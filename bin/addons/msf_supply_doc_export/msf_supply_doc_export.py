@@ -1123,7 +1123,231 @@ class parser_po_follow_up_rml(po_follow_up_mixin, report_sxw.rml_parse):
             self.back_browse = None
 
 
+
 report_sxw.report_sxw('report.po.follow.up_rml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up.rml', parser=parser_po_follow_up_rml, header=False)
+
+
+class supplier_performance_report_parser(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(supplier_performance_report_parser, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'parseDateXls': self._parse_date_xls,
+            'getLines': self.get_lines,
+        })
+
+        self._order_iterator = 0
+        self._nb_orders = 0
+        if context.get('background_id'):
+            self.back_browse = self.pool.get('memory.background.report').browse(self.cr, self.uid, context['background_id'])
+        else:
+            self.back_browse = None
+
+    def _parse_date_xls(self, dt_str, is_datetime=True):
+        if not dt_str or dt_str == 'False':
+            return ''
+        if is_datetime:
+            dt_str = dt_str[0:10] if len(dt_str) >= 10 else ''
+        if dt_str:
+            dt_str += 'T00:00:00.000'
+        return dt_str
+
+    def get_diff_date_days(self, date1, date2):
+        if not (self.isDate(date1) or self.isDateTime(date1)) or not (self.isDate(date2) or self.isDateTime(date2)):
+            return '-'
+        date1 = datetime.strptime(date1[0:10], '%Y-%m-%d')
+        date2 = datetime.strptime(date2[0:10], '%Y-%m-%d')
+
+        return (date2 - date1).days
+
+    def get_lines(self, wizard):
+        supl_info_obj = self.pool.get('product.supplierinfo')
+        catl_obj = self.pool.get('supplier.catalogue.line')
+        curr_obj = self.pool.get('res.currency')
+        lines = []
+
+        self._nb_orders = len(wizard.pol_ids)
+
+
+        invoices = {}
+
+        self.cr.execute('''
+            select i.picking_id as pick_id, l.order_line_id as pol_id, i.number as inv_number, i.currency_id as curr_id, sum(l.price_unit*l.quantity) as price_total, sum(l.quantity) as qty,  i.date_invoice as date
+            from
+                account_invoice i, account_invoice_line l
+            where
+                i.type = 'in_invoice' and
+                l.invoice_id = i.id and
+                l.order_line_id in %s and
+                i.state != 'cancel'
+            group by i.currency_id, i.picking_id, l.order_line_id, i.number, i.date_invoice
+        ''', (tuple(wizard.pol_ids),)
+        )
+        for inv in self.cr.dictfetchall():
+            key = (inv['pick_id'], inv['pol_id'])
+            if key not in invoices:
+                invoices[key] = inv
+            else:
+                ex_curr = invoices[key]['curr_id']
+                if inv['curr_id'] != ex_curr:
+                    price = curr_obj.compute(self.cr, self.uid, inv['curr_id'], ex_curr, inv['price_total'], round=False, context={'date': inv['date'] or time.strftime('%Y-%m-%d')})
+                else:
+                    price = inv['price_total']
+                invoices[key]['price_total'] += price*inv['qty']
+                invoices[key]['qty'] += inv['qty']
+
+
+        self.cr.execute('''
+            SELECT
+                pl.id, pl.product_id, pl.line_number, pl.product_qty, pl.price_unit, pl.state, pl.create_date::timestamp(0),
+                pl.validation_date, pl.confirmation_date, pl.confirmed_delivery_date, pl.comment, p.name,
+                p.delivery_requested_date, pp.default_code, COALESCE(tr.value, pt.name), rp.name, rp.supplier_lt, c.id,
+                c.name, m.id, m.price_unit, m.product_qty, sp.name, sp.physical_reception_date, c2.id, rp.id, sp.id
+            FROM purchase_order_line pl
+                LEFT JOIN purchase_order p ON p.id = pl.order_id
+                LEFT JOIN product_product pp ON pp.id = pl.product_id
+                LEFT JOIN res_partner rp ON rp.id = pl.partner_id
+                LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
+                LEFT JOIN ir_translation tr ON tr.res_id = pt.id AND tr.name = 'product.template,name' AND tr.lang = %s
+                LEFT JOIN product_pricelist pr ON pr.id = p.pricelist_id
+                LEFT JOIN res_currency c ON c.id = pr.currency_id
+                LEFT JOIN stock_move m ON m.purchase_line_id = pl.id AND m.type = 'in'
+                LEFT JOIN stock_picking sp ON sp.id = m.picking_id
+                LEFT JOIN res_currency c2 ON c2.id = m.price_currency_id
+            WHERE pl.id IN %s 
+            ORDER BY p.id DESC, pl.line_number ASC, sp.id ASC
+        ''', (self.localcontext.get('lang', 'en_MF'), tuple(wizard.pol_ids)))
+
+        for line in self.cr.fetchall():
+            # Catalogue
+            cat_unit_price = '-'
+            func_cat_unit_price = '-'
+            if line[1]:
+                supl_info_domain = [('product_id', '=', line[1]), ('active', '=', True), ('catalogue_id', '!=', False),
+                                    ('catalogue_id.partner_id', '=', line[25]), ('catalogue_id.currency_id', '=', line[17])]
+                supl_info_ids = supl_info_obj.search(self.cr, self.uid, supl_info_domain, limit=1,
+                                                     order='sequence asc', context=self.localcontext)
+                if supl_info_ids:
+                    catalogue = supl_info_obj.browse(self.cr, self.uid, supl_info_ids[0],
+                                                     fields_to_fetch=['catalogue_id'], context=self.localcontext).catalogue_id
+                    cat_line_domain = [('product_id', '=', line[1]), ('catalogue_id', '=', catalogue.id)]
+                    cat_line_ids = catl_obj.search(self.cr, self.uid, cat_line_domain, limit=1, context=self.localcontext)
+                    if cat_line_ids:
+                        cat_unit_price_raw = catl_obj.browse(self.cr, self.uid, cat_line_ids[0], fields_to_fetch=['unit_price'],
+                                                             context=self.localcontext).unit_price
+                        cat_unit_price = round(curr_obj.compute(self.cr, self.uid, catalogue.currency_id.id, line[17],
+                                                                cat_unit_price_raw, round=False, context=self.localcontext), 2)
+                        func_cat_unit_price = round(curr_obj.compute(self.cr, self.uid, catalogue.currency_id.id,
+                                                                     wizard.company_currency_id.id, cat_unit_price_raw,
+                                                                     round=False, context=self.localcontext), 2)
+
+            # Different unit prices
+            in_unit_price, func_in_unit_price = '-', '-'
+            if line[19]:
+                in_unit_price = line[20] or 0.00
+                func_in_unit_price = round(curr_obj.compute(self.cr, self.uid, line[24], wizard.company_currency_id.id,
+                                                            in_unit_price, round=False, context=self.localcontext), 2)
+            si_unit_price, func_si_unit_price = '-', '-'
+            si_ref = ''
+            key = (line[26], line[0])
+            if key in invoices and invoices[key]['qty']:
+                si_ref = invoices[key]['inv_number'] or ''
+                si_unit_price = invoices[key]['price_total'] / invoices[key]['qty']
+                if invoices[key]['curr_id'] != line[24]:
+                    si_unit_price = curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], line[24], si_unit_price, round=False, context={'date': inv['date'] or time.strftime('%Y-%m-%d')})
+                func_si_unit_price = round(curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], wizard.company_currency_id.id,
+                                                            si_unit_price, round=False, context=self.localcontext), 2)
+            func_pol_unit_price = round(curr_obj.compute(self.cr, self.uid, line[17], wizard.company_currency_id.id,
+                                                         line[4], round=False, context=self.localcontext), 2)
+
+            # Discrepancies
+            discrep_in_po, discrep_si_po, func_discrep_in_po, func_discrep_si_po = '-', '-', '-', '-'
+            if in_unit_price != '-':
+                discrep_in_po = in_unit_price - line[4]
+            if si_unit_price != '-':
+                discrep_si_po = si_unit_price - line[4]
+            if func_in_unit_price != '-':
+                func_discrep_in_po = func_in_unit_price - func_pol_unit_price
+            if func_si_unit_price != '-':
+                func_discrep_si_po = func_si_unit_price - func_pol_unit_price
+
+            # Dates comparison and Actual Supplier Lead Time
+            days_cdd_receipt, days_rdd_receipt, days_crea_receipt, act_sup_lt, discrep_lt_act_theo = '-', '-', '-', '-', '-'
+            if line[18]:
+                days_cdd_receipt = self.get_diff_date_days(line[9], line[23])
+                days_rdd_receipt = self.get_diff_date_days(line[12], line[23])
+                days_crea_receipt = self.get_diff_date_days(line[6], line[23])
+                act_sup_lt = self.get_diff_date_days(line[7], line[23])
+
+            if act_sup_lt != '-':
+                discrep_lt_act_theo = act_sup_lt - line[16]
+
+            lines.append({
+                'partner_name': line[15],
+                'po_name': line[11],
+                'in_ref': line[22] or '',
+                'si_ref': si_ref,
+                'line_number': line[2],
+                'p_code': line[13],
+                'p_name': line[14],
+                'state': line[5],
+                'qty_ordered': line[3],
+                'qty_received': line[21] or 0,
+                'currency': line[18],
+                'cat_unit_price': cat_unit_price,
+                'po_unit_price': line[4],
+                'in_unit_price': in_unit_price,
+                'si_unit_price': si_unit_price,
+                'discrep_in_po': discrep_in_po,
+                'discrep_si_po': discrep_si_po,
+                'func_cat_unit_price': func_cat_unit_price,
+                'func_po_unit_price': func_pol_unit_price,
+                'func_in_unit_price': func_in_unit_price,
+                'func_si_unit_price': func_si_unit_price,
+                'func_discrep_in_po': func_discrep_in_po,
+                'func_discrep_si_po': func_discrep_si_po,
+                'po_crea_date': line[6],
+                'po_vali_date': line[7],
+                'po_conf_date': line[8],
+                'po_rdd': line[12],
+                'po_cdd': line[9],
+                'in_receipt_date': line[23],
+                'days_crea_vali': self.get_diff_date_days(line[6], line[7]),
+                'days_crea_conf': self.get_diff_date_days(line[6], line[8]),
+                'days_cdd_receipt': days_cdd_receipt,
+                'days_rdd_receipt': days_rdd_receipt,
+                'days_crea_receipt': days_crea_receipt,
+                'days_vali_receipt': act_sup_lt,
+                'partner_lt': line[16],
+                'discrep_lt_act_theo': discrep_lt_act_theo,
+            })
+
+            self._order_iterator += 1
+            if self.back_browse:
+                percent = float(self._order_iterator) / float(self._nb_orders)
+                self.pool.get('memory.background.report').update_percent(self.cr, self.uid, [self.back_browse.id], percent)
+
+        return lines
+
+
+class supplier_performance_report_xls(SpreadsheetReport):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
+                 header='external', store=False):
+        super(supplier_performance_report_xls, self).__init__(name, table,
+                                                              rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        a = super(supplier_performance_report_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+
+supplier_performance_report_xls(
+    'report.supplier.performance.report_xls',
+    'supplier.performance.wizard',
+    'msf_supply_doc_export/report/supplier_performance_report_xls.mako',
+    parser=supplier_performance_report_parser,
+    header=False
+)
+
 
 class ir_values(osv.osv):
     """

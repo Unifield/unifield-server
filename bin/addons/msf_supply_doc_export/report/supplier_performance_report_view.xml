@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <report
+            id="supplier_performance_report_xls"
+            name="supplier.performance.report_xls"
+            model="supplier.performance.wizard"
+            string="Supplier Performance Report"
+            file="msf_supply_doc_export/report/supplier_performance_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+    </data>
+</openerp>
