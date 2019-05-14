@@ -264,6 +264,20 @@ report_stock_move()
 class export_report_stock_move(osv.osv):
     _name = 'export.report.stock.move'
 
+    def _get_has_locations(self, cr, uid, ids, field, arg, context=None):
+        '''
+        Return True if the report has a location
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for report in self.browse(cr, uid, ids, fields_to_fetch=['location_ids'], context=context):
+            res[report.id] = report.location_ids and True or False
+
+        return res
+
     _columns = {
         'company_id': fields.many2one(
             'res.company',
@@ -310,6 +324,7 @@ product will be shown.""",
             string='Specific location(s)',
             help="If a location is choosen, only stock moves that comes from/to this location will be shown.",
         ),
+        'has_locations': fields.function(_get_has_locations, method=True, type='boolean', string='Report has locations', store=True, readonly=True),
         'product_list_id': fields.many2one(
             'product.list',
             string='Specific product list',
@@ -415,7 +430,8 @@ product will be shown.""",
                     # Quarantine (before scap)
                     non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1])
 
-                    domain.append(('location_dest_id', 'not in', non_standard_loc_ids))
+                    # Move must not be from non-standard location to non-standard location
+                    domain.extend([('location_id', 'not in', non_standard_loc_ids), ('location_dest_id', 'not in', non_standard_loc_ids)])
 
             context['domain'] = domain
 
@@ -518,6 +534,24 @@ product will be shown.""",
             },
         }
 
+    def onchange_location_ids(self, cr, uid, ids, location_ids):
+        """
+        Disable the checkbox if there are locations selected
+        """
+        if location_ids != [(6, 0, [])]:
+            return {
+                'value': {
+                    'only_standard_loc': False,
+                    'has_locations': True,
+                },
+            }
+        else:
+            return {
+                'value': {
+                    'has_locations': False,
+                },
+            }
+
     def create(self, cr, uid, vals, context=None):
         """
         Call onchange_prodlot() if a prodlot is specified
@@ -579,13 +613,11 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
         if not self.datas['selected_locs']:
             inst_full_view_id = data_obj.get_object_reference(self.cr, self.uid, 'stock', 'stock_location_locations')[1]
             loc_domain = [('location_id', 'child_of', inst_full_view_id)]
-            if self.datas['non_standard_loc_ids']:
-                loc_domain.append(('id', 'not in', self.datas['non_standard_loc_ids']))
             location_ids = loc_obj.search(self.cr, self.uid, loc_domain, context=self.localcontext)
             self.localcontext.update({'location': location_ids})
 
         for move in self.pool.get('stock.move').browse(self.cr, self.uid, self.datas['moves'], context=self.localcontext):
-            move_date = move.picking_id and move.picking_id.date_done or move.date or False
+            move_date = move.date or False
             # Get stock
             ctx = self.localcontext.copy()
             ctx.update({'to_date': move_date})
