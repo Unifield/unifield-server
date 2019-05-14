@@ -458,6 +458,30 @@ class analytic_account(osv.osv):
                     raise osv.except_osv(_('Warning !'), _('You cannot have the same name between analytic accounts in the same category!'))
         return True
 
+    def _check_existing_entries(self, cr, uid, analytic_account_id, context=None):
+        """
+        Checks if some AJI booked on the analytic_account_id are outside the account activation time interval.
+        For FP and Free accounts: check is done on Doc Date. If AJI are found an error is raised to prevent Saving the account.
+        For other accounts: check is done on Posting Date. If AJI are found only a message is displayed on top of the page.
+        """
+        if context is None:
+            context = {}
+        aal_obj = self.pool.get('account.analytic.line')
+        if analytic_account_id:
+            analytic_acc_fields = ['date_start', 'date', 'code']
+            analytic_acc = self.browse(cr, uid, analytic_account_id, fields_to_fetch=analytic_acc_fields, context=context)
+            aal_dom_fp_free = [('account_id', '=', analytic_account_id),
+                               '|', ('document_date', '<', analytic_acc.date_start), ('document_date', '>=', analytic_acc.date)]
+            if aal_obj.search_exist(cr, uid, aal_dom_fp_free, context=context):
+                raise osv.except_osv(_('Error'), _('At least one Analytic Journal Item using the Analytic Account %s '
+                                                   'has a Document Date outside the activation dates selected.') % (analytic_acc.code))
+            if not context.get('sync_update_execution'):
+                aal_dom_cc_dest = ['|', ('cost_center_id', '=', analytic_account_id), ('destination_id', '=', analytic_account_id),
+                                   '|', ('date', '<', analytic_acc.date_start), ('date', '>=', analytic_acc.date)]
+                if aal_obj.search_exist(cr, uid, aal_dom_cc_dest, context=context):
+                    self.log(cr, uid, analytic_account_id, _('At least one Analytic Journal Item using the Analytic Account %s '
+                                                             'has a Posting Date outside the activation dates selected.') % (analytic_acc.code))
+
     def create(self, cr, uid, vals, context=None):
         """
         Some verifications before analytic account creation
@@ -502,6 +526,9 @@ class analytic_account(osv.osv):
             if cat_instance:
                 self.check_fp(cr, uid, cat_instance, context=context)
         self._check_name_unicity(cr, uid, ids, context=context)
+        if not context.get('sync_update_execution'):
+            for analytic_acc_id in ids:
+                self._check_existing_entries(cr, uid, analytic_acc_id, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):

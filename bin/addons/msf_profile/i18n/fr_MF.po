@@ -105705,7 +105705,7 @@ msgstr "Fichier ligne %s: La Colonne \"Article\" doit être un entier"
 
 #. modules: purchase, sale
 #: code:addons/purchase/purchase_order_line.py:24
-#: code:addons/sale/sale_order.py:1993
+#: code:addons/sale/sale_order.py:1991
 #, python-format
 msgid "The Total amount of the line is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information"
 msgstr "Le montant total de la ligne est sur plus de 10 chiffres. Veuillez vérifier la qté et le prix unitaire pour éviter des pertes d'information"
@@ -106496,3 +106496,21 @@ msgstr "Délai Configuré du Fournisseur"
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:264
 msgid "Discrepancy b/w actual Lead Time and Supplier Lead Time"
 msgstr "Écart entre le Délai réel et le Délai du Fournisseur"
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:460
+#, python-format
+msgid "At least one Analytic Journal Item using the Analytic Account %s has a Document Date outside the activation dates selected."
+msgstr "Au moins une Ligne d'Ecriture Analytique utilisant le Compte Analytique %s a une Date de Document en dehors des dates d'activation sélectionnées."
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:466
+#, python-format
+msgid "At least one Analytic Journal Item using the Analytic Account %s has a Posting Date outside the activation dates selected."
+msgstr "Au moins une Ligne d'Ecriture Analytique utilisant le Compte Analytique %s a une Date de Comptabilisation en dehors des dates d'activation sélectionnées."
+
+#. module: account_override
+#: code:addons/account_override/account.py:532
+#, python-format
+msgid "At least one Journal Item using the Account \"%s - %s\" has a Posting Date outside the activation dates selected."
+msgstr "Au moins une Ligne d'Ecriture Comptable utilisant le Compte \"%s - %s\" a une Date de Comptabilisation en dehors des dates d'activation sélectionnées."
