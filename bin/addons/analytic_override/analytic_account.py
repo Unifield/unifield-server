@@ -226,6 +226,28 @@ class analytic_account(osv.osv):
             res[analytic_acc_id] = analytic_acc_id == pf_id
         return res
 
+    def _search_dest_compatible_with_cc_ids(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain with all destinations compatible with the selected Cost Center
+        Ex: to get the dest. compatible with the CC 2, use the dom [('dest_compatible_with_cc_ids', '=', 2)]
+        """
+        dom = []
+        if context is None:
+            context = {}
+        for arg in args:
+            if arg[0] == 'dest_compatible_with_cc_ids':
+                operator = arg[1]
+                cc = arg[2]
+                if operator != '=' or not isinstance(cc, (int, long)):
+                    raise osv.except_osv(_('Error'), _('Filter not implemented on Destinations.'))
+                all_dest_ids = self.search(cr, uid, [('category', '=', 'DEST')], context=context)
+                compatible_dest_ids = []
+                for dest in self.browse(cr, uid, all_dest_ids, fields_to_fetch=['allow_all_cc', 'dest_cc_ids'], context=context):
+                    if dest.allow_all_cc or (cc and cc in [c.id for c in dest.dest_cc_ids]):
+                        compatible_dest_ids.append(dest.id)
+                dom.append(('id', 'in', compatible_dest_ids))
+        return dom
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
@@ -244,11 +266,20 @@ class analytic_account(osv.osv):
         'intermission_restricted': fields.function(_get_fake, type="boolean", method=True, store=False, string="Domain to restrict intermission cc"),
         'balance': fields.function(_debit_credit_bal_qtty, method=True, type='float', string='Balance', digits_compute=dp.get_precision('Account'), multi='debit_credit_bal_qtty'),
         'is_pf': fields.function(_is_pf, method=True, type='boolean', string='Is the default Funding Pool "PF"', store=False),
+        'dest_cc_ids': fields.many2many('account.analytic.account', 'destination_cost_center_rel',
+                                        'destination_id', 'cost_center_id', string='Cost Centers',
+                                        domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
+        'allow_all_cc': fields.boolean(string="Allow all Cost Centers"),
+        'dest_compatible_with_cc_ids': fields.function(_get_fake, method=True, store=False,
+                                                       string='Destinations compatible with the Cost Center',
+                                                       type='many2many', relation='account.analytic.account',
+                                                       fnct_search=_search_dest_compatible_with_cc_ids),
     }
 
     _defaults ={
         'date_start': lambda *a: (datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'for_fx_gain_loss': lambda *a: False,
+        'allow_all_cc': lambda *a: False,
     }
 
     def _check_code_unicity(self, cr, uid, ids, context=None):
@@ -318,6 +349,30 @@ class analytic_account(osv.osv):
         parent = self.search(cr, uid, [('category', '=', category), ('parent_id', '=', False)])[0]
         res['value']['parent_id'] = parent
         res['domain']['parent_id'] = [('category', '=', category), ('type', '=', 'view')]
+        return res
+
+    def on_change_allow_all_cc(self, cr, uid, ids, allow_all_cc, dest_cc_ids, context=None):
+        """
+        If the user tries to tick the box "Allow all Cost Centers" whereas CC are selected,
+        informs him that he has to remove the CC first
+        """
+        res = {}
+        if allow_all_cc and dest_cc_ids and dest_cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
+            warning = {
+                'title': _('Warning!'),
+                'message': _('Please remove the Cost Centers linked to the Destination before ticking this box.')
+            }
+            res['warning'] = warning
+            res['value'] = {'allow_all_cc': False, }
+        return res
+
+    def on_change_dest_cc_ids(self, cr, uid, ids, dest_cc_ids, context=None):
+        """
+        If at least a CC is selected, unticks the box "Allow all Cost Centers"
+        """
+        res = {}
+        if dest_cc_ids and dest_cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
+            res['value'] = {'allow_all_cc': False, }
         return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -393,6 +448,8 @@ class analytic_account(osv.osv):
         if 'category' in vals:
             if vals['category'] != 'DEST':
                 vals['destination_ids'] = [(6, 0, [])]
+                vals['dest_cc_ids'] = [(6, 0, [])]
+                vals['allow_all_cc'] = False  # default value
             if vals['category'] != 'FUNDING':
                 vals['tuple_destination_account_ids'] = [(6, 0, [])]
                 vals['cost_center_ids'] = [(6, 0, [])]
@@ -424,6 +481,7 @@ class analytic_account(osv.osv):
         default['child_ids'] = [] # do not copy the child_ids
         default['tuple_destination_summary'] = []
         default['line_ids'] = []
+        default['dest_cc_ids'] = []
         return super(analytic_account, self).copy(cr, uid, a_id, default, context=context)
 
     def _check_name_unicity(self, cr, uid, ids, context=None):
@@ -611,9 +669,41 @@ class analytic_account(osv.osv):
         self.write(cr, uid, ids, {'cost_center_ids':[(6, 0, [])]}, context=context)
         return True
 
+    def button_dest_cc_clear(self, cr, uid, ids, context=None):
+        """
+        Removes all Cost Centers selected in the Destination view
+        """
+        self.write(cr, uid, ids, {'dest_cc_ids': [(6, 0, [])]}, context=context)
+        return True
+
     def button_dest_clear(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'tuple_destination_account_ids':[(6, 0, [])]}, context=context)
         return True
+
+    def get_destinations_by_accounts(self, cr, uid, ids, context=None):
+        """
+        Returns a view with the Destinations by accounts (for the FP selected if any, otherwise for all the FP)
+        """
+        if context is None:
+            context = {}
+        ir_model_obj = self.pool.get('ir.model.data')
+        active_ids = context.get('active_ids', [])
+        if active_ids:
+            analytic_acc_category = self.browse(cr, uid, active_ids[0], fields_to_fetch=['category'], context=context).category or ''
+            if analytic_acc_category == 'FUNDING':
+                context.update({'search_default_funding_pool_id': active_ids[0]})
+        search_view_id = ir_model_obj.get_object_reference(cr, uid, 'analytic_distribution', 'view_account_destination_summary_search')
+        search_view_id = search_view_id and search_view_id[1] or False
+        return {
+            'name': _('Destinations by accounts'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.destination.summary',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'search_view_id': [search_view_id],
+            'context': context,
+            'target': 'current',
+        }
 
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

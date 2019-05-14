@@ -5225,8 +5225,9 @@ msgstr "Maldives"
 msgid "Close period (Mission)"
 msgstr "Clôturer la Période (Mission)"
 
-#. module: msf_budget
+#. modules: msf_budget, analytic_distribution
 #: report:addons/msf_budget/report/report_local_expenses_xls.mako:116
+#: report:funding.pool:0
 msgid "Account name"
 msgstr "Nom du compte"
 
@@ -16485,6 +16486,7 @@ msgstr "Annuler le lettrage des Ecritures"
 #: view:threshold.value:0
 #: view:international.transport.cost.report:0
 #: view:local.transport.cost.report:0
+#: view:account.destination.summary:0
 msgid "Group By..."
 msgstr "Grouper Par..."
 
@@ -16787,7 +16789,7 @@ msgstr "\n"
 #. module: analytic_distribution
 #: view:account.analytic.account:0
 msgid "Remove all"
-msgstr "Remove all"
+msgstr "Tout supprimer"
 
 #. module: vertical_integration
 #: code:addons/vertical_integration/report/hq_report_oca.py:176
@@ -31423,9 +31425,10 @@ msgstr "Nom d'Hôte du Serveur de Synchronisation"
 msgid "Type of file"
 msgstr "Type de fichier"
 
-#. module: msf_budget
+#. modules: msf_budget, analytic_distribution
 #: report:addons/msf_budget/report/report_local_expenses_xls.mako:115
 #: field:msf.budget.line,account_code:0
+#: report:funding.pool:0
 msgid "Account code"
 msgstr "Code du compte"
 
@@ -38535,6 +38538,7 @@ msgstr "Assistant Confirmation Bancaire"
 #: field:hr.payroll.msf,funding_pool_id:0
 #: field:account.invoice.line,funding_pool_id:0
 #: report:addons/account/report/free_allocation_report.mako:208
+#: view:account.destination.summary:0
 #, python-format
 msgid "Funding Pool"
 msgstr "Funding Pool"
@@ -47757,10 +47761,11 @@ msgstr "Informations sur la Transaction"
 msgid "America/Sitka"
 msgstr "America/Sitka"
 
-#. module: account
+#. modules: account, analytic_distribution
 #: view:account.analytic.line:0
+#: view:account.destination.summary:0
 msgid "G/L account"
-msgstr "G/L account"
+msgstr "Compte Grand Livre"
 
 #. modules: account, register_accounting
 #: help:account.invoice,state:0
@@ -67538,6 +67543,7 @@ msgstr "Veuillez noter que les utilisateurs ne peuvent être ajoutés à la list
 #: view:msf.instance:0
 #: report:addons/account/report/free_allocation_report.mako:176
 #: field:free.allocation.wizard,cost_center_ids:0
+#: field:account.analytic.account,dest_cc_ids:0
 msgid "Cost Centers"
 msgstr "Centres de Coût"
 
@@ -86778,10 +86784,12 @@ msgstr "N. de Lot"
 msgid "Total weight:"
 msgstr "Total weight:"
 
-#. module: analytic_distribution
+#. modules: analytic_distribution, analytic_override
 #: view:account.analytic.account:0
 #: view:account.destination.summary:0
 #: model:ir.model,name:analytic_distribution.model_account_destination_summary
+#: model:ir.actions.server,name:analytic_distribution.action_analytic_acc_dest_summary
+#: code:addons/analytic_override/analytic_account.py:652
 msgid "Destinations by accounts"
 msgstr "Destinations par Compte"
 
@@ -91327,8 +91335,8 @@ msgstr "Russian / русский язык"
 
 #. module: analytic_distribution
 #: report:funding.pool:0
-msgid "Accounts:"
-msgstr "Comptes:"
+msgid "Account/Destination:"
+msgstr "Compte / Destination :"
 
 #. module: msf_outgoing
 #: help:return.pack.shipment.processor,address_id:0
@@ -96642,6 +96650,8 @@ msgstr "Facture venant de"
 #: report:addons/account/report/free_allocation_report.mako:202
 #: report:addons/stock_override/report/report_stock_move_xls.mako:143
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:606
+#: field:account.destination.summary,destination_id:0
+#: view:account.destination.summary:0
 #, python-format
 msgid "Destination"
 msgstr "Destination"
@@ -102310,6 +102320,12 @@ msgid "%s: DEST (%s) not compatible with account (%s)"
 msgstr "%s: DEST (%s) incompatible avec le compte (%s)"
 
 #. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:142
+#, python-format
+msgid "%s: CC (%s) not compatible with DEST (%s)"
+msgstr "%s : CC (%s) non compatible avec la DEST (%s)"
+
+#. module: account_hq_entries
 #: code:addons/account_hq_entries/hq_entries.py:103
 #, python-format
 msgid "%s: No CC"
@@ -106220,6 +106236,110 @@ msgstr "Mettre le Statut à vide"
 msgid "For this Supplier you have to select a Sourcing Group"
 msgstr "Vous devez sélectionner un Groupe de Sourcing pour ce Fournisseur"
 
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_distribution.py:123
+#, python-format
+msgid "Cost Center not compatible with destination"
+msgstr "Centre de Coût non compatible avec la destination"
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_line.py:528
+#, python-format
+msgid "CC/DEST"
+msgstr "CC / DEST"
+
+#. module: analytic_distribution
+#: report:funding.pool:0
+msgid "Destination code"
+msgstr "Code de la destination"
+
+#. module: analytic_distribution
+#: report:funding.pool:0
+msgid "Destination name"
+msgstr "Nom de la destination"
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:227
+#, python-format
+msgid "Filter not implemented on Destinations."
+msgstr "Filtre non mis en oeuvre sur les Destinations."
+
+#. module: analytic_override
+#: field:account.analytic.account,allow_all_cc:0
+msgid "Allow all Cost Centers"
+msgstr "Autoriser tous les Centres de Coût"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:999
+#, python-format
+msgid "Please either list the Cost Centers to allow, or allow all Cost Centers."
+msgstr "Veuillez soit lister les Centres de Coût à autoriser, soit autoriser tous les Centres de Coût."
+
+#. module: analytic_override
+#: field:account.analytic.account,dest_compatible_with_cc_ids:0
+msgid "Destinations compatible with the Cost Center"
+msgstr "Destinations compatibles avec le Centre de Coût"
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:347
+#, python-format
+msgid "Please remove the Cost Centers linked to the Destination before ticking this box."
+msgstr "Veuillez supprimer les Centres de Coût liés à la Destination avant de cocher cette case."
+
+#. module: account_corrections
+#: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:246
+#, python-format
+msgid "The Cost Center %s is not compatible with the Destination %s."
+msgstr "Le Centre de Coût %s n'est pas compatible avec la Destination %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:490
+#, python-format
+msgid "Line %s. The Cost Center %s is not compatible with the Destination %s."
+msgstr "Ligne %s. Le Centre de Coût %s n'est pas compatible avec la Destination %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:945
+#, python-format
+msgid "The Parent Analytic Account must be a View type Funding Pool."
+msgstr "Le Compte Analytique Parent doit être un Funding Pool de type Vue."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:992
+#, python-format
+msgid "The Parent Analytic Account must be a View type Destination."
+msgstr "Le Compte Analytique Parent doit être une Destination de type Vue."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:1063
+#, python-format
+msgid "The Parent Analytic Account must be a View type Cost Center."
+msgstr "Le Compte Analytique Parent doit être un Centre de Coût de type Vue."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:1076
+#, python-format
+msgid "The Parent Analytic Account must be a View type Free 1 account."
+msgstr "Le Compte Analytique Parent doit être un compte \"Option 1\" de type Vue."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:1089
+#, python-format
+msgid "The Parent Analytic Account must be a View type Free 2 account."
+msgstr "Le Compte Analytique Parent doit être un compte \"Option 2\" de type Vue."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:995
+#, python-format
+msgid "The Type must be either \"Normal\" or \"View\"."
+msgstr "Le Type doit être soit \"Normal\" soit \"Vue\"."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:1023
+#, python-format
+msgid "Account code \"%s\" doesn't exist or isn't allowed."
+msgstr "Le code comptable \"%s\" n'existe pas ou n'est pas autorisé."
+
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:586
 #, python-format
@@ -106514,3 +106634,9 @@ msgstr "Au moins une Ligne d'Ecriture Analytique utilisant le Compte Analytique 
 #, python-format
 msgid "At least one Journal Item using the Account \"%s - %s\" has a Posting Date outside the activation dates selected."
 msgstr "Au moins une Ligne d'Ecriture Comptable utilisant le Compte \"%s - %s\" a une Date de Comptabilisation en dehors des dates d'activation sélectionnées."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/hr.py:224
+#, python-format
+msgid "Employee %s: the Cost Center %s is not compatible with the Destination %s."
+msgstr "Employé %s : le Centre de Coût %s n'est pas compatible avec la Destination %s."

@@ -645,6 +645,7 @@ class msf_import_export(osv.osv_memory):
         model = MODEL_DICT[import_brw.model_list_selection]['model']
         impobj = self.pool.get(model)
         acc_obj = self.pool.get('account.account')
+        acc_analytic_obj = self.pool.get('account.analytic.account')
         acc_dest_obj = self.pool.get('account.destination.link')
 
         import_data_obj = self.pool.get('import_data')
@@ -961,11 +962,20 @@ class msf_import_export(osv.osv_memory):
                     if len(ids_to_update) > 1:
                         raise Exception('%d records found for rule=%s, model=%s' % (len(ids_to_update), data.get('name'), data.get('model_id')))
 
-                # Analytic Accounts
-                if import_brw.model_list_selection == 'analytic_accounts':
+                # Funding Pools
+                if import_brw.model_list_selection == 'funding_pools':
                     context['from_import_menu'] = True
+                    data['category'] = 'FUNDING'
+                    # Parent Analytic Account
+                    if data.get('parent_id'):
+                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'],
+                                                            fields_to_fetch=['type', 'category'], context=context)
+                        parent_type = parent_id.type or ''
+                        parent_category = parent_id.category or ''
+                        if parent_type != 'view' or parent_category != 'FUNDING':
+                            raise Exception(_('The Parent Analytic Account must be a View type Funding Pool.'))
                     # Cost Centers
-                    if data.get('cost_center_ids') and data.get('category', '') == 'FUNDING':
+                    if data.get('cost_center_ids'):
                         cc_list = []
                         for cost_center in data.get('cost_center_ids').split(','):
                             cc = cost_center.strip()
@@ -980,7 +990,7 @@ class msf_import_export(osv.osv_memory):
                     else:
                         data['cost_center_ids'] = [(6, 0, [])]
                     # Account/Destination
-                    if data.get('tuple_destination_account_ids') and data.get('category', '') == 'FUNDING':
+                    if data.get('tuple_destination_account_ids'):
                         dest_acc_list = []
                         for destination_account in data.get('tuple_destination_account_ids').split(','):
                             dest_acc_ids = []
@@ -999,6 +1009,115 @@ class msf_import_export(osv.osv_memory):
                         data['tuple_destination_account_ids'] = [(6, 0, dest_acc_list)]
                     else:
                         data['tuple_destination_account_ids'] = [(6, 0, [])]
+
+                # Destinations
+                if import_brw.model_list_selection == 'destinations':
+                    context['from_import_menu'] = True
+                    data['category'] = 'DEST'
+                    # Parent Analytic Account
+                    if data.get('parent_id'):
+                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'], fields_to_fetch=['type', 'category'], context=context)
+                        parent_type = parent_id.type or ''
+                        parent_category = parent_id.category or ''
+                        if parent_type != 'view' or parent_category != 'DEST':
+                            raise Exception(_('The Parent Analytic Account must be a View type Destination.'))
+                    # Type
+                    if data['type'] not in ['normal', 'view']:
+                        raise Exception(_('The Type must be either "Normal" or "View".'))
+                    # Cost Centers
+                    if data.get('dest_cc_ids'):
+                        if data.get('allow_all_cc'):
+                            raise Exception(_("Please either list the Cost Centers to allow, or allow all Cost Centers."))
+                        dest_cc_list = []
+                        for cost_center in data.get('dest_cc_ids').split(','):
+                            cc = cost_center.strip()
+                            cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'),
+                                      '|', ('code', '=', cc), ('name', '=', cc)]
+                            cc_ids = impobj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
+                            if cc_ids:
+                                dest_cc_list.append(cc_ids[0])
+                            else:
+                                raise Exception(_('Cost Center "%s" not found.') % cc)
+                        data['dest_cc_ids'] = [(6, 0, dest_cc_list)]
+                    else:
+                        data['dest_cc_ids'] = [(6, 0, [])]
+                    # Accounts
+                    if data.get('destination_ids'):  # "destinations_ids" corresponds to G/L accounts...
+                        acc_list = []
+                        for account in data.get('destination_ids').split(','):
+                            acc = account.strip()
+                            acc_dom = [('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('code', '=', acc)]
+                            acc_ids = acc_obj.search(cr, uid, acc_dom, order='id', limit=1, context=context)
+                            if acc_ids:
+                                acc_list.append(acc_ids[0])
+                            else:
+                                raise Exception(_("Account code \"%s\" doesn't exist or isn't allowed.") % acc)
+                        data['destination_ids'] = [(6, 0, acc_list)]
+                    else:
+                        data['destination_ids'] = [(6, 0, [])]
+                    # if the code matches with an existing destination: update it
+                    if data.get('code'):
+                        ids_to_update = impobj.search(cr, uid, [('category', '=', 'DEST'), ('code', '=', data['code'])],
+                                                      limit=1, context=context)
+                        if ids_to_update:
+                            # in case of empty columns on non-required fields, existing values should be deleted
+                            if 'date' not in data:
+                                data['date'] = False
+                            if 'dest_cc_ids' not in data:
+                                data['dest_cc_ids'] = [(6, 0, [])]
+                            if 'allow_all_cc' not in data:
+                                data['allow_all_cc'] = False
+                            if 'destination_ids' not in data:
+                                data['destination_ids'] = [(6, 0, [])]
+                            elif data['destination_ids'][0][2]:
+                                # accounts already linked to the destination:
+                                # - if they don't appear in the new list: will be automatically de-activated
+                                # - if they appear in the list: must be re-activated if they are currently disabled
+                                link_ids = acc_dest_obj.search(cr, uid,
+                                                               [('account_id', 'in', data['destination_ids'][0][2]),
+                                                                ('destination_id', '=', ids_to_update[0]),
+                                                                ('disabled', '=', True)], context=context)
+                                if link_ids:
+                                    acc_dest_obj.write(cr, uid, link_ids, {'disabled': False}, context=context)
+
+                # Cost Centers
+                if import_brw.model_list_selection == 'cost_centers':
+                    context['from_import_menu'] = True
+                    data['category'] = 'OC'
+                    # Parent Analytic Account
+                    if data.get('parent_id'):
+                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'],
+                                                            fields_to_fetch=['type', 'category'], context=context)
+                        parent_type = parent_id.type or ''
+                        parent_category = parent_id.category or ''
+                        if parent_type != 'view' or parent_category != 'OC':
+                            raise Exception(_('The Parent Analytic Account must be a View type Cost Center.'))
+
+                # Free 1
+                if import_brw.model_list_selection == 'free1':
+                    context['from_import_menu'] = True
+                    data['category'] = 'FREE1'
+                    # Parent Analytic Account
+                    if data.get('parent_id'):
+                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'],
+                                                            fields_to_fetch=['type', 'category'], context=context)
+                        parent_type = parent_id.type or ''
+                        parent_category = parent_id.category or ''
+                        if parent_type != 'view' or parent_category != 'FREE1':
+                            raise Exception(_('The Parent Analytic Account must be a View type Free 1 account.'))
+
+                # Free 2
+                if import_brw.model_list_selection == 'free2':
+                    context['from_import_menu'] = True
+                    data['category'] = 'FREE2'
+                    # Parent Analytic Account
+                    if data.get('parent_id'):
+                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'],
+                                                            fields_to_fetch=['type', 'category'], context=context)
+                        parent_type = parent_id.type or ''
+                        parent_category = parent_id.category or ''
+                        if parent_type != 'view' or parent_category != 'FREE2':
+                            raise Exception(_('The Parent Analytic Account must be a View type Free 2 account.'))
 
                 if import_brw.model_list_selection == 'record_rules':
                     if not data.get('groups'):

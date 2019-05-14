@@ -69,6 +69,24 @@ class patch_scripts(osv.osv):
                     err_msg,
                 )
 
+    # UF13.0
+    def us_5771_allow_all_cc_in_default_dest(self, cr, uid, *a, **b):
+        """
+        Set the default created destinations (OPS/EXP/SUP/NAT) as "Allow all Cost Centers"
+        """
+        update_dests = """
+            UPDATE account_analytic_account
+            SET allow_all_cc = 't'
+            WHERE category = 'DEST' 
+            AND id IN (SELECT res_id FROM ir_model_data WHERE module='analytic_distribution' AND name IN (
+                'analytic_account_destination_operation',
+                'analytic_account_destination_expatriates',
+                'analytic_account_destination_support',
+                'analytic_account_destination_national_staff'));
+        """
+        cr.execute(update_dests)
+        return True
+
     # UF12.1
     def us_5199_fix_cancel_partial_move_sol_id(self, cr, uid, *a, **b):
         '''

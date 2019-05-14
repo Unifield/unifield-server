@@ -257,7 +257,8 @@
     if object_ids:
         # Create the rule
         fields = ['state', 'category', 'code', 'complete_name', 'cost_center_ids', 'date', 'date_start', 'name', 'parent_id',
-                  'type', 'for_fx_gain_loss', 'instance_id', 'tuple_destination_account_ids', 'description', 'destination_ids']
+                  'type', 'for_fx_gain_loss', 'instance_id', 'tuple_destination_account_ids', 'description', 'destination_ids',
+                  'dest_cc_ids', 'allow_all_cc']
 
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'account.analytic.account'), ('name', 'in', fields)], context=context)
 

@@ -21,7 +21,6 @@
 
 from osv import fields, osv
 from tools import drop_view_if_exists
-from lxml import etree
 from destination_tools import many2many_notlazy
 from tools.translate import _
 
@@ -121,79 +120,8 @@ class account_destination_summary(osv.osv):
     _columns = {
         'account_id': fields.many2one('account.account', "G/L Account"),
         'funding_pool_id': fields.many2one('account.analytic.account', 'Funding Pool'),
+        'destination_id': fields.many2one('account.analytic.account', 'Destination'),
     }
-
-    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
-        fields = super(account_destination_summary, self).fields_get(cr, uid, fields, context)
-        dest_obj = self.pool.get('account.analytic.account')
-        destination_ids = dest_obj.search(cr, uid, [('type', '!=', 'view'), ('category', '=', 'DEST'), ('parent_id', '!=', False)])
-        for dest in dest_obj.read(cr, uid, destination_ids, ['name']):
-            fields['dest_%s'%(dest['id'])] = {'type': 'boolean', 'string': dest['name']}
-        return fields
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        view = super(account_destination_summary, self).fields_view_get(cr, uid, view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if view_type == 'tree':
-            fields_to_add = []
-            form = etree.fromstring(view['arch'])
-            tree = form.xpath('//tree')
-            for field in view.get('fields', {}):
-                if field.startswith('dest_'):
-                    fields_to_add.append(int(field.split('_')[1]))
-
-            if fields_to_add:
-                for dest_order in self.pool.get('account.analytic.account').search(cr, uid, [('id', 'in', fields_to_add)], order='name'):
-                    new_field = etree.Element('field', attrib={'name': 'dest_%d'%dest_order})
-                    tree[0].append(new_field)
-            view['arch'] = etree.tostring(form)
-        return view
-
-    def read(self, cr, uid, ids, fields_to_read=None, context=None, load='_classic_read'):
-        first = False
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-            first = True
-        if fields_to_read is None:
-            fields_to_read = []
-        ret = super(account_destination_summary, self).read(cr, uid, ids, fields_to_read, context, load)
-        f_to_read = []
-        for field in fields_to_read:
-            if field.startswith('dest_'):
-                f_to_read.append(field)
-
-        if f_to_read:
-            cr.execute('''
-                SELECT
-                    sum.id,
-                    l.destination_id
-                FROM
-                    account_destination_link l,
-                    account_destination_summary sum,
-                    funding_pool_associated_destinations d
-                WHERE
-                    l.disabled = 'f' and
-                    d.tuple_id = l.id and
-                    sum.account_id = l.account_id and
-                    sum.funding_pool_id = d.funding_pool_id and
-                    sum.id in %s
-                ''',(tuple(ids),)
-            )
-            tmp_result = {}
-            for x in cr.fetchall():
-                tmp_result.setdefault(x[0], []).append(x[1])
-
-            for x in ret:
-                for dest in tmp_result.get(x['id'], []):
-                    x['dest_%s'%(dest,)] = True
-                for false_value in f_to_read:
-                    if false_value not in x:
-                        x[false_value] = False
-
-        if first:
-            return ret[0]
-        return ret
-
-
 
     def init(self, cr):
         # test if id exists in funding_pool_associated_destinations or create it
@@ -207,7 +135,8 @@ class account_destination_summary(osv.osv):
                 SELECT
                     min(d.id) AS id,
                     l.account_id AS account_id,
-                    d.funding_pool_id AS funding_pool_id
+                    d.funding_pool_id AS funding_pool_id,
+                    l.destination_id AS destination_id
                 FROM
                     account_destination_link l,
                     funding_pool_associated_destinations d
@@ -215,10 +144,10 @@ class account_destination_summary(osv.osv):
                     d.tuple_id = l.id and
                     l.disabled = 'f'
                 GROUP BY
-                    l.account_id,d.funding_pool_id
+                    l.account_id, d.funding_pool_id, l.destination_id
             )
         """)
-    _order = 'account_id'
+    _order = 'funding_pool_id, account_id, destination_id'
 account_destination_summary()
 
 class account_account(osv.osv):
