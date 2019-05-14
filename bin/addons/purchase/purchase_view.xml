@@ -109,7 +109,7 @@
                             <html>
                                 <p id="big_amount" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                                     <translate>
-                                        WARNING: The Total amount of the following lines is more than 15 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information:
+                                        WARNING: The Total amount of the following lines is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information:
                                     </translate>
                                 </p>
                                 <p id="view_order_requested_in_past" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">

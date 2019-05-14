@@ -557,6 +557,25 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return ref_by_order
 
+    def _get_msg_big_qty(self, cr, uid, ids, name, arg, context=None):
+        res = {}
+        max_value = self.pool.get('sale.order.line')._max_value
+
+        for id in ids:
+            res[id] = ''
+
+        cr.execute('''select line_number, order_id from sale_order_line
+            where
+                order_id in %s
+                and ( product_uom_qty >= %s or product_uom_qty*price_unit >= %s)
+                and state not in ('cancel', 'cancel_r')
+            ''', (tuple(ids), max_value, max_value))
+        for x in cr.fetchall():
+            res[x[1]] += ' #%s' % x[0]
+
+        return res
+
+
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}, select=True, sort_column='id'),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
@@ -670,6 +689,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'claim_name_goods_return': fields.char(string='Customer Claim Name', help='Name of the claim that created the IN-replacement/-missing which created the FO', size=512),
         'draft_cancelled': fields.boolean(string='State', readonly=True),
         'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
+        'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
     }
 
     _defaults = {
@@ -1983,6 +2003,8 @@ class sale_order_line(osv.osv):
 
         return res
 
+    _max_value = 10**10
+    _max_msg = _('The Total amount of the line is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information')
     _name = 'sale.order.line'
     _description = 'Sales Order Line'
     _columns = {

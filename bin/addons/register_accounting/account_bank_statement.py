@@ -2053,6 +2053,21 @@ class account_bank_statement_line(osv.osv):
                 msg = _('This cheque number has already been used')
                 raise osv.except_osv(_('Info'), (msg))
 
+    def _check_on_regline_big_amounts(self, cr, uid, ids, context=None):
+        """
+        Prevents booking amounts IN or OUT having more than 10 digits before the comma, i.e. amounts starting from 10 billions.
+        The goal is to avoid losing precision, see e.g.: "%s" % 10000000000.01  # '10000000000.0'
+        (and to avoid decimal.InvalidOperation due to huge amounts).
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        too_big_amount = 10**10
+        for regline in self.browse(cr, uid, ids, fields_to_fetch=['amount', 'name'], context=context):
+            if abs(regline.amount or 0.0) >= too_big_amount:
+                raise osv.except_osv(_('Error'), _('The amount of the register line "%s" is more than 10 digits.') % regline.name)
+
     def create(self, cr, uid, values, context=None):
         """
         Create a new account bank statement line with values
@@ -2113,6 +2128,7 @@ class account_bank_statement_line(osv.osv):
                     'from_correction' in context or context.get('sync_update_execution', False):
                 res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
                 self._check_account_partner_compat(cr, uid, ids, context=context)
+                self._check_on_regline_big_amounts(cr, uid, ids, context=context)
                 return res
             raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
         # First update amount
@@ -2169,6 +2185,7 @@ class account_bank_statement_line(osv.osv):
 
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
                 self._check_account_partner_compat(cr, uid, line.get('id'), context=context)
+                self._check_on_regline_big_amounts(cr, uid, line.get('id'), context=context)
                 res.append(tmp)
 
                 new_distrib = values.get('analytic_distribution_id', False)
@@ -2207,6 +2224,7 @@ class account_bank_statement_line(osv.osv):
         # Update the bank statement lines with 'values'
         res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         self._check_account_partner_compat(cr, uid, ids, context=context)
+        self._check_on_regline_big_amounts(cr, uid, ids, context=context)
         # Amount verification regarding Down payments
         for line in self.read(cr, uid, ids, ['is_down_payment', 'down_payment_id']):
             if line.get('is_down_payment', False) and line.get('down_payment_id'):
