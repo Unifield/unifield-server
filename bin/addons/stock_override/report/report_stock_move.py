@@ -430,9 +430,6 @@ product will be shown.""",
                     # Quarantine (before scap)
                     non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1])
 
-                    # Move must not be from non-standard location to non-standard location
-                    domain.extend([('location_id', 'not in', non_standard_loc_ids), ('location_dest_id', 'not in', non_standard_loc_ids)])
-
             context['domain'] = domain
 
             rsm_ids = rsm_obj.search(cr, uid, domain, order='product_id, date', context=context)
@@ -617,6 +614,9 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             self.localcontext.update({'location': location_ids})
 
         for move in self.pool.get('stock.move').browse(self.cr, self.uid, self.datas['moves'], context=self.localcontext):
+            if self.datas['non_standard_loc_ids'] and move.location_id.id in self.datas['non_standard_loc_ids'] \
+                    and move.location_dest_id.id in self.datas['non_standard_loc_ids']:
+                continue
             move_date = move.date or False
             # Get stock
             ctx = self.localcontext.copy()
