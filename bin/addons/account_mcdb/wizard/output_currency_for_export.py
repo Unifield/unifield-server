@@ -110,7 +110,7 @@ class output_currency_for_export(osv.osv_memory):
 
     def button_validate(self, cr, uid, ids, context=None, data_from_selector=None):
         """
-            Display warning msg if number of records > 5000
+            Display warning msg if number of records > 50000
         """
 
         if context is None:
@@ -135,7 +135,7 @@ class output_currency_for_export(osv.osv_memory):
                 dom = self.get_dom_from_context(cr, uid, model, context)
                 count_ids = self.pool.get(model).search(cr, uid, dom, count=True, context=context)
 
-        if count_ids > 5000:
+        if count_ids > 50000:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', 'output_currency_for_export_confirm_view')[1]
             return {
                 'type': 'ir.actions.act_window',
