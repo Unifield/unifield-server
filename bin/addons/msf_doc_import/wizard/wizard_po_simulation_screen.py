@@ -593,38 +593,55 @@ class wizard_import_po_simulation_screen(osv.osv):
 
         valid_ad = True
         data_ad_set = set()
+        add_detail = []
         aa_ko = cc_cache['aa_ko']
         aa_ok = cc_cache['aa_ok']
 
-        gl_account_id = False
-        if product_id:
-            product_record = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-            gl_account_id = self.pool.get('purchase.order.line').get_distribution_account(cr, uid, product_record, False, po_type, context=None)
+        msf_pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
 
         for ad_value in ad:
-            ad = {}
+            ad = {'DEST': False, 'OC': False}
             for x in [(0, 'DEST', _('Destination')), (1, 'OC', _('Cost Center'))]:
                 account = ad_value[x[0]].strip()
                 if account not in aa_ko[x[1]] and account not in aa_ok[x[1]]:
                     dom = [('category', '=', x[1]), ('type','!=', 'view'), ('code', '=ilike', account), ('filter_active', '=', True)]
-                    if gl_account_id and x[1] == 'DEST':
-                        dom += [('destination_ids', '=', gl_account_id)]
                     account_ids = self.pool.get('account.analytic.account').search(cr, uid, dom, context=context)
                     if not account_ids:
-                        valid_ad = False
                         aa_ko[x[1]][account] = True
                         errors.append(_('%s %s not found or inactive , AD in file ignored') % (x[2], account))
                     else:
                         aa_ok[x[1]][account] = account_ids[0]
                 ad[x[1]] = aa_ok[x[1]].get(account)
-            if valid_ad:
-                data_ad_set.add('%s-%s-%s' % (ad['DEST'], ad['OC'], round(ad_value[2], 2)))
 
-        if valid_ad and existing_ad_set:
-            if data_ad_set != existing_ad_set:
+            if not ad['DEST'] or not ad['OC']:
+                valid_ad = False
+                break
+            data_ad_set.add('%s-%s-%s' % (ad['DEST'], ad['OC'], round(ad_value[2], 2)))
+            add_detail.append(ad)
+
+        if existing_ad_set:
+            if valid_ad and data_ad_set != existing_ad_set:
                 errors.append(_('Already has a valid Analytical Distribution'))
-            else:
-                data_ad_set = set()
+            data_ad_set = set()
+        elif not valid_ad:
+            data_ad_set = set()
+        else:
+            gl_account_id = False
+            if product_id:
+                product_record = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+                gl_account_id = self.pool.get('purchase.order.line').get_distribution_account(cr, uid, product_record, False, po_type, context=None)
+            for ad_line in add_detail:
+                if gl_account_id:
+                    ad_info = self.pool.get('account.analytic.line').check_dest_cc_fp_compatibility(cr, uid, [], dest_id=ad_line['DEST'], cc_id=ad_line['OC'], from_import=True, from_import_general_account_id=gl_account_id, fp_id=msf_pf_id, from_import_posting_date=time.strftime('%Y-%m-%d'), context=context)
+                    if ad_info:
+                        errors.append(_('Invalid Analytical Distribution'))
+                        data_ad_set = set()
+                        break
+                else:
+                    if not self.pool.get('analytic.distribution').check_dest_cc_compatibility(cr, uid, ad_line['DEST'], ad_line['OC'], context=context):
+                        errors.append(_('Invalid Analytical Distribution'))
+                        data_ad_set = set()
+                        break
 
         return errors, list(data_ad_set)
 

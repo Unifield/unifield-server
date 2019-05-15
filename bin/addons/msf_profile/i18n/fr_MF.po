@@ -105926,6 +105926,12 @@ msgid "Already has a valid Analytical Distribution"
 msgstr "Possède déjà une DA valide"
 
 #. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:625
+#, python-format
+msgid "Invalid Analytical Distribution"
+msgstr "Distribution Analytique Invalide"
+
+#. module: msf_doc_import
 #: field:purchase.order,can_be_auto_exported:0
 msgid "Can be auto exported ?"
 msgstr "Peut être auto exporté ?"
