@@ -309,8 +309,8 @@ class product_mass_update(osv.osv):
                     raise osv.except_osv(_('Error'), _('You must select on order procurement method for %s products.')
                                          % (prod.type == 'consu' and 'Non-stockable' or 'Service'))
                 # Deactivation
-                if p_mass_upd.seller_id and not p_suppinfo_obj.search(cr, uid, [('product_id', '=', prod.id), ('name', '=', p_mass_upd.seller_id.id)], context=context):
-                    p_suppinfo_obj.create(cr, uid, {'product_id': prod.id, 'name': p_mass_upd.seller_id.id, 'sequence': 1}, context=context)
+                if p_mass_upd.seller_id and not p_suppinfo_obj.search(cr, uid, [('product_id', '=', prod.product_tmpl_id.id), ('name', '=', p_mass_upd.seller_id.id)], context=context):
+                    p_suppinfo_obj.create(cr, uid, {'product_id': prod.product_tmpl_id.id, 'name': p_mass_upd.seller_id.id, 'sequence': 0}, context=context)
                 if p_mass_upd.active_product:
                     if not prod.active and p_mass_upd.active_product == 'yes':
                         prod_obj.reactivate_product(cr, uid, [prod.id], context=context)

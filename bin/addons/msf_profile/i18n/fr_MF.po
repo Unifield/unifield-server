@@ -78424,8 +78424,9 @@ msgstr "Valeur totale"
 msgid "Cancelled"
 msgstr "Annulé"
 
-#. module: stock
+#. module: stock, product
 #: field:physical.inventory,product_ids:0
+#: field:product.mass.update,product_ids:0
 msgid "Product selection"
 msgstr "Sélection de produits"
 
