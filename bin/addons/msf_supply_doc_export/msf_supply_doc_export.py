@@ -576,29 +576,6 @@ class po_follow_up_mixin(object):
             states[state_val] = state_string
         return states
 
-    def getHeaderLine(self,obj):
-        ''' format the header line for each PO object '''
-        po_header = []
-        po_header.append('Order ref: ' + obj.name)
-        po_header.append('Status: ' + self._get_states().get(obj.state, ''))
-        po_header.append('Created: ' + obj.date_order)
-        po_header.append('Confirmed delivery date: ' + obj.delivery_confirmed_date)
-        po_header.append('Nb items: ' + str(len(obj.order_line)))
-        po_header.append('Estimated amount: ' + str(obj.amount_total))
-        return po_header
-
-    def getHeaderLine2(self,obj):
-        ''' format the header line for each PO object '''
-        po_header = {}
-        po_header['ref'] = 'Order ref: ' + obj.name
-        po_header['status'] = 'Status: ' + self._get_states().get(obj.state, '')
-        po_header['created'] = 'Created: ' + obj.date_order
-        po_header['deldate'] = 'Confirmed delivery date: ' + obj.delivery_confirmed_date
-        po_header['items'] = 'Nb items: ' + str(len(obj.order_line))
-        po_header['amount'] = 'Estimated amount: ' + str(obj.amount_total)
-        line = po_header['ref'] + po_header['status'] + po_header['created'] + po_header['deldate'] + po_header['items'] + po_header['amount']
-        return line
-
     def getRunParms(self):
         return self.datas['report_parms']
 
@@ -1067,8 +1044,6 @@ class parser_po_follow_up_xls(po_follow_up_mixin, report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'getLang': self._get_lang,
-            'getHeaderLine': self.getHeaderLine,
-            'getHeaderLine2': self.getHeaderLine2,
             'getReportHeaderLine1': self.getReportHeaderLine1,
             'getReportHeaderLine2': self.getReportHeaderLine2,
             'getAllLineIN': self.getAllLineIN,
@@ -1108,8 +1083,6 @@ class parser_po_follow_up_rml(po_follow_up_mixin, report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'getPOLines': self.getPOLines,
-            'getHeaderLine2': self.getHeaderLine2,
-            'getHeaderLine': self.getHeaderLine,
             'getReportHeaderLine1': self.getReportHeaderLine1,
             'getReportHeaderLine2': self.getReportHeaderLine2,
             'getRunParmsRML': self.getRunParmsRML,
@@ -1121,7 +1094,6 @@ class parser_po_follow_up_rml(po_follow_up_mixin, report_sxw.rml_parse):
             self.back_browse = self.pool.get('memory.background.report').browse(self.cr, self.uid, context['background_id'])
         else:
             self.back_browse = None
-
 
 
 report_sxw.report_sxw('report.po.follow.up_rml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up.rml', parser=parser_po_follow_up_rml, header=False)
