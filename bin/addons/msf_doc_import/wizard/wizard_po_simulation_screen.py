@@ -50,7 +50,6 @@ NB_LINES_COLUMNS = 20
 
 PRODUCT_CODE_ID = {}
 UOM_NAME_ID = {}
-CURRENCY_NAME_ID = {}
 
 SIMU_LINES = {}
 LN_BY_EXT_REF = {}
@@ -665,7 +664,6 @@ class wizard_import_po_simulation_screen(osv.osv):
             # them at the end of the treatment)
             global PRODUCT_CODE_ID
             global UOM_NAME_ID
-            global CURRENCY_NAME_ID
             global SIMU_LINES
             global LN_BY_EXT_REF
             global EXT_REF_BY_LN
@@ -697,8 +695,6 @@ class wizard_import_po_simulation_screen(osv.osv):
                         PRODUCT_CODE_ID.setdefault(line.in_product_id.default_code, line.in_product_id.id)
                     if line.in_uom:
                         UOM_NAME_ID.setdefault(line.in_uom.name, line.in_uom.id)
-                    if line.in_currency:
-                        CURRENCY_NAME_ID.setdefault(line.in_currency.name, line.in_currency.id)
 
                     '''
                     First of all, we build a cache for simulation screen lines
@@ -1207,16 +1203,21 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
             cr.commit()
             cr.close(True)
 
-            # Clear the cache
-            PRODUCT_CODE_ID = {}
-            UOM_NAME_ID = {}
-            CURRENCY_NAME_ID = {}
-            SIMU_LINES = {}
         except Exception, e:
             logging.getLogger('po.simulation simulate').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e}, context=context)
             cr.commit()
             cr.close(True)
+        finally:
+            try:
+                # Clear the cache
+                UOM_NAME_ID = {}
+                PRODUCT_CODE_ID = {}
+                del SIMU_LINES[wiz.id]
+                del LN_BY_EXT_REF[wiz.id]
+                del EXT_REF_BY_LN[wiz.id]
+            except:
+                pass
 
         return True
 
