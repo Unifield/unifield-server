@@ -1754,7 +1754,7 @@ class product_product(osv.osv):
             if from_date and to_date:
                 rac_search_domain = [
                     ('cons_location_id', 'in', location_ids),
-                    ('state', '!=', 'cancel'),
+                    ('state', 'not in', ['draft', 'cancel']),
                     # All lines with a report started out the period and finished in the period
                     '|', '&', ('period_to', '>=', from_date), ('period_to', '<=', to_date),
                     #  All lines with a report started in the period and finished out the period
