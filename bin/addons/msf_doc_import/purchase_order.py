@@ -463,6 +463,8 @@ class purchase_order(osv.osv):
             defaults.update({'import_in_progress': False})
         if 'auto_exported_ok' not in defaults:
             defaults.update({'auto_exported_ok': False})
+        if 'import_filenames' not in defaults:
+            defaults['import_filenames'] = False
 
         return super(purchase_order, self).copy(cr, uid, id, defaults, context=context)
 
