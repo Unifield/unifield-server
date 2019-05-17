@@ -58,7 +58,7 @@ def _check_db_name(name):
     if name and isinstance(name, basestring):
         # allow char, number, _ and -
         if not re.match('^[a-zA-Z][a-zA-Z0-9_-]+$', name):
-            raise _("You must avoid all accents, space or special characters.")
+            raise Exception(_("You must avoid all accents, space or special characters."))
 
 def export_csv(fields, result, result_file_path):
     try:
@@ -921,7 +921,6 @@ class report_spool(netsvc.ExportService):
 
     def exp_export(self, db_name, uid, fields, domain, model, fields_name,
                    group_by=None, export_format='csv', ids=None, context=None):
-        _check_db_name(db_name)
         res = {'result': None}
         db, pool = pooler.get_db_and_pool(db_name)
         cr = db.cursor()
@@ -1066,8 +1065,6 @@ class report_spool(netsvc.ExportService):
             datas={}
         if not context:
             context={}
-
-        _check_db_name(db_name)
 
         self.id_protect.acquire()
         self.id += 1

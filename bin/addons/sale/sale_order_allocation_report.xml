@@ -34,6 +34,7 @@
         <record model="ir.values" id="action_fo_allocation_report_values">
             <field name="object" eval="1" />
             <field name="name">allocation.report</field>
+            <field name="view_ids" ref="sale.view_order_form,sale.view_order_tree" />
             <field name="key2">client_print_multi</field>
             <field name="value" eval="'ir.actions.act_window,' +str(ref('action_fo_allocation_report_menu'))" />
             <field name="key">action</field>

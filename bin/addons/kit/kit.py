@@ -1394,23 +1394,19 @@ class stock_location(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # objects
-        loc_obj = self.pool.get('stock.location')
         # do we want the child location
         stock_context = dict(context, compute_child=consider_child_locations)
+        stock_context['uom'] = uom_id
         # we check for the available qty (in:done, out: assigned, done)
-        res = loc_obj._product_reserve_lot(cr, uid, ids, product_id, uom_id, context=stock_context, lock=True)
-        #print res
-        return res
+        return {'total': self.pool.get('product.product').read(cr, uid, product_id, ['qty_allocable'], context=stock_context).get('qty_allocable', 0)}
 
-    def _product_reserve_lot(self, cr, uid, ids, product_id, needed_qty, uom_id, context=None, lock=False):
+    def _product_reserve_lot(self, cr, uid, ids, product_id, needed_qty, uom_id, context=None, lock=False, prod_lot=False):
         """
         refactoring of original reserver method, taking production lot into account
 
         returning the original list-tuple structure + the total qty in each location
         """
 
-        # TODO : how to deal with product attrbiutes changes (ie: from BN managed to not BN, from not BN to BN ?)
-        # TODO : update compute_availability used in kit / clail
         amount = 0.0
         if context is None:
             context = {}
@@ -1452,12 +1448,12 @@ class stock_location(osv.osv):
                 logger.debug("Trace of the failed product reservation attempt: ", exc_info=True)
                 return {}
 
-        # SQL request is FEFO by default
-        # TODO merge different UOM directly in SQL statement
-        # example in class stock_report_prodlots_virtual(osv.osv): in report_stock_virtual.py
-        # class report_stock_inventory(osv.osv): in specific_rules.py
 
         factor = pool_uom.read(cr, uid, uom_id, ['factor'])['factor']
+        sql = ""
+        if prod_lot:
+            sql = " AND prodlot_id = %s" % prod_lot
+
         cr.execute("""
                     SELECT subs.location, subs.parent_left, subs.prodlot_id, subs.expired_date, sum(subs.product_qty) AS product_qty FROM
                         (SELECT m.location_dest_id as location, loc.parent_left, m.prodlot_id, lot.life_date as expired_date, sum(m.product_qty / move_uom.factor) AS product_qty
@@ -1469,7 +1465,7 @@ class stock_location(osv.osv):
                             m.location_id<>m.location_dest_id AND
                             m.product_id=%s AND
                             m.state='done' AND
-                            (expired_date is null or expired_date >= CURRENT_DATE)
+                            (expired_date is null or expired_date >= CURRENT_DATE) """ + sql + """
                             GROUP BY m.location_dest_id, loc.parent_left, m.prodlot_id, lot.life_date
 
                             UNION
@@ -1483,12 +1479,12 @@ class stock_location(osv.osv):
                             m.location_dest_id<>m.location_id AND
                             m.product_id=%s AND
                             m.state in ('done', 'assigned') AND
-                            (expired_date is null or expired_date >= CURRENT_DATE)
+                            (expired_date is null or expired_date >= CURRENT_DATE) """ + sql + """
                             GROUP BY m.location_id, loc.parent_left, m.prodlot_id, lot.life_date) as subs
                     GROUP BY location, parent_left, prodlot_id, expired_date
                     ORDER BY expired_date asc, prodlot_id asc, parent_left
                    """,
-                   (tuple(location_ids), product_id, tuple(location_ids), product_id))
+                   (tuple(location_ids), product_id, tuple(location_ids), product_id))  # not_a_user_entry
 
         results = []
         for r in cr.dictfetchall():

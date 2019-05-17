@@ -620,7 +620,6 @@ class stock_picking(osv.osv):
         new_id = super(stock_picking, self).create(cr, user, vals, context)
         return new_id
 
-
     def _get_location_dest_active_ok(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns True if there is draft moves on Picking Ticket
@@ -640,6 +639,28 @@ class stock_picking(osv.osv):
 
         return res
 
+    def _get_destinations_list(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns a list of Destinations
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for pick in self.browse(cr, uid, ids, fields_to_fetch=['type', 'subtype', 'location_dest_id', 'move_lines'], context=context):
+            res[pick.id] = pick.location_dest_id and pick.location_dest_id.name or ''
+            if pick.type == 'out' and pick.subtype == 'standard' and pick.move_lines:
+                destinations = []
+                for move in pick.move_lines:
+                    if move.location_dest_id:
+                        if move.location_dest_id.name not in destinations:
+                            destinations.append(move.location_dest_id.name)
+                if destinations:
+                    res[pick.id] = '; '.join(destinations)
+
+        return res
 
     _columns = {
         'name': fields.char('Reference', size=64, select=True),
@@ -688,6 +709,7 @@ class stock_picking(osv.osv):
         'physical_reception_date': fields.datetime('Physical Reception Date', states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}),
         'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
         'packing_list': fields.char('Supplier Packing List', size=30),
+        'destinations_list': fields.function(_get_destinations_list, method=True, type='char', size=512, string='Destination Location', store=False),
     }
     _defaults = {
         'name': lambda self, cr, uid, context: '/',
@@ -2487,7 +2509,10 @@ class stock_move(osv.osv):
             if move.state in ('confirmed', 'waiting'):
                 bn_needed =  move.product_id.perishable
                 # Important: we must pass lock=True to _product_reserve() to avoid race conditions and double reservations
-                res = self.pool.get('stock.location')._product_reserve_lot(cr, uid, [move.location_id.id], move.product_id.id,  move.product_qty, move.product_uom.id, lock=True)
+                prod_lot = False
+                if bn_needed and move.prodlot_id:
+                    prod_lot = move.prodlot_id.id
+                res = self.pool.get('stock.location')._product_reserve_lot(cr, uid, [move.location_id.id], move.product_id.id,  move.product_qty, move.product_uom.id, lock=True, prod_lot=prod_lot)
                 if res:
                     if move.location_id.id == move.location_dest_id.id:
                         state = 'done'

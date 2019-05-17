@@ -741,7 +741,7 @@ You cannot choose this supplier because some destination locations are not avail
             ))
         return res
 
-    def check_availability_manually(self, cr, uid, ids, context=None):
+    def check_availability_manually(self, cr, uid, ids, context=None, initial_location=False):
         '''
         US-2677 : Cancel assigned moves' availability and re-check it
         '''
@@ -782,6 +782,8 @@ You cannot choose this supplier because some destination locations are not avail
 
         if moves_ids_to_reassign:
             move_obj.cancel_assign(cr, uid, moves_ids_to_reassign, context=context)
+            if initial_location:
+                move_obj.write(cr, uid, moves_ids_to_reassign, {'location_id': initial_location}, context=context)
             for pick_id in ids:
                 # trigger transition from Assigned to Confirmed if needed
                 netsvc.LocalService("workflow").trg_write(uid, 'stock.picking', pick_id, cr)
@@ -2898,82 +2900,3 @@ class stock_picking_cancel_more_wizard(osv.osv_memory):
 
 
 stock_picking_cancel_more_wizard()
-
-
-class ir_values(osv.osv):
-    _name = 'ir.values'
-    _inherit = 'ir.values'
-
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
-        if context is None:
-            context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
-        trans_obj = self.pool.get('ir.translation')
-        new_values = values
-        move_accepted_values = {'client_action_multi': [],
-                                'client_print_multi': [],
-                                'client_action_relate': ['act_relate_picking'],
-                                'tree_but_action': [],
-                                'tree_but_open': []}
-
-        incoming_accepted_values = {'client_action_multi': ['act_stock_return_picking', 'action_stock_invoice_onshipping'],
-                                    'client_print_multi': ['Reception', 'XML Export'],
-                                    'client_action_relate': ['View_log_stock.picking'],
-                                    'tree_but_action': [],
-                                    'tree_but_open': []}
-
-        internal_accepted_values = {'client_action_multi': [],
-                                    'client_print_multi': ['Internal Move Excel Export', 'Internal Move'],
-                                    'client_action_relate': [],
-                                    'tree_but_action': [],
-                                    'tree_but_open': []}
-
-        delivery_accepted_values = {'client_action_multi': [],
-                                    'client_print_multi': ['Labels', 'Delivery Order'],
-                                    'client_action_relate': [''],
-                                    'tree_but_action': [],
-                                    'tree_but_open': []}
-
-        picking_accepted_values = {'client_action_multi': [],
-                                   'client_print_multi': ['Picking Ticket', 'Pre-Packing List', 'Pre-Packing Excel Export', 'Labels'],
-                                   'client_action_relate': [''],
-                                   'tree_but_action': [],
-                                   'tree_but_open': []}
-
-        if 'stock.move' in [x[0] for x in models]:
-            new_values = []
-            Destruction_Report = trans_obj.tr_view(cr, 'Destruction Report', context)
-            Reserved = trans_obj.tr_view(cr, 'Reserved Products', context)
-            for v in values:
-                if context.get('_terp_view_name', False) == Reserved:
-                    if v[1] == 'wizard_reserved_products_export':
-                        new_values.append(v)
-                elif key == 'action' and v[1] in move_accepted_values[key2]:
-                    new_values.append(v)
-                elif context.get('_terp_view_name', False) == Destruction_Report:
-                    if v[1] != 'wizard_reserved_products_export':
-                        new_values.append(v)
-        elif context.get('picking_type', False) == 'incoming_shipment' and 'stock.picking' in [x[0] for x in models]:
-            new_values = []
-            for v in values:
-                if key == 'action' and v[1] in incoming_accepted_values[key2]:
-                    new_values.append(v)
-        elif context.get('picking_type', False) == 'internal_move' and 'stock.picking' in [x[0] for x in models]:
-            new_values = []
-            for v in values:
-                if key == 'action' and v[1] in internal_accepted_values[key2]:
-                    new_values.append(v)
-        elif context.get('picking_type', False) == 'delivery_order' and 'stock.picking' in [x[0] for x in models]:
-            new_values = []
-            for v in values:
-                if key == 'action' and v[1] in delivery_accepted_values[key2]:
-                    new_values.append(v)
-        elif context.get('picking_type', False) == 'picking_ticket' and 'stock.picking' in [x[0] for x in models]:
-            new_values = []
-            for v in values:
-                if key == 'action' and v[1] in picking_accepted_values[key2]:
-                    new_values.append(v)
-
-        return new_values
-
-ir_values()

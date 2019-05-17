@@ -431,8 +431,9 @@ product will be shown.""",
                     non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1])
 
             context['domain'] = domain
-
+            context['active_test'] = False
             rsm_ids = rsm_obj.search(cr, uid, domain, order='product_id, date', context=context)
+            context['active_test'] = True
             self.write(cr, uid, [report.id], {
                 'name': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'state': 'in_progress',
@@ -609,7 +610,7 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
 
         if not self.datas['selected_locs']:
             inst_full_view_id = data_obj.get_object_reference(self.cr, self.uid, 'stock', 'stock_location_locations')[1]
-            loc_domain = [('location_id', 'child_of', inst_full_view_id)]
+            loc_domain = [('location_id', 'child_of', inst_full_view_id), ('active', 'in', ['t', 'f'])]
             location_ids = loc_obj.search(self.cr, self.uid, loc_domain, context=self.localcontext)
             self.localcontext.update({'location': location_ids})
 

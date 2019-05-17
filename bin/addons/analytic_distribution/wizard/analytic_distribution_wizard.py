@@ -159,6 +159,18 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         percentage = abs((amount / total_amount) * 100)
         return {'value': {'percentage': percentage, 'is_percentage_amount_touched': True}}
 
+    def _dest_compatible_with_cc_domain_part(self, tree):
+        """
+        Returns the domain condition to restrict the destination regarding the cost_center_id (for finance views),
+        or if this field doesn't exist in the view, to the analytic_id (Cost Center in Supply views)
+        """
+        dom_part = ""
+        if tree.xpath('/tree/field[@name="cost_center_id"]'):
+            dom_part = "('dest_compatible_with_cc_ids', '=', cost_center_id)"
+        elif tree.xpath('/tree/field[@name="analytic_id"]'):
+            dom_part = "('dest_compatible_with_cc_ids', '=', analytic_id)"
+        return dom_part
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         Rewrite view in order:
@@ -195,9 +207,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                             or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
                             or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
                     else:
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST'), " \
+                                 "('destination_ids', '=', parent.account_id) %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
             ## FUNDING POOL
             if line_type == 'analytic.distribution.wizard.fp.lines':
                 # Change OC field
@@ -235,9 +252,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
                             or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
 
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
                     else:
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST'), " \
+                                 "('destination_ids', '=', parent.account_id) %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
 
             ## FREE 1
             if line_type == 'analytic.distribution.wizard.f1.lines':
