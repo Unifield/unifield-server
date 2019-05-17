@@ -628,15 +628,18 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                 prod_stock_bn = prod_obj.read(self.cr, self.uid, move.product_id.id, ['qty_available'], context=ctx)['qty_available']
 
             # Get Unit Price at date
-            prod_price = move.product_id.standard_price or move.price_unit
-            if move_date:
-                self.cr.execute("""SELECT distinct on (product_id) product_id, old_standard_price
-                            FROM standard_price_track_changes
-                            WHERE product_id = %s AND change_date >= %s
-                            ORDER BY product_id, change_date asc
-                            """, (move.product_id.id, move_date))
-                for x in self.cr.fetchall():
-                    prod_price = x[1]
+            prod_price = move.price_unit or 0
+            if not prod_price:
+                if move_date:
+                    self.cr.execute("""SELECT distinct on (product_id) product_id, old_standard_price
+                                FROM standard_price_track_changes
+                                WHERE product_id = %s AND change_date >= %s
+                                ORDER BY product_id, change_date ASC
+                                """, (move.product_id.id, move_date))
+                    for x in self.cr.fetchall():
+                        prod_price = x[1]
+                else:
+                    prod_price = move.prodlot_id.standard_price
             if move.price_currency_id.id != currency_id:
                 prod_price = curr_obj.compute(self.cr, self.uid, move.price_currency_id.id, currency_id,
                                               prod_price, round=False, context=ctx)
