@@ -309,8 +309,8 @@ class product_mass_update(osv.osv):
                     raise osv.except_osv(_('Error'), _('You must select on order procurement method for %s products.')
                                          % (prod.type == 'consu' and 'Non-stockable' or 'Service'))
                 # Deactivation
-                if p_mass_upd.seller_id and not p_suppinfo_obj.search(cr, uid, [('product_id', '=', prod.id), ('name', '=', p_mass_upd.seller_id.id)], context=context):
-                    p_suppinfo_obj.create(cr, uid, {'product_id': prod.id, 'name': p_mass_upd.seller_id.id, 'sequence': 1}, context=context)
+                if p_mass_upd.seller_id and not p_suppinfo_obj.search(cr, uid, [('product_id', '=', prod.product_tmpl_id.id), ('name', '=', p_mass_upd.seller_id.id)], context=context):
+                    p_suppinfo_obj.create(cr, uid, {'product_id': prod.product_tmpl_id.id, 'name': p_mass_upd.seller_id.id, 'sequence': 0}, context=context)
                 if p_mass_upd.active_product:
                     if not prod.active and p_mass_upd.active_product == 'yes':
                         prod_obj.reactivate_product(cr, uid, [prod.id], context=context)
@@ -355,7 +355,11 @@ class product_mass_update(osv.osv):
                 }
                 self.write(cr, uid, p_mass_upd.id, p_mass_upd_vals, context=context)
         except Exception as e:
-            err = _('An error has occured during the update:\n%s') % tools.ustr(e.value or e)
+            cr.rollback()
+            error = e
+            if hasattr(e, 'value'):
+                error = e.value
+            err = _('An error has occured during the update:\n%s') % tools.ustr(error)
             self.write(cr, uid, p_mass_upd.id, {'state': 'error', 'message': err}, context=context)
         finally:
             cr.commit()
