@@ -81,14 +81,14 @@
     </para>
     
     <para>[[repeatIn(objects,'o')]]</para>
-    <blockTable colWidths="150.0,150.0,150.0,150.0,150.0,150.0" style="Tableau3">
+    <blockTable colWidths="175.0,125.0,150.0,200.0,100.0,150.0" style="Tableau3">
     <tr>
-         <td><para style="P2">[[ getHeaderLine(o)[0] ]]</para></td>
-         <td><para style="P2">[[ getHeaderLine(o)[1] ]]</para></td>
-         <td><para style="P2">[[ getHeaderLine(o)[2] ]]</para></td>
-         <td><para style="P2">[[ getHeaderLine(o)[3] ]]</para></td>
-         <td><para style="P2">[[ getHeaderLine(o)[4] ]]</para></td>
-         <td><para style="P2">[[ getHeaderLine(o)[5] ]]</para></td>
+         <td><para style="P2">Order Ref: [[ o.name ]]</para></td>
+         <td><para style="P2">Status: [[ getSel(o, 'state') ]]</para></td>
+         <td><para style="P2">Created: [[ o.date_order ]]</para></td>
+         <td><para style="P2">Confirmed Delivery Date: [[ isDate(o.delivery_confirmed_date) and o.delivery_confirmed_date or '' ]]</para></td>
+         <td><para style="P2">Nb Items: [[ len(o.order_line) ]]</para></td>
+         <td><para style="P2">Estimated Amount: [[ o.amount_total ]]</para></td>
     </tr>     	  
      </blockTable>
     <blockTable colWidths="25.0,95.0,180.0,40.0,50.0,50.0,70.0,70.0,70.0,60.0,55.0,80.0,60.0" style="Tableau3" >

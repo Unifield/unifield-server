@@ -70488,9 +70488,10 @@ msgstr "Vous devez mentionner un numéro de lot pour ce produit."
 msgid "Return products"
 msgstr "Retourner les produits"
 
-#. modules: sales_followup, purchase_followup
+#. modules: sales_followup, purchase_followup, msf_supply_doc_export
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:206
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:198
+#: report:po.follow.up_rml:0
 msgid "Order Ref:"
 msgstr "Ref Commande:"
 
@@ -106646,3 +106647,28 @@ msgstr "Au moins une Ligne d'Ecriture Comptable utilisant le Compte \"%s - %s\" 
 #, python-format
 msgid "Employee %s: the Cost Center %s is not compatible with the Destination %s."
 msgstr "Employé %s : le Centre de Coût %s n'est pas compatible avec la Destination %s."
+
+#. module: msf_supply_doc_export
+#: report:po.follow.up_rml:0
+msgid "Status:"
+msgstr "Statut:"
+
+#. module: msf_supply_doc_export
+#: report:po.follow.up_rml:0
+msgid "Created:"
+msgstr "Créé:"
+
+#. module: msf_supply_doc_export
+#: report:po.follow.up_rml:0
+msgid "Confirmed Delivery Date:"
+msgstr "Date de Livraison Confirmée:"
+
+#. module: msf_supply_doc_export
+#: report:po.follow.up_rml:0
+msgid "Nb Items:"
+msgstr "Nb Articles:"
+
+#. module: msf_supply_doc_export
+#: report:po.follow.up_rml:0
+msgid "Estimated Amount:"
+msgstr "Montant Estimé:"
