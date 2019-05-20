@@ -558,6 +558,9 @@ product will be shown.""",
         if vals.get('prodlot_id'):
             vals.update(self.onchange_prodlot(cr, uid, False, vals.get('prodlot_id')))
 
+        if vals.get('location_ids') != [(6, 0, [])]:
+            vals['only_standard_loc'] = False
+
         return super(export_report_stock_move, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -633,8 +636,8 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                                 """, (move.product_id.id, move_date))
                     for x in self.cr.fetchall():
                         prod_price = x[1]
-                else:
-                    prod_price = move.prodlot_id.standard_price
+                if not prod_price:
+                    prod_price = move.product_id.standard_price
             if move.price_currency_id.id != currency_id:
                 prod_price = curr_obj.compute(self.cr, self.uid, move.price_currency_id.id, currency_id,
                                               prod_price, round=False, context=ctx)
