@@ -805,6 +805,7 @@ class account_invoice(osv.osv):
             i['ref'] = ref
             if inv.type in ('out_invoice','in_refund'):
                 total += i['amount_currency']
+                i['price'] = -i['price']
                 i['amount_currency'] = - i['amount_currency']
                 i['change_sign'] = True
             else:
