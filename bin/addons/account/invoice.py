@@ -753,37 +753,7 @@ class account_invoice(osv.osv):
         return (ref or '').replace('/','')
 
     def _get_analytic_lines(self, cr, uid, id):
-        inv = self.browse(cr, uid, id)
-        cur_obj = self.pool.get('res.currency')
-
-        company_currency = inv.company_id.currency_id.id
-        if inv.type in ('out_invoice', 'in_refund'):
-            sign = 1
-        else:
-            sign = -1
-
-        iml = self.pool.get('account.invoice.line').move_line_get(cr, uid, inv.id)
-        for il in iml:
-            if il['account_analytic_id']:
-                if inv.type in ('in_invoice', 'in_refund'):
-                    ref = inv.reference
-                else:
-                    ref = self._convert_ref(cr, uid, inv.number)
-                if not inv.journal_id.analytic_journal_id:
-                    raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (inv.journal_id.name,))
-                il['analytic_lines'] = [(0,0, {
-                    'name': il['name'],
-                    'date': inv['date_invoice'],
-                    'account_id': il['account_analytic_id'],
-                    'unit_amount': il['quantity'],
-                    'amount': cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, il['price'], context={'date': inv.date_invoice}) * sign,
-                    'product_id': il['product_id'],
-                    'product_uom_id': il['uos_id'],
-                    'general_account_id': il['account_id'],
-                    'journal_id': inv.journal_id.analytic_journal_id.id,
-                    'ref': ref,
-                })]
-        return iml
+        return self.pool.get('account.invoice.line').move_line_get(cr, uid, id)
 
     def action_date_assign(self, cr, uid, ids, *args):
         for inv in self.browse(cr, uid, ids):
@@ -825,29 +795,22 @@ class account_invoice(osv.osv):
 
     def compute_invoice_totals(self, cr, uid, inv, company_currency, ref, invoice_move_lines):
         total = 0
-        total_currency = 0
-        cur_obj = self.pool.get('res.currency')
         for i in invoice_move_lines:
             if inv.currency_id.id != company_currency:
                 i['currency_id'] = inv.currency_id.id
                 i['amount_currency'] = i['price']
-                i['price'] = cur_obj.compute(cr, uid, inv.currency_id.id,
-                                             company_currency, i['price'],
-                                             context={'date': inv.date_invoice or time.strftime('%Y-%m-%d')})
             else:
-                i['amount_currency'] = False
-                i['currency_id'] = False
+                i['amount_currency'] = i['price']
+                i['currency_id'] = inv.currency_id.id
             i['ref'] = ref
             if inv.type in ('out_invoice','in_refund'):
-                total += i['price']
-                total_currency += i['amount_currency'] or i['price']
-                i['price'] = - i['price']
+                total += i['amount_currency']
+                i['amount_currency'] = - i['amount_currency']
                 i['change_sign'] = True
             else:
-                total -= i['price']
-                total_currency -= i['amount_currency'] or i['price']
+                total -= i['amount_currency']
                 i['change_sign'] = False
-        return total, total_currency, invoice_move_lines
+        return total, invoice_move_lines
 
     def inv_line_characteristic_hashcode(self, invoice, invoice_line):
         """Overridable hashcode generation for invoice lines. Lines having the same hashcode
@@ -895,7 +858,6 @@ class account_invoice(osv.osv):
     def action_move_create(self, cr, uid, ids, *args):
         """Creates invoice related analytics and financial move lines"""
         ait_obj = self.pool.get('account.invoice.tax')
-        cur_obj = self.pool.get('res.currency')
         context = {}
         for inv in self.browse(cr, uid, ids):
             if not inv.journal_id.sequence_id:
@@ -967,11 +929,9 @@ class account_invoice(osv.osv):
                 if inv.type == 'out_refund':
                     entry_type = 'cont_voucher'
 
-            diff_currency_p = inv.currency_id.id <> company_currency
             # create one move line for the total and possibly adjust the other lines amount
             total = 0
-            total_currency = 0
-            total, total_currency, iml = self.compute_invoice_totals(cr, uid, inv, company_currency, ref, iml)
+            total, iml = self.compute_invoice_totals(cr, uid, inv, company_currency, ref, iml)
             acc_id = inv.account_id.id
 
             totlines = False
@@ -979,14 +939,10 @@ class account_invoice(osv.osv):
                 totlines = self.pool.get('account.payment.term').compute(cr,
                                                                          uid, inv.payment_term.id, total, inv.date_invoice or False)
             if totlines:
-                res_amount_currency = total_currency
+                res_amount_currency = total
                 i = 0
                 for t in totlines:
-                    if inv.currency_id.id != company_currency:
-                        amount_currency = cur_obj.compute(cr, uid,
-                                                          company_currency, inv.currency_id.id, t[1])
-                    else:
-                        amount_currency = False
+                    amount_currency = t[1]
 
                     # last line add the diff
                     res_amount_currency -= amount_currency or 0
@@ -1001,10 +957,8 @@ class account_invoice(osv.osv):
                         'price': t[1],
                         'account_id': acc_id,
                         'date_maturity': t[0],
-                        'amount_currency': diff_currency_p \
-                                and  amount_currency or False,
-                        'currency_id': diff_currency_p \
-                                and inv.currency_id.id or False,
+                        'amount_currency': t[1],
+                        'currency_id': inv.currency_id.id,
                         'ref': ref,
                         'is_counterpart': True,
                     })
@@ -1016,10 +970,8 @@ class account_invoice(osv.osv):
                     'price': total,
                     'account_id': acc_id,
                     'date_maturity': inv.date_due or False,
-                    'amount_currency': diff_currency_p \
-                            and total_currency or False,
-                    'currency_id': diff_currency_p \
-                            and inv.currency_id.id or False,
+                    'amount_currency': total,
+                    'currency_id': inv.currency_id.id,
                     'ref': ref,
                     'reference': ref, # UTP-594: Use both ref and reference
                     'is_counterpart': True,
@@ -1087,8 +1039,8 @@ class account_invoice(osv.osv):
             'partner_id': part,
             'name': x['name'][:64],
             'date': date,
-            'debit': x['price']>0 and x['price'],
-            'credit': x['price']<0 and -x['price'],
+            'debit_currency': x['price']>0 and x['price'],
+            'credit_currency': x['price']<0 and -x['price'],
             'account_id': x['account_id'],
             'analytic_lines': x.get('analytic_lines', []),
             'amount_currency': x.get('change_sign', False) and -x.get('amount_currency', False) or x.get('amount_currency', False),
@@ -1103,6 +1055,7 @@ class account_invoice(osv.osv):
             'analytic_account_id': x.get('account_analytic_id', False),
             # UNIFIELD REFACTORISATION: (UF-1536) add new attribute to search which line is the counterpart
             'is_counterpart': x.get('is_counterpart', False),
+            'invoice_line_id': x.get('invoice_line_id', False),
         }
 
     def action_number(self, cr, uid, ids, context=None):
@@ -1668,11 +1621,9 @@ class account_invoice_line(osv.osv):
     def move_line_get(self, cr, uid, invoice_id, context=None):
         res = []
         tax_obj = self.pool.get('account.tax')
-        cur_obj = self.pool.get('res.currency')
         if context is None:
             context = {}
         inv = self.pool.get('account.invoice').browse(cr, uid, invoice_id, context=context)
-        company_currency = inv.company_id.currency_id.id
 
         for line in inv.invoice_line:
             mres = self.move_line_get_item(cr, uid, line, context)
@@ -1703,7 +1654,7 @@ class account_invoice_line(osv.osv):
                 tax_code_found = True
 
                 res[-1]['tax_code_id'] = tax_code_id
-                res[-1]['tax_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, tax_amount, context={'date': inv.date_invoice})
+                res[-1]['tax_amount'] = tax_amount
         return res
 
     def _get_line_name(self, line):

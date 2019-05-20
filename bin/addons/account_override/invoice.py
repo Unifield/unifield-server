@@ -1162,17 +1162,6 @@ class account_invoice(osv.osv):
         self.check_domain_restrictions(cr, uid, ids, context)  # raises an error if one unauthorized element is used
         return True
 
-    def line_get_convert(self, cr, uid, x, part, date, context=None):
-        """
-        Add these field into invoice line:
-        - invoice_line_id
-        """
-        if not context:
-            context = {}
-        res = super(account_invoice, self).line_get_convert(cr, uid, x, part, date, context)
-        res.update({'invoice_line_id': x.get('invoice_line_id', False)})
-        return res
-
     def finalize_invoice_move_lines(self, cr, uid, inv, line):
         """
         Hook that changes move line data before write them.
