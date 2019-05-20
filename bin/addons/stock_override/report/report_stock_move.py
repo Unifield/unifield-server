@@ -323,6 +323,7 @@ product will be shown.""",
             'location_id',
             string='Specific location(s)',
             help="If a location is choosen, only stock moves that comes from/to this location will be shown.",
+            domain=['|', ('active', '=', True), ('active', '=', False)],
         ),
         'has_locations': fields.function(_get_has_locations, method=True, type='boolean', string='Report has locations', store=True, readonly=True),
         'product_list_id': fields.many2one(
@@ -555,14 +556,9 @@ product will be shown.""",
         Call onchange_prodlot() if a prodlot is specified
         """
         if vals.get('prodlot_id'):
-            vals.update(
-                self.onchange_prodlot(
-                    cr, uid, False, vals.get('prodlot_id')
-                )
-            )
+            vals.update(self.onchange_prodlot(cr, uid, False, vals.get('prodlot_id')))
 
-        return super(export_report_stock_move, self).\
-            create(cr, uid, vals, context=context)
+        return super(export_report_stock_move, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -571,14 +567,12 @@ product will be shown.""",
         if not ids:
             return True
         if vals.get('prodlot_id'):
-            vals.update(
-                self.onchange_prodlot(
-                    cr, uid, ids, vals.get('prodlot_id')
-                )
-            )
+            vals.update(self.onchange_prodlot(cr, uid, ids, vals.get('prodlot_id')))
 
-        return super(export_report_stock_move, self).\
-            write(cr, uid, ids, vals, context=context)
+        if vals.get('location_ids') != [(6, 0, [])]:
+            vals['only_standard_loc'] = False
+
+        return super(export_report_stock_move, self).write(cr, uid, ids, vals, context=context)
 
 
 export_report_stock_move()

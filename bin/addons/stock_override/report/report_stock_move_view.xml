@@ -167,6 +167,7 @@
                     <field name="location_ids" on_change="onchange_location_ids(location_ids)" colspan="4" mode="tree" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('usage', '!=', 'view'), ('active', 'in', ['t', 'f'])]">
                         <tree noteditable="True" string="Location(s)">
                             <field name="name" />
+                            <field name="active" invisible="1" />
                         </tree>
                     </field>
                     <field name="reason_type_ids" colspan="4" mode="tree">
