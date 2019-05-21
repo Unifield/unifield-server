@@ -3497,6 +3497,9 @@ class stock_picking(osv.osv):
 
                 # update main pick
                 if line.qty_to_process < line.product_qty:
+                    # unassigned line in sub-pick must be closed and pushed back to main pick
+                    if line.state == 'confirmed':
+                        values['state'] = 'assigned'
                     move_obj.write(cr, uid, [line.id], values, context=context)
 
 
