@@ -385,7 +385,7 @@
                                 <button name="copy_all" type="object" icon="gtk-jump-to" string="Copy all"  attrs="{'invisible': [('state', 'in', ['done', 'cancel'])]}" />
                                 <button name="uncopy_all" type="object" icon="gtk-undo" string="Clear all" attrs="{'invisible': [('state', 'in', ['done', 'cancel'])]}" />
                                 <button name="reset_all" type="object" icon="gtk-go-forward" string="Reset" attrs="{'invisible': [('state', 'in', ['done', 'cancel'])]}" />
-                                <button name="change_all_location" string="Change All Sources" type="object" attrs="{'invisible':['|', '|', ('allocation_setup', '=', 'unallocated'),('cross_docking_ok','=', True), ('state', 'in', ['done','cancel'])]}" icon="gtk-execute"/>
+                                <button name="change_all_location" string="Change All Sources" type="object" attrs="{'invisible':['|', '|', ('allocation_setup', '=', 'unallocated'), ('state', 'in', ['done','cancel'])]}" icon="gtk-execute"/>
                                 <button name="quick_flow" type="object" string="" icon="escalator-up.png" attrs="{'invisible': [('flow_type', '=', 'quick')], 'readonly': [('state','not in',['assigned', 'draft'])]}" help="Switch to Quick flow"/>
                                 <button name="standard_flow" type="object" string="" icon="stairs-up.png"  attrs="{'invisible': [('flow_type', '=', 'full')], 'readonly': [('state','not in', ['assigned', 'draft'])]}" help="Switch to Full flow"/>
                                 <group colspan="1" col="1">
