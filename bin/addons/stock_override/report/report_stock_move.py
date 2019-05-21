@@ -431,6 +431,8 @@ product will be shown.""",
                     # Quarantine (before scap)
                     non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1])
 
+                    domain.extend(['|', ('location_id', 'not in', non_standard_loc_ids), ('location_dest_id', 'not in', non_standard_loc_ids)])
+
             context['domain'] = domain
             context['active_test'] = False
             rsm_ids = rsm_obj.search(cr, uid, domain, order='product_id, date', context=context)
@@ -444,7 +446,6 @@ product will be shown.""",
                 'ids': [report.id],
                 'moves': rsm_ids,
                 'selected_locs': selected_locs,
-                'non_standard_loc_ids': non_standard_loc_ids,
             }
 
             cr.commit()
@@ -558,7 +559,7 @@ product will be shown.""",
         if vals.get('prodlot_id'):
             vals.update(self.onchange_prodlot(cr, uid, False, vals.get('prodlot_id')))
 
-        if vals.get('location_ids') != [(6, 0, [])]:
+        if vals.get('location_ids') and vals['location_ids'] != [(6, 0, [])]:
             vals['only_standard_loc'] = False
 
         return super(export_report_stock_move, self).create(cr, uid, vals, context=context)
@@ -572,7 +573,7 @@ product will be shown.""",
         if vals.get('prodlot_id'):
             vals.update(self.onchange_prodlot(cr, uid, ids, vals.get('prodlot_id')))
 
-        if vals.get('location_ids') != [(6, 0, [])]:
+        if vals.get('location_ids') and vals['location_ids'] != [(6, 0, [])]:
             vals['only_standard_loc'] = False
 
         return super(export_report_stock_move, self).write(cr, uid, ids, vals, context=context)
@@ -612,9 +613,6 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             self.localcontext.update({'location': location_ids})
 
         for move in self.pool.get('stock.move').browse(self.cr, self.uid, self.datas['moves'], context=self.localcontext):
-            if self.datas['non_standard_loc_ids'] and move.location_id.id in self.datas['non_standard_loc_ids'] \
-                    and move.location_dest_id.id in self.datas['non_standard_loc_ids']:
-                continue
             move_date = move.date or False
             # Get stock
             ctx = self.localcontext.copy()
