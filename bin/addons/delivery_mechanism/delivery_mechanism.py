@@ -913,6 +913,7 @@ class stock_picking(osv.osv):
 
         backorder_id = False
 
+        cd_loc = loc_obj.get_cross_docking_location(cr, uid)
         internal_loc = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('cross_docking_location_ok', '=', False)])
         context['location'] = internal_loc
 
@@ -1020,134 +1021,135 @@ class stock_picking(osv.osv):
 
                     # Sort the OUT moves to get the closest quantities as the IN quantity
                     out_moves = sorted(out_moves, key=lambda x: abs(x.product_qty-line.quantity))
-                    for lst_out_move in out_moves:
-                        if remaining_out_qty <= 0.00:
-                            break
+                    if values.get('location_dest_id', move.location_dest_id.id) == cd_loc:
+                        for lst_out_move in out_moves:
+                            if remaining_out_qty <= 0.00:
+                                break
 
-                        out_move = move_obj.browse(cr, uid, lst_out_move.id, context=context)
-                        if values.get('price_unit', False) and out_move.price_currency_id.id != move.price_currency_id.id:
-                            price_unit = cur_obj.compute(
-                                cr,
-                                uid,
-                                move.price_currency_id.id,
-                                out_move.price_currency_id.id,
-                                values.get('price_unit'),
-                                round=False,
-                                context=context
-                            )
-                            out_values['price_unit'] = price_unit
-                            out_values['price_currency_id'] = out_move.price_currency_id.id
+                            out_move = move_obj.browse(cr, uid, lst_out_move.id, context=context)
+                            if values.get('price_unit', False) and out_move.price_currency_id.id != move.price_currency_id.id:
+                                price_unit = cur_obj.compute(
+                                    cr,
+                                    uid,
+                                    move.price_currency_id.id,
+                                    out_move.price_currency_id.id,
+                                    values.get('price_unit'),
+                                    round=False,
+                                    context=context
+                                )
+                                out_values['price_unit'] = price_unit
+                                out_values['price_currency_id'] = out_move.price_currency_id.id
 
-                        # List the Picking Ticket that need to be created from the Draft Picking Ticket
-                        if out_move.picking_id.type == 'out':
-                            out_values['purchase_line_id'] = False
-                            if out_move.picking_id.subtype == 'picking' and out_move.picking_id.state == 'draft':
-                                out_picks.add(out_move.picking_id.id)
+                            # List the Picking Ticket that need to be created from the Draft Picking Ticket
+                            if out_move.picking_id.type == 'out':
+                                out_values['purchase_line_id'] = False
+                                if out_move.picking_id.subtype == 'picking' and out_move.picking_id.state == 'draft':
+                                    out_picks.add(out_move.picking_id.id)
 
-                        if line.uom_id.id != out_move.product_uom.id:
-                            uom_partial_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, remaining_out_qty, out_move.product_uom.id)
-                        else:
-                            uom_partial_qty = remaining_out_qty
-
-                        # Manage OUT BO moves already processed (forced)
-                        bo_moves = []
-                        minus_qty = 0.00
-                        if out_move.picking_id and out_move.picking_id.backorder_id:
-                            bo_moves = move_obj.search(cr, uid, [
-                                ('picking_id', '=', out_move.picking_id.backorder_id.id),
-                                ('sale_line_id', '=', out_move.sale_line_id.id),
-                                ('state', '=', 'done'),
-                                ('in_out_updated', '=', False),
-                            ], context=context)
-                            while bo_moves:
-                                boms = move_obj.browse(cr, uid, bo_moves, context=context)
-                                bo_moves = []
-                                for bom in boms:
-                                    if bom.product_uom.id != out_move.product_uom.id:
-                                        minus_qty += uom_obj._compute_qty(cr, uid, bom.product_uom.id, bom.product_qty, out_move.product_uom.id)
-                                    else:
-                                        minus_qty += bom.product_qty
-                                    if bom.picking_id and bom.picking_id.backorder_id:
-                                        bo_moves.extend(move_obj.search(cr, uid, [
-                                            ('picking_id', '=', bom.picking_id.backorder_id.id),
-                                            ('sale_line_id', '=', bom.sale_line_id.id),
-                                            ('state', '=', 'done'),
-                                            ('in_out_updated', '=', False),
-                                        ], context=context))
-
-                        # we need to check if the current IN has already been modified by this loop (out_move.id not in processed_out_moves)
-                        # to not change again an already modifier qty
-                        # split IN lines two times and set the whole original qty on the 3 lines (ie: extra qty received with split)
-                        if uom_partial_qty < out_move.product_qty and out_move.id not in processed_out_moves:
-                            # Splt the out move
-                            out_values.update({
-                                'product_qty': remaining_out_qty,
-                                'product_uom': line.uom_id.id,
-                                'in_out_updated': in_out_updated,
-                            })
-                            context['keepLineNumber'] = True
-                            new_out_move_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
-                            context['keepLineNumber'] = False
-                            remaining_out_qty = 0.00
-                            move_values = {
-                                'product_qty': out_move.product_qty - uom_partial_qty,
-                                'product_uos_qty': out_move.product_qty - uom_partial_qty,
-                            }
-                            # search for sol that match with the updated move:
-                            move_obj.write(cr, uid, [out_move.id], move_values, context=context)
-                            processed_out_moves.append(new_out_move_id)
-                            processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(new_out_move_id)
-
-                        elif uom_partial_qty == out_move.product_qty and out_move.id not in processed_out_moves:
-                            out_values.update({
-                                'product_qty': remaining_out_qty,
-                                'product_uom': line.uom_id.id,
-                                'in_out_updated': in_out_updated,
-                            })
-                            remaining_out_qty = 0.00
-                            move_obj.write(cr, uid, [out_move.id], out_values, context=context)
-                            processed_out_moves.append(out_move.id)
-                            processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
-                        elif uom_partial_qty > out_move.product_qty and out_moves[out_moves.index(out_move)] != out_moves[-1] and out_move.id not in processed_out_moves:
-                            # Just update the out move with the value of the out move with UoM of IN
-                            out_qty = out_move.product_qty
                             if line.uom_id.id != out_move.product_uom.id:
-                                out_qty = uom_obj._compute_qty(cr, uid, out_move.product_uom.id, out_move.product_qty, line.uom_id.id)
+                                uom_partial_qty = uom_obj._compute_qty(cr, uid, line.uom_id.id, remaining_out_qty, out_move.product_uom.id)
+                            else:
+                                uom_partial_qty = remaining_out_qty
 
-                            out_values.update({
-                                'product_qty': out_qty,
-                                'product_uom': line.uom_id.id,
-                                'in_out_updated': in_out_updated,
-                            })
-                            remaining_out_qty -= out_qty
-                            move_obj.write(cr, uid, [out_move.id], out_values, context=context)
-                            processed_out_moves.append(out_move.id)
-                            processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
-                        else:
-                            # Just update the data of the initial out move
-                            processed_qty = lst_out_move is out_moves[-1] and uom_partial_qty - minus_qty or out_move.product_qty
-                            out_values.update({
-                                'product_qty': processed_qty,
-                                'product_uom': line.uom_id.id,
-                                'in_out_updated': in_out_updated,
-                            })
-                            if out_move.id in processed_out_moves:
+                            # Manage OUT BO moves already processed (forced)
+                            bo_moves = []
+                            minus_qty = 0.00
+                            if out_move.picking_id and out_move.picking_id.backorder_id:
+                                bo_moves = move_obj.search(cr, uid, [
+                                    ('picking_id', '=', out_move.picking_id.backorder_id.id),
+                                    ('sale_line_id', '=', out_move.sale_line_id.id),
+                                    ('state', '=', 'done'),
+                                    ('in_out_updated', '=', False),
+                                ], context=context)
+                                while bo_moves:
+                                    boms = move_obj.browse(cr, uid, bo_moves, context=context)
+                                    bo_moves = []
+                                    for bom in boms:
+                                        if bom.product_uom.id != out_move.product_uom.id:
+                                            minus_qty += uom_obj._compute_qty(cr, uid, bom.product_uom.id, bom.product_qty, out_move.product_uom.id)
+                                        else:
+                                            minus_qty += bom.product_qty
+                                        if bom.picking_id and bom.picking_id.backorder_id:
+                                            bo_moves.extend(move_obj.search(cr, uid, [
+                                                ('picking_id', '=', bom.picking_id.backorder_id.id),
+                                                ('sale_line_id', '=', bom.sale_line_id.id),
+                                                ('state', '=', 'done'),
+                                                ('in_out_updated', '=', False),
+                                            ], context=context))
+
+                            # we need to check if the current IN has already been modified by this loop (out_move.id not in processed_out_moves)
+                            # to not change again an already modifier qty
+                            # split IN lines two times and set the whole original qty on the 3 lines (ie: extra qty received with split)
+                            if uom_partial_qty < out_move.product_qty and out_move.id not in processed_out_moves:
+                                # Splt the out move
+                                out_values.update({
+                                    'product_qty': remaining_out_qty,
+                                    'product_uom': line.uom_id.id,
+                                    'in_out_updated': in_out_updated,
+                                })
                                 context['keepLineNumber'] = True
                                 new_out_move_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
                                 context['keepLineNumber'] = False
+                                remaining_out_qty = 0.00
+                                move_values = {
+                                    'product_qty': out_move.product_qty - uom_partial_qty,
+                                    'product_uos_qty': out_move.product_qty - uom_partial_qty,
+                                }
+                                # search for sol that match with the updated move:
+                                move_obj.write(cr, uid, [out_move.id], move_values, context=context)
                                 processed_out_moves.append(new_out_move_id)
                                 processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(new_out_move_id)
-                            else:
+
+                            elif uom_partial_qty == out_move.product_qty and out_move.id not in processed_out_moves:
+                                out_values.update({
+                                    'product_qty': remaining_out_qty,
+                                    'product_uom': line.uom_id.id,
+                                    'in_out_updated': in_out_updated,
+                                })
+                                remaining_out_qty = 0.00
                                 move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                                 processed_out_moves.append(out_move.id)
                                 processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
+                            elif uom_partial_qty > out_move.product_qty and out_moves[out_moves.index(out_move)] != out_moves[-1] and out_move.id not in processed_out_moves:
+                                # Just update the out move with the value of the out move with UoM of IN
+                                out_qty = out_move.product_qty
+                                if line.uom_id.id != out_move.product_uom.id:
+                                    out_qty = uom_obj._compute_qty(cr, uid, out_move.product_uom.id, out_move.product_qty, line.uom_id.id)
 
-                            if line.uom_id.id != out_move.product_uom.id:
-                                uom_processed_qty = uom_obj._compute_qty(cr, uid, out_move.product_uom.id, processed_qty, line.uom_id.id)
+                                out_values.update({
+                                    'product_qty': out_qty,
+                                    'product_uom': line.uom_id.id,
+                                    'in_out_updated': in_out_updated,
+                                })
+                                remaining_out_qty -= out_qty
+                                move_obj.write(cr, uid, [out_move.id], out_values, context=context)
+                                processed_out_moves.append(out_move.id)
+                                processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
                             else:
-                                uom_processed_qty = processed_qty
+                                # Just update the data of the initial out move
+                                processed_qty = lst_out_move is out_moves[-1] and uom_partial_qty - minus_qty or out_move.product_qty
+                                out_values.update({
+                                    'product_qty': processed_qty,
+                                    'product_uom': line.uom_id.id,
+                                    'in_out_updated': in_out_updated,
+                                })
+                                if out_move.id in processed_out_moves:
+                                    context['keepLineNumber'] = True
+                                    new_out_move_id = move_obj.copy(cr, uid, out_move.id, out_values, context=context)
+                                    context['keepLineNumber'] = False
+                                    processed_out_moves.append(new_out_move_id)
+                                    processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(new_out_move_id)
+                                else:
+                                    move_obj.write(cr, uid, [out_move.id], out_values, context=context)
+                                    processed_out_moves.append(out_move.id)
+                                    processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
 
-                            remaining_out_qty -= uom_processed_qty
+                                if line.uom_id.id != out_move.product_uom.id:
+                                    uom_processed_qty = uom_obj._compute_qty(cr, uid, out_move.product_uom.id, processed_qty, line.uom_id.id)
+                                else:
+                                    uom_processed_qty = processed_qty
+
+                                remaining_out_qty -= uom_processed_qty
 
 
                 # Decrement the inital move, cannot be less than zero
