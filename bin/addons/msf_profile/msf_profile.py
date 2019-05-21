@@ -69,6 +69,18 @@ class patch_scripts(osv.osv):
                     err_msg,
                 )
 
+    # UF13.1
+    def us_3413_align_in_partner_to_po(self,cr, uid, *a, **b):
+        cr.execute("select p.name, p.id, po.partner_id, p.partner_id from stock_picking p, purchase_order po where p.type='in' and po.id = p.purchase_id and ( p.partner_id != po.partner_id or p.partner_id2 != po.partner_id)")
+        pick_to_update = []
+        for x in cr.fetchall():
+            pick_to_update.append(x[1])
+            self._logger.warn('Update partner on IN: %s, from partner id: %s to id %s' % (x[0], x[3], x[2]))
+        if pick_to_update:
+            cr.execute('''update stock_picking set (partner_id, partner_id2, address_id) = (select po.partner_id, po.partner_id, po.partner_address_id from purchase_order po where po.id=stock_picking.purchase_id) where id in %s''' , (tuple(pick_to_update),))
+            cr.execute('''update stock_move set partner_id=(select partner_id from stock_picking where id=stock_move.picking_id) where picking_id in %s''', (tuple(pick_to_update),))
+        return True
+
     # UF13.0
     def us_5771_allow_all_cc_in_default_dest(self, cr, uid, *a, **b):
         """
