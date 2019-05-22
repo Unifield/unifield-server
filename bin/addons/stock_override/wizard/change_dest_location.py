@@ -99,8 +99,11 @@ class change_dest_location(osv.osv_memory):
         nb = 0
         for wizard in self.browse(cr, uid, ids, context=context):
             warn_msg = []
+            state_to_change = ['draft', 'confirmed', 'assigned']
+            if wizard.type != 'internal':
+                state_to_change = ['draft', 'confirmed']
             for move in wizard.picking_id.move_lines:
-                if move.state not in ('draft', 'confirmed', 'assigned') or move.product_qty == 0:
+                if move.state not in state_to_change or move.product_qty == 0:
                     continue
 
                 if wizard.type == 'internal':
