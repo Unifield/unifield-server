@@ -71,7 +71,7 @@ class patch_scripts(osv.osv):
 
     # UF13.1
     def us_3413_align_in_partner_to_po(self,cr, uid, *a, **b):
-        cr.execute("select p.name, p.id, po.partner_id, p.partner_id from stock_picking p, purchase_order po where p.type='in' and po.id = p.purchase_id and ( p.partner_id != po.partner_id or p.partner_id2 != po.partner_id)")
+        cr.execute("select p.name, p.id, po.partner_id, p.partner_id from stock_picking p, purchase_order po where p.type='in' and po.id = p.purchase_id and ( p.partner_id != po.partner_id or p.partner_id2 != po.partner_id) order by p.name")
         pick_to_update = []
         for x in cr.fetchall():
             pick_to_update.append(x[1])
