@@ -588,6 +588,34 @@ class product_product(osv.osv):
                 (data['name'] or '') + (data['variants'] and (' - '+data['variants']) or '')
         return res
 
+    def _get_expected_prod_creator(self, cr, uid, ids, field_names, arg, context=None):
+        if context is None:
+            context = {}
+
+        res = {}
+        for id in ids:
+            res[id] = False
+
+        return res
+
+    def _expected_prod_creator_search(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns all documents according to the product creator
+        '''
+        if context is None:
+            context = {}
+
+        obj_data = self.pool.get('ir.model.data')
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
+        prod_creator_id = False
+        for arg in args:
+            if arg[0] == 'expected_prod_creator':
+                if instance_level == 'section':
+                    prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
+                elif instance_level == 'coordo':
+                    prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+
+        return [('international_status', '=', prod_creator_id)]
 
     _defaults = {
         'active': lambda *a: 1,
@@ -619,8 +647,8 @@ class product_product(osv.osv):
         'price_margin': fields.float('Variant Price Margin', digits_compute=dp.get_precision('Sale Price')),
         'pricelist_id': fields.dummy(string='Pricelist', relation='product.pricelist', type='many2one'),
         'name_template': fields.related('product_tmpl_id', 'name', string="Name", type='char', size=128, store=True, write_relate=False),
+        'expected_prod_creator': fields.function(_get_expected_prod_creator, method=True, type='many2one', relation='product.international.status', fnct_search=_expected_prod_creator_search, readonly=True, string='Expected Product Creator for Product Mass Update'),
     }
-
 
     def unlink(self, cr, uid, ids, context=None):
         unlink_ids = []

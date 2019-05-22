@@ -620,7 +620,6 @@ class stock_picking(osv.osv):
         new_id = super(stock_picking, self).create(cr, user, vals, context)
         return new_id
 
-
     def _get_location_dest_active_ok(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns True if there is draft moves on Picking Ticket
@@ -651,6 +650,29 @@ class stock_picking(osv.osv):
             else:
                 ret[pick['id']] = False
         return ret
+
+    def _get_destinations_list(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns a list of Destinations
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for pick in self.browse(cr, uid, ids, fields_to_fetch=['type', 'subtype', 'location_dest_id', 'move_lines'], context=context):
+            res[pick.id] = pick.location_dest_id and pick.location_dest_id.name or ''
+            if pick.type == 'out' and pick.subtype == 'standard' and pick.move_lines:
+                destinations = []
+                for move in pick.move_lines:
+                    if move.location_dest_id:
+                        if move.location_dest_id.name not in destinations:
+                            destinations.append(move.location_dest_id.name)
+                if destinations:
+                    res[pick.id] = '; '.join(destinations)
+
+        return res
 
     _columns = {
         'object_name': fields.function(_get_object_name, type='char', method=True, string='Title'),
@@ -701,7 +723,9 @@ class stock_picking(osv.osv):
         'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
         'packing_list': fields.char('Supplier Packing List', size=30),
         'is_subpick': fields.boolean('Main or Sub PT'),
+        'destinations_list': fields.function(_get_destinations_list, method=True, type='char', size=512, string='Destination Location', store=False),
     }
+
     _defaults = {
         'name': lambda self, cr, uid, context: '/',
         'state': 'draft',

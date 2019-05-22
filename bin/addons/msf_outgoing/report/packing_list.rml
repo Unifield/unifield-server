@@ -126,7 +126,7 @@
 		                       			<para style="HeaderInfosTitle">Your Ref.:</para>
 									</td>
 									<td>
-                            			<parawrap style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref or '-' ]]</parawrap>
+                            			<parawrap style="HeaderInfosValue">[[ p['ppl'].sale_id and p['ppl'].sale_id.client_order_ref and p['ppl'].sale_id.short_client_ref or '-' ]]</parawrap>
 									</td>
 								</tr>
 								<tr>

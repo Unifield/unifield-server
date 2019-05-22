@@ -211,7 +211,7 @@ class account_bank_statement(osv.osv):
                                           help='Name and position of the person who closes the register'),
     }
 
-    _order = 'state asc, period_number asc'
+    _order = 'state, period_id, instance_id, journal_id'
 
     _defaults = {
         'balance_start': lambda *a: 0.0,
@@ -1775,7 +1775,7 @@ class account_bank_statement_line(osv.osv):
                     raise osv.except_osv(e.name, msg)
                 # Update analytic distribution lines
                 analytic_amount = acc_move_line_obj.read(cr, uid, [other_line.get('id')], ['amount_currency'], context=context)[0].get('amount_currency', False)
-                if analytic_amount:
+                if analytic_amount and st_line.analytic_distribution_id:
                     self.pool.get('analytic.distribution').update_distribution_line_amount(cr, uid, [st_line.analytic_distribution_id.id],
                                                                                            amount=analytic_amount, context=context)
                 # Update move
@@ -2053,6 +2053,21 @@ class account_bank_statement_line(osv.osv):
                 msg = _('This cheque number has already been used')
                 raise osv.except_osv(_('Info'), (msg))
 
+    def _check_on_regline_big_amounts(self, cr, uid, ids, context=None):
+        """
+        Prevents booking amounts IN or OUT having more than 10 digits before the comma, i.e. amounts starting from 10 billions.
+        The goal is to avoid losing precision, see e.g.: "%s" % 10000000000.01  # '10000000000.0'
+        (and to avoid decimal.InvalidOperation due to huge amounts).
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        too_big_amount = 10**10
+        for regline in self.browse(cr, uid, ids, fields_to_fetch=['amount', 'name'], context=context):
+            if abs(regline.amount or 0.0) >= too_big_amount:
+                raise osv.except_osv(_('Error'), _('The amount of the register line "%s" is more than 10 digits.') % regline.name)
+
     def create(self, cr, uid, values, context=None):
         """
         Create a new account bank statement line with values
@@ -2113,6 +2128,7 @@ class account_bank_statement_line(osv.osv):
                     'from_correction' in context or context.get('sync_update_execution', False):
                 res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
                 self._check_account_partner_compat(cr, uid, ids, context=context)
+                self._check_on_regline_big_amounts(cr, uid, ids, context=context)
                 return res
             raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
         # First update amount
@@ -2169,6 +2185,7 @@ class account_bank_statement_line(osv.osv):
 
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
                 self._check_account_partner_compat(cr, uid, line.get('id'), context=context)
+                self._check_on_regline_big_amounts(cr, uid, line.get('id'), context=context)
                 res.append(tmp)
 
                 new_distrib = values.get('analytic_distribution_id', False)
@@ -2207,6 +2224,7 @@ class account_bank_statement_line(osv.osv):
         # Update the bank statement lines with 'values'
         res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         self._check_account_partner_compat(cr, uid, ids, context=context)
+        self._check_on_regline_big_amounts(cr, uid, ids, context=context)
         # Amount verification regarding Down payments
         for line in self.read(cr, uid, ids, ['is_down_payment', 'down_payment_id']):
             if line.get('is_down_payment', False) and line.get('down_payment_id'):
@@ -2937,54 +2955,6 @@ class account_bank_statement_line(osv.osv):
             'name': _("Down Payment"),
             'type': 'ir.actions.act_window',
             'res_model': 'wizard.down.payment',
-            'target': 'new',
-            'res_id': [wiz_id],
-            'view_mode': 'form',
-            'view_type': 'form',
-            'context': context,
-        }
-
-    def button_transfer(self, cr, uid, ids, context=None):
-        """
-        Open Transfer with change wizard
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        absl = self.browse(cr, uid, ids[0], context=context)
-        if absl.account_id and absl.account_id.type_for_register and absl.account_id.type_for_register != 'transfer':
-            raise osv.except_osv(_('Error'), _('Open transfer with change wizard is only possible with transfer account in other currency!'))
-        # Create wizard
-        vals = {'absl_id': ids[0],}
-        transfer_type = 'to'
-        amount_field = 'amount_to'
-        curr_field = 'currency_to'
-        if absl and absl.amount:
-            if absl.amount >= 0:
-                transfer_type = 'from'
-                amount_field = 'amount_from'
-                curr_field = 'currency_from'
-        if absl and absl.transfer_amount:
-            vals.update({amount_field: absl.transfer_amount,})
-        if absl and absl.transfer_journal_id:
-            vals.update({'currency_id': absl.transfer_journal_id.currency.id, curr_field: absl.transfer_journal_id.currency.id})
-        if absl and absl.state == 'hard':
-            vals.update({'state': 'closed',})
-        vals.update({'type': transfer_type,})
-        wiz_id = self.pool.get('wizard.transfer.with.change').create(cr, uid, vals, context=context)
-        # Return view with register_line id
-        context.update({
-            'active_id': wiz_id,
-            'active_ids': [wiz_id],
-            'register_line_id': ids[0],
-        })
-        return {
-            'name': _("Transfer with change"),
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.transfer.with.change',
             'target': 'new',
             'res_id': [wiz_id],
             'view_mode': 'form',

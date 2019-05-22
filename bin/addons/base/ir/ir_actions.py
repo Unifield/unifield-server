@@ -302,7 +302,7 @@ class act_window(osv.osv):
         'auto_refresh': fields.integer('Auto-Refresh',
                                        help='Auto refresh the view after X seconds'),
         'groups_id': fields.many2many('res.groups', 'ir_act_window_group_rel',
-                                      'act_id', 'gid', 'Groups'),
+                                      'act_id', 'gid', 'Groups', order_by='name'),
         'search_view_id': fields.many2one('ir.ui.view', 'Search View Ref.'),
         'filter': fields.boolean('Filter'),
         'auto_search':fields.boolean('Auto Search'),

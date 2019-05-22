@@ -562,6 +562,8 @@ def trans_parse_view(de):
         res.append(de.get('confirm').encode("utf8"))
     if de.get("help"):
         res.append(de.get('help').encode("utf8"))
+    if de.get("required_error_msg"):
+        res.append(de.get('required_error_msg').encode("utf8"))
     if de.get("filter_selector"):
         try:
             eval_filter = safe_eval(de.get('filter_selector'))

@@ -787,6 +787,7 @@
                 <tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Delivery Orders">
                     <field name="name"/>
                     <field name="partner_id"/>
+                    <field name="destinations_list"/>
                     <field name="origin"/>
                     <field name="date"/>
                     <field name="min_date"/>

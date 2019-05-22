@@ -42,6 +42,7 @@ class hr_payroll(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        ad_obj = self.pool.get('analytic.distribution')
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
@@ -57,6 +58,7 @@ class hr_payroll(osv.osv):
         # E/ DEST in list of available DEST in ACCOUNT
         # F/ Check posting date with cost center and destination if exists
         # G/ Check document date with funding pool
+        # H/ Check Cost Center / Destination compatibility
         ## CASES where FP is filled in (or not) and/or DEST is filled in (or not).
         ## CC is mandatory, so always available:
         # 1/ no FP, no DEST => Distro = valid
@@ -124,6 +126,11 @@ class hr_payroll(osv.osv):
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
                     continue
+            # H check
+            if line.destination_id and line.cost_center_id and \
+                    not ad_obj.check_dest_cc_compatibility(cr, uid, line.destination_id.id, line.cost_center_id.id, context=context):
+                res[line.id] = 'invalid'
+                continue
         return res
 
     def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=None):

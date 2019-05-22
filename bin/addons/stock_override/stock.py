@@ -708,7 +708,8 @@ You cannot choose this supplier because some destination locations are not avail
 
         return True
 
-    def check_availability_manually(self, cr, uid, ids, context=None):
+
+    def check_availability_manually(self, cr, uid, ids, context=None, initial_location=False):
         '''
         US-2677 : Cancel assigned moves' availability and re-check it
         '''
@@ -749,6 +750,8 @@ You cannot choose this supplier because some destination locations are not avail
 
         if moves_ids_to_reassign:
             move_obj.cancel_assign(cr, uid, moves_ids_to_reassign, context=context)
+            if initial_location:
+                move_obj.write(cr, uid, moves_ids_to_reassign, {'location_id': initial_location}, context=context)
             for pick_id in ids:
                 # trigger transition from Assigned to Confirmed if needed
                 netsvc.LocalService("workflow").trg_write(uid, 'stock.picking', pick_id, cr)
