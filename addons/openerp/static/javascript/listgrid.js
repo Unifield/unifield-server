@@ -59,6 +59,7 @@ ListView.prototype = {
 
         this.sort_order = null;
         this.sort_key = null;
+        this.sort_column = null;
     },
 
     get_previously_selected: function() {
@@ -330,6 +331,12 @@ MochiKit.Base.update(ListView.prototype, {
         else this.sort_order = 'asc';
 
         this.sort_key = column;
+        var field_d = jQuery(field)
+        if (field_d.attr('sort_column')) {
+            this.sort_key = field_d.attr('sort_column');
+        }
+
+        this.sort_column = column;
         if(this.ids.length) {
             this.reload();
         }
@@ -371,6 +378,10 @@ MochiKit.Base.update(ListView.prototype, {
         if (group_by_context == '[]' && this.sort_order) {
             sort_order = this.sort_order;
             sort_key = this.sort_key;
+            col = jQuery('#grid-data-column/'+sort_key)
+            if (col && col.attr('sort_column')) {
+                sort_key = col.attr('sort_column')
+            }
         }
         if (jQuery(group).hasClass('group-expand')) {
             // get listview selectable value, so we know if we are in
@@ -1103,12 +1114,12 @@ MochiKit.Base.update(ListView.prototype, {
 
                 MochiKit.Signal.signal(__listview, 'onreload');
 
-                if(self.sort_key != null) {
+                if(self.sort_column != null) {
                     var $th;
                     if(self.name != '_terp_list') {
-                        $th = jQuery(idSelector('grid-data-column/' + self.name + '/' + self.sort_key));
+                        $th = jQuery(idSelector('grid-data-column/' + self.name + '/' + self.sort_column));
                     } else {
-                        $th = jQuery(idSelector('grid-data-column/' + self.sort_key));
+                        $th = jQuery(idSelector('grid-data-column/' + self.sort_column));
                     }
                     $th.append(
                         jQuery('<span>&nbsp;</span>')

@@ -245,6 +245,9 @@ function validate_required(form){
         var elem2 = elem;
         var value = elem.value;
         var kind = jQuery(elem).attr('kind');
+        // Custom message for a required field to display if it's empty
+        // TODO: Improve for multiple fields with this attr
+        var err_msg = jQuery(elem).attr('required_error_msg');
 
         if (kind == 'many2many') {
             elem2 = openobject.dom.get(elem.name + '_set') || elem;
@@ -266,7 +269,12 @@ function validate_required(form){
     }
 
     if (!result) {
-        error_display(_("Invalid form, correct red fields."));
+        if (err_msg && err_msg != 'False') {
+            error_display(err_msg);
+        }
+        else {
+            error_display(_("Invalid form, correct red fields."));
+        }
     }
     return result;
 }

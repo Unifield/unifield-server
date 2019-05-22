@@ -543,7 +543,7 @@ class List(TinyWidget):
 class Char(TinyWidget):
     template = "/openerp/widgets/templates/listgrid/char.mako"
 
-    params = ['text', 'link', 'value']
+    params = ['text', 'link', 'value', 'truncate']
 
     def __init__(self, **attrs):
 
@@ -554,11 +554,22 @@ class Char(TinyWidget):
         self.text = self.get_text()
         self.link = self.get_link()
 
+        self.truncate = attrs.get('truncate', False)
+
         self.color = None
         self.onclick = None
 
     def get_text(self):
-        return self.value or ''
+        if self.truncate:
+            try:
+                nb_trunc = int(self.truncate)
+                value = self.value and self.value[:nb_trunc] or ''
+            except:
+                value = self.value or ''
+        else:
+            value = self.value or ''
+
+        return value
 
     def get_link(self):
         return None
