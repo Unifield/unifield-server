@@ -273,6 +273,7 @@
                                     <field name="location_id"
                                         string="Src. Loc"
                                         attrs="{'readonly': [('fake_state', '=', 'assigned')]}"
+                                        domain="[('picking_ticket_src', '=', product_id), ('id', '!=', location_dest_id)]"
                                         />
                                     <field name="date" string="Actual Pick Date" />
                                     <field name="state"/>
