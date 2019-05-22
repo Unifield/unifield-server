@@ -1043,7 +1043,7 @@ class stock_picking(osv.osv):
 
                             if chain_ids:
                                 final_dest_id = chained_loc.browse(cr, uid, chain_ids[0], fields_to_fetch=['dest_location_id'])
-                                if out_move.location_id.id == final_dest_id.dest_location_id.id:
+                                if out_move.location_id.id == final_dest_id.dest_location_id.id or final_dest_id.dest_location_id.id in [x.id for x in out_move.location_id.child_ids]:
                                     ok_to_update_out = True
                             if not ok_to_update_out:
                                 continue
