@@ -1457,44 +1457,6 @@ class purchase_order(osv.osv):
     def button_dummy(self, cr, uid, ids, context=None):
         return True
 
-    def _hook_o_line_value(self, cr, uid, *args, **kwargs):
-        o_line = kwargs['o_line']
-        order_line = kwargs['order_line']
-
-        # Copy all fields except order_id and analytic_distribution_id
-        fields = ['product_uom', 'price_unit', 'move_dest_id', 'product_qty', 'partner_id',
-                  'confirmed_delivery_date', 'nomenclature_description', 'default_code',
-                  'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3',
-                  'nomenclature_code', 'name', 'default_name', 'comment', 'date_planned',
-                  'to_correct_ok', 'text_error', 'select_fo', 'project_ref', 'external_ref',
-                  'nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4',
-                  'nomen_sub_5', 'linked_sol_id', 'change_price_manually', 'old_price_unit',
-                  'origin', 'account_analytic_id', 'product_id', 'company_id', 'notes', 'taxes_id',
-                  'link_so_id', 'from_fo', 'sale_order_line_id', 'tender_line_id', 'dest_partner_id']
-
-        for field in fields:
-            field_val = getattr(order_line, field)
-            if isinstance(field_val, browse_record):
-                field_val = field_val.id
-            elif isinstance(field_val, browse_null):
-                field_val = False
-            elif isinstance(field_val, list):
-                field_val = ((6, 0, tuple([v.id for v in field_val])),)
-            o_line[field] = field_val
-
-
-        # Set the analytic distribution
-        distrib_id = False
-        if order_line.analytic_distribution_id:
-            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.analytic_distribution_id.id)
-        elif order_line.order_id.analytic_distribution_id:
-            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.order_id.analytic_distribution_id.id)
-
-        o_line['analytic_distribution_id'] = distrib_id
-
-        return o_line
-
-
     def _hook_order_infos(self, cr, uid, *args, **kwargs):
         '''
         Hook to change the values of the PO
@@ -1547,6 +1509,7 @@ class purchase_order(osv.osv):
 
         """
         wf_service = netsvc.LocalService("workflow")
+
         def make_key(br, fields):
             list_key = []
             for field in fields:
@@ -1564,7 +1527,7 @@ class purchase_order(osv.osv):
             list_key.sort()
             return tuple(list_key)
 
-    # compute what the new orders should contain
+        # compute what the new orders should contain
 
         new_orders = {}
 
@@ -1595,22 +1558,16 @@ class purchase_order(osv.osv):
                     order_infos['origin'] = (order_infos['origin'] or '') + ' ' + porder.origin
             order_infos = self._hook_order_infos(cr, uid, order_infos=order_infos, order_id=porder)
 
-            for order_line in porder.order_line:
+            for order_line in [line for line in porder.order_line if line.state == 'draft']:
                 line_key = make_key(order_line, ('id', 'order_id', 'name', 'date_planned', 'taxes_id', 'price_unit', 'notes', 'product_id', 'move_dest_id', 'account_analytic_id'))
                 o_line = order_infos['order_line'].setdefault(line_key, {})
-                if o_line:
-                    o_line = self._hook_o_line_value(cr, uid, o_line=o_line, order_line=order_line)
-                    # merge the line with an existing line
-                    o_line['product_qty'] += order_line.product_qty * order_line.product_uom.factor / o_line['uom_factor']
-                else:
-                    # append a new "standalone" line
-                    for field in ('product_qty', 'product_uom'):
-                        field_val = getattr(order_line, field)
-                        if isinstance(field_val, browse_record):
-                            field_val = field_val.id
-                        o_line[field] = field_val
-                    o_line['uom_factor'] = order_line.product_uom and order_line.product_uom.factor or 1.0
-                    o_line = self._hook_o_line_value(cr, uid, o_line=o_line, order_line=order_line)
+                # append a new line
+                for field in ('product_qty', 'product_uom'):
+                    field_val = getattr(order_line, field)
+                    if isinstance(field_val, browse_record):
+                        field_val = field_val.id
+                    o_line[field] = field_val
+                o_line['uom_factor'] = order_line.product_uom and order_line.product_uom.factor or 1.0
 
         allorders = []
         orders_info = {}
