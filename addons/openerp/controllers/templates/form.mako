@@ -223,7 +223,7 @@
             error_display(_("The form contains errors."));
             % endif
             % if loading_id:
-            jQuery.fancybox({'href': "/openerp/progressbar?model=${form.screen.model}&id=${form.screen.id}&job_id=${loading_id}", 'modal': false});
+            jQuery.fancybox({'href': "/openerp/progressbar?model=${form.screen.model}&id=${form.screen.id}&job_id=${loading_id}", 'modal': false, 'onClickClosed': function() {window.editRecord(${form.screen.id})}});
             % endif
         })
     </script>
