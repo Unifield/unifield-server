@@ -744,7 +744,7 @@ class po_follow_up_mixin(object):
 
         po = []
         self.cr.execute("""
-            SELECT p.id, p.state, p.name, p.date_order, ad.id, ppar.name, p.partner_ref, p.order_type, c.id, 
+            SELECT p.id, p.state, p.name, p.date_order, ad.id, ppar.name, p.partner_ref, p.order_type, c.name, 
                 p.delivery_confirmed_date
             FROM purchase_order p
                 LEFT JOIN analytic_distribution ad ON p.analytic_distribution_id = ad.id
