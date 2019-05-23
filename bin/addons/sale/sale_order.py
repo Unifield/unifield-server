@@ -718,8 +718,24 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
     ]
 
+    def _check_stock_take_date(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        if not context.get('import_in_progress') and not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+            for so in self.browse(cr, uid, ids, context=context):
+                if so.stock_take_date and so.stock_take_date > so.date_order:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('The Stock Take Date of %s is not consistent! It should not be later than its creation date')
+                        % (so.name,)
+                    )
+
+        return True
+
     _constraints = [
         (_check_empty_line, 'All lines must have a quantity larger than 0.00', ['order_line']),
+        (_check_stock_take_date, _("The Stock Take Date of the document is not consistent! It should not be later than its creation date"), ['stock_take_date']),
     ]
 
     _order = 'id desc'
@@ -2109,6 +2125,25 @@ class sale_order_line(osv.osv):
         'created_by_sync': False,
         'cancelled_by_sync': False,
     }
+
+    def _check_stock_take_date(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        if not context.get('import_in_progress') and not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+            for sol in self.browse(cr, uid, ids, context=context):
+                if sol.stock_take_date and sol.stock_take_date > sol.order_id.date_order:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('The Stock Take Date of the line %s is not consistent! It should not be later than %s\'s creation date')
+                        % (sol.line_number, sol.order_id.name)
+                    )
+
+        return True
+
+    _constraints = [
+        (_check_stock_take_date, _("The Stock Take Date of a line is not consistent! It should not be later than the FO/IR's creation date"), ['stock_take_date']),
+    ]
 
     def invoice_line_create(self, cr, uid, ids, context=None):
         if context is None:

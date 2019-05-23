@@ -587,7 +587,6 @@ class purchase_order_line(osv.osv):
         'cancelled_by_sync': False,
     }
 
-
     def _check_max_price(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -611,8 +610,26 @@ class purchase_order_line(osv.osv):
 
         return True
 
+    def _check_stock_take_date(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        if not context.get('import_in_progress') and not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+            for pol in self.browse(cr, uid, ids, context=context):
+                if pol.stock_take_date and \
+                        ((pol.linked_sol_id and pol.stock_take_date > pol.linked_sol_id.order_id.date_order)
+                         or (pol.stock_take_date > pol.order_id.date_order)):
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('The Stock Take Date of the line %s is not consistent! It should not be later than the %s\'s creation date')
+                        % (pol.line_number, pol.linked_sol_id and pol.linked_sol_id.order_id.name or pol.order_id.name)
+                    )
+
+        return True
+
     _constraints = [
         (_check_max_price, _("The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"), ['price_unit', 'product_qty']),
+        (_check_stock_take_date, _("The Stock Take Date of a line is not consistent! It should not be later than the FO/IR/PO's creation date"), ['stock_take_date']),
     ]
 
     def _get_destination_ok(self, cr, uid, lines, context):

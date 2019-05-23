@@ -928,8 +928,24 @@ class purchase_order(osv.osv):
 
         return True
 
+    def _check_stock_take_date(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        if not context.get('import_in_progress') and not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+            for po in self.browse(cr, uid, ids, context=context):
+                if po.stock_take_date and po.stock_take_date > po.date_order:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('The Stock Take Date of %s is not consistent! It should not be later than its creation date')
+                        % (po.name,)
+                    )
+
+        return True
+
     _constraints = [
-        (_check_order_type, 'The order type of the order is not consistent with the order type of the source', ['order_type'])
+        (_check_order_type, 'The order type of the order is not consistent with the order type of the source', ['order_type']),
+        (_check_stock_take_date, _("The Stock Take Date of the document is not consistent! It should not be later than its creation date"), ['stock_take_date']),
     ]
 
     def default_get(self, cr, uid, fields, context=None):
