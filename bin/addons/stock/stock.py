@@ -2781,10 +2781,10 @@ class stock_move(osv.osv):
                         if r[1]:
                             if r[1] == move.location_dest_id.id:
                                 state = 'done'
-                                qty_to_process = r[1]
+                                qty_to_process = r[0]
                             else:
                                 state = 'assigned'
-                                qty_to_process = r[1]
+                                qty_to_process = r[0]
                         else:
                             state = 'confirmed'
                             qty_to_process = 0
