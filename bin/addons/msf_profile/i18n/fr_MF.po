@@ -8541,6 +8541,7 @@ msgstr "Générer les écarts"
 #: field:internal.request.import.line,imp_qty:0
 #: field:internal.request.import.line,in_qty:0
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:216
+#: report:addons/stock_override/report/report_stock_move_xls.mako:223
 #, python-format
 msgid "Quantity"
 msgstr "Quantité"
@@ -13030,8 +13031,9 @@ msgstr "kit.creation"
 
 #. module: stock_override
 #: field:export.report.stock.move,reason_type_ids:0
+#: report:addons/stock_override/report/report_stock_move_xls.mako:210
 msgid "Specific reason types"
-msgstr "Specific reason types"
+msgstr "Types de raison spécifiques"
 
 #. module: report_webkit
 #: field:ir.header_webkit,orientation:0
@@ -16866,7 +16868,7 @@ msgstr "Réf Packing:"
 msgid "%s update%s"
 msgstr "%s update%s"
 
-#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, msf_partner, res_currency_tables, salr, sourcing, tender_flow, msf_doc_import, finance, stock, product
+#. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, msf_partner, res_currency_tables, salr, sourcing, tender_flow, msf_doc_import, finance, stock, product, stock_override
 #: view:account.state.open:0
 #: selection:mission.stock.wizard,split_stock:0
 #: selection:mission.stock.wizard,with_valuation:0
@@ -16913,6 +16915,7 @@ msgstr "%s update%s"
 #: selection:po.automation.config,name:0
 #: view:tender.cancel.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: report:addons/stock_override/report/report_stock_move_xls.mako:207
 #: view:change.bn.ed.mandatory.wizard:0
 #: selection:product.mass.update,active_product:0
 #: selection:product.mass.update,dangerous_goods:0
@@ -18974,8 +18977,9 @@ msgstr "Asia/Atyrau"
 #: model:ir.actions.act_window,name:stock_override.export_report_stock_move_action
 #: model:ir.actions.report.xml,name:stock_override.report_stock_move_xls
 #: model:ir.ui.menu,name:stock_override.export_report_stock_move_menu
-msgid "Export Moves Analysis"
-msgstr "Export d'Analyse des Mouvements"
+#: report:addons/stock_override/report/report_stock_move_xls.mako:112
+msgid "IN & OUT Report"
+msgstr "Rapport sur IN & OUT"
 
 #. module: product
 #: help:product.supplierinfo,product_uom:0
@@ -25269,7 +25273,7 @@ msgstr "# push data"
 msgid "Europe/Bucharest"
 msgstr "Europe/Bucharest"
 
-#. modules: msf_budget, account, account_payment, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, stock, msf_partner, salr, sourcing, tender_flow, msf_doc_import, finance, msf_supply_doc_export, product
+#. modules: msf_budget, account, account_payment, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, stock, msf_partner, salr, sourcing, tender_flow, msf_doc_import, finance, msf_supply_doc_export, product, stock_override
 #: view:account.state.open:0
 #: view:account.payment.make.payment:0
 #: selection:mission.stock.wizard,split_stock:0
@@ -25309,6 +25313,7 @@ msgstr "Europe/Bucharest"
 #: selection:po.automation.config,name:0
 #: view:tender.cancel.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: report:addons/stock_override/report/report_stock_move_xls.mako:207
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:177
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:178
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:179
@@ -29757,6 +29762,7 @@ msgstr "Etiquettes ne sont disponibles que pour les Objets de Liste de Pré-Coli
 #: field:stock.warehouse.order.cycle,product_id:0
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:167
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:170
+#: report:addons/stock_override/report/report_stock_move_xls.mako:190
 msgid "Specific product"
 msgstr "Produit Spécifique"
 
@@ -31454,6 +31460,7 @@ msgstr "Alloc.Analyt."
 #: report:addons/stock/report/stock_reception_report_xls.mako:166
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:170
 #: field:stock.expired.damaged.report,name:0
+#: report:addons/stock_override/report/report_stock_move_xls.mako:154
 #: report:addons/stock/report/products_situation_report_xls.mako:140
 #: field:products.situation.report,report_date:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:187
@@ -34403,11 +34410,16 @@ msgstr "Commandes"
 
 #. modules: specific_rules, stock_override
 #: field:export.report.stock.inventory,location_id:0
-#: field:export.report.stock.move,location_id:0
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:187
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:190
 msgid "Specific location"
 msgstr "Zone spéciale"
+
+#. module: stock_override
+#: report:addons/stock_override/report/report_stock_move_xls.mako:182
+#: field:export.report.stock.move,location_ids:0
+msgid "Specific location(s)"
+msgstr "Zone(s) spécifique(s)"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:453
@@ -41086,6 +41098,7 @@ msgstr "De confirmé à attribué."
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:225
 #: report:addons/stock/report/stock_reception_report_xls.mako:239
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:220
+#: report:addons/stock_override/report/report_stock_move_xls.mako:219
 #: report:addons/stock/report/products_situation_report_xls.mako:218
 #, python-format
 msgid "UoM"
@@ -44180,6 +44193,7 @@ msgstr "Contient des Produits Dangereux"
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:223
 #: report:addons/stock/report/stock_reception_report_xls.mako:237
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:218
+#: report:addons/stock_override/report/report_stock_move_xls.mako:217
 #: report:addons/product/report/product_mass_update_export_xls.mako:113
 #: field:tender.line,product_code:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:233
@@ -61340,6 +61354,7 @@ msgstr "Parent Droit"
 
 #. module: stock_override
 #: field:export.report.stock.move,partner_id:0
+#: report:addons/stock_override/report/report_stock_move_xls.mako:178
 msgid "Specific partner"
 msgstr "Partenaire spécifique"
 
@@ -70364,11 +70379,12 @@ msgstr "% RECEIVED"
 msgid "MOZAMBICAN METICAL"
 msgstr "MOZAMBICAN METICAL"
 
-#. modules: specific_rules, stock
+#. modules: specific_rules, stock, stock_override
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:143
 #: report:addons/stock/report/reserved_products_report_xls.mako:159
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:125
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:227
+#: report:addons/stock_override/report/report_stock_move_xls.mako:222
 msgid "Exp Date"
 msgstr "Date Exp."
 
@@ -70826,8 +70842,8 @@ msgstr "Fonction Objet"
 
 #. module: stock_override
 #: view:export.report.stock.move:0
-msgid "Export Moves Analysis"
-msgstr "Export de l'Analyse des Mouvements"
+msgid "IN & OUT Report"
+msgstr "Rapport sur IN & OUT"
 
 #. module: transport_mgmt
 #: field:product.product,transport_ok:0
@@ -77008,6 +77024,7 @@ msgstr "Sorte de Node"
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:224
 #: report:addons/stock/report/stock_reception_report_xls.mako:238
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:219
+#: report:addons/stock_override/report/report_stock_move_xls.mako:218
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:234
 #, python-format
 msgid "Product Description"
@@ -79211,6 +79228,7 @@ msgstr "Amériques/St_Johns"
 #: field:export.report.stock.move,expiry_date:0
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:179
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:182
+#: report:addons/stock_override/report/report_stock_move_xls.mako:198
 msgid "Specific expiry date"
 msgstr "Date d'expiration spécifique"
 
@@ -81780,10 +81798,11 @@ msgstr "Une facture ne peut pas être créée depuis une ligne de Commande Clien
 msgid "Europe/Zagreb"
 msgstr "Europe/Zagreb"
 
-#. modules: sale, account, msf_supply_doc_export
+#. modules: sale, account, msf_supply_doc_export, stock_override
 #: report:msf.consumption_report:0
 #: code:addons/account/report/free_allocation_report.py:304
 #: code:addons/account/report/free_allocation_report.py:319
+#: report:addons/stock_override/report/report_stock_move_xls.mako:162
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:207
 #: field:supplier.performance.wizard,date_from:0
 msgid "From"
@@ -82752,7 +82771,7 @@ msgstr "Ceci va supprimer toutes les écritures de Paie. Etes-vous certain?"
 msgid "Update(s) not run left: %d"
 msgstr "Update(s) not run left: %d"
 
-#. modules: reason_types_moves, msf_outgoing, stock
+#. modules: reason_types_moves, msf_outgoing, stock, stock_override
 #: view:stock.picking:0
 #: view:stock.move:0
 #: view:report.stock.move:0
@@ -82761,6 +82780,7 @@ msgstr "Update(s) not run left: %d"
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:202
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:216
 #: view:stock.expired.damaged.report:0
+#: report:addons/stock_override/report/report_stock_move_xls.mako:235
 msgid "Reason Type"
 msgstr "Raison - Type"
 
@@ -85919,6 +85939,7 @@ msgstr "Vous avez sélectionné en Février la date du 29 comme date de planning
 
 #. module: specific_rules, stock_override
 #: field:export.report.stock.move,prodlot_id:0
+#: report:addons/stock_override/report/report_stock_move_xls.mako:194
 msgid "Specific batch"
 msgstr "Lot spécifique"
 
@@ -88809,7 +88830,8 @@ msgstr "TbD"
 #: report:stock.card.report:0
 #: code:addons/account/report/free_allocation_report.py:306
 #: code:addons/account/report/free_allocation_report.py:321
-#: field:liquidity.balance.wizard,date_to:0
+#: field:liquidity.balance.wizard,date_to:
+#: report:addons/stock_override/report/report_stock_move_xls.mako:170
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:215
 #: field:supplier.performance.wizard,date_to:0
 msgid "To"
@@ -90851,6 +90873,7 @@ msgstr "Erreur ! Vous ne pouvez pas créer des catégories récursives."
 #: report:addons/stock/report/stock_reception_report_xls.mako:162
 #: field:stock.expired.damaged.report,company_id:0
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:166
+#: report:addons/stock_override/report/report_stock_move_xls.mako:150
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:183
 msgid "DB/Instance name"
 msgstr "DB/Nom de l'Instance"
@@ -105886,6 +105909,53 @@ msgstr "Le Centre de Coût %s utilisé dans l'entrée Siège \"%s\" est inactif.
 #, python-format
 msgid "In a PICK from scratch, your are not allowed to choose this type of partner."
 msgstr "Dans un PICK créé à partir de rien, vous n'êtes pas autorisé(e) à choisir ce type de partenaire."
+
+#. module: stock_override
+#: report:addons/stock_override/report/report_stock_move_xls.mako:206
+#: field:export.report.stock.move,only_standard_loc:0
+msgid "Only display standard stock location(s)"
+msgstr "Afficher uniquement la ou les zones standard"
+
+#. module: stock_override
+#: report:addons/stock_override/report/report_stock_move_xls.mako:186
+#: field:export.report.stock.move,product_list_id:0
+msgid "Specific product list"
+msgstr "Liste de produit spécifique"
+
+#. module: stock_override
+#: report:addons/stock_override/report/report_stock_move_xls.mako:224
+msgid "Unit Price (%s)"
+msgstr "Prix Unitaire (%s)"
+
+#. module: stock_override
+#: report:addons/stock_override/report/report_stock_move_xls.mako:225
+msgid "Movement value (%s)"
+msgstr "Valeur du mouvement (%s)"
+
+#. module: stock_override
+#: report:addons/stock_override/report/report_stock_move_xls.mako:227
+msgid "BN stock after movement (selected location(s))"
+msgstr "Stock NL après mouvement (zone(s) sélectionnée(s))"
+
+#. module: stock_override
+#: report:addons/stock_override/report/report_stock_move_xls.mako:228
+msgid "Total stock after movement (selected location(s))"
+msgstr "Stock total après mouvement (sone(s) sélectionnée(s))"
+
+#. module: stock_override
+#: report:addons/stock_override/report/report_stock_move_xls.mako:230
+msgid "BN stock after movement (instance)"
+msgstr "Stock NL après mouvement (instance)"
+
+#. module: stock_override
+#: report:addons/stock_override/report/report_stock_move_xls.mako:231
+msgid "Total stock after movement (instance)"
+msgstr "Stock total après mouvement (instance)"
+
+#. module: stock_override
+#: report:addons/stock_override/report/report_stock_move_xls.mako:236
+msgid "Document Ref."
+msgstr "Réf. Document"
 
 #. module: kit
 #: code:addons/kit/kit_creation.py:1238
