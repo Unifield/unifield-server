@@ -106380,6 +106380,12 @@ msgstr "Empêcher le Lettrage avec des devises différentes"
 msgid "'Origin' Document can't be Closed or Cancelled"
 msgstr "Le Document de 'Origine' ne peut pas être Fermé ou Annulé"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1692
+#, python-format
+msgid "'Origin' Document must have the Regular Order Type"
+msgstr "Le Document de 'Origine' doit avoir le Type de Commande Normal"
+
 #. module: sale
 #: code:addons/sale/sale_workflow.py:561
 #, python-format

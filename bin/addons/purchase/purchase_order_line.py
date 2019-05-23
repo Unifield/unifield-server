@@ -1480,16 +1480,18 @@ class purchase_order_line(osv.osv):
         Fill the origin field if a FO is selected
         '''
         if fo_id:
-            fo = self.pool.get('sale.order').read(cr, uid, fo_id, ['name', 'sourced_references'], context=context)
-            return {
-                'value': {
-                    'origin': fo['name'],
-                    'display_sync_ref': len(fo['sourced_references']) and True or False,
-                },
-                'warning': {
-                    'message': _(self.msg_selected_po),
+            fo_domain = ['name', 'sourced_references', 'state', 'order_type']
+            fo = self.pool.get('sale.order').read(cr, uid, fo_id, fo_domain, context=context)
+            if fo.state not in ['done', 'cancel'] and fo.order_type == 'regular':
+                return {
+                    'value': {
+                        'origin': fo['name'],
+                        'display_sync_ref': len(fo['sourced_references']) and True or False,
+                    },
+                    'warning': {
+                        'message': _(self.msg_selected_po),
+                    }
                 }
-            }
         return {}
 
     def on_change_origin(self, cr, uid, ids, origin, linked_sol_id=False, partner_type='external', context=None):
