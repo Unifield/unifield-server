@@ -1030,7 +1030,10 @@ class msf_import_export(osv.osv_memory):
                         if data.get('allow_all_cc'):
                             raise Exception(_("Please either list the Cost Centers to allow, or allow all Cost Centers."))
                         dest_cc_list = []
-                        for cost_center in data.get('dest_cc_ids').split(','):
+                        split_char = ';'
+                        if split_char not in data.get('dest_cc_ids'):
+                            split_char = ','
+                        for cost_center in data.get('dest_cc_ids').split(split_char):
                             cc = cost_center.strip()
                             cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'),
                                       '|', ('code', '=', cc), ('name', '=', cc)]
@@ -1045,7 +1048,10 @@ class msf_import_export(osv.osv_memory):
                     # Accounts
                     if data.get('destination_ids'):  # "destinations_ids" corresponds to G/L accounts...
                         acc_list = []
-                        for account in data.get('destination_ids').split(','):
+                        split_char = ';'
+                        if split_char not in data.get('destination_ids'):
+                            split_char = ','
+                        for account in data.get('destination_ids').split(split_char):
                             acc = account.strip()
                             acc_dom = [('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('code', '=', acc)]
                             acc_ids = acc_obj.search(cr, uid, acc_dom, order='id', limit=1, context=context)

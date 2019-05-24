@@ -538,8 +538,8 @@ MODEL_DATA_DICT = {
     },
     'destinations': {
         'header_list': [
-            'name',
             'code',
+            'name',
             'parent_id.code',
             'type',
             'date_start',
