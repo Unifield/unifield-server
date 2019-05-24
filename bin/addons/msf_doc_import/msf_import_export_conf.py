@@ -503,8 +503,8 @@ MODEL_DATA_DICT = {
     },
     'funding_pools': {
         'header_list': [
-            'name',
             'code',
+            'name',
             'parent_id.code',
             'type',
             'date_start',
@@ -522,8 +522,8 @@ MODEL_DATA_DICT = {
     },
     'cost_centers': {
         'header_list': [
-            'name',
             'code',
+            'name',
             'parent_id.code',
             'type',
             'date_start',
