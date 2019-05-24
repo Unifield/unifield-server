@@ -610,7 +610,7 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             loc_domain = [('location_id', 'child_of', inst_full_view_id), ('active', 'in', ['t', 'f'])]
             location_ids = loc_obj.search(self.cr, self.uid, loc_domain, context=self.localcontext)
             self.localcontext.update({'location': location_ids})
-
+        self.localcontext['compute_child'] = False
         for move in self.pool.get('stock.move').browse(self.cr, self.uid, self.datas['moves'], context=self.localcontext):
             move_date = move.date or False
             # Get stock
