@@ -1503,12 +1503,13 @@ class purchase_order_line(osv.osv):
             sale_id = self.pool.get('sale.order').search(cr, uid, [
                 ('name', '=', origin),
                 ('state', 'not in', ['done', 'cancel']),
-                ('procurement_request', 'in', ['t', 'f'])
+                ('procurement_request', 'in', ['t', 'f']),
+                ('order_type', '=', 'regular'),
             ], limit=1, order='NO_ORDER', context=context)
             if not sale_id:
                 res['warning'] = {
                     'title': _('Warning'),
-                    'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line') % origin,
+                    'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a non-closed/cancelled regular FO/IR. No FO/IR line will be created for this PO line') % origin,
                 }
                 res['value'] = {
                     'display_sync_ref': False,

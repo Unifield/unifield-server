@@ -80356,8 +80356,8 @@ msgstr "XML Export"
 #. module: purchase
 #: code:addons/purchase/purchase_order_line.py:1397
 #, python-format
-msgid "The reference '%s' put in the Origin field doesn't match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line"
-msgstr "The reference '%s' put in the Origin field doesn't match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line"
+msgid "The reference '%s' put in the Origin field doesn't match with a non-closed/cancelled regular FO/IR. No FO/IR line will be created for this PO line"
+msgstr "La référence '%s' mise dans le champ Document d'origine ne correspond pas à un FO/IR normal non fermé/annulé. Aucune ligne de FO/IR ne sera créé pour cette ligne de PO"
 
 #. module: sync_client
 #: view:sync.monitor:0
