@@ -1482,7 +1482,7 @@ class purchase_order_line(osv.osv):
         if fo_id:
             fo_domain = ['name', 'sourced_references', 'state', 'order_type']
             fo = self.pool.get('sale.order').read(cr, uid, fo_id, fo_domain, context=context)
-            if fo.state not in ['done', 'cancel'] and fo.order_type == 'regular':
+            if fo['state'] not in ['done', 'cancel'] and fo['order_type'] == 'regular':
                 return {
                     'value': {
                         'origin': fo['name'],
