@@ -650,6 +650,7 @@ class msf_import_export(osv.osv_memory):
 
         cost_centers_cache = {}
         gl_account_cache = {}
+        parent_ok_cache = {}
         import_data_obj = self.pool.get('import_data')
         prod_nomenclature_obj = self.pool.get('product.nomenclature')
 
@@ -1029,10 +1030,13 @@ class msf_import_export(osv.osv_memory):
                     data['category'] = 'DEST'
                     # Parent Analytic Account
                     if data.get('parent_id'):
-                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'], fields_to_fetch=['type', 'category'], context=context)
-                        parent_type = parent_id.type or ''
-                        parent_category = parent_id.category or ''
-                        if parent_type != 'view' or parent_category != 'DEST':
+                        if data['parent_id'] not in parent_ok_cache:
+                            parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'], fields_to_fetch=['type', 'category'], context=context)
+                            parent_type = parent_id.type or ''
+                            parent_category = parent_id.category or ''
+                            if parent_type == 'view' and parent_category == 'DEST':
+                                parent_ok_cache[data['parent_id']] = True
+                        if not parent_ok_cache.get(data['parent_id']):
                             raise Exception(_('The Parent Analytic Account must be a View type Destination.'))
                     # Type
                     if data['type'] not in ['normal', 'view']:
