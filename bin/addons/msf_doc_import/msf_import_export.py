@@ -648,6 +648,8 @@ class msf_import_export(osv.osv_memory):
         acc_analytic_obj = self.pool.get('account.analytic.account')
         acc_dest_obj = self.pool.get('account.destination.link')
 
+        cost_centers_cache = {}
+        gl_account_cache = {}
         import_data_obj = self.pool.get('import_data')
         prod_nomenclature_obj = self.pool.get('product.nomenclature')
 
@@ -1045,9 +1047,10 @@ class msf_import_export(osv.osv_memory):
                             split_char = ','
                         for cost_center in data.get('dest_cc_ids').split(split_char):
                             cc = cost_center.strip()
-                            cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'),
-                                      '|', ('code', '=', cc), ('name', '=', cc)]
-                            cc_ids = impobj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
+                            if cc not in cost_centers_cache:
+                                cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'), ('code', '=', cc)]
+                                cost_centers_cache[cc] = impobj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
+                            cc_ids = cost_centers_cache.get(cc)
                             if cc_ids:
                                 dest_cc_list.append(cc_ids[0])
                             else:
@@ -1063,8 +1066,10 @@ class msf_import_export(osv.osv_memory):
                             split_char = ','
                         for account in data.get('destination_ids').split(split_char):
                             acc = account.strip()
-                            acc_dom = [('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('code', '=', acc)]
-                            acc_ids = acc_obj.search(cr, uid, acc_dom, order='id', limit=1, context=context)
+                            if acc not in gl_account_cache:
+                                acc_dom = [('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('code', '=', acc)]
+                                gl_account_cache[acc] = acc_obj.search(cr, uid, acc_dom, order='id', limit=1, context=context)
+                            acc_ids = gl_account_cache.get(acc)
                             if acc_ids:
                                 acc_list.append(acc_ids[0])
                             else:
