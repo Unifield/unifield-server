@@ -98,27 +98,32 @@ MODEL_DICT = {
     'funding_pools': {
         'name': 'Funding Pools',
         'domain_type': 'finance',
-        'model': 'account.analytic.account'
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'FUNDING')]
     },
     'destinations': {
         'name': 'Destinations',
         'domain_type': 'finance',
-        'model': 'account.analytic.account'
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'DEST')]
     },
     'cost_centers': {
         'name': 'Cost Centers',
         'domain_type': 'finance',
-        'model': 'account.analytic.account'
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'OC')]
     },
     'free1': {
         'name': 'Free 1',
         'domain_type': 'finance',
-        'model': 'account.analytic.account'
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'FREE1')]
     },
     'free2': {
         'name': 'Free 2',
         'domain_type': 'finance',
-        'model': 'account.analytic.account'
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'FREE2')]
     },
     'analytic_journals': {
         'name': 'Analytic Journals',
