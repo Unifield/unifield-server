@@ -596,14 +596,6 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
         loc_obj = self.pool.get('stock.location')
         data_obj = self.pool.get('ir.model.data')
         res = []
-        company_id = self.pool.get('res.users').browse(
-            self.cr, self.uid, self.uid).company_id.partner_id.id
-
-        def get_src_dest(m, f='location_id'):
-            if m[f].usage in ('supplier', 'customer') and m.picking_id and m.picking_id.partner_id and m.picking_id.partner_id.id != company_id:
-                return m.picking_id.partner_id.name
-            else:
-                return m[f].name
 
         if not self.datas['selected_locs']:
             inst_full_view_id = data_obj.get_object_reference(self.cr, self.uid, 'stock', 'stock_location_locations')[1]
@@ -652,8 +644,8 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                 'move_value': move.product_qty * prod_price,
                 'prod_stock_bn': move.prodlot_id and prod_stock_bn or 0,
                 'prod_stock': prod_stock,
-                'source': get_src_dest(move, 'location_id'),
-                'destination': get_src_dest(move, 'location_dest_id'),
+                'source': move.location_id.name,
+                'destination': move.location_dest_id.name,
                 'reason_type': move.reason_type_id and move.reason_type_id.complete_name or '',
                 'doc_ref': move.picking_id and move.picking_id.name or move.name or '',
             })
