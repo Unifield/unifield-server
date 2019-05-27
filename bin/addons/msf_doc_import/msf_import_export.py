@@ -725,6 +725,16 @@ class msf_import_export(osv.osv_memory):
         fields_def = impobj.fields_get(cr, uid, context=context)
         i = 0
 
+        # custom process to retrieve CC, Destination_ids
+        custom_m2m = []
+        if import_brw.model_list_selection == 'destinations':
+            custom_m2m = ['dest_cc_ids', 'destination_ids']
+        elif import_brw.model_list_selection == 'funding_pools':
+            custom_m2m = ['cost_center_ids', 'tuple_destination_account_ids']
+        for c_m2m in custom_m2m:
+            if c_m2m in fields_def:
+                fields_def[c_m2m]['type'] = 'many2many_custom'
+
         def _get_obj(header, value, fields_def):
             list_obj = header.split('.')
             relation = fields_def[list_obj[0]]['relation']
@@ -964,7 +974,7 @@ class msf_import_export(osv.osv_memory):
 
                 # Funding Pools
                 if import_brw.model_list_selection == 'funding_pools':
-                    ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('type', '=', 'FUNDING')])
+                    ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('category', '=', 'FUNDING')])
                     context['from_import_menu'] = True
                     data['category'] = 'FUNDING'
                     # Parent Analytic Account
@@ -1089,7 +1099,7 @@ class msf_import_export(osv.osv_memory):
 
                 # Cost Centers
                 if import_brw.model_list_selection == 'cost_centers':
-                    ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('type', '=', 'OC')])
+                    ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('category', '=', 'OC')])
                     context['from_import_menu'] = True
                     data['category'] = 'OC'
                     # Parent Analytic Account

@@ -99,31 +99,31 @@ MODEL_DICT = {
         'name': 'Funding Pools',
         'domain_type': 'finance',
         'model': 'account.analytic.account',
-        'domain': [('category', '=', 'FUNDING')]
+        'domain': [('category', '=', 'FUNDING'), ('parent_id', '!=', False)]
     },
     'destinations': {
         'name': 'Destinations',
         'domain_type': 'finance',
         'model': 'account.analytic.account',
-        'domain': [('category', '=', 'DEST')]
+        'domain': [('category', '=', 'DEST'), ('parent_id', '!=', False)]
     },
     'cost_centers': {
         'name': 'Cost Centers',
         'domain_type': 'finance',
         'model': 'account.analytic.account',
-        'domain': [('category', '=', 'OC')]
+        'domain': [('category', '=', 'OC'), ('parent_id', '!=', False)]
     },
     'free1': {
         'name': 'Free 1',
         'domain_type': 'finance',
         'model': 'account.analytic.account',
-        'domain': [('category', '=', 'FREE1')]
+        'domain': [('category', '=', 'FREE1'), ('parent_id', '!=', False)]
     },
     'free2': {
         'name': 'Free 2',
         'domain_type': 'finance',
         'model': 'account.analytic.account',
-        'domain': [('category', '=', 'FREE2')]
+        'domain': [('category', '=', 'FREE2'), ('parent_id', '!=', False)]
     },
     'analytic_journals': {
         'name': 'Analytic Journals',
