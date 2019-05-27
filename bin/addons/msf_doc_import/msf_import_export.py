@@ -1089,7 +1089,7 @@ class msf_import_export(osv.osv_memory):
 
                 # Cost Centers
                 if import_brw.model_list_selection == 'cost_centers':
-                    ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('type', '=', 'FUNDING')])
+                    ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('type', '=', 'OC')])
                     context['from_import_menu'] = True
                     data['category'] = 'OC'
                     # Parent Analytic Account
