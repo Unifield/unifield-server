@@ -175,7 +175,7 @@ class account_fiscalyear_state(osv.osv):
                   '''
             for fy_state_id in ids:
                 fy_state = self.browse(cr, uid, fy_state_id, fields_to_fetch=['fy_id', 'instance_id'], context=context)
-                if fy_state.instance_id.id != company_instance.instance_id.id:
+                if fy_state.instance_id.id != company_instance.id:
                     # trigger reconcile only if instance FY is closed, not when update is received from project
                     break
                 fy = fy_state.fy_id
