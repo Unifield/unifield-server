@@ -106679,3 +106679,16 @@ msgstr "Nb Articles:"
 #: report:po.follow.up_rml:0
 msgid "Estimated Amount:"
 msgstr "Montant Estimé:"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1705
+#, python-format
+msgid "A PO with a Loan, Donation before expiry, Standard donation or In Kind Donation Order Type can't have an Source Document in its lines"
+msgstr "Un BC avec un Type de Commande Prêt, Donation avant expiration, Donation normale ou Donation en Nature ne peut pas avoir de ligne avec un Document d'Origine"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1056
+#: code:addons/purchase/purchase_order.py:1860
+#, python-format
+msgid "You can't change the Order Type to Loan, Donation before expiry, Standard donation or In Kind Donation if a line has a Source Document"
+msgstr "Vous ne pouvez pas changer le Type de Commande en Prêt, Donation avant expiration, Donation normale ou Donation en Nature si une des lignes a un Document d'Origine"

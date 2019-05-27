@@ -999,6 +999,9 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        pol_obj = self.pool.get('purchase.order.line')
+
         if not 'date_order' in vals:
             vals.update({'date_order': self.browse(cr, uid, ids[0]).date_order})
 
@@ -1044,6 +1047,14 @@ class purchase_order(osv.osv):
         # Fix bug invalid syntax for type date:
         if 'valid_till' in vals and vals['valid_till'] == '':
             vals['valid_till'] = False
+
+        # Check if there's source documents on lines
+        if vals.get('order_type') and vals['order_type'] in ['loan', 'donation_exp', 'donation_st', 'in_kind'] and \
+                pol_obj.search(cr, uid, [('order_id', 'in', ids), ('origin', '!=', False)], context=context):
+            raise osv.except_osv(
+                _('Error'),
+                _('You can\'t change the Order Type to Loan, Donation before expiry, Standard donation or In Kind Donation if a line has a Source Document')
+            )
 
         res = super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
@@ -1713,6 +1724,7 @@ class purchase_order(osv.osv):
         Changes the partner to local market if the type is Purchase List
         '''
         partner_obj = self.pool.get('res.partner')
+        pol_obj = self.pool.get('purchase.order.line')
         v = {}
         # the domain on the onchange was replace by a several fields.function that you can retrieve in the
         # file msf_custom_settings/view/purchase_view.xml: domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', order_type),  ('check_partner_rfq', '=', tender_id)]"
@@ -1837,6 +1849,17 @@ class purchase_order(osv.osv):
                 'message': _('Partner type and order type are incompatible! Please change either order type or partner.'),
             })
             v.update({'order_type': 'regular'})
+
+        # Check if there's source documents on lines
+        if order_type in ['loan', 'donation_exp', 'donation_st', 'in_kind'] and \
+                pol_obj.search(cr, uid, [('order_id', 'in', ids), ('origin', '!=', False)]):
+            return {
+                'value': {'order_type': 'regular'},
+                'warning': {
+                    'title': _('Error'),
+                    'message': _('You can\'t change the Order Type to Loan, Donation before expiry, Standard donation or In Kind Donation if a line has a Source Document')
+                },
+            }
 
         return {'value': v, 'warning': w}
 

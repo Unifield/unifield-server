@@ -13,6 +13,17 @@ from msf_partner import PARTNER_TYPE
 from lxml import etree
 
 
+ORDER_TYPES_SELECTION = [
+    ('regular', _('Regular')),
+    ('donation_exp', _('Donation before expiry')),
+    ('donation_st', _('Standard donation')),
+    ('loan', _('Loan')),
+    ('in_kind', _('In Kind Donation')),
+    ('purchase_list', _('Purchase List')),
+    ('direct', _('Direct Purchase Order')),
+]
+
+
 class purchase_order_line(osv.osv):
     _table = 'purchase_order_line'
     _name = 'purchase.order.line'
@@ -528,6 +539,7 @@ class purchase_order_line(osv.osv):
         # not replacing the po_state from sale_followup - should ?
         'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
         'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
+        'po_order_type': fields.related('order_id', 'order_type', type='selection', selection=ORDER_TYPES_SELECTION, string='Po Order Type', readonly=True),
         'original_product': fields.many2one('product.product', 'Original Product'),
         'original_qty': fields.float('Original Qty', related_uom='original_uom'),
         'original_price': fields.float('Original Price', digits_compute=dp.get_precision('Purchase Price Computation')),
