@@ -633,8 +633,9 @@
 
                             <separator string="Linked Information" colspan="4" />
                                 <group colspan="2" col="3">
-                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('link_so_id', '!=', False)]}" string="Source Document"/>
-                                <field name="select_fo" on_change="on_change_select_fo(select_fo)" nolabel="1" domain="[('state', 'not in', ['done', 'cancel']), ('procurement_request', 'in', ['t', 'f'])]" attrs="{'invisible': ['|', '|', '|', ('link_so_id', '!=', False), ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}"/>
+                                <field name="po_order_type" invisible="1"/>
+                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', '|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('link_so_id', '!=', False), ('po_order_type', 'in', ['loan', 'donation_exp', 'donation_st', 'in_kind'])]}" string="Source Document"/>
+                                <field name="select_fo" on_change="on_change_select_fo(select_fo)" nolabel="1" domain="[('state', 'not in', ['done', 'cancel']), ('procurement_request', 'in', ['t', 'f']), ('order_type', '=', 'regular')]" attrs="{'invisible': ['|', '|', '|', '|', ('link_so_id', '!=', False), ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('po_order_type', 'in', ['loan', 'donation_exp', 'donation_st', 'in_kind'])]}"/>
                                 </group>
                                 <field name="customer_ref" string="Customer ref" widget="char"/>
                                 <field name="external_ref" readonly="1"/>

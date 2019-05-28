@@ -80374,8 +80374,8 @@ msgstr "XML Export"
 #. module: purchase
 #: code:addons/purchase/purchase_order_line.py:1397
 #, python-format
-msgid "The reference '%s' put in the Origin field doesn't match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line"
-msgstr "The reference '%s' put in the Origin field doesn't match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line"
+msgid "The reference '%s' put in the Origin field doesn't match with a non-closed/cancelled regular FO/IR. No FO/IR line will be created for this PO line"
+msgstr "La référence '%s' mise dans le champ Document d'origine ne correspond pas à un FO/IR normal non fermé/annulé. Aucune ligne de FO/IR ne sera créé pour cette ligne de PO"
 
 #. module: sync_client
 #: view:sync.monitor:0
@@ -106450,6 +106450,12 @@ msgstr "Empêcher le Lettrage avec des devises différentes"
 msgid "'Origin' Document can't be Closed or Cancelled"
 msgstr "Le Document de 'Origine' ne peut pas être Fermé ou Annulé"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1692
+#, python-format
+msgid "'Origin' Document must have the Regular Order Type"
+msgstr "Le Document de 'Origine' doit avoir le Type de Commande Normal"
+
 #. module: sale
 #: code:addons/sale/sale_workflow.py:561
 #, python-format
@@ -106743,3 +106749,16 @@ msgstr "Nb Articles:"
 #: report:po.follow.up_rml:0
 msgid "Estimated Amount:"
 msgstr "Montant Estimé:"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1705
+#, python-format
+msgid "A PO with a Loan, Donation before expiry, Standard donation or In Kind Donation Order Type can't have an Source Document in its lines"
+msgstr "Un BC avec un Type de Commande Prêt, Donation avant expiration, Donation normale ou Donation en Nature ne peut pas avoir de ligne avec un Document d'Origine"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1056
+#: code:addons/purchase/purchase_order.py:1860
+#, python-format
+msgid "You can't change the Order Type to Loan, Donation before expiry, Standard donation or In Kind Donation if a line has a Source Document"
+msgstr "Vous ne pouvez pas changer le Type de Commande en Prêt, Donation avant expiration, Donation normale ou Donation en Nature si une des lignes a un Document d'Origine"
