@@ -418,6 +418,8 @@ class account_account(osv.osv):
         """
         Use "-" instead of " " between name and code for account's default name
         """
+        if context is None:
+            context = {}
         if not ids:
             return []
         reads = self.read(cr, uid, ids, ['name', 'code'], context=context)
@@ -425,7 +427,10 @@ class account_account(osv.osv):
         for record in reads:
             name = record['name']
             if record['code']:
-                name = record['code'] + ' - '+name
+                if context.get('account_only_code'):
+                    name = record['code']
+                else:
+                    name = record['code'] + ' - '+name
             res.append((record['id'], name))
         return res
 

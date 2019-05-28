@@ -98,27 +98,32 @@ MODEL_DICT = {
     'funding_pools': {
         'name': 'Funding Pools',
         'domain_type': 'finance',
-        'model': 'account.analytic.account'
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'FUNDING'), ('parent_id', '!=', False)]
     },
     'destinations': {
         'name': 'Destinations',
         'domain_type': 'finance',
-        'model': 'account.analytic.account'
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'DEST'), ('parent_id', '!=', False)]
     },
     'cost_centers': {
         'name': 'Cost Centers',
         'domain_type': 'finance',
-        'model': 'account.analytic.account'
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'OC'), ('parent_id', '!=', False)]
     },
     'free1': {
         'name': 'Free 1',
         'domain_type': 'finance',
-        'model': 'account.analytic.account'
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'FREE1'), ('parent_id', '!=', False)]
     },
     'free2': {
         'name': 'Free 2',
         'domain_type': 'finance',
-        'model': 'account.analytic.account'
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'FREE2'), ('parent_id', '!=', False)]
     },
     'analytic_journals': {
         'name': 'Analytic Journals',
@@ -503,8 +508,8 @@ MODEL_DATA_DICT = {
     },
     'funding_pools': {
         'header_list': [
-            'name',
             'code',
+            'name',
             'parent_id.code',
             'type',
             'date_start',
@@ -522,8 +527,8 @@ MODEL_DATA_DICT = {
     },
     'cost_centers': {
         'header_list': [
-            'name',
             'code',
+            'name',
             'parent_id.code',
             'type',
             'date_start',
@@ -538,8 +543,8 @@ MODEL_DATA_DICT = {
     },
     'destinations': {
         'header_list': [
-            'name',
             'code',
+            'name',
             'parent_id.code',
             'type',
             'date_start',
