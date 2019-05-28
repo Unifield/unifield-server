@@ -1681,7 +1681,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             # Origin
             origin = values[8]
             if origin:
-                if line.po_line_id.order_id.order_type not in ['loan', 'donation_exp', 'donation_st', 'in_kind']:
+                if line.simu_id.order_id.order_type not in ['loan', 'donation_exp', 'donation_st', 'in_kind']:
                     so_ids = sale_obj.search(cr, uid, [('name', '=', origin), ('procurement_request', 'in', ['t', 'f'])],
                                              limit=1, context=context)
                     if so_ids:
