@@ -1042,7 +1042,7 @@ class purchase_order(osv.osv):
         # Check if there's source documents on lines
         if vals.get('order_type') and vals['order_type'] in ['loan', 'donation_exp', 'donation_st', 'in_kind']:
                 # do not raise on existing non draft PO
-            draft_po_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')], context=context)
+            draft_po_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft'), ('is_a_counterpart', '=', False)], context=context)
             if draft_po_ids and pol_obj.search_exist(cr, uid, [('order_id', 'in', draft_po_ids), ('origin', '!=', False), ('state', '!=', 'cancel')], context=context):
                 raise osv.except_osv(
                     _('Error'),
