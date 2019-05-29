@@ -65,9 +65,13 @@ class sale_donation_stock_moves(osv.osv_memory):
             string='Stock Moves',
             readonly=True
         ),
+        'display_bn_ed': fields.boolean(
+            string='Display BN/ED details',
+        ),
     }
 
     _defaults = {
+        'display_bn_ed': False,
     }
 
 
