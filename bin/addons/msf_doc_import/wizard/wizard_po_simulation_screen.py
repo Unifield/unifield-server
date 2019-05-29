@@ -1007,8 +1007,12 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                                 uom_id = uom_ids[0]
                                 UOM_NAME_ID.setdefault(vals[5], uom_id)
                     # Qty
+                    qty = 0
                     if vals[4]:
-                        qty = float(vals[4])
+                        try:
+                            qty = float(vals[4])
+                        except Exception:
+                            qty = 0
 
                     # AD on line
                     file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref, vals[20:])
