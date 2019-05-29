@@ -4924,6 +4924,7 @@ msgstr "Un écart existe dans la séquence"
 #: view:stock.move.cancel.wizard:0
 #: view:stock.move.cancel.more.wizard:0
 #: view:stock.picking.cancel.more.wizard:0
+#: view:stock.picking.cancel.wizard:0
 msgid "Cancel Only"
 msgstr "Annuler Seulement"
 
@@ -58838,6 +58839,7 @@ msgstr "Journal Ajustement"
 #: code:addons/msf_tools/msf_tools.py:1084
 #: code:addons/msf_tools/msf_tools.py:1106
 #: code:addons/msf_doc_import/purchase_order.py:68
+#: code:addons/stock_override/wizard/change_dest_location.py:118
 #, python-format
 msgid "Warning"
 msgstr "Avertissement"
@@ -84105,6 +84107,7 @@ msgstr "Maroc"
 #: field:stock.move.memory.out,move_id:0
 #: field:report.stock.move,move:0
 #: field:stock.move.cancel.more.wizard,move_id:0
+#: field:change.dest.location,picking_id:0
 msgid "Move"
 msgstr "Transaction"
 
@@ -91607,6 +91610,8 @@ msgstr "XML non valide pour la Vue Architecture!"
 #: view:purchase.order.cancel.wizard:0
 #: view:tender.cancel.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: view:stock.move.cancel.more.wizard:0
+#: view:stock.picking.cancel.more.wizard:0
 msgid "Actions"
 msgstr "Actions"
 
@@ -101818,7 +101823,7 @@ msgstr "Numéro du Bon d'Engagement"
 
 #. module: msf_outgoing
 #: view:stock.incoming.processor:0
-msgid "Warning! There is a risk of producing inconsistent data if you process this Incoming Shipment before it receives the delivery details and is changed into status \"Available Shipped\” after synchronization. To avoid major misalignment please proceed only if you can do a full reception."
+msgid "Warning! There is a risk of producing inconsistent data if you process this Incoming Shipment before it receives the delivery details and is changed into status \"Available Shipped\\” after synchronization. To avoid major misalignment please proceed only if you can do a full reception."
 msgstr "Attention! Si vous traitez la Livraison Entrante, il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\"après une synchro. Pour éviter tout mauvais alignement, veuillez procéder au traitement uniquement si vous faites une réception totale."
 
 #. module: stock
@@ -106035,3 +106040,21 @@ msgstr "Nb Articles:"
 #: report:po.follow.up_rml:0
 msgid "Estimated Amount:"
 msgstr "Montant Estimé:"
+
+#. module: stock_override
+#: code:addons/stock_override/wizard/change_dest_location.py:185
+#, python-format
+msgid "Change location - All lines"
+msgstr "Changer la zone - Toutes les lignes"
+
+#. module: stock_override
+#: view:change.dest.location:0
+msgid "Change location - Selected lines"
+msgstr "Changer la zone - Lignes sélectionnées"
+
+#. module: stock_override
+#: code:addons/stock_override/wizard/change_dest_location.py:118
+#, python-format
+msgid "No stock move found."
+msgstr "Aucun mouvement trouvé."
+

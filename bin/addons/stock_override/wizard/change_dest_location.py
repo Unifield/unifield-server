@@ -22,6 +22,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from lxml import etree
 
 
 class change_dest_location(osv.osv_memory):
@@ -84,7 +85,12 @@ class change_dest_location(osv.osv_memory):
         return getattr(o,fields) or ""
 
 
-    def change_dest_location(self, cr, uid, ids, context=None):
+    def change_dest_location_selected(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        return self.change_dest_location(cr, uid, ids, context=context, selection=context.get('button_selected_ids', []))
+
+    def change_dest_location(self, cr, uid, ids, context=None, selection=None):
         '''
         Change the destination location for all stock moves
         '''
@@ -95,20 +101,27 @@ class change_dest_location(osv.osv_memory):
             ids = [ids]
 
         loc_obj = self.pool.get('stock.location')
-
+        move_obj = self.pool.get('stock.move')
         nb = 0
         for wizard in self.browse(cr, uid, ids, context=context):
             warn_msg = []
             state_to_change = ['draft', 'confirmed', 'assigned']
             if wizard.type != 'internal':
                 state_to_change = ['draft', 'confirmed']
-            for move in wizard.picking_id.move_lines:
-                if move.state not in state_to_change or move.product_qty == 0:
-                    continue
+
+            move_domain = [('picking_id', '=', wizard.picking_id.id), ('state', '!=', state_to_change), ('product_qty', '!=', 0)]
+            if selection is not None:
+                move_domain.append(('id', 'in', selection))
+            move_ids = move_obj.search(cr, uid, move_domain, context=context)
+
+            if not move_ids:
+                raise osv.except_osv(_('Warning'), _('No stock move found.'))
+
+            for move in move_obj.browse(cr, uid, move_ids, context=context):
 
                 if wizard.type == 'internal':
                     # Check if the new destination location is not the source location
-                    if move.location_dest_id.id == wizard.dest_location_id.id:
+                    if move.location_id.id == wizard.dest_location_id.id:
                         warn_msg.append(_('Line %s : The new destination location is the same as the source location of the move, so the destination location has not been changed for this move. \n') % move.line_number)
                         continue
 
@@ -119,7 +132,7 @@ class change_dest_location(osv.osv_memory):
                         warn_msg.append(_('Line %s : The new destination location is not compatible with the product type, so the destination location has not been changed for this move. \n') % move.line_number)
                         continue
                     nb += 1
-                    self.pool.get('stock.move').write(cr, uid, [move.id], {'location_dest_id': wizard.dest_location_id.id}, context=context)
+                    move_obj.write(cr, uid, [move.id], {'location_dest_id': wizard.dest_location_id.id}, context=context)
 
                 else: # out
                     if move.location_id.id == wizard.src_location_id.id:
@@ -131,7 +144,7 @@ class change_dest_location(osv.osv_memory):
                     new_data = {'location_id': wizard.src_location_id.id}
                     if move.state == 'assigned':
                         new_data['state'] = 'confirmed'
-                    self.pool.get('stock.move').write(cr, uid, [move.id], new_data, context=context)
+                    move_obj.write(cr, uid, [move.id], new_data, context=context)
                     nb += 1
 
             if nb:
@@ -160,6 +173,21 @@ class change_dest_location(osv.osv_memory):
                 'view_mode': 'form',
                 'target': 'new',
                 'context': context}
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+        res = super(change_dest_location, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        has_selection = context.get('button_selected_ids')
+        view_xml = etree.fromstring(res['arch'])
+        if has_selection:
+            fields = view_xml.xpath("//button[@name='change_dest_location']")
+            fields[0].set('string',  _('Change location - All lines'))
+        else:
+            fields = view_xml.xpath("//button[@name='change_dest_location_selected']")
+            fields[0].set('invisible', '1')
+        res['arch'] = etree.tostring(view_xml)
+        return res
 
 change_dest_location()
 

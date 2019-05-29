@@ -33,9 +33,10 @@
                         <field name="warn_msg" colspan="4" nolabel="1" readonly="1" />
                     </group>
                     <group colspan="4" col="3">
-                        <button special="cancel" icon="gtk-cancel" string="Cancel" states="start" />
                         <button name="close_window" icon="gtk-cancel" string="Close" states="end" type="object" />
                         <button name="change_dest_location" type="object" icon="gtk-execute" string="Change location" states="start" />
+                        <button name="change_dest_location_selected" type="object" icon="gtk-execute" string="Change location - Selected lines" states="start" />
+                        <button special="cancel" icon="gtk-cancel" string="Cancel" states="start" />
                     </group>
                 </form>
             </field>
