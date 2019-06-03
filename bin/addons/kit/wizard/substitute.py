@@ -626,6 +626,8 @@ class substitute_item(osv.osv_memory):
         result.setdefault('value', {}).update({'qty_substitute_item': product_obj.qty_allocable,
                                                'uom_id_substitute_item': uom_id,
                                                })
+        if context.get('prodlot_id'):
+            context.pop('prodlot_id')
         return result
 
     def change_lot(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
@@ -809,7 +811,16 @@ class substitute_item(osv.osv_memory):
             # hidden_asset_mandatory
             result[obj.id].update({'hidden_asset_mandatory': obj.product_id_substitute_item.type == 'product' and obj.product_id_substitute_item.subtype == 'asset'})
             # call common_on_change
-            compute_avail = self.common_on_change(cr, uid, [obj.id], obj.location_id_substitute_item.id, obj.product_id_substitute_item.id, obj.lot_id_substitute_item.id, obj.uom_id_substitute_item.id, result=None, context=context)
+            prodlot_id = obj.lot_id_substitute_item and obj.lot_id_substitute_item.id or False
+            if not prodlot_id and obj.lot_mirror and obj.exp_substitute_item:
+                prodlot_domain = [
+                    ('product_id', '=', obj.product_id_substitute_item.id),
+                    ('name', '=', obj.lot_mirror),
+                    ('life_date', '=', obj.exp_substitute_item)
+                ]
+                prodlot_ids = self.pool.get('stock.production.lot').search(cr, uid, prodlot_domain, context=context)
+                prodlot_id = prodlot_ids and prodlot_ids[0] or False
+            compute_avail = self.common_on_change(cr, uid, [obj.id], obj.location_id_substitute_item.id, obj.product_id_substitute_item.id, prodlot_id, obj.uom_id_substitute_item.id, result=None, context=context)
             # availability_value_func_substitute_item
             result[obj.id].update({'availability_value_func_substitute_item': compute_avail['value']['qty_substitute_item']})
             # integrity_status_func_substitute_item
