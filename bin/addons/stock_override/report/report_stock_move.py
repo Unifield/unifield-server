@@ -671,45 +671,23 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             prod_stock_bn = 0
             prod_stock = 0
             ctx.update({'to_date': move_date, 'prodlot_id': False})
-            """
-            if move['product_id'] not in stock_level:
-                stock_level[move['product_id']] = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
-            elif move['location_dest_id'] != move['location_src_id']:
-                if move['location_dest_id'] in location_ids and move['location_src_id'] not in location_ids:
-                    stock_level[move['product_id']] += move['product_qty']
-                elif move['location_dest_id'] not in location_ids and move['location_src_id'] in location_ids:
-                    stock_level[move['product_id']] -= move['product_qty']
-            prod_stock = stock_level[move['product_id']]
-            """
             prod_stock = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
-            # UOM 12PCE / PCE + same product in 2 moves / ignore INT or +/- stock
-            """
-            if move['prodlot_id']:
-                if move['prodlot_id'] not in bn_level:
-                    ctx.update({'prodlot_id': move['prodlot_id']})
-                    bn_level[move['prodlot_id']] = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
-                elif move['location_dest_id'] != move['location_src_id']:
-                    if move['location_dest_id'] in location_ids and move['location_src_id'] not in location_ids:
-                        bn_level[move['prodlot_id']] += move['product_qty']
-                    elif move['location_dest_id'] not in location_ids and move['location_src_id'] in location_ids:
-                        bn_level[move['prodlot_id']] -= move['product_qty']
-                prod_stock_bn = bn_level[move['prodlot_id']]
-            """
             prod_stock_bn = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
             # Get Unit Price at date
             prod_price = move['price_unit'] or 0
             if not prod_price:
                 if move_date:
-                    self.cr.execute("""SELECT distinct on (product_id) product_id, old_standard_price
+                    self.cr.execute("""SELECT old_standard_price
                                 FROM standard_price_track_changes
                                 WHERE product_id = %s AND change_date >= %s
-                                ORDER BY product_id, change_date ASC
+                                ORDER BY change_date ASC
+                                LIMIT 1
                                 """, (move['product_id'], move_date))
                     for x in self.cr.fetchall():
-                        prod_price = x[1]
+                        prod_price = x[0]
                 if not prod_price:
                     prod_price = move['standard_price']
-            if move['price_currency_id'] != currency_id:
+            elif move['price_currency_id'] != currency_id:
                 prod_price = curr_obj.compute(self.cr, self.uid, move['price_currency_id'], currency_id,
                                               prod_price, round=False, context=ctx)
 
