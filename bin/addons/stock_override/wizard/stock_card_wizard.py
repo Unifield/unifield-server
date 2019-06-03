@@ -283,11 +283,31 @@ class stock_card_wizard(osv.osv_memory):
                       (move.init_inv_ids and move.init_inv_ids[0].name) or \
                       (move.inventory_ids and move.inventory_ids[0].name) or move.name or ''
 
+            partner_or_loc = False
+            if move.type == 'out':
+                if not move.sale_line_id and not move.purchase_line_id and not move.picking_id.sale_id and \
+                        not move.picking_id.purchase_id:  # from scratch OUT move
+                    partner_or_loc = move.location_dest_id.name
+                elif move.sale_line_id:
+                    if move.sale_line_id.procurement_request:  # OUT move linked to IR
+                        partner_or_loc = move.sale_line_id.order_id.location_requestor_id.name
+                    else:  # OUT move linked to FO
+                        partner_or_loc = move.sale_line_id.order_id.partner_id.name
+            elif move.type == 'in':
+                if (not move.sale_line_id and not move.purchase_line_id and not move.picking_id.sale_id and
+                        not move.picking_id.purchase_id) or (move.sale_line_id and move.sale_line_id.procurement_request) \
+                        or (move.purchase_line_id and move.purchase_line_id.linked_sol_id
+                        and move.purchase_line_id.linked_sol_id.procurement_request):  # from scratch IN move or IN move linked to IR
+                    partner_or_loc = move.location_id.name
+                elif move.purchase_line_id:  # IN move linked to PO
+                    partner_or_loc = move.purchase_line_id.order_id.partner_id.name
+
             line_values = {
                 'card_id': ids[0],
                 'date_done': move.date,
                 'doc_ref': doc_ref,
                 'origin': move.picking_id and move.picking_id.origin or False,
+                'partner_or_loc': partner_or_loc,
                 'qty_in': in_qty,
                 'qty_out': out_qty,
                 'balance': initial_stock,
@@ -356,6 +376,7 @@ class stock_card_wizard_line(osv.osv_memory):
         'date_done': fields.datetime(string='Date'),
         'doc_ref': fields.char(size=64, string='Doc. Ref.'),
         'origin': fields.char(size=512, string='Origin'),
+        'partner_or_loc': fields.char(size=512, string='Partner/Location'),
         'qty_in': fields.float(digits=(16,2), string='Qty IN', related_uom='uom_id'),
         'qty_out': fields.float(digits=(16,2), string='Qty OUT', related_uom='uom_id'),
         'balance': fields.float(digits=(16,2), string='Balance', related_uom='uom_id'),
