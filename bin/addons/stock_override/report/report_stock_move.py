@@ -23,6 +23,7 @@ import tools
 import time
 import threading
 
+import logging
 from report import report_sxw
 from osv import fields, osv
 from decimal_precision import decimal_precision as dp
@@ -391,6 +392,9 @@ product will be shown.""",
             ]
             if report.partner_id:
                 domain.append(('partner_id', '=', report.partner_id.id))
+            if report.product_list_id:
+                p_ids = self.pool.get('product.product').search(cr, uid, [('list_ids', '=', report.product_list_id.id)])
+                domain.append(('product_id', 'in', p_ids))
             if report.product_id:
                 domain.append(('product_id', '=', report.product_id.id))
             if report.prodlot_id:
@@ -597,6 +601,7 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
         })
 
     def getLines(self, currency_id):
+        _logger = logging.getLogger('in.out.report')
         prod_obj = self.pool.get('product.product')
         curr_obj = self.pool.get('res.currency')
         loc_obj = self.pool.get('stock.location')
@@ -609,10 +614,8 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             location_ids = loc_obj.search(self.cr, self.uid, loc_domain, context=self.localcontext)
             self.localcontext.update({'location': location_ids})
         self.localcontext['compute_child'] = False
-        i = len(self.datas['moves'])
-        print i
-        a = time.time()
-        j= 0
+        nb_lines = len(self.datas['moves'])
+        _logger.info('Report started on %d lines' % nb_lines)
 
         lang_ctx = {'lang': self.localcontext.get('lang', 'en_MF')}
         reason_ids = self.pool.get('stock.reason.type').search(self.cr, self.uid, [])
@@ -657,14 +660,14 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             order by p.default_code, lot.name, m.date asc
         ''', (lang_ctx.get('lang'), tuple(self.datas['moves'])))
 
-        #stock_level = {}
-        #bn_level = {}
+        start_time = time.time()
+        nb_done = 0
         for move in self.cr.dictfetchall():
-            j += 1
-            if j%100 == 0:
-                print time.time() - a
-                a = time.time()
-                print j
+            nb_done += 1
+            if nb_done%1000 == 0:
+                _logger.info('1000 lines in %s seconds (%d/%d)' % (time.time() - start_time, nb_done, nb_lines))
+                start_time = time.time()
+
             move_date = move['date'] or False
             # Get stock
             ctx = self.localcontext.copy()
@@ -719,7 +722,6 @@ class report_stock_move_xls(SpreadsheetReport):
         super(report_stock_move_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
-        print context
         if context is None:
             context = {}
         try:
