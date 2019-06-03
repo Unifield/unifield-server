@@ -106762,3 +106762,8 @@ msgstr "Un BC avec un Type de Commande Prêt, Donation avant expiration, Donatio
 #, python-format
 msgid "You can't change the Order Type to Loan, Donation before expiry, Standard donation or In Kind Donation if a line has a Source Document"
 msgstr "Vous ne pouvez pas changer le Type de Commande en Prêt, Donation avant expiration, Donation normale ou Donation en Nature si une des lignes a un Document d'Origine"
+
+#. module: stock_override
+#: field:stock.card.wizard.line,partner_or_loc:0
+msgid "Partner/Location"
+msgstr "Partneraire/Zone"
