@@ -211,6 +211,43 @@ class analytic_account(osv.osv):
                 account_ids += tmp_ids
         return account_ids
 
+    def _is_pf(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns True if the Analytic Account is the default Funding Pool "MSF Private Funds"
+        """
+        res = {}
+        ir_model_obj = self.pool.get('ir.model.data')
+        # get the id of PF
+        try:
+            pf_id = ir_model_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            pf_id = 0
+        for analytic_acc_id in ids:
+            res[analytic_acc_id] = analytic_acc_id == pf_id
+        return res
+
+    def _search_dest_compatible_with_cc_ids(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain with all destinations compatible with the selected Cost Center
+        Ex: to get the dest. compatible with the CC 2, use the dom [('dest_compatible_with_cc_ids', '=', 2)]
+        """
+        dom = []
+        if context is None:
+            context = {}
+        for arg in args:
+            if arg[0] == 'dest_compatible_with_cc_ids':
+                operator = arg[1]
+                cc = arg[2]
+                if operator != '=' or not isinstance(cc, (int, long)):
+                    raise osv.except_osv(_('Error'), _('Filter not implemented on Destinations.'))
+                all_dest_ids = self.search(cr, uid, [('category', '=', 'DEST')], context=context)
+                compatible_dest_ids = []
+                for dest in self.browse(cr, uid, all_dest_ids, fields_to_fetch=['allow_all_cc', 'dest_cc_ids'], context=context):
+                    if dest.allow_all_cc or (cc and cc in [c.id for c in dest.dest_cc_ids]):
+                        compatible_dest_ids.append(dest.id)
+                dom.append(('id', 'in', compatible_dest_ids))
+        return dom
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
@@ -228,11 +265,21 @@ class analytic_account(osv.osv):
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active analytic accounts",),
         'intermission_restricted': fields.function(_get_fake, type="boolean", method=True, store=False, string="Domain to restrict intermission cc"),
         'balance': fields.function(_debit_credit_bal_qtty, method=True, type='float', string='Balance', digits_compute=dp.get_precision('Account'), multi='debit_credit_bal_qtty'),
+        'is_pf': fields.function(_is_pf, method=True, type='boolean', string='Is the default Funding Pool "PF"', store=False),
+        'dest_cc_ids': fields.many2many('account.analytic.account', 'destination_cost_center_rel',
+                                        'destination_id', 'cost_center_id', string='Cost Centers',
+                                        domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
+        'allow_all_cc': fields.boolean(string="Allow all Cost Centers"),
+        'dest_compatible_with_cc_ids': fields.function(_get_fake, method=True, store=False,
+                                                       string='Destinations compatible with the Cost Center',
+                                                       type='many2many', relation='account.analytic.account',
+                                                       fnct_search=_search_dest_compatible_with_cc_ids),
     }
 
     _defaults ={
         'date_start': lambda *a: (datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'for_fx_gain_loss': lambda *a: False,
+        'allow_all_cc': lambda *a: False,
     }
 
     def _check_code_unicity(self, cr, uid, ids, context=None):
@@ -302,6 +349,30 @@ class analytic_account(osv.osv):
         parent = self.search(cr, uid, [('category', '=', category), ('parent_id', '=', False)])[0]
         res['value']['parent_id'] = parent
         res['domain']['parent_id'] = [('category', '=', category), ('type', '=', 'view')]
+        return res
+
+    def on_change_allow_all_cc(self, cr, uid, ids, allow_all_cc, dest_cc_ids, context=None):
+        """
+        If the user tries to tick the box "Allow all Cost Centers" whereas CC are selected,
+        informs him that he has to remove the CC first
+        """
+        res = {}
+        if allow_all_cc and dest_cc_ids and dest_cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
+            warning = {
+                'title': _('Warning!'),
+                'message': _('Please remove the Cost Centers linked to the Destination before ticking this box.')
+            }
+            res['warning'] = warning
+            res['value'] = {'allow_all_cc': False, }
+        return res
+
+    def on_change_dest_cc_ids(self, cr, uid, ids, dest_cc_ids, context=None):
+        """
+        If at least a CC is selected, unticks the box "Allow all Cost Centers"
+        """
+        res = {}
+        if dest_cc_ids and dest_cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
+            res['value'] = {'allow_all_cc': False, }
         return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -377,6 +448,8 @@ class analytic_account(osv.osv):
         if 'category' in vals:
             if vals['category'] != 'DEST':
                 vals['destination_ids'] = [(6, 0, [])]
+                vals['dest_cc_ids'] = [(6, 0, [])]
+                vals['allow_all_cc'] = False  # default value
             if vals['category'] != 'FUNDING':
                 vals['tuple_destination_account_ids'] = [(6, 0, [])]
                 vals['cost_center_ids'] = [(6, 0, [])]
@@ -408,6 +481,7 @@ class analytic_account(osv.osv):
         default['child_ids'] = [] # do not copy the child_ids
         default['tuple_destination_summary'] = []
         default['line_ids'] = []
+        default['dest_cc_ids'] = []
         return super(analytic_account, self).copy(cr, uid, a_id, default, context=context)
 
     def _check_name_unicity(self, cr, uid, ids, context=None):
@@ -416,21 +490,55 @@ class analytic_account(osv.osv):
         """
         if context is None:
             context = {}
+        lang_obj = self.pool.get('res.lang')
         # no check at sync time (note that there may be some accounts with duplicated names created before US-5224)
         if not context.get('sync_update_execution', False):
             if isinstance(ids, (int, long)):
                 ids = [ids]
+            lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True), ('active', '=', True)], context=context)
             for analytic_acc in self.read(cr, uid, ids, ['category', 'name'], context=context):
                 dom = [('category', '=', analytic_acc.get('category', '')),
                        ('name', '=ilike', analytic_acc.get('name', '')),
                        ('id', '!=', analytic_acc.get('id'))]
-                if self.search_exist(cr, uid, dom, context=context):
+                duplicate = 0
+                # check the potential duplicates in all languages
+                if lang_ids:
+                    for lang in lang_obj.browse(cr, uid, lang_ids, fields_to_fetch=['code'], context=context):
+                        if self.search_exist(cr, uid, dom, context={'lang': lang.code}):
+                            duplicate += 1
+                elif self.search_exist(cr, uid, dom, context=context):
+                    duplicate += 1
+                if duplicate > 0:
                     ir_trans = self.pool.get('ir.translation')
                     trans_ids = ir_trans.search(cr, uid, [('res_id', 'in', ids), ('name', '=', 'account.analytic.account,name')], context=context)
                     if trans_ids:
                         ir_trans.clear_transid(cr, uid, trans_ids, context=context)
                     raise osv.except_osv(_('Warning !'), _('You cannot have the same name between analytic accounts in the same category!'))
         return True
+
+    def _check_existing_entries(self, cr, uid, analytic_account_id, context=None):
+        """
+        Checks if some AJI booked on the analytic_account_id are outside the account activation time interval.
+        For FP and Free accounts: check is done on Doc Date. If AJI are found an error is raised to prevent Saving the account.
+        For other accounts: check is done on Posting Date. If AJI are found only a message is displayed on top of the page.
+        """
+        if context is None:
+            context = {}
+        aal_obj = self.pool.get('account.analytic.line')
+        if analytic_account_id:
+            analytic_acc_fields = ['date_start', 'date', 'code']
+            analytic_acc = self.browse(cr, uid, analytic_account_id, fields_to_fetch=analytic_acc_fields, context=context)
+            aal_dom_fp_free = [('account_id', '=', analytic_account_id),
+                               '|', ('document_date', '<', analytic_acc.date_start), ('document_date', '>=', analytic_acc.date)]
+            if aal_obj.search_exist(cr, uid, aal_dom_fp_free, context=context):
+                raise osv.except_osv(_('Error'), _('At least one Analytic Journal Item using the Analytic Account %s '
+                                                   'has a Document Date outside the activation dates selected.') % (analytic_acc.code))
+            if not context.get('sync_update_execution'):
+                aal_dom_cc_dest = ['|', ('cost_center_id', '=', analytic_account_id), ('destination_id', '=', analytic_account_id),
+                                   '|', ('date', '<', analytic_acc.date_start), ('date', '>=', analytic_acc.date)]
+                if aal_obj.search_exist(cr, uid, aal_dom_cc_dest, context=context):
+                    self.log(cr, uid, analytic_account_id, _('At least one Analytic Journal Item using the Analytic Account %s '
+                                                             'has a Posting Date outside the activation dates selected.') % (analytic_acc.code))
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -470,11 +578,15 @@ class analytic_account(osv.osv):
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
         res = super(analytic_account, self).write(cr, uid, ids, vals, context=context)
+        self.check_access_rule(cr, uid, ids, 'write', context=context)
         if context.get('from_web', False) or context.get('from_import_menu', False):
-            cat_instance = self.read(cr, uid, ids, ['category', 'instance_id'], context=context)[0]
+            cat_instance = self.read(cr, uid, ids, ['category', 'instance_id', 'is_pf'], context=context)[0]
             if cat_instance:
                 self.check_fp(cr, uid, cat_instance, context=context)
         self._check_name_unicity(cr, uid, ids, context=context)
+        if not context.get('sync_update_execution'):
+            for analytic_acc_id in ids:
+                self._check_existing_entries(cr, uid, analytic_acc_id, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
@@ -557,9 +669,41 @@ class analytic_account(osv.osv):
         self.write(cr, uid, ids, {'cost_center_ids':[(6, 0, [])]}, context=context)
         return True
 
+    def button_dest_cc_clear(self, cr, uid, ids, context=None):
+        """
+        Removes all Cost Centers selected in the Destination view
+        """
+        self.write(cr, uid, ids, {'dest_cc_ids': [(6, 0, [])]}, context=context)
+        return True
+
     def button_dest_clear(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'tuple_destination_account_ids':[(6, 0, [])]}, context=context)
         return True
+
+    def get_destinations_by_accounts(self, cr, uid, ids, context=None):
+        """
+        Returns a view with the Destinations by accounts (for the FP selected if any, otherwise for all the FP)
+        """
+        if context is None:
+            context = {}
+        ir_model_obj = self.pool.get('ir.model.data')
+        active_ids = context.get('active_ids', [])
+        if active_ids:
+            analytic_acc_category = self.browse(cr, uid, active_ids[0], fields_to_fetch=['category'], context=context).category or ''
+            if analytic_acc_category == 'FUNDING':
+                context.update({'search_default_funding_pool_id': active_ids[0]})
+        search_view_id = ir_model_obj.get_object_reference(cr, uid, 'analytic_distribution', 'view_account_destination_summary_search')
+        search_view_id = search_view_id and search_view_id[1] or False
+        return {
+            'name': _('Destinations by accounts'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.destination.summary',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'search_view_id': [search_view_id],
+            'context': context,
+            'target': 'current',
+        }
 
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

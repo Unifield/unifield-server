@@ -105,7 +105,7 @@
       </tr>
       <tr>
         <td>
-          <para style="P3">[[ repeatIn(data['form'], 'm') ]] [[ '[%s]' %m['product_code'] ]] [[ m['product_name'] ]]</para>
+          <para style="P3">[[ repeatIn(get_data(o), 'm') ]] [[ '[%s]' %m['product_code'] ]] [[ m['product_name'] ]]</para>
         </td>
         <td>
           <para style="P5">[[ m['product_qty'] ]] [[ m['product_uom'] ]]</para>

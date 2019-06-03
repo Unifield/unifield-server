@@ -106,7 +106,7 @@ class procurement_request(osv.osv):
         'purchase_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Purchase Total', help="The amount of lines sourced on order", multi='by_type'),
         'stock_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total', help="The amount of lines sourced from stock", multi='by_type'),
         'proc_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total', help="The amount of lines sourced from stock", multi='by_type'),
-        'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True),
+        'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True, sort_column='id'),
         'is_ir_from_po_cancel': fields.boolean('Is IR from a PO cancelled', invisible=True),  # UFTP-82: flagging we are in an IR and its PO is cancelled
     }
 
@@ -714,5 +714,16 @@ class procurement_request_line(osv.osv):
 
 procurement_request_line()
 
+class procurement_request_sourcing_document(osv.osv):
+    """ Backward compatibility: do not change object's sdref """
+
+    _name = 'procurement.request.sourcing.document'
+    _table = 'procurement_request_sourcing_document2'
+    _auto = False
+    _columns = {
+        'order_id': fields.many2one('sale.order', string='Internal request'),
+    }
+
+procurement_request_sourcing_document()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

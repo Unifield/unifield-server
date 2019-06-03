@@ -26,7 +26,7 @@ import logging
 
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
-RESULT_MODELS_SELECTION = [('group', 'Group'), ('user', 'User'), ('menu', 'Menu')]
+RESULT_MODELS_SELECTION = [('group', 'Group'), ('menu', 'Menu')]
 RESULT_TYPES_SELECTION = [('error', 'Error'), ('warning', 'Warning'), ('created', 'Created'), ('activated', 'Activated'), ('deactivated', 'Deactivated'), ('updated', 'Updated')]
 
 LEVEL_SELECTION = {'hq': 'hq', 'co': 'coordo', 'pr': 'project'}
@@ -154,7 +154,6 @@ class user_access_configurator(osv.osv_memory):
               'group_name_list': [group_names],
               'menus_groups': {'menu_id': [group_names]}, - we only take the group_name into account if True - if the same group is defined multiple times, it will be deleted at the end of import function
               'group': {'activated': [group_names], 'deactivated': [group_names], 'created': [group_names], 'warning': [], 'error': [], 'updated': []},
-              'user': {'activated': [user_names], 'deactivated': [user_names], 'created': [user_names], 'warning': [], 'error': []},
               'menu': {'warning': [], 'error': []},
               }
         '''
@@ -174,7 +173,6 @@ class user_access_configurator(osv.osv_memory):
             data_structure.update({obj.id: {'group_name_list': [],
                                             'menus_groups': {},
                                             'group': {'activated': [], 'deactivated': [], 'created': [], 'warning': [], 'error': [], 'updated':[]},
-                                            'user': {'activated': [], 'deactivated': [], 'created': [], 'warning': [], 'error': []},
                                             'menu': {'warning': [], 'error': []},
                                             }})
             # file to process
@@ -353,117 +351,6 @@ class user_access_configurator(osv.osv_memory):
                     # info logging - created groups
                     data_structure[obj.id]['group']['created'].append(group)
 
-            # deactivate the groups not present in the file
-            # UF-1996 : Don't deactivate groups not present in the file
-            #self._set_active_group_name(cr, uid, ids, context=context, group_names=deactivate_group_names, active_value=False)
-
-        return True
-
-    def _set_active_user_ids(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        change active value of user ids
-
-        return modified user ids
-        '''
-        # objects
-        user_obj = self.pool.get('res.users')
-        # data structure
-        data_structure = context['data_structure']
-
-        user_ids = kwargs['user_ids']
-        active_value = kwargs['active_value']
-        # only with active not active_value
-        set_active_ids = user_obj.search(cr, uid, [('id', 'in', user_ids), ('active', '=', not active_value)], context=context)
-        user_obj.write(cr, uid, set_active_ids, {'active': active_value}, context=context)
-
-        # info logging - activated/deactivated users
-        set_active_names = [x['name'] for x in user_obj.read(cr, uid, set_active_ids, ['name'], context=context)]
-        for i in ids:
-            if active_value:
-                data_structure[i]['user']['activated'].extend(set_active_names)
-            else:
-                data_structure[i]['user']['deactivated'].extend(set_active_names)
-
-        return set_active_ids
-
-    def _process_users_uac(self, cr, uid, ids, context=None):
-        '''
-        create user corresponding to file groups if not already present
-
-        default values for users
-
-        res_user:
-        'groups_id': fields.many2many('res.groups', 'res_groups_users_rel', 'uid', 'gid', 'Groups'),
-        '''
-        # Some verifications
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        # objects
-        user_obj = self.pool.get('res.users')
-        # data structure
-        data_structure = context['data_structure']
-        # default password value
-        default_password_value = 'temp'
-
-        for obj in self.browse(cr, uid, ids, context=context):
-            # get admin user id
-            admin_ids = user_obj.search(cr, uid, [('login', '=', 'admin')], context=context)
-            if not admin_ids:
-                # log error and return
-                data_structure[obj.id]['user']['error'].append('The Administrator user does not exist. This is a big issue.')
-                return
-            # group ids - used to set all groups to admin user
-            group_ids_list = []
-            # user ids - used to deactivate users for which group is not in the file
-            # we do not want to deactivate admin user (even if not in the file)
-            user_ids_list = [admin_ids[0]]
-            group_names_with_level = list(data_structure[obj.id]['group_name_list'])
-            # remove the $XX extension
-            group_names = [group.split('$')[0] for group in
-                           group_names_with_level if group]
-            data_structure[obj.id]['group_name_list'] = group_names
-
-            for group_name in group_names:
-                # login format from group_name
-                login_name = '_'.join(group_name.lower().split())
-                # check if a user already exist
-                user_ids = user_obj.search(cr, uid, [('login', '=', login_name)], context=context)
-                if not user_ids:
-                    # create a new user, copied from admin user
-                    user_ids = [user_obj.copy(cr, uid, admin_ids[0], {'name': group_name,
-                                                                      'login': login_name,
-                                                                      'password': default_password_value,
-                                                                      'date': False}, context=context)]
-                    # info logging - created users
-                    data_structure[obj.id]['user']['created'].append(group_name)
-
-                else:
-                    # we make sure that the user name is up to date, as Manager gives the same login name as mAnAgER.
-                    user_obj.write(cr, uid, user_ids, {'name': group_name}, context=context)
-                # update the group of the user with (6, 0, 0) resetting the data
-                group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=[group_name])
-                user_obj.write(cr, uid, user_ids, {'groups_id': [(6, 0, group_ids)]}, context=context)
-                # keep group_id for updating admin user
-                group_ids_list.extend(group_ids)
-                # keep user_id for deactivate users not present in the file
-                user_ids_list.extend(user_ids)
-
-            # get all users
-            #all_user_ids = user_obj.search(cr, uid, [], context=context)
-            # deactivate user not present in the file and not ADMIN
-            # UF-1996 : Don't deactivate user not present in the file
-            #deactivate_user_ids = [x for x in all_user_ids if x not in user_ids_list]
-            #self._set_active_user_ids(cr, uid, ids, context=context, user_ids=deactivate_user_ids, active_value=False)
-            # activate user from the file (could have been deactivate previously)
-            self._set_active_user_ids(cr, uid, ids, context=context, user_ids=user_ids_list, active_value=True)
-            # get admin group id
-            group_ids_list.append(self._get_admin_user_rights_group_id(cr, uid, context=context))
-            group_ids_list = list(set(group_ids_list))  # remove duplicates
-            # for admin user, set all unifield groups + admin group (only user to have this group)
-            user_obj.write(cr, uid, admin_ids, {'groups_id': [(6, 0, group_ids_list)]}, context=context)
 
         return True
 
@@ -636,8 +523,6 @@ class user_access_configurator(osv.osv_memory):
         data_structure = self._import_data_uac(cr, uid, ids, context=context)
         # process the groups
         self._process_groups_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
-        # process users
-        self._process_users_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
         # process menus - groups relation
         self._process_menus_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
         # process ACL
@@ -715,7 +600,6 @@ user_access_configurator()
 class user_access_results(osv.osv_memory):
     _name = 'user.access.results'
     _columns = {'group_ids_user_access_results': fields.one2many('user.access.results.groups.line', 'wizard_id_user_access_results_line', string='Groups Info'),
-                'user_ids_user_access_results': fields.one2many('user.access.results.users.line', 'wizard_id_user_access_results_line', string='Users Info'),
                 'menu_ids_user_access_results': fields.one2many('user.access.results.menus.line', 'wizard_id_user_access_results_line', string='Menus Info'),
                 }
 

@@ -11,7 +11,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree" position="replace">
-                        <tree colors="red:virtual_available&lt;0;blue:virtual_available&gt;=0 and state in ('draft', 'end', 'obsolete');black:virtual_available&gt;=0 and state not in ('draft', 'end', 'obsolete')" string="Products">
+                        <tree colors="red:virtual_available&lt;0;blue:virtual_available&gt;=0 and state in ('draft', 'end', 'obsolete');grey:active == False" string="Products">
                         <field name="default_code" string="Code"/>
                         <field name="name" string="Description"/>
                         <field name="categ_id" invisible="1"/>
@@ -28,6 +28,7 @@
                         <field name="international_status"/>
                         <field name="uf_create_date" string="Creation"/>
                         <field name="uf_write_date" string="Modification"/>
+                        <field name="active" invisible="1"/>
                        </tree>
                     </xpath>
                 </data>
@@ -74,6 +75,7 @@
                             <field name="old_code"/>
                             <field name="sale_ok" invisible="1" />
                             <field name="purchase_ok" invisible="1" />
+                            <field name="xmlid_code" invisible="1" />
                         </group>
                     </group>
 
@@ -120,14 +122,23 @@
                                 </group>
                             </group>
 
-                            <group colspan="2" col="2" name="quality">
-                                <separator string="Quality" colspan="2"/>
-                                <field name="perishable"/>
-                                <field name="batch_management" on_change="onchange_batch_management(batch_management)" />
-                                <separator string="UOM" colspan="2"/>
-                                <field name="soq_quantity" on_change="change_soq_quantity(soq_quantity, uom_id)" />
-                                <field name="uom_id" on_change="onchange_uom(uom_id,uom_po_id)" domain="[('compatible_product_id', '=', active_id)]" />
-                                <field name="uom_po_id" string="Exchangeable Unit of Measure" domain="[('compatible_product_id', '=', active_id)]" />
+                            <group colspan="2" col="3" name="quality">
+                                <field name="uf_create_date" invisible="1"/>
+                                <separator string="Quality" colspan="3"/>
+                                <field name="perishable" attrs="{'readonly': [('uf_create_date', '!=', False)]}"/>
+                                <group colspan="1" col="1">
+                                   <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Make mandatory" type="object" attrs="{'invisible': ['|', ('uf_create_date', '=', False), ('perishable', '=', True)]}" context="{'needed_perishable': True}" />
+                                   <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Remove mandatory" type="object" attrs="{'invisible': ['|', ('uf_create_date', '=', False), ('perishable', '=', False)]}" context="{'needed_perishable': False}" />
+                                </group>
+                                <field name="batch_management" attrs="{'readonly': [('uf_create_date', '!=', False)]}"/>
+                                <group colspan="1" col="1">
+                                   <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Make mandatory" type="object" attrs="{'invisible': ['|', ('uf_create_date', '=', False), ('batch_management', '=', True)]}" context="{'needed_batch_mngmt': True}" />
+                                   <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Remove mandatory" type="object" attrs="{'invisible': ['|', ('uf_create_date', '=', False), ('batch_management', '=', False)]}" context="{'needed_batch_mngmt': False}" />
+                                </group>
+                                <separator string="UOM" colspan="3"/>
+                                <field name="soq_quantity" on_change="change_soq_quantity(soq_quantity, uom_id)" colspan="3" />
+                                <field name="uom_id" on_change="onchange_uom(uom_id,uom_po_id)" domain="[('compatible_product_id', '=', active_id)]" colspan="3" />
+                                <field name="uom_po_id" string="Exchangeable Unit of Measure" domain="[('compatible_product_id', '=', active_id)]" colspan="3" />
                             </group>
                         </page>
                         <page string="Specific info">
@@ -820,6 +831,32 @@
               </form>
            </field>
        </record>
+
+        <record id="change_bn_ed_mandatory_wizard" model="ir.ui.view">
+            <field name="name">change.bn.ed.mandatory.wizard</field>
+            <field name="model">change.bn.ed.mandatory.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Batch Number / Expiry Date flags change">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h3 style="text-align: center; margin: 10px; font-weight: normal"><translate>
+                                This product is still in use, changing the Batch Number / Expiry Date flags will have an impact on the quantity in stock or in pending transactions, making them unavailable for any transaction.<br/><br/>
+                                Please ensure the product is no longer in use in this mission before changing the attributes.<br/><br/>
+                                If you continue, products or transactions may be blocked.<br/><br/>
+                                Do you still want to continue ?
+                            </translate></h3>
+                        </html>
+                    </group>
+                    <newline />
+                    <button name="yes_change_bn_ed_mandatory" string="Yes" type="object" icon="terp-check" colspan="1" />
+                    <button name="no_change_bn_ed_mandatory" string="No" type="object" icon="gtk-cancel" colspan="1" />
+                </form>
+            </field>
+        </record>
+
+        <!-- Product Mass Update Menu -->
+        <menuitem id="product.parent_product_mass_update" parent="product_attributes.menu_main_product" name="Products Update" />
+        <menuitem action="product.previous_mass_update_action" id="menu_import_request" sequence="1" parent="product.parent_product_mass_update" />
 
     </data>
 </openerp>

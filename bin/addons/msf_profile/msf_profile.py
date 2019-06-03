@@ -52,7 +52,162 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def launch_patch_scripts(self, cr, uid, *a, **b):
+        ps_obj = self.pool.get('patch.scripts')
+        ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
+        for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
+            method = ps['method']
+            model_obj = self.pool.get(ps['model'])
+            try:
+                getattr(model_obj, method)(cr, uid, *a, **b)
+                self.write(cr, uid, [ps['id']], {'run': True})
+            except Exception as e:
+                err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
+                self._logger.error(err_msg)
+                raise osv.except_osv(
+                    'Error',
+                    err_msg,
+                )
+
+    # UF13.0
+    def us_5771_allow_all_cc_in_default_dest(self, cr, uid, *a, **b):
+        """
+        Set the default created destinations (OPS/EXP/SUP/NAT) as "Allow all Cost Centers"
+        """
+        update_dests = """
+            UPDATE account_analytic_account
+            SET allow_all_cc = 't'
+            WHERE category = 'DEST' 
+            AND id IN (SELECT res_id FROM ir_model_data WHERE module='analytic_distribution' AND name IN (
+                'analytic_account_destination_operation',
+                'analytic_account_destination_expatriates',
+                'analytic_account_destination_support',
+                'analytic_account_destination_national_staff'));
+        """
+        cr.execute(update_dests)
+        return True
+
+    # UF12.1
+    def us_5199_fix_cancel_partial_move_sol_id(self, cr, uid, *a, **b):
+        '''
+        Set the correct sale_line_id on moves post SLL that were cancelled after the original line was partially processed
+        '''
+        move_obj = self.pool.get('stock.move')
+        sol_obj = self.pool.get('sale.order.line')
+
+        move_domain = [
+            ('state', '=', 'cancel'),
+            ('type', '=', 'out'),
+            ('picking_id.subtype', '=', 'standard'),
+            ('picking_id.type', '=', 'out'),
+            ('sale_line_id.order_id.procurement_request', '=', True),
+            ('sale_line_id.state', '=', 'done'),
+        ]
+        moves_ids = move_obj.search(cr, uid, move_domain)
+        impacted_ir = []
+        for move in self.pool.get('stock.move').browse(cr, uid, moves_ids):
+            split_sol_ids = sol_obj.search(cr, uid, [
+                ('order_id', '=', move.sale_line_id.order_id.id),
+                ('id', '!=', move.sale_line_id.id),
+                ('line_number', '=', move.sale_line_id.line_number),
+                ('is_line_split', '=', True),
+                ('state', '=', 'cancel'),
+                ('product_uom_qty', '=', move.product_qty),
+            ])
+            if split_sol_ids:
+                impacted_ir.append('%s #%s' % (move.sale_line_id.order_id.name, move.sale_line_id.line_number))
+                move_obj.write(cr, uid, [move.id], {'sale_line_id': split_sol_ids[0]})
+
+        if impacted_ir:
+            self._logger.warn('%d IR cancelled lines linked to cancelled OUT: %s' % (len(impacted_ir), ', '.join(impacted_ir)))
+        return True
+
+
+    def us_5785_set_ocg_price_001(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance:
+            return True
+
+        if instance.instance.startswith('OCG'):
+            cr.execute("""select p.id, tmpl.id, p.default_code from
+                product_template tmpl, product_product p
+                where
+                    p.product_tmpl_id = tmpl.id and
+                    standard_price=0
+                """)
+            prod = cr.fetchall()
+            if prod:
+                cr.execute('update product_template set standard_price=0.01, list_price=0.01 where id in %s', (tuple([x[1] for x in prod]), ))
+                self._logger.warn('Change price to 0.01 on %d products: %s' % (cr.rowcount,', '.join([x[2] for x in prod])))
+                for prod_i in prod:
+                    cr.execute("""insert into standard_price_track_changes ( create_uid, create_date, old_standard_price, new_standard_price, user_id, product_id, change_date, transaction_name) values
+                            (1, NOW(), 0.00, 0.01, 1, %s, date_trunc('second', now()::timestamp), 'Patch US-5785')
+                            """,  (prod_i[0], ))
+                if instance.level == 'section' and instance.code == 'CH':
+                    cr.execute('''update ir_model_data set touched='[''default_code'']', last_modification=NOW() where model='product.product' and res_id in %s and module='sd' ''', (tuple([x[0] for x in prod]), ))
+                    self._logger.warn('Tigger price sync update on %d products' % (cr.rowcount,))
+        return True
+
+    def us_5667_remove_contract_workflow(self, cr, uid, *a, **b):
+        """
+        Deletes the workflow related to Financing Contracts (not used anymore)
+        """
+        delete_wkf_transition = """
+            DELETE FROM wkf_transition
+            WHERE signal IN ('contract_open', 'contract_soft_closed', 'contract_hard_closed', 'contract_reopen')
+            AND act_from IN 
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract')
+                );
+        """
+        delete_wkf_workitem = """
+            DELETE FROM wkf_workitem WHERE act_id IN
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract')
+                );
+        """
+        delete_wkf_activity = """
+            DELETE FROM wkf_activity 
+            WHERE wkf_id = (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract');
+        """
+        delete_wkf = """
+            DELETE FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract';
+        """
+        cr.execute(delete_wkf_transition)
+        cr.execute(delete_wkf_workitem)
+        cr.execute(delete_wkf_activity)
+        cr.execute(delete_wkf)  # will also delete data in wkf_instance because of the ONDELETE 'cascade'
+        return True
+
     # UF12.0
+    def us_5724_set_previous_fy_dates_allowed(self, cr, uid, *a, **b):
+        """
+        Sets the field "previous_fy_dates_allowed" to True in the UniField Setup Configuration for all OCB and OCP instances
+        """
+        user_obj = self.pool.get('res.users')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance and (current_instance.name.startswith('OCB') or current_instance.name.startswith('OCP')):
+            cr.execute("UPDATE unifield_setup_configuration SET previous_fy_dates_allowed = 't';")
+        return True
+
+    def us_5746_rename_products_with_new_lines(self, cr, uid, *a, **b):
+        """
+        Remove the "new line character" from the description of products and their translation
+        """
+        cr.execute("""
+            UPDATE product_template
+            SET name = regexp_replace(name, '^\\s+', '', 'g' )
+            WHERE name ~ '^\\s.*';
+            """)
+        self._logger.warn('Update description on %d products' % (cr.rowcount,))
+        cr.execute("""
+            UPDATE ir_translation
+            SET src = regexp_replace(src, '^\\s+', '', 'g' ), value = regexp_replace(value, '^\\s+', '', 'g' )
+            WHERE name = 'product.template,name' AND (src ~ '^\\s.*' OR value ~ '^\\s.*');
+            """)
+        self._logger.warn('Update src and/or value on %d products translations' % (cr.rowcount,))
+        return True
+
     def us_2896_volume_ocbprod(self, cr, uid, *a, **b):
         ''' OCBHQ: volume has not been converted to dm3 on instances '''
         instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
@@ -1724,22 +1879,6 @@ class patch_scripts(osv.osv):
         if seq_id_list:
             seq_obj.write(cr, uid, seq_id_list, {'implementation': 'psql'})
 
-    def launch_patch_scripts(self, cr, uid, *a, **b):
-        ps_obj = self.pool.get('patch.scripts')
-        ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
-        for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
-            method = ps['method']
-            model_obj = self.pool.get(ps['model'])
-            try:
-                getattr(model_obj, method)(cr, uid, *a, **b)
-                self.write(cr, uid, [ps['id']], {'run': True})
-            except Exception as e:
-                err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
-                self._logger.error(err_msg)
-                raise osv.except_osv(
-                    'Error',
-                    err_msg,
-                )
 
     def us_1421_lower_login(self, cr, uid, *a, **b):
         user_obj = self.pool.get('res.users')
@@ -2986,6 +3125,10 @@ class communication_config(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        sync_disabled = self.pool.get('sync.server.disabled')
+        if sync_disabled and sync_disabled.is_set(cr, 1, context):
+            return True
+
         if ids is None:
             ids = self.search(cr, 1, [], context=context)
 
@@ -3018,6 +3161,11 @@ class communication_config(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        sync_disabled = self.pool.get('sync.server.disabled')
+        if sync_disabled and sync_disabled.is_set(cr, 1, context):
+            return sync_disabled.get_message(cr, 1, context)
+
         if ids is None:
             ids = self.search(cr, 1, [], context=context)
         return self.read(cr, 1, ids[0], ['message'],

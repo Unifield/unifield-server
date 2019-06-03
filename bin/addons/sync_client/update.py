@@ -358,10 +358,6 @@ class update_received(osv.osv,fv_formatter):
         'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
     }
 
-    _defaults = {
-        'manually_ran': False,
-        'manually_set_run_date': False,
-    }
 
     line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)", re.S)
 
@@ -968,6 +964,8 @@ class update_received(osv.osv,fv_formatter):
 
                         if update.model == 'res.partner.address' and field == 'partner_id/id':
                             return {'res': False, 'error_message': 'partner_id %s not found' % xmlid}
+                        if update.model == 'account.analytic.line' and field in ('cost_center_id/id', 'destination_id/id'):
+                            return {'res': False, 'error_message': 'Analytic Account %s not found' % xmlid}
                         fb = fallback.get(field, False)
                         if not fb:
                             raise ValueError("no fallback value defined")

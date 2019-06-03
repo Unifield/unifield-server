@@ -6,6 +6,7 @@
             res_model="purchase.order.group"
             src_model="purchase.order"
             view_mode="form"
+            view_ids="purchase.purchase_order_form,purchase.purchase_order_tree"
             target="new"
             multi="True"
             key2="client_action_multi"

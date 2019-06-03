@@ -42,6 +42,7 @@ class hq_entries(osv.osv):
         # Prepare some values
         res = {}
         logger = netsvc.Logger()
+        ad_obj = self.pool.get('analytic.distribution')
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
@@ -57,6 +58,7 @@ class hq_entries(osv.osv):
         # E/ DEST in list of available DEST in ACCOUNT
         # F/ Check posting date with cost center and destination if exists
         # G/ Check document date with funding pool
+        # H/ Check Cost Center / Destination compatibility
         ## CASES where FP is filled in (or not) and/or DEST is filled in (or not).
         ## CC is mandatory, so always available:
         # 1/ no FP, no DEST => Distro = valid
@@ -132,6 +134,14 @@ class hq_entries(osv.osv):
                     res[line.id] = 'invalid'
                     logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
+            # H check
+            if line.destination_id and line.cost_center_id and \
+                    not ad_obj.check_dest_cc_compatibility(cr, uid, line.destination_id.id, line.cost_center_id.id, context=context):
+                res[line.id] = 'invalid'
+                logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING,
+                                     _('%s: CC (%s) not compatible with DEST (%s)') %
+                                     (line.id or '', line.cost_center_id.code or '', line.destination_id.code or ''))
+                continue
         return res
 
     def _get_cc_changed(self, cr, uid, ids, field_name, arg, context=None):
@@ -496,9 +506,31 @@ class hq_entries(osv.osv):
         # If destination given, search if given
         return res
 
+    def _check_cc(self, cr, uid, ids, context=None):
+        """
+        At synchro time sets HQ entry to Not Run if the Cost Center used in the line doesn't exist or is inactive
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution'):
+            for hq_entry in self.browse(cr, uid, ids, fields_to_fetch=['cost_center_id', 'date', 'name'], context=context):
+                if not hq_entry.cost_center_id:
+                    raise osv.except_osv(_('Warning'), _('The Cost Center of the HQ entry "%s" doesn\'t exist in the system.') % hq_entry.name)
+                elif hq_entry.date:  # posting date
+                    hq_date = hq_entry.date
+                    cc_date_start = hq_entry.cost_center_id.date_start
+                    cc_date_end = hq_entry.cost_center_id.date or False
+                    if (hq_date < cc_date_start) or (cc_date_end and hq_date >= cc_date_end):
+                        raise osv.except_osv(_('Warning'), _('The Cost Center %s used in the HQ entry "%s" is inactive.') %
+                                             (hq_entry.cost_center_id.code or '', hq_entry.name))
+        return True
+
     def create(self, cr, uid, vals, context=None):
         new_id = super(hq_entries, self).create(cr, uid, vals, context)
         self._check_active_account(cr, uid, [new_id], context=context)
+        self._check_cc(cr, uid, [new_id], context=context)
         return new_id
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -531,6 +563,7 @@ class hq_entries(osv.osv):
         self.check_ad_change_allowed(cr, uid, ids, vals, context=context)
         res = super(hq_entries, self).write(cr, uid, ids, vals, context)
         self._check_active_account(cr, uid, ids, context=context)
+        self._check_cc(cr, uid, ids, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):

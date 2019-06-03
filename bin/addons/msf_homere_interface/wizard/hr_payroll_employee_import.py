@@ -245,7 +245,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                     homere_fields[check_key] = []
                 # if not possible only the current employee name will be displayed
                 else:
-                    list_duplicates = [employee_name]
+                    list_duplicates = ['%s (%s)' % (employee_name, _('Import File'))]
                 self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {
                     'wizard_id': wizard_id,
                     'msg': _('Several employees have the same combination key codeterrain/id_staff/(id_unique) "%s / %s / (%s)": %s') %
@@ -711,7 +711,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 # store the Homere fields combination for all employees
                 if line.get('nom'):
                     # "no id_unique" is replaced by the string "empty"
-                    homere_fields_key = "%s%s%s" % (line.get('codeterrain', ''), line.get('id_staff', ''), line.get('id_unique', 'empty'))
+                    homere_fields_key = "%s%s%s" % (line.get('codeterrain', ''), line.get('id_staff', ''), line.get('id_unique') or 'empty')
                     if homere_fields_key not in homere_fields:
                         homere_fields[homere_fields_key] = []
                     homere_fields[homere_fields_key].append(line['nom'])

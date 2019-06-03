@@ -87,8 +87,9 @@
                     <field name="priority" />
                     <field name="categ" />
                     <field name="date_order"/>
-                    <field name="client_order_ref" groups="base.group_extended"/>
+                    <field name="short_client_ref" groups="base.group_extended"/>
                     <field name="partner_id"/>
+                    <field name="details" truncate="15"/>
                     <field name="user_id" />
                     <field name="line_count"/>
                     <field name="picked_rate" widget="progressbar"/>
@@ -108,12 +109,30 @@
             <field name="arch" type="xml">
                 <form string="Sales Order" noteditable="import_in_progress==True" hide_delete_button="1">
                     <group col="4" colspan="4">
+                        <html>
+                            <p id="big_amount" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                                <translate>
+                                    WARNING: The Total amount of the following lines is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information:
+                                </translate>
+                            </p>
+                            <script language="javascript">
+                                var is_big_amount = $('#msg_big_qty').val() || $('#msg_big_qty').text();
+                                if (is_big_amount) {
+                                    $('#big_amount').append('&lt;span&gt;'+is_big_amount+'&lt;/span&gt;&lt;br/&gt;');
+                                    $('#big_amount').show();
+                                }
+                            </script>
+                        </html>
+                    </group>
+                    <group col="4" colspan="4">
                         <field name="name" required="1"/>
                         <field name="date_order" readonly="1" />
                         <field name="invoiced" string="Invoiced" invisible="1"/>
                         <field name="warehouse_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                        <field name="client_order_ref" readonly="1" />
+                        <field name="client_order_ref" invisible="1" />
+                        <field name="short_client_ref" readonly="1" />
                         <field name="shipped" invisible="1"/>
+                        <field name="msg_big_qty" invisible="1"/>
                         <field name="internal_type" invisible="1"/>
                         <field name="picked_rate" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
@@ -157,8 +176,8 @@
                                 <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', '|', ('no_line', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}"/>
                             </group>
                             <group colspan="2" col="3">
-                                <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
-                                <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}"/>
+                                <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'sourced', 'sourced_p', 'confirmed', 'confirmed_p'])]}"/>
+                                <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated', 'sourced', 'sourced_p', 'confirmed', 'confirmed_p'))]}"/>
                             </group>
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                             <newline/>
@@ -179,13 +198,13 @@
                                     <notebook>
                                         <page string="Order Line">
                                             <field colspan="4" context="categ=parent.categ,partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,warehouse=parent.warehouse_id,uom=product_uom,available_for_restriction=parent.partner_type,search_default_not_restricted=1" name="product_id" on_change="product_id_on_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], True, parent.date_order, product_packaging, parent.fiscal_position, False, context)" domain="[('sale_ok', '=', True)]" default_focus="1"/>
-                                            <field name="product_uom_qty" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_qty_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, True)"/>
+                                            <field name="product_uom_qty" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_qty_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, True, price_unit, context)"/>
                                             <field groups="product.group_uos" name="product_uos_qty" invisible="1"/>
                                             <field groups="product.group_uos" name="product_uos" invisible="1"/>
                                             <field name="product_uom" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" domain="[('uom_by_product', '=', product_id)]"/>
                                             <field name="product_packaging" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_packaging_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, False)" domain="[('product_id','=',product_id)]" invisible="1"/>
                                             <newline/>
-                                            <field name="price_unit"/>
+                                            <field name="price_unit" on_change="change_price_unit(product_uom_qty, price_unit, context)"/>
                                             <field name="supplier" invisible="True"/>
                                             <field name="po_cft" invisible="True"/>
                                             <field name="currency_id" invisible="False"/>
@@ -340,8 +359,8 @@
                             <group colspan="4" col="4" name="date">
                                 <separator colspan="4" string="Dates"/>
                                 <group colspan="2" col="3">
-                                    <field name="delivery_requested_date" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)"/>
-                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'requested', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                    <field name="delivery_requested_date" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'sourced', 'sourced_p', 'confirmed', 'confirmed_p'])]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)"/>
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'requested', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'sourced', 'sourced_p', 'confirmed', 'confirmed_p'])]}"/>
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'in', ['cancel','done'])]}"/>
@@ -409,12 +428,12 @@
                         <button name="invoice_corrected" states="invoice_except" string="Ignore Exception" icon="gtk-apply"/>
                         <button name="ship_corrected" states="shipping_except" string="Manually corrected" icon="gtk-apply"/>
                         <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object" invisible="1"/>
-                        <button name="ship_cancel" states="shipping_except" string="Cancel Order" icon="gtk-cancel"/>
-                        <button name="ask_resource_lines" states="draft,draft_p,validated,validated_p" string="Cancel Order" type="object" icon="gtk-cancel"/>
-                        <button name="invoice_cancel" states="invoice_except" string="Cancel Order" icon="gtk-cancel"/>
-                        <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply" invisible="True"/>
-                        <button name="do_order_confirm_method" type="object" states="validated" string="Confirm Order" icon="gtk-apply" confirm="You are about to confirm the Field Order without going through the sourcing tool. Are you sure?" attrs="{'readonly': [('no_line', '=', True)]}"/>
-                        <button name="validate_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" attrs="{'readonly': [('no_line', '=', True)]}"/>
+                        <button name="ship_cancel" states="shipping_except" string="Cancel document" icon="gtk-cancel" help="all the lines will be Cancelled where this status change is feasible" />
+                        <button name="ask_resource_lines" states="draft,draft_p,validated,validated_p" string="Cancel document" type="object" icon="gtk-cancel" help="all the lines will be Cancelled where this status change is feasible" />
+                        <button name="invoice_cancel" states="invoice_except" string="Cancel document" icon="gtk-cancel" help="all the lines will be Cancelled where this status change is feasible" />
+                        <button name="order_confirm" states="validated" string="Confirm document" icon="gtk-apply" invisible="True" help="all the lines will be Confirmed where this status change is feasible" />
+                        <button name="do_order_confirm_method" type="object" states="validated" string="Confirm document" help="all the lines will be Confirmed where this status change is feasible" icon="gtk-apply" confirm="You are about to confirm the Field Order without going through the sourcing tool. Are you sure?" attrs="{'readonly': [('no_line', '=', True)]}"/>
+                        <button name="validate_lines" type="object" string="Validate document" icon="terp-check" states="draft,draft_p" attrs="{'readonly': [('no_line', '=', True)]}" help="all the lines will be Validated where this status change is feasible" />
                     </group>
                 </form>
             </field>
