@@ -22,7 +22,6 @@
 from osv import fields, osv
 from tools.translate import _
 import decimal_precision as dp
-
 class product_product(osv.osv):
     _inherit = "product.product"
 
@@ -269,55 +268,46 @@ class product_product(osv.osv):
 
             # all moves from a location out of the set to a location in the set
             cr.execute("""
-                select sum(product_qty), product_id, product_uom
-                from stock_move
-                where location_id NOT IN %%s
-                and location_dest_id IN %%s
-                and product_id IN %%s %s
-                and state in %%s %s
-                group by product_id,product_uom""" % (prodlot_id_str, date_str),tuple(where))  # not_a_user_entry
+                select sum(m.product_qty), m.product_id, m.product_uom, t.uom_id
+                from stock_move m
+                left join product_product p on p.id = m.product_id
+                left join product_template t on t.id = p.product_tmpl_id
+                where m.location_id NOT IN %%s
+                and m.location_dest_id IN %%s
+                and m.product_id IN %%s %s
+                and m.state in %%s %s
+                group by m.product_id, m.product_uom, t.uom_id""" % (prodlot_id_str, date_str),tuple(where))  # not_a_user_entry
             results = cr.fetchall()
         if 'out' in what:
             if not states and context.get('out_states'):
                 where[3] = tuple(context['out_states'])
             # all moves from a location in the set to a location out of the set
             cr.execute("""
-                select sum(product_qty), product_id, product_uom
-                from stock_move
-                where location_id IN %%s
-                and location_dest_id NOT IN %%s
-                and product_id IN %%s %s
-                and state in %%s %s
-                group by product_id,product_uom""" % (prodlot_id_str, date_str),tuple(where))  # not_a_user_entry
+                select sum(m.product_qty), m.product_id, m.product_uom, t.uom_id
+                from stock_move m
+                left join product_product p on p.id = m.product_id
+                left join product_template t on t.id = p.product_tmpl_id
+                where m.location_id IN %%s
+                and m.location_dest_id NOT IN %%s
+                and m.product_id IN %%s %s
+                and m.state in %%s %s
+                group by m.product_id, m.product_uom, t.uom_id""" % (prodlot_id_str, date_str),tuple(where))  # not_a_user_entry
             results2 = cr.fetchall()
-
         if results or results2:
             uoms_o = {}
-            product2uom = {}
             uom_obj = self.pool.get('product.uom')
-            for product in self.read(cr, uid, ids, ['uom_id'], context=context):
-                product2uom[product['id']] = product['uom_id'][0]
-                if product['uom_id'][0] not in uoms_o:
-                    uoms_o[product['uom_id'][0]] = uom_obj.browse(cr, uid, product['uom_id'][0], context=context)
-            uoms = map(lambda x: x[2], results) + map(lambda x: x[2], results2)
-            if context.get('uom', False):
-                uoms += [context['uom']]
-
-            uoms = filter(lambda x: x not in uoms_o.keys(), uoms)
-            if uoms:
-                uoms = uom_obj.browse(cr, uid, list(set(uoms)), context=context)
-                for o in uoms:
-                    uoms_o[o.id] = o
-            #TOCHECK: before change uom of product, stock move line are in old uom.
             context.update({'raise-exception': False})
-            for amount, prod_id, prod_uom in results:
-                amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
-                                                  uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
-                res[prod_id] += amount
-            for amount, prod_id, prod_uom in results2:
-                amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
-                                                  uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
-                res[prod_id] -= amount
+            for sign, data in [(1, results), (-1, results2)]:
+                for amount, prod_id, prod_uom, pt_uom in data:
+                    target_uom = context.get('uom', False) or pt_uom
+                    if target_uom != prod_uom:
+                        if target_uom not in uoms_o:
+                            uoms_o[target_uom] = uom_obj.browse(cr, uid, target_uom, context=context)
+                        if prod_uom not in uoms_o:
+                            uoms_o[prod_uom] = uom_obj.browse(cr, uid, prod_uom, context=context)
+                        amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
+                                                          uoms_o[target_uom], context=context)
+                    res[prod_id] += sign * amount
         return res
 
     def _product_available(self, cr, uid, ids, field_names=None, arg=False, context=None):

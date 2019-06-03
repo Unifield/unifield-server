@@ -175,6 +175,7 @@
                             <field name="name" />
                         </tree>
                     </field>
+                    <field name="error" attrs="{'invisible': [('state', '!=', 'error')]}" colspan="4" />
                     <separator colspan="4" string="Actions" />
                     <button name="generate_report" type="object" string="Generate report" icon="gtk-execute" states="draft" />
                     <button name="update" type="object" string="Update" icon="gtk-reload" states="in_progress" />

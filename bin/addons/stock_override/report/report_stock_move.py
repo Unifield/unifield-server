@@ -341,6 +341,7 @@ product will be shown.""",
                 ('draft', 'Draft'),
                 ('in_progress', 'In Progress'),
                 ('ready', 'Ready'),
+                ('error', 'Error'),
             ],
             string='State',
             readonly=True,
@@ -353,6 +354,7 @@ product will be shown.""",
             string='Filename',
             readonly=True,
         ),
+        'error': fields.text('Error'),
     }
 
     _defaults = {
@@ -489,26 +491,30 @@ product will be shown.""",
 
         import pooler
         new_cr = pooler.get_db(cr.dbname).cursor()
-
-        rp_spool = report_spool()
-        result = rp_spool.exp_report(cr.dbname, uid, 'stock.move.xls', ids, datas, context)
-        file_res = {'state': False}
-        while not file_res.get('state'):
-            file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
-            time.sleep(0.5)
-        attachment = self.pool.get('ir.attachment')
-        attachment.create(new_cr, uid, {
-            'name': 'in_out_report_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-            'datas_fname': 'in_out_report_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-            'description': 'IN & OUT Report',
-            'res_model': 'export.report.stock.move',
-            'res_id': ids[0],
-            'datas': file_res.get('result'),
-        })
-        self.write(new_cr, uid, ids, {'state': 'ready'}, context=context)
-
-        new_cr.commit()
-        new_cr.close(True)
+        try:
+            context['report_id'] = ids[0]
+            rp_spool = report_spool()
+            result = rp_spool.exp_report(cr.dbname, uid, 'stock.move.xls', ids, datas, context)
+            file_res = {'state': False}
+            while not file_res.get('state'):
+                file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
+                time.sleep(0.5)
+            attachment = self.pool.get('ir.attachment')
+            attachment.create(new_cr, uid, {
+                'name': 'in_out_report_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'datas_fname': 'in_out_report_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'description': 'IN & OUT Report',
+                'res_model': 'export.report.stock.move',
+                'res_id': ids[0],
+                'datas': file_res.get('result'),
+            })
+            self.write(new_cr, uid, ids, {'state': 'ready'}, context=context)
+        except:
+            cr.rollback()
+            raise
+        finally:
+            new_cr.commit()
+            new_cr.close(True)
 
         return True
 
@@ -603,51 +609,127 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             location_ids = loc_obj.search(self.cr, self.uid, loc_domain, context=self.localcontext)
             self.localcontext.update({'location': location_ids})
         self.localcontext['compute_child'] = False
-        for move in self.pool.get('stock.move').browse(self.cr, self.uid, self.datas['moves'], context=self.localcontext):
-            move_date = move.date or False
+        i = len(self.datas['moves'])
+        print i
+        a = time.time()
+        j= 0
+
+        lang_ctx = {'lang': self.localcontext.get('lang', 'en_MF')}
+        reason_ids = self.pool.get('stock.reason.type').search(self.cr, self.uid, [])
+        reason_info = {}
+        for x in self.pool.get('stock.reason.type').read(self.cr, self.uid, reason_ids, ['complete_name'], context=lang_ctx):
+            reason_info[x['id']] = x['complete_name']
+
+        all_loc_ids = loc_obj.search(self.cr, self.uid, [('active', 'in', ['t', 'f'])])
+        location_info = {}
+        for x in loc_obj.read(self.cr, self.uid, all_loc_ids, ['name'], context=lang_ctx):
+            location_info[x['id']] = x['name']
+        self.cr.execute('''select
+                m.product_id as product_id,
+                m.prodlot_id as prodlot_id,
+                m.product_qty as product_qty,
+                t.uom_id as prod_uom,
+                m.name as move_name,
+                p.default_code as default_code,
+                p.batch_management as batch_management,
+                COALESCE(trans.value, t.name) as product_name,
+                m.price_unit as price_unit,
+                m.price_currency_id as price_currency_id,
+                pick.name as pick_name,
+                m.date as date,
+                uom.name as uom_name,
+                t.standard_price as standard_price,
+                m.location_id as location_src_id,
+                m.location_dest_id as location_dest_id,
+                m.reason_type_id as reason_type_id,
+                lot.name as lot_name,
+                lot.life_date as life_date
+            from
+                stock_move m
+                inner join product_uom uom on uom.id = m.product_uom
+                inner join product_product p on p.id = m.product_id
+                inner join product_template t on t.id = p.product_tmpl_id
+                left join stock_picking pick on m.picking_id = pick.id
+                left join stock_production_lot lot on lot.id = m.prodlot_id
+                left join ir_translation trans on trans.name='product.template,name' and trans.res_id=t.id and lang=%s
+            where
+                m.id in %s
+            order by p.default_code, lot.name, m.date asc
+        ''', (lang_ctx.get('lang'), tuple(self.datas['moves'])))
+
+        #stock_level = {}
+        #bn_level = {}
+        for move in self.cr.dictfetchall():
+            j += 1
+            if j%100 == 0:
+                print time.time() - a
+                a = time.time()
+                print j
+            move_date = move['date'] or False
             # Get stock
             ctx = self.localcontext.copy()
-            ctx.update({'to_date': move_date})
-            prod_stock = prod_obj.read(self.cr, self.uid, move.product_id.id, ['qty_available'], context=ctx)['qty_available']
             prod_stock_bn = 0
-            if move.prodlot_id:
-                ctx.update({'prodlot_id': move.prodlot_id.id or False})
-                prod_stock_bn = prod_obj.read(self.cr, self.uid, move.product_id.id, ['qty_available'], context=ctx)['qty_available']
-
+            prod_stock = 0
+            ctx.update({'to_date': move_date, 'prodlot_id': False})
+            """
+            if move['product_id'] not in stock_level:
+                stock_level[move['product_id']] = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
+            elif move['location_dest_id'] != move['location_src_id']:
+                if move['location_dest_id'] in location_ids and move['location_src_id'] not in location_ids:
+                    stock_level[move['product_id']] += move['product_qty']
+                elif move['location_dest_id'] not in location_ids and move['location_src_id'] in location_ids:
+                    stock_level[move['product_id']] -= move['product_qty']
+            prod_stock = stock_level[move['product_id']]
+            """
+            prod_stock = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
+            # UOM 12PCE / PCE + same product in 2 moves / ignore INT or +/- stock
+            """
+            if move['prodlot_id']:
+                if move['prodlot_id'] not in bn_level:
+                    ctx.update({'prodlot_id': move['prodlot_id']})
+                    bn_level[move['prodlot_id']] = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
+                elif move['location_dest_id'] != move['location_src_id']:
+                    if move['location_dest_id'] in location_ids and move['location_src_id'] not in location_ids:
+                        bn_level[move['prodlot_id']] += move['product_qty']
+                    elif move['location_dest_id'] not in location_ids and move['location_src_id'] in location_ids:
+                        bn_level[move['prodlot_id']] -= move['product_qty']
+                prod_stock_bn = bn_level[move['prodlot_id']]
+            """
+            prod_stock_bn = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
             # Get Unit Price at date
-            prod_price = move.price_unit or 0
+            prod_price = move['price_unit'] or 0
             if not prod_price:
                 if move_date:
                     self.cr.execute("""SELECT distinct on (product_id) product_id, old_standard_price
                                 FROM standard_price_track_changes
                                 WHERE product_id = %s AND change_date >= %s
                                 ORDER BY product_id, change_date ASC
-                                """, (move.product_id.id, move_date))
+                                """, (move['product_id'], move_date))
                     for x in self.cr.fetchall():
                         prod_price = x[1]
                 if not prod_price:
-                    prod_price = move.product_id.standard_price
-            if move.price_currency_id.id != currency_id:
-                prod_price = curr_obj.compute(self.cr, self.uid, move.price_currency_id.id, currency_id,
+                    prod_price = move['standard_price']
+            if move['price_currency_id'] != currency_id:
+                prod_price = curr_obj.compute(self.cr, self.uid, move['price_currency_id'], currency_id,
                                               prod_price, round=False, context=ctx)
 
             res.append({
-                'product_code': move.product_id.default_code,
-                'product_name': move.product_id.name,
-                'uom': move.product_uom.name,
+                'product_code': move['default_code'],
+                'product_name': move['product_name'],
+                'uom': move['uom_name'],
                 'date_done': move_date,
-                'need_batch': move.product_id.batch_management,
-                'batch': move.prodlot_id and move.prodlot_id.name or '',
-                'expiry_date': move.prodlot_id and move.prodlot_id.life_date or False,
-                'qty': move.product_qty,
+                'need_batch': move['batch_management'],
+                'batch': move['lot_name'] or '',
+                'expiry_date': move['life_date'] or False,
+                'qty': move['product_qty'],
                 'unit_price': prod_price,
-                'move_value': move.product_qty * prod_price,
-                'prod_stock_bn': move.prodlot_id and prod_stock_bn or 0,
+                'move_value': move['product_qty'] * prod_price,
+                'prod_stock_bn': move['lot_name'] and prod_stock_bn or 0,
                 'prod_stock': prod_stock,
-                'source': move.location_id.name,
-                'destination': move.location_dest_id.name,
-                'reason_type': move.reason_type_id and move.reason_type_id.complete_name or '',
-                'doc_ref': move.picking_id and move.picking_id.name or move.name or '',
+                'source': location_info.get(move['location_src_id']),
+                'destination': location_info.get(move['location_dest_id']),
+                'reason_type': reason_info.get(move['reason_type_id']) or '',
+                'doc_ref': move['pick_name'] or move['move_name'] or '',
             })
 
         return res
@@ -659,8 +741,18 @@ class report_stock_move_xls(SpreadsheetReport):
         super(report_stock_move_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
-        a = super(report_stock_move_xls, self).create(cr, uid, ids, data, context=context)
-        return (a[0], 'xls')
-
+        print context
+        if context is None:
+            context = {}
+        try:
+            a = super(report_stock_move_xls, self).create(cr, uid, ids, data, context=context)
+            return (a[0], 'xls')
+        except Exception, e:
+            if context.get('report_id'):
+                cr.rollback()
+                msg = hasattr(e, 'value') and e.value or e.message
+                self.pool.get('export.report.stock.move').write(cr, uid, context['report_id'], {'state': 'error', 'error': tools.ustr(msg)})
+                cr.commit()
+                raise
 
 report_stock_move_xls('report.stock.move.xls', 'export.report.stock.move', 'addons/stock_override/report/report_stock_move_xls.mako', parser=parser_report_stock_move_xls, header='internal')
