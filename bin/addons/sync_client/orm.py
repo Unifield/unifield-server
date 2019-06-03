@@ -132,6 +132,7 @@ SELECT res_id, touched
     FROM ir_model_data
     WHERE module = 'sd' AND
           model = %s AND
+          COALESCE(touched, '') != '[]' AND
           """+add_sql+"""
           ("""+field+""" < last_modification OR """+field+""" IS NULL)""",
                        sql_params) # not_a_user_entry

@@ -149,11 +149,10 @@ class sale_order_line(osv.osv):
 
         if context.get('sync_message_execution'):
             return False
-        sol = self.browse(cr, uid, ids[0], context=context)
-        related_pol = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', sol.id)], context=context)
+        related_pol = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', ids[0])], context=context)
         if not related_pol:
             return True
-        related_pol = self.pool.get('purchase.order.line').browse(cr, uid, related_pol[0], context=context)
+        related_pol = self.pool.get('purchase.order.line').browse(cr, uid, related_pol[0], fields_to_fetch=['original_line_id'], context=context)
         if not related_pol.original_line_id:
             return True
         return (not related_pol.original_line_id.block_resourced_line_creation)
@@ -175,7 +174,7 @@ class sale_order_line(osv.osv):
             if not sol.cancelled_by_sync and self.has_to_create_resourced_line(cr, uid, sol.id, context=context):
                 sol_vals = {
                     'resourced_original_line': sol.id,
-                    'resourced_original_remote_line': sol.sync_linked_pol,
+                    'resourced_original_remote_line': sol.sync_linked_pol or ( sol.original_line_id and sol.original_line_id.sync_linked_pol) or sol.resourced_original_remote_line or False,
                     'resourced_at_state': sol.state,
                     'is_line_split': False,
                     'analytic_distribution_id': sol.analytic_distribution_id.id or False,
@@ -406,19 +405,22 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
+        stock_move_obj = self.pool.get('stock.move')
         pick_to_check = set()
-        for sol in self.browse(cr, uid, ids, context=context):
+
+
+        for sol in ids:
             out_moves_to_cancel = self.pool.get('stock.move').search(cr, uid, [
-                ('sale_line_id', '=', sol.id),
+                ('sale_line_id', '=', sol),
                 ('type', '=', 'out'),
                 ('state', 'in', ['assigned', 'confirmed']),
             ], context=context)
 
             if out_moves_to_cancel:
                 context.update({'not_resource_move': out_moves_to_cancel})
-                self.pool.get('stock.move').action_cancel(cr, uid, out_moves_to_cancel, context=context)
+                stock_move_obj.action_cancel(cr, uid, out_moves_to_cancel, context=context)
                 context.pop('not_resource_move')
-                for move in self.pool.get('stock.move').browse(cr, uid, out_moves_to_cancel, fields_to_fetch=['picking_id'], context=context):
+                for move in stock_move_obj.browse(cr, uid, out_moves_to_cancel, fields_to_fetch=['picking_id'], context=context):
                     pick_to_check.add(move.picking_id.id)
 
         # maybe the stock picking needs to be closed/cancelled :
@@ -439,9 +441,6 @@ class sale_order_line(osv.osv):
         wf_service = netsvc.LocalService("workflow")
 
         for sol in self.browse(cr, uid, ids, context=context):
-            if not sol.stock_take_date and sol.order_id.stock_take_date:
-                self.write(cr, uid, sol.id, {'stock_take_date': sol.order_id.stock_take_date}, context=context)
-
             linked_dpo_line = self.pool.get('purchase.order.line').search(cr, uid, [
                 ('linked_sol_id', '=', sol.id),
                 ('order_id.order_type', '=', 'direct'),
@@ -515,7 +514,6 @@ class sale_order_line(osv.osv):
                 # run check availability on PICK/OUT:
                 if picking_data['type'] == 'out' and picking_data['subtype'] in ['picking', 'standard']:
                     self.pool.get('stock.move').action_assign(cr, uid, [move_id])
-                    self.pool.get('stock.move').fefo_update(cr, uid, [move_id], context=context)
                 #    self.pool.get('stock.picking').action_assign(cr, uid, [pick_to_use], context=context)
                 if picking_data['type'] == 'internal' and sol.type == 'make_to_stock' and sol.order_id.procurement_request:
                     wf_service.trg_validate(uid, 'stock.picking', pick_to_use, 'button_confirm', cr)
@@ -559,6 +557,8 @@ class sale_order_line(osv.osv):
             if sol.order_id.procurement_request and not sol.order_id.location_requestor_id:
                 raise osv.except_osv(_('Warning !'),
                                      _('You can not validate the line without a Location Requestor.'))
+            if not sol.order_id.procurement_request and sol.product_uom_qty*sol.price_unit >= self._max_value:
+                raise osv.except_osv(_('Warning !'), _('%s line %s: %s') % (sol.order_id.name, sol.line_number, _(self._max_msg)))
             if not sol.order_id.delivery_requested_date:
                 raise osv.except_osv(_('Warning !'),
                                      _('You can not validate the line without a Requested date.'))
@@ -578,8 +578,6 @@ class sale_order_line(osv.osv):
                     and sol.product_id and sol.product_id.seller_id:
                 to_write['supplier'] = sol.product_id.seller_id.id
 
-            if not sol.stock_take_date and sol.order_id.stock_take_date:
-                to_write['stock_take_date'] = sol.order_id.stock_take_date
             if sol.order_id.order_type == 'loan':
                 to_write['supplier'] = False
                 to_write['type'] = 'make_to_stock'

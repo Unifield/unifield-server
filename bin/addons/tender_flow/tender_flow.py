@@ -37,6 +37,7 @@ class tender(osv.osv):
     '''
     _name = 'tender'
     _description = 'Tender'
+    _trace = True
 
     def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         if not default:
@@ -99,45 +100,62 @@ class tender(osv.osv):
             res[tender.id] = retour
         return res
 
-    _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
-                'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
-                'state': fields.selection([('draft', 'Draft'), ('comparison', 'Comparison'), ('done', 'Closed'), ('cancel', 'Cancelled'), ], string="State", readonly=True),
-                'supplier_ids': fields.many2many('res.partner', 'tender_supplier_rel', 'tender_id', 'supplier_id', string="Suppliers", domain="[('id', '!=', company_id)]",
-                                                 states={'draft': [('readonly', False)]}, readonly=True,
-                                                 context={'search_default_supplier': 1, }),
-                'location_id': fields.many2one('stock.location', 'Location', required=True, states={'draft': [('readonly', False)]}, readonly=True, domain=[('usage', '=', 'internal')]),
-                'company_id': fields.many2one('res.company', 'Company', required=True, states={'draft': [('readonly', False)]}, readonly=True),
-                'rfq_ids': fields.one2many('purchase.order', 'tender_id', string="RfQs", readonly=True),
-                'priority': fields.selection(ORDER_PRIORITY, string='Tender Priority', states={'draft': [('readonly', False)], }, readonly=True,),
-                'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft': [('readonly', False)], }, readonly=True, add_empty=True),
-                'creator': fields.many2one('res.users', string="Creator", readonly=True, required=True,),
-                'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft': [('readonly', False)], }, readonly=True),
-                'creation_date': fields.date(string="Creation Date", readonly=True, states={'draft': [('readonly', False)]}),
-                'details': fields.char(size=30, string="Details", states={'draft': [('readonly', False)], }, readonly=True),
-                'requested_date': fields.date(string="Requested Date", required=True, states={'draft': [('readonly', False)], }, readonly=True),
-                'notes': fields.text('Notes'),
-                'internal_state': fields.selection([('draft', 'Draft'), ('updated', 'Rfq Updated'), ], string="Internal State", readonly=True),
-                'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
-                'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product'),
-                'delivery_address': fields.many2one('res.partner.address', string='Delivery address', required=True),
-                'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
-                }
+    def _diff_nb_rfq_supplier(self, cr, uid, ids, field, args, context=None):
+        if context is None:
+            context = {}
 
-    _defaults = {'categ': False,
-                 'state': 'draft',
-                 'internal_state': 'draft',
-                 'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
-                 'creator': lambda obj, cr, uid, context: uid,
-                 'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
-                 'requested_date': lambda *a: time.strftime('%Y-%m-%d'),
-                 'priority': 'normal',
-                 'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
-                 }
+        res = {}
+        for tender in self.browse(cr, uid, ids, fields_to_fetch=['rfq_ids', 'supplier_ids'], context=context):
+            diff_number = False
+            supplier_ids = [supplier.id for supplier in tender.supplier_ids]
+            rfq_ids = [rfq.id for rfq in tender.rfq_ids if rfq.partner_id.id in supplier_ids]
+            if len(rfq_ids) < len(supplier_ids):
+                diff_number = True
+            res[tender.id] = diff_number
+        return res
+
+    _columns = {
+        'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True, sort_column='id'),
+        'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
+        'state': fields.selection([('draft', 'Draft'), ('comparison', 'Comparison'), ('done', 'Closed'), ('cancel', 'Cancelled'), ], string="State", readonly=True),
+        'supplier_ids': fields.many2many('res.partner', 'tender_supplier_rel', 'tender_id', 'supplier_id', string="Suppliers", domain="[('id', '!=', company_id)]",
+                                         states={'draft': [('readonly', False)], 'comparison': [('readonly', False)]}, readonly=True,
+                                         context={'search_default_supplier': 1, }),
+        'location_id': fields.many2one('stock.location', 'Location', required=True, states={'draft': [('readonly', False)]}, readonly=True, domain=[('usage', '=', 'internal')]),
+        'company_id': fields.many2one('res.company', 'Company', required=True, states={'draft': [('readonly', False)]}, readonly=True),
+        'rfq_ids': fields.one2many('purchase.order', 'tender_id', string="RfQs", readonly=True),
+        'priority': fields.selection(ORDER_PRIORITY, string='Tender Priority', states={'draft': [('readonly', False)], }, readonly=True,),
+        'categ': fields.selection(ORDER_CATEGORY, string='Tender Category', required=True, states={'draft': [('readonly', False)], }, readonly=True, add_empty=True),
+        'creator': fields.many2one('res.users', string="Creator", readonly=True, required=True,),
+        'warehouse_id': fields.many2one('stock.warehouse', string="Warehouse", required=True, states={'draft': [('readonly', False)], }, readonly=True),
+        'creation_date': fields.date(string="Creation Date", readonly=True, states={'draft': [('readonly', False)]}),
+        'details': fields.char(size=30, string="Details", states={'draft': [('readonly', False)], }, readonly=True),
+        'requested_date': fields.date(string="Requested Date", required=True, states={'draft': [('readonly', False)], }, readonly=True),
+        'notes': fields.text('Notes'),
+        'internal_state': fields.selection([('draft', 'Draft'), ('updated', 'Rfq Updated'), ], string="Internal State", readonly=True),
+        'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
+        'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product'),
+        'delivery_address': fields.many2one('res.partner.address', string='Delivery address', required=True),
+        'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
+        'diff_nb_rfq_supplier': fields.function(_diff_nb_rfq_supplier, method=True, type="boolean", string="Compare the number of rfqs and the number of suppliers", store=False),
+    }
+
+    _defaults = {
+        'categ': False,
+        'state': 'draft',
+        'internal_state': 'draft',
+        'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
+        'creator': lambda obj, cr, uid, context: uid,
+        'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'requested_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'priority': 'normal',
+        'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
+    }
 
     _sql_constraints = [
     ]
 
-    _order = 'name desc'
+    _order = 'id desc'
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
@@ -195,6 +213,7 @@ class tender(osv.osv):
 
         return super(tender, self).create(cr, uid, vals, context=context)
 
+
     def write(self, cr, uid, ids, vals, context=None):
         """
         Check consistency between lines and categ of tender
@@ -213,7 +232,15 @@ class tender(osv.osv):
             ], context=context)
             exp_sol_obj.unlink(cr, uid, exp_sol_ids, context=context)
 
-        return super(tender, self).write(cr, uid, ids, vals, context=context)
+        r =  super(tender, self).write(cr, uid, ids, vals, context=context)
+        if 'supplier_ids' in vals:
+            for t_id in ids:
+                # prevent deletion of partner if RfQ generated
+                cr.execute("select partner_id from purchase_order po left join tender_supplier_rel sup on sup.tender_id = po.tender_id and sup.supplier_id = po.partner_id  where po.tender_id = %s and sup.supplier_id is null", (t_id,))
+                missing_partners = [x[0] for x in cr.fetchall()]
+                if missing_partners:
+                    super(tender, self).write(cr, uid, [t_id], {'supplier_ids': [(4,x) for x in missing_partners]}, context=context)
+        return r
 
     def onchange_categ(self, cr, uid, ids, category, context=None):
         """
@@ -290,6 +317,14 @@ class tender(osv.osv):
 
         return result
 
+    def change_supplier(self, cr, uid, ids, supplier_ids, context=None):
+        if ids and supplier_ids and isinstance(supplier_ids, list) and isinstance(supplier_ids[0], tuple) and len(supplier_ids[0]) == 3:
+            # display generates RfQs
+            nb_po = self.pool.get('purchase.order').search(cr, uid, [('tender_id', 'in', ids)], count=True)
+            return {'value': {'diff_nb_rfq_supplier': nb_po!=len(supplier_ids[0][2])}}
+
+        return {}
+
     def wkf_generate_rfq(self, cr, uid, ids, context=None):
         '''
         generate the rfqs for each specified supplier
@@ -325,68 +360,70 @@ class tender(osv.osv):
             if not tender_line_ids:
                 raise osv.except_osv(_('Warning !'), _('You must select at least one product!'))
             for supplier in tender.supplier_ids:
-                # create a purchase order for each supplier
-                address_id = partner_obj.address_get(cr, uid, [supplier.id], ['default'])['default']
-                if not address_id:
-                    raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!') % (supplier.name,))
-                pricelist_id = supplier.property_product_pricelist_purchase.id
-                values = {'origin': tender.sale_order_id and tender.sale_order_id.name + ';' + tender.name or tender.name,
-                          'rfq_ok': True,
-                          'partner_id': supplier.id,
-                          'partner_address_id': address_id,
-                          'location_id': tender.location_id.id,
-                          'pricelist_id': pricelist_id,
-                          'company_id': tender.company_id.id,
-                          'fiscal_position': supplier.property_account_position and supplier.property_account_position.id or False,
-                          'tender_id': tender.id,
-                          'warehouse_id': tender.warehouse_id.id,
-                          'categ': tender.categ,
-                          'priority': tender.priority,
-                          'details': tender.details,
-                          'delivery_requested_date': tender.requested_date,
-                          'rfq_delivery_address': tender.delivery_address and tender.delivery_address.id or False,
-                          }
-                # create the rfq - dic is udpated for default partner_address_id at purchase.order level
-                po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id, rfq_ok=True))
+                if not po_obj.search_exist(cr,  uid, [('tender_id', '=', tender.id), ('partner_id', '=', supplier.id)], context=context):
+                    # create a purchase order for each supplier
+                    address_id = partner_obj.address_get(cr, uid, [supplier.id], ['default'])['default']
+                    if not address_id:
+                        raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!') % (supplier.name,))
+                    pricelist_id = supplier.property_product_pricelist_purchase.id
+                    values = {
+                        'origin': tender.sale_order_id and tender.sale_order_id.name + ';' + tender.name or tender.name,
+                        'rfq_ok': True,
+                        'partner_id': supplier.id,
+                        'partner_address_id': address_id,
+                        'location_id': tender.location_id.id,
+                        'pricelist_id': pricelist_id,
+                        'company_id': tender.company_id.id,
+                        'fiscal_position': supplier.property_account_position and supplier.property_account_position.id or False,
+                        'tender_id': tender.id,
+                        'warehouse_id': tender.warehouse_id.id,
+                        'categ': tender.categ,
+                        'priority': tender.priority,
+                        'details': tender.details,
+                        'delivery_requested_date': tender.requested_date,
+                        'rfq_delivery_address': tender.delivery_address and tender.delivery_address.id or False,
+                    }
+                    # create the rfq - dic is udpated for default partner_address_id at purchase.order level
+                    po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id, rfq_ok=True))
 
-                for line in tender.tender_line_ids:
-                    if line.line_state == 'cancel':
-                        continue
+                    for line in tender.tender_line_ids:
+                        if line.line_state == 'cancel':
+                            continue
 
-                    if line.qty <= 0.00:
-                        raise osv.except_osv(_('Error !'), _('You cannot generate RfQs for an line with a null quantity.'))
+                        if line.qty <= 0.00:
+                            raise osv.except_osv(_('Error !'), _('You cannot generate RfQs for an line with a null quantity.'))
 
-                    if line.product_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]:
-                        raise osv.except_osv(_('Warning !'), _('You can\'t have "To Be Defined" for the product. Please select an existing product.'))
-                    newdate = datetime.strptime(line.date_planned, '%Y-%m-%d')
-                    values = {'name': line.product_id.partner_ref,
-                              'product_qty': line.qty,
-                              'product_id': line.product_id.id,
-                              'product_uom': line.product_uom.id,
-                              'price_unit': 0.0,  # was price variable - uf-607
-                              'date_planned': newdate.strftime('%Y-%m-%d'),
-                              'notes': line.product_id.description_purchase,
-                              'order_id': po_id,
-                              'tender_line_id': line.id,
-                              'comment': line.comment,
-                              }
-                    # create purchase order line
-                    pol_obj.create(cr, uid, values, context=context)
-                    message = "Request for Quotation '%s' has been created." % po_obj.browse(cr, uid, po_id, context=context).name
-                    # create the log message
-                    self.pool.get('res.log').create(cr, uid,
-                                                    {'name': message,
-                                                     'res_model': po_obj._name,
-                                                     'secondary': False,
-                                                     'res_id': po_id,
-                                                     'domain': [('rfq_ok', '=', True)],
-                                                     }, context={'rfq_ok': True})
-                self.infolog(cr, uid, "The RfQ id:%s (%s) has been generated from tender id:%s (%s)" % (
-                    po_id,
-                    po_obj.read(cr, uid, po_id, ['name'], context=context)['name'],
-                    tender.id,
-                    tender.name,
-                ))
+                        if line.product_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]:
+                            raise osv.except_osv(_('Warning !'), _('You can\'t have "To Be Defined" for the product. Please select an existing product.'))
+                        newdate = datetime.strptime(line.date_planned, '%Y-%m-%d')
+                        values = {'name': line.product_id.partner_ref,
+                                  'product_qty': line.qty,
+                                  'product_id': line.product_id.id,
+                                  'product_uom': line.product_uom.id,
+                                  'price_unit': 0.0,  # was price variable - uf-607
+                                  'date_planned': newdate.strftime('%Y-%m-%d'),
+                                  'notes': line.product_id.description_purchase,
+                                  'order_id': po_id,
+                                  'tender_line_id': line.id,
+                                  'comment': line.comment,
+                                  }
+                        # create purchase order line
+                        pol_obj.create(cr, uid, values, context=context)
+                        message = "Request for Quotation '%s' has been created." % po_obj.browse(cr, uid, po_id, context=context).name
+                        # create the log message
+                        self.pool.get('res.log').create(cr, uid,
+                                                        {'name': message,
+                                                         'res_model': po_obj._name,
+                                                         'secondary': False,
+                                                         'res_id': po_id,
+                                                         'domain': [('rfq_ok', '=', True)],
+                                                         }, context={'rfq_ok': True})
+                    self.infolog(cr, uid, "The RfQ id:%s (%s) has been generated from tender id:%s (%s)" % (
+                        po_id,
+                        po_obj.read(cr, uid, po_id, ['name'], context=context)['name'],
+                        tender.id,
+                        tender.name,
+                    ))
 
         self.write(cr, uid, ids, {'state': 'comparison'}, context=context)
         return True
@@ -421,11 +458,8 @@ class tender(osv.osv):
 
         for tender in self.browse(cr, uid, ids, context=context):
             # close linked RfQ:
-            rfq_list = []
             for rfq in tender.rfq_ids:
-                if rfq.rfq_state not in ('updated', 'cancel'):
-                    rfq_list.append(rfq.id)
-                else:
+                if rfq.rfq_state in ('updated', 'cancel'):
                     self.pool.get('purchase.order').write(cr, uid, [rfq.id], {'rfq_state': 'done'}, context=context)
 
             self.write(cr, uid, [tender.id], {'state': 'done'}, context=context)
@@ -456,6 +490,9 @@ class tender(osv.osv):
         if not rfq_ids:
             raise osv.except_osv(_('Warning !'), _("At least one RfQ must be in state Updated."))
 
+        if tender.diff_nb_rfq_supplier:
+            raise osv.except_osv(_('Warning !'), _("Please Generate RfQs for all Suppliers"))
+
         return rfq_ids
 
     def compare_rfqs(self, cr, uid, ids, context=None):
@@ -464,7 +501,9 @@ class tender(osv.osv):
         '''
         if len(ids) > 1:
             raise osv.except_osv(_('Warning !'), _('Cannot compare rfqs of more than one tender at a time!'))
+
         wiz_obj = self.pool.get('wizard.compare.rfq')
+
         for tender in self.browse(cr, uid, ids, context=context):
             # check if corresponding rfqs are in the good state
             rfq_ids = self.tender_integrity(cr, uid, tender, context=context)
@@ -646,13 +685,15 @@ class tender(osv.osv):
             context = {}
 
         t_line_obj = self.pool.get('tender.line')
+        po_obj = self.pool.get('purchase.order')
 
         # set state
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         for tender in self.browse(cr, uid, ids, context=context):
+            # search for the rfqs
+            rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id), ('rfq_ok', '=', True)], context=context)
             # trigger all related rfqs
-            rfq_ids = self.pool.get('purchase.order').search(cr, uid, [('tender_id', '=', tender.id)], context=context)
-            self.pool.get('purchase.order').cancel_rfq(cr, uid, rfq_ids, context=context)
+            po_obj.cancel_rfq(cr, uid, rfq_ids, context=context)
 
             for line in tender.tender_line_ids:
                 t_line_obj.cancel_sourcing(cr, uid, [line.id], context=context)
@@ -779,6 +820,7 @@ class tender_line(osv.osv):
     _name = 'tender.line'
     _rec_name = 'product_id'
     _description = 'Tender Line'
+    _trace = True
 
     _SELECTION_TENDER_STATE = [('draft', 'Draft'), ('comparison', 'Comparison'), ('done', 'Closed'), ]
 
@@ -865,33 +907,37 @@ class tender_line(osv.osv):
             res += [(rs.id, code)]
         return res
 
-    _columns = {'product_id': fields.many2one('product.product', string="Product", required=True),
-                'qty': fields.float(string="Qty", required=True, related_uom='product_uom'),
-                'tender_id': fields.many2one('tender', string="Tender", required=True, ondelete='cascade'),
-                'purchase_order_line_id': fields.many2one('purchase.order.line', string="Related RfQ line", readonly=True),
-                'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
-                'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
-                'date_planned': fields.related('tender_id', 'requested_date', type='date', string='Requested Date', store=False,),
-                # functions
-                'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
-                'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", digits_compute=dp.get_precision('Purchase Price Computation'), readonly=True),  # same precision as related field!
-                'delivery_confirmed_date': fields.related('purchase_order_line_id', 'confirmed_delivery_date', type="date", string="Delivery Confirmed Date", readonly=True),
-                'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
-                'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
-                'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
-                'func_currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Func. Cur.', multi='total'),
-                'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
-                'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="char", string="Related Line Number", readonly=True,),
-                'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
-                'line_state': fields.selection([('draft', 'Draft'), ('cancel', 'Canceled'), ('done', 'Done')], string='State', readonly=True),
-                'comment': fields.char(size=128, string='Comment'),
-                'has_to_be_resourced': fields.boolean(string='Has to be resourced'),
-                'created_by_rfq': fields.boolean(string='Created by RfQ'),
-                }
-    _defaults = {'qty': lambda *a: 1.0,
-                 'state': lambda *a: 'draft',
-                 'line_state': lambda *a: 'draft',
-                 }
+    _columns = {
+        'product_id': fields.many2one('product.product', string="Product", required=True),
+        'qty': fields.float(string="Qty", required=True, related_uom='product_uom'),
+        'tender_id': fields.many2one('tender', string="Tender", required=True, ondelete='cascade'),
+        'purchase_order_line_id': fields.many2one('purchase.order.line', string="Related RfQ line", readonly=True),
+        'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
+        'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
+        'date_planned': fields.related('tender_id', 'requested_date', type='date', string='Requested Date', store=False,),
+        # functions
+        'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
+        'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", digits_compute=dp.get_precision('Purchase Price Computation'), readonly=True),  # same precision as related field!
+        'delivery_confirmed_date': fields.related('purchase_order_line_id', 'confirmed_delivery_date', type="date", string="Delivery Confirmed Date", readonly=True),
+        'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
+        'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
+        'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
+        'func_currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Func. Cur.', multi='total'),
+        'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
+        'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="char", string="Related Line Number", readonly=True,),
+        'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
+        'line_state': fields.selection([('draft', 'Draft'), ('cancel', 'Canceled'), ('done', 'Done')], string='State', readonly=True),
+        'comment': fields.char(size=128, string='Comment'),
+        'has_to_be_resourced': fields.boolean(string='Has to be resourced'),
+        'created_by_rfq': fields.boolean(string='Created by RfQ'),
+        'product_default_code': fields.related('product_id', 'default_code', type='char', string='Product Code', size=64, store=False, write_relate=False)
+    }
+
+    _defaults = {
+        'qty': lambda *a: 1.0,
+        'state': lambda *a: 'draft',
+        'line_state': lambda *a: 'draft',
+    }
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
@@ -1784,7 +1830,7 @@ price. Please set unit price on these lines or cancel them'''),
             'view_mode': 'form,tree,graph,calendar',
             'view_type': 'form',
             'target': 'crush',
-            'context': {'rfq_ok': True, 'search_default_draft_rfq': 1},
+            'context': {'rfq_ok': True},
             'domain': [('rfq_ok', '=', True)],
             'res_id': rfq.id,
         }
@@ -2102,57 +2148,6 @@ class expected_sale_order_line(osv.osv):
 expected_sale_order_line()
 
 
-class ir_values(osv.osv):
-    _name = 'ir.values'
-    _inherit = 'ir.values'
-
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
-        if context is None:
-            context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
-        new_values = values
-
-        po_accepted_values = {'client_action_multi': ['Order Follow Up',
-                                                      'action_view_purchase_order_group'],
-                              'client_print_multi': ['Purchase Order (Merged)',
-                                                     'Purchase Order',
-                                                     'po.allocation.report',
-                                                     'order.impact.vs.budget'],
-                              'client_action_relate': ['ir_open_product_list_export_view',
-                                                       'View_log_purchase.order',
-                                                       'Allocation report'],
-                              'tree_but_action': [],
-                              'tree_but_open': []}
-
-        rfq_accepted_values = {'client_action_multi': [],
-                               'client_print_multi': ['Request for Quotation'],
-                               'client_action_relate': [],
-                               'tree_but_action': [],
-                               'tree_but_open': []}
-        if context.get('purchase_order', False) and 'purchase.order' in [x[0] for x in models]:
-            new_values = []
-            for v in values:
-                if key == 'action' and v[1] in po_accepted_values[key2] \
-                        or v[1] == 'Purchase Order Excel Export' \
-                        or v[1] == 'Purchase Order' \
-                        or v[1] == 'Purchase Order (Merged)' \
-                        or v[1] == 'Allocation report' \
-                        or v[1] == 'Order impact vs. Budget':
-                    new_values.append(v)
-        elif context.get('request_for_quotation', False) and 'purchase.order' in [x[0] for x in models]:
-            new_values = []
-            for v in values:
-                if key == 'action' and v[1] in rfq_accepted_values[key2] \
-                        or v[1] == 'Request for Quotation' \
-                        or v[1] == 'Request For Quotation Excel Export':
-                    new_values.append(v)
-
-        return new_values
-
-
-ir_values()
-
-
 SOURCE_DOCUMENT_MODELS = [
     ('', ''),
     ('po', 'Purchase Order'),
@@ -2166,6 +2161,7 @@ SOURCE_DOCUMENT_MODELS = [
 
 class procurement_request_sourcing_document(osv.osv):
     _name = 'procurement.request.sourcing.document'
+    _inherit = 'procurement.request.sourcing.document'
     _table = 'procurement_request_sourcing_document2'
     _description = 'Sourcing Document'
     _rec_name = 'order_id'
@@ -2190,32 +2186,32 @@ class procurement_request_sourcing_document(osv.osv):
                 linked_model AS linked_model
             FROM (
                 SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name, CASE WHEN p.rfq_ok = 't' THEN 'rfq' ELSE 'po' END AS linked_model
-                FROM purchase_order_line pl, purchase_order p, sale_order_line sl
-                WHERE pl.order_id = p.id AND pl.linked_sol_id = sl.id AND sl.procurement_request = True
+                FROM purchase_order_line pl, purchase_order p, sale_order_line sl, sale_order so
+                WHERE so.id = sl.order_id AND pl.order_id = p.id AND pl.linked_sol_id = sl.id AND so.procurement_request = True
                 GROUP BY p.id, sl.order_id
 
                 UNION
 
                 SELECT t.id AS linked_id, sl.order_id AS order_id, t.name AS linked_name, 'tender' AS linked_model
-                FROM tender_line tl, tender t, sale_order_line sl 
-                WHERE tl.tender_id = t.id AND tl.sale_order_line_id = sl.id AND sl.procurement_request = True
+                FROM tender_line tl, tender t, sale_order_line sl, sale_order so
+                WHERE so.id = sl.order_id AND tl.tender_id = t.id AND tl.sale_order_line_id = sl.id AND so.procurement_request = True
                 GROUP BY t.id, sl.order_id, t.name
 
                 UNION
 
-                SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name, 
+                SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name,
                     CASE WHEN p.type = 'out' AND p.subtype = 'standard' THEN 'out' ELSE 'pick' END AS linked_model
-                FROM stock_move m, stock_picking p, sale_order_line sl
-                WHERE m.picking_id = p.id AND m.sale_line_id = sl.id AND sl.procurement_request = True 
+                FROM stock_move m, stock_picking p, sale_order_line sl, sale_order so
+                WHERE so.id = sl.order_id AND m.picking_id = p.id AND m.sale_line_id = sl.id AND so.procurement_request = True
                     AND p.type = 'out' AND p.subtype in ('standard', 'picking')
                 GROUP BY p.id, sl.order_id, p.name
 
                 UNION
 
                 SELECT p.id AS linked_id, sl.order_id AS order_id, p.name AS linked_name, 'int' AS linked_model
-                FROM stock_move m, stock_picking p, sale_order_line sl, purchase_order_line pl
-                WHERE m.picking_id = p.id AND m.purchase_line_id = pl.id AND pl.linked_sol_id = sl.id 
-                    AND sl.procurement_request = True AND p.type = 'internal' AND p.subtype != 'sysint'
+                FROM stock_move m, stock_picking p, sale_order_line sl, purchase_order_line pl, sale_order so
+                WHERE so.id = sl.order_id AND m.picking_id = p.id AND m.purchase_line_id = pl.id AND pl.linked_sol_id = sl.id
+                    AND so.procurement_request = True AND p.type = 'internal' AND p.subtype != 'sysint'
                 GROUP BY p.id, sl.order_id, p.name
                 ) AS subq
             )''')
@@ -2272,3 +2268,28 @@ class procurement_request_sourcing_document(osv.osv):
 
 
 procurement_request_sourcing_document()
+
+class res_partner(osv.osv):
+    _name = 'res.partner'
+    _inherit = 'res.partner'
+
+    def _get_is_rfq_generated(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+
+        if context is None:
+            context = {}
+
+        if not context.get('tender_id'):
+            return ret
+
+        cr.execute('select partner_id from purchase_order where tender_id = %s', (context['tender_id'], ))
+        for x in cr.fetchall():
+            ret[x[0]] = True
+        return ret
+
+    _columns = {
+        'is_rfq_generated': fields.function(_get_is_rfq_generated, method=1, internal=1, type='boolean', string='RfQ Generated for the tender in context'),
+    }
+res_partner()

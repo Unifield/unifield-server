@@ -773,7 +773,9 @@ class stock_mission_report(osv.osv):
 
         logging.getLogger('MSR').info("""___ Number of MSR lines to be updated: %s, at %s""" % (len(product_reviewed_ids) + len(product_amc_ids), time.strftime('%Y-%m-%d %H:%M:%S')))
 
-        product_values = dict.fromkeys(product_ids, {})
+        product_values = {}
+        for p_id in product_ids:
+            product_values[p_id] = {}
 
         # Update the final dict with this results
         for product_dict in product_amc_result:
@@ -844,7 +846,7 @@ class stock_mission_report(osv.osv):
                     # update AMC / FMC
                     cr.execute('select id, product_id, product_amc, product_consumption from stock_mission_report_line where mission_report_id = %s', (report['id'],))
                     for x in cr.fetchall():
-                        if product_values.get(x[1]) and ( (x[2] or 0) != product_values.get(x[1], {}).get('product_amc', 0) or (x[3] or 0) != product_values.get(x[1], {}).get('reviewed_consumption', 0)):
+                        if (x[2] or 0) != product_values.get(x[1], {}).get('product_amc', 0) or (x[3] or 0) != product_values.get(x[1], {}).get('reviewed_consumption', 0):
                             line_obj.write(cr, uid, x[0], {'product_amc': product_values.get(x[1], {}).get('product_amc', 0), 'product_consumption':  product_values.get(x[1], {}).get('reviewed_consumption', 0)}, context=context)
 
                 msr_in_progress = self.pool.get('msr_in_progress')

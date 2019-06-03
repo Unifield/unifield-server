@@ -41,6 +41,13 @@
             <field name="sequence" eval="10" />
             <field name="signal">button_generate</field>
         </record>
+
+        <record id="trans_comparison_comparison" model="workflow.transition">
+            <field name="act_from" ref="act_comparison" />
+            <field name="act_to" ref="act_comparison" />
+            <field name="sequence" eval="15" />
+            <field name="signal">button_generate</field>
+        </record>
         
         <record id="trans_comparison_done" model="workflow.transition">
             <field name="act_from" ref="act_comparison" />

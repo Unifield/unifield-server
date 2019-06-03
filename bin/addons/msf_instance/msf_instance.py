@@ -38,6 +38,7 @@ import time
 
 class msf_instance(osv.osv):
     _name = 'msf.instance'
+    _trace = True
 
     def _get_current_instance_level(self, cr, uid, ids, fields, arg, context=None):
         if not context:
@@ -226,6 +227,9 @@ class msf_instance(osv.osv):
         }
 
     def create(self, cr, uid, vals, context=None):
+        if 'state' not in vals:
+            # state by default at creation time = Draft: add it in vals to make it appear in the Track Changes
+            vals['state'] = 'draft'
         # Check if lines are imported from coordo; if now, create those
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         if 'parent_id' in vals and 'level' in vals and vals['level'] == 'project':

@@ -448,22 +448,29 @@ def compute_price_value(**kwargs):
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
     price = kwargs['price'] or 'Price'
+    is_rfq = kwargs['is_rfq']
     price_unit_defined = False
     cell_nb = kwargs.get('cell_nb', 3)
     try:
-        if not row.cells[cell_nb] or not row.cells[cell_nb].data:
-            if default_code:
-                warning_list.append(_('The Price Unit was not set, we have taken the default "%s" of the product.') % price)
-            else:
-                error_list.append(_('The Price and Product were not found.'))
-        elif row.cells[cell_nb].type not in ['int', 'float'] and not default_code:
-            error_list.append(_('The Price Unit was not a number and no product was found.'))
-        elif row.cells[cell_nb].type in ['int', 'float']:
-            price_unit_defined = True
-            price_unit = row.cells[cell_nb].data
-            cost_price = row.cells[cell_nb].data
+        if is_rfq:
+            if row.cells[cell_nb].type in ['int', 'float']:
+                price_unit_defined = True
+                price_unit = row.cells[cell_nb].data
+                cost_price = row.cells[cell_nb].data
         else:
-            error_list.append(_('The Price Unit was not defined properly.'))
+            if not row.cells[cell_nb] or not row.cells[cell_nb].data:
+                if default_code:
+                    warning_list.append(_('The Price Unit was not set, we have taken the default "%s" of the product.') % price)
+                else:
+                    error_list.append(_('The Price and Product were not found.'))
+            elif row.cells[cell_nb].type not in ['int', 'float'] and not default_code:
+                error_list.append(_('The Price Unit was not a number and no product was found.'))
+            elif row.cells[cell_nb].type in ['int', 'float']:
+                price_unit_defined = True
+                price_unit = row.cells[cell_nb].data
+                cost_price = row.cells[cell_nb].data
+            else:
+                error_list.append(_('The Price Unit was not defined properly.'))
     # if nothing is found at the line index (empty cell)
     except IndexError:
         if default_code:

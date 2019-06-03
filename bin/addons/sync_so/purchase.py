@@ -78,12 +78,32 @@ class purchase_order_line_sync(osv.osv):
         'has_pol_been_synched': fields.function(_has_pol_been_synched, type='boolean', method=True, string='Synched ?'),
     }
 
+
+    def update_linked_in(self, cr, uid, pol_line, orig_qty, new_qty, context=None):
+        # po line already confirmed, but qty changed => update IN / SYS-INt
+        domain = [('purchase_line_id', '=', pol_line), ('type', '=', 'in'), ('state', '=', 'assigned'), ('product_qty', '=', orig_qty)]
+        linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
+        if linked_in_move:
+            self.pool.get('stock.move').write(cr, uid, linked_in_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
+            # update SYS-INT if has:
+            domain = [('linked_incoming_move', '=', linked_in_move[0]), ('type', '=', 'internal')]
+            sys_int_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
+            if sys_int_move:
+                self.pool.get('stock.move').write(cr, uid, sys_int_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
+            return True
+
+        return False
+
     def sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
         '''
         Update original PO lines from remote SO lines
         '''
         if context is None:
             context = {}
+
+        debug = False
+        logger = logging.getLogger('------sync.purchase.order.line')
+
         pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
         wf_service = netsvc.LocalService("workflow")
@@ -121,13 +141,22 @@ class purchase_order_line_sync(osv.osv):
         if 'line_number' in pol_values:
             del(pol_values['line_number'])
 
+        # search the PO line to update:
+        pol_id = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['sync_local_id'])], limit=1, context=context)
+        if not pol_id and sol_dict.get('sync_linked_pol'):
+            pol_id_msg = sol_dict['sync_linked_pol'].split('/')[-1]
+            pol_id = self.search(cr, uid, [('order_id', '=', pol_values['order_id']), ('id', '=', int(pol_id_msg))], context=context)
+
+
+        if debug:
+            logger.info('sol_dict: %s' % sol_dict)
+
         # the current line has been resourced in other instance, so we set it as "sourced_n" in current instance PO in order to
         # create the resourced line in current instance IR:
-
         ress_fo = False
         if sol_dict.get('resourced_original_line'):
             pol_values['set_as_resourced'] = True
-            if sol_dict.get('resourced_original_remote_line'):
+            if sol_dict.get('resourced_original_remote_line') and not pol_id:
                 pol_values['resourced_original_line'] = int(sol_dict['resourced_original_remote_line'].split('/')[-1])
                 # link our resourced PO line with corresponding resourced FO line:
                 if pol_values['resourced_original_line']:
@@ -148,11 +177,6 @@ class purchase_order_line_sync(osv.osv):
                     pol_values['link_so_id'] = orig_line.link_so_id.id
                     self.pool.get('purchase.order.line').write(cr, uid, orig_line_ids, {'block_resourced_line_creation': True}, context=context)
 
-        # search the PO line to update:
-        pol_id = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['sync_local_id'])], limit=1, context=context)
-        if not pol_id and sol_dict.get('sync_linked_pol'):
-            pol_id_msg = sol_dict['sync_linked_pol'].split('/')[-1]
-            pol_id = self.search(cr, uid, [('order_id', '=', pol_values['order_id']), ('id', '=', int(pol_id_msg))], context=context)
 
         # update PO line:
         kind = ""
@@ -175,15 +199,19 @@ class purchase_order_line_sync(osv.osv):
                 if orig_pol_info.analytic_distribution_id:
                     pol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, orig_pol_info.analytic_distribution_id.id, {}, context=context)
                 if orig_pol_info.linked_sol_id:
-                    pol_values['origin'] = orig_pol_info.origin
+                    pol_values['origin'] = orig_pol_info.linked_sol_id.order_id.name
+
             if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:
                 # in case of FO from missing/replacement claim
                 pol_values['origin'] = self.pool.get('purchase.order').browse(cr, uid, po_ids[0], context=context).origin
                 pol_values['from_synchro_return_goods'] = True
+
             # case of PO line doesn't exists, so created in FO (COO) and pushed back in PO (PROJ)
             # so we have to create this new PO line:
-            pol_values['set_as_sourced_n'] = True if not sol_dict.get('resourced_original_line') else False
+            pol_values['set_as_sourced_n'] = True if not sol_dict.get('resourced_original_line') and not sol_dict.get('is_line_split') else False
             new_pol = self.create(cr, uid, pol_values, context=context)
+            if debug:
+                logger.info("create pol id: %s, values: %s" % (new_pol, pol_values))
 
             # if original pol has already been confirmed (and so has linked IN moves), then we re-attach moves to the right new split pol:
             if sol_dict['is_line_split']:
@@ -203,47 +231,55 @@ class purchase_order_line_sync(osv.osv):
             pol_updated = new_pol
             pol_state = ''
             parent_so_id = False
-            #### Create the linked IR/FO line: execpt when set_as_sourced_n=True (new line added in PO coo, this value already create an IR/FO line when pol is create)
-            if not pol_values['set_as_sourced_n']:
-                if not pol_values.get('origin') and ress_fo:
-                    parent_so_id = ress_fo
-                if pol_values.get('origin'):
-                    parent_so_id = self.pool.get('sale.order').search(cr, uid, [
-                        ('name', '=', pol_values['origin']),
-                        ('procurement_request', 'in', ['t', 'f']),
-                    ], context=context)
-                if parent_so_id:
-                    self.create_sol_from_pol(cr, uid, [new_pol], parent_so_id, context=context)
+
+            #### Create the linked IR/FO line: except when set_as_validated_n=True (new line added in PO coo, this value already creates an IR/FO line when pol is created)
+            if not pol_values.get('origin') and ress_fo:
+                parent_so_id = ress_fo
+            if pol_values.get('origin'):
+                parent_so_id = self.pool.get('sale.order').search(cr, uid, [
+                    ('name', '=', pol_values['origin']),
+                    ('procurement_request', 'in', ['t', 'f']),
+                ], context=context)
+            if parent_so_id:
+                self.create_sol_from_pol(cr, uid, [new_pol], parent_so_id, context=context)
 
         else: # regular update
             pol_updated = pol_id[0]
             kind = 'update'
             pol_to_update = [pol_updated]
             confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], 'confirmed', context=context)
-            po_line = self.browse(cr, uid, pol_updated, fields_to_fetch=['state'], context=context)
+            po_line = self.browse(cr, uid, pol_updated, fields_to_fetch=['state', 'product_qty'], context=context)
             pol_state = po_line.state
             if sol_dict['state'] in ['cancel', 'cancel_r']:
                 pol_values['cancelled_by_sync'] = True
             if self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], po_line.state, context=context) <= confirmed_sequence:
                 # if the state is less than confirmed we update the PO line
-                # todo : added case when line is confirmed, but OUT cancelled in PICK, then we must update the qty on PO
+                if debug:
+                    logger.info("Write pol id: %s, values: %s" % (pol_to_update, pol_values))
+                check_in = False
+                if po_line.state == 'confirmed' and 'product_qty' in pol_values and pol_values['product_qty'] != po_line.product_qty:
+                    check_in = True
                 self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
+                if check_in:
+                    self.update_linked_in(cr, uid, pol_to_update, orig_qty=po_line.product_qty, new_qty=pol_values['product_qty'], context=context)
 
-        # update PO line state:
-        """
         if debug:
-            print '##############',kind, 'pol_id', pol_updated, 'sol state', sol_dict['state']
+            logger.info("%s pol_id: %s, sol state: %s" % (kind, pol_updated, sol_dict['state']))
             cr.execute("select act.name, inst.res_id from wkf_instance inst ,wkf_workitem item, wkf_activity act where act.id=item.act_id and item.inst_id=inst.id and inst.res_id=%s and inst.res_type='purchase.order.line'", (pol_updated,))
-            print cr.fetchall()
-            dd = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['line_number', 'state', 'product_qty', 'order_id'])
+            logger.info("Wkf pol state: %s" % cr.fetchall())
+            dd = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['line_number', 'state', 'product_qty', 'order_id', 'linked_sol_id', 'product_id'])
 
+            logger.info('Pol data %s ' % dd)
             all_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', dd['order_id'][1])])
-            print 'other pol', self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty'])
-            print dd
-        """
+            logger.info('other pol: %s' % self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty', 'linked_sol_id', 'product_id']))
+            logger.info('pol_state %s' % pol_state)
+
+        # Wkf action:
         if sol_dict['state'] in ('sourced', 'sourced_v'):
-            if pol_state == 'sourced_n':
+            if pol_state in 'sourced_n':
                 self.pool.get('purchase.order.line').action_sourced_v(cr, uid, [pol_updated], context=context)
+            elif pol_state in ('sourced_sy', 'sourced_v'):
+                self.update_fo_lines(cr, uid, [pol_updated], context=context)
 
         if sol_dict['state'] == 'sourced':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'sourced_sy', cr)
@@ -252,30 +288,38 @@ class purchase_order_line_sync(osv.osv):
         elif sol_dict['state'] == 'validated':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'validated', cr)
         elif sol_dict['state'] == 'confirmed':
-            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
+            if pol_state == 'confirmed':
+                # pol already confirmed: just update the linked IR line but do no recreate IN
+                self.update_fo_lines(cr, uid, [pol_updated], context=context)
+            else:
+                wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
         elif sol_dict['state'] == 'cancel' or (sol_dict['state'] == 'done' and sol_dict.get('from_cancel_out')):
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel', cr)
         elif sol_dict['state'] == 'cancel_r':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel_r', cr)
+        elif debug:
+            logger.info('No wkf trigger')
 
-        # log me:
         pol_data = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['order_id', 'line_number'], context=context)
         message = "+++ Purchase Order %s %s: line number %s (id:%s) has been updated +++" % (kind, pol_data['order_id'][1], pol_data['line_number'], pol_updated)
-        logging.getLogger('------sync.purchase.order.line').info(message)
+        logger.info(message)
 
-        """
-        if debug:
-            print 'IR RESULT'
-            ir_l_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', '=', 8)])
-            if ir_l_ids:
-                print self.pool.get('sale.order.line').read(cr, uid, ir_l_ids, ['line_number', 'state', 'product_uom_qty'])
-                cr.execute("select act.name, inst.res_id from wkf_instance inst ,wkf_workitem item, wkf_activity act where act.id=item.act_id and item.inst_id=inst.id and inst.res_id in %s and inst.res_type='sale.order.line'", (tuple(ir_l_ids),))
-                print cr.fetchall()
+        ## Debug
+        if debug and pol_updated:
+            linked_fo_ir = self.pool.get('purchase.order.line').browse(cr, uid, pol_updated, fields_to_fetch=['linked_sol_id', 'order_id'])
+            if not linked_fo_ir.linked_sol_id:
+                logger.info("Not linked to any FO/IR")
+            else:
+                ir_l_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', '=', linked_fo_ir.linked_sol_id.order_id.id)])
+                if ir_l_ids:
+                    logger.info( 'FO/IR %s, lines: %s' % (linked_fo_ir.linked_sol_id.order_id.name, self.pool.get('sale.order.line').read(cr, uid, ir_l_ids, ['line_number', 'state', 'product_uom_qty'])))
+                    cr.execute("select act.name, inst.res_id from wkf_instance inst ,wkf_workitem item, wkf_activity act where act.id=item.act_id and item.inst_id=inst.id and inst.res_id in %s and inst.res_type='sale.order.line'", (tuple(ir_l_ids),))
+                    logger.info("Wkf foline: %s" % cr.fetchall())
 
-            all_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', 24)])
-            print 'FINALE PO LINE', self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty'])
-            print ''
-        """
+            all_pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', linked_fo_ir.order_id.id)])
+            logger.info('Final pol %s' % self.pool.get('purchase.order.line').read(cr, uid, all_pol_ids, ['line_number', 'state', 'product_qty']))
+        ## Debug
+
         return message
 
     def confirmed_dpo_service_lines_update_in_po(self, cr, uid, source, line_info, context=None):

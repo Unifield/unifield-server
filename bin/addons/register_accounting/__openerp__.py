@@ -65,7 +65,6 @@
         'wizard/wizard_confirm_bank.xml',
         'wizard/invoice_date.xml',
         'wizard/down_payment.xml',
-        'wizard/transfer_with_change.xml',
         'register_accounting_report.xml',
         'account_wizard.xml',
         'wizard/wizard_register_import.xml',

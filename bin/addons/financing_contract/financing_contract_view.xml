@@ -134,7 +134,7 @@
                         </group>
                         <button name="contract_open_proxy" states="draft" string="Open" type="object" icon="gtk-go-forward"/>
                         <button name="contract_soft_closed_proxy" states="open" string="Soft-close" type="object" icon="gtk-go-forward"/>
-                        <button name="contract_reopen" states="soft_closed" string="Re-Open" type="workflow" icon="gtk-go-forward"/>
+                        <button name="contract_reopen_proxy" states="soft_closed" string="Re-Open" type="object" icon="gtk-go-forward"/>
                         <button name="contract_hard_closed_proxy" states="soft_closed" string="Hard-close" type="object" icon="gtk-ok"/>
                     </form>
                 </field>

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        <menuitem icon="terp-purchase" id="base.menu_purchase_root" name="Purchases" sequence="3" groups="group_purchase_manager,group_purchase_user" web_icon="images/purchases.png" web_icon_hover="images/purchases-hover.png"/>
+        <menuitem icon="terp-purchase" id="base.menu_purchase_root" name="Purchases" sequence="3" web_icon="images/purchases.png" web_icon_hover="images/purchases-hover.png"/>
         <menuitem id="menu_procurement_management" name="Purchase Management" parent="base.menu_purchase_root" sequence="1"/>
-        <menuitem id="menu_purchase_config_purchase" name="Configuration" groups="group_purchase_manager" parent="base.menu_purchase_root" sequence="100"/>
+        <menuitem id="menu_purchase_config_purchase" name="Configuration" parent="base.menu_purchase_root" sequence="100"/>
         <menuitem id="menu_purchase_config_pricelist" name="Pricelists" parent="menu_purchase_config_purchase" sequence="50"/>
         <menuitem action="product.product_pricelist_action" id="menu_product_pricelist_action_purhase" parent="menu_purchase_config_pricelist" sequence="20"/>
         <menuitem action="product.product_pricelist_action2" id="menu_product_pricelist_action2_purchase" parent="menu_purchase_config_pricelist" sequence="10"/>
-        <menuitem action="product.product_pricelist_type_action" id="menu_purchase_product_pricelist_type" parent="menu_purchase_config_pricelist" sequence="2" groups="base.group_extended"/>
+        <menuitem action="product.product_pricelist_type_action" id="menu_purchase_product_pricelist_type" parent="menu_purchase_config_pricelist" sequence="2" />
         <menuitem id="menu_product_in_config_purchase" name="Product" parent="menu_purchase_config_purchase" sequence="30"/>
         <menuitem action="product.product_category_action_form" id="menu_product_category_config_purchase" parent="purchase.menu_product_in_config_purchase" sequence="10"/>
         <menuitem id="menu_purchase_unit_measure_purchase" name="Units of Measure" parent="purchase.menu_product_in_config_purchase" sequence="20"/>
@@ -45,7 +45,7 @@
 
         <!--Inventory control-->
         <menuitem id="menu_procurement_management_inventory" name="Receive Products" parent="base.menu_purchase_root" sequence="4"/>
-        <menuitem action="stock.action_picking_tree4" id="menu_action_picking_tree4" parent="menu_procurement_management_inventory" name="Incoming Shipments" sequence="9" groups="base.group_extended"/>
+        <menuitem action="stock.action_picking_tree4" id="menu_action_picking_tree4" parent="menu_procurement_management_inventory" name="Incoming Shipments" sequence="9" />
         <menuitem action="stock.action_reception_picking_move" id="menu_action_picking_tree_in_move" parent="menu_procurement_management_inventory" sequence="11"/>
 
         <!--Invoice control-->
@@ -104,8 +104,14 @@
                         <field name="requested_date_in_past" invisible="1"/>
                         <field name="update_in_progress" invisible="1" readonly="1"/>
                         <field name="is_validated_and_synced" invisible="1"/>
+                        <field name="msg_big_qty" invisible="1"/>
                         <group colspan="6">
                             <html>
+                                <p id="big_amount" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                                    <translate>
+                                        WARNING: The Total amount of the following lines is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information:
+                                    </translate>
+                                </p>
                                 <p id="view_order_requested_in_past" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                                     <translate>
                                         WARNING: The requested date of this purchase order is in the past.
@@ -125,6 +131,11 @@
                                     <br/>
                                 </p>
                                 <script language="javascript">
+                                    var is_big_amount = $('#msg_big_qty').val() || $('#msg_big_qty').text();
+                                    if (is_big_amount) {
+                                        $('#big_amount').append('&lt;span&gt;'+is_big_amount+'&lt;/span&gt;&lt;br/&gt;');
+                                        $('#big_amount').show();
+                                    }
                                     var is_in_past = $('#requested_date_in_past').val();
                                     if (is_in_past == "1") {
                                         msg_dom = $('#view_order_requested_in_past');
@@ -148,7 +159,8 @@
                         <field name="invoiced" attrs="{'invisible':[('state', 'in', ('draft', 'draft_p', 'validated', 'validated_p'))]}" readonly="1"/>
                         <newline/>
                         <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
-                        <field name="partner_ref" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                        <field name="partner_ref" invisible="1"/>
+                        <field name="short_partner_ref" on_change="onchange_short_partner_ref(short_partner_ref)" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <field name="shipped" attrs="{'invisible':[('state', 'in', ('draft', 'draft_p', 'validated', 'validated_p'))]}" readonly="1"/>
                         <field name="shipped_rate" invisible="True"/>
                         <field name="push_fo" invisible="1"/>
@@ -187,16 +199,18 @@
                                 <field name="partner_address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="origin" readonly="1" widget="char"/>
                                 <field name="internal_type" string="Zone"/>
-                                <field name="customer_ref" widget="char"/>
+                                <field name="customer_ref" invisible="1"/>
+                                <field name="short_customer_ref" widget="char"/>
                                 <field name="from_address" domain="[('partner_id', '=', company_id)]" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                <field name="dest_partner_names"/>
+                                <group colspan="2" col="3">
+                                    <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                </group>
                                 <group colspan="2" col="3">
                                     <field name="no_line" invisible="1"/>
                                     <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"/>
                                     <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated']), ('partner_type', 'in', ['internal', 'intermission', 'section'])]}"/>
-                                </group>
-                                <group colspan="2" col="3">
-                                    <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 </group>
                                 <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                             </group>
@@ -220,7 +234,7 @@
                                     <field name="default_code" displayon="noteditable"/>
                                     <field name="default_name" displayon="noteditable"/>
 
-                                    <field name="product_id" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context, parent.categ)" attrs="{'readonly': [('tender_line_id', '!=', False)], 'required': [('comment', '=', False)]}" displayon="editable" />
+                                    <field name="product_id" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,fake_state,old_price_unit,nomen_manda_0,comment,context, parent.categ)" attrs="{'readonly': [('tender_line_id', '!=', False)], 'required': [('comment', '=', False)]}" displayon="editable" />
                                     <field name="comment"  attrs="{'required': [('product_id', '=', False)]}"/>
                                     <field name="nomenclature_description" readonly="1" />
                                     <button name="openform"
@@ -234,7 +248,7 @@
                                     <field name="internal_code" invisible="True"/>
                                     <field name="internal_name" invisible="True"/>
                                     <field name="supplier_name" invisible="True"/>
-                                    <field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,'','', context)" string="Qty"/>
+                                    <field name="product_qty" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,fake_state,old_price_unit,'','', context)" string="Qty"/>
                                     <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)" domain="[('uom_by_product', '=', product_id)]"/>
                                     <field name="price_unit" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, '', '', context)"/>
                                     <field name="price_subtotal"/>
@@ -353,8 +367,12 @@
                             </field>
                         </page>
                         <page string="Notes">
+                            <group colspan="4" col="6">
                             <field name="import_in_progress" readonly="1" invisible="0"/>
                             <field name="auto_exported_ok" readonly="1"/>
+                            <field name="can_be_auto_exported" invisible="1" />
+                            <button name="auto_export_manual" string="Run PO export job" attrs="{'invisible': [('can_be_auto_exported', '!=', True)]}" type="object" icon="terp-camera_test" colspan="2"/>
+                            </group>
                             <field colspan="4" name="notes" nolabel="1"/>
                             <separator colspan="4" string="Message ESC"/>
                             <field name="message_esc" colspan="4" nolabel="1" readonly="1" attrs="{'invisible': [('partner_type', '!=', 'esc')]}"/>
@@ -493,12 +511,13 @@
                     <field name="priority"/>
                     <field name="categ"/>
                     <field name="date_order"/>
-                    <field name="partner_ref"/>
+                    <field name="short_partner_ref"/>
                     <field name="partner_id" string="Supplier"/>
                     <field name="delivery_requested_date"/>
                     <field name="origin"/>
-                    <field name="customer_ref"/>
+                    <field name="short_customer_ref"/>
                     <field name="dest_partner_names"/>
+                    <field name="details" truncate="15"/>
                     <field name="line_count"/>
                     <field name="shipped_rate" widget="progressbar"/>
                     <field name="invoiced_rate" widget="progressbar"/>
@@ -596,7 +615,7 @@
                             </html>
                             </group>
                             <separator string="Product" colspan="4" />
-                            <field name="product_id" colspan="4" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context, parent.categ)" attrs="{'readonly': [('tender_line_id', '!=', False)]}" default_focus="1"/>
+                            <field name="product_id" colspan="4" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,state,old_price_unit,nomen_manda_0,comment,context, parent.categ, True)" attrs="{'readonly': [('tender_line_id', '!=', False)]}" default_focus="1"/>
                             <field name="comment" colspan="4" attrs="{'required':[('product_id', '=', False)]}"/>
                             <field name="product_uom" on_change="product_uom_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes)" domain="[('uom_by_product', '=', product_id)]"/>
 
@@ -610,11 +629,13 @@
                             <field name="justification_code_id" />
                             <field name="from_fo" invisible="1"/>
                             <field name="tender_id" invisible="1"/>
+                            <field name="link_so_id" invisible="1" />
 
                             <separator string="Linked Information" colspan="4" />
                                 <group colspan="2" col="3">
-                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}" string="Source Document"/>
-                                <field name="select_fo" on_change="on_change_select_fo(select_fo)" nolabel="1" domain="['|', ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p']), ('procurement_request', '=', True)]" attrs="{'invisible': ['|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}"/>
+                                <field name="po_order_type" invisible="1"/>
+                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', '|', '|', '|', ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('link_so_id', '!=', False), ('po_order_type', 'in', ['loan', 'donation_exp', 'donation_st', 'in_kind'])]}" string="Source Document"/>
+                                <field name="select_fo" on_change="on_change_select_fo(select_fo)" nolabel="1" domain="[('state', 'not in', ['done', 'cancel']), ('procurement_request', 'in', ['t', 'f']), ('order_type', '=', 'regular')]" attrs="{'invisible': ['|', '|', '|', '|', ('link_so_id', '!=', False), ('linked_sol_id', '!=', False), ('tender_id', '!=', False), ('tender_line_id', '!=', False), ('po_order_type', 'in', ['loan', 'donation_exp', 'donation_st', 'in_kind'])]}"/>
                                 </group>
                                 <field name="customer_ref" string="Customer ref" widget="char"/>
                                 <field name="external_ref" readonly="1"/>
@@ -631,7 +652,7 @@
                                 <field name="original_price" colspan="1" readonly="1"/>
                                 <field name="original_uom" colspan="1" readonly="1"/>
                                 <field name="original_product" colspan="2" readonly="1" />
-                                <field name="product_qty" string="Current Qty" colspan="1" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment, context)" />
+                                <field name="product_qty" string="Current Qty" colspan="1" context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" on_change="product_qty_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id,parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,state,old_price_unit,nomen_manda_0,comment, context)" />
                                 <field name="price_unit" string="Current Price" colspan="1" on_change="price_unit_change(fake_id, price_unit, product_id, product_uom, product_qty, parent.pricelist_id, parent.partner_id, parent.date_order, change_price_ok, parent.state, old_price_unit, nomen_manda_0, comment, context)"/>
                                 <field name="original_currency_id" colspan="1" readonly="1"/>
                                 <field name="modification_comment" colspan="2" />
