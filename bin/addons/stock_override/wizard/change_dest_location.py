@@ -117,6 +117,7 @@ class change_dest_location(osv.osv_memory):
             if not move_ids:
                 raise osv.except_osv(_('Warning'), _('No stock move found.'))
 
+            move_changed = []
             for move in move_obj.browse(cr, uid, move_ids, context=context):
 
                 if wizard.type == 'internal':
@@ -136,6 +137,7 @@ class change_dest_location(osv.osv_memory):
 
                 else: # out
                     if move.location_id.id == wizard.src_location_id.id:
+                        move_changed.append(move.id)
                         continue
                     if not loc_obj.search_exist(cr, uid, [('picking_ticket_src', '=', move.product_id.id), ('id', '=', wizard.src_location_id.id)], context=context):
                         warn_msg.append(_('Line %s : The new source location is not compatible with the product type, so the destination location has not been changed for this move. \n') % move.line_number)
@@ -144,9 +146,12 @@ class change_dest_location(osv.osv_memory):
                     new_data = {'location_id': wizard.src_location_id.id}
                     if move.state == 'assigned':
                         new_data['state'] = 'confirmed'
+                    move_changed.append(move.id)
                     move_obj.write(cr, uid, [move.id], new_data, context=context)
                     nb += 1
 
+            if move_changed:
+                move_obj.action_assign(cr, uid, move_changed)
             if nb:
                 if wizard.type == 'internal':
                     warn_msg.append(_('The destination location has been changed on %d stock moves.') % (nb,))
