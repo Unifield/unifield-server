@@ -3527,8 +3527,8 @@ class stock_picking(osv.osv):
                     })
                     if line.pack_info_id:
                         values.update({
-                            'from_pack': line.pack_info_id.parcel_from,
-                            'to_pack': line.pack_info_id.parcel_to,
+                            'from_pack': line.pack_info_id.parcel_from or 1,
+                            'to_pack': line.pack_info_id.parcel_to or 1,
                             'length': line.pack_info_id.total_length,
                             'width': line.pack_info_id.total_width,
                             'height': line.pack_info_id.total_height,
