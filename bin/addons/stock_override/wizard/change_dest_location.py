@@ -109,7 +109,7 @@ class change_dest_location(osv.osv_memory):
             if wizard.type != 'internal':
                 state_to_change = ['draft', 'confirmed']
 
-            move_domain = [('picking_id', '=', wizard.picking_id.id), ('state', '!=', state_to_change), ('product_qty', '!=', 0)]
+            move_domain = [('picking_id', '=', wizard.picking_id.id), ('state', 'in', state_to_change), ('product_qty', '!=', 0)]
             if selection is not None:
                 move_domain.append(('id', 'in', selection))
             move_ids = move_obj.search(cr, uid, move_domain, context=context)
