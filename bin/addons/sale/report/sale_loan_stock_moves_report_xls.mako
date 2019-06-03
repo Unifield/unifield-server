@@ -142,6 +142,12 @@
         <Column ss:AutoFitWidth="1" ss:Width="74.25"  />
         ## Qty Balance
         <Column ss:AutoFitWidth="1" ss:Width="69.25"  />
+        % if r.display_bn_ed:
+        ## Batch Number
+        <Column ss:AutoFitWidth="1" ss:Width="85.25" />
+        ## Expiry Date
+        <Column ss:AutoFitWidth="1" ss:Width="75.0" />
+        % endif
         ## PO/FO Ref.
         <Column ss:AutoFitWidth="1" ss:Width="282.0"  />
         ## Origin Ref.
@@ -155,32 +161,28 @@
         ## Status
         <Column ss:AutoFitWidth="1" ss:Width="42.25"  />
 
-        <%
-            headers_list = [
-                _('Code'),
-                _('Description'),
-                _('Order Type'),
-                _('Movement Date'),
-                _('Move Ref.'),
-                _('Partner'),
-                _('Partner Type'),
-                _('Instance'),
-                _('Qty In'),
-                _('Qty Out'),
-                _('Qty Balance'),
-                _('PO/FO Ref.'),
-                _('Origin Ref.'),
-                _('Unit Price'),
-                _('Currency'),
-                _('Total Value'),
-                _('Status'),
-            ]
-        %>
-
         <Row>
-        % for h in headers_list:
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${h|x}</Data></Cell>
-        % endfor
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Code')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Order Type')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Movement Date')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Move Ref.')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Partner')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Partner Type')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Instance')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Qty In')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Qty Out')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Qty Balance')|x}</Data></Cell>
+            % if r.display_bn_ed:
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Batch Number')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Expiry Date')|x}</Data></Cell>
+            % endif
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('PO/FO Ref.')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Origin Ref.')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Unit Price')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Currency')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Total Value')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Status')|x}</Data></Cell>
         </Row>
 
         <% i = 0 %>
@@ -212,6 +214,14 @@
                 % else:
                 <Cell ss:StyleID="line_right${i}"><Data ss:Type="String"></Data></Cell>
                 %endif
+                % if r.display_bn_ed:
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.prodlot_id and o.prodlot_id.name|x}</Data></Cell>
+                % if o.expired_date and isDate(o.expired_date):
+                <Cell ss:StyleID="sShortDate${i}"><Data ss:Type="DateTime">${o.expired_date|n}T00:00:00.000</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String"></Data></Cell>
+                % endif
+                % endif
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.origin|x}</Data></Cell>
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getFirstSplitOnUnderscore(o.purchase_line_id.sync_order_line_db_id) or getFirstSplitOnUnderscore(o.sale_line_id.sync_order_line_db_id) or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${computeCurrency(o)|x}</Data></Cell>

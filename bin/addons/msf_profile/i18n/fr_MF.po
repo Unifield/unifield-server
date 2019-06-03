@@ -24487,7 +24487,7 @@ msgstr "Source Approvisionnement"
 msgid "Internal Location"
 msgstr "Zone Interne"
 
-#. modules: msf_outgoing, stock_override, consumption_calculation, specific_rules, kit, stock_batch_recall, msf_supply_doc_export, msf_doc_import, stock
+#. modules: msf_outgoing, stock_override, consumption_calculation, specific_rules, kit, stock_batch_recall, msf_supply_doc_export, msf_doc_import, stock, sale
 #: code:addons/consumption_calculation/consumption_calculation.py:482
 #: report:addons/consumption_calculation/report/report_incoming_consumption_xls.mako:72
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:72
@@ -24511,6 +24511,8 @@ msgstr "Zone Interne"
 #: report:stock.card.report:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:191
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:222
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:148
+#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:177
 #, python-format
 msgid "Batch Number"
 msgstr "Numéro de Lot"
@@ -46096,11 +46098,13 @@ msgstr "Le montant à facturer par anticipation"
 msgid "Is Keep Cool ?"
 msgstr "Est à maintenir au frais?"
 
-#. modules: sales_followup, stock_override, msf_supply_doc_export
+#. modules: sales_followup, stock_override, msf_supply_doc_export, sale
 #: view:po.follow.up:0
 #: view:sale.followup.multi.wizard:0
 #: view:export.report.stock.move:0
 #: view:ir.followup.location.wizard:0
+#: view:sale.donation.stock.moves:0
+#: view:sale.loan.stock.moves:0
 msgid "Report parameters"
 msgstr "Paramètres du Rapport"
 
@@ -58319,11 +58323,6 @@ msgstr "Enregistrement des Écritures Comptables…"
 msgid "Please specify server option --email-from !"
 msgstr "Veuillez Spécifier l'option du serveur --email-from !"
 
-#. module: sale
-#: view:sale.loan.stock.moves:0
-msgid "Report Parameters"
-msgstr "Report Parameters"
-
 #. module: base
 #: view:ir.actions.server:0
 msgid "Trigger Configuration"
@@ -58556,7 +58555,7 @@ msgstr "Le rapport RML"
 msgid "%s was not a number, it is set to %d by default."
 msgstr "%s was not a number, it is set to %d by default."
 
-#. modules: msf_outgoing, stock_move_tracking, stock_override, consumption_calculation, specific_rules, kit, product_expiry, msf_doc_import, msf_supply_doc_export, stock
+#. modules: msf_outgoing, stock_move_tracking, stock_override, consumption_calculation, specific_rules, kit, product_expiry, msf_doc_import, msf_supply_doc_export, stock, sale
 #: code:addons/consumption_calculation/consumption_calculation.py:482
 #: report:addons/consumption_calculation/report/report_incoming_consumption_xls.mako:73
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:73
@@ -58597,6 +58596,8 @@ msgstr "%s was not a number, it is set to %d by default."
 #: report:stock.card.report:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:192
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:223
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:149
+#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:178
 #, python-format
 msgid "Expiry Date"
 msgstr "Date d'Expiration"
@@ -106762,3 +106763,9 @@ msgstr "Un BC avec un Type de Commande Prêt, Donation avant expiration, Donatio
 #, python-format
 msgid "You can't change the Order Type to Loan, Donation before expiry, Standard donation or In Kind Donation if a line has a Source Document"
 msgstr "Vous ne pouvez pas changer le Type de Commande en Prêt, Donation avant expiration, Donation normale ou Donation en Nature si une des lignes a un Document d'Origine"
+
+#. module: sale
+#: field:sale.donation.stock.moves,display_bn_ed:0
+#: field:sale.loan.stock.moves,display_bn_ed:0
+msgid "Display BN/ED details"
+msgstr "Afficher les détails des NL/EXP"

@@ -14,8 +14,9 @@
                     <field name="partner_type" />
                     <field name="product_id" />
                     <field name="origin" />
-                    <separator colspan="4" string="Report Parameters" />
+                    <separator colspan="4" string="Report parameters" />
                     <field name="remove_completed" />
+                    <field name="display_bn_ed" />
                     <separator colspan="4" string="Actions" />
                     <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="4" />
                 </form>

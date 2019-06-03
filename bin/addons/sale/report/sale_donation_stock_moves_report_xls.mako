@@ -120,9 +120,9 @@
         <Column ss:AutoFitWidth="1" ss:Width="75.25"  />
         % if r.display_bn_ed:
         ## Batch Number
-        <Column ss:AutoFitWidth="1" ss:Width="75.25" />
+        <Column ss:AutoFitWidth="1" ss:Width="85.25" />
         ## Expiry Date
-        <Column ss:AutoFitWidth="1" ss:Width="72.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="75.0" />
         % endif
         ## Instance
         <Column ss:AutoFitWidth="1" ss:Width="150.75"  />
