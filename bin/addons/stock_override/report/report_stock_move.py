@@ -794,6 +794,7 @@ product will be shown.""",
                 #sheet.row(row_count).height = 60*20
 
             export_file = tempfile.NamedTemporaryFile(delete=False)
+            file_name = export_file.name
             book.save(export_file)
             export_file.close()
 
@@ -804,7 +805,7 @@ product will be shown.""",
                 'description': 'IN & OUT Report',
                 'res_model': 'export.report.stock.move',
                 'res_id': ids[0],
-                'datas': base64.encodestring(open(export_file.name, 'r').read()),
+                'datas': base64.encodestring(open(file_name, 'rb').read()),
             })
             self.write(new_cr, uid, ids, {'state': 'ready'}, context=context)
         except Exception, e:
