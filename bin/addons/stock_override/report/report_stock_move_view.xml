@@ -238,17 +238,6 @@
             parent="stock.next_id_61"
             sequence="4" />
 
-        <report
-            id="report_stock_move_xls"
-            string="IN &amp; OUT Report"
-            model="export.report.stock.move"
-            name="stock.move.xls"
-            file="stock_override/report/report_stock_move_xls.mako"
-            report_type="webkit"
-            header="False"
-            auto="False"
-            menu="False"
-            />
 
     </data>
 </openerp>

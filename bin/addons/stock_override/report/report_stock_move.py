@@ -5,13 +5,15 @@ import time
 import threading
 import uuid
 import logging
-from report import report_sxw
 from osv import fields, osv
 from decimal_precision import decimal_precision as dp
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
-from service.web_services import report_spool
+import pooler
+import datetime
 
+from xlwt import Workbook, easyxf, Borders
+import tempfile
+import base64
 
 class report_stock_move(osv.osv):
     _name = "report.stock.move"
@@ -500,6 +502,163 @@ product will be shown.""",
             _('No stock moves found for these parameters')
         )
 
+    def getLines(self, cr, uid, datas, currency_id, context=None):
+
+        if context is None:
+            context = {}
+
+        _logger = logging.getLogger('in.out.report')
+        prod_obj = self.pool.get('product.product')
+        curr_obj = self.pool.get('res.currency')
+        loc_obj = self.pool.get('stock.location')
+        data_obj = self.pool.get('ir.model.data')
+        rate_cache = {}
+
+        if not datas['moves']:
+            raise StopIteration
+        if not datas['selected_locs']:
+            inst_full_view_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_locations')[1]
+            loc_domain = [('location_id', 'child_of', inst_full_view_id), ('active', 'in', ['t', 'f'])]
+            location_ids = loc_obj.search(cr, uid, loc_domain, context=context)
+            context.update({'location': location_ids})
+        context['compute_child'] = False
+        nb_lines = len(datas['moves'])
+        _logger.info('Report started on %d lines' % nb_lines)
+
+        lang_ctx = {'lang': context.get('lang', 'en_MF')}
+        reason_ids = self.pool.get('stock.reason.type').search(cr, uid, [])
+        reason_info = {}
+        for x in self.pool.get('stock.reason.type').read(cr, uid, reason_ids, ['complete_name'], context=lang_ctx):
+            reason_info[x['id']] = x['complete_name']
+
+        all_loc_ids = loc_obj.search(cr, uid, [('active', 'in', ['t', 'f'])])
+        location_info = {}
+        for x in loc_obj.read(cr, uid, all_loc_ids, ['name'], context=lang_ctx):
+            location_info[x['id']] = x['name']
+
+        new_cr =  pooler.get_db(cr.dbname).cursor()
+        try:
+            new_cr.execute('''select
+                    m.product_id as product_id,
+                    m.prodlot_id as prodlot_id,
+                    m.product_qty as product_qty,
+                    t.uom_id as prod_uom,
+                    m.name as move_name,
+                    p.default_code as default_code,
+                    p.batch_management as batch_management,
+                    COALESCE(trans.value, t.name) as product_name,
+                    m.price_unit as price_unit,
+                    m.price_currency_id as price_currency_id,
+                    pick.name as pick_name,
+                    m.date as date,
+                    uom.name as uom_name,
+                    t.standard_price as standard_price,
+                    m.location_id as location_src_id,
+                    m.location_dest_id as location_dest_id,
+                    m.reason_type_id as reason_type_id,
+                    lot.name as lot_name,
+                    lot.life_date as life_date
+                from
+                    stock_move m
+                    inner join product_uom uom on uom.id = m.product_uom
+                    inner join product_product p on p.id = m.product_id
+                    inner join product_template t on t.id = p.product_tmpl_id
+                    left join stock_picking pick on m.picking_id = pick.id
+                    left join stock_production_lot lot on lot.id = m.prodlot_id
+                    left join ir_translation trans on trans.name='product.template,name' and trans.res_id=t.id and lang=%s
+                where
+                    m.id in %s
+                order by p.default_code, m.date asc, lot.name
+            ''', (lang_ctx.get('lang'), tuple(datas['moves'])))
+            # do not change order by or stock level computation will be wrong
+
+            start_time = time.time()
+            nb_done = 0
+            bn_stock_cache = {}
+            prod_stock_cache = {}
+            while True:
+                rows = new_cr.dictfetchmany(600)
+                if not rows:
+                    raise StopIteration
+                for move in rows:
+                    nb_done += 1
+                    if nb_done % 300 == 0:
+                        _logger.info('%d/%d %s seconds' % (nb_done, nb_lines, time.time() - start_time))
+                        if context.get('progress_id'):
+                            self.pool.get('export.report.stock.move.progress').write(cr, uid, context.get('progress_id'), {'progress': '%d / %d' % (nb_done, nb_lines)})
+                        start_time = time.time()
+
+                    move_date = move['date'] or False
+                    # Get stock
+                    ctx = context.copy()
+                    prod_stock_bn = 0
+                    prod_stock = 0
+                    ctx.update({'to_date': move_date, 'prodlot_id': False, 'from_strict_date': prod_stock_cache.get(move['product_id'], {}).get('to_date', False)})
+
+                    if ctx['to_date'] != ctx['from_strict_date']:
+                        prod_stock = prod_obj.read(cr, uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
+                        if move['product_id'] in prod_stock_cache:
+                            prod_stock += prod_stock_cache[move['product_id']]['stock']
+                        prod_stock_cache[move['product_id']] = {'to_date': move_date, 'stock': prod_stock}
+                    else:
+                        prod_stock = prod_stock_cache[move['product_id']]['stock']
+
+
+                    if move['prodlot_id']:
+                        ctx.update({'prodlot_id': move['prodlot_id'], 'from_strict_date': bn_stock_cache.get(move['prodlot_id'], {}).get('to_date', False)})
+                        if ctx['to_date'] != ctx['from_strict_date']:
+                            prod_stock_bn = prod_obj.read(cr, uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
+                            if move['prodlot_id'] in bn_stock_cache:
+                                prod_stock_bn += bn_stock_cache[move['prodlot_id']]['stock']
+                            bn_stock_cache[move['prodlot_id']] = {'to_date': move_date, 'stock': prod_stock_bn}
+                        else:
+                            prod_stock_bn = bn_stock_cache[move['prodlot_id']]['stock']
+
+                    # Get Unit Price at date
+                    prod_price = move['price_unit'] or 0
+                    if not prod_price:
+                        if move_date:
+                            cr.execute("""SELECT old_standard_price
+                                        FROM standard_price_track_changes
+                                        WHERE product_id = %s AND change_date >= %s
+                                        ORDER BY change_date ASC
+                                        LIMIT 1
+                                        """, (move['product_id'], move_date))
+                            for x in cr.fetchall():
+                                prod_price = x[0]
+                        if not prod_price:
+                            prod_price = move['standard_price']
+                    elif move['price_currency_id'] and move['price_currency_id'] != currency_id:
+                        if move_date:
+                            first_day = time.strftime('%Y-%m-01', time.strptime(move_date, '%Y-%m-%d %H:%M:%S'))
+                            rate_key = '%s-%s' % (move['price_currency_id'], first_day)
+                            if rate_key not in rate_cache:
+                                rate_cache[rate_key] = curr_obj.read(cr, uid, move['price_currency_id'], ['rate'], {'date': first_day})['rate'] or 1
+                            prod_price = prod_price/rate_cache[rate_key]
+
+                    yield [
+                        move['default_code'],
+                        move['product_name'],
+                        move['uom_name'],
+                        move_date and datetime.datetime.strptime(move_date, '%Y-%m-%d %H:%M:%S') or '',
+                        move['lot_name'] or '',
+                        move['life_date'] and datetime.datetime.strptime(move['life_date'], '%Y-%m-%d'),
+                        move['product_qty'],
+                        prod_price,
+                        move['product_qty'] * prod_price,
+                        move['lot_name'] and prod_stock_bn or 0,
+                        prod_stock,
+                        location_info.get(move['location_src_id']),
+                        location_info.get(move['location_dest_id']),
+                        reason_info.get(move['reason_type_id']) or '',
+                        move['pick_name'] or move['move_name'] or '',
+                    ]
+
+            raise StopIteration
+        finally:
+            new_cr.commit()
+            new_cr.close(True)
+
     def generate_report_bkg(self, cr, uid, ids, datas, context=None):
         """
         Generate the report in background
@@ -510,17 +669,134 @@ product will be shown.""",
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        import pooler
         new_cr = pooler.get_db(cr.dbname).cursor()
         try:
             context['progress_id'] = self.pool.get('export.report.stock.move.progress').create(new_cr, uid, {'name': ids[0]})
             context['report_id'] = ids[0]
-            rp_spool = report_spool()
-            result = rp_spool.exp_report(cr.dbname, uid, 'stock.move.xls', ids, datas, context, new_cr=new_cr)
-            file_res = {'state': False}
-            while not file_res.get('state'):
-                file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
-                time.sleep(0.5)
+
+            borders = Borders()
+            borders.left = Borders.THIN
+            borders.right = Borders.THIN
+            borders.top = Borders.THIN
+            borders.bottom = Borders.THIN
+
+            top_header1 = easyxf("""
+                    font: height 200;
+                    font: name Calibri;
+                    pattern: pattern solid, fore_colour gray25;
+                    align: wrap on, vert center, horiz center;
+            """)
+            top_header2 = easyxf("""
+                    font: height 200;
+                    font: name Calibri;
+                    pattern: pattern solid, fore_colour tan;
+                    align: wrap on, vert center, horiz center;
+            """)
+            header_style = easyxf("""
+                    font: height 200;
+                    font: name Calibri;
+                    pattern: pattern solid, fore_colour gray25;
+                    align: wrap on, vert center, horiz center;
+                """)
+            header_style.borders = borders
+
+            header2_date_style = easyxf("""
+                    font: height 200;
+                    font: name Calibri;
+                    pattern: pattern solid, fore_colour tan;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='dd/mm/yyyy')
+
+            header2_date_time_style = easyxf("""
+                    font: height 200;
+                    font: name Calibri;
+                    pattern: pattern solid, fore_colour tan;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='dd/mm/yyyy hh:mm')
+
+            row_style = easyxf("""
+                    font: height 200;
+                    font: name Calibri;
+                    align: wrap on, vert center, horiz center;
+                """)
+            row_style.borders = borders
+
+            date_time_format = easyxf(
+                """
+                    font: height 200;
+                    font: name Calibri;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='dd/mm/yyyy hh:mm')
+            date_time_format.borders = borders
+
+            date_format = easyxf(
+                """
+                    font: height 200;
+                    font: name Calibri;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='dd/mm/yyyy')
+            date_format.borders = borders
+
+            book = Workbook()
+            sheet = book.add_sheet(_('IN & OUT Report'))
+            sheet.row_default_height = 10*20
+
+            report = self.browse(cr, uid, ids[0], context=context)
+            currency = report.company_id.currency_id
+            header = [
+                (_('DB/instance name'), report.company_id.name or '', ''),
+                (_('Generated on'), report.name and  datetime.datetime.strptime(report.name, '%Y-%m-%d %H:%M:%S') or '', header2_date_time_style),
+                (_('From'), report.date_from and  datetime.datetime.strptime(report.date_from, '%Y-%m-%d') or '', header2_date_style),
+                (_('To'), report.date_to and datetime.datetime.strptime(report.date_to, '%Y-%m-%d') or '', header2_date_style),
+                (_('Specific partner'), report.partner_id and report.partner_id.name or '', ''),
+                (_('Specific location(s)'), report.location_ids and ' ; '.join([l.name for l in report.location_ids]) or '', ''),
+                (_('Specific product list'), report.product_list_id and report.product_list_id.name or '', ''),
+                (_('Specific product'), report.product_id and report.product_id.default_code or '', ''),
+                (_('Specific batch'), report.prodlot_id and report.prodlot_id.name or '', ''),
+                (_('Specific expiry date'), report.expiry_date or '', ''),
+                (_('Only display standard stock location(s)'), report.only_standard_loc and _('Yes') or _('No'), ''),
+                (_('Specific reason types'), report.reason_type_ids and ' ; '.join([r.complete_name for r in report.reason_type_ids]) or '', '')
+            ]
+            row_count = 0
+            #sheet.write_merge(2, 2, begin, max_size, instance_dict[inst_id], style=header_styles[i])
+            for col_name, col_value, style in header:
+                sheet.write_merge(row_count, row_count, 0, 1, col_name, top_header1)
+                if not style:
+                    style = top_header2
+
+                sheet.write_merge(row_count, row_count, 2, 4, col_value, style)
+                row_count += 1
+
+            row_count += 1
+            pos = 0
+            headers = [(_('Product Code'), '', 25), (_('Product Description'), '', 70), (_('UoM'), '', 11),  (_('Stock Move Date'), date_time_format,20), (_('Batch'), '',30), (_('Exp Date'), date_format, 11), (_('Quantity'), '', 10), (_('Unit Price (%s)') % (currency.name,), '', 10), (_('Movement value (%s)') % (currency.name,) , '', 10), (_('BN stock after movement (instance)'), '', 10), (_('Total stock after movement (instance)'), '', 10),  (_('Source'), '', 40), (_('Destination'), '', 40), (_('Reason Type'), '', 30), (_('Document Ref.'), '', 40)]
+
+            for header_row, col_type, size in headers:
+                sheet.col(pos).width = size * 256
+                sheet.write(row_count, pos, header_row, header_style)
+                pos += 1
+
+            sheet.set_horz_split_pos(row_count+1)
+            sheet.panes_frozen = True
+            sheet.remove_splits = True
+            sheet.row(row_count).height_mismatch = True
+            sheet.row(row_count).height = 45*20
+            for data_list in self.getLines(new_cr, uid, datas, currency.id, context):
+                row_count += 1
+                col_count = 0
+                for value in data_list:
+                    if value and headers[col_count][1]:
+                        style = headers[col_count][1]
+                    else:
+                        style = row_style
+                    sheet.write(row_count, col_count, value, style)
+                    col_count += 1
+                #sheet.row(row_count).height = 60*20
+
+            export_file = tempfile.NamedTemporaryFile(delete=False)
+            book.save(export_file)
+            export_file.close()
+
             attachment = self.pool.get('ir.attachment')
             attachment.create(new_cr, uid, {
                 'name': 'in_out_report_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
@@ -528,11 +804,14 @@ product will be shown.""",
                 'description': 'IN & OUT Report',
                 'res_model': 'export.report.stock.move',
                 'res_id': ids[0],
-                'datas': file_res.get('result'),
+                'datas': base64.encodestring(open(export_file.name, 'r').read()),
             })
             self.write(new_cr, uid, ids, {'state': 'ready'}, context=context)
-        except:
+        except Exception, e:
             new_cr.rollback()
+            if context.get('report_id'):
+                msg = hasattr(e, 'value') and e.value or e.message
+                self.pool.get('export.report.stock.move').write(new_cr, uid, context['report_id'], {'state': 'error', 'error': tools.ustr(msg)})
             raise
         finally:
             if context.get('progress_id'):
@@ -610,179 +889,3 @@ product will be shown.""",
 
 export_report_stock_move()
 
-
-class parser_report_stock_move_xls(report_sxw.rml_parse):
-
-    def __init__(self, cr, uid, name, context=None):
-        super(parser_report_stock_move_xls, self).__init__(cr, uid, name, context=context)
-        self.localcontext.update({
-            'time': time,
-            'getLines': self.getLines,
-        })
-
-    def getLines(self, currency_id):
-        _logger = logging.getLogger('in.out.report')
-        prod_obj = self.pool.get('product.product')
-        curr_obj = self.pool.get('res.currency')
-        loc_obj = self.pool.get('stock.location')
-        data_obj = self.pool.get('ir.model.data')
-        res = []
-        rate_cache = {}
-
-        if not self.datas['moves']:
-            return []
-        if not self.datas['selected_locs']:
-            inst_full_view_id = data_obj.get_object_reference(self.cr, self.uid, 'stock', 'stock_location_locations')[1]
-            loc_domain = [('location_id', 'child_of', inst_full_view_id), ('active', 'in', ['t', 'f'])]
-            location_ids = loc_obj.search(self.cr, self.uid, loc_domain, context=self.localcontext)
-            self.localcontext.update({'location': location_ids})
-        self.localcontext['compute_child'] = False
-        nb_lines = len(self.datas['moves'])
-        _logger.info('Report started on %d lines' % nb_lines)
-
-        lang_ctx = {'lang': self.localcontext.get('lang', 'en_MF')}
-        reason_ids = self.pool.get('stock.reason.type').search(self.cr, self.uid, [])
-        reason_info = {}
-        for x in self.pool.get('stock.reason.type').read(self.cr, self.uid, reason_ids, ['complete_name'], context=lang_ctx):
-            reason_info[x['id']] = x['complete_name']
-
-        all_loc_ids = loc_obj.search(self.cr, self.uid, [('active', 'in', ['t', 'f'])])
-        location_info = {}
-        for x in loc_obj.read(self.cr, self.uid, all_loc_ids, ['name'], context=lang_ctx):
-            location_info[x['id']] = x['name']
-        self.cr.execute('''select
-                m.product_id as product_id,
-                m.prodlot_id as prodlot_id,
-                m.product_qty as product_qty,
-                t.uom_id as prod_uom,
-                m.name as move_name,
-                p.default_code as default_code,
-                p.batch_management as batch_management,
-                COALESCE(trans.value, t.name) as product_name,
-                m.price_unit as price_unit,
-                m.price_currency_id as price_currency_id,
-                pick.name as pick_name,
-                m.date as date,
-                uom.name as uom_name,
-                t.standard_price as standard_price,
-                m.location_id as location_src_id,
-                m.location_dest_id as location_dest_id,
-                m.reason_type_id as reason_type_id,
-                lot.name as lot_name,
-                lot.life_date as life_date
-            from
-                stock_move m
-                inner join product_uom uom on uom.id = m.product_uom
-                inner join product_product p on p.id = m.product_id
-                inner join product_template t on t.id = p.product_tmpl_id
-                left join stock_picking pick on m.picking_id = pick.id
-                left join stock_production_lot lot on lot.id = m.prodlot_id
-                left join ir_translation trans on trans.name='product.template,name' and trans.res_id=t.id and lang=%s
-            where
-                m.id in %s
-            order by p.default_code, m.date asc, lot.name
-        ''', (lang_ctx.get('lang'), tuple(self.datas['moves'])))
-        # do not change order by or stock level computation will be wrong
-
-        start_time = time.time()
-        nb_done = 0
-        bn_stock_cache = {}
-        prod_stock_cache = {}
-        for move in self.cr.dictfetchall():
-            nb_done += 1
-            if nb_done % 300 == 0:
-                _logger.info('%d/%d %s seconds' % (nb_done, nb_lines, time.time() - start_time))
-                if self.localcontext.get('progress_id'):
-                    self.pool.get('export.report.stock.move.progress').write(self.cr, self.uid, self.localcontext.get('progress_id'), {'progress': '%d / %d' % (nb_done, nb_lines)})
-                start_time = time.time()
-
-            move_date = move['date'] or False
-            # Get stock
-            ctx = self.localcontext.copy()
-            prod_stock_bn = 0
-            prod_stock = 0
-            ctx.update({'to_date': move_date, 'prodlot_id': False, 'from_strict_date': prod_stock_cache.get(move['product_id'], {}).get('to_date', False)})
-
-            if ctx['to_date'] != ctx['from_strict_date']:
-                prod_stock = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
-                if move['product_id'] in prod_stock_cache:
-                    prod_stock += prod_stock_cache[move['product_id']]['stock']
-                prod_stock_cache[move['product_id']] = {'to_date': move_date, 'stock': prod_stock}
-            else:
-                prod_stock = prod_stock_cache[move['product_id']]['stock']
-
-
-            if move['prodlot_id']:
-                ctx.update({'prodlot_id': move['prodlot_id'], 'from_strict_date': bn_stock_cache.get(move['prodlot_id'], {}).get('to_date', False)})
-                if ctx['to_date'] != ctx['from_strict_date']:
-                    prod_stock_bn = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
-                    if move['prodlot_id'] in bn_stock_cache:
-                        prod_stock_bn += bn_stock_cache[move['prodlot_id']]['stock']
-                    bn_stock_cache[move['prodlot_id']] = {'to_date': move_date, 'stock': prod_stock_bn}
-                else:
-                    prod_stock_bn = bn_stock_cache[move['prodlot_id']]['stock']
-
-            # Get Unit Price at date
-            prod_price = move['price_unit'] or 0
-            if not prod_price:
-                if move_date:
-                    self.cr.execute("""SELECT old_standard_price
-                                FROM standard_price_track_changes
-                                WHERE product_id = %s AND change_date >= %s
-                                ORDER BY change_date ASC
-                                LIMIT 1
-                                """, (move['product_id'], move_date))
-                    for x in self.cr.fetchall():
-                        prod_price = x[0]
-                if not prod_price:
-                    prod_price = move['standard_price']
-            elif move['price_currency_id'] and move['price_currency_id'] != currency_id:
-                if move_date:
-                    first_day = time.strftime('%Y-%m-01', time.strptime(move_date, '%Y-%m-%d %H:%M:%S'))
-                    rate_key = '%s-%s' % (move['price_currency_id'], first_day)
-                    if rate_key not in rate_cache:
-                        rate_cache[rate_key] = curr_obj.read(self.cr, self.uid, move['price_currency_id'], ['rate'], {'date': first_day})['rate'] or 1
-                    prod_price = prod_price/rate_cache[rate_key]
-
-            res.append({
-                'product_code': move['default_code'],
-                'product_name': move['product_name'],
-                'uom': move['uom_name'],
-                'date_done': move_date,
-                'need_batch': move['batch_management'],
-                'batch': move['lot_name'] or '',
-                'expiry_date': move['life_date'] or False,
-                'qty': move['product_qty'],
-                'unit_price': prod_price,
-                'move_value': move['product_qty'] * prod_price,
-                'prod_stock_bn': move['lot_name'] and prod_stock_bn or 0,
-                'prod_stock': prod_stock,
-                'source': location_info.get(move['location_src_id']),
-                'destination': location_info.get(move['location_dest_id']),
-                'reason_type': reason_info.get(move['reason_type_id']) or '',
-                'doc_ref': move['pick_name'] or move['move_name'] or '',
-            })
-
-        return res
-
-
-class report_stock_move_xls(SpreadsheetReport):
-
-    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-        super(report_stock_move_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
-
-    def create(self, cr, uid, ids, data, context=None):
-        if context is None:
-            context = {}
-        try:
-            a = super(report_stock_move_xls, self).create(cr, uid, ids, data, context=context)
-            return (a[0], 'xls')
-        except Exception, e:
-            if context.get('report_id'):
-                cr.rollback()
-                msg = hasattr(e, 'value') and e.value or e.message
-                self.pool.get('export.report.stock.move').write(cr, uid, context['report_id'], {'state': 'error', 'error': tools.ustr(msg)})
-                cr.commit()
-                raise
-
-report_stock_move_xls('report.stock.move.xls', 'export.report.stock.move', 'addons/stock_override/report/report_stock_move_xls.mako', parser=parser_report_stock_move_xls, header='internal')
