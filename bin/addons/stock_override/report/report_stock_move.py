@@ -680,8 +680,9 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                 left join ir_translation trans on trans.name='product.template,name' and trans.res_id=t.id and lang=%s
             where
                 m.id in %s
-            order by p.default_code, lot.name, m.date asc
+            order by p.default_code, m.date asc, lot.name
         ''', (lang_ctx.get('lang'), tuple(self.datas['moves'])))
+        # do not change order by or stock level computation will be wrong
 
         start_time = time.time()
         nb_done = 0
