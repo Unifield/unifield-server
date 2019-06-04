@@ -86,6 +86,7 @@
                     	<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
                         <button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
                         <button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
+                        <button name="reactivate_kit" string="Re-activate" type="object" icon="gtk-undo" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'done')]}" />
                     </group>
             	</form>
             </field>

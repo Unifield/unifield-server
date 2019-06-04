@@ -180,6 +180,24 @@ class composition_kit(osv.osv):
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
         return True
 
+    def reactivate_kit(self, cr, uid, ids, context=None):
+        '''
+        button function
+        set the state to 'completed'
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for kit in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context):
+            if kit.state != 'done':
+                raise osv.except_osv(_('Error'), _('You can only re-activate a Closed Kit Composition.'))
+
+        self.write(cr, uid, ids, {'state': 'completed'}, context=context)
+        return True
+
     def reset_to_version(self, cr, uid, ids, context=None):
         '''
         open confirmation wizard
