@@ -591,7 +591,7 @@ product will be shown.""",
                     move_date = move['date'] or False
                     # Get stock
                     ctx = context.copy()
-                    prod_stock_bn = 0
+                    prod_stock_bn = _('NA')
                     prod_stock = 0
                     ctx.update({'to_date': move_date, 'prodlot_id': False, 'from_strict_date': prod_stock_cache.get(move['product_id'], {}).get('to_date', False)})
 
@@ -646,7 +646,7 @@ product will be shown.""",
                         move['product_qty'],
                         prod_price,
                         move['product_qty'] * prod_price,
-                        move['lot_name'] and prod_stock_bn or _('NA'),
+                        prod_stock_bn,
                         prod_stock,
                         location_info.get(move['location_src_id']),
                         location_info.get(move['location_dest_id']),
