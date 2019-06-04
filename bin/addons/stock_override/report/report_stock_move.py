@@ -753,7 +753,7 @@ product will be shown.""",
                 (_('Specific product list'), report.product_list_id and report.product_list_id.name or '', ''),
                 (_('Specific product'), report.product_id and report.product_id.default_code or '', ''),
                 (_('Specific batch'), report.prodlot_id and report.prodlot_id.name or '', ''),
-                (_('Specific expiry date'), report.expiry_date or '', ''),
+                (_('Specific expiry date'), report.expiry_date and datetime.datetime.strptime(report.expiry_date, '%Y-%m-%d') or '', header2_date_style),
                 (_('Only display standard stock location(s)'), report.only_standard_loc and _('Yes') or _('No'), ''),
                 (_('Specific reason types'), report.reason_type_ids and ' ; '.join([r.complete_name for r in report.reason_type_ids]) or '', '')
             ]
