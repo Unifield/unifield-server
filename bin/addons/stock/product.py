@@ -243,11 +243,16 @@ class product_product(osv.osv):
         results = []
         results2 = []
         from_date = context.get('from_date',False)
+        from_strict_date = context.get('from_strict_date',False)
         to_date = context.get('to_date',False)
         date_str = False
         date_values = False
         where = [tuple(location_ids), tuple(location_ids), tuple(ids), tuple(states)]
-        if from_date and to_date:
+        if from_strict_date and to_date:
+            date_str = "date>%s AND date<=%s"
+            where.append(tuple([from_strict_date]))
+            where.append(tuple([to_date]))
+        elif from_date and to_date:
             date_str = "date>=%s AND date<=%s"
             where.append(tuple([from_date]))
             where.append(tuple([to_date]))

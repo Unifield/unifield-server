@@ -1061,7 +1061,7 @@ class report_spool(netsvc.ExportService):
         cr.close()
         return result_file_path
 
-    def exp_report(self, db_name, uid, object, ids, datas=None, context=None):
+    def exp_report(self, db_name, uid, object, ids, datas=None, context=None, new_cr=None):
         if not datas:
             datas={}
         if not context:
@@ -1075,7 +1075,10 @@ class report_spool(netsvc.ExportService):
         self._reports[id] = {'uid': uid, 'result': False, 'state': False, 'exception': None}
 
         def go(id, uid, ids, datas, context):
-            cr = pooler.get_db(db_name).cursor()
+            if new_cr:
+                cr = new_cr
+            else:
+                cr = pooler.get_db(db_name).cursor()
             import traceback
             import sys
             try:
@@ -1109,8 +1112,9 @@ class report_spool(netsvc.ExportService):
                     self._reports[id]['exception'] = ExceptionWithTraceback(tools.exception_to_unicode(exception), tb)
                 self._reports[id]['state'] = True
             finally:
-                cr.commit()
-                cr.close()
+                if not new_cr:
+                    cr.commit()
+                    cr.close()
             return True
 
         thread.start_new_thread(go, (id, uid, ids, datas, context))

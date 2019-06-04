@@ -1,28 +1,9 @@
 # -*- coding: utf-8 -*-
-#
-#
-#    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-#
 
 import tools
 import time
 import threading
-
+import uuid
 import logging
 from report import report_sxw
 from osv import fields, osv
@@ -261,8 +242,41 @@ class report_stock_move(osv.osv):
 report_stock_move()
 
 
+class export_report_stock_move_progress(osv.osv_memory):
+    _name = 'export.report.stock.move.progress'
+    _columns = {
+        'name': fields.many2one('export.report.stock.move', 'Report'),
+        'progress': fields.char('Nb lines', size=256),
+        'uuid': fields.char('uuid', size=256),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        vals['uuid'] = str(uuid.uuid4())
+        osv._recorded_psql_pid.set(vals['uuid'], cr._cnx.get_backend_pid())
+        return super(export_report_stock_move_progress, self).create(cr, uid, vals, context)
+
+export_report_stock_move_progress()
+
 class export_report_stock_move(osv.osv):
     _name = 'export.report.stock.move'
+
+    def kill_request(self, cr, uid, ids, context=None):
+        pg_ids = self.pool.get('export.report.stock.move.progress').search(cr, uid, [('name', 'in', ids)])
+        if pg_ids:
+            for x in self.pool.get('export.report.stock.move.progress').read(cr, uid, pg_ids, ['uuid']):
+                osv._recorded_psql_pid.kill(cr, x['uuid'])
+        self.write(cr, uid, ids, {'state': 'cancel', 'error': _('Request cancelled by user')})
+        return True
+
+    def _get_progress(self, cr, uid, ids, field, arg, context=None):
+        ret = {}
+        for id in ids:
+            ret[id] = False
+        pg_ids = self.pool.get('export.report.stock.move.progress').search(cr, uid, [('name', 'in', ids)])
+        if pg_ids:
+            for x in self.pool.get('export.report.stock.move.progress').read(cr, uid, pg_ids, ['name', 'progress']):
+                ret[x['name']] = x['progress']
+        return ret
 
     def _get_has_locations(self, cr, uid, ids, field, arg, context=None):
         '''
@@ -330,6 +344,7 @@ product will be shown.""",
             'product.list',
             string='Specific product list',
         ),
+        'progress': fields.function(_get_progress, method=True, type='char', string='Progress', store=False),
         'only_standard_loc': fields.boolean('Only display standard stock location(s)'),
         'date_from': fields.date(
             string='From',
@@ -343,6 +358,7 @@ product will be shown.""",
                 ('in_progress', 'In Progress'),
                 ('ready', 'Ready'),
                 ('error', 'Error'),
+                ('cancel', 'Cancel'),
             ],
             string='State',
             readonly=True,
@@ -355,13 +371,14 @@ product will be shown.""",
             string='Filename',
             readonly=True,
         ),
-        'error': fields.text('Error'),
+        'error': fields.text('Error', readonly=1),
     }
 
     _defaults = {
         'state': 'draft',
         'company_id': lambda s, cr, uid, c: s.pool.get('res.company')._company_default_get(cr, uid, 'export.report.stock.move', context=c),
         'only_standard_loc': True,
+        'name': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
     }
 
     _order = 'id desc'
@@ -459,7 +476,7 @@ product will be shown.""",
                 args=(cr, uid, report.id, datas, context)
             )
             new_thread.start()
-            new_thread.join(30.0)
+            new_thread.join(6.0)
 
             res = {
                 'type': 'ir.actions.act_window',
@@ -496,9 +513,10 @@ product will be shown.""",
         import pooler
         new_cr = pooler.get_db(cr.dbname).cursor()
         try:
+            context['progress_id'] = self.pool.get('export.report.stock.move.progress').create(new_cr, uid, {'name': ids[0]})
             context['report_id'] = ids[0]
             rp_spool = report_spool()
-            result = rp_spool.exp_report(cr.dbname, uid, 'stock.move.xls', ids, datas, context)
+            result = rp_spool.exp_report(cr.dbname, uid, 'stock.move.xls', ids, datas, context, new_cr=new_cr)
             file_res = {'state': False}
             while not file_res.get('state'):
                 file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
@@ -514,9 +532,11 @@ product will be shown.""",
             })
             self.write(new_cr, uid, ids, {'state': 'ready'}, context=context)
         except:
-            cr.rollback()
+            new_cr.rollback()
             raise
         finally:
+            if context.get('progress_id'):
+                self.pool.get('export.report.stock.move.progress').unlink(new_cr, uid, [context['progress_id']])
             new_cr.commit()
             new_cr.close(True)
 
@@ -607,7 +627,10 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
         loc_obj = self.pool.get('stock.location')
         data_obj = self.pool.get('ir.model.data')
         res = []
+        rate_cache = {}
 
+        if not self.datas['moves']:
+            return []
         if not self.datas['selected_locs']:
             inst_full_view_id = data_obj.get_object_reference(self.cr, self.uid, 'stock', 'stock_location_locations')[1]
             loc_domain = [('location_id', 'child_of', inst_full_view_id), ('active', 'in', ['t', 'f'])]
@@ -662,10 +685,14 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
 
         start_time = time.time()
         nb_done = 0
+        bn_stock_cache = {}
+        prod_stock_cache = {}
         for move in self.cr.dictfetchall():
             nb_done += 1
-            if nb_done%1000 == 0:
-                _logger.info('1000 lines in %s seconds (%d/%d)' % (time.time() - start_time, nb_done, nb_lines))
+            if nb_done % 300 == 0:
+                _logger.info('%d/%d %s seconds' % (nb_done, nb_lines, time.time() - start_time))
+                if self.localcontext.get('progress_id'):
+                    self.pool.get('export.report.stock.move.progress').write(self.cr, self.uid, self.localcontext.get('progress_id'), {'progress': '%d / %d' % (nb_done, nb_lines)})
                 start_time = time.time()
 
             move_date = move['date'] or False
@@ -673,9 +700,27 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             ctx = self.localcontext.copy()
             prod_stock_bn = 0
             prod_stock = 0
-            ctx.update({'to_date': move_date, 'prodlot_id': False})
-            prod_stock = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
-            prod_stock_bn = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
+            ctx.update({'to_date': move_date, 'prodlot_id': False, 'from_strict_date': prod_stock_cache.get(move['product_id'], {}).get('to_date', False)})
+
+            if ctx['to_date'] != ctx['from_strict_date']:
+                prod_stock = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
+                if move['product_id'] in prod_stock_cache:
+                    prod_stock += prod_stock_cache[move['product_id']]['stock']
+                prod_stock_cache[move['product_id']] = {'to_date': move_date, 'stock': prod_stock}
+            else:
+                prod_stock = prod_stock_cache[move['product_id']]['stock']
+
+
+            if move['prodlot_id']:
+                ctx.update({'prodlot_id': move['prodlot_id'], 'from_strict_date': bn_stock_cache.get(move['prodlot_id'], {}).get('to_date', False)})
+                if ctx['to_date'] != ctx['from_strict_date']:
+                    prod_stock_bn = prod_obj.read(self.cr, self.uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
+                    if move['prodlot_id'] in bn_stock_cache:
+                        prod_stock_bn += bn_stock_cache[move['prodlot_id']]['stock']
+                    bn_stock_cache[move['prodlot_id']] = {'to_date': move_date, 'stock': prod_stock_bn}
+                else:
+                    prod_stock_bn = bn_stock_cache[move['prodlot_id']]['stock']
+
             # Get Unit Price at date
             prod_price = move['price_unit'] or 0
             if not prod_price:
@@ -690,9 +735,13 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
                         prod_price = x[0]
                 if not prod_price:
                     prod_price = move['standard_price']
-            elif move['price_currency_id'] != currency_id:
-                prod_price = curr_obj.compute(self.cr, self.uid, move['price_currency_id'], currency_id,
-                                              prod_price, round=False, context=ctx)
+            elif move['price_currency_id'] and move['price_currency_id'] != currency_id:
+                if move_date:
+                    first_day = time.strftime('%Y-%m-01', time.strptime(move_date, '%Y-%m-%d %H:%M:%S'))
+                    rate_key = '%s-%s' % (move['price_currency_id'], first_day)
+                    if rate_key not in rate_cache:
+                        rate_cache[rate_key] = curr_obj.read(self.cr, self.uid, move['price_currency_id'], ['rate'], {'date': first_day})['rate'] or 1
+                    prod_price = prod_price/rate_cache[rate_key]
 
             res.append({
                 'product_code': move['default_code'],

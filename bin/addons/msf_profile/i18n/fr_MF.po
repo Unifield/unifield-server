@@ -4217,11 +4217,12 @@ msgstr "Montrer les Inactifs"
 msgid "UoM Stock"
 msgstr "UoM Stock"
 
-#. modules: stock, sync_client, base
+#. modules: stock, sync_client, base, stock_override
 #: view:stock.move:0
 #: field:ir.translation,src:0
 #: view:sync.client.message_received:0
 #: view:sync.client.update_received:0
+#: report:addons/stock_override/report/report_stock_move_xls.mako:233
 msgid "Source"
 msgstr "Origine"
 
@@ -6102,6 +6103,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:stock.production.lot.revision,description:0
 #: report:stock.card.report:0
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:294
+#: field:products.situation.report,p_desc:0
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -8808,6 +8810,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:wizard.import.ppl.to.create.ship,state:0
 #: selection:wizard.import.product.line,state:0
 #: selection:product.mass.update,state:0
+#: selection:stock.expired.damaged.report,state:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -9559,7 +9562,7 @@ msgstr "Paiement"
 msgid "Tender not draft"
 msgstr "Tender not draft"
 
-#. modules: consumption_calculation, specific_rules, stock_override, msf_tools
+#. modules: consumption_calculation, specific_rules, stock_override, msf_tools, stock
 #: view:product.history.consumption:0
 #: view:product.likely.expire.report:0
 #: view:weekly.forecast.report:0
@@ -9567,6 +9570,7 @@ msgstr "Tender not draft"
 #: view:export.report.stock.move:0
 #: view:export.report.inconsistencies:0
 #: view:export.report.stopped.products:0
+#: view:stock.expired.damaged.report:0
 msgid "Status of the report"
 msgstr "État du rapport"
 
@@ -12851,9 +12855,10 @@ msgstr "La sortie est limitée à 5000 enregistrements"
 msgid "Close Claim"
 msgstr "Fermer Réclamation"
 
-#. modules: product_attributes, documents_done
+#. modules: product_attributes, documents_done, stock
 #: view:documents.done.problem:0
 #: view:product.deactivation.error:0
+#: report:addons/stock/report/reserved_products_report_xls.mako:161
 msgid "Documents"
 msgstr "Documents"
 
@@ -16161,6 +16166,7 @@ msgstr "Poids net"
 #: selection:export.report.stock.move,state:0
 #: view:stock.move:0
 #: selection:sync.client.entity_manager,state:0
+#: selection:stock.expired.damaged.report,state:0
 msgid "Ready"
 msgstr "Prêt"
 
@@ -16748,8 +16754,9 @@ msgstr "Nom du Déclencheur"
 msgid "Best before Date"
 msgstr "Date limite de consommation"
 
-#. module: sales_followup
+#. module: sales_followup, stock
 #: field:ir.followup.location.wizard,company_id:0
+#: field:stock.reception.wizard,company_id:0
 msgid "Company"
 msgstr "Entreprise"
 
@@ -17790,6 +17797,7 @@ msgstr "Créer l'Accès "
 #: view:sale.order:0
 #: view:integrity.finance.wizard:0
 #: report:addons/stock/report/products_situation_report_xls.mako:151
+#: view:reserved.products.wizard:0
 msgid "Filters"
 msgstr "Filtres"
 
@@ -23379,7 +23387,7 @@ msgstr "Déclaration de Taxe : Notes de Crédit"
 msgid "Get dump"
 msgstr "Get dump"
 
-#. modules: mission_stock, consumption_calculation, base, base_report_designer, specific_rules
+#. modules: mission_stock, consumption_calculation, base, base_report_designer, specific_rules, stock_override
 #: view:ir.actions.report.xml:0
 #: field:base.report.file.sxw,report_id:0
 #: field:base.report.sxw,report_id:0
@@ -23390,6 +23398,7 @@ msgstr "Get dump"
 #: view:product.likely.expire.report:0
 #: field:msr_in_progress,report_id:0
 #: field:unconsistent.stock.report.line,report_id:0
+#: field:export.report.stock.move.progress,name:0
 msgid "Report"
 msgstr "Rapport"
 
@@ -26856,6 +26865,9 @@ msgstr "Picking Connexe"
 #: code:addons/sales_followup/wizard/sale_followup_multi_wizard.py:178
 #: code:addons/stock/wizard/reserved_products_wizard.py:178
 #: code:addons/stock/report/products_situation_report.py:172
+#: code:addons/stock/report/stock_expired_damaged_report.py:137
+#: code:addons/stock/report/stock_expired_damaged_report.py:173
+#: code:addons/stock/wizard/stock_reception_wizard.py:111
 #, python-format
 msgid "No data found with these parameters"
 msgstr "Aucune donnée n'a été trouvée avec ces paramètres"
@@ -29124,6 +29136,7 @@ msgstr "Inventaire (pertes & profits)"
 #: help:report.stock.move,location_dest_id:0
 #: help:stock.move,location_dest_id:0
 #: help:stock.picking,location_dest_id:0
+#: help:stock.reception.wizard,location_dest_id:0
 msgid "Location where the system will stock the finished products."
 msgstr "La Zone où le système stockera les produits finis."
 
@@ -33272,6 +33285,7 @@ msgstr "Demande de Devis - envoyé"
 #: view:product.product:0
 #: field:product.template,nomenclature_description:0
 #: selection:stock.location,chained_location_type:0
+#: view:products.situation.report:0
 msgid "Nomenclature"
 msgstr "Nomenclature"
 
@@ -35582,6 +35596,8 @@ msgstr "Michigan"
 #: report:sales.follow.up.multi.report_pdf:0
 #: field:stock.incoterms,code:0
 #: report:stock.card.report:0
+#: report:addons/stock/report/products_situation_report_xls.mako:216
+#: field:products.situation.report,p_code:0
 #, python-format
 msgid "Code"
 msgstr "Code"
@@ -40134,13 +40150,14 @@ msgstr "KC/CS/DG"
 msgid "(Keep empty to open the current situation)"
 msgstr "(A laisser vide pour  ouvrir la situation courante)"
 
-#. modules: sales_followup, consumption_calculation, purchase_followup
+#. modules: sales_followup, consumption_calculation, purchase_followup, stock
 #: field:product.history.consumption,requestor_date:0
 #: field:product.likely.expire.report,requestor_date:0
 #: field:po.track.changes.wizard,report_date:0
 #: field:ir.track.changes.wizard,report_date:0
 #: field:sale.followup.multi.wizard,report_date:0
 #: field:ir.followup.location.wizard,report_date:0
+#: field:stock.reception.wizard,report_date:0
 msgid "Date of the demand"
 msgstr "Date de la demande"
 
@@ -41653,6 +41670,7 @@ msgstr "Icône"
 #: report:ir.follow.up.location.report_pdf:0
 #: report:sales.follow.up.multi.report_pdf:0
 #: report:internal.move:0
+#: report:delivery.order:0
 msgid "Notes :"
 msgstr "Notes :"
 
@@ -46799,7 +46817,7 @@ msgstr "Vous devriez sélectionner au moins deux lignes à traiter."
 msgid "Activate the payroll feature"
 msgstr "Activer l'attribut Paie"
 
-#. modules: purchase, product, purchase_allocation_report, service_purchasing, consumption_calculation, sale, sales_followup, purchase_compare_rfq, sourcing, order_types, tender_flow, return_claim, purchase_followup
+#. modules: purchase, product, purchase_allocation_report, service_purchasing, consumption_calculation, sale, sales_followup, purchase_compare_rfq, sourcing, order_types, tender_flow, return_claim, purchase_followup, stock
 #: selection:real.average.consumption,categ:0
 #: selection:stock.move,order_category:0
 #: view:product.product:0
@@ -46824,6 +46842,7 @@ msgstr "Activer l'attribut Paie"
 #: selection:sale.order.line,categ:0
 #: selection:purchase.report,categ:0
 #: selection:tender,categ:0
+#: selection:stock.reception.wizard,order_category:0
 msgid "Transport"
 msgstr "Transport"
 
@@ -50721,11 +50740,12 @@ msgstr "Colis..."
 msgid "Localisation"
 msgstr "Zone"
 
-#. modules: kit, consumption_calculation
+#. modules: kit, consumption_calculation, stock
 #: report:product.likely.expire.report_pdf:0
 #: field:kit.creation.to.consume,qty_available_to_consume:0
 #: field:process.to.consume.line,qty_available_process_to_consume:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:194
+#: field:product.product,qty_allocable:0
 msgid "Available Qty"
 msgstr "Qté Disponible"
 
@@ -51737,8 +51757,9 @@ msgstr "DEMANDE DE DEVIS"
 msgid "Unifield Account Code"
 msgstr "Unifield Account Code"
 
-#. module: specific_rules
+#. module: specific_rules, stock_override
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:125
+#: report:addons/stock_override/report/report_stock_move_xls.mako:150
 msgid "DB/instance name"
 msgstr "BD/nom de l'instance"
 
@@ -60830,10 +60851,11 @@ msgstr "Tous les produits"
 msgid "CAYMAN ISLANDS DOLLAR"
 msgstr "CAYMAN ISLANDS DOLLAR"
 
-#. modules: account, sync_client, base
+#. modules: account, sync_client, base, stock_override
 #: field:account.partner.reconcile.process,progress:0
 #: field:msf.instance.cloud.progress,name:0
 #: field:instance.auto.creation,progress:0
+#: field:export.report.stock.move,progress:0
 msgid "Progress"
 msgstr "Avancement"
 
@@ -68133,6 +68155,7 @@ msgstr "New Mexico"
 #: field:stock.picking.processor,move_ids:0
 #: view:stock.reserved.products:0
 #: view:stock.picking:0
+#: field:stock.reception.wizard,moves_ids:0
 msgid "Moves"
 msgstr "Mouvements"
 
@@ -69849,6 +69872,7 @@ msgstr "Date Justificatif"
 #: field:threshold.value,product_ids:0
 #: view:restrictive.country.setup:0
 #: view:product.mass.update:0
+#: field:products.situation.report,prod_ids:0
 #, python-format
 msgid "Products"
 msgstr "Produits"
@@ -74823,6 +74847,14 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/product/wizard/product_mass_update.py:210
 #: code:addons/product/wizard/product_mass_update.py:216
 #: selection:product.mass.update,state:0
+#: code:addons/stock/report/products_situation_report.py:92
+#: code:addons/stock/report/products_situation_report.py:143
+#: code:addons/stock/report/stock_expired_damaged_report.py:136
+#: code:addons/stock/report/stock_expired_damaged_report.py:172
+#: code:addons/stock/wizard/manage_expired_stock.py:63
+#: code:addons/stock/wizard/stock_reception_wizard.py:110
+#: field:export.report.stock.move,error:0
+#: selection:export.report.stock.move,state:0
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -83231,6 +83263,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:internal.request.import,state:0
 #: field:wizard.import.ppl.to.create.ship,state:0
 #: field:wizard.import.product.line,state:0
+#: field:stock.expired.damaged.report,state:0
 #, python-format
 msgid "State"
 msgstr "État"
@@ -85098,7 +85131,7 @@ msgstr "OPW"
 msgid "Sourced-n line"
 msgstr "Ligne sourcée-n"
 
-#. modules: analytic_distribution, sales_followup, register_accounting, reason_types_moves, msf_homere_interface, stock_override, consumption_calculation, sale, specific_rules, order_types, msf_tools, mission_stock, msf_doc_import, product
+#. modules: analytic_distribution, sales_followup, register_accounting, reason_types_moves, msf_homere_interface, stock_override, consumption_calculation, sale, specific_rules, order_types, msf_tools, mission_stock, msf_doc_import, product, stock
 #: field:import.commitment.wizard,in_progress:0
 #: view:product.history.consumption:0
 #: selection:product.history.consumption,fake_status:0
@@ -85140,6 +85173,7 @@ msgstr "Ligne sourcée-n"
 #: selection:wizard.import.ppl.to.create.ship,state:0
 #: selection:wizard.import.product.line,state:0
 #: selection:product.mass.update,state:0
+#: selection:stock.expired.damaged.report,state:0
 #, python-format
 msgid "In Progress"
 msgstr "En cours"
@@ -92428,6 +92462,13 @@ msgstr "XML non valide pour la Vue Architecture!"
 #: view:purchase.order.cancel.wizard:0
 #: view:tender.cancel.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: view:manage.expired.stock:0
+#: view:products.situation.report:0
+#: view:reserved.products.wizard:0
+#: view:stock.expired.damaged.report:0
+#: view:stock.reception.wizard:0
+#: view:stock.move.cancel.more.wizard:0
+#: view:stock.picking.cancel.more.wizard:0
 msgid "Actions"
 msgstr "Actions"
 
@@ -93336,7 +93377,7 @@ msgstr "Ceci est le délai moyen (en jours) entre la confirmation de la commande
 msgid "Internal Notes"
 msgstr "Notes internes"
 
-#. modules: msf_budget, purchase, account, finance, account_mcdb, procurement_request, financing_contract, account_voucher, sale, account_payment, msf_button_access_rights, register_accounting, msf_doc_import, analytic_distribution
+#. modules: msf_budget, purchase, account, finance, account_mcdb, procurement_request, financing_contract, account_voucher, sale, account_payment, msf_button_access_rights, register_accounting, msf_doc_import, analytic_distribution, stock
 #: report:account.analytic.account.balance:0
 #: report:account.analytic.account.inverted.balance:0
 #: report:account.analytic.account.quantity_cost_ledger:0
@@ -93377,6 +93418,7 @@ msgstr "Notes internes"
 #: field:wizard.invoice.date,check_total:0
 #: field:sale.order,amount_total:0
 #: view:sale.order.line:0
+#: report:addons/stock/report/reserved_products_report_xls.mako:164
 #, python-format
 msgid "Total"
 msgstr "Total"
@@ -95740,11 +95782,12 @@ msgstr "Désinscrire"
 msgid "Opening Cashbox"
 msgstr "Solde de Caisse à l'ouverture"
 
-#. module: msf_instance
+#. module: msf_instance, stock
 #: field:account.analytic.journal,is_current_instance:0
 #: field:account.analytic.journal.fake,is_current_instance:0
 #: field:account.journal,is_current_instance:0
 #: field:account.journal.fake,is_current_instance:0
+#: field:products.situation.report,instance_id:0
 msgid "Current Instance"
 msgstr "Instance actuelle"
 
@@ -98308,6 +98351,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:wizard.pick.import:0
 #: code:addons/msf_doc_import/purchase_order.py:60
 #: view:wizard.import.product.line:0
+#: selection:export.report.stock.move,state:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -98647,7 +98691,7 @@ msgstr "Validating journal entry…"
 msgid "America/Port-au-Prince"
 msgstr "Amériques/Port-au-Prince"
 
-#. modules: purchase, tender_flow, purchase_allocation_report, supplier_catalogue, service_purchasing, consumption_calculation, sale, msf_config_locations, procurement, sourcing, order_types, return_claim, purchase_compare_rfq, purchase_followup
+#. modules: purchase, tender_flow, purchase_allocation_report, supplier_catalogue, service_purchasing, consumption_calculation, sale, msf_config_locations, procurement, sourcing, order_types, return_claim, purchase_compare_rfq, purchase_followup, stock
 #: selection:real.average.consumption,categ:0
 #: model:stock.location,name:msf_config_locations.stock_location_service
 #: selection:stock.move,order_category:0
@@ -98672,6 +98716,7 @@ msgstr "Amériques/Port-au-Prince"
 #: selection:purchase.report,categ:0
 #: view:tender:0
 #: selection:tender,categ:0
+#: selection:stock.reception.wizard,order_category:0
 msgid "Service"
 msgstr "Service"
 
@@ -102902,7 +102947,7 @@ msgstr "Numéro du Bon d'Engagement"
 
 #. module: msf_outgoing
 #: view:stock.incoming.processor:0
-msgid "Warning! There is a risk of producing inconsistent data if you process this Incoming Shipment before it receives the delivery details and is changed into status \"Available Shipped\” after synchronization. To avoid major misalignment please proceed only if you can do a full reception."
+msgid "Warning! There is a risk of producing inconsistent data if you process this Incoming Shipment before it receives the delivery details and is changed into status \"Available Shipped\\” after synchronization. To avoid major misalignment please proceed only if you can do a full reception."
 msgstr "Attention! Si vous traitez la Livraison Entrante, il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\"après une synchro. Pour éviter tout mauvais alignement, veuillez procéder au traitement uniquement si vous faites une réception totale."
 
 #. module: stock
@@ -106762,3 +106807,34 @@ msgstr "Un BC avec un Type de Commande Prêt, Donation avant expiration, Donatio
 #, python-format
 msgid "You can't change the Order Type to Loan, Donation before expiry, Standard donation or In Kind Donation if a line has a Source Document"
 msgstr "Vous ne pouvez pas changer le Type de Commande en Prêt, Donation avant expiration, Donation normale ou Donation en Nature si une des lignes a un Document d'Origine"
+
+#. module: stock
+#: report:addons/stock/report/products_situation_report_xls.mako:217
+msgid "Description"
+msgstr "Description"
+
+#. module: stock_override
+#: help:export.report.stock.move,location_ids:0
+msgid "If a location is choosen, only stock moves that comes from/to this location will be shown."
+msgstr "Si une zone esr sélectionnée, seuls les mouvements qui vont ou qui viennent de cette zone seront affichés"
+
+#. module: stock_override
+#: view:export.report.stock.move:0
+msgid "Location(s)"
+msgstr "Zone(s)"
+
+#. module: stock_override
+#: field:export.report.stock.move.progress,progress:0
+msgid "Nb lines"
+msgstr "Nb lignes"
+
+#. module: stock_override
+#: code:addons/stock_override/report/report_stock_move.py:268
+#, python-format
+msgid "Request cancelled by user"
+msgstr "Requête annulée par l'utilisateur"
+
+#. module: stock_override
+#: view:export.report.stock.move:0
+msgid "Stop report"
+msgstr "Arrêter le rapport"

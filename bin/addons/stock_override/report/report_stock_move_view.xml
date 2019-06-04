@@ -147,8 +147,9 @@
             <field name="model">export.report.stock.move</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="IN &amp; OUT Report" noteditable="state!='draft'">
+                <form string="IN &amp; OUT Report">
                     <separator colspan="4" string="Request information" />
+                    <group colspan="4" attrs="{'readonly': [('state', '!=', 'draft')]}">
                     <field name="name" />
                     <field name="company_id" />
                     <separator colspan="4" string="Report parameters" />
@@ -175,10 +176,13 @@
                             <field name="name" />
                         </tree>
                     </field>
-                    <field name="error" attrs="{'invisible': [('state', '!=', 'error')]}" colspan="4" />
+                    </group>
+                    <field name="error" attrs="{'invisible': [('state', 'not in', ['error', 'cancel'])]}" colspan="4" />
+                    <field name="progress" attrs="{'invisible': [('state', '!=', 'in_progress')]}" colspan="4" nolabel="1" />
                     <separator colspan="4" string="Actions" />
                     <button name="generate_report" type="object" string="Generate report" icon="gtk-execute" states="draft" />
-                    <button name="update" type="object" string="Update" icon="gtk-reload" states="in_progress" />
+                    <button name="update" type="object" string="Update" icon="gtk-refresh" states="in_progress" />
+                    <button name="kill_request" type="object" string="Stop report" icon="gtk-cancel" states="in_progress" />
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'ready')]}">
                         <html>
                             <div style="align: center">
