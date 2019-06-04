@@ -646,7 +646,7 @@ product will be shown.""",
                         move['product_qty'],
                         prod_price,
                         move['product_qty'] * prod_price,
-                        move['lot_name'] and prod_stock_bn or 0,
+                        move['lot_name'] and prod_stock_bn or _('NA'),
                         prod_stock,
                         location_info.get(move['location_src_id']),
                         location_info.get(move['location_dest_id']),
@@ -712,7 +712,7 @@ product will be shown.""",
                     font: name Calibri;
                     pattern: pattern solid, fore_colour tan;
                     align: wrap on, vert center, horiz center;
-                """, num_format_str='dd/mm/yyyy hh:mm')
+                """, num_format_str='dd/mm/yyyy h:mm')
 
             row_style = easyxf("""
                     font: height 200;
@@ -726,7 +726,7 @@ product will be shown.""",
                     font: height 200;
                     font: name Calibri;
                     align: wrap on, vert center, horiz center;
-                """, num_format_str='dd/mm/yyyy hh:mm')
+                """, num_format_str='dd/mm/yyyy h:mm')
             date_time_format.borders = borders
 
             date_format = easyxf(
