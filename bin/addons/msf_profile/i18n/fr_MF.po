@@ -64891,11 +64891,11 @@ msgstr "Journal Centralisé"
 msgid "There is no inventory variation account defined on the product category: \"%s\" (id: %d)"
 msgstr "Il n'y a pas de compte de variations d'inventaire défini dans cette catégorie de produits : \"%s\" (id. : %d)"
 
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/invoice.py:160
+#. module: account
+#: code:addons/account/invoice.py:1317
 #, python-format
 msgid "Document date for the refund is before the invoice's document date!"
-msgstr "Document date for the refund is before the invoice's document date!"
+msgstr "La Date de Document pour l'avoir précède celle de la facture !"
 
 #. module: account_corrections
 #: code:addons/account_corrections/account_move_line.py:356
@@ -75735,11 +75735,11 @@ msgstr "Approvisionnement- Méthode"
 msgid "Kit Code"
 msgstr "Code Kit"
 
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/invoice.py:158
+#. module: account
+#: code:addons/account/invoice.py:1315
 #, python-format
 msgid "Posting date for the refund is before the invoice's posting date!"
-msgstr "Posting date for the refund is before the invoice's posting date!"
+msgstr "La Date de Comptabilisation pour l'avoir précède celle de la facture !"
 
 #. modules: register_accounting, account_mcdb
 #: view:account.move:0

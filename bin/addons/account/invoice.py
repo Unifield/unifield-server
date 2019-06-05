@@ -1739,7 +1739,7 @@ class account_invoice_line(osv.osv):
             return ''.join((trimmed_name, ' x', qty_str))
 
     def move_line_get_item(self, cr, uid, line, context=None):
-        if not context:
+        if context is None:
             context = {}
 
         line_name = self._get_line_name(line)
