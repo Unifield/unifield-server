@@ -1726,18 +1726,28 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             # Origin
             origin = values[8]
             if origin:
-                so_ids = sale_obj.search(cr, uid, [('name', '=', origin), ('procurement_request', 'in', ['t', 'f'])],
-                                         limit=1, context=context)
-                if so_ids:
-                    so_state = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state'], context=context).state
-                    if so_state not in ('done', 'cancel'):
-                        write_vals['imp_origin'] = origin
+                if line.simu_id.order_id.order_type not in ['loan', 'donation_exp', 'donation_st', 'in_kind']:
+                    so_ids = sale_obj.search(cr, uid, [('name', '=', origin), ('procurement_request', 'in', ['t', 'f'])],
+                                             limit=1, context=context)
+                    if so_ids:
+                        so = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state', 'order_type'], context=context)
+                        if so.state not in ('done', 'cancel'):
+                            if so.order_type == 'regular':
+                                write_vals['imp_origin'] = origin
+                            else:
+                                err_msg = _('\'Origin\' Document must have the Regular Order Type')
+                                errors.append(err_msg)
+                                write_vals['type_change'] = 'error'
+                        else:
+                            err_msg = _('\'Origin\' Document can\'t be Closed or Cancelled')
+                            errors.append(err_msg)
+                            write_vals['type_change'] = 'error'
                     else:
-                        err_msg = _('\'Origin\' Document can\'t be Closed or Cancelled')
+                        err_msg = _('The FO reference in \'Origin\' is not consistent with this PO')
                         errors.append(err_msg)
                         write_vals['type_change'] = 'error'
                 else:
-                    err_msg = _('The FO reference in \'Origin\' is not consistent with this PO')
+                    err_msg = _('A PO with a Loan, Donation before expiry, Standard donation or In Kind Donation Order Type can\'t have an Source Document in its lines')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
             else:

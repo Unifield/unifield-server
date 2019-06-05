@@ -648,6 +648,9 @@ class msf_import_export(osv.osv_memory):
         acc_analytic_obj = self.pool.get('account.analytic.account')
         acc_dest_obj = self.pool.get('account.destination.link')
 
+        cost_centers_cache = {}
+        gl_account_cache = {}
+        parent_ok_cache = {}
         import_data_obj = self.pool.get('import_data')
         prod_nomenclature_obj = self.pool.get('product.nomenclature')
 
@@ -724,6 +727,16 @@ class msf_import_export(osv.osv_memory):
 
         fields_def = impobj.fields_get(cr, uid, context=context)
         i = 0
+
+        # custom process to retrieve CC, Destination_ids
+        custom_m2m = []
+        if import_brw.model_list_selection == 'destinations':
+            custom_m2m = ['dest_cc_ids', 'destination_ids']
+        elif import_brw.model_list_selection == 'funding_pools':
+            custom_m2m = ['cost_center_ids', 'tuple_destination_account_ids']
+        for c_m2m in custom_m2m:
+            if c_m2m in fields_def:
+                fields_def[c_m2m]['type'] = 'many2many_custom'
 
         def _get_obj(header, value, fields_def):
             list_obj = header.split('.')
@@ -964,6 +977,7 @@ class msf_import_export(osv.osv_memory):
 
                 # Funding Pools
                 if import_brw.model_list_selection == 'funding_pools':
+                    ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('category', '=', 'FUNDING')])
                     context['from_import_menu'] = True
                     data['category'] = 'FUNDING'
                     # Parent Analytic Account
@@ -1016,10 +1030,13 @@ class msf_import_export(osv.osv_memory):
                     data['category'] = 'DEST'
                     # Parent Analytic Account
                     if data.get('parent_id'):
-                        parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'], fields_to_fetch=['type', 'category'], context=context)
-                        parent_type = parent_id.type or ''
-                        parent_category = parent_id.category or ''
-                        if parent_type != 'view' or parent_category != 'DEST':
+                        if data['parent_id'] not in parent_ok_cache:
+                            parent_id = acc_analytic_obj.browse(cr, uid, data['parent_id'], fields_to_fetch=['type', 'category'], context=context)
+                            parent_type = parent_id.type or ''
+                            parent_category = parent_id.category or ''
+                            if parent_type == 'view' and parent_category == 'DEST':
+                                parent_ok_cache[data['parent_id']] = True
+                        if not parent_ok_cache.get(data['parent_id']):
                             raise Exception(_('The Parent Analytic Account must be a View type Destination.'))
                     # Type
                     if data['type'] not in ['normal', 'view']:
@@ -1029,11 +1046,15 @@ class msf_import_export(osv.osv_memory):
                         if data.get('allow_all_cc'):
                             raise Exception(_("Please either list the Cost Centers to allow, or allow all Cost Centers."))
                         dest_cc_list = []
-                        for cost_center in data.get('dest_cc_ids').split(','):
+                        split_char = ';'
+                        if split_char not in data.get('dest_cc_ids'):
+                            split_char = ','
+                        for cost_center in data.get('dest_cc_ids').split(split_char):
                             cc = cost_center.strip()
-                            cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'),
-                                      '|', ('code', '=', cc), ('name', '=', cc)]
-                            cc_ids = impobj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
+                            if cc not in cost_centers_cache:
+                                cc_dom = [('category', '=', 'OC'), ('type', '=', 'normal'), ('code', '=', cc)]
+                                cost_centers_cache[cc] = impobj.search(cr, uid, cc_dom, order='id', limit=1, context=context)
+                            cc_ids = cost_centers_cache.get(cc)
                             if cc_ids:
                                 dest_cc_list.append(cc_ids[0])
                             else:
@@ -1044,10 +1065,15 @@ class msf_import_export(osv.osv_memory):
                     # Accounts
                     if data.get('destination_ids'):  # "destinations_ids" corresponds to G/L accounts...
                         acc_list = []
-                        for account in data.get('destination_ids').split(','):
+                        split_char = ';'
+                        if split_char not in data.get('destination_ids'):
+                            split_char = ','
+                        for account in data.get('destination_ids').split(split_char):
                             acc = account.strip()
-                            acc_dom = [('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('code', '=', acc)]
-                            acc_ids = acc_obj.search(cr, uid, acc_dom, order='id', limit=1, context=context)
+                            if acc not in gl_account_cache:
+                                acc_dom = [('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('code', '=', acc)]
+                                gl_account_cache[acc] = acc_obj.search(cr, uid, acc_dom, order='id', limit=1, context=context)
+                            acc_ids = gl_account_cache.get(acc)
                             if acc_ids:
                                 acc_list.append(acc_ids[0])
                             else:
@@ -1082,6 +1108,7 @@ class msf_import_export(osv.osv_memory):
 
                 # Cost Centers
                 if import_brw.model_list_selection == 'cost_centers':
+                    ids_to_update = acc_analytic_obj.search(cr, uid, [('code', '=ilike', data.get('code')), ('category', '=', 'OC')])
                     context['from_import_menu'] = True
                     data['category'] = 'OC'
                     # Parent Analytic Account

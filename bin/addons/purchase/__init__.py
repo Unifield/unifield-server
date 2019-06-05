@@ -18,6 +18,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+
+from tools.translate import _
+
 ORDER_PRIORITY = [
     ('emergency', 'Emergency'),
     ('normal', 'Normal'),
@@ -57,6 +60,17 @@ PURCHASE_ORDER_STATE_SELECTION = [
     ('done', 'Closed'),
     ('cancel', 'Cancelled'),
 ]
+
+ORDER_TYPES_SELECTION = [
+    ('regular', _('Regular')),
+    ('donation_exp', _('Donation before expiry')),
+    ('donation_st', _('Standard donation')),
+    ('loan', _('Loan')),
+    ('in_kind', _('In Kind Donation')),
+    ('purchase_list', _('Purchase List')),
+    ('direct', _('Direct Purchase Order')),
+]
+
 
 import purchase_order
 import purchase_order_line

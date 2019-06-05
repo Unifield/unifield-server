@@ -598,6 +598,7 @@
                     <field name="complete_name"/>
                     <field name="usage"/>
                     <field name="location_category" />
+                    <field name="active" invisible="'display_active' not in context" />
                 </tree>
             </field>
         </record>

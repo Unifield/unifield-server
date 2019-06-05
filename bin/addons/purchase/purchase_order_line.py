@@ -9,6 +9,7 @@ from tools.translate import _
 import decimal_precision as dp
 from . import PURCHASE_ORDER_STATE_SELECTION
 from . import PURCHASE_ORDER_LINE_STATE_SELECTION
+from . import ORDER_TYPES_SELECTION
 from msf_partner import PARTNER_TYPE
 from lxml import etree
 
@@ -528,6 +529,7 @@ class purchase_order_line(osv.osv):
         # not replacing the po_state from sale_followup - should ?
         'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
         'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
+        'po_order_type': fields.related('order_id', 'order_type', type='selection', selection=ORDER_TYPES_SELECTION, string='Po Order Type', readonly=True, write_relate=False),
         'original_product': fields.many2one('product.product', 'Original Product'),
         'original_qty': fields.float('Original Qty', related_uom='original_uom'),
         'original_price': fields.float('Original Price', digits_compute=dp.get_precision('Purchase Price Computation')),
@@ -1480,16 +1482,18 @@ class purchase_order_line(osv.osv):
         Fill the origin field if a FO is selected
         '''
         if fo_id:
-            fo = self.pool.get('sale.order').read(cr, uid, fo_id, ['name', 'sourced_references'], context=context)
-            return {
-                'value': {
-                    'origin': fo['name'],
-                    'display_sync_ref': len(fo['sourced_references']) and True or False,
-                },
-                'warning': {
-                    'message': _(self.msg_selected_po),
+            fo_domain = ['name', 'sourced_references', 'state', 'order_type']
+            fo = self.pool.get('sale.order').read(cr, uid, fo_id, fo_domain, context=context)
+            if fo['state'] not in ['done', 'cancel'] and fo['order_type'] == 'regular':
+                return {
+                    'value': {
+                        'origin': fo['name'],
+                        'display_sync_ref': len(fo['sourced_references']) and True or False,
+                    },
+                    'warning': {
+                        'message': _(self.msg_selected_po),
+                    }
                 }
-            }
         return {}
 
     def on_change_origin(self, cr, uid, ids, origin, linked_sol_id=False, partner_type='external', context=None):
@@ -1501,12 +1505,13 @@ class purchase_order_line(osv.osv):
             sale_id = self.pool.get('sale.order').search(cr, uid, [
                 ('name', '=', origin),
                 ('state', 'not in', ['done', 'cancel']),
-                ('procurement_request', 'in', ['t', 'f'])
+                ('procurement_request', 'in', ['t', 'f']),
+                ('order_type', '=', 'regular'),
             ], limit=1, order='NO_ORDER', context=context)
             if not sale_id:
                 res['warning'] = {
                     'title': _('Warning'),
-                    'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line') % origin,
+                    'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a non-closed/cancelled regular FO/IR. No FO/IR line will be created for this PO line') % origin,
                 }
                 res['value'] = {
                     'display_sync_ref': False,
