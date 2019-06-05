@@ -370,6 +370,8 @@
             <field name="priority" eval="17"/>
             <field name="arch" type="xml">
                 <search string="Selector">
+                    <filter name="user_active" icon="terp-check" string="Active Users" domain="[('user.active', '=', True)]" />
+                    <newline/>
                     <field name="description" select="1"/>
                     <field name="user" select="1"/>
                     <field name="hq_template" />
