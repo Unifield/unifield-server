@@ -441,7 +441,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Total cost : [[ objects[0].total_price_include_transport or '0.00' ]]</para>
+                    <para style="TextInformation">Total cost : <b>[[ objects[0].total_price_include_transport or '0.00' ]] [[ objects[0].pricelist_id.currency_id.name ]]</b></para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -470,7 +470,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Currency : [[ objects[0].pricelist_id.currency_id.name ]]</para>
+                    <para style="TextInformation">Functional total cost : [[ computeFuncCurrency(objects[0].pricelist_id.currency_id.id, objects[0].company_id.currency_id.id, objects[0].total_price_include_transport or 0) ]] [[ objects[0].company_id.currency_id.name ]]</para>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>

@@ -31,6 +31,7 @@ class merged_order(report_sxw.rml_parse):
             'enumerate': enumerate,
             'getOrigin': self._get_origin,
             'get_merged_lines': self.get_merged_lines,
+            'computeFuncCurrency': self.compute_func_currency,
         })
 
     def _get_origin(self, origin, number=5):
@@ -103,6 +104,10 @@ class merged_order(report_sxw.rml_parse):
             return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, datetime=time)
 
         return ''
+
+    def compute_func_currency(self, l_curr, comp_curr, price):
+        currency_obj = self.pool.get('res.currency')
+        return round(currency_obj.compute(self.cr, self.uid, l_curr, comp_curr, price, round=False, context=self.localcontext), 2)
 
 
 report_sxw.report_sxw('report.purchase.order.merged','purchase.order','addons/purchase_override/report/merged_order.rml',parser=merged_order, header=False)
