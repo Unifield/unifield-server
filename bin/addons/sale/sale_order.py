@@ -2208,6 +2208,7 @@ class sale_order_line(osv.osv):
             'from_cancel_out': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
+            'supplier': False,
         })
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
@@ -2244,6 +2245,7 @@ class sale_order_line(osv.osv):
             'set_as_sourced_n': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
+            'supplier': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
@@ -2923,6 +2925,13 @@ class sale_order_line(osv.osv):
             vals.update({
                 'price_unit': product_obj.read(cr, uid, product_id, ['price'], context=new_ctx)['price']
             })
+
+        # Add default supplier
+        if vals.get('type', False) == 'make_to_order' and product_id:
+            seller = self.pool.get('product.product').browse(cr, uid, product_id, fields_to_fetch=['seller_id'],
+                                                             context=context).seller_id
+            if seller and (seller.supplier or seller.manufacturer or seller.transporter):
+                vals['supplier'] = seller.id
 
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id

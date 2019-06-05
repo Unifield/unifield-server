@@ -575,7 +575,8 @@ class sale_order_line(osv.osv):
 
             # US-4576: Set supplier
             if sol.type == 'make_to_order' and sol.order_id.order_type not in ['loan', 'donation_st', 'donation_exp']\
-                    and sol.product_id and sol.product_id.seller_id:
+                    and sol.product_id and sol.product_id.seller_id and (sol.product_id.seller_id.supplier or
+                    sol.product_id.seller_id.manufacturer or sol.product_id.seller_id.transporter):
                 to_write['supplier'] = sol.product_id.seller_id.id
 
             if sol.order_id.order_type == 'loan':
