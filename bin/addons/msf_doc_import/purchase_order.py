@@ -427,19 +427,18 @@ class purchase_order(osv.osv):
                 # create tmp file
                 tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
                 tmp_file.write(base64.decodestring(file_res['result']))
+                tmpname = tmp_file.name
                 tmp_file.close()
-                new_tmp_file_name = os.path.join(os.path.dirname(tmp_file.name), filename)
-                os.rename(tmp_file.name, new_tmp_file_name)
 
                 # transfer tmp file on SFTP server
                 try:
                     with sftp.cd(export_wiz.dest_path):
-                        sftp.put(new_tmp_file_name, preserve_mtime=True)
+                        sftp.put(tmpname, filename, preserve_mtime=True)
                 except:
                     raise osv.except_osv(_('Error'), _('Unable to write on SFTP server at location %s') % export_wiz.dest_path)
 
                 # now we can remove tmp file
-                os.remove(new_tmp_file_name)
+                os.remove(tmpname)
             else:
                 # write export in local file
                 with open(path_to_file, 'w') as fich:

@@ -622,12 +622,9 @@ class automated_import_job(osv.osv):
                 if not rep.startswith('2'):
                     raise osv.except_osv(_('Error'), _('Unable to write report on FTP server'))
         elif on_ftp and job_brw.import_id.ftp_protocol == 'sftp':
-            new_tmp_file_name = os.path.join(os.path.dirname(temp_path), filename)
-            os.rename(temp_path, new_tmp_file_name)
-            temp_path = new_tmp_file_name
             try:
                 with sftp.cd(job_brw.import_id.report_path):
-                    sftp.put(new_tmp_file_name, preserve_mtime=True)
+                    sftp.put(temp_path, filename, preserve_mtime=True)
             except:
                 raise osv.except_osv(_('Error'), _('Unable to write report on SFTP server'))
 
