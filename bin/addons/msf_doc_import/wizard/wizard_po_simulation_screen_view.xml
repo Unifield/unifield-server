@@ -33,7 +33,7 @@
                         <button name="print_simulation_report" string="Print report" icon="gtk-print" type="object" states="simu_done,import_progress,done" />
                     </group>
                     <notebook colspan="4">
-                        <page string="Error" attrs="{'invisible': [('import_error_ok', '=', False), ('state', '!=', 'error')]}">
+                        <page string="Errors/Warnings" attrs="{'invisible': [('import_error_ok', '=', False), ('state', '!=', 'error')]}">
                             <field name="message" nolabel="1" colspan="4" readonly="1" widget="full_text" />
                         </page>
                         <page string="Purchase Order">
@@ -80,7 +80,7 @@
                         <page string="Details">
                             <!-- LINES -->
                             <field name="simu_line_ids" nolabel="1" colspan="4">
-                                <tree string="Lines" colors="grey: type_change == 'del'; red: type_change in ('warning', 'error'); orange: change_ok==True and type_change not in ('del', 'ignore', 'error', 'warning'); blue: type_change=='split'; green: type_change=='new'">
+                                <tree string="Lines" colors="grey: type_change == 'del'; red: type_change == 'error'; orange: type_change == 'warning'; darkgreen: change_ok==True and type_change not in ('del', 'ignore', 'error', 'warning'); green:type_change=='new'; blue: type_change=='split'">
                                     <field name="in_product_id" />
                                     <field name="in_nomen" />
                                     <field name="in_comment" />
