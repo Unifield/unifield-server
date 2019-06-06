@@ -47,6 +47,8 @@ class account_balance_report(osv.osv_memory):
         help="filter will apply only on the B/S accounts except for the non reconciliable account like 10100 and 10200 which will never be displayed per details"),
         'reconcile_date': fields.date("At"),
 
+        'open_items': fields.many2one('account.period', string='Open Items at', domain=[('state', '!=', 'created')]),
+        
         'account_ids': fields.many2many('account.account',
             'account_report_general_ledger_account_account_rel',
             'report_id', 'account_id', 'Accounts'),
@@ -95,7 +97,7 @@ class account_balance_report(osv.osv_memory):
 
         data['form']['initial_balance'] = False
         form_fields = [ 'initial_balance', 'instance_ids', 'export_format',
-            'account_type', 'account_ids', 'reconciled', 'reconcile_date', ]
+            'account_type', 'account_ids', 'reconciled', 'reconcile_date', 'open_items']
         data['form'].update(self.read(cr, uid, ids, form_fields)[0])
 
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record
