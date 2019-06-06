@@ -106819,3 +106819,10 @@ msgstr "Un BC avec un Type de Commande Prêt, Donation avant expiration, Donatio
 #, python-format
 msgid "You can't change the Order Type to Loan, Donation before expiry, Standard donation or In Kind Donation if a line has a Source Document"
 msgstr "Vous ne pouvez pas changer le Type de Commande en Prêt, Donation avant expiration, Donation normale ou Donation en Nature si une des lignes a un Document d'Origine"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:947
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1674
+#, python-format
+msgid "You can not have an order line with a negative or zero quantity. Updated quantity is ignored"
+msgstr "Vous ne pouvez pas avoir de ligne de commande avec une quantité négative ou nulle. La quantité mise à jour est ignorée"

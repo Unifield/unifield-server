@@ -943,7 +943,10 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     for manda_field in LINES_COLUMNS:
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
                             not_ok = True
-                            err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
+                            if manda_field[0] == 4:  # Product Qty
+                                err1 = _('You can not have an order line with a negative or zero quantity. Updated quantity is ignored')
+                            else:
+                                err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
                             err = _('Line %s of the PO: %s') % (line_number, err1)
                             values_line_errors.append(err)
                             file_line_error.append(err1)
@@ -977,9 +980,6 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
                     if not ext_ref and line_number and line_number in EXT_REF_BY_LN[wiz.id].keys():
                         ext_ref = EXT_REF_BY_LN[wiz.id][line_number][0]
-
-                    if not_ok:
-                        not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
 
 #                    if not line_number and not ext_ref:
 #                        continue
@@ -1016,6 +1016,10 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
                     # AD on line
                     file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref, vals[20:])
+
+                    # If error(s)
+                    if not_ok:
+                        not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
 
                 '''
                 Get the best matching line :
@@ -1662,12 +1666,19 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     write_vals['ad_info'] = ad_info
 
             # Qty
-            err_msg = _('Incorrect float value for field \'Product Qty\'')
-            try:
-                qty = float(values[4])
-                write_vals['imp_qty'] = qty
-            except Exception:
-                errors.append(err_msg)
+            if values[4]:
+                try:
+                    qty = float(values[4])
+                    write_vals['imp_qty'] = qty
+                    if qty <= 0:
+                        errors.append(_('You can not have an order line with a negative or zero quantity. Updated quantity is ignored'))
+                        write_vals['type_change'] = 'error'
+                        write_vals['imp_qty'] = 0.00
+                except Exception:
+                    errors.append(_('Incorrect float value for field \'Product Qty\''))
+                    write_vals['type_change'] = 'error'
+                    write_vals['imp_qty'] = 0.00
+            else:
                 write_vals['type_change'] = 'error'
                 write_vals['imp_qty'] = 0.00
 
