@@ -32,7 +32,6 @@ class order(report_sxw.rml_parse):
             'enumerate': enumerate,
             'getOrigin': self._get_origin,
             'filter_lines': self.filter_lines,
-            'computeFuncCurrency': self.compute_func_currency,
         })
 
     def filter_lines(self, o):
@@ -75,10 +74,6 @@ class order(report_sxw.rml_parse):
             return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, datetime=time)
 
         return ''
-
-    def compute_func_currency(self, l_curr, comp_curr, price):
-        currency_obj = self.pool.get('res.currency')
-        return round(currency_obj.compute(self.cr, self.uid, l_curr, comp_curr, price, round=False, context=self.localcontext), 2)
 
 
 report_sxw.report_sxw('report.msf.purchase.order','purchase.order','addons/purchase_override/report/purchase_order.rml',parser=order, header=False)
