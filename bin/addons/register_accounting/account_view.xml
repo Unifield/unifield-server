@@ -441,7 +441,7 @@
                            attrs="{'readonly': ['|', '|', ('number_imported_invoice', '>', 0), ('from_import_cheque_id', '!=', False), ('direct_invoice', '=', True)],
                                    'required': [('partner_type_mandatory', '=', True)]}"
                            domain="[('filter_for_third_party', '=', account_id)]"
-                           context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" />
+                           context="{'search_default_active': True, 'from': 'regline_view',}" />
                     <field name="partner_id" invisible="1"/>
                     <field name="employee_id" invisible="1"/>
                     <field name="transfer_journal_id" invisible="1"/>
