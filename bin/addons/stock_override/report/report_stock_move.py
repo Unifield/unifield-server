@@ -557,7 +557,8 @@ product will be shown.""",
                     m.location_dest_id as location_dest_id,
                     m.reason_type_id as reason_type_id,
                     lot.name as lot_name,
-                    lot.life_date as life_date
+                    lot.life_date as life_date,
+                    case when pick.subtype not in ('ppl', 'packing') then null when so.procurement_request then %s else pl.currency_id end as bug_pl
                 from
                     stock_move m
                     inner join product_uom uom on uom.id = m.product_uom
@@ -566,10 +567,13 @@ product will be shown.""",
                     left join stock_picking pick on m.picking_id = pick.id
                     left join stock_production_lot lot on lot.id = m.prodlot_id
                     left join ir_translation trans on trans.name='product.template,name' and trans.res_id=t.id and lang=%s
+                    left join sale_order_line sol on m.sale_line_id = sol.id
+                    left join sale_order so on sol.order_id = so.id
+                    left join product_pricelist pl on so.pricelist_id = pl.id
                 where
                     m.id in %s
                 order by p.default_code, m.date asc, lot.name
-            ''', (lang_ctx.get('lang'), tuple(datas['moves'])))
+            ''', (currency_id, lang_ctx.get('lang'), tuple(datas['moves'])))
             # do not change order by or stock level computation will be wrong
 
             start_time = time.time()
@@ -628,12 +632,13 @@ product will be shown.""",
                                 prod_price = x[0]
                         if not prod_price:
                             prod_price = move['standard_price']
-                    elif move['price_currency_id'] and move['price_currency_id'] != currency_id:
-                        if move_date:
+                    elif move_date:
+                        move_currency = move['bug_pl'] or move['price_currency_id']
+                        if move_currency and move_currency != currency_id:
                             first_day = time.strftime('%Y-%m-01', time.strptime(move_date, '%Y-%m-%d %H:%M:%S'))
-                            rate_key = '%s-%s' % (move['price_currency_id'], first_day)
+                            rate_key = '%s-%s' % (move_currency, first_day)
                             if rate_key not in rate_cache:
-                                rate_cache[rate_key] = curr_obj.read(cr, uid, move['price_currency_id'], ['rate'], {'date': first_day})['rate'] or 1
+                                rate_cache[rate_key] = curr_obj.read(cr, uid, move_currency, ['rate'], {'date': first_day})['rate'] or 1
                             prod_price = prod_price/rate_cache[rate_key]
 
                     yield [
