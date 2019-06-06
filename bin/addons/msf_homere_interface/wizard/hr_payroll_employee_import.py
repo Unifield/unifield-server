@@ -757,8 +757,11 @@ class hr_payroll_employee_import(osv.osv_memory):
                 shutil.rmtree(tmpdir)
         del registered_keys
         if res:
+            rejected = processed - created - updated
             message = _("Employee import successful.")
         else:
+            rejected = processed  # reject the import of all employees
+            created = updated = 0
             context.update({'employee_import_wizard_ids': ids})
         context.update({'message': message})
 
@@ -768,7 +771,6 @@ class hr_payroll_employee_import(osv.osv_memory):
         # This is to redirect to Employee Tree View
         context.update({'from': 'employee_import'})
 
-        rejected = processed - created - updated
         res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename, 'created': created,
                                                                                   'updated': updated, 'total': processed,
                                                                                   'rejected': rejected, 'state': 'employee'}, context)

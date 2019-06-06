@@ -106827,3 +106827,7 @@ msgstr "Requête annulée par l'utilisateur"
 msgid "Stop report"
 msgstr "Arrêter le rapport"
 
+#. module: msf_homere_interface
+#: view:hr.payroll.import.confirmation:0
+msgid "The import of the file failed!"
+msgstr "L'import du fichier a échoué !"

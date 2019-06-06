@@ -114,6 +114,14 @@
                         <field name="updated" invisible="context.get('from', False) not in ['expat_employee_import', 'employee_import']"/>
                         <field name="rejected" invisible="context.get('from', False) != 'employee_import'"/>
                     </group>
+                    <group colspan="4" attrs="{'invisible': [('nberrors', '=', 0)]}">
+                        <html>
+                            <p id="label_import_employee_fail"
+                               style="text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                                <translate>The import of the file failed!</translate>
+                            </p>
+                        </html>
+                    </group>
                     <field name="error_line_ids" nolabel="1" colspan="4" attrs="{'invisible': [('nberrors', '=', 0)]}">
                         <tree string="Error List">
                             <field name="msg"/>
