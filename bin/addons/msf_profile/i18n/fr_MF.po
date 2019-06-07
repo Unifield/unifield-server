@@ -28224,11 +28224,11 @@ msgid "Search fields"
 msgstr "Chercher champs"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:690
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:698
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:810
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:820
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:827
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:728
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:736
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:964
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1172
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1179
 #, python-format
 msgid "Line %s of the file: %s"
 msgstr "Ligne %s du fichier: %s"
@@ -28386,12 +28386,13 @@ msgstr "Rapport périodique prévisionnel"
 msgid "Determines the percentage which will be applied on field price from the product form."
 msgstr "Détermine le pourcentage qui sera appliqué sur le champ du prix à partir du formulaire de produits."
 
-#. modules: stock_override, kit
+#. modules: stock_override, kit, msf_doc_import
 #: field:kit.mass.import,warning_import:0
 #: field:kit.mass.import,warning_message:0
+#: field:wizard.import.po.simulation.screen.line,warning_msg:0
 #: field:change.dest.location,warn_msg:0
 msgid "Warning message"
-msgstr "Warning message"
+msgstr "Message d'avertissement"
 
 #. modules: product_attributes, product
 #: selection:product.price.type,field:0
@@ -41986,10 +41987,10 @@ msgid "Optional model name of the objects on which this action should be visible
 msgstr "Nom de modèle facultatif des objets pour lesquels cette action doit être visible"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1381
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1600
 #, python-format
 msgid "Line no is not consistent with validated PO."
-msgstr "Line no is not consistent with validated PO."
+msgstr "Le num de ligne n'est pas cohérent avec le BC validé."
 
 #. module: unifield_setup
 #: view:field.orders.setup:0
@@ -74683,7 +74684,6 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:329
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:331
 #: view:wizard.import.in.simulation.screen:0
-#: view:wizard.import.po.simulation.screen:0
 #: code:addons/msf_instance/account.py:57
 #: code:addons/msf_instance/account.py:60
 #: code:addons/msf_instance/add_instance.py:590
@@ -101894,11 +101894,21 @@ msgid "You can only have one draft shipment for a given address, please check %s
 msgstr "Vous ne pouvez avoir qu'une seule Expédition en brouillon pour la même adresse, veuillez vérifier %s "
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:811
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:827
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:947
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:971
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1140
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1144
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1170
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1177
 #, python-format
 msgid "Line %s of the PO: %s"
 msgstr "Ligne %s du BC: %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1177
+#, python-format
+msgid "Line ref %s of the PO: %s"
+msgstr "Ligne ref %s du BC: %s"
 
 #. module: msf_doc_import, sale
 #: selection:wizard.import.po.simulation.screen.line,type_change:0
@@ -103242,8 +103252,8 @@ msgstr "%s: Nouvelle ligne #%s créée."
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1688
 #, python-format
-msgid "%s: error on line %s %s"
-msgstr "%s: erreur à la ligne %s %s"
+msgid "%s: %s on line %s %s"
+msgstr "%s: %s à la ligne %s %s"
 
 #. module: msf_outgoing
 #: view:stock.picking:0
@@ -106784,6 +106794,59 @@ msgid "Estimated Amount:"
 msgstr "Montant Estimé:"
 
 #. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1199
+#, python-format
+msgid "\n"
+"## Error on header values ##\n"
+"\n"
+""
+msgstr "\n"
+"## Erreur sur les valeurs de l'entête ##\n"
+"\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1205
+#, python-format
+msgid "\n"
+"## Warning on header values ##\n"
+"\n"
+""
+msgstr "\n"
+"## Avertissement sur les valeurs de l'entete ##\n"
+"\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1211
+#, python-format
+msgid "\n"
+"## Error on line values ##\n"
+"\n"
+""
+msgstr "\n"
+"## Erreur sur les valeurs des lignes ##\n"
+"\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1217
+#, python-format
+msgid "\n"
+"## Warning on line values ##\n"
+"\n"
+""
+msgstr "\n"
+"## Avertissement sur les valeurs des lignes ##\n"
+"\n"
+""
+
+#. module: msf_doc_import
+#: view:wizard.import.po.simulation.screen:0
+msgid "Errors/Warnings"
+msgstr "Erreurs/Avertissements"
+
+#. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1705
 #, python-format
 msgid "A PO with a Loan, Donation before expiry, Standard donation or In Kind Donation Order Type can't have an Source Document in its lines"
@@ -106827,3 +106890,10 @@ msgstr "Requête annulée par l'utilisateur"
 msgid "Stop report"
 msgstr "Arrêter le rapport"
 
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:947
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1674
+#, python-format
+msgid "You can not have an order line with a negative or zero quantity. Updated quantity is ignored"
+msgstr "Vous ne pouvez pas avoir de ligne de commande avec une quantité négative ou nulle. La quantité mise à jour est ignorée"
