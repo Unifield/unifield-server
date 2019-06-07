@@ -469,6 +469,9 @@ class wizard_import_po_simulation_screen(osv.osv):
                 values[index] = [node.attrib['name'], node.text or '']
                 return index
 
+        field_parser = {
+            'product_qty': lambda a: float(a),
+        }
         for field in rec:
             ad_field = field.attrib['name'] in ad_field_names
             if field.attrib['name'] != 'order_line' and not ad_field:
@@ -506,7 +509,14 @@ class wizard_import_po_simulation_screen(osv.osv):
                         if ad_node.text:
                             values[index].append(ad_node.text or '')
                 elif not fl.getchildren():
-                    values[index].append(fl.text or '')
+                    if fl.attrib['name'] in field_parser:
+                        try:
+                            value = field_parser[fl.attrib['name']](fl.text)
+                        except:
+                            value = fl.text or ''
+                    else:
+                        value = fl.text or ''
+                    values[index].append(value)
                 else:
                     for sfl in fl:
                         values[index].append(sfl.text or '')
@@ -939,9 +949,17 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     file_line_error = []
                     line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
                     for manda_field in LINES_COLUMNS:
+                        if manda_field[0] == 4: #product qty
+                            try:
+                                values[x][4] = float(values[x][4])
+                            except:
+                                values[x][4] = 0
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
                             not_ok = True
-                            err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
+                            if manda_field[0] == 4:  # Product Qty
+                                err1 = _('You can not have an order line with a negative or zero quantity. Updated quantity is ignored')
+                            else:
+                                err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
                             err = _('Line %s of the PO: %s') % (line_number, err1)
                             values_line_errors.append(err)
                             file_line_error.append(err1)
@@ -1006,7 +1024,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                                 UOM_NAME_ID.setdefault(vals[5], uom_id)
                     # Qty
                     if vals[4]:
-                        qty = float(vals[4])
+                        qty = vals[4]
 
                     # AD on line
                     file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref, vals[20:])
