@@ -45,15 +45,19 @@
 					<field name="product_uom" attrs="{'readonly': []}" /> 
                     <button name="open_split_wizard" type="object" string="Split line" icon="terp-stock_effects-object-colorize" 
 						attrs="{'invisible': [('display_confirm_button', '=', False)]}" />
-					<field name="rts" readonly="True" />
+					<field name="rts" invisible="1" />
+					<field name="rdd" readonly="True" />
 					<field name="type" string="Proc. Method" on_change="onChangeType(type, location_id, supplier)"
 						attrs="{'readonly': ['|', ('state', '!=', 'validated'), ('loan_type', '=', True)]}" />
 					<field name="po_cft"
 					    on_change="onChangePoCft(po_cft, order_id, supplier)" 
                         attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'validated')], 'required': [('type', '=', 'make_to_order')]}" />
 					<field name="related_sourcing_ok" invisible="1" />
+                    <field name="supplier_type" invisible="1" />
+                    <field name="supplier_split_po" invisible="1" />
                     <field name="related_sourcing_id"
-                        attrs="{'readonly': ['|', '|', '|', ('supplier', '=', False), ('related_sourcing_ok', '=', False), ('state', '!=', 'validated'), ('po_cft', 'not in', ['po', 'dpo'])]}" />
+                        attrs="{'readonly': ['|', '|', '|', ('supplier', '=', False), ('related_sourcing_ok', '=', False), ('state', '!=', 'validated'), ('po_cft', 'not in', ['po', 'dpo'])],
+						'required': [('supplier', '!=', False), ('supplier_type', '=', 'esc'), ('supplier_split_po', '=', 'yes')]}" />
                     <field name="location_id" 
                         widget="selection"
                         on_change="onChangeLocation(location_id, product_id, rts, order_id)"

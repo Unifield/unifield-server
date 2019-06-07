@@ -38,6 +38,7 @@ class account_account(osv.osv):
     '''
     _name = "account.account"
     _inherit = "account.account"
+    _trace = True
 
     def _get_active(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -417,6 +418,8 @@ class account_account(osv.osv):
         """
         Use "-" instead of " " between name and code for account's default name
         """
+        if context is None:
+            context = {}
         if not ids:
             return []
         reads = self.read(cr, uid, ids, ['name', 'code'], context=context)
@@ -424,7 +427,10 @@ class account_account(osv.osv):
         for record in reads:
             name = record['name']
             if record['code']:
-                name = record['code'] + ' - '+name
+                if context.get('account_only_code'):
+                    name = record['code']
+                else:
+                    name = record['code'] + ' - '+name
             res.append((record['id'], name))
         return res
 
@@ -516,7 +522,32 @@ class account_account(osv.osv):
                 raise osv.except_osv(_('Warning !'),
                                      _('An account set as "Included in revaluation" must be set as "Reconcile".'))
 
+    def _set_prevent_multi_curr_rec(self, vals):
+        """
+        Updates vals to set prevent_multi_curr_rec to False when "reconcile" is False.
+        Cf: when "reconcile" is unticked, prevent_multi_curr_rec is in readonly so its value (False in that case) is ignored
+        """
+        if 'reconcile' in vals and not vals['reconcile'] and 'prevent_multi_curr_rec' not in vals:
+            vals['prevent_multi_curr_rec'] = False
+
+    def _check_existing_entries(self, cr, uid, account_id, context=None):
+        """
+        Displays a message visible on top of the page in case some JI booked on the account_id have a posting date
+        outside the account activation time interval
+        """
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        if account_id and not context.get('sync_update_execution'):
+            account_fields = ['activation_date', 'inactivation_date', 'code', 'name']
+            account = self.browse(cr, uid, account_id, fields_to_fetch=account_fields, context=context)
+            aml_dom = [('account_id', '=', account_id), '|', ('date', '<', account.activation_date), ('date', '>=', account.inactivation_date)]
+            if aml_obj.search_exist(cr, uid, aml_dom, context=context):
+                self.log(cr, uid, account_id, _('At least one Journal Item using the Account "%s - %s" has a Posting Date '
+                                                'outside the activation dates selected.') % (account.code, account.name))
+
     def create(self, cr, uid, vals, context=None):
+        self._set_prevent_multi_curr_rec(vals)  # update vals
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
         account_id = super(account_account, self).create(cr, uid, vals, context=context)
@@ -530,6 +561,7 @@ class account_account(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
+        self._set_prevent_multi_curr_rec(vals)  # update vals
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
         # remove user_type from vals if it hasn't been modified to avoid the recomputation on JI Account Type (due to store feature)
@@ -541,6 +573,7 @@ class account_account(osv.osv):
             res = res and super(account_account, self).write(cr, uid, [acc.id], newvals, context=context)
         for account_id in ids:
             self._check_reconcile_status(cr, uid, account_id, context=context)
+            self._check_existing_entries(cr, uid, account_id, context=context)
         return res
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):

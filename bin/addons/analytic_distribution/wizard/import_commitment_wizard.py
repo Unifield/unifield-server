@@ -431,7 +431,8 @@ class int_commitment_export_wizard(osv.osv_memory):
         ]
         export_ids = aal_obj.search(cr, uid, domain, context=context)
         for export_br in aal_obj.browse(cr, uid, export_ids, context=context):
-            csv_writer.writerow(self._export_entry(export_br))
+            line_data = self._export_entry(export_br)
+            csv_writer.writerow(map(lambda x: isinstance(x, unicode) and x.encode('utf8') or x, line_data))
 
         # download csv
         vals = {

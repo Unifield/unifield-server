@@ -178,7 +178,7 @@
     <Cell ss:MergeAcross="2" ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
 </Row>
 <Row ss:AutoFitHeight="1">
-   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">Report run date</Data></Cell>
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${getRunParms()['run_date_title'] or '' |x}</Data></Cell>
    % if getRunParms()['run_date'] and isDate(getRunParms()['run_date']):
        % if getLang() == 'fr_MF':
        <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${getRunParms()['run_date']|n}T00:00:00.000</Data></Cell>
@@ -190,7 +190,7 @@
    % endif
 </Row>
 <Row ss:AutoFitHeight="1">
-   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">PO date from</Data></Cell>
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${getRunParms()['date_from_title'] or ''|x}</Data></Cell>
    % if getRunParms()['date_from'] and isDate(getRunParms()['date_from']):
        % if getLang() == 'fr_MF':
        <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${getRunParms()['date_from']|n}T00:00:00.000</Data></Cell>
@@ -202,7 +202,7 @@
    % endif
 </Row>
 <Row ss:AutoFitHeight="1">
-   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">PO date to</Data></Cell>
+   <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${getRunParms()['date_thru_title'] or '' |x}</Data></Cell>
    % if getRunParms()['date_thru'] and isDate(getRunParms()['date_thru']):
        % if getLang() == 'fr_MF':
        <Cell ss:StyleID="short_date_fr"><Data ss:Type="DateTime">${getRunParms()['date_thru']|n}T00:00:00.000</Data></Cell>
@@ -222,6 +222,7 @@
     
 % for o in objects:
   % for line in getPOLines(o.id):
+    % if (getRunParms()['pending_only_ok'] and float(line['qty_backordered']) > 0) or not getRunParms()['pending_only_ok']: 
     <Row ss:AutoFitHeight="1">
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['supplier'])|x}</Data></Cell>
@@ -297,6 +298,7 @@
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['source_doc'])|x}</Data></Cell>
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['supplier_ref'])|x}</Data></Cell>
     </Row>
+    % endif
   % endfor
 % endfor   
     

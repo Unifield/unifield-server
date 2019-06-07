@@ -42,6 +42,7 @@ class hq_entries(osv.osv):
         # Prepare some values
         res = {}
         logger = netsvc.Logger()
+        ad_obj = self.pool.get('analytic.distribution')
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
@@ -57,6 +58,7 @@ class hq_entries(osv.osv):
         # E/ DEST in list of available DEST in ACCOUNT
         # F/ Check posting date with cost center and destination if exists
         # G/ Check document date with funding pool
+        # H/ Check Cost Center / Destination compatibility
         ## CASES where FP is filled in (or not) and/or DEST is filled in (or not).
         ## CC is mandatory, so always available:
         # 1/ no FP, no DEST => Distro = valid
@@ -132,6 +134,14 @@ class hq_entries(osv.osv):
                     res[line.id] = 'invalid'
                     logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
+            # H check
+            if line.destination_id and line.cost_center_id and \
+                    not ad_obj.check_dest_cc_compatibility(cr, uid, line.destination_id.id, line.cost_center_id.id, context=context):
+                res[line.id] = 'invalid'
+                logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING,
+                                     _('%s: CC (%s) not compatible with DEST (%s)') %
+                                     (line.id or '', line.cost_center_id.code or '', line.destination_id.code or ''))
+                continue
         return res
 
     def _get_cc_changed(self, cr, uid, ids, field_name, arg, context=None):

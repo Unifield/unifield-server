@@ -120,7 +120,7 @@
             <field name="model">export.report.stock.move</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Export Moves Analysis" noteditable="1">
+                <tree string="IN &amp; OUT Report" noteditable="1">
                     <field name="name" />
                     <field name="date_from" />
                     <field name="date_to" />
@@ -134,7 +134,7 @@
             <field name="model">export.report.stock.move</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Export Moves Analysis">
+                <search string="IN &amp; OUT Report">
                     <field name="name" />
                     <field name="date_from" />
                     <field name="date_to" />
@@ -147,8 +147,9 @@
             <field name="model">export.report.stock.move</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Export Moves Analysis" noteditable="state!='draft'">
+                <form string="IN &amp; OUT Report">
                     <separator colspan="4" string="Request information" />
+                    <group colspan="4" attrs="{'readonly': [('state', '!=', 'draft')]}">
                     <field name="name" />
                     <field name="company_id" />
                     <separator colspan="4" string="Report parameters" />
@@ -156,20 +157,32 @@
                     <field name="date_to" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     <separator colspan="4" string="Advanced filters" />
                     <field name="partner_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                    <field name="product_id" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" />
-                    <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                    <field name="prodlot_id"
-                           on_change="onchange_prodlot(prodlot_id)"
-                           domain="[('src_product_id', '=', product_id)]" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    <field name="product_id" attrs="{'readonly': ['|', '|', ('prodlot_id', '!=', False), ('state', '!=', 'draft'), ('product_list_id', '!=', False)]}" />
+                    <field name="product_list_id" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
+                    <newline/>
+                    <field name="prodlot_id" on_change="onchange_prodlot(prodlot_id)" domain="[('src_product_id', '=', product_id)]"
+                           attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('product_list_id', '!=', False)]}" />
                     <field name="expiry_date" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" />
+                    <field name="has_locations" invisible="1" />
+                    <field name="only_standard_loc" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_locations', '=', True)]}" />
+                    <field name="location_ids" on_change="onchange_location_ids(location_ids)" colspan="4" mode="tree" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('usage', '!=', 'view'), ('active', 'in', ['t', 'f'])]" context="{'display_active': 1}">
+                        <tree noteditable="True" string="Location(s)">
+                            <field name="name" />
+                            <field name="active" />
+                        </tree>
+                    </field>
                     <field name="reason_type_ids" colspan="4" mode="tree">
                         <tree noteditable="True" string="Reason Types">
                             <field name="name" />
                         </tree>
                     </field>
+                    </group>
+                    <field name="error" attrs="{'invisible': [('state', 'not in', ['error', 'cancel'])]}" colspan="4" />
+                    <field name="progress" attrs="{'invisible': [('state', '!=', 'in_progress')]}" colspan="4" nolabel="1" />
                     <separator colspan="4" string="Actions" />
                     <button name="generate_report" type="object" string="Generate report" icon="gtk-execute" states="draft" />
-                    <button name="update" type="object" string="Update" icon="gtk-reload" states="in_progress" />
+                    <button name="update" type="object" string="Update" icon="gtk-refresh" states="in_progress" />
+                    <button name="kill_request" type="object" string="Stop report" icon="gtk-cancel" states="in_progress" />
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'ready')]}">
                         <html>
                             <div style="align: center">
@@ -196,13 +209,13 @@
                         <html>
                             <div style="align: center">
                                 <p style="font-size:14px;align:center">
-                                    Your export moves analysis demand will be treated quickly.<br />
+                                    Your IN &amp; OUT report demand will be treated quickly.<br />
                                 </p>
                                 <p style="font-size:14px;align:center">
                                     Due to the volume of data, your report cannot be shown immediatly.<br />
                                 </p>
                                 <p style="font-size:14px;align:center">
-                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / Export Moves Analysis.<br />
+                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / IN &amp; OUT Report.<br />
                                 </p>
                             </div>
                         </html>
@@ -213,7 +226,7 @@
         </record>
 
         <record id="export_report_stock_move_action" model="ir.actions.act_window">
-            <field name="name">Export Moves Analysis</field>
+            <field name="name">IN &amp; OUT Report</field>
             <field name="res_model">export.report.stock.move</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -225,17 +238,6 @@
             parent="stock.next_id_61"
             sequence="4" />
 
-        <report
-            id="report_stock_move_xls"
-            string="Export Moves Analysis"
-            model="export.report.stock.move"
-            name="stock.move.xls"
-            file="stock_override/report/report_stock_move_xls.mako"
-            report_type="webkit"
-            header="False"
-            auto="False"
-            menu="False"
-            />
 
     </data>
 </openerp>

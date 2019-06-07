@@ -344,6 +344,24 @@ class product_attributes(osv.osv):
 
         return
 
+    def _search_mandatory_creator(self, cr, uid, obj, name, args, context=None):
+        '''
+        Filter the search according to the args parameter
+        '''
+        if context is None:
+            context = {}
+
+        data_obj = self.pool.get('ir.model.data')
+
+        res_id = 0  # To prevent search
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level
+        if instance_level == 'section':
+            res_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
+        elif instance_level == 'coordo':
+            res_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+
+        return [('international_status', '=', res_id)]
+
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
@@ -628,6 +646,8 @@ class product_attributes(osv.osv):
         ),
         'new_code' : fields.char('New code', size=64),
         'international_status': fields.many2one('product.international.status', 'Product Creator', required=False),
+        'mandatory_creator': fields.function(_get_dummy, fnct_search=_search_mandatory_creator, type='many2one',
+                                             relation='product.international.status', method=True, string='Mandatory Product Creator'),
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),

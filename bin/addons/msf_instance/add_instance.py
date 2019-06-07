@@ -585,7 +585,7 @@ class account_analytic_account(osv.osv):
             return True
         cat = vals.get('category', False)
         from_import = context.get('from_import_menu', False) or context.get('from_import_data', False)
-        if cat == 'FUNDING':
+        if cat == 'FUNDING' and not vals.get('is_pf', False):  # skip check for PF that doesn't require a Prop. Instance
             instance_id = vals.get('instance_id', False)
             if isinstance(instance_id, (tuple)): # UFTP-2: This is for the case of write (create: only instance_id as int is given)
                 instance_id = instance_id[0]
