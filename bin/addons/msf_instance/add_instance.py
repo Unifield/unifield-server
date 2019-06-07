@@ -71,6 +71,7 @@ account_analytic_journal()
 class account_journal(osv.osv):
     _name = 'account.journal'
     _inherit = 'account.journal'
+    _trace = True
 
     def name_get(self, cr, uid, ids, context=None):
         if context is None:
