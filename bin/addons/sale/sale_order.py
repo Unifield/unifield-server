@@ -2208,7 +2208,6 @@ class sale_order_line(osv.osv):
             'from_cancel_out': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
-            'supplier': False,
         })
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
@@ -2245,7 +2244,6 @@ class sale_order_line(osv.osv):
             'set_as_sourced_n': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
-            'supplier': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
@@ -2254,7 +2252,19 @@ class sale_order_line(osv.osv):
             if x not in default:
                 default[x] = False
 
-        return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
+        new_data = super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
+
+        # Remove supplier is line is from stock or has a customer-only supplier
+        if new_data and new_data.get('supplier'):
+            if new_data.get('type') == 'make_to_order':
+                ftf = ['supplier', 'manufacturer', 'transporter']
+                supp = self.pool.get('res.partner').browse(cr, uid, new_data['supplier'], fields_to_fetch=ftf, context=context)
+                if not (supp.supplier or supp.manufacturer or supp.transporter):
+                    new_data['supplier'] = False
+            else:
+                new_data['supplier'] = False
+
+        return new_data
 
     def product_id_change_orig(self, cr, uid, ids, pricelist, product, qty=0,
                                uom=False, qty_uos=0, uos=False, name='', partner_id=False,
