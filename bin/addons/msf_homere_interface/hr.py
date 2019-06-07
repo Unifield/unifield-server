@@ -199,13 +199,30 @@ class hr_employee(osv.osv):
                         employee_name = employee.get('name', False)
                         if employee_name and employee_name not in names:
                             names.append(employee_name)
-                    raise osv.except_osv(_('Error'), _('Some employees have the same unique code: %s') % (';'.join(names)))
+                    raise osv.except_osv(_('Error'), _('Several employees have the same Identification No "%s": %s') %
+                                         (e.identification_id, ' ; '.join(names)))
                     return False
         return True
 
     _constraints = [
-        (_check_unicity, "Another employee has the same unique code.", ['identification_id']),
+        (_check_unicity, "Another employee has the same Identification No.", ['identification_id']),
     ]
+
+    def _check_employe_dest_cc_compatibility(self, cr, uid, employee_id, context=None):
+        """
+        Raises an error in case the employee Destination and Cost Center are not compatible
+        """
+        if context is None:
+            context = {}
+        ad_obj = self.pool.get('analytic.distribution')
+        employee_fields = ['destination_id', 'cost_center_id', 'name_resource']
+        employee = self.browse(cr, uid, employee_id, fields_to_fetch=employee_fields, context=context)
+        emp_dest = employee.destination_id
+        emp_cc = employee.cost_center_id
+        if emp_dest and emp_cc:
+            if not ad_obj.check_dest_cc_compatibility(cr, uid, emp_dest.id, emp_cc.id, context=context):
+                raise osv.except_osv(_('Error'), _('Employee %s: the Cost Center %s is not compatible with the Destination %s.') %
+                                     (employee.name_resource, emp_cc.code or '', emp_dest.code or ''))
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -227,18 +244,9 @@ class hr_employee(osv.osv):
             # Raise an error if employee is created manually
             if (not context.get('from', False) or context.get('from') not in ['yaml', 'import']) and not context.get('sync_update_execution', False) and not allow_edition:
                 raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
-#            # Raise an error if no cost_center
-#            if not vals.get('cost_center_id', False):
-#                raise osv.except_osv(_('Warning'), _('You have to complete Cost Center field before employee creation!'))
-            # Add Nat. staff by default if not in vals
-            if not vals.get('destination_id', False):
-                try:
-                    ns_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_destination_national_staff')[1]
-                except ValueError:
-                    ns_id = False
-                vals.update({'destination_id': ns_id})
-
-        return super(hr_employee, self).create(cr, uid, vals, context)
+        employee_id = super(hr_employee, self).create(cr, uid, vals, context)
+        self._check_employe_dest_cc_compatibility(cr, uid, employee_id, context=context)
+        return employee_id
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -287,6 +295,7 @@ class hr_employee(osv.osv):
             employee_id = super(hr_employee, self).write(cr, uid, emp.id, new_vals, context)
             if employee_id:
                 res.append(employee_id)
+            self._check_employe_dest_cc_compatibility(cr, uid, emp.id, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
@@ -332,6 +341,11 @@ class hr_employee(osv.osv):
             fields = form.xpath('/' + view_type + '//field[@name="cost_center_id"]')
             for field in fields:
                 field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
+            # Change DEST field
+            dest_fields = form.xpath('/' + view_type + '//field[@name="destination_id"]')
+            for dest_field in dest_fields:
+                dest_field.set('domain', "[('category', '=', 'DEST'), ('type', '!=', 'view'), "
+                                         "('dest_compatible_with_cc_ids', '=', cost_center_id)]")
             # Change FP field
             try:
                 fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]

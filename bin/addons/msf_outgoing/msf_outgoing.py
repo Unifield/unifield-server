@@ -359,9 +359,9 @@ class shipment(osv.osv):
         'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
         'state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
                                                                                       ('packed', 'Packed'),
-                                                                                      ('shipped', 'Shipped'),
-                                                                                      ('done', 'Closed'),
-                                                                                      ('delivered', 'Delivered'),
+                                                                                      ('shipped', 'Ready to ship'),
+                                                                                      ('done', 'Dispatched'),
+                                                                                      ('delivered', 'Received'),
                                                                                       ('cancel', 'Cancelled')], string='State', multi='get_vals',
                                  store={
                                      'stock.picking': (_get_shipment_ids, ['state', 'shipment_id', 'delivered'], 10),
@@ -1553,7 +1553,7 @@ class shipment(osv.osv):
                                      _('Please put a partner on the shipment if you want to generate invoice.'))
 
             # (US-952) No STV created when a shipment is generated on an external supplier
-            if partner.partner_type == 'external':
+            if partner.partner_type in ('external', 'esc'):
                 continue
 
             inv_type = 'out_invoice'
@@ -1738,7 +1738,7 @@ class shipment(osv.osv):
             if shipment.state != 'shipped':
                 raise osv.except_osv(
                     _('Error'),
-                    _('The state of the shipment must be \'Shipped\'. Please check it and re-try.')
+                    _('The state of the shipment must be \'Ready to ship\'. Please check it and re-try.')
                 )
             # corresponding packing objects - only the distribution -> customer ones
             # we have to discard picking object with state done, because when we return from shipment
@@ -1796,7 +1796,7 @@ class shipment(osv.osv):
             if shipment.state != 'done':
                 raise osv.except_osv(
                     _('Error'),
-                    _('The shipment must be \'Closed\'. Please check this and re-try')
+                    _('The shipment must be \'Dispatched\'. Please check this and re-try')
                 )
             # gather the corresponding packing and trigger the corresponding function
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'done')], context=context)
@@ -3079,16 +3079,6 @@ class stock_picking(osv.osv):
 
         return new_packing_id
 
-    def _hook_action_assign_raise_exception(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_assign method from stock>stock.py>stock_picking class
-
-        - allow to choose wether or not an exception should be raised in case of no stock move
-        '''
-        res = super(stock_picking, self)._hook_action_assign_raise_exception(cr, uid, ids, context=context, *args, **kwargs)
-        return res and False
-
     def _hook_log_picking_modify_message(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         stock>stock.py>log_picking
@@ -4244,11 +4234,16 @@ class stock_picking(osv.osv):
                     'move_ids': [],
                     'from_pack': line.from_pack,
                     'to_pack': line.to_pack,
+                    'pack_type': line.move_id.pack_type.id,
+                    'length': line.move_id.length,
+                    'width': line.move_id.width,
+                    'height': line.move_id.height,
+                    'weight': line.move_id.weight,
                 })
 
                 families_data[key]['move_ids'].append(line.id)
 
-            for family_data in families_data.values():
+            for family_data in sorted(families_data.values(), key=lambda move_id: families_data.values()[0]):
                 move_ids = family_data.get('move_ids', [])
                 if 'move_ids' in family_data:
                     del family_data['move_ids']
@@ -5161,6 +5156,7 @@ class stock_move(osv.osv):
                         'stock.picking': (_get_picking, ['shipment_id'], 10),
                     }
     ),
+        'from_manage_expired_move': fields.related('picking_id', 'from_manage_expired', string='Manage Expired', type='boolean', readonly=True),
         # Fields used for domain
         'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
         'location_output_id': fields.many2one('stock.location', string='Output location'),
@@ -5199,6 +5195,7 @@ class stock_move(osv.osv):
 
         move_to_done = []
         pick_to_check = set()
+        sol_ids_to_check = {}
 
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_qty == 0.00:
@@ -5288,6 +5285,7 @@ class stock_move(osv.osv):
                 self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
 
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
+                sol_ids_to_check[move.sale_line_id.id] = True
                 resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced or False
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
@@ -5295,7 +5293,7 @@ class stock_move(osv.osv):
                         has_linked_pol = self.pool.get('purchase.order.line').search_exist(cr, uid, [('linked_sol_id', '=', move.sale_line_id.id)], context=context)
                         if has_linked_pol:
                             context['sol_done_instead_of_cancel'] = True
-                        sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=resource, context=context)
+                        sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=resource, cancel_move=move.id, context=context)
                         if has_linked_pol:
                             context.pop('sol_done_instead_of_cancel')
 
@@ -5304,6 +5302,11 @@ class stock_move(osv.osv):
         # Search only non unlink move
         ids = self.search(cr, uid, [('id', 'in', ids)])
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
+
+        # cancel remaining qty on OUT must close the IR/FO line
+        for sol_id in  sol_ids_to_check.keys():
+            wf_service.trg_write(uid, 'sale.order.line', sol_id, cr)
+
         for ptc in pick_obj.browse(cr, uid, list(pick_to_check), context=context):
             if ptc.subtype == 'picking' and ptc.state == 'draft' and not pick_obj.has_picking_ticket_in_progress(cr, uid, [ptc.id], context=context)[ptc.id] and all(m.state == 'cancel' or m.product_qty == 0.00 for m in ptc.move_lines):
                 moves_to_done = self.search(cr, uid, [('picking_id', '=', ptc.id), ('product_qty', '=', 0.00), ('state', 'not in', ['done', 'cancel'])], context=context)

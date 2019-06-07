@@ -156,6 +156,10 @@ class sync_manager(osv.osv):
 
     @sync_server.sync_server.check_validated
     def get_next_revisions(self, cr, uid, entity, rev_sum, context=None):
+        disabled_obj = self.pool.get('sync.server.disabled')
+        if disabled_obj and not disabled_obj.is_sync_active(cr, 1, context):
+            data = disabled_obj.get_data(cr, 1, context)
+            return (False, 'The Sync Server is down for maintenance. Sync is disabled until %s Geneva time.' % data['to_date'])
         return (True, self.pool.get('sync_server.version')._compare_with_last_rev(cr, 1, entity, rev_sum))
 
     @sync_server.sync_server.check_validated
@@ -272,7 +276,8 @@ class sync_server_user_rights_add_file(osv.osv_memory):
                 error = e.value
             else:
                 error = e
-            wiz.write({'state': 'error', 'message': tools.ustr(error)})
+            msg = self.read(cr, uid, wiz_id, ['message'])['message'] or ''
+            wiz.write({'state': 'error', 'message': "%s\n%s" % (msg, tools.ustr(error))})
         finally:
             cr.rollback()
             cr.commit = cr.commit_org
@@ -294,6 +299,7 @@ class sync_server_user_rights_add_file(osv.osv_memory):
         if context is None:
             context = {}
 
+        expected_bar = 1
         wiz = self.browse(cr, uid, ids[0], context=context)
         plain_zip = decodestring(wiz.zip_file)
         zp = StringIO(plain_zip)
@@ -321,8 +327,8 @@ class sync_server_user_rights_add_file(osv.osv_memory):
 
         ur = self.pool.get('user_rights.tools').unzip_file(cr, uid, zp, True, context=context)
 
-        if len(ur['msf_button_access_rights.button_access_rule']) != 3:
-            raise osv.except_osv(_('Warning !'), _("Found %d BAR files, expected 3.") % (len(ur['msf_button_access_rights.button_access_rule'])))
+        if len(ur['msf_button_access_rights.button_access_rule']) != expected_bar:
+            raise osv.except_osv(_('Warning !'), _("Found %d BAR files, expected %s.") % (len(ur['msf_button_access_rights.button_access_rule'], expected_bar)))
         for x in ur:
             if not ur[x]:
                 raise osv.except_osv(_('Warning !'), _("File %s not found!") % (ur_meaning[x]))

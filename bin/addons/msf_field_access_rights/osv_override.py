@@ -4,7 +4,7 @@
 #
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Max Mumford 
+#    Developer: Max Mumford
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -63,91 +63,22 @@ def _record_matches_domain(self, cr, record_id, domain):
     if isinstance(domain, bool) or not domain:
         return True
 
-    # add id = record_id to domain 
+    # add id = record_id to domain
     domain.insert(0, ('id', '=', record_id))
     domain.insert(0, '&')
 
-    # perform search and return bool based on whether or not the record_id was in the 
+    # perform search and return bool based on whether or not the record_id was in the
     return record_id in self.search(cr, 1, domain)
 
 class _SetToDefaultFlag:
     pass
 
-super_create = orm.orm.create
+# FAR deactivated during sync in US-5123:
+#  - never tested
+#  - never set on rules for sync user
+#  - can create bad behavior during sync if set by mistake
+#super_create = orm.orm.create
 
-def create(self, cr, uid, vals, context=None):
-    """
-    If rules defined for current user and model, create each record then check domain for each record.
-    If domain matches, for each field with value_not_synchronized_on_create in the rule, update created field with default values.
-    """
-    context = context or {}
-
-    # is the create coming from a sync or import? If yes, apply rules from msf_access_right module
-    if context.get('sync_update_execution'):
-
-        # create the record. we will sanitize it later based on domain search check
-        create_result = super_create(self, cr, uid, vals, context)
-
-        if create_result:
-            access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
-            if not access_line_obj.search(cr, uid, [('value_not_synchronized_on_create', '=', True)]):
-                return create_result
-            instance_level = _get_instance_level(self, cr, uid)
-
-            if instance_level:
-
-                # get rules for this model, instance and user
-                model_name = self._name
-                groups = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'], context=context)['groups_id']
-
-                rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
-                if not rules_pool:
-                    return create_result
-
-                rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
-
-
-                # do we have rules that apply to this user and model?
-                if rules_search:
-                    field_changed = False
-                    line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search), ('value_not_synchronized_on_create', '=', True)])
-                    if not line_ids:
-                        return create_result
-                    rules_search = rules_pool.search(cr, 1, [('field_access_rule_line_ids', 'in', line_ids)])
-                    rules = rules_pool.browse(cr, 1, rules_search)
-                    defaults = self.pool.get(model_name)._defaults
-
-                    # for each rule, check the record against the rule domain.
-                    for rule in rules:
-
-                        is_match = True
-
-                        if rule.domain_text:
-                            is_match = _record_matches_domain(self, cr, create_result, rule.domain_text)
-
-                        if is_match:
-                            # record matches the domain so modify values based on rule lines
-                            for line in rule.field_access_rule_line_ids:
-                                if line.value_not_synchronized_on_create:
-                                    field_changed = True
-                                    default_value = defaults.get(line.field.name, None)
-                                    new_value = default_value if default_value and not hasattr(default_value, '__call__') else None
-                                    vals[line.field.name] = new_value
-
-                    # Then update the record
-                    if field_changed:
-                        self.write(cr, 1, create_result, vals, context=dict(context, sync_update_execution=False))
-
-                return create_result
-            else:
-                return create_result
-        else:
-            return False
-    else:
-        res = super_create(self, cr, uid, vals, context)
-        return res
-
-orm.orm.create = create
 
 
 def infolog(self, cr, uid, message):
@@ -276,6 +207,11 @@ def write(self, cr, uid, ids, vals, context=None):
     if not isinstance(ids, list):
         ids = [ids]
 
+    update_execution = context.get('sync_update_execution')
+    # during sync or with uid=1: do no check FAR
+    if uid == 1 or update_execution:
+        return super_write(self, cr, uid, ids, vals, context=context)
+
     # get instance level. if not set, log warning, then return normal write
     instance_level = _get_instance_level(self, cr, uid)
     if not instance_level:
@@ -284,13 +220,6 @@ def write(self, cr, uid, ids, vals, context=None):
     # get rules for this model
     rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
     if not rules_pool:
-        return super_write(self, cr, uid, ids, vals, context=context)
-    access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
-
-    update_execution = context.get('sync_update_execution')
-    # do not do unecessary work : return in some condition
-    if uid == 1 or update_execution and \
-       not access_line_obj.search(cr, uid, [('value_not_synchronized_on_write', '=', True)]):
         return super_write(self, cr, uid, ids, vals, context=context)
 
     groups = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'], context=context)['groups_id']
@@ -339,42 +268,7 @@ def write(self, cr, uid, ids, vals, context=None):
                             # throw access denied error
                             raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % field_name)
 
-        # if syncing, sanitize editted rows that don't have sync_on_write permission
-        if update_execution:
-            line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search), ('value_not_synchronized_on_write', '=', True)])
-            if not line_ids:
-                return super_write(self, cr, uid, ids, vals, context=context)
-
-            # FIXME this following code is not used yet as there is no value_not_synchronized_on_write
-            rule_ids = rules_pool.search(cr, 1, [('field_access_rule_line_ids', 'in', line_ids)])
-            rules = rules_pool.browse(cr, 1, rule_ids)
-            # iterate over current records
-            for record in old_values_list:
-                new_values = copy.deepcopy(vals)
-
-                # iterate over rules and see if they match the current record
-                for rule in rules:
-                    if _record_matches_domain(self, cr, record['id'], rule.domain_text):
-
-                        # for each rule, if value has changed and value_not_synchronized_on_write then delete key from new_values
-                        for line in rule.field_access_rule_line_ids:
-                            # if value_not_synchronized_on_write
-                            if line.value_not_synchronized_on_write:
-                                # if we have a new value for the field
-                                if line.field.name in new_values:
-                                    # if the current field value is different from the new field value
-                                    if line.field.name in record:
-                                        if new_values[line.field.name] != record[line.field.name]:
-                                            # remove field from new_values
-                                            del new_values[line.field.name]
-                                    else:
-                                        del new_values[line.field.name]
-
-                # if we still have new values to write, write them for the current record
-                if new_values:
-                    super_write(self, cr, uid, record['id'], new_values, context=context)
-        else:
-            return super_write(self, cr, uid, ids, vals, context=context)
+        return super_write(self, cr, uid, ids, vals, context=context)
     else:
         return super_write(self, cr, uid, ids, vals, context=context)
 

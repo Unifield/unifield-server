@@ -521,32 +521,63 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
-
     def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
         '''
-        Return the number of line(s) for the SO
+        Return the number of non-cancelled line(s) for the SO
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for so_id in ids:
+            res[so_id] = 0
+
+        cr.execute("""
+            SELECT order_id, COUNT(*) FROM sale_order_line 
+            WHERE order_id IN %s AND state NOT IN ('cancel', 'cancel_r') GROUP BY order_id
+        """, (tuple(ids),))
+        for so in cr.fetchall():
+            res[so[0]] = so[1]
+
+        return res
+
+    def _get_short_client_ref(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return a shortened version of Customer Reference, with only the Order Reference
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        res = {}.fromkeys(ids, 0)
-        line_number_by_order = {}
+        ref_by_order = {}
+        for so in self.browse(cr, uid, ids, fields_to_fetch=['client_order_ref'], context=context):
+            ref_by_order[so.id] = so.client_order_ref and so.client_order_ref.split('.')[-1] or ''
 
-        lines = self.pool.get('sale.order.line').search(cr, uid, [('order_id', 'in', ids), ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
-        for l in self.pool.get('sale.order.line').read(cr, uid, lines, ['order_id', 'line_number'], context=context):
-            line_number_by_order.setdefault(l['order_id'][0], set())
-            line_number_by_order[l['order_id'][0]].add(l['line_number'])
+        return ref_by_order
 
-        for so_id, ln in line_number_by_order.iteritems():
-            res[so_id] = len(ln)
+    def _get_msg_big_qty(self, cr, uid, ids, name, arg, context=None):
+        res = {}
+        max_value = self.pool.get('sale.order.line')._max_value
+
+        for id in ids:
+            res[id] = ''
+
+        cr.execute('''select line_number, order_id from sale_order_line
+            where
+                order_id in %s
+                and ( product_uom_qty >= %s or product_uom_qty*price_unit >= %s)
+                and state not in ('cancel', 'cancel_r')
+            ''', (tuple(ids), max_value, max_value))
+        for x in cr.fetchall():
+            res[x[1]] += ' #%s' % x[0]
 
         return res
 
 
-
     _columns = {
-        'name': fields.char('Order Reference', size=64, required=True,
-                            readonly=True, states={'draft': [('readonly', False)]}, select=True),
+        'name': fields.char('Order Reference', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}, select=True, sort_column='id'),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
         'state': fields.function(_get_less_advanced_sol_state, string='Order State', method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
@@ -602,6 +633,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'company_id': fields.related('shop_id','company_id',type='many2one',relation='res.company',string='Company',store=True,readonly=True),
         # we increase the size of client_order_ref field from 64 to 128
         'client_order_ref': fields.char('Customer Reference', size=128),
+        'short_client_ref': fields.function(_get_short_client_ref, method=True, string='Customer Reference', type='char', size=64, store=False),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
         'partner_id': fields.many2one('res.partner', 'Customer', required=True, change_default=True, select=True),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
@@ -657,6 +689,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'claim_name_goods_return': fields.char(string='Customer Claim Name', help='Name of the claim that created the IN-replacement/-missing which created the FO', size=512),
         'draft_cancelled': fields.boolean(string='State', readonly=True),
         'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
+        'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
     }
 
     _defaults = {
@@ -689,7 +722,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         (_check_empty_line, 'All lines must have a quantity larger than 0.00', ['order_line']),
     ]
 
-    _order = 'name desc'
+    _order = 'id desc'
 
     # Form filling
     def unlink(self, cr, uid, ids, context=None):
@@ -824,6 +857,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 if not obj['procurement_request']:
                     self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
+        if 'partner_id' in vals:
+            partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], fields_to_fetch=['property_product_pricelist', 'partner_type'], context=context)
+            if partner.partner_type in ('internal', 'intermission', 'section'):
+                vals['pricelist_id'] = partner.property_product_pricelist.id
+
         for order in self.browse(cr, uid, ids, context=context):
             if order.yml_module_name == 'sale':
                 continue
@@ -848,6 +886,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
+
+        if not 'pricelist_id' in vals and vals.get('partner_id'):
+            partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], fields_to_fetch=['property_product_pricelist', 'partner_type'], context=context)
+            if partner.partner_type in ('internal', 'intermission', 'section'):
+                vals['pricelist_id'] = partner.property_product_pricelist.id
 
         if 'partner_id' in vals:
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'])
@@ -1874,17 +1917,29 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
+        def get_linked_pol(sol_id):
+            '''
+            @return PO line (browse_record) linked to the given SO line or None
+            '''
+            linked_pol_id = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', sol.id)], context=context)
+            linked_pol = None
+            if linked_pol_id:
+                linked_pol = self.pool.get('purchase.order.line').browse(cr, uid, linked_pol_id[0], fields_to_fetch=['state'], context=context)
+            return linked_pol
+
         res = {}
         for sol in self.browse(cr, uid, ids, context=context):
             # if FO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
-            if sol.resourced_original_line and sol.state != 'done':
+            if (sol.resourced_original_line or (sol.is_line_split and sol.original_line_id and sol.original_line_id.resourced_original_line)) and sol.state not in ('done', 'cancel', 'cancel_r'):
                 if sol.state.startswith('validated'):
                     res[sol.id] = 'Resourced-v'
                 elif sol.state.startswith('sourced'):
-                    if sol.state in ('sourced_v', 'sourced_n'):
+                    linked_pol = get_linked_pol(sol.id)
+                    if sol.state == 'sourced_v' or (sol.state == 'sourced_n' and linked_pol and linked_pol.state != 'draft'):
                         res[sol.id] = 'Resourced-pv'
-                    elif sol.state == 'sourced_sy':
-                        res[sol.id] = 'Resourced-sy'
+                    #elif sol.state == 'sourced_sy':
+                    #    res[sol.id] = 'Resourced-sy'
+                    # debatable
                     else:
                         res[sol.id] = 'Resourced-s'
                 elif sol.state.startswith('confirmed'):
@@ -1948,6 +2003,8 @@ class sale_order_line(osv.osv):
 
         return res
 
+    _max_value = 10**10
+    _max_msg = _('The Total amount of the line is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information')
     _name = 'sale.order.line'
     _description = 'Sales Order Line'
     _columns = {
@@ -2188,6 +2245,8 @@ class sale_order_line(osv.osv):
             'created_by_sync': False,
             'cancelled_by_sync': False,
         })
+        if context.get('from_button') and 'is_line_split' not in default:
+            default['is_line_split'] = False
 
         for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line']:
             if x not in default:
@@ -2441,8 +2500,7 @@ class sale_order_line(osv.osv):
 
         return True
 
-
-    def cancel_partial_qty(self, cr, uid, ids, qty_to_cancel, resource=False, context=None):
+    def cancel_partial_qty(self, cr, uid, ids, qty_to_cancel, resource=False, cancel_move=None, context=None):
         '''
         cancel partially a SO line: create a split and cancel the split
         '''
@@ -2471,10 +2529,10 @@ class sale_order_line(osv.osv):
                 self.pool.get('sale.order.line').write(cr, uid, [new_line_id], {'from_cancel_out': True}, context=context)
             context.update({'return_new_line_id': True})
             wf_service.trg_validate(uid, 'sale.order.line', new_line_id, signal, cr)
+            if cancel_move:
+                self.pool.get('stock.move').write(cr, uid, [cancel_move], {'sale_line_id': new_line_id}, context=context)
 
         return True
-
-
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
@@ -2493,7 +2551,7 @@ class sale_order_line(osv.osv):
 
         return True
 
-    def update_or_cancel_line(self, cr, uid, line, qty_diff, resource=False, context=None):
+    def update_or_cancel_line(self, cr, uid, line, qty_diff, resource=False, cancel_move=None, context=None):
         '''
         Update the quantity of the IR/FO line with the qty_diff - Update also
         the quantity in procurement attached to the IR/Fo line.
@@ -2526,7 +2584,7 @@ class sale_order_line(osv.osv):
             wf_service.trg_validate(uid, 'sale.order.line', line.id, signal, cr)
         else:
             # Update the line and the procurement
-            self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource, context=context)
+            self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource, cancel_move=cancel_move, context=context)
 
         so_to_cancel_id = False
         if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
@@ -2866,7 +2924,6 @@ class sale_order_line(osv.osv):
                 'price_unit': product_obj.read(cr, uid, product_id, ['price'], context=new_ctx)['price']
             })
 
-
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''
@@ -3022,6 +3079,7 @@ sync_sale_order_line_split()
 class sale_order_sourcing_progress(osv.osv):
     _name = 'sale.order.sourcing.progress'
     _rec_name = 'order_id'
+    _order = 'id desc'
 
     def _get_nb_lines_by_type(self, cr, uid, order_id=None, context=None):
         """
@@ -3111,8 +3169,6 @@ class sale_order_sourcing_progress(osv.osv):
         """
         order_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
-        src_doc_obj = self.pool.get('procurement.request.sourcing.document')
-        src_doc_mem = self.pool.get('procurement.request.sourcing.document.mem')
 
         if context is None:
             context = {}
@@ -3133,11 +3189,6 @@ class sale_order_sourcing_progress(osv.osv):
         ''', (tuple(order_ids),))
         min_date, max_date = cr.fetchone()
 
-        # All documents that source the FO/IR lines
-        src_doc_ids = src_doc_obj.search(cr, uid, [
-            ('order_id', 'in', order_ids),
-        ], context=context)
-
         # Number of lines in the FO
         nb_all_lines = sol_obj.search(cr, uid, [
             ('order_id', 'in', order_ids),
@@ -3146,54 +3197,8 @@ class sale_order_sourcing_progress(osv.osv):
         mem_fsl_nb = 0
         mem_ool_nb = 0
 
-        mem_sol_ids = []
-        src_doc_mem_ids = src_doc_mem.search(cr, uid, [
-            ('order_id', 'in', order_ids),
-        ], context=context)
-        for mem_doc in src_doc_mem.browse(cr, uid, src_doc_mem_ids, context=context):
-            for l in mem_doc.sourcing_lines:
-                if l.id not in mem_sol_ids:
-                    mem_sol_ids.append(l.id)
-                    if l.type == 'make_to_stock':
-                        mem_fsl_nb += 1
-                    elif l.type == 'make_to_order':
-                        mem_ool_nb += 1
-
-        # Get number of sourced lines by type (MTS or MTO)
-        res = []
-        if src_doc_ids:
-            where_sql = ''
-            where_params = [tuple(src_doc_ids)]
-            if mem_sol_ids:
-                where_sql = ' AND sol.id NOT IN %s'
-                where_params.append(tuple(mem_sol_ids))
-            sql = '''
-                SELECT count(*) AS nb_line, sol.type AS type
-                FROM sale_order_line sol
-                    LEFT JOIN sale_line_sourcing_doc_rel slsdr
-                    ON slsdr.sale_line_id = sol.id
-                WHERE
-                    slsdr.document_id IN %%s
-                    %s
-                GROUP BY sol.type
-            ''' % where_sql # not_a_user_entry
-            cr.execute(sql, where_params)
-            res = cr.dictfetchall()
-
-        for r in res:
-            if r.get('type') == 'make_to_stock':
-                mem_fsl_nb += r.get('nb_line', 0)
-            elif r.get('type') == 'make_to_order':
-                mem_ool_nb += r.get('nb_line', 0)
-
         # Build message by sourcing document
         sourcing = ''
-        for src_doc in src_doc_obj.browse(cr, uid, src_doc_ids, context=context):
-            sourcing += _('%s line%s sourced on %s.\n') % (
-                len(src_doc.sourcing_lines),
-                len(src_doc.sourcing_lines) > 1 and 's' or '',
-                src_doc.sourcing_document_name,
-            )
 
         fsl_nb = 0
         ool_nb = 0

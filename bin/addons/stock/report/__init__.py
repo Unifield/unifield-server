@@ -31,3 +31,6 @@ import physical_inventory_counting_sheet
 import physical_inventory_discrepancies_report
 import reserved_products_report
 import unreserved_stock_report
+import stock_reception_report
+import stock_expired_damaged_report
+import products_situation_report

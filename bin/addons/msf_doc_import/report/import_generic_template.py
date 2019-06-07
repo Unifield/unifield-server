@@ -22,7 +22,7 @@
 from report import report_sxw
 from report_webkit.webkit_report import XlsWebKitParser
 from operator import itemgetter
-from msf_doc_import.msf_import_export_conf import MODEL_DATA_DICT
+from msf_doc_import.msf_import_export_conf import MODEL_DATA_DICT, MODEL_DICT
 import tools
 
 
@@ -114,6 +114,8 @@ class report_generic_export_parser(report_sxw.rml_parse):
         size of it.
         '''
         import_export_obj = self.pool.get('msf.import.export')
+        if 'lang' in MODEL_DICT.get(selection, {}):
+            context['lang'] = MODEL_DICT[selection]['lang']
         return import_export_obj._get_headers(self.cr, self.uid, model,
                                               selection=selection, field_list=field_list, rows=rows, context=context)
 
@@ -142,10 +144,15 @@ class report_generic_export_parser(report_sxw.rml_parse):
         rows = []
         chunk_size = 100
         fields = [x.replace('.', '/') for x in fields]
+        new_ctx = context.copy()
+        if 'lang' in MODEL_DICT.get(data['selection'], {}):
+            new_ctx['lang'] = MODEL_DICT[data['selection']]['lang']
+        if data['selection'] == 'destinations':
+            new_ctx['account_only_code'] = True
         for i in range(0, len(ids), chunk_size):
             ids_chunk = ids[i:i + chunk_size]
             context['translate_selection_field'] = True
-            rows.extend(model_obj.export_data(self.cr, self.uid, ids_chunk, fields, context=context)['datas'])
+            rows.extend(model_obj.export_data(self.cr, self.uid, ids_chunk, fields, context=new_ctx)['datas'])
 
         # sort supplier catalogue line
         if data['model'] == 'supplier.catalogue.line':
@@ -243,9 +250,19 @@ class report_user_access_export_parser(report_generic_export_parser):
             row_list.append(row)
 
         # build the access right part
-        group_ids = group_obj.search(self.cr, self.uid,
-                                     [('visible_res_groups', '=', 't')], order='name',
-                                     context=context)
+        no_export_groups = [('base', 'group_erp_manager'), ('base', 'group_extended'), ('base', 'group_no_one'), ('sync_common', 'sync_read_group')]
+        ignore_goups = []
+        for module, xmlid in no_export_groups:
+            try:
+                ignore_goups.append(data_obj.get_object_reference(self.cr, self.uid, module, xmlid)[1])
+            except:
+                pass
+        group_dom = [('visible_res_groups', '=', 't')]
+
+        if ignore_goups:
+            group_dom.append(('id', 'not in', ignore_goups))
+
+        group_ids = group_obj.search(self.cr, self.uid, group_dom, order='name', context=context)
         group_read_result = group_obj.read(self.cr, self.uid, group_ids,
                                            ['name', 'level', 'menu_access'], context=context)
         group_dict = dict((x['id'], x) for x in group_read_result)

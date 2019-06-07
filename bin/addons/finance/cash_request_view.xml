@@ -28,13 +28,13 @@
                                     <field name="current_instance_level" invisible="1"/>
                                     <field name="name"/>
                                     <field name="state"/>
-                                    <field name="request_date" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}"/>
-                                    <field name="month_period_id" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}"/>
+                                    <field name="request_date" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '=', 'project')]}"/>
+                                    <field name="month_period_id" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '=', 'project')]}"/>
                                     <field name="mission"/>
                                     <field name="prop_instance_id"/>
-                                    <field name="transfer_account_id" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}"/>
-                                    <field name="bank_journal_id" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}"/>
-                                    <field name="transfer_currency_ids" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}">
+                                    <field name="transfer_account_id" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '=', 'project')]}"/>
+                                    <field name="bank_journal_id" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '=', 'project')]}"/>
+                                    <field name="transfer_currency_ids" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '=', 'project')]}">
                                         <tree string="Currencies" editable="bottom">
                                             <field name="currency_id"/>
                                             <field name="percentage"/>
@@ -51,7 +51,7 @@
                                         </tree>
                                     </field>
                                 </group>
-                                <group colspan="4" col="4" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                                <group colspan="4" col="4" attrs="{'invisible': [('current_instance_level', '=', 'project')]}">
                                     <separator colspan="4" string="Recap"/>
                                     <button name="compute_recap_and_total" type="object"
                                             string="Compute recap lines &amp; total to transfer" icon="gtk-refresh"
@@ -92,7 +92,7 @@
                                 </group>
                             </page>
                             <!-- BANKING TAB -->
-                            <page string="Banking" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                            <page string="Banking" attrs="{'invisible': [('current_instance_level', '=', 'project')]}">
                                 <separator colspan="4" string="Banking references"/>
                                 <field name="journal_name"/>
                                 <field name="journal_code"/>
@@ -102,7 +102,7 @@
                                 <field name="bank_address"/>
                             </page>
                             <!-- LIQUIDITY POSITION TAB -->
-                            <page string="Liquidity Position" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                            <page string="Liquidity Position" attrs="{'invisible': [('current_instance_level', '=', 'project')]}">
                                 <!-- CASH -->
                                 <group colspan="4" col="2">
                                     <button name="display_details_cash" type="object" colspan="1"
@@ -182,7 +182,7 @@
                                 </group>
                             </page>
                             <!-- PAYABLES TAB -->
-                            <page string="Payables" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                            <page string="Payables" attrs="{'invisible': [('current_instance_level', '=', 'project')]}">
                                 <field name="payable_ids" nolabel="1">
                                     <tree string="Payables">
                                         <field name="instance_id"/>
@@ -193,7 +193,7 @@
                                 </field>
                             </page>
                             <!-- COMMITMENT TAB -->
-                            <page string="Commitment" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                            <page string="Commitment" attrs="{'invisible': [('current_instance_level', '=', 'project')]}">
                                 <separator colspan="4" string="Commitment"/>
                                 <field name="commitment_ids" nolabel="1">
                                     <tree string="Engagement Entries in func. currency">
@@ -206,7 +206,7 @@
                             <!-- PLANNED EXPENSE TAB -->
                             <page string="Planned Expense">
                                 <separator colspan="4" string="Planned expense for the coming period"/>
-                                <group colspan="4" col="2" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                                <group colspan="4" col="2" attrs="{'invisible': [('current_instance_level', '=', 'project')]}">
                                     <field name="recap_expense_ids" nolabel="1">
                                         <tree string="Recap Planned Expenses in func. currency">
                                             <field name="instance_id"/>
@@ -238,7 +238,7 @@
                                 </group>
                             </page>
                             <!-- TRANSFERS FOLLOW-UP TAB -->
-                            <page string="Transfers Follow-up" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                            <page string="Transfers Follow-up" attrs="{'invisible': [('current_instance_level', '=', 'project')]}">
                                 <field name="past_transfer_ids" nolabel="1">
                                     <tree string="Past Transfers">
                                         <field name="instance_id"/>

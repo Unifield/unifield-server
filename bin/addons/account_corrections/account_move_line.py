@@ -598,19 +598,14 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 transfer_journal_id = third_party.id
         return partner_id, employee_id, transfer_journal_id
 
-    def update_st_line(self, cr, uid, ids, account_id=None, context=None):
+    def update_st_line(self, cr, uid, ids, context=None):
         """
-        Update the account of the statement line
+        Updates the "corrected_st_line_id" on the JI
         """
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if not account_id:
-            raise osv.except_osv(_('Warning'), _('No account_id given. No update on account will be done.'))
-        # Prepare some values
-        absl_obj = self.pool.get('account.bank.statement.line')
-        cor_vals = {'account_id': account_id}
         # Update lines
         for ml in self.browse(cr, uid, ids, context=context):
             # in order to update hard posted line (that's forbidden!), we use a tip: add from_correction in context
@@ -620,20 +615,14 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Case where this move line have a link to some statement lines
             if ml.statement_id and ml.move_id.statement_line_ids:
                 for st_line in ml.move_id.statement_line_ids:
-                    # US-303: only update the statement line that links to this move line
                     if st_line.cash_return_move_line_id:
                         if st_line.cash_return_move_line_id.id == ml.id:
-                            absl_obj.write(cr, uid, [st_line.id], cor_vals, context=context)
                             # we informs new move line that it have correct a statement line
                             self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
                             break
-                    elif not st_line.from_cash_return: #US-1044: only update the account on line if the regline is not cash return!
+                    elif not st_line.from_cash_return:
                         #US-303: If not the case, then we inform the new move line that it has corrected a statement line
-                        absl_obj.write(cr, uid, [st_line.id], cor_vals, context=context)
                         self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
-            # if not, this move line should have a direct link to a register line
-            elif ml.statement_id and ml.corrected_st_line_id:
-                absl_obj.write(cr, uid, [ml.corrected_st_line_id.id], cor_vals, context=context)
         return True
 
     def correct_aml(self, cr, uid, ids, date=None, new_account_id=None, distrib_id=False, new_third_party=None, context=None):
@@ -808,12 +797,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # check the account compatibility with the Third Party on the COR line created
             correction_line = self.browse(cr, uid, correction_line_id, context=context)
             wiz_obj._check_account_partner_compatibility(cr, uid, new_account, correction_line, context)
-            # UF-2231: Remove the update to the statement line
-            # Update register line if exists
-
-            # UFTP-119: Reverted a code that has been commented out in UF-2231 without explanation, and which caused the problem of updating back the Reg line
             if ml.statement_id:
-                self.update_st_line(cr, uid, [ml.id], account_id=new_account_id, context=context)
+                self.update_st_line(cr, uid, [ml.id], context=context)
             # Inform old line that it have been corrected
             self.write(cr, uid, [ml.id], {'corrected': True, 'have_an_historic': True,}, context=context, check=False, update_check=False)
             # Post the move

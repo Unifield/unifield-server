@@ -54,6 +54,7 @@
                             <field name="in_shipment_date" />
                             <field name="imp_shipment_date" nolabel="1" />
                             <label> </label>
+                            <field name="ad_info" widget="boolean" />
                             <group colspan="4" string="Header notes">
                                  <field name="imp_notes" colspan="4" nolabel="1" />
                             </group>

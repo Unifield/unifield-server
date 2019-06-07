@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 class update_lines(osv.osv_memory):
     _name = "update.lines"
@@ -85,15 +86,26 @@ class update_lines(osv.osv_memory):
             return result
 
         obj_name = obj_obj.browse(cr, uid, obj_ids[0], context=context).name
+        header_name = _('Value to be used')
+        btn_name_yes_s = _('Yes - Selected lines')
+        btn_name_yes = _('Yes - All lines')
+        btn_name_no = _('No')
+        has_selection = context.get('button_selected_ids')
+        button_selection = ""
 
         if str(field_name) == 'stock_take':
+            if has_selection:
+                button_selection = '<button name="update_stock_take_date_select" string="%s" type="object" icon="gtk-apply" />' % (btn_name_yes_s, )
             _moves_arch_lst = """
                             <form>
-                            <separator colspan="4" string="%s: Value to be used-"/>
-                            <field name="stock_take_date" />
-                            <button name="update_stock_take_date" string="Yes" type="object" icon="gtk-apply" />
-                            <button special="cancel" string="No" icon="gtk-cancel"/>
-                            """ % obj_name
+                            <separator colspan="4" string="%s: %s-"/>
+                            <field colspan="2" name="stock_take_date" />
+                            <group colspan="2" col="3">
+                                %s
+                                <button name="update_stock_take_date" string="%s" type="object" icon="gtk-apply" />
+                                <button special="cancel" string="%s" icon="gtk-cancel"/>
+                            </group>
+                            """ % (obj_name, header_name, button_selection, btn_name_yes, btn_name_no)
 
             _moves_fields = result['fields']
             # add field related to picking type only
@@ -101,13 +113,18 @@ class update_lines(osv.osv_memory):
 
             _moves_arch_lst += """</form>"""
         else:
+            if has_selection:
+                button_selection = '<button name="update_delivery_%s_date_select" string="%s" type="object" icon="gtk-apply" />' % (field_name, btn_name_yes_s)
             _moves_arch_lst = """
                             <form>
-                            <separator colspan="4" string="%s: Value to be used-"/>
+                            <separator colspan="4" string="%s: %s-"/>
                             <field name="delivery_%s_date" />
-                            <button name="update_delivery_%s_date" string="Yes" type="object" icon="gtk-apply" />
-                            <button special="cancel" string="No" icon="gtk-cancel"/>
-                            """ % (obj_name, field_name, field_name)
+                            <group colspan="2" col="3">
+                                %s
+                                <button name="update_delivery_%s_date" string="%s" type="object" icon="gtk-apply" />
+                                <button special="cancel" string="%s" icon="gtk-cancel"/>
+                            </group>
+                            """ % (obj_name, header_name, field_name, button_selection, field_name, btn_name_yes, btn_name_no)
 
             _moves_fields = result['fields']
             # add field related to picking type only
@@ -120,24 +137,45 @@ class update_lines(osv.osv_memory):
         result['fields'] = _moves_fields
         return result
 
-    def update_delivery_requested_date(self, cr, uid, ids, context=None):
+    def update_delivery_requested_date_select(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        return self.update_delivery_requested_date(cr, uid, ids, context=context, selected=True)
+
+    def update_delivery_requested_date(self, cr, uid, ids, context=None, selected=False):
         '''
         update all corresponding lines
         '''
         # switch according to type
-        type = context['type']
-        obj_obj = self.pool.get(type)
+        obj_type = context['type']
+        obj_obj = self.pool.get(obj_type)
         # working objects
         obj_ids = context.get('active_ids', [])
-        for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
+
+        if obj_type == 'purchase.order':
+            line_obj = self.pool.get('purchase.order.line')
+        else:
+            line_obj = self.pool.get('sale.order.line')
+
+        for obj in obj_obj.browse(cr, uid, obj_ids, fields_to_fetch=['delivery_requested_date'], context=context):
             requested_date = obj.delivery_requested_date
-            for line in obj.order_line:
-                if line.state in ('draft', 'validated', 'validated_n'):
-                    line.write({'date_planned': requested_date})
+            dom = [('order_id', '=', obj.id), ('state', 'in',['draft', 'validated', 'validated_n'])]
+            if selected and context.get('button_selected_ids'):
+                dom += [('id', 'in', context['button_selected_ids'])]
+            line_ids = line_obj.search(cr, uid, dom, context=context)
+            if line_ids:
+                line_obj.write(cr, uid, line_ids, {'date_planned': requested_date}, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def update_delivery_confirmed_date(self, cr, uid, ids, context=None):
+    def update_delivery_confirmed_date_select(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        return self.update_delivery_confirmed_date(cr, uid, ids, context=context, selected=True)
+
+    def update_delivery_confirmed_date(self, cr, uid, ids, context=None, selected=False):
         '''
         update all corresponding lines
         '''
@@ -149,26 +187,46 @@ class update_lines(osv.osv_memory):
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             confirmed_date = obj.delivery_confirmed_date
             for line in obj.order_line:
-                if line.state in ('draft', 'validated', 'validated_n'):
-                    line.write({'confirmed_delivery_date': confirmed_date})
+                if selected and context.get('button_selected_ids'):
+                    if line.id in context['button_selected_ids'] and line.state in ('draft', 'validated', 'validated_n'):
+                        line.write({'confirmed_delivery_date': confirmed_date})
+                else:
+                    if line.state in ('draft', 'validated', 'validated_n'):
+                        line.write({'confirmed_delivery_date': confirmed_date})
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def update_stock_take_date(self, cr, uid, ids, context=None):
+    def update_stock_take_date_select(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        return self.update_stock_take_date(cr, uid, ids, context=context, selected=True)
+
+    def update_stock_take_date(self, cr, uid, ids, context=None, selected=False):
         '''
         update all corresponding lines
         '''
         # switch according to type
-        type = context['type']
-        obj_obj = self.pool.get(type)
+        obj_type = context['type']
+        obj_obj = self.pool.get(obj_type)
         # working objects
         obj_ids = context.get('active_ids', [])
+
+        if obj_type == 'purchase.order':
+            line_obj = self.pool.get('purchase.order.line')
+        else:
+            line_obj = self.pool.get('sale.order.line')
+
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             stock_take_date = obj.stock_take_date
-            for line in obj.order_line:
-                if line.state in ('draft', 'validated', 'validated_n'):
-                    line.write({'stock_take_date': stock_take_date})
+            dom = [('order_id', '=', obj.id), ('state', 'in', ['draft', 'validated', 'validated_n'])]
+            if selected and context.get('button_selected_ids'):
+                dom += [('id', 'in', context.get('button_selected_ids'))]
+            line_ids = line_obj.search(cr, uid, dom, context=context)
+            if line_ids:
+                line_obj.write(cr, uid, line_ids, {'stock_take_date': stock_take_date}, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
+
 
 update_lines()
