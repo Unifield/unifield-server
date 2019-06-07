@@ -479,11 +479,11 @@ class hq_report_oca(report_sxw.report_sxw):
         # set prefix for file names
         mission_code = ''
         if parent_instance:
-            mission_code = "%s0" % parent_instance.code[:2]
+            mission_code = "%s" % parent_instance.code[:3]
         tm = strptime(period.date_start, '%Y-%m-%d')
         year = str(tm.tm_year)
         period_number = period and period.number and '%02d' % period.number or ''
-        prefix = '%s_%sP%s_' % (mission_code, year, period_number)
+        prefix = '%sY%sP%s_' % (mission_code, year, period_number)
 
         zip_buffer = StringIO.StringIO()
         first_fileobj = NamedTemporaryFile('w+b', delete=False)

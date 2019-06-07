@@ -66,7 +66,7 @@ class wizard_hq_report_oca(osv.osv_memory):
         year = ''
         period_number = ''
         if wizard.instance_id:
-            mission_code = "%s0" % wizard.instance_id.code[:2]
+            mission_code = "%s" % wizard.instance_id.code[:3]
             # Get projects below instance
             data['form'].update({'instance_ids': [wizard.instance_id.id] + [x.id for x in wizard.instance_id.child_ids]})
         if wizard.period_id:
@@ -76,7 +76,7 @@ class wizard_hq_report_oca(osv.osv_memory):
             data['form'].update({'period_id': wizard.period_id.id})
         # UFTP-375: Permit user to select all lines or only previous ones
         data['form'].update({'selection': wizard.selection})
-        data['target_filename'] = '%s_%sP%s_formatted data D365 import' % (mission_code, year, period_number)
+        data['target_filename'] = '%sY%sP%s_formatted data D365 import' % (mission_code, year, period_number)
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
             'file_name': data['target_filename'],
