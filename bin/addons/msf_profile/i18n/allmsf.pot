@@ -8649,12 +8649,6 @@ msgstr ""
 msgid "Purchase Lead Time"
 msgstr ""
 
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:83
-#, python-format
-msgid "Please save the Internal Request before importing lines"
-msgstr ""
-
 #. module: financing_contract
 #: code:addons/financing_contract/analytic.py:58
 #, python-format
@@ -10681,8 +10675,6 @@ msgstr ""
 #: code:addons/msf_order_date/order_dates.py:219
 #: code:addons/msf_order_date/order_dates.py:339
 #: code:addons/order_types/stock.py:178
-#: code:addons/procurement_request/wizard/wizard_import_list.py:83
-#: code:addons/procurement_request/wizard/wizard_import_list.py:90
 #: code:addons/purchase/purchase.py:711
 #: code:addons/purchase/purchase.py:758
 #: code:addons/purchase/wizard/purchase_order_group.py:47
@@ -18491,12 +18483,6 @@ msgstr ""
 msgid "You can't re-post a hard posted entry !"
 msgstr ""
 
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:88
-#, python-format
-msgid "You cannot import lines in a Sale Order"
-msgstr ""
-
 #. module: procurement
 #: view:procurement.order:0
 msgid "Late"
@@ -22605,12 +22591,6 @@ msgstr ""
 #: code:addons/base/ir/ir_model.py:328
 #, python-format
 msgid "Properties of base fields cannot be altered in this manner! Please modify them through Python code, preferably through a custom addon!"
-msgstr ""
-
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:90
-#, python-format
-msgid "You cannot import lines in a confirmed Internal Request"
 msgstr ""
 
 #. module: sale
@@ -32380,12 +32360,6 @@ msgstr ""
 msgid "Pending"
 msgstr ""
 
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:109
-#, python-format
-msgid "The system hasn't found a Internal Request to import lines"
-msgstr ""
-
 #. module: product
 #: help:product.packaging,weight_ul:0
 msgid "The weight of the empty UL"
@@ -39205,8 +39179,6 @@ msgstr ""
 #: code:addons/order_nomenclature/wizard/order_nomenclature_select_product.py:100
 #: code:addons/procurement_cycle/procurement.py:37
 #: code:addons/procurement_cycle/procurement.py:48
-#: code:addons/procurement_request/wizard/wizard_import_list.py:88
-#: code:addons/procurement_request/wizard/wizard_import_list.py:109
 #: code:addons/product_list/wizard/add_products.py:47
 #: code:addons/product_list/wizard/list_export.py:47
 #: code:addons/product_list/wizard/list_export.py:49

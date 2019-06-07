@@ -3040,12 +3040,6 @@ msgstr "product.where.used"
 msgid "Payment term"
 msgstr "Délai de Paiement"
 
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:94
-#, python-format
-msgid "You cannot import lines in a confirmed Internal Request"
-msgstr "Vous ne pouvez pas importer de lignes dans une Demande Interne confirmée"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -21837,12 +21831,6 @@ msgstr "Livraison Entrante Correspondante ne peut être trouvée. L'Enregistreme
 #: view:account.chart.template:0
 msgid "Search Chart of Account Templates"
 msgstr "Rechercher des Modèles de Plan Comptable"
-
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:92
-#, python-format
-msgid "You cannot import lines in a Sale Order"
-msgstr "Vous ne pouvez pas importer de lignes dans une Commande Client"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/register_creation.py:194
@@ -59220,8 +59208,6 @@ msgstr "Journal Ajustement"
 #: code:addons/procurement_request/procurement_request.py:497
 #: code:addons/procurement_request/procurement_request.py:773
 #: code:addons/procurement_request/procurement_request.py:797
-#: code:addons/procurement_request/wizard/wizard_import_list.py:87
-#: code:addons/procurement_request/wizard/wizard_import_list.py:94
 #: code:addons/product_attributes/product_attributes.py:1145
 #: code:addons/product_attributes/product_attributes.py:1168
 #: code:addons/product_attributes/product_attributes.py:1764
@@ -74305,8 +74291,6 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/procurement_request/procurement_request.py:472
 #: code:addons/procurement_request/procurement_request.py:486
 #: code:addons/procurement_request/procurement_request.py:501
-#: code:addons/procurement_request/wizard/wizard_import_list.py:92
-#: code:addons/procurement_request/wizard/wizard_import_list.py:114
 #: code:addons/product_attributes/product_attributes.py:60
 #: code:addons/product_attributes/product_attributes.py:86
 #: code:addons/product_attributes/product_attributes.py:95
@@ -87179,12 +87163,6 @@ msgstr "Contrepartie pour les balances de Bilan au débit "
 msgid "Full View"
 msgstr "Full View"
 
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:87
-#, python-format
-msgid "Please save the Internal Request before importing lines"
-msgstr "Veuillez sauvegarder la Demande Interne avant d'importer des lignes"
-
 #. module: product_asset
 #: view:product.asset.event:0
 msgid "Event Information"
@@ -90496,12 +90474,6 @@ msgstr "Le moment de décision %s n'est pas défini sous la base de données!"
 #: model:ir.model,name:export_import_lang.model_base_language_export
 msgid "base.language.export"
 msgstr "base.language.export"
-
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:114
-#, python-format
-msgid "The system hasn't found a Internal Request to import lines"
-msgstr "Le système n'a pas trouvé de Demande Interne pour importer les lignes"
 
 #. module: kit
 #: code:addons/kit/kit.py:188

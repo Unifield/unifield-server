@@ -295,12 +295,6 @@ msgstr "Field Order"
 msgid "Sales By Month"
 msgstr "Field Orders By Month"
 
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:88
-#, python-format
-msgid "You cannot import lines in a Sale Order"
-msgstr "You cannot import lines in a Field Order"
-
 #. module: msf_outgoing
 #: field:stock.move,sale_order_line_number:0
 msgid "Sale Order Line Number"
