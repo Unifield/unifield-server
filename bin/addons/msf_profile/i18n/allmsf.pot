@@ -5154,7 +5154,6 @@ msgstr ""
 #: field:wizard.export.rac,message:0
 #: field:wizard.import.fmc,message:0
 #: field:wizard.import.rac,message:0
-#: field:procurement.request.import,message:0
 #: view:product.list.export:0
 #: field:product.list.export,message:0
 #: view:product.list.import:0
@@ -5338,7 +5337,6 @@ msgstr ""
 #: wizard_button:server.action.create,init,end:0
 #: wizard_button:server.action.create,step_1,end:0
 #: view:documents.done.wizard:0
-#: view:procurement.request.import:0
 #: view:product.price_list:0
 #: view:sale.open.invoice:0
 #: view:sale.order.followup:0
@@ -6806,7 +6804,6 @@ msgstr ""
 #: view:procurement.orderpoint.compute:0
 #: view:procurement.supply.compute.all:0
 #: view:procurement.cycle.compute.all:0
-#: view:procurement.request.import:0
 #: view:sale.order:0
 #: view:product.list.add.products:0
 #: view:product.list.import:0
@@ -20749,7 +20746,6 @@ msgstr ""
 #: field:ir.model,info:0
 #: view:wizard.import.fmc:0
 #: view:wizard.import.rac:0
-#: view:procurement.request.import:0
 #: view:product.product:0
 #: view:product.template:0
 #: view:product.product:0
@@ -22549,12 +22545,6 @@ msgstr ""
 #. module: analytic_distribution_supply
 #: field:analytic.distribution,purchase_line_ids:0
 msgid "Purchase Lines"
-msgstr ""
-
-#. module: procurement_request
-#: model:ir.actions.act_window,name:procurement_request.action_open_wizard_import
-#: view:procurement.request.import:0
-msgid "Import lines"
 msgstr ""
 
 #. module: register_accounting
@@ -31313,11 +31303,6 @@ msgstr ""
 msgid "Latest Inventory Date"
 msgstr ""
 
-#. module: procurement_request
-#: model:ir.model,name:procurement_request.model_procurement_request_import
-msgid "Import of Internal Request"
-msgstr ""
-
 #. module: msf_outgoing
 #: selection:stock.picking,flow_type:0
 msgid "Quick"
@@ -33882,11 +33867,6 @@ msgstr ""
 msgid "You can not add/modify entries in a closed journal."
 msgstr ""
 
-#. module: procurement_request
-#: view:procurement.request.import:0
-msgid "Result of importation"
-msgstr ""
-
 #. module: resource
 #: code:addons/resource/faces/resource.py:340
 #, python-format
@@ -34082,7 +34062,6 @@ msgstr ""
 #: field:wizard.import.fmc,file:0
 #: view:wizard.import.rac:0
 #: field:wizard.import.rac,file:0
-#: view:procurement.request.import:0
 #: field:product.list.export,file:0
 #: view:product.list.import:0
 #: field:product.list.import,file_to_import:0
@@ -34739,7 +34718,6 @@ msgstr ""
 #. modules: product_list, consumption_calculation, procurement_request
 #: view:wizard.import.fmc:0
 #: view:wizard.import.rac:0
-#: view:procurement.request.import:0
 #: view:product.list.import:0
 msgid "Import file"
 msgstr ""
@@ -35072,8 +35050,7 @@ msgstr ""
 msgid "Quarantine View"
 msgstr ""
 
-#. modules: specific_rules, procurement_request
-#: field:procurement.request.import,info:0
+#. modules: specific_rules
 #: code:addons/specific_rules/specific_rules.py:480
 #: code:addons/specific_rules/specific_rules.py:485
 #: code:addons/specific_rules/specific_rules.py:1103
@@ -43621,7 +43598,6 @@ msgstr ""
 #: field:monthly.review.consumption.line,mrc_creation_date:0
 #: field:product.likely.expire.report.item.line,item_id:0
 #: field:hr.employee,partner_id:0
-#: field:procurement.request.import,file:0
 #: field:purchase.order.line,order_type:0
 #: field:purchase.order.line,po_state:0
 #: field:sourcing.line,sale_order_line_state:0
