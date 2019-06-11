@@ -1355,7 +1355,7 @@ class stock_picking(osv.osv):
                 # Cancel missing IN instead of processing
                 if wizard.register_a_claim and wizard.claim_type == 'missing':
                     move_ids = move_obj.search(cr, uid, [('picking_id', '=', backorder_id)])
-                    move_obj.action_cancel(cr, uid, move_ids, context=context)
+                    move_obj.write(cr, uid, move_ids, {'purchase_line_id': False, 'state': 'cancel'})
                     self.action_cancel(cr, uid, [backorder_id], context=context)
                 else:
                     wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
@@ -1409,7 +1409,7 @@ class stock_picking(osv.osv):
                     # Cancel missing IN instead of processing
                     if wizard.register_a_claim and wizard.claim_type == 'missing':
                         move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking_id)])
-                        move_obj.action_cancel(cr, uid, move_ids, context=context)
+                        move_obj.write(cr, uid, move_ids, {'purchase_line_id': False, 'state': 'cancel'})
                         self.action_cancel(cr, uid, [picking_id], context=context)
                     else:
                         if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):

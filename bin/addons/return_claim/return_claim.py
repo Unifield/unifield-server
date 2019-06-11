@@ -1763,7 +1763,6 @@ class claim_event(osv.osv):
         '''
         context = context.copy()
         context.update({'from_claim': True, 'keep_prodlot': True})
-
         # objects
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
@@ -1777,7 +1776,7 @@ class claim_event(osv.osv):
         event_picking = pick_obj.browse(cr, uid, event_picking_id, context=context)
         # We cancel the lines of the OUT linked to the IN/INT lines processed
         # if the linked PO lines has an IR whose Location Requestor is ExtCU
-        self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, context=context)
+        #self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, context=context)
         # we copy the picking
         in_values = {
             'reason_type_id': context['common']['rt_goods_replacement'],
