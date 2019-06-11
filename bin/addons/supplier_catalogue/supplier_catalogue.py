@@ -85,6 +85,7 @@ class supplier_catalogue(osv.osv):
             'context': context,
             'domain': [('partner_id', '=', ids[0])],
         }
+
     def _update_other_catalogue(self, cr, uid, cat_id, period_from, currency_id, partner_id, period_to=False, context=None):
         '''
         Check if other catalogues with the same partner/currency exist and are defined in the period of the
@@ -204,7 +205,6 @@ class supplier_catalogue(osv.osv):
 
         return res
 
-
     def unlink(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -227,7 +227,6 @@ class supplier_catalogue(osv.osv):
 
         return super(supplier_catalogue, self).unlink(cr, uid, list(to_unlink), context=context)
 
-
     def write(self, cr, uid, ids, vals, context=None):
         '''
         Update the supplierinfo and pricelist line according to the
@@ -235,6 +234,7 @@ class supplier_catalogue(osv.osv):
         '''
         if not ids:
             return True
+        ir_model = self.pool.get('ir.model')
         supinfo_obj = self.pool.get('product.supplierinfo')
         price_obj = self.pool.get('pricelist.partnerinfo')
         user_obj = self.pool.get('res.users')
@@ -254,6 +254,26 @@ class supplier_catalogue(osv.osv):
                                              vals.get('currency_id', catalogue.currency_id.id),
                                              vals.get('partner_id', catalogue.partner_id.id),
                                              vals.get('period_to', catalogue.period_to), context=context)
+            # Track Changes
+            if catalogue.state != 'draft' and vals.get('active') is not None and vals['active'] != catalogue.active:
+                for line in catalogue.line_ids:
+                    has_removed = False
+                    if line.product_id:
+                        old_seller = []
+                        for seller in line.product_id.seller_ids:
+                            old_seller.append((seller.sequence, seller.name.name))
+                        new_seller = list(old_seller)
+                        for i, seller in enumerate(new_seller):
+                            if catalogue.partner_id.name in seller[1]:
+                                new_seller.remove(new_seller[i])
+                                has_removed = True
+                                break
+                        if vals['active'] and not has_removed:
+                            new_seller.append((0, catalogue.partner_id.name))
+                        object_id = ir_model.search(cr, uid, [('model', '=', 'product.template')], context=context)[0]
+                        supinfo_obj.add_audit_line(cr, uid, 'seller_ids', object_id, line.product_id.id, False, False, False,
+                                                   self.pool.get('product.template')._columns['seller_ids'].string,
+                                                   False, new_seller, old_seller, context=context)
 
             current_partner_id = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
             if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
@@ -278,10 +298,14 @@ class supplier_catalogue(osv.osv):
 
                 # Change pricelist data according to new data (only if there is change)
                 new_price_vals = {}
-                for prop in ('period_to', 'period_from', 'currency_id',
-                             'name'):
+                for prop in ('period_to', 'period_from', 'currency_id', 'name'):
                     if prop in vals:
-                        new_price_vals[prop] = vals[prop]
+                        if prop == 'period_to':
+                            new_price_vals['valid_till'] = vals[prop]
+                        elif prop == 'period_from':
+                            new_price_vals['valid_from'] = vals[prop]
+                        else:
+                            new_price_vals[prop] = vals[prop]
 
                 # Update the supplier info and price lines
                 supplierinfo_ids = supinfo_obj.search(cr, uid,
@@ -369,6 +393,8 @@ class supplier_catalogue(osv.osv):
         '''
         ids = isinstance(ids, (int, long)) and [ids] or ids
         #line_obj = self.pool.get('supplier.catalogue.line')
+        ir_model = self.pool.get('ir.model')
+        supplinfo_obj = self.pool.get('product.supplierinfo')
 
         #line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)], context=context)
 
@@ -377,6 +403,23 @@ class supplier_catalogue(osv.osv):
 
         # Update catalogues
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+
+        # US-3531: Add a Track Changes line to each product in the catalogue
+        catalog = self.browse(cr, uid, ids[0], fields_to_fetch=['partner_id', 'line_ids'], context=context)
+        for line in catalog.line_ids:
+            if line.product_id:
+                old_seller = []
+                for seller in line.product_id.seller_ids:
+                    old_seller.append((seller.sequence, seller.name.name))
+                new_seller = list(old_seller)
+                for i, seller in enumerate(new_seller):
+                    if catalog.partner_id.name in seller[1]:
+                        new_seller.remove(new_seller[i])
+                        break
+                object_id = ir_model.search(cr, uid, [('model', '=', 'product.template')], context=context)[0]
+                supplinfo_obj.add_audit_line(cr, uid, 'seller_ids', object_id, line.product_id.id, False, False,
+                                             False, self.pool.get('product.template')._columns['seller_ids'].string,
+                                             False, new_seller, old_seller, context=context)
 
         # Update lines
         #line_obj.write(cr, uid, line_ids, {}, context=context)
@@ -391,7 +434,6 @@ class supplier_catalogue(osv.osv):
                                      where catalogue_id = %s)
                         and id not in (select suppinfo_id from
                                     pricelist_partnerinfo ) ''', (ids[0],))
-
 
         return True
 
@@ -1115,13 +1157,13 @@ class supplier_catalogue_line(osv.osv):
         'product_code': fields.char('Supplier Code', size=64),
         'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade'),
         'min_qty': fields.float(digits=(16,2), string='Min. Qty', required=True,
-                                help='Minimal order quantity to get this unit price.'),
+                                help='Minimal order quantity to get this unit price.', related_uom='line_uom_id'),
         'line_uom_id': fields.many2one('product.uom', string='Product UoM', required=True,
                                        help='UoM of the product used to get this unit price.'),
         'unit_price': fields.float(string='Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
         'rounding': fields.float(digits=(16,2), string='SoQ rounding',
-                                 help='The ordered quantity must be a multiple of this rounding value.'),
-        'min_order_qty': fields.float(digits=(16,2), string='Min. Order Qty'),
+                                 help='The ordered quantity must be a multiple of this rounding value.', related_uom='line_uom_id'),
+        'min_order_qty': fields.float(digits=(16,2), string='Min. Order Qty', related_uom='line_uom_id'),
         'comment': fields.char(size=64, string='Comment'),
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
@@ -1228,7 +1270,7 @@ class supplier_catalogue_line(osv.osv):
 
         return res
 
-    def fields_get(self, cr, uid, fields=None, context=None):
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
         '''
         Override the fields to display historical prices according to context
         '''

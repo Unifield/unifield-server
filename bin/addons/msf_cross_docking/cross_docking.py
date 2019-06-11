@@ -376,7 +376,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                     move_ids = move.id
                     for move in move_obj.browse(cr, uid, [move_ids], context=context):
                         # Don't change done stock moves
-                        if move.state != 'done':
+                        if move.state not in ['done', 'cancel']:
                             move_obj.write(cr, uid, [move_ids], {'location_id': cross_docking_location,
                                                                  'move_cross_docking_ok': True}, context=context)
                 self.write(cr, uid, ids, {'cross_docking_ok': True}, context=context)
@@ -408,7 +408,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 for move in move_lines:
                     move_ids = move.id
                     for move in move_obj.browse(cr, uid, [move_ids], context=context):
-                        if move.state != 'done':
+                        if move.state not in ['done', 'cancel']:
                             '''
                             Specific rules for non-stockable products:
                                * if the move is an outgoing delivery, picked them from cross-docking
@@ -625,7 +625,7 @@ class stock_move(osv.osv):
         cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         todo = []
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state != 'done':
+            if move.state not in ['done', 'cancel']:
                 todo.append(move.id)
                 self.infolog(cr, uid, "The source location of the stock move id:%s has been changed to cross-docking location" % (move.id))
         ret = True
@@ -638,17 +638,6 @@ class stock_move(osv.osv):
                 todo = new_todo
             # we rechech availability
             self.action_assign(cr, uid, todo, context)
-            #FEFO
-            self.fefo_update(cr, uid, todo, context)
-            # below we cancel availability to recheck it
-#            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
-#            picking_todo.append(stock_picking_id)
-#            # we cancel availability
-#            self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
-#            # we recheck availability
-#            self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
-#        if picking_todo:
-#            self.pool.get('stock.picking').check_all_move_cross_docking(cr, uid, picking_todo, context=context)
         return ret
 
     @check_cp_rw
@@ -663,7 +652,7 @@ class stock_move(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         todo = []
         for move in self.browse(cr, uid, ids, context=context):
-            if move.state != 'done':
+            if move.state not in ['done', 'cancel']:
                 '''
                 Specific rules for non-stockable products:
                    * if the move is an outgoing delivery, picked them from cross-docking
@@ -691,17 +680,6 @@ class stock_move(osv.osv):
                 todo = new_todo
             # we rechech availability
             self.action_assign(cr, uid, todo)
-
-            #FEFO
-            self.fefo_update(cr, uid, todo, context)
-#            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
-#            picking_todo.append(stock_picking_id)
-            # we cancel availability
-#            self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
-            # we recheck availability
-#            self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
-#        if picking_todo:
-#            self.pool.get('stock.picking').check_all_move_cross_docking(cr, uid, picking_todo, context=context)
         return True
 
 stock_move()

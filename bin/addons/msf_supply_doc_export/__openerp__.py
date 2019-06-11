@@ -30,8 +30,11 @@
     "update_xml" : [
         'msf_export_report.xml',
         'wizard/po_follow_up_view.xml',
+        'wizard/wizard_pick_import.xml',
         'po_follow_up_menu.xml',
         'report/po_follow_up_report.xml',
+        'wizard/supplier_performance_wizard_view.xml',
+        'report/supplier_performance_report_view.xml',
     ],
     "demo_xml" : [],
     "test": [],

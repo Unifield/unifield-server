@@ -34,7 +34,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         'date': fields.date(string="Date", help="This date is taken from analytic distribution corrections"),
         'state': fields.selection([('draft', 'Draft'), ('cc', 'Cost Center only'), ('dispatch', 'All other elements'), ('done', 'Done'),
                                    ('correction', 'Correction')], string="State", required=True, readonly=True),
-        'old_account_id': fields.many2one('account.account', "New account given by correction wizard", readonly=True),
+        'old_account_id': fields.many2one('account.account', "Original account of the line to be corrected", readonly=True),
+        'old_partner_id': fields.many2one('res.partner', "Original partner of the line to be corrected", readonly=True),
+        'old_employee_id': fields.many2one('hr.employee', "Original employee of the line to be corrected", readonly=True),
+        'new_partner_id': fields.many2one('res.partner', "New partner selected in the correction wizard", readonly=True),
+        'new_employee_id': fields.many2one('hr.employee', "New employee selected in the correction wizard", readonly=True),
     }
 
     _defaults = {
@@ -144,6 +148,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             context = {}
         # Prepare some values
         wizard = self.browse(cr, uid, wizard_id)
+        ad_obj = self.pool.get('analytic.distribution')
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         ml = wizard.move_line_id
         orig_date = ml.source_date or ml.date
@@ -236,6 +241,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                     break
 
         for wiz_line in self.pool.get('analytic.distribution.wizard.fp.lines').browse(cr, uid, wiz_line_ids):
+            if not ad_obj.check_dest_cc_compatibility(cr, uid, wiz_line.destination_id.id, wiz_line.cost_center_id.id, context=context):
+                raise osv.except_osv(_('Error'),
+                                     _('The Cost Center %s is not compatible with the Destination %s.') %
+                                     (wiz_line.cost_center_id.code or '', wiz_line.destination_id.code or ''))
+
             if not wiz_line.distribution_line_id or wiz_line.distribution_line_id.id not in old_line_ids:
                 # new distribution line
                 #if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [wiz_line.analytic_id.id]):
@@ -593,14 +603,14 @@ class analytic_distribution_wizard(osv.osv_memory):
         if to_reverse or to_override or to_create:
             self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)
 
-        if context and 'ji_correction_account_changed' in context:
+        if context and 'ji_correction_account_or_tp_changed' in context:
             if (any_reverse or to_reverse) and \
-                    not context['ji_correction_account_changed']:
+                    not context['ji_correction_account_or_tp_changed']:
                 # BKLG-12 pure AD correction flag marker
                 # (do this bypassing model write)
                 return osv.osv.write(self.pool.get('account.move.line'), cr,
                                      uid, [ml.id], {'last_cor_was_only_analytic': True})
-            del context['ji_correction_account_changed']
+            del context['ji_correction_account_or_tp_changed']
 
     def button_cancel(self, cr, uid, ids, context=None):
         """
@@ -643,15 +653,17 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # Do some verifications before writing elements
                 self.wizard_verifications(cr, uid, wiz.id, context=context)
                 # Verify old account and new account
-                account_changed = False
+                account_or_tp_changed = False
                 new_account_id = wiz.account_id and wiz.account_id.id or False
                 old_account_id = wiz.old_account_id and wiz.old_account_id.id or False
-                if old_account_id != new_account_id:
-                    account_changed = True
+                new_tp = wiz.new_partner_id or wiz.new_employee_id or False
+                old_tp = wiz.old_partner_id or wiz.old_employee_id or False
+                if (old_account_id != new_account_id) or (new_tp != old_tp):
+                    account_or_tp_changed = True
 
-                # Account AND/OR Distribution have changed
-                context['ji_correction_account_changed'] = account_changed
-                if account_changed:
+                # Account and/or Third Party AND/OR Distribution have changed
+                context['ji_correction_account_or_tp_changed'] = account_or_tp_changed
+                if account_or_tp_changed:
                     # Create new distribution
                     new_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
                     # Write current distribution to the new one

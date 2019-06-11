@@ -117,7 +117,9 @@ class stock_move(osv.osv):
             search_args.append((matching_fields.get(arg[0], arg[0]), arg[1], arg[2]))
 
         # copy search_args, because it's modified by sale_obj.search
-        sale_ids = sale_obj.search(cr, uid, search_args[:], limit=0)
+        sale_args = search_args[:]
+        sale_args.append(('procurement_request', 'in', ['t', 'f']))
+        sale_ids = sale_obj.search(cr, uid, sale_args, limit=0)
         purch_ids = purch_obj.search(cr, uid, search_args, limit=0)
 
         newrgs = []
@@ -221,18 +223,19 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
-        print_id = self.pool.get('stock.print.certificate').create(cr, uid, {'type': 'donation',
-                                                                             'picking_id': ids[0]})
+        newuid = hasattr(uid, 'realUid') and uid.realUid or uid
+        print_id = self.pool.get('stock.print.certificate').create(cr, newuid, {'type': 'donation', 'picking_id': ids[0]})
 
         for picking in self.browse(cr, uid, ids):
             for move in picking.move_lines:
-                self.pool.get('stock.certificate.valuation').create(cr, uid, {'picking_id': picking.id,
-                                                                              'product_id': move.product_id.id,
-                                                                              'qty': move.product_qty,
-                                                                              'print_id': print_id,
-                                                                              'move_id': move.id,
-                                                                              'prodlot_id': move.prodlot_id.id,
-                                                                              'unit_price': move.product_id.list_price})
+                self.pool.get('stock.certificate.valuation').create(cr, newuid,
+                                                                    {'picking_id': picking.id,
+                                                                     'product_id': move.product_id.id,
+                                                                     'qty': move.product_qty,
+                                                                     'print_id': print_id,
+                                                                     'move_id': move.id,
+                                                                     'prodlot_id': move.prodlot_id.id,
+                                                                     'unit_price': move.product_id.list_price})
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.print.certificate',
@@ -324,21 +327,16 @@ class stock_picking(osv.osv):
                         _('You cannot do this action on a Picking Ticket. Please check you are in the right view.')
                     )
 
-                # US-148
                 if pick.type == 'in':
                     domain = [('picking_id', '=', pick.id), ('draft', '=', True), ('already_processed', '=', False)]
-                    wiz_ids = wizard_obj.search(cr, uid, domain, context=context)
-                    if wiz_ids:
-                        proc_id = wiz_ids[0]
-                    else:
-                        proc_id = wizard_obj.create(cr, uid,
-                                                    {'picking_id': pick.id})
-                        wizard_obj.create_lines(cr, uid, proc_id,
-                                                context=context)
                 else:
-                    proc_id = wizard_obj.create(cr, uid,
-                                                {'picking_id': pick.id})
-                    wizard_obj.create_lines(cr, uid, proc_id, context=context)
+                    domain = [('picking_id', '=', pick.id), ('draft', '=', True)]
+                wiz_ids = wizard_obj.search(cr, uid, domain, context=context)
+                if wiz_ids:
+                    proc_id = wiz_ids[0]
+                else:
+                    proc_id = wizard_obj.create(cr, uid, {'picking_id': pick.id})
+                wizard_obj.create_lines(cr, uid, proc_id, context=context)
 
                 res = {
                     'type': 'ir.actions.act_window',

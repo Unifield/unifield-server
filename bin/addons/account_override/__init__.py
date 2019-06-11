@@ -38,7 +38,12 @@ ACCOUNT_RESTRICTED_AREA = {
     # CASH RETURN - ADVANCE LINES
     'cash_return': [
         ('type', '!=', 'view'),
+        ('type_for_register', '!=', 'donation'),
+        '|', '|', '|',
         ('user_type_code', 'in', ['income', 'expense']),
+        '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash']),
+        '&', ('type', '=', 'other'), ('user_type_code', '=', 'cash'),
+        '&', ('type', '=', 'payable'), ('user_type_code', '=', 'payables'),
         ('user_type_report_type', '!=', 'none'),
         ('is_not_hq_correctible', '=', False),
     ],
@@ -48,8 +53,10 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Supplier refund
     'in_invoice': [
         ('type', '!=', 'view'),
-        # Either Payable/Payables accounts or Regular / Debt accounts
-        '|', '&', ('type', '=', 'payable'), ('user_type_code', '=', 'payables'), '&', ('type', '=', 'other'), ('user_type_code', 'in', ['debt','cash','income']),
+        # Either Payable/Payables or Payable/Tax or Regular/Debt or Regular/Cash or Regular/Income accounts
+        '|',
+        '&', ('type', '=', 'payable'), ('user_type_code', 'in', ['payables', 'tax']),
+        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['debt', 'cash', 'income']),
         ('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
     ],
     # HEADER OF:
@@ -131,11 +138,22 @@ ACCOUNT_RESTRICTED_AREA = {
         ('accrual_account', '=', True),
     ],
     # HQ ENTRIES
-    'hq_lines': [
+    # /!\ The accounts allowed at import are different from the ones allowed for correction
+    'hq_lines_import': [
         ('type', '!=', 'view'),
-        ('user_type_code', '=', 'expense'),
-        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Exclude non-extra accounting expense accounts
+        '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'),  # Exclude extra-accounting expense accounts
+        ('type_for_register', '!=', 'donation'),
         #('is_not_hq_correctible', '=', False), # UF-2312: not possibleto add this domain because WE SHOULD ALLOW "Not HQ Correctible" account during the import
+    ],
+    'hq_lines_correction': [
+        ('type', '!=', 'view'),
+        ('type_for_register', '!=', 'donation'),
+        ('is_not_hq_correctible', '=', False),
+        '|',
+        ('user_type.code', '=', 'income'),
+        '&', ('user_type.code', '=', 'expense'), ('user_type.report_type', '!=', 'none'),  # Exclude extra-accounting expense accounts
+        # note : filter_active isn't set to True here as that would prevent to "Change Account" to an account
+        # currently inactive but active at the date of the entry
     ],
     # MANUEL JOURNAL ENTRIES
     'account_move_lines': [

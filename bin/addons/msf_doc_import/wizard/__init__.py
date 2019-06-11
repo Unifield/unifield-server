@@ -108,6 +108,10 @@ PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT = [
     (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Comment'), 'string')]
 PRODUCT_LIST_COLUMNS_FOR_IMPORT = [x for (x,y) in PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT]
 
+COLUMNS_HEADER_FOR_PRODUCT_LINE_IMPORT = [
+    (_('Product Code'), 'string')]
+COLUMNS_FOR_PRODUCT_LINE_IMPORT = [x for (x, y) in COLUMNS_HEADER_FOR_PRODUCT_LINE_IMPORT]
+
 ACCOUNT_INVOICE_COLUMNS_HEADER_FOR_IMPORT = [
     ('Description', 'string'), ('Account', 'string'), ('Quantity', 'number'), ('Unit Price', 'number'), ('Destination', 'string'), ('Cost Center', 'string'), ('Funding Pool', 'string')]
 ACCOUNT_INVOICE_COLUMNS_FOR_IMPORT = [x for (x,y) in ACCOUNT_INVOICE_COLUMNS_HEADER_FOR_IMPORT]
@@ -128,6 +132,16 @@ SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT = [
 ]
 SUPPLIER_CATALOG_COLUMNS_FOR_IMPORT = [x for (x,y) in SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT]
 
+PPL_COLUMNS_LINES_HEADERS_FOR_IMPORT = [
+    (_('ppl_import_update_item'), 'number'), (_('ppl_import_update_code'), 'string'), (_('ppl_import_update_description'), 'string'),
+    (_('ppl_import_update_comment'), 'string'), (_('ppl_import_update_tot_qty'), 'string'), (_('ppl_import_update_batch'), 'string'),
+    (_('ppl_import_update_expiry'), 'date'), (_('ppl_import_update_kc'), 'string'), (_('ppl_import_update_dg'), 'string'),
+    (_('ppl_import_update_cs'), 'string'), (_('ppl_import_update_packed'), 'number'), (_('ppl_import_update_from_p'), 'number'),
+    (_('ppl_import_update_to_p'), 'number'), (_('ppl_import_update_weight'), 'number'), (_('ppl_import_update_size'), 'number'),
+    (_('ppl_import_update_pack_t'), 'string')
+]
+PPL_COLUMNS_LINES_FOR_IMPORT = [x for (x,y) in PPL_COLUMNS_LINES_HEADERS_FOR_IMPORT]
+
 import wizard_import_po
 import stock_partial_picking
 import wizard_import_po_line
@@ -143,9 +157,11 @@ import wizard_import_order_cycle_line
 import wizard_import_threshold_value_line
 import wizard_import_stock_warehouse_order_point_line
 import wizard_import_product_list
+import wizard_import_product_line
 import wizard_import_supplier_catalogue
 import wizard_po_simulation_screen
 import wizard_in_simulation_screen
+import wizard_import_ppl_to_create_ship
 
 import abstract_wizard_import
 import wizard_import_batch

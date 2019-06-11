@@ -27,40 +27,222 @@ from purchase import PURCHASE_ORDER_STATE_SELECTION
 import time
 from datetime import datetime
 
+
 class po_follow_up(osv.osv_memory):
     _name = 'po.follow.up'
     _description = 'PO Follow up report wizard'
 
     _columns = {
         'po_id': fields.many2one('purchase.order', string="Order Reference", help="Unique number of the Purchase Order. Optional", required=False),
-        'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', help="The state of the purchase order. Optional", select=True, required=False),
         'po_date_from': fields.date("PO date from", required="False"),
         'po_date_thru': fields.date("PO date to", required="False"),
         'partner_id': fields.many2one('res.partner', 'Supplier', required=False),
         'project_ref': fields.char('Supplier reference', size=64, required=False),
-        'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
         'background_time': fields.integer('Number of second before background processing'),
+        'draft_ok': fields.boolean('Draft'),
+        'validated_ok': fields.boolean('Validated'),
+        'sourced_ok': fields.boolean('Sourced'),
+        'confirmed_ok': fields.boolean('Confirmed'),
+        'closed_ok': fields.boolean('Closed'),
+        'cancel_ok': fields.boolean('Cancelled'),
+        'pending_only_ok': fields.boolean('Pending order lines only'),
+        'include_notes_ok': fields.boolean('Include order lines note (PDF)'),
+        'export_format': fields.char('Export Format', size=16),
     }
 
     _defaults = {
         'export_format': lambda *a: 'xls',
-        'background_time': lambda *a: 20,
+        'background_time': lambda *a: 3,
     }
 
-    def button_validate(self, cr, uid, ids, context=None):
+    def excel_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'export_format': 'xls'}, context=context)
+        return self.button_validate(cr, uid, ids, report_name='po.follow.up_xls', context=None)
+
+
+    def pdf_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        self.write(cr, uid, ids, {'export_format': 'pdf'}, context=context)
+
+        return self.button_validate(cr, uid, ids, report_name='po.follow.up_rml', context=None)
+
+
+    def get_state_list(self, cr, uid, wiz, context=None):
+        if context is None:
+            context = {}
+        res = []
+        if wiz.draft_ok:
+            res.append('draft')
+            res.append('draft_p')
+        if wiz.validated_ok:
+            res.append('validated')
+            res.append('validated_p')
+        if wiz.sourced_ok:
+            res.append('sourced')
+            res.append('sourced_p')
+        if wiz.confirmed_ok:
+            res.append('confirmed')
+            res.append('confirmed_p')
+        if wiz.closed_ok:
+            res.append('done')
+        if wiz.cancel_ok:
+            res.append('cancel')
+
+        if not res:
+            res = [key for key, value in PURCHASE_ORDER_STATE_SELECTION]
+
+        return res
+
+
+    def get_states_str(self, cr, uid, states, pending_only, context=None):
+        if context is None:
+            context = {}
+
+        if pending_only:
+            res = [_(value) for key, value in PURCHASE_ORDER_STATE_SELECTION if key in states and key not in ['cancel', 'done']]
+        else:
+            res = [_(value) for key, value in PURCHASE_ORDER_STATE_SELECTION if key in states]
+
+        return ', '.join(res).strip(', ')
+
+
+    def getAllLineIN(self, cr, uid, po_line_id):
+        cr.execute('''
+            SELECT
+                sm.id, sp.name, sm.product_id, sm.product_qty,
+                sm.product_uom, sm.price_unit, sm.state,
+                sp.backorder_id, sm.picking_id
+            FROM
+                stock_move sm, stock_picking sp
+            WHERE
+                sm.purchase_line_id = %s
+              AND
+                sm.type = 'in'
+              AND
+                sm.picking_id = sp.id
+            ORDER BY
+                sp.name, sp.backorder_id, sm.id asc''', tuple([po_line_id]))
+        for res in cr.dictfetchall():
+            yield res
+
+        raise StopIteration
+
+
+    def get_qty_backordered(self, cr, uid, pol_id, qty_ordered, qty_received, first_line):
+        pol = self.pool.get('purchase.order.line').browse(cr, uid, pol_id)
+        if pol.state.startswith('cancel'):
+            return 0.0
+        if not qty_ordered:
+            return 0.0
+        try:
+            qty_ordered = float(qty_ordered)
+            qty_received = float(qty_received)
+        except:
+            return 0.0
+
+        # Line partially received:
+        in_move_done = self.pool.get('stock.move').search(cr, uid, [
+            ('type', '=', 'in'),
+            ('purchase_line_id', '=', pol.id),
+            ('state', '=', 'done'),
+        ])
+        if first_line and in_move_done:
+            total_done = 0.0
+            for move in self.pool.get('stock.move').browse(cr, uid, in_move_done, fields_to_fetch=['product_qty','product_uom']):
+                if pol.product_uom.id != move.product_uom.id:
+                    total_done += self.pool.get('product.uom')._compute_qty(cr, uid, move.product_uom.id, move.product_qty, pol.product_uom.id)
+                else:
+                    total_done += move.product_qty
+            return qty_ordered - total_done
+
+        return qty_ordered - qty_received
+
+
+
+    def has_pending_lines(self, cr, uid, po_id):
+        po_line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id','=',po_id)], order='line_number')
+        report_lines = []
+        for line in self.pool.get('purchase.order.line').browse(cr, uid, po_line_ids):
+            same_product_same_uom = []
+            same_product = []
+            other_product = []
+
+            for inl in self.getAllLineIN(cr, uid, line.id):
+                if inl.get('product_id') and inl.get('product_id') == line.product_id.id:
+                    if inl.get('product_uom') and inl.get('product_uom') == line.product_uom.id:
+                        same_product_same_uom.append(inl)
+                    else:
+                        same_product.append(inl)
+                else:
+                    other_product.append(inl)
+
+            first_line = True
+            if not same_product_same_uom:
+                report_line = {
+                    'qty_backordered': self.get_qty_backordered(cr, uid, line.id, line.product_qty, 0.0, first_line),
+                }
+                if report_line.get('qty_backordered', False) and report_line['qty_backordered'] > 0:
+                    report_lines.append(report_line)
+                first_line = False
+
+            for spsul in sorted(same_product_same_uom, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
+                report_line = {
+                    'qty_backordered': self.get_qty_backordered(cr, uid, line.id, first_line and line.product_qty or 0.0, spsul.get('state') == 'done' and spsul.get('product_qty', 0.0) or 0.0, first_line),
+                }
+                if report_line.get('qty_backordered', False) and report_line['qty_backordered'] > 0:
+                    report_lines.append(report_line)
+
+                if first_line:
+                    first_line = False
+
+            for spl in sorted(same_product, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
+                report_line = {
+                    'qty_backordered': self.get_qty_backordered(cr, uid, line.id, first_line and line.product_qty or 0.0, spl.get('state') == 'done' and spl.get('product_qty', 0.0) or 0.0, first_line),
+                }
+                if report_line.get('qty_backordered', False) and report_line['qty_backordered'] > 0:
+                    report_lines.append(report_line)
+
+                if first_line:
+                    first_line = False
+
+            for ol in other_product:
+                report_line = {
+                    'qty_backordered': self.get_qty_backordered(cr, uid, line.id, first_line and line.product_qty or 0.0, ol.get('state') == 'done' and ol.get('product_qty', 0.0) or 0.0, first_line),
+                }
+                if report_line.get('qty_backordered', False) and report_line['qty_backordered'] > 0:
+                    report_lines.append(report_line)
+
+        return report_lines
+
+
+
+    def button_validate(self, cr, uid, ids, report_name, context=None):
+        if context is None:
+            context = {}
+
         wiz = self.browse(cr, uid, ids)[0]
 
         domain = [('rfq_ok', '=', False)]
-        states = {}
-        for state_val, state_string in PURCHASE_ORDER_STATE_SELECTION:
-            states[state_val] = state_string
         report_parms = {
-            'title': 'PO Follow Up per Supplier',
-            'run_date': time.strftime("%d/%m/%Y"),
+            'title': _('PO Follow Up per Supplier'),
+            'run_date_title': _('Report run date'),
+            'date_from_title': _('PO date from'),
+            'date_thru_title': _('PO date to'),
+            'run_date': wiz.export_format == 'xls' and time.strftime("%Y-%m-%d") or time.strftime("%d.%m.%Y"),
             'date_from': '',
             'date_thru': '',
             'state': '',
-            'supplier': ''
+            'supplier': '',
+            'pending_only_ok': wiz.pending_only_ok,
+            'include_notes_ok': wiz.include_notes_ok,
         }
 
         # PO number
@@ -68,20 +250,28 @@ class po_follow_up(osv.osv_memory):
             domain.append(('id', '=', wiz.po_id.id))
 
         # Status
-        if wiz.state:
-            domain.append(('state', '=', wiz.state))
-            report_parms['state'] = states[wiz.state]
+        state_list = self.get_state_list(cr, uid, wiz, context=context)
+        domain.append(('state', 'in', state_list))
+        if wiz.pending_only_ok:
+            domain.append(('state', 'not in', ['done', 'cancel']))
+        report_parms['state'] = self.get_states_str(cr, uid, state_list, wiz.pending_only_ok, context=context)
 
         # Dates
         if wiz.po_date_from:
             domain.append(('date_order', '>=', wiz.po_date_from))
-            tmp = datetime.strptime(wiz.po_date_from, "%Y-%m-%d")
-            report_parms['date_from'] = tmp.strftime("%d/%m/%Y")
+            if wiz.export_format == 'xls':
+                report_parms['date_from'] = wiz.po_date_from
+            else:
+                tmp = datetime.strptime(wiz.po_date_from, "%Y-%m-%d")
+                report_parms['date_from'] = tmp.strftime("%d.%m.%Y")
 
         if wiz.po_date_thru:
             domain.append(('date_order', '<=', wiz.po_date_thru))
-            tmp = datetime.strptime(wiz.po_date_thru, "%Y-%m-%d")
-            report_parms['date_thru'] = tmp.strftime("%d/%m/%Y")
+            if wiz.export_format == 'xls':
+                report_parms['date_thru'] = wiz.po_date_thru
+            else:
+                tmp = datetime.strptime(wiz.po_date_thru, "%Y-%m-%d")
+                report_parms['date_thru'] = tmp.strftime("%d.%m.%Y")
 
         # Supplier
         if wiz.partner_id:
@@ -100,13 +290,20 @@ class po_follow_up(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No Purchase Orders match the specified criteria.'))
             return True
 
+        if wiz.pending_only_ok and report_name == 'po.follow.up_rml':
+            filtered_po_ids = []
+            for po_id in po_ids:
+                if self.has_pending_lines(cr, uid, po_id):
+                    filtered_po_ids.append(po_id)
+            po_ids = filtered_po_ids
+
         report_header = []
         report_header.append(report_parms['title'])
 
         report_header_line2 = ''
         if wiz.partner_id:
             report_header_line2 += wiz.partner_id.name
-        report_header_line2 += '  Report run date: ' + time.strftime("%d/%m/%Y")  # TODO to be removed
+        report_header_line2 += '  Report run date: ' + time.strftime("%d.%m.%Y")  # TODO to be removed
         if wiz.po_date_from:
             report_header_line2 += wiz.po_date_from
         # UF-2496: Minor fix to append the "date from" correctly into header
@@ -116,11 +313,7 @@ class po_follow_up(osv.osv_memory):
             report_header_line2 += wiz.po_date_thru
         report_header.append(report_header_line2)
 
-        datas = {'ids': po_ids, 'report_header': report_header, 'report_parms': report_parms}
-        if wiz.export_format == 'xls':
-            report_name = 'po.follow.up_xls'
-        else:
-            report_name = 'po.follow.up_rml'
+        datas = {'ids': po_ids, 'report_header': report_header, 'report_parms': report_parms, 'context': context}
 
         if wiz.po_date_from:
             domain.append(('date_order', '>=', wiz.po_date_from))
@@ -128,6 +321,7 @@ class po_follow_up(osv.osv_memory):
         background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': report_name, 'report_name': report_name}, context=context)
         context['background_id'] = background_id
         context['background_time'] = wiz.background_time
+        context['nb_orders'] = len(po_ids)
 
         return {
             'type': 'ir.actions.report.xml',

@@ -810,6 +810,7 @@
 
 
         <act_window name="Add Users"
+            view_ids="view_users_white_list_tree"
             res_model="wizard.add.users.synchronized"
             src_model="res.users"
             view_mode="form"

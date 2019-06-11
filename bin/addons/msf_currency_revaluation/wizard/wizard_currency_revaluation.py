@@ -55,8 +55,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', '!=', 'created')]"),
         'result_period_internal_id': fields.many2one(
             'account.period', string=_(u"Entry period"), invisible=True),
-        'result_period_yearly_editable': fields.boolean(
-            'Yearly revaluation applied ?', invisible=True),
         'posting_date': fields.date(
             _('Entry date'), readonly=True,
             help=_("Revaluation entry date (document and posting date)")),
@@ -91,7 +89,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         'label': "%(currency)s %(account)s %(rate)s",
         'revaluation_method': lambda *args: 'liquidity_month',
         'fiscalyear_id': _get_default_fiscalyear_id,
-        'result_period_yearly_editable': True,
     }
 
     def _get_last_yearly_reval_period_id(self, cr, uid, fy_id, context=None):
@@ -260,9 +257,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if not revaluation_account:
             raise osv.except_osv(_('Settings Error!'),
                                  _('Revaluation account is not set in company settings'))
-        if not self.pool.get('res.company').check_revaluation_default_account_has_sup_destination(cr, uid, cp, context=context):
-            raise osv.except_osv(_('Settings Error!'),
-                                 _('The default revaluation account must have a default destination SUP'))
         # Entry period
         # Posting date
         res['posting_date'] = False
@@ -279,7 +273,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             return res
 
         value = {
-            'result_period_yearly_editable': True,
             'msg': False,
         }
         warning = {}
@@ -331,24 +324,15 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 last_reval_period = self._get_last_yearly_reval_period_id(
                     cr, uid, fiscalyear_id)
                 if last_reval_period:
-                    # US-816: liquidity or BS can be processed in any order
-                    # but the 2nd should always use the same period
                     period_number = last_reval_period.number
-                    value['result_period_id'] = last_reval_period.id
-                    value['result_period_yearly_editable'] = False
-                    value['msg'] = _('One of the year-end revaluations has' \
-                                     ' already been processed. The next one will be' \
-                                     ' processed on the same period: %s.') % (
-                        last_reval_period.name, )
+                    value['msg'] = _('One of the year-end revaluations has already been processed in the period "%s". '
+                                     'The next one will be processed in the selected period.') % (last_reval_period.name,)
 
                 # check period opened
                 check_period_res = self._check_period_opened(cr, uid,
                                                              fiscalyear.id, period_number)
-                if check_period_res[1]:
-                    value['result_period_id'] = check_period_res[1]
-                else:
-                    value['result_period_id'] = False
                 if not check_period_res[0] and check_period_res[2]:
+                    # non-blocking warning
                     warning = {
                         'title': _('Warning!'),
                         'message': check_period_res[2]
@@ -358,8 +342,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     ('number', '>', 12),
                     ('number', '<', 16),
                 ]
-                value['result_period_id'] = check_period_res[0] and \
-                    check_period_res[1] or False
+                # pre-select the period if it is opened
+                value['result_period_id'] = check_period_res[0] and check_period_res[1] or False
         else:
             if period_id:
                 period = period_obj.browse(cr, uid, period_id)
@@ -533,8 +517,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # if the account has a 'expense' or 'income' type
         distribution_id = False
         if revaluation_account.user_type.code in ['expense', 'income']:
-            destination_id = model_data_obj.get_object_reference(
-                cr, uid, 'analytic_distribution', 'analytic_account_destination_support')[1]
+            if not revaluation_account.default_destination_id:
+                raise osv.except_osv(_('Settings Error!'), _('The default revaluation account "%s - %s" must have '
+                                                             'a default destination.') % (revaluation_account.code, revaluation_account.name))
+            destination_id = revaluation_account.default_destination_id.id
 
             # UFTP-189: Show warning message when the fx gain/loss is missing to select (before it was fix for me)
             cc_list = account_ana_obj.search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
@@ -629,6 +615,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         period_state_obj =  self.pool.get('account.period.state')
         account_obj = self.pool.get('account.account')
         currency_obj = self.pool.get('res.currency')
+        move_obj = self.pool.get('account.move')
 
         company = user_obj.browse(cr, uid, uid).company_id
 
@@ -820,8 +807,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     msg = _(u"End year revaluation already performed")
                 raise osv.except_osv(_(u"Error"), msg)
 
-        # Get balance sums
-        account_sums = account_obj.compute_revaluations(
+        # Get balance sums and entries included in the reval
+        account_sums, entries_included = account_obj.compute_revaluations(
             cr, uid, account_ids, period_ids, form.fiscalyear_id.id,
             revaluation_date, form.revaluation_method, context=context)
         for account_id, account_tree in account_sums.iteritems():
@@ -845,6 +832,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     context=context)
                 account_sums[account_id][currency_id].update(diff_balances)
         # Create entries only after all computation have been done
+        current_dt = datetime.datetime.now()
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, sums in account_tree.iteritems():
                 # (US-1682) The adj_balance is rounded, otherwise the booking amount of the first reval entry would be
@@ -862,13 +850,23 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     account_id, currency_id, False, adj_balance,
                     label, rate, form, sums, context=context)
                 if move_id:
+                    move_name = move_obj.read(cr, uid, move_id, ['name'], context=context)['name']
+                    to_tag_ids = account_id in entries_included and currency_id in entries_included[account_id] and \
+                        entries_included[account_id][currency_id] or []
+                    to_tag_ids.extend(new_ids)
                     created_ids.extend(new_ids)
                     # Create a second journal entry that will offset the first one
                     # if the revaluation method is 'Other B/S'
                     if form.revaluation_method in ['liquidity_year', 'other_bs']:
                         move_id, rev_line_ids = self._reverse_other_bs_move_lines(
                             cr, uid, form, move_id, new_ids, context=context)
+                        to_tag_ids.extend(rev_line_ids)
                         created_ids.extend(rev_line_ids)
+                    # tag the entries revaluated, and the reval entry and reversal reval entry (only the leg on the revaluated account)
+                    cr.execute('UPDATE account_move_line '
+                               'SET revaluation_date = %s, revaluation_reference = %s '
+                               'WHERE id IN %s '
+                               'AND account_id = %s;', (current_dt, move_name, tuple(to_tag_ids), account_id,))
 
         if created_ids:
             # Set all booking amount to 0 for revaluation lines

@@ -445,6 +445,19 @@ class account_move_line(osv.osv):
             res[line_id] = (invoice_id, invoice_names[invoice_id])
         return res
 
+    def _get_purchase_order_id(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns a dict with key = id of the JI, and value = id of the related PO,
+        in case the JI is linked to an invoice which is linked to a PO
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for aml in self.browse(cr, uid, ids, fields_to_fetch=['invoice'], context=context):
+            po = aml.invoice and aml.invoice.purchase_ids and aml.invoice.purchase_ids[0]  # only one PO can be linked to an SI
+            res[aml.id] = po and po.id or False
+        return res
+
     def name_get(self, cr, uid, ids, context=None):
         if not ids:
             return []
@@ -563,6 +576,8 @@ class account_move_line(osv.osv):
                                    "this field will contain the basic amount(without tax)."),
         'invoice': fields.function(_invoice, method=True, string='Invoice',
                                    type='many2one', relation='account.invoice', fnct_search=_invoice_search),
+        'purchase_order_id': fields.function(_get_purchase_order_id, method=True, string='Purchase Order',
+                                             type='many2one', relation='purchase.order', readonly=True, store=False),
         'account_tax_id':fields.many2one('account.tax', 'Tax'),
         'analytic_account_id': fields.many2one('account.analytic.account', 'Analytic Account'),
         #TODO: remove this
@@ -1093,6 +1108,7 @@ class account_move_line(osv.osv):
                     move_obj.validate(cr, uid, [line.move_id.id], context)
                     if todo_date:
                         move_obj.write(cr, uid, [line.move_id.id], {'date': todo_date}, context=context)
+        self._check_on_ji_big_amounts(cr, uid, ids, context=context)
         return result
 
     def _hook_check_period_state(self, cr, uid, result=False, context=None, raise_hq_closed=True, *args, **kargs):
@@ -1145,6 +1161,25 @@ class account_move_line(osv.osv):
                 self._update_journal_check(cr, uid, line.journal_id.id, line.period_id.id, context)
                 done[t] = True
         return True
+
+    def _check_on_ji_big_amounts(self, cr, uid, ids, context=None):
+        """
+        Prevents booking amounts having more than 10 digits before the comma, i.e. amounts starting from 10 billions.
+        The goal is to avoid losing precision, see e.g.: "%s" % 10000000000.01  # '10000000000.0'
+        (and to avoid decimal.InvalidOperation due to huge amounts).
+        Checks are done only on user manual actions.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        too_big_amount = 10**10
+        if context.get('from_web_menu') or context.get('from_je_import') or context.get('from_invoice_move_creation'):
+            aml_fields = ['debit_currency', 'credit_currency', 'amount_currency', 'name']
+            for aml in self.browse(cr, uid, ids, fields_to_fetch=aml_fields, context=context):
+                booking_amount = aml.debit_currency or aml.credit_currency or aml.amount_currency or 0.0
+                if abs(booking_amount) >= too_big_amount:
+                    raise osv.except_osv(_('Error'), _('The amount of the line "%s" is more than 10 digits.') % aml.name)
 
     def create(self, cr, uid, vals, context=None, check=True):
         account_obj = self.pool.get('account.account')
@@ -1320,17 +1355,73 @@ class account_move_line(osv.osv):
                 move_obj.write(cr, uid, [vals['move_id']], {'date': vals.get('date')}, context)
             if journal.entry_posted and tmp:
                 move_obj.button_validate(cr,uid, [vals['move_id']], context)
+        self._check_on_ji_big_amounts(cr, uid, result, context=context)
         return result
 
-    def get_related_entries(self, cr, uid, ids, context=None):
+    def get_related_entry_ids(self, cr, uid, ids=False, entry_seqs=None, context=None):
         """
-        Returns a JI view with all the JIs related to the selected one, i.e.:
-        1) those having the same Entry Sequence as the selected JI (including the selected JI itself)
+        Returns the ids of all the JIs related to the selected JIs and/or Entry Sequences (list), i.e.:
+        1) those having the same Entry Sequence as the selected JIs (including the selected JIs themselves)
         2) those having the same reference as one of the JIs found in 1)
         3) those having an Entry Sequence matching exactly with the reference of one of the JIs found in 1)
         4) those being partially or totally reconciled with one of the JIs found in 1)
-        5) those whose reference contains EXACTLY the Entry Sequence of the selected JI
+        5) those whose reference contains EXACTLY the Entry Sequence of one of the selected JIs
         6) those having the same Entry Sequence as one of the JIs found in 2), 3) 4) or 5)
+        """
+        if context is None:
+            context = {}
+        if entry_seqs is None:
+            entry_seqs = []
+        am_obj = self.pool.get('account.move')
+        related_amls = set()
+        account_move_ids = []
+        if entry_seqs:
+            account_move_ids = am_obj.search(cr, uid, [('name', 'in', entry_seqs)], order='NO_ORDER', context=context) or []
+        if ids:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            selected_amls = self.browse(cr, uid, ids, fields_to_fetch=['move_id'], context=context)
+            for selected_aml in selected_amls:
+                account_move_ids.append(selected_aml.move_id.id)
+                entry_seqs.append(selected_aml.move_id.name)
+        if account_move_ids and entry_seqs:
+            # get the ids of all the related JIs
+            account_move_ids = list(set(account_move_ids))
+            entry_seqs = list(set(entry_seqs))
+            # JIs having the same Entry Seq = JIs of the same JE
+            same_seq_ji_ids = self.search(cr, uid, [('move_id', 'in', account_move_ids)], order='NO_ORDER', context=context)
+            related_amls.update(same_seq_ji_ids)
+
+            # check on ref and reconciliation
+            set_of_refs = set()
+            set_of_reconcile_ids = set()
+            for aml in self.browse(cr, uid, same_seq_ji_ids,
+                                   fields_to_fetch=['ref', 'reconcile_id', 'reconcile_partial_id'], context=context):
+                aml.ref and set_of_refs.add(aml.ref)
+                aml.reconcile_id and set_of_reconcile_ids.add(aml.reconcile_id.id)
+                aml.reconcile_partial_id and set_of_reconcile_ids.add(aml.reconcile_partial_id.id)
+
+            # JEs with Entry Sequence = ref of one of the JIs of the account_move
+            je_ids = am_obj.search(cr, uid, [('name', 'in', list(set_of_refs))], order='NO_ORDER', context=context)
+
+            domain_related_jis = ['|', '|', '|', '|',
+                                  '&', ('ref', 'in', list(set_of_refs)), ('ref', '!=', ''),
+                                  ('ref', 'in', entry_seqs),
+                                  ('move_id', 'in', je_ids),
+                                  ('reconcile_id', 'in', list(set_of_reconcile_ids)),
+                                  ('reconcile_partial_id', 'in', list(set_of_reconcile_ids))]
+            related_ji_ids = self.search(cr, uid, domain_related_jis, order='NO_ORDER', context=context)
+            related_amls.update(related_ji_ids)
+
+            # check on Entry Seq. (compared with those of the related JIs found)
+            seq_je_ids = set(am.move_id.id for am in self.browse(cr, uid, related_ji_ids, fields_to_fetch=['move_id'], context=context))
+            same_seq_related_ji_ids = self.search(cr, uid, [('move_id', 'in', list(seq_je_ids))], order='NO_ORDER', context=context)
+            related_amls.update(same_seq_related_ji_ids)
+        return list(related_amls)
+
+    def get_related_entries(self, cr, uid, ids, context=None):
+        """
+        Returns a JI view with all the JIs related to the selected one (see get_related_entry_ids for details)
         """
         if context is None:
             context = {}
@@ -1341,43 +1432,9 @@ class account_move_line(osv.osv):
             raise osv.except_osv(_('Error'),
                                  _('The related entries feature can only be used with one Journal Item.'))
         ir_model_obj = self.pool.get('ir.model.data')
-        am_obj = self.pool.get('account.move')
-        related_amls = set()
-        selected_aml = self.browse(cr, uid, ids[0], fields_to_fetch=['move_id'], context=context)
-        selected_entry_seq = selected_aml.move_id.name
-
-        # get the ids of all the related JIs
-        # JIs having the same Entry Seq = JIs of the same JE
-        same_seq_ji_ids = self.search(cr, uid, [('move_id', '=', selected_aml.move_id.id)], order='NO_ORDER', context=context)
-        related_amls.update(same_seq_ji_ids)
-
-        # check on ref and reconciliation
-        set_of_refs = set()
-        set_of_reconcile_ids = set()
-        for aml in self.browse(cr, uid, same_seq_ji_ids,
-                               fields_to_fetch=['ref', 'reconcile_id', 'reconcile_partial_id'], context=context):
-            aml.ref and set_of_refs.add(aml.ref)
-            aml.reconcile_id and set_of_reconcile_ids.add(aml.reconcile_id.id)
-            aml.reconcile_partial_id and set_of_reconcile_ids.add(aml.reconcile_partial_id.id)
-
-        # JEs with Entry Sequence = ref of one of the JIs of the account_move
-        je_ids = am_obj.search(cr, uid, [('name', 'in', list(set_of_refs))], order='NO_ORDER', context=context)
-
-        domain_related_jis = ['|', '|', '|', '|',
-                              '&', ('ref', 'in', list(set_of_refs)), ('ref', '!=', ''),
-                              ('ref', '=', selected_entry_seq),
-                              ('move_id', 'in', je_ids),
-                              ('reconcile_id', 'in', list(set_of_reconcile_ids)),
-                              ('reconcile_partial_id', 'in', list(set_of_reconcile_ids))]
-        related_ji_ids = self.search(cr, uid, domain_related_jis, order='NO_ORDER', context=context)
-        related_amls.update(related_ji_ids)
-
-        # check on Entry Seq. (compared with those of the related JIs found)
-        seq_je_ids = set(am.move_id.id for am in self.browse(cr, uid, related_ji_ids, fields_to_fetch=['move_id'], context=context))
-        same_seq_related_ji_ids = self.search(cr, uid, [('move_id', 'in', list(seq_je_ids))], order='NO_ORDER', context=context)
-        related_amls.update(same_seq_related_ji_ids)
-
-        domain = [('id', 'in', list(related_amls))]
+        selected_entry_seq = self.browse(cr, uid, ids[0], fields_to_fetch=['move_id'], context=context).move_id.name
+        related_entry_ids = self.get_related_entry_ids(cr, uid, ids=ids, context=context)
+        domain = [('id', 'in', related_entry_ids)]
         search_view_id = ir_model_obj.get_object_reference(cr, uid, 'account_mcdb', 'mcdb_view_account_move_line_filter')
         search_view_id = search_view_id and search_view_id[1] or False
         return {

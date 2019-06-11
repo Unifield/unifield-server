@@ -1,122 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
-        <!-- UF9.0 -->
-        <record id="change_fo_seq_to_nogap" model="patch.scripts">
-            <field name="method">change_fo_seq_to_nogap</field>
-        </record>
-
-        <record id="us_4481_monitor_set_null_size" model="patch.scripts">
-            <field name="method">us_4481_monitor_set_null_size</field>
-        </record>
-
-        <record id="us_3319_product_track_price" model="patch.scripts">
-            <field name="method">us_3319_product_track_price</field>
-        </record>
-
-        <record id="us_3015_remove_whitespaces_product_description" model="patch.scripts">
-            <field name="method">us_3015_remove_whitespaces_product_description</field>
-        </record>
-
-        <!-- UF8.2 -->
-        <record id="ud_trans" model="patch.scripts">
-            <field name="method">ud_trans</field>
-        </record>
-
-        <!-- UF8.1 -->
-        <record id="us-4454" model="patch.scripts">
-            <field name="method">cancel_extra_empty_draft_po</field>
-        </record>
-
-        <record id="us_4430_set_puf_to_reversal" model="patch.scripts">
-            <field name="method">us_4430_set_puf_to_reversal</field>
-        </record>
-
-        <!-- UF8.0 -->
-        <record id="set_sequence_main_nomen" model="patch.scripts">
-            <field name="method">set_sequence_main_nomen</field>
-        </record>
-
-        <record id="us_3734_rename_partners_with_new_lines" model="patch.scripts">
-            <field name="method">us_3734_rename_partners_with_new_lines</field>
-        </record>
-
-        <record id="us_4407_update_free_lines_ad" model="patch.scripts">
-            <field name="method">us_4407_update_free_lines_ad</field>
-        </record>
-
-        <record id="us_4151_change_correct_out_currency" model="patch.scripts">
-            <field name="method">us_4151_change_correct_out_currency</field>
-        </record>
-
-        <!-- UF7.3 -->
-        <record id="send_instance_uuid" model="patch.scripts">
-            <field name="method">send_instance_uuid</field>
-        </record>
-
-        <record id="flag_pi" model="patch.scripts">
-            <field name="method">flag_pi</field>
-        </record>
-
-        <!-- UF7.1 -->
-        <record id="compute_amount" model="patch.scripts">
-            <field name="method">recompute_amount</field>
-        </record>
-
-        <!-- UF7.0 -->
-        <record id="post_sll" model="patch.scripts">
-            <field name="method">post_sll</field>
-        </record>
-
-        <record id="us_3306" model="patch.scripts">
-            <field name="method">us_3306</field>
-        </record>
-
-        <record id="us_2676_patch" model="patch.scripts">
-            <field name="method">us_2676</field>
-        </record>
-
-        <record id="us_3345_remove_space_in_employee_name" model="patch.scripts">
-            <field name="method">us_3345_remove_space_in_employee_name</field>
-        </record>
-
-        <record id="us_3756_remove_space_partner" model="patch.scripts">
-            <field name="method">us_3756_remove_space_partner</field>
-        </record>
-
-        <record id="set_stock_level" model="patch.scripts">
-            <field name="method">set_stock_level</field>
-        </record>
-
-        <record id="us_3516_change_damage_reason_type_incoming_ok" model="patch.scripts">
-            <field name="method">us_3516_change_damage_reason_type_incoming_ok</field>
-        </record>
-
-        <record id="delete_commitment" model="patch.scripts">
-            <field name="method">delete_commitment</field>
-        </record>
-
-        <record id="us_3879_set_pricelist_id_for_ir" model="patch.scripts">
-            <field name="method">us_3879_set_pricelist_id_for_ir</field>
-        </record>
-
-        <!-- UF7.1 -->
-        <record id="US-4036" model="patch.scripts">
-            <field name="method">trigger_pofomsg</field>
-        </record>
-        <record id="gen_pick" model="patch.scripts">
-            <field name="method">gen_pick</field>
-        </record>
-        <record id="close_pol_already_processed" model="patch.scripts">
-            <field name="method">close_pol_already_processed</field>
-        </record>
+        <!-- Please add new script at the end of the file -->
 
         <!-- OLD -->
 
         <record id="us_3048_patch" model="patch.scripts">
             <field name="method">us_3048_patch</field>
         </record>
-
 
         <record id="us_2647_patch" model="patch.scripts">
             <field name="method">us_2647</field>
@@ -221,10 +112,6 @@
             <field name="method">uftp_144_patch</field>
         </record>
 
-        <record id="update_volume_patch" model="patch.scripts">
-            <field name="method">update_volume_patch</field>
-        </record>
-
         <record id="clean_far_updates" model="patch.scripts">
             <field name="method">clean_far_updates</field>
         </record>
@@ -317,6 +204,216 @@
 
         <record id="us_1562_rename_special_periods" model="patch.scripts">
             <field name="method">us_1562_rename_special_periods</field>
+        </record>
+
+        <!-- UF7.0 -->
+        <record id="post_sll" model="patch.scripts">
+            <field name="method">post_sll</field>
+        </record>
+
+        <record id="us_3306" model="patch.scripts">
+            <field name="method">us_3306</field>
+        </record>
+
+        <record id="us_2676_patch" model="patch.scripts">
+            <field name="method">us_2676</field>
+        </record>
+
+        <record id="us_3345_remove_space_in_employee_name" model="patch.scripts">
+            <field name="method">us_3345_remove_space_in_employee_name</field>
+        </record>
+
+        <record id="us_3756_remove_space_partner" model="patch.scripts">
+            <field name="method">us_3756_remove_space_partner</field>
+        </record>
+
+        <record id="set_stock_level" model="patch.scripts">
+            <field name="method">set_stock_level</field>
+        </record>
+
+        <record id="us_3516_change_damage_reason_type_incoming_ok" model="patch.scripts">
+            <field name="method">us_3516_change_damage_reason_type_incoming_ok</field>
+        </record>
+
+        <record id="delete_commitment" model="patch.scripts">
+            <field name="method">delete_commitment</field>
+        </record>
+
+        <record id="us_3879_set_pricelist_id_for_ir" model="patch.scripts">
+            <field name="method">us_3879_set_pricelist_id_for_ir</field>
+        </record>
+
+        <!-- UF7.1 -->
+        <record id="US-4036" model="patch.scripts">
+            <field name="method">trigger_pofomsg</field>
+        </record>
+
+        <record id="gen_pick" model="patch.scripts">
+            <field name="method">gen_pick</field>
+        </record>
+
+        <record id="close_pol_already_processed" model="patch.scripts">
+            <field name="method">close_pol_already_processed</field>
+        </record>
+
+        <record id="compute_amount" model="patch.scripts">
+            <field name="method">recompute_amount</field>
+        </record>
+
+        <!-- UF7.3 -->
+        <record id="send_instance_uuid" model="patch.scripts">
+            <field name="method">send_instance_uuid</field>
+        </record>
+
+        <record id="flag_pi" model="patch.scripts">
+            <field name="method">flag_pi</field>
+        </record>
+
+        <!-- UF8.0 -->
+        <record id="set_sequence_main_nomen" model="patch.scripts">
+            <field name="method">set_sequence_main_nomen</field>
+        </record>
+
+        <record id="us_3734_rename_partners_with_new_lines" model="patch.scripts">
+            <field name="method">us_3734_rename_partners_with_new_lines</field>
+        </record>
+
+        <record id="us_4407_update_free_lines_ad" model="patch.scripts">
+            <field name="method">us_4407_update_free_lines_ad</field>
+        </record>
+
+        <record id="us_4151_change_correct_out_currency" model="patch.scripts">
+            <field name="method">us_4151_change_correct_out_currency</field>
+        </record>
+
+        <!-- UF8.1 -->
+        <record id="us-4454" model="patch.scripts">
+            <field name="method">cancel_extra_empty_draft_po</field>
+        </record>
+
+        <record id="us_4430_set_puf_to_reversal" model="patch.scripts">
+            <field name="method">us_4430_set_puf_to_reversal</field>
+        </record>
+
+        <!-- UF8.2 -->
+        <record id="ud_trans" model="patch.scripts">
+            <field name="method">ud_trans</field>
+        </record>
+
+        <!-- UF9.0 -->
+        <record id="change_fo_seq_to_nogap" model="patch.scripts">
+            <field name="method">change_fo_seq_to_nogap</field>
+        </record>
+
+        <record id="us_4481_monitor_set_null_size" model="patch.scripts">
+            <field name="method">us_4481_monitor_set_null_size</field>
+        </record>
+
+        <record id="us_3319_product_track_price" model="patch.scripts">
+            <field name="method">us_3319_product_track_price</field>
+        </record>
+
+        <record id="us_3015_remove_whitespaces_product_description" model="patch.scripts">
+            <field name="method">us_3015_remove_whitespaces_product_description</field>
+        </record>
+
+        <!-- UF 9.1 -->
+        <record id="change_xml_payment_method" model="patch.scripts">
+            <field name="method">change_xml_payment_method</field>
+        </record>
+
+        <!-- UF10.0 -->
+        <record id="us_3427_update_third_parties_in_gl_selector" model="patch.scripts">
+            <field name="method">us_3427_update_third_parties_in_gl_selector</field>
+        </record>
+
+        <record id="us_4879_fo_from_shipping_except_to_close" model="patch.scripts">
+            <field name="method">us_4879_fo_from_shipping_except_to_close</field>
+        </record>
+        <record id="us_3873_update_reconcile_filter_in_partner_report_templates" model="patch.scripts">
+            <field name="method">us_3873_update_reconcile_filter_in_partner_report_templates</field>
+        </record>
+
+        <record id="us_3873_update_display_partner_in_partner_balance_templates" model="patch.scripts">
+            <field name="method">us_3873_update_display_partner_in_partner_balance_templates</field>
+        </record>
+
+        <record id="us_3873_remove_initial_balance_in_partner_balance_templates" model="patch.scripts">
+            <field name="method">us_3873_remove_initial_balance_in_partner_balance_templates</field>
+        </record>
+
+        <!-- UF11.0 -->
+        <record id="us_5356_reset_ud_prod" model="patch.scripts">
+            <field name="method">us_5356_reset_ud_prod</field>
+        </record>
+
+        <record id="us_4541_stock_mission_recompute_cu_qty" model="patch.scripts">
+            <field name="method">us_4541_stock_mission_recompute_cu_qty</field>
+        </record>
+
+        <record id="us_4996_bck_beforepatch" model="patch.scripts">
+            <field name="method">us_4996_bck_beforepatch</field>
+        </record>
+
+        <record id="testfield_missing_updates_on_sync" model="patch.scripts">
+            <field name="method">testfield_missing_updates_on_sync</field>
+        </record>
+
+        <record id="us_4375_build_xmlid_admin_acl" model="patch.scripts">
+            <field name="method">us_4375_build_xmlid_admin_acl</field>
+        </record>
+
+
+        <!-- UF11.1 -->
+        <record id="us_5425_reset_amount_currency" model="patch.scripts">
+            <field name="method">us_5425_reset_amount_currency</field>
+        </record>
+
+        <!-- UF12.0 -->
+        <record id="us_5724_set_previous_fy_dates_allowed" model="patch.scripts">
+            <field name="method">us_5724_set_previous_fy_dates_allowed</field>
+        </record>
+
+        <record id="us_5746_rename_products_with_new_lines" model="patch.scripts">
+            <field name="method">us_5746_rename_products_with_new_lines</field>
+        </record>
+
+        <record id="us_2896_volume_ocbprod" model="patch.scripts">
+            <field name="method">us_2896_volume_ocbprod</field>
+        </record>
+
+        <record id="us_5480_correct_partner_fo_default_currency" model="patch.scripts">
+            <field name="method">us_5480_correct_partner_fo_default_currency</field>
+        </record>
+
+        <record id="us_5507_set_synchronize" model="patch.scripts">
+            <field name="method">us_5507_set_synchronize</field>
+        </record>
+
+        <record id="us_5398_reset_ud_cost_price" model="patch.scripts">
+            <field name="method">us_5398_reset_ud_cost_price</field>
+        </record>
+
+        <record id="us_5559_set_pricelist" model="patch.scripts">
+            <field name="method">us_5559_set_pricelist</field>
+        </record>
+
+        <!-- UF12.1 -->
+        <record id="us_5785_set_ocg_price_001" model="patch.scripts">
+            <field name="method">us_5785_set_ocg_price_001</field>
+        </record>
+
+        <record id="us_5199_fix_cancel_partial_move_sol_id" model="patch.scripts">
+            <field name="method">us_5199_fix_cancel_partial_move_sol_id</field>
+        </record>
+
+        <record id="us_5667_remove_contract_workflow" model="patch.scripts">
+            <field name="method">us_5667_remove_contract_workflow</field>
+        </record>
+
+        <!-- UF13.0 -->
+        <record id="us_5771_allow_all_cc_in_default_dest" model="patch.scripts">
+            <field name="method">us_5771_allow_all_cc_in_default_dest</field>
         </record>
 
     </data>

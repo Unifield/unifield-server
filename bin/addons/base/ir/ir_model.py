@@ -56,6 +56,34 @@ def _in_modules(self, cr, uid, ids, field_name, arg, context=None):
     return result
 
 
+class common_import_ur(osv.osv):
+    _name = 'common.import.ur'
+    _description = 'Object used to delete non imported records'
+    _auto = False
+    _common_import = True
+    _columns = {
+        'imported_flag': fields.boolean('Record imported', internal=1),
+    }
+    _defaults = {
+        'imported_flag': False,
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('from_synced_ur'):
+            vals['imported_flag'] = True
+        return super(common_import_ur, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('from_synced_ur'):
+            vals['imported_flag'] = True
+        return super(common_import_ur, self).write(cr, uid, ids, vals, context=context)
+
+common_import_ur()
+
 class ir_model(osv.osv):
     _name = 'ir.model'
     _description = "Objects"
@@ -448,6 +476,9 @@ ir_model_fields()
 
 class ir_model_access(osv.osv):
     _name = 'ir.model.access'
+    _inherit = 'common.import.ur'
+    _auto = True
+
     _columns = {
         'name': fields.char('Name', size=64, required=True, select=True),
         'model_id': fields.many2one('ir.model', 'Object', required=True, domain=[('osv_memory','=', False)], select=True, ondelete='cascade'),
@@ -456,8 +487,14 @@ class ir_model_access(osv.osv):
         'perm_write': fields.boolean('Write Access'),
         'perm_create': fields.boolean('Create Access'),
         'perm_unlink': fields.boolean('Delete Access'),
+        'from_system': fields.boolean('ACL created by dev'),
     }
 
+    _defaults = {
+        'from_system': False,
+    }
+    _sql_constraints = [
+    ]
     def _ir_model_access_check_groups_hook(self, cr, uid, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
@@ -608,19 +645,39 @@ class ir_model_access(osv.osv):
     #
     # Check rights on actions
     #
-    def write(self, cr, uid, *args, **argv):
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+
+        if context.get('from_system'):
+            vals['from_system'] = True
+
+        if not context.get('sync_update_execution') and not context.get('from_synced_ur'):
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+
         self.call_cache_clearing_methods(cr)
-        res = super(ir_model_access, self).write(cr, uid, *args, **argv)
+        res = super(ir_model_access, self).write(cr, uid, ids, vals, context=context)
         return res
 
-    def create(self, cr, uid, *args, **argv):
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('from_system'):
+            vals['from_system'] = True
+        if not context.get('sync_update_execution') and not context.get('from_synced_ur'):
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         self.call_cache_clearing_methods(cr)
-        res = super(ir_model_access, self).create(cr, uid, *args, **argv)
+        res = super(ir_model_access, self).create(cr, uid, vals, context=context)
         return res
 
-    def unlink(self, cr, uid, *args, **argv):
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('sync_update_execution') and not context.get('from_synced_ur'):
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         self.call_cache_clearing_methods(cr)
-        res = super(ir_model_access, self).unlink(cr, uid, *args, **argv)
+        res = super(ir_model_access, self).unlink(cr, uid, ids, context)
         return res
 
 ir_model_access()
@@ -823,7 +880,7 @@ class ir_model_data(osv.osv):
             cr.execute('delete from ir_model_data where res_id=%s and model=%s', (res_id, model))
         return True
 
-    def ir_set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=None, xml_id=False):
+    def ir_set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=None, xml_id=False, view_ids=False):
         if type(models[0])==type([]) or type(models[0])==type(()):
             model,res_id = models[0]
         else:
@@ -840,12 +897,16 @@ class ir_model_data(osv.osv):
         else:
             where += ' and (key2 is null)'
 
-        cr.execute('select * from ir_values where model=%s and key=%s and name=%s'+where,(model, key, name)) # not_a_user_entry
+        cr.execute('select id from ir_values where model=%s and key=%s and name=%s'+where,(model, key, name)) # not_a_user_entry
         res = cr.fetchone()
         if not res:
-            res = ir.ir_set(cr, uid, key, key2, name, models, value, replace, isobject, meta)
+            res = ir.ir_set(cr, uid, key, key2, name, models, value, replace, isobject, meta, view_ids)
         elif xml_id:
             cr.execute('UPDATE ir_values set value=%s WHERE model=%s and key=%s and name=%s'+where,(value, model, key, name)) # not_a_user_entry
+        if key == 'action' and view_ids is not False:
+            cr.execute('DELETE FROM actions_view_rel WHERE action_id = %s', (res[0],))
+            for x in view_ids:
+                cr.execute('INSERT INTO actions_view_rel (action_id, view_id) VALUES (%s, %s)', (res[0], x))
         return True
 
     def _process_end(self, cr, uid, modules):
@@ -902,5 +963,36 @@ class ir_model_data(osv.osv):
                             'restart with --update=module', res_id, model)
         return True
 ir_model_data()
+
+class ir_model_access_empty(osv.osv):
+    _name = 'ir.model.access.empty'
+    _auto = False
+
+    _columns = {
+        'name': fields.char('Name', size=64),
+        'model_id': fields.many2one('ir.model', 'Object'),
+        'group_id': fields.many2one('res.groups', string='Group'),
+        'perm_read': fields.boolean('Read Access'),
+        'perm_write': fields.boolean('Write Access'),
+        'perm_create': fields.boolean('Create Access'),
+        'perm_unlink': fields.boolean('Delete Access'),
+    }
+
+    def init(self, cr):
+        tools.drop_view_if_exists(cr, 'ir_model_access_empty')
+        cr.execute("""CREATE OR REPLACE VIEW ir_model_access_empty AS (
+        SELECT model.id as id,
+        ''::varchar as name,
+        model.id as model_id,
+        NULL::integer as group_id,
+        'f'::boolean as perm_read,
+        'f'::boolean as perm_write,
+        'f'::boolean as perm_create,
+        'f'::boolean as perm_unlink
+        from ir_model model
+        left join ir_model_access ac on ac.model_id = model.id
+        where ac.id is null)""")
+
+ir_model_access_empty()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

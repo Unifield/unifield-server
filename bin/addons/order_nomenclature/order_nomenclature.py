@@ -21,6 +21,7 @@
 
 
 from osv import osv, fields
+from tools.translate import _
 
 
 def _order_nomenclature_get_product_code_name(module, cr, uid, ids, fieldname, args, context=None):
@@ -107,6 +108,14 @@ class purchase_order_line(osv.osv):
 
         return result
 
+    def check_digits(self, cr, uid, result, qty=0, price_unit=0, context=None):
+        if result.get('value', {}).get('product_qty', qty) >= self._max_qty or result.get('value', {}).get('product_qty', qty)*result.get('value', {}).get('price_unit', price_unit) >= self._max_amount:
+            result.setdefault('warning', {'title': '', 'message': ''})
+            result['warning'].setdefault('title', '')
+            result['warning'].setdefault('message', '')
+            result['warning']['message'] = "\n".join([result['warning']['message'], _(self._max_msg)])
+        return True
+
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty, uom,
                            partner_id, date_order=False, fiscal_position=False, date_planned=False,
                            name=False, price_unit=False, notes=False, state=False, old_unit_price=False,
@@ -114,10 +123,13 @@ class purchase_order_line(osv.osv):
         '''
         interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
+
         if not context:
             context = {}
 
         if not product and not comment and not nomen_manda_0 and qty != 0.00:
+            if qty >= self._max_qty or qty*price_unit >= self._max_amount:
+                return {'warning': {'title': '', 'message': _(self._max_msg)}}
             return {}
 
         prod_context = context.copy()
@@ -142,6 +154,7 @@ class purchase_order_line(osv.osv):
             uom = uom or result.get('value', {}).get('product_uom')
             result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
 
+        self.check_digits(cr, uid, result, context=context)
         return result
 
     def _relatedFields(self, cr, uid, vals, context=None):
@@ -162,14 +175,16 @@ class purchase_order_line(osv.osv):
             # erase the nomenclature - readonly
             self.pool.get('product.product')._resetNomenclatureFields(vals)
         elif ('product_id' in vals) and (not vals['product_id']):
-            sale = self.pool.get('sale.order.line')
-            sale._setNomenclatureInfo(cr, uid, vals, context)
+            if 'nomen_manda_0' in vals:
+                sale = self.pool.get('sale.order.line')
+                sale._setNomenclatureInfo(cr, uid, vals, context)
             # erase default code
             vals.update({'default_code':False})
             vals.update({'default_name':False})
 
             if 'comment' in vals:
                 vals.update({'name':vals['comment']})
+
         # clear nomenclature filter values
         #self.pool.get('product.product')._resetNomenclatureFields(vals)
 
@@ -361,9 +376,22 @@ class sale_order_line(osv.osv):
 
         return result
 
+    def check_digits(self, cr, uid, result, qty=0, price_unit=0, context=None):
+        if result.get('value', {}).get('product_uom_qty', qty) >= self._max_value or result.get('value', {}).get('product_uom_qty', qty)*result.get('value', {}).get('price_unit', price_unit) >= self._max_value:
+            result.setdefault('warning', {'title': '', 'message': ''})
+            result['warning'].setdefault('title', '')
+            result['warning'].setdefault('message', '')
+            result['warning']['message'] = "\n".join([result['warning']['message'], _(self._max_msg)])
+        return True
+
+    def change_price_unit(self, cr, uid, ids, product_uom_qty, price_unit, context):
+        result = {}
+        self.check_digits(cr, uid, result, product_uom_qty, price_unit, context)
+        return result
+
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty=0,
                            uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-                           lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+                           lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, price_unit=0, context=None):
         '''
         interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
@@ -391,6 +419,7 @@ class sale_order_line(osv.osv):
         if qty:
             result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, ['product_uom_qty', 'product_uos_qty'], result=result)
 
+        self.check_digits(cr, uid, result, qty, price_unit, context)
         return result
 
     def product_packaging_change(self, cr, uid, ids, pricelist, product, qty=0,

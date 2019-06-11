@@ -65,6 +65,7 @@
                             <field name="balance" />
                             <field name="src_dest" />
                             <field name="notes" />
+                            <field name="uom_id" invisible="1" />
                         </tree>
                     </field>
                 </form>

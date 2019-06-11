@@ -27,15 +27,20 @@
                             <field name="balance_start" attrs="{'readonly': ['|', ('prev_reg_id', '!=', False), ('closing_balance_frozen', '=', True)]}"/>
                             <group col="3" colspan="4">
                                 <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}" string="Bank statement balance"/>
-                                <button name="button_confirm_closing_bank_balance" type="object" string="Confirm End-of-the Month Balance" icon="gtk-apply"
+                                <button name="button_confirm_closing_bank_balance" type="object" string="Confirm End-of-Month Balance" icon="gtk-apply"
                                     colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                    confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
+                                    confirm="Are you sure you want to freeze closing balance?"/>
                             </group>
                             <field name="balance_end" readonly="1"/>
-                            <field name="balance_gap"/>
-                            <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
-                            <field name="virtual_id" invisible="1" readonly="1"/>
-                            <field name="closing_balance_frozen" invisible="1"/>
+                            <group col="3" colspan="4">
+                                <field name="balance_gap" colspan="2"/>
+                                <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
+                                <field name="virtual_id" invisible="1" readonly="1"/>
+                                <field name="closing_balance_frozen" invisible="1"/>
+                                <button name="button_cancel_closing_balance_confirmation" type="object"
+                                        string="Re-open End-of-Month Balance" icon="gtk-undo" colspan="1"
+                                        attrs="{'invisible': ['|', ('closing_balance_frozen', '=', False), ('state', '!=', 'open')]}"/>
+                            </group>
                         </group>
                         <group col="4" colspan="4">
                             <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr"
@@ -56,8 +61,7 @@
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True" limit="20">
-                                        <field name="transfer_amount" invisible="1"/>
+                                    <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or red_on_supplier == True" limit="20">
                                         <field name="red_on_supplier" invisible="1"/>
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
@@ -99,9 +103,6 @@
                                                                     ('from_import_cheque_id', '!=', False),
                                                                     ('direct_invoice', '=', True),
                                                                     ('number_imported_invoice', '>', 0)]}"/>
-                                        <field name="is_transfer_with_change" invisible="1"/>
-                                        <button name="button_transfer" string="Transfer details" type="object"
-                                            icon="terp-stock_format-default" context="context" attrs="{'invisible': [('is_transfer_with_change', '=', False)]}"/>
                                         <field name="direct_invoice" invisible="1" />
                                         <field name="invoice_id" invisible="1"/>
                                         <field name="number_imported_invoice"  invisible="1"/>
@@ -229,8 +230,7 @@
                         <notebook colspan="4">
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True" limit="20">
-                                      <field name="transfer_amount" invisible="1"/>
+                                    <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or red_on_supplier == True" limit="20">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
                                         <field name="from_cash_return" invisible="1"/>
@@ -268,9 +268,6 @@
                                                attrs="{'readonly': ['|',
                                                                     ('direct_invoice', '=', True),
                                                                     ('number_imported_invoice', '>', 0)]}"/>
-                                        <field name="is_transfer_with_change" invisible="1"/>
-                                        <button name="button_transfer" string="Transfer details" type="object"
-                                            icon="terp-stock_format-default" context="context" attrs="{'invisible': [('is_transfer_with_change', '=', False)]}"/>
                                         <field name="direct_invoice" invisible="1"/>
                                         <field name="invoice_id" invisible="1"/>
                                         <field name="number_imported_invoice"  invisible="1"/>
@@ -342,12 +339,12 @@
                                 <field name="prev_reg_id" invisible="1"/>
                                 <group col="4" colspan="4">
                                     <field name="starting_details_ids" nolabel="1" colspan="2" attrs="{'invisible':['|',('state','!=','draft'),('prev_reg_id','!=',False)], 'readonly':['|',('state','!=','draft'),('prev_reg_id','!=',False)]}">
-                                        <tree string = "Opening Balance" editable="bottom">
+                                        <tree string="Starting Balance" editable="bottom">
                                             <field name="pieces"/>
                                             <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
                                             <field name="subtotal" sum="Total"/>
                                         </tree>
-                                        <form string = "Opening Balance">
+                                        <form string="Starting Balance">
                                             <field name="pieces"/>
                                             <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
                                             <field name="subtotal"/>
@@ -367,8 +364,11 @@
                                         </form>
                                     </field>
                                     <button name="button_confirm_closing_balance" type="object" string="Confirm month-end cash count" icon="gtk-apply"
-                                        colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
-                                        confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
+                                        colspan="4" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
+                                        confirm="Are you sure you want to freeze closing balance?"/>
+                                    <button name="button_cancel_closing_balance_confirmation" type="object"
+                                            string="Re-open month-end cash count" icon="gtk-undo" colspan="4"
+                                            attrs="{'invisible': ['|', ('closing_balance_frozen', '=', False), ('state', '!=', 'open')]}"/>
                                 </group>
                             </page>
                             <page string="Responsible">
@@ -382,8 +382,8 @@
                                 <field name="closing_date" select="1" readonly="1"/>
                             </group>
                             <group col="2" colspan="2">
-                                <separator string="Opening Balance" colspan="4"/>
-                                <field name="balance_start" string="Opening Balance" readonly="True"/>
+                                <separator string="Starting Balance" colspan="4"/>
+                                <field name="balance_start" readonly="True"/>
                                 <field name="total_entry_encoding"/>
                                 <field name="msf_calculated_balance"/>
                                 <field name="open_advance_amount" attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
@@ -445,6 +445,9 @@
                                     'invisible': [('display_analytic_button', '=', False)]}"/>
                     <field name="amount_in"/>
                     <field name="amount_out"/>
+                    <field name="invoice_id" invisible="1"/>
+                    <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}"
+                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
                     <field name="currency_id" invisible="1"/>
                     <field name="functional_in" invisible="1"/>
                     <field name="functional_out" invisible="1"/>
@@ -798,6 +801,7 @@
                         <field name="date" select="1" on_change="onchange_date(date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
                         <field name="period_id" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
                         <field name="currency" readonly="1"/>
+                        <field name="balance_end" string="Calculated Balance" readonly="1"/>
                         <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                         <field name="virtual_id" invisible="1" readonly="1"/>
                         <field name="prev_reg_id" invisible="1"/>
@@ -819,8 +823,7 @@
                         <page string="Transaction" name="statement_line_ids">
                             <field colspan="4" name="line_ids" nolabel="1">
                                 <!-- WARNING: because of UTP-331, in cheque register direct invoice lines should be editable but ONLY for cheque_number FIELD. That's why ALL field must be not editable when "direct_invoice" is True. -->
-                                <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True" limit="20">
-                                    <field name="transfer_amount" invisible="1"/>
+                                <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or red_on_supplier == True" limit="20">
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                     <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
                                     <field name="document_date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
@@ -853,9 +856,6 @@
                                            attrs="{'readonly': ['|',
                                                                 ('direct_invoice', '=', True),
                                                                 ('number_imported_invoice', '>', 0)]}"/>
-                                    <field name="is_transfer_with_change" invisible="1"/>
-                                    <button name="button_transfer" string="Transfer details" type="object"
-                                        icon="terp-stock_format-default" context="context" attrs="{'invisible': [('is_transfer_with_change', '=', False)]}"/>
                                     <field name="direct_invoice" invisible="1"/>
                                     <field name="invoice_id" invisible="1"/>
                                     <field name="number_imported_invoice"  invisible="1"/>

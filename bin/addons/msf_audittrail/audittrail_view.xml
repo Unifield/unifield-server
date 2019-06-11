@@ -107,6 +107,8 @@
                         <field name="old_value_text" />
                         <field name="new_value_text" />
                         <field name="user_id" />
+                        <newline />
+                        <field name="other_column" string="Sequence" />
                     </group>
                 </search>
             </field>

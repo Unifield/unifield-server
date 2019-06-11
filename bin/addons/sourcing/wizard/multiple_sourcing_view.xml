@@ -18,14 +18,14 @@
                         <field name="line_ids" nolabel="1" colspan="4" />
                         <separator colspan="4" string="Procurement method" />
                         <field name="type" 
-                               on_change="change_type(type, supplier)"/>
+                               on_change="change_type(line_ids, type, supplier)"/>
                         <field name="po_cft" attrs="{'readonly': [('type', '=', 'make_to_stock')]}"
                                on_change="change_po_cft(po_cft)"/>
                         <field name="run_scheduler" />
                         <separator colspan="4" string="Supplier selection" />
                         <field name="supplier_id"
                                domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft), ('line_contains_fo', '=', line_ids)]"
-                               attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), ('type', '=', 'make_to_stock')]}"
+                               attrs="{'readonly': [('po_cft', '=', 'cft')], 'invisible': [('type', '=', 'make_to_stock')]}"
                                on_change="change_supplier(supplier_id, type)"
                         />
                     
@@ -36,8 +36,12 @@
                                attrs="{'readonly': [('type', '!=', 'make_to_stock')]}" 
                                on_change="change_location(location_id, line_ids)" />
                         <field name="related_sourcing_ok" invisible="1" />
+                        <field name="supplier_type" invisible="1" />
+                        <field name="supplier_split_po" invisible="1" />
                         <field name="related_sourcing_id"
-                            attrs="{'readonly': ['|', '|', '|', ('supplier_id', '=', False), ('related_sourcing_ok', '=', False), ('type', '!=', 'make_to_order'), ('po_cft', 'not in', ['po', 'dpo'])]}" />
+                            attrs="{'readonly': ['|', '|', '|', ('supplier_id', '=', False), ('related_sourcing_ok', '=', False), ('type', '!=', 'make_to_order'), ('po_cft', 'not in', ['po', 'dpo'])],
+                            'required': [('supplier_id', '!=', False), ('supplier_type', '=', 'esc'), ('supplier_split_po', '=', 'yes')]}"
+                            required_error_msg="For this Supplier you have to select a Sourcing Group" />
                     </group>
                     <separator colspan="4" string="Actions" />
                     <button special="cancel" string="Cancel" icon="gtk-cancel" help="Close the wizard" />

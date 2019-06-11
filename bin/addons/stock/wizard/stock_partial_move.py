@@ -23,15 +23,13 @@ from osv import fields, osv
 from tools.translate import _
 import time
 
-import decimal_precision as dp
-
 
 class stock_partial_move_memory_out(osv.osv_memory):
     _name = "stock.move.memory.out"
     _rec_name = 'product_id'
     _columns = {
         'product_id' : fields.many2one('product.product', string="Product", required=True),
-        'quantity' : fields.float("Quantity", required=True),
+        'quantity' : fields.float("Quantity", required=True, related_uom='product_uom'),
         'product_uom': fields.many2one('product.uom', 'Unit of Measure', required=True),
         'prodlot_id' : fields.many2one('stock.production.lot', 'Production Lot'),
         'move_id' : fields.many2one('stock.move', "Move"),
@@ -39,19 +37,19 @@ class stock_partial_move_memory_out(osv.osv_memory):
         'wizard_pick_id' : fields.many2one('stock.partial.picking', string="Wizard"),
         'cost' : fields.float("Cost", help="Unit Cost for this product line"),
         'currency' : fields.many2one('res.currency', string="Currency", help="Currency in which Unit cost is expressed"),
-        
+
     }
-    
+
     _defaults = {
         'wizard_id' : False,
         'wizard_pick_id' : False
     }
-    
-    
+
+
 class stock_partial_move_memory_in(osv.osv_memory):
     _inherit = "stock.move.memory.out"
     _name = "stock.move.memory.in"
-    
+
 class stock_partial_move(osv.osv_memory):
     _name = "stock.partial.move"
     _description = "Partial Move"
@@ -60,26 +58,26 @@ class stock_partial_move(osv.osv_memory):
         'type': fields.char("Type", size=3),
         'product_moves_out' : fields.one2many('stock.move.memory.out', 'wizard_id', 'Moves'),
         'product_moves_in' : fields.one2many('stock.move.memory.in', 'wizard_id', 'Moves'),
-     }
+    }
 
     def _is_incoming_move(self, move):
         return (move.location_id.usage not in ('internal','view') and move.location_dest_id.usage == 'internal')
-    
+
     def __is_in(self,cr, uid, move_ids):
         """
             @return: True if one of the moves has as picking type 'in'
         """
         if not move_ids:
             return False
-       
+
         move_obj = self.pool.get('stock.move')
         move_ids = move_obj.search(cr, uid, [('id','in',move_ids)])
-       
+
         for move in move_obj.browse(cr, uid, move_ids):
             if self._is_incoming_move(move) and move.product_id.cost_method == 'average':
                 return True
         return False
-    
+
     def __get_picking_type(self, cr, uid, move_ids):
         if self.__is_in(cr, uid, move_ids):
             return "product_moves_in"
@@ -88,20 +86,20 @@ class stock_partial_move(osv.osv_memory):
 
     def _hook_move_state(self):
         return ('done', 'cancel')
-    
+
     def view_init(self, cr, uid, fields_list, context=None):
         res = super(stock_partial_move, self).view_init(cr, uid, fields_list, context=context)
         move_obj = self.pool.get('stock.move')
-    
+
         if context is None:
             context = {}
         for move in move_obj.browse(cr, uid, context.get('active_ids', []), context=context):
             if move.state in self._hook_move_state():
                 raise osv.except_osv(_('Invalid action !'), _('Cannot deliver products which are already delivered !'))
-            
+
         return res
-    
-    
+
+
     def __create_partial_move_memory(self, move):
         move_memory = {
             'product_id' : move.product_id.id,
@@ -110,7 +108,7 @@ class stock_partial_move(osv.osv_memory):
             'prodlot_id' : move.prodlot_id.id,
             'move_id' : move.id,
         }
-    
+
         if self._is_incoming_move(move):
             move_memory.update({
                 'cost' : move.product_id.standard_price,
@@ -122,48 +120,48 @@ class stock_partial_move(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
         if context is None:
             context = {}
-               
+
         res = []
         for move in move_obj.browse(cr, uid, context.get('active_ids', []), context=context):
             if move.state in ('done', 'cancel'):
-                continue           
+                continue
             res.append(self.__create_partial_move_memory(move))
-            
+
         return res
-    
+
     _defaults = {
         'product_moves_in' : __get_active_stock_moves,
         'product_moves_out' : __get_active_stock_moves,
         'date' : lambda *a : time.strftime('%Y-%m-%d %H:%M:%S'),
     }
-    
-    
+
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:
             context = {}
-        
+
         message = {
-                'title' : _('Deliver Products'),
-                'info' : _('Delivery Information'),
-                'button' : _('Deliver'),
-                }
-        if context:            
+            'title' : _('Deliver Products'),
+            'info' : _('Delivery Information'),
+            'button' : _('Deliver'),
+        }
+        if context:
             if context.get('product_receive', False):
                 message = {
                     'title' : _('Receive Products'),
                     'info' : _('Receive Information'),
                     'button' : _('Receive'),
-                }   
-         
-        move_ids = context.get('active_ids', False)    
+                }
+
+        move_ids = context.get('active_ids', False)
         message['picking_type'] = self.__get_picking_type(cr, uid, move_ids)
         result = super(stock_partial_move, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         _moves_fields = result['fields']
         _moves_fields.update({
-                            'product_moves_in' : {'relation': 'stock.move.memory.in', 'type' : 'one2many', 'string' : 'Product Moves'},
-                            'product_moves_out' : {'relation': 'stock.move.memory.out', 'type' : 'one2many', 'string' : 'Product Moves'}
-                            })
-        
+            'product_moves_in' : {'relation': 'stock.move.memory.in', 'type' : 'one2many', 'string' : 'Product Moves'},
+            'product_moves_out' : {'relation': 'stock.move.memory.out', 'type' : 'one2many', 'string' : 'Product Moves'}
+        })
+
         _moves_arch_lst = """
                 <form string="%(title)s">
                     <separator colspan="4" string="%(info)s"/>
@@ -178,11 +176,11 @@ class stock_partial_move(osv.osv_memory):
                             colspan="1" type="object" icon="gtk-apply" />
                     </group>
                 </form> """ % message
-        
+
         result['arch'] = _moves_arch_lst
         result['fields'] = _moves_fields
         return result
-   
+
     def do_partial(self, cr, uid, ids, context=None):
         """ Makes partial moves and pickings done.
         @param self: The object pointer.
@@ -192,24 +190,24 @@ class stock_partial_move(osv.osv_memory):
         @param context: A standard dictionary
         @return: A dictionary which of fields with values.
         """
-    
+
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        
+
         move_ids = context.get('active_ids', False)
         partial = self.browse(cr, uid, ids[0], context=context)
         partial_datas = {
             'delivery_date' : partial.date
         }
-        
+
         p_moves = {}
         picking_type = self.__get_picking_type(cr, uid, move_ids)
-        
+
         moves_list = picking_type == 'product_moves_in' and partial.product_moves_in  or partial.product_moves_out
         for product_move in moves_list:
             p_moves[product_move.move_id.id] = product_move
-            
+
         moves_ids_final = []
         for move in move_obj.browse(cr, uid, move_ids, context=context):
             if move.state in ('done', 'cancel'):
@@ -222,15 +220,15 @@ class stock_partial_move(osv.osv_memory):
                 'product_uom' :p_moves[move.id].product_uom.id,
                 'prodlot_id' : p_moves[move.id].prodlot_id.id,
             }
-            
+
             moves_ids_final.append(move.id)
             if self._is_incoming_move(move) and move.product_id.cost_method == 'average':
                 partial_datas['move%s' % (move.id)].update({
                     'product_price' : p_moves[move.id].cost,
                     'product_currency': p_moves[move.id].currency.id,
                 })
-                
-            
+
+
         move_obj.do_partial(cr, uid, moves_ids_final, partial_datas, context=context)
         return {'type': 'ir.actions.act_window_close'}
 

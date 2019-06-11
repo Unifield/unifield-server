@@ -9,20 +9,36 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="HQ Entries List" editable="top" noteditable="user_validated==True or is_original==True" hide_new_button="1" colors="black: analytic_state=='valid' and is_split==True;blue:analytic_state in ('valid') and is_original==False and is_split==False;gray:is_original==True;red:analytic_state in ('invalid')" limit="50">
+                    <field name="current_instance_level" invisible="1"/>
+                    <field name="account_user_type_code" invisible="1"/>
                     <field name="name"/>
-                    <field name="ref"/>
+                    <field name="ref" attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="document_date"/>
                     <field name="date"/>
                     <field name="period_id"/>
-                    <field name="account_id" domain="[('type', '!=', 'view'), ('restricted_area', '=', 'hq_lines'), ('is_not_hq_correctible', '=', False)]"/>
+                    <field name="account_id"
+                           domain="[('restricted_area', '=', 'hq_lines_correction'), ('filter_active', '=', True)]"
+                           context="{'date': date}"
+                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="partner_txt"/>
                     <field name="amount"/>
                     <field name="currency_id"/>
-                    <field name="destination_id" on_change="onchange_destination(destination_id, analytic_id, account_id)" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
-                    <field name="cost_center_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
-                    <field name="analytic_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"/>
-                    <field name="free_1_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
-                    <field name="free_2_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="destination_id"
+                           on_change="onchange_destination(destination_id, analytic_id, account_id)"
+                           context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
+                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
+                    <field name="cost_center_id"
+                           context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
+                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
+                    <field name="analytic_id"
+                           context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"
+                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
+                    <field name="free_1_id"
+                           context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
+                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
+                    <field name="free_2_id"
+                           context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"
+                           attrs="{'readonly': ['|', ('current_instance_level', '=', 'section'), ('account_user_type_code', 'not in', ['expense', 'income'])]}"/>
                     <field name="user_validated" invisible="1"/>
                     <field name="analytic_state" invisible="1"/>
                     <field name="is_original" invisible="1"/>

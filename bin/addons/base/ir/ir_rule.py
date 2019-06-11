@@ -29,6 +29,8 @@ from tools.safe_eval import safe_eval as eval
 class ir_rule(osv.osv):
     _name = 'ir.rule'
     _order = 'name'
+    _inherit = 'common.import.ur'
+    _auto = True
     _MODES = ['read', 'write', 'create', 'unlink']
 
     def _domain_force_get(self, cr, uid, ids, field_name, arg, context=None):
@@ -58,7 +60,7 @@ class ir_rule(osv.osv):
         'name': fields.char('Name', size=128, select=1),
         'model_id': fields.many2one('ir.model', 'Object',select=1, required=True),
         'global': fields.function(_get_value, method=True, string='Global', type='boolean', store=True, help="If no group is specified the rule is global and applied to everyone"),
-        'groups': fields.many2many('res.groups', 'rule_group_rel', 'rule_group_id', 'group_id', 'Groups'),
+        'groups': fields.many2many('res.groups', 'rule_group_rel', 'rule_group_id', 'group_id', 'Groups', order_by='name'),
         'domain_force': fields.text('Domain'),
         'domain': fields.function(_domain_force_get, method=True, string='Domain', type='text'),
         'perm_read': fields.boolean('Apply For Read'),

@@ -58,7 +58,7 @@ def _check_db_name(name):
     if name and isinstance(name, basestring):
         # allow char, number, _ and -
         if not re.match('^[a-zA-Z][a-zA-Z0-9_-]+$', name):
-            raise _("You must avoid all accents, space or special characters.")
+            raise Exception(_("You must avoid all accents, space or special characters."))
 
 def export_csv(fields, result, result_file_path):
     try:
@@ -233,6 +233,7 @@ class db(netsvc.ExportService):
                                          args=(cr, pool, 1, creation_id))
         create_thread.start()
         create_thread.join(1)
+        return True
 
     def exp_creation_get_resume_progress(self, db_name):
         db, pool = pooler.get_db_and_pool(db_name)
@@ -921,7 +922,6 @@ class report_spool(netsvc.ExportService):
 
     def exp_export(self, db_name, uid, fields, domain, model, fields_name,
                    group_by=None, export_format='csv', ids=None, context=None):
-        _check_db_name(db_name)
         res = {'result': None}
         db, pool = pooler.get_db_and_pool(db_name)
         cr = db.cursor()
@@ -952,17 +952,15 @@ class report_spool(netsvc.ExportService):
         report_id = self.id
         self.id_protect.release()
         model_obj = pool.get(model)
-        view_name = context.get('_terp_view_name', '')
-        tools_obj = pool.get('date.tools')
-        time_stamp = time.strftime(tools_obj.get_datetime_format(cr, uid, context=context))
-        title = 'Export %s %s' % (view_name, time_stamp)
+        view_name = context.get('_terp_view_name', '') or context.get('_terp_view_name_for_export', '')
+        title = '%s_%s' % (view_name, time.strftime('%Y%m%d'))
         self._reports[report_id] = {
             'uid': uid,
             'result': False,
             'state': False,
             'exception': None,
             'format': export_format,
-            'filename': '%s_%s' % (view_name, time.strftime('%Y%m%d')),
+            'filename': title,
         }
 
         bg_obj = pool.get('memory.background.report')
@@ -1069,8 +1067,6 @@ class report_spool(netsvc.ExportService):
         if not context:
             context={}
 
-        _check_db_name(db_name)
-
         self.id_protect.acquire()
         self.id += 1
         id = self.id
@@ -1106,7 +1102,7 @@ class report_spool(netsvc.ExportService):
                 tb_s = "".join(traceback.format_exception(*tb))
                 logger = netsvc.Logger()
                 logger.notifyChannel('web-services', netsvc.LOG_ERROR,
-                                     'Exception: %s\n%s' % (str(exception), tb_s))
+                                     'Exception: %s\n%s' % (tools.ustr(exception), tb_s))
                 if hasattr(exception, 'name') and hasattr(exception, 'value'):
                     self._reports[id]['exception'] = ExceptionWithTraceback(tools.ustr(exception.name), tools.ustr(exception.value))
                 else:

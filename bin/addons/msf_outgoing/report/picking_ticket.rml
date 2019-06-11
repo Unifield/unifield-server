@@ -43,9 +43,16 @@
         <blockTableStyle id="HeaderInfos">
             <blockAlignment value="LEFT" />
             <blockValign value="TOP" />
-            <lineStyle kind="OUTLINE" colorName="black" start="1,0" stop="2,0" />
-            <lineStyle kind="OUTLINE" colorName="black" start="4,0" stop="5,0" />
-            <lineStyle kind="OUTLINE" colorName="black" start="7,0" stop="7,0" />
+            <lineStyle kind="OUTLINE" colorName="black" start="1,0" stop="1,0" />
+            <lineStyle kind="OUTLINE" colorName="black" start="3,0" stop="4,0" />
+            <lineStyle kind="OUTLINE" colorName="black" start="6,0" stop="6,0" />
+        </blockTableStyle>
+        <blockTableStyle id="HeaderInfos2">
+            <blockAlignment value="LEFT" />
+			<blockValign value="MIDDLE" />
+			<blockLeading length="0" />
+			<blockBottomPadding length="0" />
+			<blockTopPadding length="0" />
         </blockTableStyle>
 
         <blockTableStyle id="WarningTable">
@@ -70,6 +77,15 @@
             <blockSpan start="10,0" stop="10,-1" />
             <blockSpan start="11,0" stop="11,-1" />
             <blockSpan start="12,0" stop="12,-1" />
+        </blockTableStyle>
+
+        <blockTableStyle id="FooterInfo">
+            <blockAlignment value="CENTER" />
+            <blockValign value="MIDDLE" />
+            <lineStyle kind="LINEBEFORE" colorName="#000000" start="0,1" />
+            <lineStyle kind="LINEABOVE" colorName="#000000" start="1,0" />
+            <lineStyle kind="LINEAFTER" colorName="#000000" />
+            <lineStyle kind="LINEBELOW" colorName="#000000" />
         </blockTableStyle>
 
         <blockTableStyle id="LinesValues">
@@ -110,7 +126,10 @@
 
         <paraStyle name="LineValue" fontName="Helvetica" fontSize="6.0" alignment="CENTER" leading="5.0" textColor="blue" />
         <paraStyle name="LineValueBold" fontName="Helvetica-Bold" fontSize="8.0" alignment="CENTER" leading="5.0" textColor="blue" />
-        <paraStyle name="LineValueLeft" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="5.0" textColor="blue" />
+        <paraStyle name="LineValueLeft" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" textColor="blue" />
+
+        <paraStyle name="LFooter" fontName="Helvetica" fontSize="8.0" alignement="LEFT" />
+        <paraStyle name="LFooterEnd" fontName="Helvetica" fontSize="8.0" alignement="LEFT" leading="30" />
 
 
     </stylesheet>
@@ -126,25 +145,63 @@
 
         <!-- Picking Ticket header values -->
 
-        <blockTable colWidths="20.0,70.0,225.0,5.0,80.0,120.0,5.0,242.0,80.0" style="HeaderInfos">
+        <blockTable colWidths="20.0,295.0,5.0,80.0,120.0,5.0,242.0,80.0" style="HeaderInfos">
             <tr>
                 <td>
                     <para style="HeaderInfosTitle"></para>
-                </td>
-                <td>
-                    <para style="HeaderInfosTitle">FO ref.:</para>
-                    <para style="HeaderInfosTitle">Origin ref.:</para>
-                    <para style="HeaderInfosTitle">Incoming ref:</para>
-                    <para style="HeaderInfosTitle">Category:</para>
-                    <para style="HeaderInfosTitle">Total items:</para>
-                </td>
-                <td>
-                    <para style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.name or '-' ]]</para>
-                    <para style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.client_order_ref and pt.sale_id.client_order_ref or '-' ]]</para>
-                    <para style="HeaderInfosValue">[[ pt.incoming_id.name or '-' ]]</para>
-                    <para style="HeaderInfosValue">[[ pt.sale_id and getSel(pt.sale_id, 'categ') or '-' ]]</para>
-                    <para style="HeaderInfosValue">[[ getNbItems(pt) ]]</para>
-                </td>
+				</td>
+				<td>
+					<blockTable colWidths="100.0,195.0" style="HeaderInfos2">
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">FO ref.:</para>
+							</td>
+							<td>
+                    			<parawrap style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.name or '-' ]]</parawrap>
+							</td>
+						</tr>
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">Origin ref.:</para>
+							</td>
+							<td>
+                    			<parawrap style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.client_order_ref and pt.sale_id.short_client_ref or '-' ]]</parawrap>
+							</td>
+						</tr>
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">Incoming ref:</para>
+							</td>
+							<td>
+                    			<para style="HeaderInfosValue">[[ pt.incoming_id.name or '-' ]]</para>
+							</td>
+						</tr>
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">Supplier Packing List:</para>
+							</td>
+							<td>
+                    			<para style="HeaderInfosValue">[[ pt.packing_list or '-' ]]</para>
+							</td>
+						</tr>
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">Category:</para>
+							</td>
+							<td>
+                    			<para style="HeaderInfosValue">[[ pt.sale_id and getSel(pt.sale_id, 'categ') or '-' ]]</para>
+							</td>
+						</tr>
+						<tr>
+							<td>
+                    			<para style="HeaderInfosTitle">Total items:</para>
+							</td>
+							<td>
+                    			<para style="HeaderInfosValue">[[ getNbItems(pt) ]]</para>
+							</td>
+						</tr>
+					</blockTable>
+				</td>
                 <td>
                     <para style="HeaderInfosTitle"></para>
                 </td>
@@ -204,7 +261,7 @@
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="30.0,100.0,220.0,40.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesHeader">
+        <blockTable colWidths="30.0,100.0,220.0,55.0,55.0,55.0,55.0,55.0,75.0,50.0,20.0,20.0,20.0" style="LinesHeader">
             <tr>
                 <td>
                     <para style="LineHeader">Item</para>
@@ -251,10 +308,10 @@
                     <para style="LineHeader"></para>
                 </td>
                 <td>
-                    <para style="LineHeaderLeft">Comment</para>
+                    <para style="LineHeaderLeft">Changed article</para>
                 </td>
                 <td>
-                    <para style="LineHeaderLeft">Changed article</para>
+                    <para style="LineHeaderLeft">Comment</para>
                 </td>
                 <td>
                     <para style="LineHeader"></para>
@@ -288,7 +345,7 @@
 
         <pto>
             <pto_header>
-                <blockTable colWidths="30.0,100.0,220.0,40.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesHeader">
+                <blockTable colWidths="30.0,100.0,220.0,55.0,55.0,55.0,55.0,55.0,75.0,50.0,20.0,20.0,20.0" style="LinesHeader">
                     <tr>
                         <td>
                             <para style="LineHeader">Item</para>
@@ -372,7 +429,7 @@
             </pto_header>
 
             <!-- Lines -->
-            <blockTable colWidths="30.0,100.0,220.0,40.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" rowHeights="15.0" style="LinesValues">
+            <blockTable colWidths="30.0,100.0,220.0,55.0,55.0,55.0,55.0,55.0,75.0,50.0,20.0,20.0,20.0" style="LinesValues">
                 [[ repeatIn(getLines(pt), 'm', 'blockTable') ]]
                 [[ m.state == 'cancel' and removeParentNode('blockTable') ]]
                 <tr>
@@ -380,16 +437,16 @@
                         <para style="LineValue">[[ not m.no_product and m.line_number or '' ]]</para>
                     </td>
                     <td>
-                        <para style="LineValueLeft">[[ not m.no_product and (m.sale_line_id and m.sale_line_id.product_id.default_code or m.product_id.default_code) or '' ]]</para>
+                        <para style="LineValueLeft">[[ (m.sale_line_id and m.sale_line_id.product_id.default_code or m.product_id.default_code) or '' ]]</para>
                     </td>
                     <td>
-                        <para style="LineValueLeft">[[ not m.no_product and (m.sale_line_id and m.sale_line_id.product_id.name or m.product_id.name) or '']]</para>
+                        <para style="LineValueLeft">[[ (m.sale_line_id and m.sale_line_id.product_id.name or m.product_id.name) or '']]</para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.location_id.name ]]</para>
                     </td>
                     <td>
-                        <para style="LineValue">[[ formatLang(getStock(m) or 0.00, digits=get_digits(dp='Product UoM')) ]]</para>
+                        <para style="LineValue">[[ objects[0].state != 'done' and formatLang(getStock(m) or 0.00, digits=get_digits(dp='Product UoM')) or '' ]]</para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.product_id.uom_id.name ]]</para>
@@ -399,7 +456,7 @@
                         <para style="LineValueBold">[[ not m.no_product and formatLang(m.product_qty, digits=get_digits(dp='Product UoM')) or removeParentNode('para') ]]</para>
                     </td>
                     <td>
-                        <para style="LineValue"> </para>
+                        <para style="LineValue">[[ objects[0].backorder_id and objects[0].state == 'done' and formatLang(m.product_qty, digits=get_digits(dp='Product UoM')) ]]</para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.prodlot_id and m.prodlot_id.name or '' ]]</para>
@@ -422,10 +479,10 @@
                         <para style="LineValue"></para>
                     </td>
                     <td>
-                        <para style="LineValueLeft">[[ m.comment or '' ]]</para>
+                        <para style="LineValueLeft">[[ m.sale_line_id and m.sale_line_id.product_id != m.product_id and '[%s] %s' % (m.product_id.default_code, m.product_id.name) or '' ]]</para>
                     </td>
                     <td>
-                        <para style="LineValueLeft">[[ m.sale_line_id and m.sale_line_id.product_id != m.product_id and '[%s] %s' % (m.product_id.default_code, m.product_id.name) or '' ]]</para>
+                        <parawrap style="LineValueLeft">[[ m.comment or '' ]]</parawrap>
                     </td>
                     <td>
                         <para style="LineValue"></para>
@@ -463,11 +520,80 @@
 
         </pto>
 
-        <blockTable style="NoteTable">
+        <blockTable colWidths="810.0" style="NoteTable">
             <tr>
                 <td>
                     <para style="HeaderInfosTitle">Notes :</para>
                     <para style="HeaderInfosValue">[[ pt.note or '-' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="LineValue">
+            <font color="white"> </font>
+        </para>
+        <para style="LineValue">
+            <font color="white"> </font>
+        </para>
+        <para style="LineValue">
+            <font color="white"> </font>
+        </para>
+
+        <blockTable colWidths="51.0,253.0,253.0,253.0" style="FooterInfo" keepWithNext="1">
+            <tr>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+                <td>
+                    <para style="LFooter">Approved by :</para>
+                </td>
+                <td>
+                    <para style="LFooter">Picked by :</para>
+                </td>
+                <td>
+                    <para style="LFooter">Validated by :</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="LFooter">Name</para>
+                </td>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="LFooter">Date</para>
+                </td>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+                <td>
+                    <para style="LFooter"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="LFooterEnd">Signature</para>
+                </td>
+                <td>
+                    <para style="LFooterEnd"> </para>
+                </td>
+                <td>
+                    <para style="LFooterEnd"> </para>
+                </td>
+                <td>
+                    <para style="LFooterEnd"> </para>
                 </td>
             </tr>
         </blockTable>

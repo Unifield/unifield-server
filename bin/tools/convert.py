@@ -332,6 +332,7 @@ form: module.record_id""" % (xml_id,)
         if rec.get('target_filename'):
             res['target_filename'] = rec.get('target_filename')
 
+        res['run_in_background'] = rec.get('run_in_background', False)
         res['multi'] = rec.get('multi') and eval(rec.get('multi','False'))
 
         xml_id = rec.get('id','').encode('utf8')
@@ -356,7 +357,11 @@ form: module.record_id""" % (xml_id,)
             keyword = str(rec.get('keyword', 'client_print_multi'))
             value = 'ir.actions.report.xml,'+str(id)
             replace = rec.get('replace', True)
-            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, res['name'], [res['model']], value, replace=replace, isobject=True, xml_id=xml_id)
+            linked_views = []
+            if rec.get('view_ids'):
+                for x in rec.get('view_ids').split(','):
+                    linked_views.append(self.id_get(cr,x))
+            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, res['name'], [res['model']], value, replace=replace, isobject=True, xml_id=xml_id, view_ids=linked_views)
         elif self.mode=='update' and eval(rec.get('menu','False'))==False:
             # Special check for report having attribute menu=False on update
             value = 'ir.actions.report.xml,'+str(id)
@@ -519,7 +524,11 @@ form: module.record_id""" % (xml_id,)
             keyword = rec.get('key2','').encode('utf-8') or 'client_action_relate'
             value = 'ir.actions.act_window,'+str(id)
             replace = rec.get('replace','') or True
-            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, xml_id, [src_model], value, replace=replace, isobject=True, xml_id=xml_id)
+            linked_views = []
+            if rec.get('view_ids'):
+                for x in rec.get('view_ids').split(','):
+                    linked_views.append(self.id_get(cr,x))
+            self.pool.get('ir.model.data').ir_set(cr, self.uid, 'action', keyword, xml_id, [src_model], value, replace=replace, isobject=True, xml_id=xml_id, view_ids=linked_views)
         # TODO add remove ir.model.data
 
     def _tag_ir_set(self, cr, rec, data_node=None):
@@ -827,6 +836,11 @@ form: module.record_id""" % (xml_id,)
                             and model._columns[f_name]._type == 'reference':
                         val = self.model_id_get(cr, f_ref)
                         f_val = val[0] + ',' + str(val[1])
+                    elif f_name in model._columns and model._columns[f_name]._type == 'many2many':
+                        to_link = []
+                        for link_id in f_ref.split(','):
+                            to_link.append(self.model_id_get(cr, link_id)[1])
+                        f_val = [(6, 0, to_link)]
                     else:
                         f_val = self.id_get(cr, f_ref)
             else:
@@ -835,7 +849,6 @@ form: module.record_id""" % (xml_id,)
                     if isinstance(model._columns[f_name], osv.fields.integer):
                         f_val = int(f_val)
             res[f_name] = f_val
-
         id = self.pool.get('ir.model.data')._update(cr, self.uid, rec_model, self.module, res, rec_id or False, not self.isnoupdate(data_node), noupdate=self.isnoupdate(data_node), mode=self.mode, context=rec_context )
         if rec_id:
             self.idref[rec_id] = int(id)
@@ -952,7 +965,7 @@ def convert_csv_import(cr, module, fname, csvcontent, idref=None, mode='init',
             datas.append(map(lambda x: misc.ustr(x), line))
         except:
             logger.error("Cannot import the line: %s", line)
-    result, rows, warning_msg, dummy = pool.get(model).import_data(cr, uid, fields, datas,mode, module, noupdate, filename=fname_partial)
+    result, rows, warning_msg, dummy = pool.get(model).import_data(cr, uid, fields, datas,mode, module, noupdate, filename=fname_partial, context={'from_system': True})
     if result < 0:
         # Report failed import and abort module install
         raise Exception(_('Module loading failed: file %s/%s could not be processed:\n %s') % (module, fname, warning_msg))

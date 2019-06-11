@@ -97,6 +97,7 @@ class _column(object):
         self.hide_default_menu = hide_default_menu
         self.group_operator = args.get('group_operator', False)
         self.m2o_order = args.get('m2o_order', False)
+        self.sort_column = False
         for a in args:
             if args[a]:
                 setattr(self, a, args[a])
@@ -198,6 +199,7 @@ class float(_column):
 
         # custom fields
         self.computation = args.get('computation', False)
+        self.related_uom = args.get('related_uom', False)
 
     def digits_change(self, cr):
         if self.digits_compute:
@@ -772,6 +774,7 @@ class function(_column):
 
         # custom fields
         self.computation = args.get('computation', False)
+        self.related_uom = args.get('related_uom', False)
 
         if args.get('_fnct_migrate', False):
             self._fnct_migrate = args['_fnct_migrate']

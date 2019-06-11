@@ -23,12 +23,7 @@ from osv import fields, osv
 from tools.translate import _
 from tools import misc
 from tools import config
-import base64
 import os
-from cryptography.fernet import Fernet
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import StringIO
 from tools import webdav
 import zipfile
@@ -39,30 +34,11 @@ import logging
 import requests
 import time
 
-class crypt():
-    def __init__(self, password):
-        password = bytes(password)
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            iterations=100000,
-            salt=password,
-            backend=default_backend()
-        )
-        key = base64.urlsafe_b64encode(kdf.derive(password))
-        self.Fernet = Fernet(key)
-
-    def encrypt(self, string):
-        return self.Fernet.encrypt(string)
-
-    def decrypt(self, string):
-        return self.Fernet.decrypt(bytes(string))
-
-
 
 
 class msf_instance(osv.osv):
     _name = 'msf.instance'
+    _trace = True
 
     def _get_current_instance_level(self, cr, uid, ids, fields, arg, context=None):
         if not context:
@@ -251,6 +227,9 @@ class msf_instance(osv.osv):
         }
 
     def create(self, cr, uid, vals, context=None):
+        if 'state' not in vals:
+            # state by default at creation time = Draft: add it in vals to make it appear in the Track Changes
+            vals['state'] = 'draft'
         # Check if lines are imported from coordo; if now, create those
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         if 'parent_id' in vals and 'level' in vals and vals['level'] == 'project':
@@ -512,7 +491,7 @@ class msf_instance_cloud(osv.osv):
             identifier = self.read(cr, uid, id, ['instance_identifier'], context=context)['instance_identifier']
             if not identifier:
                 raise osv.except_osv(_('Warning !'), _('Unable to store password if Instance identifier is not set.'))
-            crypt_o = crypt(identifier)
+            crypt_o = misc.crypt(identifier)
             self.write(cr, uid, id, {'cloud_password': crypt_o.encrypt(value)}, context=context)
         return True
 
@@ -525,7 +504,7 @@ class msf_instance_cloud(osv.osv):
         }
         if d['cloud_password'] and d['instance_identifier']:
             try:
-                crypt_o = crypt(d['instance_identifier'])
+                crypt_o = misc.crypt(d['instance_identifier'])
                 ret['password'] = crypt_o.decrypt(d['cloud_password'])
             except:
                 raise osv.except_osv(_('Warning !'), _('Unable to decode password'))
@@ -595,12 +574,6 @@ class msf_instance_cloud(osv.osv):
                 init_time += (sc_info['delay_minute'] or 0) / 60.
                 init_time = init_time % 24
                 data['cloud_schedule_time'] = init_time
-
-                retry_from = (retry_from + (sc_info['delay_minute'] / 60.)) % 24
-                data['cloud_retry_from'] = retry_from
-
-                retry_to = (retry_to + (sc_info['delay_minute'] / 60. )) % 24
-                data['cloud_retry_to'] = retry_to
 
             self.write(cr, uid, x, data, context=context)
 
@@ -820,6 +793,9 @@ class msf_instance_cloud(osv.osv):
                             break
 
                         self._get_backoff(dav, 'OneDrive: retry %s' % error)
+                        if 'timed out' in error or '2130575252' in error:
+                            self._logger.info('OneDrive: session time out')
+                            dav.login()
 
                 except requests.exceptions.RequestException, e:
                     if not self._is_in_time_range(range_data['cloud_retry_from'], range_data['cloud_retry_to']):

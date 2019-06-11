@@ -23,11 +23,12 @@
                     <field name="employee_type" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}" on_change="onchange_type(employee_type)"/>
                     <newline/>
                     <field name="department_id" widget="selection" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
-                    <field name="parent_id"/>
+                    <field name="homere_id_unique" invisible="1"/>
+                    <field name="homere_codeterrain" invisible="1"/>
                 </group>
                 <group colspan="4" col="8">
-                  <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <newline />
                     <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
@@ -92,7 +93,6 @@
           * delete work phone column
           * delete work e-mail column
           * delete department column
-          * delete manager column (parent_id)
           * add employee ID (identification_id) after description (name)
           * add analytic distribution elements:
             * cost center
@@ -113,7 +113,6 @@
                 <field name="work_phone" position="replace"/>
                 <field name="work_email" position="replace"/>
                 <field name="department_id" position="replace"/>
-                <field name="parent_id" position="replace"/>
                 <field name="name" position="after">
                   <field name="identification_id" attrs="{'required': [('employee_type', '=', 'local')]}"/>
                 </field>
@@ -171,10 +170,6 @@
                     <filter icon="gtk-quit" domain="[('employee_type','=','ex')]" name="employee_type_expatriate" string="Expat'" />
                 </xpath>
                 <xpath expr="/search/field[@name='department_id']" position="replace">
-                </xpath>
-                <xpath expr="/search/field[@name='parent_id']" position="replace">
-                </xpath>
-                <xpath expr="//filter[@string='Manager']" position="replace">
                 </xpath>
                 <xpath expr="//filter[@string='Coach']" position="replace">
                 </xpath>

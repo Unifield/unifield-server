@@ -151,29 +151,6 @@ class purchase_order_line(osv.osv):
 
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),}
 
-    def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
-                             partner_id, date_order=False, fiscal_position=False, date_planned=False,
-                             name=False, price_unit=False, notes=False, state=False, old_price_unit=0.00, nomen_manda_0=False,
-                             comment='', context=None):
-        '''
-        if the product is short shelf life we display a warning
-        '''
-        # call to super
-        result = super(purchase_order_line, self).product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
-                                                                       partner_id, date_order, fiscal_position, date_planned,
-                                                                       name, price_unit, notes, state, old_price_unit, nomen_manda_0, comment, context)
-
-        # if the product is short shelf life, display a warning
-        if product:
-            prod_obj = self.pool.get('product.product')
-            if prod_obj.browse(cr, uid, product).is_ssl:
-                warning = {
-                    'title': 'Short Shelf Life product',
-                    'message': _(SHORT_SHELF_LIFE_MESS)
-                }
-                result.update(warning=warning)
-
-        return result
 
 purchase_order_line()
 
@@ -1296,8 +1273,22 @@ class stock_production_lot(osv.osv):
 
         return res
 
+    def _get_has_stock_move(self, cr, uid, ids, field_name, arg, context=None):
+        if isinstance(ids,(long, int)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        res = {}
+        for _id in ids:
+            res[_id] = self.pool.get('stock.move').search(cr, uid, [('prodlot_id', '=', _id)], limit=1, context=context) and True or False
+
+        return res
+
+
     _columns = {
         'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
+        'has_stock_move': fields.function(_get_has_stock_move, string='Has stock move', type="boolean", readonly=True, method=True),
         # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
         'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type", readonly=True),
         #'expiry_date': fields.date('Expiry Date'),
@@ -1307,10 +1298,10 @@ class stock_production_lot(osv.osv):
         'stock_virtual': fields.function(_get_stock_virtual, method=True, type="float", string="Available Stock", select=True,
                                          help="Current available quantity of products with this Batch Numbre Number in company warehouses",
                                          digits_compute=dp.get_precision('Product UoM'), readonly=True,
-                                         fnct_search=_stock_search_virtual,),
+                                         fnct_search=_stock_search_virtual, related_uom='uom_id'),
         'stock_available': fields.function(_get_stock, fnct_search=_stock_search, method=True, type="float", string="Real Stock", select=True,
                                            help="Current real quantity of products with this Batch Number in company warehouses",
-                                           digits_compute=dp.get_precision('Product UoM')),
+                                           digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'src_product_id': fields.function(_get_dummy, fnct_search=_src_product, method=True, type="boolean", string="By product"),
         'kc_check': fields.function(
             _get_checks_all,
@@ -1474,7 +1465,7 @@ class stock_location(osv.osv):
             for f in field_names:
                 result[id].update({f: False,})
         # if product is set to False, it does not make sense to return a stock value, return False for each location
-        if 'product_id' in context and not context['product_id']:
+        if not context.get('product_id'):
             return result
 
         result = super(stock_location, self)._product_value(cr, uid, ids, ['stock_real', 'stock_virtual'], arg, context=context)
@@ -1491,12 +1482,16 @@ class stock_location(osv.osv):
         if context is None:
             context = {}
         # warehouse wizards or inventory screen
-        if view_type == 'tree' and context.get('specific_rules_tree_view', False):
-            view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_location_tree2')
+        if not view_id and view_type == 'tree':
+            view = False
+            if context.get('specific_rules_tree_view', False) and context.get('product_id'):
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_location_tree_specific_rule')
+            elif not context.get('product_id'):
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_location_tree_simple')
             if view:
                 view_id = view[1]
-        result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        return result
+
+        return super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
     _columns = {'stock_real_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Real Stock', multi="get_vals_specific_rules"),
                 'stock_virtual_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Virtual Stock', multi="get_vals_specific_rules"),
@@ -1743,6 +1738,17 @@ Expiry date. Only one line with same data is expected."""))
                 self._name == 'initial.stock.inventory' and 'Initial stock' or 'Physical',
                 inv['id'], inv['name'],
             ))
+
+        if self._name == 'initial.stock.inventory':
+            line_obj = self.pool.get('initial.stock.inventory.line')
+        else:
+            line_obj = self.pool.get('stock.inventory.line')
+
+        line_inactive = line_obj.search(cr, uid, [('inventory_id', 'in', ids), ('location_id.active', '=', False)], context=context)
+        if line_inactive:
+            line_obj.write(cr, uid, line_inactive, {'comment': _('Location is inactive'), 'location_id': False, 'location_not_found': True}, context=context)
+            # should be done in 2 passes
+            line_obj.write(cr, uid, line_inactive, {'to_correct_ok': True}, context=context)
 
         return res
 
@@ -2262,7 +2268,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
         THEN
         coalesce(sum(-m.product_qty)::decimal, 0.0)
         ELSE
-        coalesce(sum(-m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty
+        coalesce(sum(-m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty,
+        pt.uom_id as uom_id
     FROM
         stock_move m
             LEFT JOIN stock_picking p ON (m.picking_id=p.id)
@@ -2271,6 +2278,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
                 LEFT JOIN product_uom pu ON (pt.uom_id=pu.id)
             LEFT JOIN product_uom u ON (m.product_uom=u.id)
             LEFT JOIN stock_location l ON (m.location_id=l.id)
+    WHERE
+        pt.type='product'
     GROUP BY
         m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id,  m.location_dest_id,
         m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id,pt.uom_id
@@ -2291,7 +2300,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
         THEN
         coalesce(sum(m.product_qty)::decimal, 0.0)
         ELSE
-        coalesce(sum(m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty
+        coalesce(sum(m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty,
+        pt.uom_id as uom_id
     FROM
         stock_move m
             LEFT JOIN stock_picking p ON (m.picking_id=p.id)
@@ -2300,6 +2310,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
                 LEFT JOIN product_uom pu ON (pt.uom_id=pu.id)
             LEFT JOIN product_uom u ON (m.product_uom=u.id)
             LEFT JOIN stock_location l ON (m.location_dest_id=l.id)
+    WHERE
+        pt.type='product'
     GROUP BY
         m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id, m.location_dest_id,
         m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id,pt.uom_id

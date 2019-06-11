@@ -49,6 +49,11 @@ OBJ_TO_RECREATE = [
     'msf_field_access_rights.field_access_rule_line',
     'msf_button_access_rights.button_access_rule',
     'ir.rule',
+    'hr.payment.method',
+    'account.analytic.journal',
+    'account.journal',
+    'account.mcdb',
+    'wizard.template',
 ]
 
 
@@ -158,7 +163,7 @@ class update_to_send(osv.osv,fv_formatter):
         'version' : fields.integer('Version', readonly=True),
         'fancy_version' : fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
         'rule_id' : fields.many2one('sync.client.rule','Generating Rule', readonly=True, ondelete="set null"),
-        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
+        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True, select=True),
         'fields':fields.text('Fields', size=128, readonly=True),
         'fieldsvalues': fields.function(fv_formatter.fmt, method=True, type='char'),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
@@ -349,7 +354,10 @@ class update_received(osv.osv,fv_formatter):
         'create_date':fields.datetime('Synchro date/time', readonly=True),
         'execution_date':fields.datetime('Execution date', readonly=True),
         'editable' : fields.boolean("Set editable"),
+        'manually_ran': fields.boolean('Has been manually tried', readonly=True),
+        'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
     }
+
 
     line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)", re.S)
 
@@ -425,11 +433,17 @@ class update_received(osv.osv,fv_formatter):
         else:
             raise Exception("Unable to unfold unknown packet type: " % packet_type)
 
+    def manual_set_as_run(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'run': True, 'log': 'Set manually to run without execution', 'manually_set_run_date': fields.datetime.now(), 'editable': False}, context=context)
+        return True
+
     def run(self, cr, uid, ids, context=None):
         try:
             self.execute_update(cr, uid, ids, context=context)
         except BaseException, e:
             sync_log(self, e)
+        finally:
+            self.write(cr, uid, ids, {'manually_ran': True})
         return True
 
     def execute_update(self, cr, uid, ids=None, priorities=None, context=None):
@@ -664,6 +678,9 @@ class update_received(osv.osv,fv_formatter):
 
             if obj._name == 'ir.translation':
                 self.pool.get('ir.translation')._get_reset_cache_at_sync(cr, uid)
+            elif obj._name == 'ir.model.access':
+                self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+
             # Obvious
             assert len(values) == len(update_ids) == len(versions), \
                 message+"""This error must never occur. Please contact the developper team of this module.\n"""
@@ -947,6 +964,8 @@ class update_received(osv.osv,fv_formatter):
 
                         if update.model == 'res.partner.address' and field == 'partner_id/id':
                             return {'res': False, 'error_message': 'partner_id %s not found' % xmlid}
+                        if update.model == 'account.analytic.line' and field in ('cost_center_id/id', 'destination_id/id'):
+                            return {'res': False, 'error_message': 'Analytic Account %s not found' % xmlid}
                         fb = fallback.get(field, False)
                         if not fb:
                             raise ValueError("no fallback value defined")

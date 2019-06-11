@@ -31,8 +31,12 @@ from decimal import Decimal, ROUND_UP
 import math
 
 import netsvc
-
+from zipfile import ZipFile
+from cStringIO import StringIO
+from base64 import encodestring
 from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
+import logging
+from msf_doc_import.msf_import_export_conf import MODEL_DICT
 
 class lang(osv.osv):
     '''
@@ -663,6 +667,28 @@ class ir_translation(osv.osv):
                 return prod[0]['product_tmpl_id'][0]
         return res_id
 
+    def _audit_product_name(self, cr, uid, ids, vals, context=None):
+        if context.get('sync_update_execution') and vals.get('name') == 'product.template,name' and vals.get('lang'):
+            templ_obj = self.pool.get('product.template')
+            audit_rule_ids = templ_obj.check_audit(cr, uid, 'write')
+            if audit_rule_ids:
+                new_ctx = context.copy()
+                new_ctx['lang'] = vals['lang']
+                template_id = vals.get('res_id')
+                if not template_id and ids:
+                    template_id = self.browse(cr, uid, ids[0], fields_to_fetch=['res_id'], context=new_ctx).res_id
+                if template_id:
+                    previous = templ_obj.read(cr, uid, [template_id], ['name'], context=new_ctx)[0]
+                    audit_obj = self.pool.get('audittrail.rule')
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, templ_obj, template_id, 'write', previous, {template_id: {'name': vals['value']}} , context=context)
+
+
+
+    def write(self, cr, uid, ids, vals, clear=False, context=None):
+        self._audit_product_name(cr, uid, ids, vals, context=context)
+        return super(ir_translation, self).write(cr, uid, ids, vals, clear=clear, context=context)
+
+
     # US_394: Remove duplicate lines for ir.translation
     def create(self, cr, uid, vals, clear=True, context=None):
         if context is None:
@@ -702,10 +728,13 @@ class ir_translation(osv.osv):
                     self.unlink(cr, uid, del_ids, context=context)
                 else:
                     ids = existing_ids
-                res = self.write(cr, uid, ids, vals, context=context)
+                self.write(cr, uid, ids, vals, context=context)
                 return ids[0]
-        res = super(ir_translation, self).create(cr, uid, vals, clear=clear, context=context)
-        return res
+
+        if context.get('sync_update_execution') and vals.get('res_id') and vals.get('name') == 'product.template,name' and vals.get('lang'):
+            self._audit_product_name(cr, uid, False, vals, context=context)
+
+        return super(ir_translation, self).create(cr, uid, vals, clear=clear, context=context)
 
     # US_394: add xml_id for each lines
     def add_xml_ids(self, cr, uid, context=None):
@@ -841,12 +870,9 @@ class finance_tools(osv.osv):
     def check_document_date(self, cr, uid, document_date, posting_date,
                             show_date=False, custom_msg=False, context=None):
         """
-        US-192 document date check rules
-        http://jira.unifield.org/browse/US-192?focusedCommentId=38911&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38911
-
-        Document date should be included within the fiscal year of
-            the posting date it is tied with.
-        01/01/FY <= document date <= 31/12/FY
+        Checks that posting date >= document date
+        Depending on the config made in the Reconfigure Wizard, can also check that the document date is included
+        in the same FY as the related posting date.
 
         :type document_date: orm date
         :type posting_date: orm date
@@ -859,8 +885,6 @@ class finance_tools(osv.osv):
         if custom_msg:
             show_date = False
 
-        # initial check that not (posting_date < document_date)
-        # like was until 1.0-5
         if posting_date < document_date:
             if custom_msg:
                 msg = custom_msg  # optional custom message
@@ -873,18 +897,19 @@ class finance_tools(osv.osv):
                         'Posting date should be later than Document Date.')
             raise osv.except_osv(_('Error'), msg)
 
-        # US-192 check
-        # 01/01/FY <= document date <= 31/12/FY
-        posting_date_obj = self.pool.get('date.tools').orm2date(posting_date)
-        check_range_start = self.get_orm_date(1, 1, year=posting_date_obj.year)
-        check_range_end = posting_date
-        if not (check_range_start <= document_date <= check_range_end):
-            if show_date:
-                msg = _('Document date (%s) should be in posting date FY') % (
-                    document_date, )
-            else:
-                msg = _('Document date should be in posting date FY')
-            raise osv.except_osv(_('Error'), msg)
+        # if the system doesn't allow doc dates from previous FY, check that this condition is met
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if not setup or not setup.previous_fy_dates_allowed:
+            # 01/01/FY <= document date <= 31/12/FY
+            posting_date_obj = self.pool.get('date.tools').orm2date(posting_date)
+            check_range_start = self.get_orm_date(1, 1, year=posting_date_obj.year)
+            check_range_end = self.get_orm_date(31, 12, year=posting_date_obj.year)
+            if not (check_range_start <= document_date <= check_range_end):
+                if show_date:
+                    msg = _('Document date (%s) should be in posting date FY') % (document_date, )
+                else:
+                    msg = _('Document date should be in posting date FY')
+                raise osv.except_osv(_('Error'), msg)
 
     def truncate_amount(self, amount, digits):
         stepper = pow(10.0, digits)
@@ -892,3 +917,130 @@ class finance_tools(osv.osv):
 
 finance_tools()
 
+
+class user_rights_tools(osv.osv_memory):
+    _name = 'user_rights.tools'
+    _logger = logging.getLogger('UR import')
+    def load_ur_zip(self, cr, uid, plain_zip, sync_server=False, logger=False, context=None):
+        '''
+            load UR from zip file
+        plain_zip: content of the zip file as a string
+        sync_server: method is executed from sync server: extra check needed else from client then UR not in files must be deleted
+        logger: where to log progression of import
+        '''
+
+        if context is None:
+            context = {}
+        zp = StringIO(plain_zip)
+        ur = self.pool.get('user_rights.tools').unzip_file(cr, uid, zp, context=context)
+        z = ZipFile(zp)
+
+
+        uac_processor = self.pool.get('user.access.configurator')
+        f = z.open(ur['UAC'])
+        data = encodestring(f.read())
+        f.close()
+        if logger:
+            log_line = 'Importing %s' % (ur['UAC'],)
+            self._logger.info(log_line)
+            logger.append(log_line)
+            logger.write()
+
+        wiz_id = uac_processor.create(cr, uid, {'file_to_import_uac': data})
+        uac_processor.do_process_uac(cr, uid, [wiz_id])
+
+        import_key = {}
+        for x in MODEL_DICT:
+            import_key[MODEL_DICT[x]['model']] = x
+
+        context['from_synced_ur'] = True
+        for model in ['msf_button_access_rights.button_access_rule', 'ir.model.access', 'ir.rule', 'ir.actions.act_window', 'msf_field_access_rights.field_access_rule', 'msf_field_access_rights.field_access_rule_line']:
+            zip_to_import = ur[model]
+            obj_to_import = self.pool.get(model)
+            if not isinstance(zip_to_import, list):
+                zip_to_import = [zip_to_import]
+
+            if not sync_server and hasattr(obj_to_import, '_common_import') and obj_to_import._common_import:
+                cr.execute("update %s set imported_flag='f'" % (obj_to_import._table)) # not_a_user_entry
+
+            for zp_f in zip_to_import:
+                if logger:
+                    log_line = 'Importing %s' % (zp_f)
+                    self._logger.info(log_line)
+                    logger.append(log_line)
+                    logger.write()
+
+                file_d = z.open(zp_f, 'r')
+
+                wiz_key = import_key[model]
+                wiz = self.pool.get('msf.import.export').create(cr, uid, {'model_list_selection': wiz_key, 'import_file': encodestring(file_d.read())}, context=context)
+                file_d.close()
+                self.pool.get('msf.import.export').import_xml(cr, uid, [wiz], raise_on_error=True, context=context)
+                if sync_server and model == 'msf_field_access_rights.field_access_rule_line':
+                    cr.execute("""select d.name from msf_field_access_rights_field_access_rule_line line
+                            left join ir_model_fields f on f.id = line.field
+                            left join ir_model_data d on d.res_id = line.id and d.model='msf_field_access_rights.field_access_rule_line' and d.module!='sd'
+                        where f.state='deprecated'
+                        """)
+                    error = [x[0] for x in cr.fetchall()]
+                    if error:
+                        raise osv.except_osv(_('Warning !'), _("FARL %s the following rules are on deprecated rows:\n - %s") % (zp_f, "\n - ".join(error)))
+
+
+            if not sync_server and hasattr(obj_to_import, '_common_import') and obj_to_import._common_import:
+                dom = [('imported_flag', '=', False)]
+                if model == 'ir.model.access':
+                    dom += [('from_system', '=', False)]
+                to_del_ids = obj_to_import.search(cr, uid, dom, context=context)
+                if to_del_ids:
+                    if model == 'msf_button_access_rights.button_access_rule':
+                        obj_to_import.write(cr, uid, to_del_ids, {'group_ids': [(6, 0, [])]}, context=context)
+                    else:
+                        obj_to_import.unlink(cr, uid, to_del_ids, context=context)
+                    self._logger.info("User Rigths model %s, %d records deleted" % (model, len(to_del_ids)))
+        return True
+
+    def unzip_file(self, cr, uid, zfile, raise_error=False, context=None):
+        ur = {
+            'UAC': False,
+            'msf_button_access_rights.button_access_rule': [],
+            'ir.model.access': False,
+            'msf_field_access_rights.field_access_rule': False,
+            'msf_field_access_rights.field_access_rule_line': False,
+            'ir.rule': False,
+            'ir.actions.act_window': False,
+        }
+
+        expected_files = 7
+        z = ZipFile(zfile)
+        nb = 0
+        for f in z.infolist():
+            if f.filename.endswith('/'):
+                continue
+            nb += 1
+            if 'button_access' in f.filename.lower():
+                ur['msf_button_access_rights.button_access_rule'].append(f.filename)
+            elif 'access_control' in f.filename.lower():
+                ur['ir.model.access'] = f.filename
+            elif 'record_rules' in f.filename.lower():
+                ur['ir.rule'] = f.filename
+            elif 'window' in f.filename.lower():
+                ur['ir.actions.act_window'] = f.filename
+            elif 'user_access' in f.filename.lower():
+                ur['UAC'] = f.filename
+            elif 'rule_lines' in f.filename.lower():
+                ur['msf_field_access_rights.field_access_rule_line'] = f.filename
+            elif 'field_access_rules' in f.filename.lower():
+                ur['msf_field_access_rights.field_access_rule'] = f.filename
+            elif raise_error:
+                raise osv.except_osv(_('Warning !'), _('Extra file "%s" found in zip !') % (f.filename))
+
+        if raise_error:
+            if nb != expected_files:
+                raise osv.except_osv(_('Warning !'), _("%s files found, %s expected.") % (nb, expected_files))
+
+        z.close()
+
+        return ur
+
+user_rights_tools()

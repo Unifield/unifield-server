@@ -220,7 +220,7 @@ class shipment_processor(osv.osv):
                     'sale_order_id': family.sale_order_id and family.sale_order_id.id or False,
                     'from_pack': family.from_pack,
                     'to_pack': family.to_pack,
-                    'selected_number': family.num_of_packs,
+                    'selected_number': 0 if self._name == 'return.shipment.processor' else family.num_of_packs,
                     'pack_type': family.pack_type and family.pack_type.id or False,
                     'length': family.length,
                     'width': family.width,
@@ -312,6 +312,7 @@ class shipment_family_processor(osv.osv):
     _name = 'shipment.family.processor'
     _inherit = 'ppl.family.processor'
     _description = 'Family of the shipment to process'
+    _order = 'sale_order_id, ppl_id, from_pack, id'
 
     def _get_pack_info(self, cr, uid, ids, field_name, args, context=None):
         """
@@ -346,7 +347,7 @@ class shipment_family_processor(osv.osv):
         ),
         'sale_order_id': fields.many2one(
             'sale.order',
-            string='Sale Order Ref.',
+            string='Field Order Ref.',
             readonly=True,
         ),
         'ppl_id': fields.many2one(

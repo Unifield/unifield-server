@@ -27,11 +27,19 @@
       <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="20,-1" thickness="0.5"/>
       <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
     </blockTableStyle>
+    <blockTableStyle id="TableauNotes">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="20,-1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="20,-1" thickness="0.5"/>
+    </blockTableStyle>
     <initialize>
       <paraStyle name="all" alignment="justify"/>
     </initialize>
     <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="16.0" leading="20" alignment="CENTER" />
     <paraStyle name="P2" fontName="Helvetica" fontSize="8.0" leading="10"/>
+    <paraStyle name="P2Bold" fontName="Helvetica-Bold" fontSize="8.0" leading="10"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT"/>
     <paraStyle name="P4Grey" textColor="#747474" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT"/>
@@ -73,14 +81,14 @@
     </para>
     
     <para>[[repeatIn(objects,'o')]]</para>
-    <blockTable colWidths="150.0,150.0,150.0,150.0,150.0,150.0" style="Tableau3">
+    <blockTable colWidths="175.0,125.0,150.0,200.0,100.0,150.0" style="Tableau3">
     <tr>
-         <td><para style="P2">[[ getHeaderLine(o)[0] ]]</para></td>
-         <td><para style="P2">[[ getHeaderLine(o)[1] ]]</para></td>
-         <td><para style="P2">[[ getHeaderLine(o)[2] ]]</para></td>
-         <td><para style="P2">[[ getHeaderLine(o)[3] ]]</para></td>
-         <td><para style="P2">[[ getHeaderLine(o)[4] ]]</para></td>
-         <td><para style="P2">[[ getHeaderLine(o)[5] ]]</para></td>
+         <td><para style="P2">Order Ref: [[ o.name ]]</para></td>
+         <td><para style="P2">Status: [[ getSel(o, 'state') ]]</para></td>
+         <td><para style="P2">Created: [[ o.date_order ]]</para></td>
+         <td><para style="P2">Confirmed Delivery Date: [[ isDate(o.delivery_confirmed_date) and o.delivery_confirmed_date or '' ]]</para></td>
+         <td><para style="P2">Nb Items: [[ len(o.order_line) ]]</para></td>
+         <td><para style="P2">Estimated Amount: [[ o.amount_total ]]</para></td>
     </tr>     	  
      </blockTable>
     <blockTable colWidths="25.0,95.0,180.0,40.0,50.0,50.0,70.0,70.0,70.0,60.0,55.0,80.0,60.0" style="Tableau3" >
@@ -126,7 +134,7 @@
         </td>
       </tr>
       <tr>
-         <para style="P4">[[ repeatIn(getPOLines(o.id), 'line') ]]</para>
+         <para style="P4">[[ repeatIn(getPOLines(o.id, getRunParmsRML('pending_only_ok')), 'line') ]]</para>
         <td>
           <para style="P4Center">[[ line['raw_state'] not in ['cancel', 'cancel_r'] and line['item'] or removeParentNode('para') ]]</para>
           <para style="P4CenterGrey">[[ line['raw_state'] in ['cancel', 'cancel_r'] and line['item'] or removeParentNode('para') ]]</para>
@@ -182,6 +190,17 @@
      </tr>
     
     </blockTable>
+
+    <blockTable colWidths="905.0" style="TableauNotes">
+        [[ getRunParmsRML('include_notes_ok') or removeParentNode('blockTable') ]]
+        <tr>
+            <td>
+                <para style="P2Bold">Notes :</para>
+                <para style="P4Left">[[o.notes]]</para>
+            </td>
+        </tr>
+    </blockTable>
+
     <section>
       <para style="P2">
         <font color="white"> </font>

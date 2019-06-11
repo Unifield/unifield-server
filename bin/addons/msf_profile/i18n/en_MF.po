@@ -889,6 +889,102 @@ msgstr "Currency"
 msgid "fo_import_comment"
 msgstr "Comment"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:132
+#, python-format
+msgid "ppl_import_update_item"
+msgstr "Item"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:132
+#, python-format
+msgid "ppl_import_update_code"
+msgstr "Code"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:132
+#, python-format
+msgid "ppl_import_update_description"
+msgstr "Description"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:133
+#, python-format
+msgid "ppl_import_update_comment"
+msgstr "Comment"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:133
+#, python-format
+msgid "ppl_import_update_tot_qty"
+msgstr "Total Qty to pack"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:133
+#, python-format
+msgid "ppl_import_update_batch"
+msgstr "Batch #"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:134
+#, python-format
+msgid "ppl_import_update_expiry"
+msgstr "Expiry Date #"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:134
+#, python-format
+msgid "ppl_import_update_kc"
+msgstr "KC"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:134
+#, python-format
+msgid "ppl_import_update_dg"
+msgstr "DG"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:135
+#, python-format
+msgid "ppl_import_update_cs"
+msgstr "CS"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:135
+#, python-format
+msgid "ppl_import_update_packed"
+msgstr "Qty Packed"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:135
+#, python-format
+msgid "ppl_import_update_from_p"
+msgstr "From pack"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:136
+#, python-format
+msgid "ppl_import_update_to_p"
+msgstr "To pack"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:136
+#, python-format
+msgid "ppl_import_update_weight"
+msgstr "Weight per pack (kg)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:136
+#, python-format
+msgid "ppl_import_update_size"
+msgstr "Size (w x l x h) (cm)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:137
+#, python-format
+msgid "ppl_import_update_pack_t"
+msgstr "Pack Type"
+
 #. modules: msf_doc_import
 #: code:addons/msf_doc_import/wizard/__init__.py:58
 #: code:addons/msf_doc_import/wizard/__init__.py:63

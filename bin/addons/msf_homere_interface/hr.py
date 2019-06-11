@@ -25,7 +25,7 @@ from osv import osv
 from osv import fields
 from lxml import etree
 from tools.translate import _
-
+from msf_field_access_rights.osv_override import _get_instance_level
 
 class hr_payment_method(osv.osv):
     _name = 'hr.payment.method'
@@ -40,6 +40,30 @@ class hr_payment_method(osv.osv):
         ('name_uniq', 'UNIQUE(name)', 'The payment method name must be unique.')
     ]
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        result = super(hr_payment_method, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree':
+            if _get_instance_level(self, cr, uid) == 'hq':
+                root = etree.fromstring(result['arch'])
+                root.set('editable', 'top')
+                root.set('hide_new_button', '0')
+                root.set('hide_edit_button', '0')
+                root.set('hide_delete_button', '0')
+                result['arch'] = etree.tostring(root)
+        return result
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if 'name' in vals and not context.get('sync_update_execution'):
+            existing_ids = self.search(cr, uid, [('id', 'in', ids), ('name', '!=', vals['name'])])
+            if existing_ids and self.pool.get('hr.employee').search(cr, uid, [('active', 'in', ['t', 'f']), ('payment_method_id', 'in', existing_ids)]):
+                raise osv.except_osv(_('Error'), _("You can't change a payment method used at least in one employee"))
+
+        return super(hr_payment_method, self).write(cr, uid, ids, vals, context=context)
 hr_payment_method()
 
 
@@ -122,7 +146,7 @@ class hr_employee(osv.osv):
         'allow_edition': fields.function(_get_allow_edition, method=True, type='boolean', store=False, string="Allow local employee edition?", readonly=True),
         'photo': fields.binary('Photo', readonly=True),
         'ex_allow_edition': fields.function(_get_ex_allow_edition, method=True, type='boolean', store=False, string="Allow expat employee edition?", readonly=True),
-        'payment_method_id': fields.many2one('hr.payment.method', string='Payment Method', required=False),
+        'payment_method_id': fields.many2one('hr.payment.method', string='Payment Method', required=False, ondelete='restrict'),
         'bank_name': fields.char('Bank Name', size=256, required=False),
         'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
     }
@@ -175,13 +199,30 @@ class hr_employee(osv.osv):
                         employee_name = employee.get('name', False)
                         if employee_name and employee_name not in names:
                             names.append(employee_name)
-                    raise osv.except_osv(_('Error'), _('Some employees have the same unique code: %s') % (';'.join(names)))
+                    raise osv.except_osv(_('Error'), _('Several employees have the same Identification No "%s": %s') %
+                                         (e.identification_id, ' ; '.join(names)))
                     return False
         return True
 
     _constraints = [
-        (_check_unicity, "Another employee has the same unique code.", ['identification_id']),
+        (_check_unicity, "Another employee has the same Identification No.", ['identification_id']),
     ]
+
+    def _check_employe_dest_cc_compatibility(self, cr, uid, employee_id, context=None):
+        """
+        Raises an error in case the employee Destination and Cost Center are not compatible
+        """
+        if context is None:
+            context = {}
+        ad_obj = self.pool.get('analytic.distribution')
+        employee_fields = ['destination_id', 'cost_center_id', 'name_resource']
+        employee = self.browse(cr, uid, employee_id, fields_to_fetch=employee_fields, context=context)
+        emp_dest = employee.destination_id
+        emp_cc = employee.cost_center_id
+        if emp_dest and emp_cc:
+            if not ad_obj.check_dest_cc_compatibility(cr, uid, emp_dest.id, emp_cc.id, context=context):
+                raise osv.except_osv(_('Error'), _('Employee %s: the Cost Center %s is not compatible with the Destination %s.') %
+                                     (employee.name_resource, emp_cc.code or '', emp_dest.code or ''))
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -203,18 +244,9 @@ class hr_employee(osv.osv):
             # Raise an error if employee is created manually
             if (not context.get('from', False) or context.get('from') not in ['yaml', 'import']) and not context.get('sync_update_execution', False) and not allow_edition:
                 raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
-#            # Raise an error if no cost_center
-#            if not vals.get('cost_center_id', False):
-#                raise osv.except_osv(_('Warning'), _('You have to complete Cost Center field before employee creation!'))
-            # Add Nat. staff by default if not in vals
-            if not vals.get('destination_id', False):
-                try:
-                    ns_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_destination_national_staff')[1]
-                except ValueError:
-                    ns_id = False
-                vals.update({'destination_id': ns_id})
-
-        return super(hr_employee, self).create(cr, uid, vals, context)
+        employee_id = super(hr_employee, self).create(cr, uid, vals, context)
+        self._check_employe_dest_cc_compatibility(cr, uid, employee_id, context=context)
+        return employee_id
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -263,6 +295,7 @@ class hr_employee(osv.osv):
             employee_id = super(hr_employee, self).write(cr, uid, emp.id, new_vals, context)
             if employee_id:
                 res.append(employee_id)
+            self._check_employe_dest_cc_compatibility(cr, uid, emp.id, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
@@ -308,6 +341,11 @@ class hr_employee(osv.osv):
             fields = form.xpath('/' + view_type + '//field[@name="cost_center_id"]')
             for field in fields:
                 field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
+            # Change DEST field
+            dest_fields = form.xpath('/' + view_type + '//field[@name="destination_id"]')
+            for dest_field in dest_fields:
+                dest_field.set('domain', "[('category', '=', 'DEST'), ('type', '!=', 'view'), "
+                                         "('dest_compatible_with_cc_ids', '=', cost_center_id)]")
             # Change FP field
             try:
                 fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]

@@ -34,6 +34,8 @@ class field_access_rule(osv.osv):
 
     _name = "msf_field_access_rights.field_access_rule"
     _description = 'Field Access Rule'
+    _inherit = 'common.import.ur'
+    _auto = True
 
     def _get_all_model_ids(self, cr, uid, model_name):
         def recur_get_model(model, res):
@@ -60,14 +62,14 @@ class field_access_rule(osv.osv):
         'instance_level': fields.selection((('hq', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')), 'Instance Level', help='The Instance Level that this rule applies to'),
         'domain_id': fields.many2one('ir.filters', 'Filter', domain='[("model_id","=",model_name)]', ondelete="set null", help='Choose a pre-defined Filter to filter which records this rule applies to. Click the Create New Filter button, define some seach criteria, save your custom filter, then return to this form and type your new filters name here to use it for this rule. Note: Due to a technical constraint, all "like" or "ilike" operators will be automatically replaced with "=".'),
         'domain_text': fields.text('Advanced Filter', help='The Filter that chooses which records this rule applies to'),
-        'group_ids': fields.many2many('res.groups', 'field_access_rule_groups_rel', 'field_access_rule_id', 'group_id', 'Groups', help='A list of groups that should be affected by this rule. If you leave this empty, this rule will apply to all groups.'),
+        'group_ids': fields.many2many('res.groups', 'field_access_rule_groups_rel', 'field_access_rule_id', 'group_id', 'Groups', help='A list of groups that should be affected by this rule. If you leave this empty, this rule will apply to all groups.', order_by='name'),
         'field_access_rule_line_ids': fields.one2many('msf_field_access_rights.field_access_rule_line', 'field_access_rule', 'Field Access Rule Lines', help='A list of fields and their specific access and synchronization propagation rules that will be implemented by this rule. If you have left out any fields, users will have full write access, and all values will be synchronized when the record is created or editted.', required=True),
         'comment': fields.text('Comment', help='A description of what this rule does'),
         'active': fields.boolean('Active', help='If checked, this rule will be applied. This rule must be validated first.'),
         'status': fields.selection((('not_validated', 'Not Validated'), ('validated', 'Model Validated'), ('domain_validated', 'Filter Validated')), 'Status', help='The validation status of the rule. The Filter must be valid for this rule to be validated.', required=True),
 
         'family_model_ids': fields.function(_get_family_model_ids, string='Family Model IDs', type='many2many', relation='ir.model', method=True),
-        }
+    }
 
     _defaults = {
         'active': False,

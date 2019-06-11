@@ -108,6 +108,7 @@ class ir_values(osv.osv):
         'user_id': fields.many2one('res.users', 'User', ondelete='cascade', select=True),
         'company_id': fields.many2one('res.company', 'Company', select=True),
         'sequence': fields.integer('Sequence'),
+        'view_ids': fields.many2many('ir.ui.view', 'actions_view_rel', 'action_id', 'view_id', 'Linked views'),
     }
     _defaults = {
         'key': lambda *a: 'action',
@@ -122,7 +123,7 @@ class ir_values(osv.osv):
         if not cr.fetchone():
             cr.execute('CREATE INDEX ir_values_key_model_key2_res_id_user_id_idx ON ir_values (key, model, key2, res_id, user_id)')
 
-    def set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=False, preserve_user=False, company=False):
+    def set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=False, preserve_user=False, company=False, view_ids=False):
         if isinstance(value, unicode):
             value = value.encode('utf8')
         if not isobject:
@@ -164,6 +165,9 @@ class ir_values(osv.osv):
                 'meta': meta,
                 'user_id': preserve_user and uid,
             }
+
+            if view_ids:
+                vals['view_ids'] = [(6, 0, view_ids)]
             if preserve_user and key == 'default':
                 vals['sequence'] = 50
 
@@ -176,7 +180,7 @@ class ir_values(osv.osv):
             ids_res.append(self.create(cr, uid_access, vals))
         return ids_res
 
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
         if context is None:
             context = {}
         result = []
@@ -187,6 +191,7 @@ class ir_values(osv.osv):
                 res_id=False
 
             where = ['key=%s','model=%s']
+            join = ''
             params = [key, str(m)]
             if key2:
                 where.append('key2=%s')
@@ -207,13 +212,18 @@ class ir_values(osv.osv):
                     where.append('res_id=%s')
                     params.append(res_id)
 
+            if key == 'action' and view_id:
+                join = 'left join actions_view_rel r on r.action_id=ir_values.id'
+                where.append('(view_id is NULL or view_id=%s)')
+                params.append(view_id)
             if key == 'default' and (context.get('sync_update_execution') or context.get('sync_message_execution')):
                 where.append('user_id IS NULL order by sequence,id')
             else:
                 where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
                 params.append(uid)
             clause = ' and '.join(where)
-            cr.execute('select id,name,value,object,meta, key from ir_values where ' + clause, params)  # not_a_user_entry
+
+            cr.execute('select id,name,value,object,meta, key from ir_values '+ join +' where ' + clause, params)  # not_a_user_entry
             result = cr.fetchall()
             if result:
                 break

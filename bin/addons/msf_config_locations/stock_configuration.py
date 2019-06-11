@@ -235,7 +235,7 @@ class stock_location(osv.osv):
         Returns the available locations for destination location of an internal picking according to the product
         '''
         # Inventory, destruction, quarantine and all internal and virtual locations
-        res = [('service_location', '=', False), '|', '|', '|', ('usage', 'in', ('internal', 'inventory')), ('destruction_location', '=', True), ('quarantine_location', '=', True), ('virtual_ok', '=', True)]
+        res = [('service_location', '=', False), '|', '|', '|', ('usage', 'in', ['internal', 'inventory']), ('destruction_location', '=', True), ('quarantine_location', '=', True), ('virtual_ok', '=', True)]
         for arg in args:
             if arg[0] == 'internal_dest' and arg[1] == '=':
                 if arg[2] == False:
@@ -260,7 +260,7 @@ class stock_location(osv.osv):
         for wh in self.browse(cr, uid, ids, context=context):
             res.append(wh.lot_input_id.id)
 
-        input_ids = self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True), ('active', 'in', ('t', 'f'))])
+        input_ids = self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True), ('active', 'in', ['t', 'f'])])
         res.extend(input_ids)
 
         return res
@@ -270,7 +270,7 @@ class stock_location(osv.osv):
         for wh in self.browse(cr, uid, ids, context=context):
             res.append(wh.lot_output_id.id)
 
-        output_ids = self.pool.get('stock.location').search(cr, uid, [('output_ok', '=', True), ('active', 'in', ('t', 'f'))])
+        output_ids = self.pool.get('stock.location').search(cr, uid, [('output_ok', '=', True), ('active', 'in', ['t', 'f'])])
         res.extend(output_ids)
 
         return res
@@ -315,10 +315,19 @@ class stock_location(osv.osv):
         if context is None:
             context = {}
 
+        lang_obj = self.pool.get('res.lang')
+
         if vals and vals.get('name'):
             loc_name = vals.get('name', '').strip()
-            if self.search_exist(cr, uid, [('name', '=ilike', loc_name)], context=context):
-                raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
+            lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True), ('active', '=', True)], context=context)
+            if lang_ids:
+                langs = lang_obj.browse(cr, uid, lang_ids, fields_to_fetch=['code'], context=context)
+                for lang in langs:
+                    if self.search_exist(cr, uid, [('name', '=ilike', loc_name)], context={'lang': lang.code}):
+                        raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
+            else:
+                if self.search_exist(cr, uid, [('name', '=ilike', loc_name)], context=context):
+                    raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
             vals['name'] = loc_name
 
         return super(stock_location, self).create(cr, uid, vals, context=context)
@@ -339,11 +348,21 @@ class stock_location(osv.osv):
         if not ids:
             return True
 
+        lang_obj = self.pool.get('res.lang')
+
         if vals and vals.get('name'):
             for loc_id in ids:
                 loc_name = vals.get('name', '').strip()
-                if self.search_exist(cr, uid, [('id', '!=', loc_id), ('name', '=ilike', loc_name)], context=context):
-                    raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
+                lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True), ('active', '=', True)], context=context)
+                if lang_ids:
+                    langs = lang_obj.browse(cr, uid, lang_ids, fields_to_fetch=['code'], context=context)
+                    for lang in langs:
+                        if self.search_exist(cr, uid, [('id', '!=', loc_id), ('name', '=ilike', loc_name)],
+                                             context={'lang': lang.code}):
+                            raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
+                else:
+                    if self.search_exist(cr, uid, [('id', '!=', loc_id), ('name', '=ilike', loc_name)], context=context):
+                        raise osv.except_osv(_('Warning'), _('A location with a similar name already exists.'))
                 vals['name'] = loc_name
 
         return super(stock_location, self).write(cr, uid, ids, vals, context=context)
@@ -584,10 +603,31 @@ class stock_remove_location_wizard(osv.osv_memory):
                                               string='Location type'),
         'error_message': fields.text(string='Information Message', readonly=True),
         'error': fields.boolean(string='Error'),
-        'move_from_to': fields.boolean(string='Has a move from/to the location'),
+        'can_force': fields.boolean(string='Can force'),
+        'move_from': fields.boolean(string='Has a move from the location'),
+        'move_to': fields.boolean(string='Has a move to the location'),
         'not_empty': fields.boolean(string='Location not empty'),
         'has_child': fields.boolean(string='Location has children locations'),
+        'related_ir': fields.boolean(string='Location has related IR open'),
+        'other': fields.char('Other doc: PI/ISI/Conso', size=128),
     }
+
+    _defaults = {
+        'error_message': ' ',
+    }
+
+    def get_dom(self, obj, location_id):
+        if obj._name == 'physical.inventory':
+            return [('location_id', '=', location_id), ('state', 'not in', ['cancel', 'closed'])]
+
+        if obj._name == 'initial.stock.inventory.line':
+            return [('location_id', '=', location_id), ('inventory_id.state', 'not in', ['done', 'cancel'])]
+
+        if obj._name == 'stock.inventory.line':
+            return [('location_id', '=', location_id), ('inventory_id.state', 'not in', ['done', 'cancel'])]
+
+        if obj._name == 'real.average.consumption':
+            return [('state', '=', 'draft') , '|', ('cons_location_id', '=', location_id), ('activity_id', '=', location_id)]
 
     def location_id_on_change(self, cr, uid, ids, location_id, context=None):
         '''
@@ -595,44 +635,124 @@ class stock_remove_location_wizard(osv.osv_memory):
         Check if there is no stock in this location
         '''
         res = {'error_message': '',
-               'move_from_to': False,
+               'move_from': False,
+               'move_to': False,
                'not_empty': False,
-               'has_child': False}
+               'other': False,
+               'has_child': False,
+               'related_ir': False}
         warning = {}
         error = False
+        can_force = False
 
         if location_id:
             location = self.pool.get('stock.location').browse(cr, uid, location_id, context=context)
-            # Check if no moves to this location aren't done
-            move_from_to = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ('done', 'cancel')), '|', ('location_id', '=', location.id), ('location_dest_id', '=', location.id)])
-            if move_from_to:
+
+            move_to = self.pool.get('stock.move').search(cr, uid, [
+                ('state', 'not in', ['done', 'cancel']),
+                ('location_dest_id', '=', location.id),
+                ('type', 'in', ['in', 'internal']),
+            ])
+            if move_to:
                 error = True
-                res['move_from_to'] = True
-                res['error_message'] += '''* You have at least one move from or to the location '%s' which is not 'Done'.
-Please click on the 'See moves' button to see which moves are still in progress from/to this location.''' %location.name
+                can_force = True
+                res['move_to'] = True
+                res['error_message'] += _("* You have at least one move to the location '%s' which is not 'Done'.\nPlease click on the 'See moves' button to see which moves are still in progress to this location.") % location.name
                 res['error_message'] += '\n' + '\n'
+
+            move_from = self.pool.get('stock.move').search(cr, uid, [
+                ('state', 'not in', ['done', 'cancel']),
+                ('id', 'not in', move_to),
+                ('picking_id', '!=', False),
+                '|', ('location_id', '=', location.id), ('location_dest_id', '=', location.id),
+            ])
+            if move_from:
+                error = True
+                res['move_from'] = True
+                res['error_message'] += _("* You have at least one move from or to the location '%s' which is not 'Done'.\nPlease click on the 'See moves' button to see which moves are still in progress from/to this location.") % location.name
+                res['error_message'] += '\n' + '\n'
+
+
             # Check if no stock in the location
             if location.stock_real and location.usage == 'internal':
                 error = True
                 res['not_empty'] = True
-                res['error_message'] += '''* The location '%s' is not empty of products. 
-Please click on the 'Products in location' button to see which products are still in the location.''' %location.name
+                res['error_message'] += _("* The location '%s' is not empty of products.\nPlease click on the 'Products in location' button to see which products are still in the location.") % location.name
                 res['error_message'] += '\n' + '\n'
 
             # Check if the location has children locations
             if location.child_ids:
                 error = True
                 res['has_child'] = True
-                res['error_message'] += '''* The location '%s' has children locations.
-Please remove all children locations before remove it. 
-Please click on the 'Children locations' button to see all children locations.''' %location.name
+                res['error_message'] += _("* The location '%s' has children locations.\nPlease remove all children locations before remove it.\nPlease click on the 'Children locations' button to see all children locations.") % location.name
                 res['error_message'] += '\n' + '\n'
 
+            related_ir = self.pool.get('sale.order').search(cr, uid, [
+                ('procurement_request', '=', True),
+                ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p']),
+                ('location_requestor_id', '=', location_id),
+            ], context=context)
+            if related_ir:
+                error = True
+                can_force = True
+                res['related_ir'] = True
+                res['error_message'] += _("* Warning there are open IR with location '%s'.\n Please click on the 'See documents' button to see all children locations.\n\n") % location.name
+
+
+
+            pi_obj = self.pool.get('physical.inventory')
+            pi_ids = pi_obj.search(cr, uid, self.get_dom(pi_obj, location.id), context=context)
+            if pi_ids:
+                error = True
+                can_force = False
+                if not res.get('other'):
+                    res['other'] = 'physical.inventory'
+                res['error_message'] += _("* Warning the following PI are in progess:\n")
+                for x in pi_obj.browse(cr, uid, pi_ids, fields_to_fetch=['name', 'ref'], context=context):
+                    res['error_message'] += "  - %s %s\n" % (x.name, x.ref)
+
+
+            isi_line_obj = self.pool.get('initial.stock.inventory.line')
+            isi_line_ids = isi_line_obj.search(cr, uid, self.get_dom(isi_line_obj, location.id), context=context)
+            if isi_line_ids:
+                error = True
+                can_force = False
+                if not res.get('other'):
+                    res['other'] = 'initial.stock.inventory.line'
+                res['error_message'] += _("* Warning the following ISI are in progess:\n")
+                for x in isi_line_obj.browse(cr, uid, isi_line_ids, fields_to_fetch=['product_id', 'inventory_id'], context=context):
+                    res['error_message'] += "  - %s %s\n" % (x.inventory_id.name, x.product_id.default_code)
+
+            oldpi_line_obj = self.pool.get('stock.inventory.line')
+            oldpi_line_ids = oldpi_line_obj.search(cr, uid, self.get_dom(oldpi_line_obj, location.id), context=context)
+            if oldpi_line_ids:
+                error = True
+                can_force = False
+                if not res.get('other'):
+                    res['other'] = 'stock.inventory.line'
+                res['error_message'] += _("* Warning the following Previous PI are in progess:\n")
+                for x in oldpi_line_obj.browse(cr, uid, oldpi_line_ids, fields_to_fetch=['product_id', 'inventory_id'], context=context):
+                    res['error_message'] += "  - %s %s\n" % (x.inventory_id.name, x.product_id.default_code)
+
+            conso_obj = self.pool.get('real.average.consumption')
+            conso_ids = conso_obj.search(cr, uid, self.get_dom(conso_obj, location.id), context=context)
+            if conso_ids:
+                error = True
+                can_force = False
+                if not res.get('other'):
+                    res['other'] = 'real.average.consumption'
+                res['error_message'] += _("* Warning the following Consumption Reports are in progess:\n")
+                for x in conso_obj.browse(cr, uid, conso_ids, fields_to_fetch=['name'], context=context):
+                    res['error_message'] += "  - %s\n" % (x.name, )
+
+
+
         if error:
-            warning.update({'title': 'Be careful !',
-                            'message': 'You have a problem with this location − Please see the message in the form for more information.'})
+            warning.update({'title': _('Be careful !'),
+                            'message': _('You have a problem with this location − Please see the message in the form for more information.')})
 
         res['error'] = error
+        res['can_force'] = error and not (res['not_empty'] or res['has_child'] or res['move_from']) and can_force or False
 
         return {'value': res,
                 'warning': warning}
@@ -677,9 +797,8 @@ Please click on the 'Children locations' button to see all children locations.''
         internal_cu_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
 
         for wizard in self.browse(cr, uid, ids, context=context):
-            if wizard.error or wizard.has_child or wizard.not_empty or wizard.move_from_to:
+            if (wizard.error and not wizard.can_force) or wizard.has_child or wizard.not_empty or wizard.move_from:
                 raise osv.except_osv(_('Error'), _('You cannot remove this location because some errors are still here !'))
-
             location = wizard.location_id
 
         # De-activate the location
@@ -720,28 +839,106 @@ Please click on the 'Children locations' button to see all children locations.''
         Returns all stock.picking containing a stock move not done from/to the location
         '''
         location = False
-        picking_ids = []
+        picking_ids = set()
 
         for wizard in self.browse(cr, uid, ids, context=context):
             location = wizard.location_id
 
-        move_ids = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ('done', 'cancel')), '|', ('location_id', '=', location.id), ('location_dest_id', '=', location.id)])
+        sys_int_po_ids = set()
+        move_ids = self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['done', 'cancel']), '|', ('location_id', '=', location.id), ('location_dest_id', '=', location.id)])
         for move in self.pool.get('stock.move').browse(cr, uid, move_ids, context=context):
-            if move.picking_id and move.picking_id.id not in picking_ids:
-                picking_ids.append(move.picking_id.id)
+            if move.picking_id.subtype == 'sysint' and move.picking_id.purchase_id:
+                sys_int_po_ids.add(move.picking_id.purchase_id.id)
+            elif move.picking_id and move.picking_id.id not in picking_ids:
+                picking_ids.add(move.picking_id.id)
 
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'vpicktree')[1]
+        if sys_int_po_ids:
+            in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', 'in', list(sys_int_po_ids)), ('state', 'not in', ['done', 'cancel']), ('type', '=', 'in')], context=context)
+            picking_ids.update(in_ids)
+
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'genericpick')[1]
         if location.usage == 'customer':
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_out_tree')[1]
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
-                'domain': [('id', 'in', picking_ids)],
+                'domain': [('id', 'in', list(picking_ids))],
                 'view_id': [view_id],
                 'view_type': 'form',
-                'view_mode': 'tree,form',
+                'view_mode': 'tree',
+                'name': _('Moves'),
                 'target': 'current',
                 }
+
+
+    def open_other(self, cr, uid, ids, context=None):
+        act_obj = self.pool.get('ir.actions.act_window')
+
+        wiz = self.browse(cr, uid, ids[0], fields_to_fetch=['other', 'location_id'], context=context)
+        dom = []
+
+        obj = self.pool.get(wiz['other'])
+        if obj:
+            dom = self.get_dom(obj, wiz.location_id.id)
+
+        if wiz['other'] == 'physical.inventory':
+            data = act_obj.open_view_from_xmlid(cr, uid, 'stock.action_physical_inventory', new_tab=True, context=context)
+            data['domain'] = dom
+
+        if wiz['other'] == 'initial.stock.inventory.line':
+            line_ids = obj.search(cr, uid, dom, context=context)
+            parent = set()
+            for x in obj.browse(cr, uid, line_ids, fields_to_fetch=['inventory_id'], context=context):
+                parent.add(x.inventory_id.id)
+            data = act_obj.open_view_from_xmlid(cr, uid, 'specific_rules.action_initial_inventory', new_tab=True, context=context)
+            data['domain'] = [('id', 'in', list(parent))]
+
+
+        if wiz['other'] == 'stock.inventory.line':
+            line_ids = obj.search(cr, uid, dom, context=context)
+            parent = set()
+            for x in obj.browse(cr, uid, line_ids, fields_to_fetch=['inventory_id'], context=context):
+                parent.add(x.inventory_id.id)
+            data = act_obj.open_view_from_xmlid(cr, uid, 'stock.action_inventory_form', new_tab=True, context=context)
+            data['domain'] = [('id', 'in', list(parent))]
+
+        if wiz['other'] == 'real.average.consumption':
+            data = act_obj.open_view_from_xmlid(cr, uid, 'consumption_calculation.action_real_average_consumption', new_tab=True, context=context)
+            data['domain'] = dom
+
+        data['keep_open'] = 1
+        return data
+
+
+    def related_ir(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        location = wizard.location_id
+        context.update({'procurement_request': True})
+
+        related_ir = self.pool.get('sale.order').search(cr, uid, [
+            ('procurement_request', '=', True),
+            ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p']),
+            ('location_requestor_id', '=', location.id),
+        ], context=context)
+
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_tree_view')[1]
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'sale.order',
+            'domain': [('id', 'in', related_ir)],
+            'view_id': [view_id],
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'target': 'current',
+            'context': context,
+        }
+
 
     def products_in_location(self, cr, uid, ids, context=None):
         '''

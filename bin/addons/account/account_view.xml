@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE WIZARD [
+    <!ENTITY wizard_template SYSTEM "../resource/wizard_template_view.xml">
+]>
+
 <openerp>
     <data>
 
@@ -1240,6 +1245,7 @@
                     <group col="10" colspan="4">
                         <field name="journal_id" widget="selection" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
                         <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                        <field name="cheque_number"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Extended Filters...">
@@ -2645,12 +2651,12 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
                         <page string="CashBox">
                             <group col="2" colspan="2" expand="1">
                                 <field name="starting_details_ids" nolabel="1" colspan="2" attrs="{'readonly':[('state','!=','draft')]}">
-                                    <tree string = "Opening Balance" editable="bottom">
+                                    <tree string="Starting Balance" editable="bottom">
                                         <field name="pieces"/>
                                         <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
                                         <field name="subtotal" sum="Total"/>
                                     </tree>
-                                    <form string = "Opening Balance">
+                                    <form string="Starting Balance">
                                         <field name="pieces"/>
                                         <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
                                         <field name="subtotal"/>
@@ -2683,8 +2689,8 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
                             <field name="closing_date" select="1" readonly="1"/>
                         </group>
                         <group col="2" colspan="2">
-                            <separator string="Opening Balance" colspan="4"/>
-                            <field name="balance_start" readonly="1" string="Opening Balance"/>
+                            <separator string="Starting Balance" colspan="4"/>
+                            <field name="balance_start" readonly="1" string="Starting Balance"/>
                             <field name="total_entry_encoding"/>
                         </group>
                         <group col="2" colspan="2">
@@ -2776,6 +2782,52 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
             <field eval="True" name="object"/>
             <field name="sequence" eval="105"/>
         </record>
+
+        <!-- FREE 1/2 ANALYTIC ALLOCATION WITH FREE / WIZARD -->
+        <record id="analytic_allocation_with_free_wizard" model="ir.ui.view">
+            <field name="name">analytic.allocation.with.free.wizard</field>
+            <field name="model">free.allocation.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Analytic Allocation with Free - Report">
+                    <separator colspan="4" string="General"/>
+                    <field name="instance_id" domain="[('instance_to_display_ids', '=', True)]"/>
+                    <newline/>
+                    <field name="account_ids"/>
+                    <field name="journal_ids"/>
+                    <newline/>
+                    <separator colspan="4" string="Dates"/>
+                    <field name="fiscalyear_id" on_change="onchange_fiscalyear(fiscalyear_id)"/>
+                    <field name="period_id"/>
+                    <field name="document_date_from"/>
+                    <field name="document_date_to"/>
+                    <field name="posting_date_from"/>
+                    <field name="posting_date_to"/>
+                    <newline/>
+                    <separator colspan="4" string="Analytic Accounts"/>
+                    <field name="free1_ids" />
+                    <field name="free2_ids"/>
+                    <field name="cost_center_ids"/>
+                    <newline/>
+                    <button string="Cancel" special="cancel" icon="gtk-cancel" colspan="2"/>
+                    <button name="print_free_allocation_report" type="object" string="Print report" icon="gtk-print"
+                            colspan="2"/>
+                    <!-- to be able to store the wizard values -->
+                    &wizard_template;
+                </form>
+            </field>
+        </record>
+        <!-- FREE 1/2 ANALYTIC ALLOCATION WITH FREE / MENU ENTRY -->
+        <act_window id="action_analytic_allocation_with_free"
+            name="Analytic Allocation with Free - Report"
+            res_model="free.allocation.wizard"
+            src_model="account.analytic.line"
+            key2="client_print_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            empty_ids="1"
+            view_id="analytic_allocation_with_free_wizard"/>
 
         <menuitem action="action_view_bank_statement_tree" id="journal_cash_move_lines"
             parent="menu_finance_bank_and_cash"/>

@@ -202,9 +202,11 @@ def compute_location_value(cr, uid, **kwargs):
     product_id = kwargs.get('product_id')
     pick_type = kwargs.get('pick_type')
     pick_subtype = kwargs.get('pick_subtype')
+    pick_ext_cu = kwargs.get('pick_ext_cu')
     context = kwargs.get('context', {})
     loc_id = None
     loc_name = None
+    ext_cu = False
     msg = ''
     if row.cells[cell_nb] and tools.ustr(row.cells[cell_nb]) != tools.ustr(None):
         if row.cells[cell_nb].type == 'str':
@@ -230,18 +232,37 @@ def compute_location_value(cr, uid, **kwargs):
                     domain.extend([('id', '=', pack_loc_id)])
 
                 loc_ids = loc_obj.search(cr, uid, domain, context=context)
-                if loc_ids:
-                    loc_id = loc_ids[0]
-                elif loc_obj.search(cr, uid, [('name', '=ilike', loc_name)]):
-                    error_list.append(_('The Location "%s" is not compatible with the product of the stock move.') % loc_name)
+                loc_by_name_ids = loc_obj.search(cr, uid, [('name', '=ilike', loc_name)], context=context)
+                if pick_ext_cu:
+                    if loc_ids and loc_ids[0] != pick_ext_cu.id:
+                        error_list.append(
+                            _('The Location "%s" on line level is not the same as the Location "%s" on header level.')
+                            % (loc_name, pick_ext_cu.name))
+                    elif loc_by_name_ids and loc_by_name_ids[0] != pick_ext_cu.id:
+                        error_list.append(
+                            _('The Location "%s" on line level is not the same as the Location "%s" on header level.')
+                            % (loc_name, pick_ext_cu.name))
+                    else:
+                        loc_id = pick_ext_cu.id
+                        ext_cu = True
                 else:
-                    error_list.append(_('The Location "%s" does not exist on this instance.') % loc_name)
+                    if loc_ids:
+                        loc_id = loc_ids[0]
+                    elif loc_by_name_ids:
+                        loc_by_name = loc_obj.browse(cr, uid, loc_by_name_ids[0], context=context)
+                        if pick_type == 'in' and loc_by_name.location_category == 'consumption_unit' \
+                                and loc_by_name.usage == 'customer':
+                            loc_id = loc_by_name.id
+                        else:
+                            error_list.append(_('The Location "%s" is not compatible with the product of the stock move.') % loc_name)
+                    else:
+                        error_list.append(_('The Location "%s" does not exist on this instance.') % loc_name)
 
         else:
             msg = _('The Location Name has to be string.')
         if not loc_name:
             error_list.append(msg or _('The location was not valid.'))
-    return {'location_id': loc_id, 'error_list': error_list}
+    return {'location_id': loc_id, 'is_ext_cu': ext_cu, 'error_list': error_list}
 
 
 def product_value(cr, uid, **kwargs):
@@ -427,22 +448,29 @@ def compute_price_value(**kwargs):
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
     price = kwargs['price'] or 'Price'
+    is_rfq = kwargs['is_rfq']
     price_unit_defined = False
     cell_nb = kwargs.get('cell_nb', 3)
     try:
-        if not row.cells[cell_nb] or not row.cells[cell_nb].data:
-            if default_code:
-                warning_list.append(_('The Price Unit was not set, we have taken the default "%s" of the product.') % price)
-            else:
-                error_list.append(_('The Price and Product were not found.'))
-        elif row.cells[cell_nb].type not in ['int', 'float'] and not default_code:
-            error_list.append(_('The Price Unit was not a number and no product was found.'))
-        elif row.cells[cell_nb].type in ['int', 'float']:
-            price_unit_defined = True
-            price_unit = row.cells[cell_nb].data
-            cost_price = row.cells[cell_nb].data
+        if is_rfq:
+            if row.cells[cell_nb].type in ['int', 'float']:
+                price_unit_defined = True
+                price_unit = row.cells[cell_nb].data
+                cost_price = row.cells[cell_nb].data
         else:
-            error_list.append(_('The Price Unit was not defined properly.'))
+            if not row.cells[cell_nb] or not row.cells[cell_nb].data:
+                if default_code:
+                    warning_list.append(_('The Price Unit was not set, we have taken the default "%s" of the product.') % price)
+                else:
+                    error_list.append(_('The Price and Product were not found.'))
+            elif row.cells[cell_nb].type not in ['int', 'float'] and not default_code:
+                error_list.append(_('The Price Unit was not a number and no product was found.'))
+            elif row.cells[cell_nb].type in ['int', 'float']:
+                price_unit_defined = True
+                price_unit = row.cells[cell_nb].data
+                cost_price = row.cells[cell_nb].data
+            else:
+                error_list.append(_('The Price Unit was not defined properly.'))
     # if nothing is found at the line index (empty cell)
     except IndexError:
         if default_code:

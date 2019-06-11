@@ -468,10 +468,19 @@ class stock_inventory_line(osv.osv):
         if 'bad_batch_name' in vals:
             del vals['bad_batch_name']
 
+        if location_id and not self.pool.get('stock.location').search_exist(cr, uid, [('id', '=', location_id), ('active', '=', True)], context=context):
+            location_id = False
+            vals['location_id'] = False
+            location_not_found = True
+            vals['location_not_found'] = True
+            vals['to_correct_ok'] = True
+            vals['comment'] = _('Location is inactive')
+
         if not location_id and not location_not_found:
             comment += _('Location is missing.\n')
         elif location_not_found:
             comment += _('Location not found.\n')
+
 
         if hidden_batch_management_mandatory and not batch:
             if bad_batch_name:
@@ -1033,6 +1042,15 @@ class initial_stock_inventory_line(osv.osv):
 
         if 'bad_batch_name' in vals:
             del vals['bad_batch_name']
+
+        if location_id and not self.pool.get('stock.location').search_exist(cr, uid, [('id', '=', location_id), ('active', '=', True)], context=context):
+            location_id = False
+            vals['location_id'] = False
+            location_not_found = True
+            vals['location_not_found'] = True
+            vals['to_correct_ok'] = True
+            vals['comment'] = _('Location is inactive')
+
 
         if not location_id and not location_not_found:
             comment += _('Location is missing.\n')

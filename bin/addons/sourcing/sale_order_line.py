@@ -244,12 +244,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'priority': line.order_id.priority,
                 'categ': line.order_id.categ,
                 'rts': line.order_id.ready_to_ship_date,
+                'rdd': line.procurement_request and line.order_id.delivery_requested_date or line.date_planned,
                 'procurement_request': line.order_id.procurement_request,
                 'loan_type': line.order_id.order_type == 'loan',
                 'estimated_delivery_date': self._get_date(cr, uid, line, context=context),
                 'display_confirm_button': line.state == 'validated',
                 'sale_order_in_progress': line.order_id.sourcing_trace_ok,
                 'sale_order_state': self._get_sale_order_state(cr, uid, line.order_id, context=context),
+                'supplier_type': line.supplier and line.supplier.partner_type or False,
+                'supplier_split_po': line.supplier and line.supplier.split_po or False,
             }
             res[line.id] = values
 
@@ -528,6 +531,33 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             store=False,
             multi='line_info',
         ),
+        'supplier_type': fields.function(
+            _get_line_values,
+            method=True,
+            string='Supplier Type',
+            type='char',
+            readonly=True,
+            store=False,
+            multi='line_info',
+        ),
+        'supplier_split_po': fields.function(
+            _get_line_values,
+            method=True,
+            string='Supplier can Split POs',
+            type='char',
+            readonly=True,
+            store=False,
+            multi='line_info',
+        ),
+        'rdd': fields.function(
+            _get_line_values,
+            method=True,
+            string='RDD',
+            type='date',
+            readonly=True,
+            store=False,
+            multi='line_info',
+        ),
         'stock_uom_id': fields.related(
             'product_id',
             'uom_id',
@@ -589,6 +619,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             digits_compute=dp.get_precision('Product UoM'),
             readonly=True,
             multi='stock_qty',
+            related_uom='product_uom',
         ),
         'virtual_stock': fields.function(
             _getVirtualStock, method=True,
@@ -596,6 +627,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             string='Virtual Stock',
             digits_compute=dp.get_precision('Product UoM'),
             readonly=True,
+            related_uom='product_uom',
             multi='stock_qty',
         ),
         'available_stock': fields.function(
@@ -604,6 +636,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             type='float',
             string='Available Stock',
             digits_compute=dp.get_precision('Product UoM'),
+            related_uom='product_uom',
             readonly=True,
         ),
         # Fields used for export
@@ -1538,6 +1571,31 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         return new_rfq_id
 
 
+    def check_location_integrity(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        med_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
+        log_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
+        stock_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+
+        for sourcing_line in self.browse(cr, uid, ids, context=context):
+            if sourcing_line.order_id.location_requestor_id.id in (med_loc_id, log_loc_id) and sourcing_line.location_id.id == stock_loc_id:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You cannot source with location \'Stock\' if the destination location of the Internal request is LOG or MED')
+                )
+            elif sourcing_line.order_id.location_requestor_id.id == sourcing_line.location_id.id:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You cannot choose a source location which is the destination location of the Internal request')
+                )
+
+        return True
+
+
     def source_line(self, cr, uid, ids, context=None):
         """
         Source a sale.order.line
@@ -1550,9 +1608,16 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         wf_service = netsvc.LocalService("workflow")
         pricelist_obj = self.pool.get('product.pricelist')
 
+        company_currency_id = self.pool.get('res.users').get_company_currency_id(cr, uid)
+
         for sourcing_line in self.browse(cr, uid, ids, context=context):
+            if sourcing_line.supplier and sourcing_line.supplier_type == 'esc' and \
+                    sourcing_line.supplier_split_po == 'yes' and not sourcing_line.related_sourcing_id:
+                raise osv.except_osv(_('Error'), _('For this Supplier you have to select a Sourcing Group'))
             if sourcing_line.state in ['validated', 'validated_p']:
                 if sourcing_line.type == 'make_to_stock':
+                    self.check_location_integrity(cr, uid, [sourcing_line.id], context=context)
+
                     if sourcing_line.order_id.order_type == 'loan' and not sourcing_line.order_id.is_a_counterpart:
                         # In case of loan, create the PO for later goods return:
                         po_loan = self.get_existing_po_loan_for_goods_return(cr, uid, sourcing_line.id, context=context)
@@ -1624,9 +1689,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
                         if not price:
                             price = sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0
-                            src_currency = sourcing_line.currency_id.id
-                            if price and src_currency != target_currency_id:
-                                price = self.pool.get('res.currency').compute(cr, uid, src_currency, target_currency_id, price, round=False, context=context)
+                            if price and company_currency_id != target_currency_id:
+                                price = self.pool.get('res.currency').compute(cr, uid, company_currency_id, target_currency_id, price, round=False, context=context)
 
                         pol_values = {
                             'order_id': po_to_use,
@@ -1646,15 +1710,12 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'nomen_manda_3': sourcing_line.nomen_manda_3.id or False,
                             'date_planned': sourcing_line.date_planned,
                             'stock_take_date': sourcing_line.stock_take_date or False,
+                            'original_product': sourcing_line.original_product and sourcing_line.original_product.id or False,
+                            'original_qty': sourcing_line.original_qty,
+                            'original_uom': sourcing_line.original_uom.id
                         }
                         if not sourcing_line.product_id:
                             pol_values['name'] = sourcing_line.comment
-                        if sourcing_line.order_id.procurement_request:
-                            pol_values.update({
-                                'original_product': sourcing_line.original_product.id,
-                                'original_qty': sourcing_line.original_qty,
-                                'original_uom': sourcing_line.original_uom.id,
-                            })
                         self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
                         self.pool.get('purchase.order').write(cr, uid, po_to_use, {'dest_partner_ids': [(4, sourcing_line.order_id.partner_id.id, 0)]}, context=context)
                         self.pool.get('purchase.order').update_source_document(cr, uid, po_to_use, sourcing_line.order_id.id, context=context)
@@ -1687,7 +1748,11 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distrib, {}, context=context)
                         # attach new RfQ line:
                         price_unit = sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price
-                        src_currency = sourcing_line.currency_id.id
+                        if sourcing_line.price_unit > 0:
+                            src_currency = sourcing_line.currency_id.id
+                        else:
+                            src_currency = company_currency_id
+
                         if price_unit and src_currency != target_currency_id:
                             price_unit = self.pool.get('res.currency').compute(cr, uid, src_currency, target_currency_id, price_unit, round=False, context=context)
 
@@ -1703,13 +1768,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'linked_sol_id': sourcing_line.id,
                             'analytic_distribution_id': anal_dist,
                             'link_so_id': sourcing_line.order_id.id,
+                            'original_product': sourcing_line.original_product and sourcing_line.original_product.id or False,
+                            'original_qty': sourcing_line.original_qty,
+                            'original_uom': sourcing_line.original_uom.id,
                         }
-                        if sourcing_line.order_id.procurement_request:
-                            rfq_line_values.update({
-                                'original_product': sourcing_line.original_product.id,
-                                'original_qty': sourcing_line.original_qty,
-                                'original_uom': sourcing_line.original_uom.id,
-                            })
                         self.pool.get('purchase.order.line').create(cr, uid, rfq_line_values, context=context)
                         self.pool.get('purchase.order').update_source_document(cr, uid, rfq_to_use, sourcing_line.order_id.id, context=context)
 
@@ -1732,14 +1794,13 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'tender_id': tender_to_use,
                             'sale_order_line_id': sourcing_line.id,
                             'location_id': proc_location_id,
+                            'original_product': sourcing_line.original_product and sourcing_line.original_product.id or False,
+                            'original_qty': sourcing_line.original_qty,
+                            'original_uom': sourcing_line.original_uom.id,
                         }
-                        if sourcing_line.order_id.procurement_request:
-                            tender_values.update({
-                                'original_product': sourcing_line.original_product.id,
-                                'original_qty': sourcing_line.original_qty,
-                                'original_uom': sourcing_line.original_uom.id,
-                            })
                         self.pool.get('tender.line').create(cr, uid, tender_values, context=context)
+                    else:
+                        raise osv.except_osv(_('Error'), _('Line %s of order %s, please select a PO/CFT in the Order Sourcing Tool') % (sourcing_line.line_number, sourcing_line.order_id.name))
 
                     wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
 
@@ -2186,6 +2247,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'title': _('Warning'),
                     'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type,
                 })
+            if l_type == 'make_to_order' and line.product_id and line.product_id.seller_id:
+                value['supplier'] = line.product_id.seller_id.id
 
         if l_type == 'make_to_stock':
             if not location_id:
@@ -2197,6 +2260,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 'po_cft': False,
                 'related_sourcing_ok': False,
                 'related_sourcing_id': False,
+                'supplier': False,
             })
 
             res = {'value': value, 'warning': message}
@@ -2262,6 +2326,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             result['value'].update({
                 'related_sourcing_id': False,
                 'related_sourcing_ok': False,
+                'supplier_type': False,
+                'supplier_split_po': False,
             })
             sl = self.browse(cr, uid, line_id, context=context)
             if not sl.product_id and sl.order_id.procurement_request and sl.type == 'make_to_order':
@@ -2287,6 +2353,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         result['value'].update({
             'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d'),
             'related_sourcing_ok': related_sourcing_ok,
+            'supplier_type': partner and partner.partner_type or False,
+            'supplier_split_po': partner and partner.split_po or False,
         })
         if not related_sourcing_ok:
             result['value']['related_sourcing_id'] = False

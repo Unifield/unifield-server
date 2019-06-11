@@ -35,6 +35,7 @@ class report_gl_selector(report_sxw.rml_parse):
             'total_output_credit': self._get_total_output_credit,
             'update_percent': self._update_percent,
         })
+        self.log_export = True
 
     def _update_percent(self, data, objects):
         """
@@ -97,6 +98,7 @@ class report_analytic_selector(report_sxw.rml_parse):
             'total_output': self._get_total_output,
             'update_percent': self._update_percent,
         })
+        self.log_export = True
 
     def _update_percent(self, data, objects):
         """

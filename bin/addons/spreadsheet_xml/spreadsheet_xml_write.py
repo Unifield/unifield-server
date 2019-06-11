@@ -2,6 +2,7 @@
 
 from tools.translate import _
 from tools.misc import file_open
+from tools.misc import Path
 from osv import osv
 from report_webkit.webkit_report import WebKitParser
 from report import report_sxw
@@ -18,7 +19,7 @@ import zipfile
 import tempfile
 import codecs
 import re
-
+import logging
 # new mako filter |xn to escape html entities + replace \n by &#10;
 xml_escapes = {
     '&' : '&amp;',
@@ -39,7 +40,7 @@ class SpreadsheetReport(WebKitParser):
         'date': report_sxw._date_format,
         'datetime': report_sxw._dttime_format
     }
-
+    log_export = False
 
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         if not rml:
@@ -126,6 +127,10 @@ class SpreadsheetReport(WebKitParser):
             os.unlink(tmpname)
             return (out, 'zip')
 
+        if context.get('pathit'):
+            os.close(null)
+            return (Path(tmpname, delete=True), 'xls')
+
         out = file(tmpname, 'rb').read()
         os.close(null)
         os.unlink(tmpname)
@@ -139,11 +144,14 @@ class SpreadsheetReport(WebKitParser):
         return table_obj.browse(cr, uid, ids, list_class=report_sxw.browse_record_list, context=context, fields_process=self._fields_process)
 
     def create(self, cr, uid, ids, data, context=None):
-        a = super(SpreadsheetReport, self).create(cr, uid, ids, data, context)
-        # This permit to test XLS report generation with tools.tests_reports without given some warning
-        # Cf. tools/tests_reports.py:89
-        return a
-
+        if self.log_export:
+            logger = logging.getLogger('XLS export')
+            logger.info('Exporting %d %s ...' % (len(ids), self.table))
+        try:
+            return super(SpreadsheetReport, self).create(cr, uid, ids, data, context)
+        finally:
+            if self.log_export:
+                logger.info('End of Export %s' % (self.table,))
 class SpreadsheetCreator(object):
     def __init__(self, title, headers, datas):
         self.headers = headers

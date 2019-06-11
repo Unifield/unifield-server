@@ -31,9 +31,9 @@ class account_bank_statement(osv.osv):
 
     _columns = {
         'prev_reg_id': fields.many2one('account.bank.statement', string="Previous register", required=False, readonly=True,
-            help="This fields give the previous register from which this one is linked."),
+                                       help="This fields give the previous register from which this one is linked."),
         'next_reg_id': fields.one2many('account.bank.statement', 'prev_reg_id', string="Next register", readonly=True,
-            help="This fields give the next register if exists."),
+                                       help="This fields give the next register if exists."),
     }
 
 account_bank_statement()
@@ -56,12 +56,17 @@ class account_bank_statement_line(osv.osv):
             # UF-2300: for the case of sync, the line can also be created if the partner is inactive
             if not context.get('sync_update_execution', False) and absl and absl[0] and absl[0].partner_id and not absl[0].partner_id.active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (absl[0].partner_id.name or '',))
+            self._check_on_regline_big_amounts(cr, uid, res, context=context)
         return res
 
     _columns = {
         'ref': fields.char('Reference', size=50), # UF-1613 - add reference field from 32 to 50 chars
         'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
+        # NOTE: partner_move_ids is used for old entries until US-3874. Since then, entries use partner_move_line_ids.
         'partner_move_ids': fields.one2many('account.move', 'register_line_id', 'Payable Entries', readonly=True, required=False),
+        'partner_move_line_ids': fields.one2many('account.move.line', 'partner_register_line_id', 'Automated Entries',
+                                                 readonly=True, required=False,
+                                                 help="Automated entries generated for expense/income register lines linked to a partner"),
     }
 
 account_bank_statement_line()
