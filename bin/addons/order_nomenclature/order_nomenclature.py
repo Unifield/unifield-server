@@ -376,9 +376,22 @@ class sale_order_line(osv.osv):
 
         return result
 
+    def check_digits(self, cr, uid, result, qty=0, price_unit=0, context=None):
+        if result.get('value', {}).get('product_uom_qty', qty) >= self._max_value or result.get('value', {}).get('product_uom_qty', qty)*result.get('value', {}).get('price_unit', price_unit) >= self._max_value:
+            result.setdefault('warning', {'title': '', 'message': ''})
+            result['warning'].setdefault('title', '')
+            result['warning'].setdefault('message', '')
+            result['warning']['message'] = "\n".join([result['warning']['message'], _(self._max_msg)])
+        return True
+
+    def change_price_unit(self, cr, uid, ids, product_uom_qty, price_unit, context):
+        result = {}
+        self.check_digits(cr, uid, result, product_uom_qty, price_unit, context)
+        return result
+
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty=0,
                            uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-                           lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+                           lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, price_unit=0, context=None):
         '''
         interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
@@ -406,6 +419,7 @@ class sale_order_line(osv.osv):
         if qty:
             result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, ['product_uom_qty', 'product_uos_qty'], result=result)
 
+        self.check_digits(cr, uid, result, qty, price_unit, context)
         return result
 
     def product_packaging_change(self, cr, uid, ids, pricelist, product, qty=0,

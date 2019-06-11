@@ -33,6 +33,27 @@ _SELECTION_TYPE = [
 class multiple_sourcing_wizard(osv.osv_memory):
     _name = 'multiple.sourcing.wizard'
 
+    def _get_values(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Get some values from the wizard.
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for wizard in self.browse(cr, uid, ids, context=context):
+            values = {
+                'supplier_type': wizard.supplier_id and wizard.supplier_id.partner_type or False,
+                'supplier_split_po': wizard.supplier_id and wizard.supplier_id.split_po or False,
+            }
+            res[wizard.id] = values
+
+        return res
+
     _columns = {
         'line_ids': fields.many2many(
             'sale.order.line',
@@ -77,6 +98,24 @@ class multiple_sourcing_wizard(osv.osv_memory):
         ),
         'related_sourcing_ok': fields.boolean(
             string='Related sourcing OK',
+        ),
+        'supplier_type': fields.function(
+            _get_values,
+            method=True,
+            string='Supplier Type',
+            type='char',
+            readonly=True,
+            store=False,
+            multi='wizard_info',
+        ),
+        'supplier_split_po': fields.function(
+            _get_values,
+            method=True,
+            string='Supplier can Split POs',
+            type='char',
+            readonly=True,
+            store=False,
+            multi='wizard_info',
         ),
     }
 
@@ -430,7 +469,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        result = {}
+        result = {'value': {}}
         related_sourcing_ok = False
         if supplier:
             related_sourcing_ok = sol_obj._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
@@ -442,9 +481,19 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     'message': _('The chosen partner has no address. Please define an address before continuing.'),
                 }
 
-        result['value'] = {
+            result['value'].update({
+                'supplier_type': partner and partner.partner_type or False,
+                'supplier_split_po': partner and partner.split_po or False,
+            })
+        else:
+            result['value'].update({
+                'supplier_type': False,
+                'supplier_split_po': False,
+            })
+
+        result['value'].update({
             'related_sourcing_ok': related_sourcing_ok,
-        }
+        })
 
         if not related_sourcing_ok:
             result['value']['related_sourcing_id'] = False

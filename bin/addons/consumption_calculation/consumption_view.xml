@@ -384,6 +384,7 @@
             <field name="key2">client_print_multi</field>
             <field name="model">stock.picking</field>
             <field name="name">XML Export</field>
+            <field name="view_ids" ref="stock.view_picking_in_tree,stock.view_picking_in_form" />
             <field eval="'ir.actions.server,%d'%action_incoming_print_xml_export" name="value" />
             <field eval="True" name="object" />
         </record>

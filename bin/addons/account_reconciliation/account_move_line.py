@@ -116,11 +116,32 @@ class account_move_line(osv.osv):
             raise osv.except_osv(_('Warning'), _('Reconciliation of lines that come from a "Pending payment" wizard should be done via registers. Lines: %s') % (' - '.join(msg),))
         return True
 
+    def check_multi_curr_rec(self, cr, uid, ids, context=None):
+        """
+        Raises an error in case a reconciliation includes several currencies whereas the account is set as prevent_multi_curr_rec
+        (Note that we don't directly use the rec. field "different_currencies" as it could be False in case of a transfer with change)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        amls = self.browse(cr, uid, ids, fields_to_fetch=['account_id', 'currency_id'], context=context)
+        rec_account = amls and amls[0].account_id or False
+        if rec_account and rec_account.prevent_multi_curr_rec:
+            currencies = set()
+            for aml in amls:
+                if aml.currency_id:
+                    currencies.add(aml.currency_id.id)
+            if len(currencies) > 1:
+                raise osv.except_osv(_('Warning'), _('The account "%s - %s" is set as "Prevent Reconciliation with different currencies".') %
+                                     (rec_account.code, rec_account.name))
+
     def reconcile_partial(self, cr, uid, ids, type='auto', context=None):
         """
         WARNING: This method has been taken from account module from OpenERP
         """
         self.check_imported_invoice(cr, uid, ids, context)
+        self.check_multi_curr_rec(cr, uid, ids, context=context)
         move_rec_obj = self.pool.get('account.move.reconcile')
         merges = []
         unmerge = []
@@ -194,6 +215,7 @@ class account_move_line(osv.osv):
         WARNING: This method has been taken from account module from OpenERP
         """
         self.check_imported_invoice(cr, uid, ids, context)
+        self.check_multi_curr_rec(cr, uid, ids, context=context)
         account_obj = self.pool.get('account.account')
         move_rec_obj = self.pool.get('account.move.reconcile')
         partner_obj = self.pool.get('res.partner')

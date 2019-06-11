@@ -31,8 +31,8 @@ class account_move_line_reconcile(osv.osv_memory):
     _name = 'account.move.line.reconcile'
 
     _columns = {
-        'state': fields.selection([('total', 'Full Reconciliation'), ('partial', 'Partial Reconciliation'), 
-                                   ('total_change', 'Full Reconciliation with change'), ('partial_change', 'Partial Reconciliation with change')], string="State", 
+        'state': fields.selection([('total', 'Full Reconciliation'), ('partial', 'Partial Reconciliation'),
+                                   ('total_change', 'Full Reconciliation with change'), ('partial_change', 'Partial Reconciliation with change')], string="State",
                                   required=True, readonly=True),
         'different_currencies': fields.boolean('Is this reconciliation in different currencies? (2 at most)'),
     }
@@ -171,8 +171,8 @@ class account_move_line_reconcile(osv.osv_memory):
             # UTP-1040: 3RD party is also desactivated in case of account that is "Disregard Third Party" as "type_for_register"
             if not transfer and not disregard_third_party:
                 third_party = {
-                    'partner_id': line.partner_id and line.partner_id.id or False, 
-                    'employee_id': line.employee_id and line.employee_id.id or False, 
+                    'partner_id': line.partner_id and line.partner_id.id or False,
+                    'employee_id': line.employee_id and line.employee_id.id or False,
                     'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or False}
                 if not prev_third_party:
                     prev_third_party = third_party
@@ -209,6 +209,8 @@ class account_move_line_reconcile(osv.osv_memory):
 
         if debit <= 10**-3 or credit <= 10**-3:
             raise osv.except_osv(_('Error'), _('Both Debit and Credit lines are required for reconciliation.'))
+
+        account_move_line_obj.check_multi_curr_rec(cr, uid, context.get('active_ids', []), context=context)
 
         # Adapt state value
         if diff_in_booking <= 10**-3:

@@ -46,16 +46,6 @@
 			                    </field>
 		                    </group>
 	                    </page>
-	                    <page string="Users">
-                    		<group col="4" colspan="4">
-			                    <field name="user_ids_user_access_results" nolabel="True">
-			                    	<tree hide_new_button="True" hide_delete_button="True" string="Users" editable="top" noteditable="True" colors="red:type_user_access_results_line in ['error'];orange:type_user_access_results_line in ['warning']">
-			                    		<field name="type_user_access_results_line" invisible="True" />
-			                            <field name="name" />
-			                        </tree>
-			                    </field>
-		                    </group>
-	                    </page>
 	                    <page string="Menus">
                     		<group col="4" colspan="4">
 			                    <field name="menu_ids_user_access_results" nolabel="True">

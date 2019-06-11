@@ -547,6 +547,9 @@ class purchase_order_line(osv.osv):
         # update FO lines:
         self.update_fo_lines(cr, uid, ids, context=context)
         for pol in self.browse(cr, uid, ids, context=context):
+            if pol.product_qty*pol.price_unit >= self._max_amount:
+                raise osv.except_osv(_('Error'), _('%s, line %s: %s') % (pol.order_id.name, pol.line_number, _(self._max_msg)))
+
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_v', cr)
             # update original qty, unit price, uom and currency on line level
@@ -657,10 +660,10 @@ class purchase_order_line(osv.osv):
                 raise osv.except_osv(_('Error'), _('Line %s: Please choose a product before confirming the line') % pol.line_number)
 
             if pol.order_type != 'direct' and not pol.from_synchro_return_goods:
-                # create incoming shipment (IN):
+                # create incoming shipment (IN):
                 in_id = self.pool.get('stock.picking').search(cr, uid, [
                     ('purchase_id', '=', pol.order_id.id),
-                    ('state', 'not in', ['done', 'cancel', 'shipped']),
+                    ('state', 'not in', ['done', 'cancel', 'shipped', 'updated', 'import']),
                     ('type', '=', 'in'),
                 ])
                 created = False
@@ -695,7 +698,7 @@ class purchase_order_line(osv.osv):
 
             # if line created in PO, then create a FO line that match with it:
             if not pol.linked_sol_id and pol.origin:
-                fo_id = self.update_origin_link(cr, uid, pol.origin, context=context)
+                fo_id = self.update_origin_link(cr, uid, pol.origin, po_obj=pol.order_id, context=context)
                 fo_id = fo_id['link_so_id'] if fo_id else False
                 if fo_id:
                     new_sol_id = self.create_sol_from_pol(cr, uid, pol.id, fo_id, context=context)
