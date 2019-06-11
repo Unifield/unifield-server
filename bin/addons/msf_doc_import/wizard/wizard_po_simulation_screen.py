@@ -1152,17 +1152,18 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                                                      'parent_line_id': po_line,
                                                      'imp_dcd': False,
                                                      'po_line_id': False}, context=context)
-                            err_msg, warn_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, cc_cache, context=context)
+                            err_msg1, warn_msg1 = wl_obj.import_line(cr, uid, new_wl_id, vals, cc_cache, context=context)
+                            err_msg += err_msg1
+                            warn_msg += warn_msg1
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         # Commit modifications
                         cr.commit()
-
                     if err_msg:
                         for err in err_msg:
                             err = _('Line %s of the PO: %s') % (file_line[2], err)
                             values_line_errors.append(err)
-                    if warn_msg:
+                    if not err_msg and warn_msg:
                         for warn in warn_msg:
                             warn = _('Line %s of the PO: %s') % (file_line[2], warn)
                             values_line_warnings.append(warn)
@@ -1194,7 +1195,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                             else:
                                 err = _('Line %s of the file: %s') % (po_line, err)
                             values_line_errors.append(err)
-                    if warn_msg:
+                    if not err_msg and warn_msg:
                         for warn in warn_msg:
                             if line_n:
                                 warn = _('Line %s of the PO: %s') % (line_n, warn)
