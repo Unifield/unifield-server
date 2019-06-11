@@ -2936,13 +2936,6 @@ class sale_order_line(osv.osv):
                 'price_unit': product_obj.read(cr, uid, product_id, ['price'], context=new_ctx)['price']
             })
 
-        # Add default supplier
-        if vals.get('type', False) == 'make_to_order' and product_id:
-            seller = self.pool.get('product.product').browse(cr, uid, product_id, fields_to_fetch=['seller_id'],
-                                                             context=context).seller_id
-            if seller and (seller.supplier or seller.manufacturer or seller.transporter):
-                vals['supplier'] = seller.id
-
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''
