@@ -17415,7 +17415,7 @@ msgstr "Employé - Etat civil "
 msgid "Tenders"
 msgstr "Appels d'Offres"
 
-#. modules: account, base, product_nomenclature, stock, msf_doc_import, msf_currency_revaluation, sale
+#. modules: account, base, product_nomenclature, stock, msf_doc_import, msf_currency_revaluation, sale, tender_flow
 #: code:addons/account/invoice.py:1661
 #: code:addons/base/res/res_user.py:946
 #: code:addons/product_nomenclature/product_nomenclature.py:154
@@ -17432,6 +17432,7 @@ msgstr "Appels d'Offres"
 #: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:694
 #: code:addons/msf_doc_import/wizard/wizard_delete_lines.py:589
 #: code:addons/sale/sale_order.py:2564
+#: view:check.products.supplier.updated.wizard:0
 #, python-format
 msgid "Warning!"
 msgstr "Avertissement!"
@@ -19151,7 +19152,7 @@ msgstr "Merge Lines by Account"
 #. module: tender_flow
 #: view:tender:0
 msgid "Update Product's Suppliers"
-msgstr "Mise à jour des Produits Fournisseurs"
+msgstr "Mise à jour des Fournisseurs des Produits"
 
 #. module: base
 #: field:res.config.users,log_xmlrpc:0
@@ -25147,6 +25148,7 @@ msgstr "Stopped products"
 #: field:internal.request.import.line,imp_comment:0
 #: field:internal.request.import.line,in_comment:0
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:256
+#: field:check.products.supplier.updated.wizard,comment:0
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -96801,9 +96803,10 @@ msgstr "The reference currency %s is not defined in the table to import!"
 msgid "Families"
 msgstr "Familles"
 
-#. modules: base, base_report_designer
+#. modules: base, base_report_designer, tender_flow
 #: view:ir.actions.configuration.wizard:0
 #: view:base.report.sxw:0
+#: view:check.products.supplier.updated.wizard:0
 msgid "Continue"
 msgstr "Continuer"
 
@@ -102869,8 +102872,9 @@ msgstr "Un compte marqué comme inclus dans la Réévaluation doit être défini
 msgid "OK, cancel line"
 msgstr "OK, annuler la ligne"
 
-#. module: sale
+#. module: sale, tender_flow
 #: code:addons/sale/wizard/delete_sale_order_line.py:42
+#: view:check.products.supplier.updated.wizard:0
 #, python-format
 msgid "Return to previous screen"
 msgstr "Retourner à l'écran précédent"
@@ -106827,3 +106831,30 @@ msgstr "Requête annulée par l'utilisateur"
 msgid "Stop report"
 msgstr "Arrêter le rapport"
 
+#. module: tender_flow
+#: field:tender,supplier_info_updated:0
+msgid "Did the Product's Suppliers have been updated"
+msgstr "Est-ce que les Fournisseurs des Produits ont été mis à jour"
+
+#. module: tender_flow
+#: help:tender,supplier_info_updated:0
+msgid "Flag to see if the 'Update Product's Suppliers' button have been used"
+msgstr "Flag pour voir si le bouton 'Mise à jour des Fournisseurs des Produits' a été utilisé"
+
+#. module: tender_flow
+#: view:check.products.supplier.updated.wizard:0
+msgid "\n"
+"                                You are about to close this Tender without the details being sent to update the Product Supplier information, are you sure you wish to continue ?\n"
+"                            "
+msgstr "\n"
+"                                Vous êtes sur le point de fermer cet Appel d'Offre sans avoir mis à jour les informations des Fournisseurs des Produits, êtes-vous sûr(e) de vouloir continuer ?\n"
+"                            "
+
+#. module: tender_flow
+#: view:check.products.supplier.updated.wizard:0
+msgid "\n"
+"                                Comment :\n"
+"                            "
+msgstr "\n"
+"                                Commentaire :\n"
+"                            "
