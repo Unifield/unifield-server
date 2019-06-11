@@ -1010,7 +1010,7 @@ You cannot choose this supplier because some destination locations are not avail
                     for stock_move in sp.move_lines:
                         if stock_move.purchase_line_id:
                             # get done qty for this PO line:
-                            domain = [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('state', 'in', ['done', 'cancel', 'cancel_r'])]
+                            domain = [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('state', 'in', ['done', 'cancel', 'cancel_r']), ('type', '=', 'in')]
                             done_moves = move_obj.search(cr, uid, domain, context=context)
                             done_qty = 0
                             for done_move in move_obj.browse(cr, uid, done_moves, context=context):

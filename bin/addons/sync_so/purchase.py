@@ -203,6 +203,9 @@ class purchase_order_line_sync(osv.osv):
 
             if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:
                 # in case of FO from missing/replacement claim
+                original_claim_line = self.pool.get('purchase.order.line').search(cr, uid, [('line_number', '=', pol_values['line_number']), ('order_id', '=', po_ids[0]), ('state', 'not in', ['cancel', 'cancel_r'])])
+                if original_claim_line:
+                    pol_values['resourced_original_line'] = original_claim_line[0]
                 pol_values['origin'] = self.pool.get('purchase.order').browse(cr, uid, po_ids[0], context=context).origin
                 pol_values['from_synchro_return_goods'] = True
 
@@ -227,6 +230,16 @@ class purchase_order_line_sync(osv.osv):
                 move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick_id),
                                                      ('line_number', '=', pol_values['line_number'])], context=context)
                 move_obj.write(cr, uid, move_ids, ({'purchase_line_id': new_pol}), context=context)
+                # update qty on original claim pol line
+                claim_pol_id = self.pool.get('purchase.order.line').search(cr, uid, [('line_number', '=', pol_values['line_number']), ('order_id', '=', po_ids[0]), ('product_qty', '>=', pol_values['product_uom_qty']), ('state', '=', 'confirmed')], context=context)
+                if claim_pol_id:
+                    orig_qty = self.pool.get('purchase.order.line').read(cr, uid, claim_pol_id[0], ['product_qty'], context=context)['product_qty']
+                    self.pool.get('purchase.order.line').write(cr, uid, claim_pol_id[0], {'product_qty': orig_qty - pol_values['product_uom_qty'], 'is_line_split': True}, context=context)
+                    self.update_fo_lines(cr, uid, [claim_pol_id[0]], for_claim=pol_values['product_uom_qty'], context=context)
+                    # check if original claim po line must be closed
+                    pending_move = self.pool.get('stock.move').search(cr, uid, [('type', '=', 'in'), ('purchase_line_id', '=', claim_pol_id[0]), ('state', 'not in', ['done', 'cancel', 'cancel_r'])], context=context)
+                    if not pending_move:
+                        wf_service.trg_validate(uid, 'purchase.order.line', claim_pol_id[0], 'done', cr)
 
             pol_updated = new_pol
             pol_state = ''

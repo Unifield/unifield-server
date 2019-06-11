@@ -90,7 +90,7 @@ class purchase_order_line(osv.osv):
 
         return True
 
-    def update_fo_lines(self, cr, uid, ids, context=None, qty_updated=False):
+    def update_fo_lines(self, cr, uid, ids, context=None, qty_updated=False, for_claim=False):
         '''
         update corresponding FO lines in the same instance
         '''
@@ -237,6 +237,18 @@ class purchase_order_line(osv.osv):
                     ], context=context)
                     if linked_out_moves:
                         self.pool.get('stock.move').write(cr, uid, [linked_out_moves[0]], {'product_qty': sol_values['product_uom_qty'], 'product_uos_qty': sol_values['product_uom_qty']}, context=context)
+                    elif for_claim:
+                        # if claim created but IR already confirmed, if qty can't be decreased on OUT because OUT was split, cancel the qty related to the claim
+                        linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
+                            ('sale_line_id', '=', pol.linked_sol_id.id),
+                            ('type', '=', 'out'),
+                            ('state', 'in', ['assigned', 'confirmed']),
+                            ('product_qty', '=',  for_claim)
+                        ], context=context)
+                        if linked_out_moves:
+                            self.pool.get('stock.move').write(cr, uid, [linked_out_moves[0]], {'sale_line_id': False}, context=context)
+                            self.pool.get('stock.move').action_cancel(cr, uid, [linked_out_moves[0]], context=context)
+
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
                 if qty_updated:
                     # if FO line qty reduced by a Cancel(/R) on IN, trigger update to PO proj line

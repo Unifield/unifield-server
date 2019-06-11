@@ -2888,7 +2888,6 @@ class sale_order_line(osv.osv):
             vals.update({'type': 'make_to_order'})
 
         self.check_empty_line(cr, uid, False, vals, context=context)
-
         # UF-1739: as we do not have product_uos_qty in PO (only in FO), we recompute here the product_uos_qty for the SYNCHRO
         qty = vals.get('product_uom_qty')
         product_id = vals.get('product_id')
