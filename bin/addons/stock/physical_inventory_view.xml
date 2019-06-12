@@ -129,23 +129,23 @@
                                <tree string="Discrepancies" editable="bottom" hide_delete_button="True" hide_new_button="True"
                                      colors="grey:ignored==True">
                                     <field name="inv_state" invisible="True" />
-                                    <field name="line_no" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="nomen_manda_2" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="product_id" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="product_uom_id" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="standard_price" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="currency_id" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="theoretical_qty" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
+                                    <field name="line_no" readonly="1"/>
+                                    <field name="nomen_manda_2" readonly="1"/>
+                                    <field name="product_id" readonly="1"/>
+                                    <field name="product_uom_id" readonly="1"/>
+                                    <field name="standard_price" readonly="1"/>
+                                    <field name="currency_id" readonly="1"/>
+                                    <field name="theoretical_qty" readonly="1"/>
                                     <field name="counted_qty" readonly="1" />
-                                    <field name="batch_number" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="expiry_date" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="discrepancy_qty" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="discrepancy_value" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="total_product_theoretical_qty" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="total_product_counted_qty" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="total_product_counted_value" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="total_product_discrepancy_qty" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
-                                    <field name="total_product_discrepancy_value" attrs="{ 'readonly': [('inv_state', 'not in', ['validated'])]}"/>
+                                    <field name="batch_number" readonly="1"/>
+                                    <field name="expiry_date" readonly="1"/>
+                                    <field name="discrepancy_qty" readonly="1"/>
+                                    <field name="discrepancy_value" readonly="1"/>
+                                    <field name="total_product_theoretical_qty" readonly="1"/>
+                                    <field name="total_product_counted_qty" readonly="1"/>
+                                    <field name="total_product_counted_value" readonly="1"/>
+                                    <field name="total_product_discrepancy_qty" readonly="1"/>
+                                    <field name="total_product_discrepancy_value" readonly="1"/>
                                     <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" attrs="{ 'readonly': [('inv_state', 'not in', ['counted', 'validated'])]}"/>
                                     <field name="comment" attrs="{ 'readonly': [('inv_state', 'not in', ['counted', 'validated', 'confirmed'])]}"/>
                                     <field name="ignored" invisible="True"/>

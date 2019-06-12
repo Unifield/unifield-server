@@ -42,22 +42,25 @@ class button_access_rule(osv.osv):
         return res
 
     _columns = {
+        'create_date': fields.date('Creation date', readonly=True),
         'name': fields.char('Name', size=256, required=True),
         'label': fields.char('Label', size=256),
         'type': fields.selection((('workflow','Workflow'), ('object','Object'), ('action', 'Action')), 'Button Type'),
         'xmlname': fields.char('Button action name', size=1024),
         'model_id': fields.many2one('ir.model', 'Model', help='The type of data to which this rule applies', required=True, ondelete='cascade'),
         'view_id': fields.many2one('ir.ui.view', 'View', help='The view to which this rule applies', required=True, ondelete='cascade'),
-        'group_ids': fields.many2many('res.groups', 'button_access_rule_groups_rel', 'button_access_rule_id', 'group_id', 'Groups', help='A list of groups who have access to this button. If you leave this empty, everybody will have access.'),
+        'group_ids': fields.many2many('res.groups', 'button_access_rule_groups_rel', 'button_access_rule_id', 'group_id', 'Groups', help='A list of groups who have access to this button. If you leave this empty, everybody will have access.', order_by='name'),
         'comment': fields.text('Comment', help='A description of what this rule does'),
         'group_names': fields.function(_get_group_names, type='char', method=True, string='Group Names', help='A list of all group names given button access by this rule'),
         'active': fields.boolean('Active', help='If checked, this rule will be applied.'),
         'deprecated': fields.boolean('Deprecated'),
+        'bar_type': fields.selection([('IT', 'IT'), ('Supply', 'Supply'), ('Finance', 'Finance')], string='Type'),
     }
 
     _defaults = {
         'active': True,
         'deprecated': True,
+        'bar_type': False,
     }
 
     _sql_constraints = [

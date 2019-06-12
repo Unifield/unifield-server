@@ -1710,6 +1710,28 @@ class account_invoice_line(osv.osv):
 
     _order = 'line_number'
 
+    def _check_on_invoice_line_big_amounts(self, cr, uid, ids, context=None):
+        """
+        Prevents booking amounts having more than 10 digits before the comma, i.e. amounts starting from 10 billions.
+        The goal is to avoid losing precision, see e.g.: "%s" % 10000000000.01  # '10000000000.0'
+        (and to avoid decimal.InvalidOperation due to huge amounts).
+        This applies to all types of account.invoice.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        too_big_amount = 10**10
+        inv_line_fields = ['quantity', 'price_unit', 'discount', 'name']
+        for inv_line in self.browse(cr, uid, ids, fields_to_fetch=inv_line_fields, context=context):
+            # check amounts entered manually (cf. huge amounts could cause decimal.InvalidOperation), and the total to be used in JI
+            qty = inv_line.quantity or 0.0
+            pu = inv_line.price_unit or 0.0
+            discount = inv_line.discount or 0.0
+            subtotal = self._amount_line(cr, uid, [inv_line.id], 'price_subtotal', None, context)[inv_line.id]
+            if abs(qty) >= too_big_amount or abs(pu) >= too_big_amount or abs(discount) >= too_big_amount or abs(subtotal) >= too_big_amount:
+                raise osv.except_osv(_('Error'), _('Line "%s": one of the numbers entered is more than 10 digits.') % inv_line.name)
+
     def create(self, cr, uid, vals, context=None):
         """
         Give a line_number to invoice line.
@@ -1727,7 +1749,9 @@ class account_invoice_line(osv.osv):
                 sequence = invoice.sequence_id
                 line = sequence.get_id(code_or_id='id', context=context)
                 vals.update({'line_number': line})
-        return super(account_invoice_line, self).create(cr, uid, vals, context)
+        inv_line_id = super(account_invoice_line, self).create(cr, uid, vals, context)
+        self._check_on_invoice_line_big_amounts(cr, uid, inv_line_id, context=context)
+        return inv_line_id
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -1758,6 +1782,7 @@ class account_invoice_line(osv.osv):
                     amount += l.price_subtotal
                 self.pool.get('account.invoice').write(cr, uid, [invl.invoice_id.id], {'check_total': amount}, context)
                 self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invl.invoice_id.register_line_ids], {'amount': -1 * amount}, context)
+        self._check_on_invoice_line_big_amounts(cr, uid, ids, context=context)
         return res
 
     def copy(self, cr, uid, inv_id, default=None, context=None):

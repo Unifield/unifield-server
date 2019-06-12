@@ -344,6 +344,24 @@ class product_attributes(osv.osv):
 
         return
 
+    def _search_mandatory_creator(self, cr, uid, obj, name, args, context=None):
+        '''
+        Filter the search according to the args parameter
+        '''
+        if context is None:
+            context = {}
+
+        data_obj = self.pool.get('ir.model.data')
+
+        res_id = 0  # To prevent search
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level
+        if instance_level == 'section':
+            res_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
+        elif instance_level == 'coordo':
+            res_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+
+        return [('international_status', '=', res_id)]
+
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
@@ -628,6 +646,8 @@ class product_attributes(osv.osv):
         ),
         'new_code' : fields.char('New code', size=64),
         'international_status': fields.many2one('product.international.status', 'Product Creator', required=False),
+        'mandatory_creator': fields.function(_get_dummy, fnct_search=_search_mandatory_creator, type='many2one',
+                                             relation='product.international.status', method=True, string='Mandatory Product Creator'),
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
@@ -1219,6 +1239,13 @@ class product_attributes(osv.osv):
                         'res_id': res_id,
                     }, context=context)
 
+        if 'batch_management' in vals and 'perishable' in vals and context.get('from_import_menu'):
+            if vals['batch_management'] and not vals['perishable']:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Batch and Expiry attributes do not conform')
+                )
+
         if 'default_code' in vals:
             if not context.get('sync_update_execution'):
                 vals['default_code'] = vals['default_code'].strip()
@@ -1780,13 +1807,84 @@ class product_attributes(osv.osv):
 
         return True
 
-    def onchange_batch_management(self, cr, uid, ids, batch_management, context=None):
-        '''
-        batch management is modified -> modification of Expiry Date Mandatory (perishable)
-        '''
-        if batch_management:
-            return {'value': {'perishable': True}}
-        return {}
+    def change_bn_ed_mandatory(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not ids:
+            return True
+
+        product = self.browse(cr, uid, ids[0], fields_to_fetch=['qty_available', 'batch_management', 'perishable'], context=context)
+        vals = {}
+
+        if context.get('needed_batch_mngmt') is not None:
+            vals.update({'batch_management': context['needed_batch_mngmt']})
+            context.pop('needed_batch_mngmt')
+            if vals['batch_management'] and not (product.perishable or context.get('needed_perishable')):
+                raise osv.except_osv(_('Error'),
+                                     _('You are not allowed to have a Batch managed product without an Expiry Date'))
+        if context.get('needed_perishable') is not None:
+            vals.update({'perishable': context['needed_perishable']})
+            context.pop('needed_perishable')
+            if not vals['perishable'] and (product.batch_management or vals.get('batch_management')):
+                raise osv.except_osv(_('Error'),
+                                     _('You are not allowed to have a Batch managed product without an Expiry Date'))
+
+        in_use_stock = product.qty_available > 0 or False
+        if not in_use_stock:  # Check stock IN - stock OUT
+            cr.execute("""
+                SELECT (SELECT SUM(m.product_qty) FROM stock_move m, stock_location l 
+                    WHERE l.id = m.location_dest_id AND m.product_id = %s AND m.state = 'done'
+                        AND l.usage NOT IN ('customer', 'supplier', 'inventory')
+                    GROUP BY m.product_id)
+                -
+                    (SELECT SUM(m.product_qty) FROM stock_move m, stock_location l 
+                    WHERE l.id = m.location_id AND m.product_id = %s AND m.state = 'done'
+                        AND l.usage NOT IN ('customer', 'supplier', 'inventory')
+                    GROUP BY m.product_id)
+            """, (product.id, product.id))
+            for prod in cr.fetchall():
+                if prod[0] > 0:
+                    in_use_stock = True
+                    break
+        # Check for Available INs and for Available Moves of Picking Tickets with 0 qty and Processed Line State
+        if not in_use_stock:
+            cr.execute("""
+                SELECT m.id FROM stock_move m, stock_picking p 
+                LEFT JOIN stock_incoming_processor ip ON p.id = ip.picking_id
+                WHERE m.picking_id = p.id AND m.product_id = %s 
+                    AND (
+                        (m.product_qty > 0 AND p.type = 'in' AND p.subtype = 'standard' 
+                            AND (p.state = 'shipped' OR (ip.draft = 't' AND p.state = 'assigned'))) 
+                        OR (m.state = 'assigned' AND m.product_qty = 0 AND p.type = 'out' AND p.line_state = 'processed')
+                    )
+                LIMIT 1
+            """, (product.id,))
+            if cr.rowcount:
+                in_use_stock = True
+        if not in_use_stock:  # Check for Stock Mission Report
+            srml_domain = [
+                ('product_id', '=', product.id),
+                '|', '|', '|', '|', '|', '|', '|', '|',
+                ('stock_qty', '>', 0), ('in_pipe_coor_qty', '>', 0), ('cross_qty', '>', 0), ('in_pipe_qty', '>', 0),
+                ('cu_qty', '>', 0), ('wh_qty', '>', 0), ('central_qty', '>', 0), ('secondary_qty', '>', 0),
+                ('internal_qty', '>', 0),
+            ]
+            if self.pool.get('stock.mission.report.line').search(cr, uid, srml_domain, limit=1, context=context):
+                in_use_stock = True
+
+        if in_use_stock:
+            context['prod_data'] = {'id': product.id, 'vals': vals}
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'change.bn.ed.mandatory.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+            }
+        else:
+            return self.write(cr, uid, ids, vals, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):
         product_xxx = self.search(cr, uid, [('default_code', '=', 'XXX')])
@@ -2068,14 +2166,44 @@ class product_uom(osv.osv):
                     uom_name = self.read(cr, uid, uom_id, ['name'])['name']
                     raise osv.except_osv(
                         _('Error'),
-                        _('''The UoM '%s' is an Unifield internal
-Uom, so you can't remove it''' % uom_name),
+                        _("The UoM '%s' is an Unifield internal Uom, so you can't remove it" % uom_name),
                     )
             except ValueError:
                 pass
 
         return super(product_uom, self).unlink(cr, uid, ids, context=context)
 
+
 product_uom()
+
+
+class change_bn_ed_mandatory_wizard(osv.osv_memory):
+    _name = 'change.bn.ed.mandatory.wizard'
+
+    _columns = {}
+
+    def yes_change_bn_ed_mandatory(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        prod_obj = self.pool.get('product.product')
+        if context.get('prod_data'):
+            prod_obj.write(cr, uid, context['prod_data']['id'], context['prod_data']['vals'], context=context)
+            context.pop('prod_data')
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def no_change_bn_ed_mandatory(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if context.get('prod_data'):
+            context.pop('prod_data')
+
+        return {'type': 'ir.actions.act_window_close'}
+
+
+change_bn_ed_mandatory_wizard()
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

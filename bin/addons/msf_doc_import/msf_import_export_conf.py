@@ -95,10 +95,35 @@ MODEL_DICT = {
         'domain_type': 'finance',
         'model': 'account.journal'
     },
-    'analytic_accounts': {
-        'name': 'Analytic Accounts',
+    'funding_pools': {
+        'name': 'Funding Pools',
         'domain_type': 'finance',
-        'model': 'account.analytic.account'
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'FUNDING'), ('parent_id', '!=', False)]
+    },
+    'destinations': {
+        'name': 'Destinations',
+        'domain_type': 'finance',
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'DEST'), ('parent_id', '!=', False)]
+    },
+    'cost_centers': {
+        'name': 'Cost Centers',
+        'domain_type': 'finance',
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'OC'), ('parent_id', '!=', False)]
+    },
+    'free1': {
+        'name': 'Free 1',
+        'domain_type': 'finance',
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'FREE1'), ('parent_id', '!=', False)]
+    },
+    'free2': {
+        'name': 'Free 2',
+        'domain_type': 'finance',
+        'model': 'account.analytic.account',
+        'domain': [('category', '=', 'FREE2'), ('parent_id', '!=', False)]
     },
     'analytic_journals': {
         'name': 'Analytic Journals',
@@ -136,38 +161,53 @@ MODEL_DICT = {
     'user_access': {
         'name': 'User Access',
         'domain_type': 'non_functionnal',
+        'lang': 'en_MF',
         'model': 'user.access.configurator'
     },
     'record_rules': {
         'name': 'Record Rules',
         'domain_type': 'non_functionnal',
+        'lang': 'en_MF',
         'model': 'ir.rule'
     },
     'access_control_list': {
         'name': 'Access Controls List',
         'domain_type': 'non_functionnal',
         'model': 'ir.model.access',
-        'domain': [('name', '!=', 'admin')],
+        'lang': 'en_MF',
+        'domain': [('from_system', '=', False)],
+    },
+    'access_control_list_empty': {
+        'name': 'Objects without ACL',
+        'domain_type': 'non_functionnal',
+        'model': 'ir.model.access.empty',
+        'lang': 'en_MF',
+        'domain': [('model_id.osv_memory', '=', False)],
     },
     'field_access_rules': {
         'name': 'Field Access Rules',
         'domain_type': 'non_functionnal',
+        'lang': 'en_MF',
         'model': 'msf_field_access_rights.field_access_rule'
     },
     'field_access_rule_lines': {
         'name': 'Field Access Rule Lines',
         'domain_type': 'non_functionnal',
+        'lang': 'en_MF',
         'model': 'msf_field_access_rights.field_access_rule_line'
     },
     'button_access_rules': {
         'name': 'Button Access Rules',
         'domain_type': 'non_functionnal',
-        'model': 'msf_button_access_rights.button_access_rule'
+        'lang': 'en_MF',
+        'model': 'msf_button_access_rights.button_access_rule',
     },
     'window_actions': {
         'name': 'Window Actions',
         'domain_type': 'non_functionnal',
-        'model': 'ir.actions.act_window'
+        'model': 'ir.actions.act_window',
+        'lang': 'en_MF',
+        'domain': [('res_model', '!=', 'audittrail.log.line')],
     },
 }
 
@@ -466,11 +506,10 @@ MODEL_DATA_DICT = {
             'analytic_journal_id.name',
         ],
     },
-    'analytic_accounts': {
+    'funding_pools': {
         'header_list': [
-            'name',
             'code',
-            'category',
+            'name',
             'parent_id.code',
             'type',
             'date_start',
@@ -482,7 +521,74 @@ MODEL_DATA_DICT = {
         'required_field_list': [
             'name',
             'code',
-            'category',
+            'parent_id.code',
+            'date_start',
+        ],
+    },
+    'cost_centers': {
+        'header_list': [
+            'code',
+            'name',
+            'parent_id.code',
+            'type',
+            'date_start',
+            'date',  # "inactive from"
+        ],
+        'required_field_list': [
+            'name',
+            'code',
+            'parent_id.code',
+            'date_start',
+        ],
+    },
+    'destinations': {
+        'header_list': [
+            'code',
+            'name',
+            'parent_id.code',
+            'type',
+            'date_start',
+            'date',  # "inactive from"
+            'dest_cc_ids',
+            'destination_ids',
+            'allow_all_cc',
+        ],
+        'required_field_list': [
+            'name',
+            'code',
+            'parent_id.code',
+            'type',
+            'date_start',
+        ],
+    },
+    'free1': {
+        'header_list': [
+            'name',
+            'code',
+            'parent_id.code',
+            'type',
+            'date_start',
+            'date',  # "inactive from"
+        ],
+        'required_field_list': [
+            'name',
+            'code',
+            'parent_id.code',
+            'date_start',
+        ],
+    },
+    'free2': {
+        'header_list': [
+            'name',
+            'code',
+            'parent_id.code',
+            'type',
+            'date_start',
+            'date',  # "inactive from"
+        ],
+        'required_field_list': [
+            'name',
+            'code',
             'parent_id.code',
             'date_start',
         ],
@@ -606,6 +712,21 @@ MODEL_DATA_DICT = {
             'model_id.id',
         ],
     },
+    'access_control_list_empty': {
+        'header_list': [
+            'name',
+            'group_id.name',
+            'perm_create',
+            'perm_unlink',
+            'perm_read',
+            'perm_write',
+            'model_id.id',
+        ],
+        'required_field_list': [],
+        'hide_download_template': True,
+        'hide_download_3_entries': True,
+        'display_file_import': False,
+    },
     'field_access_rules': {
         'header_list': [
             'active',
@@ -649,7 +770,9 @@ MODEL_DATA_DICT = {
             'id',
             'group_ids',
             'model_id.model',
-            'view_id.name'
+            'view_id.name',
+            'bar_type',
+            'create_date',
         ],
         'required_field_list': [
             'id',
@@ -659,6 +782,7 @@ MODEL_DATA_DICT = {
             'label',
             'model_id.model',
             'view_id.name',
+            'create_date',
         ],
     },
     'window_actions': {

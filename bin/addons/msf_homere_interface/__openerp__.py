@@ -32,8 +32,8 @@
     "update_xml" : [
         'security/ir.model.access.csv',
         'hr_view.xml',
-        'hr_payroll_wizard.xml',
         'hr_payroll_view.xml',
+        'hr_payroll_wizard.xml',
     ],
     "demo_xml" : [],
     "test": [],

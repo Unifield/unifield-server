@@ -27,6 +27,7 @@
           <!-- Actions -->
           <act_window id="action_write_off"
             name="Re-open partially closed register"
+            view_ids="register_accounting.view_cash_statement_tree,account.view_bank_statement_form2"
             res_model="cashbox.write.off"
             src_model="account.bank.statement"
             key2="client_action_multi"
