@@ -17748,7 +17748,7 @@ msgstr "Indique à l'utilisateur s'il peut ou ne peut pas utiliser le produit."
 
 #. modules: threshold_value, procurement_auto, supplier_catalogue, consumption_calculation, kit, stock_forecast, procurement, msf_supply_doc_export, msf_doc_import
 #: code:addons/consumption_calculation/consumption_calculation.py:482
-#: code:addons/kit/wizard/kit_mass_import.py:134
+#: report:addons/kit/report/kit_mass_import_export_xls.mako:119
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:43
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:69
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:177
@@ -19397,7 +19397,7 @@ msgid "ID of the parent record"
 msgstr "ID de l'enregistrement parent"
 
 #. module: kit
-#: code:addons/kit/wizard/kit_mass_import.py:128
+#: report:addons/kit/report/kit_mass_import_export_xls.mako:113
 #: field:composition.item,item_kit_version:0
 #, python-format
 msgid "Kit Version"
@@ -23275,10 +23275,10 @@ msgid "The user's timezone, used to perform timezone conversions between the ser
 msgstr "Le fuseau horaire de l'utilisateur, utilisé pour calculer les conversions horaires entre le serveur et le client"
 
 #. module: kit
-#: code:addons/kit/wizard/kit_mass_import.py:127
+#: report:addons/kit/report/kit_mass_import_export_xls.mako:112
 #, python-format
 msgid "Kit Description"
-msgstr "Kit Description"
+msgstr "Description du Kit"
 
 #. module: msf_profile
 #: field:res.groups,is_an_admin_profile:0
@@ -38064,12 +38064,13 @@ msgid "Transport type"
 msgstr "Transport type"
 
 #. modules: msf_doc_import, kit
-#: code:addons/kit/wizard/kit_mass_import.py:133
+#: report:addons/kit/report/kit_mass_import_export_xls.mako:118
+#: code:addons/kit/wizard/kit_mass_import.py:130
 #: code:addons/msf_doc_import/wizard/__init__.py:100
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:68
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:62
 #, python-format
 msgid "Product Qty"
-msgstr "Product Qty"
+msgstr "Qté du Produit"
 
 #. module: purchase_double_validation
 #: view:purchase.double.validation.installer:0
@@ -44193,7 +44194,7 @@ msgstr "Contient des Produits Dangereux"
 #: report:addons/consumption_calculation/report/report_incoming_consumption_xls.mako:69
 #: code:addons/consumption_calculation/wizard/wizard_export_fmc_rac.py:38
 #: report:product.likely.expire.report_pdf:0
-#: code:addons/kit/wizard/kit_mass_import.py:131
+#: report:addons/kit/report/kit_mass_import_export_xls.mako:116
 #: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:68
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:65
 #: report:addons/msf_supply_doc_export/report/stock_inventory_xls.mako:59
@@ -55469,11 +55470,6 @@ msgstr "Lignes de facture à importer"
 msgid "Manufacturer Ref."
 msgstr "Manufacturer Ref."
 
-#. module: kit
-#: field:kit.mass.import,show_template:0
-msgid "Show template"
-msgstr "Montrer le modèle"
-
 #. modules: msf_doc_import, msf_outgoing
 #: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:151
 #: field:wizard.import.in.line.simulation.screen,move_uom_id:0
@@ -60257,7 +60253,7 @@ msgstr "Africa/Ceuta"
 #. module: kit
 #: view:kit.mass.import:0
 msgid "Get template"
-msgstr "Get template"
+msgstr "Obtenir le modèle"
 
 #. module: product
 #: field:product.template,rental:0
@@ -65077,7 +65073,7 @@ msgstr "La langue choisie a été installée avec succès. Vous devez changer le
 #: field:ir.module.module.dependency,module_id:0
 #: report:ir.module.reference:0
 #: field:ir.translation,module:0
-#: code:addons/kit/wizard/kit_mass_import.py:130
+#: report:addons/kit/report/kit_mass_import_export_xls.mako:115
 #: field:assign.to.kit,module_assign_to_kit:0
 #: view:composition.item:0
 #: field:composition.item,item_module:0
@@ -73032,7 +73028,7 @@ msgstr "Navajo"
 #: field:sync.client.sync_server_connection,active:0
 #: field:threshold.value,active:0
 #: field:account.period,active:0
-#: code:addons/kit/wizard/kit_mass_import.py:129
+#: report:addons/kit/report/kit_mass_import_export_xls.mako:114
 #: view:msf.instance:0
 #: field:automated.export,active:0
 #: field:product.heat_sensitive,active:0
@@ -75763,7 +75759,7 @@ msgid "Procurement Method"
 msgstr "Approvisionnement- Méthode"
 
 #. module: kit
-#: code:addons/kit/wizard/kit_mass_import.py:126
+#: report:addons/kit/report/kit_mass_import_export_xls.mako:111
 #, python-format
 msgid "Kit Code"
 msgstr "Code Kit"
@@ -77002,7 +76998,7 @@ msgstr "Sorte de Node"
 #: report:addons/consumption_calculation/report/report_incoming_consumption_xls.mako:70
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:70
 #: report:product.likely.expire.report_pdf:0
-#: code:addons/kit/wizard/kit_mass_import.py:132
+#: report:addons/kit/report/kit_mass_import_export_xls.mako:117
 #: code:addons/msf_doc_import/wizard/__init__.py:30
 #: code:addons/msf_doc_import/wizard/__init__.py:57
 #: code:addons/msf_doc_import/wizard/__init__.py:67
@@ -106827,3 +106823,10 @@ msgstr "Requête annulée par l'utilisateur"
 msgid "Stop report"
 msgstr "Arrêter le rapport"
 
+#. module: kit
+#: report:addons/kit/report/kit_mass_import_export_xls.mako:89
+#: code:addons/kit/wizard/kit_mass_import.py:149
+#: model:ir.actions.report.xml,name:kit.kit_mass_import_export
+#, python-format
+msgid "Theoretical Kit Template"
+msgstr "Modèle du Kit Théorique"

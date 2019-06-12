@@ -67,9 +67,6 @@ class kit_mass_import(osv.osv):
             size=128,
             string='Template filename',
         ),
-        'show_template': fields.boolean(
-            string='Show template',
-        ),
         'state': fields.selection(
             selection=[
                 ('draft', 'Not started'),
@@ -122,31 +119,12 @@ class kit_mass_import(osv.osv):
         if context is None:
             context = {}
 
-        columns_header = [
-            (_('Kit Code'), 'string'),
-            (_('Kit Description'), 'string'),
-            (_('Kit Version'), 'string'),
-            (_('Active'), 'string'),
-            (_('Module'), 'string'),
-            (_('Product Code'), 'string'),
-            (_('Product Description'), 'string'),
-            (_('Product Qty'), 'string'),
-            (_('Product UoM'), 'string'),
-        ]
-        default_template = SpreadsheetCreator(
-            'Template of import',
-            columns_header,
-            [],)
-        template = base64.encodestring(default_template.get_xml(
-            default_filters=['decode.utf8']))
-
-        self.write(cr, uid, ids, {
-            'template_file': template,
-            'template_filename': 'template.xls',
-            'show_template': True,
-        }, context=context)
-
-        return {}
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'kit_mass_import_export',
+            'datas': {'target_filename': _('Theoretical Kit Template')},
+            'context': context,
+        }
 
     def get_value_from_excel(self, cr, uid, file_to_import, context=None):
         """

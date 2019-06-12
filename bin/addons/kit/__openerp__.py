@@ -46,6 +46,7 @@
         'security/ir.model.access.csv',
         'wizard/split_move_view.xml',
         'wizard/kit_mass_import_view.xml',
+        'report/kit_mass_import_export_view.xml'
     ],
     "demo_xml": [],
     'test': [
