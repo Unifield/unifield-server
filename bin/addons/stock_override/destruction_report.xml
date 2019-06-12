@@ -9,11 +9,13 @@
                 header="True"
                 rml="addons/stock_override/report/destruction_location.rml"
                 string="Destruction Report"
+                view_ids="stock_override.view_destruction_location_tree"
                 />
 
         <report auto="False"
                 id="internal_move"
                 model="stock.picking"
+                view_ids="stock.vpicktree,stock.view_picking_form"
                 name="internal.move"
                 header="True"
                 rml="addons/stock_override/report/internal_move.rml"

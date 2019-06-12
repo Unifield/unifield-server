@@ -1553,7 +1553,7 @@ class shipment(osv.osv):
                                      _('Please put a partner on the shipment if you want to generate invoice.'))
 
             # (US-952) No STV created when a shipment is generated on an external supplier
-            if partner.partner_type == 'external':
+            if partner.partner_type in ('external', 'esc'):
                 continue
 
             inv_type = 'out_invoice'
@@ -5156,6 +5156,7 @@ class stock_move(osv.osv):
                         'stock.picking': (_get_picking, ['shipment_id'], 10),
                     }
     ),
+        'from_manage_expired_move': fields.related('picking_id', 'from_manage_expired', string='Manage Expired', type='boolean', readonly=True),
         # Fields used for domain
         'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
         'location_output_id': fields.many2one('stock.location', string='Output location'),

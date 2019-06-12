@@ -165,7 +165,7 @@
                     			<para style="HeaderInfosTitle">Origin ref.:</para>
 							</td>
 							<td>
-                    			<parawrap style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.client_order_ref and pt.sale_id.client_order_ref or '-' ]]</parawrap>
+                    			<parawrap style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.client_order_ref and pt.sale_id.short_client_ref or '-' ]]</parawrap>
 							</td>
 						</tr>
 						<tr>
