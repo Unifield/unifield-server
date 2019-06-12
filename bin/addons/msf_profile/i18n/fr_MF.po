@@ -106827,3 +106827,8 @@ msgstr "Requête annulée par l'utilisateur"
 msgid "Stop report"
 msgstr "Arrêter le rapport"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:648
+#, python-format
+msgid "Line #%s: The location \"%s\" is not allowed"
+msgstr "Ligne #%s: La Zone \"%s\" n'est pas autorisée"

@@ -625,7 +625,6 @@ class initial_stock_inventory(osv.osv):
         (_check_active_product, "You cannot confirm this stock inventory because it contains a line with an inactive product", ['order_line', 'state'])
     ]
 
-
     def check_location_id(self, cr, uid, location_id, line_num, wrong_location, context=None):
         if context is None:
             context = {}
@@ -645,10 +644,9 @@ class initial_stock_inventory(osv.osv):
 
         if location_id in forbidden_loc_ids:
             loc_name = self.pool.get('stock.location').read(cr, uid, location_id, ['name'], context=context)['name']
-            wrong_location.append(_('Line #%s: location "%s" not allowed') % (line_num, loc_name))
+            wrong_location.append(_('Line #%s: The location "%s" is not allowed') % (line_num, loc_name))
 
         return True
-
 
     def import_file(self, cr, uid, ids, context=None):
         '''
@@ -779,10 +777,9 @@ Product Code, Product Description, Initial Average Cost, Location, Batch, Expiry
                         location_not_found = True
                     else:
                         location_id = loc_ids[0]
+                        self.check_location_id(cr, uid, location_id, line_num, wrong_location, context=context)
                 except Exception:
                     location_id = False
-
-            self.check_location_id(cr, uid, location_id, line_num, wrong_location, context=context)
 
             # Batch
             batch = row.cells[4].data
