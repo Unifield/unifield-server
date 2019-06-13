@@ -26988,10 +26988,14 @@ msgstr "Rechercher Actions"
 #: code:addons/specific_rules/wizard/stock_partial_picking.py:43
 #: view:shipment:0
 #: view:shipment.add.pack.processor:0
-#: view:stock.picking:0
 #, python-format
 msgid "Clear all"
 msgstr "Effacer tout"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Clear lines"
+msgstr "Effacer lignes"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:1068
@@ -33974,10 +33978,15 @@ msgstr "30 Jours Fin de Mois"
 #: code:addons/specific_rules/wizard/stock_partial_picking.py:42
 #: view:shipment:0
 #: view:shipment.add.pack.processor:0
-#: view:stock.picking:0
 #, python-format
 msgid "Copy all"
 msgstr "Copier tout"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+#, python-format
+msgid "Copy lines"
+msgstr "Copier les lignes"
 
 #. module: base
 #: view:ir.actions.todo:0
@@ -104817,8 +104826,8 @@ msgstr "Numéro\\nLot"
 
 #. module: msf_outgoing
 #: view:stock.picking:0
-msgid "Change All Sources"
-msgstr "Changer toutes les Sources"
+msgid "Change sources"
+msgstr "Changer les sources"
 
 #. module: stock_override
 #: view:change.dest.location:0

@@ -1836,11 +1836,27 @@ class stock_picking(osv.osv):
         return True
 
     def copy_all(self, cr, uid, ids, context=None):
-        cr.execute("update stock_move set qty_to_process=product_qty where state = 'assigned' and picking_id in %s and product_qty!=0", (tuple(ids),))
+        if context is None:
+            context = {}
+        cond = ''
+        params = [tuple(ids)]
+        if context.get('button_selected_ids'):
+            cond = 'and id in %s'
+            params.append(tuple(context['button_selected_ids']))
+
+        cr.execute("update stock_move set qty_to_process=product_qty where state = 'assigned' and picking_id in %s and product_qty!=0 "+cond, params) # not_a_user_entry
         return True
 
     def uncopy_all(self, cr, uid, ids, context=None):
-        cr.execute("update stock_move set qty_to_process=0 where state in ('confirmed', 'assigned') and picking_id in %s and product_qty!=0", (tuple(ids),))
+        if context is None:
+            context = {}
+        cond = ''
+        params = [tuple(ids)]
+        if context.get('button_selected_ids'):
+            cond = 'and id in %s'
+            params.append(tuple(context['button_selected_ids']))
+
+        cr.execute("update stock_move set qty_to_process=0 where state in ('confirmed', 'assigned') and picking_id in %s and product_qty!=0"+cond, params) # not_a_user_entry
         return True
 
     def reset_all(self, cr, uid, ids, context=None):
