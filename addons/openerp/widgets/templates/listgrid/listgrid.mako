@@ -463,7 +463,15 @@ if (auto_field && auto_field.val()){
                                % if bothedit:
                                 else {
                                     jQuery(row).click(function(event) {
-                                        new One2Many('${name}', false).edit(parseInt(jQuery(row).attr('record'), 10),  true);
+                                        var rec_id = parseInt(jQuery(row).attr('record'), 10);
+                                        if (rec_id) {
+                                            new One2Many('${name}', false).edit(rec_id,  true);
+                                        } else {
+                                            var current_id = jQuery(idSelector('${name}')).attr('current_id');
+                                            if (current_id) {
+                                                new ListView('${name}').save(current_id);
+                                            }
+                                        }
                                     });
                                 }
                                % endif
