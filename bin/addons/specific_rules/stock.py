@@ -271,8 +271,6 @@ class initial_stock_inventory_line(osv.osv):
     _inherit = 'stock.inventory.line'
 
     def _get_error_msg(self, cr, uid, ids, field_name, args, context=None):
-        prodlot_obj = self.pool.get('stock.production.lot')
-        dt_obj = self.pool.get('date.tools')
         res = {}
 
         for line in self.browse(cr, uid, ids, context=context):
@@ -283,22 +281,6 @@ class initial_stock_inventory_line(osv.osv):
                 res[line.id] = _('You must define a batch number')
             elif line.hidden_perishable_mandatory and not line.expiry_date:
                 res[line.id] = _('You must define an expiry date')
-            elif line.prodlot_name and line.expiry_date and line.product_id:
-                prodlot_ids = prodlot_obj.search(cr, uid, [
-                    ('name', '=', line.prodlot_name),
-                    ('product_id', '=', line.product_id.id),
-                    ('life_date', '=', line.expiry_date),
-                ], context=context)
-                if not prodlot_ids:
-                    prodlot_ids = prodlot_obj.search(cr, uid, [
-                        ('name', '=', line.prodlot_name),
-                        ('product_id', '=', line.product_id.id),
-                    ], context=context)
-                    if prodlot_ids:
-                        prodlot = prodlot_obj.browse(cr, uid, prodlot_ids[0], context=context)
-                        life_date = dt_obj.get_date_formatted(cr, uid, datetime=prodlot.life_date)
-                        if prodlot.life_date != line.expiry_date:
-                            res[line.id] = _('The batch number \'%s\' is already in the system but its expiry date is %s') % (line.prodlot_name, life_date)
 
         return res
 
