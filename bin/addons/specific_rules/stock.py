@@ -287,12 +287,18 @@ class initial_stock_inventory_line(osv.osv):
                 prodlot_ids = prodlot_obj.search(cr, uid, [
                     ('name', '=', line.prodlot_name),
                     ('product_id', '=', line.product_id.id),
+                    ('life_date', '=', line.expiry_date),
                 ], context=context)
-                if prodlot_ids:
-                    prodlot = prodlot_obj.browse(cr, uid, prodlot_ids[0], context=context)
-                    life_date = dt_obj.get_date_formatted(cr, uid, datetime=prodlot.life_date)
-                    if prodlot.life_date != line.expiry_date:
-                        res[line.id] = _('The batch number \'%s\' is already in the system but its expiry date is %s') % (line.prodlot_name, life_date)
+                if not prodlot_ids:
+                    prodlot_ids = prodlot_obj.search(cr, uid, [
+                        ('name', '=', line.prodlot_name),
+                        ('product_id', '=', line.product_id.id),
+                    ], context=context)
+                    if prodlot_ids:
+                        prodlot = prodlot_obj.browse(cr, uid, prodlot_ids[0], context=context)
+                        life_date = dt_obj.get_date_formatted(cr, uid, datetime=prodlot.life_date)
+                        if prodlot.life_date != line.expiry_date:
+                            res[line.id] = _('The batch number \'%s\' is already in the system but its expiry date is %s') % (line.prodlot_name, life_date)
 
         return res
 
