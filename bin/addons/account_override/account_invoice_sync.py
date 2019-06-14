@@ -52,6 +52,7 @@ class account_invoice_sync(osv.osv):
         journal_obj = self.pool.get('account.journal')
         currency_obj = self.pool.get('res.currency')
         partner_obj = self.pool.get('res.partner')
+        user_obj = self.pool.get('res.users')
         invoice_dict = invoice_data.to_dict()
         # the counterpart instance must exist and be active
         partner_ids = partner_obj.search(cr, uid, [('name', '=', source), ('active', '=', True)], limit=1, context=context)
@@ -59,9 +60,6 @@ class account_invoice_sync(osv.osv):
             raise osv.except_osv(_('Error'), _("The partner %s doesn't exist or is inactive.") % source)
         partner_id = partner_ids[0]
         partner = partner_obj.browse(cr, uid, partner_ids[0], fields_to_fetch=['property_account_payable'], context=context)
-        account_id = partner.property_account_payable and partner.property_account_payable.id
-        if not account_id:
-            raise osv.except_osv(_('Error'), _("Impossible to retrieve the account code."))
         journal_type = invoice_dict.get('journal_id', {}).get('type', '')
         if not journal_type or journal_type not in ('sale', 'intermission'):
             raise osv.except_osv(_('Error'), _("Impossible to retrieve the journal type, or the journal type found is incorrect."))
@@ -84,9 +82,14 @@ class account_invoice_sync(osv.osv):
             pur_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)], limit=1, context=context)
             if not pur_journal_ids:
                 raise osv.except_osv(_('Error'), _("No Purchase Journal found for the current instance."))
+            # for the SI use the Account Payable of the partner
+            si_account = partner.property_account_payable
+            if not si_account:
+                raise osv.except_osv(_('Error'), _("Account Payable not found for the partner %s.") % partner.name)
             vals.update(
                 {
                     'journal_id': pur_journal_ids[0],
+                    'account_id': si_account.id,
                     'type': 'in_invoice',
                     'is_direct_invoice': False,
                     'is_inkind_donation': False,
@@ -99,9 +102,14 @@ class account_invoice_sync(osv.osv):
             int_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'intermission'), ('is_current_instance', '=', True)], limit=1, context=context)
             if not int_journal_ids:
                 raise osv.except_osv(_('Error'), _("No Intermission Journal found for the current instance."))
+            # for the IVI use the Intermission counterpart account from the Company form
+            ivi_account = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.intermission_default_counterpart
+            if not ivi_account:
+                raise osv.except_osv(_('Error'), _("The Intermission counterpart account is missing in the Company form."))
             vals.update(
                 {
                     'journal_id': int_journal_ids[0],
+                    'account_id': ivi_account.id,
                     'type': 'in_invoice',
                     'is_inkind_donation': False,
                     'is_debit_note': False,
@@ -112,7 +120,6 @@ class account_invoice_sync(osv.osv):
             {
                 'partner_id': partner_id,
                 'currency_id': currency_id,
-                'account_id': account_id,
                 'document_date': doc_date,
                 'date_invoice': posting_date,
             }
