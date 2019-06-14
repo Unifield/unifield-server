@@ -204,10 +204,14 @@ class account_move_line(osv.osv):
             """, (time.strftime('%Y-%m-%d'), tuple(merges+unmerge), )
         )
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
-        if self.pool.get('sync.client.orm_extended'):
-            self.pool.get('account.move.line').synchronize(cr, uid, merges+unmerge, context=context)
+        #if self.pool.get('sync.client.orm_extended'):
+        #    self.pool.get('account.move.line').synchronize(cr, uid, merges+unmerge, context=context)
 
         move_rec_obj.reconcile_partial_check(cr, uid, [r_id] + merges_rec, context=context)
+
+        # delete old partial rec
+        if merges_rec:
+            self.pool.get('account.move.reconcile').unlink(cr, uid, merges_rec, context=context)
         return True
 
     def reconcile(self, cr, uid, ids, type='auto', writeoff_acc_id=False, writeoff_period_id=False, writeoff_journal_id=False, context=None):
@@ -253,6 +257,7 @@ class account_move_line(osv.osv):
         if different_level and has_project_line and not has_section_line:
             different_level = False
             multi_instance_level_creation = 'coordo'
+        partial_reconcile_ids = set()
         for line in unrec_lines:
             if line.state <> 'valid':
                 raise osv.except_osv(_('Error'),
@@ -264,6 +269,8 @@ class account_move_line(osv.osv):
             currency += line['amount_currency'] or 0.0
             account_id = line['account_id']['id']
             partner_id = (line['partner_id'] and line['partner_id']['id']) or False
+            if line.reconcile_partial_id:
+                partial_reconcile_ids.add(line.reconcile_partial_id.id)
         func_balance = func_debit - func_credit
         book_balance = debit - credit
 
@@ -327,6 +334,10 @@ class account_move_line(osv.osv):
             partner_id = lines[0].partner_id and lines[0].partner_id.id or False
             if partner_id and context and context.get('stop_reconcile', False):
                 partner_obj.write(cr, uid, [partner_id], {'last_reconciliation_date': time.strftime('%Y-%m-%d %H:%M:%S')})
+
+        if partial_reconcile_ids:
+            # delete old partial rec
+            self.pool.get('account.move.reconcile').unlink(cr, uid, list(partial_reconcile_ids), context=context)
         return r_id
 
     def _hook_check_period_state(self, cr, uid, result=False, context=None, *args, **kargs):
