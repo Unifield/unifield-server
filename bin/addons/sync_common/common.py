@@ -30,6 +30,7 @@ WHITE_LIST_MODEL = [
     'account.move',
     'account.move.line',
     'account.move.reconcile',
+    'account.move.unreconcile',
     'account.payment.term',
     'account.period',
     'account.period.state',

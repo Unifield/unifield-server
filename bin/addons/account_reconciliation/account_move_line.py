@@ -314,8 +314,8 @@ class account_move_line(osv.osv):
                    )
 
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
-        if self.pool.get('sync.client.orm_extended'):
-            self.pool.get('account.move.line').synchronize(cr, uid, ids, context=context)
+        #if self.pool.get('sync.client.orm_extended'):
+        #    self.pool.get('account.move.line').synchronize(cr, uid, ids, context=context)
 
         wf_service = netsvc.LocalService("workflow")
         # the id of the move.reconcile is written in the move.line (self) by the create method above
@@ -569,12 +569,14 @@ class account_move_reconcile(osv.osv):
                                                           string='Where the adjustement line should be created'
                                                           ),
         'nb_partial_legs': fields.integer('Nb legs in partial reconcile'),
+        'action_date': fields.date('Date of (un)reconciliation'),
     }
 
     _defaults = {
         'is_multi_instance': lambda *a: False,
         'multi_instance_level_creation': False,
         'nb_partial_legs': 0,
+        'action_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -584,10 +586,7 @@ class account_move_reconcile(osv.osv):
         if not context:
             context = {}
 
-
-
         # track changes: we need the old value, the previous reconcile if any
-
         prev = {}
         aml_ids = []
 
@@ -602,11 +601,17 @@ class account_move_reconcile(osv.osv):
                         aml_ids += x[2]
 
         # get previous reconcile from _txt
+        already_reconciled = []
         if aml_ids:
-            cr.execute('select id, reconcile_txt from account_move_line where id in %s', (tuple(aml_ids),))
+            cr.execute('select id, reconcile_txt, reconcile_id, reconcile_partial_id, name from account_move_line where id in %s', (tuple(aml_ids),))
             for x in cr.fetchall():
                 prev[x[0]] = x[1]
+            if context.get('sync_update_execution'):
+                if x[2] or x[3]:
+                    already_reconciled.append('%s already reconciled on the instance, id:%s, rec_txt:%s' % (x[4], x[0], x[1]))
 
+        if already_reconciled:
+            raise osv.except_osv(_('Warning'), "\n".join(already_reconciled))
 
         res = super(account_move_reconcile, self).create(cr, uid, vals, context)
         if res:
@@ -621,17 +626,32 @@ class account_move_reconcile(osv.osv):
                 if d and d[0] and d[0][1]:
                     name = d[0][1]
                 if p or t:
+                    sql_params = [name, tuple(p+t)]
+                    new_field = ""
                     self.pool.get('account.move.line').log_reconcile(cr, uid, r, previous=prev, rec_name=name, context=context)
-                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"  # not_a_user_entry
-                    cr.execute(sql, (name, tuple(p+t)))
+                    if context.get('sync_update_execution') and t and vals.get('action_date'):
+                        new_field = "unreconcile_date=NULL, unreconcile_txt='', reconcile_date=%s,"
+                        sql_params.insert(0, vals.get('action_date'))
+
+                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET " + new_field + " reconcile_txt = %s WHERE id in %s"  # not_a_user_entry
+                    cr.execute(sql, sql_params)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        move_obj = self.pool.get('account.move.line')
         for rec in self.browse(cr, uid, list(set(ids)), fields_to_fetch=['name', 'line_id', 'line_partial_ids'], context=context):
-            self.pool.get('account.move.line').log_reconcile(cr, uid, rec, delete=True, context=context)
+            move_obj.log_reconcile(cr, uid, rec, delete=True, context=context)
+
+        if not context.get('sync_update_execution') and (rec.line_id or rec.line_partial_ids):
+            # full reconcile deleted
+            lines = rec.line_id or rec.line_partial_ids
+            sdrefs = move_obj.get_sd_ref(cr, uid, [x.id for x in lines], context=context)
+            self.pool.get('account.move.unreconcile').create(cr, 1, {'delete_reconcile_txt': rec.name, 'move_sdref_txt': ','.join(sdrefs.values())}, context=context)
 
         return super(account_move_reconcile, self).unlink(cr, uid, ids, context=context)
 
@@ -656,9 +676,41 @@ class account_move_reconcile(osv.osv):
                 if d and d[0] and d[0][1]:
                     name = d[0][1]
                 if p or t:
-                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"  # not_a_user_entry
-                    cr.execute(sql, (name, tuple(p+t)))
+                    sql_params = [name, tuple(p+t)]
+                    new_field = ""
+                    if context.get('sync_update_execution') and t and vals.get('action_date'):
+                        new_field = "unreconcile_date=NULL, unreconcile_txt='', reconcile_date=%s,"
+                        sql_params.insert(0, vals.get('action_date'))
+                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET " + new_field + " reconcile_txt = %s WHERE id in %s"  # not_a_user_entry
+                    cr.execute(sql, sql_params)
         return res
 
 account_move_reconcile()
+
+class account_move_unreconcile(osv.osv):
+
+    """ Object used to track JI legs on unreconcile, used by sync to set unreconcile_date on JI """
+
+    _name = 'account.move.unreconcile'
+    _rec_name = 'unreconcile_date'
+
+    _columns = {
+        'unreconcile_date': fields.date("Unreconcile date"),
+        'delete_reconcile_txt': fields.char('Old reconcile ref', size=126),
+        'move_sdref_txt': fields.text('List of JI sdref'),
+    }
+
+    _defaults = {
+        'unreconcile_date': lambda *a: time.strftime('%Y-%m-%d'),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and vals.get('move_sdref_txt'):
+            move_ids = self.pool.get('account.move.line').find_sd_ref(cr, uid, vals['move_sdref_txt'].split(","), context=context)
+            if move_ids:
+                cr.execute("UPDATE account_move_line SET unreconcile_txt=%s, unreconcile_date=%s, reconcile_txt='', reconcile_date=NULL WHERE id in %s", (vals.get('delete_reconcile_txt'), vals.get('unreconcile_date'), tuple(move_ids.values())))
+        return super(account_move_unreconcile, self).create(cr, uid, vals, context)
+account_move_unreconcile()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
