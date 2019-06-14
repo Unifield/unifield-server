@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 import logging
 import time
 
@@ -32,7 +33,7 @@ class account_invoice_sync(osv.osv):
     _logger = logging.getLogger('------sync.account.invoice')
 
     _columns = {
-        'synced': fields.boolean("Sent or received via synchro"),
+        'synced': fields.boolean("Synchronized document"),
     }
 
     _defaults = {
@@ -40,39 +41,52 @@ class account_invoice_sync(osv.osv):
     }
 
     def create_invoice_from_sync(self, cr, uid, source, invoice_data, context=None):
-        self._logger.info("+++ Create an account.invoice at %s matching the one sent by %s" % (cr.dbname, source))
+        """
+        Creates automatic counterpart invoice at synchro time.
+        Intermission workflow: an IVO sent generates an IVI
+        Intersection workflow: an STV sent generates an SI
+        """
+        self._logger.info("+++ Create an account.invoice in %s matching the one sent by %s" % (cr.dbname, source))
         if context is None:
             context = {}
         journal_obj = self.pool.get('account.journal')
         currency_obj = self.pool.get('res.currency')
         partner_obj = self.pool.get('res.partner')
         invoice_dict = invoice_data.to_dict()
+        # the counterpart instance must exist and be active
+        partner_ids = partner_obj.search(cr, uid, [('name', '=', source), ('active', '=', True)], limit=1, context=context)
+        if not partner_ids:
+            raise osv.except_osv(_('Error'), _("The partner %s doesn't exist or is inactive.") % source)
+        partner_id = partner_ids[0]
+        partner = partner_obj.browse(cr, uid, partner_ids[0], fields_to_fetch=['property_account_payable'], context=context)
+        account_id = partner.property_account_payable and partner.property_account_payable.id
+        if not account_id:
+            raise osv.except_osv(_('Error'), _("Impossible to retrieve the account code."))
+        journal_type = invoice_dict.get('journal_id', {}).get('type', '')
+        if not journal_type or journal_type not in ('sale', 'intermission'):
+            raise osv.except_osv(_('Error'), _("Impossible to retrieve the journal type, or the journal type found is incorrect."))
+        currency_name = invoice_dict.get('currency_id', {}).get('name', '')
+        if not currency_name:
+            raise osv.except_osv(_('Error'), _("Impossible to retrieve the currency."))
+        currency_ids = currency_obj.search(cr, uid, [('name', '=', currency_name), ('currency_table_id', '=', False)], limit=1, context=context)
+        if not currency_ids:
+            raise osv.except_osv(_('Error'), _("Currency %s not found.") % currency_name)
+        currency_id = currency_ids[0]
         number = invoice_dict.get('number', '')
         doc_date = invoice_dict.get('document_date', time.strftime('%Y-%m-%d'))
         posting_date = invoice_dict.get('date_invoice', time.strftime('%Y-%m-%d'))
-        journal_type = invoice_dict.get('journal_id', {}).get('type', '')
-        currency_name = invoice_dict.get('currency_id', {}).get('name', '')
         description = invoice_dict.get('name', '')
         source_doc = invoice_dict.get('origin', '')
         inv_lines = invoice_dict.get('invoice_line', [])
-        journal_ids = []
+        vals = {}
         if journal_type == 'sale':
-            journal_ids = journal_obj.search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)], limit=1, context=context)
-        elif journal_type == 'intermission':
-            journal_ids = journal_obj.search(cr, uid, [('type', '=', 'intermission'), ('is_current_instance', '=', True)], limit=1, context=context)
-        currency_ids = currency_obj.search(cr, uid, [('name', '=', currency_name), ('currency_table_id', '=', False)], limit=1, context=context)
-        partner_ids = partner_obj.search(cr, uid, [('name', '=', source)], limit=1, context=context)
-        partner = partner_obj.browse(cr, uid, partner_ids[0], fields_to_fetch=['property_account_payable'], context=context)
-        account_id = partner.property_account_payable.id
-        vals = {
-            'journal_id': journal_ids[0],
-            'partner_id': partner_ids[0],
-            'currency_id': currency_ids[0],
-            'account_id': account_id,
-        }
-        if journal_type == 'sale':
+            # STV in sending instance should generate an SI in the receiving instance
+            pur_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)], limit=1, context=context)
+            if not pur_journal_ids:
+                raise osv.except_osv(_('Error'), _("No Purchase Journal found for the current instance."))
             vals.update(
                 {
+                    'journal_id': pur_journal_ids[0],
                     'type': 'in_invoice',
                     'is_direct_invoice': False,
                     'is_inkind_donation': False,
@@ -80,7 +94,34 @@ class account_invoice_sync(osv.osv):
                     'is_intermission': False,
                 }
             )
-        self.create(cr, uid, vals, context=context)
+        elif journal_type == 'intermission':
+            # IVO in sending instance should generate an IVI in the receiving instance
+            int_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'intermission'), ('is_current_instance', '=', True)], limit=1, context=context)
+            if not int_journal_ids:
+                raise osv.except_osv(_('Error'), _("No Intermission Journal found for the current instance."))
+            vals.update(
+                {
+                    'journal_id': int_journal_ids[0],
+                    'type': 'in_invoice',
+                    'is_inkind_donation': False,
+                    'is_debit_note': False,
+                    'is_intermission': True,
+                }
+            )
+        vals.update(
+            {
+                'partner_id': partner_id,
+                'currency_id': currency_id,
+                'account_id': account_id,
+                'document_date': doc_date,
+                'date_invoice': posting_date,
+            }
+        )
+        inv_id = self.create(cr, uid, vals, context=context)
+        if inv_id and journal_type == 'sale':
+            self._logger.info("SI No. %s created successfully." % inv_id)
+        elif inv_id and journal_type == 'intermission':
+            self._logger.info("IVI No. %s created successfully." % inv_id)
 
 
 account_invoice_sync()
