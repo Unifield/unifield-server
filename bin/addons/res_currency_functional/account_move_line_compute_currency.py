@@ -477,6 +477,11 @@ class account_move_line_compute_currency(osv.osv):
                                                      context=new_ctx).reconcile_date or None
                         cr.execute('UPDATE account_move_line SET reconcile_id=%s, reconcile_txt=%s, reconcile_date=%s WHERE id=%s',
                                    (reconciled.id, reconcile_txt or '', reconcile_date, partner_line_id))
+
+                        if self.pool.get('sync.client.orm_extended'):
+                            # touch to trigger a sync (FXA created at project for reconciliation done at coo)
+                            self.pool.get('account.move.reconcile').synchronize(cr, uid, [reconciled.id], context=context)
+
                         self.log_reconcile(cr, uid, reconcile_obj=reconciled, aml_id=partner_line_id, previous={}, context={})
         return True
 
