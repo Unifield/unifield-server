@@ -59,6 +59,7 @@ class account_invoice_sync(osv.osv):
         account_obj = self.pool.get('account.account')
         so_po_common_obj = self.pool.get('so.po.common')
         product_uom_obj = self.pool.get('product.uom')
+        po_obj = self.pool.get('purchase.order')
         invoice_dict = invoice_data.to_dict()
         # the counterpart instance must exist and be active
         partner_ids = partner_obj.search(cr, uid, [('name', '=', source), ('active', '=', True)], limit=1, context=context)
@@ -81,6 +82,7 @@ class account_invoice_sync(osv.osv):
         posting_date = invoice_dict.get('date_invoice', time.strftime('%Y-%m-%d'))
         description = invoice_dict.get('name', '')
         source_doc = invoice_dict.get('origin', '')
+        from_supply = invoice_dict.get('from_supply', False)
         inv_lines = invoice_dict.get('invoice_line', [])
         vals = {}
         # STV in sending instance: generates an SI in the receiving instance
@@ -125,17 +127,24 @@ class account_invoice_sync(osv.osv):
                 }
             )
         # common fields whatever the invoice type
-        # TODO: distinguish between from_supply or not
-        inv_name = description
-        inv_origin = source_doc
+        # TODO (in progress): distinguish between from_supply or not
+        if from_supply:
+            # extract PO number from refs looking like:
+            # "se_HQ2C1.19/se_HQ2/HT101/PO00001 : SHIP/00002-01" or "se_HQ1C2.19/se_HQ1/HT201/PO00003 : OUT/00001"
+            inv_name_split = description.split()
+            if inv_name_split:
+                po_number = inv_name_split[0].split('.')[-1]
+                po_ids = po_obj.search(cr, uid, [('name', '=', po_number)], limit=1, context=context)
+                if po_ids:
+                    po_id = po_ids[0]
         vals.update(
             {
                 'partner_id': partner_id,
                 'currency_id': currency_id,
                 'document_date': doc_date,
                 'date_invoice': posting_date,
-                'name': inv_name,
-                'origin': inv_origin,
+                'name': description,
+                'origin': source_doc,
                 'from_supply': True,
             }
         )
