@@ -1690,7 +1690,7 @@
                 <group>
                         <filter string="Global" icon="terp-stage" domain="[('group_id','=',False)]"/>
                         <separator orientation="vertical"/>
-                        <filter string="Full Access" icon="terp-gtk-select-all" domain="[('perm_read','=',True),('perm_write','=',True),('perm_create','=',True),('perm_unlink','=',True)]"/>
+                        <filter string="Full Access" icon="terp-gtk-select-all" domain="['&amp;', '&amp;', '&amp;',('perm_read','=',True),('perm_write','=',True),('perm_create','=',True),('perm_unlink','=',True)]"/>
                         <filter string="Read Access" icon="terp-stock_align_left_24" domain="[('perm_read','=',True)]"/>
                         <filter string="Write Access" icon="terp-tools" domain="[('perm_write','=',True)]"/>
                         <separator orientation="vertical"/>
@@ -1783,7 +1783,7 @@
                     <group>
                         <filter string="Global" icon="terp-stage" domain="[('global','=',True)]"/>
                         <separator orientation="vertical"/>
-                        <filter string="Full Access" icon="terp-gtk-select-all" domain="[('perm_read','=',True),('perm_write','=',True),('perm_create','=',True),('perm_unlink','=',True)]"/>
+                        <filter string="Full Access" icon="terp-gtk-select-all" domain="['&amp;', '&amp;', '&amp;', ('perm_read','=',True),('perm_write','=',True),('perm_create','=',True),('perm_unlink','=',True)]"/>
                         <filter string="Read Access" icon="terp-stock_align_left_24" domain="[('perm_read','=',True)]"/>
                         <filter string="Write Access" icon="terp-tools" domain="[('perm_write','=',True)]"/>
                         <separator orientation="vertical"/>
