@@ -1228,6 +1228,7 @@ class stock_picking(osv.osv):
                 'company_id': picking.company_id.id,
                 'user_id':uid,
                 'picking_id': picking.id,
+                'from_supply': True,
             }
             if picking.sale_id:
                 if not partner.property_account_position.id:

@@ -34,10 +34,12 @@ class account_invoice_sync(osv.osv):
 
     _columns = {
         'synced': fields.boolean("Synchronized document"),
+        'from_supply': fields.boolean('From Supply', help="Internal field indicating whether the document is related to a Supply workflow"),
     }
 
     _defaults = {
         'synced': lambda *a: False,
+        'from_supply': lambda *a: False,
     }
 
     def create_invoice_from_sync(self, cr, uid, source, invoice_data, context=None):
@@ -134,6 +136,7 @@ class account_invoice_sync(osv.osv):
                 'date_invoice': posting_date,
                 'name': inv_name,
                 'origin': inv_origin,
+                'from_supply': True,
             }
         )
         inv_id = self.create(cr, uid, vals, context=context)

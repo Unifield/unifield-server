@@ -1579,6 +1579,7 @@ class shipment(osv.osv):
                 'fiscal_position': partner.property_account_position.id,
                 'date_invoice': context.get('date_inv', False) or today,
                 'user_id': uid,
+                'from_supply': True,
             }
 
             cur_id = shipment.pack_family_memory_ids[0].currency_id.id
