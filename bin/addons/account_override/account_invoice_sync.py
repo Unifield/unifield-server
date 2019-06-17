@@ -77,8 +77,8 @@ class account_invoice_sync(osv.osv):
         source_doc = invoice_dict.get('origin', '')
         inv_lines = invoice_dict.get('invoice_line', [])
         vals = {}
+        # STV in sending instance: generates an SI in the receiving instance
         if journal_type == 'sale':
-            # STV in sending instance should generate an SI in the receiving instance
             pur_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)], limit=1, context=context)
             if not pur_journal_ids:
                 raise osv.except_osv(_('Error'), _("No Purchase Journal found for the current instance."))
@@ -97,8 +97,8 @@ class account_invoice_sync(osv.osv):
                     'is_intermission': False,
                 }
             )
+        # IVO in sending instance: generates an IVI in the receiving instance
         elif journal_type == 'intermission':
-            # IVO in sending instance should generate an IVI in the receiving instance
             int_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'intermission'), ('is_current_instance', '=', True)], limit=1, context=context)
             if not int_journal_ids:
                 raise osv.except_osv(_('Error'), _("No Intermission Journal found for the current instance."))
@@ -116,12 +116,18 @@ class account_invoice_sync(osv.osv):
                     'is_intermission': True,
                 }
             )
+        # common fields whatever the invoice type
+        # TODO: distinguish between from_supply or not
+        inv_name = description
+        inv_origin = source_doc
         vals.update(
             {
                 'partner_id': partner_id,
                 'currency_id': currency_id,
                 'document_date': doc_date,
                 'date_invoice': posting_date,
+                'name': inv_name,
+                'origin': inv_origin,
             }
         )
         inv_id = self.create(cr, uid, vals, context=context)
