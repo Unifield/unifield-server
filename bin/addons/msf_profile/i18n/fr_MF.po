@@ -71236,14 +71236,12 @@ msgid "When the stock move is created it is in the 'Draft' state.\n"
 " After that, it is set to 'Not Available' state if the scheduler did not find the products.\n"
 " When products are reserved it is set to 'Available'.\n"
 " When the picking is done the state is 'Closed'.              \n"
-"The state is 'Waiting' if the move is waiting for another one.\n"
-"The state is 'Delivered' when the OUT is delivered."
+"The state is 'Waiting' if the move is waiting for another one."
 msgstr "Quand le mouvement de stock est créé, il est sous statut 'brouillon'.\n"
 "  Après cela, il est défini à 'Non disponible' si le planificateur n'a pas trouvé les produits.\n"
 "  Lorsque les produits sont réservés il est défini à \"Disponible\".\n"
 "  Lorsque le Picking est fait, le statut est « Fermé ».\n"
-"Le statut \"en attente\" indique que le mouvement est en attente d'un autre.\n"
-"Le status est 'Livré' quand l'OUT est livré."
+"Le statut \"en attente\" indique que le mouvement est en attente d'un autre."
 
 #. module: product
 #: view:product.product:0
@@ -83820,7 +83818,6 @@ msgstr "B7  21  88 x 125 mm"
 #: field:stock.picking,delivered:0
 #: selection:stock.picking,state_hidden:0
 #: field:sale.order,shipped:0
-#: selection:stock.move,state:0
 #: selection:stock.picking,state:0
 #: selection:stock.forecast.line,state:0
 msgid "Delivered"
@@ -106834,3 +106831,8 @@ msgstr "Requête annulée par l'utilisateur"
 msgid "Stop report"
 msgstr "Arrêter le rapport"
 
+#. module: stock
+#: code:addons/stock/stock.py:1780
+#, python-format
+msgid "is delivered."
+msgstr "est livré."

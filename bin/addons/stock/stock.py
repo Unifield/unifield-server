@@ -1777,6 +1777,7 @@ class stock_picking(osv.osv):
                 'assigned': _('is ready to process.'),
                 'cancel': _('is cancelled.'),
                 'done': _('is done.'),
+                'delivered': _('is delivered.'),
                 'draft':_('is in draft state.'),
             }
             state_list = self._hook_state_list(cr, uid, state_list=state_list, msg=msg)
@@ -1805,11 +1806,7 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for pick in self.browse(cr, uid, ids, fields_to_fetch=['state', 'move_lines'], context=context):
-            if pick.state == 'done':
-                if pick.move_lines:
-                    self.pool.get('stock.move').set_delivered(cr, uid, [m.id for m in pick.move_lines], context=context)
-                self.write(cr, uid, pick.id, {'state': 'delivered'}, context=context)
+        self.write(cr, uid, ids, {'state': 'delivered'}, context=context)
 
         return True
 
@@ -2054,9 +2051,9 @@ class stock_move(osv.osv):
         'move_history_ids2': fields.many2many('stock.move', 'stock_move_history_ids', 'child_id', 'parent_id', 'Move History (parent moves)'),
         'picking_id': fields.many2one('stock.picking', 'Reference', select=True,states={'done': [('readonly', True)]}),
         'note': fields.text('Notes'),
-        'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Done'), ('cancel', 'Cancelled'), ('delivered', 'Delivered')], 'State', readonly=True, select=True,
+        'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Done'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
                                   help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Done\'.\
-              \nThe state is \'Waiting\' if the move is waiting for another one.\nThe state is \'Delivered\' when the OUT is delivered.'),
+              \nThe state is \'Waiting\' if the move is waiting for another one.'),
         'price_unit': fields.float('Unit Price', digits_compute= dp.get_precision('Account'), help="Technical field used to record the product cost set by the user during a picking confirmation (when average price costing method is used)"),
         'price_currency_id': fields.many2one('res.currency', 'Currency for average price', help="Technical field used to record the currency chosen by the user during a picking confirmation (when average price costing method is used)"),
         'company_id': fields.many2one('res.company', 'Company', required=True, select=True),
@@ -3200,21 +3197,6 @@ class stock_move(osv.osv):
                     wf_service.trg_validate(uid, 'stock.picking', move.picking_id.id, 'button_done', cr)
 
         return [move.id for move in complete]
-
-    def set_delivered(self, cr, uid, ids, context=None):
-        '''
-        Set the moves to delivered
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for move in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context):
-            if move.state == 'done':
-                self.write(cr, uid, ids, {'state': 'delivered'}, context=context)
-
-        return True
 
 
 stock_move()
