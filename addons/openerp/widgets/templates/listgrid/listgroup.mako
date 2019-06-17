@@ -7,30 +7,30 @@ import itertools
     % if pageable:
     <tr class="pagerbar">
         <td colspan="2" class="pagerbar-cell" align="right">
-        	<table class="pager-table">
-        		<tr>
-        			<td class="pager-cell">
-        				<h2>${string}</h2>
-        			</td>
-        			<td id="${name}" class="loading-list" style="display: none;">
-        				<img src="/openerp/static/images/load.gif" width="16" height="16" title="loading..."/>
-        			</td>
-					% if editable and not hide_new_button:
-						<td class="pager-cell-button">
-							<button id="${name}_new" title="${_('Create new record.')}" onclick="editRecord(null); return false;">${_('New')}</button>
+            <table class="pager-table">
+                <tr>
+                    <td class="pager-cell">
+                        <h2>${string}</h2>
+                    </td>
+                    <td id="${name}" class="loading-list" style="display: none;">
+                        <img src="/openerp/static/images/load.gif" width="16" height="16" title="loading..."/>
+                    </td>
+                    % if editable and not hide_new_button:
+                        <td class="pager-cell-button">
+                            <button id="${name}_new" title="${_('Create new record.')}" onclick="editRecord(null); return false;">${_('New')}</button>
                         </td>
-					% endif
+                    % endif
                     % if len(group_by_ctx) > 1 or not group_by_no_leaf:
                         <td class="pager-cell-button">
                             <button title="${_('Expand all.')}" id="expand_all" onclick="new ListView('${name}').expand_all_group(); return false;">${_('Expand All')}</button>
                         </td>
                     % endif
-						</td>
-        			<td class="pager-cell" style="width: 90%">
-    					${pager.display()}
-    				</td>
-        		</tr>
-        	</table>
+                        </td>
+                    <td class="pager-cell" style="width: 90%">
+                        ${pager.display()}
+                    </td>
+                </tr>
+            </table>
         </td>
     </tr>
     % endif
@@ -47,7 +47,12 @@ import itertools
                             % if field == 'button':
                                 <th class="grid-cell"><div style="width: 0;"></div></th>
                             % elif not field_attrs.get('not_sortable'):
-                                <th id="grid-data-column/${(name != '_terp_list' or None) and (name + '/')}${field}" class="grid-cell ${field_attrs.get('type', 'char')}" kind="${field_attrs.get('type', 'char')}" style="cursor: pointer;" onclick="new ListView('${name}').sort_by_order('${field}', this)">${field_attrs['string']}</th>
+                                <th id="grid-data-column/${(name != '_terp_list' or None) and (name + '/')}${field}" class="grid-cell ${field_attrs.get('type', 'char')}" kind="${field_attrs.get('type', 'char')}" style="cursor: pointer;" onclick="new ListView('${name}').sort_by_order('${field}', this)"
+                                % if field_attrs.get('sort_column'):
+                                    sort_column="${field_attrs.get('sort_column')}"
+                                % endif
+
+                                >${field_attrs['string']}</th>
                             %else:
                                 <th id="grid-data-column/${(name != '_terp_list' or None) and (name + '/')}${field}" class="grid-cell ${field_attrs.get('type', 'char')}" kind="${field_attrs.get('type', 'char')}">${field_attrs['string']}</th>
                             % endif
@@ -59,16 +64,16 @@ import itertools
                 </thead>
 
                 <tbody>
-					% for j, grp_row in enumerate(grp_records):
-					<tr class="grid-row-group" grp_by_id="${grp_row.get('group_by_id')}" records="${grp_row.get('groups_id')}" style="cursor: pointer; " ch_records="${map(lambda x: x['id'], grp_row['child_rec'])}" grp_domain="${grp_row['__domain']}" grp_context="${grp_row['__context']['group_by']}" grp_level="0">
+                    % for j, grp_row in enumerate(grp_records):
+                        <tr class="grid-row-group" grp_by_id="${grp_row.get('group_by_id')}" records="${grp_row.get('groups_id')}" style="cursor: pointer; " ch_records="${map(lambda x: x['id'], grp_row['child_rec'])}" grp_domain="${grp_row['__domain']}" grp_context="${grp_row['__context']['group_by']}" grp_level="0">
                         % if editable:
 
                             % if len(group_by_ctx) == 1 and group_by_no_leaf:
                                 <td class="grid-cell"></td>
                             % elif len(group_by_ctx) >= 0:
-	                            <td class="grid-cell group-expand"
-	                                onclick="new ListView('${name}').group_by('${grp_row.get('group_by_id')}', '${grp_row.get('groups_id')}', '${group_by_no_leaf}', this);">
-	                            </td>
+                                <td class="grid-cell group-expand"
+                                    onclick="new ListView('${name}').group_by('${grp_row.get('group_by_id')}', '${grp_row.get('groups_id')}', '${group_by_no_leaf}', this);">
+                                </td>
                             % else:
                                 <td class="grid-cell"></td>
                             % endif
@@ -113,7 +118,7 @@ import itertools
 
                     % for ch in grp_row.get('child_rec'):
                     <tr class="grid-row grid-row-group ${ch.get('id') and ch['id'] in noteditable and 'noteditable' or ''}" id="${grp_row.get('groups_id')}" parent_grp_id="${grp_row.get('group_by_id')}"
-                    	record="${ch.get('id')}" style="cursor: pointer; display: none;">
+                        record="${ch.get('id')}" style="cursor: pointer; display: none;">
                          % for field, field_attrs in hiddens:
                             % if field in ch:
                                 ${ch[field].display()}
@@ -149,7 +154,7 @@ import itertools
                         % endif
                     </tr>
                     % endfor
-                	% endfor
+                    % endfor
 
                     % for i in range(0, min_rows - len(grp_records)):
                     <tr class="grid-row-group">
@@ -218,10 +223,10 @@ import itertools
                     });
                 </script>
             % endif
-            <script type="text/javascript">                             
-                // force attrs evaluation after listgrid loading        
+            <script type="text/javascript">
+                // force attrs evaluation after listgrid loading
                 // (otherwise this won't be catched by form_hookAttrChange() as we don't have any 'id')
-                list_hookAttrChange('${name}');                         
+                list_hookAttrChange('${name}');
             </script>
         </td>
     </tr>

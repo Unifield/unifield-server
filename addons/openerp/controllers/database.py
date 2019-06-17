@@ -527,11 +527,7 @@ class Database(BaseController):
             self.msg = {'message': _('Bad super admin password'),
                         'title' : e.title}
 
-    def background_auto_creation(self, password, dbname, db_exists, config_dict):
-        if not db_exists:
-            # create database
-            self.database_creation(password, dbname, config_dict['instance'].get('admin_password'))
-
+    def background_auto_creation(self, password, dbname, config_dict):
         rpc.session.execute_db('instance_auto_creation', password, dbname)
         self.resume, self.progress, self.state, self.error, monitor_status = rpc.session.execute_db('creation_get_resume_progress', dbname)
 
@@ -567,9 +563,13 @@ class Database(BaseController):
                 self.resume = _('Empty database creation in progress...\n')
                 #raise DatabaseExist
 
+            if not db_exists:
+                # create database
+                self.database_creation(password, dbname, config_dict['instance'].get('admin_password'))
+
             create_thread = threading.Thread(target=self.background_auto_creation,
-                                             args=(password, dbname, db_exists,
-                                                   config_dict))
+                                             args=(password, dbname, config_dict)
+                            )
             create_thread.start()
             create_thread.join(0.5)
 
