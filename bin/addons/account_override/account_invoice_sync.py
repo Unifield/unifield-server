@@ -55,6 +55,7 @@ class account_invoice_sync(osv.osv):
         user_obj = self.pool.get('res.users')
         inv_line_obj = self.pool.get('account.invoice.line')
         account_obj = self.pool.get('account.account')
+        so_po_common_obj = self.pool.get('so.po.common')
         invoice_dict = invoice_data.to_dict()
         # the counterpart instance must exist and be active
         partner_ids = partner_obj.search(cr, uid, [('name', '=', source), ('active', '=', True)], limit=1, context=context)
@@ -153,6 +154,11 @@ class account_invoice_sync(osv.osv):
                 line_name = inv_line.get('name', '')
                 if not line_name:  # required field
                     raise osv.except_osv(_('Error'), _("Impossible to retrieve the line description."))
+                product_id = False
+                product_data = inv_line.get('product_id', {})
+                if product_data:
+                    default_code = product_data.get('default_code', '')
+                    product_id = so_po_common_obj.get_product_id(cr, uid, product_data, default_code=default_code, context=context) or False
                 inv_line_vals = {
                     'invoice_id': inv_id,
                     'account_id': line_account_id,
@@ -160,6 +166,7 @@ class account_invoice_sync(osv.osv):
                     'quantity': inv_line.get('quantity', 0.0),
                     'price_unit': inv_line.get('price_unit', 0.0),
                     'discount': inv_line.get('discount', 0.0),
+                    'product_id': product_id,
                 }
                 inv_line_obj.create(cr, uid, inv_line_vals, context=context)
             if journal_type == 'sale':
