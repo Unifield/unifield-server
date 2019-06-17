@@ -480,7 +480,9 @@ class account_move_line_compute_currency(osv.osv):
 
                         if self.pool.get('sync.client.orm_extended'):
                             # touch to trigger a sync (FXA created at project for reconciliation done at coo)
-                            self.pool.get('account.move.reconcile').synchronize(cr, uid, [reconciled.id], context=context)
+                            self.pool.get('account.move.reconcile').synchronize(cr, 1, [reconciled.id], context=new_ctx)
+                            if context.get('sync_update_execution'):
+                                self.pool.get('ir.model.data').mark_resend(cr, 1, 'account.move.reconcile', reconciled.id, context=context)
 
                         self.log_reconcile(cr, uid, reconcile_obj=reconciled, aml_id=partner_line_id, previous={}, context={})
         return True

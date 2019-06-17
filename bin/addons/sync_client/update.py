@@ -317,7 +317,7 @@ class update_to_send(osv.osv,fv_formatter):
             for update in self.browse(cr, uid, update_ids[min_offset:offset], context=context):
                 try:
                     self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-                                                                 update.sdref, {'version':update.version,sync_field:update.create_date},
+                                                                 update.sdref, {'version':update.version,sync_field:update.create_date, 'resend': False},
                                                                  context=context)
                 except ValueError:
                     self._logger.warning("Cannot find record %s during pushing update process!" % update.sdref)
@@ -555,6 +555,7 @@ class update_received(osv.osv,fv_formatter):
                                 'force_recreation' : False,
                                 'touched' : '[]',
                             },
+                            consider_resend=True,
                             context=context)
                     except ValueError:
                         self._logger.warning("Cannot find record %s during update execution process!" % update.sdref)
@@ -732,6 +733,7 @@ class update_received(osv.osv,fv_formatter):
                     cr, uid, sdref, {
                         'sync_date': fields.datetime.now(),
                         'touched' : '[]',
+                        'resend': False,
                     },
                     context=context)
             return

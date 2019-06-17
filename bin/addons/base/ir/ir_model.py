@@ -844,13 +844,18 @@ class ir_model_data(osv.osv):
                         identifier = self.pool.get('sync.client.entity').get_entity(cr, uid).identifier
                         if identifier != xml_id.split('/')[0]:
                             model_obj.write(cr, uid, [res_id], {'locally_created': False}, context=context)
-                    self.create(cr, uid, {
+                    xmlid_data = {
                         'name': xml_id,
                         'model': model,
                         'module': module,
                         'res_id': res_id,
-                        'noupdate': noupdate
-                    },context=context)
+                        'noupdate': noupdate,
+                    }
+                    if context.get('sync_update_execution') and model == 'account.move.reconcile' and module == 'sd':
+                        if self.search_exist(cr, uid, [('model', '=', 'account.move.reconcile'), ('res_id', '=', res_id), ('module', '=', 'sd'), ('resend', '=', True)], context=context):
+                            xmlid_data['resend'] = True
+                            xmlid_data['touched'] = "['line_id']"
+                    self.create(cr, uid, xmlid_data, context=context)
                     if model_obj._inherits and not context.get('sync_update_execution', False):
                         for table in model_obj._inherits:
                             inherit_id = model_obj.browse(cr, uid,

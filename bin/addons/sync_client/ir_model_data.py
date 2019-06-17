@@ -83,13 +83,20 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
                                        fnct=_get_is_deleted, fnct_search=_get_is_deleted, method=True),
         'touched' : fields.text("Which records has been touched"),
         'force_recreation' : fields.boolean("Force record re-creation"),
+        'resend': fields.boolean('Received but pushed', help='Update received but must be pushed in the same sync: if true do not reset touch on update execution'),
     }
 
     _defaults={
         'version' : 1,
         'force_recreation' : False,
         'touched' : '[]',
+        'resend': False,
     }
+
+    def mark_resend(self, cr, uid, model, res_id, context=None):
+        cr.execute("update ir_model_data set resend='t' where module='sd' and model=%s and res_id=%s", (model, res_id))
+        return True
+
 
     def create_all_sdrefs(self, cr):
         """
@@ -280,10 +287,14 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
             result.append(data_ids[0] if data_ids else False)
         return result if isinstance(ids, (list, tuple)) else result[0]
 
-    def update_sd_ref(self, cr, uid, sdref, vals, context=None):
+    def update_sd_ref(self, cr, uid, sdref, vals, consider_resend=False, context=None):
         """Update a SD ref information. Raise ValueError if sdref doesn't exists."""
-        ids = self.search(cr, uid, [('module','=','sd'),('name','=',sdref)],
-                          order='NO_ORDER', context=context)
+        domain = [('module','=','sd'),('name','=',sdref)]
+
+        if consider_resend:
+            domain.append(('resend', '=', False))
+
+        ids = self.search(cr, uid, domain, order='NO_ORDER', context=context)
         if not ids:
             raise ValueError("Cannot find sdref %s!" % sdref)
 
