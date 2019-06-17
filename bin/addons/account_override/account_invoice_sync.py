@@ -53,6 +53,8 @@ class account_invoice_sync(osv.osv):
         currency_obj = self.pool.get('res.currency')
         partner_obj = self.pool.get('res.partner')
         user_obj = self.pool.get('res.users')
+        inv_line_obj = self.pool.get('account.invoice.line')
+        account_obj = self.pool.get('account.account')
         invoice_dict = invoice_data.to_dict()
         # the counterpart instance must exist and be active
         partner_ids = partner_obj.search(cr, uid, [('name', '=', source), ('active', '=', True)], limit=1, context=context)
@@ -84,8 +86,9 @@ class account_invoice_sync(osv.osv):
                 raise osv.except_osv(_('Error'), _("No Purchase Journal found for the current instance."))
             # for the SI use the Account Payable of the partner
             si_account = partner.property_account_payable
-            if not si_account:
-                raise osv.except_osv(_('Error'), _("Account Payable not found for the partner %s.") % partner.name)
+            if not si_account or posting_date < si_account.activation_date or \
+                    (si_account.inactivation_date and posting_date >= si_account.inactivation_date):
+                raise osv.except_osv(_('Error'), _("Account Payable not found or inactive for the partner %s.") % partner.name)
             vals.update(
                 {
                     'journal_id': pur_journal_ids[0],
@@ -104,8 +107,9 @@ class account_invoice_sync(osv.osv):
                 raise osv.except_osv(_('Error'), _("No Intermission Journal found for the current instance."))
             # for the IVI use the Intermission counterpart account from the Company form
             ivi_account = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.intermission_default_counterpart
-            if not ivi_account:
-                raise osv.except_osv(_('Error'), _("The Intermission counterpart account is missing in the Company form."))
+            if not ivi_account or posting_date < ivi_account.activation_date or \
+                    (ivi_account.inactivation_date and posting_date >= ivi_account.inactivation_date):
+                raise osv.except_osv(_('Error'), _("The Intermission counterpart account is missing in the Company form or is inactive."))
             vals.update(
                 {
                     'journal_id': int_journal_ids[0],
@@ -131,10 +135,37 @@ class account_invoice_sync(osv.osv):
             }
         )
         inv_id = self.create(cr, uid, vals, context=context)
-        if inv_id and journal_type == 'sale':
-            self._logger.info("SI No. %s created successfully." % inv_id)
-        elif inv_id and journal_type == 'intermission':
-            self._logger.info("IVI No. %s created successfully." % inv_id)
+        if inv_id:
+            # creation of the lines
+            for inv_line in inv_lines:
+                account_code = inv_line.get('account_id', {}).get('code', '')
+                if not account_code:
+                    raise osv.except_osv(_('Error'), _("Impossible to retrieve the account code at line level."))
+                account_ids = account_obj.search(cr, uid, [('code', '=', account_code)], limit=1, context=context)
+                if not account_ids:
+                    raise osv.except_osv(_('Error'), _("Account code %s not found.") % account_code)
+                line_account_id = account_ids[0]
+                line_account = account_obj.browse(cr, uid, line_account_id,
+                                                  fields_to_fetch=['activation_date', 'inactivation_date'], context=context)
+                if posting_date < line_account.activation_date or \
+                        (line_account.inactivation_date and posting_date >= line_account.inactivation_date):
+                    raise osv.except_osv(_('Error'), _('The account "%s - %s" is inactive.') % (line_account.code, line_account.name))
+                line_name = inv_line.get('name', '')
+                if not line_name:  # required field
+                    raise osv.except_osv(_('Error'), _("Impossible to retrieve the line description."))
+                inv_line_vals = {
+                    'invoice_id': inv_id,
+                    'account_id': line_account_id,
+                    'name': line_name,
+                    'quantity': inv_line.get('quantity', 0.0),
+                    'price_unit': inv_line.get('price_unit', 0.0),
+                    'discount': inv_line.get('discount', 0.0),
+                }
+                inv_line_obj.create(cr, uid, inv_line_vals, context=context)
+            if journal_type == 'sale':
+                self._logger.info("SI No. %s created successfully." % inv_id)
+            elif journal_type == 'intermission':
+                self._logger.info("IVI No. %s created successfully." % inv_id)
 
 
 account_invoice_sync()
