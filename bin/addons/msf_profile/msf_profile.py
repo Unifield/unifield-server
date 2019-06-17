@@ -80,11 +80,12 @@ class patch_scripts(osv.osv):
             WHERE state = 'done' AND type = 'out' AND subtype = 'standard' AND delivered = 't'
         ''')
         pick_ids = [p[0] for p in cr.fetchall()]
-        # Update moves
-        cr.execute("UPDATE stock_move SET state = 'delivered' WHERE state = 'done' and picking_id IN %s",
-                   (tuple(pick_ids),))
-        # Update outs
-        cr.execute("UPDATE stock_picking SET state = 'delivered' WHERE id IN %s", (tuple(pick_ids),))
+        if pick_ids:
+            # Update moves
+            cr.execute("UPDATE stock_move SET state = 'delivered' WHERE state = 'done' and picking_id IN %s",
+                       (tuple(pick_ids),))
+            # Update outs
+            cr.execute("UPDATE stock_picking SET state = 'delivered' WHERE id IN %s", (tuple(pick_ids),))
 
         return True
 
