@@ -56,6 +56,7 @@ class account_invoice_sync(osv.osv):
         inv_line_obj = self.pool.get('account.invoice.line')
         account_obj = self.pool.get('account.account')
         so_po_common_obj = self.pool.get('so.po.common')
+        product_uom_obj = self.pool.get('product.uom')
         invoice_dict = invoice_data.to_dict()
         # the counterpart instance must exist and be active
         partner_ids = partner_obj.search(cr, uid, [('name', '=', source), ('active', '=', True)], limit=1, context=context)
@@ -159,6 +160,16 @@ class account_invoice_sync(osv.osv):
                 if product_data:
                     default_code = product_data.get('default_code', '')
                     product_id = so_po_common_obj.get_product_id(cr, uid, product_data, default_code=default_code, context=context) or False
+                    if not product_id:
+                        raise osv.except_osv(_('Error'), _("Product %s not found.") % default_code)
+                uom_id = False
+                uom_data = inv_line.get('uos_id', {})
+                if uom_data:
+                    uom_name = uom_data.get('name', '')
+                    uom_ids = product_uom_obj.search(cr, uid, [('name', '=', uom_name)], limit=1, context=context)
+                    if not uom_ids:
+                        raise osv.except_osv(_('Error'), _("Unit of Measure %s not found.") % uom_name)
+                    uom_id = uom_ids[0]
                 inv_line_vals = {
                     'invoice_id': inv_id,
                     'account_id': line_account_id,
@@ -167,6 +178,7 @@ class account_invoice_sync(osv.osv):
                     'price_unit': inv_line.get('price_unit', 0.0),
                     'discount': inv_line.get('discount', 0.0),
                     'product_id': product_id,
+                    'uos_id': uom_id,
                 }
                 inv_line_obj.create(cr, uid, inv_line_vals, context=context)
             if journal_type == 'sale':
