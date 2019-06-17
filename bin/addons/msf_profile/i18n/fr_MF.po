@@ -71236,12 +71236,14 @@ msgid "When the stock move is created it is in the 'Draft' state.\n"
 " After that, it is set to 'Not Available' state if the scheduler did not find the products.\n"
 " When products are reserved it is set to 'Available'.\n"
 " When the picking is done the state is 'Closed'.              \n"
-"The state is 'Waiting' if the move is waiting for another one."
+"The state is 'Waiting' if the move is waiting for another one.\n"
+"The state is 'Delivered' when the OUT is delivered."
 msgstr "Quand le mouvement de stock est créé, il est sous statut 'brouillon'.\n"
 "  Après cela, il est défini à 'Non disponible' si le planificateur n'a pas trouvé les produits.\n"
 "  Lorsque les produits sont réservés il est défini à \"Disponible\".\n"
 "  Lorsque le Picking est fait, le statut est « Fermé ».\n"
-"Le statut \"en attente\" indique que le mouvement est en attente d'un autre."
+"Le statut \"en attente\" indique que le mouvement est en attente d'un autre.\n"
+"Le status est 'Livré' quand l'OUT est livré."
 
 #. module: product
 #: view:product.product:0
@@ -83812,12 +83814,15 @@ msgstr "Changé"
 msgid "B7  21  88 x 125 mm"
 msgstr "B7  21  88 x 125 mm"
 
-#. modules: out_step, msf_outgoing, sale
+#. modules: out_step, msf_outgoing, sale, stock_forecast, stock
 #: view:shipment:0
 #: view:stock.picking:0
 #: field:stock.picking,delivered:0
 #: selection:stock.picking,state_hidden:0
 #: field:sale.order,shipped:0
+#: selection:stock.move,state:0
+#: selection:stock.picking,state:0
+#: selection:stock.forecast.line,state:0
 msgid "Delivered"
 msgstr "Livré"
 
@@ -95852,14 +95857,16 @@ msgid "* Draft: not confirmed yet and will not be scheduled until confirmed\n"
 "* Available: products reserved, simply waiting for confirmation.\n"
 "* Available Shipped: products already shipped at supplier, simply waiting for arrival confirmation.\n"
 "* Waiting: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows)\n"
-"* Closed: has been processed, can't be modified or cancelled anymore\n"
+"* Done: has been processed, can't be modified or cancelled anymore. Can still be processed to Delivered if the document is an OUT\n"
+"* Delivered: has been delivered, only for a closed OUT\n"
 "* Cancelled: has been cancelled, can't be confirmed anymore"
 msgstr "* Brouillon: pas encore confirmé et ne sera pas planifié avant confirmation\n"
 "* Confirmé: encore en attente de la disponibilité produits\n"
 "* Disponible: produits reservé,  simplement en attente de confirmation.\n"
 "* Disponible Expédié: produits déjà envoyés au fourniseur, simplement en attente de confirmation d'arrivée.\n"
 "* En attente: attendant l'exécution d'un autre mouvement avant de devenir automatiquement disponible (ex: flux A Commander)\n"
-"* Fermé: a été exécuté, ne peut plus être modifié ou annulé\n"
+"* Fermé: a été exécuté, ne peut plus être modifié ou annulé. Peut toujours être changé en Livré si le document est un OUT\n"
+"* Livré: a été livré, seulement pour un OUT fermé\n"
 "* Annulé: a été annulé, ne peut plus être confirmé"
 
 #. module: delivery_mechanism

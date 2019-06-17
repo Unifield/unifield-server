@@ -69,6 +69,25 @@ class patch_scripts(osv.osv):
                     err_msg,
                 )
 
+    # UF14.0
+    def us_5952_delivered_closed_outs_to_delivered_state(self, cr, uid, *a, **b):
+        """
+        Set the OUT pickings in 'Done' state with delivered = True to the 'Delivered' state
+        """
+        # Get Picking ids
+        cr.execute('''
+            SELECT id FROM stock_picking 
+            WHERE state = 'done' AND type = 'out' AND subtype = 'standard' AND delivered = 't'
+        ''')
+        pick_ids = [p[0] for p in cr.fetchall()]
+        # Update moves
+        cr.execute("UPDATE stock_move SET state = 'delivered' WHERE state = 'done' and picking_id IN %s",
+                   (tuple(pick_ids),))
+        # Update outs
+        cr.execute("UPDATE stock_picking SET state = 'delivered' WHERE id IN %s", (tuple(pick_ids),))
+
+        return True
+
     # UF13.0
     def us_5771_allow_all_cc_in_default_dest(self, cr, uid, *a, **b):
         """

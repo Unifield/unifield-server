@@ -381,7 +381,7 @@
                                     <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                     <button name="call_cancel_wizard" icon="gtk-del" string="Cancel &amp; Resource" type="object" 
                                             confirm="Do you really want to delete selected record ?"
-                                            attrs="{'invisible': ['|', ('from_wkf', '=', False), ('fake_state', 'in', ('cancel', 'done'))]}" 
+                                            attrs="{'invisible': ['|', ('from_wkf', '=', False), ('fake_state', 'in', ('cancel', 'done'))]}"
                                             context="{'from_int': 1, 'from_button': True}"/>
                                 </tree>
 
@@ -489,7 +489,7 @@
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" context="{'from_button': True}"/>
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
-                                <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
+                                <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','!=','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
                         <page string="Additional info">
@@ -759,7 +759,7 @@
                                 <group colspan="1" states="done">
                                     <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 </group>
-                                <button states="done" name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
+                                <button states="done" name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','!=','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
                         <page string="Additional Info">
@@ -880,7 +880,7 @@
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                            <field name="min_date" string="Expected Shipped Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}"
+                            <field name="min_date" string="Expected Shipped Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel', 'delivered'])]}"
                             on_change="change_min_date()" required="1" />
                             <field name="min_date_manually" invisible="1" />
                             <field name="warehouse_id"
@@ -902,7 +902,7 @@
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date, 'partner_id': partner_id2}"
                                 on_change="onchange_move()"
                                 >
-                                <tree colors="grey:scrapped==True; red: inactive_product == True or product_tbd == True" string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="True">
+                                <tree colors="grey:scrapped==True; red: inactive_product == True or product_tbd == True" string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel', 'delivered')" hide_new_button="context.get('from_wkf')" hide_delete_button="True">
                                     <field name="line_number"/>
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"/>
                                     <field name="comment" />
@@ -1021,16 +1021,15 @@
                             </field>
                             <group col="12" colspan="4">
                                 <field name="state" invisible="True"/>
-                                <field name="delivered" invisible="True"/>
                                 <field name="state_hidden"/>
                                 <field name="is_company" invisible="1" />
                                 <button name="set_delivered"
                                         icon="gtk-apply"
                                         type="object"
                                         string="Confirm Delivery"
-                                        attrs="{'invisible': ['|', '|', '|', '|', '|',
+                                        attrs="{'invisible': ['|', '|', '|', '|',
                                                               ('type', '!=', 'out'), ('subtype', '!=', 'standard'),
-                                                              ('state', '!=', 'done'), ('delivered', '=', True),
+                                                              ('state', '!=', 'done'),
                                                               ('partner_type', 'not in', ['internal', 'intermission', 'section']),
                                                               ('is_company', '=', True),
                                                               ]}"
@@ -1040,9 +1039,9 @@
                                         icon="gtk-apply"
                                         type="object"
                                         string="Confirm Delivery"
-                                        attrs="{'invisible': ['|', '|', '|', '|',
+                                        attrs="{'invisible': ['|', '|', '|',
                                                               ('type', '!=', 'out'), ('subtype', '!=', 'standard'),
-                                                              ('state', '!=', 'done'), ('delivered', '=', True),
+                                                              ('state', '!=', 'done'),
                                                               '&amp;',
                                                               ('partner_type', 'in', ['internal', 'intermission', 'section']),
                                                               ('is_company', '=', False),
@@ -1058,7 +1057,7 @@
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
                                 <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
-                                <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
+                                <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','not in',['done','delivered']),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
                         <page string="Additional info">

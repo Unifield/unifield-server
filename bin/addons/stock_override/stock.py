@@ -305,6 +305,7 @@ class stock_picking(osv.osv):
             ('shipped', 'Available Shipped'),  # UF-1617: new state of IN for partial shipment
             ('updated', 'Available Updated'),
             ('done', 'Closed'),
+            ('delivered', 'Delivered'),
             ('cancel', 'Cancelled'),
             ('import', 'Import in progress'),
         ], 'State', readonly=True, select=True,
@@ -313,7 +314,8 @@ class stock_picking(osv.osv):
                  "* Available: products reserved, simply waiting for confirmation.\n"\
                  "* Available Shipped: products already shipped at supplier, simply waiting for arrival confirmation.\n"\
                  "* Waiting: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows)\n"\
-                 "* Closed: has been processed, can't be modified or cancelled anymore\n"\
+                 "* Closed: has been processed, can't be modified or cancelled anymore. Can still be processed to Delivered if the document is an OUT\n"
+                 "* Delivered: has been delivered, only for a closed OUT\n"\
                  "* Cancelled: has been cancelled, can't be confirmed anymore"),
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
@@ -1291,9 +1293,9 @@ class stock_move(osv.osv):
 
     _columns = {
         'price_unit': fields.float('Unit Price', digits_compute=dp.get_precision('Picking Price Computation'), help="Technical field used to record the product cost set by the user during a picking confirmation (when average price costing method is used)"),
-        'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled'), ('hidden', 'Hidden')], 'State', readonly=True, select=True,
+        'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('delivered', 'Delivered'), ('cancel', 'Cancelled'), ('hidden', 'Hidden')], 'State', readonly=True, select=True,
                                   help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Closed\'.\
-              \nThe state is \'Waiting\' if the move is waiting for another one.'),
+              \nThe state is \'Waiting\' if the move is waiting for another one.\nThe state is \'Delivered\' when the OUT is delivered.'),
         'state_to_display': fields.function(_get_state_to_display, type='char', method=True, string='State', readonly=True),
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),

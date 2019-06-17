@@ -217,7 +217,7 @@
 						<group colspan="2" col="2">
 							<field name="date" readonly="1"/>
 							<field name="stock_journal_id" widget="selection" invisible="True" />
-							<field name="min_date" string="Expected Pick Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}"
+							<field name="min_date" string="Expected Pick Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel', 'delivered'])]}"
 								   on_change="change_min_date()" required="1" />
                             <field name="min_date_manually" invisible="1" />
 							<field name="sale_id" invisible="True" />
