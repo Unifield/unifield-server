@@ -360,7 +360,7 @@
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
                 <search string="Groups">
-                    <filter name="show_active" string="Only inactive" icon="gtk-cancel" domain="[('visible_res_groups', '=', False)]" context="{'show_invisible': True}" />
+                    <filter name="only_inactive" string="Only inactive" icon="gtk-cancel" domain="[('visible_res_groups', '=', False)]" context="{'show_invisible': True}" />
                     <filter name="show_good_level" string="All Levels" icon="gtk-cancel" context="{'show_all_level': True}" />
                     <field name="name" />
                     <field name="is_an_admin_profile" />
@@ -387,8 +387,8 @@
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
                 <search string="Users">
-                    <filter name="show_active" string="Active" icon="terp-personal+" domain="[('active', '=', True)]" />
-                    <filter name="show_inactive" string="Inactive" icon="terp-personal-" domain="[('active', '=', False)]" />
+                    <filter name="active" string="Active" icon="terp-personal+" domain="[('active', '=', True)]" />
+                    <filter name="inactive" string="Inactive" icon="terp-personal-" domain="[('active', '=', False)]" />
                     <separator orientation="vertical"/>
                     <filter name="show_synchronized" string="Show synchronized" icon="gtk-ok" domain="[('synchronize', '=', True)]"/>
                     <field name="name" />

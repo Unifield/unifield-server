@@ -140,7 +140,6 @@
             <field name="arch" type="xml">
                 <search string="Search Theoretical Kit Composition">
                     <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
-                    <filter icon="terp-camera_test" name="completed" string="Completed" domain="[('state','=', 'completed')]" separator="1" />
                     <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                     <filter icon="gtk-cancel" name="cancel" string="Canceled" domain="[('state','=', 'cancel')]" separator="1" />
                     <separator orientation="vertical" />
@@ -189,7 +188,6 @@
                 <search string="Search Real Kit Composition">
                     <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
                     <filter icon="gtk-execute" name="in_production" string="In Production" domain="[('state','=', 'in_production')]" separator="1" />
-                    <filter icon="terp-camera_test" name="completed" string="Completed" domain="[('state','=', 'completed')]" separator="1" />
                     <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                     <filter icon="gtk-cancel" name="cancel" string="Canceled" domain="[('state','=', 'cancel')]" separator="1" />
                     <separator orientation="vertical" />
@@ -336,7 +334,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('composition_type', '=', 'theoretical')]</field>
-			<field name="context">{'search_default_completed': True, 'composition_type':'theoretical'}</field>
+			<field name="context">{'composition_type':'theoretical'}</field>
 			<field name="search_view_id" ref="view_composition_kit_theoretical_filter" />
 		</record>
 		
@@ -356,7 +354,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
 			<field name="domain">[('composition_type', '=', 'real')]</field>
-			<field name="context">{'search_default_completed': True, 'composition_type':'real'}</field>
+			<field name="context">{'composition_type':'real'}</field>
 			<field name="search_view_id" ref="view_composition_kit_real_filter" />
         </record>
 

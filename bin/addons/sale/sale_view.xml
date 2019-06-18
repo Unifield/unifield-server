@@ -447,10 +447,11 @@
             <field name="arch" type="xml">
                 <search string="Search Sales Order">
                     <filter icon="terp-document-new" string="Draft" domain="[('state','in',['draft','draft_p'])]" help="Field Order that haven't yet been confirmed" />
-                    <filter icon="terp-camera_test" string="Validated" domain="[('state','in',['validated','validated_p'])]" help="Field Order validated"/>
+                    <filter icon="terp-check" string="Validated" domain="[('state','in',['validated','validated_p'])]" help="Field Order validated"/>
                     <filter icon="gtk-paste-v" name="sourced" string="Sourced" domain="[('state','in',['sourced','sourced_p'])]" separator="1" />
-                    <filter icon="terp-check" string="Confirmed" domain="[('state','in',('confirmed','confirmed_p'))]"/>
+                    <filter icon="terp-camera_test" string="Confirmed" domain="[('state','in',('confirmed','confirmed_p'))]"/>
                     <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]"/>
+                    <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state','=','cancel')]"/>
                     <separator orientation="vertical"/>
                     <filter icon="terp-dolar_ok!" string="To Invoice" domain="[('state','=','manual')]" help="Sales Order ready to be invoiced"/>
 

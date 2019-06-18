@@ -146,7 +146,7 @@
         	<field name="model">res.currency</field>
         	<field name="type">form</field>
             <field name="priority">25</field>
-        	<field name="inherit_id" ref="base.view_currency_form" />
+        	<field name="inherit_id" ref="base.view_currency_functional_form" />
         	<field name="arch" type="xml">
         		<data>
         			<xpath expr="/form//group[3]" position="attributes">

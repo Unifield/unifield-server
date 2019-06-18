@@ -32,6 +32,7 @@
                     <filter string="Sublist" name="only_sublist" domain="[('type', '=', 'sublist')]" icon="gtk-copy" />
                     <separator orientation="vertical" />
                     <filter string="Standard" name="standard" domain="[('standard_list_ok', '=', True)]" icon="terp-rating-rated" />
+                    <separator orientation="vertical" />
                     <filter string="Order list print" name="print_list" domain="[('order_list_print_ok', '=', True)]" icon="gtk-print" />
                     <field name="ref" />
                     <field name="name" />

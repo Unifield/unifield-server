@@ -6,7 +6,7 @@
             <field name="name">res.currency.form</field>
             <field name="model">res.currency</field>
             <field name="type">form</field>
-            <field name="inherit_id" ref="base.view_currency_form"/>
+            <field name="inherit_id" ref="base.view_currency_functional_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//form[@string='Rates']/field[@name='rate']" position="after">
                     <field name="currency_rate_type_id"/>
