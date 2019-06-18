@@ -507,8 +507,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             # verify purchase state
             if el.purchase_id and el.purchase_id.state not in ['draft', 'draft_p', 'validated_n', 'validated']:
                 res[el.id] = False
-            # verify purchase line state
-            if el.purchase_line_id and el.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
+            # verify purchase line state and allow modification if the line is created by sync and blocked at validated
+            if el.purchase_line_id and el.purchase_line_id.state not in ['draft', 'validated_n', 'validated'] and \
+                    not (not el.purchase_line_id.analytic_distribution_id and el.purchase_line_id.created_by_sync and
+                         el.purchase_line_id.state == 'sourced_v'):
                 res[el.id] = False
             # verify invoice state
             if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
@@ -761,7 +763,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             if wiz.purchase_id and wiz.purchase_id.state not in ['draft', 'validated_n', 'validated', 'draft_p', 'validated_p']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that purchase from purchase line is in good state if necessary
-            if wiz.purchase_line_id and wiz.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
+            if wiz.purchase_line_id and wiz.purchase_line_id.state not in ['draft', 'validated_n', 'validated'] and\
+                    not (not wiz.purchase_line_id.analytic_distribution_id and wiz.purchase_line_id.created_by_sync and
+                         wiz.purchase_line_id.state == 'sourced_v'):
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice is in good state if necessary
             if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
