@@ -205,8 +205,6 @@
                         <filter icon="terp-personal" name="customer" string="Customer" domain="[('type_return_claim','=', 'customer')]" separator="1" />
                         <filter icon="terp-personal" name="transport" string="Transport" domain="[('type_return_claim','=','transport')]" />
                         <separator orientation="vertical" />
-                        <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
-                        <separator orientation="vertical" />
                         <field name="name" />
                         <field name="type_return_claim" />
                         <newline />

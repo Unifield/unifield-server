@@ -101,21 +101,26 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Employees">
-                    <filter icon="terp-personal+" domain="[('active','=',True)]" name="active" string="Active" groups="base.group_extended"/>
+                    <filter icon="terp-personal+" domain="[('active','=',True)]" name="active" string="Active" />
+                    <filter icon="terp-personal-" domain="[('active','=',False)]" name="inactive" string="Inactive" />
+                    <separator orientation="vertical" />
+                    <filter icon="gtk-leave-fullscreen" domain="[('employee_type','=','local')]" name="employee_type_local" string="Local" />
+                    <filter icon="gtk-quit" domain="[('employee_type','=','ex')]" name="employee_type_expatriate" string="Expat'" />
+
                     <separator orientation="vertical" />
                     <field name="name"/>
                     <field name="identification_id"/>
-                    <field name="department_id" widget="selection">
-                    <filter icon="terp-personal+" domain="[('department_id','=',context.get('department_id',False))]" string="My Departments Employee"/>
-                    </field>
                     <field name="job_id"/>
+                    <newline/>
+                    <group>
+                        <field name="destination_id" domain="[('category','=','DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
+                        <field name="cost_center_id" domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
+                        <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open')]"/>
+                    </group>
                     <newline />
                     <group expand="0" string="Group By...">
-                    <filter string="Coach" icon="terp-personal" domain="[]" context="{'group_by':'coach_id'}" groups="base.group_extended"/>
                     <separator orientation="vertical" />
-                    <filter string="Department" icon="terp-personal+" domain="[]" context="{'group_by':'department_id'}"/>
                     <filter string="Job" icon="terp-gtk-select-all" domain="[]" context="{'group_by':'job_id'}"/>
-                    <filter string="Company" icon="terp-go-home" domain="[]" context="{'group_by':'company_id'}" groups="base.group_multi_company"/>
                     </group>
                 </search>
              </field>

@@ -134,7 +134,9 @@
             <field name="arch" type="xml">
                 <search string="Real consumption reports">
                     <group col="10" colspan="4">
+                        <filter icon="terp-document-new" name="draft" string="Draft"  domain="[('state', '=', 'draft')]" />
                         <filter icon="terp-check" string="Closed" domain="[('created_ok','=',True)]"/>
+                        <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
                         <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="cons_location_id"/>

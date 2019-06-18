@@ -6,50 +6,21 @@
             <field name="name">res.currency_functional.tree</field>
             <field name="model">res.currency</field>
             <field name="type">tree</field>
-            <field name="inherit_id" ref="base.view_currency_tree"/>
             <field name="arch" type="xml">
                 <tree string="Currencies" position="replace">
                     <tree string="Currencies">
-	                    <field name="name"/>
+                        <field name="name"/>
                         <field name="currency_name"/>
                         <field name="rate"/>
                         <field name="date"/>
-	                    <field name="rounding"/>
+                        <field name="rounding"/>
                         <field name="active"/>
-	                </tree>
-	            </tree>
-            </field>
-        </record>
-        
-        <record id="view_currency_functional_form" model="ir.ui.view">
-            <field name="name">res.currency_functional.form</field>
-            <field name="model">res.currency</field>
-            <field name="type">form</field>
-            <field name="priority">20</field>
-            <field name="inherit_id" ref="base.view_currency_form"/>
-            <field name="arch" type="xml">
-                <data>
-                    <field name="company_id" position="replace">
-                        <field name="currency_name"/>
-                    </field>
-                    <field name="base" position="replace">
-                    </field>
-                    <form string="Rates" position="replace">
-                        <form string="Rates">
-                            <field name="name"/>
-                            <field name="rate"/>
-                        </form>
-                    </form>
-                    <tree string="Rates"  position="replace">
-                        <tree string="Rates">
-                            <field name="name"/>
-                            <field name="rate"/>
-                        </tree>
                     </tree>
-                </data>
-            </field>
+                </tree>
+        </field>
         </record>
-        
+
+
          <record id="view_currency_functional_search" model="ir.ui.view">
             <field name="name">res.currency_functional.search</field>
             <field name="model">res.currency</field>
@@ -58,8 +29,9 @@
                 <search string="Currencies">
                     <group>
                         <filter name="active" icon="terp-check" string="Active" domain="[('active','=', True)]" />
-	                    <separator orientation="vertical"/>
-	                    <field name="name"/>
+                        <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('active','=', False)]" />
+                        <separator orientation="vertical"/>
+                        <field name="name"/>
                     </group>
                 </search>
             </field>

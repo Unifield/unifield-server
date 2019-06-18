@@ -121,23 +121,6 @@
             </field>
         </record>
 
-        <record model="ir.ui.view" id="view_account_activable_search">
-            <field name="name">account.account_activable.search</field>
-            <field name="model">account.account</field>
-            <field name="type">search</field>
-            <field name="field_parent">child_id</field>
-            <field name="inherit_id" ref="account.view_account_search"/>
-            <field name="arch" type="xml">
-                <data>
-                    <group string="Group By..." position="replace">
-                        <group expand="0" string="Group By...">
-                            <filter string="Internal Type" icon="terp-stock_symbol-selection" context="{'group_by':'type'}"/>
-                        </group>
-                    </group>
-                </data>
-            </field>
-        </record>
-
     <!-- Tree view for default tree view of accounts -->
         <record id="account.view_account_list" model="ir.ui.view">
             <field name="name">account.account_activable.list</field>

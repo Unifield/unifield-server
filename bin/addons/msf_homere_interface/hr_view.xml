@@ -154,40 +154,6 @@
         </field>
     </record>
 
-    <!--
-        Employee Search
-    -->
-    <record id="inherit_view_employee_filter" model="ir.ui.view">
-        <field name="name">inherit.view.employee.filter</field>
-        <field name="model">hr.employee</field>
-        <field name="type">search</field>
-        <field name="inherit_id" ref="hr.view_employee_filter"/>
-        <field name="arch" type="xml">
-            <data>
-                <xpath expr="/search/filter[@name='active']" position="after">
-                    <separator orientation="vertical" />
-                    <filter icon="gtk-leave-fullscreen" domain="[('employee_type','=','local')]" name="employee_type_local" string="Local" />
-                    <filter icon="gtk-quit" domain="[('employee_type','=','ex')]" name="employee_type_expatriate" string="Expat'" />
-                </xpath>
-                <xpath expr="/search/field[@name='department_id']" position="replace">
-                </xpath>
-                <xpath expr="//filter[@string='Coach']" position="replace">
-                </xpath>
-                <xpath expr="//filter[@string='Department']" position="replace">
-                </xpath>
-                <xpath expr="//filter[@string='Company']" position="replace">
-                </xpath>
-                <xpath expr="//field[@name='job_id']" position="after">
-                    <newline/>
-                    <group>
-                        <field name="destination_id" domain="[('category','=','DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
-                        <field name="cost_center_id" domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
-                        <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open')]"/>
-                    </group>
-                </xpath>
-            </data>
-        </field>
-    </record>
 
     <record id="view_employee_filter_2" model="ir.ui.view">
         <field name="name">view.employee.filter.2</field>

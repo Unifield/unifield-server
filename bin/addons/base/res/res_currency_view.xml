@@ -2,61 +2,34 @@
 <openerp>
     <data>
 
-        <record id="view_currency_tree" model="ir.ui.view">
-            <field name="name">res.currency.tree</field>
-            <field name="model">res.currency</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree string="Currencies">
-                    <field name="name"/>
-                    <field name="company_id" select="2" />
-                     <field name="rate_ids" invisible="1"/>
-                    <field name="date"/>
-                    <field name="rate"/>
-                    <field name="rounding"/>
-                    <field name="accuracy"/>
-                    <field name="active"/>
-                </tree>
-            </field>
-        </record>
-        <record id="view_currency_form" model="ir.ui.view">
-            <field name="name">res.currency.form</field>
+        <record id="view_currency_functional_form" model="ir.ui.view">
+            <field name="name">res.currency_functional.form</field>
             <field name="model">res.currency</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="arch" type="xml">
-                <form string="Currency" hide_duplicate_button="1">
-                    <group col="6" colspan="6">
-                        <field name="name" select="1"/>
-                        <field name="rate"/>
-                        <field name="company_id" select="2" groups="base.group_multi_company" />
-                        <field name="symbol"/>
-                    </group>
-
-                    <group col="2" colspan="2">
-                        <separator string="Price Accuracy" colspan="2"/>
-                        <field name="rounding"/>
-                        <field name="accuracy"/>
-                    </group>
-
-                    <group col="2" colspan="2">
-                        <separator string="Miscelleanous" colspan="2"/>
-                        <field name="base"/>
-                        <field name="active" select="1"/>
-                    </group>
-
-                    <field colspan="4" mode="tree,form" name="rate_ids" nolabel="1" attrs="{'readonly':[('base','=',True)]}">
+                <data>
+                    <field name="company_id" position="replace">
+                        <field name="currency_name"/>
+                    </field>
+                    <field name="base" position="replace">
+                    </field>
+                    <form string="Rates" position="replace">
                         <form string="Rates">
                             <field name="name"/>
                             <field name="rate"/>
                         </form>
+                    </form>
+                    <tree string="Rates"  position="replace">
                         <tree string="Rates">
                             <field name="name"/>
                             <field name="rate"/>
                         </tree>
-                    </field>
-                </form>
+                    </tree>
+                </data>
             </field>
         </record>
+
         <record id="action_currency_form" model="ir.actions.act_window">
             <field name="name">Currencies</field>
             <field name="res_model">res.currency</field>

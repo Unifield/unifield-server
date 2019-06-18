@@ -144,6 +144,7 @@
                     <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                     <filter icon="gtk-cancel" name="cancel" string="Canceled" domain="[('state','=', 'cancel')]" separator="1" />
                     <separator orientation="vertical" />
+                    <filter icon="gtk-ok" name="active" string="Active" domain="[('active', '=', True)]" separator="1" />
                     <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[('active', '=', False)]" separator="1" />
                     <separator orientation="vertical" />
                     <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />

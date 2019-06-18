@@ -143,8 +143,9 @@
                             <filter
                                 icon="terp-dolar_ok!"
                                 string="Unreconciled"
-                                domain="[('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
+                                domain="['&amp;', ('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
                                 name="unreconciled"/>
+                            <separator orientation="vertical"/>
                             <filter icon="terp-personal" string="Employee" domain="[('employee_id', '!=', False)]" context="{'identification': 1}" />
                             <field name="document_date"/>
                             <field name="date" select='1'/>
