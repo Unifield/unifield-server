@@ -153,12 +153,13 @@ class account_invoice_sync(osv.osv):
                 shipment_ref = "%s.%s" % (source or '', ship_or_out_ref or '')
                 # get the "main" IN
                 main_in_ids = stock_picking_obj.search(cr, uid,
-                                                       [('id', 'in', po.picking_ids), ('shipment_ref', '=', shipment_ref)],
+                                                       [('id', 'in', [picking.id for picking in po.picking_ids]),
+                                                        ('shipment_ref', '=', shipment_ref)],
                                                        limit=1, context=context)
                 if main_in_ids:
                     main_in = stock_picking_obj.browse(cr, uid, main_in_ids[0], fields_to_fetch=['name'], context=context)
             description = "%s.%s : %s" % (source, fo_number, main_in and main_in.name or '')  # e.g. se_HQ1C1.19/se_HQ1/HT101/FO00008 : IN/00009
-            source_doc = "% : %s" % (main_in and main_in.name or '', po_number) # e.g. IN/00009:19/se_HQ1/HT201/PO00009
+            source_doc = "%s:%s" % (main_in and main_in.name or '', po_id and po_number or '') # e.g. IN/00009:19/se_HQ1/HT201/PO00009
         vals.update(
             {
                 'partner_id': partner_id,
