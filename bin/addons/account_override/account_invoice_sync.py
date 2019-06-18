@@ -60,6 +60,7 @@ class account_invoice_sync(osv.osv):
         so_po_common_obj = self.pool.get('so.po.common')
         product_uom_obj = self.pool.get('product.uom')
         po_obj = self.pool.get('purchase.order')
+        stock_picking_obj = self.pool.get('stock.picking')
         invoice_dict = invoice_data.to_dict()
         # the counterpart instance must exist and be active
         partner_ids = partner_obj.search(cr, uid, [('name', '=', source), ('active', '=', True)], limit=1, context=context)
@@ -127,9 +128,13 @@ class account_invoice_sync(osv.osv):
                 }
             )
         # common fields whatever the invoice type
-        # TODO (in progress): distinguish between from_supply or not
         if from_supply:
-            # extract PO number from refs looking like:
+            po_id = False
+            po_number = ''
+            fo_number = ''
+            ship_or_out_ref = ''
+            main_in = False
+            # extract PO number, and Shipment or Simple Out ref, from refs looking like:
             # "se_HQ2C1.19/se_HQ2/HT101/PO00001 : SHIP/00002-01" or "se_HQ1C2.19/se_HQ1/HT201/PO00003 : OUT/00001"
             inv_name_split = description.split()
             if inv_name_split:
@@ -137,6 +142,23 @@ class account_invoice_sync(osv.osv):
                 po_ids = po_obj.search(cr, uid, [('name', '=', po_number)], limit=1, context=context)
                 if po_ids:
                     po_id = po_ids[0]
+                ship_or_out_ref = inv_name_split[-1]
+            # extract FO number from source docs looking like:
+            # "SHIP/00001-04:19/se_HQ1/HT101/FO00007" or "OUT/00003:19/se_HQ1/HT101/FO00008"
+            inv_source_doc_split = source_doc.split(':')
+            if inv_source_doc_split:
+                fo_number = inv_source_doc_split[-1]
+            if po_id:
+                po = po_obj.browse(cr, uid, po_id, fields_to_fetch=['picking_ids'], context=context)
+                shipment_ref = "%s.%s" % (source or '', ship_or_out_ref or '')
+                # get the "main" IN
+                main_in_ids = stock_picking_obj.search(cr, uid,
+                                                       [('id', 'in', po.picking_ids), ('shipment_ref', '=', shipment_ref)],
+                                                       limit=1, context=context)
+                if main_in_ids:
+                    main_in = stock_picking_obj.browse(cr, uid, main_in_ids[0], fields_to_fetch=['name'], context=context)
+            description = "%s.%s : %s" % (source, fo_number, main_in and main_in.name or '')  # e.g. se_HQ1C1.19/se_HQ1/HT101/FO00008 : IN/00009
+            source_doc = "% : %s" % (main_in and main_in.name or '', po_number) # e.g. IN/00009:19/se_HQ1/HT201/PO00009
         vals.update(
             {
                 'partner_id': partner_id,
