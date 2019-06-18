@@ -61,6 +61,10 @@ class account_invoice_sync(osv.osv):
         product_uom_obj = self.pool.get('product.uom')
         po_obj = self.pool.get('purchase.order')
         stock_picking_obj = self.pool.get('stock.picking')
+        analytic_distrib_obj = self.pool.get('analytic.distribution')
+        cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
+        fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
+        data_obj = self.pool.get('ir.model.data')
         invoice_dict = invoice_data.to_dict()
         # the counterpart instance must exist and be active
         partner_ids = partner_obj.search(cr, uid, [('name', '=', source), ('active', '=', True)], limit=1, context=context)
@@ -149,7 +153,7 @@ class account_invoice_sync(osv.osv):
             if inv_source_doc_split:
                 fo_number = inv_source_doc_split[-1]
             if po_id:
-                po = po_obj.browse(cr, uid, po_id, fields_to_fetch=['picking_ids'], context=context)
+                po = po_obj.browse(cr, uid, po_id, fields_to_fetch=['picking_ids', 'analytic_distribution_id'], context=context)
                 shipment_ref = "%s.%s" % (source or '', ship_or_out_ref or '')
                 # get the "main" IN
                 main_in_ids = stock_picking_obj.search(cr, uid,
@@ -158,6 +162,32 @@ class account_invoice_sync(osv.osv):
                                                        limit=1, context=context)
                 if main_in_ids:
                     main_in = stock_picking_obj.browse(cr, uid, main_in_ids[0], fields_to_fetch=['name'], context=context)
+                # fill in the Analytic Distribution
+                # at header level if applicable
+                po_distrib = po.analytic_distribution_id
+                # Funding Pool is always PF
+                try:
+                    fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+                except ValueError:
+                    fp_id = 0
+                if po_distrib:
+                    # create the Analytic Distribution
+                    header_distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
+                    for cc_line in po_distrib.cost_center_lines:
+                        distrib_vals = {
+                            'analytic_id': cc_line.analytic_id and cc_line.analytic_id.id,  # analytic_id = Cost Center for the CC distrib line
+                            'percentage': cc_line.percentage or 0.0,
+                            'distribution_id': header_distrib_id,
+                            'currency_id': cc_line.currency_id.id,
+                            'destination_id': cc_line.destination_id.id,
+                        }
+                        cc_distrib_line_obj.create(cr, uid, distrib_vals, context=context)
+                        distrib_vals.update({
+                            'analytic_id': fp_id,  # analytic_id = Funding Pool for the FP distrib line
+                            'cost_center_id': cc_line.analytic_id and cc_line.analytic_id.id,
+                        })
+                        fp_distrib_line_obj.create(cr, uid, distrib_vals, context=context)
+                    vals.update({'analytic_distribution_id': header_distrib_id,})
             # note: in case a FO would have been manually created the PO and IN would be missing in the ref/source doc,
             # but the same codification is used so it's visible that sthg is missing
             description = "%s.%s : %s" % (source, fo_number, main_in and main_in.name or '')  # e.g. se_HQ1C1.19/se_HQ1/HT101/FO00008 : IN/00009
