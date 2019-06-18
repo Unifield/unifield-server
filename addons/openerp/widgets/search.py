@@ -37,9 +37,10 @@ from openobject.widgets import JSLink, locations
 from openobject.i18n.format import convert_date_format_in_domain
 
 
-def get_search_default(attrs, screen_context=None, default_domain=[]):
+def get_search_default(attrs, screen_context=None, default_domain=None, add_active=False):
     screen_context = screen_context or {}
-
+    if default_domain is None:
+        default_domain = []
     if 'context' in attrs:
         ctx = expr_eval(attrs.get('context', "{}"), {'self':attrs.get('name', False)})
         group_by = ctx.get('group_by')
@@ -63,6 +64,8 @@ def get_search_default(attrs, screen_context=None, default_domain=[]):
             # resolution of those, so either we have a truthy value and we
             # return it, or we don't and we don't do anything
             return search_default
+        elif add_active and attrs['name'] == 'active' and 'active' not in '%s'%default_domain:
+            return True
 
     return False
 
@@ -135,7 +138,7 @@ class Filter(TinyInputWidget):
         self.def_checked = False
         self.groupcontext = []
 
-        default_search = get_search_default(attrs, screen_context, default_domain)
+        default_search = get_search_default(attrs, screen_context, default_domain, add_active=True)
 
         # context implemented only for group_by.
         self.group_context = None
@@ -147,7 +150,6 @@ class Filter(TinyInputWidget):
                     self.group_context = map(lambda x: 'group_' + x, self.group_context)
                 else:
                     self.group_context = 'group_' + self.group_context
-
         if default_search:
             self.def_checked = True
             self.global_domain += (expr_eval(self.filter_domain, {'context':screen_context}))
