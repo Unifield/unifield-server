@@ -40,7 +40,7 @@
                     <filter name="done" position="replace">
                         <!-- <separator orientation="vertical"/> -->
                         <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Delivery orders already processed"/>
-                        <filter icon="gtk-yes" name="delivered" string="Delivered" domain="['|', ('state', '=', 'delivered'), '&amp;', ('state', '=', 'done'), ('delivered', '=', True)]" help="Delivered Delivery Orders" />
+                        <filter icon="gtk-yes" name="delivered" string="Delivered" domain="[('state', '=', 'delivered')]" help="Delivered Delivery Orders" />
                         <!-- <filter icon="gtk-no" name="not_delivered" string="Not Delivered" domain="[('state', '=', 'done'), ('delivered', '=', False)]" help="Not Delivered Delivery Orders" /> -->
                         <separator orientation="vertical"/>
 					</filter>
