@@ -83,9 +83,6 @@
     <record id="order_types.res_partner_local_market" model="res.partner">
         <field name="lang">en_MF</field>
     </record>
-    <record id="msf_doc_import.supplier_tbd" model="res.partner">
-        <field name="lang">en_MF</field>
-    </record>
 
     <record id="smtp_config" model="email.configuration">
         <field name="smtp_server">127.0.0.1</field>

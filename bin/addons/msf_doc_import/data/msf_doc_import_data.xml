@@ -76,33 +76,5 @@
         <field name="international_status" ref="product_attributes.int_5"/>
     </record>
     
-    <!-- Partner to be defined -->
-    <record id="supplier_tbd" model="res.partner">
-        <field name="name">To be defined</field>
-        <field name="active" eval="False" />
-    </record>
-    
-    <!-- Partner address to be defined -->
-    <record id="address_tbd" model="res.partner.address">
-        <field name="type">default</field>
-        <field name="street">To be defined</field>
-        <field name="zip">To be defined</field>
-        <field name="city">To be defined</field>
-        <field name="partner_id" ref="supplier_tbd"/>
-        <field name="active" eval="False" />
-    </record>
-    
-    <!-- SupplierInfo to be defined -->
-    <record id="supplierinfo_tbd" model="product.supplierinfo">
-        <field name="name" ref="supplier_tbd"/>
-        <field name="product_id" ref="product_tbd"/>
-        <field name="active" eval="False" />
-        <!-- 
-        <field name="uom_id" ref="uom_tbd"/>
-        <field name="uom_po_id" ref="uom_tbd"/>
-        <field name="categ_id" ref="cat_tbd"/>
-         -->
-    </record>
-    
     </data>
 </openerp>

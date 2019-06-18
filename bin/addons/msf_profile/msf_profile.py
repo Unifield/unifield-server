@@ -1730,7 +1730,7 @@ class patch_scripts(osv.osv):
                     select res_id from ir_model_data d
                     where d.module='sd'
                         and d.model='res.partner'
-                        and name not in ('msf_doc_import_supplier_tbd', 'order_types_res_partner_local_market')
+                        and name != 'order_types_res_partner_local_market'
                         and name not like '%s%%'
                     ) """ % (identifier, ))  # not_a_user_entry
                 self._logger.warn('%s non local partners updated' % (cr.rowcount,))

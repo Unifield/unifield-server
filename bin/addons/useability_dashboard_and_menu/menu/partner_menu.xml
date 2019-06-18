@@ -53,7 +53,7 @@
             <field name="res_model">res.partner</field>
             <field name="view_type">form</field>
             <field name="search_view_id" ref="base.view_res_partner_filter"/>
-            <field name="context">{"search_default_manufacturer":1, 'show_button_show_inactive':1}</field>
+            <field name="context">{"search_default_manufacturer":1, 'show_button_show_inactive':1, 'search_default_active': 1, 'active_test': 0}</field>
             <field name="help">You see here Other/Manufacturer who can be both Customer and Supplier.</field>
         </record>
         
@@ -65,18 +65,6 @@
         sequence="13"
         />
 
-        <!-- The 3 records below enable the user to see the button "Show inactive" -->
-        <record id="base.action_partner_supplier_form" model="ir.actions.act_window">
-            <field name="context">{'default_customer':0, 'search_default_supplier': 1, 'default_supplier':1, 'show_button_show_inactive':1}</field>
-        </record>
-
-        <record id="base.action_partner_customer_form" model="ir.actions.act_window">
-            <field name="context">{'default_customer':1, 'search_default_customer':1, 'show_button_show_inactive':1}</field>
-        </record>
-
-        <record id="base.action_partner_form" model="ir.actions.act_window">
-            <field name="context">{"search_default_customer":1, 'show_button_show_inactive':1}</field>
-        </record>
 
     </data>
 </openerp>
