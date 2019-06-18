@@ -273,11 +273,12 @@ class Search(TinyInputWidget):
             self.fields_list.sort(lambda x, y: cmp(x[1], y[1]))
 
         self.frame = self.parse(model, dom, self.fields, values)
+        #print 'ORIG', self.listof_domain
         for oreddom in self.listof_ored_domain:
             for el in range(1, len(self.listof_ored_domain[oreddom])):
                 self.listof_ored_domain[oreddom].insert(0, '|')
             self.listof_domain += self.listof_ored_domain[oreddom]
-
+        #print 'FINAL', self.listof_domain
         if self.frame:
             self.frame = self.frame[0]
 
@@ -328,6 +329,7 @@ class Search(TinyInputWidget):
             if 'nolabel' in attrs:
                 attrs['nolabel'] = False
 
+            expand_grp_id = False
             if node.localName in ('form', 'tree', 'search', 'group'):
                 if node.localName == 'group':
                     attrs['group_by_ctx'] = values.get('group_by_ctx')
@@ -335,7 +337,6 @@ class Search(TinyInputWidget):
                     expand_grp_id = 'expand_grp_%s' % (random.randint(0,10000))
                     Element = Group
                 else:
-                    expand_grp_id = False
                     Element = Frame
 
                 views.append(Element(children=
@@ -370,6 +371,8 @@ class Search(TinyInputWidget):
                     self.listof_domain.extend(i for i in v.global_domain if not i in self.listof_domain)
                 filters_run.append(v)
 
+            elif node.localName == 'separator':
+                parent_group = 'expand_grp_%s' % (random.randint(0,10000))
             elif node.localName == 'field':
                 val  = attrs.get('select', False) or fields[str(attrs['name'])].get('select', False) or self.view_type == 'search'
                 if val:
