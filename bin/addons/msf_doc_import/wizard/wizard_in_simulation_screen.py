@@ -102,7 +102,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                             'backorder_id': simu.picking_id.backorder_id and simu.picking_id.backorder_id.id or False,
                             'header_notes': simu.picking_id.note,
                             'freight_number': simu.picking_id.shipment_ref,
-                            'transport_mode': simu.picking_id and simu.picking_id.purchase_id and simu.picking_id.purchase_id.transport_type or False}
+                            'transport_type': simu.picking_id and simu.picking_id.purchase_id and simu.picking_id.purchase_id.transport_type or False}
 
         return res
 
@@ -147,14 +147,14 @@ class wizard_import_in_simulation_screen(osv.osv):
                                         readonly=True, type='text', multi='related'),
         'freight_number': fields.function(_get_related_values, method=True, string='Freight number',
                                           readonly=True, type='char', size=128, multi='related'),
-        'transport_mode': fields.function(_get_related_values, method=True, string='Transport mode',
+        'transport_type': fields.function(_get_related_values, method=True, string='Transport mode',
                                           readonly=True, type='selection', selection=TRANSPORT_TYPE, multi='related'),
         # Import fields
         'imp_notes': fields.text(string='Notes', readonly=True),
         'message_esc': fields.text(string='Message ESC', readonly=True),
         'imp_origin': fields.char(size=128, string='Origin', readonly=True),
         'imp_freight_number': fields.char(size=128, string='Freight number', readonly=True),
-        'imp_transport_mode': fields.char(string='Transport mode', size=128, readonly=True),
+        'imp_transport_type': fields.char(string='Transport mode', size=128, readonly=True),
         # Lines
         'line_ids': fields.one2many('wizard.import.in.line.simulation.screen', 'simu_id', string='Stock moves'),
         'with_pack': fields.boolean('With Pack Info'),
@@ -664,8 +664,8 @@ Nothing has been imported because of %s. See below:
                 header_values['imp_origin'] = wiz.origin
 
                 # Line 5: Transport mode
-                transport_mode = values.get(5, ['', ''])[1]
-                header_values['imp_transport_mode'] = transport_mode
+                transport_type = values.get(5, ['', ''])[1]
+                header_values['imp_transport_type'] = transport_type
 
                 # Line 6: Notes
                 imp_notes = values.get(6, ['', ''])[1]

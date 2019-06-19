@@ -23,18 +23,18 @@ from osv import osv
 from osv import fields
 
 import tools
+from msf_order_date import TRANSPORT_TYPE
+
 
 class international_transport_cost_report(osv.osv):
     _name = 'international.transport.cost.report'
     _rec_name = 'order_id'
     _description = 'International Transport Costs'
     _auto = False
-    _order = 'date_order desc, delivery_confirmed_date desc, partner_id, transport_mode'
+    _order = 'date_order desc, delivery_confirmed_date desc, partner_id, transport_type'
 
     _columns = {
-        'transport_mode': fields.selection([('regular_air', 'Air regular'), ('express_air', 'Air express'),
-                                            ('ffc_air', 'Air FFC'), ('sea', 'Sea'),
-                                            ('road', 'Road'), ('hand', 'Hand carry'),], string='Transport mode'),
+        'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport mode'),
         'func_transport_cost': fields.float(digits=(16,2), string='Func. Transport cost'),
         'func_currency_id': fields.many2one('res.currency', string='Func. Currency'),
         'transport_cost': fields.float(digits=(16,2), string='Transport cost'),
@@ -55,7 +55,7 @@ class international_transport_cost_report(osv.osv):
                         min(po.id) as id,
                         po.id as order_id,
                         count(po.id) as nb_order,
-                        po.transport_mode as transport_mode,
+                        po.transport_type as transport_type,
                         sum(round((po.transport_cost*(to_rate.rate/fr_rate.rate)/to_cur.rounding))*to_cur.rounding) as func_transport_cost,
                         po.transport_cost as transport_cost,
                         po.transport_currency_id as transport_currency_id,
@@ -93,7 +93,7 @@ class international_transport_cost_report(osv.osv):
                         po.transport_cost > 0.00
                     GROUP BY
                         po.id,
-                        po.transport_mode,
+                        po.transport_type,
                         po.transport_cost,
                         po.transport_currency_id,
                         po.date_order,

@@ -101,9 +101,6 @@ class purchase_order(osv.osv):
     _columns = {
         'display_intl_transport_ok': fields.boolean(string='Displayed intl transport'),
         'intl_supplier_ok': fields.boolean(string='International Supplier'),
-        'transport_mode': fields.selection([('regular_air', 'Air regular'), ('express_air', 'Air express'),
-                                            ('ffc_air', 'Air FFC'), ('sea', 'Sea'),
-                                            ('road', 'Road'), ('hand', 'Hand carry'),], string='Transport mode'),
         'transport_cost': fields.float(string='Transport cost', digits_compute=dp.get_precision('Purchase Price')),
         'transport_currency_id': fields.many2one('res.currency', string='Currency'),
         'total_price_include_transport': fields.function(_get_include_transport, method=True, string="Total incl. transport", type='float', digits_compute=dp.get_precision('Purchase Price'), readonly=True, multi='cost'),

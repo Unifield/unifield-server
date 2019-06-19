@@ -99,10 +99,10 @@
                     <para style="HeaderDiffNameRight">Transport mode:</para>
                 </td>
                 <td>
-                    <para style="HeaderDiffValue">[[ getSel(o, 'in_transport_mode') ]]</para>
+                    <para style="HeaderDiffValue">[[ getSel(o, 'in_transport_type') ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderDiffValue">[[ setTag('para', 'para', {'style': o.in_transport_mode != o.imp_transport_mode and 'HeaderDiffValueColor' or 'HeaderDiffValue'}) ]] [[ getSel(o, 'imp_transport_mode') ]]</para>
+                    <para style="HeaderDiffValue">[[ setTag('para', 'para', {'style': o.in_transport_type != o.imp_transport_type and 'HeaderDiffValueColor' or 'HeaderDiffValue'}) ]] [[ getSel(o, 'imp_transport_type') ]]</para>
                 </td>
             </tr>
             <tr>

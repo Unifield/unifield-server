@@ -13969,9 +13969,7 @@ msgid "Tax codes"
 msgstr "Códigos de impuestos"
 
 #. module: transport_mgmt
-#: field:international.transport.cost.report,transport_mode:0
 #: field:local.transport.cost.report,transport_mode:0
-#: field:purchase.order,transport_mode:0
 msgid "Transport mode"
 msgstr "Modo de transporte"
 
@@ -15779,12 +15777,6 @@ msgstr "Desencadenat configuración "
 #: constraint:stock.move:0
 msgid "You try to assign a lot which is not from the same product"
 msgstr "Está intentando asignar un lote que no es del mismo producto"
-
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air regular"
-msgstr "Aéreo regular"
 
 #. module: account_voucher
 #: view:account.voucher:0
@@ -29552,12 +29544,6 @@ msgstr "¡No se puede cambiar el impuesto!"
 msgid "New Jersey"
 msgstr "Nueva Jersey"
 
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air express"
-msgstr "Air express"
-
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:446
 #, python-format
@@ -36530,12 +36516,6 @@ msgstr "Peso neto"
 msgid "Owner"
 msgstr "Propietario"
 
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air FFC"
-msgstr "Aire FFC"
-
 #. module: resource
 #: field:resource.calendar.attendance,hour_from:0
 msgid "Work from"
@@ -41573,8 +41553,6 @@ msgstr "Se produjo un error en el equilibrio y no hay línea de redondeo de nóm
 #: selection:res.partner,transport_0:0
 #: selection:res.partner,transport_1:0
 #: selection:res.partner,transport_2:0
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
 msgid "Sea"
 msgstr "Mar"
 
@@ -46484,12 +46462,6 @@ msgstr "Desde orden: se genera un borrador de factura  a partir de la orden de c
 msgid "Nomenclature level"
 msgstr "Nivel de nomenclatura"
 
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Hand carry"
-msgstr "Transportado en mano"
-
 #. module: account
 #: model:process.transition,note:account.process_transition_invoiceimport0
 msgid "Import of the statement in the system from a supplier or customer invoice"
@@ -49784,8 +49756,6 @@ msgstr "Fallido"
 #: selection:res.partner,transport_0:0
 #: selection:res.partner,transport_1:0
 #: selection:res.partner,transport_2:0
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
 msgid "Road"
 msgstr "Tierra"
 

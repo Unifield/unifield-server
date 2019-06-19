@@ -393,10 +393,10 @@
                         <group colspan="12" col="19" attrs="{'invisible': ['|', ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}">
                             <field name="display_intl_transport_ok" invisible="1"/>
                             <field name="intl_supplier_ok" invisible="1"/>
-                            <field name="transport_mode" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'readonly': [('shipped_rate', '!=', 0.00)]}"/>
-                            <label colspan="15"/>
+                            <label align="1.0" string="Estimated transport costs : " colspan="3"/>
                             <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', '!=', 0.00)]}" nolabel="1"/>
                             <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)],'readonly': [('shipped_rate', '!=', 0.00)]}" nolabel="1"/>
+                            <label colspan="13"/>
                             <separator colspan="19" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}"/>
                         </group>
                         <field name="currency_id" readonly="1"/>

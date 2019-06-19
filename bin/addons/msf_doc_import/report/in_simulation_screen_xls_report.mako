@@ -137,11 +137,11 @@
 
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Transport mode')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(o, 'transport_mode') or '')|x}</Data></Cell>
-        % if o.imp_transport_mode != o.transport_mode:
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(o, 'imp_transport_mode') or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(o, 'transport_type') or '')|x}</Data></Cell>
+        % if o.imp_transport_type != o.transport_type:
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(o, 'imp_transport_type') or '')|x}</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(o, 'imp_transport_mode') or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(o, 'imp_transport_type') or '')|x}</Data></Cell>
         % endif
     </Row>
 

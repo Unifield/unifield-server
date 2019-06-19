@@ -4535,12 +4535,6 @@ msgstr ""
 msgid "OpenERP Tweets"
 msgstr ""
 
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air regular"
-msgstr ""
-
 #. module: analytic_distribution
 #: field:mass.reallocation.verification.wizard,nb_error:0
 msgid "Lines in error"
@@ -23335,12 +23329,6 @@ msgstr ""
 msgid "Module Upgrade"
 msgstr ""
 
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air express"
-msgstr ""
-
 #. module: msf_outgoing
 #: model:ir.actions.report.xml,name:msf_outgoing.report_cargo_manifest
 msgid "Cargo Manifest"
@@ -24784,9 +24772,7 @@ msgid "Valid"
 msgstr ""
 
 #. module: transport_mgmt
-#: field:international.transport.cost.report,transport_mode:0
 #: field:local.transport.cost.report,transport_mode:0
-#: field:purchase.order,transport_mode:0
 msgid "Transport mode"
 msgstr ""
 
@@ -29573,8 +29559,6 @@ msgstr ""
 #: selection:res.partner,transport_0:0
 #: selection:res.partner,transport_1:0
 #: selection:res.partner,transport_2:0
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
 msgid "Sea"
 msgstr ""
 
@@ -32209,12 +32193,6 @@ msgstr ""
 #, python-format
 msgid "Invalid group_by specification: \"%s\".\n"
 "A group_by specification must be a list of valid fields."
-msgstr ""
-
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air FFC"
 msgstr ""
 
 #. module: msf_outgoing
@@ -40793,8 +40771,6 @@ msgstr ""
 #: selection:res.partner,transport_0:0
 #: selection:res.partner,transport_1:0
 #: selection:res.partner,transport_2:0
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
 msgid "Road"
 msgstr ""
 
@@ -41084,12 +41060,6 @@ msgstr ""
 #: selection:account.analytic.account,category:0
 #: view:analytic.distribution.wizard:0
 msgid "Free 2"
-msgstr ""
-
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Hand carry"
 msgstr ""
 
 #. modules: delivery_mechanism, purchase, stock_override, product_asset, specific_rules, stock

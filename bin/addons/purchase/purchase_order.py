@@ -1510,7 +1510,7 @@ class purchase_order(osv.osv):
                   'categ', 'priority', 'internal_type', 'arrival_date',
                   'transport_type', 'shipment_date', 'ready_to_ship_date',
                   'cross_docking_ok', 'delivery_confirmed_date',
-                  'est_transport_lead_time', 'transport_mode', 'location_id',
+                  'est_transport_lead_time', 'location_id',
                   'dest_address_id', 'incoterm_id']
 
 

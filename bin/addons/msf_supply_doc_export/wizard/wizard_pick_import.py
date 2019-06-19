@@ -39,7 +39,7 @@ XLS_TEMPLATE_HEADER = {
     7: 'packing_date',
     8: 'total_items',
     9: 'content',
-    10: 'transport_mode',
+    10: 'transport_type',
     11: 'priority',
     12: 'rts_date',
 }
