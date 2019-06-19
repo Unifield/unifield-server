@@ -106795,10 +106795,6 @@ msgid "Estimated transport costs : "
 msgstr "Estimation des coûts du transport : "
 
 #. modules: msf_order_date, purchase, msf_outgoing, partner_modification, transport_mgmt, msf_doc_import
-#: selection:purchase.import.xml.line,transport_type:0
-#: selection:wizard.import.in.simulation.screen,transport_type:0
-#: selection:wizard.import.po.simulation.screen,imp_transport_type:0
-#: selection:wizard.import.po.simulation.screen,in_transport_type:0
 #: selection:sale.order,transport_type:0
 #: selection:return.pack.shipment.processor,transport_type:0
 #: selection:return.shipment.processor,transport_type:0
