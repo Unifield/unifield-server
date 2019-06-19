@@ -70,6 +70,24 @@ class patch_scripts(osv.osv):
                 )
 
     # UF13.1
+    def us_6111_nr_field_closed_mar_2018(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            return True
+
+        cr.execute("""
+            update sync_client_update_received set
+                run='t',
+                log='Set manually to run without execution',
+                manually_set_run_date=now(),
+                editable='f'
+            where
+                run='f' and
+                sdref = 'FY2018/Mar 2018_2018-03-01' and
+                values like '%%field-closed%%'
+        """)
+        self._logger.warn('%d NR Mar 2018 field-closed set as run' % (cr.rowcount, ))
+        return True
+
     def us_6128_delete_auto_group(self, cr, uid, *a, **b):
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if not instance_id:
