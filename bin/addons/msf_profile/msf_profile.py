@@ -88,7 +88,7 @@ class patch_scripts(osv.osv):
                 where
                     run='f' and
                     sdref = 'FY2018/Mar 2018_2018-03-01' and
-                    values like '%%field-closed%%'
+                    values like '%''field-closed''%'
             """)
             self._logger.warn('%d NR Mar 2018 field-closed set as run' % (cr.rowcount, ))
 
