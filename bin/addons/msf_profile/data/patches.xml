@@ -416,5 +416,10 @@
             <field name="method">us_5771_allow_all_cc_in_default_dest</field>
         </record>
 
+       <!-- UF13.1 -->
+        <record id="us_6128_delete_auto_group" model="patch.scripts">
+            <field name="method">us_6128_delete_auto_group</field>
+        </record>
+
     </data>
 </openerp>
