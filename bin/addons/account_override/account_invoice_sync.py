@@ -89,6 +89,12 @@ class account_invoice_sync(osv.osv):
         source_doc = invoice_dict.get('origin', '')
         from_supply = invoice_dict.get('from_supply', False)
         inv_lines = invoice_dict.get('invoice_line', [])
+        # get the Funding Pool "PF"
+        try:
+            fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            fp_id = 0
+        po = False
         vals = {}
         # STV in sending instance: generates an SI in the receiving instance
         if journal_type == 'sale':
@@ -153,7 +159,7 @@ class account_invoice_sync(osv.osv):
             if inv_source_doc_split:
                 fo_number = inv_source_doc_split[-1]
             if po_id:
-                po = po_obj.browse(cr, uid, po_id, fields_to_fetch=['picking_ids', 'analytic_distribution_id'], context=context)
+                po = po_obj.browse(cr, uid, po_id, fields_to_fetch=['picking_ids', 'analytic_distribution_id', 'order_line'], context=context)
                 shipment_ref = "%s.%s" % (source or '', ship_or_out_ref or '')
                 # get the "main" IN
                 main_in_ids = stock_picking_obj.search(cr, uid,
@@ -165,28 +171,23 @@ class account_invoice_sync(osv.osv):
                 # fill in the Analytic Distribution
                 # at header level if applicable
                 po_distrib = po.analytic_distribution_id
-                # Funding Pool is always PF
-                try:
-                    fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-                except ValueError:
-                    fp_id = 0
                 if po_distrib:
                     # create the Analytic Distribution
                     header_distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
                     for cc_line in po_distrib.cost_center_lines:
-                        distrib_vals = {
+                        header_distrib_vals = {
                             'analytic_id': cc_line.analytic_id and cc_line.analytic_id.id,  # analytic_id = Cost Center for the CC distrib line
                             'percentage': cc_line.percentage or 0.0,
                             'distribution_id': header_distrib_id,
                             'currency_id': cc_line.currency_id.id,
                             'destination_id': cc_line.destination_id.id,
                         }
-                        cc_distrib_line_obj.create(cr, uid, distrib_vals, context=context)
-                        distrib_vals.update({
+                        cc_distrib_line_obj.create(cr, uid, header_distrib_vals, context=context)
+                        header_distrib_vals.update({
                             'analytic_id': fp_id,  # analytic_id = Funding Pool for the FP distrib line
                             'cost_center_id': cc_line.analytic_id and cc_line.analytic_id.id,
                         })
-                        fp_distrib_line_obj.create(cr, uid, distrib_vals, context=context)
+                        fp_distrib_line_obj.create(cr, uid, header_distrib_vals, context=context)
                     vals.update({'analytic_distribution_id': header_distrib_id,})
             # note: in case a FO would have been manually created the PO and IN would be missing in the ref/source doc,
             # but the same codification is used so it's visible that sthg is missing
@@ -237,16 +238,46 @@ class account_invoice_sync(osv.osv):
                     if not uom_ids:
                         raise osv.except_osv(_('Error'), _("Unit of Measure %s not found.") % uom_name)
                     uom_id = uom_ids[0]
+                quantity = inv_line.get('quantity', 0.0)
                 inv_line_vals = {
                     'invoice_id': inv_id,
                     'account_id': line_account_id,
                     'name': line_name,
-                    'quantity': inv_line.get('quantity', 0.0),
+                    'quantity': quantity,
                     'price_unit': inv_line.get('price_unit', 0.0),
                     'discount': inv_line.get('discount', 0.0),
                     'product_id': product_id,
                     'uos_id': uom_id,
                 }
+                if from_supply and po:
+                    # fill in the AD at line level if applicable
+                    # search the matching between PO line and invoice line based on description/product/quantity
+                    matching_po_line = False
+                    for po_line in po.order_line:
+                        if po_line.name == line_name and po_line.product_id and po_line.product_id.id == product_id and \
+                                po_line.product_qty == quantity:
+                            matching_po_line = po_line
+                            break
+                    if matching_po_line:
+                        po_line_distrib = matching_po_line.analytic_distribution_id
+                        if po_line_distrib:
+                            # create the Analytic Distribution
+                            line_distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
+                            for c_line in po_line_distrib.cost_center_lines:
+                                line_distrib_vals = {
+                                    'analytic_id': c_line.analytic_id and c_line.analytic_id.id,  # analytic_id = Cost Center for the CC distrib line
+                                    'percentage': c_line.percentage or 0.0,
+                                    'distribution_id': line_distrib_id,
+                                    'currency_id': c_line.currency_id.id,
+                                    'destination_id': c_line.destination_id.id,
+                                }
+                                cc_distrib_line_obj.create(cr, uid, line_distrib_vals, context=context)
+                                line_distrib_vals.update({
+                                    'analytic_id': fp_id,  # analytic_id = Funding Pool for the FP distrib line
+                                    'cost_center_id': c_line.analytic_id and c_line.analytic_id.id,
+                                })
+                                fp_distrib_line_obj.create(cr, uid, line_distrib_vals, context=context)
+                            inv_line_vals.update({'analytic_distribution_id': line_distrib_id,})
                 inv_line_obj.create(cr, uid, inv_line_vals, context=context)
             if journal_type == 'sale':
                 self._logger.info("SI No. %s created successfully." % inv_id)
