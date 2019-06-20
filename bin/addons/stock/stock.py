@@ -1322,6 +1322,13 @@ class stock_picking(osv.osv):
             if origin_ivi:
                 invoice_vals.update({'origin': origin_ivi})
 
+            # Add "synced" tag for STV and IVO created from Supply flow
+            out_invoice = inv_type == 'out_invoice'
+            is_stv = out_invoice and not di and not inkind_donation and not intermission
+            is_ivo = out_invoice and not debit_note and not inkind_donation and intermission
+            if is_stv or is_ivo:
+                invoice_vals.update({'synced': True, })
+
             # Update Payment terms and due date for the Supplier Invoices and Refunds
             if is_si or inv_type == 'in_refund':
                 si_payment_term = self._get_payment_term(cr, uid, picking)

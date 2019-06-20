@@ -1615,6 +1615,7 @@ class shipment(osv.osv):
                 continue
 
             if is_ivo or is_stv:
+                invoice_vals.update({'synced': True, })  # add "synced" tag for STV and IVO created from Supply flow
                 origin_inv = 'origin' in invoice_vals and invoice_vals['origin'] or False
                 fo = move and move.sale_line_id and move.sale_line_id.order_id or False
                 new_origin = origin_inv and fo and "%s:%s" % (origin_inv, fo.name)
