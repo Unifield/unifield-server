@@ -86,6 +86,42 @@ class patch_scripts(osv.osv):
                 self._logger.warn('Update address on %d IN' % cr.rowcount)
         return True
 
+    def us_6111_nr_field_closed_mar_2018(self, cr, uid, *a, **b):
+        if not self.pool.get('sync.client.entity'):
+            return True
+
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance:
+            return True
+
+        if instance.instance.startswith('OCG'):
+            cr.execute("""
+                update sync_client_update_received set
+                    run='t',
+                    log='Set manually to run without execution',
+                    manually_set_run_date=now(),
+                    editable='f'
+                where
+                    run='f' and
+                    sdref = 'FY2018/Mar 2018_2018-03-01' and
+                    values like '%''field-closed''%'
+            """)
+            self._logger.warn('%d NR Mar 2018 field-closed set as run' % (cr.rowcount, ))
+
+        return True
+
+    def us_6128_delete_auto_group(self, cr, uid, *a, **b):
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if not instance_id:
+            return True
+        if instance_id.level == 'section':
+            login_to_del = ['sup_consumption_management', 'sup_consumption_only', 'sup_demand_manager', 'sup_fin_read', 'sup_med_read', 'sup_product_manager', 'sup_product_mgr_coordo', 'sup_purchase_cr', 'sup_purchase_manager', 'sup_purchase_officer', 'sup_purchase_sup', 'sup_read_all', 'sup_request_sourcing', 'sup_request_validator', 'sup_requester', 'sup_store_keeper', 'sup_supply_config', 'sup_supply_system_administrator', 'sup_transport_manager', 'sup_valid_line_fo', 'sup_valid_line_ir', 'sup_valid_line_po', 'sup_warehouse_cr', 'sup_warehouse_manager', 'sync_config', 'sync_manual', 'user_manager', 'fin_accounting_entries_act', 'fin_accounting_entries_consult', 'fin_accounting_reports', 'fin_advanced_accounting', 'fin_bnk_chk_registers', 'fin_bnk_chk_responsible_access', 'fin_budget', 'fin_cash_registers', 'fin_cash_responsible_access', 'fin_config_admin_mission', 'fin_config_coordo', 'fin_config_full', 'fin_config_hq', 'fin_config_project', 'fin_consult_sup', 'fin_grant_mgt', 'fin_hard_posting', 'fin_hq_entries', 'fin_hr', 'fin_invoicing_advanced', 'fin_local_payroll', 'fin_register_project_responsible', 'fin_supplier_invoices', 'fin_supplier_invoices_validation', 'auditor_read']
+
+            cr.execute('delete from res_users where login in %s', (tuple(login_to_del),))
+            self._logger.warn('%d users deleted' % (cr.rowcount, ))
+
+        return True
+
     # UF13.0
     def us_5771_allow_all_cc_in_default_dest(self, cr, uid, *a, **b):
         """
