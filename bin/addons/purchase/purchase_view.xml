@@ -162,7 +162,7 @@
                         <field name="partner_ref" invisible="1"/>
                         <field name="short_partner_ref" on_change="onchange_short_partner_ref(short_partner_ref)" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <field name="shipped" attrs="{'invisible':[('state', 'in', ('draft', 'draft_p', 'validated', 'validated_p'))]}" readonly="1"/>
-                        <field name="shipped_rate" invisible="True"/>
+                        <field name="shipped_rate" invisible="True" widget="boolean"/> <!-- Put to boolean for the conditions below -->
                         <field name="push_fo" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
@@ -325,7 +325,7 @@
                                 <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated'])], 'invisible': [('partner_type', '=', 'external')]}"/>
                                 <field name="shipment_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated'])], 'invisible': [('partner_type', '=', 'external')]}"/>
-                                <field name="arrival_date" attrs="{'readonly': ['|', ('shipped_rate', '!=', 0.0), ('state', '=', 'done')], 'invisible': [('internal_type', '!=', 'international')]}"/>
+                                <field name="arrival_date" attrs="{'readonly': ['|', ('shipped_rate', '=', True), ('state', '=', 'done')], 'invisible': [('internal_type', '!=', 'international')]}"/>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Delivery" colspan="2"/>
@@ -394,8 +394,8 @@
                             <field name="display_intl_transport_ok" invisible="1"/>
                             <field name="intl_supplier_ok" invisible="1"/>
                             <label align="1.0" string="Estimated transport costs : " colspan="3"/>
-                            <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', '&gt;', 0)]}" nolabel="1"/>
-                            <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)],'readonly': [('shipped_rate', '&gt;', 0)]}" nolabel="1"/>
+                            <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', '=', True)]}" nolabel="1"/>
+                            <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)],'readonly': [('shipped_rate', '=', True)]}" nolabel="1"/>
                             <label colspan="13"/>
                             <separator colspan="19" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}"/>
                         </group>
