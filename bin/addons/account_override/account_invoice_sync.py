@@ -255,7 +255,7 @@ class account_invoice_sync(osv.osv):
                     matching_po_line = False
                     for po_line in po.order_line:
                         if po_line.name == line_name and po_line.product_id and po_line.product_id.id == product_id and \
-                                po_line.product_qty == quantity:
+                                po_line.product_qty == quantity and po_line.state not in ('draft', 'cancel', 'cancel_r'):
                             matching_po_line = po_line
                             break
                     if matching_po_line:
