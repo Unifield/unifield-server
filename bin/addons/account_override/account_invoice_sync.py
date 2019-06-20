@@ -203,6 +203,7 @@ class account_invoice_sync(osv.osv):
                 'name': description,
                 'origin': source_doc,
                 'from_supply': True,
+                'synced': True,
             }
         )
         inv_id = self.create(cr, uid, vals, context=context)
