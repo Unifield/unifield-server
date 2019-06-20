@@ -33,7 +33,7 @@ class account_invoice_sync(osv.osv):
     _logger = logging.getLogger('------sync.account.invoice')
 
     _columns = {
-        'synced': fields.boolean("Synchronized document"),
+        'synced': fields.boolean("Synchronized"),
         'from_supply': fields.boolean('From Supply', help="Internal field indicating whether the document is related to a Supply workflow"),
     }
 

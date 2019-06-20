@@ -348,6 +348,10 @@
                                 </tree>
                             </field>
                         </page>
+                        <!-- display the Counterpart Invoice tab in SI, hide it in SR -->
+                        <page string="Counterpart Invoice" attrs="{'invisible': [('type', '=', 'in_refund')]}">
+                            <field name="synced" readonly="1"/>  <!-- SI can never be ticked as "Synced" manually -->
+                        </page>
                     </page>
 
                     <xpath expr="/form//field[@name='tax_line']" position="attributes">

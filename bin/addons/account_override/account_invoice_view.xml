@@ -572,6 +572,14 @@
                             <separator colspan="4" string="Additional Information"/>
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
+                        <page string="Counterpart Invoice">
+                            <field name="from_supply" invisible="True"/>
+                            <field name="synced"
+                                   attrs="{'readonly': ['|', '|',
+                                                        ('from_supply', '=', True),
+                                                        ('state', '!=', 'draft'),
+                                                        ('type','=','in_invoice')]}"/>  <!-- IVI can never be ticked as "Synced" manually -->
+                        </page>
                     </notebook>
                 </form>
             </field>
