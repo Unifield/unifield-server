@@ -65,6 +65,7 @@ class account_invoice_sync(osv.osv):
         cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
         fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
         data_obj = self.pool.get('ir.model.data')
+        product_obj = self.pool.get('product.product')
         invoice_dict = invoice_data.to_dict()
         # the counterpart instance must exist and be active
         partner_ids = partner_obj.search(cr, uid, [('name', '=', source), ('active', '=', True)], limit=1, context=context)
@@ -208,28 +209,37 @@ class account_invoice_sync(osv.osv):
         if inv_id:
             # creation of the lines
             for inv_line in inv_lines:
-                account_code = inv_line.get('account_id', {}).get('code', '')
-                if not account_code:
-                    raise osv.except_osv(_('Error'), _("Impossible to retrieve the account code at line level."))
-                account_ids = account_obj.search(cr, uid, [('code', '=', account_code)], limit=1, context=context)
-                if not account_ids:
-                    raise osv.except_osv(_('Error'), _("Account code %s not found.") % account_code)
-                line_account_id = account_ids[0]
-                line_account = account_obj.browse(cr, uid, line_account_id,
-                                                  fields_to_fetch=['activation_date', 'inactivation_date'], context=context)
-                if posting_date < line_account.activation_date or \
-                        (line_account.inactivation_date and posting_date >= line_account.inactivation_date):
-                    raise osv.except_osv(_('Error'), _('The account "%s - %s" is inactive.') % (line_account.code, line_account.name))
                 line_name = inv_line.get('name', '')
                 if not line_name:  # required field
                     raise osv.except_osv(_('Error'), _("Impossible to retrieve the line description."))
                 product_id = False
                 product_data = inv_line.get('product_id', {})
+                line_account_id = False
+                # for the lines related to a product: use the account of the product / else use the one of the source invoice line
                 if product_data:
                     default_code = product_data.get('default_code', '')
                     product_id = so_po_common_obj.get_product_id(cr, uid, product_data, default_code=default_code, context=context) or False
                     if not product_id:
                         raise osv.except_osv(_('Error'), _("Product %s not found.") % default_code)
+                    product = product_obj.browse(cr, uid, product_id, fields_to_fetch=['product_tmpl_id', 'categ_id'], context=context)
+                    line_account_id = product.product_tmpl_id.property_account_expense and product.product_tmpl_id.property_account_expense.id
+                    if not line_account_id:
+                        line_account_id = product.categ_id and product.categ_id.property_account_expense_categ and product.categ_id.property_account_expense_categ.id
+                else:
+                    account_code = inv_line.get('account_id', {}).get('code', '')
+                    if not account_code:
+                        raise osv.except_osv(_('Error'), _("Impossible to retrieve the account code at line level."))
+                    account_ids = account_obj.search(cr, uid, [('code', '=', account_code)], limit=1, context=context)
+                    if not account_ids:
+                        raise osv.except_osv(_('Error'), _("Account code %s not found.") % account_code)
+                    line_account_id = account_ids[0]
+                if not line_account_id:
+                    raise osv.except_osv(_('Error'), _("Error when retrieving the account at line level."))
+                line_account = account_obj.browse(cr, uid, line_account_id,
+                                                  fields_to_fetch=['activation_date', 'inactivation_date'], context=context)
+                if posting_date < line_account.activation_date or \
+                        (line_account.inactivation_date and posting_date >= line_account.inactivation_date):
+                    raise osv.except_osv(_('Error'), _('The account "%s - %s" is inactive.') % (line_account.code, line_account.name))
                 uom_id = False
                 uom_data = inv_line.get('uos_id', {})
                 if uom_data:
