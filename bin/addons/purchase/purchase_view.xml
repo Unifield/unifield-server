@@ -394,8 +394,8 @@
                             <field name="display_intl_transport_ok" invisible="1"/>
                             <field name="intl_supplier_ok" invisible="1"/>
                             <label align="1.0" string="Estimated transport costs : " colspan="3"/>
-                            <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', '!=', 0.00)]}" nolabel="1"/>
-                            <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)],'readonly': [('shipped_rate', '!=', 0.00)]}" nolabel="1"/>
+                            <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', '&gt;', 0)]}" nolabel="1"/>
+                            <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)],'readonly': [('shipped_rate', '&gt;', 0)]}" nolabel="1"/>
                             <label colspan="13"/>
                             <separator colspan="19" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}"/>
                         </group>
