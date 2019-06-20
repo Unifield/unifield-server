@@ -705,6 +705,8 @@ class account_invoice(osv.osv):
             'move_name':False,
             'internal_number': False,
             'main_purchase_id': False,
+            'from_supply': False,
+            'synced': False,
         })
         if 'date_invoice' not in default:
             default.update({
