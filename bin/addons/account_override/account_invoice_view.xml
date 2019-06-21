@@ -563,7 +563,7 @@
                                         confirm="Are you sure you want to validate this invoice without synchronization?"
                                         attrs="{'invisible': ['|', '|',
                                                               ('state', '!=', 'draft'),
-                                                              ('type', '=', 'in_invoice'),
+                                                              ('type', '!=', 'out_invoice'),
                                                               ('synced', '=', True)]}"/>
                             </group>
                             <group col="2" colspan="4" states="open,paid">
@@ -658,7 +658,7 @@
                                     confirm="Are you sure you want to validate this invoice without synchronization?"
                                     attrs="{'invisible': ['|', '|',
                                                           ('state', '!=', 'draft'),
-                                                          ('type', '=', 'out_refund'),
+                                                          ('type', '!=', 'out_invoice'),
                                                           ('synced', '=', True)]}"/>
                             <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,proforma,sale,proforma2"/>
                         </group>
