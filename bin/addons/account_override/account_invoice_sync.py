@@ -79,9 +79,10 @@ class account_invoice_sync(osv.osv):
         currency_name = invoice_dict.get('currency_id', {}).get('name', '')
         if not currency_name:
             raise osv.except_osv(_('Error'), _("Impossible to retrieve the currency."))
-        currency_ids = currency_obj.search(cr, uid, [('name', '=', currency_name), ('currency_table_id', '=', False)], limit=1, context=context)
+        currency_ids = currency_obj.search(cr, uid, [('name', '=', currency_name), ('currency_table_id', '=', False),
+                                                     ('active', '=', True)], limit=1, context=context)
         if not currency_ids:
-            raise osv.except_osv(_('Error'), _("Currency %s not found.") % currency_name)
+            raise osv.except_osv(_('Error'), _("Currency %s not found or inactive.") % currency_name)
         currency_id = currency_ids[0]
         number = invoice_dict.get('number', '')
         doc_date = invoice_dict.get('document_date', time.strftime('%Y-%m-%d'))
