@@ -907,6 +907,12 @@ class account_invoice(osv.osv):
 
         return True
 
+    def invoice_open_with_confirmation(self, cr, uid, ids, context=None):
+        """
+        Simply calls "invoice_open" (asking for confirmation is done at form level)
+        """
+        return self.invoice_open(cr, uid, ids, context=context)
+
     def action_reconcile_imported_invoice(self, cr, uid, ids, context=None):
         """
         Reconcile each imported invoice with its attached invoice line

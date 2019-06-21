@@ -552,7 +552,19 @@
                             </group>
                             <group col="2" colspan="4" states="draft">
                                 <label string=""/>
-                                <button name="invoice_open" type="object" states="draft" string="Validate" icon="gtk-go-forward"/>
+                                <!-- add a confirmation step only for IVOs when "synced" isn't selected -->
+                                <button name="invoice_open" type="object" string="Validate"
+                                        icon="gtk-go-forward"
+                                        attrs="{'invisible': ['|',
+                                                              ('state', '!=', 'draft'),
+                                                              '&amp;', ('type', '=', 'out_invoice'), ('synced', '=', False)]}"/>
+                                <button name="invoice_open_with_confirmation" type="object" string="Validate"
+                                        icon="gtk-go-forward"
+                                        confirm="Are you sure you want to validate this invoice without synchronization?"
+                                        attrs="{'invisible': ['|', '|',
+                                                              ('state', '!=', 'draft'),
+                                                              ('type', '=', 'in_invoice'),
+                                                              ('synced', '=', True)]}"/>
                             </group>
                             <group col="2" colspan="4" states="open,paid">
                                 <label string=""/>
@@ -635,7 +647,19 @@
                             <button name="invoice_cancel" states="proforma2,open" string="Cancel" icon="gtk-cancel"/>
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
                             <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
-                            <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward" type="object"/>
+                            <!-- add a confirmation step only for STV (not for Customer Refunds) when "synced" isn't selected -->
+                            <button name="invoice_open" type="object" string="Validate"
+                                    icon="gtk-go-forward"
+                                    attrs="{'invisible': ['|',
+                                                          ('state', '!=', 'draft'),
+                                                          '&amp;', ('type', '=', 'out_invoice'), ('synced', '=', False)]}"/>
+                            <button name="invoice_open_with_confirmation" type="object" string="Validate"
+                                    icon="gtk-go-forward"
+                                    confirm="Are you sure you want to validate this invoice without synchronization?"
+                                    attrs="{'invisible': ['|', '|',
+                                                          ('state', '!=', 'draft'),
+                                                          ('type', '=', 'out_refund'),
+                                                          ('synced', '=', True)]}"/>
                             <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,proforma,sale,proforma2"/>
                         </group>
                     </xpath>
