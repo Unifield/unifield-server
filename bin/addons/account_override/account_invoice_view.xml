@@ -545,8 +545,12 @@
                                                 <field name="newline" invisible="1" />
                                                 <field name="is_allocatable" invisible="1"/>
                                                 <group colspan="2" col="4">
-                                                    <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-check" context="context" colspan="1" attrs="{'invisible': ['|','|', ('newline', '=', True),('analytic_distribution_state', '!=', 'valid'), ('is_allocatable', '=', False)]}" />
-                                                    <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-emblem-important" context="context" colspan="1" attrs="{'invisible': ['|','|', ('newline', '=', True), ('analytic_distribution_state', '=', 'valid'), ('is_allocatable', '=', False)]}" />
+                                                    <button name="button_analytic_distribution" string="Change analytic distribution"
+                                                            type="object" icon="terp-check" context="context" colspan="1"
+                                                            attrs="{'invisible': ['|','|', ('newline', '=', True), ('analytic_distribution_state', '!=', 'valid'), ('is_allocatable', '=', False)]}" />
+                                                    <button name="button_analytic_distribution" string="Change analytic distribution"
+                                                            type="object" icon="terp-emblem-important" context="context" colspan="1"
+                                                            attrs="{'invisible': ['|','|', ('newline', '=', True), ('analytic_distribution_state', '=', 'valid'), ('is_allocatable', '=', False)]}" />
                                                     <field name="analytic_distribution_state_recap" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
                                                 </group>
                                             </group>
