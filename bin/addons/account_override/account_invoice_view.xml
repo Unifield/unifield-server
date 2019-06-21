@@ -512,6 +512,7 @@
                             </group>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'is_intermission': True}">
                                 <tree string="Intermission Voucher Lines">
+                                    <field name="line_number"/>
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
                                     <field name="name"/>
@@ -523,7 +524,7 @@
                                     <field name="analytic_distribution_state" invisible="1"/>
                                     <field name="have_analytic_distribution_from_header" invisible="1"/>
                                     <field name="quantity"/>
-                                    <field name="uos_id" string="UOM" invisible="1" />
+                                    <field name="uos_id" string="UOM"/>
                                     <field name="price_unit"/>
                                     <field name="price_subtotal"/>
                                     <field name="inactive_product" invisible="1" />
@@ -532,12 +533,23 @@
                                 <form string="Intermission Voucher Lines">
                                     <notebook>
                                         <page string="Line">
-                                            <field name="name" default_focus="1"/>
-                                            <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]"/>
+                                            <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})" default_focus="1"/>
+                                            <field name="uos_id" on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"/>
                                             <field name="quantity"/>
-                                            <field name="uos_id" string="UOM" invisible="1"/>
                                             <field name="price_unit"/>
-                                            <field name="price_subtotal"/>
+                                            <field name="discount" groups="base.group_extended"/>
+                                            <field name="name" colspan="4"/>
+                                            <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]"/>
+                                            <group colspan="6">
+                                                <field name="analytic_distribution_state" invisible="1"/>
+                                                <field name="newline" invisible="1" />
+                                                <field name="is_allocatable" invisible="1"/>
+                                                <group colspan="2" col="4">
+                                                    <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-check" context="context" colspan="1" attrs="{'invisible': ['|','|', ('newline', '=', True),('analytic_distribution_state', '!=', 'valid'), ('is_allocatable', '=', False)]}" />
+                                                    <button name="button_analytic_distribution" string="Change analytic distribution" type="object" icon="terp-emblem-important" context="context" colspan="1" attrs="{'invisible': ['|','|', ('newline', '=', True), ('analytic_distribution_state', '=', 'valid'), ('is_allocatable', '=', False)]}" />
+                                                    <field name="analytic_distribution_state_recap" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                                                </group>
+                                            </group>
                                         </page>
                                         <page string="Notes">
                                             <field name="note" nolabel="1" colspan="4"/>
