@@ -265,11 +265,19 @@ class account_invoice_refund(osv.osv_memory):
                     # write on JIs without recreating AJIs
                     account_m_line_obj.write(cr, uid, ji_ids, {'is_si_refund': True}, context=context, check=False, update_check=False)
 
-            if inv.type in ('out_invoice', 'out_refund'):
-                xml_id = 'action_invoice_tree3'
+            if context.get('is_intermission', False):
+                module = 'account_override'
+                if inv.type == 'in_invoice':
+                    xml_id = 'action_intermission_out'
+                else:
+                    xml_id = 'action_intermission_in'
             else:
-                xml_id = 'action_invoice_tree4'
-            result = mod_obj.get_object_reference(cr, uid, 'account', xml_id)
+                module = 'account'
+                if inv.type in ('out_invoice', 'out_refund'):
+                    xml_id = 'action_invoice_tree3'
+                else:
+                    xml_id = 'action_invoice_tree4'
+            result = mod_obj.get_object_reference(cr, uid, module, xml_id)
             id = result and result[1] or False
             result = act_obj.read(cr, uid, id, context=context)
             invoice_domain = eval(result['domain'])

@@ -1310,12 +1310,18 @@ class account_invoice(osv.osv):
         for invoice in invoices:
             del invoice['id']
 
-            type_dict = {
-                'out_invoice': 'out_refund', # Customer Invoice
-                'in_invoice': 'in_refund',   # Supplier Invoice
-                'out_refund': 'out_invoice', # Customer Refund
-                'in_refund': 'in_invoice',   # Supplier Refund
-            }
+            if context.get('is_intermission', False):
+                type_dict = {
+                    'out_invoice': 'in_invoice',  # IVO
+                    'in_invoice': 'out_invoice',  # IVI
+                }
+            else:
+                type_dict = {
+                    'out_invoice': 'out_refund', # Customer Invoice
+                    'in_invoice': 'in_refund',   # Supplier Invoice
+                    'out_refund': 'out_invoice', # Customer Refund
+                    'in_refund': 'in_invoice',   # Supplier Refund
+                }
 
             invoice_lines = obj_invoice_line.read(cr, uid, invoice['invoice_line'])
             invoice_lines = self._refund_cleanup_lines(cr, uid, invoice_lines, is_account_inv_line=True, context=context)
@@ -1341,6 +1347,10 @@ class account_invoice(osv.osv):
                 'journal_id': refund_journal_ids,
                 'origin': invoice['number']
             })
+            if context.get('is_intermission', False):
+                invoice.update({
+                    'is_intermission': True,
+                })
             if period_id:
                 invoice.update({
                     'period_id': period_id,
