@@ -582,8 +582,10 @@
                                                               ('type', '!=', 'out_invoice'),
                                                               ('synced', '=', True)]}"/>
                             </group>
-                            <group col="2" colspan="4" states="open,paid">
+                            <group col="6" colspan="4" states="open,paid">
                                 <label string=""/>
+                                <button name="%(account.action_account_invoice_refund)d" type="action" string="Refund" icon="gtk-execute"
+                                        attrs="{'invisible': [('state', '!=', 'open')]}"/>
                                 <button name="%(account.account_invoices)d" string="Print Intermission Voucher" type="action" icon="gtk-print" states="open,paid"/>
                             </group>
                         </page>

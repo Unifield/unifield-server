@@ -867,7 +867,6 @@ class account_invoice(osv.osv):
                     if inv_line.invoice_line_tax_id:
                         raise osv.except_osv(_('Warning'), warning_msg)
 
-
     def invoice_open(self, cr, uid, ids, context=None):
         """
         No longer fills the date automatically, but requires it to be set

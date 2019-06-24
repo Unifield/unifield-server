@@ -29,13 +29,24 @@ class account_invoice_refund(osv.osv_memory):
 
     _name = "account.invoice.refund"
     _description = "Invoice Refund"
+
+    def _get_filter_refund(self, cr, uid, context=None):
+        """
+        Returns the selectable Refund Types (no simple "Refund" in case of an IVO/IVI)
+        """
+        if context is None:
+            context = {}
+        if context.get('is_intermission', False):
+            return [('modify', 'Modify'), ('cancel', 'Cancel')]
+        return [('modify', 'Modify'), ('refund', 'Refund'), ('cancel', 'Cancel')]
+
     _columns = {
         'date': fields.date('Operation date', help='This date will be used as the invoice date for Refund Invoice and Period will be chosen accordingly!'),
         'period': fields.many2one('account.period', 'Force period'),
         'journal_id': fields.many2one('account.journal', 'Refund Journal', hide_default_menu=True,
                                       help='You can select here the journal to use for the refund invoice that will be created. If you leave that field empty, it will use the same journal as the current invoice.'),
         'description': fields.char('Description', size=128, required=True),
-        'filter_refund': fields.selection([('modify', 'Modify'), ('refund', 'Refund'), ('cancel', 'Cancel')], "Refund Type", required=True, help='Refund invoice base on this type. You can not Modify and Cancel if the invoice is already reconciled'),
+        'filter_refund': fields.selection(_get_filter_refund, "Refund Type", required=True, help='Refund invoice base on this type. You can not Modify and Cancel if the invoice is already reconciled'),
     }
 
     def _get_journal(self, cr, uid, context=None):
