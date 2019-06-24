@@ -850,6 +850,24 @@ class account_invoice(osv.osv):
                              'view_id': supplier_view_id}
         return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, action_xmlid, local_ctx)
 
+    def _check_tax_allowed(self, cr, uid, ids, context=None):
+        """
+        Raises an error if a tax is used with an Intermission or Intersection partner
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        warning_msg = _('Taxes are forbidden with Intermission and Intersection partners.')
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['partner_id', 'tax_line', 'invoice_line'], context=context):
+            if inv.partner_id.partner_type in ('intermission', 'section'):
+                if inv.tax_line:
+                    raise osv.except_osv(_('Warning'), warning_msg)
+                for inv_line in inv.invoice_line:
+                    if inv_line.invoice_line_tax_id:
+                        raise osv.except_osv(_('Warning'), warning_msg)
+
+
     def invoice_open(self, cr, uid, ids, context=None):
         """
         No longer fills the date automatically, but requires it to be set
@@ -859,6 +877,7 @@ class account_invoice(osv.osv):
             context = {}
         self._check_invoice_merged_lines(cr, uid, ids, context=context)
         self.check_accounts_for_partner(cr, uid, ids, context=context)
+        self._check_tax_allowed(cr, uid, ids, context=context)
 
         # Prepare workflow object
         wf_service = netsvc.LocalService("workflow")
