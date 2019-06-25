@@ -199,8 +199,14 @@ class account_invoice_refund(osv.osv_memory):
                 refund_id = self._hook_create_refund(cr, uid, [inv.id], date, period, description, journal_id, form, context=context)
                 del context['refund_mode']  # ignore it for the remaining process (in particular for the SI created in a refund modify...)
                 refund = inv_obj.browse(cr, uid, refund_id[0], context=context)
+                # for Intermission Vouchers OUT: at standard creation time there is no "check_total" entered manually,
+                # its value is always 0.0 => use the "amount_total" value for the IVI generated so it won't block at validation step
+                if inv.is_intermission and inv.type == 'out_invoice':
+                    check_total = inv.amount_total or 0.0
+                else:
+                    check_total = inv.check_total
                 inv_obj.write(cr, uid, [refund.id], {'date_due': date,
-                                                     'check_total': inv.check_total})
+                                                     'check_total': check_total})
 
                 created_inv.append(refund_id[0])
                 if mode in ('cancel', 'modify'):
