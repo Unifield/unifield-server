@@ -510,7 +510,7 @@
                             <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                                 <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                             </group>
-                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'is_intermission': True}">
+                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'is_intermission': True, 'from_inv_form': True}">
                                 <tree string="Intermission Voucher Lines">
                                     <field name="line_number"/>
                                     <field name="is_corrected" invisible="1"/>
