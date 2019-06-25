@@ -241,6 +241,7 @@ class account_invoice_refund(osv.osv_memory):
                             'period_id': False,
                             'name': description,
                             'origin': source_doc,
+                            'is_intermission': inv.is_intermission,
                         })
                         for field in self._hook_fields_m2o_for_modify_refund(cr, uid):
                             invoice[field] = invoice[field] and invoice[field][0]
