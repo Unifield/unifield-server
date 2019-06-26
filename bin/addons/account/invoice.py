@@ -711,6 +711,8 @@ class account_invoice(osv.osv):
             'main_purchase_id': False,
             'from_supply': False,
             'synced': False,
+            'counterpart_inv_number': '',
+            'counterpart_inv_status': '',
         })
         if 'date_invoice' not in default:
             default.update({
