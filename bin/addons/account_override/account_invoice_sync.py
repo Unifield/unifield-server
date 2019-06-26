@@ -301,6 +301,47 @@ class account_invoice_sync(osv.osv):
             elif journal_type == 'intermission':
                 self._logger.info("IVI No. %s created successfully." % inv_id)
 
+    def update_counterpart_inv(self, cr, uid, source, invoice_data, state, context=None):
+        """
+        Updates the Counterpart Invoice Number and Status (to be triggered at synchro time)
+
+        For the record:
+        In most cases the state "Open" of the Out Invoices will be updated following both msg rules "create_invoice_from_sync" and
+        "update_counterpart_inv_opened". However "update_counterpart_inv_opened" can't be skipped to cover use cases such as:
+        - in C1: open IVO and reconcile the related JI manually: IVO is in Paid state
+        - sync from C1 to C2: the counterpart inv. status in the IVI generated is directly: Paid
+        - in C2: open IVI
+        - sync from C2 to C1: the counterpart number (and status) is updated in C1
+        - in C1: unreconcile IVO JI. The IVO is back to Open.
+        - sync from C1 to C2: the counterpart inv. status in the related IVI is updated to: Open
+        """
+        self._logger.info("+++ Update Counterpart Invoice data from %s" % source)
+        if context is None:
+            context = {}
+        invoice_dict = invoice_data.to_dict()
+        number = invoice_dict.get('number', '')
+        counterpart_inv_number = invoice_dict.get('counterpart_inv_number', '')
+        state = state and dict(self._columns['state'].selection).get(state) or ''  # use the state value and not its key
+        if number and counterpart_inv_number and state:
+            inv_ids = self.search(cr, uid, [('number', '=', counterpart_inv_number)], limit=1, context=context)
+            if inv_ids:
+                vals = {
+                    'counterpart_inv_number': number,
+                    'counterpart_inv_status': state,
+                }
+                self.write(cr, uid, inv_ids[0], vals, context=context)
+                # note that the "Counterpart Inv. Number" received is the "Number" of the invoice updated!
+                self._logger.info("account.invoice %s: Counterpart Invoice %s set to %s" % (counterpart_inv_number, number, state))
+
+    def update_counterpart_inv_opened(self, cr, uid, source, invoice_data, context=None):
+        self.update_counterpart_inv(cr, uid, source, invoice_data, 'open', context=context)
+
+    def update_counterpart_inv_paid(self, cr, uid, source, invoice_data, context=None):
+        self.update_counterpart_inv(cr, uid, source, invoice_data, 'paid', context=context)
+
+    def update_counterpart_inv_cancelled(self, cr, uid, source, invoice_data, context=None):
+        self.update_counterpart_inv(cr, uid, source, invoice_data, 'cancel', context=context)
+
 
 account_invoice_sync()
 
