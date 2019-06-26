@@ -69,7 +69,7 @@ class po_follow_up(osv.osv_memory):
         context['background_time'] = 3
 
         self.write(cr, uid, ids, {'export_format': 'xls'}, context=context)
-        return self.button_validate(cr, uid, ids, report_name=report_name, context=None)
+        return self.button_validate(cr, uid, ids, report_name=report_name, context=context)
 
     def pdf_report(self, cr, uid, ids, context=None):
         if context is None:
@@ -85,7 +85,7 @@ class po_follow_up(osv.osv_memory):
         context['background_time'] = 3
 
         self.write(cr, uid, ids, {'export_format': 'pdf'}, context=context)
-        return self.button_validate(cr, uid, ids, report_name=report_name, context=None)
+        return self.button_validate(cr, uid, ids, report_name=report_name, context=context)
 
 
     def get_state_list(self, cr, uid, wiz, context=None):
@@ -234,8 +234,6 @@ class po_follow_up(osv.osv_memory):
                     report_lines.append(report_line)
 
         return report_lines
-
-
 
     def button_validate(self, cr, uid, ids, report_name, context=None):
         if context is None:
