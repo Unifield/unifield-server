@@ -863,7 +863,7 @@
             <field eval="False" name="view_id"/>
             <!-- US-2704 if the domain change, do not forget to update the domain of account_board_supplier_invoice_draft in finance/board_account_view.xml -->
             <field name="domain">[('type','=','in_invoice'), ('is_direct_invoice', '=', False), ('is_inkind_donation', '=', False), ('is_debit_note', "=", False), ('is_intermission', '=', False)]</field>
-            <field name="context">{'type':'in_invoice', 'journal_type': 'purchase'}</field>
+            <field name="context">{'type': 'in_invoice', 'journal_type': 'purchase', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
             <field name="help">With Supplier Invoices you can enter and manage invoices issued by your suppliers.
                 OpenERP can also generate draft invoices automatically from purchase orders or receipts. This way, you can control the invoice
