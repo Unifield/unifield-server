@@ -35,6 +35,8 @@ class account_invoice_sync(osv.osv):
     _columns = {
         'synced': fields.boolean("Synchronized"),
         'from_supply': fields.boolean('From Supply', help="Internal field indicating whether the document is related to a Supply workflow"),
+        'counterpart_inv_number': fields.char('Counterpart Invoice Number', size=64, readonly=True),
+        'counterpart_inv_status': fields.char('Counterpart Invoice Status', size=16, readonly=True),
     }
 
     _defaults = {
@@ -85,6 +87,7 @@ class account_invoice_sync(osv.osv):
             raise osv.except_osv(_('Error'), _("Currency %s not found or inactive.") % currency_name)
         currency_id = currency_ids[0]
         number = invoice_dict.get('number', '')
+        state = invoice_dict.get('state', '')  # note that we get the real state as the doc can be beyond the "open" state at sync. time
         doc_date = invoice_dict.get('document_date', time.strftime('%Y-%m-%d'))
         posting_date = invoice_dict.get('date_invoice', time.strftime('%Y-%m-%d'))
         description = invoice_dict.get('name', '')
@@ -203,6 +206,8 @@ class account_invoice_sync(osv.osv):
                 'date_invoice': posting_date,
                 'name': description,
                 'origin': source_doc,
+                'counterpart_inv_number': number,
+                'counterpart_inv_status': state and dict(self._columns['state'].selection).get(state) or '',  # use the state value and not its key
                 'from_supply': True,
                 'synced': True,
             }

@@ -609,6 +609,9 @@
                                                         ('from_supply', '=', True),
                                                         ('state', '!=', 'draft'),
                                                         ('type','=','in_invoice')]}"/>  <!-- IVI can never be ticked as "Synced" manually -->
+                            <newline/>
+                            <field name="counterpart_inv_number"/>
+                            <field name="counterpart_inv_status"/>
                         </page>
                     </notebook>
                 </form>

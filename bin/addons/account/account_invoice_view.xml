@@ -358,6 +358,9 @@
                             <field name="from_supply" invisible="True"/>
                             <field name="synced"
                                    attrs="{'readonly': ['|', ('from_supply', '=', True), ('state', '!=', 'draft')]}"/>
+                            <newline/>
+                            <field name="counterpart_inv_number"/>
+                            <field name="counterpart_inv_status"/>
                         </page>
                     </notebook>
                 </form>
