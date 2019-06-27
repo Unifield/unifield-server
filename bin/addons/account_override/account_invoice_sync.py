@@ -44,6 +44,40 @@ class account_invoice_sync(osv.osv):
         'from_supply': lambda *a: False,
     }
 
+    def create_analytic_distrib(self, cr, uid, vals, distrib, context=None):
+        """
+        Updates vals with the new analytic_distribution_id created based on the distrib in parameter if it exists
+        """
+        if context is None:
+            context = {}
+        analytic_distrib_obj = self.pool.get('analytic.distribution')
+        cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
+        fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
+        data_obj = self.pool.get('ir.model.data')
+        # get the Funding Pool "PF"
+        try:
+            fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            fp_id = 0
+        if distrib:  # original distrib from PO or PO line
+            # create the Analytic Distribution
+            distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
+            for cc_line in distrib.cost_center_lines:
+                distrib_vals = {
+                    'analytic_id': cc_line.analytic_id and cc_line.analytic_id.id,  # analytic_id = Cost Center for the CC distrib line
+                    'percentage': cc_line.percentage or 0.0,
+                    'distribution_id': distrib_id,
+                    'currency_id': cc_line.currency_id.id,
+                    'destination_id': cc_line.destination_id.id,
+                }
+                cc_distrib_line_obj.create(cr, uid, distrib_vals, context=context)
+                distrib_vals.update({
+                    'analytic_id': fp_id,  # analytic_id = Funding Pool for the FP distrib line
+                    'cost_center_id': cc_line.analytic_id and cc_line.analytic_id.id,
+                })
+                fp_distrib_line_obj.create(cr, uid, distrib_vals, context=context)
+            vals.update({'analytic_distribution_id': distrib_id,})
+
     def create_invoice_from_sync(self, cr, uid, source, invoice_data, context=None):
         """
         Creates automatic counterpart invoice at synchro time.
@@ -63,10 +97,6 @@ class account_invoice_sync(osv.osv):
         product_uom_obj = self.pool.get('product.uom')
         po_obj = self.pool.get('purchase.order')
         stock_picking_obj = self.pool.get('stock.picking')
-        analytic_distrib_obj = self.pool.get('analytic.distribution')
-        cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
-        fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
-        data_obj = self.pool.get('ir.model.data')
         product_obj = self.pool.get('product.product')
         invoice_dict = invoice_data.to_dict()
         # the counterpart instance must exist and be active
@@ -94,11 +124,6 @@ class account_invoice_sync(osv.osv):
         source_doc = invoice_dict.get('origin', '')
         from_supply = invoice_dict.get('from_supply', False)
         inv_lines = invoice_dict.get('invoice_line', [])
-        # get the Funding Pool "PF"
-        try:
-            fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            fp_id = 0
         po = False
         vals = {}
         # STV in sending instance: generates an SI in the receiving instance
@@ -176,24 +201,7 @@ class account_invoice_sync(osv.osv):
                 # fill in the Analytic Distribution
                 # at header level if applicable
                 po_distrib = po.analytic_distribution_id
-                if po_distrib:
-                    # create the Analytic Distribution
-                    header_distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
-                    for cc_line in po_distrib.cost_center_lines:
-                        header_distrib_vals = {
-                            'analytic_id': cc_line.analytic_id and cc_line.analytic_id.id,  # analytic_id = Cost Center for the CC distrib line
-                            'percentage': cc_line.percentage or 0.0,
-                            'distribution_id': header_distrib_id,
-                            'currency_id': cc_line.currency_id.id,
-                            'destination_id': cc_line.destination_id.id,
-                        }
-                        cc_distrib_line_obj.create(cr, uid, header_distrib_vals, context=context)
-                        header_distrib_vals.update({
-                            'analytic_id': fp_id,  # analytic_id = Funding Pool for the FP distrib line
-                            'cost_center_id': cc_line.analytic_id and cc_line.analytic_id.id,
-                        })
-                        fp_distrib_line_obj.create(cr, uid, header_distrib_vals, context=context)
-                    vals.update({'analytic_distribution_id': header_distrib_id,})
+                self.create_analytic_distrib(cr, uid, vals, po_distrib, context=context)  # update vals
             # note: in case a FO would have been manually created the PO and IN would be missing in the ref/source doc,
             # but the same codification is used so it's visible that sthg is missing
             description = "%s.%s : %s" % (source, fo_number, main_in and main_in.name or '')  # e.g. se_HQ1C1.19/se_HQ1/HT101/FO00008 : IN/00009
@@ -277,24 +285,7 @@ class account_invoice_sync(osv.osv):
                             break
                     if matching_po_line:
                         po_line_distrib = matching_po_line.analytic_distribution_id
-                        if po_line_distrib:
-                            # create the Analytic Distribution
-                            line_distrib_id = analytic_distrib_obj.create(cr, uid, {}, context=context)
-                            for c_line in po_line_distrib.cost_center_lines:
-                                line_distrib_vals = {
-                                    'analytic_id': c_line.analytic_id and c_line.analytic_id.id,  # analytic_id = Cost Center for the CC distrib line
-                                    'percentage': c_line.percentage or 0.0,
-                                    'distribution_id': line_distrib_id,
-                                    'currency_id': c_line.currency_id.id,
-                                    'destination_id': c_line.destination_id.id,
-                                }
-                                cc_distrib_line_obj.create(cr, uid, line_distrib_vals, context=context)
-                                line_distrib_vals.update({
-                                    'analytic_id': fp_id,  # analytic_id = Funding Pool for the FP distrib line
-                                    'cost_center_id': c_line.analytic_id and c_line.analytic_id.id,
-                                })
-                                fp_distrib_line_obj.create(cr, uid, line_distrib_vals, context=context)
-                            inv_line_vals.update({'analytic_distribution_id': line_distrib_id,})
+                        self.create_analytic_distrib(cr, uid, inv_line_vals, po_line_distrib, context=context)  # update inv_line_vals
                 inv_line_obj.create(cr, uid, inv_line_vals, context=context)
             if journal_type == 'sale':
                 self._logger.info("SI No. %s created successfully." % inv_id)
