@@ -942,6 +942,11 @@ You cannot choose this supplier because some destination locations are not avail
         if sp.type == 'out' and sp.partner_id.partner_type == 'external' and invoice_type != 'in_refund':
             res = False
 
+        # Move in on an intermission or intersection partner should not create an IVI / SI (generation of Donations shouldn't be blocked)
+        if sp.type == 'in' and sp.purchase_id and sp.purchase_id.order_type not in ('donation_st', 'donation_exp') \
+                and sp.partner_id and sp.partner_id.partner_type in ('intermission', 'section') and invoice_type == 'in_invoice':
+            res = False
+
         return res
 
     def _create_invoice(self, cr, uid, stock_picking):
