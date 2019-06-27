@@ -500,18 +500,6 @@ class account_invoice(osv.osv):
                             ' before invoice validation')
                     )
 
-    def _refund_cleanup_lines(self, cr, uid, lines, is_account_inv_line=False, context=None):
-        """
-        Remove useless fields
-        """
-        for line in lines:
-            if line.get('move_lines',False):
-                del line['move_lines']
-            if line.get('import_invoice_id',False):
-                del line['import_invoice_id']
-        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines, is_account_inv_line=is_account_inv_line, context=context)
-        return res
-
     def check_po_link(self, cr, uid, ids, context=None):
         """
         Check that invoice (only supplier invoices) has no link with a PO. This is because of commitments presence.
@@ -532,30 +520,6 @@ class account_invoice(osv.osv):
                         raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
         return True
 
-    def _hook_period_id(self, cr, uid, inv, context=None):
-        """
-        Give matches period that are not draft and not HQ-closed from given date.
-        Do not use special periods as period 13, 14 and 15.
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if not inv:
-            return False
-        # NB: there is some period state. So we define that we choose only open period (so not draft and not done)
-        res = self.pool.get('account.period').search(cr, uid, [('date_start','<=',inv.date_invoice or strftime('%Y-%m-%d')),
-                                                               ('date_stop','>=',inv.date_invoice or strftime('%Y-%m-%d')), ('state', 'not in', ['created', 'done']),
-                                                               ('company_id', '=', inv.company_id.id), ('special', '=', False)], context=context, order="date_start ASC, name ASC")
-        return res
-
-    def __hook_lines_before_pay_and_reconcile(self, cr, uid, lines):
-        """
-        Add document date to account_move_line before pay and reconcile
-        """
-        for line in lines:
-            if line[2] and 'date' in line[2] and not line[2].get('document_date', False):
-                line[2].update({'document_date': line[2].get('date')})
-        return lines
 
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
         """
@@ -1186,41 +1150,6 @@ class account_invoice(osv.osv):
         self.check_domain_restrictions(cr, uid, ids, context)  # raises an error if one unauthorized element is used
         return True
 
-    def line_get_convert(self, cr, uid, x, part, date, context=None):
-        """
-        Add these field into invoice line:
-        - invoice_line_id
-        """
-        if not context:
-            context = {}
-        res = super(account_invoice, self).line_get_convert(cr, uid, x, part, date, context)
-        res.update({'invoice_line_id': x.get('invoice_line_id', False)})
-        return res
-
-    def finalize_invoice_move_lines(self, cr, uid, inv, line):
-        """
-        Hook that changes move line data before write them.
-        Add a link between partner move line and invoice.
-        Add invoice document date to data.
-        """
-        def is_partner_line(dico):
-            if isinstance(dico, dict):
-                if dico:
-                    # In case where no amount_currency filled in, then take debit - credit for amount comparison
-                    amount = dico.get('amount_currency', False) or (dico.get('debit', 0.0) - dico.get('credit', 0.0))
-                    if amount == inv.amount_total and dico.get('partner_id', False) == inv.partner_id.id:
-                        return True
-            return False
-        new_line = []
-        for el in line:
-            if el[2]:
-                el[2].update({'document_date': inv.document_date})
-            if el[2] and is_partner_line(el[2]):
-                el[2].update({'invoice_partner_link': inv.id})
-                new_line.append((el[0], el[1], el[2]))
-            else:
-                new_line.append(el)
-        return super(account_invoice, self).finalize_invoice_move_lines(cr, uid, inv, new_line)
 
     def button_debit_note_import_invoice(self, cr, uid, ids, context=None):
         """
@@ -1903,18 +1832,6 @@ class account_invoice_line(osv.osv):
                 amount += l.price_subtotal
             self.pool.get('account.invoice').write(cr, uid, [inv.id], {'check_total': amount}, context)
             self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in inv.register_line_ids], {'amount': -1 * amount}, context)
-        return res
-
-    def move_line_get_item(self, cr, uid, line, context=None):
-        """
-        Add a link between move line and its invoice line
-        """
-        # some verification
-        if not context:
-            context = {}
-        # update default dict with invoice line ID
-        res = super(account_invoice_line, self).move_line_get_item(cr, uid, line, context=context)
-        res.update({'invoice_line_id': line.id})
         return res
 
     def button_open_analytic_lines(self, cr, uid, ids, context=None):

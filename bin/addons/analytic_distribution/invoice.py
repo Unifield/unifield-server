@@ -71,100 +71,6 @@ class account_invoice(osv.osv):
                     raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for "%s"') % invl.name)
         return True
 
-    def _hook_fields_for_refund(self, cr, uid, *args):
-        """
-        Add these fields to result:
-         - analytic_distribution_id
-        """
-        res = super(account_invoice, self)._hook_fields_for_refund(cr, uid, args)
-        res.append('analytic_distribution_id')
-        res.append('document_date')
-        return res
-
-    def _hook_fields_m2o_for_refund(self, cr, uid, *args):
-        """
-        Add these fields to result:
-         - analytic_distribution_id
-        """
-        res = super(account_invoice, self)._hook_fields_m2o_for_refund(cr, uid, args)
-        res.append('analytic_distribution_id')
-        return res
-
-    def _hook_refund_data(self, cr, uid, data, *args):
-        """
-        Copy analytic distribution for refund invoice
-        """
-        if not data:
-            return False
-        if 'analytic_distribution_id' in data:
-            if data.get('analytic_distribution_id', False):
-                data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, data.get('analytic_distribution_id'), {}) or False
-            else:
-                data['analytic_distribution_id'] = False
-        return data
-
-    def _refund_cleanup_lines(self, cr, uid, lines, is_account_inv_line=False, context=None):
-        """
-        Add right analytic distribution values on each lines
-        """
-        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines, is_account_inv_line=is_account_inv_line, context=context)
-        for el in res:
-            if el[2]:
-                # Give analytic distribution on line
-                if 'analytic_distribution_id' in el[2]:
-                    if el[2].get('analytic_distribution_id', False) and el[2].get('analytic_distribution_id')[0]:
-                        distrib_id = el[2].get('analytic_distribution_id')[0]
-                        el[2]['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, distrib_id, {}) or False
-                    else:
-                        # default value
-                        el[2]['analytic_distribution_id'] = False
-                # Give false analytic lines for 'line' in order not to give an error
-                if 'analytic_line_ids' in el[2]:
-                    el[2]['analytic_line_ids'] = False
-                # Give false for (because not needed):
-                # - order_line_id
-                # - sale_order_line_id
-                for field in ['order_line_id', 'sale_order_line_id']:
-                    if field in el[2]:
-                        el[2][field] = el[2].get(field, False) and el[2][field][0] or False
-        return res
-
-    def copy(self, cr, uid, inv_id, default=None, context=None):
-        """
-        Copy global distribution and give it to new invoice
-        """
-        if not context:
-            context = {}
-        if not default:
-            default = {}
-        inv = self.browse(cr, uid, [inv_id], context=context)[0]
-        if inv.analytic_distribution_id:
-            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, inv.analytic_distribution_id.id, {}, context=context)
-            if new_distrib_id:
-                default.update({'analytic_distribution_id': new_distrib_id})
-        return super(account_invoice, self).copy(cr, uid, inv_id, default, context)
-
-    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None, context=None):
-        """
-        Reverse lines for given invoice
-        """
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for inv in self.browse(cr, uid, ids):
-            # Check for dates (refund must be done after invoice)
-            if date and date < inv.date_invoice:
-                raise osv.except_osv(_('Error'), _("Posting date for the refund is before the invoice's posting date!"))
-            if document_date and document_date < inv.document_date:
-                raise osv.except_osv(_('Error'), _("Document date for the refund is before the invoice's document date!"))
-        return super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id, document_date, context=context)
-
-    def line_get_convert(self, cr, uid, x, part, date, context=None):
-        res = super(account_invoice, self).line_get_convert(cr, uid, x, part, date, context=context)
-        res['analytic_distribution_id'] = x.get('analytic_distribution_id', False)
-        return res
-
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on an invoice
@@ -392,28 +298,6 @@ class account_invoice_line(osv.osv):
             if new_distrib_id:
                 default.update({'analytic_distribution_id': new_distrib_id})
         return super(account_invoice_line, self).copy_data(cr, uid, l_id, default, context)
-
-    def move_line_get_item(self, cr, uid, line, context=None):
-        """
-        Give right analytic distribution when creating move lines
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        # Default result
-        res = super(account_invoice_line, self).move_line_get_item(cr, uid, line, context=context)
-        # Update result by copying analytic distribution from invoice line
-        ana_obj = self.pool.get('analytic.distribution')
-        if line.analytic_distribution_id:
-            new_distrib_id = ana_obj.copy(cr, uid, line.analytic_distribution_id.id, {}, context=context)
-            if new_distrib_id:
-                res['analytic_distribution_id'] = new_distrib_id
-        # If no distribution on invoice line, take those from invoice and copy it!
-        elif line.invoice_id and line.invoice_id.analytic_distribution_id:
-            new_distrib_id = ana_obj.copy(cr, uid, line.invoice_id.analytic_distribution_id.id, {}, context=context)
-            if new_distrib_id:
-                res['analytic_distribution_id'] = new_distrib_id
-        return res
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
