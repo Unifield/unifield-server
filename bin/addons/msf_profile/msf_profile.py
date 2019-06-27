@@ -69,6 +69,21 @@ class patch_scripts(osv.osv):
                     err_msg,
                 )
 
+    # UF14.0
+    def us_6076_set_inv_as_from_supply(self, cr, uid, *a, **b):
+        """
+        Set the new tag from_supply to True in the related account.invoices
+        """
+        update_inv = """
+            UPDATE account_invoice
+            SET from_supply = 't' 
+            WHERE picking_id IS NOT NULL
+            OR id IN (SELECT invoice_id FROM shipment WHERE invoice_id IS NOT NULL);
+        """
+        cr.execute(update_inv)
+        self._logger.warn('Tag from_supply set to True in %s account.invoice(s).' % (cr.rowcount,))
+        return True
+
     # UF13.1
     def us_3413_align_in_partner_to_po(self,cr, uid, *a, **b):
         cr.execute("select p.name, p.id, po.partner_id, p.partner_id from stock_picking p, purchase_order po where p.type='in' and po.id = p.purchase_id and ( p.partner_id != po.partner_id or p.partner_id2 != po.partner_id) order by p.name")
