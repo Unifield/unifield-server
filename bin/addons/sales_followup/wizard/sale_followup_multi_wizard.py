@@ -178,6 +178,13 @@ class sale_followup_multi_wizard(osv.osv_memory):
                         _('No data found with these parameters'),
                     )
 
+                cr.execute("""SELECT COUNT(id) FROM sale_order_line WHERE order_id IN %s""", (tuple(fo_ids),))
+                nb_lines = 0
+                for x in cr.fetchall():
+                    nb_lines = x[0]
+                if (len(fo_ids) + nb_lines) > 1500:
+                    raise osv.except_osv(_('Error'), _('The requested report is too heavy to generate. Please apply further filters so that report can be generated.'))
+
             self.write(cr, uid, [wizard.id], {'order_ids': fo_ids}, context=context)
 
         return True
@@ -228,7 +235,7 @@ class sale_followup_multi_wizard(osv.osv_memory):
             'report_name': 'sales.follow.up.multi.report_pdf',
         }, context=context)
         context['background_id'] = background_id
-        context['background_time'] = 20
+        context['background_time'] = 3
 
         data = {'ids': ids, 'context': context}
         return {
