@@ -52,7 +52,9 @@
                     <button name='invoice_cancel' position="replace">
                         <!-- The widget boolean permit to the attrs to work efficiently -->
                         <field name="purchase_ids" invisible="1" widget="boolean" readonly="1" />
-                        <button name="invoice_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible': ['|', ('state', 'in', ['open', 'paid']), ('purchase_ids', '!=', False)]}" confirm="You are about to cancel this invoice. Do you want to proceed?"/>
+                        <button name="invoice_cancel" string="Cancel" icon="gtk-cancel"
+                                attrs="{'invisible': ['|', '|', ('state', 'in', ['open', 'paid']), ('purchase_ids', '!=', False), ('synced', '=', True)]}"
+                                confirm="You are about to cancel this invoice. Do you want to proceed?"/>
                     </button>
                     <xpath expr="//button[@name='invoice_open']" position="after" >
                         <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
