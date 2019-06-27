@@ -320,13 +320,23 @@ class account_invoice_sync(osv.osv):
         number = invoice_dict.get('number', '')
         counterpart_inv_number = invoice_dict.get('counterpart_inv_number', '')
         state = state and dict(self._columns['state'].selection).get(state) or ''  # use the state value and not its key
-        if number and counterpart_inv_number and state:
-            inv_ids = self.search(cr, uid, [('number', '=', counterpart_inv_number)], limit=1, context=context)
+        if state:
+            vals = {
+                'counterpart_inv_status': state,
+            }
+            if number:
+                vals.update(
+                    {
+                        'counterpart_inv_number': number,
+                    }
+                )
+            inv_ids = []
+            if counterpart_inv_number:
+                inv_ids = self.search(cr, uid, [('number', '=', counterpart_inv_number)], limit=1, context=context)
+            elif not counterpart_inv_number and number:
+                # use case where the state of the IVO/STV is updated before the related IVI/SI has been opened
+                inv_ids = self.search(cr, uid, [('counterpart_inv_number', '=', number)], limit=1, context=context)
             if inv_ids:
-                vals = {
-                    'counterpart_inv_number': number,
-                    'counterpart_inv_status': state,
-                }
                 self.write(cr, uid, inv_ids[0], vals, context=context)
                 # note that the "Counterpart Inv. Number" received is the "Number" of the invoice updated!
                 self._logger.info("account.invoice %s: Counterpart Invoice %s set to %s" % (counterpart_inv_number, number, state))
