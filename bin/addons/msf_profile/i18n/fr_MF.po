@@ -105570,9 +105570,14 @@ msgid "Qty Received"
 msgstr "Qté Reçue"
 
 #. module: stock
-#: report:addons/stock/report/stock_reception_report_xls.mako:244
-msgid "Total Cost"
-msgstr "Coût Total"
+#: report:addons/stock/report/stock_reception_report_xls.mako:246
+msgid "Total Cost (PO currency)"
+msgstr "Coût Total (Devise du PO)"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:247
+msgid "Total Cost (Functional currency)"
+msgstr "Coût Total (Devise fonctionelle)"
 
 #. module: stock
 #: report:addons/stock/report/stock_reception_report_xls.mako:246

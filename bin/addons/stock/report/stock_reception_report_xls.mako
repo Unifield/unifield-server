@@ -141,8 +141,10 @@
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Currency
         <Column ss:AutoFitWidth="1" ss:Width="45.0" />
-        ## Total Cost
-        <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        ## Total Cost (PO currency)
+        <Column ss:AutoFitWidth="1" ss:Width="80.0" />
+        ## Total Cost (Functional currency)
+        <Column ss:AutoFitWidth="1" ss:Width="80.0" />
         ## Destination Location
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
         ## Final Destination Location
@@ -241,7 +243,8 @@
             _('Qty Received'),
             _('Unit Price'),
             _('Currency'),
-            _('Total Cost'),
+            _('Total Cost (PO currency)'),
+            _('Total Cost (Functional currency)'),
             _('Destination Location'),
             _('Final Destination Location'),
             _('Expected Receipt Date'),
@@ -285,6 +288,7 @@
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['unit_price']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['currency']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['total_cost']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['total_cost_func']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['dest_loc']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['final_dest_loc']|x}</Data></Cell>
                 % if move['exp_receipt_date'] and isDateTime(move['exp_receipt_date']):

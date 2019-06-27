@@ -23,6 +23,7 @@ class stock_reception_report(report_sxw.rml_parse):
 
     def get_moves(self, moves_ids):
         move_obj = self.pool.get('stock.move')
+        curr_obj = self.pool.get('res.currency')
         res = []
 
         for move in move_obj.browse(self.cr, self.uid, moves_ids, context=self.localcontext):
@@ -30,6 +31,11 @@ class stock_reception_report(report_sxw.rml_parse):
             pol = move.purchase_line_id
             po = pol.order_id
             sol = move.purchase_line_id.sale_order_line_id
+            func_price_unit = move.price_unit
+            if move.company_id.currency_id.id != po.pricelist_id.currency_id.id:
+                func_price_unit = round(curr_obj.compute(self.cr, self.uid, po.pricelist_id.currency_id.id,
+                                                         move.company_id.currency_id.id, move.price_unit,
+                                                         round=False, context=self.localcontext), 2)
             res.append({
                 'ref': pick.name,
                 'reason_type': move.reason_type_id and move.reason_type_id.name or '',
@@ -49,6 +55,7 @@ class stock_reception_report(report_sxw.rml_parse):
                 'unit_price': move.price_unit,
                 'currency': move.price_currency_id and move.price_currency_id.name or '',
                 'total_cost': move.product_qty * move.price_unit,
+                'total_cost_func': move.product_qty * func_price_unit,
                 'dest_loc': move.location_dest_id and move.location_dest_id.name or '',
                 'final_dest_loc': sol and (sol.procurement_request and sol.order_id.location_requestor_id.name or sol.order_id.partner_id.name)
                 or move.location_dest_id and move.location_dest_id.name or '',
