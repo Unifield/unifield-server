@@ -308,8 +308,6 @@ class account_invoice_sync(osv.osv):
         "update_counterpart_inv_opened". However "update_counterpart_inv_opened" can't be skipped to cover use cases such as:
         - in C1: open IVO and reconcile the related JI manually: IVO is in Paid state
         - sync from C1 to C2: the counterpart inv. status in the IVI generated is directly: Paid
-        - in C2: open IVI
-        - sync from C2 to C1: the counterpart number (and status) is updated in C1
         - in C1: unreconcile IVO JI. The IVO is back to Open.
         - sync from C1 to C2: the counterpart inv. status in the related IVI is updated to: Open
         """
