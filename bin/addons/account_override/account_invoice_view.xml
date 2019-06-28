@@ -666,6 +666,7 @@
                             <field name="residual"/>
                             <field name="is_debit_note" invisible="1"/>
                         </group>
+                        <field name="partner_type" invisible="1"/>
                         <group col="8" colspan="4">
                             <button name="invoice_cancel" states="proforma2,open" string="Cancel" icon="gtk-cancel"/>
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
@@ -675,14 +676,16 @@
                                     icon="gtk-go-forward"
                                     attrs="{'invisible': ['|',
                                                           ('state', '!=', 'draft'),
-                                                          '&amp;', ('type', '=', 'out_invoice'), ('synced', '=', False)]}"/>
+                                                          '&amp;', '&amp;',
+                                                          ('type', '=', 'out_invoice'), ('synced', '=', False), ('partner_type', 'in', ('intermission', 'section')) ]}"/>
                             <button name="invoice_open_with_confirmation" type="object" string="Validate"
                                     icon="gtk-go-forward"
                                     confirm="Are you sure you want to validate this invoice without synchronization?"
-                                    attrs="{'invisible': ['|', '|',
+                                    attrs="{'invisible': ['|', '|', '|',
                                                           ('state', '!=', 'draft'),
                                                           ('type', '!=', 'out_invoice'),
-                                                          ('synced', '=', True)]}"/>
+                                                          ('synced', '=', True),
+                                                          ('partner_type', 'not in', ('intermission', 'section'))]}"/>
                             <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,proforma,sale,proforma2"/>
                         </group>
                     </xpath>

@@ -485,6 +485,7 @@ class account_invoice(osv.osv):
         acc_id = False
         bank_id = False
         fiscal_position = False
+        partner_type = False
 
         opt = [('uid', str(uid))]
         if partner_id:
@@ -494,6 +495,8 @@ class account_invoice(osv.osv):
             contact_addr_id = res['contact']
             invoice_addr_id = res['invoice']
             p = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            partner_type = p.partner_type  # update the partner type immediately as it is used in a domain in attrs
+
             if company_id:
                 if p.property_account_receivable.company_id.id != company_id and p.property_account_payable.company_id.id != company_id:
                     property_obj = self.pool.get('ir.property')
@@ -530,7 +533,8 @@ class account_invoice(osv.osv):
             'address_invoice_id': invoice_addr_id,
             'account_id': acc_id,
             'payment_term': partner_payment_term,
-            'fiscal_position': fiscal_position
+            'fiscal_position': fiscal_position,
+            'partner_type': partner_type,
         }
         }
 

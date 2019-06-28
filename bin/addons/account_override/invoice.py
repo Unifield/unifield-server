@@ -28,11 +28,13 @@ from time import strftime
 from tools.translate import _
 from lxml import etree
 from datetime import datetime
+from msf_partner import PARTNER_TYPE
 import re
 import netsvc
 
 
 import decimal_precision as dp
+
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
@@ -251,6 +253,8 @@ class account_invoice(osv.osv):
         'st_lines': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register lines", readonly=True, help="Register lines that have a link to this invoice."),
         'can_merge_lines': fields.function(_get_can_merge_lines, method=True, type='boolean', string='Can merge lines ?'),
         'is_merged_by_account': fields.boolean("Is merged by account"),
+        'partner_type': fields.related('partner_id', 'partner_type', string='Partner Type', type='selection',
+                                       selection=PARTNER_TYPE, readonly=True),
     }
 
     _defaults = {
