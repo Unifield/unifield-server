@@ -357,7 +357,8 @@
                         <page string="Counterpart Invoice" attrs="{'invisible': [('type', '=', 'out_refund')]}">
                             <field name="from_supply" invisible="True"/>
                             <field name="synced"
-                                   attrs="{'readonly': ['|', ('from_supply', '=', True), ('state', '!=', 'draft')]}"/>
+                                   attrs="{'readonly': ['|', ('from_supply', '=', True), ('state', '!=', 'draft')]}"
+                                   on_change="onchange_synced(synced, partner_id)"/>
                             <newline/>
                             <field name="counterpart_inv_number"/>
                             <field name="counterpart_inv_status"/>

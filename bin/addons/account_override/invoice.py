@@ -841,7 +841,7 @@ class account_invoice(osv.osv):
             ids = [ids]
         for inv in self.browse(cr, uid, ids, fields_to_fetch=['partner_id', 'synced'], context=context):
             if inv.partner_id.partner_type not in ('intermission', 'section') and inv.synced:
-                raise osv.except_osv(_('Warning'), _('Synchronized invoices are allowed only with an Intermission or an Intersection partner.'))
+                raise osv.except_osv(_('Warning'), _('Synchronized invoices are allowed only with Intermission and Intersection partners.'))
 
     def invoice_open(self, cr, uid, ids, context=None):
         """

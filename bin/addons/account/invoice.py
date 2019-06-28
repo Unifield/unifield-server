@@ -666,6 +666,22 @@ class account_invoice(osv.osv):
                 val['currency_id'] = currency.id
         return {'value': val, 'domain': dom}
 
+    def onchange_synced(self, cr, uid, ids, synced, partner_id):
+        """
+        Resets "synced" field and informs the user in case the box is ticked whereas the partner is neither Intermission nor Intersection
+        """
+        res = {}
+        partner_obj = self.pool.get('res.partner')
+        if synced and partner_id:
+            if partner_obj.browse(cr, uid, partner_id, fields_to_fetch=['partner_type']).partner_type not in ('intermission', 'section'):
+                warning = {
+                    'title': _('Warning!'),
+                    'message': _('Synchronization is allowed only with Intermission and Intersection partners.')
+                }
+                res['warning'] = warning
+                res['value'] = {'synced': False, }
+        return res
+
     # go from canceled state to draft state
     def action_cancel_draft(self, cr, uid, ids, *args):
         self.write(cr, uid, ids, {'state':'draft'})
