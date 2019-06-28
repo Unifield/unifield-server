@@ -78,7 +78,7 @@ class account_invoice_sync(osv.osv):
                 fp_distrib_line_obj.create(cr, uid, distrib_vals, context=context)
             vals.update({'analytic_distribution_id': distrib_id,})
 
-    def _create_invoice_lines(self, cr, uid, inv_lines, inv_id, posting_date, from_supply, po, context=None):
+    def _create_invoice_lines(self, cr, uid, inv_lines_data, inv_id, inv_posting_date, inv_linked_po, from_supply, context=None):
         """
         Creates the lines of the automatic counterpart invoice (inv_id) generated at synchro time.
         """
@@ -89,7 +89,7 @@ class account_invoice_sync(osv.osv):
         account_obj = self.pool.get('account.account')
         product_uom_obj = self.pool.get('product.uom')
         inv_line_obj = self.pool.get('account.invoice.line')
-        for inv_line in inv_lines:
+        for inv_line in inv_lines_data:
             line_name = inv_line.get('name', '')
             if not line_name:  # required field
                 raise osv.except_osv(_('Error'), _("Impossible to retrieve the line description."))
@@ -118,8 +118,8 @@ class account_invoice_sync(osv.osv):
                 raise osv.except_osv(_('Error'), _("Error when retrieving the account at line level."))
             line_account = account_obj.browse(cr, uid, line_account_id,
                                               fields_to_fetch=['activation_date', 'inactivation_date'], context=context)
-            if posting_date < line_account.activation_date or \
-                    (line_account.inactivation_date and posting_date >= line_account.inactivation_date):
+            if inv_posting_date < line_account.activation_date or \
+                    (line_account.inactivation_date and inv_posting_date >= line_account.inactivation_date):
                 raise osv.except_osv(_('Error'), _('The account "%s - %s" is inactive.') % (line_account.code, line_account.name))
             uom_id = False
             uom_data = inv_line.get('uos_id', {})
@@ -140,11 +140,11 @@ class account_invoice_sync(osv.osv):
                 'product_id': product_id,
                 'uos_id': uom_id,
             }
-            if from_supply and po:
+            if from_supply and inv_linked_po:
                 # fill in the AD at line level if applicable
                 # search the matching between PO line and invoice line based on description/product/quantity
                 matching_po_line = False
-                for po_line in po.order_line:
+                for po_line in inv_linked_po.order_line:
                     if po_line.name == line_name and po_line.product_id and po_line.product_id.id == product_id and \
                             po_line.product_qty == quantity and po_line.state not in ('draft', 'cancel', 'cancel_r'):
                         matching_po_line = po_line
@@ -293,7 +293,7 @@ class account_invoice_sync(osv.osv):
         )
         inv_id = self.create(cr, uid, vals, context=context)
         if inv_id:
-            self._create_invoice_lines(cr, uid, inv_lines, inv_id, posting_date, from_supply, po, context=context)
+            self._create_invoice_lines(cr, uid, inv_lines, inv_id, posting_date, po, from_supply, context=context)
             if journal_type == 'sale':
                 self._logger.info("SI No. %s created successfully." % inv_id)
             elif journal_type == 'intermission':

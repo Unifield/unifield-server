@@ -11252,7 +11252,7 @@ msgstr "Qté par produit"
 
 #. module: account
 #: help:account.invoice.refund,filter_refund:0
-msgid "Refund invoice base on this type. You can not Modify and Cancel if the invoice is already reconciled"
+msgid "Refund invoice based on this type. You can not Modify and Cancel if the invoice is already reconciled"
 msgstr "Facture d'Avoirs basée sur ce type. Vous ne pouvez pas Modifier ni Annuler si la facture est déjà lettrée."
 
 #. module: base
