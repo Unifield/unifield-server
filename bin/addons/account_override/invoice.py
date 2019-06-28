@@ -831,6 +831,18 @@ class account_invoice(osv.osv):
                     if inv_line.invoice_line_tax_id:
                         raise osv.except_osv(_('Warning'), warning_msg)
 
+    def _check_sync_allowed(self, cr, uid, ids, context=None):
+        """
+        Raises an error if the doc is marked as Synced whereas the Partner is neither Intermission nor Intersection
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['partner_id', 'synced'], context=context):
+            if inv.partner_id.partner_type not in ('intermission', 'section') and inv.synced:
+                raise osv.except_osv(_('Warning'), _('Synchronized invoices are allowed only with an Intermission or an Intersection partner.'))
+
     def invoice_open(self, cr, uid, ids, context=None):
         """
         No longer fills the date automatically, but requires it to be set
@@ -841,6 +853,7 @@ class account_invoice(osv.osv):
         self._check_invoice_merged_lines(cr, uid, ids, context=context)
         self.check_accounts_for_partner(cr, uid, ids, context=context)
         self._check_tax_allowed(cr, uid, ids, context=context)
+        self._check_sync_allowed(cr, uid, ids, context=context)
 
         # Prepare workflow object
         wf_service = netsvc.LocalService("workflow")
