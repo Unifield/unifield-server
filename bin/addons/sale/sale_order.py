@@ -2864,9 +2864,14 @@ class sale_order_line(osv.osv):
                     ('id', 'in', ids),
                     ('order_id.state', '!=', 'cancel'),
                     ('product_uom_qty', '<=', 0.00),
+                    ('state', '!=', 'cancel'),
                 ], limit=1, order='NO_ORDER', context=context)
             elif 'product_uom_qty' in vals:
-                empty_lines = True if vals.get('product_uom_qty', 0.) <= 0. else False
+                if ids and len(ids) == 1:
+                    line_state = self.browse(cr, uid, ids[0], fields_to_fetch=['state'], context=context).state
+                    empty_lines = True if vals.get('product_uom_qty', 0.) <= 0. and line_state != 'cancel' else False
+                else:
+                    empty_lines = True if vals.get('product_uom_qty', 0.) <= 0. else False
             if empty_lines:
                 raise osv.except_osv(
                     _('Error'),
