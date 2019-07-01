@@ -78,7 +78,7 @@ class patch_scripts(osv.osv):
             UPDATE account_invoice
             SET from_supply = 't' 
             WHERE picking_id IS NOT NULL
-            OR id IN (SELECT invoice_id FROM shipment WHERE invoice_id IS NOT NULL);
+            OR id IN (SELECT DISTINCT (invoice_id) FROM shipment WHERE invoice_id IS NOT NULL);
         """
         cr.execute(update_inv)
         self._logger.warn('Tag from_supply set to True in %s account.invoice(s).' % (cr.rowcount,))

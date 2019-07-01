@@ -175,7 +175,7 @@ class account_invoice_sync(osv.osv):
         if not partner_ids:
             raise osv.except_osv(_('Error'), _("The partner %s doesn't exist or is inactive.") % source)
         partner_id = partner_ids[0]
-        partner = partner_obj.browse(cr, uid, partner_ids[0], fields_to_fetch=['property_account_payable'], context=context)
+        partner = partner_obj.browse(cr, uid, partner_id, fields_to_fetch=['property_account_payable'], context=context)
         journal_type = invoice_dict.get('journal_id', {}).get('type', '')
         if not journal_type or journal_type not in ('sale', 'intermission'):
             raise osv.except_osv(_('Error'), _("Impossible to retrieve the journal type, or the journal type found is incorrect."))

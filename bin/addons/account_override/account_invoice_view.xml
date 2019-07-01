@@ -671,7 +671,8 @@
                             <button name="invoice_cancel" states="proforma2,open" string="Cancel" icon="gtk-cancel"/>
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
                             <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
-                            <!-- add a confirmation step only for STV (not for Customer Refunds) when "synced" isn't selected -->
+                            <!-- add a confirmation step only for STV (not for Customer Refunds)
+                                 when the partner type is compatible with a synchro but "synced" isn't ticked -->
                             <button name="invoice_open" type="object" string="Validate"
                                     icon="gtk-go-forward"
                                     attrs="{'invisible': ['|',
