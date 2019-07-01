@@ -1148,6 +1148,22 @@ class account_invoice(osv.osv):
             self._check_header_account(cr, uid, inv_id, inv_type=inv_type, context=context)
             self._check_line_accounts(cr, uid, inv_id, inv_type=inv_type, context=context)
 
+    def update_counterpart_inv_status(self, cr, uid, ids, context=None):
+        """
+        In case an IVO or STV, with an Intermission or Intersection partner and set as Synchronized, is being opened:
+        set the Counterpart Invoice Status to Draft automatically
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        inv_fields = ['type', 'is_debit_note', 'synced', 'partner_type', 'counterpart_inv_status']
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=inv_fields, context=context):
+            is_ivo_or_stv = inv.type == 'out_invoice' and not inv.is_debit_note
+            if is_ivo_or_stv and inv.synced and inv.partner_type in ('intermission', 'section') and not inv.counterpart_inv_status:
+                self.write(cr, uid, inv.id, {'counterpart_inv_status': 'Draft'}, context=context)
+
+
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
         Give function to use when changing invoice to open state
@@ -1165,6 +1181,7 @@ class account_invoice(osv.osv):
         if not self.action_reconcile_imported_invoice(cr, uid, ids, context):
             return False
         self.check_domain_restrictions(cr, uid, ids, context)  # raises an error if one unauthorized element is used
+        self.update_counterpart_inv_status(cr, uid, ids, context=context)
         return True
 
 
