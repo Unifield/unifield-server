@@ -605,7 +605,7 @@
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                         <page string="Counterpart Invoice">
-                            <field name="from_supply" invisible="True"/>
+                            <field name="from_supply" invisible="1"/>
                             <field name="synced"
                                    attrs="{'readonly': ['|', '|',
                                                         ('from_supply', '=', True),

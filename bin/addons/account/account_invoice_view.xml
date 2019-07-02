@@ -355,7 +355,7 @@
                         </page>
                         <!-- display the Counterpart Invoice tab in STV, hide it in Customer Refunds -->
                         <page string="Counterpart Invoice" attrs="{'invisible': [('type', '!=', 'out_invoice')]}">
-                            <field name="from_supply" invisible="True"/>
+                            <field name="from_supply" invisible="1"/>
                             <field name="synced"
                                    attrs="{'readonly': ['|', ('from_supply', '=', True), ('state', '!=', 'draft')]}"
                                    on_change="onchange_synced(synced, partner_id)"/>
