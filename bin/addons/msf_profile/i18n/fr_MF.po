@@ -17440,8 +17440,8 @@ msgstr "Avertissement!"
 #: code:addons/purchase/purchase_workflow.py:549
 #: code:addons/sale/sale_workflow.py:529
 #, python-format
-msgid "You can't use taxes with an intermission partner."
-msgstr "Vous ne pouvez pas utiliser de taxes avec un partenaire intermission."
+msgid "Taxes are forbidden with Intermission and Intersection partners."
+msgstr "Les taxes sont interdites avec les partenaires Intermission et Intersection."
 
 #. module: account
 #: model:ir.actions.act_window,name:account.action_account_fiscal_position_form
