@@ -36,7 +36,12 @@ class account_invoice_sync(osv.osv):
         'synced': fields.boolean("Synchronized"),
         'from_supply': fields.boolean('From Supply', help="Internal field indicating whether the document is related to a Supply workflow"),
         'counterpart_inv_number': fields.char('Counterpart Invoice Number', size=64, readonly=True),
-        'counterpart_inv_status': fields.char('Counterpart Invoice Status', size=16, readonly=True),
+        'counterpart_inv_status': fields.selection([
+            ('draft', 'Draft'),
+            ('open', 'Open'),
+            ('paid', 'Paid'),
+            ('cancel', 'Cancelled'),
+        ], string='Counterpart Invoice Status', readonly=True),
     }
 
     _defaults = {
@@ -286,7 +291,7 @@ class account_invoice_sync(osv.osv):
                 'name': description,
                 'origin': source_doc,
                 'counterpart_inv_number': number,
-                'counterpart_inv_status': state and dict(self._columns['state'].selection).get(state) or '',  # use the state value and not its key
+                'counterpart_inv_status': state,
                 'from_supply': from_supply,
                 'synced': True,
             }
@@ -317,7 +322,6 @@ class account_invoice_sync(osv.osv):
         invoice_dict = invoice_data.to_dict()
         number = invoice_dict.get('number', '')
         counterpart_inv_number = invoice_dict.get('counterpart_inv_number', '')
-        state = state and dict(self._columns['state'].selection).get(state) or ''  # use the state value and not its key
         if state:
             vals = {
                 'counterpart_inv_status': state,

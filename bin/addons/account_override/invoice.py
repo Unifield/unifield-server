@@ -1161,8 +1161,7 @@ class account_invoice(osv.osv):
         for inv in self.browse(cr, uid, ids, fields_to_fetch=inv_fields, context=context):
             is_ivo_or_stv = inv.type == 'out_invoice' and not inv.is_debit_note
             if is_ivo_or_stv and inv.synced and inv.partner_type in ('intermission', 'section') and not inv.counterpart_inv_status:
-                self.write(cr, uid, inv.id, {'counterpart_inv_status': 'Draft'}, context=context)
-
+                self.write(cr, uid, inv.id, {'counterpart_inv_status': 'draft'}, context=context)
 
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
