@@ -95021,6 +95021,18 @@ msgstr "Ne peut %s une facture qui est déjà lettrée, le lettrage de la factur
 msgid "Cannot %s an Intermission Voucher which is already reconciled, it should be unreconciled first."
 msgstr "Ne peut %s un Bon Intermission qui est déjà lettré, le lettrage du bon devrait d'abord être annulé."
 
+#. module: account
+#: code:addons/account/wizard/account_invoice_refund.py:0
+#, python-format
+msgid "modify"
+msgstr "modifier"
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_refund.py:0
+#, python-format
+msgid "cancel"
+msgstr "annuler"
+
 #. modules: return_claim, msf_outgoing, stock_override, kit, msf_doc_import
 #: selection:assign.to.kit.line,integrity_status:0
 #: selection:kit.selection.line,integrity_status:0

@@ -158,8 +158,8 @@ class account_invoice_refund(osv.osv_memory):
                 if mode in ('cancel', 'modify') and inv_obj.has_one_line_reconciled(cr, uid, [inv.id], context=context):
                     if inv.is_intermission:
                         # error specific to IVO/IVI for which there is no simple refund option
-                        raise osv.except_osv(_('Error !'), _('Cannot %s an Intermission Voucher which is already reconciled, it should be unreconciled first.') % mode)
-                    raise osv.except_osv(_('Error !'), _('Can not %s invoice which is already reconciled, invoice should be unreconciled first. You can only Refund this invoice') % (mode))
+                        raise osv.except_osv(_('Error !'), _('Cannot %s an Intermission Voucher which is already reconciled, it should be unreconciled first.') % _(mode))
+                    raise osv.except_osv(_('Error !'), _('Can not %s invoice which is already reconciled, invoice should be unreconciled first. You can only Refund this invoice') % _(mode))
                 if form['period']:
                     period = form['period']
                 else:
