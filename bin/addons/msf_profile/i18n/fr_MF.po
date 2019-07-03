@@ -107017,6 +107017,12 @@ msgid "The partner %s doesn't exist or is inactive."
 msgstr "Le partenaire %s n'existe pas ou est inactif."
 
 #. module: account_override
+#: code:addons/account_override/account_invoice_sync.py:113
+#, python-format
+msgid "The product %s is inactive."
+msgstr "Le produit %s est inactif."
+
+#. module: account_override
 #: code:addons/account_override/account_invoice_sync.py:214
 #, python-format
 msgid "Account Payable not found or inactive for the partner %s."

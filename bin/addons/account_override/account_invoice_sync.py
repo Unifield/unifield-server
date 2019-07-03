@@ -107,7 +107,10 @@ class account_invoice_sync(osv.osv):
                 product_id = so_po_common_obj.get_product_id(cr, uid, product_data, default_code=default_code, context=context) or False
                 if not product_id:
                     raise osv.except_osv(_('Error'), _("Product %s not found.") % default_code)
-                product = product_obj.browse(cr, uid, product_id, fields_to_fetch=['product_tmpl_id', 'categ_id'], context=context)
+                product = product_obj.browse(cr, uid, product_id, fields_to_fetch=['active', 'default_code', 'product_tmpl_id', 'categ_id'],
+                                             context=context)
+                if not product.active:
+                    raise osv.except_osv(_('Error'), _("The product %s is inactive.") % product.default_code or '')
                 line_account_id = product.product_tmpl_id.property_account_expense and product.product_tmpl_id.property_account_expense.id
                 if not line_account_id:
                     line_account_id = product.categ_id and product.categ_id.property_account_expense_categ and product.categ_id.property_account_expense_categ.id
