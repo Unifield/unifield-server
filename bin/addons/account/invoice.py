@@ -257,7 +257,7 @@ class account_invoice(osv.osv):
     _order = "id desc"
 
     _columns = {
-        'name': fields.char('Description', size=64, select=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'name': fields.char('Description', size=256, select=True, readonly=True, states={'draft': [('readonly', False)]}),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that produced this invoice.", readonly=True, states={'draft':[('readonly',False)]}),
         'type': fields.selection([
             ('out_invoice','Customer Invoice'),
