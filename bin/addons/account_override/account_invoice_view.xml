@@ -513,7 +513,8 @@
                                 <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                             </group>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'is_intermission': True, 'from_inv_form': True}">
-                                <tree string="Intermission Voucher Lines">
+                                <tree string="Intermission Voucher Lines"
+                                      colors="red:analytic_distribution_state == 'invalid' or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none', 'valid')">
                                     <field name="line_number"/>
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
