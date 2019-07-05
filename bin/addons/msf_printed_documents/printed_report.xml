@@ -10,5 +10,39 @@
         <report auto="False" id="sale.product_list_report" model="product.list" name="msf.product_list" rml="msf_printed_documents/report/product_list.rml" string="Product List / Sub-List" />
 
         <report auto="False" id="sale.report_freight_manifest" model="shipment" name="msf.freight_manifest" rml="msf_printed_documents/report/freight_manifest.rml" string="Freight Manifest" />
+
+        <!-- PRODUCT LABELS -->
+        <report
+            id="product_labels_batch"
+            string="Product Labels"
+            model="stock.production.lot"
+            name="product_labels_batch"
+            rml="msf_printed_documents/report/report_product_labels.rml"
+            header="False"
+            auto="False"
+            menu="True"
+        />
+
+        <report
+            id="product_labels_product"
+            string="Product Labels"
+            model="product.product"
+            name="product_labels_product"
+            rml="msf_printed_documents/report/report_product_labels.rml"
+            header="False"
+            auto="False"
+            menu="True"
+        />
+
+        <report
+            id="product_labels_stock_card"
+            string="Product Labels"
+            model="stock.card.wizard"
+            name="product_labels_stock_card"
+            rml="msf_printed_documents/report/report_product_labels.rml"
+            header="False"
+            auto="False"
+            menu="True"
+        />
     </data>
 </openerp>

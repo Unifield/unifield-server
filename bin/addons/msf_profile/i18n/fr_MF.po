@@ -83971,9 +83971,12 @@ msgstr "Configuration Annuelle"
 msgid "Hard Posting"
 msgstr "Comptabiliser "
 
-#. modules: reason_types_moves, consumption_calculation
+#. modules: reason_types_moves, consumption_calculation, msf_printed_documents
 #: model:ir.ui.menu,name:consumption_calculation.menu_warehouse_expiry
 #: model:stock.reason.type,name:reason_types_moves.reason_type_expiry
+#: report:product_labels_batch:0
+#: report:product_labels_product:0
+#: report:product_labels_stock_card:0
 msgid "Expiry"
 msgstr "Expiration"
 
@@ -106827,3 +106830,28 @@ msgstr "Requête annulée par l'utilisateur"
 msgid "Stop report"
 msgstr "Arrêter le rapport"
 
+#. module: msf_printed_documents
+#: code:addons/msf_printed_documents/report/report_product_labels.py:67
+#, python-format
+msgid "You can only generate Product Labels in the Product's, Stock Card's or Batch number's Action menu"
+msgstr "Vous pouvez uniquement générer des Étiquettes du Produit dans le menu d'Action du Produit, de la fiche de Stock ou du Numéro de Lot"
+
+#. module: msf_printed_documents
+#: model:ir.actions.report.xml,name:msf_printed_documents.product_labels_batch
+#: model:ir.actions.report.xml,name:msf_printed_documents.product_labels_product
+#: model:ir.actions.report.xml,name:msf_printed_documents.product_labels_stock_card
+msgid "Product Labels"
+msgstr "Étiquettes du Produit"
+
+#. module: msf_printed_documents
+#: report:product_labels_batch:0
+#: report:product_labels_product:0
+#: report:product_labels_stock_card:0
+msgid "Btch nr"
+msgstr "Nr de lot"
+
+#. module: msf_printed_documents
+#: code:addons/msf_printed_documents/report/report_product_labels.py:69
+#, python-format
+msgid "No document has been selected"
+msgstr "Aucun document n'a été sélectionné"
