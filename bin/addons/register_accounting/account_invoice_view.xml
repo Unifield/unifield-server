@@ -316,11 +316,15 @@
                     </field>
                     <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='invoice_line']" position="before" >
                         <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object"
+                                    attrs="{'invisible': [('state', '!=', 'draft')],
+                                            'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                         </group>
                     </xpath>
                     <field name="journal_id" position="replace">
-                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"/>
+                        <field name="journal_id"
+                               domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"
+                               attrs="{'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                         <field name="vat_ok" invisible="1" />
                     </field>
                     <button name="action_cancel_draft" position="replace"/>

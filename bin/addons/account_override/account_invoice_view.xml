@@ -43,7 +43,7 @@
                         <field name="line_number"/>
                     </xpath>
                     <xpath expr="//field[@name='date_invoice']" position="before">
-                        <field name="document_date"/>
+                        <field name="document_date" attrs="{'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                     </xpath>
                     <xpath expr="//field[@name='period_id']" position="replace">
                     </xpath>
