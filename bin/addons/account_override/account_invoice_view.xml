@@ -685,7 +685,9 @@
                     <button name="invoice_proforma2" position="replace"/>
                     <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='invoice_line']" position="before" >
                         <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object"
+                                    attrs="{'invisible': [('state', '!=', 'draft')],
+                                            'readonly': [('type', '=', 'out_invoice'), ('from_supply', '=', True)]}"/>
                         </group>
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Invoice']/group[3]" position="replace">
