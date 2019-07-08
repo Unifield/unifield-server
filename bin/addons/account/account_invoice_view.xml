@@ -58,14 +58,23 @@
                             <field name="product_id"
                                    on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
                                    default_focus="1"
-                                   attrs="{'readonly': [('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True)]}"/>
+                                   attrs="{'readonly': ['|',
+                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('synced', '=', True),
+                                                        '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True)]}"
+                            />
                             <field name="uos_id"
                                    on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
-                                   attrs="{'readonly': [('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True)]}"
+                                   attrs="{'readonly': ['|',
+                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('synced', '=', True),
+                                                        '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True)]}"
                             />
-                            <field name="quantity" attrs="{'readonly': [('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True)]}"/>
-                            <field name="price_unit"/>
-                            <field name="discount" groups="base.group_extended"/>
+                            <field name="quantity" attrs="{'readonly': ['|',
+                                                           '&amp;', ('invoice_type', '=', 'in_invoice'), ('synced', '=', True),
+                                                           '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True)]}"
+                            />
+                            <field name="price_unit" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
+                            <field name="discount" groups="base.group_extended"
+                                   attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                             <field colspan="4" name="name"/>
                             <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
                             <field domain="[('type','&lt;&gt;','view'), ('company_id', '=', parent.company_id), ('parent_id', '!=', False)]" name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
@@ -259,11 +268,14 @@
                             <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)" widget="selection" groups="base.group_multi_company"/>
                             <newline/>
                             <field name="payment_term" widget="selection"/>
-                            <field name="name"/>
+                            <field name="name"
+                                   attrs="{'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True), ('from_supply', '=', True)]}"/>
                             <newline/>
-                            <field name="origin" groups="base.group_extended"/>
+                            <field name="origin" groups="base.group_extended"
+                                   attrs="{'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True), ('from_supply', '=', True)]}"/>
                             <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" groups="base.group_extended"/>
-                            <field name="user_id"/>
+                            <field name="user_id"
+                                   attrs="{'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                             <field name="move_id" groups="account.group_account_user"/>
                             <separator colspan="4" string="Additional Information"/>
                             <field colspan="4" name="comment" nolabel="1"/>
