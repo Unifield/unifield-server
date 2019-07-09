@@ -120,6 +120,7 @@
                     <xpath expr="//separator[@string='Taxes']" position="replace" />
                     <xpath expr="//field[@name='invoice_line_tax_id']" position="replace">
                         <field name="vat_ok" invisible="1" />
+                        <field name="synced" invisible="1" />
                         <group colspan="4" col="4" attrs="{'invisible': [('vat_ok', '=', False)]}">
                             <separator colspan="4" string="Taxes"/>
                             <field colspan="4"
@@ -127,7 +128,7 @@
                                    context="{'type': parent.type}"
                                    domain="[('parent_id', '=', False), ('company_id', '=', parent.company_id)]"
                                    nolabel="1"
-                                   attrs="{'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True)]}"
+                                   attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('synced', '=', True)]}"
                             />
                         </group>
                     </xpath>
