@@ -1855,16 +1855,25 @@ class account_invoice_line(osv.osv):
             ids = [ids]
         # Fetch all invoice_id to check
         direct_invoice_ids = []
+        invoice_ids = []
         abst_obj = self.pool.get('account.bank.statement.line')
         for invl in self.browse(cr, uid, ids):
-            if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
-                direct_invoice_ids.append(invl.invoice_id.id)
-                # find account_bank_statement_lines and used this to delete the account_moves and associated records
-                absl_ids = abst_obj.search(cr, uid,
-                                           [('invoice_id','=',invl.invoice_id.id)],
-                                           order='NO_ORDER')
-                if absl_ids:
-                    abst_obj.unlink_moves(cr, uid, absl_ids, context)
+            if invl.invoice_id and invl.invoice_id.id not in invoice_ids:
+                invoice = invl.invoice_id
+                invoice_ids.append(invoice.id)  # check each invoice only once
+                is_ivi_or_si = invoice.type == 'in_invoice' and not invoice.is_inkind_donation
+                if (is_ivi_or_si and invoice.synced) or (invoice.from_supply and invoice.partner_type in ('intermission', 'section')):
+                    # will be displayed when trying to delete lines manually / merge lines / or split invoices
+                    raise osv.except_osv(_('Error'), _("This document has been generated via a Supply workflow or via synchronization. "
+                                                       "Existing lines can't be deleted."))
+                if invoice.is_direct_invoice and invoice.state == 'draft':
+                    direct_invoice_ids.append(invoice.id)
+                    # find account_bank_statement_lines and use this to delete the account_moves and associated records
+                    absl_ids = abst_obj.search(cr, uid,
+                                               [('invoice_id', '=', invoice.id)],
+                                               order='NO_ORDER')
+                    if absl_ids:
+                        abst_obj.unlink_moves(cr, uid, absl_ids, context)
         # Normal behaviour
         res = super(account_invoice_line, self).unlink(cr, uid, ids, context)
         # See all direct invoice
