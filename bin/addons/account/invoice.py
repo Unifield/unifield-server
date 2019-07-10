@@ -26,6 +26,7 @@ import decimal_precision as dp
 import netsvc
 from osv import fields, osv, orm
 from tools.translate import _
+from msf_partner import PARTNER_TYPE
 
 
 class account_invoice(osv.osv):
@@ -1554,6 +1555,8 @@ class account_invoice_line(osv.osv):
         'name': fields.char('Description', size=256, required=True),
         'origin': fields.char('Origin', size=512, help="Reference of the document that produced this invoice."),
         'invoice_id': fields.many2one('account.invoice', 'Invoice Reference', ondelete='cascade', select=True),
+        'partner_type': fields.related('invoice_id', 'partner_type', string='Partner Type', type='selection',
+                                       selection=PARTNER_TYPE, readonly=True, store=False),
         'uos_id': fields.many2one('product.uom', 'Unit of Measure', ondelete='set null'),
         'product_id': fields.many2one('product.product', 'Product', ondelete='set null'),
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type','<>','view'), ('type', '<>', 'closed')], help="The income or expense account related to the selected product."),

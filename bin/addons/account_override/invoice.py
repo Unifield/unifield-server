@@ -254,7 +254,7 @@ class account_invoice(osv.osv):
         'can_merge_lines': fields.function(_get_can_merge_lines, method=True, type='boolean', string='Can merge lines ?'),
         'is_merged_by_account': fields.boolean("Is merged by account"),
         'partner_type': fields.related('partner_id', 'partner_type', string='Partner Type', type='selection',
-                                       selection=PARTNER_TYPE, readonly=True),
+                                       selection=PARTNER_TYPE, readonly=True, store=False),
     }
 
     _defaults = {

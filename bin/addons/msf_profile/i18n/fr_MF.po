@@ -10426,6 +10426,7 @@ msgstr "Import template"
 #: selection:sale.loan.stock.moves,partner_type:0
 #: selection:stock.picking,partner_type:0
 #: selection:account.invoice,partner_type:0
+#: selection:account.invoice.line,partner_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:32
 #: field:supplier.performance.wizard,partner_type_intermission:0
 msgid "Intermission"
@@ -13334,7 +13335,7 @@ msgstr "Quantité pour le nouveau mouvement"
 msgid "Automatic entry"
 msgstr "Ecriture Automatique"
 
-#. modules: msf_order_date, purchase, msf_partner, stock_override, purchase_override, msf_config_locations, sale, account_override, analytic_distribution, msf_outgoing, msf_supply_doc_export
+#. modules: msf_order_date, purchase, msf_partner, stock_override, purchase_override, msf_config_locations, sale, account_override, analytic_distribution, msf_outgoing, msf_supply_doc_export, account
 #: selection:shipment,partner_type:0
 #: selection:purchase.order.merged.line,po_partner_type_stored:0
 #: selection:sale.loan.stock.moves,partner_type:0
@@ -13353,6 +13354,7 @@ msgstr "Ecriture Automatique"
 #: selection:sale.order.change.currency,partner_type:0
 #: selection:stock.picking,partner_type_stock_picking:0
 #: selection:account.invoice,partner_type:0
+#: selection:account.invoice.line,partner_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:30
 #: field:supplier.performance.wizard,partner_type_external:0
 msgid "External"
@@ -21187,7 +21189,7 @@ msgstr "Europe/Jersey"
 msgid "Free 1 Lines"
 msgstr "Option 1 Lignes"
 
-#. modules: account_override, msf_outgoing, purchase_override, stock_override, sale, msf_order_date, purchase, msf_partner, msf_supply_doc_export
+#. modules: account_override, msf_outgoing, purchase_override, stock_override, sale, msf_order_date, purchase, msf_partner, msf_supply_doc_export, account
 #: field:account.account,has_partner_type_section:0
 #: selection:shipment,partner_type:0
 #: selection:purchase.order.merged.line,po_partner_type_stored:0
@@ -21196,6 +21198,7 @@ msgstr "Option 1 Lignes"
 #: selection:stock.picking,partner_type:0
 #: selection:sale.order,partner_type:0
 #: selection:account.invoice,partner_type:0
+#: selection:account.invoice.line,partner_type:0
 #: view:res.partner:0
 #: selection:res.partner,partner_type:0
 #: selection:purchase.order,partner_type:0
@@ -47245,7 +47248,7 @@ msgstr "Précision décimale"
 msgid "Metadata"
 msgstr "Métadonnées"
 
-#. modules: msf_order_date, purchase, msf_outgoing, msf_partner, stock_override, purchase_override, sale, account_override, analytic_distribution, msf_supply_doc_export
+#. modules: msf_order_date, purchase, msf_outgoing, msf_partner, stock_override, purchase_override, sale, account_override, analytic_distribution, msf_supply_doc_export, account
 #: field:account.account,has_partner_type_esc:0
 #: view:account.commitment:0
 #: selection:sale.order,partner_type:0
@@ -47262,6 +47265,7 @@ msgstr "Métadonnées"
 #: selection:stock.picking,partner_type:0
 #: selection:stock.picking,partner_type_stock_picking:0
 #: selection:account.invoice,partner_type:0
+#: selection:account.invoice.line,partner_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:31
 #: field:supplier.performance.wizard,partner_type_esc:0
 msgid "ESC"
@@ -52072,10 +52076,11 @@ msgstr "Le produit est inactif"
 msgid "Search Donation"
 msgstr "Rechercher Donation"
 
-#. modules: sale, account_override
+#. modules: sale, account_override, account
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:127
 #: field:sale.donation.stock.moves,partner_type:0
 #: field:account.invoice,partner_type:0
+#: field:account.invoice.line,partner_type:0
 msgid "Partner Type"
 msgstr "Type de Partenaire"
 
@@ -97691,7 +97696,7 @@ msgstr "wizard.export.po.validated"
 msgid "Document Date"
 msgstr "Date du Document"
 
-#. modules: msf_order_date, purchase, msf_outgoing, stock_move_tracking, msf_partner, stock_override, purchase_override, msf_config_locations, sale, account_override, stock_batch_recall, specific_rules, msf_doc_import, stock, msf_supply_doc_export
+#. modules: msf_order_date, purchase, msf_outgoing, stock_move_tracking, msf_partner, stock_override, purchase_override, msf_config_locations, sale, account_override, stock_batch_recall, specific_rules, msf_doc_import, stock, msf_supply_doc_export, account
 #: field:account.account,has_partner_type_internal:0
 #: selection:stock.location.configuration.wizard,location_type:0
 #: selection:stock.remove.location.wizard,location_usage:0
@@ -97721,6 +97726,7 @@ msgstr "Date du Document"
 #: selection:stock.picking,partner_type:0
 #: selection:stock.picking,partner_type_stock_picking:0
 #: selection:account.invoice,partner_type:0
+#: selection:account.invoice.line,partner_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:28
 #: field:supplier.performance.wizard,partner_type_internal:0
 #, python-format
