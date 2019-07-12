@@ -1230,7 +1230,7 @@ class account_mcdb(osv.osv):
                     operator = " %s" % _("to:")
                 if '.' not in dom[0]:
                     field = obj_data[dom[0]]
-                    title = field['string']
+                    title = _(field['string'])
                     value, operator = self._get_data_from_field(cr, uid, field, dom[2], operator, context)
                 # composed filters
                 elif dom[0] in composed_filters:

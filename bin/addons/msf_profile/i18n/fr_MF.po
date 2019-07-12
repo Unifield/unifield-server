@@ -54673,6 +54673,7 @@ msgstr "Balance Agée Partenaire"
 #: report:account.move.line_csv:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:62
 #: code:addons/account_mcdb/report/account_mcdb_export.py:277
+#: code:addons/account_mcdb/account_mcdb.py:0
 #: report:addons/account_mcdb/report/report_account_bank_statement_line_xls.mako:57
 #: report:addons/account_mcdb/report/report_account_move_line_xls.mako:57
 #: field:account.invoice,virtual_account_id:0
