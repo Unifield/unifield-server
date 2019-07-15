@@ -759,7 +759,6 @@ class po_follow_up_mixin(object):
         # Background
         if not self.localcontext.get('processed_pos'):
             self.localcontext['processed_pos'] = []
-        back_browse = get_back_browse(self, self.cr, self.uid, context=self.localcontext)
 
         for line in self.yieldPoLines(po_line_ids):
             analytic_lines = self.getAnalyticLines(po, line)
@@ -955,9 +954,9 @@ class po_follow_up_mixin(object):
             if 'processed_pos' in self.localcontext and po_id not in self.localcontext['processed_pos']:
                 self._order_iterator += 1
                 self.localcontext['processed_pos'].append(po_id)
-            if back_browse:
+            if self.back_browse:
                 percent = float(self._order_iterator) / float(self._nb_orders)
-                self.pool.get('memory.background.report').update_percent(self.cr, self.uid, [back_browse.id], percent)
+                self.pool.get('memory.background.report').update_percent(self.cr, self.uid, [self.back_browse.id], percent)
 
         if pending_only_ok:
             report_lines = self.filter_pending_only(report_lines)
