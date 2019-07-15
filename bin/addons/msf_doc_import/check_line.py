@@ -448,7 +448,7 @@ def compute_price_value(**kwargs):
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
     price = kwargs['price'] or 'Price'
-    is_rfq = kwargs['is_rfq']
+    is_rfq = kwargs.get('is_rfq', False)
     price_unit_defined = False
     cell_nb = kwargs.get('cell_nb', 3)
     try:
