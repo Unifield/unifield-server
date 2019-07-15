@@ -147,16 +147,16 @@
             <field name="model">export.report.stock.move</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="IN &amp; OUT Report">
+                <form string="IN &amp; OUT Report" noteditable="state!='draft'">
                     <separator colspan="4" string="Request information" />
-                    <group colspan="4" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                    <group colspan="4">
                     <field name="name" />
                     <field name="company_id" />
                     <separator colspan="4" string="Report parameters" />
-                    <field name="date_from" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                    <field name="date_to" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    <field name="date_from" />
+                    <field name="date_to" />
                     <separator colspan="4" string="Advanced filters" />
-                    <field name="partner_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    <field name="partner_id" />
                     <field name="product_id" attrs="{'readonly': ['|', '|', ('prodlot_id', '!=', False), ('state', '!=', 'draft'), ('product_list_id', '!=', False)]}" />
                     <field name="product_list_id" attrs="{'readonly': ['|', '|', ('state', '!=', 'draft'), ('prodlot_id', '!=', False), ('product_id', '!=', False)]}" />
                     <newline/>
@@ -165,7 +165,7 @@
                     <field name="expiry_date" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" />
                     <field name="has_locations" invisible="1" />
                     <field name="only_standard_loc" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('has_locations', '=', True)]}" />
-                    <field name="location_ids" on_change="onchange_location_ids(location_ids)" colspan="4" mode="tree" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('usage', '!=', 'view'), ('active', 'in', ['t', 'f'])]" context="{'display_active': 1}">
+                    <field name="location_ids" on_change="onchange_location_ids(location_ids)" colspan="4" mode="tree" domain="[('usage', '!=', 'view'), ('active', 'in', ['t', 'f'])]" context="{'display_active': 1}">
                         <tree noteditable="True" string="Location(s)">
                             <field name="name" />
                             <field name="active" />
