@@ -307,7 +307,7 @@ class account_invoice_sync(osv.osv):
             elif journal_type == 'intermission':
                 self._logger.info("IVI No. %s created successfully." % inv_id)
 
-    def update_counterpart_inv(self, cr, uid, source, invoice_data, state, context=None):
+    def update_counterpart_inv(self, cr, uid, source, invoice_data, context=None):
         """
         Updates the Counterpart Invoice Number and Status (to be triggered at synchro time)
 
@@ -324,6 +324,7 @@ class account_invoice_sync(osv.osv):
             context = {}
         invoice_dict = invoice_data.to_dict()
         number = invoice_dict.get('number', '')
+        state =  invoice_dict.get('state')
         counterpart_inv_number = invoice_dict.get('counterpart_inv_number', '')
         if state:
             vals = {
@@ -345,16 +346,6 @@ class account_invoice_sync(osv.osv):
                 self.write(cr, uid, inv_ids[0], vals, context=context)
                 # note that the "Counterpart Inv. Number" received is the "Number" of the invoice updated!
                 self._logger.info("account.invoice %s: Counterpart Invoice %s set to %s" % (counterpart_inv_number, number, state))
-
-    def update_counterpart_inv_opened(self, cr, uid, source, invoice_data, context=None):
-        self.update_counterpart_inv(cr, uid, source, invoice_data, 'open', context=context)
-
-    def update_counterpart_inv_paid(self, cr, uid, source, invoice_data, context=None):
-        self.update_counterpart_inv(cr, uid, source, invoice_data, 'paid', context=context)
-
-    def update_counterpart_inv_cancelled(self, cr, uid, source, invoice_data, context=None):
-        self.update_counterpart_inv(cr, uid, source, invoice_data, 'cancel', context=context)
-
 
 account_invoice_sync()
 

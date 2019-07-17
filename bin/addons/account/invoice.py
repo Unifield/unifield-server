@@ -1515,6 +1515,13 @@ class account_invoice(osv.osv):
         self.pool.get('account.invoice').write(cr, uid, ids, {}, context=context)
         return True
 
+
+    def action_gen_sync_msg(self, cr, uid, ids, context=None):
+        for inv_id in ids:
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'account.invoice', inv_id, {},
+                                                                                  'account.invoice.update_counterpart_inv', self._logger, check_identifier=False, context=context)
+        return True
+
 account_invoice()
 
 class account_invoice_line(osv.osv):
