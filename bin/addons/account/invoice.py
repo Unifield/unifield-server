@@ -302,7 +302,7 @@ class account_invoice(osv.osv):
 
         'account_id': fields.many2one('account.account', 'Account', required=True, readonly=True, states={'draft':[('readonly',False)]}, help="The partner account used for this invoice."),
         'invoice_line': fields.one2many('account.invoice.line', 'invoice_id', 'Invoice Lines', readonly=True, states={'draft':[('readonly',False)]}),
-        'tax_line': fields.one2many('account.invoice.tax', 'invoice_id', 'Tax Lines', readonly=True, states={'draft':[('readonly',False)]}),
+        'tax_line': fields.one2many('account.invoice.tax', 'invoice_id', 'Tax Lines'),
         'tax_line_ids': fields.related('tax_line', type='one2many', relation='account.invoice.tax', string='Tax Lines',
                                        readonly=True, store=False, help="Internal field for taxes always in read-only mode"),
         'move_id': fields.many2one('account.move', 'Journal Entry', readonly=True, select=1, ondelete='restrict', help="Link to the automatically generated Journal Items."),

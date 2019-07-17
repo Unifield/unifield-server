@@ -371,7 +371,7 @@
                     </xpath>
 
                     <xpath expr="/form//field[@name='amount_tax']" position="attributes">
-                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
+                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)], 'readonly': ['|', ('state','!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}</attribute>
                     </xpath>
 
                     <!-- Take care of attrs redefinition that omit the "states" one. So we need to add readonly with state to avoid this bug  -->
