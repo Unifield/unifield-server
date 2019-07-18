@@ -565,29 +565,36 @@ class shipment(osv.osv):
                     move.qty_per_pack % move.product_uom.rounding != 0:
                 raise osv.except_osv(_('Error'), _('Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together'))
 
-        # Copy the picking object without moves
-        # Creation of moves and update of initial in picking create method
-        sequence = picking.sequence_id
-        packing_number = sequence.get_id(code_or_id='id', context=context)
 
-        # New packing data
-        packing_data = {
-            'name': '%s-%s' % (picking.name, packing_number),
-            'backorder_id': picking.id,
-            'shipment_id': new_shipment_id,
-            'move_lines': [],
-            'description_ppl': description_ppl or picking.description_ppl,  # US-803: added the description
-            'claim': picking.claim or False, #TEST ME
-        }
-        # Update context for copy
-        context.update({
-            'keep_prodlot': True,
-            'keepLineNumber': True,
-            'allow_copy': True,
-            'non_stock_noupdate': True,
-        })
+        # search if the ship already contains a draft PACK
+        new_packing_ids = picking_obj.search(cr, uid, [('shipment_id', '=', new_shipment_id), ('backorder_id', '=', picking.id), ('state', 'not in', ['cancel', 'done'])], context=context)
+        if new_packing_ids:
+            new_packing_id = new_packing_ids[0]
+        else:
+            # Copy the picking object without moves
+            # Creation of moves and update of initial in picking create method
+            sequence = picking.sequence_id
+            packing_number = sequence.get_id(code_or_id='id', context=context)
 
-        new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
+            # New packing data
+            packing_data = {
+                'name': '%s-%s' % (picking.name, packing_number),
+                'backorder_id': picking.id,
+                'shipment_id': new_shipment_id,
+                'move_lines': [],
+                'description_ppl': description_ppl or picking.description_ppl,  # US-803: added the description
+                'claim': picking.claim or False, #TEST ME
+            }
+            # Update context for copy
+            context.update({
+                'keep_prodlot': True,
+                'keepLineNumber': True,
+                'allow_copy': True,
+                'non_stock_noupdate': True,
+            })
+
+            new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
+
         selected_from_pack = family.to_pack - family.selected_number + 1
 
         if family.selected_number == int(family.num_of_packs):
@@ -620,7 +627,8 @@ class shipment(osv.osv):
                 'location_dest_id': picking.warehouse_id.lot_output_id.id,
                 'selected_number': family.selected_number,
             }
-            move_obj.copy(cr, uid, move.id, move_vals, context=context)
+            new_move = move_obj.copy(cr, uid, move.id, move_vals, context=context)
+            move_obj.action_confirm(cr, uid, new_move, context=context)
             # Update corresponding initial move
             initial_qty = max(move.product_qty - selected_qty, 0)
 
@@ -743,7 +751,6 @@ class shipment(osv.osv):
             for family in shipment.pack_family_memory_ids:
                 if not family.selected_number or family.state != 'assigned':
                     continue
-
                 nb_processed = self.attach_draft_pick_to_ship(cr, uid, new_shipment_id, family, description_ppl, context=context, job_id=job_id, nb_processed=nb_processed)
 
             if not nb_processed:
