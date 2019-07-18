@@ -853,9 +853,11 @@ class shipment(osv.osv):
                     # If al packs have been selected, from/to are set to 0
                     initial_from_pack = 0
                     initial_to_pack = 0
+                    selected_number = 0
                 else:
                     initial_from_pack = family.from_pack
                     initial_to_pack = family.to_pack - family.selected_number
+                    selected_number = initial_to_pack - initial_from_pack + 1
 
                 # Find the concerned stock moves
                 move_ids = move_obj.search(cr, uid, [
@@ -884,6 +886,7 @@ class shipment(osv.osv):
                         'product_qty': max(move.product_qty - return_qty, 0),
                         'from_pack': initial_from_pack,
                         'to_pack': initial_to_pack,
+                        'selected_number': min(move.selected_number, selected_number),
                     }
 
                     move_obj.write(cr, uid, [move.id], move_vals, context=context)
@@ -899,6 +902,7 @@ class shipment(osv.osv):
                         'location_dest_id': move.initial_location.id,
                         'from_pack': family.to_pack - family.selected_number + 1,
                         'to_pack': family.to_pack,
+                        'selected_number': family.selected_number,
                         'state': 'done',
                         'not_shipped': True,  # BKLG-13: set the pack returned to stock also as not_shipped, for showing to view ship draft
                     }
@@ -1084,6 +1088,7 @@ class shipment(osv.osv):
                         move_values = {
                             'from_pack': seq[0],
                             'to_pack': seq[1],
+                            'selected_number': selected_number,
                             'product_qty': new_qty,
                             'line_number': move.line_number,
                             'state': 'assigned',
@@ -1102,6 +1107,7 @@ class shipment(osv.osv):
                         'from_pack': family.return_from,
                         'to_pack': family.return_to,
                         'line_number': move.line_number,
+                        'selected_number': min(move.selected_number, selected_number),
                         'product_qty': new_qty,
                         'location_id': move.picking_id.warehouse_id.lot_distribution_id.id,
                         'location_dest_id': move.picking_id.warehouse_id.lot_dispatch_id.id,
