@@ -738,7 +738,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
     _constraints = [
         (_check_empty_line, 'All lines must have a quantity larger than 0.00', ['order_line']),
-        (_check_stock_take_date, _("The Stock Take Date of the document is not consistent! It should not be later than its creation date"), ['stock_take_date']),
+        (_check_stock_take_date, "The Stock Take Date of the document is not consistent! It should not be later than its creation date", ['stock_take_date']),
     ]
 
     _order = 'id desc'
@@ -2155,7 +2155,7 @@ class sale_order_line(osv.osv):
         return True
 
     _constraints = [
-        (_check_stock_take_date, _("The Stock Take Date of a line is not consistent! It should not be later than the FO/IR's creation date"), ['stock_take_date']),
+        (_check_stock_take_date, "The Stock Take Date of a line is not consistent! It should not be later than the FO/IR's creation date", ['stock_take_date']),
     ]
 
     def invoice_line_create(self, cr, uid, ids, context=None):

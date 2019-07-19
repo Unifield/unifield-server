@@ -938,7 +938,7 @@ class purchase_order(osv.osv):
 
     _constraints = [
         (_check_order_type, 'The order type of the order is not consistent with the order type of the source', ['order_type']),
-        (_check_stock_take_date, _("The Stock Take Date of the document is not consistent! It should not be later than its creation date"), ['stock_take_date']),
+        (_check_stock_take_date, "The Stock Take Date of the document is not consistent! It should not be later than its creation date", ['stock_take_date']),
     ]
 
     def default_get(self, cr, uid, fields, context=None):

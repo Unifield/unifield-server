@@ -641,7 +641,7 @@ class purchase_order_line(osv.osv):
 
     _constraints = [
         (_check_max_price, _("The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"), ['price_unit', 'product_qty']),
-        (_check_stock_take_date, _("The Stock Take Date of a line is not consistent! It should not be later than the PO's creation date"), ['stock_take_date']),
+        (_check_stock_take_date, "The Stock Take Date of a line is not consistent! It should not be later than the PO's creation date", ['stock_take_date']),
     ]
 
     def _get_destination_ok(self, cr, uid, lines, context):
