@@ -6,18 +6,17 @@
             <field name="name">res.currency_functional.tree</field>
             <field name="model">res.currency</field>
             <field name="type">tree</field>
+            <field name="inherit_id" eval="False" />
             <field name="arch" type="xml">
-                <tree string="Currencies" position="replace">
-                    <tree string="Currencies">
-                        <field name="name"/>
-                        <field name="currency_name"/>
-                        <field name="rate"/>
-                        <field name="date"/>
-                        <field name="rounding"/>
-                        <field name="active"/>
-                    </tree>
+                <tree string="Currencies">
+                    <field name="name"/>
+                    <field name="currency_name"/>
+                    <field name="rate"/>
+                    <field name="date"/>
+                    <field name="rounding"/>
+                    <field name="active"/>
                 </tree>
-        </field>
+            </field>
         </record>
 
 
