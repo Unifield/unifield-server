@@ -616,24 +616,32 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
 
-        # Do not prevent modification during sourcing, import and synchro
-        if not context.get('is_sourcing') and not context.get('import_in_progress') and \
-                not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+        # Do not prevent modification during synchro
+        if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+            error_lines = []
+            linked_orders = []
             for pol in self.browse(cr, uid, ids, context=context):
-                if pol.stock_take_date and \
+                linked_order = pol.linked_sol_id and pol.linked_sol_id.order_id.name or pol.order_id.name
+                if linked_order not in linked_orders:
+                    linked_orders.append(linked_order)
+                if pol.state in ['draft', 'validated', 'validated_n'] and pol.stock_take_date and \
                         ((pol.linked_sol_id and pol.stock_take_date > pol.linked_sol_id.order_id.date_order)
                          or (pol.stock_take_date > pol.order_id.date_order)):
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('The Stock Take Date of the line %s is not consistent! It should not be later than the %s\'s creation date')
-                        % (pol.line_number, pol.linked_sol_id and pol.linked_sol_id.order_id.name or pol.order_id.name)
-                    )
+                    error_lines.append(str(pol.line_number))
+                if len(error_lines) >= 10:  # To not display too much
+                    break
+            if error_lines:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The Stock Take Date of the lines %s is not consistent! It should not be later than %s\'s creation date')
+                    % (', '.join(error_lines), linked_orders and ', '.join(linked_orders) or _('the PO'))
+                )
 
         return True
 
     _constraints = [
         (_check_max_price, _("The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"), ['price_unit', 'product_qty']),
-        (_check_stock_take_date, _("The Stock Take Date of a line is not consistent! It should not be later than the FO/IR/PO's creation date"), ['stock_take_date']),
+        (_check_stock_take_date, _("The Stock Take Date of a line is not consistent! It should not be later than the PO's creation date"), ['stock_take_date']),
     ]
 
     def _get_destination_ok(self, cr, uid, lines, context):
@@ -1249,7 +1257,8 @@ class purchase_order_line(osv.osv):
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False})
+        # TODO: to check 'resourced_original_line' and 'set_as_resourced'
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False, 'stock_take_date': False})
 
         # from RfQ line to PO line: grab the linked sol if has:
         if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):

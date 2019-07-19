@@ -923,11 +923,11 @@ class purchase_order(osv.osv):
         if not context:
             context = {}
 
-        # Do not prevent modification during sourcing, import and synchro
-        if not context.get('is_sourcing') and not context.get('import_in_progress') and \
-                not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+        # Do not prevent modification during synchro
+        if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
             for po in self.browse(cr, uid, ids, context=context):
-                if po.stock_take_date and po.stock_take_date > po.date_order:
+                if po.state in ['draft', 'draft_p', 'validated'] and po.stock_take_date \
+                        and po.stock_take_date > po.date_order:
                     raise osv.except_osv(
                         _('Error'),
                         _('The Stock Take Date of %s is not consistent! It should not be later than its creation date')
@@ -1240,7 +1240,7 @@ class purchase_order(osv.osv):
             default = {}
         if context is None:
             context = {}
-        fields_to_reset = ['delivery_requested_date', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve', 'analytic_distribution_id', 'empty_po_cancelled']
+        fields_to_reset = ['delivery_requested_date', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date']
         to_del = []
         for ftr in fields_to_reset:
             if ftr not in default:

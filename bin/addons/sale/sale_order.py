@@ -97,6 +97,7 @@ class sale_order(osv.osv):
             'sourcing_trace_ok': False,
             'claim_name_goods_return': '',
             'draft_cancelled': False,
+            'stock_take_date': False,
         })
 
         if not context.get('keepClientOrder', False):
@@ -722,11 +723,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if not context:
             context = {}
 
-        # Do not prevent modification during sourcing, import and synchro
-        if not context.get('is_sourcing') and not context.get('import_in_progress') and \
-                not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+        # Do not prevent modification during synchro
+        if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
             for so in self.browse(cr, uid, ids, context=context):
-                if so.stock_take_date and so.stock_take_date > so.date_order:
+                if so.state in ['draft', 'draft_p', 'validated', 'sourced', 'sourced_p', 'confirmed', 'confirmed_p'] \
+                        and so.stock_take_date and so.stock_take_date > so.date_order:
                     raise osv.except_osv(
                         _('Error'),
                         _('The Stock Take Date of %s is not consistent! It should not be later than its creation date')
@@ -2132,16 +2133,24 @@ class sale_order_line(osv.osv):
         if not context:
             context = {}
 
-        # Do not prevent modification during sourcing, import and synchro
-        if not context.get('is_sourcing') and not context.get('import_in_progress') and \
-                not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+        # Do not prevent modification during synchro
+        if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+            error_lines = []
+            linked_order = ''
             for sol in self.browse(cr, uid, ids, context=context):
-                if sol.stock_take_date and sol.stock_take_date > sol.order_id.date_order:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('The Stock Take Date of the line %s is not consistent! It should not be later than %s\'s creation date')
-                        % (sol.line_number, sol.order_id.name)
-                    )
+                if not linked_order:
+                    linked_order = sol.order_id.name
+                if sol.state in ['draft', 'validated', 'sourced', 'sourced_v', 'sourced_sy', 'sourced_n', 'confirmed'] \
+                        and sol.stock_take_date and sol.stock_take_date > sol.order_id.date_order:
+                    error_lines.append(str(sol.line_number))
+                if len(error_lines) >= 10:  # To not display too much
+                    break
+            if error_lines:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The Stock Take Date of the lines %s is not consistent! It should not be later than %s\'s creation date')
+                    % (', '.join(error_lines), linked_order or _('the FO/IR'))
+                )
 
         return True
 
@@ -2283,6 +2292,7 @@ class sale_order_line(osv.osv):
             'set_as_sourced_n': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
+            'stock_take_date': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False

@@ -1182,8 +1182,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if not context.get('is_sourcing'):
-            context['is_sourcing'] = True
         context['procurement_request'] = True
         no_prod = self.search(cr, uid, [
             ('id', 'in', ids),
