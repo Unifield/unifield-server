@@ -273,12 +273,11 @@ class Search(TinyInputWidget):
             self.fields_list.sort(lambda x, y: cmp(x[1], y[1]))
 
         self.frame = self.parse(model, dom, self.fields, values)
-        #print 'ORIG', self.listof_domain
         for oreddom in self.listof_ored_domain:
             for el in range(1, len(self.listof_ored_domain[oreddom])):
                 self.listof_ored_domain[oreddom].insert(0, '|')
-            self.listof_domain += self.listof_ored_domain[oreddom]
-        #print 'FINAL', self.listof_domain
+            for oredfilter in self.listof_ored_domain[oreddom]:
+                self.listof_domain += oredfilter
         if self.frame:
             self.frame = self.frame[0]
 
@@ -366,7 +365,7 @@ class Search(TinyInputWidget):
                 if v.groupcontext and v.groupcontext not in self.groupby:
                     self.groupby.append(v.groupcontext)
                 if v.global_domain and v.expand_grp_id:
-                    self.listof_ored_domain.setdefault(v.expand_grp_id, []).extend(i for i in v.global_domain)
+                    self.listof_ored_domain.setdefault(v.expand_grp_id, []).append([i for i in v.global_domain])
                 else:
                     self.listof_domain.extend(i for i in v.global_domain if not i in self.listof_domain)
                 filters_run.append(v)
