@@ -429,5 +429,8 @@
             <field name="method">us_6111_nr_field_closed_mar_2018</field>
         </record>
 
+        <record id="us_6108_onedrive_bg" model="patch.scripts">
+            <field name="method">us_6108_onedrive_bg</field>
+        </record>
     </data>
 </openerp>

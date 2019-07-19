@@ -109,50 +109,54 @@ class ir_cron(osv.osv, netsvc.Agent):
 
     def _poolJobs(self, db_name, check=False):
         try:
-            db, pool = pooler.get_db_and_pool(db_name)
-        except:
-            return False
-        cr = db.cursor()
-        try:
-            if not pool._init:
-                now = datetime.now()
-                cr.execute('select * from ir_cron where numbercall<>0 and active and nextcall<=now() order by priority')
-                for job in cr.dictfetchall():
-                    nextcall = datetime.strptime(job['nextcall'], '%Y-%m-%d %H:%M:%S')
-                    numbercall = job['numbercall']
+            next_call = int(time.time()) + 60
+            try:
+                db, pool = pooler.get_db_and_pool(db_name)
+            except:
+                return False
+            cr = db.cursor()
+            try:
+                if not pool._init:
+                    now = datetime.now()
+                    cr.execute('select * from ir_cron where numbercall<>0 and active and nextcall<=now() order by priority')
+                    for job in cr.dictfetchall():
+                        nextcall = datetime.strptime(job['nextcall'], '%Y-%m-%d %H:%M:%S')
+                        numbercall = job['numbercall']
 
-                    ok = False
-                    while nextcall < now and numbercall:
-                        if numbercall > 0:
-                            numbercall -= 1
-                        if not ok or job['doall']:
-                            self._callback(cr, job['user_id'], job['model'], job['function'], job['args'])
-                        if numbercall:
-                            nextcall += _intervalTypes[job['interval_type']](job['interval_number'])
-                        ok = True
-                    addsql = ''
-                    if not numbercall:
-                        addsql = ', active=False'
-                    cr.execute("update ir_cron set nextcall=%s, numbercall=%s"+addsql+" where id=%s", (nextcall.strftime('%Y-%m-%d %H:%M:%S'), numbercall, job['id']))  # not_a_user_entry
-                    cr.commit()
+                        ok = False
+                        while nextcall < now and numbercall:
+                            if numbercall > 0:
+                                numbercall -= 1
+                            if not ok or job['doall']:
+                                self._logger.info('Cron: start %s %s' % (job['model'], job['function']))
+                                self._callback(cr, job['user_id'], job['model'], job['function'], job['args'])
+                                self._logger.info('Cron: done %s %s' % (job['model'], job['function']))
+                            if numbercall:
+                                nextcall += _intervalTypes[job['interval_type']](job['interval_number'])
+                            ok = True
+                        addsql = ''
+                        if not numbercall:
+                            addsql = ', active=False'
+                        cr.execute("update ir_cron set nextcall=%s, numbercall=%s"+addsql+" where id=%s", (nextcall.strftime('%Y-%m-%d %H:%M:%S'), numbercall, job['id']))  # not_a_user_entry
+                        cr.commit()
 
 
-            cr.execute('select min(nextcall) as min_next_call from ir_cron where numbercall<>0 and active')
-            next_call = cr.dictfetchone()['min_next_call']
-            if next_call:
-                next_call = time.mktime(time.strptime(next_call, '%Y-%m-%d %H:%M:%S'))
-            else:
-                next_call = int(time.time()) + 3600   # if do not find active cron job from database, it will run again after 1 day
+                cr.execute('select min(nextcall) as min_next_call from ir_cron where numbercall<>0 and active')
+                next_call = cr.dictfetchone()['min_next_call']
+                if next_call:
+                    next_call = time.mktime(time.strptime(next_call, '%Y-%m-%d %H:%M:%S'))
+                else:
+                    next_call = int(time.time()) + 3600   # if do not find active cron job from database, it will run again after 1 day
 
+            except Exception:
+                self._logger.warning('Exception in cron:', exc_info=True)
+
+            finally:
+                cr.commit()
+                cr.close()
+        finally:
             if not check:
                 self.setAlarm(self._poolJobs, next_call, db_name, db_name)
-
-        except Exception:
-            self._logger.warning('Exception in cron:', exc_info=True)
-
-        finally:
-            cr.commit()
-            cr.close()
 
     def restart(self, dbname):
         self.cancel(dbname)
