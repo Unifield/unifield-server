@@ -61,18 +61,31 @@ class po_follow_up(osv.osv_memory):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'export_format': 'xls'}, context=context)
-        return self.button_validate(cr, uid, ids, report_name='po.follow.up_xls', context=None)
+        # Create background report
+        report_name = 'po.follow.up_xls'
+        background_id = self.pool.get('memory.background.report').\
+            create(cr, uid, {'file_name': report_name, 'report_name': report_name}, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 3
 
+        self.write(cr, uid, ids, {'export_format': 'xls'}, context=context)
+        return self.button_validate(cr, uid, ids, report_name=report_name, context=context)
 
     def pdf_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
-        self.write(cr, uid, ids, {'export_format': 'pdf'}, context=context)
 
-        return self.button_validate(cr, uid, ids, report_name='po.follow.up_rml', context=None)
+        report_name = 'po.follow.up_rml'
+        # Create background report
+        background_id = self.pool.get('memory.background.report').\
+            create(cr, uid, {'file_name': report_name, 'report_name': report_name}, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 3
+
+        self.write(cr, uid, ids, {'export_format': 'pdf'}, context=context)
+        return self.button_validate(cr, uid, ids, report_name=report_name, context=context)
 
 
     def get_state_list(self, cr, uid, wiz, context=None):
@@ -222,8 +235,6 @@ class po_follow_up(osv.osv_memory):
 
         return report_lines
 
-
-
     def button_validate(self, cr, uid, ids, report_name, context=None):
         if context is None:
             context = {}
@@ -318,9 +329,7 @@ class po_follow_up(osv.osv_memory):
         if wiz.po_date_from:
             domain.append(('date_order', '>=', wiz.po_date_from))
 
-        background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': report_name, 'report_name': report_name}, context=context)
-        context['background_id'] = background_id
-        context['background_time'] = wiz.background_time
+        # For background report
         context['nb_orders'] = len(po_ids)
 
         return {

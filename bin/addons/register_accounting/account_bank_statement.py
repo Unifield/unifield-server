@@ -91,7 +91,16 @@ class account_journal(osv.osv):
     def _search_filter_third(self, cr, uid, obj, name, args, context):
         if not context:
             context = {}
+        regline_obj = self.pool.get('account.bank.statement.line')
         dom = [('type', 'in', ['cash', 'bank', 'cheque'])]
+        if context.get('from', '') == 'regline_view' and context.get('active_id'):
+            # get the currency and journal values for the View "Register Lines" accessible from the reg. Actions Menu
+            reg_line = regline_obj.browse(cr, uid, context['active_id'], fields_to_fetch=['statement_id'], context=context)
+            reg = reg_line and reg_line.statement_id
+            if reg and not context.get('curr'):
+                context['curr'] = reg.currency and reg.currency.id or False
+            if reg and not context.get('journal'):
+                context['journal'] = reg.journal_id.id
         if not args or not context.get('curr') or not context.get('journal'):
             return dom
         if args[0][2]:
