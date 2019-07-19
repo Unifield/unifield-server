@@ -333,8 +333,8 @@
 			<field name="res_model">composition.kit</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
-			<field name="domain">[('composition_type', '=', 'theoretical')]</field>
-			<field name="context">{'composition_type':'theoretical'}</field>
+			<field name="domain">['&amp;', ('composition_type', '=', 'theoretical'), ('active', 'in', ['t', 'f'])]</field>
+			<field name="context">{'composition_type':'theoretical', 'search_default_active': 1}</field>
 			<field name="search_view_id" ref="view_composition_kit_theoretical_filter" />
 		</record>
 		
