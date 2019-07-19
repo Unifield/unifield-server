@@ -299,6 +299,15 @@ class shipment(osv.osv):
 
         return res
 
+    def _get_object_name(self, cr, uid, ids, field_name, args, context=None):
+        ret = {}
+        for _id in ids:
+            ret[_id] = _('Shipment')
+
+        for x in self.search(cr, uid, [('id', 'in', ids), ('parent_id', '=', False)], context=context):
+            ret[x] = _('Shipment List')
+        return ret
+
     _columns = {
         'name': fields.char(string='Reference', size=1024),
         'date': fields.datetime(string='Creation Date'),
@@ -379,6 +388,7 @@ class shipment(osv.osv):
                 'shipment': (lambda self, cr, uid, ids, c={}: ids, ['partner_id2'], 10),
             }
         ),
+        'object_name': fields.function(_get_object_name, type='char', method=True, string='Title', internal="1"),
     }
 
     def _get_sequence(self, cr, uid, context=None):

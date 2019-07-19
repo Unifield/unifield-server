@@ -1272,10 +1272,12 @@
             <field name="name">shipment.form</field>
             <field name="model">shipment</field>
             <field name="type">form</field>
+            <field name="title_field">object_name</field>
             <field name="arch" type="xml">
-                <form string="Shipment List" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" force_string="1">
+                <form string="Shipment List" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
                     <group col="6" colspan="4">
                         <group colspan="4" col="4">
+                            <field name="object_name" invisible="1" />
                             <field name="name" readonly="1"/>
                             <field name="date" readonly="True" />
                             <field name="shipment_actual_date" />
