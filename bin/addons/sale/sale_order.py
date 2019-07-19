@@ -722,7 +722,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if not context:
             context = {}
 
-        if not context.get('import_in_progress') and not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+        # Do not prevent modification during sourcing, import and synchro
+        if not context.get('is_sourcing') and not context.get('import_in_progress') and \
+                not context.get('sync_update_execution') and not context.get('sync_message_execution'):
             for so in self.browse(cr, uid, ids, context=context):
                 if so.stock_take_date and so.stock_take_date > so.date_order:
                     raise osv.except_osv(
@@ -2130,7 +2132,9 @@ class sale_order_line(osv.osv):
         if not context:
             context = {}
 
-        if not context.get('import_in_progress') and not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+        # Do not prevent modification during sourcing, import and synchro
+        if not context.get('is_sourcing') and not context.get('import_in_progress') and \
+                not context.get('sync_update_execution') and not context.get('sync_message_execution'):
             for sol in self.browse(cr, uid, ids, context=context):
                 if sol.stock_take_date and sol.stock_take_date > sol.order_id.date_order:
                     raise osv.except_osv(

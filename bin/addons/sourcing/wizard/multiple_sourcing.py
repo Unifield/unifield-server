@@ -340,8 +340,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
+        if not context.get('is_sourcing'):
+            context['is_sourcing'] = True
+
         self.save_lines(cr, uid, ids, context=context)
         self.source_lines(cr, uid, ids, context=context)
+
+        context.pop('is_sourcing')
 
         return {'type': 'ir.actions.act_window_close'}
 

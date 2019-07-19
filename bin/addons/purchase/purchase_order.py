@@ -932,7 +932,9 @@ class purchase_order(osv.osv):
         if not context:
             context = {}
 
-        if not context.get('import_in_progress') and not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+        # Do not prevent modification during sourcing, import and synchro
+        if not context.get('is_sourcing') and not context.get('import_in_progress') and \
+                not context.get('sync_update_execution') and not context.get('sync_message_execution'):
             for po in self.browse(cr, uid, ids, context=context):
                 if po.stock_take_date and po.stock_take_date > po.date_order:
                     raise osv.except_osv(

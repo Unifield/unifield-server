@@ -614,7 +614,9 @@ class purchase_order_line(osv.osv):
         if not context:
             context = {}
 
-        if not context.get('import_in_progress') and not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+        # Do not prevent modification during sourcing, import and synchro
+        if not context.get('is_sourcing') and not context.get('import_in_progress') and \
+                not context.get('sync_update_execution') and not context.get('sync_message_execution'):
             for pol in self.browse(cr, uid, ids, context=context):
                 if pol.stock_take_date and \
                         ((pol.linked_sol_id and pol.stock_take_date > pol.linked_sol_id.order_id.date_order)
