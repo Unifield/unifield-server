@@ -96,11 +96,13 @@ class ppl_processor(osv.osv):
                 # Rule #2: if from[i] == from[i-1] -> to[i] == to[i-1]
                 if (seq[0] == seqb[0]) and not (seq[1] == seqb[1]):
                     overlap_ids.append(seq[2])
+                    sequences[i] = (seqb[0], max(seq[1], seqb[1]), seqb[2])
                 # Rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
-                if (seq[0] != seqb[0]) and not (seq[0] == seqb[1] + 1):
+                elif (seq[0] != seqb[0]) and not (seq[0] == seqb[1] + 1):
                     if seq[0] < seqb[1] + 1:
                         overlap_ids.append(seq[2])
-                    if seq[0] > seqb[1] + 1:
+                        sequences[i] = (min(seq[0], seqb[0]), seqb[1], seqb[2])
+                    elif seq[0] > seqb[1] + 1:
                         gap_ids.append(seq[2])
             # rule #4: to[i] >= from[i]
             if not (seq[1] >= seq[0]):
