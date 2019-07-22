@@ -106852,3 +106852,15 @@ msgstr "le BC"
 #, python-format
 msgid "the FO/IR"
 msgstr "la CdT/DI"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:713
+#, python-format
+msgid "The Date of Stock Take is not consistent! It should not be later than %s's creation date. "
+msgstr "La Date de Prise de Stock n'est pas cohérente! Elle ne devrait pas être ultérieure à la date de création de %s. "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1731
+#, python-format
+msgid "The Date of Stock Take is not consistent! It should not be later than %s's creation date"
+msgstr "La Date de Prise de Stock n'est pas cohérente! Elle ne devrait pas être ultérieure à la date de création de %s"

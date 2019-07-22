@@ -708,6 +708,10 @@ class internal_request_import(osv.osv):
                             if not line_data.get('imp_stock_take_date'):
                                 line_errors += _('Date of Stock Take \'%s\' is not a correct value, line has been imported without Date of Stock Take. ') \
                                     % vals[8]
+                        if line_data.get('imp_stock_take_date') and line_data['imp_stock_take_date'] > ir_order.date_order:
+                            red = True
+                            line_errors += _('The Date of Stock Take is not consistent! It should not be later than %s\'s creation date. ') \
+                                           % (ir_order.name)
 
                     line_data.update({
                         'error_msg': line_errors,
