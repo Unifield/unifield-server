@@ -219,6 +219,7 @@ class rml_parse(object):
         self.default_lang = {}
         self.lang_dict_called = False
         self._transl_regex = re.compile('(\[\[.+?\]\])')
+        self.log_export = False
 
     def isDate(self, date, date_format=DT_FORMAT):
         '''
@@ -568,17 +569,24 @@ class report_sxw(report_rml, preprocess.report):
         if not rml:
             return False
         rml_parser = self.parser(cr, uid, self.name2, context=context)
-        objs = self.getObjects(cr, uid, ids, context)
-        rml_parser.set_context(objs, data, ids, report_xml.report_type)
-        processed_rml = etree.XML(rml)
-        if report_xml.header:
-            rml_parser._add_header(processed_rml, self.header)
-        processed_rml = self.preprocess_rml(processed_rml,report_xml.report_type)
-        if rml_parser.logo:
-            logo = base64.decodestring(rml_parser.logo)
-        create_doc = self.generators[report_xml.report_type]
-        pdf = create_doc(etree.tostring(processed_rml),rml_parser.localcontext,logo,title.encode('utf8'))
-        return (pdf, report_xml.report_type)
+        if rml_parser.log_export:
+            logger = logging.getLogger('PDF export')
+            logger.info('Exporting %d %s ...' % (len(ids), self.table))
+        try:
+            objs = self.getObjects(cr, uid, ids, context)
+            rml_parser.set_context(objs, data, ids, report_xml.report_type)
+            processed_rml = etree.XML(rml)
+            if report_xml.header:
+                rml_parser._add_header(processed_rml, self.header)
+            processed_rml = self.preprocess_rml(processed_rml,report_xml.report_type)
+            if rml_parser.logo:
+                logo = base64.decodestring(rml_parser.logo)
+            create_doc = self.generators[report_xml.report_type]
+            pdf = create_doc(etree.tostring(processed_rml),rml_parser.localcontext,logo,title.encode('utf8'))
+            return (pdf, report_xml.report_type)
+        finally:
+            if rml_parser.log_export:
+                logger.info('End of exporting %s' % (self.table, ))
 
     def create_single_odt(self, cr, uid, ids, data, report_xml, context=None):
         if not context:
@@ -739,7 +747,7 @@ class report_sxw(report_rml, preprocess.report):
         :param finished: when True, no matter what percent is, the percentage
         of the background id will be updated with share
         '''
-        if not bg_id_list: 
+        if not bg_id_list:
             return
         if bg_id_list[0] is None:
             return

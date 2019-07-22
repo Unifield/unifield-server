@@ -38,59 +38,27 @@ from tools.translate import _
 from StringIO import StringIO
 from mission_stock.mission_stock import UnicodeWriter
 
+from threading import RLock
 
-def all_files_under(path, startswith=False):
+def all_files_under(path, startswith=False, already=None):
     """
     Iterates through all files that are under the given path.
     :param path: Path on which we want to iterate
     """
-    res = []
+    if already is None:
+        already = []
+
     for cur_path, dirnames, filenames in os.walk(path):
         if startswith:
             filenames = [fn for fn in filenames if fn.startswith(startswith)]
-        res.extend([os.path.join(cur_path, fn) for fn in filenames])
-        break # don't parse children
-    return res
-
-def get_oldest_filename(job, ftp_connec=None, sftp=None, already=None):
-    '''
-    Get the oldest file in local or on FTP server
-    '''
-    if already is None:
-        already = []
-    logging.getLogger('automated.import').info(_('Getting the oldest file at location %s') % job.import_id.src_path)
-    if not job.import_id.ftp_source_ok:
-        return min(all_files_under(job.import_id.src_path, job.import_id.function_id.startswith), key=os.path.getmtime)
-    elif job.import_id.ftp_protocol == 'ftp':
-        files = []
-        ftp_connec.dir(job.import_id.src_path, files.append)
-        file_names = []
-        for file in files:
-            if file.startswith('d'): # directory
-                continue
-            if job.import_id.function_id.startswith and not file.split(' ')[-1].startswith(job.import_id.function_id.startswith):
-                continue
-            file_names.append( posixpath.join(job.import_id.src_path, file.split(' ')[-1]) )
         res = []
-        for file in file_names:
-            if file not in already:
-                dt = ftp_connec.sendcmd('MDTM %s' % file).split(' ')[-1]
-                dt = time.strptime(dt, '%Y%m%d%H%M%S') # '20180228170748'
-                res.append((dt, file))
-        return min(res, key=lambda x:x[1])[1] if res else False
-    elif job.import_id.ftp_protocol == 'sftp':
-        latest = 0
-        latestfile = False
-        with sftp.cd(job.import_id.src_path):
-            for fileattr in sftp.listdir_attr():
-                if sftp.isfile(fileattr.filename) and fileattr.st_mtime > latest:
-                    if job.import_id.function_id.startswith and not fileattr.filename.startswith(job.import_id.function_id.startswith):
-                        continue
-                    posix_name = posixpath.join(job.import_id.src_path, fileattr.filename)
-                    if posix_name not in already:
-                        latest = fileattr.st_mtime
-                        latestfile = posix_name
-        return latestfile
+        for fn in filenames:
+            full_name = os.path.join(cur_path, fn)
+            if full_name not in already:
+                res.append((os.stat(full_name).st_ctime, full_name))
+        return res
+    return []
+
 
 
 def get_file_content(file, from_ftp=False, ftp_connec=None, sftp=None):
@@ -191,7 +159,10 @@ def move_to_process_path(import_brw, ftp_connec, sftp, file, success):
 
 class automated_import_job(osv.osv):
     _name = 'automated.import.job'
+    _order = 'id desc'
 
+    _processing = {}
+    _lock = RLock()
     def _get_name(self, cr, uid, ids, field_name, args, context=None):
         """
         Build the name of the job by using the function_id and the date and time
@@ -214,6 +185,22 @@ class automated_import_job(osv.osv):
             res[job.id] = '%s - %s' % (job.import_id.function_id.name, job.start_time or _('Not started'))
 
         return res
+
+    def is_processing_filename(self, filename):
+        with self._lock:
+            if filename not in self._processing:
+                self._processing[filename] = True
+                return False
+            logging.getLogger('automated.import').info(_('Ignore already processing %s') % filename)
+            return True
+
+    def end_processing_filename(self, filename):
+        with self._lock:
+            try:
+                del(self._processing[filename])
+            except KeyError:
+                pass
+
 
     _columns = {
         'name': fields.function(
@@ -279,7 +266,47 @@ class automated_import_job(osv.osv):
         'state': lambda *a: 'draft',
     }
 
-    _order = 'id desc'
+
+    def get_oldest_filename(self, job, ftp_connec=None, sftp=None, already=None):
+        '''
+        Get the oldest file in local or on FTP server
+        '''
+        if already is None:
+            already = []
+        logging.getLogger('automated.import').info(_('Getting the oldest file at location %s') % job.import_id.src_path)
+
+        res = []
+        if not job.import_id.ftp_source_ok:
+            res = all_files_under(job.import_id.src_path, job.import_id.function_id.startswith, already)
+        elif job.import_id.ftp_protocol == 'ftp':
+            files = []
+            ftp_connec.dir(job.import_id.src_path, files.append)
+            file_names = []
+            for file in files:
+                if file.startswith('d'): # directory
+                    continue
+                if job.import_id.function_id.startswith and not file.split(' ')[-1].startswith(job.import_id.function_id.startswith):
+                    continue
+                file_names.append( posixpath.join(job.import_id.src_path, file.split(' ')[-1]) )
+            for file in file_names:
+                if file not in already:
+                    dt = ftp_connec.sendcmd('MDTM %s' % file).split(' ')[-1]
+                    dt = time.strptime(dt, '%Y%m%d%H%M%S') # '20180228170748'
+                    res.append((dt, file))
+
+        elif job.import_id.ftp_protocol == 'sftp':
+            with sftp.cd(job.import_id.src_path):
+                for fileattr in sftp.listdir_attr():
+                    if sftp.isfile(fileattr.filename):
+                        if job.import_id.function_id.startswith and not fileattr.filename.startswith(job.import_id.function_id.startswith):
+                            continue
+                        posix_name = posixpath.join(job.import_id.src_path, fileattr.filename)
+                        if posix_name not in already:
+                            res.append((fileattr.st_mtime, posix_name))
+        for x in sorted(res, key=lambda x:x[0]):
+            if not self.is_processing_filename(x[1]):
+                return x[1]
+        return False
 
     def manual_process_import(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
@@ -332,10 +359,20 @@ class automated_import_job(osv.osv):
             ftp_connec = None
             sftp = None
             context.update({'no_raise_if_ok': True, 'auto_import_ok': True})
-            if import_data.ftp_ok and import_data.ftp_protocol == 'ftp':
-                ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, import_data.id, context=context)
-            elif import_data.ftp_ok and import_data.ftp_protocol == 'sftp':
-                sftp = self.pool.get('automated.import').sftp_test_connection(cr, uid, import_data.id, context=context)
+            try:
+                if import_data.ftp_ok and import_data.ftp_protocol == 'ftp':
+                    ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, import_data.id, context=context)
+                elif import_data.ftp_ok and import_data.ftp_protocol == 'sftp':
+                    sftp = self.pool.get('automated.import').sftp_test_connection(cr, uid, import_data.id, context=context)
+            except Exception, e:
+                if job.id:
+                    if isinstance(e, osv.except_osv):
+                        msg = e.value
+                    else:
+                        msg = e
+                    self.write(cr, uid, job_id, {'state': 'error', 'end_time': time.strftime('%Y-%m-%d %H:%M:%S'), 'start_time': start_time, 'comment': tools.ustr(msg)}, context=context)
+                    cr.commit()
+                raise
 
             try:
                 for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('dest_path_failure', 'w', 'ftp_dest_fail_ok'), ('report_path', 'w', 'ftp_report_ok')]:
@@ -348,168 +385,176 @@ class automated_import_job(osv.osv):
                 if job.file_to_import:
                     raise e
 
-            if not job.file_to_import:
+            try:
+                oldest_file = False
+                orig_file_name = False
+                if not job.file_to_import:
+                    try:
+                        oldest_file = self.get_oldest_filename(job, ftp_connec, sftp, already_done)
+                        orig_file_name = oldest_file
+                        already_done.append(oldest_file)
+                        if not oldest_file:
+                            raise ValueError()
+                        filename = os.path.split(oldest_file)[1]
+                        file_content = get_file_content(oldest_file, import_data.ftp_source_ok, ftp_connec, sftp)
+                        md5 = hashlib.md5(file_content).hexdigest()
+                        data64 = base64.encodestring(file_content)
+                    except ValueError:
+                        no_file = True
+                    except Exception as e:
+                        no_file = True
+                        error = tools.ustr(traceback.format_exc())
+
+                    if not error:
+                        if no_file:
+                            if not prev_job_id:
+                                error = _('No file to import in %s !') % import_data.src_path
+                            else:
+                                # files already processed in previous loop: delete the in_progress job
+                                self.unlink(cr, 1, [job_id], context=context)
+                                job_id = prev_job_id
+                                break
+
+                        elif md5 and self.search_exist(cr, uid, [('import_id', '=', import_data.id), ('file_sum', '=', md5)], context=context):
+                            error = _('A file with same checksum has been already imported !')
+                            move_to_process_path(import_data, ftp_connec, sftp, filename, success=False)
+                            self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
+
+                    if error:
+                        self.infolog(cr, uid, '%s :: %s' % (import_data.name , error))
+                        self.write(cr, uid, [job.id], {
+                            'filename': filename,
+                            'file_to_import': data64,
+                            'start_time': start_time,
+                            'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
+                            'nb_processed_records': 0,
+                            'nb_rejected_records': 0,
+                            'comment': error,
+                            'file_sum': md5,
+                            'state': 'done' if no_file else 'error',
+                        }, context=context)
+                        continue
+                else: # file to import given
+                    no_file = True
+                    if job.import_id.ftp_source_ok:
+                        raise osv.except_osv(_('Error'), _('You cannot manually select a file to import if given source path is set on FTP server'))
+                    oldest_file = open(os.path.join(job.import_id.src_path, job.filename), 'wb+')
+                    oldest_file.write(base64.decodestring(job.file_to_import))
+                    oldest_file.close()
+                    md5 = hashlib.md5(job.file_to_import).hexdigest()
+
+                    if job.file_sum != md5:
+                        if self.search_exist(cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], context=context):
+                            self.write(cr, uid, [job.id], {'file_sum': md5}, context=context)
+                            return {
+                                'type': 'ir.actions.act_window',
+                                'res_model': self._name,
+                                'res_id': job_id,
+                                'view_type': 'form',
+                                'view_mode': 'form,tree',
+                                'target': 'new',
+                                'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'automated_import_job_file_view')[1]],
+                                'context': context,
+                            }
+
+                    oldest_file = os.path.join(job.import_id.src_path, job.filename)
+                    filename = job.filename
+                    data64 = base64.encodestring(job.file_to_import)
+
+                # Process import
+                error_message = []
+                state = 'done'
                 try:
-                    oldest_file = get_oldest_filename(job, ftp_connec, sftp, already_done)
-                    already_done.append(oldest_file)
-                    if not oldest_file:
-                        raise ValueError()
-                    filename = os.path.split(oldest_file)[1]
-                    md5 = hashlib.md5(get_file_content(oldest_file, import_data.ftp_source_ok, ftp_connec, sftp)).hexdigest()
-                    data64 = base64.encodestring(get_file_content(oldest_file, import_data.ftp_source_ok, ftp_connec, sftp))
-                except ValueError:
-                    no_file = True
-                except Exception as e:
-                    no_file = True
-                    error = tools.ustr(traceback.format_exc())
+                    if import_data.ftp_source_ok and import_data.ftp_protocol == 'ftp':
+                        prefix = '%s_' % filename.split('.')[0]
+                        suffix = '.xls' if self.pool.get('stock.picking').get_import_filetype(cr, uid, filename) == 'excel' else '.xml'
+                        temp_file = tempfile.NamedTemporaryFile(delete=False, prefix=prefix, suffix=suffix)
+                        ftp_connec.retrbinary('RETR %s' % oldest_file, temp_file.write)
+                        temp_file.close()
+                        oldest_file = temp_file.name
+                    elif import_data.ftp_source_ok and import_data.ftp_protocol == 'sftp':
+                        tmp_dest_path = os.path.join(tempfile.gettempdir(), filename)
+                        sftp.get(oldest_file, tmp_dest_path)
+                        oldest_file = tmp_dest_path
 
-                if not error:
-                    if no_file:
-                        if not prev_job_id:
-                            error = _('No file to import in %s !') % import_data.src_path
-                        else:
-                            # files already processed in previous loop: delete the in_progress job
-                            self.unlink(cr, 1, [job_id], context=context)
-                            job_id = prev_job_id
-                            break
+                    processed, rejected, headers = getattr(
+                        self.pool.get(import_data.function_id.model_id.model),
+                        import_data.function_id.method_to_call
+                    )(cr, uid, oldest_file, context=context)
+                    if processed:
+                        nb_processed += self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp)
 
-                    elif md5 and self.search_exist(cr, uid, [('import_id', '=', import_data.id), ('file_sum', '=', md5)], context=context):
-                        error = _('A file with same checksum has been already imported !')
-                        move_to_process_path(import_data, ftp_connec, sftp, filename, success=False)
-                        self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
+                    if rejected:
+                        nb_rejected += self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp)
+                        state = 'error'
+                        for resjected_line in rejected:
+                            line_message = ''
+                            if resjected_line[0]:
+                                line_message = _('Line %s: ') % resjected_line[0]
+                            line_message += resjected_line[2]
+                            error_message.append(line_message)
 
-                if error:
-                    self.infolog(cr, uid, '%s :: %s' % (import_data.name , error))
+                    if context.get('rejected_confirmation'):
+                        nb_rejected += context.get('rejected_confirmation')
+                        state = 'error'
+
+                    self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (import_data.name, len(processed), nb_rejected))
+
+                    if import_data.function_id.model_id.model == 'purchase.order':
+                        po_id = self.pool.get('purchase.order').get_po_id_from_file(cr, uid, oldest_file, context=context)
+                        if po_id and (nb_processed or nb_rejected):
+                            po_name = self.pool.get('purchase.order').read(cr, uid, po_id, ['name'], context=context)['name']
+                            nb_total_pol = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', po_id)], count=True, context=context)
+                            msg = _('%s: ') % po_name
+                            if nb_processed:
+                                msg += _('%s out of %s lines have been updated') % (nb_processed, nb_total_pol)
+                                if nb_rejected:
+                                    msg += _(' and ')
+                            if nb_rejected:
+                                msg += _('%s out of %s lines have been rejected') % (nb_rejected, nb_total_pol)
+                            if nb_processed or nb_rejected:
+                                self.pool.get('purchase.order').log(cr, uid, po_id, msg)
+
+                    if context.get('job_comment'):
+                        for msg_dict in context['job_comment']:
+                            self.pool.get(msg_dict['res_model']).log(cr, uid, msg_dict['res_id'], msg_dict['msg'])
+                            error_message.append(msg_dict['msg'])
+
                     self.write(cr, uid, [job.id], {
                         'filename': filename,
+                        'start_time': start_time,
+                        'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
+                        'nb_processed_records': nb_processed,
+                        'nb_rejected_records': nb_rejected,
+                        'comment': '\n'.join(error_message),
+                        'file_sum': md5,
                         'file_to_import': data64,
+                        'state': state,
+                    }, context=context)
+                    is_success = True if not rejected else False
+                    move_to_process_path(import_data, ftp_connec, sftp, filename, success=is_success)
+                    self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
+                    cr.commit()
+                except Exception as e:
+                    cr.rollback()
+                    trace_b = tools.ustr(traceback.format_exc())
+                    self.infolog(cr, uid, '%s :: %s' % (import_data.name, trace_b))
+                    self.write(cr, uid, [job.id], {
+                        'filename': False,
                         'start_time': start_time,
                         'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                         'nb_processed_records': 0,
                         'nb_rejected_records': 0,
-                        'comment': error,
+                        'comment': trace_b,
                         'file_sum': md5,
-                        'state': 'done' if no_file else 'error',
+                        'file_to_import': data64,
+                        'state': 'error',
                     }, context=context)
-                    continue
-            else: # file to import given
-                no_file = True
-                if job.import_id.ftp_source_ok:
-                    raise osv.except_osv(_('Error'), _('You cannot manually select a file to import if given source path is set on FTP server'))
-                oldest_file = open(os.path.join(job.import_id.src_path, job.filename), 'wb+')
-                oldest_file.write(base64.decodestring(job.file_to_import))
-                oldest_file.close()
-                md5 = hashlib.md5(job.file_to_import).hexdigest()
-
-                if job.file_sum != md5:
-                    if self.search_exist(cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], context=context):
-                        self.write(cr, uid, [job.id], {'file_sum': md5}, context=context)
-                        return {
-                            'type': 'ir.actions.act_window',
-                            'res_model': self._name,
-                            'res_id': job_id,
-                            'view_type': 'form',
-                            'view_mode': 'form,tree',
-                            'target': 'new',
-                            'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'automated_import_job_file_view')[1]],
-                            'context': context,
-                        }
-
-                oldest_file = os.path.join(job.import_id.src_path, job.filename)
-                filename = job.filename
-                data64 = base64.encodestring(job.file_to_import)
-
-            # Process import
-            error_message = []
-            state = 'done'
-            try:
-                if import_data.ftp_source_ok and import_data.ftp_protocol == 'ftp':
-                    prefix = '%s_' % filename.split('.')[0]
-                    suffix = '.xls' if self.pool.get('stock.picking').get_import_filetype(cr, uid, filename) == 'excel' else '.xml'
-                    temp_file = tempfile.NamedTemporaryFile(delete=False, prefix=prefix, suffix=suffix)
-                    ftp_connec.retrbinary('RETR %s' % oldest_file, temp_file.write)
-                    temp_file.close()
-                    oldest_file = temp_file.name
-                elif import_data.ftp_source_ok and import_data.ftp_protocol == 'sftp':
-                    tmp_dest_path = os.path.join(tempfile.gettempdir(), filename)
-                    sftp.get(oldest_file, tmp_dest_path)
-                    oldest_file = tmp_dest_path
-
-                processed, rejected, headers = getattr(
-                    self.pool.get(import_data.function_id.model_id.model),
-                    import_data.function_id.method_to_call
-                )(cr, uid, oldest_file, context=context)
-                if processed:
-                    nb_processed += self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp)
-
-                if rejected:
-                    nb_rejected += self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp)
-                    state = 'error'
-                    for resjected_line in rejected:
-                        line_message = ''
-                        if resjected_line[0]:
-                            line_message = _('Line %s: ') % resjected_line[0]
-                        line_message += resjected_line[2]
-                        error_message.append(line_message)
-
-                if context.get('rejected_confirmation'):
-                    nb_rejected += context.get('rejected_confirmation')
-                    state = 'error'
-
-                self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (import_data.name, len(processed), nb_rejected))
-
-                if import_data.function_id.model_id.model == 'purchase.order':
-                    po_id = self.pool.get('purchase.order').get_po_id_from_file(cr, uid, oldest_file, context=context)
-                    if po_id and (nb_processed or nb_rejected):
-                        po_name = self.pool.get('purchase.order').read(cr, uid, po_id, ['name'], context=context)['name']
-                        nb_total_pol = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', po_id)], count=True, context=context)
-                        msg = _('%s: ') % po_name
-                        if nb_processed:
-                            msg += _('%s out of %s lines have been updated') % (nb_processed, nb_total_pol)
-                            if nb_rejected:
-                                msg += _(' and ')
-                        if nb_rejected:
-                            msg += _('%s out of %s lines have been rejected') % (nb_rejected, nb_total_pol)
-                        if nb_processed or nb_rejected:
-                            self.pool.get('purchase.order').log(cr, uid, po_id, msg)
-
-                if context.get('job_comment'):
-                    for msg_dict in context['job_comment']:
-                        self.pool.get(msg_dict['res_model']).log(cr, uid, msg_dict['res_id'], msg_dict['msg'])
-                        error_message.append(msg_dict['msg'])
-
-                self.write(cr, uid, [job.id], {
-                    'filename': filename,
-                    'start_time': start_time,
-                    'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
-                    'nb_processed_records': nb_processed,
-                    'nb_rejected_records': nb_rejected,
-                    'comment': '\n'.join(error_message),
-                    'file_sum': md5,
-                    'file_to_import': data64,
-                    'state': state,
-                }, context=context)
-                is_success = True if not rejected else False
-                move_to_process_path(import_data, ftp_connec, sftp, filename, success=is_success)
-                self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
-                cr.commit()
-            except Exception as e:
-                cr.rollback()
-                trace_b = tools.ustr(traceback.format_exc())
-                self.infolog(cr, uid, '%s :: %s' % (import_data.name, trace_b))
-                self.write(cr, uid, [job.id], {
-                    'filename': False,
-                    'start_time': start_time,
-                    'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
-                    'nb_processed_records': 0,
-                    'nb_rejected_records': 0,
-                    'comment': trace_b,
-                    'file_sum': md5,
-                    'file_to_import': data64,
-                    'state': 'error',
-                }, context=context)
-                move_to_process_path(import_data, ftp_connec, sftp, filename, success=False)
-                self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
+                    move_to_process_path(import_data, ftp_connec, sftp, filename, success=False)
+                    self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
+            finally:
+                if orig_file_name:
+                    self.end_processing_filename(orig_file_name)
 
         if 'row' in context:
             # causing LmF when running job manually

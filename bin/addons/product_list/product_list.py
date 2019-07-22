@@ -478,7 +478,7 @@ product and can't be deleted"""),
             select=1
         ),  # US-45: Added this field but hidden, for UniData to be able to import the Id
         'xmlid_code': fields.char(
-            'Hidden xmlid code',
+            'Xmlid Code',
             size=18,
         ),  # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
     }

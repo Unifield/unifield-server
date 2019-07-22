@@ -244,12 +244,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'priority': line.order_id.priority,
                 'categ': line.order_id.categ,
                 'rts': line.order_id.ready_to_ship_date,
+                'rdd': line.procurement_request and line.order_id.delivery_requested_date or line.date_planned,
                 'procurement_request': line.order_id.procurement_request,
                 'loan_type': line.order_id.order_type == 'loan',
                 'estimated_delivery_date': self._get_date(cr, uid, line, context=context),
                 'display_confirm_button': line.state == 'validated',
                 'sale_order_in_progress': line.order_id.sourcing_trace_ok,
                 'sale_order_state': self._get_sale_order_state(cr, uid, line.order_id, context=context),
+                'supplier_type': line.supplier and line.supplier.partner_type or False,
+                'supplier_split_po': line.supplier and line.supplier.split_po or False,
             }
             res[line.id] = values
 
@@ -523,6 +526,33 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             _get_line_values,
             method=True,
             string='RTS',
+            type='date',
+            readonly=True,
+            store=False,
+            multi='line_info',
+        ),
+        'supplier_type': fields.function(
+            _get_line_values,
+            method=True,
+            string='Supplier Type',
+            type='char',
+            readonly=True,
+            store=False,
+            multi='line_info',
+        ),
+        'supplier_split_po': fields.function(
+            _get_line_values,
+            method=True,
+            string='Supplier can Split POs',
+            type='char',
+            readonly=True,
+            store=False,
+            multi='line_info',
+        ),
+        'rdd': fields.function(
+            _get_line_values,
+            method=True,
+            string='RDD',
             type='date',
             readonly=True,
             store=False,
@@ -1581,6 +1611,9 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         company_currency_id = self.pool.get('res.users').get_company_currency_id(cr, uid)
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
+            if sourcing_line.supplier and sourcing_line.supplier_type == 'esc' and \
+                    sourcing_line.supplier_split_po == 'yes' and not sourcing_line.related_sourcing_id:
+                raise osv.except_osv(_('Error'), _('For this Supplier you have to select a Sourcing Group'))
             if sourcing_line.state in ['validated', 'validated_p']:
                 if sourcing_line.type == 'make_to_stock':
                     self.check_location_integrity(cr, uid, [sourcing_line.id], context=context)
@@ -2293,6 +2326,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             result['value'].update({
                 'related_sourcing_id': False,
                 'related_sourcing_ok': False,
+                'supplier_type': False,
+                'supplier_split_po': False,
             })
             sl = self.browse(cr, uid, line_id, context=context)
             if not sl.product_id and sl.order_id.procurement_request and sl.type == 'make_to_order':
@@ -2318,6 +2353,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         result['value'].update({
             'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d'),
             'related_sourcing_ok': related_sourcing_ok,
+            'supplier_type': partner and partner.partner_type or False,
+            'supplier_split_po': partner and partner.split_po or False,
         })
         if not related_sourcing_ok:
             result['value']['related_sourcing_id'] = False

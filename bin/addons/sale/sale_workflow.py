@@ -514,7 +514,6 @@ class sale_order_line(osv.osv):
                 # run check availability on PICK/OUT:
                 if picking_data['type'] == 'out' and picking_data['subtype'] in ['picking', 'standard']:
                     self.pool.get('stock.move').action_assign(cr, uid, [move_id])
-                    self.pool.get('stock.move').fefo_update(cr, uid, [move_id], context=context)
                 #    self.pool.get('stock.picking').action_assign(cr, uid, [pick_to_use], context=context)
                 if picking_data['type'] == 'internal' and sol.type == 'make_to_stock' and sol.order_id.procurement_request:
                     wf_service.trg_validate(uid, 'stock.picking', pick_to_use, 'button_confirm', cr)
@@ -558,6 +557,8 @@ class sale_order_line(osv.osv):
             if sol.order_id.procurement_request and not sol.order_id.location_requestor_id:
                 raise osv.except_osv(_('Warning !'),
                                      _('You can not validate the line without a Location Requestor.'))
+            if not sol.order_id.procurement_request and sol.product_uom_qty*sol.price_unit >= self._max_value:
+                raise osv.except_osv(_('Warning !'), _('%s line %s: %s') % (sol.order_id.name, sol.line_number, _(self._max_msg)))
             if not sol.order_id.delivery_requested_date:
                 raise osv.except_osv(_('Warning !'),
                                      _('You can not validate the line without a Requested date.'))

@@ -101,7 +101,7 @@ class wizard_import_po_line(osv.osv_memory):
             error_log, message = '', ''
             header_index = context['header_index']
             template_col_count = len(header_index)
-            is_rfq = wiz.po_id.rfq_ok and wiz.po_id.state == 'rfq_sent'
+            is_rfq = wiz.po_id.rfq_ok
             mandatory_col_count = 9 if is_rfq else 7
 
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
@@ -236,7 +236,8 @@ class wizard_import_po_line(osv.osv_memory):
 
                         # Cell 4: Price
                         price_value = check_line.compute_price_value(
-                            row=row, to_write=to_write, cell_nb=header_index[_('Price')], price='Cost Price', context=context)
+                            row=row, to_write=to_write, cell_nb=header_index[_('Price')], price='Cost Price',
+                            is_rfq=is_rfq, context=context)
                         to_write.update(
                             price_unit=price_value['price_unit'],
                             error_list=price_value['error_list'],
@@ -448,7 +449,7 @@ Importation completed in %s!
                     cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
                 context.update({'po_id': po_id, 'header_index': header_index})
                 rfq = purchase_obj.read(cr, uid, po_id, ['state', 'rfq_ok'], context=context)
-                is_rfq = rfq['rfq_ok'] and rfq['state'] == 'rfq_sent'
+                is_rfq = rfq['rfq_ok']
                 res, res1 = wiz_common_import.check_header_values(
                     cr, uid, ids, context, header_index, is_rfq and columns_for_po_line_import + [_('Delivery confirmed date')] \
                     or columns_for_po_line_import[1:], origin='PO')

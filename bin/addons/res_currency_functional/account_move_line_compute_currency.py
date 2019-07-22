@@ -557,8 +557,8 @@ class account_move_line_compute_currency(osv.osv):
             if vals['date'] < period.get('date_start') or vals['date'] > period.get('date_stop'):
                 raise osv.except_osv(_('Warning !'), _('Posting date (%s) is outside of defined period: %s!') % (vals.get('date'), period.get('name') or '',))
 
-    def _update_amount_bis(self, cr, uid, vals, currency_id, curr_fun, date=False, source_date=False,
-                           debit_currency=False, credit_currency=False, context=None):
+    def _compute_currency_on_create_write(self, cr, uid, vals, currency_id, curr_fun, date=False, source_date=False,
+                                          debit_currency=False, credit_currency=False, context=None):
         if context is None:
             context = {}
         newvals = {}
@@ -573,10 +573,13 @@ class account_move_line_compute_currency(osv.osv):
 
         if 'currency_table_id' in context:
             ctxcurr['currency_table_id'] = context['currency_table_id']
-#        if ctxcurr.get('date', False):
-#            newvals['date'] = ctxcurr['date']
 
-        if vals.get('credit_currency') or vals.get('debit_currency'):
+        if context.get('from_web_menu') and (vals.get('debit_currency', False) is not False or vals.get('credit_currency', False) is not False):
+            # use case where one of the booking fields MANUALLY CHANGED IN THE INTERFACE has a value, EVEN IF IT IS 0.00
+            newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
+            newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
+            newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
+        elif vals.get('credit_currency') or vals.get('debit_currency'):
             newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
@@ -584,7 +587,7 @@ class account_move_line_compute_currency(osv.osv):
             newvals['credit_currency'] = cur_obj.compute(cr, uid, curr_fun, currency_id, vals.get('credit') or 0.0, round=True, context=ctxcurr)
             newvals['debit_currency'] = cur_obj.compute(cr, uid, curr_fun, currency_id, vals.get('debit') or 0.0, round=True, context=ctxcurr)
             newvals['amount_currency'] = newvals['debit_currency'] - newvals['credit_currency']
-        elif vals.get('amount_currency'):
+        elif vals.get('amount_currency') not in (None, False):
             if vals['amount_currency'] < 0:
                 newvals['credit_currency'] = -vals['amount_currency']
                 newvals['debit_currency'] = 0
@@ -659,7 +662,7 @@ class account_move_line_compute_currency(osv.osv):
         # and for revaluation lines (US-1682)
         if not is_system_period and not newvals.get('is_addendum_line', False) and not \
                 (context.get('sync_update_execution', False) and 'is_revaluated_ok' in newvals and newvals['is_revaluated_ok']):
-            newvals.update(self._update_amount_bis(cr, uid, vals, newvals['currency_id'], curr_fun, date=date_to_compute, context=context))
+            newvals.update(self._compute_currency_on_create_write(cr, uid, vals, newvals['currency_id'], curr_fun, date=date_to_compute, context=context))
         return super(account_move_line_compute_currency, self).create(cr, uid, newvals, context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
@@ -688,7 +691,7 @@ class account_move_line_compute_currency(osv.osv):
             currency_id = vals.get('currency_id') or line.currency_id.id
             func_currency = line.account_id.company_id.currency_id.id
             if line.period_id and not line.period_id.is_system and not (context.get('sync_update_execution', False) and line.is_revaluated_ok):
-                newvals.update(self._update_amount_bis(cr, uid, newvals, currency_id, func_currency, date, source_date, line.debit_currency, line.credit_currency, context=context))
+                newvals.update(self._compute_currency_on_create_write(cr, uid, newvals, currency_id, func_currency, date, source_date, line.debit_currency, line.credit_currency, context=context))
             res = res and super(account_move_line_compute_currency, self).write(cr, uid, [line.id], newvals, context, check=check, update_check=update_check)
             # Update addendum line for reconciliation entries if this line is reconciled
             if vals.get('reconcile_id'):

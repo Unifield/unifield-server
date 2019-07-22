@@ -331,6 +331,7 @@ class account_account(osv.osv):
                                                                     ('user_type_code', '=', 'income'),
                                                                     '&', ('user_type_code', '=', 'expense'), ('user_type.report_type', '!=', 'none'),  # exclude Extra-accounting expenses
                                                                     ]),
+        'prevent_multi_curr_rec': fields.boolean('Prevent Reconciliation with different currencies'),
         'shortcut': fields.char('Shortcut', size=12),
         'tax_ids': fields.many2many('account.tax', 'account_account_tax_default_rel',
                                     'account_id', 'tax_id', 'Default Taxes'),
@@ -355,6 +356,7 @@ class account_account(osv.osv):
     _defaults = {
         'type': 'view',
         'reconcile': False,
+        'prevent_multi_curr_rec': False,
         'active': True,
         'currency_mode': 'current',
         'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'account.account', context=c),
@@ -505,6 +507,16 @@ class account_account(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         self._check_moves(cr, uid, ids, "unlink", context=context)
         return super(account_account, self).unlink(cr, uid, ids, context=context)
+
+    def onchange_reconcile(self, cr, uid, ids, reconcile, context=None):
+        """
+        Unticks "Prevent Reconciliation with different currencies" when "Reconcile" is unticked
+        """
+        res = {}
+        if not reconcile:
+            res['value'] = {'prevent_multi_curr_rec': False}
+        return res
+
 
 account_account()
 

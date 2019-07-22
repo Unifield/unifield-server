@@ -112,6 +112,10 @@ PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT = [
     (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Comment'), 'string')]
 PRODUCT_LIST_COLUMNS_FOR_IMPORT = [x for (x,y) in PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT]
 
+COLUMNS_HEADER_FOR_PRODUCT_LINE_IMPORT = [
+    (_('Product Code'), 'string')]
+COLUMNS_FOR_PRODUCT_LINE_IMPORT = [x for (x, y) in COLUMNS_HEADER_FOR_PRODUCT_LINE_IMPORT]
+
 ACCOUNT_INVOICE_COLUMNS_HEADER_FOR_IMPORT = [
     ('Description', 'string'), ('Account', 'string'), ('Quantity', 'number'), ('Unit Price', 'number'), ('Destination', 'string'), ('Cost Center', 'string'), ('Funding Pool', 'string')]
 ACCOUNT_INVOICE_COLUMNS_FOR_IMPORT = [x for (x,y) in ACCOUNT_INVOICE_COLUMNS_HEADER_FOR_IMPORT]
@@ -157,6 +161,7 @@ import wizard_import_order_cycle_line
 import wizard_import_threshold_value_line
 import wizard_import_stock_warehouse_order_point_line
 import wizard_import_product_list
+import wizard_import_product_line
 import wizard_import_supplier_catalogue
 import wizard_po_simulation_screen
 import wizard_in_simulation_screen

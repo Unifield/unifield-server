@@ -537,14 +537,28 @@ class audittrail_rule(osv.osv):
                 "search_view_id": search_view_id and search_view_id[1] or False,
                 "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
             }
+            view_ids = []
+            if thisrule.object_id.model in ('purchase.order', 'purchase.order.line'):
+                # not Track changes on RfQ
+                view_ids.append(obj_model.get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1])
+                view_ids.append(obj_model.get_object_reference(cr, uid, 'purchase', 'purchase_order_tree')[1])
 
-            if thisrule.object_id.model == 'account.bank.statement.line' or\
+            elif thisrule.object_id.model == 'account.bank.statement.line' or\
                     thisrule.object_id.model == 'account.move.line':
                 # for register line we allow to select many lines in track changes view
                 # it is required to use fct_object_id and fct_res_id instead
                 # of object_id and res_id because account.bank.statement.line are sub object of
                 # register and track changes are created this way.
                 val['domain'] = "[('fct_object_id','=', %d), ('fct_res_id', 'in', active_ids)]" % (thisrule.object_id.id, )
+
+            elif thisrule.object_id.model == 'stock.move':
+                # disable Track changes link
+                view_ids.append(obj_model.get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1])
+
+            elif thisrule.object_id.model == 'stock.picking':
+                # TC only on IN
+                view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_in_tree')[1])
+                view_ids.append(obj_model.get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1])
 
             # search if the view does not already exists
             search_domain = [('name', '=', val['name']),
@@ -561,7 +575,7 @@ class audittrail_rule(osv.osv):
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
             keyword = 'client_action_relate'
             value = 'ir.actions.act_window,' + str(action_id)
-            obj_model.ir_set(cr, uid, 'action', keyword, 'View_log_' + thisrule.object_id.model, [thisrule.object_id.model], value, replace=True, isobject=True, xml_id=False)
+            obj_model.ir_set(cr, uid, 'action', keyword, 'View_log_' + thisrule.object_id.model, [thisrule.object_id.model], value, replace=True, isobject=True, xml_id=False, view_ids=view_ids)
             cr.execute('update ir_values set sequence = 99999 where model=%s and key=\'action\' and name=%s', (thisrule.object_id.model, 'View_log_' + thisrule.object_id.model))
             # End Loop
 

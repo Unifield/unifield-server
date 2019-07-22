@@ -117,7 +117,9 @@ class stock_move(osv.osv):
             search_args.append((matching_fields.get(arg[0], arg[0]), arg[1], arg[2]))
 
         # copy search_args, because it's modified by sale_obj.search
-        sale_ids = sale_obj.search(cr, uid, search_args[:], limit=0)
+        sale_args = search_args[:]
+        sale_args.append(('procurement_request', 'in', ['t', 'f']))
+        sale_ids = sale_obj.search(cr, uid, sale_args, limit=0)
         purch_ids = purch_obj.search(cr, uid, search_args, limit=0)
 
         newrgs = []

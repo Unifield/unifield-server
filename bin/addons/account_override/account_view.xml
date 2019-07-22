@@ -16,7 +16,8 @@
                             <field name="activation_date"/>
                             <field name="inactivation_date"/>
                             <group col="2" colspan="2">
-                                <field name="reconcile"/>
+                                <field name="reconcile" on_change="onchange_reconcile(reconcile)"/>
+                                <field name="prevent_multi_curr_rec" attrs="{'readonly': [('reconcile', '=', False)]}"/>
                                 <field name="reconciliation_debit_account_id"/>
                                 <field name="reconciliation_credit_account_id"/>
                             </group>

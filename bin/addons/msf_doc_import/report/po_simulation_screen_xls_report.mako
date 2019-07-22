@@ -298,7 +298,7 @@
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.imp_currency and obj_name_get('res.currency', l.imp_currency.id) or '')|x}</Data></Cell>
         % endif
-        % if not l.type_change == 'ignore' and (l.type_change == 'del' or (l.in_drd != l.imp_drd and isDate(l.imp_drd))):
+        % if not l.type_change == 'ignore' and (l.type_change == 'del' or l.in_drd != l.imp_drd) and isDate(l.imp_drd):
         <Cell ss:StyleID="line_change_short_date" ><Data ss:Type="DateTime">${(l.imp_drd)|n}T00:00:00.000</Data></Cell>
         % elif isDate(l.imp_drd):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(l.imp_drd)|n}T00:00:00.000</Data></Cell>

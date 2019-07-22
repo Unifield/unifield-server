@@ -1365,7 +1365,7 @@ class orm_template(object):
                     res[f]['third_table'] = field_col._rel
                 for arg in ('string', 'readonly', 'states', 'size', 'required', 'group_operator',
                             'change_default', 'translate', 'help', 'select',
-                            'selectable', 'internal', 'hide_default_menu'):
+                            'selectable', 'internal', 'hide_default_menu', 'sort_column'):
                     if getattr(field_col, arg):
                         res[f][arg] = getattr(field_col, arg)
                 if not write_access:
@@ -1557,6 +1557,10 @@ class orm_template(object):
                 trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('help'))
                 if trans:
                     node.set('help', trans)
+            if node.get('required_error_msg'):
+                trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('required_error_msg'))
+                if trans:
+                    node.set('required_error_msg', trans)
             if node.get('string'):
                 trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('string'))
                 if trans == node.get('string') and ('base_model_name' in context):
