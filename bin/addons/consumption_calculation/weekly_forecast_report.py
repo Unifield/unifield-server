@@ -330,6 +330,7 @@ class weekly_forecast_report(osv.osv):
         :rtype boolean
         """
         # Objects
+        debug = True
         product_obj = self.pool.get('product.product')
         loc_obj = self.pool.get('stock.location')
         uom_obj = self.pool.get('product.uom')
@@ -342,11 +343,11 @@ class weekly_forecast_report(osv.osv):
 
         # background cursor
         new_cr = pooler.get_db(cr.dbname).cursor()
+        fixed_now = now()
         try:
             for report in self.browse(new_cr, uid, ids, context=context):
                 product_domain = [('type', '=', 'product')]
                 product_ids = []
-                nomen_name_for_loc = None
                 if report.nomen_manda_0:
                     nom = False
                     # Get all products for the defined nomenclature
@@ -362,7 +363,6 @@ class weekly_forecast_report(osv.osv):
                     elif report.nomen_manda_0:
                         nom = report.nomen_manda_0.id
                         field = 'nomen_manda_0'
-                        nomen_name_for_loc = report.nomen_manda_0.name
 
                     if nom:
                         product_domain.append((field, '=', nom))
@@ -381,14 +381,7 @@ class weekly_forecast_report(osv.osv):
                     ('location_id', 'child_of', report.location_id.id),
                     ('quarantine_location', '=', False),
                 ], order='location_id', context=context)
-
-                if location_ids:
-                    loc_name = loc_obj.read(new_cr, uid, location_ids[0], ['name',], context=context)
-                    if loc_name:
-                        loc_name = loc_name['name']
-                        if loc_name in ['LOG', 'MED'] and loc_name != nomen_name_for_loc:
-                            nomen_id = self.pool.get('product.nomenclature').search(new_cr, uid, [('level', '=', 0), ('name', '=', loc_name)], context=context)[0]
-                            product_domain.append(('nomen_manda_0', '=', nomen_id))
+                loc_asked_by_user = location_ids[:]
 
                 #UFTP-225: If the location is from Stock/MED/LOG, take also the Input location for the report
                 stock_ids = loc_obj.search(new_cr, uid, [('location_category', '=', 'stock')], context=context)
@@ -412,12 +405,12 @@ class weekly_forecast_report(osv.osv):
                     i += 1
                     if report.interval_type == 'week':
                         interval_name = 'Week %s' % i
-                        interval_from = now() + RelativeDateTime(weeks=i-1, hour=0, minute=0, second=0)
-                        interval_to = now() + RelativeDateTime(weeks=i, days=-1, hour=23, minute=59, second=59)
+                        interval_from = fixed_now + RelativeDateTime(weeks=i-1, hour=0, minute=0, second=0)
+                        interval_to = fixed_now + RelativeDateTime(weeks=i, days=-1, hour=23, minute=59, second=59)
                     else:
                         interval_name = 'Month %s' % i
-                        interval_from = now() + RelativeDateTime(months=i-1, hour=0, minute=0, second=0)
-                        interval_to = now() + RelativeDateTime(months=i, days=-1, hour=23, minute=59, second=59)
+                        interval_from = fixed_now + RelativeDateTime(months=i-1, hour=0, minute=0, second=0)
+                        interval_to = fixed_now + RelativeDateTime(months=i, days=-1, hour=23, minute=59, second=59)
 
                     intervals.append((interval_name, interval_from, interval_to))
                     dict_int_from.setdefault(interval_from.strftime('%Y-%m-%d'), interval_name)
@@ -432,31 +425,18 @@ class weekly_forecast_report(osv.osv):
                 ##### First, get the list of product_id
                 product_ids = product_obj.search(new_cr, uid, product_domain, context=context)
                 product_ids = list(set(product_ids))
+                if debug:
+                    print 'orginial prod dom', product_domain, product_ids
 
                 if len(product_ids) > 0:
                     ##### UFTP-220: Filter this list of products for those only appeared in the selected location of the report, not all product
-                    new_cr.execute("select distinct product_id from report_stock_inventory where location_id in %s and product_id in %s", (tuple(location_ids),tuple(product_ids),) )
+                    new_cr.execute("select distinct product_id from report_stock_inventory where location_id in %s and product_id in %s", (tuple(loc_asked_by_user),tuple(product_ids),) )
                     product_ids = []
                     for row in new_cr.dictfetchall():
                         product_ids.append(row['product_id'])
                     product_ids = list(set(product_ids)) # just to make sure that the list is duplicate-free
-
-                ##### We still need to get the list of products with AMC and FMC > 0
-                fmc_line_obj = self.pool.get('monthly.review.consumption.line')
-                tmp_product_ids = []
-                amc_fmc_product_ids = fmc_line_obj.search(new_cr, uid, ['|', ('amc', '>', 0), ('fmc', '>', 0)], context=context)
-                if len(amc_fmc_product_ids) > 0:
-                    amc_fmc_product_ids = fmc_line_obj.read(new_cr, uid, amc_fmc_product_ids, ['name',], context=context) # read the name, which is product_id
-                    for temp in amc_fmc_product_ids:
-                        if temp['name'] and temp['name'][0]:
-                            tmp_product_ids.append(temp['name'][0])
-
-                temp_domain = product_domain
-                temp_domain.append(('id', 'in', tmp_product_ids))
-                tmp_product_ids = product_obj.search(new_cr, uid, temp_domain, context=context) # search with domain again
-
-                product_ids.extend(tmp_product_ids)
-                product_ids = list(set(product_ids)) # just to make sure that the list is duplicate-free
+                    if debug:
+                        print "Prod in the loc", self.pool.get('stock.location').read(cr, uid, loc_asked_by_user, ['name']), product_ids
 
                 ##### Now, from this list, perform calculation for consumption, in-pipeline and expired quantity
                 nb_products = len(product_ids) # reupdate the number of real products to calculate
@@ -466,7 +446,7 @@ class weekly_forecast_report(osv.osv):
                     # Get consumption, in-pipe and expired quantities for each product
                     product_cons.update(self._get_product_consumption(new_cr, uid, product_ids, location_ids, report, context=context))
                     in_pipe_vals.update(self._get_in_pipe_vals(new_cr, uid, product_ids, location_ids, report, context=context))
-                    exp_vals.update(self._get_expiry_batch(new_cr, uid, product_cons, location_ids, report, context=context))
+                    exp_vals.update(self._get_expiry_batch(new_cr, uid, product_cons, location_ids, report, fixed_now=fixed_now, context=context))
 
                     percent_completed = (t/nb_products) * 100
                     progress_comment = """
@@ -519,19 +499,15 @@ class weekly_forecast_report(osv.osv):
                 ], context=context)
 
                 j = 0
-                # UFTP-220: get a list of rules that has either one of 3 columns yes, and add the product_ids of these lines for checking it.
-                rule_prod_ids = []
-                new_cr.execute("select distinct product_id from procurement_rules_report where auto_supply_ok = 'yes' or order_cycle_ok = 'yes' or min_max_ok = 'yes' or threshold_ok = 'yes'")
-                for row in new_cr.dictfetchall():
-                    rule_prod_ids.append(row['product_id'])
 
                 for product in stock_products:
                     product_id = product['id']
                     j += 1
                     cons = product_cons[product_id][1]
                     if not cons and not product['qty_available']:
-                        if product_id not in rule_prod_ids:
-                            continue
+                        if debug:
+                            print 'CONTINUE', product_id
+                        continue
 
                     weekly_cons = cons
                     if report.interval_type == 'week':
@@ -547,7 +523,7 @@ class weekly_forecast_report(osv.osv):
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(stock_qty)s</Data></Cell>
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(pipe_qty)s</Data></Cell>
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(exp_qty)s</Data></Cell>""" % {
-                        'product_code': product['default_code'],
+                        'product_code': escape(product['default_code']),
                         'product_name': escape(product['name']),
                         'unit_price': product['standard_price'],
                         'consumption': cons,
@@ -568,10 +544,10 @@ class weekly_forecast_report(osv.osv):
                     # Return the last from date of interval closest to date
                     def get_interval_by_date(date):
                         date = DateFrom(date)
-                        if date < now():
-                            date = now()
+                        if date < fixed_now:
+                            date = fixed_now
                         if report.interval_type == 'week':
-                            st_day = now().day_of_week
+                            st_day = fixed_now.day_of_week
                             last_date = date + RelativeDateTime(weekday=(st_day, 0))
                             if date.iso_week[2] == last_date.iso_week[2]:
                                 return date
@@ -580,7 +556,7 @@ class weekly_forecast_report(osv.osv):
                             else:
                                 return date + RelativeDateTime(weeks=-1) + RelativeDateTime(weekday=(st_day, 0))
                         else:
-                            st_day = now().day
+                            st_day = fixed_now.day
                             if date.day >= st_day:
                                 return date + RelativeDateTime(day=st_day)
                             else:
@@ -706,7 +682,7 @@ class weekly_forecast_report(osv.osv):
 
         return res
 
-    def _get_expiry_batch(self, cr, uid, product_cons, location_ids, report, context=None):
+    def _get_expiry_batch(self, cr, uid, product_cons, location_ids, report, fixed_now, context=None):
         """
         Returns a dictionary with for each product in products, the expiry quantities per date.
 
@@ -736,9 +712,9 @@ class weekly_forecast_report(osv.osv):
         res = {}
 
         if report.interval_type == 'week':
-            report_end_date = now() + RelativeDateTime(weeks=report.interval)
+            report_end_date = fixed_now + RelativeDateTime(weeks=report.interval)
         else:
-            report_end_date = now() + RelativeDateTime(months=report.interval)
+            report_end_date = fixed_now + RelativeDateTime(months=report.interval)
 
         for product, av_cons in product_cons.itervalues():
             res.setdefault(product['id'], {'total': 0.00})
@@ -752,7 +728,7 @@ class weekly_forecast_report(osv.osv):
                 ('life_date', '<=', report_end_date.strftime('%Y-%m-%d')),
             ], order='life_date', context=context)
 
-            last_expiry_date = now() - RelativeDateTime(days=1)
+            last_expiry_date = fixed_now - RelativeDateTime(days=1)
             total_expired = 0.00
             rest = 0.00
             already_cons = 0.00
