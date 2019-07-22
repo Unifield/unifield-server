@@ -3578,6 +3578,7 @@ class stock_picking(osv.osv):
 
             # if the flow type is in quick mode, we perform the ppl steps automatically
             if picking.flow_type == 'quick' and new_ppl:
+                context['from_quick_flow'] = picking.id
                 res = self.quick_mode(cr, uid, new_ppl.id, context=context)
                 return res
 
@@ -3758,7 +3759,12 @@ class stock_picking(osv.osv):
         proc = self.pool.get('ppl.processor').browse(cr, uid, wizard_ids, fields_to_fetch=['picking_id'], context=context)
 
         nb_lines = self.pool.get('ppl.family.processor').search(cr, uid, [('wizard_id', 'in', wizard_ids)], count=True)
-        return self.pool.get('job.in_progress')._prepare_run_bg_job(cr, uid, wizard_ids, 'stock.picking', self.do_ppl_step2, nb_lines, _('Validate PPL'), main_object_id=proc[0].picking_id.id, return_success={'type': 'ir.actions.act_window_close'}, context=context)
+        # if from quick flow: attach progress to Picking Ticket
+        if context.get('from_quick_flow'):
+            main_object_id = context['from_quick_flow']
+        else:
+            main_object_id = proc[0].picking_id.id
+        return self.pool.get('job.in_progress')._prepare_run_bg_job(cr, uid, wizard_ids, 'stock.picking', self.do_ppl_step2, nb_lines, _('Validate PPL'), main_object_id=main_object_id, return_success={'type': 'ir.actions.act_window_close'}, context=context)
 
 
     def do_ppl_step2(self, cr, uid, wizard_ids, context=None, job_id=False):

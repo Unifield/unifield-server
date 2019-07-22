@@ -757,7 +757,7 @@
                                 <button name="ppl_return" string="Return Products..." states="confirmed,assigned" type="object" icon="gtk-undo" context="{'from_button': True}" />
                                 <button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
                                 <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" />
-                                <button name="ppl_pack_lines" states="assigned" string="Pack Lines..." type="object" icon="gtk-go-forward" attrs="{'invisible': [('flow_type', '=', 'quick')]}" />
+                                <button name="ppl_pack_lines" states="assigned" string="Pack Lines..." type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('flow_type', '=', 'quick'), ('state', '=', 'done')]}" />
                                 <button name="check_ppl_integrity" states="assigned" string="Check Integrity" type="object" icon="gtk-info"/>
                                 <button name="ppl_step2" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver" context="{'from_button': True}" />
                             </group>

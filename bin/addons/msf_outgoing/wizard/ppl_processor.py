@@ -33,6 +33,7 @@ class ppl_processor(osv.osv):
     _description = 'Wizard to process the third step of the P/P/S'
 
     _columns = {
+        'name': fields.char('Name', size=256),
         'family_ids': fields.one2many(
             'ppl.family.processor',
             'wizard_id',
@@ -45,6 +46,11 @@ class ppl_processor(osv.osv):
     _defaults = {
         'draft_step2': lambda *a: False,
     }
+
+    def create(self, cr, uid, vals, context=None):
+        if 'picking_id' in vals:
+            vals['name'] = self.pool.get('stock.picking').read(cr, uid, vals['picking_id'], ['name']).get('name')
+        return super(ppl_processor, self).create(cr, uid, vals, context=context)
 
     def do_reset_step2(self, cr, uid, ids, context=None):
         if context is None:
