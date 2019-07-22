@@ -4917,6 +4917,7 @@ msgstr "Holds the row id of rows imported from a remote instance. Unused except 
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
+#: selection:stock.move.in.processor,sequence_issue:0
 msgid "A gap exists in the sequence"
 msgstr "Un écart existe dans la séquence"
 
@@ -21405,6 +21406,8 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: report:empty.picking.ticket:0
 #: report:picking.ticket:0
 #: field:job.in_progress,name:0
+#: field:ppl.processor,name:0
+#: field:return.ppl.processor,name:0
 #, python-format
 msgid "Name"
 msgstr "Nom"
@@ -34891,13 +34894,15 @@ msgstr "OpenERP Tweets"
 msgid "Simplified"
 msgstr "Simplifié"
 
-#. modules: sync_client, base, board, stock
+#. modules: sync_client, base, board, stock, msf_outgoing,stock_override
 #: field:res.partner.address,title:0
 #: field:res.partner.title,name:0
 #: field:res.widget,title:0
 #: field:board.board.line,name:0
 #: field:hq.monitor,title:0
 #: field:stock.picking,object_name:0
+#: field:shipment,object_name:0
+#: field:change.dest.location,wizard_title:0
 msgid "Title"
 msgstr "Titre"
 
@@ -45508,6 +45513,7 @@ msgstr "Excel file"
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
+#: selection:stock.move.in.processor,sequence_issue:0
 msgid "To value must be greater or equal to From value"
 msgstr "'A Valeur' doit être supérieure ou égale à 'De Valeur'"
 
@@ -50485,6 +50491,7 @@ msgstr "Vous ne pouvez pas supprimer ce créateur  produit parce qu il est utili
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
 #: selection:stock.move,integrity_error:0
+#: selection:stock.move.in.processor,sequence_issue:0
 msgid "The sequence overlaps previous one"
 msgstr "La séquence chevauche la précédente"
 
@@ -52725,6 +52732,7 @@ msgstr "Planification"
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:shipment.add.pack.processor.line,integrity_status:0
 #: selection:stock.move,integrity_error:0
+#: selection:stock.move.in.processor,integrity_status:0
 msgid "Too much quantity selected"
 msgstr "Quantité sélectionnée trop grande"
 
@@ -69282,6 +69290,7 @@ msgstr "Méthode d'Approvisionnement"
 #: selection:stock.move.in.processor,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
+#: selection:stock.move.in.processor,sequence_issue:0
 msgid "The first sequence must start with 1"
 msgstr "La première séquence doit commencer par un 1"
 
@@ -74190,6 +74199,8 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/product/wizard/product_mass_update.py:210
 #: code:addons/product/wizard/product_mass_update.py:216
 #: selection:product.mass.update,state:0
+#: code:addons/stock/report/products_situation_report.py:92
+#: code:addons/stock/report/products_situation_report.py:143
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -104831,6 +104842,7 @@ msgstr "Changer les sources"
 
 #. module: stock_override
 #: view:change.dest.location:0
+#: code:addons/stock_override/wizard/change_dest_location.py:44
 msgid "Change Location"
 msgstr "Changer la Zone"
 
@@ -105108,6 +105120,7 @@ msgstr "Code - Raison"
 
 #. module: msf_outgoing
 #: view:shipment:0
+#: code:addons/msf_outgoing/msf_outgoing.py:308
 msgid "Shipment List"
 msgstr "Expédition"
 
@@ -106067,3 +106080,16 @@ msgstr "Changer la zone - Lignes sélectionnées"
 msgid "No stock move found."
 msgstr "Aucun mouvement trouvé."
 
+#. module: stock_override
+#: code:addons/stock_override/wizard/change_dest_location.py:63
+#: view:change.dest.location:0
+#, python-format
+msgid "Change Sources"
+msgstr "Changer Sources"
+
+#. modules: stock_override, stock
+#: code:addons/stock/stock.py:1840
+#: code:addons/stock_override/wizard/change_dest_location.py:62
+#, python-format
+msgid "Please select at least one line"
+msgstr "Veuillez sélectionner au moins une ligne"
