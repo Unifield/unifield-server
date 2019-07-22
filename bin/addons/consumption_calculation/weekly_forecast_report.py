@@ -426,7 +426,7 @@ class weekly_forecast_report(osv.osv):
                 product_ids = product_obj.search(new_cr, uid, product_domain, context=context)
                 product_ids = list(set(product_ids))
                 if debug:
-                    print 'orginial prod dom', product_domain, product_ids
+                    print 'original prod dom', product_domain, product_ids
 
                 if len(product_ids) > 0:
                     ##### UFTP-220: Filter this list of products for those only appeared in the selected location of the report, not all product
@@ -499,7 +499,6 @@ class weekly_forecast_report(osv.osv):
                 ], context=context)
 
                 j = 0
-
                 for product in stock_products:
                     product_id = product['id']
                     j += 1
