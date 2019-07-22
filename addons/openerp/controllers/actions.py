@@ -270,6 +270,11 @@ def execute_report(name, **data):
 def act_window_close(action=False, *args, **b):
     return close_popup(o2m_refresh=action.get('o2m_refresh'))
 
+def refresh_o2m(action=False, *a, **b):
+    cherrypy.response.headers['Content-Type'] = 'text/javascript'
+    import json
+    return json.dumps({'reload': 1, 'list_grid': action.get('o2m_refresh')})
+
 def act_window(action, data):
     if not action.get('opened'):
         action.setdefault('target', 'current')
@@ -403,6 +408,7 @@ def act_url(action, data):
                               ))
 
 ACTIONS_BY_TYPE = {
+    'ir.actions.refresh_o2m': refresh_o2m,
     'ir.actions.act_window_close': act_window_close,
     'ir.actions.act_window': act_window,
     'ir.actions.submenu': act_window,
