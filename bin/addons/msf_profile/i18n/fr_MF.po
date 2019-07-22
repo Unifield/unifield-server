@@ -45652,7 +45652,6 @@ msgstr "======================================================"
 
 #. modules: account, register_accounting
 #: field:account.invoice,tax_line:0
-#: field:account.invoice,tax_line_ids:0
 #: field:wizard.account.invoice,tax_line:0
 msgid "Tax Lines"
 msgstr "Lignes de Taxe"
@@ -106967,11 +106966,6 @@ msgstr "Type de Facture"
 #: help:wizard.account.invoice,from_supply:0
 msgid "Internal field indicating whether the document is related to a Supply workflow"
 msgstr "Champ interne indiquant si le document est lié à un flux \"Supply\""
-
-#. module: account
-#: help:account.invoice,tax_line_ids:0
-msgid "Internal field for taxes always in read-only mode"
-msgstr "Champ interne pour les taxes toujours en mode lecture seule"
 
 #. module: account_override
 #: code:addons/account_override/account_invoice_sync.py:120

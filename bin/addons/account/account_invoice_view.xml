@@ -212,39 +212,25 @@
                                 </tree>
                             </field>
                             <group col="1" colspan="2">
-                                <group colspan="1" attrs="{'invisible': ['|', ('type', '!=', 'in_invoice'), ('synced', '=', False)]}">
-                                    <!-- SI synced: Tax Lines always in read-only -->
-                                    <field name="tax_line_ids" nolabel="1">
-                                        <tree noteditable="1" string="Taxes">
-                                            <field name="account_tax_id"/>
-                                            <field name="name"/>
-                                            <field name="account_id"/>
-                                            <field name="base"/>
-                                            <field name="amount"/>
-                                        </tree>
-                                    </field>
-                                </group>
-                                <group colspan="1" attrs="{'invisible': [('type', '=', 'in_invoice'), ('synced', '=', True)]}">
-                                    <field name="tax_line" nolabel="1">
-                                        <tree editable="bottom" string="Taxes">
-                                            <field name="invoice_id" invisible="True"/>
-                                            <field name="account_tax_id" on_change="tax_code_change(account_tax_id,parent.amount_untaxed,context)"/>
-                                            <field name="name"/>
+                                <field name="tax_line" nolabel="1" attrs="{'invisible': [('vat_ok', '=', False)], 'readonly': ['|', ('state','!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}">
+                                    <tree editable="bottom" string="Taxes">
+                                        <field name="invoice_id" invisible="True"/>
+                                        <field name="account_tax_id" on_change="tax_code_change(account_tax_id,parent.amount_untaxed,context)"/>
+                                        <field name="name"/>
 
-                                            <field name="account_id" groups="account.group_account_invoice"
-                                                   domain="[('type', 'not in', ['view', 'consolidation']),
-                                                            ('user_type_code', '=', 'tax')]"/>
+                                        <field name="account_id" groups="account.group_account_invoice"
+                                               domain="[('type', 'not in', ['view', 'consolidation']),
+                                                        ('user_type_code', '=', 'tax')]"/>
 
-                                            <field name="base" on_change="base_change(base,parent.currency_id,parent.company_id,parent.date_invoice)" readonly="1"/>
-                                            <field name="amount" on_change="amount_change(amount,parent.currency_id,parent.company_id,parent.date_invoice)"/>
+                                        <field name="base" on_change="base_change(base,parent.currency_id,parent.company_id,parent.date_invoice)" readonly="1"/>
+                                        <field name="amount" on_change="amount_change(amount,parent.currency_id,parent.company_id,parent.date_invoice)"/>
 
-                                            <field invisible="True" name="base_amount"/>
-                                            <field invisible="True" name="tax_amount"/>
-                                            <field name="factor_base" invisible="True"/>
-                                            <field name="factor_tax" invisible="True"/>
-                                        </tree>
-                                    </field>
-                                </group>
+                                        <field invisible="True" name="base_amount"/>
+                                        <field invisible="True" name="tax_amount"/>
+                                        <field name="factor_base" invisible="True"/>
+                                        <field name="factor_tax" invisible="True"/>
+                                    </tree>
+                                </field>
                             </group>
                             <group col="4" colspan="2">
                                 <button colspan="2" name="button_reset_taxes" states="draft" string="Compute Taxes" type="object" icon="terp-stock_format-scientific"/>
