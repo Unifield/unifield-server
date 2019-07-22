@@ -6,8 +6,10 @@
             <field name="name">change.dest.location.form.view</field>
             <field name="model">change.dest.location</field>
             <field name="type">form</field>
+            <field name="title_field">wizard_title</field>
             <field name="arch" type="xml">
                 <form string="Change Location">
+                    <field name="wizard_title" invisible="1" />
                     <group attrs="{'invisible':  [('type', '=', 'out')]}" colspan="4">
                         <separator colspan="4" string="Internal move" />
                     </group>
@@ -35,7 +37,7 @@
                     <group colspan="4" col="3">
                         <button name="close_window" icon="gtk-cancel" string="Close" states="end" type="object" />
                         <button name="change_dest_location" type="object" icon="gtk-execute" string="Change location" states="start" />
-                        <button name="change_dest_location_selected" type="object" icon="gtk-execute" string="Change location - Selected lines" states="start" />
+                        <button name="change_dest_location_selected" type="object" icon="gtk-execute" string="Change Sources" states="start" />
                         <button special="cancel" icon="gtk-cancel" string="Cancel" states="start" />
                     </group>
                 </form>

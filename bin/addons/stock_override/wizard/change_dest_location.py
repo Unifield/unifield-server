@@ -35,11 +35,13 @@ class change_dest_location(osv.osv_memory):
         'type': fields.selection([('internal','internal'), ('out', 'out')], 'Type'),
         'warn_msg': fields.text(string='Warning message', readonly=True),
         'state': fields.selection([('start', 'Start'), ('end', 'Finished')], string='State', readonly=True),
+        'wizard_title': fields.char('Title', size=256),
     }
 
     _defaults = {
         'state': lambda *a: 'start',
         'type': 'internal',
+        'wizard_title': lambda *a: _('Change Location'),
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -55,6 +57,10 @@ class change_dest_location(osv.osv_memory):
 
         picking = self.pool.get('stock.picking').browse(cr, uid, vals.get('picking_id'), fields_to_fetch=['type'], context=context)
         vals['type'] = picking.type
+        if picking.type == 'out':
+            if not context.get('button_selected_ids'):
+                raise osv.except_osv(_('Warning'),  _('Please select at least one line'))
+            vals['wizard_title'] = _('Change Sources')
         if picking.type not in ('internal', 'out'):
             raise osv.except_osv(_('Error'), _('The modification of the locations is only available for Internal moves and Picking Ticket.'))
         return super(change_dest_location, self).create(cr, uid, vals, context=context)
@@ -70,7 +76,11 @@ class change_dest_location(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        return {'type': 'ir.actions.act_window_close'}
+        close_wiz = {'type': 'ir.actions.act_window_close'}
+
+        if context.get('button_selected_ids'):
+            close_wiz['o2m_refresh'] = 'move_lines'
+        return close_wiz
 
     def getSelection(self,o,fields):
         sel =  o.fields_get(self.cr, self.uid, fields)
@@ -187,7 +197,8 @@ class change_dest_location(osv.osv_memory):
         view_xml = etree.fromstring(res['arch'])
         if has_selection:
             fields = view_xml.xpath("//button[@name='change_dest_location']")
-            fields[0].set('string',  _('Change location - All lines'))
+            #fields[0].set('string',  _('Change location - All lines'))
+            fields[0].set('invisible', '1')
         else:
             fields = view_xml.xpath("//button[@name='change_dest_location_selected']")
             fields[0].set('invisible', '1')
