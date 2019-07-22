@@ -1835,29 +1835,24 @@ class stock_picking(osv.osv):
                 self.infolog(cr, uid, message)
         return True
 
+    def check_selected(self, context):
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Warning'),  _('Please select at least one line'))
+        return True
+
     def copy_all(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        cond = ''
-        params = [tuple(ids)]
-        if context.get('button_selected_ids'):
-            cond = 'and id in %s'
-            params.append(tuple(context['button_selected_ids']))
-
-        cr.execute("update stock_move set qty_to_process=product_qty where state = 'assigned' and picking_id in %s and product_qty!=0 "+cond, params) # not_a_user_entry
-        return True
+        self.check_selected(context)
+        cr.execute("update stock_move set qty_to_process=product_qty where state = 'assigned' and picking_id in %s and product_qty!=0 and id in %s", (tuple(ids), tuple(context['button_selected_ids']))) # not_a_user_entry
+        return {'type': 'ir.actions.refresh_o2m', 'o2m_refresh': 'move_lines'}
 
     def uncopy_all(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        cond = ''
-        params = [tuple(ids)]
-        if context.get('button_selected_ids'):
-            cond = 'and id in %s'
-            params.append(tuple(context['button_selected_ids']))
-
-        cr.execute("update stock_move set qty_to_process=0 where state in ('confirmed', 'assigned') and picking_id in %s and product_qty!=0"+cond, params) # not_a_user_entry
-        return True
+        self.check_selected(context)
+        cr.execute("update stock_move set qty_to_process=0 where state in ('confirmed', 'assigned') and picking_id in %s and product_qty!=0 and id in %s", (tuple(ids), tuple(context['button_selected_ids'])))
+        return {'type': 'ir.actions.refresh_o2m', 'o2m_refresh': 'move_lines'}
 
     def reset_all(self, cr, uid, ids, context=None):
         move_obj = self.pool.get('stock.move')
