@@ -52,13 +52,14 @@
                             $('#open_src').html(_('View ')+obj.src_name)
                         }
                         $('#open_src').click(function() {open_progress_target()});
-                        $('#open_src').show();
                         if (obj.target) {
                             if (obj.target_name) {
                                 $('#open_target').html(_('View ')+obj.target_name);
                             }
                             $('#open_target').show();
                             $('#open_target').click(function() {open_progress_target(obj.target)});
+                        } else {
+                            $('#open_src').show();
                         }
                     }
                 }
