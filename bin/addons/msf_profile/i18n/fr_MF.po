@@ -300,7 +300,7 @@ msgstr "Repasser en statut Brouillon"
 #: report:stock.card.report:0
 #: report:addons/stock_override/report/stock_card_report_xls.mako:103
 msgid "STOCK CARD"
-msgstr "FICHE STOCK"
+msgstr "FICHE DE STOCK"
 
 #. module: procurement_cycle
 #: view:stock.warehouse.order.cycle:0
@@ -23333,7 +23333,7 @@ msgstr "Where product used ?"
 #. module: stock_override
 #: view:stock.card.wizard:0
 msgid "Stock cards"
-msgstr "Stock cards"
+msgstr "Fiches de stock"
 
 #. module: account
 #: code:addons/account/account.py:637
@@ -36068,7 +36068,7 @@ msgstr "Budget - Montant"
 #: model:ir.ui.menu,name:sale.menu_board_sales_manager
 #: view:board.board:0
 msgid "Sales Manager Dashboard"
-msgstr "Tableau de bord du Gérant des commandes"
+msgstr "Tableau de bord des Commandes"
 
 #. module: supplier_catalogue
 #: view:res.partner:0
@@ -37088,7 +37088,7 @@ msgstr "Fournisseur - UdM"
 #. module: purchase
 #: view:purchase.order.line.manually.confirmed.wizard:0
 msgid "Confirm Purchase Order line"
-msgstr "Confirm Purchase Order line"
+msgstr "Confirmation des lignes de BdC"
 
 #. module: purchase
 #: report:purchase.order:0
@@ -37197,7 +37197,7 @@ msgstr "Responsable du Compte"
 #. module: partner_modification
 #: selection:res.partner,po_by_project:0
 msgid "All requirements"
-msgstr "Tous les besoins"
+msgstr "Tous les critères"
 
 #. module: base_report_designer
 #: model:ir.actions.act_window,name:base_report_designer.action_report_designer_installer
@@ -39739,7 +39739,7 @@ msgstr "Séquence Lignes"
 #. module: partner_modification
 #: selection:res.partner,po_by_project:0
 msgid "Requirements by Category"
-msgstr "Pré-requis par Catégorie"
+msgstr "Critères par Catégorie"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -40890,7 +40890,7 @@ msgstr "Lignes enfants"
 #. module: stock_override
 #: model:ir.actions.report.xml,name:stock_override.stock_card_report_xls
 msgid "Stock card Excel Export"
-msgstr "Stock card Excel Export"
+msgstr "Fiche de Stock - Excel"
 
 #. module: specific_rules
 #: view:export.report.stock.inventory:0
@@ -44325,7 +44325,7 @@ msgstr "Timeout"
 #. module: stock_override
 #: model:ir.model,name:stock_override.model_stock_card_wizard_line
 msgid "Stock card line"
-msgstr "Stock card line"
+msgstr "Ligne de fiche de stock"
 
 #. module: base
 #: model:ir.model,name:base.model_base_module_configuration
@@ -46745,7 +46745,7 @@ msgstr "Ouvrir le Tableau de Bord"
 #. module: stock_override
 #: model:ir.actions.act_window,name:stock_override.act_product_stock_card
 msgid "Stock Card"
-msgstr "Fiche Stock"
+msgstr "Fiche de Stock"
 
 #. modules: product_attributes, product, specific_rules, msf_tools
 #: constraint:product.uom:0
@@ -50747,7 +50747,7 @@ msgstr "Urgence"
 #. module: purchase
 #: view:purchase.order.line.manually.confirmed.wizard:0
 msgid "Confirm line"
-msgstr "Confirm line"
+msgstr "Confirmer les linges"
 
 #. module: stock
 #: view:stock.production.lot.revision:0
@@ -55912,7 +55912,7 @@ msgstr "Valeur Stock Réel"
 #. module: partner_modification
 #: selection:res.partner,po_by_project:0
 msgid "Requirements by Project"
-msgstr "Besoins par Projet"
+msgstr "Critères par Projet"
 
 #. module: stock_schedule
 #: code:addons/stock_schedule/schedule.py:185
@@ -59817,7 +59817,7 @@ msgstr "Second filtre"
 #. module: partner_modification
 #: selection:res.partner,po_by_project:0
 msgid "Requirements by Category and Project"
-msgstr "Pré-requis par Catégorie et Projet"
+msgstr "Critères par Catégorie et Projet"
 
 #. module: procurement
 #: model:ir.model,name:procurement.model_mrp_property_group
@@ -78282,7 +78282,7 @@ msgstr "Pas de filtre"
 #: model:ir.model,name:stock_override.model_stock_card_wizard
 #: model:ir.ui.menu,name:stock_override.menu_stock_card
 msgid "Stock card"
-msgstr "Fiche Stock"
+msgstr "Fiche de Stock"
 
 #. module: account_override
 #: code:addons/account_override/account.py:924
@@ -79997,7 +79997,7 @@ msgstr "Période d'Ouverture du Registre"
 #: model:ir.ui.menu,name:purchase.menu_board_purchase
 #: model:ir.actions.act_window,name:tender_flow.open_board_purchase
 msgid "Purchase Dashboard"
-msgstr "Achat - Tableau de bord"
+msgstr "Tableau de bord des Achats"
 
 #. module: procurement_auto
 #: model:ir.actions.act_window,help:procurement_auto.action_automatic_supply_tree
@@ -82372,7 +82372,7 @@ msgstr "Inventaire de stock initial"
 #. module: partner_modification
 #: selection:res.partner,po_by_project:0
 msgid "Requirements by Order"
-msgstr "Requirements by Order"
+msgstr "Critères par Commande"
 
 #. module: transport_mgmt
 #: model:ir.module.module,description:transport_mgmt.module_meta_information
@@ -91285,7 +91285,7 @@ msgstr "Détermine si cette Zone est enchaînée à une autre Zone, c'est à di
 #. module: msf_partner
 #: field:res.partner,split_po:0
 msgid "Split PO ?"
-msgstr "Split PO ?"
+msgstr "Scinder BdC ?"
 
 #. module: vertical_integration
 #: field:country.export.mapping,instance_id:0
@@ -92621,7 +92621,7 @@ msgstr "America/St_Thomas"
 #: view:product.product:0
 #: view:supplier.catalogue.line:0
 msgid "Stockable"
-msgstr "Gérer en stock"
+msgstr "Stockable"
 
 #. module: stock
 #: field:stock.picking,auto_picking:0
@@ -99640,7 +99640,7 @@ msgstr "Direction "
 #: view:purchase.order.line.manually.confirmed.wizard:0
 #: view:multiple.sourcing.wizard:0
 msgid "Close the wizard"
-msgstr "Close the wizard"
+msgstr "Fermer la fenêtre"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:2049
@@ -102785,8 +102785,8 @@ msgstr "Numéro du Bon d'Engagement"
 
 #. module: msf_outgoing
 #: view:stock.incoming.processor:0
-msgid "Warning! There is a risk of producing inconsistent data if you process this Incoming Shipment before it receives the delivery details and is changed into status \"Available Shipped\\” after synchronization. To avoid major misalignment please proceed only if you can do a full reception."
-msgstr "Attention! Si vous traitez la Livraison Entrante, il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\"après une synchro. Pour éviter tout mauvais alignement, veuillez procéder au traitement uniquement si vous faites une réception totale."
+msgid "Warning! There is a risk of producing inconsistent data if you process this Incoming Shipment before it receives the delivery details and is changed into status \"Available Shipped\" after synchronization. To avoid major misalignment please proceed only if you can do a full reception."
+msgstr "Attention! Si vous traitez la Livraison Entrante, il y a un risque de générer des données incohérentes tant que le document n'a pas reçu les détails de la livraison et que son état n'a pas changé en \"Disponible Expédié\" après une synchro. Pour éviter tout mauvais alignement, veuillez procéder au traitement uniquement si vous faites une réception totale."
 
 #. module: stock
 #: code:addons/stock/physical_inventory.py:907
