@@ -41,6 +41,7 @@ import ConfigParser
 from ConfigParser import NoOptionError, NoSectionError
 import threading
 
+TRUE_LIST = (True, 'True', 'true', 'TRUE', 'Yes', 'YES', 'yes')
 def get_lang_list():
     langs = [('en_US', 'English (US)')]
     try:
@@ -358,6 +359,27 @@ class Database(BaseController):
             self.msg = {'message': ustr(_('The option \'%s\' from section \'[%s]\' have to be one of those values: %r. (currently it is \'%s\').') % (option, section, possible_values, value)),
                         'title': ustr(_('Wrong option'))}
 
+    def check_date_time(self, config, section, option, time_format):
+        if not config.has_option(section, option):
+            return True
+        value = config.get(section, option)
+        if value:
+            try:
+                time.strptime(value, time_format)
+            except:
+                return False
+        return True
+
+    def check_datetime(self, config, section, option):
+        if not self.check_date_time(config, section, option, '%Y-%m-%d %H:%M'):
+            self.msg = {'message': ustr(_('The option \'%s\' from section \'[%s]\' datetime format expected YYY-MM-DD HH:MM') % (option, section)),
+                        'title': ustr(_('Wrong format'))}
+
+    def check_time(self, config, section, option):
+        if not self.check_date_time(config, section, option, '%H:%M'):
+            self.msg = {'message': ustr(_('The option \'%s\' from section \'[%s]\' time format expected HH:MM') % (option, section)),
+                        'title': ustr(_('Wrong format'))}
+
     def check_config_file(self, file_path):
         '''
         perform some basic checks to avoid crashing later
@@ -416,6 +438,8 @@ class Database(BaseController):
                 ('partner', 'external_account_payable'),
                 ('partner', 'internal_account_receivable'),
                 ('partner', 'internal_account_payable'),
+                ('autosync', 'interval_nb'),
+                ('stockmission', 'interval_nb'),
             )
             for section, option in not_empty_int_option_list:
                 self.check_mandatory_int(config, section, option)
@@ -427,10 +451,25 @@ class Database(BaseController):
                 ('instance', 'instance_level', ('coordo', 'project')),
                 ('instance', 'lang', ('fr_MF', 'es_MF', 'en_MF')),
                 ('backup', 'auto_bck_interval_unit', ('minutes', 'hours', 'work_days', 'days', 'weeks', 'months')),
+                ('autosync', 'interval_unit', ('minutes', 'hours', 'work_days', 'days', 'weeks', 'months')),
+                ('stockmission', 'interval_unit', ('minutes', 'hours', 'work_days', 'days', 'weeks', 'months')),
                 ('reconfigure', 'delivery_process', ('complex', 'simple')),
             )
             for section, option, possible_values in possible_value_list:
                 self.check_possible_value(config, section, option, possible_values)
+                if self.msg:
+                    return
+
+            check_format = [
+                ('backup', 'auto_bck_next_exec_date', self.check_datetime),
+                ('autosync', 'next_exec_date', self.check_datetime),
+                ('stockmission', 'next_exec_date', self.check_datetime),
+                ('silentupgrade', 'hour_from', self.check_time),
+                ('silentupgrade', 'hour_to', self.check_time),
+
+            ]
+            for section, option, check_fct in check_format:
+                check_fct(config, section, option)
                 if self.msg:
                     return
 
@@ -462,6 +501,19 @@ class Database(BaseController):
                 }
                 return
 
+            # check date betweens auto patch and sync scheduler
+            if config.has_option('autosync', 'next_exec_date') and config.has_option('silentupgrade', 'hour_to') and config.has_option('silentupgrade', 'hour_from'):
+                if (not config.has_option('autosync', 'active') or config.get('autosync', 'active') in TRUE_LIST) and (not config.has_option('silentupgrade', 'active') or config.get('silentupgrade', 'active') in TRUE_LIST):
+                    time_from = time.strptime(config.get('silentupgrade', 'hour_from'), '%H:%M')
+                    time_to = time.strptime(config.get('silentupgrade', 'hour_to'), '%H:%M')
+                    if not server_rpc.execute('object', 'execute', 'sync.client.sync_server_connection', 'is_automatic_patching_allowed',
+                            config.get('autosync', 'next_exec_date'), True, time_from.tm_hour + time_from.tm_min/60. , time_to.tm_hour + time_to.tm_min/60.
+                            ):
+                        self.msg = {
+                            'message': _('"Scheduler autosync next date" and "Silent Upgrade interval" are not consistent'),
+                            'title': _('Auto sync / silent upgrade'),
+                        }
+                        return
             config_groups = config.get('instance', 'group_names').split(',')
             found_group = []
             groups_ids = server_rpc.execute('object', 'execute', 'sync.server.entity_group', 'search', [('name', 'in', config_groups)])
