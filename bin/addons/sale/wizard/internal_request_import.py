@@ -33,6 +33,7 @@ from mx import DateTime
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
+from tools.misc import escape_html
 
 NB_OF_HEADER_LINES = 11
 NB_LINES_COLUMNS = 9
@@ -165,14 +166,14 @@ class internal_request_import(osv.osv):
     <p>%s</p>
     <p>%s</p>
     </span>
-                                ''' % (line_n, line.line_message, line.data_summary)
+                                ''' % (line_n, line.line_message, escape_html(line.data_summary))
                             else:
                                 line_n = _('Line %s') % (line.line_number,)
                                 line_err_data += '''
     <p><u>%s</u></p>
     <p>%s</p>
     <p>%s</p>
-                                ''' % (line_n, line.line_message, line.data_summary)
+                                ''' % (line_n, line.line_message, escape_html(line.data_summary))
                     if header_err_data:
                         info_msg += '''
     <br/>
