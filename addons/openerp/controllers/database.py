@@ -547,6 +547,18 @@ class Database(BaseController):
                 }
                 return
 
+            import_path = os.path.join(os.path.dirname(file_path), 'import')
+            if os.path.exists(import_path):
+                for file_name in os.listdir(import_path):
+                    if not file_name.endswith('.csv'):
+                        self.msg = {
+                            'message': 'File to import %s: incorrect name (must end with .csv:' % file_name,
+                            'title': 'File name error',
+                        }
+                        return
+                    import_object = file_name.split('.csv')[0]
+                    server_rpc.execute('object', 'execute', import_object, 'search', [('id', '=', 0)])
+
 
         except NoOptionError as e:
             self.msg = {'message': ustr(_('No option \'%s\' found for the section \'[%s]\' in the config file \'%s\'') % (e.option, e.section, file_path)),
