@@ -50747,7 +50747,7 @@ msgstr "Urgence"
 #. module: purchase
 #: view:purchase.order.line.manually.confirmed.wizard:0
 msgid "Confirm line"
-msgstr "Confirmer les linges"
+msgstr "Confirmer les lignes"
 
 #. module: stock
 #: view:stock.production.lot.revision:0
