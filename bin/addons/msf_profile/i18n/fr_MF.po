@@ -37448,7 +37448,7 @@ msgstr "Spanish (UY) / Español (UY)"
 msgid "Export to HQ system"
 msgstr "Export au système HQ"
 
-#. modules: product, account, base, finance, useability_dashboard_and_menu, account_mcdb
+#. modules: product, account, base, finance, useability_dashboard_and_menu, account_mcdb, msf_partners
 #: field:account.partner.ledger,partner_ids:0
 #: model:ir.ui.menu,name:account.next_id_22
 #: view:res.partner:0
@@ -37459,6 +37459,7 @@ msgstr "Export au système HQ"
 #: field:wizard.account.partner.balance.tree,partner_ids:0
 #: field:product.template,seller_ids:0
 #: model:ir.ui.menu,name:useability_dashboard_and_menu.menu_partner
+#: model:ir.actions.act_window,name:msf_partner.partner_normal_action
 msgid "Partners"
 msgstr "Partenaires"
 
