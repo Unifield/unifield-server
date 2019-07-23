@@ -1732,6 +1732,9 @@ class account_invoice_line(osv.osv):
         """
         if context is None:
             context = {}
+        if self._name == 'wizard.account.invoice.line':
+            # no check on Direct Invoice
+            return True
         inv_obj = self.pool.get('account.invoice')
         if invoice_id:
             inv_fields = ['from_supply', 'synced', 'type', 'is_inkind_donation', 'partner_type']
