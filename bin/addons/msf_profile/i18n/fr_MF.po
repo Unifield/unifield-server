@@ -34094,11 +34094,11 @@ msgid "When option “All requirements” is set for \n"
 "                                            and one category.\n"
 "                                            If option \"Requirements by Order\" is set, the system will create a PO\n"
 "                                            that merge lines coming from the same FO/IR."
-msgstr "Quand l'option \"Tous les pré-requis\" est définie pour un fournisseur donné, le système créera un BdC qui fusionnera tous les pré-requis pour ce fournisseur.\n"
-"Si l'option \"Pré-requis par projet\" est définie, les BdC seront créés par requérant intial (client du SO d'origin), c'est à dire que le ystème crée un BdC par projet pour ce fournisseur.\n"
-"Si l'option \"Pré-requis par Catégorie\" est définie, le système créera un BdC   qui fusionnera tous les pré-requis par catégorie pour ce fournisseur.\n"
-"Si l'option \"Pré-requis par Catégorie et Projet\" est définie, le système créera un BdC   qui fusionnera seulement les pré-requis d'un client et d'une catégorie.\n"
-"Si l'option \"Pré-requis par Commande\" est définie, le système créera un BdC   qui fusionnera les lignes venant d'une seule commande (Interne ou Terrain)."
+msgstr "Quand l'option \"Tous les critères\" est définie pour un fournisseur donné, le système créera un BdC qui fusionnera tous les pré-requis pour ce fournisseur.\n"
+"Si l'option \"Critères par projet\" est définie, les BdC seront créés par requérant intial (client du SO d'origin), c'est à dire que le ystème crée un BdC par projet pour ce fournisseur.\n"
+"Si l'option \"Critères par Catégorie\" est définie, le système créera un BdC qui fusionnera tous les pré-requis par catégorie pour ce fournisseur.\n"
+"Si l'option \"Critères par Catégorie et Projet\" est définie, le système créera un BdC qui fusionnera seulement les pré-requis d'un client et d'une catégorie.\n"
+"Si l'option \"Critères par Commande\" est définie, le système créera un BdC qui fusionnera les lignes venant d'une seule commande (Interne ou Terrain)."
 
 #. module: financing_contract
 #: field:financing.contract.format,actual_line_ids:0
