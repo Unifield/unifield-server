@@ -1533,6 +1533,8 @@ class Connection(osv.osv):
 
         if date is None:
             date = datetime.today()
+        if isinstance(date, basestring):
+            date = datetime.strptime(date, '%Y-%m-%d %H:%M')
 
         if not hour_from:
             hour_from = connection.automatic_patching_hour_from

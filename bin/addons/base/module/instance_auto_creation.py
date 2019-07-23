@@ -30,7 +30,8 @@ import tools
 import threading
 from tools.translate import _
 from osv import fields, osv
-
+from mx import DateTime
+import logging
 
 TRUE_LIST = (True, 'True', 'true', 'TRUE', 'Yes', 'YES', 'yes')
 
@@ -430,16 +431,19 @@ class instance_auto_creation(osv.osv):
                     'beforepatching': config_dict['backup'].get('auto_bck_beforepatching') in TRUE_LIST,
                     'beforeautomaticsync': config_dict['backup'].get('auto_bck_beforeautomaticsync') in TRUE_LIST,
                     'afterautomaticsync': config_dict['backup'].get('auto_bck_afterautomaticsync') in TRUE_LIST,
-                    'scheduledbackup': config_dict['backup'].get('auto_bck_scheduledbackup') in TRUE_LIST,
+                    'scheduledbackup': config_dict['backup'].get('auto_bck_scheduledbackup', True) in TRUE_LIST,
                 }
                 backup_obj.write(cr, uid, backup_id, backup_vals, context=context)
 
                 # update automatic backup cron job
                 vals = {
-                    'active': True,
+                    'active': config_dict['backup'].get('auto_bck_scheduledbackup', True) in TRUE_LIST,
                     'interval_number': config_dict['backup'].get('auto_bck_interval_nb'),
                     'interval_type': config_dict['backup'].get('auto_bck_interval_unit'),
                 }
+                if config_dict['backup'].get('auto_bck_next_exec_date'):
+                    vals['nextcall'] = config_dict['backup'].get('auto_bck_next_exec_date')
+
                 auto_backup = self.pool.get('ir.model.data').get_object(cr, uid, 'sync_client', 'ir_cron_automaticsyncbackup')
                 cron_obj = self.pool.get('ir.cron')
                 if auto_backup:
@@ -568,6 +572,48 @@ class instance_auto_creation(osv.osv):
                 self.pool.get('sync.client.entity').sync(cr, uid)
                 self.write(cr, 1, creation_id,
                            {'state': 'reconfigure_done'}, context=context)
+
+            if config_dict.get('autosync'):
+                auto_sync_cron = self.pool.get('ir.model.data').get_object(cr, uid, 'sync_client', 'ir_cron_automaticsynchronization0')
+                if auto_sync_cron:
+                    auto_sync_data = {
+                        'active': config_dict['autosync'].get('active', True) in TRUE_LIST,
+                        'interval_number': config_dict['autosync'].get('interval_nb'),
+                        'interval_type': config_dict['autosync'].get('interval_unit'),
+                    }
+                    if config_dict['autosync'].get('next_exec_date'):
+                        auto_sync_data['nextcall'] = config_dict['autosync'].get('next_exec_date')
+                    self.pool.get('ir.cron').write(cr, uid, auto_sync_cron.id, auto_sync_data, context=context)
+
+            if config_dict.get('stockmission'):
+                cron_id = self.pool.get('ir.model.data').get_object(cr, uid, 'mission_stock', 'ir_cron_stock_mission_update_action')
+                if cron_id:
+                    scheduler_data = {
+                        'active': config_dict['stockmission'].get('active', True) in TRUE_LIST,
+                        'interval_number': config_dict['stockmission'].get('interval_nb'),
+                        'interval_type': config_dict['stockmission'].get('interval_unit'),
+                    }
+                    if config_dict['stockmission'].get('next_exec_date'):
+                        scheduler_data['nextcall'] = config_dict['stockmission'].get('next_exec_date')
+                    self.pool.get('ir.cron').write(cr, uid, cron_id.id, scheduler_data, context=context)
+
+            if config_dict.get('silentupgrade') and config_dict['silentupgrade'].get('hour_from') and config_dict['silentupgrade'].get('hour_to'):
+                synchro_serv = pool.get('sync.client.sync_server_connection')
+                ids = synchro_serv.search(cr, uid, [])
+                if ids:
+                    from_mx = DateTime.strptime(config_dict['silentupgrade']['hour_from'], '%H:%M')
+                    to_mx = DateTime.strptime(config_dict['silentupgrade']['hour_to'], '%H:%M')
+                    sync_vals = {
+                        'automatic_patching_hour_from': from_mx.hour + from_mx.minute/60.,
+                        'automatic_patching_hour_to': to_mx.hour + to_mx.minute/60.,
+                        'automatic_patching': config_dict['silentupgrade'].get('active', True) in TRUE_LIST
+                    }
+                    try:
+                        cr.commit()
+                        synchro_serv.write(cr, uid, ids, sync_vals)
+                    except:
+                        cr.rollback()
+                        logging.getLogger('autoinstall').warn('Unable to set Silent Upgrade, please check the silent upgrade and auto sync times')
 
             if not skip_import_files:
                 self.write(cr, 1, creation_id,
