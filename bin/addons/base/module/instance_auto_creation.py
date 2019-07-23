@@ -619,9 +619,15 @@ class instance_auto_creation(osv.osv):
                 self.write(cr, 1, creation_id,
                            {'state': 'import_files'}, context=context)
                 import_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall', 'import')
+                file_to_import = []
                 for file_name in os.listdir(import_path):
                     if not '.csv' in file_name:
                         raise osv.except_osv(_("Error!"), 'Only CSV file can be imported. \'%s\' is not a CSV extension.' % file_name)
+                    if file_name == 'account.analytic.journal.csv':
+                        file_to_import.insert(0, file_name)
+                    else:
+                        file_to_import.append(file_name)
+                for file_name in file_to_import:
                     model_to_import = file_name.split('.csv')[0]
                     model_obj = self.pool.get(model_to_import)
                     model_obj.import_data_from_csv(cr, uid, os.path.join(import_path, file_name))
