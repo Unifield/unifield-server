@@ -557,7 +557,12 @@ class Database(BaseController):
                         }
                         return
                     import_object = file_name.split('.csv')[0]
-                    server_rpc.execute('object', 'execute', import_object, 'search', [('id', '=', 0)])
+                    if not server_rpc.execute('object', 'execute', 'ir.model', 'search', [('model', '=', import_object)]):
+                        self.msg = {
+                            'message': 'File to import %s: incorrect name object %s does not exist' % (file_name, import_object),
+                            'title': 'File name error',
+                        }
+                        return
 
 
         except NoOptionError as e:
