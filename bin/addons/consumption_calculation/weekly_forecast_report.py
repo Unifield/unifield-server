@@ -430,7 +430,7 @@ class weekly_forecast_report(osv.osv):
 
                 if len(product_ids) > 0:
                     ##### UFTP-220: Filter this list of products for those only appeared in the selected location of the report, not all product
-                    new_cr.execute("select distinct product_id from report_stock_inventory where location_id in %s and product_id in %s", (tuple(loc_asked_by_user),tuple(product_ids),) )
+                    new_cr.execute("select distinct product_id from report_stock_inventory where location_id in %s and product_id in %s and state !='cancel'", (tuple(loc_asked_by_user),tuple(product_ids),) )
                     product_ids = []
                     for row in new_cr.dictfetchall():
                         product_ids.append(row['product_id'])
