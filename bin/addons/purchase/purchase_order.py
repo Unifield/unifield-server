@@ -919,9 +919,16 @@ class purchase_order(osv.osv):
 
         return True
 
+    _constraints = [
+        (_check_order_type, 'The order type of the order is not consistent with the order type of the source', ['order_type']),
+    ]
+
     def _check_stock_take_date(self, cr, uid, ids, context=None):
         if not context:
             context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         # Do not prevent modification during synchro
         if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
@@ -929,17 +936,11 @@ class purchase_order(osv.osv):
                 if po.state in ['draft', 'draft_p', 'validated'] and po.stock_take_date \
                         and po.stock_take_date > po.date_order:
                     raise osv.except_osv(
-                        _('Error'),
-                        _('The Stock Take Date of %s is not consistent! It should not be later than its creation date')
+                        _('Error'), _('The Stock Take Date of %s is not consistent! It should not be later than its creation date')
                         % (po.name,)
                     )
 
         return True
-
-    _constraints = [
-        (_check_order_type, 'The order type of the order is not consistent with the order type of the source', ['order_type']),
-        (_check_stock_take_date, "The Stock Take Date of the document is not consistent! It should not be later than its creation date", ['stock_take_date']),
-    ]
 
     def default_get(self, cr, uid, fields, context=None):
         '''
@@ -995,6 +996,10 @@ class purchase_order(osv.osv):
         # we need to update the location_id because it is readonly and so does not pass in the vals of create and write
         vals = self._get_location_id(cr, uid, vals, warehouse_id=vals.get('warehouse_id', False), context=context)
         res = super(purchase_order, self).create(cr, uid, vals, context=context)
+
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, res, context=context)
+
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -1068,6 +1073,9 @@ class purchase_order(osv.osv):
                 )
 
         res = super(purchase_order, self).write(cr, uid, ids, vals, context=context)
+
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, ids, context=context)
 
         # Delete expected sale order line
         if 'state' in vals and vals.get('state') not in ('draft', 'validated'):

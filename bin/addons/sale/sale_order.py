@@ -719,9 +719,18 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
     ]
 
+    _constraints = [
+        (_check_empty_line, 'All lines must have a quantity larger than 0.00', ['order_line']),
+    ]
+
+    _order = 'id desc'
+
     def _check_stock_take_date(self, cr, uid, ids, context=None):
         if not context:
             context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         # Do not prevent modification during synchro
         if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
@@ -735,13 +744,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     )
 
         return True
-
-    _constraints = [
-        (_check_empty_line, 'All lines must have a quantity larger than 0.00', ['order_line']),
-        (_check_stock_take_date, "The Stock Take Date of the document is not consistent! It should not be later than its creation date", ['stock_take_date']),
-    ]
-
-    _order = 'id desc'
 
     # Form filling
     def unlink(self, cr, uid, ids, context=None):
@@ -896,7 +898,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             elif vals['order_policy'] == 'picking':
                 vals.update({'invoice_quantity': 'procurement'})
 
-        return super(sale_order, self).write(cr, uid, ids, vals, context=context)
+        res = super(sale_order, self).write(cr, uid, ids, vals, context=context)
+
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, ids, context=context)
+
+        return res
 
     def create(self, cr, uid, vals, context=None):
         if context is None:
@@ -924,8 +931,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if vals['order_policy'] == 'picking':
                 vals.update({'invoice_quantity': 'procurement'})
 
-        return super(sale_order, self).create(cr, uid, vals, context)
+        sale_id = super(sale_order, self).create(cr, uid, vals, context)
 
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, sale_id, context=context)
+
+        return sale_id
 
     def button_dummy(self, cr, uid, ids, context=None):
         return True
@@ -2133,6 +2144,9 @@ class sale_order_line(osv.osv):
         if not context:
             context = {}
 
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         # Do not prevent modification during synchro
         if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
             error_lines = []
@@ -2153,10 +2167,6 @@ class sale_order_line(osv.osv):
                 )
 
         return True
-
-    _constraints = [
-        (_check_stock_take_date, "The Stock Take Date of a line is not consistent! It should not be later than the FO/IR's creation date", ['stock_take_date']),
-    ]
 
     def invoice_line_create(self, cr, uid, ids, context=None):
         if context is None:
@@ -2982,6 +2992,9 @@ class sale_order_line(osv.osv):
                 name = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).name
                 super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': name + "_" + str(so_line_ids), } , context=context)
 
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, so_line_ids, context=context)
+
         return so_line_ids
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -3014,6 +3027,9 @@ class sale_order_line(osv.osv):
             vals['soq_updated'] = False
 
         res = super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
+
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, ids, context=context)
 
         return res
 
