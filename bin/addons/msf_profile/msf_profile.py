@@ -52,22 +52,16 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
-    def launch_patch_scripts(self, cr, uid, *a, **b):
-        ps_obj = self.pool.get('patch.scripts')
-        ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
-        for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
-            method = ps['method']
-            model_obj = self.pool.get(ps['model'])
-            try:
-                getattr(model_obj, method)(cr, uid, *a, **b)
-                self.write(cr, uid, [ps['id']], {'run': True})
-            except Exception as e:
-                err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
-                self._logger.error(err_msg)
-                raise osv.except_osv(
-                    'Error',
-                    err_msg,
-                )
+    # UF14.0
+    def us_5952_delivered_closed_outs_to_delivered_state(self, cr, uid, *a, **b):
+        """
+        Set the OUT pickings in 'Done' state with delivered = True to the 'Delivered' state
+        """
+        cr.execute('''
+            UPDATE stock_picking SET state = 'delivered' 
+            WHERE state = 'done' AND type = 'out' AND subtype = 'standard' AND delivered = 't'
+        ''')
+        return True
 
     def us_6108_onedrive_bg(self, cr, uid, *a, **b):
         cr.execute("update ir_cron set function='send_backup_bg' where function='send_backup' and model='msf.instance.cloud'")
@@ -2824,6 +2818,22 @@ class patch_scripts(osv.osv):
         cr.execute(update_name_and_code)
         cr.execute(update_translation)
 
+    def launch_patch_scripts(self, cr, uid, *a, **b):
+        ps_obj = self.pool.get('patch.scripts')
+        ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
+        for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
+            method = ps['method']
+            model_obj = self.pool.get(ps['model'])
+            try:
+                getattr(model_obj, method)(cr, uid, *a, **b)
+                self.write(cr, uid, [ps['id']], {'run': True})
+            except Exception as e:
+                err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
+                self._logger.error(err_msg)
+                raise osv.except_osv(
+                    'Error',
+                    err_msg,
+                )
 
 patch_scripts()
 

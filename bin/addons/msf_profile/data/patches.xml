@@ -429,8 +429,15 @@
             <field name="method">us_6111_nr_field_closed_mar_2018</field>
         </record>
 
+        <!-- UF14.0 -->
+        <record id="us_5952_delivered_closed_outs_to_delivered_state" model="patch.scripts">
+            <field name="method">us_5952_delivered_closed_outs_to_delivered_state</field>
+        </record>
+
         <record id="us_6108_onedrive_bg" model="patch.scripts">
             <field name="method">us_6108_onedrive_bg</field>
         </record>
+
+
     </data>
 </openerp>

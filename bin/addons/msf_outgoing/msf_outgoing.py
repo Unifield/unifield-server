@@ -1801,10 +1801,9 @@ class shipment(osv.osv):
             # gather the corresponding packing and trigger the corresponding function
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'done')], context=context)
             # set delivered all packings
-            pick_obj.set_delivered(cr, uid, packing_ids, context=context)
+            pick_obj.write(cr, uid, packing_ids, {'delivered': True}, context=context)
 
         return True
-
 
 
 shipment()
