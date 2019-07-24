@@ -33,8 +33,8 @@ from mx import DateTime
 import logging
 import requests
 import time
-
-
+import threading
+import pooler
 
 class msf_instance(osv.osv):
     _name = 'msf.instance'
@@ -705,6 +705,22 @@ class msf_instance_cloud(osv.osv):
             return now_dt >= start_dt and now_dt <= end_dt
 
         return now_dt >= start_dt or now_dt <= end_dt
+
+    def send_backup_bg(self, cr, uid, progress=False, context=None):
+        thread = threading.Thread(target=self.send_backup_run, args=(cr.dbname, uid, progress, context))
+        thread.start()
+        return True
+
+    def send_backup_run(self, dbname, uid, progress=False, context=None):
+        new_cr = pooler.get_db(dbname).cursor()
+        try:
+            self.send_backup(new_cr, uid, progress=progress, context=context)
+        except:
+            new_cr.rollback()
+            raise
+        finally:
+            new_cr.commit()
+            new_cr.close(True)
 
     def send_backup(self, cr, uid, progress=False, context=None):
         day_abr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
