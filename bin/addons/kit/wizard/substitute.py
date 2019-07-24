@@ -621,7 +621,9 @@ class substitute_item(osv.osv_memory):
             ctx['uom'] = uom_id
         if prodlot_id:
             ctx['prodlot_id'] = prodlot_id
-        product_obj = prod_obj.browse(cr, uid, product_id, fields_to_fetch=['qty_allocable'], context=context)
+        else:
+            ctx['prodlot_id'] = False
+        product_obj = prod_obj.browse(cr, uid, product_id, fields_to_fetch=['qty_allocable'], context=ctx)
         # update the result
         result.setdefault('value', {}).update({'qty_substitute_item': product_obj.qty_allocable,
                                                'uom_id_substitute_item': uom_id,
