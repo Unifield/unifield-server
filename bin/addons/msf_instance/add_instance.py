@@ -25,6 +25,7 @@ from tools.translate import _
 class account_analytic_journal(osv.osv):
     _name = 'account.analytic.journal'
     _inherit = 'account.analytic.journal'
+    _trace = True
 
     def _get_current_instance(self, cr, uid, ids, name, args, context=None):
         """
@@ -70,6 +71,7 @@ account_analytic_journal()
 class account_journal(osv.osv):
     _name = 'account.journal'
     _inherit = 'account.journal'
+    _trace = True
 
     def name_get(self, cr, uid, ids, context=None):
         if context is None:
@@ -114,22 +116,19 @@ class account_journal(osv.osv):
     # the create and write check and replace with the "good" journal if necessary.
     def create(self, cr, uid, vals, context=None):
         analytic_obj = self.pool.get('account.analytic.journal')
+        user_obj = self.pool.get('res.users')
+        if 'instance_id' not in vals:  # ensure that the instance_id always exists, in particular for the Track Changes
+            vals['instance_id'] = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.instance_id.id
         if vals.get('type') and vals.get('type') not in ['situation', 'stock'] and vals.get('analytic_journal_id'):
             analytic_journal = analytic_obj.browse(cr, uid, vals['analytic_journal_id'], context=context)
-
-            instance_id = False
-            if 'instance_id' in vals:
-                instance_id = vals['instance_id']
-            else:
-                instance_id = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id
 
             if analytic_journal and \
                analytic_journal.name and \
                analytic_journal.instance_id and \
-               analytic_journal.instance_id.id != instance_id:
+               analytic_journal.instance_id.id != vals['instance_id']:
                 # replace the journal with the one with the same name, and the wanted instance
                 new_journal_ids = analytic_obj.search(cr, uid, [('name','=', analytic_journal.name),
-                                                                ('instance_id','=',instance_id)], context=context)
+                                                                ('instance_id', '=', vals['instance_id'])], context=context)
                 if len(new_journal_ids) > 0:
                     vals['analytic_journal_id'] = new_journal_ids[0]
         return super(account_journal, self).create(cr, uid, vals, context=context)
