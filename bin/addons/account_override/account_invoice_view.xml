@@ -49,11 +49,6 @@
                     </xpath>
                     <xpath expr="//label[@string='(keep empty to use the current period)']" position="replace">
                     </xpath>
-                    <button name='invoice_cancel' position="replace">
-                        <!-- The widget boolean permit to the attrs to work efficiently -->
-                        <field name="purchase_ids" invisible="1" widget="boolean" readonly="1" />
-                        <button name="invoice_cancel" string="Cancel" icon="gtk-cancel" attrs="{'invisible': ['|', ('state', 'in', ['open', 'paid']), ('purchase_ids', '!=', False)]}" confirm="You are about to cancel this invoice. Do you want to proceed?"/>
-                    </button>
                     <xpath expr="//button[@name='invoice_open']" position="after" >
                         <button name="button_split_invoice" states="draft,proforma2" type="object" string="Split Invoice" icon="gtk-cut"/>
                         <newline/>
@@ -278,7 +273,6 @@
                                 <field name="residual"/>
                             </group>
                             <group col="8" colspan="4">
-                                <button name="invoice_cancel" states="draft,proforma2,sale,open" string="Cancel" icon="gtk-cancel"/>
                                 <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute"/>
                                 <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
                                 <button name="invoice_open" type="object" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
@@ -433,10 +427,7 @@
                                 <label string=""/>
                                 <button name="invoice_open" type="object" states="draft" string="Validate" icon="gtk-go-forward"/>
                             </group>
-                            <group col="2" colspan="4" states="open,paid">
-                                <button name="invoice_cancel" states="open" string="Cancel" icon="gtk-cancel" confirm="Do you confirm Donation received cancellation?"/>
-                                <button name="%(account.account_invoices)d" string="Print Donation" type="action" icon="gtk-print" states="open,paid"/>
-                            </group>
+                            <button name="%(account.account_invoices)d" string="Print Donation" type="action" icon="gtk-print" states="open,paid"/>
                         </page>
                     </notebook>
                 </form>
@@ -624,7 +615,6 @@
                             <field name="is_debit_note" invisible="1"/>
                         </group>
                         <group col="8" colspan="4">
-                            <button name="invoice_cancel" states="proforma2,open" string="Cancel" icon="gtk-cancel"/>
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
                             <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
                             <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward" type="object"/>
