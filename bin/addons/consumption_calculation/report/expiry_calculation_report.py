@@ -21,6 +21,7 @@
 
 import time
 import calendar
+import tools
 from tools.translate import _
 
 from report import report_sxw
@@ -31,6 +32,8 @@ CONSUMPTION_TYPE = [
     ('amc', _('AMC -- Average Monthly Consumption')),
     ('rac', _('RAC -- Real Average Consumption')),
 ]
+
+
 class product_likely_expire_report_parser(report_sxw.rml_parse):
     """UTP-770/UTP-411"""
     def __init__(self, cr, uid, name, context=None):
@@ -53,6 +56,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             'getAddress': self._get_instance_addr,
             'getCurrency': self._get_currency,
             'toDate': self.str_to_time,
+            'toUstr': self.to_ustr,
         })
         self._dates_context = {}
         self._report_context = {}
@@ -61,7 +65,7 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         """get period header(str)"""
         dt_from = self.formatLang(report.date_from, date=True)
         dt_to = self.formatLang(report.date_to, date=True)
-        res = "%s - %s" % (dt_from, dt_to,)
+        res = tools.ustr("%s - %s" % (dt_from, dt_to,))
         return res
 
     def _get_report_consumption_type(self, report):
@@ -69,7 +73,10 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         res = ""
         for val, label in CONSUMPTION_TYPE:
             if val == report.consumption_type:
-                return _(label)
+                if val == 'amc':
+                    return _(label) + tools.ustr(' (' + self.str_to_time(report.consumption_from) + ' - ' + self.str_to_time(report.consumption_to) + ')')
+                else:
+                    return _(label)
         return res
 
     def _get_report_dates(self, report):
@@ -259,6 +266,11 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         if dtime:
             return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, datetime=dtime)
         return ''
+
+    def to_ustr(self, val):
+        return tools.ustr(val)
+
+
 report_sxw.report_sxw('report.product.likely.expire.report_pdf', 'product.likely.expire.report', 'consumption_calculation/report/product_likely_expire.rml', parser=product_likely_expire_report_parser, header=False)
 
 class product_likely_expire_report_xls_parser(SpreadsheetReport):

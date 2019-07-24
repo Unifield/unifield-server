@@ -84,7 +84,7 @@ if n_header_colspan < 0:
 <Row>
 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Location')}</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Period')}</Data></Cell>
-<Cell ss:StyleID="header" ss:MergeAcross="2"><Data ss:Type="String">${_('Consumption')}</Data></Cell>
+<Cell ss:StyleID="header" ss:MergeAcross="4"><Data ss:Type="String">${_('Consumption')}</Data></Cell>
 <%
 cols = n_header_colspan - 2
 if cols < 0:
@@ -97,7 +97,7 @@ if cols < 0:
 <Row>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.location_id and objects[0].location_id.name or '')|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${(getReportPeriod(o) or '')|x}</Data></Cell>
-<Cell ss:StyleID="line" ss:MergeAcross="2"><Data ss:Type="String">${(getReportConsumptionType(o) or '')|x}</Data></Cell>
+<Cell ss:StyleID="line" ss:MergeAcross="4"><Data ss:Type="String">${(getReportConsumptionType(o) or '')|x}</Data></Cell>
 % for n in range(cols):
 <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
 % endfor
@@ -199,7 +199,7 @@ worksheet_name = d_str.replace('/', '-')
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.default_code or ''|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.name or ''|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.lot_id.name}</Data></Cell>
-<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.expired_date, date=True) or '')}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(toUstr(formatLang(il.expired_date, date=True)) or '')}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.location_id.name}</Data></Cell>
 <Cell ss:StyleID="line_number" ><Data ss:Type="Number">${il.available_qty or 0.}</Data></Cell>
 <Cell ss:StyleID="line_number" ><Data ss:Type="Number">${il.expired_qty or 0.}</Data></Cell>
