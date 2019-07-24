@@ -149,14 +149,14 @@
                         <field name="type" invisible="1"/>
                         <field name="currency_id" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
                         <newline/>
-                        <field name="partner_id" domain="[('supplier', '=', True)]" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
+                        <field name="partner_id" domain="[('supplier', '=', True)]" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', 'in', ['paid', 'inv_close'])]}"/>
 
-                        <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
+                        <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', 'in', ['paid', inv_close'])]}"/>
                         <newline/>
-                        <field name="document_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
+                        <field name="document_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', 'in', ['paid', 'inv_close'])]}"/>
                         <field name="date_invoice" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
                         <field name="register_posting_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
-                        <field name="reference" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}" />
+                        <field name="reference" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', 'in', ['paid', 'inv_close'])]}" />
                         <newline/>
                         <label string="" colspan="4"/>
                         <field name="amount_total"/>
@@ -165,11 +165,11 @@
                     <group colspan="2"/>
                     <notebook colspan="4">
                         <page string="Invoice">
-                            <field name="account_id" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'in_invoice')]" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <field name="account_id" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'in_invoice')]" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid', 'inv_close'])]}"/>
                             <field name="check_total" readonly="1" invisible="1"/>
                             <field colspan="4" default_get="{'check_total': check_total, 'address_invoice_id':
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}"
-                                name="invoice_line" nolabel="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}">
+                                name="invoice_line" nolabel="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid','inv_close'])]}">
                                 <tree editable="bottom" string="Invoice lines" >
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
@@ -193,23 +193,23 @@
                             </field>
                         </page>
                         <page string="Other Info">
-                            <field domain="[('partner_id', '=', partner_id)]" name="partner_bank_id" on_change="onchange_partner_bank(partner_bank_id)" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <field domain="[('partner_id', '=', partner_id)]" name="partner_bank_id" on_change="onchange_partner_bank(partner_bank_id)" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid', 'inv_close'])]}"/>
                             <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)"
-                                widget="selection" groups="base.group_multi_company" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                                widget="selection" groups="base.group_multi_company" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid', 'inv_close'])]}"/>
                             <newline/>
-                            <field name="payment_term" widget="selection" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
-                            <field name="name" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <field name="payment_term" widget="selection" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid','inv_close'])]}"/>
+                            <field name="name" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid','inv_close'])]}"/>
                             <newline/>
-                            <field name="origin" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
-                            <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
-                            <field name="user_id" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <field name="origin" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid','inv_close'])]}"/>
+                            <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid','inv_close'])]}"/>
+                            <field name="user_id" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid','inv_close'])]}"/>
                             <separator colspan="4" string="Additional Information"/>
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                     </notebook>
                     <group col="4" colspan="4">
                         <field name="state" readonly="1" colspan="2"/>
-                        <button name="%(action_direct_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute" colspan="2"/>
+                        <button name="%(action_direct_invoice_refund)d" type='action' string='Refund' states='open,paid,inv_close' icon="gtk-execute" colspan="2"/>
                     </group>
                 </form>
             </field>

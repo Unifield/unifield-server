@@ -180,7 +180,7 @@ class sale_order(osv.osv):
             else:
                 res[sale.id] = True
                 for invoice in sale.invoice_ids:
-                    if invoice.state != 'paid':
+                    if invoice.state not in ('paid', 'inv_close'):
                         res[sale.id] = False
                         break
                 if not sale.invoice_ids:
@@ -196,9 +196,9 @@ class sale_order(osv.osv):
         for arg in args:
             if arg[1] == '=':
                 if arg[2]:
-                    clause += 'AND inv.state = \'paid\' OR (sale.state != \'draft\' AND (sale.order_type != \'regular\' OR part.partner_type = \'internal\'))'
+                    clause += 'AND inv.state in (\'paid\', \'inv_close\') OR (sale.state != \'draft\' AND (sale.order_type != \'regular\' OR part.partner_type = \'internal\'))'
                 else:
-                    clause += 'AND inv.state != \'cancel\' AND sale.state != \'cancel\'  AND inv.state <> \'paid\' AND sale.order_type = \'regular\''
+                    clause += 'AND inv.state != \'cancel\' AND sale.state != \'cancel\'  AND inv.state not in  (\'paid\', \'inv_close\') AND sale.order_type = \'regular\''
                     no_invoiced = True
 
         cursor.execute('SELECT rel.order_id ' \

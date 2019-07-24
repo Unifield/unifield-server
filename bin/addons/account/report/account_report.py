@@ -68,7 +68,7 @@ class report_account_receivable(osv.osv):
             )""")
 report_account_receivable()
 
-                    #a.type in ('receivable','payable')
+#a.type in ('receivable','payable')
 class temp_range(osv.osv):
     _name = 'temp.range'
     _description = 'A Temporary table used for Dashboard view'
@@ -101,14 +101,14 @@ class report_aged_receivable(osv.osv):
     def _calc_bal(self, cr, uid, ids, name, args, context=None):
         res = {}
         for period in self.read(cr, uid, ids, ['name'], context=context):
-           date1,date2 = period['name'].split(' to ')
-           cr.execute("SELECT SUM(credit-debit) FROM account_move_line AS line, account_account as ac  \
+            date1,date2 = period['name'].split(' to ')
+            cr.execute("SELECT SUM(credit-debit) FROM account_move_line AS line, account_account as ac  \
                         WHERE (line.account_id=ac.id) AND ac.type='receivable' \
                             AND (COALESCE(line.date,date) BETWEEN %s AND  %s) \
                             AND (reconcile_id IS NULL) AND ac.active",(str(date2),str(date1),))
-           amount = cr.fetchone()
-           amount = amount[0] or 0.00
-           res[period['id']] = amount
+            amount = cr.fetchone()
+            amount = amount[0] or 0.00
+            res[period['id']] = amount
 
         return res
 
@@ -159,7 +159,7 @@ class report_invoice_created(osv.osv):
             ('in_invoice','Supplier Invoice'),
             ('out_refund','Customer Refund'),
             ('in_refund','Supplier Refund'),
-            ],'Type', readonly=True),
+        ],'Type', readonly=True),
         'number': fields.char('Invoice Number', size=32, readonly=True),
         'partner_id': fields.many2one('res.partner', 'Partner', readonly=True),
         'amount_untaxed': fields.float('Untaxed', readonly=True),
@@ -174,6 +174,7 @@ class report_invoice_created(osv.osv):
             ('proforma2','Pro-forma'),
             ('open','Open'),
             ('paid','Done'),
+            ('inv_close','Close'),
             ('cancel','Cancelled')
         ],'State', readonly=True),
         'origin': fields.char('Source Document', size=512, readonly=True, help="Reference of the document that generated this invoice report."),
@@ -235,7 +236,7 @@ class report_account_type_sales(osv.osv):
             inner join account_invoice inv on inv.id = inv_line.invoice_id
             inner join account_account account on account.id = inv_line.account_id
             where
-                inv.state in ('open','paid')
+                inv.state in ('open','paid', 'inv_close')
             group by
                 to_char(inv.date_invoice, 'YYYY'),to_char(inv.date_invoice,'MM'),inv.currency_id, inv.period_id, inv_line.product_id, account.user_type
             )""")
@@ -277,7 +278,7 @@ class report_account_sales(osv.osv):
             inner join account_invoice inv on inv.id = inv_line.invoice_id
             inner join account_account account on account.id = inv_line.account_id
             where
-                inv.state in ('open','paid')
+                inv.state in ('open','paid', 'inv_close')
             group by
                 to_char(inv.date_invoice, 'YYYY'),to_char(inv.date_invoice,'MM'),inv.currency_id, inv.period_id, inv_line.product_id, account.id
             )""")

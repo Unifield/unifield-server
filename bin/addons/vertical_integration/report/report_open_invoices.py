@@ -20,7 +20,6 @@
 
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from report import report_sxw
-from tools.translate import _
 
 
 class report_open_invoices2(report_sxw.rml_parse):
@@ -50,7 +49,7 @@ class report_open_invoices2(report_sxw.rml_parse):
                 LEFT JOIN res_users responsible ON invoice.user_id = responsible.id
                 LEFT JOIN res_currency currency ON invoice.currency_id = currency.id
             WHERE
-                invoice.state NOT IN ('paid', 'cancel') AND
+                invoice.state NOT IN ('paid', 'inv_close', 'cancel') AND
                 invoice.type = %s
             ORDER BY invoice.date_invoice
         """

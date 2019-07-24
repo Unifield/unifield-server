@@ -93,7 +93,7 @@ class account_invoice(osv.osv):
         for invoice in self.browse(cr, uid, ids, context=context):
             # UNIFIELD REFACTORING: UF-1536 have change this method
             # Not needed to do process if invoice is draft or paid
-            if invoice.state in ['draft', 'paid']:
+            if invoice.state in ['draft', 'paid', 'inv_close']:
                 result[invoice.id] = 0.0
                 continue
             result[invoice.id] = invoice.amount_total
@@ -278,6 +278,7 @@ class account_invoice(osv.osv):
             ('proforma2','Pro-forma'),
             ('open','Open'),
             ('paid','Paid'),
+            ('inv_close','Close'),
             ('cancel','Cancelled')
         ],'State', select=True, readonly=True,
             help=' * The \'Draft\' state is used when a user is encoding a new and unconfirmed Invoice. \
@@ -285,8 +286,8 @@ class account_invoice(osv.osv):
             \n* The \'Open\' state is used when user create invoice,a invoice number is generated.Its in open state till user does not pay invoice. \
             \n* The \'Paid\' state is set automatically when invoice is paid.\
             \n* The \'Cancelled\' state is used when user cancel invoice.'),
-        'date_invoice': fields.date('Invoice Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 'close':[('readonly',True)]}, select=True, help="Keep empty to use the current date"),
-        'date_due': fields.date('Due Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 'close':[('readonly',True)]}, select=True,
+        'date_invoice': fields.date('Invoice Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 'inv_close':[('readonly',True)]}, select=True, help="Keep empty to use the current date"),
+        'date_due': fields.date('Due Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 'inv_close':[('readonly',True)]}, select=True,
                                 help="If you use payment terms, the due date will be computed automatically at the generation "\
                                 "of accounting entries. If you keep the payment term and the due date empty, it means direct payment. The payment term may compute several due dates, for example 50% now, 50% in one month."),
         'partner_id': fields.many2one('res.partner', 'Partner', change_default=True, readonly=True, required=True, states={'draft':[('readonly',False)]}),
@@ -327,7 +328,7 @@ class account_invoice(osv.osv):
         'currency_id': fields.many2one('res.currency', 'Currency', required=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, hide_default_menu=True, readonly=True, states={'draft':[('readonly',False)]}),
         'company_id': fields.many2one('res.company', 'Company', required=True, change_default=True, readonly=True, states={'draft':[('readonly',False)]}),
-        'check_total': fields.float('Total', digits_compute=dp.get_precision('Account'), states={'open':[('readonly',True)],'close':[('readonly',True)],'paid':[('readonly',True)]}),
+        'check_total': fields.float('Total', digits_compute=dp.get_precision('Account'), states={'open':[('readonly',True)],'inv_close':[('readonly',True)],'paid':[('readonly',True)]}),
         'reconciled': fields.function(_reconciled, method=True, string='Paid/Reconciled', type='boolean',
                                       store={
                                           'account.invoice': (lambda self, cr, uid, ids, c={}: ids, None, 50), # Check if we can remove ?
@@ -472,7 +473,7 @@ class account_invoice(osv.osv):
                 state = 'paid'
                 display_state = _('paid')
             else:
-                state = 'cancel'
+                state = 'inv_close'
                 display_state = _('closed')
 
             self.write(cr, uid, x[0], {'state': state}, context=context)
@@ -486,7 +487,7 @@ class account_invoice(osv.osv):
         invoices = self.read(cr, uid, ids, ['state'], context=context)
         unlink_ids = []
         for t in invoices:
-            if t['state'] in ('draft', 'cancel'):
+            if t['state'] == 'draft':
                 unlink_ids.append(t['id'])
             else:
                 raise osv.except_osv(_('Invalid action !'), _('Cannot delete invoice(s) that are already opened or paid !'))

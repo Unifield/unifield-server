@@ -273,9 +273,9 @@
                                 <field name="residual"/>
                             </group>
                             <group col="8" colspan="4">
-                                <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute"/>
+                                <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid,inv_close' icon="gtk-execute"/>
                                 <button name="invoice_open" type="object" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
-                                <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,proforma,sale,proforma2"/>
+                                <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,inv_close,proforma,sale,proforma2"/>
                             </group>
                         </page>
                         <page string="Other Info">
@@ -426,7 +426,7 @@
                                 <label string=""/>
                                 <button name="invoice_open" type="object" states="draft" string="Validate" icon="gtk-go-forward"/>
                             </group>
-                            <button name="%(account.account_invoices)d" string="Print Donation" type="action" icon="gtk-print" states="open,paid"/>
+                            <button name="%(account.account_invoices)d" string="Print Donation" type="action" icon="gtk-print" states="open,paid,inv_close"/>
                         </page>
                     </notebook>
                 </form>
@@ -544,9 +544,9 @@
                                 <label string=""/>
                                 <button name="invoice_open" type="object" states="draft" string="Validate" icon="gtk-go-forward"/>
                             </group>
-                            <group col="2" colspan="4" states="open,paid">
+                            <group col="2" colspan="4" states="open,paid,inv_close">
                                 <label string=""/>
-                                <button name="%(account.account_invoices)d" string="Print Intermission Voucher" type="action" icon="gtk-print" states="open,paid"/>
+                                <button name="%(account.account_invoices)d" string="Print Intermission Voucher" type="action" icon="gtk-print" states="open,inv_close,paid"/>
                             </group>
                         </page>
                         <page string="Other Info">
@@ -616,7 +616,7 @@
                         <group col="8" colspan="4">
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
                             <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward" type="object"/>
-                            <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,proforma,sale,proforma2"/>
+                            <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,inv_close,paid,proforma,sale,proforma2"/>
                         </group>
                     </xpath>
                     <xpath expr="//page[@string='Payments']" position="replace">
@@ -836,7 +836,7 @@
             rml="account_override/report/account_print_invoice.rml"
             string="Print report"
             target_filename="${eval(_get_invoice_report_name)}"
-            attachment="(object.state in ('open','paid')) and ('INV'+(object.number or '').replace('/',''))"
+            attachment="(object.state in ('open','paid', 'inv_close')) and ('INV'+(object.number or '').replace('/',''))"
             attachment_use="1"
             multi="True"/>
 

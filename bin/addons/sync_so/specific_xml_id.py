@@ -625,7 +625,7 @@ class account_move_line(osv.osv):
             invoice_ids = []
             line_list = self.browse(cr, uid, ids, context=context)
             invoice_ids = [line.invoice.id for line in line_list if
-                           line.invoice and line.invoice.state != 'paid']
+                           line.invoice and line.invoice.state not in ('paid','inv_close')]
             if self.pool.get('account.invoice').test_paid(cr, uid, invoice_ids):
                 self.pool.get('account.invoice').confirm_paid(cr, uid, invoice_ids)
         return res

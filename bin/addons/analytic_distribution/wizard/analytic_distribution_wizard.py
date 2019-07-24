@@ -511,10 +511,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.purchase_line_id and el.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
                 res[el.id] = False
             # verify invoice state
-            if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
+            if el.invoice_id and el.invoice_id.state in ['open', 'paid', 'inv_close']:
                 res[el.id] = False
             # verify invoice line state
-            if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid']:
+            if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid', 'inv_close']:
                 res[el.id] = False
             # verify commitment state
             if el.commitment_id and el.commitment_id.state in ['done']:
@@ -764,10 +764,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if wiz.purchase_line_id and wiz.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice is in good state if necessary
-            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
+            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid', 'inv_close']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice from invoice line is in good state if necessary
-            if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in ['open', 'paid']:
+            if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in ['open', 'paid', 'inv_close']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that commitment is in good state if necessary
             if wiz.commitment_id and wiz.commitment_id.state in ['done']:
