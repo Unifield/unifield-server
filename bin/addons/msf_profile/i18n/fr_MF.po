@@ -106833,3 +106833,8 @@ msgstr "est livré."
 #, python-format
 msgid "Theoretical Kit Template"
 msgstr "Modèle du Kit Théorique"
+
+#. module: stock_override
+#: field:stock.card.wizard.line,partner_or_loc:0
+msgid "Partner/Location"
+msgstr "Partneraire/Zone"
