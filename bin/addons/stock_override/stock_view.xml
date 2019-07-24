@@ -429,7 +429,7 @@
                                             context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" 
                                             />
                                        <field name="location_dest_id"
-                                            domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_id)]" 
+                                            domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_id), ('input_ok', '!=', True)]"
                                             on_change="location_dest_change(location_dest_id, location_id, product_id)"
                                             />
                                     </group>
