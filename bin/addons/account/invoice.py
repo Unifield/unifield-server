@@ -453,10 +453,31 @@ class account_invoice(osv.osv):
     def confirm_paid(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        self.write(cr, uid, ids, {'state':'paid'}, context=context)
-        for inv_id, name in self.name_get(cr, uid, ids, context=context):
-            message = _("Invoice '%s' is paid.") % name
-            self.log(cr, uid, inv_id, message)
+        # if reconciled with at least 1 liquidity journal then paid else cancel aka Closed
+        cr.execute("""
+            SELECT i.id, min(j.id), i.number
+            FROM account_invoice i
+            LEFT JOIN account_move_line l ON i.move_id=l.move_id
+            LEFT JOIN account_move_line rec_line ON rec_line.reconcile_id = l.reconcile_id
+            LEFT JOIN account_journal j ON j.id = rec_line.journal_id AND j.type in ('cash', 'bank', 'cheque')
+            WHERE i.id IN %s
+            AND l.reconcile_id is not null
+            AND l.account_id=i.account_id
+            AND l.is_counterpart
+            GROUP BY i.id, i.number""", (tuple(ids), )
+                   )
+
+        for x in cr.fetchall():
+            if x[1]:
+                state = 'paid'
+                display_state = _('paid')
+            else:
+                state = 'cancel'
+                display_state = _('closed')
+
+            self.write(cr, uid, x[0], {'state': state}, context=context)
+            self.log(cr, uid, x[0], _("Invoice '%s' is %s.") % (x[2], display_state))
+
         return True
 
     def unlink(self, cr, uid, ids, context=None):
@@ -697,7 +718,7 @@ class account_invoice(osv.osv):
                    )
         for r in cr.fetchall():
             res.setdefault(r[0], [])
-            res[r[0]].append( r[1] )
+            res[r[0]].append(r[1])
         return res
 
     def copy(self, cr, uid, id, default={}, context=None):

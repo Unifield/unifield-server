@@ -27,6 +27,7 @@ from osv import fields, osv
 from tools.translate import _
 import decimal_precision as dp
 import tools
+import netsvc
 
 class account_move_line(osv.osv):
     _name = "account.move.line"
@@ -993,8 +994,24 @@ class account_move_line(osv.osv):
                     'unreconcile_date': time.strftime('%Y-%m-%d'),
                     'unreconcile_txt': obj_move_line.browse(cr, uid, aml, context=context, fields_to_fetch=['reconcile_txt']).reconcile_txt,
                 }, context=context)
+
+            # if full reconcile linked to an invoice, set it as (re-)open
+            cr.execute('''
+                select distinct(inv.id)
+                    from account_invoice inv
+                    left join account_move_line move_line on move_line.move_id = inv.move_id
+                    where
+                        move_line.reconcile_id in %s and
+                        move_line.is_counterpart
+                ''', (tuple(unlink_ids), )
+            )
+            inv_ids = [x[0] for x in cr.fetchall()]
+
             # then delete the account.move.reconciles
             obj_move_rec.unlink(cr, uid, unlink_ids)
+
+            if inv_ids:
+                netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', inv_ids, 'open_test', cr)
         return True
 
     def check_unlink(self, cr, uid, ids, context=None):

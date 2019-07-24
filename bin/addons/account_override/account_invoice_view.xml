@@ -274,7 +274,6 @@
                             </group>
                             <group col="8" colspan="4">
                                 <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute"/>
-                                <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
                                 <button name="invoice_open" type="object" states="draft,proforma2" string="Validate" icon="gtk-go-forward"/>
                                 <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,proforma,sale,proforma2"/>
                             </group>
@@ -616,7 +615,6 @@
                         </group>
                         <group col="8" colspan="4">
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
-                            <button name='%(account.action_account_state_open)d' type='action' string='Re-Open' states='paid' icon="gtk-convert" groups="base.group_no_one"/>
                             <button name="invoice_open" states="draft,proforma2" string="Validate" icon="gtk-go-forward" type="object"/>
                             <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,proforma,sale,proforma2"/>
                         </group>
