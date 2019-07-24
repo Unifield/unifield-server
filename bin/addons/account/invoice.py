@@ -167,8 +167,7 @@ class account_invoice(osv.osv):
             if invoice.move_id:
                 # US-1882 The payments should only concern the "header line" of the SI on the counterpart account.
                 # For example the import of a tax line shouldn't be considered as a payment (out or in).
-                invoice_amls = [ml for ml in invoice.move_id.line_id if ml.account_id == invoice.account_id
-                                and abs(abs(invoice.amount_total) - abs(ml.amount_currency)) <= 10**-3]
+                invoice_amls = [ml for ml in invoice.move_id.line_id if ml.account_id == invoice.account_id and ml.is_counterpart]
                 for m in invoice_amls:
                     temp_lines = set()
                     if m.reconcile_id:

@@ -109,9 +109,8 @@ class account_invoice_refund(osv.osv_memory):
         """
         for ml in aml_list:
             if ml.account_id.reconcile:
-                if ml.account_id.id not in to_reconcile_dict:
-                    to_reconcile_dict[ml.account_id.id] = []
-                to_reconcile_dict[ml.account_id.id].append(ml.id)
+                key = (ml.account_id.id, ml.is_counterpart)
+                to_reconcile_dict.setdefault(key, []).append(ml.id)
 
     def compute_refund(self, cr, uid, ids, mode='refund', context=None):
         """
@@ -206,8 +205,8 @@ class account_invoice_refund(osv.osv_memory):
                     self._get_reconcilable_amls(movelines, to_reconcile)
                     self._get_reconcilable_amls(refund.move_id.line_id, to_reconcile)
                     # reconcile the lines grouped by account
-                    for account_id in to_reconcile:
-                        account_m_line_obj.reconcile(cr, uid, to_reconcile[account_id],
+                    for account_id, is_counterpart in to_reconcile:
+                        account_m_line_obj.reconcile(cr, uid, to_reconcile[(account_id, is_counterpart)],
                                                      writeoff_period_id=period,
                                                      writeoff_journal_id = inv.journal_id.id,
                                                      writeoff_acc_id=account_id
@@ -243,8 +242,7 @@ class account_invoice_refund(osv.osv_memory):
                     # Refund cancel/modify: set the invoice JI/AJIs as Corrected by the system so that they can't be
                     # corrected manually. This must be done at the end of the refund process to handle the right AJI ids
                     # get the list of move lines excluding invoice header
-                    ml_list = [ml.id for ml in movelines if not (ml.account_id.id == inv.account_id.id and
-                                                                 abs(abs(inv.amount_total) - abs(ml.amount_currency)) <= 10**-3)]
+                    ml_list = [ml.id for ml in movelines if not ml.is_counterpart]
                     account_m_line_obj.set_as_corrected(cr, uid, ml_list, manual=False, context=None)
                     # all JI lines of the SI and SR (including header) should be not corrigible, no matter if they
                     # are marked as corrected, reversed...
