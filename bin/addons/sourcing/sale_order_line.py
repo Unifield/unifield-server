@@ -770,7 +770,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     vals['related_sourcing_id'] = False
 
         if product and vals.get('type', False) == 'make_to_order' and not vals.get('supplier', False):
-            vals['supplier'] = product.seller_id and product.seller_id.id or False
+            vals['supplier'] = product.seller_id and (product.seller_id.supplier or product.seller_id.manufacturer or
+                                                      product.seller_id.transporter) and product.seller_id.id or False
 
         if product and product.type in ('consu', 'service', 'service_recep'):
             vals['type'] = 'make_to_order'
@@ -846,8 +847,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             line_ids = [line_ids]
 
         for line in self.browse(cr, uid, line_ids, context=context):
-            if line.type == 'make_to_order' and line.product_id \
-               and line.product_id.seller_id:
+            if line.type == 'make_to_order' and line.product_id and line.product_id.seller_id and \
+                    (line.product_id.seller_id.supplier or line.product_id.seller_id.manufacturer
+                     or line.product_id.seller_id.transporter):
                 self.write(cr, uid, [line.id], {
                     'supplier': line.product_id.seller_id.id,
                 }, context=context)
@@ -2112,7 +2114,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         if product and type:
             seller = product_obj.browse(cr, uid, product).seller_id
-            sellerId = (seller and seller.id) or False
+            sellerId = (seller and (seller.supplier or seller.manufacturer or seller.transporter) and seller.id) or False
 
             if l_type == 'make_to_order':
                 po_cft = 'po'
@@ -2247,7 +2249,9 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'title': _('Warning'),
                     'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type,
                 })
-            if l_type == 'make_to_order' and line.product_id and line.product_id.seller_id:
+            if l_type == 'make_to_order' and line.product_id and line.product_id.seller_id and \
+                    (line.product_id.seller_id.supplier or line.product_id.seller_id.manufacturer
+                     or line.product_id.seller_id.transporter):
                 value['supplier'] = line.product_id.seller_id.id
 
         if l_type == 'make_to_stock':

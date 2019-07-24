@@ -24,7 +24,7 @@
                         <field name="run_scheduler" />
                         <separator colspan="4" string="Supplier selection" />
                         <field name="supplier_id"
-                               domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft), ('line_contains_fo', '=', line_ids)]"
+                               domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft), ('line_contains_fo', '=', line_ids), '|', '|', ('supplier', '=', 't'), ('manufacturer', '=', 't'), ('transporter', '=', 't')]"
                                attrs="{'readonly': [('po_cft', '=', 'cft')], 'invisible': [('type', '=', 'make_to_stock')]}"
                                on_change="change_supplier(supplier_id, type)"
                         />
