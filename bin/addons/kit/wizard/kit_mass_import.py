@@ -22,7 +22,6 @@
 # External libraries imports
 import time
 import base64
-import threading
 
 # Server imports
 from osv import osv
@@ -31,7 +30,6 @@ from tools.translate import _
 
 # Addons imports
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 
 
 class kit_mass_import(osv.osv):
@@ -66,9 +64,6 @@ class kit_mass_import(osv.osv):
         'template_filename': fields.char(
             size=128,
             string='Template filename',
-        ),
-        'show_template': fields.boolean(
-            string='Show template',
         ),
         'state': fields.selection(
             selection=[
@@ -122,31 +117,12 @@ class kit_mass_import(osv.osv):
         if context is None:
             context = {}
 
-        columns_header = [
-            (_('Kit Code'), 'string'),
-            (_('Kit Description'), 'string'),
-            (_('Kit Version'), 'string'),
-            (_('Active'), 'string'),
-            (_('Module'), 'string'),
-            (_('Product Code'), 'string'),
-            (_('Product Description'), 'string'),
-            (_('Product Qty'), 'string'),
-            (_('Product UoM'), 'string'),
-        ]
-        default_template = SpreadsheetCreator(
-            'Template of import',
-            columns_header,
-            [],)
-        template = base64.encodestring(default_template.get_xml(
-            default_filters=['decode.utf8']))
-
-        self.write(cr, uid, ids, {
-            'template_file': template,
-            'template_filename': 'template.xls',
-            'show_template': True,
-        }, context=context)
-
-        return {}
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'kit_mass_import_export',
+            'datas': {'target_filename': _('Theoretical Kit Template')},
+            'context': context,
+        }
 
     def get_value_from_excel(self, cr, uid, file_to_import, context=None):
         """
@@ -185,7 +161,7 @@ class kit_mass_import(osv.osv):
             values.setdefault(index, [])
             for cell_nb in range(len(r)):
                 cell_data = r.cells and r.cells[cell_nb] and\
-                            r.cells[cell_nb].data
+                    r.cells[cell_nb].data
                 values[index].append(cell_data)
 
         return values
@@ -275,7 +251,7 @@ class kit_mass_import(osv.osv):
             import_data_from_file(cr, uid, ids, context=context, force=True)
 
     def _chk_consistency(self, cr, uid, wizard_id,
-            values=None, context=None, force=False):
+                         values=None, context=None, force=False):
         """
         Check if all lines of the file have the mandatory field set and values
         consistent for other fields.
@@ -438,7 +414,6 @@ class kit_mass_import(osv.osv):
 
         for values in kit_values.itervalues():
             warning = False
-            error = False
             # Create the Theoretical Kit
             kit_product_id = self._get_product(
                 cr, uid, values.get('code'), cache_product, check_kit=True)
@@ -452,13 +427,13 @@ class kit_mass_import(osv.osv):
                     error_msg[err_index].append(
                         _('Kit Product \'%s\' not found in the database - '\
                           'Kit not imported') %
-                            values.get('code')
+                        values.get('code')
                     )
                 elif kit_product_id < 0:
                     error_msg[err_index].append(
                         _('Kit Product \'%s\' is not a kit product - '\
                           'Kit not imported') %
-                            values.get('code')
+                        values.get('code')
                     )
                 continue
 
@@ -524,8 +499,8 @@ class kit_mass_import(osv.osv):
                         warning_msg.setdefault(warn_index, [])
                         warning_msg[warn_index].append(
                             _('The UoM \'%s\' not found in the database. '\
-                            'Forced to product default UoM') %
-                                item.get('uom')
+                              'Forced to product default UoM') %
+                            item.get('uom')
                         )
                 else:
                     warning = True
@@ -595,7 +570,7 @@ class kit_mass_import(osv.osv):
                         warning_index.add(warn_index)
                         warning_msg.setdefault(warn_index, [])
                         warning_msg[warn_index].append(_(
-"""Kit \'%s\' - Module \'%s\' - Item \'%s\' not found in file, item removed"""
+                            """Kit \'%s\' - Module \'%s\' - Item \'%s\' not found in file, item removed"""
                         ) % (
                             it.item_kit_id.composition_product_id.default_code,
                             it.item_module or '',
@@ -646,7 +621,7 @@ class kit_mass_import(osv.osv):
         in cache, put it in cache.
         """
         kit_product_id = self._get_record(
-                cr, uid, 'default_code', code, 'product.product', cache)
+            cr, uid, 'default_code', code, 'product.product', cache)
 
         # Check if the product is a Kit
         if kit_product_id and check_kit:
@@ -663,7 +638,7 @@ class kit_mass_import(osv.osv):
         put it in cache.
         """
         return self._get_record(
-                cr, uid, 'name', name, 'product.uom', cache)
+            cr, uid, 'name', name, 'product.uom', cache)
 
     def _get_uom_from_product(self, cr, uid, product_id, context=None):
         """

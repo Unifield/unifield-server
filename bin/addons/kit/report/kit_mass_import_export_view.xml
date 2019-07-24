@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="kit_mass_import_export"
+            string="Theoretical Kit Template"
+            model="kit.mass.import"
+            name="kit_mass_import_export"
+            file="kit/report/kit_mass_import_export_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+    </data>
+</openerp>
