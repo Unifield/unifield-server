@@ -21,6 +21,7 @@
 
 from osv import fields, osv
 import tools
+import logging
 
 TRANSLATION_TYPE = [
     ('field', 'Field'),
@@ -65,7 +66,30 @@ class ir_translation(osv.osv):
         # They are used to resolve the res_id above after loading is done.
         'module': fields.char('Module', size=64, help='Maps to the ir_model_data for which this translation is provided.'),
         'xml_id': fields.char('XML Id', size=128, help='Maps to the ir_model_data for which this translation is provided.', select=True),
+        'updated_by_modules': fields.boolean('Updated by last msf_profile update'),
     }
+
+    _defaults = {
+        'updated_by_modules': False,
+    }
+
+    def has_duplicate(self, cr, uid, verbose=False, context=None):
+
+        cr.execute("""select src,type,count(*), lang
+            from ir_translation
+            where
+                type in ('code', 'sql_constraint') and
+                lang in ('fr_MF', 'en_MF')
+            group by src,type, lang
+            having count(distinct(value)) > 1"""
+                   )
+
+        nb = cr.rowcount
+        if verbose:
+            logger = logging.getLogger('translate')
+            for x in cr.fetchall():
+                logger.warn("%s duplicated %s %s translations: %s" % (x[2], x[3], x[1], x[0]))
+        return nb
 
     def _auto_init(self, cr, context={}):
         super(ir_translation, self)._auto_init(cr, context)

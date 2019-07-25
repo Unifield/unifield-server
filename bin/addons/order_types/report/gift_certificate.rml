@@ -67,7 +67,7 @@
   </stylesheet>
   <story>
     <para style="terp_default_8">[[ repeatIn(objects,'o') ]]</para>
-    <para style="terp_default_8">[[ setLang(o.partner_id.lang) ]]</para>
+    <para style="terp_default_8"></para>
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>

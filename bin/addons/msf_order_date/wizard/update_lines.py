@@ -109,7 +109,7 @@ class update_lines(osv.osv_memory):
 
             _moves_fields = result['fields']
             # add field related to picking type only
-            _moves_fields.update({'stock_take_date': {'type': 'date', 'string': 'Date of Stock Take', 'readonly': True, },})
+            _moves_fields.update({'stock_take_date': {'type': 'date', 'string': _('Date of Stock Take'), 'readonly': True, },})
 
             _moves_arch_lst += """</form>"""
         else:
@@ -128,7 +128,7 @@ class update_lines(osv.osv_memory):
 
             _moves_fields = result['fields']
             # add field related to picking type only
-            _moves_fields.update({'delivery_%s_date'%field_name: {'type' : 'date', 'string' : 'Delivery %s date'%field_name, 'readonly': True,},
+            _moves_fields.update({'delivery_%s_date'%field_name: {'type' : 'date', 'string' : _('Delivery %s date')% _(field_name), 'readonly': True,},
                                   })
 
             _moves_arch_lst += """</form>"""

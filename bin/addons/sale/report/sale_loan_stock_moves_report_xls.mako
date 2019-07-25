@@ -118,7 +118,7 @@
  </Styles>
 
  % for r in objects:
- <ss:Worksheet ss:Name="Loan Report">
+ <ss:Worksheet ss:Name="${_('Loan Report')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Product Code
         <Column ss:AutoFitWidth="1" ss:Width="102.5" />
@@ -198,7 +198,7 @@
                 % endif
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.picking_id.name or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.partner_id.name or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.partner_id.partner_type or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getSel(o.partner_id, 'partner_type') or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getUserCompany()['instance_id'].name|x}</Data></Cell>
                 % if isQtyOut(o):
                 <Cell ss:StyleID="line_right${i}"><Data ss:Type="String"></Data></Cell>
@@ -217,7 +217,7 @@
                 <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${computeCurrency(o)|x}</Data></Cell>
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getUserCompany()['currency_id'].name|x}</Data></Cell>
                 <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${computeCurrency(o) * getQty(o)|x}</Data></Cell>
-                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.status|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getSel(o, 'status')|x}</Data></Cell>
             </Row>
             % endfor
         % endfor

@@ -1209,7 +1209,7 @@
                     <field name="allow_cr" invisible="1" />
                     <group colspan="4" col="1" attrs="{'invisible': [('allow_cr', '=', False)]}">
                         <html>
-                            <h4 style="text-align: center; margin: 10px">If you click on 'Cancel &amp; Resource' button, all lines of this delivery OUT attached to a Field order or an Internal Request will be re-sourced. All lines or quantities already processed wouldn't be re-sourced.</h4>
+                            <h4 style="text-align: center; margin: 10px"><translate>If you click on 'Cancel &amp; Resource' button, all lines of this delivery OUT attached to a Field order or an Internal Request will be re-sourced. All lines or quantities already processed wouldn't be re-sourced.</translate></h4>
                         </html>
                     </group>
                     <newline />
@@ -1253,7 +1253,7 @@
                 <form string="Cancel move">
                     <group colspan="4" col="1" attrs="{'invisible': [('cancel_only', '=', True)]}">
                         <html>
-                            <h4 style="text-align: center; margin: 10px">Would you re-source the need sourced by this stock move ?</h4>
+                            <h4 style="text-align: center; margin: 10px"><translate>Would you re-source the need sourced by this stock move ?</translate></h4>
                         </html>
                     </group>
                     <newline />

@@ -44,7 +44,7 @@
   </stylesheet>
   <story>
     <para style="Standard">[[repeatIn(objects,'o')]]</para>
-    <para style="Standard">[[ setLang(o.partner_id.lang) ]]</para>
+    <para style="Standard"></para>
     
     <!-- HEADER TABLE OF THE PRINTED FILE -->
     <blockTable colWidths="565" style="HeaderTable">

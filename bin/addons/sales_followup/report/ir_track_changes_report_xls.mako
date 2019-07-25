@@ -124,7 +124,7 @@
 
 
 % for r in objects:
-<ss:Worksheet ss:Name="IR Track Changes">
+<ss:Worksheet ss:Name="${_('IR Track Changes')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Order ref
         <Column ss:AutoFitWidth="1" ss:Width="80.0" />
@@ -158,7 +158,7 @@
         <Column ss:AutoFitWidth="1" ss:Width="209.25"  />
 
         <Row ss:Height="18">
-            <Cell ss:StyleID="big_header"><Data ss:Type="String">INTERNAL REQUEST Track Changes report</Data><NamedCell ss:Name="Print_Area"/></Cell>
+            <Cell ss:StyleID="big_header"><Data ss:Type="String">${_('INTERNAL REQUEST Track Changes report')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
         </Row>
 
         <Row ss:Height="10"></Row>
@@ -240,7 +240,7 @@
         % for line in getLines(r):
             <Row ss:Height="11.25">
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.order_id.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.state|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(line, 'state_to_display')|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_no_digits"><Data ss:Type="Number">${line.line_number|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.product_id.default_code or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.name|x}</Data></Cell>

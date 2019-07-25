@@ -22,24 +22,23 @@
 import time
 
 from report import report_sxw
-from report_webkit.webkit_report import WebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 
 class sale_follow_up_report_parser(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(sale_follow_up_report_parser, self).__init__(cr, uid, name,
-            context=context)
+                                                           context=context)
         self.localcontext.update({
             'time': time,
             'parse_date_xls': self._parse_date_xls,
             'upper': self._upper,
-         })
+        })
         self._dates_context = {}
         self._report_context = {}
 
         #self.module_instance = self.pool.get('sale.order.followup')
-        
+
     def _parse_date_xls(self, dt_str, is_datetime=True):
         if not dt_str or dt_str == 'False':
             return ''
@@ -48,7 +47,7 @@ class sale_follow_up_report_parser(report_sxw.rml_parse):
         if dt_str:
             dt_str += 'T00:00:00.000'
         return dt_str
-        
+
     def _upper(self, s):
         if not isinstance(s, (str, unicode)):
             return s
@@ -66,13 +65,12 @@ report_sxw.report_sxw(
 
 class sale_follow_up_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
-        header='external', store=False):
+                 header='external', store=False):
         super(sale_follow_up_report_xls, self).__init__(name, table,
-            rml=rml, parser=parser, header=header, store=store)
+                                                        rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
-        a = super(sale_follow_up_report_xls, self).create(cr, uid, ids,
-        data, context)
+        a = super(sale_follow_up_report_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
 sale_follow_up_report_xls(

@@ -81,27 +81,27 @@
     </Style>
 </Styles>
 % for o in objects:
-    <ss:Worksheet ss:Name="Periodical forecast report">
+    <ss:Worksheet ss:Name="${_('Periodical forecast report')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
 
         <Row>
-            <Cell ss:StyleID="header"><Data ss:Type="String">DB/instance name</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">${_('DB/instance name')|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${o.requestor_id and o.requestor_id.company_id and o.requestor_id.company_id.instance_id and o.requestor_id.company_id.instance_id.name or ''|x}</Data></Cell>
         </Row>
 
         <Row>
-            <Cell ss:StyleID="header"><Data ss:Type="String">From</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">${_('From date')|x}</Data></Cell>
             <Cell ss:StyleID="header_short_date"><Data ss:Type="DateTime">${o.requestor_date[:10]|n}T${o.requestor_date[11:]|n}.000</Data></Cell>
         </Row>
 
         <Row>
-            <Cell ss:StyleID="header"><Data ss:Type="String">Number of ${o.interval_type == 'week' and 'weeks' or 'months'|n} from now</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">${_('Number of')|x} ${o.interval_type == 'week' and _('weeks') or _('months')|n} ${_('from now')|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="Number">${o.interval|x}</Data></Cell>
         </Row>
 
         <Row>
-            <Cell ss:StyleID="header"><Data ss:Type="String">Consumption calculation method</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${o.consumption_type == 'fmc' and 'FMC' or o.consumption_type == 'amc' and 'AMC' or 'RAC'|x}</Data></Cell>
+            <Cell ss:StyleID="header"><Data ss:Type="String">${_('Consumption calculation method')|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${o.consumption_type == 'fmc' and _('FMC') or o.consumption_type == 'amc' and _('AMC') or _('RAC')|x}</Data></Cell>
         </Row>
 
         ${o.xml_data}

@@ -342,19 +342,3 @@ class po_follow_up(osv.osv_memory):
 
 po_follow_up()
 
-
-# already defined in account_mcdb/wizard/output_currency_for_export.py
-# class background_report(osv.osv_memory):
-#        _name = 'memory.background.report'
-#        _description = 'Report result'
-#
-#        _columns = {
-#            'file_name': fields.char('Filename', size=256),
-#            'report_name': fields.char('Report Name', size=256),
-#            'report_id': fields.integer('Report id'),
-#            'percent': fields.float('Percent'),
-#            'finished': fields.boolean('Finished'),
-#        }
-#        def update_percent(self, cr, uid, ids, percent, context=None):
-#            self.write(cr, uid, ids, {'percent': percent})
-# background_report()

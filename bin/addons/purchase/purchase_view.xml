@@ -976,7 +976,6 @@
             </field>
         </record>
 
-        <act_window context="{'search_default_partner_id': [active_id]}" id="act_res_partner_2_purchase_order" name="Purchase Orders" groups="purchase.group_purchase_user" res_model="purchase.order" src_model="res.partner"/>
 
         <act_window context="{}"
                     domain="[('rfq_ok', '=', False), ('product_id', '=', active_id)]"

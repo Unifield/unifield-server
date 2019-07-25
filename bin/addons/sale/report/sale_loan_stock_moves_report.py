@@ -24,6 +24,7 @@ import time
 
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+from tools.translate import _
 
 
 class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
@@ -73,7 +74,7 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
         sm_list = []
         # TODO: we must search on counterpart if filter is used on wizard
         for move in report.sm_ids:
-            sm_list.append(self.pool.get('stock.move').browse(self.cr, self.uid, move))
+            sm_list.append(self.pool.get('stock.move').browse(self.cr, self.uid, move, context=self.localcontext))
 
         sm_list = sorted(sm_list, key=lambda sm: sm['create_date'])
         move_by_fo_po_prod = {}
@@ -89,7 +90,7 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 qty = self._get_qty(move)
 
             dom = []
-            status = 'Open'
+            status = _('Open')
             if move.purchase_line_id:
                 po_found = move.purchase_line_id.order_id
                 ids = []
@@ -114,9 +115,9 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                                 so = so_obj.browse(self.cr, self.uid, ids[0])
                         get_so_from_po_id[po_found.id] = so
 
-                so_found = get_so_from_po_id.get(po_found.id)             
+                so_found = get_so_from_po_id.get(po_found.id)
                 if so_found and so_found.state == po_found.state == 'done':
-                    status = 'Closed'
+                    status = _('Closed')
             elif move.sale_line_id:
                 so_found = move.sale_line_id.order_id
                 if so_found.id not in get_po_from_so_id:
@@ -137,15 +138,15 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
 
                 po_found = get_po_from_so_id.get(so_found.id)
                 if po_found and so_found.state == po_found.state == 'done':
-                    status = 'Closed'
+                    status = _('Closed')
 
-            if status != 'Closed' or not report.remove_completed:
+            if status != _('Closed') or not report.remove_completed:
                 setattr(move, 'status', status)
                 setattr(move, 'balance', 0)
 
                 key = (
                     so_found and so_found.id or 'NF%s' % po_found.id,
-                    po_found and po_found.id or 'NF%s' % so_found.id, 
+                    po_found and po_found.id or 'NF%s' % so_found.id,
                     move.product_id.id
                 )
                 if key not in move_by_fo_po_prod:

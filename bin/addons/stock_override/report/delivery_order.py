@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,7 +21,7 @@
 
 import time
 from report import report_sxw
-import pooler
+from tools.translate import _
 
 class delivery_order(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
@@ -56,14 +56,14 @@ class delivery_order(report_sxw.rml_parse):
         if not state:
             return ''
         states = {
-            'draft': 'Draft',
-            'auto': 'Waiting',
-            'confirmed': 'Confirmed',
-            'assigned': 'Available',
-            'shipped': 'Available Shipped',
-            'done': 'Closed',
-            'cancel': 'Cancelled',
-            'import': 'Import in progress',
+            'draft': _('Draft'),
+            'auto': _('Waiting'),
+            'confirmed': _('Confirmed'),
+            'assigned': _('Available'),
+            'shipped': _('Available Shipped'),
+            'done': _('Closed'),
+            'cancel': _('Cancelled'),
+            'import': _('Import in progress'),
         }
         return states.get(state, '')
 

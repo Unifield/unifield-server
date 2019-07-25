@@ -84,7 +84,7 @@
  </Styles>
 
  % for r in objects:
- <ss:Worksheet ss:Name="Donation Report">
+ <ss:Worksheet ss:Name="${_('Donation Report')}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Product Code
         <Column ss:AutoFitWidth="1" ss:Width="92.5" />
@@ -176,7 +176,7 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.purchase_line_id and o.purchase_line_id.order_id.name or ''|x}</Data></Cell>
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.partner_id.name or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.partner_id.partner_type or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o.partner_id, 'partner_type') or ''|x}</Data></Cell>
                 % if isQtyOut(o):
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>

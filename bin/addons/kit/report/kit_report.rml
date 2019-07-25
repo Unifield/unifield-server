@@ -65,7 +65,7 @@
         <blockTable colWidths="842.0" style="MainTitle">
             <tr>
                 <td>
-                    <para style="Title">[[ o.composition_type == 'theoretical' and 'THEORETICAL KIT COMPOSITION' or 'KIT COMPOSITION LIST' ]]</para>
+                    <para style="Title">[[ o.composition_type == 'theoretical' and translate('THEORETICAL KIT COMPOSITION') or translate('KIT COMPOSITION LIST') ]]</para>
                 </td>
             </tr>
         </blockTable>

@@ -959,8 +959,6 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     if not line_number and not ext_ref:
                         not_ok = True
                         err1 = _('The line must have either the line number or the external ref. set')
-                        err = _('Line %s of the file: %s') % (x, err1)
-                        values_line_errors.append(err)
                         file_line_error.append(err1)
 
                     if line_number and ext_ref and (ext_ref not in LN_BY_EXT_REF[wiz.id].keys() or line_number not in LN_BY_EXT_REF[wiz.id][ext_ref]):
@@ -1135,7 +1133,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
                     if err_msg:
                         for err in err_msg:
-                            err = 'Line %s of the PO: %s' % (file_line[2], err)
+                            err = _('Line %s of the PO: %s') % (file_line[2], err)
                             values_line_errors.append(err)
 
 
@@ -1161,9 +1159,9 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     if err_msg:
                         for err in err_msg:
                             if line_n:
-                                err = 'Line %s of the PO: %s' % (line_n, err)
+                                err = _('Line %s of the PO: %s') % (line_n, err)
                             else:
-                                err = 'Line %s of the file: %s' % (po_line, err)
+                                err = _('Line %s of the file: %s') % (po_line, err)
                             values_line_errors.append(err)
                     # Commit modifications
                     cr.commit()
@@ -1182,13 +1180,13 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 import_error_ok = False
                 if len(values_header_errors):
                     import_error_ok = True
-                    message += '\n## Error on header values ##\n\n'
+                    message += '\n## %s ##\n\n' % (_('Error on header values'), )
                     for err in values_header_errors:
                         message += '%s\n' % err
 
                 if len(values_line_errors):
                     import_error_ok = True
-                    message += '\n## Error on line values ##\n\n'
+                    message += '\n## %s ##\n\n' % (_('Error on line values'), )
                     for err in values_line_errors:
                         message += '%s\n' % err
 
@@ -1338,14 +1336,15 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 delete_line_numbers.add(x['in_line_number'])
 
         res = {}
+        chg_dict = dict(self.fields_get(cr, uid, ['type_change'], context=context).get('type_change', {}).get('selection', []))
         for line in self.browse(cr, uid, ids, context=context):
             chg = ''
             if line.type_change in ('warning', 'del', 'ignore'):
-                chg = dict(self._columns['type_change'].selection).get(line.type_change) or ''
+                chg = chg_dict.get(line.type_change) or ''
             elif line.chg_text:
                 chg = line.chg_text
             elif line.type_change:
-                chg = dict(self._columns['type_change'].selection).get(line.type_change) or ''
+                chg = chg_dict.get(line.type_change) or ''
             res[line.id] = {'in_product_id': False,
                             'in_nomen': False,
                             'in_comment': False,
@@ -1413,7 +1412,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     res[line.id]['in_uom'] = line.imp_uom.id
 
             if line.type_change in ('warning', 'del', 'ignore'):
-                res[line.id]['chg_text'] = dict(self._columns['type_change'].selection).get(line.type_change) or ''
+                res[line.id]['chg_text'] = chg_dict.get(line.type_change) or ''
 
         return res
 
