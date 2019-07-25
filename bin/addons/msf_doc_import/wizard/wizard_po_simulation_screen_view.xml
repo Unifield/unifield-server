@@ -45,8 +45,8 @@
                             <field name="in_supplier_ref" />
                             <field name="imp_supplier_ref" nolabel="1" />
                             <label> </label>
-                            <field name="in_transport_mode" />
-                            <field name="imp_transport_mode" nolabel="1" />
+                            <field name="in_transport_type" />
+                            <field name="imp_transport_type" nolabel="1" />
                             <label> </label>
                             <field name="in_ready_to_ship_date" />
                             <field name="imp_ready_to_ship_date" nolabel="1" />

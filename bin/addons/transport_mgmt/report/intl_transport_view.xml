@@ -14,7 +14,7 @@
                     <field name="date_order" />
                     <field name="delivery_confirmed_date" />
                     <field name="partner_id" />
-                    <field name="transport_mode" />
+                    <field name="transport_type" />
                     <field name="func_transport_cost" sum="Transport cost" />
                     <field name="func_currency_id" />
                     <field name="transport_cost" />
@@ -33,7 +33,7 @@
                         <filter icon="terp-check" name="approved" string="Confirmed" domain="[('order_state','=','approved')]" separator="1" />
                         <filter icon="gtk-yes" name="done" string="Closed" domain="[('order_state','=','done')]" separator="1" />
                         <separator orientation="vertical" />
-                        <field name="transport_mode" />
+                        <field name="transport_type" />
                         <field name="transport_cost" />
                         <field name="order_id" />
                         <field name="date_order" />
@@ -42,7 +42,7 @@
                     </group>
                     <newline />
                     <group expand="1" string="Group By..." colspan="10" col="12">
-                        <filter string="Transport Mode" name="group_transport_mode" icon="terp-accessories-archiver" context="{'group_by': 'transport_mode'}" />
+                        <filter string="Transport Mode" name="group_transport_type" icon="terp-accessories-archiver" context="{'group_by': 'transport_type'}" />
                         <separator orientation="vertical" />
                         <filter string="Supplier" name="group_partner_id" icon="terp-personal" context="{'group_by':'partner_id'}"/>
                     </group>
@@ -55,7 +55,7 @@
             <field name="res_model">international.transport.cost.report</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree</field>
-            <field name="context">{'search_default_group_transport_mode':1, 'search_default_group_partner_id':1, 'search_default_group_transport_currency_id':1, 'group_by':[], 'group_by_no_leaf':0}</field>
+            <field name="context">{'search_default_group_transport_type':1, 'search_default_group_partner_id':1, 'search_default_group_transport_currency_id':1, 'group_by':[], 'group_by_no_leaf':0}</field>
         </record>
 
         <menuitem action="action_intl_transport_cost_action" id="menu_intl_transport_cost_report" parent="menu_transport_cost_reports"/>

@@ -198,7 +198,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                                        relation='res.partner.address',
                                        string='Destination Address',
                                        readonly=True),
-        'in_transport_mode': fields.related('order_id', 'transport_type',
+        'in_transport_type': fields.related('order_id', 'transport_type',
                                             type='selection',
                                             selection=TRANSPORT_TYPE,
                                             string='Transport mode',
@@ -238,7 +238,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         # Import fiels
         'imp_supplier_ref': fields.char(size=256, string='Supplier Ref',
                                         readonly=True),
-        'imp_transport_mode': fields.selection(selection=TRANSPORT_TYPE,
+        'imp_transport_type': fields.selection(selection=TRANSPORT_TYPE,
                                                string='Transport mode',
                                                readonly=True),
         'imp_ready_to_ship_date': fields.date(string='RTS Date',
@@ -838,17 +838,17 @@ information must be on at least %s columns. The line %s has %s columns') % (x, n
                 # Nothing to do
 
                 # Line 9: Transport mode
-                transport_mode = values.get(9, [])[1]
-                if transport_mode:
-                    transport_select = self.fields_get(cr, uid, ['imp_transport_mode'], context=context)
-                    for x in transport_select['imp_transport_mode']['selection']:
-                        if x[1] == transport_mode:
-                            header_values['imp_transport_mode'] = x[0]
+                transport_type = values.get(9, [])[1]
+                if transport_type:
+                    transport_select = self.fields_get(cr, uid, ['imp_transport_type'], context=context)
+                    for x in transport_select['imp_transport_type']['selection']:
+                        if x[1] == transport_type:
+                            header_values['imp_transport_type'] = x[0]
                             break
                     else:
-                        possible_mode = ', '.join(x[1] for x in transport_select['imp_transport_mode']['selection'] if x[1])
+                        possible_type = ', '.join(x[1] for x in transport_select['imp_transport_type']['selection'] if x[1])
                         err_msg = _('Line 9 of the file: The transport mode \'%s\' is not \
-a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_mode)
+a valid transport mode. Valid transport modes: %s') % (transport_type, possible_type)
                         values_header_errors.append(err_msg)
 
 

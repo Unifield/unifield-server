@@ -39248,9 +39248,6 @@ msgstr "base.report.sxw"
 
 #. modules: msf_order_date, purchase, msf_outgoing, partner_modification, transport_mgmt, msf_doc_import
 #: selection:purchase.import.xml.line,transport_type:0
-#: selection:wizard.import.in.simulation.screen,transport_mode:0
-#: selection:wizard.import.po.simulation.screen,imp_transport_mode:0
-#: selection:wizard.import.po.simulation.screen,in_transport_mode:0
 #: selection:sale.order,transport_type:0
 #: selection:return.pack.shipment.processor,transport_type:0
 #: selection:return.shipment.processor,transport_type:0
@@ -39260,8 +39257,6 @@ msgstr "base.report.sxw"
 #: selection:res.partner,transport_1:0
 #: selection:res.partner,transport_2:0
 #: selection:purchase.order,transport_type:0
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
 msgid "Sea"
 msgstr "Mer"
 
@@ -49822,9 +49817,6 @@ msgstr "Créer une Facture"
 
 #. modules: msf_order_date, msf_doc_import, msf_outgoing, partner_modification, purchase
 #: selection:purchase.import.xml.line,transport_type:0
-#: selection:wizard.import.in.simulation.screen,transport_mode:0
-#: selection:wizard.import.po.simulation.screen,imp_transport_mode:0
-#: selection:wizard.import.po.simulation.screen,in_transport_mode:0
 #: selection:sale.order,transport_type:0
 #: selection:return.pack.shipment.processor,transport_type:0
 #: selection:return.shipment.processor,transport_type:0
@@ -53780,12 +53772,6 @@ msgstr "Modèle de Sélecteur"
 #, python-format
 msgid "Problem in configuration `Record Id` in Server Action!"
 msgstr "Problème dans la configuration `Record Id` sous Action Server!"
-
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air regular"
-msgstr "Air - régulier "
 
 #. module: account
 #: field:account.move.line.reconcile,credit:0
@@ -76075,12 +76061,6 @@ msgstr "Field order"
 msgid "Price List Version"
 msgstr "Prix - Version  de Liste"
 
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Hand carry"
-msgstr "Transport en bagage à main"
-
 #. module: account_corrections
 #: view:wizard.journal.items.corrections:0
 #: view:analytic.distribution.wizard:0
@@ -77271,18 +77251,17 @@ msgstr "Liste des Funding pools associés aux coûts réservés"
 #. modules: msf_doc_import, transport_mgmt, msf_supply_doc_export, msf_outgoing
 #: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:139
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:60
-#: field:wizard.import.in.simulation.screen,imp_transport_mode:0
-#: field:wizard.import.in.simulation.screen,transport_mode:0
-#: field:wizard.import.po.simulation.screen,imp_transport_mode:0
-#: field:wizard.import.po.simulation.screen,in_transport_mode:0
-#: field:international.transport.cost.report,transport_mode:0
 #: field:local.transport.cost.report,transport_mode:0
-#: field:purchase.order,transport_mode:0
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:124
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:118
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:136
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:402
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:73
+#: field:wizard.import.in.simulation.screen,imp_transport_type:0
+#: field:wizard.import.in.simulation.screen,transport_type:0
+#: field:wizard.import.po.simulation.screen,imp_transport_type:0
+#: field:wizard.import.po.simulation.screen,in_transport_type:0
+#: field:international.transport.cost.report,transport_type:0
 #, python-format
 msgid "Transport mode"
 msgstr "Mode de Transport"
@@ -81571,12 +81550,6 @@ msgstr " avec le numéro de Lot '%s' et la date d'Expiration '%s'"
 msgid "Validated by"
 msgstr "Validé par"
 
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air FFC"
-msgstr "Air - FFC"
-
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,state_id:0
 #: selection:base.setup.company,bill_state_id:0
@@ -83319,12 +83292,6 @@ msgstr "analytic.distribution"
 #: selection:res.partner,transport_1:0
 #: selection:res.partner,transport_2:0
 #: selection:purchase.order,transport_type:0
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-#: selection:purchase.import.xml.line,transport_type:0
-#: selection:wizard.import.in.simulation.screen,transport_mode:0
-#: selection:wizard.import.po.simulation.screen,imp_transport_mode:0
-#: selection:wizard.import.po.simulation.screen,in_transport_mode:0
 #: selection:return.pack.shipment.processor,transport_type:0
 #: selection:return.shipment.processor,transport_type:0
 #: selection:shipment,transport_type:0
@@ -85767,12 +85734,6 @@ msgstr "Suivi d'un mouvement"
 #: view:free.allocation.wizard:0
 msgid "Load"
 msgstr "Charger"
-
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air express"
-msgstr "Air - express"
 
 #. module: hr
 #: model:hr.employee.marital.status,name:hr.hr_employee_marital_status_single
@@ -107409,3 +107370,22 @@ msgstr "Nr de lot"
 #, python-format
 msgid "No document has been selected"
 msgstr "Aucun document n'a été sélectionné"
+
+#. module: purchase
+#: view:purchase.order:0
+msgid "Estimated transport costs : "
+msgstr "Estimation des coûts du transport : "
+
+#. modules: msf_order_date, purchase, msf_outgoing, partner_modification, transport_mgmt, msf_doc_import
+#: selection:sale.order,transport_type:0
+#: selection:return.pack.shipment.processor,transport_type:0
+#: selection:return.shipment.processor,transport_type:0
+#: selection:shipment,transport_type:0
+#: selection:shipment.processor,transport_type:0
+#: selection:res.partner,transport_0:0
+#: selection:res.partner,transport_1:0
+#: selection:res.partner,transport_2:0
+#: selection:purchase.order,transport_type:0
+#: selection:international.transport.cost.report,transport_type:0
+msgid "Hand carry"
+msgstr "Transport en bagage à main"
