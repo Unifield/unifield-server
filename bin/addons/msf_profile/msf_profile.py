@@ -69,6 +69,31 @@ class patch_scripts(osv.osv):
                     err_msg,
                 )
 
+    def us_6075_set_paid_invoices_as_closed(self, cr, uid, *a, **b):
+        cr.execute('''SELECT i.id, i.number
+            FROM account_invoice i
+                LEFT JOIN account_move_line l ON i.move_id=l.move_id
+                LEFT JOIN account_move_line rec_line ON rec_line.reconcile_id = l.reconcile_id
+                LEFT JOIN account_journal j ON j.id = rec_line.journal_id AND j.type in ('cash', 'bank', 'cheque')
+            WHERE i.state='paid'
+                AND l.reconcile_id is not null
+                AND l.account_id=i.account_id
+                AND l.is_counterpart
+            GROUP BY i.id, i.number
+            HAVING min(j.id) IS NULL
+            ORDER BY i.id
+        ''')
+        inv_ids = []
+        inv_name = []
+        for x in cr.fetchall():
+            inv_ids.append(x[0])
+            inv_name.append(x[1])
+        if inv_ids:
+            self._logger.warn('%d Invoices change state from Paid to Close: %s' % (len(inv_ids), ', '.join(inv_name)))
+            cr.execute("update account_invoice set state='inv_close' where state='paid' and id in %s", (tuple(inv_ids), ))
+        return True
+
+
     # UF13.1
     def us_3413_align_in_partner_to_po(self,cr, uid, *a, **b):
         cr.execute("select p.name, p.id, po.partner_id, p.partner_id from stock_picking p, purchase_order po where p.type='in' and po.id = p.purchase_id and ( p.partner_id != po.partner_id or p.partner_id2 != po.partner_id) order by p.name")

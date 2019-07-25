@@ -429,5 +429,10 @@
             <field name="method">us_6111_nr_field_closed_mar_2018</field>
         </record>
 
+        <!-- UF14.0 -->
+        <record id="us_6075_set_paid_invoices_as_closed" model="patch.scripts">
+            <field name="method">us_6075_set_paid_invoices_as_closed</field>
+        </record>
+
     </data>
 </openerp>
