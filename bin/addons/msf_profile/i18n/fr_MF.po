@@ -4292,12 +4292,6 @@ msgstr "Pas de lignes…"
 msgid "Account tax charts"
 msgstr "Compte - Plans de taxes"
 
-#. module: account
-#: model:ir.actions.act_window,name:account.action_account_state_open
-#: model:ir.model,name:account.model_account_state_open
-msgid "Account State Open"
-msgstr "Compte - Statut Ouvert"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -7087,11 +7081,6 @@ msgstr "Aucun journal de type %s n'existe pour cette société.\n"
 "\n"
 "Vous pouvez en créer un à partir du menu :\n"
 "Configuration/Comptabilité Financière/Comptes/Journaux."
-
-#. module: account
-#: view:account.state.open:0
-msgid "Are you sure you want to open this invoice ?"
-msgstr "Etes-vous sûr de vouloir ouvrir cette facture ?"
 
 #. modules: stock_move_tracking, stock, stock_override
 #: selection:report.stock.move,type:0
@@ -15413,11 +15402,6 @@ msgstr "La devise que vous désirez %s est utilisée dans au moins une Commande 
 msgid "Destination not compatible with account"
 msgstr "Destination not compatible with account"
 
-#. module: account
-#: model:ir.model,name:account.model_account_invoice_cancel
-msgid "Cancel the Selected Invoices"
-msgstr "Annuler les Factures Sélectionnées"
-
 #. modules: account, register_accounting
 #: view:account.bank.statement:0
 #: view:account.bank.statement:0
@@ -16876,7 +16860,6 @@ msgid "%s update%s"
 msgstr "%s update%s"
 
 #. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, msf_partner, res_currency_tables, salr, sourcing, tender_flow, msf_doc_import, finance, stock, product, stock_override
-#: view:account.state.open:0
 #: selection:mission.stock.wizard,split_stock:0
 #: selection:mission.stock.wizard,with_valuation:0
 #: view:wizard.accrual.reversal:0
@@ -18905,8 +18888,9 @@ msgstr "Weight is missing"
 msgid "Number of Packs"
 msgstr "Nombre de Colis"
 
-#. module: account
+#. module: account, account_override
 #: code:addons/account/invoice.py:652
+#: code:addons/account_override/invoice.py:421
 #, python-format
 msgid "Can't find any account journal of %s type for this company.\n"
 "\n"
@@ -20448,8 +20432,9 @@ msgstr "Load Spreadsheet XML file"
 msgid "Red color"
 msgstr "Red color"
 
-#. module: base
+#. module: base, account
 #: selection:res.request,state:0
+#: code:addons/account/invoice.py:477
 msgid "closed"
 msgstr "fermé/fermée"
 
@@ -25283,7 +25268,6 @@ msgid "Europe/Bucharest"
 msgstr "Europe/Bucharest"
 
 #. modules: msf_budget, account, account_payment, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, stock, msf_partner, salr, sourcing, tender_flow, msf_doc_import, finance, msf_supply_doc_export, product, stock_override
-#: view:account.state.open:0
 #: view:account.payment.make.payment:0
 #: selection:mission.stock.wizard,split_stock:0
 #: selection:mission.stock.wizard,with_valuation:0
@@ -27945,12 +27929,6 @@ msgstr "Aucune ligne non sourcée sélectionnée. Veuillez sélectionner des lig
 msgid "Ratio"
 msgstr "Ratio"
 
-#. module: account
-#: code:addons/account/wizard/account_state_open.py:37
-#, python-format
-msgid "Invoice is already reconciled"
-msgstr "La Facture est déjà lettrée"
-
 #. module: account_mcdb
 #: view:account.analytic.line:0
 msgid "Have been reallocated?"
@@ -30269,13 +30247,18 @@ msgstr "Date de Début"
 msgid "Certificate attached ?"
 msgstr "Certificat attaché ?"
 
-#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, msf_supply_doc_export
+#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, msf_supply_doc_export, account_override,account,register_accounting
 #: field:po.follow.up,closed_ok:0
 #: selection:real.average.consumption,state:0
 #: selection:po.follow.up,state:0
 #: selection:sale.order.leave.close,order_state:0
 #: field:ir.followup.location.wizard,closed_ok:0
 #: selection:sale.order.line,sale_order_state:0
+#: selection:account.invoice,state:0
+#: selection:account.invoice.report,state:0
+#: selection:report.invoice.created,state:0
+#: view:account.invoice:0
+#: selection:wizard.account.invoice,state:0
 msgid "Closed"
 msgstr "Fermé"
 
@@ -33715,7 +33698,6 @@ msgid "Import FMC from Excel sheet"
 msgstr "Importer PCM à partir de feuilles Excel"
 
 #. modules: account, sale
-#: view:account.state.open:0
 #: model:ir.actions.act_window,name:sale.action_view_sale_open_invoice
 #: view:sale.open.invoice:0
 msgid "Open Invoice"
@@ -33803,11 +33785,6 @@ msgstr "\n"
 "* a more efficient way to manage invoice payment.\n"
 "* a basic mechanism to easily plug various automated payment.\n"
 "    "
-
-#. module: account
-#: view:account.invoice.cancel:0
-msgid "Cancel Invoices"
-msgstr "Annuler les Factures"
 
 #. module: base
 #: field:partner.sms.send,text:0
@@ -41146,12 +41123,6 @@ msgstr "Remplacement Stock"
 #: field:account.period,state_sync_flag:0
 msgid "Sync Flag"
 msgstr "Sync Flag"
-
-#. module: account
-#: view:account.invoice.cancel:0
-#: model:ir.actions.act_window,name:account.action_account_invoice_cancel
-msgid "Cancel Selected Invoices"
-msgstr "Annuler les Factures Sélectionnées"
 
 #. module: account_override
 #: code:addons/account_override/account.py:624
@@ -59022,7 +58993,6 @@ msgstr "Journal Ajustement"
 #: code:addons/account/wizard/account_invoice_state.py:44
 #: code:addons/account/wizard/account_invoice_state.py:68
 #: code:addons/account/wizard/account_report_balance_sheet.py:55
-#: code:addons/account/wizard/account_state_open.py:37
 #: code:addons/account/wizard/account_subscription_generate.py:50
 #: code:addons/account/wizard/account_subscription_generate.py:52
 #: code:addons/account/wizard/account_subscription_generate.py:60
@@ -64129,11 +64099,6 @@ msgstr "Écart quantitatif"
 #: view:base.report.sxw:0
 msgid "Select your report"
 msgstr "Sélectionner votre rapport"
-
-#. module: account
-#: view:account.state.open:0
-msgid "(Invoice should be unreconciled if you want to open it)"
-msgstr "(Une facture doit être déléttrée pour pouvoir l'ouvrir"
 
 #. modules: procurement_auto, procurement_cycle
 #: help:stock.warehouse.automatic.supply,frequence_id:0
@@ -72202,7 +72167,6 @@ msgid "Only Kit products can be used for kits."
 msgstr "Seuls les Produits de Kit peuvent être utilisés pour les Kits."
 
 #. modules: sales_followup, account, purchase_override, procurement_request, res_currency_tables, sync_client, documents_done, product, kit, base, purchase_followup, sale, stock, msf_profile
-#: view:account.invoice.cancel:0
 #: view:account.invoice.confirm:0
 #: view:base.language.install:0
 #: view:base.module.import:0
@@ -74856,6 +74820,13 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/stock/wizard/stock_reception_wizard.py:110
 #: field:export.report.stock.move,error:0
 #: selection:export.report.stock.move,state:0
+#: code:addons/account/invoice.py:1342
+#: code:addons/account/invoice.py:1344
+#: code:addons/account/report/account_liquidity_balance.py:71
+#: code:addons/account/wizard/account_report_liquidity_balance.py:71
+#: code:addons/account/wizard/account_report_liquidity_balance.py:73
+#: code:addons/account/wizard/account_report_liquidity_balance.py:75
+#: code:addons/account_override/period.py:148
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -106827,3 +106798,26 @@ msgstr "Requête annulée par l'utilisateur"
 msgid "Stop report"
 msgstr "Arrêter le rapport"
 
+#. module: account
+#: code:addons/account/wizard/account_invoice_refund.py:148
+#, python-format
+msgid "Can not %s invoice which is already reconciled, invoice should be unreconciled first."
+msgstr "Ne peut %s une facture qui est déjà lettrée, le lettrage de la facture devrait d'abord être annulé."
+
+#. module: account
+#: code:addons/account/invoice.py:480
+#, python-format
+msgid "Invoice '%s' is %s."
+msgstr "La facture '%s' est %s."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_refund.py:153
+#, python-format
+msgid "It is not possible to refund a Closed invoice"
+msgstr "Il ne pas possible de rembourser une facture fermée"
+
+#. module: account
+#: code:addons/account/invoice.py:474
+#, python-format
+msgid "paid"
+msgstr "réglée"
