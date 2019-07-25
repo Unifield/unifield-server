@@ -144,7 +144,14 @@ class account_invoice_refund(osv.osv_memory):
                 if inv.state in ['draft', 'proforma2', 'cancel']:
                     raise osv.except_osv(_('Error !'), _('Can not %s draft/proforma/cancel invoice.') % (mode))
                 if mode in ('cancel', 'modify') and inv_obj.has_one_line_reconciled(cr, uid, [inv.id], context=context):
-                    raise osv.except_osv(_('Error !'), _('Can not %s invoice which is already reconciled, invoice should be unreconciled first. You can only Refund this invoice') % (mode))
+                    if inv.state == 'inv_close':
+                        raise osv.except_osv(_('Error !'), _('Can not %s invoice which is already reconciled, invoice should be unreconciled first.') % (mode))
+                    else:
+                        raise osv.except_osv(_('Error !'), _('Can not %s invoice which is already reconciled, invoice should be unreconciled first. You can only Refund this invoice') % (mode))
+
+                if mode == 'refund' and inv.state == 'inv_close':
+                    raise osv.except_osv(_('Error !'), _('It is not possible to refund a Closed invoice'))
+
                 if form['period']:
                     period = form['period']
                 else:
