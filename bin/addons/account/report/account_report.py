@@ -174,7 +174,7 @@ class report_invoice_created(osv.osv):
             ('proforma2','Pro-forma'),
             ('open','Open'),
             ('paid','Done'),
-            ('inv_close','Close'),
+            ('inv_close','Closed'),
             ('cancel','Cancelled')
         ],'State', readonly=True),
         'origin': fields.char('Source Document', size=512, readonly=True, help="Reference of the document that generated this invoice report."),
