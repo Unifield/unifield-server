@@ -434,5 +434,9 @@
             <field name="method">us_6075_set_paid_invoices_as_closed</field>
         </record>
 
+        <record id="us_6076_set_inv_as_from_supply" model="patch.scripts">
+            <field name="method">us_6076_set_inv_as_from_supply</field>
+        </record>
+
     </data>
 </openerp>

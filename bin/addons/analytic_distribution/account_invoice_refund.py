@@ -43,8 +43,10 @@ class account_invoice_refund(osv.osv_memory):
         # in case of a DI refund from a register line use the dir_invoice_id in context
         doc_to_refund_id = context.get('dir_invoice_id', False) or (context.get('active_ids') and context['active_ids'][0])
         if doc_to_refund_id:
-            source_type = obj_inv.read(cr, uid, doc_to_refund_id, ['type'], context=context)['type']
-            if source_type in ('in_invoice', 'in_refund'):
+            source = obj_inv.read(cr, uid, doc_to_refund_id, ['type', 'is_intermission'], context=context)
+            if source['is_intermission']:
+                args = [('type', '=', 'intermission')]
+            elif source['type'] in ('in_invoice', 'in_refund'):
                 args = [('type', '=', 'purchase_refund')]
         if user.company_id.instance_id:
             args.append(('is_current_instance','=',True))
@@ -72,7 +74,7 @@ class account_invoice_refund(osv.osv_memory):
             jtype = isinstance(context['journal_type'], list) and context['journal_type'][0] or context['journal_type']
         if jtype in ('sale', 'sale_refund'):
             jtype = 'sale_refund'
-        else:
+        elif jtype != 'intermission':  # for IVO/IVI keep using the Interm. journal
             jtype = 'purchase_refund'
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         for field in res['fields']:
@@ -86,13 +88,32 @@ class account_invoice_refund(osv.osv_memory):
     _columns = {
         'date': fields.date('Posting date'),
         'document_date': fields.date('Document Date', required=True),
+        'is_intermission': fields.boolean("Wizard opened from an Intermission Voucher", readonly=True)
     }
+
+    def _get_refund(self, cr, uid, context=None):
+        """
+        Returns the default value for the 'filter_refund' field depending on the context
+        """
+        if context is None:
+            context = {}
+        if context.get('is_intermission', False):
+            return 'modify'
+        return 'refund'  # note that only the "Refund" option is available in DI
+
+    def _get_is_intermission(self, cr, uid, context=None):
+        """
+        Returns True if the wizard has been opened from an Intermission Voucher
+        """
+        if context is None:
+            context = {}
+        return context.get('is_intermission', False)
 
     _defaults = {
         'document_date': _get_document_date,
-        #UTP-961: refund DI: only refund option is available
-        'filter_refund': 'refund',
+        'filter_refund': _get_refund,
         'journal_id': _get_journal,  # US-193
+        'is_intermission': _get_is_intermission,
     }
 
     def _hook_fields_for_modify_refund(self, cr, uid, *args):

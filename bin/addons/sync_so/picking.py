@@ -316,10 +316,7 @@ class stock_picking(osv.osv):
         if shipment:
             shipment_ref = shipment['name'] # shipment made
         else:
-            #UFTP-332: Check if name is really an OUT, because DPO could have PICk but no SHIP nor OUT --> do not link this PICK to IN
             shipment_ref = pick_dict.get('name', False) # the case of OUT
-            if shipment_ref and 'OUT' not in shipment_ref:
-                shipment_ref = False
         if not po_id and pick_dict.get('sale_id') and pick_dict.get('sale_id', {}).get('claim_name_goods_return'):
             po_sync_name = pick_dict.get('sale_id', {}).get('client_order_ref')
             if po_sync_name:
@@ -756,6 +753,9 @@ class stock_picking(osv.osv):
                     so_po_common = self.pool.get('so.po.common')
                     so_po_common.create_invalid_recovery_message(cr, uid, source, in_name, context)
                     return "Recovery: the reference to " + in_name + " at " + source + " will be set to void."
+        elif 'PICK' in out_doc_name:
+            return "Msg ignored"
+
         if message:
             self._logger.info(message)
             return message

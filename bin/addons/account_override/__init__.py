@@ -230,4 +230,5 @@ import account_bank_statement
 import report
 import wizard
 import finance_export
+import account_invoice_sync
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

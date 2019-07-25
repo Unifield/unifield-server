@@ -9,7 +9,8 @@
         # Create the rule
         fields = ['date_invoice', 'state', 'account_id', 'address_invoice_id', 'amount_to_pay', 'analytic_distribution_id', 
                   'check_total', 'comment', 'currency_id', 'fiscal_position', 'name', 'origin', 'partner_id', 
-                  'payment_ids', 'period_id', 'reference', 'reference_type', 'tax_line']
+                  'payment_ids', 'period_id', 'reference', 'reference_type', 'tax_line', 'synced', 'counterpart_inv_number',
+                  'counterpart_inv_status']
 
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'account.invoice'), ('name', 'in', fields)], context=context)
 

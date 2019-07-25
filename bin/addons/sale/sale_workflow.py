@@ -529,15 +529,15 @@ class sale_order_line(osv.osv):
 
     def check_fo_tax(self, cr, uid, ids, context=None):
         """
-        Prevents from validating a FO with taxes when using an Intermission partner
+        Prevents from validating a FO with taxes when using an Intermission or Intersection partner
         """
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         for fo_line in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'tax_id'], context=context):
-            if fo_line.tax_id and fo_line.order_id.partner_type == 'intermission':
-                raise osv.except_osv(_('Error'), _("You can't use taxes with an intermission partner."))
+            if fo_line.tax_id and fo_line.order_id.partner_type in ('intermission', 'section'):
+                raise osv.except_osv(_('Error'), _("Taxes are forbidden with Intermission and Intersection partners."))
 
     def action_validate(self, cr, uid, ids, context=None):
         '''

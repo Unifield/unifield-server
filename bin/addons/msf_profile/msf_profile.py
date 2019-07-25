@@ -69,6 +69,7 @@ class patch_scripts(osv.osv):
                     err_msg,
                 )
 
+    # UF14.0
     def us_6075_set_paid_invoices_as_closed(self, cr, uid, *a, **b):
         cr.execute('''SELECT i.id, i.number
             FROM account_invoice i
@@ -91,6 +92,20 @@ class patch_scripts(osv.osv):
         if inv_ids:
             self._logger.warn('%d Invoices change state from Paid to Close: %s' % (len(inv_ids), ', '.join(inv_name)))
             cr.execute("update account_invoice set state='inv_close' where state='paid' and id in %s", (tuple(inv_ids), ))
+        return True
+
+    def us_6076_set_inv_as_from_supply(self, cr, uid, *a, **b):
+        """
+        Set the new tag from_supply to True in the related account.invoices
+        """
+        update_inv = """
+            UPDATE account_invoice
+            SET from_supply = 't' 
+            WHERE picking_id IS NOT NULL
+            OR id IN (SELECT DISTINCT (invoice_id) FROM shipment WHERE invoice_id IS NOT NULL);
+        """
+        cr.execute(update_inv)
+        self._logger.warn('Tag from_supply set to True in %s account.invoice(s).' % (cr.rowcount,))
         return True
 
 
