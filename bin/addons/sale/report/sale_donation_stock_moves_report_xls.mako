@@ -98,6 +98,10 @@
         <Column ss:AutoFitWidth="1" ss:Width="72.25" />
         ## Move Ref.
         <Column ss:AutoFitWidth="1" ss:Width="102.0" />
+        % if r.display_bn_ed:
+        ## Line State
+        <Column ss:AutoFitWidth="1" ss:Width="73.25" />
+        % endif
         ## Order Type
         <Column ss:AutoFitWidth="1" ss:Width="129.0" />
         ## Order Ref.
@@ -134,6 +138,9 @@
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Donation Account')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Movement Date')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Move Ref.')|x}</Data></Cell>
+            % if r.display_bn_ed:
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Line State')|x}</Data></Cell>
+            % endif
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Order Type')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Order Ref.')|x}</Data></Cell>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Partner')|x}</Data></Cell>
@@ -171,6 +178,9 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.picking_id.name|x}</Data></Cell>
+                % if r.display_bn_ed:
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
+                % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.reason_type_id.name|x}</Data></Cell>
                 % if isQtyOut(o):
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.sale_line_id and o.sale_line_id.order_id.name or ''|x}</Data></Cell>
@@ -196,8 +206,8 @@
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
                 % endif
                 % if r.display_bn_ed:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.prodlot_id and o.prodlot_id.name|x}</Data></Cell>
-                % if o.expired_date and isDate(o.expired_date):
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.state == 'done' and o.prodlot_id and o.prodlot_id.name or ''|x}</Data></Cell>
+                % if o.state == 'done' and o.expired_date and isDate(o.expired_date):
                 <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${o.expired_date|n}T00:00:00.000</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>

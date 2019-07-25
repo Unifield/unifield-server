@@ -106769,3 +106769,9 @@ msgstr "Vous ne pouvez pas changer le Type de Commande en Prêt, Donation avant 
 #: field:sale.loan.stock.moves,display_bn_ed:0
 msgid "Display BN/ED details"
 msgstr "Afficher les détails des NL/EXP"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:142
+#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:175
+msgid "Line State"
+msgstr "État de la Ligne"

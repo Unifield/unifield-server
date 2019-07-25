@@ -92,7 +92,6 @@ class sale_loan_stock_moves(osv.osv_memory):
             sm_domain = []
 
             sm_domain.append(('reason_type_id', '=', type_loan_id))
-            sm_domain.append(('state', '=', 'done'))
             sm_domain += ['|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
                           ('location_dest_id.usage', 'in', ['customer', 'supplier'])]
 
@@ -113,6 +112,9 @@ class sale_loan_stock_moves(osv.osv_memory):
 
             if wizard.origin:
                 sm_domain.append(('origin', 'like', wizard.origin))
+
+            if not wizard.display_bn_ed:
+                sm_domain.append(('state', '=', 'done'))
 
             remove_completed = False
             if wizard.remove_completed:
@@ -157,5 +159,6 @@ class sale_loan_stock_moves(osv.osv_memory):
             'datas': data,
             'context': context,
         }
+
 
 sale_loan_stock_moves()
