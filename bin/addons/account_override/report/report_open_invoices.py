@@ -71,7 +71,7 @@ class report_open_invoices2(report_sxw.rml_parse):
             bg_id = context['background_id']
             self.percent = 0.05  # 5% of the process
             bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
-        states = context.get('paid_invoice') and ['paid', 'inv_close'] or ['open']
+        states = context.get('paid_invoice') and ['paid'] or ['open']
         for type in ['si_di', 'sr', 'donation', 'ivi', 'stv', 'cr', 'dn', 'ivo']:
             # determine the domain to use according to the report type and the doc type
             domain = [('state', 'in', states)]
