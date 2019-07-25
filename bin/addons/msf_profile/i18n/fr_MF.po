@@ -1299,7 +1299,6 @@ msgstr "msf.budget.line"
 #: code:addons/msf_tools/automated_export.py:225
 #: code:addons/msf_tools/automated_import.py:207
 #: code:addons/msf_tools/automated_import.py:230
-#: field:procurement.request.import,info:0
 #: code:addons/register_accounting/account_bank_statement.py:2035
 #: code:addons/return_claim/return_claim.py:2256
 #: code:addons/specific_rules/specific_rules.py:784
@@ -3039,12 +3038,6 @@ msgstr "product.where.used"
 #: model:ir.model,name:base.model_res_payterm
 msgid "Payment term"
 msgstr "Délai de Paiement"
-
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:94
-#, python-format
-msgid "You cannot import lines in a confirmed Internal Request"
-msgstr "Vous ne pouvez pas importer de lignes dans une Demande Interne confirmée"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -21838,12 +21831,6 @@ msgstr "Livraison Entrante Correspondante ne peut être trouvée. L'Enregistreme
 msgid "Search Chart of Account Templates"
 msgstr "Rechercher des Modèles de Plan Comptable"
 
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:92
-#, python-format
-msgid "You cannot import lines in a Sale Order"
-msgstr "Vous ne pouvez pas importer de lignes dans une Commande Client"
-
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/register_creation.py:194
 #, python-format
@@ -22572,7 +22559,6 @@ msgstr "Zone Fixe"
 #: view:supplier.catalogue:0
 #: view:tender:0
 #: view:threshold.value:0
-#: view:procurement.request.import:0
 #: view:purchase.order:0
 #: view:account.invoice:0
 #: view:sale.order:0
@@ -22900,7 +22886,6 @@ msgstr "Le message d'enregistrement"
 #: view:wizard.import.tender.line:0
 #: view:wizard.import.threshold.value.line:0
 #: view:automated.import.job:0
-#: view:procurement.request.import:0
 #: view:wizard.import.ppl.to.create.ship:0
 #: view:wizard.import.product.line:0
 msgid "Import file"
@@ -30648,7 +30633,6 @@ msgstr "Operator '%s' not suported"
 #: field:hr.payroll.employee.import.errors,msg:0
 #: field:hr.payroll.import,msg:0
 #: field:hr.payroll.validation,message:0
-#: field:procurement.request.import,message:0
 #: view:wizard.down.payment:0
 #: field:wizard.register.import,message:0
 #: field:initial.stock.inventory.line,err_msg:0
@@ -31378,11 +31362,6 @@ msgstr "This FP is already in use: %s"
 #: report:account.account.balance.landscape:0
 msgid "Year :"
 msgstr "Année :"
-
-#. module: procurement_request
-#: view:procurement.request.import:0
-msgid "Result of importation"
-msgstr "Résultat de l'importation"
 
 #. module: register_accounting
 #: field:wizard.register.opening.confirmation,opening_period:0
@@ -59209,8 +59188,6 @@ msgstr "Journal Ajustement"
 #: code:addons/procurement_request/procurement_request.py:497
 #: code:addons/procurement_request/procurement_request.py:773
 #: code:addons/procurement_request/procurement_request.py:797
-#: code:addons/procurement_request/wizard/wizard_import_list.py:87
-#: code:addons/procurement_request/wizard/wizard_import_list.py:94
 #: code:addons/product_attributes/product_attributes.py:1145
 #: code:addons/product_attributes/product_attributes.py:1168
 #: code:addons/product_attributes/product_attributes.py:1764
@@ -61246,7 +61223,6 @@ msgstr "Palette"
 #: field:product.likely.expire.report.item.line,item_id:0
 #: field:real.average.consumption.line,ref:0
 #: field:hr.employee,partner_id:0
-#: field:procurement.request.import,file:0
 #: field:purchase.order.followup,line_ids:0
 #: field:sale.order,split_type_sale_order:0
 #: field:purchase.order.line,order_type:0
@@ -72203,7 +72179,6 @@ msgstr "Seuls les Produits de Kit peuvent être utilisés pour les Kits."
 #: view:documents.done.wizard:0
 #: view:composition.kit:0
 #: view:user.access.results:0
-#: view:procurement.request.import:0
 #: view:product.price_list:0
 #: view:purchase.order.followup:0
 #: view:purchase.order.change.currency:0
@@ -74294,8 +74269,6 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/procurement_request/procurement_request.py:472
 #: code:addons/procurement_request/procurement_request.py:486
 #: code:addons/procurement_request/procurement_request.py:501
-#: code:addons/procurement_request/wizard/wizard_import_list.py:92
-#: code:addons/procurement_request/wizard/wizard_import_list.py:114
 #: code:addons/product_attributes/product_attributes.py:60
 #: code:addons/product_attributes/product_attributes.py:86
 #: code:addons/product_attributes/product_attributes.py:95
@@ -84618,7 +84591,6 @@ msgstr "Mouvement de stock correspondant"
 #: view:wizard.import.tender.line:0
 #: view:wizard.import.threshold.value.line:0
 #: code:addons/msf_outgoing/wizard/picking_processor.py:983
-#: view:procurement.request.import:0
 #: view:product.product:0
 #: view:product.template:0
 #: view:product.product:0
@@ -87170,12 +87142,6 @@ msgstr "Contrepartie pour les balances de Bilan au débit "
 msgid "Full View"
 msgstr "Full View"
 
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:87
-#, python-format
-msgid "Please save the Internal Request before importing lines"
-msgstr "Veuillez sauvegarder la Demande Interne avant d'importer des lignes"
-
 #. module: product_asset
 #: view:product.asset.event:0
 msgid "Event Information"
@@ -88761,7 +88727,6 @@ msgstr "Date - Début de Contrat"
 #: field:wizard.import.threshold.value.line,file:0
 #: field:user.access.configurator,file_to_import_uac:0
 #: field:automated.import.job,file_to_import:0
-#: view:procurement.request.import:0
 #: field:physical.inventory,file_to_import:0
 #: field:physical.inventory,file_to_import2:0
 #: field:supplier.catalogue,file_to_import:0
@@ -89582,11 +89547,6 @@ msgstr "Sélectionnez un début et une fin de période"
 #: model:ir.actions.act_window,help:account.action_account_analytic_journal_tree
 msgid "To print an analytics (or costs) journal for a given period. The report give code, move name, account number, general amount and analytic amount."
 msgstr "Pour imprimer un journal analytique (ou coûts) pour une période donnée. Le rapport donne le code, le nom de la transaction, le numéro de compte, le montant global et le montant analytique."
-
-#. module: procurement_request
-#: model:ir.model,name:procurement_request.model_procurement_request_import
-msgid "Import of Internal Request"
-msgstr "Importation d'un Demande Interne"
 
 #. module: base
 #: view:res.widget.user:0
@@ -90487,12 +90447,6 @@ msgstr "Le moment de décision %s n'est pas défini sous la base de données!"
 #: model:ir.model,name:export_import_lang.model_base_language_export
 msgid "base.language.export"
 msgstr "base.language.export"
-
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:114
-#, python-format
-msgid "The system hasn't found a Internal Request to import lines"
-msgstr "Le système n'a pas trouvé de Demande Interne pour importer les lignes"
 
 #. module: kit
 #: code:addons/kit/kit.py:188
@@ -98267,7 +98221,6 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:procurement.cycle.compute.all:0
 #: view:procurement.min.max.compute.all:0
 #: view:procurement.purchase.compute.all:0
-#: view:procurement.request.import:0
 #: view:sale.order:0
 #: view:product.where.used:0
 #: view:product.list.add.products:0

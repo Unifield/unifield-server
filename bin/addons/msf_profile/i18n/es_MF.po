@@ -603,7 +603,6 @@ msgstr "Fusionar órdenes de compra"
 #: field:wizard.import.po.line,message:0
 #: field:wizard.import.tender.line,message:0
 #: field:hr.payroll.employee.import.errors,msg:0
-#: field:procurement.request.import,message:0
 #: view:wizard.down.payment:0
 #: field:initial.stock.inventory.line,err_msg:0
 #: view:stock.forecast.export:0
@@ -6193,7 +6192,6 @@ msgstr "Excluir la selección de centro de coste"
 #: field:product.likely.expire.report.item.line,item_id:0
 #: field:real.average.consumption.line,ref:0
 #: field:hr.employee,partner_id:0
-#: field:procurement.request.import,file:0
 #: field:purchase.order.followup,line_ids:0
 #: field:sale.order,split_type_sale_order:0
 #: field:purchase.order.line,order_type:0
@@ -7475,7 +7473,6 @@ msgstr "Estado del movimiento"
 #: view:documents.done.wizard:0
 #: view:composition.kit:0
 #: view:user.access.results:0
-#: view:procurement.request.import:0
 #: view:product.price_list:0
 #: view:purchase.order.followup:0
 #: view:purchase.order.change.currency:0
@@ -12604,7 +12601,6 @@ msgstr "Rellene desde los campos de búsqueda"
 #: view:wizard.import.po:0
 #: view:wizard.import.po.line:0
 #: view:wizard.import.tender.line:0
-#: view:procurement.request.import:0
 #: view:product.product:0
 #: view:product.template:0
 #: view:product.product:0
@@ -21514,7 +21510,6 @@ msgstr "Svalbard and Jan Mayen Islands"
 #: view:stock.cost.reevaluation:0
 #: view:tender:0
 #: model:ir.actions.act_window,name:procurement_request.action_open_wizard_import
-#: view:procurement.request.import:0
 #: view:catalogue.import.lines:0
 #: view:supplier.catalogue:0
 msgid "Import lines"
@@ -37528,12 +37523,6 @@ msgstr "Balance general (Cuentas de pasivos)"
 msgid "Asia/Dushanbe"
 msgstr "Asia / Dushanbe"
 
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:92
-#, python-format
-msgid "You cannot import lines in a Sale Order"
-msgstr "No puede importar líneas en una orden de venta"
-
 #. module: sale
 #: report:msf.report_reception_in:0
 msgid "Expected Receipt Date :"
@@ -37925,12 +37914,6 @@ msgstr "Uzbekistán"
 #: model:ir.ui.menu,name:msf_homere_interface.menu_finance_payroll_entries
 msgid "Payroll entries"
 msgstr "Asientos de nómina"
-
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:114
-#, python-format
-msgid "The system hasn't found a Internal Request to import lines"
-msgstr "El sistema no ha encontrado una solicitud interna para importar líneas"
 
 #. module: purchase_compare_rfq
 #: view:wizard.choose.supplier:0
@@ -38328,11 +38311,10 @@ msgstr "Error de actualización de centro de coste."
 msgid "Progress"
 msgstr "Anticipo"
 
-#. modules: return_claim, procurement_request, account_hq_entries, kit
+#. modules: return_claim, account_hq_entries, kit
 #: field:hq.entries.split.lines,state_info:0
 #: code:addons/kit/wizard/substitute.py:681
 #: code:addons/kit/wizard/substitute.py:1018
-#: field:procurement.request.import,info:0
 #: code:addons/return_claim/return_claim.py:1136
 #, python-format
 msgid "Info"
@@ -39803,11 +39785,6 @@ msgstr "Ventas por mes"
 msgid "Let this field empty if this location is shared between all companies"
 msgstr "Deje este campo vacío si esta ubicación se comparte entre todas las empresas"
 
-#. module: procurement_request
-#: view:procurement.request.import:0
-msgid "Result of importation"
-msgstr "Resultado de la importación"
-
 #. module: sync_remote_warehouse
 #: field:sync.monitor,usb:0
 msgid "USB Sync"
@@ -40418,7 +40395,6 @@ msgstr "Expended amount"
 #: view:procurement.cycle.compute.all:0
 #: view:procurement.min.max.compute.all:0
 #: view:procurement.purchase.compute.all:0
-#: view:procurement.request.import:0
 #: view:sale.order:0
 #: view:product.list.add.products:0
 #: view:product.to.list:0
@@ -42772,7 +42748,6 @@ msgstr "Consumo histórico de producto"
 #: view:wizard.import.tender.line:0
 #: field:wizard.import.tender.line,file:0
 #: field:user.access.configurator,file_to_import_uac:0
-#: view:procurement.request.import:0
 #: field:supplier.catalogue,file_to_import:0
 msgid "File to import"
 msgstr "Archivo para importar"
@@ -43350,8 +43325,6 @@ msgstr "Total débito registrado"
 #: code:addons/procurement_request/procurement_request.py:327
 #: code:addons/procurement_request/procurement_request.py:343
 #: code:addons/procurement_request/procurement_request.py:350
-#: code:addons/procurement_request/wizard/wizard_import_list.py:92
-#: code:addons/procurement_request/wizard/wizard_import_list.py:114
 #: code:addons/product_attributes/product_attributes.py:61
 #: code:addons/product_attributes/product_attributes.py:85
 #: code:addons/product_attributes/product_attributes.py:94
@@ -58255,8 +58228,6 @@ msgstr "Territorio Británico del Océano Índico"
 #: view:stock.picking.not.available:0
 #: code:addons/procurement_request/procurement_request.py:353
 #: code:addons/procurement_request/procurement_request.py:563
-#: code:addons/procurement_request/wizard/wizard_import_list.py:87
-#: code:addons/procurement_request/wizard/wizard_import_list.py:94
 #: code:addons/product_attributes/product_attributes.py:602
 #: code:addons/product_attributes/product_attributes.py:973
 #: code:addons/purchase/purchase.py:730
@@ -59840,12 +59811,6 @@ msgstr "Archivo para exportar"
 msgid "Proprietary instance"
 msgstr "Instancia propietaria"
 
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:94
-#, python-format
-msgid "You cannot import lines in a confirmed Internal Request"
-msgstr "No puede importar líneas en una solicitud interna confirmada"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -61167,12 +61132,6 @@ msgstr "Referencia del documento que generó esta factura."
 #: view:account.tax.code:0
 msgid "Reporting Configuration"
 msgstr "Configuración de informes"
-
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:87
-#, python-format
-msgid "Please save the Internal Request before importing lines"
-msgstr "Guarde la solicitud interna antes de importar las líneas"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/history_consumption.py:107
@@ -69898,7 +69857,6 @@ msgstr "No link to a journal item found!"
 #: view:wizard.import.po:0
 #: view:wizard.import.po.line:0
 #: view:wizard.import.tender.line:0
-#: view:procurement.request.import:0
 msgid "Import file"
 msgstr "Importar archivo"
 
@@ -71158,11 +71116,6 @@ msgstr "Mercancías peligrosas"
 #: sql_constraint:msf_field_access_rights.field_access_rule_line:0
 msgid "You cannot have two Field Access Rule Lines for the same Field in the same Rule"
 msgstr "No puede tener dos líneas de reglas de acceso a campo para el mismo campo en la misma regla"
-
-#. module: procurement_request
-#: model:ir.model,name:procurement_request.model_procurement_request_import
-msgid "Import of Internal Request"
-msgstr "Importación de solicitud interna"
 
 #. module: base
 #: help:ir.actions.wizard,multi:0
