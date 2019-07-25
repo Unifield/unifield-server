@@ -371,26 +371,5 @@
         </record>
 
 
-    <!-- Invoice search view -->
-        <record id="inherit_view_account_invoice_filter2" model="ir.ui.view">
-            <field name="name">inherit.view.account.invoice.filter.2</field>
-            <field name="model">account.invoice</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_invoice_filter"/>
-            <field name="priority">18</field>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/search/group[1]/filter[@name='paid']" position="after">
-                        <separator orientation="vertical"/>
-                        <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not')]"/>
-                        <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
-                        <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported')]"/>
-                        <separator orientation="vertical"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
-
     </data>
 </openerp>
