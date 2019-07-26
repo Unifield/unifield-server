@@ -1251,7 +1251,7 @@ class account_move(osv.osv):
             # copy from web
             # TODO: what about special 13,14,15 ?
             period_obj = self.pool.get('account.period')
-            new_period = period_obj.search(cr, uid, [('date_start', '>', je.date), ('state', '=', 'draft'), ('number', '!=', 16)], order='date_start,number', limit=1, context=context)
+            new_period = period_obj.search(cr, uid, [('date_start', '>', je.date), ('state', '=', 'draft'), ('special', '=', False)], order='date_start,number', limit=1, context=context)
             if not new_period:
                 raise osv.except_osv(_('Error'), _("No open period found"))
             period_id = new_period[0]
