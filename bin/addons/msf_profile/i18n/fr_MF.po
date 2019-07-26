@@ -30272,6 +30272,7 @@ msgstr "Certificat attaché ?"
 #: selection:report.invoice.created,state:0
 #: view:account.invoice:0
 #: selection:wizard.account.invoice,state:0
+#: selection:account.invoice,counterpart_inv_status:0
 msgid "Closed"
 msgstr "Fermé"
 
@@ -107045,3 +107046,14 @@ msgstr "Le produit %s est inactif."
 #, python-format
 msgid "Account Payable not found or inactive for the partner %s."
 msgstr "Compte Fournisseur non trouvé ou inactif pour le partenaire %s."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_refund.py:158
+#, python-format
+msgid "Cannot Cancel / Modify if the account can't be reconciled."
+msgstr "Impossible d'Annuler / Modifier si le compte n'est pas lettrable."
+
+#. module: account_override
+#: view:account.invoice:0
+msgid "This invoice will sync to its counterpart instance."
+msgstr "Cette facture sera synchronisée à l'instance de Contrepartie."
