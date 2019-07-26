@@ -712,8 +712,8 @@
                                     icon="gtk-go-forward"
                                     attrs="{'invisible': ['|',
                                                           ('state', '!=', 'draft'),
-                                                          '&amp;', '&amp;',
-                                                          ('type', '=', 'out_invoice'), ('synced', '=', False), ('partner_type', 'in', ('intermission', 'section')) ]}"/>
+                                                          '&amp;',
+                                                          ('type', '=', 'out_invoice'), ('partner_type', 'in', ('intermission', 'section')) ]}"/>
                             <button name="invoice_open_with_confirmation" type="object" string="Validate"
                                     icon="gtk-go-forward"
                                     confirm="Are you sure you want to validate this invoice without synchronization?"
@@ -721,6 +721,15 @@
                                                           ('state', '!=', 'draft'),
                                                           ('type', '!=', 'out_invoice'),
                                                           ('synced', '=', True),
+                                                          ('partner_type', 'not in', ('intermission', 'section'))]}"/>
+
+                            <button name="invoice_open_with_sync_confirmation" type="object" string="Validate"
+                                    icon="gtk-go-forward"
+                                    confirm="This invoice will sync to its counterpart instance."
+                                    attrs="{'invisible': ['|', '|', '|',
+                                                          ('state', '!=', 'draft'),
+                                                          ('type', '!=', 'out_invoice'),
+                                                          ('synced', '=', False),
                                                           ('partner_type', 'not in', ('intermission', 'section'))]}"/>
                             <button name="%(account.account_invoices)d" string="Print Invoice" type="action" icon="gtk-print" states="open,paid,inv_close,proforma,sale,proforma2"/>
                         </group>
