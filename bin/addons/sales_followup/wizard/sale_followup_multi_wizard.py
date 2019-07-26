@@ -186,14 +186,14 @@ class sale_followup_multi_wizard(osv.osv_memory):
                 # Parameter to define the maximum number of lines. For a custom number:
                 # "INSERT INTO ir_config_parameter (key, value) VALUES ('FOLLOWUP_MAX_LINE', 'chosen_number');"
                 # Or update the existing one
-                config_line = self.pool.get('ir.config_parameter').get_param(cr, 1, 'FOLLOWUP_MAX_LINE')
+                config_line = self.pool.get('ir.config_parameter').get_param(cr, 1, 'FO_FOLLOWUP_MAX_LINE')
                 if config_line:
                     max_line = int(config_line)
                 else:
-                    max_line = 20000
+                    max_line = 5000
 
                 if nb_lines > max_line:
-                    raise osv.except_osv(_('Error'), _('The requested report is too heavy to generate. Please apply further filters so that report can be generated.'))
+                    raise osv.except_osv(_('Error'), _('The requested report is too heavy to generate: requested %d lines, maximum allowed %d. Please apply further filters so that report can be generated.') % (nb_lines, max_line))
 
             self.write(cr, uid, [wizard.id], {'order_ids': fo_ids}, context=context)
 

@@ -106827,9 +106827,14 @@ msgstr "Requête annulée par l'utilisateur"
 msgid "Stop report"
 msgstr "Arrêter le rapport"
 
-#. modules: msf_supply_doc_export, sales_followup
+#. module: sales_followup
+#: code:sales_followup/wizard/sale_followup_multi_wizard.py:190
+#, python-format
+msgid "The requested report is too heavy to generate: requested %d lines, maximum allowed %d. Please apply further filters so that report can be generated."
+msgstr "Le rapport demandé est trop volumineux pour être généré, %d lignes demandées, %d autorisées. Veuillez utiliser plus de filtres pour que ce rapport puisse être généré"
+
+#. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:297
-#: code:addons/sales_followup/wizard/sale_followup_multi_wizard.py:186
 #, python-format
 msgid "The requested report is too heavy to generate. Please apply further filters so that report can be generated."
 msgstr "Le rapport demandé est trop volumineux pour être généré. Veuillez utiliser plus de filtres pour que ce rapport puisse être généré"
