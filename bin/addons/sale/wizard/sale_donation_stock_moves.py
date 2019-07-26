@@ -127,7 +127,9 @@ class sale_donation_stock_moves(osv.osv_memory):
                     if prod_ids:
                         sm_domain.append(('product_id', 'in', prod_ids))
 
-                if not wizard.display_bn_ed:
+                if wizard.display_bn_ed:
+                    sm_domain.append(('state', '!=', 'cancel'))
+                else:
                     sm_domain.append(('state', '=', 'done'))
 
                 sm_ids = sm_obj.search(cr, uid, sm_domain, context=context)
@@ -198,7 +200,9 @@ class sale_donation_stock_moves(osv.osv_memory):
             ('location_dest_id.usage', 'in', ['customer', 'supplier'])
         ]
 
-        if not display_bn_ed:
+        if display_bn_ed:
+            sm_domain.append(('state', '!=', 'cancel'))
+        else:
             sm_domain.append(('state', '=', 'done'))
 
         if partner_id:
