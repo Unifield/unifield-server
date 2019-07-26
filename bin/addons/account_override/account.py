@@ -1257,8 +1257,8 @@ class account_move(osv.osv):
             period_id = new_period[0]
             date_start = period_obj.read(cr, uid, period_id, ['date_start'], context=context)['date_start']
             date_start_dt = datetime.datetime.strptime(date_start, '%Y-%m-%d')
-            doc_date = (datetime.datetime.strptime(je.document_date, '%Y-%m-%d') + relativedelta(month=date_start_dt.month)).strftime('%Y-%m-%d')
-            post_date = (datetime.datetime.strptime(je.date, '%Y-%m-%d') + relativedelta(month=date_start_dt.month)).strftime('%Y-%m-%d')
+            doc_date = (datetime.datetime.strptime(je.document_date, '%Y-%m-%d') + relativedelta(month=date_start_dt.month, year=date_start_dt.year)).strftime('%Y-%m-%d')
+            post_date = (datetime.datetime.strptime(je.date, '%Y-%m-%d') + relativedelta(month=date_start_dt.month,year=date_start_dt.year)).strftime('%Y-%m-%d')
         else:
             doc_date = je.document_date
             period_id = je.period_id and je.period_id.id or False
