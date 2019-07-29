@@ -104,13 +104,13 @@
 <ss:Worksheet ss:Name="${_('Deliveries Report')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Reference
-        <Column ss:AutoFitWidth="1" ss:Width="80.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
         ## Reason Type
         <Column ss:AutoFitWidth="1" ss:Width="100.0" />
         ## SHIP
         <Column ss:AutoFitWidth="1" ss:Width="80.0" />
         ## Origin
-        <Column ss:AutoFitWidth="1" ss:Width="240.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="140.0" />
         ## Partner
         <Column ss:AutoFitWidth="1" ss:Width="110.0" />
         ## Order Type
@@ -221,6 +221,7 @@
             _('Currency'),
             _('Total Currency'),
             _('Source Location'),
+            _('Destination Location'),
             _('Creation Date'),
             _('Shipped Date'),
         ]
@@ -237,9 +238,10 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['reason_type']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['ship']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['origin']|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(move['fo'], 'order_type')|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(move['fo'], 'categ')|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${getSel(move['fo'], 'priority')|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['partner']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['fo'] and getSel(move['fo'], 'order_type') or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['fo'] and getSel(move['fo'], 'categ') or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['fo'] and getSel(move['fo'], 'priority') or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['line_num']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['prod_code']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['prod_desc']|x}</Data></Cell>

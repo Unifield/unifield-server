@@ -12,6 +12,13 @@ class stock_delivery_report(report_sxw.rml_parse):
             'getMoves': self.get_moves,
         })
 
+        self._order_iterator = 0
+        self._nb_orders = 0
+        if context.get('background_id'):
+            self.back_browse = self.pool.get('memory.background.report').browse(self.cr, self.uid, context['background_id'])
+        else:
+            self.back_browse = None
+
     def _parse_date_xls(self, dt_str, is_datetime=True):
         if not dt_str or dt_str == 'False':
             return ''
@@ -25,9 +32,11 @@ class stock_delivery_report(report_sxw.rml_parse):
         move_obj = self.pool.get('stock.move')
         res = []
 
+        self._nb_orders = len(moves_ids)
+
         for move in move_obj.browse(self.cr, self.uid, moves_ids, context=self.localcontext):
             pick = move.picking_id
-            ppl = pick.subtype == 'ppl' and True or False
+            ppl = pick.subtype == 'packing' and pick.previous_step_id or False
             ship = move.pick_shipment_id
             fo = pick.sale_id or False
             prod = move.product_id
@@ -36,7 +45,7 @@ class stock_delivery_report(report_sxw.rml_parse):
             curr_price = self.pool.get('res.currency').compute(self.cr, self.uid, move.price_currency_id.id, currency
                                                                and currency.id or False, price, context=self.localcontext)
             res.append({
-                'ref': pick.name,
+                'ref': ppl and ppl.name or pick.name,
                 'reason_type': move.reason_type_id and move.reason_type_id.name or pick.reason_type_id
                                and pick.reason_type_id.name or '',
                 'ship': ship and ship.name or '',
@@ -57,6 +66,11 @@ class stock_delivery_report(report_sxw.rml_parse):
                 'create_date': pick.date,
                 'shipped_date': ppl and ship and ship.shipment_expected_date or pick.date_done,
             })
+
+            self._order_iterator += 1
+            if self.back_browse:
+                percent = float(self._order_iterator) / float(self._nb_orders)
+                self.pool.get('memory.background.report').update_percent(self.cr, self.uid, [self.back_browse.id], percent)
 
         return res
 

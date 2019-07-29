@@ -66,24 +66,31 @@ class stock_delivery_wizard(osv.osv_memory):
 
         for wizard in self.browse(cr, uid, ids, context=context):
             move_domain = [
-                ('type', '=', 'out'),
+                ('picking_id.type', '=', 'out'),
                 ('state', '=', 'done'),
                 '|',
             ]
-            out_domain = ['&', ('subtype', '=', 'standard'), ('picking_id.state', 'in', ['done', 'delivered'])]
-            ppl_domain = ['&', ('subtype', '=', 'standard'), ('picking_id.state', '=', 'done')]
+            out_domain = ['&', ('picking_id.subtype', '=', 'standard'), ('picking_id.state', 'in', ['done', 'delivered'])]
+            ppl_domain = [
+                '&', '&', '&', '&',
+                ('state', '=', 'done'),
+                ('picking_id.subtype', '=', 'packing'),
+                ('pick_shipment_id', '!=', 'f'),
+                ('pick_shipment_id.parent_id', '!=', 'f'),
+                ('pick_shipment_id.state', 'in', ['done', 'delivered']),
+            ]
 
             if wizard.start_date:
                 out_domain.insert(0, '&')
                 out_domain.append(('picking_id.date_done', '>=', wizard.start_date))
                 ppl_domain.insert(0, '&')
-                ppl_domain.append(('move.pick_shipment_id.shipment_expected_date', '>=', wizard.start_date))
+                ppl_domain.append(('pick_shipment_id.shipment_expected_date', '>=', wizard.start_date))
 
             if wizard.end_date:
                 out_domain.insert(0, '&')
                 out_domain.append(('picking_id.date_done', '<=', wizard.end_date))
                 ppl_domain.insert(0, '&')
-                ppl_domain.append(('move.pick_shipment_id.shipment_expected_date', '<=', wizard.end_date))
+                ppl_domain.append(('pick_shipment_id.shipment_expected_date', '<=', wizard.end_date))
 
             move_domain.extend(out_domain)
             move_domain.extend(ppl_domain)
@@ -100,7 +107,7 @@ class stock_delivery_wizard(osv.osv_memory):
             if wizard.location_dest_id:
                 move_domain.append(('location_dest_id', '=', wizard.location_dest_id.id))
 
-            move_ids = move_obj.search(cr, uid, move_domain, order='picking_id, line_number', context=context)
+            move_ids = move_obj.search(cr, uid, move_domain, order='create_date, picking_id, line_number', context=context)
 
             if not move_ids:
                 raise osv.except_osv(
