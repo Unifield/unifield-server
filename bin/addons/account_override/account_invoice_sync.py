@@ -311,14 +311,6 @@ class account_invoice_sync(osv.osv):
     def update_counterpart_inv(self, cr, uid, source, invoice_data, context=None):
         """
         Updates the Counterpart Invoice Number and Status (to be triggered at synchro time)
-
-        For the record:
-        In most cases the state "Open" of the Out Invoices will be updated following both msg rules "create_invoice_from_sync" and
-        "update_counterpart_inv_opened". However "update_counterpart_inv_opened" can't be skipped to cover use cases such as:
-        - in C1: open IVO and reconcile the related JI manually: IVO is in Paid state
-        - sync from C1 to C2: the counterpart inv. status in the IVI generated is directly: Paid
-        - in C1: unreconcile IVO JI. The IVO is back to Open.
-        - sync from C1 to C2: the counterpart inv. status in the related IVI is updated to: Open
         """
         self._logger.info("+++ Update Counterpart Invoice data from %s" % source)
         if context is None:

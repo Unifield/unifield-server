@@ -246,7 +246,8 @@ class account_account(osv.osv):
         elif args == [('restricted_area', '=', 'intermission_header')]:
             if context_ivo or context.get('check_header_ivo'):
                 # HEADER of Intermission Voucher OUT:
-                # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash
+                # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash,
+                # or Payable/Payables (for refund UC)
                 # + prevent from using donation accounts
                 arg = [
                     ('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
@@ -258,6 +259,7 @@ class account_account(osv.osv):
             elif context_ivi or context.get('check_header_ivi'):
                 # HEADER of Intermission Voucher IN:
                 # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Payable/Payables
+                # or Receivable/Receivables or Cash (for refund UC)
                 # + prevent from using donation accounts
                 arg = [
                     ('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),

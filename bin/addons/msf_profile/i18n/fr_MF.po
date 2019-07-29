@@ -106879,7 +106879,7 @@ msgstr "La facture '%s' est %s."
 #: code:addons/account/wizard/account_invoice_refund.py:153
 #, python-format
 msgid "It is not possible to refund a Closed invoice"
-msgstr "Il ne pas possible de rembourser une facture fermée"
+msgstr "Il n'est pas possible de rembourser une facture fermée"
 
 #. module: account
 #: code:addons/account/invoice.py:474

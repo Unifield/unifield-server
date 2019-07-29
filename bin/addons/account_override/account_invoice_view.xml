@@ -478,17 +478,25 @@
                         <field name="type" invisible="1"/>
                         <field name="is_intermission" invisible="1"/>
                         <!-- US-370: use the change currency button -->
-                        <field name="currency_id" width="50" attrs="{'readonly': ['|', '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True), '&amp;', ('type', '=', 'out_invoice'), ('from_supply', '=', True)]}"/>
+                        <field name="currency_id" width="50"
+                               attrs="{'readonly': ['|', '|',
+                                                    ('state', '!=', 'draft'),
+                                                    '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True),
+                                                    '&amp;', ('type', '=', 'out_invoice'), ('from_supply', '=', True)]}"/>
                         <button name="%(account.action_account_change_currency)d" type="action"
                                 icon="terp-stock_effects-object-colorize" string="Change"
                                 attrs="{'invisible': [('state', '!=', 'draft')],
-                                        'readonly': ['|', '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True), '&amp;', ('type', '=', 'out_invoice'), ('from_supply', '=', True)]}" />
+                                        'readonly': ['|', '|',
+                                                     ('state', '!=', 'draft'),
+                                                     '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True),
+                                                     '&amp;', ('type', '=', 'out_invoice'), ('from_supply', '=', True)]}" />
                         <newline/>
                         <field string="Partner" name="partner_id"
                                on_change="onchange_partner_id(type,partner_id, date_invoice,payment_term, partner_bank_id, company_id, False, is_intermission, False, False, account_id)"
                                domain="[('by_invoice_type', '=', True), ('partner_type', '=', 'intermission')]"
                                context="{'type': context.get('type')}"
-                               attrs="{'readonly': ['|',
+                               attrs="{'readonly': ['|', '|',
+                                                    ('state', '!=', 'draft'),
                                                     '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True),
                                                     '&amp;', ('type', '=', 'out_invoice'), ('from_supply', '=', True)]}"/>
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" string="Partner address"/>
@@ -510,7 +518,8 @@
                     <notebook colspan="4">
                         <page string="Invoice">
                             <field name="account_id" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'intermission_header')]"/>
-                            <field name="name" string="Reference" attrs="{'readonly': [('from_supply', '=', True)]}"/>
+                            <field name="name" string="Reference"
+                                   attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_supply', '=', True)]}"/>
                             <newline/>
                             <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                                 <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object"
@@ -626,12 +635,13 @@
                             <newline/>
                             <field name="date_due"/>
                             <field name="user_id"
-                                   attrs="{'readonly': ['|',
+                                   attrs="{'readonly': ['|', '|',
+                                                        ('state', '!=', 'draft'),
                                                         '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True),
                                                         '&amp;', ('type', '=', 'out_invoice'), ('from_supply', '=', True)]}"/>
                             <newline/>
                             <field domain="[('partner_id.ref_companies', 'in', [company_id])]" name="partner_bank_id" />
-                            <field name="origin" attrs="{'readonly': [('from_supply', '=', True)]}"/>
+                            <field name="origin" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_supply', '=', True)]}"/>
                             <field colspan="4" domain="[('partner_id','=',partner_id)]" name="address_contact_id" />
                             <field name="move_id" />
                             <separator colspan="4" string="Additional Information"/>
