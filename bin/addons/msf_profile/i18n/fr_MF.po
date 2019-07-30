@@ -107519,3 +107519,10 @@ msgstr "Afficher les détails des NL/EXP"
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:175
 msgid "Line State"
 msgstr "État de la Ligne"
+
+#. modules: sales_followup, msf_supply_doc_export
+#: code:sales_followup/wizard/sale_followup_multi_wizard.py:190
+#: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:297
+#, python-format
+msgid "The requested report is too heavy to generate: requested %d lines, maximum allowed %d. Please apply further filters so that report can be generated."
+msgstr "Le rapport demandé est trop volumineux pour être généré, %d lignes demandées, %d autorisées. Veuillez utiliser plus de filtres pour que ce rapport puisse être généré"
