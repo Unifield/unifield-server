@@ -22,6 +22,7 @@
 import time
 
 from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class sale_order_allocation_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -54,3 +55,6 @@ report_sxw.report_sxw('report.sale.order.allocation.report',
                       'sale.order',
                       'addons/sale/report/sale_order_allocation_report.rml',
                       parser=sale_order_allocation_report, header="landscape")
+
+SpreadsheetReport('report.fo.allocation.report.xls', 'sale.order',
+                  'addons/sale/report/fo_allocation_report.mako', parser=sale_order_allocation_report)

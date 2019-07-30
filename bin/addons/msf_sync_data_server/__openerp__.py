@@ -27,7 +27,7 @@
     'description': 'Data files for Sync Server',
     'author': 'MSF, OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['base', 'sync_server', 'msf_profile', 'sync_client', 'sync_so'],
+    'depends': ['base', 'sync_server', 'msf_profile', 'sync_client', 'sync_so', 'update_server'],
     'init_xml': [],
     'data': [
         'data/sync.server.group_type.csv',
@@ -35,6 +35,9 @@
         'data/sync_server.message_rule.csv',
     ],
     'demo_xml': [
+    ],
+    'function': [
+        ('user.rights.auto.load', 'load'),
     ],
     'test':[
     ],

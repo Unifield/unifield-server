@@ -54,7 +54,7 @@
 </Styles>
 
 
-<ss:Worksheet ss:Name="Stopped products">
+<ss:Worksheet ss:Name="${_('Products'|x)}">
 
   <Table x:FullColumns="1" x:FullRows="1">
 

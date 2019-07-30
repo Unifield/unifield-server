@@ -23,8 +23,6 @@ from osv import fields, osv
 from tools.translate import _
 import decimal_precision as dp
 
-import netsvc
-
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
 class kit_selection_sale(osv.osv_memory):
@@ -32,7 +30,7 @@ class kit_selection_sale(osv.osv_memory):
     kit selection
     '''
     _name = "kit.selection.sale"
-    
+
     _columns = {'product_id_kit_selection_sale': fields.many2one('product.product', string='Kit Product', readonly=True),
                 'kit_id_kit_selection_sale': fields.many2one('composition.kit', string='Theoretical Kit'),
                 'order_line_id_kit_selection_sale': fields.many2one('sale.order.line', string='Sale Order Line', readonly=True, required=True),
@@ -43,11 +41,11 @@ class kit_selection_sale(osv.osv_memory):
                 'pricelist_id_kit_selection_sale': fields.related('order_line_id_kit_selection_sale', 'order_id', 'pricelist_id', string='Currency', type='many2one', relation='product.pricelist', readonly=True, store=False),
                 'warehouse_id_kit_selection_sale': fields.related('order_line_id_kit_selection_sale', 'order_id', 'warehouse_id', string='Warehouse', type='many2one', relation='stock.warehouse', readonly=True, store=False),
                 }
-    
+
     _defaults = {'product_id_kit_selection_sale': lambda s, cr, uid, c: c.get('product_id', False),
                  'order_line_id_kit_selection_sale': lambda s, cr, uid, c: c.get('active_ids') and c.get('active_ids')[0] or False,
                  }
-    
+
     def import_items(self, cr, uid, ids, context=None):
         '''
         import lines into product_ids_kit_selection_sale
@@ -56,7 +54,7 @@ class kit_selection_sale(osv.osv_memory):
         line_obj = self.pool.get('kit.selection.sale.line')
         # purchase order line id
         sol_ids = context['active_ids']
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.kit_id_kit_selection_sale:
                 raise osv.except_osv(_('Warning !'), _('A theoretical version should be selected.'))
@@ -71,19 +69,16 @@ class kit_selection_sale(osv.osv_memory):
                           }
                 line_obj.create(cr, uid, values, context=dict(context, sol_ids=context['active_ids']))
         return self.pool.get('wizard').open_wizard(cr, uid, sol_ids, w_type='update', context=context)
-    
+
     def validate_lines(self, cr, uid, ids, context=None):
         '''
         validate the lines
-        
+
         - qty > 0.0 (must_be_greater_than_0)
         - unit price > 0.0
-        
+
         return True or False
         '''
-        # objects
-        prod_obj = self.pool.get('product.product')
-        lot_obj = self.pool.get('stock.production.lot')
         # errors
         errors = {'must_be_greater_than_0': False,
                   'price_must_be_greater_than_0': False,
@@ -114,7 +109,6 @@ class kit_selection_sale(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # objects
-        so_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
         # id of corresponding sale order line
         sol_ids = context['active_ids']
@@ -152,8 +146,8 @@ class kit_selection_sale(osv.osv_memory):
                 price_unit = item_v.price_unit_kit_selection_sale_line
                 # call purchase order line on change function
                 data = self.pool.get('kit.selection.sale.line')._call_sol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit,
-                                                                               type='product_id_change',
-                                                                               context=dict(context, sol_ids=context['active_ids']))
+                                                                                    type='product_id_change',
+                                                                                    context=dict(context, sol_ids=context['active_ids']))
                 # common dictionary of data
                 values = {'product_id': product_id,
                           'price_unit': price_unit,
@@ -165,13 +159,13 @@ class kit_selection_sale(osv.osv_memory):
                           'name': data['value']['name'],
                           'default_name': data['value']['default_name'],
                           }
-                
+
                 # following new sequencing policy, we check if resequencing occur (behavior 1).
                 # if not (behavior 2), the split line keeps the same line number as original line
                 if not sol_obj.allow_resequencing(cr, uid, [obj.order_line_id_kit_selection_sale.id], context=context):
                     # set default value for line_number as the same as original line
                     values.update({'line_number': obj.order_line_id_kit_selection_sale.line_number})
-                
+
                 if last_line_id:
                     # the existing purchase order line has already been updated, we create a new one
                     # copy the original purchase order line
@@ -181,9 +175,9 @@ class kit_selection_sale(osv.osv_memory):
                     # first item to be treated, we update the existing line
                     last_line_id = obj.order_line_id_kit_selection_sale.id
                     sol_obj.write(cr, uid, [last_line_id], values, context=context)
-                
+
         return {'type': 'ir.actions.act_window_close'}
-    
+
 kit_selection_sale()
 
 
@@ -192,17 +186,14 @@ class kit_selection_sale_line(osv.osv_memory):
     substitute items
     '''
     _name = 'kit.selection.sale.line'
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         default price unit from sol on_change function
         '''
-        # objects
-        sol_obj = self.pool.get('sale.order.line')
         # id of corresponding sale order line
         sol_id = context.get('active_ids', False) and context['active_ids'][0] or False
         if sol_id and ('price_unit_kit_selection_sale_line' not in vals or vals.get('price_unit_kit_selection_sale_line') == 0.0):
-            sol = sol_obj.browse(cr, uid, sol_id, context=context)
             # selected product_id
             product_id = vals.get('product_id_kit_selection_sale_line', False)
             # selected qty
@@ -215,15 +206,15 @@ class kit_selection_sale_line(osv.osv_memory):
             data = self._call_sol_on_change(cr, uid, context['active_ids'],
                                             product_id, qty, uom_id, price_unit, type='product_id_change',
                                             context=context)
-            
+
             # update price_unit value
             vals.update({'price_unit_kit_selection_sale_line': data['value']['price_unit']})
         return super(kit_selection_sale_line, self).create(cr, uid, vals, context=context)
-    
+
     def _call_sol_on_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, type, context=None):
         '''
         core function from sale order line
-        
+
         def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
             uom=False, qty_uos=0, uos=False, name='', partner_id=False,
             lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
@@ -232,7 +223,7 @@ class kit_selection_sale_line(osv.osv_memory):
         assert context, 'No context defined, problem on method call'
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # objects
         sol_obj = self.pool.get('sale.order.line')
         prod_obj = self.pool.get('product.product')
@@ -247,16 +238,10 @@ class kit_selection_sale_line(osv.osv_memory):
         date_order = sol.order_id.date_order
         # fiscal_position from purchase order
         fiscal_position_id = sol.order_id.fiscal_position.id
-        # date_planned from purchase order line
-        date_planned = sol.date_planned
         # name
         name = False
         if product_id:
             name = prod_obj.read(cr, uid, product_id, ['name'], context=context)['name']
-        # notes
-        notes = sol.notes
-        # state
-        state = sol.order_id.state
         # gather default values
         if type == 'product_uom_change':
             data = getattr(sol_obj, type)(cr, uid, ids, pricelist=pricelist_id, product=product_id, qty=qty,
@@ -264,14 +249,14 @@ class kit_selection_sale_line(osv.osv_memory):
                                           lang='lang' in context and context['lang'], update_tax=False, date_order=date_order)
         elif type == 'product_id_change':
             data = getattr(sol_obj, type)(cr, uid, ids, pricelist=pricelist_id, product=product_id, qty=qty,
-                                             uom=uom_id, qty_uos=qty, uos=uom_id, name=name, partner_id=partner_id,
-                                             lang='lang' in context and context['lang'], update_tax=True, date_order=date_order, packaging=False, fiscal_position=fiscal_position_id, flag=False)
+                                          uom=uom_id, qty_uos=qty, uos=uom_id, name=name, partner_id=partner_id,
+                                          lang='lang' in context and context['lang'], update_tax=True, date_order=date_order, packaging=False, fiscal_position=fiscal_position_id, flag=False)
         return data
-    
+
     def on_product_id_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, context=None):
         '''
         core function from purchase order line
-        
+
         def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
             name=False, price_unit=False, notes=False):
@@ -280,7 +265,7 @@ class kit_selection_sale_line(osv.osv_memory):
         assert context, 'No context defined, problem on method call'
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # product change, we reset everything
         result = {'value': {'uom_id_kit_selection_sale_line': False,
                             'price_unit_kit_selection_sale_line': 0.0,
@@ -288,7 +273,7 @@ class kit_selection_sale_line(osv.osv_memory):
         # gather default values
 #        data = self._call_sol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, 'product_id_change', context=context)
         data = self._call_sol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, type='product_id_change', context=context)
-        
+
         # update result price_unit and default uom
         if 'price_unit' in data['value']:
             result['value'].update({'price_unit_kit_selection_sale_line': data['value']['price_unit']})
@@ -296,13 +281,13 @@ class kit_selection_sale_line(osv.osv_memory):
             result['value'].update({'qty_kit_selection_sale_line': data['value']['product_qty']})
         if 'product_uom' in data['value']:
             result['value'].update({'uom_id_kit_selection_sale_line': data['value']['product_uom']})
-            
+
         return result
-    
+
     def on_uom_id_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, context=None):
         '''
         core function from purchase order line
-        
+
         def product_uom_change(self, cursor, user, ids, pricelist, product, qty=0,
             uom=False, qty_uos=0, uos=False, name='', partner_id=False,
             lang=False, update_tax=True, date_order=False):
@@ -311,7 +296,7 @@ class kit_selection_sale_line(osv.osv_memory):
         assert context, 'No context defined, problem on method call'
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # uom change - we reset the qty and price
         result = {'value': {'qty_kit_selection_sale_line': 0.0,
                             'price_unit_kit_selection_sale_line': 0.0}}
@@ -323,11 +308,11 @@ class kit_selection_sale_line(osv.osv_memory):
         if 'product_qty' in data['value']:
             result['value'].update({'qty_kit_selection_sale_line': data['value']['product_qty']})
         return result
-    
+
     def on_qty_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, context=None):
         '''
         core function from purchase order line
-        
+
         def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
             name=False, price_unit=False, notes=False):
@@ -336,8 +321,8 @@ class kit_selection_sale_line(osv.osv_memory):
         assert context, 'No context defined, problem on method call'
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
-        # qty changed - we do not reset anything 
+
+        # qty changed - we do not reset anything
         result = {'value': {}}
         # gather default values
         data = self._call_sol_on_change(cr, uid, ids, product_id, qty, uom_id, price_unit, type='product_id_change', context=context)
@@ -352,19 +337,19 @@ class kit_selection_sale_line(osv.osv_memory):
             result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty_kit_selection_sale_line', result=result)
 
         return result
-    
+
     _columns = {'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
                 'order_line_id_kit_selection_sale_line': fields.many2one('sale.order.line', string='Sale Order Line', readonly=True, required=True),
                 'wizard_id_kit_selection_sale_line': fields.many2one('kit.selection.sale', string='Kit Selection wizard'),
                 # data
                 'product_id_kit_selection_sale_line': fields.many2one('product.product', string='Product', required=True),
-                'qty_kit_selection_sale_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
+                'qty_kit_selection_sale_line': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True, related_uom='uom_id_kit_selection_sale_line'),
                 'uom_id_kit_selection_sale_line': fields.many2one('product.uom', string='UoM', required=True),
                 'price_unit_kit_selection_sale_line': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price')),
                 }
-    
+
     _defaults = {'integrity_status': 'empty',
                  }
-    
+
 kit_selection_sale_line()
 

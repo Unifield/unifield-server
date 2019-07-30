@@ -126,9 +126,9 @@ class module(osv.osv):
                     aa = v.inherit_id and '* INHERIT ' or ''
                     res_mod_dic['views_by_module'].append(aa + v.name + '('+v.type+')')
                 elif key=='ir.actions.report.xml':
-                    res_mod_dic['reports_by_module'].append(report_obj.browse(cr,uid,data_id.res_id).name)
+                    res_mod_dic['reports_by_module'].append(report_obj.browse(cr,uid,data_id.res_id, fields_to_fetch=['name']).name)
                 elif key=='ir.ui.menu':
-                    res_mod_dic['menus_by_module'].append(menu_obj.browse(cr,uid,data_id.res_id).complete_name)
+                    res_mod_dic['menus_by_module'].append(menu_obj.browse(cr,uid,data_id.res_id, fields_to_fetch=['complete_name']).complete_name)
             except KeyError:
                 self.__logger.warning(
                     'Data not found for reference %s[%s:%s.%s]', data_id.model,
@@ -389,7 +389,7 @@ class module(osv.osv):
                 updated_values = {}
                 for key in values:
                     old = getattr(mod, key)
-                    updated = isinstance(values[key], basestring) and tools.ustr(values[key]) or values[key] 
+                    updated = isinstance(values[key], basestring) and tools.ustr(values[key]) or values[key]
                     if not old == updated:
                         updated_values[key] = values[key]
                 if terp.get('installable', True) and mod.state == 'uninstallable':
@@ -528,8 +528,9 @@ class module(osv.osv):
                     iso_lang = iso_lang.split('_')[0]
                     f = addons.get_module_resource(mod.name, 'i18n', iso_lang + '.po')
                 if f:
+                    delete_old =  mod.name == 'msf_profile' and context2.get('overwrite') and lang== 'fr_MF'
                     logger.info('module %s: loading translation file (%s) for language %s', mod.name, iso_lang, lang)
-                    tools.trans_load(cr, f, lang, verbose=False, context=context2)
+                    tools.trans_load(cr, f, lang, verbose=False, context=context2, delete_old=delete_old)
         tools.trans_update_res_ids(cr)
 
     def check(self, cr, uid, ids, context=None):

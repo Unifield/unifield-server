@@ -111,20 +111,12 @@ class manage_version(osv.osv):
                         'message': "A version already exists with same checksum and a non-empty patch. You cannot (and probably don't need to) override it.",
                     }, context=context)
 
-                # Only update the name if the current one is empty
-                name = existing_version.name
-                if not name:
-                    name = wiz.name
-
-                # Only update the comment if the current one is empty
-                comment = existing_version.comment
-                if not comment:
-                    comment = wiz.comment
-
                 data = {
-                    'name': name,
+                    'name': wiz.name,
+                    'date': fields.datetime.now(),
                     'patch': wiz.patch,
-                    'comment': comment,
+                    'comment': wiz.comment,
+                    'importance': wiz.importance,
                 }
 
                 version_pool.write(cr, uid, [res_id], data, context=context)

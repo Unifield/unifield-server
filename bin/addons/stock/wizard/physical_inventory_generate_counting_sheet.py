@@ -12,11 +12,13 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         'inventory_id': fields.many2one('physical.inventory', 'Inventory', readonly=True),
         'prefill_bn': fields.boolean('Prefill Batch Numbers'),
         'prefill_ed': fields.boolean('Prefill Expiry Dates'),
+        'only_with_stock_level': fields.boolean('Only count lines with stock different than 0'),
     }
 
     _defaults = {
         'prefill_bn': True,
-        'prefill_ed': True
+        'prefill_ed': True,
+        'only_with_stock_level': False,
     }
 
     def create(self, cr, user, vals, context=None):
@@ -44,6 +46,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         # Get the selected option
         prefill_bn = read_single(self._name, wizard_id, 'prefill_bn')
         prefill_ed = read_single(self._name, wizard_id, 'prefill_ed')
+        only_with_stock_level = read_single(self._name, wizard_id, 'only_with_stock_level')
 
         # Get location, products selected, and existing inventory lines
         inventory_id = read_single(self._name, wizard_id, "inventory_id")
@@ -61,29 +64,50 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         # Prepare the inventory lines to be created
 
         inventory_counting_lines_to_create = []
-        for product_id in product_ids:
-            bn_and_eds_for_this_product = bn_and_eds[product_id]
+        for key in sorted(bn_and_eds.keys(), key=lambda x: x[1]):
+            product_id = key[0]
+            bn_and_eds_for_this_product = bn_and_eds[key]
             # If no bn / ed related to this product, create a single inventory
             # line
-            if len(bn_and_eds_for_this_product) == 0:
-                values = { "line_no": len(inventory_counting_lines_to_create) + 1,
-                           "inventory_id": inventory_id,
-                           "product_id": product_id,
-                           "batch_number": False,
-                           "expiry_date": False
-                           }
-                inventory_counting_lines_to_create.append(values)
-            # Otherwise, create an inventory line for this product ~and~ for
-            # each BN/ED
-            else:
-                for bn_and_ed in bn_and_eds_for_this_product:
-                    values = { "line_no": len(inventory_counting_lines_to_create) + 1,
-                               "inventory_id": inventory_id,
-                               "product_id": product_id,
-                               "batch_number": bn_and_ed[0] if prefill_bn else False,
-                               "expiry_date":  bn_and_ed[1] if prefill_ed else False
-                               }
+            if bn_and_eds_for_this_product == (False, False, False):
+                if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product_id, False, context=context):
+                    continue
+                else:
+                    values = {
+                        "line_no": len(inventory_counting_lines_to_create) + 1,
+                        "inventory_id": inventory_id,
+                        "product_id": product_id,
+                        "batch_number": False,
+                        "expiry_date": False
+                    }
                     inventory_counting_lines_to_create.append(values)
+            elif not bn_and_eds_for_this_product:
+                # BN/ED product with no stock move in this location
+                if not only_with_stock_level:
+                    values = {
+                        "line_no": len(inventory_counting_lines_to_create) + 1,
+                        "inventory_id": inventory_id,
+                        "product_id": product_id,
+                        "batch_number": False,
+                        "expiry_date": False
+                    }
+                    inventory_counting_lines_to_create.append(values)
+            else:
+                # Otherwise, create an inventory line for this product ~and~ for
+                # each BN/ED
+                for bn_and_ed in sorted(bn_and_eds_for_this_product, key=lambda x: x[1] or x[0]):
+                    if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product_id,
+                                                                                     bn_and_ed[2], context=context):
+                        continue
+                    else:
+                        values = {
+                            "line_no": len(inventory_counting_lines_to_create) + 1,
+                            "inventory_id": inventory_id,
+                            "product_id": product_id,
+                            "batch_number": bn_and_ed[0] if prefill_bn else False,
+                            "expiry_date": bn_and_ed[1] if prefill_ed else False
+                        }
+                        inventory_counting_lines_to_create.append(values)
 
         # Get the existing inventory counting lines (to be cleared)
 
@@ -107,73 +131,94 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
-
     def get_BN_and_ED_for_products_at_location(self, cr, uid, location_id, product_ids, context=None):
-        context = context if context else {}
-        def read_many(model, ids, columns):
-            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+        if context is None:
+            context = {}
 
-        # Get the moves at location, related to these products
-        moves_at_location = self.get_moves_at_location(cr, uid, location_id, context=context)
 
-        moves_at_location_for_products = [ m for m in moves_at_location
-                                           if m["product_id"][0] in product_ids ]
+        prod_info = {}
+        move_obj = self.pool.get('stock.move')
+        prod_obj = self.pool.get('product.product')
 
-        # Get the production lot associated to these moves
-        moves_at_location_for_products = read_many("stock.move",
-                                                   moves_at_location_for_products,
-                                                   ["product_id",
-                                                    "prodlot_id",
-                                                    "expired_date"])
+        BN_and_ED = {}
+        default_code_dict = {}
+        for prod in prod_obj.read(cr, uid, product_ids, ['batch_management', 'perishable', 'default_code'], context=context):
+            default_code_dict[prod['id']] = prod['default_code']
+            key = (prod['id'], prod['default_code'])
+            if not prod['batch_management'] and not prod['perishable']:
+                BN_and_ED[key] = (False, False, False)
+            else:
+                prod_info[prod['id']] = prod
+                BN_and_ED[key] = set()
 
-        # Init a dict with an empty set for each products
-        BN_and_ED = { product_id:set() for product_id in product_ids }
+        domain = ['&', '&', '|',
+                  ('location_id', 'in', [location_id]),
+                  ('location_dest_id', 'in', [location_id]),
+                  ('state', '=', 'done'),
+                  ('product_id', 'in', prod_info.keys()),
+                  ('prodlot_id', '!=', False)
+                  ]
 
-        for move in moves_at_location_for_products:
+        move_ids = move_obj.search(cr, uid, domain, context=context)
 
+        for move in move_obj.read(cr, uid, move_ids, ['product_id', 'prodlot_id', 'expired_date']):
             product_id = move["product_id"][0]
 
-            batch_number = move["prodlot_id"][1] if isinstance(move["prodlot_id"], tuple) else False
-            expired_date = move["expired_date"]
 
-            # Dirty hack to ignore/hide internal batch numbers ("MSFBN")
-            if batch_number and batch_number.startswith("MSFBN"):
+            if move['prodlot_id'] and move["prodlot_id"][1].startswith("MSFBN"):
+                if prod_info.get(product_id, {}).get('batch_management'):
+                    # old move when product was ED only, now it's BN so ignore the move
+                    continue
                 batch_number = False
+            else:
+                if not prod_info.get(product_id, {}).get('batch_management'):
+                    # old move when this product was BN, now it's ED only so ignore this stock move
+                    continue
+                batch_number = move["prodlot_id"][1]
 
-            BN_and_ED[product_id].add((batch_number, expired_date))
+            key = (product_id, default_code_dict.get(product_id))
+            BN_and_ED[key].add((batch_number, move["expired_date"], move["prodlot_id"][0]))
 
         return BN_and_ED
 
+    def not_zero_stock_on_location(self, cr, uid, location_id, product_id, prodlot_id, context=False):
+        '''
+        Check if the product's stock on the inventory's location is != 0
+        '''
+        if not context:
+            context = {}
 
-    # FIXME : this is copy/pasta from the other wizard ...
-    # Should be factorized, probably in physical inventory, or stock somewhere.
-    def get_moves_at_location(self, cr, uid, location_id, context=None):
-        context = context if context else {}
+        move_obj = self.pool.get('stock.move')
+        uom_obj = self.pool.get('product.uom')
+        not_zero = True
 
-        def read_many(model, ids, columns):
-            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+        domain = [('product_id', '=', product_id), ('prodlot_id', '=', prodlot_id), ('state', '=', 'done'),
+                  '|', ('location_id', '=', location_id), ('location_dest_id', '=', location_id)]
+        move_ids = move_obj.search(cr, uid, domain, context=context)
 
-        def search(model, domain):
-            return self.pool.get(model).search(cr, uid, domain, context=context)
+        product_qty = 0.00
+        used_fields = ['location_id', 'location_dest_id', 'product_id', 'product_qty', 'product_uom']
+        for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=used_fields, context=context):
+            # If the move is from the same location as destination
+            if move.location_dest_id.id == move.location_id.id or move.product_qty == 0.00:
+                continue
 
-        assert isinstance(location_id, int)
+            if move.product_uom.id != move.product_id.uom_id.id:
+                to_unit = move.product_id.uom_id.id
+                qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, to_unit)
+            else:
+                qty = move.product_qty
 
-        # Get all the moves for in/out of that location
-        from_or_to_location = ['&', '|',
-                               ('location_id', 'in', [location_id]),
-                               ('location_dest_id', 'in', [location_id]),
-                               ('state', '=', 'done')]
+            if move.location_dest_id.id == location_id:  # IN qty
+                product_qty += qty
+            elif move.location_id.id == location_id:  # OUT qty
+                product_qty -= qty
 
-        moves_at_location_ids = search("stock.move", from_or_to_location)
-        moves_at_location = read_many("stock.move",
-                                      moves_at_location_ids,
-                                      ["product_id",
-                                       "date",
-                                       "product_qty",
-                                       "location_id",
-                                       "location_dest_id"])
+        if product_qty == 0:
+            not_zero = False
 
-        return moves_at_location
+        return not_zero
+
 
 physical_inventory_generate_counting_sheet()
 

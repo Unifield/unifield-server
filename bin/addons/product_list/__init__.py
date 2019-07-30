@@ -19,10 +19,9 @@
 #
 ##############################################################################
 
-LIST_TYPE = [('list', 'List'), ('sublist', 'Sublist')]
-
 import product_list
 import report
 import wizard
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

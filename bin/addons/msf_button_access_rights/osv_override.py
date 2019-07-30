@@ -155,9 +155,11 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
         if rules_pool:
             rules_search = rules_pool.search(cr, adminUid, [('name', '=', method), ('model_id', 'in', model_id)])
 
+            if not rules_search:
+                return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
+
             # do we have rules?
-            if rules_search:
-                rule = rules_pool.browse(cr, adminUid, rules_search[0])
+            for rule in rules_pool.browse(cr, adminUid, rules_search):
 
                 # does user have access?
                 access = False
@@ -184,12 +186,10 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
                     context['real_user'] = uid
                     return super_execute_cr(self, cr, adminUid, obj, method, *args, **kw)
 
-                else:
-                    # throw access denied
-                    raise osv.except_osv('Access Denied', 'You do not have permission to use this button')
 
-            else:
-                return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
+            # throw access denied
+            raise osv.except_osv('Access Denied', 'You do not have permission to use this button')
+
         else:
             logging.getLogger(self._name).warn('Could not get model pool for button_access_rule')
             return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
@@ -228,10 +228,12 @@ def exec_workflow_cr(self, cr, uid, obj, method, *args):
         if rules_pool:
             rules_search = rules_pool.search(cr, adminUid, [('name','=',method), ('model_id','in',object_id)])
 
-            # do we have rules?
-            if rules_search:
-                rule = rules_pool.browse(cr, adminUid, rules_search[0])
+            if not rules_search:
+                return super_execute_workflow_cr(self, cr, uid, obj, method, *args)
 
+
+            # do we have rules?
+            for rule in rules_pool.browse(cr, adminUid, rules_search):
                 # does user have access?
                 access = False
                 if rule.group_ids:
@@ -244,11 +246,8 @@ def exec_workflow_cr(self, cr, uid, obj, method, *args):
                 if access:
                     # execute workflow as admin
                     return super_execute_workflow_cr(self, cr, adminUid, obj, method, *args)
-                else:
-                    # throw access denied
-                    raise osv.except_osv('Access Denied', 'You do not have permission to use this button')
-            else:
-                return super_execute_workflow_cr(self, cr, uid, obj, method, *args)
+            # throw access denied
+            raise osv.except_osv('Access Denied', 'You do not have permission to use this button')
         else:
             logging.getLogger(self._name).warn('Could not get model pool for button_access_rule')
             return super_execute_workflow_cr(self, cr, uid, obj, method, *args)

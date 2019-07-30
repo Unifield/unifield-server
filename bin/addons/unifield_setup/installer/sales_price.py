@@ -21,9 +21,6 @@
 
 from osv import osv
 from osv import fields
-import decimal_precision as dp
-
-from tools.translate import _
 
 
 class sale_price_setup(osv.osv_memory):
@@ -90,77 +87,3 @@ class sale_price_setup(osv.osv_memory):
         setup_obj.write(cr, uid, [setup_id.id], {'sale_price': payload.sale_price}, context=context)
 
 sale_price_setup()
-
-
-class product_template(osv.osv):
-    _name = 'product.template'
-    _inherit = 'product.template'
-
-    def _get_list_price(self, cr, uid, ids, fields, arg, context=None):
-        '''
-        Update the list_price = Field Price according to standard_price = Cost Price and the sale_price of the unifield_setup_configuration
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = {}
-        setup_obj = self.pool.get('unifield.setup.configuration')
-        for obj in self.browse(cr, uid, ids, context=context):
-            res[obj.id] = False
-            standard_price = obj.standard_price
-            #US-1035: Fixed the wrong hardcoded id given when calling config setup object
-            setup_br = setup_obj.get_config(cr, uid)
-            if not setup_br:
-                return res
-            percentage = setup_br.sale_price
-            list_price = standard_price * (1 + (percentage/100.00))
-            res[obj.id] = list_price
-        return res
-
-    _columns = {
-        'standard_price': fields.float('Cost Price', required=True, digits_compute=dp.get_precision('Account Computation'), help="Price of product calculated according to the selected costing method."),
-            'list_price': fields.function(_get_list_price, method=True, type='float', string='Sale Price',
-                                          store = {
-                                          'product.template': (lambda self, cr, uid, ids, c=None: ids, ['standard_price'], 10),
-                                          },
-                                          digits_compute=dp.get_precision('Sale Price Computation'),
-                                          help="Base price for computing the customer price. Sometimes called the catalog price."),
-    }
-
-product_template()
-
-class product_product(osv.osv):
-    _name = 'product.product'
-    _inherit = 'product.product'
-
-    def onchange_sp(self, cr, uid, ids, standard_price, context=None):
-        '''
-        On change standard_price, update the list_price = Field Price according to standard_price = Cost Price and the sale_price of the unifield_setup_configuration
-        '''
-        res = {}
-        if standard_price :
-            if standard_price < 0.0:
-                warn_msg = {
-                    'title': _('Warning'),
-                    'message': _("The Cost Price must be greater than 0 !")
-                }
-                res.update({'warning': warn_msg,
-                            'value': {'standard_price': 1,
-                                      'list_price': self.onchange_sp(cr, uid, ids, standard_price=1, context=context).get('value').get('list_price')}})
-            else:
-                setup_obj = self.pool.get('unifield.setup.configuration')
-                #US-1035: Fixed the wrong hardcoded id given when calling config setup object
-                setup_br = setup_obj.get_config(cr, uid)
-                if not setup_br:
-                    return res
-
-                percentage = setup_br.sale_price
-                list_price = standard_price * (1 + (percentage/100.00))
-                if 'value' in res:
-                    res['value'].update({'list_price': list_price})
-                else:
-                    res.update({'value': {'list_price': list_price}})
-        return res
-
-product_product()

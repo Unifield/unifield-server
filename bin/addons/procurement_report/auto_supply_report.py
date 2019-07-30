@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,14 +21,13 @@
 
 import tools
 from osv import fields,osv
-from decimal_precision import decimal_precision as dp
 
 class auto_supply_rules_report(osv.osv):
     _name = 'auto.supply.rules.report'
     _rec_name = 'rule_id'
     _auto = False
     _order = 'product_reference, product_name, product_id, location_id'
-    
+
     def _get_nomen_s(self, cr, uid, ids, fields, *a, **b):
         value = {}
         for f in fields:
@@ -38,7 +37,7 @@ class auto_supply_rules_report(osv.osv):
         for id in ids:
             ret[id] = value
         return ret
-    
+
     def _search_nomen_s(self, cr, uid, obj, name, args, context=None):
 
         if not args:
@@ -48,18 +47,18 @@ class auto_supply_rules_report(osv.osv):
             el = arg[0].split('_')
             el.pop()
             narg=[('_'.join(el), arg[1], arg[2])]
-        
+
         return narg
-    
+
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=num, context=context)
-    
+
     def _get_nomen_name(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns a string with all nomenclature levels separated by '/'
         '''
         res = {}
-        
+
         for rule in self.browse(cr, uid, ids, context=context):
             res[rule.id] = ''
             if rule.nomen_manda_0:
@@ -72,10 +71,10 @@ class auto_supply_rules_report(osv.osv):
                 res[rule.id] += rule.nomen_manda_2.name
             if rule.nomen_manda_3:
                 res[rule.id] += '/'
-                res[rule.id] += rule.nomen_manda_3.name 
-            
+                res[rule.id] += rule.nomen_manda_3.name
+
         return res
-    
+
     def _get_stock(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns stock value of a product
@@ -83,46 +82,46 @@ class auto_supply_rules_report(osv.osv):
         if context is None:
             context = {}
         res = {}
-        
+
         ir_data = self.pool.get('ir.model.data')
         stock_location = ir_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
         # TODO: Change msf_profile by msf_location_setup module
         intermediate_stock = ir_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1]
         consumption_stock = ir_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
-        
+
         for rule in self.browse(cr, uid, ids, context=context):
             res[rule.id] = {'stock': 0.00,
                             'intermediate_stock': 0.00,
                             'consumption_stock': 0.00,
                             'amc': 0.00,
                             'fmc': 0.00}
-            
+
             if rule.product_id:
                 res[rule.id]['amc'] = rule.product_id.product_amc
                 res[rule.id]['fmc'] = rule.product_id.reviewed_consumption
-            
+
                 c = context.copy()
                 c.update({'location': stock_location, 'compute_child': True})
                 product = self.pool.get('product.product').browse(cr, uid, rule.product_id.id, context=c)
                 res[rule.id]['stock'] = product.qty_available
-                
+
                 c2 = context.copy()
                 c2.update({'location': consumption_stock, 'compute_child': True})
                 product2 = self.pool.get('product.product').browse(cr, uid, rule.product_id.id, context=c2)
                 res[rule.id]['consumption_stock'] = product2.qty_available
-                
+
                 c3 = context.copy()
                 c3.update({'location': intermediate_stock, 'compute_child': True})
                 product3 = self.pool.get('product.product').browse(cr, uid, rule.product_id.id, context=c3)
                 res[rule.id]['intermediate_stock'] = product3.qty_available
-            
+
             total_stock = res[rule.id]['stock'] + res[rule.id]['intermediate_stock'] + res[rule.id]['consumption_stock']
             moh = res[rule.id]['amc'] > 0 and total_stock / res[rule.id]['amc'] or 0.00
-            
+
             res[rule.id].update({'total_stock': total_stock, 'moh': moh})
-        
+
         return res
-    
+
     _columns = {
         'rule_id': fields.many2one('stock.warehouse.automatic.supply', string='Rules reference', readonly=True),
         'product_id': fields.many2one('product.product', string='Product', readonly=True),
@@ -140,16 +139,16 @@ class auto_supply_rules_report(osv.osv):
         'nomen_name': fields.function(_get_nomen_name, method=True, type='char', string='Nomenclature level', readonly=True),
         'product_uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
         'frequency_id': fields.many2one('stock.frequence', string='Frequency', readonly=True),
-        'order_qty': fields.float(digits=(16,2), string='Order Qty', readonly=True),
-        'total_stock': fields.function(_get_stock, method=True, type='float', string='Total stock', readonly=True, multi='stock'),
-        'stock': fields.function(_get_stock, method=True, type='float', string='Stock (stock & children)', readonly=True, multi='stock'),
-        'intermediate_stock': fields.function(_get_stock, method=True, type='float', string='ISi stocks', readonly=True, multi='stock'),
-        'consumption_stock': fields.function(_get_stock, method=True, type='float', string='CUi stocks', readonly=True, multi='stock'),
+        'order_qty': fields.float(digits=(16,2), string='Order Qty', readonly=True, related_uom='product_uom_id'),
+        'total_stock': fields.function(_get_stock, method=True, type='float', string='Total stock', readonly=True, multi='stock', related_uom='product_uom_id'),
+        'stock': fields.function(_get_stock, method=True, type='float', string='Stock (stock & children)', readonly=True, multi='stock', related_uom='product_uom_id'),
+        'intermediate_stock': fields.function(_get_stock, method=True, type='float', string='ISi stocks', readonly=True, multi='stock', related_uom='product_uom_id'),
+        'consumption_stock': fields.function(_get_stock, method=True, type='float', string='CUi stocks', readonly=True, multi='stock', related_uom='product_uom_id'),
         'amc': fields.function(_get_stock, method=True, type='float', string='AMC', readonly=True, multi='stock'),
         'moh': fields.function(_get_stock, method=True, type='float', string='MoH', readonly=True, multi='stock'),
         'fmc': fields.function(_get_stock, method=True, type='float', string='FMC', readonly=True, multi='stock'),
     }
-    
+
     def init(self, cr):
         '''
         Creates the SQL view on database
@@ -187,7 +186,7 @@ class auto_supply_rules_report(osv.osv):
                         prod.product_tmpl_id = temp.id
             )
             """)
-    
+
 auto_supply_rules_report()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -30,6 +30,7 @@ class merged_order(report_sxw.rml_parse):
             'to_time': self.str_to_time,
             'enumerate': enumerate,
             'getOrigin': self._get_origin,
+            'get_merged_lines': self.get_merged_lines,
         })
 
     def _get_origin(self, origin, number=5):
@@ -57,6 +58,41 @@ class merged_order(report_sxw.rml_parse):
 
         return res
 
+    def get_merged_lines(self, order):
+        all_prod = {}
+        line_obj = self.pool.get('purchase.order.line')
+        line_ids = line_obj.search(self.cr, self.uid, [('order_id', '=', order.id), ('state', 'not in', ['cancel', 'cancel_r'])])
+
+        for line in line_obj.browse(self.cr, self.uid, line_ids, context=self.localcontext):
+            if not line.product_id:
+                p_key = line.nomenclature_description
+                p_name = line.nomenclature_description
+                default_code = ''
+            else:
+                p_key = line.product_id.id
+                p_name = line.product_id.name
+                default_code = line.product_id.default_code
+
+            key = (p_key, line.product_uom.id)
+            if key not in all_prod:
+                all_prod[key] = {
+                    'default_code': default_code,
+                    'supplier_code': line.supplier_code,
+                    'name': p_name,
+                    'price_unit': line.price_unit,
+                    'price_subtotal': line.price_subtotal,
+                    'product_uom': line.product_uom.name,
+                    'quantity': line.product_qty,
+                    'comment': line.comment or '',
+                }
+            else:
+                all_prod[key]['price_unit'] = ((all_prod[key]['price_unit'] * all_prod[key]['quantity']) + (line.product_qty*line.price_unit)) / (line.product_qty+all_prod[key]['quantity'])
+                all_prod[key]['quantity'] += line.product_qty
+                all_prod[key]['price_subtotal'] += line.price_subtotal
+                if line.comment:
+                    all_prod[key]['comment'] += ' %s' % line.comment
+
+        return sorted(all_prod.values(), key=lambda x: x['default_code'] or x['name'])
 
     def str_to_time(self, time):
         if isinstance(time, str):

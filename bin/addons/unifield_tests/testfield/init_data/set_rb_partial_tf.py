@@ -22,6 +22,13 @@ def reset_po(oerp):
     if po_ids:
         po_o.write(po_ids, {'delivery_requested_date': '2030-01-01'})
 
+def open_period(op, year):
+    op.get('account.period.create').account_period_create_periods([], {'force_open_year': year})
+    period_ids = op.get('account.period').search([('state', '=', 'created'), ('date_start', '>=', '%s-01-01'%year), ('date_stop', '<=', '%s-12-31'%year), ('special', '=', False)])
+    if period_ids:
+        op.get('account.period').action_open_period(period_ids)
+
+
 oerp = OERP(server=SRV_ADDRESS, protocol='xmlrpc', port=XMLRPC_PORT, timeout=3600, version='6.0')
 l = oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_SYNC_SERVER' % DB_PREFIX)
 ids = oerp.get('sync.server.entity').search([])
@@ -30,6 +37,8 @@ oerp.get('sync.server.entity').write(ids, {'user_id': 1})
 
 sync_needed = False
 l = oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1' % DB_PREFIX)
+open_period(oerp, 2018)
+
 prod_o = oerp.get('product.product')
 if not prod_o.search([('default_code', '=', 'AZAZA')]):
     print 'Create Prod AZAZA'
@@ -51,23 +60,11 @@ if p_ids:
     sync_needed = True
     oerp.get('res.partner').write(p_ids, {'active': True})
 
-loc_o = oerp.get('stock.location')
-loc_ids = loc_o.search([('name', '=', 'LOG')])
-prod_o = oerp.get('product.product')
-p1_ids = prod_o.search([('default_code', '=', 'ADAPCABL1S-')])
-p2_ids = prod_o.search([('default_code', '=', 'ADAPDCDRB--')])
-p3_ids = prod_o.search([('default_code', '=', 'ADAPMEMK1--')])
-inv_o = oerp.get('stock.inventory')
-inv_id = inv_o.create({
-    'name': 'inv %s' % time.time(),
-    'inventory_line_id': [
-        (0, 0, {'location_id': loc_ids[0], 'product_id': p1_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
-        (0, 0, {'location_id': loc_ids[0], 'product_id': p2_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
-        (0, 0, {'location_id': loc_ids[0], 'product_id': p3_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
-    ],
-})
-inv_o.action_confirm([inv_id])
-inv_o.action_done([inv_id])
+msf_supply = oerp.get('res.partner').search([('name', '=', 'MSF Supply')])
+if not msf_supply and p_ids:
+    new_id = oerp.get('res.partner').copy(p_ids[0])
+    oerp.get('res.partner').write([new_id], {'name': 'MSF Supply'})
+
 
 
 conn_manager = oerp.get('sync.client.sync_server_connection')
@@ -90,6 +87,12 @@ if not loc_o.search([('name', '=', ext_name)]):
 
 
 l = oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1P1' % DB_PREFIX)
+open_period(oerp, 2018)
+
+it_comp = oerp.get('res.partner').search([('name', '=', 'ITCompany'), ('active', '=', False)])
+if it_comp:
+    oerp.get('res.partner').write(it_comp, {'active': True})
+
 conn_manager = oerp.get('sync.client.sync_server_connection')
 conn_ids = conn_manager.search([])
 conn_manager.disconnect()
@@ -119,16 +122,6 @@ inv_id = inv_o.create({
 inv_o.action_confirm([inv_id])
 inv_o.action_done([inv_id])
 
-newprod = {
-    'default_code': 'ADAPZCOO1',
-    'name': 'Local Product',
-    'xmlid_code': 'ADAPZCOO1',
-    'type': 'product',
-    'procure_method': 'make_to_order',
-    'standard_price': '0.00935',
-    'international_status': 4,
-}
-
 def get_nom_info(oerp, nom_name):
     nom = oerp.get('product.nomenclature')
     data = {}
@@ -148,6 +141,78 @@ def activate_partner(oerp, partner_name):
     p_ids = oerp.get('res.partner').search([('name', '=', '%s_%s' % (DB_PREFIX, partner_name)), ('active', 'in', ['t', 'f']), ('partner_type', 'in', ['intermission', 'section'])])
     if p_ids:
         oerp.get('res.partner').write(p_ids, {'active': True})
+
+newprods = [
+    {
+        'default_code': 'ALIFCLOC1--',
+        'name': 'CLOCK, ALARM, mechanical',
+        'xmlid_code': 'ALIFCLOC1--',
+        'type': 'product',
+        'procure_method': 'make_to_order',
+        'standard_price': '0.00935',
+        'international_status': 1,
+    },
+    {
+        'default_code': 'ALIFCOFM1E-',
+        'name': 'COFFEE MACHINE, electrical, 220 V, 12 cups',
+        'xmlid_code': 'ALIFCOFM1E-',
+        'type': 'product',
+        'procure_method': 'make_to_order',
+        'standard_price': '0.00935',
+        'international_status': 1,
+    }
+]
+for prod in newprods:
+    oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1' % DB_PREFIX)
+    create_product(oerp, prod)
+    oerp.get('sync.client.entity').sync()
+    oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1' % DB_PREFIX)
+    oerp.get('sync.client.entity').sync()
+    oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1P1' % DB_PREFIX)
+    oerp.get('sync.client.entity').sync()
+
+loc_ids = oerp.get('stock.location').search([('name', '=', 'LOG')])
+prod_o = oerp.get('product.product')
+p_ids = prod_o.search([('default_code', '=', 'ALIFCOFM1E-')])
+inv_o = oerp.get('stock.inventory')
+inv_id = inv_o.create({
+    'name': 'inv %s' % time.time(),
+    'inventory_line_id': [(0, 0, {'location_id': loc_ids[0], 'product_id': p_ids[0], 'product_uom': 1, 'product_qty': 10000, 'reason_type_id': 12})],
+})
+inv_o.action_confirm([inv_id])
+inv_o.action_done([inv_id])
+
+newprod = {
+    'default_code': 'ADAPZCOO1',
+    'name': 'Local Product',
+    'xmlid_code': 'ADAPZCOO1',
+    'type': 'product',
+    'procure_method': 'make_to_order',
+    'standard_price': '0.00935',
+    'international_status': 4,
+}
+
+oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1' % DB_PREFIX)
+loc_o = oerp.get('stock.location')
+loc_ids = loc_o.search([('name', '=', 'LOG')])
+prod_o = oerp.get('product.product')
+p1_ids = prod_o.search([('default_code', '=', 'ADAPCABL1S-')])
+p2_ids = prod_o.search([('default_code', '=', 'ADAPDCDRB--')])
+p3_ids = prod_o.search([('default_code', '=', 'ADAPMEMK1--')])
+p4_ids = prod_o.search([('default_code', '=', 'ALIFCOFM1E-')])
+inv_o = oerp.get('stock.inventory')
+inv_id = inv_o.create({
+    'name': 'inv %s' % time.time(),
+    'inventory_line_id': [
+        (0, 0, {'location_id': loc_ids[0], 'product_id': p1_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
+        (0, 0, {'location_id': loc_ids[0], 'product_id': p2_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
+        (0, 0, {'location_id': loc_ids[0], 'product_id': p3_ids[0], 'product_uom': 1, 'product_qty': 1000, 'reason_type_id': 12}),
+        (0, 0, {'location_id': loc_ids[0], 'product_id': p4_ids[0], 'product_uom': 1, 'product_qty': 10000, 'reason_type_id': 12}),
+    ],
+})
+inv_o.action_confirm([inv_id])
+inv_o.action_done([inv_id])
+
 
 #### Intermission ####
 dbs = oerp.db.list()

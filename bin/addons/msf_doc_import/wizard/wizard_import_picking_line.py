@@ -92,7 +92,7 @@ class wizard_import_pick_line(osv.osv_memory):
         for wiz_browse in self.browse(cr, uid, ids, context):
             try:
                 picking = wiz_browse.picking_id
-                
+
                 ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
                 line_ignored_num = []
                 error_list = []
@@ -100,7 +100,7 @@ class wizard_import_pick_line(osv.osv_memory):
                 message = ''
                 line_num = 0
                 header_index = context['header_index']
-                
+
                 file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
                 # iterator on rows
                 rows = file_obj.getRows()
@@ -145,12 +145,12 @@ class wizard_import_pick_line(osv.osv_memory):
                             line_num-=1
                             total_line_num -= 1
                             continue
-        
+
                         # Cell 0: Product Code
                         p_value = {}
                         p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
                         to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'price_unit': p_value['price_unit'],
-                                        'comment': p_value['comment'], 'error_list': p_value['error_list']})
+                                         'comment': p_value['comment'], 'error_list': p_value['error_list']})
 
                         # Name
                         if p_value['default_code']:
@@ -163,9 +163,10 @@ class wizard_import_pick_line(osv.osv_memory):
                         # Cell 8 : Source location
                         src_value = {}
                         src_value = check_line.compute_location_value(cr, uid, to_write=to_write, loc_obj=loc_obj, pick_type=picking.type,
-                                                                      product_id=to_write['product_id'], check_type='src',
-                                                                      row=row, cell_nb=8, context=context)
-                        to_write.update({'location_id': src_value['location_id'], 'error_list': src_value['error_list'],})
+                                                                      pick_ext_cu=picking.ext_cu, product_id=to_write['product_id'],
+                                                                      check_type='src', row=row, cell_nb=8, context=context)
+                        to_write.update({'location_id': src_value['location_id'], 'is_ext_cu': src_value['is_ext_cu'],
+                                         'error_list': src_value['error_list'],})
                         if not src_value['location_id']:
                             raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
 
@@ -177,12 +178,12 @@ class wizard_import_pick_line(osv.osv_memory):
                         to_write.update({'location_dest_id': dest_value['location_id'], 'error_list': dest_value['error_list'],})
                         if not dest_value['location_id']:
                             raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
-        
+
                         # Cell 2: Quantity
                         qty_value = {}
                         qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
                         to_write.update({'product_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
-        
+
                         # Cell 3: UOM
                         uom_value = {}
                         uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
@@ -204,27 +205,27 @@ class wizard_import_pick_line(osv.osv_memory):
                             qty_value.update({'product_qty': new_qty})
                             to_write.update({'product_qty': new_qty})
                             error_log += _("Line %s in the Excel file : The product qty. has been rounded with the rounding value of the UoM.") % line_num
-        
+
                         # Cell 4: Kit
                         if product.type == 'product' and product.subtype == 'kit':
                             kit_value = {}
-                            kit_value = check_line.compute_kit_value(cr, uid, row=row, to_write=to_write, kit_obj=kit_obj, 
+                            kit_value = check_line.compute_kit_value(cr, uid, row=row, to_write=to_write, kit_obj=kit_obj,
                                                                      cell_nb=4, context=context)
                             to_write.update({'composition_list_id': kit_value['kit_id'], 'error_list': kit_value['error_list'],})
-        
+
                         # Cell 5: Asset
                         if product.type == 'product' and product.subtype == 'asset':
                             asset_value = {}
                             asset_value = check_line.compute_asset_value(cr, uid, row=row, to_write=to_write, asset_obj=asset_obj,
                                                                          cell_nb=5, context=context)
                             to_write.update({'asset_id': asset_value['asset_id'], 'error_list': asset_value['error_list']})
-        
+
                         if product.batch_management or product.perishable:
                             # Cell 6: Batch Number and Cell 7 : Expiry date
                             batch_value = {}
                             batch_value = check_line.compute_batch_expiry_value(cr, uid, row=row, to_write=to_write, bn_obj=bn_obj,
                                                                                 product_obj=product_obj,
-                                                                                bn_cell_nb=6, ed_cell_nb=7, 
+                                                                                bn_cell_nb=6, ed_cell_nb=7,
                                                                                 date_format=date_format,
                                                                                 product_id=to_write.get('product_id'),
                                                                                 picking_type=picking.type)
@@ -395,16 +396,11 @@ Otherwise, you can continue to use Unifield.""")
             ids=[ids]
         for wiz_obj in self.browse(cr, uid, ids, context=context):
             picking_id = wiz_obj.picking_id
-            view_id = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=picking_id)[1]
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.picking',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'view_id': [view_id],
-                'target': 'crush',
-                'res_id': picking_id.id,
-                'context': context,
-                }
+            xmild = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=picking_id)
+            res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmild, ['form', 'tree'], context=context)
+            res['res_id'] = picking_id.id
+            return res
+
 
     def close_import(self, cr, uid, ids, context=None):
         '''
@@ -414,15 +410,9 @@ Otherwise, you can continue to use Unifield.""")
             ids=[ids]
         for wiz_obj in self.browse(cr, uid, ids, context=context):
             picking_id = wiz_obj.picking_id
-            view_id = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=picking_id)[1]
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'stock.picking',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'view_id': [view_id],
-                'target': 'crush',
-                'res_id': picking_id.id,
-                'context': context,
-                }
+            xmlid = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=picking_id)
+            res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmlid, ['form', 'tree'], context=context)
+            res['res_id'] = picking_id.id
+            return res
 
 wizard_import_pick_line()

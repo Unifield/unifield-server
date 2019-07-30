@@ -125,8 +125,8 @@ def rmtree(files, path=None, verbose=False):
             try:
                 os.unlink(target)
             except:
-                warn('Except on target %s, %s' % (target, target.endswith('OpenERPServerService.exe')))
-                if target.endswith('OpenERPServerService.exe'):
+                warn('Except on target %s' % (target,))
+                if target.endswith('.exe'):
                     if not os.path.isdir(backup_trash):
                         os.makedirs(backup_trash)
                     index = 0
@@ -149,8 +149,15 @@ log = sys.stderr
 def warn(*args):
     """Define way to forward logs"""
     global log
-    log.write(("[%s] UPDATER: " % now())+" ".join(map(lambda x:unicode(x), args))+os.linesep)
+    try:
+        log.write(("[%s] UPDATER: " % now())+" ".join(map(lambda x:unicode(x), args))+os.linesep)
+    except:
+        try:
+            log.write(("[%s] UPDATER: " % now())+" ".join(map(lambda x:unicode(x.decode('utf-8', errors='ignore')), args))+os.linesep)
+        except:
+            log.write("[%s] UPDATER: unknown error" % now())
     log.flush()
+
 
 def Try(command):
     """Try...Resume..."""
@@ -184,6 +191,20 @@ def base_module_upgrade(cr, pool, upgrade_now=False):
     if upgrade_now:
         logger.info("--------------- STARTING BASE UPGRADE PROCESS -----------------")
         pool.get('base.module.upgrade').upgrade_module(cr, 1, [])
+        script = pool.get('patch.scripts')
+        not_run = False
+        if script:
+            not_run = script.search(cr, 1, [('run', '=', False)])
+            if not_run:
+                logger.warn("%d patch scripts are not run" % len(not_run))
+        bad_modules = modules.search(cr, 1, [('state', 'in', ['to upgrade', 'to install', 'to remove'])])
+        if bad_modules:
+            logger.warn("%d modules not upgraded" % len(bad_modules))
+
+        if not not_run and not bad_modules:
+            logger.info("--------------- PATCH APPLIED ---------------")
+        else:
+            logger.info("--------------- ISSUES WITH PATCH APPLICATION ---------------")
 
 def process_deletes(update_dir, webpath):
     delfile = os.path.join(update_dir, 'delete.txt')
@@ -331,7 +352,11 @@ def do_update():
                         if file.endswith('.pyc'):
                             file = os.path.join(root, file)
                             warn('Purge pyc: %s' % file)
-                            os.unlink(file)
+                            try:
+                                os.unlink(file)
+                            except:
+                                # in some cases pyc is locked by another process (virus scan?)
+                                pass
 
             shutil.copy(server_version_file, 'backup')
             files.append(server_version_file)
@@ -352,12 +377,16 @@ def do_update():
 
         except BaseException, e:
             warn("Update failure!")
-            warn(unicode(e))
+            try:
+                warn(unicode(e))
+            except:
+                warn("Unknown error")
             ## Restore backup and purge .update
             if files or deleted_files:
                 warn("Restoring... ")
                 for f in reversed(files + deleted_files):
-                    if is_webfile(f):
+                    webfile = is_webfile(f)
+                    if webfile:
                         f = os.path.join(webpath, webfile.group(1))
                         target = os.path.join(webbackup, webfile.group(1))
                     else:
@@ -597,9 +626,38 @@ def _find_pg_patch():
     Returns the filename of the patch, the oldVer and the newVer.
     """
     import glob
+
+    if os.path.isfile('pgsql-8.4.17-9.6.3-patch'):
+        # ouch : this file should not be here
+        warn('Deleting zombie pgsql-8.4.17-9.6.3-patch')
+        os.remove('pgsql-8.4.17-9.6.3-patch')
+
     pfiles = glob.glob('pgsql-*-*-patch')
+    pfiles.sort()
     if len(pfiles) == 0:
         return None, None, None
+
+    if len(pfiles) == 2:
+        (oldVer1, newVer1) = pfiles[0].split('-')[1:3]
+        (oldVer2, newVer2) = pfiles[1].split('-')[1:3]
+        if oldVer1 == '9.6.32' and oldVer2 == '9.6.33' and newVer1 == newVer2:
+            try:
+                with open(r'../pgsql/bin/psql.exe', 'rb') as f:
+                    psql_exe_md5 = md5(f.read()).hexdigest()
+                if psql_exe_md5 == '1ee9b41ee3f9d63816c5fc0f00862cbd':
+                    # 9.6.3-2
+                    _archive_patch(pfiles[1])
+                    pfiles = [pfiles[0]]
+                elif psql_exe_md5 == '8651954c8b170a2b2de004df446d6693':
+                    # 9.6.3-3
+                    _archive_patch(pfiles[0])
+                    pfiles = [pfiles[1]]
+                else:
+                    warn("md5 %s does not match" % (psql_exe_md5,))
+                    return None, None, None
+            except:
+                warn("Unable to compute md5 on ../pgsql/bin/psql.exe")
+                return None, None, None
     if len(pfiles) != 1:
         warn("Too many PostgreSQL patch files: %s" % pfiles)
         warn("PostgreSQL will not be updated.")
@@ -668,8 +726,12 @@ def do_pg_update():
 
     # If there is no patch file available, then there's no
     # update to do.
-    pf, oldVer, newVer = _find_pg_patch()
-    if pf is None:
+    try:
+        pf, oldVer, newVer = _find_pg_patch()
+        if pf is None:
+            return
+    except Exception as e:
+        warn("Error %s" % (e,))
         return
 
     try:
@@ -687,47 +749,21 @@ def do_pg_update():
                 warn("Less than 1 gb free on %s. Not attempting PostgreSQL upgrade." % root)
                 return
 
-    # Minor update:
-    # 1. check that the patch will apply
-    # 2. stop server
-    # 3. patch the binaries in place, nuke patch to show it is done
-    # 4. start server
+    is_major = _is_major(oldVer, newVer)
+    # upgrade
     #
-    # Minor updates will only happen after the 8.4->9.6.x transition,
-    # so things are much easier, with more fixed items (PG inst location,
-    # service name).
-    if not _is_major(oldVer, newVer):
-        if oldVer.startswith("8.4."):
-            warn("Minor patch from 8.4.x not supported.")
-            return
-        warn("Postgres minor update from %s to %s" % (oldVer, newVer))
-
-        try:
-            bsdifftree.applyPatch(pdata, r'..\pgsql', doIt=False, log=_no_log)
-            subprocess.call('net stop Postgres', stdout=log, stderr=log)
-            bsdifftree.applyPatch(pdata, r'..\pgsql', log=warn)
-            _archive_patch(pf)
-        except Exception as e:
-            s = str(e) or type(e)
-            warn("Could not apply patch:", s)
-        finally:
-            subprocess.call('net start Postgres', stdout=log, stderr=log)
-        warn("Minor update done.")
-        return
-
-    # Major upgrade
-    #
-    # 0. find out if tablespaces are in use, if so abort
+    # MAJOR ONLY: 0. find out if tablespaces are in use, if so abort
     # 1. figure out where the old PG is and copy it to pgsql-next
     # 2. patch pgsql-next, nuke patch file
-    # 3. prepare new db dir using new initdb, old user/pass.
-    # 3.5 Alter tables to work around a bug
+    # MAJOR ONLY: 3. prepare new db dir using new initdb, old user/pass.
+    # MAJOR ONLY: 3.5 Alter tables to work around a bug
+    # MAJOR ONLY: 3.8: US-3506: remove any dependency on psql service
     # 4. stop server
-    # 5. pg_upgrade -> if fail, clean db dir, goto 8
+    # MAJOR ONLY: 5. pg_upgrade -> if fail, clean db dir, goto 8
     # 6. commit to new bin dir, put it in '..\pgsql'
     # 7. if old was 8.4, change service entry
     # 8. start server
-    # 9. Alter tables again to back out workaround
+    # MAJOR ONLY: 9. Alter tables again to back out workaround
 
     warn("Postgres major update from %s to %s" % (oldVer, newVer))
     import tools
@@ -754,18 +790,23 @@ def do_pg_update():
         if not os.path.exists(pg_old):
             raise RuntimeError('PostgreSQL install directory %s not found.' % pg_old)
 
-        # 0: check for tablespaces (pg_upgrade seems to unify them
-        # into pg_default, which is not ok)
-        cmd = [ os.path.join(pg_old, 'bin', 'psql'), '-t', '-c',
-                'select count(*) > 2 from pg_tablespace;', 'postgres' ]
-        out = None
-        try:
-            out = subprocess.check_output(cmd, stderr=log, env=env)
-        except subprocess.CalledProcessError as e:
-            warn(e)
-            warn("out is", out)
-        if out is None or 'f' not in out:
-            raise RuntimeError("User-defined tablespaces might be in use. Upgrade needs human intervention.")
+        pg_trash = r'..\psql_old_%s' % oldVer
+        if os.path.exists(pg_trash):
+            raise RuntimeError('%s directory exists, old aborted upgrade ?' % pg_trash)
+
+        if is_major:
+            # 0: check for tablespaces (pg_upgrade seems to unify them
+            # into pg_default, which is not ok)
+            cmd = [ os.path.join(pg_old, 'bin', 'psql'), '-t', '-c',
+                    'select count(*) > 2 from pg_tablespace;', 'postgres' ]
+            out = None
+            try:
+                out = subprocess.check_output(cmd, stderr=log, env=env)
+            except subprocess.CalledProcessError as e:
+                warn(e)
+                warn("out is", out)
+            if out is None or 'f' not in out:
+                raise RuntimeError("User-defined tablespaces might be in use. Upgrade needs human intervention.")
 
         # 1: use old PG install to make a new one to patch
         if os.path.exists(pg_new):
@@ -788,92 +829,96 @@ def do_pg_update():
         bsdifftree.applyPatch(pdata, pg_new, log=warn)
         _archive_patch(pf)
 
-        # 3: prepare the new db
-        pg_old_db = r'D:\MSF data\Unifield\PostgreSQL\data'
-        if not os.path.exists(pg_old_db):
-            raise RuntimeError('Could not find existing PostgreSQL data in %s' % pg_old_db)
-        pg_new_db = pg_old_db + '-new'
-        if os.path.exists(pg_new_db):
-            raise RuntimeError('New data directory %s already exists.' % pg_new_db)
-        pwf = tempfile.NamedTemporaryFile(delete=False)
-        pwf.write(tools.config.get('db_password'))
-        pwf.close()
-        cmd = [ os.path.join(pg_new, 'bin', 'initdb.exe'),
-                '--pwfile', pwf.name,
-                '-A', 'md5',
-                '-U', tools.config.get('db_user'),
-                '--locale', 'English_United States',
-                '-E', 'UTF8', pg_new_db
-                ]
-        warn('initdb: %r' % cmd)
-        rc = subprocess.call(cmd, stdout=log, stderr=log, env=env)
-        os.remove(pwf.name)
-        if rc != 0:
-            raise RuntimeError("initdb returned %d" % rc)
+        if is_major:
+            # 3: prepare the new db
+            pg_old_db = r'D:\MSF data\Unifield\PostgreSQL\data'
+            if not os.path.exists(pg_old_db):
+                raise RuntimeError('Could not find existing PostgreSQL data in %s' % pg_old_db)
+            pg_new_db = pg_old_db + '-new'
+            if os.path.exists(pg_new_db):
+                raise RuntimeError('New data directory %s already exists.' % pg_new_db)
+            pwf = tempfile.NamedTemporaryFile(delete=False)
+            pwf.write(tools.config.get('db_password'))
+            pwf.close()
+            cmd = [ os.path.join(pg_new, 'bin', 'initdb.exe'),
+                    '--pwfile', pwf.name,
+                    '-A', 'md5',
+                    '-U', tools.config.get('db_user'),
+                    '--locale', 'English_United States',
+                    '-E', 'UTF8', pg_new_db
+                    ]
+            warn('initdb: %r' % cmd)
+            rc = subprocess.call(cmd, stdout=log, stderr=log, env=env)
+            os.remove(pwf.name)
+            if rc != 0:
+                raise RuntimeError("initdb returned %d" % rc)
 
-        # modify the postgresql.conf file for best
-        # defaults
-        pgconf = os.path.join(pg_new_db, "postgresql.conf")
-        with open(pgconf, "a") as f:
-            f.write("listen_addresses = 'localhost'\n")
-            f.write("shared_buffers = 1024MB\n")
+            # modify the postgresql.conf file for best
+            # defaults
+            pgconf = os.path.join(pg_new_db, "postgresql.conf")
+            with open(pgconf, "a") as f:
+                f.write("listen_addresses = 'localhost'\n")
+                f.write("shared_buffers = 1024MB\n")
 
-        # 3.5: Alter tables to work around
-        # https://bugs.launchpad.net/openobject-server/+bug/782688
-        cmd = [ os.path.join(pg_old, 'bin', 'psql'), '-A', '-t', '-c',
-                'select datname from pg_database where not datistemplate and datname != \'postgres\'', 'postgres' ]
-        try:
-            out = subprocess.check_output(cmd, stderr=log, env=env)
-        except subprocess.CalledProcessError as e:
-            warn("alter tables failed to get db list: %s" % e)
-            out = ""
-        dbs = out.split()
+            # 3.5: Alter tables to work around
+            # https://bugs.launchpad.net/openobject-server/+bug/782688
+            cmd = [ os.path.join(pg_old, 'bin', 'psql'), '-A', '-t', '-c',
+                    'select datname from pg_database where not datistemplate and datname != \'postgres\'', 'postgres' ]
+            try:
+                out = subprocess.check_output(cmd, stderr=log, env=env)
+            except subprocess.CalledProcessError as e:
+                warn("alter tables failed to get db list: %s" % e)
+                out = ""
+            dbs = out.split()
 
-        cf = tempfile.NamedTemporaryFile(delete=False)
-        for db in dbs:
-            warn("alter tables in %s" % db)
-            cf.write("\\connect \"%s\"\n alter table ir_actions alter column \"name\" drop not null;\n" % db)
-        cf.close()
-        cmd = [ os.path.join(pg_old, 'bin', 'psql'), '-f', cf.name, 'postgres' ]
-        out = None
-        try:
-            out = subprocess.check_output(cmd, stderr=log, env=env)
-        except subprocess.CalledProcessError as e:
-            warn("problem running psql: %s" % e)
-        warn("alter tables output is: ", out)
-        os.remove(cf.name)
-        re_alter = True
+            cf = tempfile.NamedTemporaryFile(delete=False)
+            for db in dbs:
+                warn("alter tables in %s" % db)
+                cf.write("\\connect \"%s\"\n alter table ir_actions alter column \"name\" drop not null;\n" % db)
+            cf.close()
+            cmd = [ os.path.join(pg_old, 'bin', 'psql'), '-f', cf.name, 'postgres' ]
+            out = None
+            try:
+                out = subprocess.check_output(cmd, stderr=log, env=env)
+            except subprocess.CalledProcessError as e:
+                warn("problem running psql: %s" % e)
+            warn("alter tables output is: ", out)
+            os.remove(cf.name)
+            re_alter = True
 
-        # 4: stop old service (US-3506: remove any dependency on it first)
-        try:
-            subprocess.call('sc config openerp-server-6.0 depend= ""', stdout=log, stderr=log)
-        except OSError as e:
-            warn('Trying to remove the service dependency gave error %s, continuing.'%e)
+            # 3.8: US-3506: remove any dependency on psql service
+            try:
+                subprocess.call('sc config openerp-server-6.0 depend= ""', stdout=log, stderr=log)
+            except OSError as e:
+                warn('Trying to remove the service dependency gave error %s, continuing.'%e)
+
+        # 4: stop old service
         subprocess.call('net stop %s' % svc, stdout=log, stderr=log)
         stopped = True
 
-        # 5: pg_upgrade
-        cmd = [ os.path.join(pg_new, 'bin', 'pg_upgrade'),
-                '-b', os.path.join(pg_old, 'bin'),
-                '-B', os.path.join(pg_new, 'bin'),
-                '-d', pg_old_db, '-D', pg_new_db, '-k', '-v',
-                ]
-        rc = subprocess.call(cmd, stdout=log, stderr=log, env=env)
-        if rc != 0:
-            raise RuntimeError("pg_upgrade returned %d" % rc)
+        if is_major:
+            # 5: pg_upgrade
+            cmd = [ os.path.join(pg_new, 'bin', 'pg_upgrade'),
+                    '-b', os.path.join(pg_old, 'bin'),
+                    '-B', os.path.join(pg_new, 'bin'),
+                    '-d', pg_old_db, '-D', pg_new_db, '-k', '-v',
+                    ]
+            rc = subprocess.call(cmd, stdout=log, stderr=log, env=env)
+            if rc != 0:
+                raise RuntimeError("pg_upgrade returned %d" % rc)
 
-        # The pg_upgrade went ok, so we are committed now. Nuke the
-        # old db directory and move the upgraded one into place.
-        warn("pg_upgrade returned %d, committing to new version" % rc)
-        run_analyze = True
+            # The pg_upgrade went ok, so we are committed now. Nuke the
+            # old db directory and move the upgraded one into place.
+            warn("pg_upgrade returned %d, committing to new version" % rc)
+            run_analyze = True
 
-        warn("Rename %s to %s." % (pg_new_db, pg_old_db))
-        # we do this with two renames since rmtree/rename sometimes
-        # failed (why? due to antivirus still holding files open?)
-        pg_old_db2 = pg_old_db + "-trash"
-        os.rename(pg_old_db, pg_old_db2)
-        os.rename(pg_new_db, pg_old_db)
-        shutil.rmtree(pg_old_db2, True)
+            warn("Rename %s to %s." % (pg_new_db, pg_old_db))
+            # we do this with two renames since rmtree/rename sometimes
+            # failed (why? due to antivirus still holding files open?)
+            pg_old_db2 = pg_old_db + "-trash"
+            os.rename(pg_old_db, pg_old_db2)
+            os.rename(pg_new_db, pg_old_db)
+            shutil.rmtree(pg_old_db2, True)
 
         # 6: commit to new bin dir
         if oldVer == '8.4.17':
@@ -888,13 +933,22 @@ def do_pg_update():
             warn("PostgreSQL 8.4 uninstall returned %d" % rc)
             pg_old = r'..\pgsql'
         else:
-            warn("Remove %s." % pg_old)
-            shutil.rmtree(pg_old)
-            warn("Remove done.")
+            warn("Rename %s to %s." % (pg_old, pg_trash))
+            shutil.move(pg_old, pg_trash)
+            warn("Rename done.")
 
             warn("Rename %s to %s." % (pg_new, pg_old))
             shutil.move(pg_new, pg_old)
             warn("Rename done.")
+
+            try:
+                warn("Remove %s." % pg_trash)
+                shutil.rmtree(pg_trash)
+                warn("Remove done.")
+            except Exception as e:
+                s = str(e) or type(e)
+                warn('Unable to delete %s : %s', (pg_trash, s))
+
 
         pgp = os.path.normpath(os.path.join(pg_old, 'bin'))
         if tools.config['pg_path'] != pgp:
@@ -919,9 +973,9 @@ def do_pg_update():
             svc = 'Postgres'
 
     except Exception as e:
-        s = str(e) or type(e)
-        warn('Failed to update Postgres:', s)
         failed = True
+        s = str(e) or type(e)
+        warn(u'Failed to update Postgres', s)
     finally:
         try:
             if pg_new_db is not None and os.path.exists(pg_new_db):
@@ -937,7 +991,7 @@ def do_pg_update():
             subprocess.call('net start %s' % svc, stdout=log, stderr=log)
 
         # 9. re-alter tables to put the problematic constraint back on
-        if re_alter:        
+        if re_alter:
             cf = tempfile.NamedTemporaryFile(delete=False)
             for db in dbs:
                 warn("alter tables in %s" % db)
@@ -958,7 +1012,7 @@ def do_pg_update():
             subprocess.call(cmd, stdout=log, stderr=log, env=env)
 
         if not failed:
-            warn("Major update done.")
+            warn("Update done.")
     return
 
 # https://stackoverflow.com/questions/51658/cross-platform-space-remaining-on-volume-using-python

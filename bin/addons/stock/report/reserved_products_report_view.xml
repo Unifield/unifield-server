@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            id="report_reserved_products_xls"
+            name="reserved.products.report_xls"
+            model="reserved.products.wizard"
+            string="Product reservation report - excel export"
+            file="stock/report/reserved_products_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+
+    </data>
+</openerp>

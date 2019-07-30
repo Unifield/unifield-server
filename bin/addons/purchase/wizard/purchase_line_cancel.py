@@ -41,6 +41,8 @@ class purchase_order_line_cancel_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        pol_obj = self.pool.get('purchase.order.line')
+        po_obj = self.pool.get('purchase.order')
         wf_service = netsvc.LocalService("workflow")
 
         # cancel line:
@@ -50,8 +52,17 @@ class purchase_order_line_cancel_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('You cannot cancel a purchase order line which has already been synchronized'))
             wf_service.trg_validate(uid, 'purchase.order.line', wiz.pol_id.id, signal, cr)
 
-        return {'type': 'ir.actions.act_window_close'}
+            # Create the counterpart FO to a loan PO with an external partner if non-cancelled lines have been confirmed
+            p_order = wiz.pol_id.order_id
+            if p_order and p_order.order_type == 'loan' and not p_order.is_a_counterpart\
+                    and p_order.partner_type == 'external' and p_order.state == 'confirmed':
+                pol_obj.create_counterpart_fo_for_external_partner_po(cr, uid, p_order, context=context)
 
+            # check if the related CV should be set to Done
+            if p_order:
+                po_obj.check_close_cv(cr, uid, p_order.id, context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
 
     def cancel_only_pol(self, cr, uid, ids, context=None):
         return self.cancel_pol(cr, uid, ids, resource=False, context=context)

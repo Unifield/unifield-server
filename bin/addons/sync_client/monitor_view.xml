@@ -20,7 +20,7 @@
             <field name="model">sync.monitor</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form hide_edit_button="1" hide_delete_button="1" hide_new_button="1" hide_duplicate_button="1" >
+                <form noteditable="1" hide_new_button="1" hide_save_button="1" hide_duplicate_button="1" hide_delete_button="1">
                     <field name="sequence_number"/>
                     <field name="status"/>
                     <separator string="Synchronization date and time" colspan="4"/>

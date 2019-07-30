@@ -25,9 +25,13 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from tools import flatten
+from lxml import etree
+
 
 class account_mcdb(osv.osv):
     _name = 'account.mcdb'
+    _inherit = 'finance.query.method'
+    _rec_name = 'description'
 
     _columns = {
         'description': fields.char("Query name", required=False, readonly=False, size=255),
@@ -41,13 +45,22 @@ class account_mcdb(osv.osv):
         'document_date_from': fields.date('First document date'),
         'document_date_to': fields.date('Ending document date'),
         'document_code': fields.char(string='Sequence number', size=255),
+        'include_related_entries': fields.boolean('Related entries', help='Entries related to the Sequence numbers set'),
         'document_state': fields.selection([('posted', 'Posted'), ('draft', 'Unposted')], string="Entry Status"),
         'period_ids': fields.many2many(obj='account.period', rel="account_period_mcdb", id1="mcdb_id", id2="period_id", string="Accounting Period"),
         'fiscalyear_id': fields.many2one('account.fiscalyear', string='Fiscal Year'),
         'account_ids': fields.many2many(obj='account.account', rel='account_account_mcdb', id1='mcdb_id', id2='account_id', string="Account Code"),
-        'partner_id': fields.many2one('res.partner', string="Partner"),
-        'employee_id': fields.many2one('hr.employee', string="Employee"),
-        'transfer_journal_id': fields.many2one('account.journal', string="Journal", domain="[('code', '!=', 'IB')]"),  # exclude year closing initial balance journal
+        'partner_id': fields.many2one('res.partner', string="Partner"),  # not used since US-3427
+        'partner_ids': fields.many2many(obj='res.partner', rel='partner_mcdb', id1='mcdb_id', id2='partner_id',
+                                        string='Partners', order_by='name, id'),
+        'employee_id': fields.many2one('hr.employee', string="Employee"),  # not used since US-3427
+        'employee_ids': fields.many2many(obj='hr.employee', rel='employee_mcdb', id1='mcdb_id', id2='employee_id',
+                                         string='Employees', order_by='employee_type, identification_id, id'),
+        'transfer_journal_id': fields.many2one('account.journal', string="Journal",
+                                               domain="[('code', '!=', 'IB')]"),  # exclude year closing initial balance journal / not used since US-3427
+        'transfer_journal_ids': fields.many2many(obj='account.journal', rel='transfer_journal_mcdb', id1='mcdb_id', id2='journal_id',
+                                                 string='Journals', domain="[('type', 'in', ['cash', 'bank', 'cheque'])]",
+                                                 order_by='instance_id, code, id'),
         'reconciled': fields.selection([('reconciled', 'Reconciled'), ('unreconciled', 'NOT reconciled')], string='Reconciled?'),
         'functional_currency_id': fields.many2one('res.currency', string="Functional currency", readonly=True),
         'amount_func_from': fields.float('Begin amount in functional currency'),
@@ -67,7 +80,9 @@ class account_mcdb(osv.osv):
         'ref': fields.char(string='Reference', size=255),
         'name': fields.char(string='Description', size=255),
         'rev_account_ids': fields.boolean('Exclude account selection'),
-        'model': fields.selection([('account.move.line', 'Journal Items'), ('account.analytic.line', 'Analytic Journal Items')], string="Type"),
+        'model': fields.selection([('account.move.line', 'Journal Items'),
+                                   ('account.analytic.line', 'Analytic Journal Items'),
+                                   ('combined.line', 'Both Journal Items and Analytic Journal Items')], string="Type"),
         'display_in_output_currency': fields.many2one('res.currency', string='Display in output currency'),
         'fx_table_id': fields.many2one('res.currency.table', string="FX Table"),
         'analytic_account_cc_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_cc_mcdb", id1="mcdb_id", id2="analytic_account_id",
@@ -90,6 +105,9 @@ class account_mcdb(osv.osv):
         'rev_analytic_journal_ids': fields.boolean('Exclude analytic journal selection'),
         'rev_instance_ids': fields.boolean('Exclude instances selection'),
         'rev_top_prop_instance_ids': fields.boolean('Exclude top prop instances selection'),
+        'rev_partner_ids': fields.boolean('Exclude partner selection'),
+        'rev_employee_ids': fields.boolean('Exclude employee selection'),
+        'rev_transfer_journal_ids': fields.boolean('Exclude journal selection'),  # Third Party Journal
         'analytic_axis': fields.selection([('fp', 'Funding Pool'), ('f1', 'Free 1'), ('f2', 'Free 2')], string='Display'),
         'rev_analytic_account_dest_ids': fields.boolean('Exclude Destination selection'),
         'analytic_account_dest_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_dest_mcdb", id1="mcdb_id", id2="analytic_account_id",
@@ -108,9 +126,17 @@ class account_mcdb(osv.osv):
         'display_destination': fields.boolean('Display destinations?'),
         'display_free1': fields.boolean('Display Free 1?'),
         'display_free2': fields.boolean('Display Free 2?'),
+        'display_partner': fields.boolean('Display Partners?'),
+        'display_employee': fields.boolean('Display Employees?'),
+        'display_transfer_journal': fields.boolean('Display Transfer Journals?'),
         'user': fields.many2one('res.users', "User"),
         'cheque_number': fields.char('Cheque Number', size=120),  # BKLG-7
         'partner_txt': fields.char('Third Party', size=120),  # BKLG-7
+        'template': fields.many2one('account.mcdb', 'Template',
+                                    domain=[('description', '!=', False), ('description', '!=', '')]),  # filter on model done in the view
+        'copied_id': fields.many2one('account.mcdb', help='Id of the template loaded'),
+        'template_name': fields.char('Template name', size=255),  # same size as the "Query name"
+        'display_mcdb_load_button': fields.boolean('Display the Load button'),
     }
 
     _defaults = {
@@ -131,7 +157,43 @@ class account_mcdb(osv.osv):
         'display_cost_center': lambda *a: False,
         'display_destination': lambda *a: False,
         'user': lambda self, cr, uid, c: uid or False,
+        'display_mcdb_load_button': lambda *a: True,
     }
+
+    _order = 'user, description, id'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if  context is None:
+            context = {}
+        view = super(account_mcdb, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if context.get('from_query') and view_type == 'form':
+            form = etree.fromstring(view['arch'])
+            fields = form.xpath('//group[@name="wizard_template"]')
+            for field in fields:
+                field.set('invisible', "1")
+            fields = form.xpath('//group[@name="wizard_hq_query"]')
+            for field in fields:
+                field.set('invisible', "0")
+            view['arch'] = etree.tostring(form)
+
+        if context.get('from', '') != 'combined.line' and 'document_code' in view['fields']:
+            view['fields']['document_code']['string'] = _('Sequence numbers')
+            view['fields']['document_code']['help'] = _('You can set several sequences separated by a comma.')
+        return view
+
+
+    def name_get(self, cr, uid, ids, context=None):
+        if not len(ids):
+            return []
+        reads = self.read(cr, uid, ids, ['description','hq_template'], context=context)
+        res = []
+        for record in reads:
+            name = record['description']
+            if record['hq_template']:
+                name = '%s (SYNC)' % (name,)
+
+            res.append((record['id'], name))
+        return res
 
     def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context=None):
         """
@@ -250,6 +312,15 @@ class account_mcdb(osv.osv):
             }
         return {}
 
+    def onchange_template(self, cr, uid, ids, context=None):
+        """
+        Whenever a new template is selected, display the "load" button
+        (and don't display the other options for the template, such as "delete"...)
+        """
+        res = {}
+        res['value'] = {'display_mcdb_load_button': True}
+        return res
+
     def _get_domain(self, cr, uid, ids, context=None):
         """
         Returns the domain to use to get the selector results
@@ -260,14 +331,13 @@ class account_mcdb(osv.osv):
             ids = [ids]
         domain = []
         wiz = self.browse(cr, uid, [ids[0]], context=context)[0]
-        res_model = wiz and wiz.model or False
+        res_model = context.get('selector_model', False) or (wiz and wiz.model) or False
+        journal_obj = self.pool.get('account.journal')
         if res_model:
             # Prepare domain values
             # First MANY2MANY fields
             m2m_fields = [
                 ('period_ids', 'period_id'),
-                ('journal_ids', 'journal_id'),
-                ('analytic_journal_ids', 'journal_id'),
                 ('analytic_account_fp_ids', 'account_id'),
                 ('analytic_account_cc_ids', 'cost_center_id'),
                 ('analytic_account_f1_ids', 'account_id'),
@@ -276,14 +346,30 @@ class account_mcdb(osv.osv):
                 ('instance_ids', 'instance_id'),
                 ('top_prop_instance_ids', 'instance_id'),
             ]
+            # Journals
+            if res_model == 'account.analytic.line':
+                if context.get('from', '') == 'combined.line':
+                    # for the AJIs in the Combined Journals Report: distinguish between G/L and Analytic Journals
+                    m2m_fields.append(('journal_ids', 'gl_journal_id'))
+                    m2m_fields.append(('analytic_journal_ids', 'analytic_journal_id'))
+                else:
+                    # for the other AJIs: only handle analytic journals
+                    m2m_fields.append(('analytic_journal_ids', 'journal_id'))
+            else:
+                # for the JIs: only handle G/L journals
+                m2m_fields.append(('journal_ids', 'journal_id'))
             if res_model == 'account.analytic.line':
                 m2m_fields.append(('account_ids', 'general_account_id'))
                 m2m_fields.append(('account_type_ids', 'general_account_id.user_type'))
             else:
                 m2m_fields.append(('account_ids', 'account_id'))
                 m2m_fields.append(('account_type_ids', 'account_id.user_type'))
+                m2m_fields.append(('partner_ids', 'partner_id'))
+                m2m_fields.append(('employee_ids', 'employee_id'))
+                m2m_fields.append(('transfer_journal_ids', 'transfer_journal_id'))
             for m2m in m2m_fields:
                 if getattr(wiz, m2m[0]):
+                    value = False
 
                     # do not add domain if the block have not been selected
                     # (because they are using same field relation m2m)
@@ -329,6 +415,18 @@ class account_mcdb(osv.osv):
                         operator = 'not in'
                     elif m2m[0] == 'top_prop_instance_ids' and wiz.rev_top_prop_instance_ids:
                         operator = 'not in'
+                    # partner_ids with reversal
+                    elif m2m[0] == 'partner_ids' and wiz.rev_partner_ids:
+                        operator = 'not in'
+                    # employee_ids with reversal
+                    elif m2m[0] == 'employee_ids' and wiz.rev_employee_ids:
+                        operator = 'not in'
+                    # transfer_journal_ids with reversal
+                    elif m2m[0] == 'transfer_journal_ids' and wiz.rev_transfer_journal_ids:
+                        operator = 'not in'
+                        # also exclude all non liquidity journals (so the right journals will be displayed in the PDF report header)
+                        other_journal_ids = journal_obj.search(cr, uid, [('type', 'not in', ['cash', 'bank', 'cheque'])], order='NO_ORDER', context=context)
+                        value = [x.id for x in getattr(wiz, m2m[0])] + other_journal_ids
                     # Search if a view account is given
                     if m2m[0] in ['account_ids', 'analytic_account_fp_ids', 'analytic_account_cc_ids', 'analytic_account_f1_ids', 'analytic_account_f2_ids']:
                         account_ids = []
@@ -353,10 +451,10 @@ class account_mcdb(osv.osv):
                         id_list = child_list + [x.id for x in getattr(wiz, m2m[0])]
                         domain.append((m2m[1], operator, tuple(id_list)))
                     else:
-                        domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
+                        value = value or tuple([x.id for x in getattr(wiz, m2m[0])])
+                        domain.append((m2m[1], operator, value))
             # Then MANY2ONE fields
-            for m2o in [('abs_id', 'statement_id'), ('partner_id', 'partner_id'), ('employee_id', 'employee_id'),
-                        ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id'),
+            for m2o in [('abs_id', 'statement_id'), ('booking_currency_id', 'currency_id'),
                         ('fiscalyear_id', 'fiscalyear_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
@@ -369,15 +467,30 @@ class account_mcdb(osv.osv):
                         context['selector_display_cheque_number'] = True
             # DOCUMENT CODE fields
             if wiz.document_code and wiz.document_code != '':
+                document_code = wiz.document_code
                 document_code_field = 'move_id.name'
+                # For G/L and Analytic Selectors: allow searching several (exact) Entry Sequences separated by a comma
+                # For Combined Journals Report: allow only one Entry Seq. but partial search possible (ex: "FXA-1804")
+                document_codes = []
                 if res_model == 'account.analytic.line':
                     domain.append('|')
-                    domain.append('|')
-                    domain.append(('move_id.move_id.name', 'ilike', '%%%s%%' % wiz.document_code))
-                    domain.append(('commitment_line_id.commit_id.name', 'ilike', '%%%s%%' % wiz.document_code))
-                    domain.append(('entry_sequence', 'ilike', '%s' % wiz.document_code))
+                    if context.get('from', '') == 'combined.line':
+                        domain.append(('commitment_line_id.commit_id.name', 'ilike', document_code))
+                        domain.append(('entry_sequence', 'ilike', document_code))
+                    else:
+                        document_codes = [i.strip() for i in document_code.split(',')]
+                        domain.append(('commitment_line_id.commit_id.name', 'in', document_codes))
+                        domain.append(('entry_sequence', 'in', document_codes))
                 else:
-                    domain.append((document_code_field, 'ilike', '%%%s%%' % wiz.document_code))
+                    if context.get('from', '') == 'combined.line':
+                        domain.append((document_code_field, 'ilike', document_code))
+                    else:
+                        document_codes = [i.strip() for i in document_code.split(',')]
+                        domain.append((document_code_field, 'in', document_codes))
+                if document_codes and wiz.include_related_entries:
+                    # note: the domain has no impact on the related entries to be displayed
+                    context.update({'related_entries': document_codes})
+
             if wiz.document_state and wiz.document_state != '':
                 domain.append(('move_id.state', '=', wiz.document_state))
             # DATE fields
@@ -533,6 +646,12 @@ class account_mcdb(osv.osv):
 
             context['target_filename_prefix'] = name
 
+            # add the related entries at the end if needed
+            if res_model in ('account.move.line', 'account.analytic.line') and context.get('related_entries', []):
+                entry_ids = self.pool.get(res_model).search(cr, uid, domain, order='NO_ORDER', context=context) or []
+                related_entry_ids = self.pool.get(res_model).get_related_entry_ids(cr, uid, entry_seqs=context['related_entries'], context=context) or []
+                domain = [('id', 'in', list(set(entry_ids + related_entry_ids)))]
+
             return {
                 'name': name,
                 'type': 'ir.actions.act_window',
@@ -543,6 +662,7 @@ class account_mcdb(osv.osv):
                 'search_view_id': search_view_id,
                 'domain': domain,
                 'context': context,
+                'keep_open': 1,
                 'target': 'current',
             }
         return False
@@ -571,36 +691,7 @@ class account_mcdb(osv.osv):
         # Clear all fields if necessary
         if all_fields:
             res_id = self.create(cr, uid, {'model': res_model}, context=context)
-        # Update context
-        context.update({
-            'active_id': ids[0],
-            'active_ids': ids,
-        })
-        # Prepare some values
-        name = _('Selector')
-        view_name = False
-        if res_model == 'account.move.line':
-            name = _('Selector - G/L')
-            view_name = 'account_mcdb_form'
-        elif res_model == 'account.analytic.line':
-            name = _('Selector - Analytic')
-            view_name = 'account_mcdb_analytic_form'
-        if not view_name or not name:
-            raise osv.except_osv(_('Error'), _('Error: System does not know from where you come from.'))
-        # Search view_id
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view_name)
-        view_id = view_id and view_id[1] or False
-        return {
-            'name': name,
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.mcdb',
-            'res_id': res_id,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'view_id': [view_id],
-            'context': context,
-            'target': 'crush',
-        }
+        return {}
 
     def _button_add(self, cr, uid, ids, obj=False, field=False, args=None, context=None):
         """
@@ -619,41 +710,13 @@ class account_mcdb(osv.osv):
             'active_id': ids[0],
             'active_ids': ids,
         })
-        res_id = ids[0]
         # Do search
         if obj and field:
             # Search all elements
             element_ids = self.pool.get(obj).search(cr, uid, args)
             if element_ids:
                 self.write(cr, uid, ids, {field: [(6, 0, element_ids)]})
-        # Search model
-        wiz = self.browse(cr, uid, res_id)
-        res_model = wiz and wiz.model or False
-        # Prepare some values
-        name = _('Selector')
-        view_name = False
-        if res_model == 'account.move.line':
-            name = _('Selector - G/L')
-            view_name = 'account_mcdb_form'
-        elif res_model == 'account.analytic.line':
-            name = _('Selector - Analytic')
-            view_name = 'account_mcdb_analytic_form'
-        if not view_name or not name:
-            raise osv.except_osv(_('Error'), _('Error: System does not know from where you come from.'))
-        # Search view_id
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view_name)
-        view_id = view_id and view_id[1] or False
-        return {
-            'name': name,
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.mcdb',
-            'res_id': res_id,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'view_id': [view_id],
-            'context': context,
-            'target': 'crush',
-        }
+        return {}
 
     def button_journal_clear(self, cr, uid, ids, context=None):
         """
@@ -977,6 +1040,75 @@ class account_mcdb(osv.osv):
         field = 'instance_ids'
         return self._button_add(cr, uid, ids, obj, field, args, context=context)
 
+    def button_partner_add(self, cr, uid, ids, context=None):
+        """
+        Adds all Partners in partner_ids field content
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj = 'res.partner'
+        args = [('active', '=', 't')]
+        field = 'partner_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
+
+    def button_employee_add(self, cr, uid, ids, context=None):
+        """
+        Adds all Employees in employee_ids field content
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj = 'hr.employee'
+        args = [('active', '=', 't')]
+        field = 'employee_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
+
+    def button_transfer_journal_add(self, cr, uid, ids, context=None):
+        """
+        Adds all Transfer Journals in transfer_journal_ids field content
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj = 'account.journal'
+        args = [('type', 'in', ['cash', 'bank', 'cheque'])]
+        field = 'transfer_journal_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
+
+    def button_partner_clear(self, cr, uid, ids, context=None):
+        """
+        Deletes partner_ids field content
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return self.button_clear(cr, uid, ids, field='partner_ids', context=context)
+
+    def button_employee_clear(self, cr, uid, ids, context=None):
+        """
+        Deletes employee_ids field content
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return self.button_clear(cr, uid, ids, field='employee_ids', context=context)
+
+    def button_transfer_journal_clear(self, cr, uid, ids, context=None):
+        """
+        Deletes transfer_journal_ids field content
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return self.button_clear(cr, uid, ids, field='transfer_journal_ids', context=context)
+
     def clean_up_search(self, cr, uid, ids, context=None):
         """
         Clean up objects that have no description.
@@ -1057,7 +1189,8 @@ class account_mcdb(osv.osv):
     def get_selection_from_domain(self, cr, uid, domain, model, context=None):
         """
         Returns a String corresponding to the domain in parameter:
-        criteria separated with ";" and followed by ":" for the value
+        criteria separated with ";" and followed by ":" for the value.
+        Adds "Related entries: True" if related_entries stored in context.
         """
         if context is None:
             context = {}
@@ -1111,6 +1244,9 @@ class account_mcdb(osv.osv):
                         value, operator = self._get_data_from_field(cr, uid, second_obj_field, dom[2], operator, context)
                 if title and operator and value:
                     dom_selections.append("%s%s %s" % (title, operator, value))
+        if context.get('related_entries', []):
+            related_entries_str = "%s: %s" % (_("Related entries"), _("True"))
+            dom_selections.append(related_entries_str)
         return ' ; '.join(dom_selections)
 
     def export_pdf(self, cr, uid, ids, context=None):
@@ -1136,6 +1272,10 @@ class account_mcdb(osv.osv):
         elif res_model == 'account.analytic.line':
             result_ids = aal_obj.search(cr, uid, domain, context=context, limit=limit)
             target_filename = 'Analytic Selector'
+        # add the related entries if needed
+        if res_model in ('account.move.line', 'account.analytic.line') and context.get('related_entries', []):
+            related_entry_ids = self.pool.get(res_model).get_related_entry_ids(cr, uid, entry_seqs=context['related_entries'], context=context) or []
+            result_ids = list(set(result_ids + related_entry_ids))
         output_currency_id = False
         if selector.display_in_output_currency:
             output_currency_id = selector.display_in_output_currency.id
@@ -1146,7 +1286,209 @@ class account_mcdb(osv.osv):
         data['output_currency_id'] = output_currency_id
         data['target_filename'] = target_filename
         data['header'] = header
-        return export_wizard_obj.button_validate(cr, uid, result_ids, context=context, data_from_selector=data)
+        context['keep_open'] = 1
+        a = export_wizard_obj.button_validate(cr, uid, result_ids, context=context, data_from_selector=data)
+        a['datas']['keep_open'] = 1
+        return a
+
+    def load_mcdb_template(self, cr, buid, ids, context=None):
+        """
+        Loads a COPY of the template selected, without description (cf US-3030 the selector handled is overwritten when
+        the user clicks on the Search button)
+        """
+        if context is None:
+            context = {}
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        mcdb = ids and self.read(cr, uid, ids[0], ['template'], context=context)
+        template_id = mcdb and mcdb['template'] and mcdb['template'][0]
+        if not template_id:
+            raise osv.except_osv(_('Error'), _('You have to choose a template to load.'))
+        default_dict = {'description': '',
+                        'copied_id': template_id,
+                        'template': template_id,
+                        'display_mcdb_load_button': False}
+        copied_template_id = self.copy(cr, uid, template_id, default=default_dict, context=context)
+        module = 'account_mcdb'
+        if context.get('from', '') == 'account.analytic.line':
+            view_name = 'account_mcdb_analytic_form'
+        elif context.get('from', '') == 'combined.line':
+            view_name = 'account_mcdb_combined_form'
+        else:
+            view_name = 'account_mcdb_form'
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
+        view_id = view_id and view_id[1] or False
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.mcdb',
+            'view_type': 'form',
+            'context': context,
+            'res_id': copied_template_id,
+            'view_mode': 'form,tree',  # to display the menu on the right
+            'view_id': [view_id],
+            'target': 'self',
+        }
+
+    def _format_data(self, data):
+        """
+        Formats the dictionary in parameter containing the data to use to create/write a selector:
+        - removes the id, the values related to the template itself, and the user that shouldn't be modified
+        - many2many fields: formats the values to make them look like [(6, 0, [1, 2])]
+        - many2one fields: replaces the tuple looking like (1, u'FY 2018') by the related id
+        """
+        if 'id' in data:
+            del data['id']
+        if 'copied_id' in data:
+            del data['copied_id']
+        if 'template' in data:
+            del data['template']
+        if 'description' in data:  # Query name
+            del data['description']
+        if 'template_name' in data:
+            del data['template_name']
+        if 'user' in data:
+            del data['user']
+        if 'display_mcdb_load_button' in data:
+            del data['display_mcdb_load_button']
+        for i in data:
+            if type(data[i]) == list:
+                data[i] = [(6, 0, data[i])]
+            elif type(data[i]) == tuple:
+                data[i] = data[i][0]
+
+    def edit_mcdb_template(self, cr, buid, ids, context=None):
+        """
+        Edits the values of the selector of which the loaded template is a copy (see load_mcdb_template method)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        # get a dictionary containing ALL fields values of the selector
+        data = ids and self.read(cr, uid, ids[0], context=context)
+        copied_id = data and data['copied_id'] and data['copied_id'][0] or False
+        if not copied_id:
+            raise osv.except_osv(_('Error'), _('You have to load the template first.'))
+        self._format_data(data)
+
+        for field_to_clean in ('hq_template', 'synced'):
+            if field_to_clean in data:
+                del data[field_to_clean]
+
+        return self.write(cr, uid, copied_id, data, context=context)
+
+    def save_mcdb_template(self, cr, buid, ids, context=None):
+        """
+        Stores all the fields values under the template name chosen
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        # get a dictionary containing ALL fields values of the selector
+        data = ids and self.read(cr, uid, ids[0], context=context)
+        if data:
+            template_name = data['template_name']
+            if not template_name:
+                raise osv.except_osv(_('Error'), _('You have to choose a template name.'))
+            if self.search_exist(cr, uid, [('description', '=', template_name),
+                                           ('user', '=', uid),
+                                           ('model', '=', data.get('model', ''))], context=context):
+                raise osv.except_osv(_('Error'), _('This template name already exists for the current user. Please choose another name.'))
+            self._format_data(data)
+            data.update({'description': template_name})  # store the name chosen as the "Query name"
+            self.create(cr, uid, data, context=context)
+        return True
+
+    def delete_mcdb_template(self, cr, buid, ids, context=None):
+        """
+        Deletes the selector of which the loaded template is a copy (see load_mcdb_template method),
+        and loads a new empty selector
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        # get the id of the template to delete
+        data = ids and self.read(cr, uid, ids[0], ['copied_id'], context=context)
+        copied_id = data and data['copied_id'] and data['copied_id'][0] or False
+        if not copied_id:
+            raise osv.except_osv(_('Error'), _('You have to choose a template to delete.'))
+        self.unlink(cr, uid, copied_id, context=context)
+        # create a new "empty" selector
+        new_id = self.create(cr, uid, {'display_mcdb_load_button': True}, context=context)
+        module = 'account_mcdb'
+        if context.get('from', '') == 'account.analytic.line':
+            view_name = 'account_mcdb_analytic_form'
+        elif context.get('from', '') == 'combined.line':
+            view_name = 'account_mcdb_combined_form'
+        else:
+            view_name = 'account_mcdb_form'
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
+        view_id = view_id and view_id[1] or False
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.mcdb',
+            'view_type': 'form',
+            'context': context,
+            'res_id': new_id,
+            'view_mode': 'form,tree',  # to display the menu on the right
+            'view_id': [view_id],
+            'target': 'self',
+        }
+
+    def combined_export(self, cr, uid, ids, format='pdf', context=None):
+        """
+        Generates the Combined Journals Report in 'pdf' or 'xls' format
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        bg_obj = self.pool.get('memory.background.report')
+        if format == 'xls':
+            report_name = 'combined.journals.report.xls'
+        else:
+            report_name = 'combined.journals.report.pdf'
+        selector = self.read(cr, uid, ids[0], ['analytic_axis'], context=context)
+        data = {
+            'selector_id': ids[0],
+            'analytic_axis': selector.get('analytic_axis', 'fp')
+        }
+        # make the report run in background
+        background_id = bg_obj.create(cr, uid, {'file_name': 'Combined Journals Report',
+                                                'report_name': report_name}, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 2
+        data['context'] = context
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': report_name,
+            'datas': data,
+            'context': context,
+        }
+
+    def combined_export_xls(self, cr, uid, ids, context=None):
+        """
+        Generates the Combined Journals Report in Excel format
+        """
+        return self.combined_export(cr, uid, ids, format='xls', context=context)
+
+    def combined_export_pdf(self, cr, uid, ids, context=None):
+        """
+        Generates the Combined Journals Report in PDF format
+        """
+        return self.combined_export(cr, uid, ids, format='pdf', context=context)
+
+
+    def save_query(self, cr, buid, ids, context=None):
+        """
+        Save the values of the selector from HQ query
+        """
+        self.edit_mcdb_template(cr, buid, ids, context=context)
+        return {'type': 'ir.actions.act_window_close', 'context': context}
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

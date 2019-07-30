@@ -52,13 +52,13 @@ class purchase_order(osv.osv):
 
         To be 100% invoiced, a PO should have some linked invoiced that are validated ('open' state or 'paid' state) and that sum of amount is greater or equal to PO total amount. So to find PO that are not 100% invoiced, you should find those from which all invoice are not created or which amount is inferior to PO total amount.
 
-        BKLG-51: new filters
-        1) On PO state: only allow "confirmed" or "confirmed (waiting)" POs to be selected in the wizard
-        (keeping 'done' for not completly invoiced)
-        2) On PO type: only allow regular, purchase list and direct purchase order PO types
+        BKLG-51 / US-3782: new filters
+        1) On PO LINE state: only allow PO having at least one line in Confirmed State, or Closed State if the related
+           invoice is still in Draft state or Cancelled
+        2) On PO type: only allow regular and "purchase list" purchase order types
         3) Make sure that RFQs or tenders can not be linked to down payments
-        1) state 'confirm_waiting' + 'approved' + 'done' (done tolerated if partially invoiced)
-        2) order_type 'regular', 'purchase_list', 'direct'
+        1) line state 'confirmed' + 'done' (done tolerated if invoice still in Draft state)
+        2) order_type 'regular', 'purchase_list'
         3) rfq_ok != True
 
         US-1064: new rule: as soon as all goods are received on a PO (state 'done') no new Down Payment is possible
@@ -81,7 +81,7 @@ class purchase_order(osv.osv):
                        where pir.invoice_id = inv.id AND inv.state not in ('draft', 'cancel') 
                        group by pir.purchase_id) inv on inv.purchase_id = po.id 
             LEFT JOIN product_pricelist as prod ON (po.pricelist_id = prod.id AND prod.currency_id = %s) 
-            LEFT JOIN (select pol1.order_id, sum(pol1.price_unit * pol1.product_qty) as total 
+            INNER JOIN (select pol1.order_id, sum(pol1.price_unit * pol1.product_qty) as total 
                        from purchase_order_line pol1 
                        where pol1.state in ('confirmed', 'done') group by pol1.order_id) pol on pol.order_id=po.id 
             WHERE po.pricelist_id = prod.id 

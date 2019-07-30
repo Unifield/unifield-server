@@ -65,7 +65,7 @@ def _set_third_parties(self, cr, uid, obj_id, name=None, value=None, fnct_inv_ar
         if value:
             fields = value.split(",")
             element = fields[0]
-        sql = "UPDATE %s SET " % self._table
+        sql = "UPDATE %s SET " % self._table  # not_a_user_entry
         emp_val = 'Null'
         par_val = 'Null'
         tra_val = 'Null'
@@ -80,7 +80,7 @@ def _set_third_parties(self, cr, uid, obj_id, name=None, value=None, fnct_inv_ar
         cr.execute(sql)
     # Delete values for Third Parties if no value given
     elif name == 'partner_type' and not value:
-        cr.execute("UPDATE %s SET employee_id = Null, partner_id = Null, transfer_journal_id = Null WHERE id = %s" % (self._table, obj_id))
+        cr.execute("UPDATE %s SET employee_id = Null, partner_id = Null, transfer_journal_id = Null WHERE id = %%s" % self._table, (obj_id,))  # not_a_user_entry
     return True
 
 
@@ -110,7 +110,7 @@ def _populate_third_party_name(self, cr, uid, obj_id, field_name, name=None, con
             # just in case of posted JIs returned by _get_move_ids
             ('move_id.state', '=', 'draft'),
             # only records with previous name
-            ('partner_txt', '!=', name),  
+            ('partner_txt', '!=', name),
         ]
         aml_ids = aml_obj.search(cr, uid, domain, context=context)
 

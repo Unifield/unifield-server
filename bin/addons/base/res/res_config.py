@@ -180,13 +180,13 @@ class res_config_configurable(osv.osv_memory):
         next = self.execute(cr, uid, ids, context=None)
         if next: return next
         return self.next(cr, uid, ids, context=context)
-    
+
     def action_previous(self, cr, uid, ids, context=None):
         if not context:
             context = {}
-        
+
         context.update({'no_update_previous': True})
-        
+
         previous = self.next(cr, uid, ids, context=context)
         if previous.get('context', {}).get('previous_id', False):
             previous_id = self.pool.get('ir.actions.todo').search(cr, uid, [('previous', '=', previous['context']['previous_id'])])
@@ -194,31 +194,31 @@ class res_config_configurable(osv.osv_memory):
                 self.pool.get('ir.actions.todo').write(cr, uid, previous_id[0], {'state': 'open'})
                 action = self.pool.get('ir.actions.todo').browse(cr, uid, previous_id[0]).action_id
                 return {
-                        'view_mode': action.view_mode,
-                        'view_type': action.view_type,
-                        'view_id': action.view_id and [action.view_id.id] or False,
-                        'res_model': action.res_model,
-                        'type': action.type,
-                        'target': action.target,
-                    }
+                    'view_mode': action.view_mode,
+                    'view_type': action.view_type,
+                    'view_id': action.view_id and [action.view_id.id] or False,
+                    'res_model': action.res_model,
+                    'type': action.type,
+                    'target': action.target,
+                }
             else:
                 raise osv.except_osv(_('Error'), _('No previous wizard found !'))
         else:
             raise osv.except_osv(_('Error'), _('No previous wizard found !'))
-        
+
         current_user_menu = self.pool.get('res.users')\
             .browse(cr, uid, uid).menu_id
         # return the action associated with the menu
         return self.pool.get(current_user_menu.type)\
             .read(cr, uid, current_user_menu.id)
-        
+
     def action_finish(self, cr, uid, ids, context=None):
         self.action_next(cr, uid, ids, context=context)
         open_todo_ids = self.pool.get('ir.actions.todo').search(cr, uid, [('state', '=', 'open')])
         self.pool.get('ir.actions.todo').write(cr, uid, open_todo_ids, {'state': 'done'})
-        
+
         return self.next(cr, uid, ids, context=context)
-        
+
 
     def action_skip(self, cr, uid, ids, context=None):
         """ Action handler for the ``skip`` event.
@@ -400,9 +400,9 @@ class res_config_installer(osv.osv_memory):
 
         additionals = set(
             module for requirements, consequences \
-                       in self._install_if.iteritems()
-                   if base.issuperset(requirements)
-                   for module in consequences)
+            in self._install_if.iteritems()
+            if base.issuperset(requirements)
+            for module in consequences)
 
         return (base | hooks_results | additionals) - set(
             map(attrgetter('name'), self._already_installed(cr, uid, context)))
@@ -419,7 +419,7 @@ class res_config_installer(osv.osv_memory):
                             self._already_installed(cr, uid, context=context)),
                         True))
 
-    def fields_get(self, cr, uid, fields=None, context=None, write_access=True):
+    def fields_get(self, cr, uid, fields=None, context=None, write_access=True, with_uom_rounding=False):
         """ If an addon is already installed, set it to readonly as
         res.config.installer doesn't handle uninstallations of already
         installed addons
@@ -433,7 +433,7 @@ class res_config_installer(osv.osv_memory):
             fields[module.name].update(
                 readonly=True,
                 help= ustr(fields[module.name].get('help', '')) +
-                     _('\n\nThis addon is already installed on your system'))
+                _('\n\nThis addon is already installed on your system'))
         return fields
 
     def execute(self, cr, uid, ids, context=None):
@@ -472,14 +472,14 @@ class ir_actions_configuration_wizard(osv.osv_memory):
                 return next.note
             return _("Click 'Continue' to configure the next addon...")
         return _("Your database is now fully configured.\n\n"\
-            "Click 'Continue' and enjoy your OpenERP experience...")
+                 "Click 'Continue' and enjoy your OpenERP experience...")
 
     _columns = {
         'note': fields.text('Next Wizard', readonly=True),
-        }
+    }
     _defaults = {
         'note': _next_action_note,
-        }
+    }
 
     def execute(self, cr, uid, ids, context=None):
         self.__logger.warn(DEPRECATION_MESSAGE)

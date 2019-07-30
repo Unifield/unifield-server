@@ -20,11 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
-from tools.translate import _
-import time
-import netsvc
 import decimal_precision as dp
-from datetime import datetime, timedelta
 
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
@@ -33,7 +29,7 @@ class assign_to_kit(osv.osv_memory):
     substitute wizard
     '''
     _name = "assign.to.kit"
-    
+
     def validate_assign_to_kit_line(self, cr, uid, ids, context=None):
         '''
         validate the lines
@@ -49,7 +45,7 @@ class assign_to_kit(osv.osv_memory):
                     # negative value
                     errors.update(negative=True)
                     mem.write({'integrity_status': 'negative'}, context=context)
-                if mem.assigned_qty_assign_to_kit_line > obj.qty_assign_to_kit:
+                if abs(mem.assigned_qty_assign_to_kit_line - obj.qty_assign_to_kit) > 0.0001:
                     # quantity assigned is greater than available quantity
                     errors.update(greater_than_available=True)
                     mem.write({'integrity_status': 'greater_than_available'}, context=context)
@@ -59,11 +55,11 @@ class assign_to_kit(osv.osv_memory):
 #                    mem.write({'integrity_status': 'greater_than_required'}, context=context)
         # check the encountered errors
         return all([not x for x in errors.values()])
-    
+
     def automatic_assignment(self, cr, uid, ids, context=None):
         '''
         automatic assignment of products to generated kits
-        
+
         + reset all assigned qty to 0.0
         + left = available qty
         + for each line we update assigned qty if needed
@@ -81,7 +77,7 @@ class assign_to_kit(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         for wizard in self.browse(cr, uid, ids, context=context):
             # compute total of assigned qty
             for line in wizard.kit_ids_assign_to_kit:
@@ -104,9 +100,9 @@ class assign_to_kit(osv.osv_memory):
                         left = 0.0
                     # update the line
                     line.write({'assigned_qty_assign_to_kit_line': assigned}, context=context)
-        
+
         return True
-    
+
     def do_assign_to_kit(self, cr, uid, ids, context=None):
         '''
         - for each kit, we look for the corresponding item (or create it)
@@ -114,10 +110,6 @@ class assign_to_kit(osv.osv_memory):
         '''
         # objects
         item_obj = self.pool.get('composition.item')
-        to_consume_obj = self.pool.get('kit.creation.to.consume')
-        move_obj = self.pool.get('stock.move')
-        obj_data = self.pool.get('ir.model.data')
-        loc_obj = self.pool.get('stock.location')
         kit_obj = self.pool.get('composition.kit')
         data_tools_obj = self.pool.get('data.tools')
         # load data into the context
@@ -126,10 +118,9 @@ class assign_to_kit(osv.osv_memory):
         stock_move_ids = context.get('active_ids', False)
         if not stock_move_ids:
             return {'type': 'ir.actions.act_window_close'}
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             # empty to consume lines will be deleted
-            to_consume_ids = []
             # list of items to be deleted (the qty assigned has been set to 0.0)
             item_list = []
             # all kits, we check if some kits were deleted in the wizard, if yes, the corresponding items are deleted
@@ -173,11 +164,11 @@ class assign_to_kit(osv.osv_memory):
                 item_list.extend(item_ids)
             # delete empty items
             item_obj.unlink(cr, uid, item_list, context=context)
-        
+
         # because we need to refresh the view as the stock move changed from assigned to done
         return self.refresh_kit_creation_view(cr, uid, ids, context=context)
         return {'type': 'ir.actions.act_window_close'}
-    
+
     def refresh_kit_creation_view(self, cr, uid, ids, context=None):
         '''
         refresh the kit creation view when calling from a button
@@ -187,7 +178,7 @@ class assign_to_kit(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             # refresh the view so the completed flag is updated and Confirm Kitting button possibly appears
             data_obj = self.pool.get('ir.model.data')
@@ -201,7 +192,7 @@ class assign_to_kit(osv.osv_memory):
                     'type': 'ir.actions.act_window',
                     'target': 'crush',
                     }
-    
+
     def default_get(self, cr, uid, fields, context=None):
         '''
         fill the lines with default values
@@ -211,7 +202,7 @@ class assign_to_kit(osv.osv_memory):
             context = {}
         # objects
         move_obj = self.pool.get('stock.move')
-        
+
         res = super(assign_to_kit, self).default_get(cr, uid, fields, context=context)
         stock_move_ids = context.get('active_ids', False)
         if not stock_move_ids:
@@ -269,13 +260,13 @@ class assign_to_kit(osv.osv_memory):
                 res.update({'expiry_date_assign_to_kit': obj.expired_date})
             if 'kit_creation_id_assign_to_kit' in fields:
                 res.update({'kit_creation_id_assign_to_kit': obj.kit_creation_id_stock_move.id})
-            
+
         return res
-        
+
     _columns = {'kit_creation_id_assign_to_kit': fields.many2one('kit.creation', string="Kitting Order", readonly=True, required=True),
                 'module_assign_to_kit': fields.char(string='Module', size=1024),
                 'product_id_assign_to_kit': fields.many2one('product.product', string='Product', readonly=True),
-                'qty_assign_to_kit': fields.float(string='Qty Available', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+                'qty_assign_to_kit': fields.float(string='Qty Available', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='uom_id_assign_to_kit'),
                 'uom_id_assign_to_kit': fields.many2one('product.uom', string='UoM', readonly=True),
                 'prodlot_id_assign_to_kit': fields.many2one('stock.production.lot', string='Batch Number', readonly=True),
                 'move_id_assign_to_kit': fields.many2one('stock.move', string='Corresponding Stock Move', readonly=True),
@@ -291,7 +282,7 @@ class assign_to_kit_line(osv.osv_memory):
     substitute items
     '''
     _name = 'assign.to.kit.line'
-    
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -302,9 +293,8 @@ class assign_to_kit_line(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # objects
-        loc_obj = self.pool.get('stock.location')
         item_obj = self.pool.get('composition.item')
-            
+
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             # qty_assign_to_kit_by_product_uom - loop all items from the kit and count for product/uom
@@ -317,12 +307,12 @@ class assign_to_kit_line(osv.osv_memory):
             # read data
             if item_ids:
                 data = item_obj.read(cr, uid, item_ids, ['item_qty'], context=context)
-                
+
                 total_qty_assigned = sum([x['item_qty'] for x in data])
             result.setdefault(obj.id, {}).update({'qty_assign_to_kit_by_product_uom': total_qty_assigned})
-            
+
         return result
-    
+
     _columns = {'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
                 'kit_creation_id_assign_to_kit_line': fields.many2one('kit.creation', string="Kitting Order", readonly=True, required=True),
                 'kit_id_assign_to_kit_line': fields.many2one('composition.kit', string="Kit Composition List", readonly=True, required=True),
@@ -334,9 +324,9 @@ class assign_to_kit_line(osv.osv_memory):
                 'qty_assign_to_kit_by_product_uom': fields.function(_vals_get, method=True, type='float', digits_compute=dp.get_precision('Product UoM'), string='Qty already assigned', multi='get_vals', store=False, readonly=True),
                 #'qty_assign_to_kit_by_product_uom': fields.float(string='Total Qty Assigned', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 }
-    
+
     _defaults = {'integrity_status': 'empty',
                  }
-    
+
 assign_to_kit_line()
 

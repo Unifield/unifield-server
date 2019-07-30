@@ -123,7 +123,7 @@ class product_pricelist(osv.osv):
         'active': lambda *a: 1,
         "currency_id": _get_currency
     }
-    
+
     def _hook_product_partner_price(self, cr, uid, *args, **kwargs):
         '''
         Call this hook method to rework the price computation from the partner
@@ -134,17 +134,17 @@ class product_pricelist(osv.osv):
         qty = kwargs['qty']
         context = kwargs['context']
         uom_price_already_computed = kwargs['uom_price_already_computed']
-        
+
         supplierinfo_obj = self.pool.get('product.supplierinfo')
         product_template_obj = self.pool.get('product.template')
         product_uom_obj = self.pool.get('product.uom')
-        
+
         #this section could be improved by moving the queries outside the loop:
         where = []
         if partner:
             where = [('name', '=', partner) ]
         sinfo = supplierinfo_obj.search(cr, uid,
-                [('product_id', '=', tmpl_id)] + where)
+                                        [('product_id', '=', tmpl_id)] + where)
         price = 0.0
         if sinfo:
             qty_in_product_uom = qty
@@ -156,14 +156,14 @@ class product_pricelist(osv.osv):
                 uom_price_already_computed = True
                 qty_in_product_uom = product_uom_obj._compute_qty(cr, uid, product_default_uom, qty, to_uom_id=seller_uom)
             cr.execute('SELECT * ' \
-                    'FROM pricelist_partnerinfo ' \
-                    'WHERE suppinfo_id IN %s' \
-                        'AND min_quantity <= %s ' \
-                    'ORDER BY min_quantity DESC LIMIT 1', (tuple(sinfo),qty_in_product_uom,))
+                       'FROM pricelist_partnerinfo ' \
+                       'WHERE suppinfo_id IN %s' \
+                       'AND min_quantity <= %s ' \
+                       'ORDER BY min_quantity DESC LIMIT 1', (tuple(sinfo),qty_in_product_uom,))
             res2 = cr.dictfetchone()
             if res2:
                 price = self.pool.get('res.currency').compute(cr, uid, supplier_currency,\
-                        res2['currency_id'], res2['price'], round=False, context=context)
+                                                              res2['currency_id'], res2['price'], round=False, context=context)
         return price, uom_price_already_computed
 
     def price_get_multi(self, cr, uid, pricelist_ids, products_by_qty_by_partner, context=None):
@@ -196,10 +196,7 @@ class product_pricelist(osv.osv):
 
         currency_obj = self.pool.get('res.currency')
         product_obj = self.pool.get('product.product')
-        product_template_obj = self.pool.get('product.template')
         product_category_obj = self.pool.get('product.category')
-        product_uom_obj = self.pool.get('product.uom')
-        supplierinfo_obj = self.pool.get('product.supplierinfo')
         price_type_obj = self.pool.get('product.price.type')
         product_pricelist_version_obj = self.pool.get('product.pricelist.version')
 
@@ -254,15 +251,15 @@ class product_pricelist(osv.osv):
                 cr.execute(
                     'SELECT i.*, pl.currency_id '
                     'FROM product_pricelist_item AS i, '
-                        'product_pricelist_version AS v, product_pricelist AS pl '
+                    'product_pricelist_version AS v, product_pricelist AS pl '
                     'WHERE (product_tmpl_id IS NULL OR product_tmpl_id = %s) '
-                        'AND (product_id IS NULL OR product_id = %s) '
-                        'AND (' + categ_where + ' OR (categ_id IS NULL)) '
-                        'AND price_version_id = %s '
-                        'AND (min_quantity IS NULL OR min_quantity <= %s) '
-                        'AND i.price_version_id = v.id AND v.pricelist_id = pl.id '
+                    'AND (product_id IS NULL OR product_id = %s) '
+                    'AND (' + categ_where + ' OR (categ_id IS NULL)) '
+                    'AND price_version_id = %s '
+                    'AND (min_quantity IS NULL OR min_quantity <= %s) '
+                    'AND i.price_version_id = v.id AND v.pricelist_id = pl.id '
                     'ORDER BY sequence',
-                    (tmpl_id, product_id, plversion_ids[0], qty))
+                    (tmpl_id, product_id, plversion_ids[0], qty)) # not_a_user_entry
                 res1 = cr.dictfetchall()
                 uom_price_already_computed = False
                 for res in res1:
@@ -272,26 +269,26 @@ class product_pricelist(osv.osv):
                                 price = 0.0
                             else:
                                 price_tmp = self.price_get(cr, uid,
-                                        [res['base_pricelist_id']], product_id,
-                                        qty, context=context)[res['base_pricelist_id']]
+                                                           [res['base_pricelist_id']], product_id,
+                                                           qty, context=context)[res['base_pricelist_id']]
                                 ptype_src = self.browse(cr, uid, res['base_pricelist_id']).currency_id.id
                                 price = currency_obj.compute(cr, uid, ptype_src, res['currency_id'], price_tmp, round=False)
                         elif res['base'] == -2:
                             price, uom_price_already_computed = self._hook_product_partner_price(cr, uid, product_id=product_id,
-                                                                                                          partner=partner,
-                                                                                                          qty=qty,
-                                                                                                          currency_id=res['currency_id'],
-                                                                                                          date=date,
-                                                                                                          uom=context['uom'],
-                                                                                                          tmpl_id=tmpl_id,
-                                                                                                          uom_price_already_computed=uom_price_already_computed,
-                                                                                                          context=context)
+                                                                                                 partner=partner,
+                                                                                                 qty=qty,
+                                                                                                 currency_id=res['currency_id'],
+                                                                                                 date=date,
+                                                                                                 uom=context['uom'],
+                                                                                                 tmpl_id=tmpl_id,
+                                                                                                 uom_price_already_computed=uom_price_already_computed,
+                                                                                                 context=context)
                         else:
                             price_type = price_type_obj.browse(cr, uid, int(res['base']))
                             price = currency_obj.compute(cr, uid,
-                                    price_type.currency_id.id, res['currency_id'],
-                                    product_obj.price_get(cr, uid, [product_id],
-                                        price_type.field,context=context)[product_id], round=False, context=context)
+                                                         price_type.currency_id.id, res['currency_id'],
+                                                         product_obj.price_get(cr, uid, [product_id],
+                                                                               price_type.field,context=context)[product_id], round=False, context=context)
 
                             uom_price_already_computed = True
 
@@ -358,36 +355,36 @@ class product_pricelist(osv.osv):
         result['item_id'] = {}
         for id in ids:
             cr.execute('SELECT * ' \
-                    'FROM product_pricelist_version ' \
-                    'WHERE pricelist_id = %s AND active=True ' \
-                        'AND (date_start IS NULL OR date_start <= %s) ' \
-                        'AND (date_end IS NULL OR date_end >= %s) ' \
-                    'ORDER BY id LIMIT 1', (id, date, date))
+                       'FROM product_pricelist_version ' \
+                       'WHERE pricelist_id = %s AND active=True ' \
+                       'AND (date_start IS NULL OR date_start <= %s) ' \
+                       'AND (date_end IS NULL OR date_end >= %s) ' \
+                       'ORDER BY id LIMIT 1', (id, date, date))
             plversion = cr.dictfetchone()
 
             if not plversion:
                 raise osv.except_osv(_('Warning !'),
-                        _('No active version for the selected pricelist !\n' \
-                                'Please create or activate one.'))
+                                     _('No active version for the selected pricelist !\n' \
+                                       'Please create or activate one.'))
 
             cr.execute('SELECT id, categ_id ' \
-                    'FROM product_template ' \
-                    'WHERE id = (SELECT product_tmpl_id ' \
-                        'FROM product_product ' \
-                        'WHERE id = %s)', (prod_id,))
+                       'FROM product_template ' \
+                       'WHERE id = (SELECT product_tmpl_id ' \
+                       'FROM product_product ' \
+                       'WHERE id = %s)', (prod_id,))
             tmpl_id, categ = cr.fetchone()
             categ_ids = []
             while categ:
                 categ_ids.append(str(categ))
                 cr.execute('SELECT parent_id ' \
-                        'FROM product_category ' \
-                        'WHERE id = %s', (categ,))
+                           'FROM product_category ' \
+                           'WHERE id = %s', (categ,))
                 categ = cr.fetchone()[0]
                 if str(categ) in categ_ids:
                     raise osv.except_osv(_('Warning !'),
-                            _('Could not resolve product category, ' \
-                                    'you have defined cyclic categories ' \
-                                    'of products!'))
+                                         _('Could not resolve product category, ' \
+                                           'you have defined cyclic categories ' \
+                                           'of products!'))
             if categ_ids:
                 categ_where = '(categ_id IN (' + ','.join(categ_ids) + '))'
             else:
@@ -396,15 +393,15 @@ class product_pricelist(osv.osv):
             cr.execute(
                 'SELECT i.*, pl.currency_id '
                 'FROM product_pricelist_item AS i, '
-                    'product_pricelist_version AS v, product_pricelist AS pl '
+                'product_pricelist_version AS v, product_pricelist AS pl '
                 'WHERE (product_tmpl_id IS NULL OR product_tmpl_id = %s) '
-                    'AND (product_id IS NULL OR product_id = %s) '
-                    'AND (' + categ_where + ' OR (categ_id IS NULL)) '
-                    'AND price_version_id = %s '
-                    'AND (min_quantity IS NULL OR min_quantity <= %s) '
-                    'AND i.price_version_id = v.id AND v.pricelist_id = pl.id '
+                'AND (product_id IS NULL OR product_id = %s) '
+                'AND (' + categ_where + ' OR (categ_id IS NULL)) '
+                'AND price_version_id = %s '
+                'AND (min_quantity IS NULL OR min_quantity <= %s) '
+                'AND i.price_version_id = v.id AND v.pricelist_id = pl.id '
                 'ORDER BY sequence',
-                (tmpl_id, prod_id, plversion['id'], qty))
+                (tmpl_id, prod_id, plversion['id'], qty)) # not_a_user_entry
             res1 = cr.dictfetchall()
 
             for res in res1:
@@ -415,27 +412,27 @@ class product_pricelist(osv.osv):
                             price = 0.0
                         else:
                             price_tmp = self.price_get(cr, uid,
-                                    [res['base_pricelist_id']], prod_id,
-                                    qty,context=context)[res['base_pricelist_id']]
+                                                       [res['base_pricelist_id']], prod_id,
+                                                       qty,context=context)[res['base_pricelist_id']]
                             ptype_src = self.browse(cr, uid,
-                                    res['base_pricelist_id']).currency_id.id
+                                                    res['base_pricelist_id']).currency_id.id
                             price = currency_obj.compute(cr, uid, ptype_src,
-                                    res['currency_id'], price_tmp, round=False)
+                                                         res['currency_id'], price_tmp, round=False)
                             break
                     elif res['base'] == -2:
                         where = []
                         if partner:
                             where = [('name', '=', partner) ]
                         sinfo = supplierinfo_obj.search(cr, uid,
-                                [('product_id', '=', tmpl_id)] + where,
-                                order='NO_ORDER')
+                                                        [('product_id', '=', tmpl_id)] + where,
+                                                        order='NO_ORDER')
                         price = 0.0
                         if sinfo:
                             cr.execute('SELECT * ' \
-                                    'FROM pricelist_partnerinfo ' \
-                                    'WHERE suppinfo_id IN %s' \
-                                        'AND min_quantity <= %s ' \
-                                    'ORDER BY min_quantity DESC LIMIT 1', (tuple(sinfo),qty,))
+                                       'FROM pricelist_partnerinfo ' \
+                                       'WHERE suppinfo_id IN %s' \
+                                       'AND min_quantity <= %s ' \
+                                       'ORDER BY min_quantity DESC LIMIT 1', (tuple(sinfo),qty,))
                             res2 = cr.dictfetchone()
                             if res2:
                                 price = res2['price']
@@ -443,9 +440,9 @@ class product_pricelist(osv.osv):
                     else:
                         price_type = price_type_obj.browse(cr, uid, int(res['base']))
                         price = currency_obj.compute(cr, uid,
-                                price_type.currency_id.id, res['currency_id'],
-                                product_obj.price_get(cr, uid, [prod_id],
-                                    price_type.field,context=context)[prod_id], round=False, context=context)
+                                                     price_type.currency_id.id, res['currency_id'],
+                                                     product_obj.price_get(cr, uid, [prod_id],
+                                                                           price_type.field,context=context)[prod_id], round=False, context=context)
 
                     if price:
                         price_limit = price
@@ -470,7 +467,7 @@ class product_pricelist(osv.osv):
                 product = product_obj.browse(cr, uid, prod_id)
                 uom = product.uos_id or product.uom_id
                 result[id] = self.pool.get('product.uom')._compute_price(cr,
-                        uid, uom.id, result[id], context['uom'])
+                                                                         uid, uom.id, result[id], context['uom'])
 
         return result
 
@@ -482,18 +479,18 @@ class product_pricelist_version(osv.osv):
     _description = "Pricelist Version"
     _columns = {
         'pricelist_id': fields.many2one('product.pricelist', 'Price List',
-            required=True, select=True, ondelete='cascade'),
+                                        required=True, select=True, ondelete='cascade'),
         'name': fields.char('Name', size=64, required=True, translate=True),
         'active': fields.boolean('Active',
-            help="When a version is duplicated it is set to non active, so that the " \
-            "dates do not overlaps with original version. You should change the dates " \
-            "and reactivate the pricelist"),
+                                 help="When a version is duplicated it is set to non active, so that the " \
+                                 "dates do not overlaps with original version. You should change the dates " \
+                                 "and reactivate the pricelist"),
         'items_id': fields.one2many('product.pricelist.item',
-            'price_version_id', 'Price List Items', required=True),
+                                    'price_version_id', 'Price List Items', required=True),
         'date_start': fields.date('Start Date', help="Starting date for this pricelist version to be valid."),
         'date_end': fields.date('End Date', help="Ending date for this pricelist version to be valid."),
         'company_id': fields.related('pricelist_id','company_id',type='many2one',
-            readonly=True, relation='res.company', string='Company', store=True)
+                                     readonly=True, relation='res.company', string='Company', store=True)
     }
     _defaults = {
         'active': lambda *a: 1,
@@ -516,13 +513,13 @@ class product_pricelist_version(osv.osv):
                 where.append("((date_start<='%s') or (date_start is null))" % (pricelist_version.date_end,))
 
             cursor.execute('SELECT id ' \
-                    'FROM product_pricelist_version ' \
-                    'WHERE '+' and '.join(where) + (where and ' and ' or '')+
-                        'pricelist_id = %s ' \
-                        'AND active ' \
-                        'AND id <> %s', (
-                            pricelist_version.pricelist_id.id,
-                            pricelist_version.id))
+                           'FROM product_pricelist_version ' \
+                           'WHERE '+' and '.join(where) + (where and ' and ' or '')+  # not_a_user_entry
+                           'pricelist_id = %s ' \
+                           'AND active ' \
+                           'AND id <> %s', (
+                               pricelist_version.pricelist_id.id,
+                               pricelist_version.id))  # not_a_user_entry
             if cursor.fetchall():
                 return False
         return True
@@ -578,20 +575,20 @@ class product_pricelist_item(osv.osv):
         'base_pricelist_id': fields.many2one('product.pricelist', 'If Other Pricelist'),
 
         'price_surcharge': fields.float('Price Surcharge',
-            digits_compute= dp.get_precision('Sale Price')),
+                                        digits_compute= dp.get_precision('Sale Price')),
         'price_discount': fields.float('Price Discount', digits=(16,4)),
         'price_round': fields.float('Price Rounding',
-            digits_compute= dp.get_precision('Sale Price'),
-            help="Sets the price so that it is a multiple of this value.\n" \
-              "Rounding is applied after the discount and before the surcharge.\n" \
-              "To have prices that end in 9.99, set rounding 10, surcharge -0.01" \
-            ),
+                                    digits_compute= dp.get_precision('Sale Price'),
+                                    help="Sets the price so that it is a multiple of this value.\n" \
+                                    "Rounding is applied after the discount and before the surcharge.\n" \
+                                    "To have prices that end in 9.99, set rounding 10, surcharge -0.01" \
+                                    ),
         'price_min_margin': fields.float('Min. Price Margin',
-            digits_compute= dp.get_precision('Sale Price')),
+                                         digits_compute= dp.get_precision('Sale Price')),
         'price_max_margin': fields.float('Max. Price Margin',
-            digits_compute= dp.get_precision('Sale Price')),
+                                         digits_compute= dp.get_precision('Sale Price')),
         'company_id': fields.related('price_version_id','company_id',type='many2one',
-            readonly=True, relation='res.company', string='Company', store=True)
+                                     readonly=True, relation='res.company', string='Company', store=True)
     }
 
     _constraints = [

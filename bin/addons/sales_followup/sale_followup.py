@@ -16,7 +16,7 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 
 from osv import osv, fields
@@ -81,7 +81,7 @@ class sale_order_followup(osv.osv_memory):
             split = False
             for line in followup.order_id.order_line:
                 if self.pool.get('sale.order.line').search(cr, uid, [('original_line_id', '=', line.id)], context=context):
-                    split = True                
+                    split = True
 #            if followup.choose_type == 'documents':
 #                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_document_view')[1]
 #            else:
@@ -103,7 +103,7 @@ class sale_order_followup(osv.osv_memory):
 #        Switch to documents view
 #        '''
 #        self.write(cr, uid, ids, {'choose_type': 'documents'})
-#        
+#
 #        return self.go_to_view(cr, uid, ids, context=context)
 
     def switch_progress(self, cr, uid, ids, context=None):
@@ -131,7 +131,7 @@ class sale_order_followup(osv.osv_memory):
         result = self.start_order_followup(cr, uid, ids, context=new_context).get('res_id')
         if not result:
             raise osv.except_osv(_('Error'), _('No followup found ! Cannot update !'))
-        else:        
+        else:
             # Remove the old followup object and all his lines (on delete cascade)
             self.unlink(cr, uid, ids, context=new_context)
 
@@ -592,7 +592,7 @@ class sale_order_line_followup(osv.osv_memory):
                         if pack.state == 'done' and pack.product_qty == 0.00:
                             nb_return_pack += 1
 
-                    nb_return_dist = 0    
+                    nb_return_dist = 0
                     for cust in out_step['customer']['moves']:
                         if cust.state == 'done' and cust.product_qty == 0.00:
                             nb_return_dist += 1
@@ -621,7 +621,7 @@ class sale_order_line_followup(osv.osv_memory):
                         if out_step['distrib']['state'] != dist.state:
                             out_step['distrib']['state'] = 'partial'
 
-                    # Set the state for the step 'dispatch'    
+                    # Set the state for the step 'dispatch'
                     for disp in out_step['dispatch']['moves']:
                         if disp.location_id.id == disp.picking_id.warehouse_id.lot_dispatch_id.id:
                             nb_return_pack2 += 1
@@ -645,7 +645,7 @@ class sale_order_line_followup(osv.osv_memory):
                             out_step['packing']['state'] = 'partial'
 
                     # Set the state for the step 'picking'
-                    ret_iter = 0  
+                    ret_iter = 0
                     ret_iter2 = 0
                     for pick in out_step['picking']['moves']:
                         if pick.state == 'cancel':
@@ -662,7 +662,7 @@ class sale_order_line_followup(osv.osv_memory):
                         if not out_step['picking']['state']:
                             out_step['picking']['state'] = pick.state
                         if out_step['picking']['state'] != pick.state:
-                            out_step['picking']['state'] = 'partial'          
+                            out_step['picking']['state'] = 'partial'
 
                     # Increase the nb of out if there are products in general picking ticket
                     total_line = 0.00
@@ -739,11 +739,11 @@ class sale_order_line_followup(osv.osv_memory):
         'procure_method': fields.related('line_id', 'type', type='selection', selection=[('make_to_stock','From stock'), ('make_to_order','On order')], readonly=True, string='Proc. Method'),
         'po_cft': fields.related('line_id', 'po_cft', type='selection', selection=[('po','PO'), ('dpo', 'DPO'), ('cft','CFT')], readonly=True, string='PO/CFT'),
         'line_number': fields.related('line_id', 'line_number', string='Order line', readonly=True, type='integer'),
-        'product_id': fields.related('line_id', 'product_id', string='Product Code', readondy=True, 
+        'product_id': fields.related('line_id', 'product_id', string='Product Code', readondy=True,
                                      type='many2one', relation='product.product'),
-        'qty_ordered': fields.related('line_id', 'product_uom_qty', string='Ordered qty', readonly=True),
+        'qty_ordered': fields.related('line_id', 'product_uom_qty', string='Ordered qty', readonly=True, related_uom='uom_id'),
         'uom_id': fields.related('line_id', 'product_uom', type='many2one', relation='product.uom', string='UoM', readonly=True),
-        'sourced_ok': fields.function(_get_status, method=True, string='Sourced', type='char', 
+        'sourced_ok': fields.function(_get_status, method=True, string='Sourced', type='char',
                                       readonly=True, multi='status'),
         'tender_ids': fields.many2many('tender.line', 'call_tender_follow_rel',
                                        'follow_line_id', 'tender_id', string='Tender'),
@@ -753,13 +753,13 @@ class sale_order_line_followup(osv.osv_memory):
         #                                          'quotation_id', string='Requests for Quotation', readonly=True),
         #        'quotation_status': fields.function(_get_status, method=True, string='Request for Quotation',
         #                                            type='char', readonly=True, multi='status'),
-        'purchase_ids': fields.many2many('purchase.order', 'purchase_follow_rel', 'follow_line_id', 
+        'purchase_ids': fields.many2many('purchase.order', 'purchase_follow_rel', 'follow_line_id',
                                          'purchase_id', string='Purchase Orders', readonly=True),
         'purchase_line_ids': fields.many2many('purchase.order.line', 'purchase_line_follow_rel', 'follow_line_id',
                                               'purchase_line_id', string='Purchase Orders', readonly=True),
         'purchase_status': fields.function(_get_status, method=True, string='Purchase Order',
                                            type='char', readonly=True, multi='status'),
-        'incoming_ids': fields.many2many('stock.move', 'incoming_follow_rel', 'follow_line_id', 
+        'incoming_ids': fields.many2many('stock.move', 'incoming_follow_rel', 'follow_line_id',
                                          'incoming_id', string='Incoming Shipment', readonly=True),
         'incoming_status': fields.function(_get_status, method=True, string='Incoming Shipment',
                                            type='char', readonly=True, multi='status'),
@@ -767,9 +767,9 @@ class sale_order_line_followup(osv.osv_memory):
                                              type='char', readonly=True, multi='status'),
         'available_qty': fields.function(_get_status, method=True, string='Product available',
                                          type='float', readonly=True, multi='status'),
-        'outgoing_ids': fields.many2many('stock.move', 'outgoing_follow_rel', 'outgoing_id', 
+        'outgoing_ids': fields.many2many('stock.move', 'outgoing_follow_rel', 'outgoing_id',
                                          'follow_line_id', string='Outgoing Deliveries', readonly=True),
-        'displayed_out_ids': fields.many2many('stock.move', 'displayed_out_follow_rel', 'diplayed_out_id', 
+        'displayed_out_ids': fields.many2many('stock.move', 'displayed_out_follow_rel', 'diplayed_out_id',
                                               'follow_line_id', string='Outgoing Deliveries', readonly=True),
         'outgoing_status': fields.function(_get_status, method=True, string='Outgoing delivery',
                                            type='char', readonly=True, multi='status'),
@@ -972,8 +972,8 @@ class purchase_order_line(osv.osv):
         ('rfq_updated', 'Updated'),
     ]
 
-    ORDER_TYPE = [('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
-                  ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
+    ORDER_TYPE = [('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+                  ('donation_st', 'Standard donation'), ('loan', 'Loan'),
                   ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
                   ('direct', 'Direct Purchase Order')]
 

@@ -215,7 +215,7 @@
 			<field name="arch" type="xml">
 				<search string="Incoming Shipments">
                     <group col="8" colspan="4">
-                        <filter icon="terp-check" name="available" string="Available" domain="[('state','in',('assigned','shipped'))]" help="Incoming Shipments Available" />
+                        <filter icon="terp-check" name="available" string="Available" domain="[('state','in',('assigned','shipped','updated'))]" help="Incoming Shipments Available" />
                         <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Incoming Shipments already processed"/>
                         <separator orientation="vertical" />
                         <filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" />

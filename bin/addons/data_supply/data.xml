@@ -230,7 +230,7 @@
             <field name="picking_policy">direct</field>
             <field name="ready_to_ship_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+12*86400))" />
             <field name="priority">normal</field>
-            <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+15*86400))" />
+            <field name="delivery_requested_date" required="1" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+15*86400))" />
             <field name="partner_shipping_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'Project P1'), ('partner_id.ref', '=', 'P1')]"/>
             <field name="partner_order_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'Project P1'), ('partner_id.ref', '=', 'P1')]"/>
             <field name="partner_invoice_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'Project P1'), ('partner_id.ref', '=', 'P1')]"/>
@@ -246,7 +246,7 @@
             <field name="picking_policy">direct</field>
             <field name="ready_to_ship_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="priority">normal</field>
-            <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="delivery_requested_date" required="1" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="partner_shipping_id" ref="base.main_address"/>
             <field name="partner_order_id" ref="base.main_address"/>

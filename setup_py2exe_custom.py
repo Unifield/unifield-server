@@ -43,6 +43,25 @@ else:
     build_exe = _be(1, 2, 3)
     fancy_split = None
 
+def extra_files():
+    r = []
+    try:
+        import certifi
+    except:
+        return []
+    main_path = os.path.relpath(os.path.dirname(certifi.__file__))
+    cert_path = os.path.join(main_path, 'cacert.pem')
+    r.append(('libs/certifi', [cert_path]))
+
+    try:
+        import office365
+    except:
+        return []
+    main_path = os.path.relpath(os.path.dirname(office365.__file__))
+    xml_file = os.path.join(main_path, 'runtime/auth/SAML.xml')
+    r.append(('libs/office365/runtime/auth', [xml_file]))
+    return r
+
 def fixup_data_pytz_zoneinfo():
     r = {}
     import pytz
@@ -146,7 +165,7 @@ if hasattr(sys, 'frozen'):
     def create_binaries(self, py_files, extensions, dlls):
         dist = self.distribution
 
-        # Do not try compiling .py files for 'packages', we 
+        # Do not try compiling .py files for 'packages', we
         # want them into the exe directory - and only collected
         # dependencies with 'collected libbs dir'
         src_build_cmd = dist.get_command_obj('build')
@@ -191,7 +210,7 @@ if hasattr(sys, 'frozen'):
         if dist.has_data_files():
             dist.data_files = [ fixup_location(f) for f in dist.data_files ]
 
-        # Call parent create_binaries() without any py_files, so that py2exe 
+        # Call parent create_binaries() without any py_files, so that py2exe
         # do no force their compilations
         return build_exe.create_binaries(self, [], extensions, dlls)
 

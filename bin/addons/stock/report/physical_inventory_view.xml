@@ -6,6 +6,7 @@
             string="Export xls counting sheet"
             model="physical.inventory"
             name="physical_inventory_counting_sheet_xls"
+            file="stock/report/physical_inventory_counting_sheet_xls.mako"
             report_type="webkit"
             menu="False"
             />
@@ -23,6 +24,7 @@
             string="Export xls inventory report"
             model="physical.inventory"
             name="physical_inventory_discrepancies_report_xls"
+            file="stock/report/physical_inventory_discrepancies_report_xls.mako"
             report_type="webkit"
             menu="False"
             />

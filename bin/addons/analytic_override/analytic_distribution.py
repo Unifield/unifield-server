@@ -97,7 +97,13 @@ class analytic_distribution1(osv.osv):
             vals = {'destination_id': account_id}
         else:
             vals = {'analytic_id': account_id}
-        return self.pool.get('funding.pool.distribution.line').write(cr, uid, line_ids, vals)
+        if account.category == 'FREE1':
+            obj = self.pool.get('free.1.distribution.line')
+        elif account.category == 'FREE2':
+            obj = self.pool.get('free.2.distribution.line')
+        else:
+            obj = self.pool.get('funding.pool.distribution.line')
+        return obj.write(cr, uid, line_ids, vals, context=context)
 
     def create_funding_pool_lines(self, cr, uid, ids, account_id=False, context=None):
         """

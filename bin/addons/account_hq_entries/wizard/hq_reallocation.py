@@ -45,9 +45,9 @@ class hq_analytic_reallocation(osv.osv_memory):
         if isinstance(line_ids, (int, long)):
             line_ids = [line_ids]
         self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
-            line_ids, self._name, context=context)
+                                                               line_ids, self._name, context=context)
         return super(hq_analytic_reallocation, self).default_get(cr, uid, fields,
-            context=context)
+                                                                 context=context)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -90,8 +90,8 @@ class hq_analytic_reallocation(osv.osv_memory):
             fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
             # Search MSF Private Fund element, because it's valid with all accounts
             try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                'analytic_account_msf_private_funds')[1]
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                                                                            'analytic_account_msf_private_funds')[1]
             except ValueError:
                 fp_id = 0
             if cost_center_id not in [x.id for x in fp_line.cost_center_ids] and analytic_id != fp_id:
@@ -138,7 +138,8 @@ class hq_reallocation(osv.osv_memory):
     _description = 'HQ reallocation wizard'
 
     _columns = {
-        'account_id': fields.many2one('account.account', string="Account", required=True, domain="[('type', '!=', 'view'), ('user_type.code', '=', 'expense')]"),
+        'account_id': fields.many2one('account.account', string="Account", required=True,
+                                      domain="[('restricted_area', '=', 'hq_lines_correction')]"),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -147,9 +148,9 @@ class hq_reallocation(osv.osv_memory):
         if isinstance(line_ids, (int, long)):
             line_ids = [line_ids]
         self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
-            line_ids, self._name, context=context)
+                                                               line_ids, self._name, context=context)
         return super(hq_reallocation, self).default_get(cr, uid, fields,
-            context=context)
+                                                        context=context)
 
     def button_validate(self, cr, uid ,ids, context=None):
         """

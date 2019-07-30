@@ -50,6 +50,7 @@
         'view/stock_picking_import_lines_view.xml',
         'view/replenishment_rules_view.xml',
         'view/supplier_catalogue_view.xml',
+        'view/msf_import_export_view.xml',
         'wizard/wizard_import_po_line_view.xml',
         'wizard/wizard_import_fo_line.xml',
         'wizard/wizard_import_tender_line.xml',
@@ -60,6 +61,7 @@
         'wizard/wizard_import_threshold_value_line.xml',
         'wizard/wizard_import_stock_warehouse_order_point_line.xml',
         'wizard/wizard_import_product_list.xml',
+        'wizard/wizard_import_product_line_view.xml',
         'wizard/wizard_import_supplier_catalogue.xml',
         'wizard/wizard_po_simulation_screen_view.xml',
         'wizard/wizard_in_simulation_screen_view.xml',
@@ -73,6 +75,7 @@
         'doc_import_report.xml',
         'wizard/wizard_import_batch_view.xml',
         'wizard/wizard_import_invoice_line.xml',
+        'wizard/wizard_import_ppl_to_create_ship.xml',
     ],
     "demo_xml": [],
     "test": [

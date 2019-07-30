@@ -30,8 +30,28 @@ class labels(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'range': range,
+            'get_pack_weight': self.get_pack_weight,
         })
-           
+
+    def get_pack_weight(self, stock_picking, pack_num):
+        '''
+        Return weight of the given pack
+        stock.picking.pack_family_memory_ids => pack.family.memory.ppl_id
+        '''
+        res_pack = self.pool.get('pack.family.memory').search(self.cr, self.uid, [
+            ('ppl_id', '=', stock_picking.id),
+            ('from_pack', '<=', pack_num),
+            ('to_pack', '>=', pack_num),
+        ])
+        weight = 0.0
+        if res_pack:
+            res_pack = self.pool.get('pack.family.memory').browse(self.cr, self.uid, res_pack[0])
+            weight = res_pack.weight
+
+        return str(weight)
+
+
+
     def set_context(self, objects, data, ids, report_type=None):
         '''
         opening check
@@ -39,7 +59,7 @@ class labels(report_sxw.rml_parse):
         for obj in objects:
             if obj.subtype != 'ppl' or obj.state != 'done':
                 raise osv.except_osv(_('Warning !'), _('Labels are only available for completed Pre-Packing List Objects!'))
-        
+
         return super(labels, self).set_context(objects, data, ids, report_type=report_type)
 
 report_sxw.report_sxw('report.labels', 'stock.picking', 'addons/msf_outgoing/report/labels.rml', parser=labels, header=False)

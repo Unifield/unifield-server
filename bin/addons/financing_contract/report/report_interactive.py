@@ -7,6 +7,7 @@ assert _ #pyflakes check
 class report_interactive(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(report_interactive, self).__init__(cr, uid, name, context=context)
+        self.context = {}
         self.tot = []
         self.lines = []
         self.localcontext.update({
@@ -52,14 +53,11 @@ class report_interactive(report_sxw.rml_parse):
     def getLines(self,contract):
         pool = pooler.get_pool(self.cr.dbname)
 
-        lcl_context = {}
+        self.context.update({'mako': True})
         if 'out_currency' in self.datas:
-            lcl_context = {'mako':True, 'out_currency':self.datas['out_currency']}
-        else:
-            lcl_context = {'mako':True}
+            self.context.update({'out_currency': self.datas['out_currency']})
 
-
-        csv_data = pool.get('wizard.interactive.report')._get_interactive_data(self.cr, self.uid, contract.id, context=lcl_context)
+        csv_data = pool.get('wizard.interactive.report')._get_interactive_data(self.cr, self.uid, contract.id, context=self.context)
 
         lines = []
         if contract.reporting_type == 'project':
@@ -77,6 +75,11 @@ class report_interactive(report_sxw.rml_parse):
             lines += [temp]
         self.lines = lines
         return lines
+
+    def set_context(self, objects, data, ids, report_type=None):
+        self.context = data.get('context', {})
+        return super(report_interactive, self).set_context(objects, data, ids, report_type)
+
 
 SpreadsheetReport('report.financing.interactive.2', 'financing.contract.contract', 'addons/financing_contract/report/financing_interactive_xls.mako', parser=report_interactive)
 

@@ -7,3 +7,10 @@
                     <button name="button_validate" type="object" string="Search" icon="gtk-find" colspan="2"/>
                     <button icon="gtk-print" name="export_pdf" string="Export PDF report" type="object" colspan="4"/>
                     <field name="model" invisible="1"/>
+
+                    <group colspan="4" name="wizard_hq_query" invisible="1">
+                        <separator colspan="4"/>
+                        <button icon="gtk-save" name="save_query" string="Save" type="object" colspan="2"/>
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2"/>
+                    </group>
+

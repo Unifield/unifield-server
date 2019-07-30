@@ -49,7 +49,13 @@ OBJ_TO_RECREATE = [
     'msf_field_access_rights.field_access_rule_line',
     'msf_button_access_rights.button_access_rule',
     'ir.rule',
+    'hr.payment.method',
+    'account.analytic.journal',
+    'account.journal',
+    'account.mcdb',
+    'wizard.template',
 ]
+
 
 class fv_formatter:
     def fmt(self, cr, uid, ids, field_name, arg, context):
@@ -157,7 +163,7 @@ class update_to_send(osv.osv,fv_formatter):
         'version' : fields.integer('Version', readonly=True),
         'fancy_version' : fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
         'rule_id' : fields.many2one('sync.client.rule','Generating Rule', readonly=True, ondelete="set null"),
-        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
+        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True, select=True),
         'fields':fields.text('Fields', size=128, readonly=True),
         'fieldsvalues': fields.function(fv_formatter.fmt, method=True, type='char'),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
@@ -348,7 +354,10 @@ class update_received(osv.osv,fv_formatter):
         'create_date':fields.datetime('Synchro date/time', readonly=True),
         'execution_date':fields.datetime('Execution date', readonly=True),
         'editable' : fields.boolean("Set editable"),
+        'manually_ran': fields.boolean('Has been manually tried', readonly=True),
+        'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
     }
+
 
     line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)", re.S)
 
@@ -424,11 +433,17 @@ class update_received(osv.osv,fv_formatter):
         else:
             raise Exception("Unable to unfold unknown packet type: " % packet_type)
 
+    def manual_set_as_run(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'run': True, 'log': 'Set manually to run without execution', 'manually_set_run_date': fields.datetime.now(), 'editable': False}, context=context)
+        return True
+
     def run(self, cr, uid, ids, context=None):
         try:
             self.execute_update(cr, uid, ids, context=context)
         except BaseException, e:
             sync_log(self, e)
+        finally:
+            self.write(cr, uid, ids, {'manually_ran': True})
         return True
 
     def execute_update(self, cr, uid, ids=None, priorities=None, context=None):
@@ -572,16 +587,24 @@ class update_received(osv.osv,fv_formatter):
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
 
                 if result['res']: #US-852: if everything is Ok, then do import as normal
-                    values.append(row)
-                    update_ids.append(update.id)
-                    versions.append( (update.sdref, update.version) )
+                    if obj._name == 'hr.employee' and obj._set_sync_update_as_run(cr, uid, dict(zip(import_fields, row)), update.sdref, context=context):
+                        self.write(cr, uid, update.id, {
+                            'run': True,
+                            'editable': False,
+                            'execution_date': datetime.now(),
+                            'log': 'Set as Run because this employee already exists in the instance',
+                        })
+                    else:
+                        values.append(row)
+                        update_ids.append(update.id)
+                        versions.append( (update.sdref, update.version) )
 
-                    #1 conflict detection
-                    if self._conflict(cr, uid, update.sdref, update.version, context=context):
-                        #2 if conflict => manage conflict according rules : report conflict and how it's solve
-                        index_id = eval(update.fields).index('id')
-                        sd_ref = eval(update.values)[index_id]
-                        logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
+                        #1 conflict detection
+                        if self._conflict(cr, uid, update.sdref, update.version, context=context):
+                            #2 if conflict => manage conflict according rules : report conflict and how it's solve
+                            index_id = eval(update.fields).index('id')
+                            sd_ref = eval(update.values)[index_id]
+                            logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
                 else: #US-852: if account_move_line is missing then ignore the import, and set it as not run
                     self._set_not_run(cr, uid, [update.id],
                                       log=result['error_message'],
@@ -655,6 +678,9 @@ class update_received(osv.osv,fv_formatter):
 
             if obj._name == 'ir.translation':
                 self.pool.get('ir.translation')._get_reset_cache_at_sync(cr, uid)
+            elif obj._name == 'ir.model.access':
+                self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+
             # Obvious
             assert len(values) == len(update_ids) == len(versions), \
                 message+"""This error must never occur. Please contact the developper team of this module.\n"""
@@ -911,7 +937,7 @@ class update_received(osv.osv,fv_formatter):
                 except ValueError:
                     try:
                         #US-852: if account_move_line is given, then cannot use the fallback value, but exit the import!
-                        # THIS FIX COULD ALSO OPEN FOR OTHER BUG, BUT CHECK IF THE RULES THAT CONTAIN THE OBJECT (HERE account_move_line) 
+                        # THIS FIX COULD ALSO OPEN FOR OTHER BUG, BUT CHECK IF THE RULES THAT CONTAIN THE OBJECT (HERE account_move_line)
                         if 'account_move_line' in xmlid:
                             m, sep, sdref = xmlid.partition('.')
                             if self.search(cr, uid, [('sdref', '=', sdref), ('run', '=', False)], order='NO_ORDER', context=context):
@@ -938,6 +964,8 @@ class update_received(osv.osv,fv_formatter):
 
                         if update.model == 'res.partner.address' and field == 'partner_id/id':
                             return {'res': False, 'error_message': 'partner_id %s not found' % xmlid}
+                        if update.model == 'account.analytic.line' and field in ('cost_center_id/id', 'destination_id/id'):
+                            return {'res': False, 'error_message': 'Analytic Account %s not found' % xmlid}
                         fb = fallback.get(field, False)
                         if not fb:
                             raise ValueError("no fallback value defined")
@@ -956,8 +984,75 @@ class update_received(osv.osv,fv_formatter):
             values[i] = ','.join(res_val) if res_val else False
         return result
 
+
     _order = 'id desc'
 
 update_received()
+
+
+class update_link(osv.osv_memory):
+    _name = 'update.link'
+    _description = 'Handling of the Links to Updates Sent and Received'
+
+    def _open_update_list(self, cr, uid, ids, update_type='received', context=None):
+        """
+        Returns the Update Received or Sent View for the selected entries.
+        :param update_type: String. If 'received', will open the Update Received View. Else will open the Update Sent View.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context.get('active_ids'):
+            ids = context.get('active_ids')
+
+        model = context.get('model')
+        if model and isinstance(model, basestring):
+            ir_model_obj = self.pool.get('ir.model.data')
+            ir_model_data_ids = ir_model_obj.search(cr, uid, [('module', '=', 'sd'),
+                                                              ('model', '=', model),
+                                                              ('res_id', 'in', ids)], context=context)
+
+            # get the names of all the selected entries if possible, else the name of the object
+            model_obj = self.pool.get(model)
+            try:
+                obj_names = model_obj.name_get(cr, uid, ids, context=context)
+                descr = ' / '.join([x[1] for x in obj_names])
+            except KeyError:
+                descr = model_obj._description or model_obj._name or ''
+
+            if ir_model_data_ids:
+                sdrefs = ir_model_obj.browse(cr, uid, ir_model_data_ids, fields_to_fetch=['name'],
+                                             context=context)
+
+                domain = [('sdref', 'in', [sdref.name for sdref in sdrefs])]
+        tree_view = update_type == 'received' and 'update_received_tree_view' or 'sync_client_update_to_send_tree_view'
+        view_id = ir_model_obj.get_object_reference(cr, uid, 'sync_client', tree_view)
+        view_id = view_id and view_id[1] or False
+        search_view = update_type == 'received' and 'update_received_search_view' or 'update_sent_search_view'
+        search_view_id = ir_model_obj.get_object_reference(cr, uid, 'sync_client', search_view)
+        search_view_id = search_view_id and search_view_id[1] or False
+        res_model = update_type == 'received' and 'sync.client.update_received' or 'sync.client.update_to_send'
+        return {
+            'name': '%s %s' % (update_type == 'received' and _('Update Received Monitor') or _('Update Sent Monitor'), descr),
+            'type': 'ir.actions.act_window',
+            'res_model': res_model,
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': [search_view_id],
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
+    def open_updates_received(self, cr, uid, ids, context):
+        return self._open_update_list(cr, uid, ids, update_type='received', context=context)
+
+    def open_updates_sent(self, cr, uid, ids, context):
+        return self._open_update_list(cr, uid, ids, update_type='sent', context=context)
+
+update_link()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

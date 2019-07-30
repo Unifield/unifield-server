@@ -19,31 +19,6 @@
             <field eval="1" name="sequence"/>
         </record>
 
-        <record id="view_location_tree2" model="ir.ui.view">
-            <field name="name">stock.location.tree</field>
-            <field name="model">stock.location</field>
-            <field name="type">tree</field>
-            <field name="priority">20</field>
-            <field name="inherit_id" ref="stock.view_location_tree2" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree" position="attributes">
-                        <attribute name="hide_new_button">not context.get('from_advanced_menu')</attribute>
-                    </xpath>
-
-                    <field name="stock_real" position="replace">
-                        <field name="stock_real" invisible="'product_id' not in context or 'specific_rules_tree_view' in context"/>
-                        <field name="stock_real_specific" invisible="'specific_rules_tree_view' not in context" />
-                    </field>
-
-                    <field name="stock_virtual" position="replace">
-                        <field name="stock_virtual" invisible="'product_id' not in context or 'specific_rules_tree_view' in context"/>
-                        <field name="stock_virtual_specific" invisible="'specific_rules_tree_view' not in context" />
-                    </field>
-                </data>
-            </field>
-        </record>
-
         <record id="product_normal_form_view" model="ir.ui.view">
             <field name="name">product.normal.form</field>
             <field name="model">product.product</field>
@@ -148,7 +123,8 @@
                     </xpath>
 
                     <xpath expr="/form//field[@name='product_id']" position="replace">
-                        <field name="product_id" colspan="4" domain="[('batch_management', '=', True)]" />
+                        <field name="has_stock_move" invisible="1"/>
+                        <field name="product_id" colspan="4" domain="[('batch_management', '=', True)]" attrs="{'readonly': [('has_stock_move', '=', True)]}" />
                     </xpath>
 
                     <xpath expr="/form/group/separator" position="replace">
@@ -211,7 +187,7 @@
                             context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory}"
                             domain="[('product_id','=?',product_id), ('check_type','=', True)]"
                             on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
-                            attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
+                            attrs="{'readonly': ['|', ('state', 'in', ['done', 'cancel']), '&amp;', ('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
                         <field name="hidden_batch_management_mandatory" invisible="True" />
                         <field name="hidden_perishable_mandatory" invisible="True" />
                         <field name="expired_date" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
@@ -538,6 +514,7 @@
 
                     <field name="prodlot_id" position="after">
                         <field name="expired_date" invisible="1" string="Expiry Month"/>
+                        <field name="uom_id" invisible="1" />
                     </field>
 
                 </data>

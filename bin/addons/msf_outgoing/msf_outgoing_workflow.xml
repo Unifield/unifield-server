@@ -14,18 +14,21 @@
         <record id="trans_assigned_return_cancel" model="workflow.transition">
             <field name="act_from" ref="stock.act_assigned"/>
             <field name="act_to" ref="stock.act_return_cancel"/>
+            <field name="sequence" eval="100" />
             <field name="signal">return_cancel</field>
         </record>
 
         <record id="trans_assigned_draft" model="workflow.transition">
             <field name="act_from" ref="stock.act_assigned" />
             <field name="act_to" ref="stock.act_draft" />
+            <field name="sequence" eval="110" />
             <field name="signal">convert_to_picking_ticket</field>
         </record>
 
         <record id="trans_confiremd_draft" model="workflow.transition">
             <field name="act_from" ref="stock.act_confirmed" />
             <field name="act_to" ref="stock.act_draft" />
+            <field name="sequence" eval="60" />
             <field name="signal">convert_to_picking_ticket</field>
         </record>
 

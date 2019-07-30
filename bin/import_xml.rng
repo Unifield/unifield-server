@@ -115,6 +115,8 @@
             <rng:optional> <rng:attribute name="attachment" /> </rng:optional>
             <rng:optional> <rng:attribute name="attachment_use" /> </rng:optional>
             <rng:optional> <rng:attribute name="groups"/> </rng:optional>
+            <rng:optional> <rng:attribute name="run_in_background"/></rng:optional>
+            <rng:optional> <rng:attribute name="view_ids"/></rng:optional>
             <rng:empty />
         </rng:element>
     </rng:define>
@@ -198,6 +200,7 @@
             <rng:optional><rng:attribute name="src_model" /></rng:optional>
             <rng:optional><rng:attribute name="context" /></rng:optional>
             <rng:optional> <rng:attribute name="view_id"/> </rng:optional>
+            <rng:optional> <rng:attribute name="view_ids"/> </rng:optional>
             <rng:optional> <rng:attribute name="view_type"/> </rng:optional>
             <rng:optional> <rng:attribute name="view_mode"/> </rng:optional>
             <rng:optional> <rng:attribute name="multi"/> </rng:optional>

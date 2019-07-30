@@ -35,6 +35,7 @@ class account_commitment(osv.osv):
     _name = 'account.commitment'
     _description = "Account Commitment Voucher"
     _order = "id desc"
+    _trace = True
 
     def _get_total(self, cr, uid, ids, name, args, context=None):
         """
@@ -62,7 +63,7 @@ class account_commitment(osv.osv):
         if not context:
             context = {}
         for cvl in self.pool.get('account.commitment.line').browse(cr, uid, ids):
-            if not cvl.commit_id in res:
+            if cvl.commit_id.id not in res:
                 res.append(cvl.commit_id.id)
         return res
 
@@ -104,6 +105,9 @@ class account_commitment(osv.osv):
         if not 'period_id' in vals:
             period_ids = get_period_from_date(self, cr, uid, vals.get('date', strftime('%Y-%m-%d')), context=context)
             vals.update({'period_id': period_ids and period_ids[0]})
+        if 'state' not in vals:
+            # state by default at creation time = Draft: add it in vals to make it appear in the Track Changes
+            vals['state'] = 'draft'
         # UTP-317 # Check that no inactive partner have been used to create this commitment
         if 'partner_id' in vals:
             partner_id = vals.get('partner_id')
@@ -405,6 +409,7 @@ class account_commitment_line(osv.osv):
     _description = "Account Commitment Voucher Line"
     _order = "id desc"
     _rec_name = 'account_id'
+    _trace = True
 
     def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
         """
@@ -447,6 +452,8 @@ class account_commitment_line(osv.osv):
         'amount': fields.float(string="Amount left", digits_compute=dp.get_precision('Account'), required=False),
         'initial_amount': fields.float(string="Initial amount", digits_compute=dp.get_precision('Account'), required=True),
         'commit_id': fields.many2one('account.commitment', string="Commitment Voucher", on_delete="cascade"),
+        'commit_number': fields.related('commit_id', 'name', type='char', size=64,
+                                        readonly=True, store=False, string="Commitment Voucher Number"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
                                                        selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],

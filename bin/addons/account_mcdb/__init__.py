@@ -29,5 +29,5 @@ import account_analytic_line
 import account_bank_statement
 import wizard
 import mass_reallocation_search
-
+import sync_query
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

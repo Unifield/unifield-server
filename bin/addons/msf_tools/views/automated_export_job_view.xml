@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="automated_export_job_search_view" model="ir.ui.view">
+            <field name="name">automated.export.job.search.view</field>
+            <field name="model">automated.export.job</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="export job requests">
+                    <filter icon="terp-document-new" string="Draft" name="draft" domain="[('state', '=', 'draft')]" help="Draft jobs" /> 
+                    <filter icon="terp-gnome-cpu-frequency-applet+" string="In progress" name="in_progress" domain="[('state', '=', 'in_progress')]" help="In progress jobs" /> 
+                    <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state', '=', 'done')]" help="Done jobs" /> 
+                    <filter icon="terp-emblem-important" string="Exception" name="exceptions" domain="[('state', '=', 'error')]" help="Jobs with error" /> 
+                    <separator orientation="vertical" />
+                    <field name="export_id" />
+                    <field name="start_time" />
+                    <field name="end_time" />
+                </search>
+            </field>
+        </record>
+
+        <record id="automated_export_job_tree_view" model="ir.ui.view">
+            <field name="name">automated.export.job.tree.view</field>
+            <field name="model">automated.export.job</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Export job reports" noteditable="True" hide_new_button="True">
+                    <field name="export_id" />
+                    <field name="start_time" />
+                    <field name="end_time" />
+                    <field name="nb_processed_records" />
+                    <field name="nb_rejected_records" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="automated_export_job_form_view" model="ir.ui.view">
+            <field name="name">automated.export.job.form.view</field>
+            <field name="model">automated.export.job</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="export job report">
+                    <field name="export_id" />
+                    <field name="start_time" />
+                    <field name="end_time" />
+                    <separator colspan="4" string="Export results" />
+                    <field name="nb_processed_records" />
+                    <field name="nb_rejected_records" />
+                    <field name="comment" colspan="4" />
+                    <separator colspan="4" string="States" />
+                    <field name="state" />
+                    <button name="process_export" type="object" states="draft" string="Process export" icon="gtk-execute" />
+                </form>
+            </field>
+        </record>
+
+        <record id="automated_export_job_file_view" model="ir.ui.view">
+            <field name="name">automated.export.job.file.view</field>
+            <field name="model">automated.export.job</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Automated export job">
+                    <separator colspan="4" string="Actions" />
+                    <button name="cancel_file_export" type="object" string="Cancel" icon="gtk-cancel" colspan="2" />
+                    <button name="process_export" type="object" string="Run job" icon="gtk-execute" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="automated_export_job_action" model="ir.actions.act_window">
+            <field name="name">Export job reports</field>
+            <field name="res_model">automated.export.job</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            id="automated_export_job_menu"
+            action="automated_export_job_action"
+            parent="automated_export_menu" />
+
+    </data>
+</openerp>

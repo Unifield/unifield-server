@@ -8,28 +8,36 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Real consumption reporting">
-                    <group colspan="4" col="6">
-                        <field name="id" invisible="1" />
-                        <separator colspan="6" string="General information" />
-                        <field name="name" readonly="1" colspan="3" />
-                        <field name="creation_date" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="2"/>
-                        <field name="cons_location_id" attrs="{'readonly': ['|', '|', ('state', '=', 'cancel'), ('id', '!=', 0), ('created_ok', '=', True)]}" context="{'no3buttons': True}" colspan="2"/>
-                        <button name="change_cons_location_id" string="Change location" icon="gtk-preferences" type="object" attrs="{'readonly': ['|', '|', ('state', '=', 'cancel'), ('id', '=', 0), ('created_ok', '=', True)]}" />
-                        <group colspan="3" col="2">
-                            <field name="picking_id" attrs="{'invisible': [('created_ok', '=', False)]}" />
-                            <button name="import_rac" colspan="2" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}"/>
-                        </group>
-                        <field name="activity_id" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
-                        <button name="export_rac" colspan="3" string="Export lines" icon="terp-mail-forward" type="object" />
-                        <field name="categ" on_change="onchange_categ(categ)" />
-                        <separator colspan="6" string="Period of consumption" />
-                        <field name="period_from" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
-                        <field name="period_to" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
-                        <group colspan="6" col="6" name="import" string="Import lines" attrs="{'invisible': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}">
-                            <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="3" />
-                            <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="3" type="object" />
-                        </group>
-                    </group>
+                    <field name="id" invisible="1" />
+                    <notebook>
+                        <page string="General">
+                            <separator colspan="4" string="General information" />
+                            <field name="name" readonly="1" />
+                            <field name="creation_date" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}"/>
+                            <group colspan="2">
+                                <field name="cons_location_id" attrs="{'readonly': ['|', '|', ('state', '=', 'cancel'), ('id', '!=', 0), ('created_ok', '=', True)]}" context="{'no3buttons': True}" colspan="2"/>
+                                <button name="change_cons_location_id" string="Change location" icon="gtk-preferences" type="object" attrs="{'readonly': ['|', '|', ('state', '=', 'cancel'), ('id', '=', 0), ('created_ok', '=', True)]}" />
+                            </group>
+                            <group colspan="2">
+                                <field name="picking_id" attrs="{'invisible': [('created_ok', '=', False)]}" />
+                                <button name="import_rac" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}"/>
+                            </group>
+                            <field name="activity_id" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}"/>
+                            <button name="export_rac" colspan="2" string="Export lines" icon="terp-mail-forward" type="object" />
+                            <field name="categ" on_change="onchange_categ(categ)" />
+                            <field name="details"/>
+                            <separator colspan="6" string="Period of consumption" />
+                            <field name="period_from" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
+                            <field name="period_to" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
+                            <group colspan="6" col="6" name="import" string="Import lines" attrs="{'invisible': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}">
+                                <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="3" />
+                                <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="3" type="object" />
+                            </group>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" nolabel="1" />
+                        </page>
+                    </notebook>
                     <separator colspan="4" string="Products" />
                     <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" type="object" 
                     confirm="Are you sure that you want to remove all lines?" invisible="1"/>
@@ -128,8 +136,10 @@
                     <group col="10" colspan="4">
                         <filter icon="terp-check" string="Closed" domain="[('created_ok','=',True)]"/>
                         <separator orientation="vertical"/>
+                        <field name="name"/>
                         <field name="cons_location_id"/>
                         <field name="activity_id"/>
+                        <field name="details"/>
                         <field name="period_from"/>
                         <field name="period_to"/>
                     </group>
@@ -374,6 +384,7 @@
             <field name="key2">client_print_multi</field>
             <field name="model">stock.picking</field>
             <field name="name">XML Export</field>
+            <field name="view_ids" ref="stock.view_picking_in_tree,stock.view_picking_in_form" />
             <field eval="'ir.actions.server,%d'%action_incoming_print_xml_export" name="value" />
             <field eval="True" name="object" />
         </record>

@@ -237,7 +237,9 @@ class res_currency(osv.osv):
                                                          ('name', '=', 'property_product_pricelist_purchase'),
                                                          ('value_reference', 'in', value_reference)], order='NO_ORDER', context=context)
             for prop in property_obj.browse(cr, uid, property_ids, fields_to_fetch=['res_id'], context=context):
-                if prop.res_id and prop.res_id._table_name == 'res.partner' and prop.res_id.active:
+                # ensure that the partner referenced in ir_property exists before checking if he is active
+                if prop.res_id and prop.res_id._table_name == 'res.partner' and hasattr(prop.res_id, 'active') and \
+                        getattr(prop.res_id, 'active') or False:
                     raise osv.except_osv(_('Currency currently used!'), _('The currency you want to %s is used '
                                                                           'in at least one active partner form.') % keyword)
 

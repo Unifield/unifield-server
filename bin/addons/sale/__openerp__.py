@@ -60,7 +60,6 @@
         'sale_view.xml',
         'sale_installer.xml',
         'report/sale_report_view.xml',
-        'sale_report.xml',
         'stock_view.xml',
         'board_sale_view.xml',
         'sale_order_allocation_report.xml',
@@ -71,6 +70,7 @@
         'report/sale_donation_stock_moves_report.xml',
         'wizard/sale_loan_stock_moves_view.xml',
         'report/sale_loan_stock_moves_report.xml',
+        'wizard/delete_sale_order_line.xml',
     ],
     'demo_xml': ['sale_demo.xml'],
     'test': [

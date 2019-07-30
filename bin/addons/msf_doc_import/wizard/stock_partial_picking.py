@@ -20,10 +20,9 @@
 ##############################################################################
 
 from lxml import etree
-import logging
 import threading
 import pooler
-from osv import fields, osv, orm
+from osv import fields, osv
 from tools.translate import _
 # import xml file
 import base64
@@ -33,21 +32,21 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 
 class incoming_import_xml_line(osv.osv_memory):
     _name = 'incoming.import.xml.line'
-    
-    
+
+
     _columns = {
         'wizard_id': fields.many2one('stock.partial.picking', string='Wizard', required=True),
         'file_line_number': fields.integer(string='File line numbers'),
         'line_number': fields.integer(string='Line number'),
         'product_id': fields.many2one('product.product', string='Product'),
         'uom_id': fields.many2one('product.uom', string='UoM'),
-        'quantity': fields.float(digits=(16,2), string='Quantity'),
+        'quantity': fields.float(digits=(16,2), string='Quantity', related_uom='uom_id'),
         'prodlot_id': fields.many2one('stock.production.lot', string='Batch'),
         'expiry_date': fields.date(string='Expiry date'),
         'line_values': fields.text(string='Line values'),
     }
-    
-    
+
+
 incoming_import_xml_line()
 
 
@@ -119,7 +118,7 @@ class stock_partial_picking(osv.osv_memory):
         'percent_completed': fields.integer('% completed', readonly=True),
         'import_in_progress': fields.boolean(string='import in progress', readonly=True),
     }
-    
+
     _defaults = {
         'import_error_ok': False,
     }
@@ -152,7 +151,7 @@ class stock_partial_picking(osv.osv_memory):
                 'filename': 'Lines_Not_Imported.xls',
                 'import_error_ok': True,}
         return vals
-        
+
 
 
     def check_file_line_integrity(self, cr, uid, ids, row, product_id, product_uom_id, prodlot_name, expired_date, file_line_num, error_list, info_list, line_with_error, context=None):
@@ -162,15 +161,15 @@ class stock_partial_picking(osv.osv_memory):
         product_obj = self.pool.get('product.product')
         prodlot_obj = self.pool.get('stock.production.lot')
         cell_data = self.pool.get('import.cell.data')
-        
+
         prodlot_id = False
-        
+
         # integrity check on product
         if not product_id:
             error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The product was not found in the database" % (file_line_num))
             line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
             return False, prodlot_id
-        
+
         product = product_obj.browse(cr, uid, product_id, context)
 
         # integrity check on uom
@@ -208,14 +207,14 @@ class stock_partial_picking(osv.osv_memory):
 
         return True, prodlot_id
 
-        
+
     def _import(self, dbname, uid, ids, fileobj=None, context=None):
         """
         Read the file line of the xls file and update the values of the wizard.
         Create an other xls file if lines are ignored.
         """
         cr = pooler.get_db(dbname).cursor()
-        
+
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
@@ -237,12 +236,12 @@ class stock_partial_picking(osv.osv_memory):
         info_list = []
         ignore_lines, complete_lines = 0, 0
         line_with_error = []
-        
+
         percent_completed = 0
         processed_lines = 0
 
         context.update({'import_in_progress': True})
-        
+
         wizard_lines = False
         file_to_import = False
         for obj in self.browse(cr, uid, ids, context):
@@ -267,7 +266,7 @@ class stock_partial_picking(osv.osv_memory):
         rows.next()
 
         file_line_num = 1
-        
+
         line_numbers = []
 
         # reset the osv_memory before each import
@@ -308,14 +307,14 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
             product_qty = cell_data.get_product_qty(cr, uid, ids, row, qty_cell, error_list, file_line_num, context)
 
             integrity, prodlot_id = self.check_file_line_integrity(cr, uid, ids, row, product_id, uom_id, prodlot_name, expired_date, file_line_num, error_list, info_list, line_with_error)
-            
+
             if not integrity:
                 ignore_lines += 1
                 continue
-                
+
             if line_number not in line_numbers:
                 line_numbers.append(line_number)
-            
+
             # Create an osv.memory object for each file lines
             import_obj.create(cr, uid, {'wizard_id': obj.id,
                                         'file_line_number': file_line_num,
@@ -326,18 +325,18 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                         'prodlot_id': prodlot_id,
                                         'expiry_date': expired_date,
                                         'line_values': line_values}, context=context)
-        
+
         for ln in line_numbers:
             move_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
                                                  ('line_number', '=', ln)],
-                                                order='ordered_quantity desc',
-                                                context=context)
-            
+                                       order='ordered_quantity desc',
+                                       context=context)
+
             line_ids = import_obj.search(cr, uid, [('wizard_id', '=', obj.id),
                                                    ('line_number', '=', ln)],
-                                                  order='quantity desc',
-                                                  context=context)
-            
+                                         order='quantity desc',
+                                         context=context)
+
             '''
             4 cases :
                 1/ No move corresponding to the line number
@@ -359,7 +358,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : No matching line found with in the Incoming shipment for the line number %s.") % (l.file_line_number, l.line_number))
                     line_with_error.append(list(l.line_values))
                     ignore_lines += 1
-                    
+
             # 2/ The number of moves is equal to the number of lines
             elif nb_moves == nb_lines:
                 '''
@@ -373,12 +372,12 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                                           ('id', 'not in', already_treated),
                                                           ('product_id', '=', l.product_id.id),
                                                           ('product_uom', '=', l.uom_id.id)], context=context)
-                    
+
                     # Treat after if no move matches with the line values
                     if not match_ids:
                         remaining_lines.append(l.id)
                         continue
-                    
+
                     processed_lines += 1
                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                     self.write(cr, uid, ids, {'percent_completed':percent_completed}, context=context)
@@ -392,13 +391,13 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         if abs(m.ordered_quantity - l.quantity) < diff_qty:
                             best_move = m.id
                             diff_qty = abs(m.ordered_quantity - l.quantity)
-                            
+
                     move_obj.write(cr, uid, [best_move], {'quantity': l.quantity,
                                                           'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
                                                           'expiry_date': l.expiry_date}, context=context)
                     complete_lines += 1
                     already_treated.append(best_move)
-                    
+
                 # Treat the remaining lines
                 for l in import_obj.browse(cr, uid, remaining_lines, context=context):
                     processed_lines += 1
@@ -411,7 +410,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             continue
                         else:
                             ok = True
-                            
+
                             if m.product_id.id != l.product_id.id:
                                 # Call the change product wizard
                                 wizard_values = move_obj.change_product(cr, uid, m.id, context)
@@ -419,10 +418,10 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                 self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': l.product_id.id}, context=wiz_context)
                                 self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
                                 info_list.append(_("Line %s of the Excel file: The product did not match with the existing product of the line, so we change the [%s] %s to [%s] %s.") % (l.file_line_number, m.product_id.default_code, m.product_id.name, l.product_id.default_code, l.product_id.name))
-                                
+
                             if m.product_uom.id != l.uom_id.id:
                                 info_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line, so we change the UoM from %s to %s.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
-                                
+
                             move_obj.write(cr, uid, [m.id], {'product_uom': l.uom_id.id,
                                                              'quantity': l.quantity,
                                                              'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
@@ -430,12 +429,12 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             complete_lines += 1
                             already_treated.append(m.id)
                             break
-                            
+
                     if not ok:
                         error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : A line was found in the Incoming shipment but the UoM of the Excel line (%s) is not compatible with UoM (%s) of the incoming shipment line.") % (l.file_line_number, l.uom_id.name, m.product_uom.name))
                         line_with_error.append(list(l.line_values))
                         ignore_lines += 1
-                    
+
             # 3/ The number of moves is smallest than the number of lines
             elif nb_moves < nb_lines:
                 '''
@@ -447,7 +446,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 for m in move_obj.browse(cr, uid, move_ids, context=context):
                     if m.product_id.id not in multi_product:
                         multi_product.append(m.product_id.id)
-                        
+
                 # Treat after the lines which not match directly
                 remaining_lines = []
                 already_treated = []
@@ -461,11 +460,11 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     if not match_ids:
                         remaining_lines.append(l.id)
                         continue
-                    
+
                     processed_lines += 1
                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                     self.write(cr, uid, ids, {'percent_completed':percent_completed}, context=context)
-                    
+
                     # Search the best move to fill
                     diff_qty = False
                     best_move = False
@@ -476,32 +475,32 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         if abs(m.ordered_quantity - l.quantity) < diff_qty:
                             best_move = m.id
                             diff_qty = abs(m.ordered_quantity - l.quantity)
-                            
+
                     move_obj.write(cr, uid, [best_move], {'quantity': l.quantity,
                                                           'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
                                                           'expiry_date': l.expiry_date}, context=context)
                     complete_lines += 1
                     already_treated.append(best_move)
-                    
+
                 for l in import_obj.browse(cr, uid, remaining_lines, context=context):
                     processed_lines += 1
                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                     self.write(cr, uid, ids, {'percent_completed':percent_completed}, context=context)
-                    
+
                     # If the moves have more than one product and the line has another product, return an error
                     if len(multi_product) > 1 and l.product_id.id not in multi_product:
                         error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : The system cannot found a line matching with the line number %s, the product [%s] %s and the UoM %s.") % (l.file_line_number, l.line_number, l.product_id.default_code, l.product_id.name, l.uom_id.name))
                         line_with_error.append(list(l.line_values))
                         ignore_lines += 1
                         continue
-                        
+
                     # Search moves which can be split
                     match_ids = move_obj.search(cr, uid, [('id', 'in', move_ids),
                                                           ('ordered_quantity', '>=', l.quantity),], order='ordered_quantity desc', context=context)
-                    
+
                     if not match_ids:
                         match_ids = move_obj.search(cr, uid, [('id', 'in', already_treated)], order='ordered_quantity desc', context=context)
-                    
+
                     ok = False
                     for m in move_obj.browse(cr, uid, match_ids, context=context):
                         # Split the move only if UoMs are compatible and if the quantity ordered is bigger than the line quantity
@@ -518,9 +517,9 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                 self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
                                 info_list.append(_("Line %s of the Excel file produced a split for the line %s.") % (l.file_line_number, ln))
                                 new_move_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
-                                                                        ('id', 'not in', already_treated),
-                                                                        ('id', 'not in', move_ids),
-                                                                        ('line_number', '=', ln)], order='id desc', context=context)
+                                                                         ('id', 'not in', already_treated),
+                                                                         ('id', 'not in', move_ids),
+                                                                         ('line_number', '=', ln)], order='id desc', context=context)
                                 new_move_id = new_move_ids[0]
                                 move_ids.append(new_move_id)
                                 move_obj.write(cr, uid, [new_move_id], {'product_uom': l.uom_id.id,
@@ -542,10 +541,10 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                 self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': l.product_id.id}, context=wiz_context)
                                 self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
                                 info_list.append(_("Line %s of the Excel file: The product did not match with the existing product of the line, so we change the [%s] %s to [%s] %s.") % (l.file_line_number, m.product_id.default_code, m.product_id.name, l.product_id.default_code, l.product_id.name))
-                                
+
                             if m.product_uom.id != l.uom_id.id:
                                 info_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line, so we change the UoM from %s to %s.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
-                                
+
                             complete_lines += 1
                             break
                         # Don't split the move if the quantity ordered is equal to the quantity of the line and the move quantity is not filled
@@ -562,21 +561,21 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                 self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': l.product_id.id}, context=wiz_context)
                                 self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
                                 info_list.append(_("Line %s of the Excel file: The product did not match with the existing product of the line, so we change the [%s] %s to [%s] %s.") % (l.file_line_number, m.product_id.default_code, m.product_id.name, l.product_id.default_code, l.product_id.name))
-                                
+
                             if m.product_uom.id != l.uom_id.id:
                                 info_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line, so we change the UoM from %s to %s.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
-                                
+
                             complete_lines += 1
                             break
-                        
+
                     if not ok:
                         postponed_lines.append(l)
-                
+
                 for l in postponed_lines:
                     # Search moves which can be split
                     match_ids = move_obj.search(cr, uid, [('id', 'in', move_ids),
                                                           ('ordered_quantity', '>', 1), ('quantity', '=', 0.00)], order='ordered_quantity desc', context=context)
-                    
+
                     ok = False
                     for m in move_obj.browse(cr, uid, match_ids, context=context):
                         if m.product_uom.category_id.id == l.uom_id.category_id.id:
@@ -592,17 +591,17 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                 self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': l.product_id.id}, context=wiz_context)
                                 self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
                                 info_list.append(_("Line %s of the Excel file: The product did not match with the existing product of the line, so we change the [%s] %s to [%s] %s.") % (l.file_line_number, m.product_id.default_code, m.product_id.name, l.product_id.default_code, l.product_id.name))
-                                
+
                             if m.product_uom.id != l.uom_id.id:
                                 info_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line, so we change the UoM from %s to %s.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
-                                
+
                             complete_lines += 1
                             break
-                        
+
                     if not match_ids:
                         match_ids = move_obj.search(cr, uid, [('id', 'in', move_ids),
                                                               ('ordered_quantity', '>', 1)], order='ordered_quantity desc', context=context)
-                    
+
                         for m in move_obj.browse(cr, uid, match_ids, context=context):
                             # Split the move only if UoMs are compatible and if the quantity ordered is bigger than the line quantity
                             # or a quantity is already filled on this move
@@ -618,9 +617,9 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                     self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
                                     info_list.append(_("Line %s of the Excel file produced a split for the line %s.") % (l.file_line_number, ln))
                                     new_move_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
-                                                                            ('id', 'not in', already_treated),
-                                                                            ('id', 'not in', move_ids),
-                                                                            ('line_number', '=', ln)], order='id desc', context=context)
+                                                                             ('id', 'not in', already_treated),
+                                                                             ('id', 'not in', move_ids),
+                                                                             ('line_number', '=', ln)], order='id desc', context=context)
                                     new_move_id = new_move_ids[0]
                                     move_ids.append(new_move_id)
                                     move_obj.write(cr, uid, [new_move_id], {'product_uom': l.uom_id.id,
@@ -642,18 +641,18 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                     self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': l.product_id.id}, context=wiz_context)
                                     self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
                                     info_list.append(_("Line %s of the Excel file: The product did not match with the existing product of the line, so we change the [%s] %s to [%s] %s.") % (l.file_line_number, m.product_id.default_code, m.product_id.name, l.product_id.default_code, l.product_id.name))
-                                    
+
                                 if m.product_uom.id != l.uom_id.id:
                                     info_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line, so we change the UoM from %s to %s.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
-                                    
+
                                 complete_lines += 1
                                 break
-                        
+
                     if not ok:
                         error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : A line was found in the Incoming shipment but the quantity of the Excel line (%s %s) exceeds the quantity of the incoming shipment line that the system is able to split.") % (l.file_line_number, l.quantity, l.uom_id.name))
                         line_with_error.append(list(l.line_values))
                         ignore_lines += 1
-                        
+
             # 4/ The number of moves is biggest than the number of lines
             elif nb_moves > nb_lines:
                 '''
@@ -672,7 +671,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     if not match_ids:
                         remaining_lines.append(l.id)
                         continue
-                    
+
                     processed_lines += 1
                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                     self.write(cr, uid, ids, {'percent_completed':percent_completed}, context=context)
@@ -685,7 +684,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                                                      'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
                                                                      'expiry_date': l.expiry_date}, context=context)
                             break
-                        
+
                         # Search the best move
                         diff_qty = False
                         best_move = False
@@ -696,17 +695,17 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             if abs(m.ordered_quantity - l.quantity) < diff_qty:
                                 best_move = m
                                 diff_qty = abs(m.ordered_quantity - l.quantity)
-                                
+
                         move_obj.write(cr, uid, [best_move.id], {'quantity': min(best_move.ordered_quantity, remaining_qty),
                                                                  'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
                                                                  'expiry_date': l.expiry_date}, context=context)
                         remaining_qty -= min(best_move.ordered_quantity, remaining_qty)
                         last_move = best_move
                         match_ids.remove(best_move.id)
-                        
+
                     complete_lines += 1
                     already_treated.append(best_move)
-                    
+
                 for l in import_obj.browse(cr, uid, remaining_lines, context=context):
                     processed_lines += 1
                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
@@ -717,7 +716,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             continue
                         else:
                             ok = True
-                            
+
                             if m.product_id.id != l.product_id.id:
                                 # Call the change product wizard
                                 wizard_values = move_obj.change_product(cr, uid, m.id, context)
@@ -725,10 +724,10 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                 self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': l.product_id.id}, context=wiz_context)
                                 self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
                                 info_list.append(_("Line %s of the Excel file: The product did not match with the existing product of the line, so we change the [%s] %s to [%s] %s.") % (l.file_line_number, m.product_id.default_code, m.product_id.name, l.product_id.default_code, l.product_id.name))
-                                
+
                             if m.product_uom.id != l.uom_id.id:
                                 info_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line, so we change the UoM from %s to %s.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
-                                
+
                             move_obj.write(cr, uid, [m.id], {'product_uom': l.uom_id.id,
                                                              'quantity': l.quantity,
                                                              'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
@@ -736,7 +735,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             complete_lines += 1
                             already_treated.append(m.id)
                             break
-                            
+
                     if not ok:
                         error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : A line was found in the Incoming shipment but the UoM of the Excel line (%s) is not compatible with UoM (%s) of the incoming shipment line.") % (l.file_line_number, l.uom_id.name, m.product_uom.name))
                         line_with_error.append(list(l.line_values))
@@ -786,12 +785,12 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
         # Error if no line in wizard
         if not wizard_lines:
             raise osv.except_osv(_('Error'), _('No line to process.'))
-        
+
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(file_to_import))
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
         Otherwise, you can continue to use Unifield.""")
         self.write(cr, uid, ids, {'import_in_progress': True, 'message': msg_to_return}, context=context)
-        
+
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, fileobj, context))
         thread.start()
         # the windows must be updated to display the message
@@ -839,7 +838,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
         if not picking_ids:
             # not called through an action (e.g. buildbot), return the default.
             return result
-        
+
         picking_type = context.get('picking_type')
         if view_type == 'form':
             if picking_type == 'incoming_shipment':

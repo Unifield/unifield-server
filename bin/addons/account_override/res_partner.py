@@ -34,17 +34,17 @@ class res_partner(osv.osv):
 
     _columns = {
         'donation_payable_account': fields.many2one('account.account', "Donation Payable Account",
-            domain=ACCOUNT_RESTRICTED_AREA['partner_donation']),
+                                                    domain=ACCOUNT_RESTRICTED_AREA['partner_donation']),
     }
 
     def _is_linked_to_any_posted_accounting_entry(self, cr, uid, partner_id,
-        context=None):
+                                                  context=None):
         res = False
         sql = "select ml.id from account_move_line ml" \
             " left join account_move m on m.id=ml.move_id" \
-            " where m.state='posted' and ml.partner_id=%d limit 1" % (partner_id, )
+            " where m.state='posted' and ml.partner_id=%s limit 1"
 
-        cr.execute(sql)
+        cr.execute(sql, (partner_id,))
         res = cr.fetchone()
         return res and res[0] > 0 or False
 
@@ -53,7 +53,7 @@ class res_partner(osv.osv):
             return True
         if 'name' in vals:
             current_name_recs = self.read(cr, uid, ids, ['name'],
-                context=context)
+                                          context=context)
             new_name = vals.get('name', False)
             for r in current_name_recs:
                 #US-1350: convert both into the same format before comparing them
@@ -61,13 +61,13 @@ class res_partner(osv.osv):
                     # check if partner is linked to a posted entry
                     # if the case forbid its name modification
                     if self._is_linked_to_any_posted_accounting_entry(cr, uid,
-                        r['id'], context=context):
+                                                                      r['id'], context=context):
                         raise osv.except_osv(_('Error'),
-                            _('You can not rename a partner linked to posted' \
-                                ' accounting entries'))
+                                             _('You can not rename a partner linked to posted' \
+                                               ' accounting entries'))
 
         return super(res_partner, self).write(cr, uid, ids, vals,
-            context=context)
+                                              context=context)
 
 
 res_partner()

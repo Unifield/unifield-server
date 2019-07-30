@@ -50,11 +50,11 @@ class sale_order_line(osv.osv):
         for sol in self.browse(cr, uid, ids, context=context):
             if sol.product_id:
                 if sol.product_id.kc_txt:
-                    result[sol.id] += sol.product_id.is_kc and 'KC' or 'KC ?'
+                    result[sol.id] += sol.product_id.is_kc and _('KC') or '%s ?' % _('KC')
                 if sol.product_id.dg_txt:
                     if result[sol.id]:
                         result[sol.id] += ' / '
-                    result[sol.id] += sol.product_id.is_dg and 'DG' or 'DG ?'
+                    result[sol.id] += sol.product_id.is_dg and _('DG') or '%s ?' % _('DG')
 
         return result
 
@@ -141,39 +141,16 @@ class purchase_order_line(osv.osv):
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.product_id:
                 if pol.product_id.kc_txt:
-                    result[pol.id] += pol.product_id.is_kc and 'KC' or 'KC ?'
+                    result[pol.id] += pol.product_id.is_kc and _('KC') or '%s ?' % _('KC')
                 if pol.product_id.dg_txt:
                     if result[pol.id]:
                         result[pol.id] += ' / '
-                    result[pol.id] += pol.product_id.is_dg and 'DG' or 'DG ?'
+                    result[pol.id] += pol.product_id.is_dg and _('DG') or '%s ?' % _('DG')
 
         return result
 
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),}
 
-    def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
-                             partner_id, date_order=False, fiscal_position=False, date_planned=False,
-                             name=False, price_unit=False, notes=False, state=False, old_price_unit=0.00, nomen_manda_0=False,
-                             comment='', context=None):
-        '''
-        if the product is short shelf life we display a warning
-        '''
-        # call to super
-        result = super(purchase_order_line, self).product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
-                                                                       partner_id, date_order, fiscal_position, date_planned,
-                                                                       name, price_unit, notes, state, old_price_unit, nomen_manda_0, comment, context)
-
-        # if the product is short shelf life, display a warning
-        if product:
-            prod_obj = self.pool.get('product.product')
-            if prod_obj.browse(cr, uid, product).is_ssl:
-                warning = {
-                    'title': 'Short Shelf Life product',
-                    'message': _(SHORT_SHELF_LIFE_MESS)
-                }
-                result.update(warning=warning)
-
-        return result
 
 purchase_order_line()
 
@@ -508,7 +485,6 @@ class product_uom(osv.osv):
 
     def _search_uom_by_parent(self, cr, uid, obj, name, args, context=None):
         dom = []
-
         for arg in args:
             if arg[0] == 'uom_by_parent' and arg[1] != '=':
                 raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
@@ -522,11 +498,28 @@ class product_uom(osv.osv):
 
         return dom
 
+    def _search_uom_by_stock_product(self, cr, uid, obj, name, args, context=None):
+        dom = []
+
+        for arg in args:
+            if arg[0] == 'uom_by_stock_product' and arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
+            elif arg[0] == 'uom_by_stock_product':
+                product_id = arg[2]
+                if product_id and isinstance(product_id, (int, long)):
+                    product_id = [product_id]
+                    if product_id:
+                        product = self.pool.get('product.product').read(cr, uid, product_id[0], ['uom_id'], context=context)
+                        if product['uom_id']:
+                            dom = [('id', '=', product['uom_id'][0])]
+        return dom
     _columns = {
         'uom_by_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_product, string='UoM by Product',
                                           method=True, help='Field used to filter the UoM for a specific product'),
         'uom_by_parent': fields.function(_get_uom_by_parent, fnct_search=_search_uom_by_parent, string='UoM by Parent',
                                          method=True, help='Field used to filter the UoM for a specific product'),
+        'uom_by_stock_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_stock_product, string='Stock UoM by Product',
+                                                method=True, help='Field used to filter the UoM for a specific product'),
     }
 
 product_uom()
@@ -667,11 +660,11 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_id:
                 if move.product_id.kc_txt:
-                    result[move.id] += move.product_id.is_kc and 'KC' or 'KC ?'
+                    result[move.id] += move.product_id.is_kc and _('KC') or '%s ?'%_('KC')
                 if move.product_id.dg_txt:
                     if result[move.id]:
                         result[move.id] += ' / '
-                    result[move.id] += move.product_id.is_dg and 'DG' or 'DG ?'
+                    result[move.id] += move.product_id.is_dg and _('DG') or '%s ?'%_('DG')
 
         return result
 
@@ -1107,7 +1100,7 @@ class stock_production_lot(osv.osv):
                     stock_report_prodlots_virtual
                 where
                     location_id IN %s group by prodlot_id
-                having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))
+                having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))  # not_a_user_entry
             res = cr.fetchall()
             ids = [('id', 'in', map(lambda x: x[0], res))]
         return ids
@@ -1280,8 +1273,22 @@ class stock_production_lot(osv.osv):
 
         return res
 
+    def _get_has_stock_move(self, cr, uid, ids, field_name, arg, context=None):
+        if isinstance(ids,(long, int)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        res = {}
+        for _id in ids:
+            res[_id] = self.pool.get('stock.move').search(cr, uid, [('prodlot_id', '=', _id)], limit=1, context=context) and True or False
+
+        return res
+
+
     _columns = {
         'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
+        'has_stock_move': fields.function(_get_has_stock_move, string='Has stock move', type="boolean", readonly=True, method=True),
         # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
         'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type", readonly=True),
         #'expiry_date': fields.date('Expiry Date'),
@@ -1291,10 +1298,10 @@ class stock_production_lot(osv.osv):
         'stock_virtual': fields.function(_get_stock_virtual, method=True, type="float", string="Available Stock", select=True,
                                          help="Current available quantity of products with this Batch Numbre Number in company warehouses",
                                          digits_compute=dp.get_precision('Product UoM'), readonly=True,
-                                         fnct_search=_stock_search_virtual,),
+                                         fnct_search=_stock_search_virtual, related_uom='uom_id'),
         'stock_available': fields.function(_get_stock, fnct_search=_stock_search, method=True, type="float", string="Real Stock", select=True,
                                            help="Current real quantity of products with this Batch Number in company warehouses",
-                                           digits_compute=dp.get_precision('Product UoM')),
+                                           digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'src_product_id': fields.function(_get_dummy, fnct_search=_src_product, method=True, type="boolean", string="By product"),
         'kc_check': fields.function(
             _get_checks_all,
@@ -1458,7 +1465,7 @@ class stock_location(osv.osv):
             for f in field_names:
                 result[id].update({f: False,})
         # if product is set to False, it does not make sense to return a stock value, return False for each location
-        if 'product_id' in context and not context['product_id']:
+        if not context.get('product_id'):
             return result
 
         result = super(stock_location, self)._product_value(cr, uid, ids, ['stock_real', 'stock_virtual'], arg, context=context)
@@ -1475,12 +1482,16 @@ class stock_location(osv.osv):
         if context is None:
             context = {}
         # warehouse wizards or inventory screen
-        if view_type == 'tree' and context.get('specific_rules_tree_view', False):
-            view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_location_tree2')
+        if not view_id and view_type == 'tree':
+            view = False
+            if context.get('specific_rules_tree_view', False) and context.get('product_id'):
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_location_tree_specific_rule')
+            elif not context.get('product_id'):
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_location_tree_simple')
             if view:
                 view_id = view[1]
-        result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        return result
+
+        return super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
     _columns = {'stock_real_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Real Stock', multi="get_vals_specific_rules"),
                 'stock_virtual_specific': fields.function(_product_value_specific_rules, method=True, type='float', string='Virtual Stock', multi="get_vals_specific_rules"),
@@ -1614,7 +1625,7 @@ class stock_inventory(osv.osv):
                 l.inventory_id in %%s
             GROUP BY l.product_id, l.location_id, l.%s, l.expiry_date
             HAVING count(l.id) > 1
-            ORDER BY count(l.id) DESC""" % (
+            ORDER BY count(l.id) DESC""" % (  # not_a_user_entry
             self._name.replace('.', '_'),
             self._name == 'stock.inventory' and 'prod_lot_id' or 'prodlot_name',
         )
@@ -1727,6 +1738,17 @@ Expiry date. Only one line with same data is expected."""))
                 self._name == 'initial.stock.inventory' and 'Initial stock' or 'Physical',
                 inv['id'], inv['name'],
             ))
+
+        if self._name == 'initial.stock.inventory':
+            line_obj = self.pool.get('initial.stock.inventory.line')
+        else:
+            line_obj = self.pool.get('stock.inventory.line')
+
+        line_inactive = line_obj.search(cr, uid, [('inventory_id', 'in', ids), ('location_id.active', '=', False)], context=context)
+        if line_inactive:
+            line_obj.write(cr, uid, line_inactive, {'comment': _('Location is inactive'), 'location_id': False, 'location_not_found': True}, context=context)
+            # should be done in 2 passes
+            line_obj.write(cr, uid, line_inactive, {'to_correct_ok': True}, context=context)
 
         return res
 
@@ -2246,7 +2268,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
         THEN
         coalesce(sum(-m.product_qty)::decimal, 0.0)
         ELSE
-        coalesce(sum(-m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty
+        coalesce(sum(-m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty,
+        pt.uom_id as uom_id
     FROM
         stock_move m
             LEFT JOIN stock_picking p ON (m.picking_id=p.id)
@@ -2255,6 +2278,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
                 LEFT JOIN product_uom pu ON (pt.uom_id=pu.id)
             LEFT JOIN product_uom u ON (m.product_uom=u.id)
             LEFT JOIN stock_location l ON (m.location_id=l.id)
+    WHERE
+        pt.type='product'
     GROUP BY
         m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id,  m.location_dest_id,
         m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id,pt.uom_id
@@ -2275,7 +2300,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
         THEN
         coalesce(sum(m.product_qty)::decimal, 0.0)
         ELSE
-        coalesce(sum(m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty
+        coalesce(sum(m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty,
+        pt.uom_id as uom_id
     FROM
         stock_move m
             LEFT JOIN stock_picking p ON (m.picking_id=p.id)
@@ -2284,6 +2310,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
                 LEFT JOIN product_uom pu ON (pt.uom_id=pu.id)
             LEFT JOIN product_uom u ON (m.product_uom=u.id)
             LEFT JOIN stock_location l ON (m.location_dest_id=l.id)
+    WHERE
+        pt.type='product'
     GROUP BY
         m.id, m.product_id, m.product_uom, pt.categ_id, m.address_id, m.location_id, m.location_dest_id,
         m.prodlot_id, m.expired_date, m.date, m.state, l.usage, m.company_id,pt.uom_id

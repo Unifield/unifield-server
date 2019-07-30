@@ -24,7 +24,7 @@
     "author" : "OpenERP",
     "developer": "Max Mumford",
     "category" : "Generic Modules/Others",
-    "depends" : [],
+    "depends" : ['base'],
     "description": """Provides functionality to define access rights  
     for buttons in views based and the actions and workflows they trigger
     """,
@@ -39,6 +39,6 @@
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -29,7 +29,7 @@ class hr_job(osv.osv):
     _description = 'MSF Employee job from Homère'
 
     _columns = {
-        'code': fields.char(string='Job code', size=6, readonly=True, required=False),
+        'code': fields.char(string='Job code', size=16, readonly=True, required=False),
     }
 
 hr_job()

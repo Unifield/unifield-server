@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="view_reserved_products_search" model="ir.ui.view">
+            <field name="name">stock.move.reserved.products.search</field>
+            <field name="model">stock.reserved.products</field>
+            <field name="type">search</field>
+            <field eval="100" name="priority"/>
+            <field name="arch" type="xml">
+                <search string="Reserved Products">
+                    <group col="4" colspan="2">
+                        <field name="location_id" colspan="2" />
+                        <field name="product_id" colspan="2" />
+                    </group>
+                    <newline />
+                    <filter string="Location" name="group_by_location_id" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'location_id'}" />
+                </search>
+            </field>
+        </record>
+
+        <record id="view_reserved_products_tree" model="ir.ui.view">
+            <field name="name">stock.move.reserved.products.tree</field>
+            <field name="model">stock.reserved.products</field>
+            <field name="type">tree</field>
+            <field eval="101" name="priority"/>
+            <field name="arch" type="xml">
+                <tree string="Moves" noteditable="1" hide_new_button="1" hide_delete_button="1">
+                    <field name="location_id" invisible="1" not_sortable="1"/>
+                    <field name="product_code" not_sortable="1"/>
+                    <field name="uom_id" invisible="1"/>
+                    <field name="prodlot_id" not_sortable="1"/>
+                    <field name="picking_id" not_sortable="1"/>
+                    <field name="product_qty" string="Reserved Qty" not_sortable="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="stock.reserved_products_action" model="ir.actions.act_window">
+            <field name="name">Reserved Products</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">stock.reserved.products</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_reserved_products_search" />
+            <field name="view_id" ref="view_reserved_products_tree" />
+            <field name="domain">[]</field>
+            <field name="context">{'search_default_group_by_location_id': 1, 'with_expiry': True}</field>
+        </record>
+
+        <act_window id="wizard_reserved_products_export"
+            name="Export Reserved Products Report"
+            res_model="reserved.products.wizard"
+            src_model="stock.reserved.products"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="wizard_reserved_products_form_view"
+            empty_ids="1"
+        />
+
+
+    </data>
+</openerp>

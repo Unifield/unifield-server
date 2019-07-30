@@ -3,7 +3,6 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from tools.safe_eval import safe_eval
 
 class search_values(osv.osv_memory):
     _name ="object.query.wizard.values"
@@ -81,7 +80,7 @@ class search_values(osv.osv_memory):
                     values['%s'%v.field_id.id] = v.value1
         return values
 
-    def fields_get(self, cr, uid, fields=None, context=None):
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
         if context is None:
             context = {}
         if not context.get('query_id'):

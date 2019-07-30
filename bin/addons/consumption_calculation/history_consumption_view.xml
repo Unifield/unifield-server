@@ -24,6 +24,7 @@
 			<separator colspan="2" string="Consumption parameters" />
                 <field name="consumption_type" required="True" attrs="{'readonly': [('status', '!=', 'draft')]}" />
                 <field name="location_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'required': [('consumption_type', '=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
+                <field name="location_dest_id" attrs="{'invisible': [('consumption_type', '!=', 'rac')], 'readonly': [('status', '!=', 'draft')]}" />
 			<separator colspan="2" string="Product parameters" />
             <field name="sublist_id" attrs="{'readonly': ['|', ('nomen_manda_0', '!=', False), ('status', '!=', 'draft')]}" />
             <group colspan="2" col="4">
@@ -121,6 +122,7 @@
                 <field name="date_to" />
                 <field name="consumption_type" />
                 <field name="location_id" />
+                <field name="location_dest_id" />
                 <field name="sublist_id" />
                 <field name="nomen_manda_0" />
                 <field name="nomen_manda_1" />

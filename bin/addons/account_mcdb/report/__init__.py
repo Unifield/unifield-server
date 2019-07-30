@@ -24,4 +24,5 @@
 import mcdb_result
 import account_mcdb_export
 import report_account_mcdb
+import combined_journals_report
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

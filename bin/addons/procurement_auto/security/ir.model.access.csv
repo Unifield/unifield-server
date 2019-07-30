@@ -1,4 +1,4 @@
 "id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
 "access_stock_warehouse_automatic_supply_all","stock.warehouse.automatic.supply all","model_stock_warehouse_automatic_supply",,1,1,1,1
 "access_stock_warehouse_automatic_supply_line_all","stock.warehouse.automatic.supply.line all","model_stock_warehouse_automatic_supply_line",,1,1,1,1
-"access_stock_frequence_all","stock.frequence all","model_stock_frequence",,1,1,1,1
+"access_stock_frequence_all","stock.frequence all1","model_stock_frequence",,1,1,1,1

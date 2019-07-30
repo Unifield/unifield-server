@@ -43,17 +43,17 @@ class stock_production_lot(osv.osv):
                 duration = getattr(product, dtype)
                 # set date to False when no expiry time specified on the product
                 date = duration and (datetime.datetime.today()
-                    + datetime.timedelta(days=duration))
+                                     + datetime.timedelta(days=duration))
             return date and date.strftime('%Y-%m-%d %H:%M:%S') or False
         return calc_date
 
     _columns = {
         'life_date': fields.datetime('End of Life Date',
-            help='The date on which the lot may become dangerous and should not be consumed.'),
+                                     help='The date on which the lot may become dangerous and should not be consumed.'),
         'use_date': fields.datetime('Best before Date',
-            help='The date on which the lot starts deteriorating without becoming dangerous.'),
+                                    help='The date on which the lot starts deteriorating without becoming dangerous.'),
         'removal_date': fields.datetime('Removal Date',
-            help='The date on which the lot should be removed.'),
+                                        help='The date on which the lot should be removed.'),
         'alert_date': fields.datetime('Alert Date', help="The date on which an alert should be notified about the production lot."),
     }
     # Assign dates according to products data
@@ -117,33 +117,33 @@ class stock_production_lot(osv.osv):
         # Reset the constraint just in case the previous update has changed again to the original
         cr.execute('''ALTER TABLE stock_production_lot DROP CONSTRAINT stock_production_lot_batch_name_uniq,
                 ADD CONSTRAINT stock_production_lot_batch_name_uniq UNIQUE (name, product_id, life_date);''')
-        
+
         list_table_fields = [
-                             ('stock_move', 'prodlot_id'),
-                             ]
+            ('stock_move', 'prodlot_id'),
+        ]
         for element in list_table_fields:
             self.us_1469_restore_deleted_batch_for_table(cr, uid, element[0], element[1], 'expired_date')
 
 
         list_table_fields = [
-                             ('create_picking_move_processor', 'prodlot_id'),
-                             ('export_report_stock_inventory', 'prodlot_id'),
-                             ('export_report_stock_move', 'prodlot_id'),
-                             ('internal_move_processor', 'prodlot_id'),
-                             ('outgoing_delivery_move_processor', 'prodlot_id'),
-                             ('ppl_move_processor', 'prodlot_id'),
-                             ('real_average_consumption_line', 'prodlot_id'),
-                             ('return_ppl_move_processor', 'prodlot_id'),
-                             ('stock_move_in_processor', 'prodlot_id'),
-                             ('stock_move_processor', 'prodlot_id'),
-                             ('unconsistent_stock_report_line', 'prodlot_id'),
-                             ('validate_move_processor', 'prodlot_id'),
-                             ('stock_inventory_line', 'prod_lot_id'),
-                             ('initial_stock_inventory_line', 'prod_lot_id'),
-                             ]
+            ('create_picking_move_processor', 'prodlot_id'),
+            ('export_report_stock_inventory', 'prodlot_id'),
+            ('export_report_stock_move', 'prodlot_id'),
+            ('internal_move_processor', 'prodlot_id'),
+            ('outgoing_delivery_move_processor', 'prodlot_id'),
+            ('ppl_move_processor', 'prodlot_id'),
+            ('real_average_consumption_line', 'prodlot_id'),
+            ('return_ppl_move_processor', 'prodlot_id'),
+            ('stock_move_in_processor', 'prodlot_id'),
+            ('stock_move_processor', 'prodlot_id'),
+            ('unconsistent_stock_report_line', 'prodlot_id'),
+            ('validate_move_processor', 'prodlot_id'),
+            ('stock_inventory_line', 'prod_lot_id'),
+            ('initial_stock_inventory_line', 'prod_lot_id'),
+        ]
         for element in list_table_fields:
             self.us_1469_restore_deleted_batch_for_table(cr, uid, element[0], element[1], 'expiry_date')
-            
+
         self._logger.info("______________________Finish the migration task on duplicate batch objects for instance: %s\n\n", cr.dbname)
         return True
 
@@ -152,17 +152,16 @@ class stock_production_lot(osv.osv):
         # 1. Table stock_move
         sql_x = 'select lot.name, move.product_id, move.' + field_expiry_name + ' as life_date from ' + table_name + ' move, stock_production_lot lot, product_product prod where move.'
         sql_x = sql_x + field_id + ' = lot.id and move.product_id != lot.product_id  and move.product_id = prod.id and '
-        sql_x = sql_x + ' (prod.batch_management = \'t\' OR prod.perishable = \'t\') group by lot.name, move.product_id, move.' + field_expiry_name +'  order by lot.name;'
-        
+        sql_x = sql_x + ' (prod.batch_management = \'t\' OR prod.perishable = \'t\') group by lot.name, move.product_id, move.' + field_expiry_name +'  order by lot.name;'  # not_a_user_entry
+
         cr.execute(sql_x)
-        
+
         list_bn_prod = cr.dictfetchall()
         if len(list_bn_prod) == 0:
             self._logger.info("__________NOTHING to process for this table: %s! \n" % (table_name))
             return
         else:
             self._logger.info("__________Start to restore missing batch objects in table: %s _____ - for %s batches! \n %s" % (table_name, len(list_bn_prod), list_bn_prod))
-        context = {}
 
         lot_obj = self.pool.get('stock.production.lot')
         prod_obj = self.pool.get('product.product')
@@ -171,17 +170,17 @@ class stock_production_lot(osv.osv):
             batch_name = bn_prod.get('name')
             prod_id = bn_prod.get('product_id')
             life_date = bn_prod.get('life_date')
-            
+
             self._logger.info("___Start to process the batch::::::: %s" % (batch_name))
-            
-            # 2. Search if this missing batch has been created in the mean time          
+
+            # 2. Search if this missing batch has been created in the mean time
             batch_id = lot_obj.search(cr, uid, [('name', '=', batch_name), ('product_id', '=', prod_id), ('life_date', '=', life_date)])
             if batch_id:
                 batch_id = batch_id[0]
 
-                sql_up = 'update ' + table_name + ' set ' + field_id + '=' + str(batch_id) + ' where id in (select move.id from ' + table_name  
-                sql_up = sql_up + ' move, stock_production_lot lot where move.' + field_id + " = lot.id and lot.name= '" + batch_name + "' and move.product_id = " + str(prod_id) + " and move." + field_expiry_name + "='" + life_date + "');"
-                
+                sql_up = 'update ' + table_name + ' set ' + field_id + '=' + str(batch_id) + ' where id in (select move.id from ' + table_name
+                sql_up = sql_up + ' move, stock_production_lot lot where move.' + field_id + " = lot.id and lot.name= '" + batch_name + "' and move.product_id = " + str(prod_id) + " and move." + field_expiry_name + "='" + life_date + "');"  # not_a_user_entry
+
                 cr.execute(sql_up)
                 self._logger.info("--- Step 3: Batch already created. Now assign all the ref lines of table %s with wrong batch references to the new batch: %s\n"%(table_name, batch_id))
             else:
@@ -189,7 +188,7 @@ class stock_production_lot(osv.osv):
                 lots = lot_obj.search(cr, uid, [('name', '=', batch_name)])
                 if not lots:
                     continue
-            
+
                 existing_batch = lot_obj.browse(cr, uid, lots[0])
                 prod_type = prod_obj.read(cr, uid, prod_id, ['perishable', 'batch_management'])
                 # US-1476: treat differently for internal batch. No need to create if same product and same date exists!
@@ -203,18 +202,18 @@ class stock_production_lot(osv.osv):
                         vals = {'name': existing_batch.name,'product_id': prod_id, 'date':existing_batch.date, 'life_date':life_date, 'type':'internal', 'sequence_id': 1}
                         batch_id = lot_obj.create(cr, uid, vals)
                         self._logger.info("--- Step 2: A new INTERNAL batch has been DUPLICATED from the batch %s, product_id: %s and expiry date %s!\n"%(batch_name, prod_id, life_date))
-                
+
                 if not batch_id:
                     # Prepare the new batch to create, with almost same values, except the product id
                     vals = {'name': existing_batch.name, 'product_id': prod_id, 'date':existing_batch.date, 'life_date':life_date, 'type':existing_batch.type}
                     batch_id = lot_obj.create(cr, uid, vals)
                     self._logger.info("--- Step 2: A new batch has been DUPLICATED from the batch %s, product_id: %s and expiry date %s!\n"%(batch_name, prod_id,life_date))
-            
+
                 # 3. Now search all the move lines that still have the reference to the wrong BN, assign them to the new batch_id
                 self._logger.info("--- Step 3: Now assign all the ref lines of table %s with wrong batch references to the new batch: %s\n"%(table_name, batch_id))
                 if batch_id:
-                    sql_up = 'update ' + table_name + ' set ' + field_id + ' = ' + str(batch_id) + ' where product_id=' + str(prod_id) + ' and ' + field_id + '=' + str(existing_batch.id)  
-                    sql_up = sql_up + " and " + field_expiry_name + "='" + life_date + "';"
+                    sql_up = 'update ' + table_name + ' set ' + field_id + ' = ' + str(batch_id) + ' where product_id=' + str(prod_id) + ' and ' + field_id + '=' + str(existing_batch.id)
+                    sql_up = sql_up + " and " + field_expiry_name + "='" + life_date + "';"  # not_a_user_entry
                     cr.execute(sql_up)
 
         self._logger.info("__________Finish the migration task on duplicate batch objects for table: %s\n", table_name)
@@ -251,13 +250,13 @@ class stock_production_lot(osv.osv):
         cr.execute('''select name, product_id, life_date from (select name, product_id, life_date, count(name) as amount_bn from stock_production_lot group by name, product_id, life_date) as foo_bn where amount_bn>1;''')
         all_dup_batches = cr.dictfetchall()
         self._logger.info("__________Start to migrate duplicate batch objects in instance: %s - with total of %s duplicate batches!\n" % (cr.dbname, len(all_dup_batches)))
-        
+
         to_be_deleted = []
         for r in all_dup_batches:
             batch_ids = self.search(cr, uid, [('name', '=', r['name']), ('product_id', '=', r['product_id']), ('life_date', '=', r['life_date'])])
-            
+
             lead_id = batch_ids[0]
-            for wrong_id in range(1, len(batch_ids)): 
+            for wrong_id in range(1, len(batch_ids)):
                 # Do step 2.2, search the following tables to replace the link to the
                 self.remap_reference_tables(cr, uid, batch_ids[wrong_id], lead_id, r['name'], context)
 
@@ -312,32 +311,32 @@ class stock_production_lot(osv.osv):
         # Tables with foreign key prodlot_id (total 13 tables)
         self._logger.info("__ Migrating batch number:     %s\n", batch_name)
         list_table_fields = [
-                             ('create_picking_move_processor', 'prodlot_id'),
-                             ('export_report_stock_inventory', 'prodlot_id'),
-                             ('export_report_stock_move', 'prodlot_id'),
-                             ('internal_move_processor', 'prodlot_id'),
-                             ('outgoing_delivery_move_processor', 'prodlot_id'),
-                             ('ppl_move_processor', 'prodlot_id'),
-                             ('real_average_consumption_line', 'prodlot_id'),
-                             ('return_ppl_move_processor', 'prodlot_id'),
-                             ('stock_move_in_processor', 'prodlot_id'),
-                             ('stock_move_processor', 'prodlot_id'),
-                             ('stock_move', 'prodlot_id'),
-                             ('unconsistent_stock_report_line', 'prodlot_id'),
-                             ('validate_move_processor', 'prodlot_id'),
-                             ('stock_production_lot_revision', 'lot_id'),
-                             ('product_likely_expire_report_item_line', 'lot_id'),
-                             ('stock_inventory_line', 'prod_lot_id'),
-                             ('initial_stock_inventory_line', 'prod_lot_id'),
-                             ('claim_product_line', 'lot_id_claim_product_line'),
-                             ('composition_kit', 'composition_lot_id')
-                             ]
+            ('create_picking_move_processor', 'prodlot_id'),
+            ('export_report_stock_inventory', 'prodlot_id'),
+            ('export_report_stock_move', 'prodlot_id'),
+            ('internal_move_processor', 'prodlot_id'),
+            ('outgoing_delivery_move_processor', 'prodlot_id'),
+            ('ppl_move_processor', 'prodlot_id'),
+            ('real_average_consumption_line', 'prodlot_id'),
+            ('return_ppl_move_processor', 'prodlot_id'),
+            ('stock_move_in_processor', 'prodlot_id'),
+            ('stock_move_processor', 'prodlot_id'),
+            ('stock_move', 'prodlot_id'),
+            ('unconsistent_stock_report_line', 'prodlot_id'),
+            ('validate_move_processor', 'prodlot_id'),
+            ('stock_production_lot_revision', 'lot_id'),
+            ('product_likely_expire_report_item_line', 'lot_id'),
+            ('stock_inventory_line', 'prod_lot_id'),
+            ('initial_stock_inventory_line', 'prod_lot_id'),
+            ('claim_product_line', 'lot_id_claim_product_line'),
+            ('composition_kit', 'composition_lot_id')
+        ]
         for element in list_table_fields:
             # Tables with foreign key prod_lot_id (total 2)
             self.update_table(cr, uid, element[0] , element[1], wrong_id, lead_id, batch_name)
 
     def update_table(self, cr, uid, table_name, field_id, wrong_id, lead_id, batch_name):
-        cr.execute('select count(*) as amount from ' + table_name + ' where ' + field_id + ' = %s;' %(wrong_id,))
+        cr.execute('select count(*) as amount from ' + table_name + ' where ' + field_id + ' =%s', (wrong_id,))  # not_a_user_entry
         count = cr.fetchone()[0]
         if count > 0: # Only update the table if wrong bn exists
             self._logger.info("Table %s has %s batch objects (%s) and will be-mapped.\n" %(table_name, count, batch_name,))
@@ -353,8 +352,8 @@ class stock_production_lot(osv.osv):
                 del_sql_update = "DELETE FROM real_average_consumption_line WHERE prodlot_id = %s"
                 cr.execute(del_sql_update, (wrong_id,))
             else:
-                sql_update = "update " + table_name + " set " + field_id + "=" + str(lead_id) + " where " + field_id + "=" + str(wrong_id)
-                cr.execute(sql_update)
+                sql_update = "update " + table_name + " set " + field_id + "=%s" + " where " + field_id + "=%s"  # not_a_user_entry
+                cr.execute(sql_update, (lead_id, wrong_id))
         else:
             self._logger.info("Table %s has NO duplicate batch (%s).\n" %(table_name, batch_name,))
 
@@ -370,11 +369,11 @@ class product_product(osv.osv):
     _inherit = 'product.product'
     _columns = {
         'life_time': fields.integer('Product Life Time',
-            help='The number of days before a production lot may become dangerous and should not be consumed.'),
+                                    help='The number of days before a production lot may become dangerous and should not be consumed.'),
         'use_time': fields.integer('Product Use Time',
-            help='The number of days before a production lot starts deteriorating without becoming dangerous.'),
+                                   help='The number of days before a production lot starts deteriorating without becoming dangerous.'),
         'removal_time': fields.integer('Product Removal Time',
-            help='The number of days before a production lot should be removed.'),
+                                       help='The number of days before a production lot should be removed.'),
         'alert_time': fields.integer('Product Alert Time', help="The number of days after which an alert should be notified about the production lot."),
     }
 product_product()

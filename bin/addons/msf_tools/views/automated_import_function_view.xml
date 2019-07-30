@@ -38,6 +38,7 @@
                     <newline />
                     <field name="model_id" />
                     <field name="method_to_call" />
+                    <field name="startswith" />
                 </form>
             </field>
         </record>

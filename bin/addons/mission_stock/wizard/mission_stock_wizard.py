@@ -49,7 +49,7 @@ class mission_stock_wizard(osv.osv_memory):
 
         msr_ids = msr_in_progress.search(cr, 1, [('report_id', '=', report_id)], context=context)
         if msr_ids:
-            st_date = msr_in_progress.browse(cr, uid, msr_ids[0], context=context).start_date
+            st_date = msr_in_progress.browse(cr, 1, msr_ids[0], context=context).start_date
             return 'in_progress', st_date
 
         export_state = msr_obj.read(cr, uid, report_id, ['export_state'],
@@ -60,6 +60,7 @@ class mission_stock_wizard(osv.osv_memory):
         'report_id': fields.many2one(
             'stock.mission.report',
             string='Report',
+            domain=[('instance_id.state', '!=', 'inactive')]
         ),
         'with_valuation': fields.selection(
             [('true', 'Yes'), ('false', 'No')],

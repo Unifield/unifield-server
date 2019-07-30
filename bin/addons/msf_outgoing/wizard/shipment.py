@@ -177,7 +177,7 @@ class shipment_wizard(osv.osv_memory):
         for picking_id in data:
             for from_pack in data[picking_id]:
                 for to_pack in data[picking_id][from_pack]:
-                    # get a move_id no matter which from the sequence 
+                    # get a move_id no matter which from the sequence
                     move_id = data[picking_id][from_pack][to_pack].keys()[0]
                     pack_family_memory = data[picking_id][from_pack][to_pack][move_id]
                     # we add the reference to the draft packing object
@@ -218,7 +218,7 @@ class shipment_wizard(osv.osv_memory):
 
         # add field related to picking type only
         _moves_fields.update({
-            'product_moves_shipment_' + step: {'relation': 'stock.move.memory.shipment.' + step, 'type' : 'one2many', 'string' : 'Product Moves'}, 
+            'product_moves_shipment_' + step: {'relation': 'stock.move.memory.shipment.' + step, 'type' : 'one2many', 'string' : 'Product Moves'},
         })
 
         # specify the button according to the screen
@@ -248,7 +248,7 @@ class shipment_wizard(osv.osv_memory):
             </group>"""%button
         if step == 'create':
             _moves_fields.update({
-                'product_moves_shipment_additionalitems': {'relation': 'stock.move.memory.shipment.additionalitems', 'type' : 'one2many', 'string' : 'Additional Items'}, 
+                'product_moves_shipment_additionalitems': {'relation': 'stock.move.memory.shipment.additionalitems', 'type' : 'one2many', 'string' : 'Additional Items'},
             })
             _moves_arch_lst += """
             <field name="product_moves_shipment_additionalitems" colspan="4" nolabel="1" mode="tree,form" string="Additional Items"></field>
@@ -584,7 +584,7 @@ class memory_additionalitems(osv.osv_memory):
     _description="Additional Items"
 
     _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
-                'quantity': fields.float(digits=(16,2), string='Quantity', required=True),
+                'quantity': fields.float(digits=(16,2), string='Quantity', required=True, related_uom='uom'),
                 'uom': fields.many2one('product.uom', string='UOM', required=True),
                 'comment': fields.char(string='Comment', size=1024),
                 'volume': fields.float(digits=(16,2), string=u'Volume[dm³]'),

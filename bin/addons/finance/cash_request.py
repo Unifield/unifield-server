@@ -1241,7 +1241,7 @@ class cash_request_liquidity(osv.osv):
                               readonly=True),  # can be "Not Created" if the cheque reg. of the month is not created yet
         'period_id': fields.function(_period_id_compute, method=True, relation='account.period',
                                      type='many2one', string='Period', readonly=True, store=False),
-        'opening_balance': fields.float('Opening Balance in register currency', readonly=True,
+        'opening_balance': fields.float('Starting Balance in register currency', readonly=True,
                                         digits_compute=dp.get_precision('Account')),
         'calculated_balance_booking': fields.float('Calculated Balance in register currency', readonly=True,
                                                    digits_compute=dp.get_precision('Account')),

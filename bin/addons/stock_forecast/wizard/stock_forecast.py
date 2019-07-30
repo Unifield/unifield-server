@@ -22,8 +22,7 @@
 from osv import fields, osv
 from tools.translate import _
 import time
-import netsvc
-from operator import itemgetter, attrgetter
+from operator import itemgetter
 
 PREFIXES = {'sale.order': 'so_',
             'purchase.order': 'po_',
@@ -101,7 +100,6 @@ class stock_forecast(osv.osv_memory):
         '''
         get selection related of specified objects, and modify keys on the fly
         '''
-        result = []
 
         for obj in objects:
             tuples = self.pool.get(obj)._columns[field].selection
@@ -118,13 +116,13 @@ class stock_forecast(osv.osv_memory):
         result = {}
         for wiz in self.browse(cr, uid, ids, context=context):
             result[wiz.id] = {'product_family_info_id': False,
-                      'procurement_method': False,
-                      'supply_method': False,
-                      'keep_cool': False,
-                      'short_shelf_life': False,
-                      'dangerous_goods': False,
-                      'justification_code_id': False,
-                      }
+                              'procurement_method': False,
+                              'supply_method': False,
+                              'keep_cool': False,
+                              'short_shelf_life': False,
+                              'dangerous_goods': False,
+                              'justification_code_id': False,
+                              }
             values = result[wiz.id]
             if wiz.product_id:
                 values['product_family_info_id'] = wiz.product_id.nomen_manda_2.id
@@ -140,7 +138,7 @@ class stock_forecast(osv.osv_memory):
         'product_id': fields.many2one('product.product', 'Product'),
         'warehouse_id' : fields.many2one('stock.warehouse', 'Warehouse'),
         'product_uom_id': fields.many2one('product.uom', 'Product UoM'),
-        'qty' : fields.float('Quantity', digits=(16,2), readonly=True),
+        'qty' : fields.float('Quantity', digits=(16,2), readonly=True, related_uom='product_uom_id'),
         'product_family_id': fields.many2one('product.nomenclature', 'Product Family', domain=[('level', '=', 2)]), # not used
         'stock_forecast_lines': fields.one2many('stock.forecast.line', 'wizard_id', 'Stock Forecasts'),
         'product_family_info_id': fields.function(_get_info, type='many2one', relation='product.nomenclature', method=True, string='Product Family', multi='get_info',),
@@ -327,35 +325,35 @@ class stock_forecast(osv.osv_memory):
         line_obj.unlink(cr, uid, line_ids, context=context)
 
         return {
-                'name': _('Stock Level Forecast'),
-                'view_mode': 'form',
-                'view_id': False,
-                'view_type': 'form',
-                'res_model': 'stock.forecast',
-                'res_id': ids[0],
-                'type': 'ir.actions.act_window',
-                'nodestroy': True,
-                'target': 'new',
-                'domain': '[]',
-                'context': context,
-                }
+            'name': _('Stock Level Forecast'),
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': 'stock.forecast',
+            'res_id': ids[0],
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[]',
+            'context': context,
+        }
 
     def do_graph(self, cr, uid, ids, context=None):
         '''
         void
         '''
         return {
-                'name': _('Stock Level Forecast'),
-                'view_mode': 'graph,tree',
-                'view_id': False,
-                'view_type': 'form',
-                'res_model': 'stock.forecast.line',
-                'type': 'ir.actions.act_window',
-                'nodestroy': True,
-                'target': 'new',
-                'domain': '[("wizard_id", "in", %s)]'%ids,
-                'context': context,
-                }
+            'name': _('Stock Level Forecast'),
+            'view_mode': 'graph,tree',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': 'stock.forecast.line',
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[("wizard_id", "in", %s)]'%ids,
+            'context': context,
+        }
 
     def do_forecast(self, cr, uid, ids, context=None):
         '''
@@ -367,9 +365,7 @@ class stock_forecast(osv.osv_memory):
         # line object
         line_obj = self.pool.get('stock.forecast.line')
         # objects
-        so_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
-        po_obj = self.pool.get('purchase.order')
         pol_obj = self.pool.get('purchase.order.line')
         tenderl_obj = self.pool.get('tender.line')
         pro_obj = self.pool.get('procurement.order')
@@ -377,7 +373,7 @@ class stock_forecast(osv.osv_memory):
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         data_obj = self.pool.get('ir.model.data')
- 
+
         # clear existing lines
         line_ids = line_obj.search(cr, uid, [('wizard_id', 'in', ids)], context=context)
         line_obj.unlink(cr, uid, line_ids, context=context)
@@ -388,7 +384,6 @@ class stock_forecast(osv.osv_memory):
         for wizard in self.browse(cr, uid, ids, context=context):
             prod = wizard.product_id
             product_family = wizard.product_family_id
-            warehouse_id = wizard.warehouse_id.id
             product_uom_id = wizard.product_uom_id.id
 
             if not prod:
@@ -650,18 +645,18 @@ class purchase_order_line(osv.osv):
     '''
     _inherit = 'purchase.order.line'
     STATE_SELECTION = [
-                       ('draft', 'Draft'),
-                       ('wait', 'Wait'),
-                       ('confirmed', 'Validated'),
-                       ('approved', 'Confirmed'),
-                       ('except_picking', 'Receipt Exception'),
-                       ('except_invoice', 'Invoice Exception'),
-                       ('done', 'Closed'),
-                       ('cancel', 'Cancelled'),
-                       ('rfq_sent', 'Sent'),
-                       ('rfq_updated', 'Updated'),
-                       #('rfq_done', 'RfQ Done'),
-                       ]
+        ('draft', 'Draft'),
+        ('wait', 'Wait'),
+        ('confirmed', 'Validated'),
+        ('approved', 'Confirmed'),
+        ('except_picking', 'Receipt Exception'),
+        ('except_invoice', 'Invoice Exception'),
+        ('done', 'Closed'),
+        ('cancel', 'Cancelled'),
+        ('rfq_sent', 'Sent'),
+        ('rfq_updated', 'Updated'),
+        #('rfq_done', 'RfQ Done'),
+    ]
     _columns = {'order_state': fields.related('order_id', 'state', string='Purchase Order State', type='selection', selection=STATE_SELECTION,),
                 }
 

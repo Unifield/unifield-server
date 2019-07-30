@@ -11,7 +11,7 @@
                     <field name="initial_amount"/>
                     <field name="additional_amount" on_change="onchange_addl_amount(returned_amount)"/>
                     <field name='returned_amount'
-                        on_change="onchange_returned_amount(returned_amount, invoice_line_ids, advance_line_ids, display_invoice, initial_amount, advance_linked_po_auto_invoice, additional_amount)"/>
+                        on_change="onchange_returned_amount(returned_amount, invoice_line_ids, advance_line_ids, initial_amount, advance_linked_po_auto_invoice, additional_amount)"/>
                     <newline />
                     <field name='date'/>
                     <field name='reference' />
@@ -35,14 +35,14 @@
                         <button string='Add invoice(s)' name='action_add_invoice' type='object' icon='gtk-add' />
                     </group>
                     <newline />
-                    <field name='invoice_line_ids' attrs="{'invisible':[('display_invoice', '!=', True)]}" nolabel="1" colspan="4" />
+                    <field name='invoice_line_ids' nolabel="1" colspan="4" />
                     <newline />
                     <group colspan="4">
                         <label colspan="3"/>
-                        <button string="Clean invoices" name="clean_invoices" type="object" icon="gtk-clear" attrs="{'invisible':[('display_invoice', '!=', True)]}" />
+                        <button string="Clean invoices" name="clean_invoices" type="object" icon="gtk-clear" />
                     </group>
                     <newline />
-                    <field name='advance_line_ids' attrs="{'invisible':[('display_invoice', '=', True)]}" nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount, date, reference, additional_amount)"/>
+                    <field name='advance_line_ids' nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount, invoice_line_ids, date, reference, additional_amount)"/>
                     <newline />
                     <field name="total_amount"/>
                     <newline />
@@ -55,7 +55,6 @@
                             attrs="{'invisible': [('ok_with_confirm', '=', False)]}" />
                     </group>
                     <field name='currency_id' invisible="1" />
-                    <field name='display_invoice' invisible="1"/>
                     <field name="advance_linked_po_auto_invoice" invisible="1" />
                     <field name="ok_with_confirm" invisible="1" />
                     <field name="comment" colspan="4" nolabel="1" readonly="1" attrs="{'invisible':[('advance_linked_po_auto_invoice', '=', False)]}" />

@@ -105,7 +105,7 @@ class puller_ids_rel(osv.osv):
         for to_del in foreign_key_to_delete:
             cr.execute("SELECT conname FROM pg_constraint WHERE conname = %s", (to_del, ))
             if cr.fetchone():
-                cr.execute("ALTER table sync_server_entity_rel DROP CONSTRAINT %s" % (to_del,))
+                cr.execute("ALTER table sync_server_entity_rel DROP CONSTRAINT %s" % (to_del,))  # not_a_user_entry
 
     def init(self, cr):
         cr.execute("""\
@@ -131,7 +131,7 @@ ALTER TABLE "public"."%(table)s"
   ALTER COLUMN "id" SET NOT NULL;
 ALTER TABLE "public"."%(table)s" ADD UNIQUE ("id");
 ALTER TABLE "public"."%(table)s" DROP CONSTRAINT "%(table)s_id_key" RESTRICT;
-ALTER TABLE "public"."%(table)s" ADD PRIMARY KEY ("id");""" % {'table':self._table})
+ALTER TABLE "public"."%(table)s" ADD PRIMARY KEY ("id");""" % {'table':self._table})  # not_a_user_entry
 
 
 class update(osv.osv):
@@ -203,10 +203,9 @@ class update(osv.osv):
                    [(puller_ids_rel._table, self._table)]);
         existing_tables = [row[0] for row in cr.fetchall()]
         if puller_ids_rel._table in existing_tables:
-            cr.execute("""DELETE FROM %s WHERE update_id IN (SELECT id FROM %s WHERE rule_id IS NULL)""" \
-                       % (puller_ids_rel._table, self._table))
+            cr.execute("""DELETE FROM %s WHERE update_id IN (SELECT id FROM %s WHERE rule_id IS NULL)""" % (puller_ids_rel._table, self._table))  # not_a_user_entry
         if self._table in existing_tables:
-            cr.execute("""DELETE FROM %s WHERE rule_id IS NULL""" % self._table)
+            cr.execute("""DELETE FROM %s WHERE rule_id IS NULL""" % self._table)  # not_a_user_entry
         super(update, self)._auto_init(cr, context=context)
         cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'sync_server_update_sequence_id_index'")
         if not cr.fetchone():
@@ -440,7 +439,7 @@ class update(osv.osv):
             @return : list of browse record of the updates to send
         """
         update_to_send = []
-        ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context) 
+        ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context)
         children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
         for update in self.browse(cr, uid, update_ids, context=context):
             if not update.rule_id:
@@ -509,14 +508,14 @@ class update(osv.osv):
 
         if not recover and init_sync:
             # first sync get only master data
-            cr.execute("select id from sync_server_sync_rule where id in (" + ','.join(map(str, rules)) + ") and master_data='t'");
+            cr.execute("select id from sync_server_sync_rule where id in (" + ','.join(map(str, rules)) + ") and master_data='t'")  # not_a_user_entry
             rules = [x[0] for x in cr.fetchall()]
 
         base_query = " ".join(("""SELECT "sync_server_update".id FROM "sync_server_update" INNER JOIN sync_server_sync_rule ON sync_server_sync_rule.id = rule_id WHERE""",
                                "sync_server_update.rule_id IN (" + ','.join(map(str, rules)) + ")",
                                "AND sync_server_update.sequence > %s AND sync_server_update.sequence <= %s""" % (last_seq, max_seq)))
 
-        ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context) 
+        ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context)
         children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
 
         # We filter out the updates that have nothing to do with the entity that is synchronizing
@@ -547,8 +546,7 @@ class update(osv.osv):
         self._logger.info("::::::::[%s] Data pull get package:: init sync = %s, last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, init_sync, last_seq, max_seq, '/'.join(map(str, offset)), max_size))
 
         while not ids or packet_size < max_size:
-            query = base_query % (offset[0], offset[1], max_size)
-            cr.execute(query)
+            cr.execute(base_query, (offset[0], offset[1], max_size))
             ids = map(lambda x:x[0], cr.fetchall())
             if not ids:
                 break
@@ -612,7 +610,7 @@ class update(osv.osv):
                 data['unload'] = [update.sdref for update in update_to_send]
                 data['type'] = 'delete'
             else:
-                complete_fields, forced_values = self.get_additional_forced_field(update_master) 
+                complete_fields, forced_values = self.get_additional_forced_field(update_master)
                 data.update({
                     'fields' : tools.ustr(complete_fields),
                     'fallback_values' : update_master.rule_id.fallback_values,
@@ -638,7 +636,7 @@ class update(osv.osv):
         return data_packages
 
 
-    def get_additional_forced_field(self, update): 
+    def get_additional_forced_field(self, update):
         fields = eval(update.fields)
         forced_values = eval(update.rule_id.forced_values or '{}')
         if forced_values:

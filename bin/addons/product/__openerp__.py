@@ -54,7 +54,9 @@
         'product_report.xml',
         'product_view.xml',
         'pricelist_view.xml',
-        'process/product_process.xml'
+        'process/product_process.xml',
+        'wizard/product_mass_update_view.xml',
+        'report/product_mass_update_export_view.xml',
     ],
     'test':[],
     'installable': True,

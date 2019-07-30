@@ -7,7 +7,8 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 # This will be a tuple ((1,"1 months" ), (2, "2 months"), ...)
-MOVED_IN_LAST_X_MONTHS = tuple([(i, "%s months" % str(i)) for i in range(1, 13)])
+MOVED_IN_LAST_X_MONTHS_FULL_INV = tuple([("%s" % i, _("%s months") % str(i)) for i in range(0, 13)])
+MOVED_IN_LAST_X_MONTHS = tuple([(i, _("%s months") % str(i)) for i in range(1, 13)])
 
 
 class physical_inventory_select_products(osv.osv_memory):
@@ -21,7 +22,7 @@ class physical_inventory_select_products(osv.osv_memory):
 
         # If this is a full inventory, we'll add products in stock at that
         # location + products with recent moves at that location
-        'recent_moves_months_fullinvo': fields.selection(MOVED_IN_LAST_X_MONTHS, "Moved in the last", select=True),
+        'recent_moves_months_fullinvo': fields.selection(MOVED_IN_LAST_X_MONTHS_FULL_INV, "Moved in the last", select=True),
 
         # For partial inventories :
 
@@ -135,9 +136,11 @@ class physical_inventory_select_products(osv.osv_memory):
 
             # Get products in stock at that location, or recently moved
             products_in_stock = self.get_products_in_stock_at_location(cr, uid, location_id, context=context)
-            products_recently_moved = self.get_products_with_recent_moves_at_location(cr, uid, location_id,
-                                                                                      w['recent_moves_months_fullinvo'],
-                                                                                      context=context)
+            products_recently_moved = set()
+            if w['recent_moves_months_fullinvo'] != '0':
+                products_recently_moved = self.get_products_with_recent_moves_at_location(cr, uid, location_id,
+                                                                                          w['recent_moves_months_fullinvo'],
+                                                                                          context=context)
             products = products_in_stock.union(products_recently_moved)
 
             # Show them in the preview
@@ -261,6 +264,8 @@ class physical_inventory_select_products(osv.osv_memory):
     def get_products_with_recent_moves_at_location(self, cr, uid, location_id, recent_moves_months, context=None):
         context = context if context else {}
 
+        if isinstance(recent_moves_months, (str,unicode)):
+            recent_moves_months = int(recent_moves_months)
         assert isinstance(location_id, int)
         assert isinstance(recent_moves_months, int)
 

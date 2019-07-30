@@ -116,7 +116,7 @@ class RecordDictWrapper(dict):
     records do not strictly behave like dict, so we force them to.
     """
     def __init__(self, record):
-        self.record = record 
+        self.record = record
     def __getitem__(self, key):
         if key in self.record:
             return self.record[key]
@@ -159,7 +159,7 @@ class YamlInterpreter(object):
                                   % (xml_id,)
             if module != self.module:
                 module_count = self.pool.get('ir.module.module').search_count(self.cr, self.uid, \
-                        ['&', ('name', '=', module), ('state', 'in', ['installed'])])
+                                                                              ['&', ('name', '=', module), ('state', 'in', ['installed'])])
                 assert module_count == 1, 'The ID "%s" refers to an uninstalled module.' % (xml_id,)
         if len(id) > 64: # TODO where does 64 come from (DB is 128)? should be a constant or loaded form DB
             self.logger.log(logging.ERROR, 'id: %s is to long (max: 64)', id)
@@ -180,7 +180,7 @@ class YamlInterpreter(object):
             _, id = self.pool.get('ir.model.data').get_object_reference(self.cr, self.uid, module, checked_xml_id)
             self.id_map[xml_id] = id
         return id
-    
+
     def get_context(self, node, eval_dict):
         context = self.context.copy()
         if node.context:
@@ -189,7 +189,7 @@ class YamlInterpreter(object):
 
     def isnoupdate(self, node):
         return self.noupdate or node.noupdate or False
-    
+
     def _get_first_result(self, results, default=False):
         if len(results):
             value = results[0]
@@ -198,7 +198,7 @@ class YamlInterpreter(object):
         else:
             value = default
         return value
-    
+
     def process_comment(self, node):
         return node
 
@@ -321,7 +321,7 @@ class YamlInterpreter(object):
             #context = self.get_context(record, self.eval_context)
             context = record.context #TOFIX: record.context like {'withoutemployee':True} should pass from self.eval_context. example: test_project.yml in project module
             id = self.pool.get('ir.model.data')._update(self.cr, 1, record.model, \
-                    self.module, record_dict, record.id, noupdate=self.isnoupdate(record), mode=self.mode, context=context)
+                                                        self.module, record_dict, record.id, noupdate=self.isnoupdate(record), mode=self.mode, context=context)
             self.id_map[record.id] = int(id)
             if config.get('import_partial'):
                 self.cr.commit()
@@ -422,7 +422,7 @@ class YamlInterpreter(object):
             raise
         else:
             self.assert_report.record(True, python.severity)
-    
+
     def process_workflow(self, node):
         workflow, values = node.items()[0]
         if self.isnoupdate(workflow) and self.mode != 'init':
@@ -441,18 +441,18 @@ class YamlInterpreter(object):
             local_context = {'obj': lambda x: value_model.browse(self.cr, self.uid, x, context=self.context)}
             local_context.update(self.id_map)
             id = eval(value['eval'], self.eval_context, local_context)
-        
+
         if workflow.uid is not None:
             uid = workflow.uid
         else:
             uid = self.uid
-        self.cr.execute('select distinct signal from wkf_transition')
+        self.cr.execute('select distinct signal from wkf_transition order by sequence,id')
         signals=[x['signal'] for x in self.cr.dictfetchall()]
         if workflow.action not in signals:
             raise YamlImportException('Incorrect action %s. No such action defined' % workflow.action)
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(uid, workflow.model, id, workflow.action, self.cr)
-    
+
     def _eval_params(self, model, params):
         args = []
         for i, param in enumerate(params):
@@ -478,20 +478,20 @@ class YamlInterpreter(object):
                 value = param # scalar value
             args.append(value)
         return args
-        
+
     def process_function(self, node):
         function, params = node.items()[0]
         if self.isnoupdate(function) and self.mode != 'init':
             return
         model = self.get_model(function.model)
-        context = self.get_context(function, self.eval_context)
+        self.get_context(function, self.eval_context)
         if function.eval:
             args = self.process_eval(function.eval)
         else:
             args = self._eval_params(function.model, params)
         method = function.name
         getattr(model, method)(self.cr, self.uid, *args)
-    
+
     def _set_group_values(self, node, values):
         if node.groups:
             group_names = node.groups.split(',')
@@ -537,7 +537,7 @@ class YamlInterpreter(object):
                 self.cr.execute('select view_type,view_mode,name,view_id,target from ir_act_window where id=%s', (action_id,))
                 ir_act_window_result = self.cr.fetchone()
                 assert ir_act_window_result, "No window action defined for this id %s !\n" \
-                        "Verify that this is a window action or add a type argument." % (node.action,)
+                    "Verify that this is a window action or add a type argument." % (node.action,)
                 action_type, action_mode, action_name, view_id, target = ir_act_window_result
                 if view_id:
                     self.cr.execute('SELECT type FROM ir_ui_view WHERE id=%s', (view_id,))
@@ -572,10 +572,10 @@ class YamlInterpreter(object):
             values['icon'] = node.icon
 
         self._set_group_values(node, values)
-        
+
         pid = self.pool.get('ir.model.data')._update(self.cr, 1, \
-                'ir.ui.menu', self.module, values, node.id, mode=self.mode, \
-                noupdate=self.isnoupdate(node), res_id=res and res[0] or False)
+                                                     'ir.ui.menu', self.module, values, node.id, mode=self.mode, \
+                                                     noupdate=self.isnoupdate(node), res_id=res and res[0] or False)
 
         if node.id and parent_id:
             self.id_map[node.id] = int(parent_id)
@@ -585,7 +585,7 @@ class YamlInterpreter(object):
             action_id = self.get_id(node.action)
             action = "ir.actions.%s,%d" % (action_type, action_id)
             self.pool.get('ir.model.data').ir_set(self.cr, 1, 'action', \
-                    'tree_but_open', 'Menuitem', [('ir.ui.menu', int(parent_id))], action, True, True, xml_id=node.id)
+                                                  'tree_but_open', 'Menuitem', [('ir.ui.menu', int(parent_id))], action, True, True, xml_id=node.id)
 
     def process_act_window(self, node):
         assert getattr(node, 'id'), "Attribute %s of act_window is empty !" % ('id',)
@@ -619,7 +619,7 @@ class YamlInterpreter(object):
         if node.target:
             values['target'] = node.target
         id = self.pool.get('ir.model.data')._update(self.cr, 1, \
-                'ir.actions.act_window', self.module, values, node.id, mode=self.mode)
+                                                    'ir.actions.act_window', self.module, values, node.id, mode=self.mode)
         self.id_map[node.id] = int(id)
 
         if node.src_model:
@@ -627,7 +627,7 @@ class YamlInterpreter(object):
             value = 'ir.actions.act_window,%s' % id
             replace = node.replace or True
             self.pool.get('ir.model.data').ir_set(self.cr, 1, 'action', keyword, \
-                    node.id, [node.src_model], value, replace=replace, noupdate=self.isnoupdate(node), isobject=True, xml_id=node.id)
+                                                  node.id, [node.src_model], value, replace=replace, noupdate=self.isnoupdate(node), isobject=True, xml_id=node.id)
         # TODO add remove ir.model.data
 
     def process_delete(self, node):
@@ -642,14 +642,14 @@ class YamlInterpreter(object):
                 self.pool.get('ir.model.data')._unlink(self.cr, 1, node.model, ids)
         else:
             self.logger.log(logging.TEST, "Record not deleted.")
-    
+
     def process_url(self, node):
         self.validate_xml_id(node.id)
 
         res = {'name': node.name, 'url': node.url, 'target': node.target}
 
         id = self.pool.get('ir.model.data')._update(self.cr, 1, \
-                "ir.actions.url", self.module, res, node.id, mode=self.mode)
+                                                    "ir.actions.url", self.module, res, node.id, mode=self.mode)
         self.id_map[node.id] = int(id)
         # ir_set
         if (not node.menu or eval(node.menu)) and id:
@@ -657,9 +657,9 @@ class YamlInterpreter(object):
             value = 'ir.actions.url,%s' % id
             replace = node.replace or True
             self.pool.get('ir.model.data').ir_set(self.cr, 1, 'action', \
-                    keyword, node.url, ["ir.actions.url"], value, replace=replace, \
-                    noupdate=self.isnoupdate(node), isobject=True, xml_id=node.id)
-    
+                                                  keyword, node.url, ["ir.actions.url"], value, replace=replace, \
+                                                  noupdate=self.isnoupdate(node), isobject=True, xml_id=node.id)
+
     def process_ir_set(self, node):
         if not self.mode == 'init':
             return False
@@ -672,8 +672,8 @@ class YamlInterpreter(object):
                 value = expression
             res[fieldname] = value
         self.pool.get('ir.model.data').ir_set(self.cr, 1, res['key'], res['key2'], \
-                res['name'], res['models'], res['value'], replace=res.get('replace',True), \
-                isobject=res.get('isobject', False), meta=res.get('meta',None))
+                                              res['name'], res['models'], res['value'], replace=res.get('replace',True), \
+                                              isobject=res.get('isobject', False), meta=res.get('meta',None))
 
     def process_report(self, node):
         values = {}
@@ -701,7 +701,7 @@ class YamlInterpreter(object):
         self._set_group_values(node, values)
 
         id = self.pool.get('ir.model.data')._update(self.cr, 1, "ir.actions.report.xml", \
-                self.module, values, xml_id, noupdate=self.isnoupdate(node), mode=self.mode)
+                                                    self.module, values, xml_id, noupdate=self.isnoupdate(node), mode=self.mode)
         self.id_map[xml_id] = int(id)
 
         if not node.menu or eval(node.menu):
@@ -709,14 +709,14 @@ class YamlInterpreter(object):
             value = 'ir.actions.report.xml,%s' % id
             replace = node.replace or True
             self.pool.get('ir.model.data').ir_set(self.cr, 1, 'action', \
-                    keyword, values['name'], [values['model']], value, replace=replace, isobject=True, xml_id=xml_id)
-            
+                                                  keyword, values['name'], [values['model']], value, replace=replace, isobject=True, xml_id=xml_id)
+
     def process_none(self):
         """
         Empty node or commented node should not pass silently.
         """
         self._log_assert_failure(logging.WARNING, "You have an empty block in your tests.")
-        
+
 
     def process(self, yaml_string):
         """
@@ -734,7 +734,7 @@ class YamlInterpreter(object):
             except Exception, e:
                 self.logger.exception(e)
                 raise
-    
+
     def _process_node(self, node):
         if is_comment(node):
             self.process_comment(node)
@@ -772,7 +772,7 @@ class YamlInterpreter(object):
             self.process_none()
         else:
             raise YamlImportException("Can not process YAML block: %s" % node)
-    
+
     def _log(self, node, is_preceded_by_comment):
         if is_comment(node):
             is_preceded_by_comment = True

@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 from tools.translate import _
+from msf_doc_import import PRODUCT_LIST_TYPE
 
 import time
 
@@ -83,10 +84,7 @@ class product_list(osv.osv):
             string='Ref.',
         ),
         'type': fields.selection(
-            selection=[
-                ('list', 'List'),
-                ('sublist', 'Sublist'),
-            ],
+            selection=PRODUCT_LIST_TYPE,
             string='Type',
             required=True,
         ),
@@ -264,12 +262,8 @@ class product_list_line(osv.osv):
             type='char',
             size=64,
             store={
-                'product.product': (
-                    _get_product, ['default_code'], 10,
-                ),
-                'product.list.line': (
-                    lambda self, cr, uid, ids, c=None: ids, ['name'], 20,
-                ),
+                'product.product': (_get_product, ['default_code'], 10),
+                'product.list.line': (lambda self, cr, uid, ids, c={}: ids, ['name'], 20)
             },
             write_relate=False,
         ),
@@ -281,12 +275,8 @@ class product_list_line(osv.osv):
             type='char',
             size=128,
             store={
-                'product.product': (
-                    _get_product, ['name'], 10,
-                ),
-                'product.list.line': (
-                    lambda self, cr, uid, ids, c=None: ids, ['name'], 20,
-                ),
+                'product.product': (_get_product, ['name'], 10),
+                'product.list.line': (lambda self, cr, uid, ids, c={}: ids, ['name'], 20)
             },
             write_relate=False,
         ),
@@ -303,11 +293,13 @@ class product_list_line(osv.osv):
         # check if product already exists in the product list:
         if self._name != 'old.product.list.line' and not context.get('sync_update_execution') and vals.get('name', False):
             for line in self.browse(cr, uid, ids, context=context):
-                if self.search_exist(cr, uid, [('name', '=', vals['name']), ('list_id', '=', line.list_id.id)], context=context):
+                if self.search_exist(cr, uid, [('name', '=', vals['name']), ('list_id', '=', line.list_id.id)], context=context) and \
+                        line.name.id != vals.get('name'):
                     raise osv.except_osv(
                         _('Warning'),
                         _('This product cannot be added as it already exists in this list.')
                     )
+
         return super(product_list_line, self).write(cr, uid, ids, vals, context=context)
 
 
@@ -315,7 +307,8 @@ class product_list_line(osv.osv):
         if context is None:
             context = {}
         # check if product already exists in the product list:
-        if self._name != 'old.product.list.line' and not context.get('sync_update_execution') and self.search_exist(cr, uid, [('list_id', '=', vals['list_id']), ('name', '=', vals['name'])], context=context):
+        if self._name != 'old.product.list.line' and not context.get('sync_update_execution') and \
+                self.search_exist(cr, uid, [('list_id', '=', vals['list_id']), ('name', '=', vals['name'])], context=context):
             raise osv.except_osv(
                 _('Warning'),
                 _('This product cannot be added as it already exists in this list.')
@@ -355,7 +348,7 @@ class old_product_list_line(osv.osv):
     _inherit = 'product.list.line'
     _order = 'removal_date'
 
-    def _get_product(self, cr, uid, ids, context=None):
+    def _get_old_product(self, cr, uid, ids, context=None):
         opll = self.pool.get('old.product.list.line')
         return opll.search(cr, uid, [('name', 'in', ids)], context=context)
 
@@ -372,13 +365,15 @@ class old_product_list_line(osv.osv):
             type='char',
             size=64,
             store={
-                'product.product': (
-                    _get_product, ['default_code'], 10,
-                ),
-                'old.product.list.line': (
-                    lambda self, cr, uid, ids, c=None: ids, ['name'], 20,
-                ),
+                'product.product': (_get_old_product, ['default_code'], 10),
+                'old.product.list.line': (lambda self, cr, uid, ids, c={}: ids, ['name'], 20),
             },
+            write_relate=False,
+        ),
+        'desc': fields.related('name', 'name', string='Product Description', readonly=True, type='char', size=128, write_relate=False, store={
+            'product.product': (_get_old_product, ['name'], 10,),
+            'old.product.list.line': (lambda self, cr, uid, ids, c={}: ids, ['name'], 20),
+        },
         ),
     }
 
@@ -483,7 +478,7 @@ product and can't be deleted"""),
             select=1
         ),  # US-45: Added this field but hidden, for UniData to be able to import the Id
         'xmlid_code': fields.char(
-            'Hidden xmlid code',
+            'Xmlid Code',
             size=18,
         ),  # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
     }

@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -28,14 +28,18 @@ class import_cell_data(osv.osv_memory):
     '''
     _name = 'import.cell.data'
 
-    def get_cell_data(self, cr, uid, ids, row, cell_nb):
+    def get_cell_data(self, cr, uid, ids, row, cell_nb, context=None):
+        if context is None:
+            context = {}
         cell_data = False
         try:
             line_content = row.cells
         except ValueError:
             line_content = row.cells
-        if line_content and len(line_content)-1>=cell_nb and row.cells[cell_nb] and row.cells[cell_nb].data:
-            cell_data = row.cells[cell_nb].data
+        if line_content and len(line_content) - 1 >= cell_nb and row.cells[cell_nb]:
+            if row.cells[cell_nb].data or context.get('from_je_import', False):
+                # at JE import store the exact value: 0.00 and False are handled differently
+                cell_data = row.cells[cell_nb].data
         return cell_data
 
     def get_purchase_id(self, cr, uid, ids, row, cell_nb, line_num, error_list, context=None):
@@ -130,10 +134,12 @@ class import_cell_data(osv.osv_memory):
                                         return False
         return False
 
-    def get_line_values(self, cr, uid, ids, row):
+    def get_line_values(self, cr, uid, ids, row, context=None):
+        if context is None:
+            context = {}
         list_of_values = []
         for cell_nb in range(len(row)):
-            cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
+            cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb, context=context)
             # cells filled with whitespace should behave the same as cells that are empty
             if isinstance(cell_data, basestring) and cell_data.isspace():
                 cell_data = ''

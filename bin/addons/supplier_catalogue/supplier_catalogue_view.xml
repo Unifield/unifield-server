@@ -34,7 +34,7 @@
                     <field name="name" colspan="4" on_change="check_inactive_catalogues(partner_id)" />
                     <field name="period_from" attrs="{'required': [('is_esc', '=', False)], 'invisible': [('is_esc', '=', True)]}" />
                     <field name="period_to" attrs="{'invisible': [('is_esc', '=', True)]}" />
-                    <field name="currency_id" domain="[('partner_currency', '=', partner_id)]" />
+                    <field name="currency_id" attrs="{'readonly': [('state', '=', 'confirmed')]}" domain="[('partner_currency', '=', partner_id)]" />
                     <field name="partner_id" readonly="1" />
                     <field name="is_esc" invisible="1" />
                     <field name="esc_update_ts" attrs="{'invisible': [('is_esc', '=', False)]}" /> <!-- UTP-746 -->

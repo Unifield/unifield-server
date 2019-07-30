@@ -22,6 +22,7 @@
 import time
 
 from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class order_line_allocation(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -37,10 +38,16 @@ class order_line_allocation(report_sxw.rml_parse):
             total = sum([line.subtotal or 0.0 for line in po.allocation_report_lines])
         return total
 
-report_sxw.report_sxw('report.purchase.order.allocation.report', 
-                      'purchase.order.line.allocation.report', 
-                      'addons/purchase_allocation_report/report/order_line_allocation.rml', 
+report_sxw.report_sxw('report.purchase.order.allocation.report',
+                      'purchase.order.line.allocation.report',
+                      'addons/purchase_allocation_report/report/order_line_allocation.rml',
                       parser=order_line_allocation, header="landscape")
+
+SpreadsheetReport('report.po.allocation.report.xls', 'purchase.order',
+                  'addons/purchase_allocation_report/report/po_allocation_report.mako', parser=order_line_allocation)
+
+SpreadsheetReport('report.po.line.allocation.report.xls', 'purchase.order.line.allocation.report',
+                  'addons/purchase_allocation_report/report/po_line_allocation_report.mako', parser=order_line_allocation)
 
 
 class po_line_allocation_report(report_sxw.rml_parse):
@@ -50,9 +57,9 @@ class po_line_allocation_report(report_sxw.rml_parse):
             'time': time,
         })
 
-report_sxw.report_sxw('report.po.line.allocation.report', 
-                      'purchase.order', 
-                      'addons/purchase_allocation_report/report/po_line_allocation_report.rml', 
+report_sxw.report_sxw('report.po.line.allocation.report',
+                      'purchase.order',
+                      'addons/purchase_allocation_report/report/po_line_allocation_report.rml',
                       parser=order_line_allocation, header="landscape")
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -8,7 +8,7 @@
             <field name='arch' type='xml'>
                 <form string="Open Register Confirmation">
                     <group colspan="4" attrs="{'invisible': [('register_type', '=', 'cheque')]}">
-                        <separator string="Register Opening Balance"/>
+                        <separator string="Register Starting Balance"/>
                         <field name="register_type" invisible="1"/>
                         <field name="confirm_opening_balance"/>
                         <field name="opening_balance"/>

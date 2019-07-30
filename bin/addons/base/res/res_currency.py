@@ -137,7 +137,7 @@ class res_currency(osv.osv):
         res = self.name_get(cr, uid, ids, context)
         return res
 
-    def auto_import(self, cr, uid, file_to_import):
+    def auto_import(self, cr, uid, file_to_import, context=None):
         import base64
         processed = []
         rejected = []

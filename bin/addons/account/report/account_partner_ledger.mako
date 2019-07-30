@@ -148,6 +148,26 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssSubtotalLineLeft">
+<Alignment ss:Vertical="Top" ss:Horizontal="Left" ss:WrapText="1"/>
+<Font ss:Size="10"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
+<Style ss:ID="ssSubtotalLineRight">
+<Alignment ss:Vertical="Top" ss:Horizontal="Right" ss:WrapText="1"/>
+<Font ss:Size="10"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
 <Style ss:ID="ssAccountLineWrap">
    <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -164,6 +184,17 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Style ss:ID="ssAccountLineNumber">
 <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
 <Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
+<Style ss:ID="ssSubtotalLineNumber">
+<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+<Font ss:Size="10"/>
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -190,11 +221,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="140" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="85" />
+<Column ss:AutoFitWidth="1" ss:Width="70" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="45" />
+<Column ss:AutoFitWidth="1" ss:Width="125" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
@@ -207,13 +238,12 @@ selected_filter = get_filter(data) or ''
 <Row>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Chart of Account')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Fiscal Year')}</Data></Cell>
- <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Journal')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_("Partner's")}</Data></Cell>
+ <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Journals')}</Data></Cell>
  <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Accounts')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filters By'), (selected_filter != _('No Filter') and selected_filter or ''))|x}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Target Moves')}</Data></Cell>
  <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Proprietary Instances')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Currency')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filter By'), (selected_filter != _('No Filter') and selected_filter or ''))|x}</Data></Cell>
+ <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Display')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Func. Currency')}</Data></Cell>
 </Row>
 <%
 if selected_filter == _('Date'):
@@ -233,20 +263,22 @@ else:
  <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
     <Data ss:Type="String">${ get_journals_str(data)|x}</Data>
  </Cell>
- <Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${ get_partners()|x}</Data>
- </Cell>
  <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
     <Data ss:Type="String">${ get_accounts_str(data)|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
+    <Data ss:Type="String">${ get_instances_str(data)|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
     <Data ss:Type="String">${ filter|x}</Data>
  </Cell>
- <Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${ get_target_move(data)|x}</Data>
- </Cell>
  <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
-    <Data ss:Type="String">${ get_instances_str(data)|x}</Data>
+    <Data ss:Type="String">${ "%s: %s, %s: %s, %s: %s, %s: %s" % (
+                            _("Partner's"), get_partners(),
+                            _('Target Moves'), get_target_move(data),
+                            _('Reconciled'), get_reconcile_selection(),
+                            _('Display Partners'), get_display_partners_selection(),
+                            )|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
     <Data ss:Type="String">${ company.currency_id.name |x}</Data>
@@ -258,9 +290,6 @@ else:
 <Row>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${_('Partner')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Partner Ref.')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${_('Date')}</Data>
@@ -276,6 +305,9 @@ else:
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${_('Entry Label')}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${_('Reconcile Number')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${_('Currency')}</Data>
@@ -294,14 +326,14 @@ else:
 </Cell>
 </Row>
 
-% for p in objects:
+% for p in partners_to_display(objects):
 <!-- PARTNER HEADER -->
 <Row>
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String">${p.name or ''|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartner" ss:MergeAcross="5">
-    <Data ss:Type="String">${p.ref or ''|x}</Data>
+    <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String">${company.currency_id.name|x}</Data>
@@ -319,49 +351,108 @@ else:
     <Data ss:Type="Number">${(sum_debit_partner(p) or 0.) - (sum_credit_partner(p) or 0.)|x}</Data>
 </Cell>
 </Row>
-<!-- PARTNER LINES -->
-% for line in lines(p):
-<Row>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String"></Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String"></Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${formatLang(line['date'], date=True)|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${line['code']|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${line['move_name']|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${line['a_code']|x}</Data>
-  </Cell>
-  <%
-  entry_label = '%s - %s' % (line['ref'] or '', line['name'] or '')
-  %>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${ entry_label |x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${ line['currency_code'] or '' |x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${ line['debit'] or 0.0|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${ line['credit'] or 0.0|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${ line['amount_currency'] or 0.0|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${ line['total_functional'] or 0.0|x}</Data>
-  </Cell>
-</Row>
+
+% for account_code in get_accounts_to_display(p):
+    <!-- TOTALS IN FUNCTIONAL -->
+    <%
+    fctal_totals = get_fctal_totals(p, account_code)
+    %>
+    <Row>
+      <Cell ss:StyleID="ssSubtotalLineRight">
+        <Data ss:Type="String">${p.name or ''|x}</Data>
+      </Cell>
+      <Cell ss:MergeAcross="5" ss:StyleID="ssSubtotalLineRight">
+        <Data ss:Type="String">${ account_code |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineLeft">
+        <Data ss:Type="String">${ company.currency_id.name |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ fctal_totals['debit_functional'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ fctal_totals['credit_functional'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ fctal_totals['total_functional'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ fctal_totals['total_functional'] or 0.0|x}</Data>
+      </Cell>
+    </Row>
+    <!-- SUBTOTAL LINES IN BOOKING -->
+    <%
+    subtotals = get_subtotals(p, account_code)
+    %>
+    % for curr in subtotals:
+    <Row>
+      <Cell ss:StyleID="ssSubtotalLineRight">
+        <Data ss:Type="String">${p.name or ''|x}</Data>
+      </Cell>
+      <Cell ss:MergeAcross="5" ss:StyleID="ssSubtotalLineRight">
+        <Data ss:Type="String">${ _('Subtotal') |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineLeft">
+        <Data ss:Type="String">${ curr or '' |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ subtotals[curr]['debit'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ subtotals[curr]['credit'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ subtotals[curr]['amount_currency'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssSubtotalLineNumber">
+        <Data ss:Type="Number">${ subtotals[curr]['total_functional'] or 0.0|x}</Data>
+      </Cell>
+    </Row>
+    % endfor
+    <!-- PARTNER LINES -->
+    % for line in lines(p, account_code):
+    <Row>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String"></Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">${formatLang(line['date'], date=True)|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">${line['code']|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">${line['move_name']|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">${line['a_code']|x}</Data>
+      </Cell>
+      <%
+      entry_label = '%s - %s' % (line['ref'] or '', line['name'] or '')
+      %>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">${ entry_label |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">${ line['reconcile_txt'] or '' |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLine">
+        <Data ss:Type="String">${ line['currency_code'] or '' |x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLineNumber">
+        <Data ss:Type="Number">${ line['debit'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLineNumber">
+        <Data ss:Type="Number">${ line['credit'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLineNumber">
+        <Data ss:Type="Number">${ line['amount_currency'] or 0.0|x}</Data>
+      </Cell>
+      <Cell ss:StyleID="ssAccountLineNumber">
+        <Data ss:Type="Number">${ line['total_functional'] or 0.0|x}</Data>
+      </Cell>
+    </Row>
+    % endfor
 % endfor
 % endfor
 

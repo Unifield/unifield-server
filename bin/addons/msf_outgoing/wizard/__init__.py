@@ -36,3 +36,4 @@ import return_pack_shipment_processor
 import split_memory_move
 import stock_partial_move
 import shipment
+import check_ppl_integrity

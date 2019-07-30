@@ -86,7 +86,7 @@
     </blockTable>
   </pto_header>
     <para style="terp_default_9">[[repeatIn(objects,'order')]]</para>
-    <para style="terp_default_9">[[ setLang(order.partner_id.lang) ]]</para>
+    <para style="terp_default_9"></para>
     <blockTable colWidths="250.0,59.0,221.0" style="Table_Address_Detail">
       <tr>
         <td>

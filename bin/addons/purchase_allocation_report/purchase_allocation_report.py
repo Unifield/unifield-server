@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -57,8 +57,8 @@ class purchase_order_line_allocation_report(osv.osv):
 
     _columns = {
         'order_id': fields.many2one('purchase.order', string='PO', domain=[('rfq_ok', '=', False)]),
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
-                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
+        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
+                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'),
                                         ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
                                         ('direct', 'Direct Purchase Order')], string='Type'),
         'order_category': fields.selection(ORDER_CATEGORY, string='Cat.'),
@@ -80,7 +80,7 @@ class purchase_order_line_allocation_report(osv.osv):
             string='Product Name',
             store=False,
         ),
-        'product_qty': fields.float(digits=(16,2), string='Qty'),
+        'product_qty': fields.float(digits=(16,2), string='Qty', related_uom='uom_id'),
         'uom_id': fields.many2one('product.uom', string='UoM'),
         'unit_price': fields.float(string='Unit Price', digits_compute=dp.get_precision('Purchase Price Computation')),
         'analytic_id': fields.many2one('analytic.distribution', string='Distribution'),
@@ -186,7 +186,7 @@ class purchase_order_line_allocation_report(osv.osv):
                     ON
                     sol.order_id = so.id
                 WHERE pol.analytic_distribution_id IS NOT NULL
-		    AND po.rfq_ok = 'f')
+		    AND po.rfq_ok = 'f' AND pol.state not in ('cancel', 'cancel_r'))
                 UNION
                 (SELECT 
                     po.id AS order_id,
@@ -246,7 +246,7 @@ class purchase_order_line_allocation_report(osv.osv):
                     sol.order_id = so.id
                 WHERE 
                     pol.analytic_distribution_id IS NULL
-		    AND po.rfq_ok = 'f')) AS al
+		    AND po.rfq_ok = 'f' AND pol.state not in ('cancel', 'cancel_r'))) AS al
             );""")
 
 purchase_order_line_allocation_report()

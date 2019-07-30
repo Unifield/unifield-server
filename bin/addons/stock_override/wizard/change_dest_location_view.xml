@@ -11,7 +11,7 @@
                     <separator colspan="4" string="Internal move" />
                     <field name="picking_id" colspan="4" readonly="1" />
                     <separator colspan="4" string="New destination location" />
-                    <field name="dest_location_id" colspan="4" domain="[('usage', '!=', 'view')]" attrs="{'readonly': [('state', '=', 'end')]}" />
+                    <field name="dest_location_id" colspan="4" domain="[('usage', 'not in', ['view', 'supplier', 'customer'])]" attrs="{'readonly': [('state', '=', 'end')]}" />
                     <field name="state" invisible="1" />
                     <group colspan="4" col="4" attrs="{'invisible': [('state', '=', 'start')]}">
                         <field name="warn_msg" colspan="4" nolabel="1" readonly="1" />

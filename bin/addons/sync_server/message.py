@@ -123,7 +123,7 @@ class message(osv.osv):
         if entity.msg_ids_tmp:
             # convert the string into list of ids, then get only those not sent
             msg_ids_tmp = entity.msg_ids_tmp[1:-1]
-            msg_ids_tmp = map(int, msg_ids_tmp.split(',')) 
+            msg_ids_tmp = map(int, msg_ids_tmp.split(','))
             ids = self.search(cr, uid, [('id', 'in', msg_ids_tmp), ('sent', '=', False)], limit=size, context=context)
         else:
             return False
@@ -136,13 +136,14 @@ class message(osv.osv):
                 'args': data.arguments,
                 'source': data.source.name,
                 'sequence' : data.sequence,
+                'sync_id': data.id,
             }
             packet.append(message)
 
         self._logger.info("::::::::[%s] Message pull :: Number of message pulled: %s" % (entity.name, len(packet)))
         return packet
 
-    def set_message_as_received(self, cr, uid, entity, message_uuids, context=None):
+    def set_message_as_received(self, cr, uid, entity, message_uuids=None, message_ids=None, context=None):
         """
             Called by XML RPC method message_received when the client instance pull messages and it succeeds.
 
@@ -157,8 +158,14 @@ class message(osv.osv):
         self._logger.info("::::::::[%s] Set messages as received" % (entity.name,))
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm messages...'))
 
-        ids = self.search(cr, uid, [('identifier', 'in', message_uuids),
-                                    ('destination', '=', entity.id)], order='NO_ORDER', context=context)
+        domain = [('destination', '=', entity.id)]
+        if message_ids:
+            domain.append(('id', 'in', message_ids))
+        else:
+            domain.append(('identifier', 'in', message_uuids))
+
+        ids = self.search(cr, uid, domain, order='NO_ORDER', context=context)
+
         if ids:
             self.write(cr, uid, ids, {'sent' : True}, context=context)
         self._logger.info("::::::::[%s] %s messages confirmed" % (entity.name, len(ids)))

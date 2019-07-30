@@ -19,6 +19,8 @@ def migrate(cr, version):
                 if line:
                     cr.execute(line)
 
+    if not cr.table_exists('msf_field_access_rights_field_access_rule_line'):
+        return
     # delete FARL linked to deleted fields
     #field_sale_order_from_yml_test
     cr.execute('''delete from msf_field_access_rights_field_access_rule_line where id in
@@ -66,7 +68,7 @@ def migrate(cr, version):
     cr.execute("create unique index ir_ui_view_model_type_priority on ir_ui_view(id)")
     cr.execute("alter table ir_ui_view add constraint ir_ui_view_unique_view unique(id)")
 
-    if cr.column_exists('ir_ui_view', 'inherit_id'): 
+    if cr.column_exists('ir_ui_view', 'inherit_id'):
         # set fake records to prevent resinstallion of constraints, deleted in msf_profile
         cr.execute("insert into ir_ui_view (name, model, type, arch, priority) values ('aaa', 'aaa', 'aaa', '', 5) returning id")
         new_id = cr.fetchone()[0]

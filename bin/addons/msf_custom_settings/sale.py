@@ -59,7 +59,7 @@ class sale_order(osv.osv):
         Check that partner and order type are compatibles
         """
         compats = {
-            'regular':      ['internal', 'intermission', 'section', 'external'],
+            'regular':      ['internal', 'intermission', 'section', 'external', 'esc'],
             'donation_st':  ['internal', 'intermission', 'section', 'external'],
             'loan':         ['internal', 'intermission', 'section', 'external'],
             'donation_exp': ['internal', 'intermission', 'section', 'external'],
@@ -73,7 +73,7 @@ class sale_order(osv.osv):
         return True
 
     _constraints = [
-       (_check_order_type_and_partner, "Partner type and order type are incompatible! Please change either order type or partner.", ['order_type', 'partner_id']),
+        (_check_order_type_and_partner, "Partner type and order type are incompatible! Please change either order type or partner.", ['order_type', 'partner_id']),
     ]
 
 sale_order()

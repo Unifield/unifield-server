@@ -25,10 +25,9 @@
                                 'required': [('revaluation_method', 'in', ['liquidity_year', 'other_bs'])]}"/>
                     <newline/>
                     <separator string="" colspan="6"/>
-                    <field name="result_period_yearly_editable" />
                     <field name="result_period_internal_id" />
                     <field name="result_period_id"
-                        attrs="{'readonly': ['|', ('revaluation_method', '=', 'liquidity_month'), ('result_period_yearly_editable', '=', False)]}"
+                        attrs="{'readonly': [('revaluation_method', '=', 'liquidity_month')]}"
                         on_change="on_change_result_period_id(result_period_id)"/>
                     <newline/>
                     <field name="posting_date"/>

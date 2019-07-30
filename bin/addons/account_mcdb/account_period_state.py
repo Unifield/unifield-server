@@ -30,6 +30,7 @@ from account_period_closing_level import ACCOUNT_FY_STATE_SELECTION
 
 class account_period_state(osv.osv):
     _name = "account.period.state"
+    _description = "Period States"
 
     _columns = {
         'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade', select=1),
@@ -63,7 +64,7 @@ class account_period_state(osv.osv):
             'type': 'ir.actions.act_window',
             'res_model': 'account.period.state',
             'view_type': 'form',
-            'view_mode': 'tree',
+            'view_mode': 'tree,form',
             'search_view_id': search_id,
             'view_id': [view_id],
             'context': context,
@@ -126,6 +127,7 @@ account_period_state()
 class account_fiscalyear_state(osv.osv):
     # model since US-822
     _name = "account.fiscalyear.state"
+    _description = "Fiscal Year States"
 
     _columns = {
         'fy_id': fields.many2one('account.fiscalyear', 'Fiscal Year',
@@ -172,7 +174,11 @@ class account_fiscalyear_state(osv.osv):
                      AND ml.account_id = %s AND ml.currency_id = %s;
                   '''
             for fy_state_id in ids:
-                fy = self.browse(cr, uid, fy_state_id, fields_to_fetch=['fy_id'], context=context).fy_id
+                fy_state = self.browse(cr, uid, fy_state_id, fields_to_fetch=['fy_id', 'instance_id'], context=context)
+                if fy_state.instance_id.id != company_instance.id:
+                    # trigger reconcile only if instance FY is closed, not when update is received from project
+                    break
+                fy = fy_state.fy_id
                 period_id = year_end_closing_obj._get_period_id(cr, uid, fy.id, period_number, context=context)
                 if not period_id:
                     raise osv.except_osv(_('Error'), _("FY 'Period %d' not found") % (period_number,))
@@ -209,7 +215,7 @@ class account_fiscalyear_state(osv.osv):
             'type': 'ir.actions.act_window',
             'res_model': 'account.fiscalyear.state',
             'view_type': 'form',
-            'view_mode': 'tree',
+            'view_mode': 'tree,form',
             'search_view_id': search_id,
             'view_id': [view_id],
             'context': context,

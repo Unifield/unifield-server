@@ -40,27 +40,32 @@
         <record id="trans_state_open" model="workflow.transition">
             <field name="act_from" ref="act_draft" />
             <field name="act_to" ref="act_open" />
+            <field name="sequence" eval="10" />
             <field name="signal">button_open</field>
         </record>
         
         <record id="trans_state_closed" model="workflow.transition">
             <field name="act_from" ref="act_open" />
             <field name="act_to" ref="act_closed" />
+            <field name="sequence" eval="10" />
             <field name="signal">button_confirm_cash</field>
         </record>
         
         <record id="trans_state_partial_close" model="workflow.transition">
             <field name="act_from" ref="act_open" />
             <field name="act_to" ref="act_partial_close" />
+            <field name="sequence" eval="20" />
         </record>
         <record id="trans_state_partial_close_to_open" model="workflow.transition">
             <field name="act_from" ref="act_partial_close" />
             <field name="act_to" ref="act_open"/>
+            <field name="sequence" eval="10" />
             <field name="signal">button_reopen</field>
         </record>
         <record id="trans_state_partial_close_to_closed" model="workflow.transition">
             <field name="act_from" ref="act_partial_close"/>
             <field name="act_to" ref="act_closed"/>
+            <field name="sequence" eval="20" />
             <field name="signal">button_write_off</field>
         </record>
     </data>

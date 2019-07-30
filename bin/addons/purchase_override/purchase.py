@@ -312,8 +312,7 @@ class product_product(osv.osv):
             display_message = True
 
         if display_message:
-            return 'Warning you are about to add a product which does not conform to this' \
-                ' order category, do you wish to proceed ?'
+            return _('Warning you are about to add a product which does not conform to this order category, do you wish to proceed ?')
         else:
             return False
 
@@ -420,17 +419,22 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             po = wiz.order_id
 
-        # cancel all lines:
+        # cancel all non-confirmed lines:
         if po.rfq_ok:
             self.pool.get('purchase.order').cancel_rfq(cr, uid, [po.id], context=context)
         else:
             for pol in po.order_line:
-                if pol.has_pol_been_synched:
-                    continue
-                signal = 'cancel' 
-                if resource and pol.linked_sol_id:
-                    signal = 'cancel_r'
-                wf_service.trg_validate(uid, 'purchase.order.line', pol.id, signal, cr)
+                if (pol.order_id.partner_type in ('external', 'esc') and pol.state in ('draft', 'validated', 'validated_n'))\
+                        or (pol.order_id.partner_type not in ('external', 'esc') and pol.state == 'draft'):
+                    if pol.has_pol_been_synched:
+                        continue
+                    signal = 'cancel'
+                    if resource and pol.linked_sol_id:
+                        signal = 'cancel_r'
+                    wf_service.trg_validate(uid, 'purchase.order.line', pol.id, signal, cr)
+            # check if the related CV should be set to Done
+            if po:
+                self.pool.get('purchase.order').check_close_cv(cr, uid, po.id, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 

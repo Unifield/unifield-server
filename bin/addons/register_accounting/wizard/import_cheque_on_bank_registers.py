@@ -128,12 +128,12 @@ class wizard_import_cheque(osv.osv_memory):
         # Refresh wizard to display changes
         return {
             'type': 'ir.actions.act_window',
-         'res_model': 'wizard.import.cheque',
-         'view_type': 'form',
-         'view_mode': 'form',
-         'res_id': ids[0],
-         'context': context,
-         'target': 'new',
+            'res_model': 'wizard.import.cheque',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': ids[0],
+            'context': context,
+            'target': 'new',
         }
 
     def action_confirm(self, cr, uid, ids, context=None):
@@ -161,6 +161,8 @@ class wizard_import_cheque(osv.osv_memory):
         absl_lines = []
         for imported_line in wizard.imported_lines_ids:
             line = imported_line.line_id
+            if absl_obj.search_exist(cr, uid, [('from_import_cheque_id', '=', line.id)], context=context):
+                raise osv.except_osv(_('Warning'), _('The Cheque %s has already been imported.') % line.cheque_number or line.name or line.ref or '')
             total = line.amount_currency
             if not imported_line.document_date:
                 raise osv.except_osv(_('Warning'), _('Please add a Document Date on imported lines.'))
@@ -186,6 +188,8 @@ class wizard_import_cheque(osv.osv_memory):
 
         if not len(absl_lines):
             raise osv.except_osv(_('Warning'), _('No line created!'))
+        # set the wizard to "is_imported" at the end of the process only
+        # (the user must be able to re-click on OK after having fixed the potential errors displayed)
         self.write(cr, uid, ids, {'is_imported': True}, context=context)
         return { 'type': 'ir.actions.act_window_close', 'st_line_ids': absl_lines, 'o2m_refresh': 'line_ids'}
 

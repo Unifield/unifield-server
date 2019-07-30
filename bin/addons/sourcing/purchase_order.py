@@ -23,6 +23,17 @@ from osv import fields
 from osv import osv
 
 
+COMPATS = {
+    'regular':       ['internal', 'intermission', 'section', 'external', 'esc'],
+    'donation_st':   ['internal', 'intermission', 'section'],
+    'loan':          ['internal', 'intermission', 'section', 'external'],
+    'donation_exp':  ['internal', 'intermission', 'section'],
+    'in_kind':       ['external', 'esc'],
+    'direct':        ['external', 'esc'],
+    'purchase_list': ['external'],
+}
+
+
 class purchase_order(osv.osv):
     """
     override for workflow modification
@@ -72,18 +83,9 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order.'
         """
         Check order type and partner type compatibilities.
         """
-        compats = {
-            'regular':       ['internal', 'intermission', 'section', 'external', 'esc'],
-            'donation_st':   ['internal', 'intermission', 'section'],
-            'loan':          ['internal', 'intermission', 'section', 'external'],
-            'donation_exp':  ['internal', 'intermission', 'section'],
-            'in_kind':       ['external', 'esc'],
-            'direct':        ['external', 'esc'],
-            'purchase_list': ['external'],
-        }
         # Browse PO
         for po in self.browse(cr, uid, ids):
-            if po.order_type not in compats or po.partner_id.partner_type not in compats[po.order_type]:
+            if po.order_type not in COMPATS or po.partner_id.partner_type not in COMPATS[po.order_type]:
                 return False
         return True
 
