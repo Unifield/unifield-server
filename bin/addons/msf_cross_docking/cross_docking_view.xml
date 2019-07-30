@@ -34,20 +34,20 @@
                     <xpath expr="//tree[@string='Stock Moves']//field[@name='location_id']" position="after" >
                         <field name="product_type" invisible="1" />
                         <button name="button_cross_docking" string="Cross docking" type="object" icon="gtk-select-color"
-                        attrs="{'invisible':['|', '|', '|', ('product_type', 'in', ['consu', 'service_recep']), ('allocation_setup', '=', 'unallocated'),('move_cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}"
+                        attrs="{'invisible':['|', '|', '|', ('product_type', 'in', ['consu', 'service_recep']), ('allocation_setup', '=', 'unallocated'),('move_cross_docking_ok','=', True), ('state', 'in', ('done','delivered','cancel'))]}"
                         context="{'from_button': True}"  />
                         <button name="button_stock" string="Stock" type="object" icon="gtk-media-play"
-                        attrs="{'invisible':['|', '|', ('product_type', 'in', ['consu', 'service_recep']), ('move_cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}"
+                        attrs="{'invisible':['|', '|', ('product_type', 'in', ['consu', 'service_recep']), ('move_cross_docking_ok','=', False), ('state', 'in', ('done','delivered','cancel'))]}"
                         context="{'from_button': True}"  />
                         <field name="move_cross_docking_ok" invisible='1'/>
                         <field name="allocation_setup" invisible="1" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Products']/group/field[@name='state']" position="after" >
                         <button name="button_cross_docking_all" string="Cross docking" type="object" icon="gtk-select-color"
-                        attrs="{'invisible':['|', '|', ('allocation_setup', '=', 'unallocated'), ('cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}"
+                        attrs="{'invisible':['|', '|', ('allocation_setup', '=', 'unallocated'), ('cross_docking_ok','=', True), ('state', 'in', ('done','delivered','cancel'))]}"
                         context="{'from_button': True}" />
                         <button name="button_stock_all" string="Stock" type="object" icon="gtk-media-play"
-                        attrs="{'invisible':['|', ('cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}"
+                        attrs="{'invisible':['|', ('cross_docking_ok','=', False), ('state', 'in', ('done','delivered','cancel'))]}"
                         context="{'from_button': True}"  />
                         <field name="allocation_setup" invisible="1" />
                     </xpath>

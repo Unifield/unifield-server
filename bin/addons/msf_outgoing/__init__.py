@@ -19,45 +19,47 @@
 #
 ##############################################################################
 
+from tools.translate import _
+
 PACK_INTEGRITY_STATUS_SELECTION = [
     ('empty', ''),
-    ('ok', 'Ok'),
-    ('missing_1', 'The first sequence must start with 1'),
-    ('to_smaller_than_from', 'To value must be greater or equal to From value'),
-    ('overlap', 'The sequence overlaps previous one'),
-    ('gap', 'A gap exist in the sequence'),
+    ('ok', _('Ok')),
+    ('missing_1', _('The first sequence must start with 1')),
+    ('to_smaller_than_from', _('To value must be greater or equal to From value')),
+    ('overlap', _('The sequence overlaps previous one')),
+    ('gap', _('A gap exist in the sequence')),
 ]
 INTEGRITY_STATUS_SELECTION = [
-    ('negative', 'Negative Value'),
+    ('negative', _('Negative Value')),
     # picking
-    ('missing_lot', 'Batch Number is Missing'),
-    ('missing_date', 'Expiry Date is Missing'),
-    ('no_lot_needed', 'No Batch Number/Expiry Date Needed'),
-    ('wrong_lot_type', 'Wrong Batch Number Type'),
-    ('wrong_lot_type_need_internal', 'Need Expiry Date (Internal) not Batch Number (Standard)'),
-    ('wrong_lot_type_need_standard', 'Need Batch Number (Standard) not Expiry Date (Internal)'),
-    ('empty_picking', 'Empty Picking Ticket'),
+    ('missing_lot', _('Batch Number is Missing')),
+    ('missing_date', _('Expiry Date is Missing')),
+    ('no_lot_needed', _('No Batch Number/Expiry Date Needed')),
+    ('wrong_lot_type', _('Wrong Batch Number Type')),
+    ('wrong_lot_type_need_internal', _('Need Expiry Date (Internal) not Batch Number (Standard)')),
+    ('wrong_lot_type_need_standard', _('Need Batch Number (Standard) not Expiry Date (Internal)')),
+    ('empty_picking', _('Empty Picking Ticket')),
     # return ppl
-    ('return_qty_too_much', 'Too much quantity selected'),
+    ('return_qty_too_much', _('Too much quantity selected')),
     # ppl2
-    ('missing_weight', 'Weight is Missing'),
+    ('missing_weight', _('Weight is Missing')),
     # create shipment
-    ('too_many_packs', 'Too many packs selected'),
+    ('too_many_packs', _('Too many packs selected')),
     # return from shipment
-    ('seq_out_of_range', 'Selected Sequence is out of range'),
+    ('seq_out_of_range', _('Selected Sequence is out of range')),
     # substitute kit
-    ('not_available', 'Not Available'),
-    ('must_be_greater_than_0', 'Quantity must be greater than 0.0'),
-    ('missing_asset', 'Asset is Missing'),
-    ('no_asset_needed', 'No Asset Needed'),
+    ('not_available', _('Not Available')),
+    ('must_be_greater_than_0', _('Quantity must be greater than 0.0')),
+    ('missing_asset', _('Asset is Missing')),
+    ('no_asset_needed', _('No Asset Needed')),
     # assign kit
-    ('greater_than_available', 'Assigned qty must be smaller or equal to available qty'),
-    ('greater_than_required', 'Assigned qty must be smaller or equal to required qty'),
+    ('greater_than_available', _('Assigned qty must be smaller or equal to available qty')),
+    ('greater_than_required', _('Assigned qty must be smaller or equal to required qty')),
     # pol dekitting
-    ('price_must_be_greater_than_0', 'Unit Price must be greater than 0.0'),
+    ('price_must_be_greater_than_0', _('Unit Price must be greater than 0.0')),
     # claims
-    ('missing_src_location', 'Src Location is missing'),
-    ('not_exist_in_picking', 'Does not exist in selected IN/OUT'),
+    ('missing_src_location', _('Src Location is missing')),
+    ('not_exist_in_picking', _('Does not exist in selected IN/OUT')),
 ] + PACK_INTEGRITY_STATUS_SELECTION
 
 import msf_outgoing

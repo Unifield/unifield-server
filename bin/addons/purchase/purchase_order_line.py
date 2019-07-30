@@ -9,6 +9,7 @@ from tools.translate import _
 import decimal_precision as dp
 from . import PURCHASE_ORDER_STATE_SELECTION
 from . import PURCHASE_ORDER_LINE_STATE_SELECTION
+from . import PURCHASE_ORDER_LINE_DISPLAY_STATE_SELECTION
 from . import ORDER_TYPES_SELECTION
 from msf_partner import PARTNER_TYPE
 from lxml import etree
@@ -176,21 +177,21 @@ class purchase_order_line(osv.osv):
             # if PO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
             if (pol.resourced_original_line or pol.set_as_resourced) and pol.state not in ['done', 'cancel', 'cancel_r']:
                 if pol.state.startswith('validated'):
-                    res[pol.id] = 'Resourced-v'
+                    res[pol.id] = 'resourced_v'
                 elif pol.state.startswith('sourced'):
                     if pol.state == 'sourced_v':
-                        res[pol.id] = 'Resourced-pv'
+                        res[pol.id] = 'resourced_pv'
                     #elif pol.state == 'sourced_sy':
                     #    res[pol.id] = 'Resourced-sy'
                     else:
                         # debatable
-                        res[pol.id] = 'Resourced-s'
+                        res[pol.id] = 'resourced_s'
                 elif pol.state.startswith('confirmed'):
-                    res[pol.id] = 'Resourced-c'
+                    res[pol.id] = 'resourced_c'
                 else: # draft + unexpected PO line state
-                    res[pol.id] = 'Resourced-d'
+                    res[pol.id] = 'resourced_d'
             else: # state_to_display == state
-                res[pol.id] = self.pool.get('ir.model.fields').get_browse_selection(cr, uid, pol, 'state', context=context)
+                res[pol.id] = pol.state
 
         return res
 
@@ -508,7 +509,7 @@ class purchase_order_line(osv.osv):
                                        \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                                        \n* The \'Done\' state is set automatically when purchase order is set as done. \
                                        \n* The \'Cancelled\' state is set automatically when user cancel purchase order.'),
-        'state_to_display': fields.function(_get_state_to_display, string='State', type='text', method=True, readonly=True,
+        'state_to_display': fields.function(_get_state_to_display, string='State', type='selection', selection=PURCHASE_ORDER_LINE_DISPLAY_STATE_SELECTION, method=True, readonly=True,
                                             help=' * The \'Draft\' state is set automatically when purchase order in draft state. \
                \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                \n* The \'Done\' state is set automatically when purchase order is set as done. \

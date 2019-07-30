@@ -741,15 +741,15 @@ class stock_picking(osv.osv):
                     return "Recovery: the reference to " + in_name + " at " + source + " will be set to void."
 
         elif 'OUT' in out_doc_name:
-            ship_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'done')], context=context)
-            if ship_ids:
+            out_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'done')], context=context)
+            if out_ids:
                 # set the Shipment to become delivered
                 context['InShipOut'] = "OUT"  # asking OUT object to be logged (model stock.picking)
-                self.set_delivered(cr, uid, ship_ids, context=context)
+                self.set_delivered(cr, uid, out_ids, context=context)
                 message = "The OUTcoming " + out_doc_name + " has been well delivered to its partner " + source + ": " + out_info.name
             else:
-                ship_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'delivered')], context=context)
-                if ship_ids:
+                out_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'delivered')], context=context)
+                if out_ids:
                     message = "The OUTcoming " + out_doc_name + " has been MANUALLY confirmed as delivered."
                 elif context.get('restore_flag'):
                     # UF-1830: Create a message to remove the invalid reference to the inexistent document

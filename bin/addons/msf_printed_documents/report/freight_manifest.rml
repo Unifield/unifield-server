@@ -178,7 +178,7 @@
 
     <story>
 
-        <para style="Standard">[[ setLang(objects[0].partner_id2.lang) ]]</para>
+        <para style="Standard"></para>
         <para style="Standard">
             <font color="white"> </font>
         </para>

@@ -528,8 +528,9 @@ class module(osv.osv):
                     iso_lang = iso_lang.split('_')[0]
                     f = addons.get_module_resource(mod.name, 'i18n', iso_lang + '.po')
                 if f:
+                    delete_old =  mod.name == 'msf_profile' and context2.get('overwrite') and lang== 'fr_MF'
                     logger.info('module %s: loading translation file (%s) for language %s', mod.name, iso_lang, lang)
-                    tools.trans_load(cr, f, lang, verbose=False, context=context2)
+                    tools.trans_load(cr, f, lang, verbose=False, context=context2, delete_old=delete_old)
         tools.trans_update_res_ids(cr)
 
     def check(self, cr, uid, ids, context=None):
