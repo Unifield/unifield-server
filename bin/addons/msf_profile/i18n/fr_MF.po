@@ -107416,6 +107416,20 @@ msgstr "Nr de lot"
 msgid "No document has been selected"
 msgstr "Aucun document n'a été sélectionné"
 
+#. modules: purchase, sale
+#: code:addons/purchase/purchase_order_line.py:636
+#: code:addons/sale/sale_order.py:2151
+#, python-format
+msgid "The Stock Take Date of the lines %s is not consistent! It should not be later than %s's creation date"
+msgstr "La Date de Prise de Stock des lignes %s n'est pas cohérente! Elle ne devrait pas être ultérieure à la date de création de %s"
+
+#. modules: purchase, sale
+#: code:addons/purchase/purchase_order.py:933
+#: code:addons/sale/sale_order.py:733
+#, python-format
+msgid "The Stock Take Date of %s is not consistent! It should not be later than its creation date"
+msgstr "La Date de Prise de Stock de %s n'est pas cohérente! Elle ne devrait pas être ultérieure à sa date de création"
+
 #. module: purchase
 #: view:purchase.order:0
 msgid "Estimated transport costs : "
@@ -107462,6 +107476,30 @@ msgid "\n"
 msgstr "\n"
 "                                Commentaire :\n"
 "                            "
+
+#. module: purchase
+#: code:addons/purchase/purchase_order_line.py:637
+#, python-format
+msgid "the PO"
+msgstr "le BdC"
+
+#. module: sale
+#: code:addons/sale/sale_order.py:2152
+#, python-format
+msgid "the FO/IR"
+msgstr "la CdT/DI"
+
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:713
+#, python-format
+msgid "The Date of Stock Take is not consistent! It should not be later than %s's creation date. "
+msgstr "La Date de Prise de Stock n'est pas cohérente! Elle ne devrait pas être ultérieure à la date de création de %s. "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1731
+#, python-format
+msgid "The Date of Stock Take is not consistent! It should not be later than %s's creation date"
+msgstr "La Date de Prise de Stock n'est pas cohérente! Elle ne devrait pas être ultérieure à la date de création de %s"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:947

@@ -98,6 +98,7 @@ class sale_order(osv.osv):
             'sourcing_trace_ok': False,
             'claim_name_goods_return': '',
             'draft_cancelled': False,
+            'stock_take_date': False,
         })
 
         if not context.get('keepClientOrder', False):
@@ -725,6 +726,26 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
     _order = 'id desc'
 
+    def _check_stock_take_date(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # Do not prevent modification during synchro
+        if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+            for so in self.browse(cr, uid, ids, context=context):
+                if so.state in ['draft', 'draft_p', 'validated', 'sourced', 'sourced_p', 'confirmed', 'confirmed_p'] \
+                        and so.stock_take_date and so.stock_take_date > so.date_order:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('The Stock Take Date of %s is not consistent! It should not be later than its creation date')
+                        % (so.name,)
+                    )
+
+        return True
+
     # Form filling
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -878,7 +899,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             elif vals['order_policy'] == 'picking':
                 vals.update({'invoice_quantity': 'procurement'})
 
-        return super(sale_order, self).write(cr, uid, ids, vals, context=context)
+        res = super(sale_order, self).write(cr, uid, ids, vals, context=context)
+
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, ids, context=context)
+
+        return res
 
     def create(self, cr, uid, vals, context=None):
         if context is None:
@@ -906,8 +932,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if vals['order_policy'] == 'picking':
                 vals.update({'invoice_quantity': 'procurement'})
 
-        return super(sale_order, self).create(cr, uid, vals, context)
+        sale_id = super(sale_order, self).create(cr, uid, vals, context)
 
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, sale_id, context=context)
+
+        return sale_id
 
     def button_dummy(self, cr, uid, ids, context=None):
         return True
@@ -2111,6 +2141,34 @@ class sale_order_line(osv.osv):
         'cancelled_by_sync': False,
     }
 
+    def _check_stock_take_date(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # Do not prevent modification during synchro
+        if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+            error_lines = []
+            linked_order = ''
+            for sol in self.browse(cr, uid, ids, context=context):
+                if not linked_order:
+                    linked_order = sol.order_id.name
+                if sol.state in ['draft', 'validated', 'sourced', 'sourced_v', 'sourced_sy', 'sourced_n', 'confirmed'] \
+                        and sol.stock_take_date and sol.stock_take_date > sol.order_id.date_order:
+                    error_lines.append(str(sol.line_number))
+                if len(error_lines) >= 10:  # To not display too much
+                    break
+            if error_lines:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('The Stock Take Date of the lines %s is not consistent! It should not be later than %s\'s creation date')
+                    % (', '.join(error_lines), linked_order or _('the FO/IR'))
+                )
+
+        return True
+
     def invoice_line_create(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -2245,6 +2303,7 @@ class sale_order_line(osv.osv):
             'set_as_sourced_n': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
+            'stock_take_date': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
@@ -2946,6 +3005,9 @@ class sale_order_line(osv.osv):
                 name = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).name
                 super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': name + "_" + str(so_line_ids), } , context=context)
 
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, so_line_ids, context=context)
+
         return so_line_ids
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -2978,6 +3040,9 @@ class sale_order_line(osv.osv):
             vals['soq_updated'] = False
 
         res = super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
+
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, ids, context=context)
 
         return res
 
