@@ -106,7 +106,7 @@
         ## Reference
         <Column ss:AutoFitWidth="1" ss:Width="100.0" />
         ## Reason Type
-        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="110.0" />
         ## SHIP
         <Column ss:AutoFitWidth="1" ss:Width="80.0" />
         ## Origin
@@ -140,9 +140,9 @@
         ## Destination Location
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
         ## Creation Date
-        <Column ss:AutoFitWidth="1" ss:Width="60.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="63.0" />
         ## Shipped Date
-        <Column ss:AutoFitWidth="1" ss:Width="60.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="63.0" />
 
         ## WORKSHEET HEADER
         <Row>
@@ -232,7 +232,7 @@
         % endfor
         </Row>
 
-        % for move in getMoves(r.moves_ids):
+        % for move in sorted(getMoves(r.moves_ids), key=lambda x: (x['shipped_date'], x['ref'], x['line_num'], x['prod_code'])):
             <Row ss:Height="12.0">
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['ref']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['reason_type']|x}</Data></Cell>

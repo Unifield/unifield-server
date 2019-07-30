@@ -3794,6 +3794,7 @@ msgstr "Vous ne pouvez ajouter aucun nouveau mouvement tout en validant le picki
 #: report:addons/stock/report/stock_reception_report_xls.mako:204
 #: report:addons/stock/report/stock_reception_report_xls.mako:230
 #: field:stock.reception.wizard,order_category:0
+#: report:addons/stock/report/stock_delivery_report_xls.mako:213
 msgid "Order Category"
 msgstr "Catégorie de Commande"
 
@@ -4934,6 +4935,7 @@ msgstr "Mois :"
 #: view:account.invoice:0
 #: field:internal.request.import.line,ir_line_id:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:236
+#: report:addons/stock/report/stock_delivery_report_xls.mako:215
 #, python-format
 msgid "Line"
 msgstr "Ligne"
@@ -16983,6 +16985,8 @@ msgstr ","
 #: report:addons/stock/report/stock_reception_report_xls.mako:245
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:228
 #: field:stock.picking,destinations_list:0
+#: report:addons/stock/report/stock_delivery_report_xls.mako:198
+#: report:addons/stock/report/stock_delivery_report_xls.mako:224
 #, python-format
 msgid "Destination Location"
 msgstr "Zone Destination"
@@ -19860,6 +19864,8 @@ msgstr "Incorrectly formatted expiry date: %s. The expected date should be > 01/
 #: view:stock.move:0
 #: view:manage.expired.stock:0
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:227
+#: report:addons/stock/report/stock_delivery_report_xls.mako:194
+#: report:addons/stock/report/stock_delivery_report_xls.mako:223
 #, python-format
 msgid "Source Location"
 msgstr "Zone Source"
@@ -27209,6 +27215,7 @@ msgstr "Code Applicable (si type=code)"
 #: view:stock.reception.wizard:0
 #: view:products.situation.report:0
 #: view:supplier.performance.wizard:0
+#: view:stock.delivery.wizard:0
 msgid "Excel report"
 msgstr "Rapport Excel"
 
@@ -27594,6 +27601,7 @@ msgstr "Volume Total [dm³]"
 #: field:stock.reserved.products,product_qty:0
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:228
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:221
+#: report:addons/stock/report/stock_delivery_report_xls.mako:219
 #, python-format
 msgid "Qty"
 msgstr "Qté"
@@ -31478,6 +31486,7 @@ msgstr "Alloc.Analyt."
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:187
 #: field:supplier.performance.wizard,report_date:0
 #: code:addons/stock_override/report/report_stock_move.py:738
+#: report:addons/stock/report/stock_delivery_report_xls.mako:156
 msgid "Generated on"
 msgstr "Généré le"
 
@@ -38953,6 +38962,7 @@ msgstr "Masculin"
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:225
 #: report:order.type.donation.certificate:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:238
+#: report:addons/stock/report/stock_delivery_report_xls.mako:221
 msgid "Currency"
 msgstr "Devise"
 
@@ -41119,6 +41129,7 @@ msgstr "De confirmé à attribué."
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:220
 #: report:addons/stock/report/products_situation_report_xls.mako:218
 #: code:addons/stock_override/report/report_stock_move.py:759
+#: report:addons/stock/report/stock_delivery_report_xls.mako:218
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -44210,6 +44221,7 @@ msgstr "Contient des Produits Dangereux"
 #: field:tender.line,product_code:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:233
 #: code:addons/stock_override/report/report_stock_move.py:759
+#: report:addons/stock/report/stock_delivery_report_xls.mako:216
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -49206,6 +49218,7 @@ msgstr "Original Qty for Partial process - only for sync and partial processed l
 #: view:stock.reception.wizard:0
 #: view:stock.expired.damaged.report:0
 #: view:supplier.performance.wizard:0
+#: view:stock.delivery.wizard:0
 msgid "Request parameters"
 msgstr "Paramètres de la requête"
 
@@ -50350,6 +50363,9 @@ msgstr "Montant total"
 #: report:addons/stock/report/reserved_products_report_xls.mako:162
 #: report:addons/stock/report/stock_reception_report_xls.mako:200
 #: field:stock.reception.wizard,partner_id:0
+#: report:addons/stock/report/stock_delivery_report_xls.mako:186
+#: report:addons/stock/report/stock_delivery_report_xls.mako:211
+#: field:stock.delivery.wizard,partner_id:0
 #, python-format
 msgid "Partner"
 msgstr "Partenaire"
@@ -55667,8 +55683,10 @@ msgstr "Montant final en devise d'enregistrement"
 #. module: consumption_calculation, stock
 #: field:product.history.consumption.month,date_from:0
 #: field:stock.reception.wizard,start_date:0
+#: report:addons/stock/report/stock_delivery_report_xls.mako:170
+#: field:stock.delivery.wizard,start_date:0
 msgid "Date from"
-msgstr "Date à partir de"
+msgstr "Date du"
 
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:728
@@ -62599,6 +62617,7 @@ msgstr "Albanie"
 #: report:addons/stock/report/stock_reception_report_xls.mako:225
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:215
 #: report:addons/msf_supply_doc_export/report/report_pick_export_xls.mako:93
+#: report:addons/stock/report/stock_delivery_report_xls.mako:207
 #, python-format
 msgid "Reference"
 msgstr "Référence"
@@ -63176,6 +63195,7 @@ msgstr "Tél. :"
 #: report:addons/stock/report/stock_reception_report_xls.mako:208
 #: report:addons/stock/report/stock_reception_report_xls.mako:229
 #: field:stock.reception.wizard,order_type:0
+#: report:addons/stock/report/stock_delivery_report_xls.mako:212
 msgid "Order Type"
 msgstr "Type de Commande"
 
@@ -65588,6 +65608,7 @@ msgstr "Zone - Stock"
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:120
 #: view:stock.reserved.products:0
 #: view:products.situation.report:0
+#: field:stock.delivery.wizard,location_id:0
 msgid "Location"
 msgstr "Zone"
 
@@ -65855,8 +65876,10 @@ msgstr "Exemple : 2% à 14 jours nets, solde à 30 jours fin de mois"
 #. module: consumption_calculation, stock
 #: field:product.history.consumption.month,date_to:0
 #: field:stock.reception.wizard,end_date:0
+#: report:addons/stock/report/stock_delivery_report_xls.mako:178
+#: field:stock.delivery.wizard,end_date:0
 msgid "Date to"
-msgstr "Date à"
+msgstr "Date au"
 
 #. module: sale
 #: model:process.node,name:sale.process_node_saleprocurement0
@@ -76198,6 +76221,7 @@ msgstr "Vous ne pouvez pas décocher la case Section parce que cette devise est 
 #: field:internal.request.import,in_origin:0
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:205
 #: report:addons/stock/report/stock_reception_report_xls.mako:234
+#: report:addons/stock/report/stock_delivery_report_xls.mako:210
 #, python-format
 msgid "Origin"
 msgstr "Origine"
@@ -77048,6 +77072,7 @@ msgstr "Sorte de Node"
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:219
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:234
 #: code:addons/stock_override/report/report_stock_move.py:759
+#: report:addons/stock/report/stock_delivery_report_xls.mako:217
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -77828,6 +77853,7 @@ msgstr "# de lignes importées"
 #: report:addons/stock/report/stock_reception_report_xls.mako:242
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:224
 #: report:order.type.donation.certificate:0
+#: report:addons/stock/report/stock_delivery_report_xls.mako:220
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -82802,6 +82828,7 @@ msgstr "Update(s) not run left: %d"
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:216
 #: view:stock.expired.damaged.report:0
 #: code:addons/stock_override/report/report_stock_move.py:759
+#: report:addons/stock/report/stock_delivery_report_xls.mako:208
 msgid "Reason Type"
 msgstr "Raison - Type"
 
@@ -82843,6 +82870,7 @@ msgstr "\n"
 #: field:report.stock.move,location_dest_id:0
 #: field:stock.picking,location_dest_id:0
 #: field:stock.reception.wizard,location_dest_id:0
+#: field:stock.delivery.wizard,location_dest_id:0
 msgid "Dest. Location"
 msgstr "Zone Dest."
 
@@ -90899,6 +90927,7 @@ msgstr "Erreur ! Vous ne pouvez pas créer des catégories récursives."
 #: field:stock.expired.damaged.report,company_id:0
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:166
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:183
+#: report:addons/stock/report/stock_delivery_report_xls.mako:152
 msgid "DB/Instance name"
 msgstr "DB/Nom de l'Instance"
 
@@ -94165,6 +94194,7 @@ msgstr "Statuts Exercice Comptable"
 #: field:tender,creation_date:0
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:229
 #: report:addons/stock/report/products_situation_report_xls.mako:221
+#: report:addons/stock/report/stock_delivery_report_xls.mako:225
 msgid "Creation Date"
 msgstr "Date de Création"
 
@@ -103593,6 +103623,7 @@ msgstr "Export des Produits Réservés"
 #. module: stock
 #: report:addons/stock/report/reserved_products_report_xls.mako:139
 #: report:addons/stock/report/stock_reception_report_xls.mako:177
+#: report:addons/stock/report/stock_delivery_report_xls.mako:167
 msgid "FILTERS"
 msgstr "FILTRES"
 
@@ -105515,6 +105546,8 @@ msgstr "Zone de Destination Spécifique"
 #: field:stock.expired.damaged.report,nomen_manda_0:0
 #: report:addons/stock/report/stock_reception_report_xls.mako:212
 #: field:stock.reception.wizard,nomen_manda_0:0
+#: report:addons/stock/report/stock_delivery_report_xls.mako:190
+#: field:stock.delivery.wizard,nomen_manda_0:0
 msgid "Product Main Type"
 msgstr "Type Principal du Produit"
 
@@ -105542,6 +105575,7 @@ msgstr "Date IN à"
 
 #. module: stock
 #: report:addons/stock/report/stock_reception_report_xls.mako:231
+#: report:addons/stock/report/stock_delivery_report_xls.mako:214
 msgid "Order Priority"
 msgstr "Priorité de la Commande"
 
@@ -106838,3 +106872,34 @@ msgstr "Modèle du Kit Théorique"
 #: field:stock.card.wizard.line,partner_or_loc:0
 msgid "Partner/Location"
 msgstr "Partneraire/Zone"
+
+#. module: stock
+#: report:addons/stock/report/stock_delivery_report_xls.mako:149
+msgid "DELIVERIES REPORT"
+msgstr "RAPPORT DES LIVRAISONS"
+
+#. module: stock
+#: report:addons/stock/report/stock_delivery_report_xls.mako:104
+#: code:addons/stock/wizard/stock_delivery_wizard.py:139
+#: model:ir.actions.act_window,name:stock.action_stock_delivery_wizard
+#: model:ir.actions.report.xml,name:stock.report_stock_delivery_report_xls
+#: model:ir.ui.menu,name:stock.menu_stock_delivery_wizard
+#: view:stock.delivery.wizard:0
+#, python-format
+msgid "Deliveries Report"
+msgstr "Rapport des Livraisons"
+
+#. module: stock
+#: report:addons/stock/report/stock_delivery_report_xls.mako:209
+msgid "SHIP"
+msgstr "Expédition"
+
+#. module: stock
+#: report:addons/stock/report/stock_delivery_report_xls.mako:222
+msgid "Total Currency"
+msgstr "Total dans la Devise"
+
+#. module: stock
+#: report:addons/stock/report/stock_delivery_report_xls.mako:226
+msgid "Shipped Date"
+msgstr "Date d'Expédition"

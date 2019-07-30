@@ -73,8 +73,8 @@ class stock_delivery_wizard(osv.osv_memory):
             out_domain = ['&', ('picking_id.subtype', '=', 'standard'), ('picking_id.state', 'in', ['done', 'delivered'])]
             ppl_domain = [
                 '&', '&', '&', '&',
-                ('state', '=', 'done'),
                 ('picking_id.subtype', '=', 'packing'),
+                ('picking_id.already_shipped', '=', 't'),
                 ('pick_shipment_id', '!=', 'f'),
                 ('pick_shipment_id.parent_id', '!=', 'f'),
                 ('pick_shipment_id.state', 'in', ['done', 'delivered']),
@@ -92,6 +92,12 @@ class stock_delivery_wizard(osv.osv_memory):
                 ppl_domain.insert(0, '&')
                 ppl_domain.append(('pick_shipment_id.shipment_expected_date', '<=', wizard.end_date))
 
+            if wizard.location_id:
+                out_domain.insert(0, '&')
+                out_domain.append(('location_id', '=', wizard.location_id.id))
+                ppl_domain.insert(0, '&')
+                ppl_domain.append(('backmove_id.location_id', '=', wizard.location_id.id))
+
             move_domain.extend(out_domain)
             move_domain.extend(ppl_domain)
 
@@ -101,13 +107,10 @@ class stock_delivery_wizard(osv.osv_memory):
             if wizard.nomen_manda_0:
                 move_domain.append(('product_id.nomen_manda_0', '=', wizard.nomen_manda_0.id))
 
-            if wizard.location_id:
-                move_domain.append(('location_id', '=', wizard.location_id.id))
-
             if wizard.location_dest_id:
                 move_domain.append(('location_dest_id', '=', wizard.location_dest_id.id))
 
-            move_ids = move_obj.search(cr, uid, move_domain, order='create_date, picking_id, line_number', context=context)
+            move_ids = move_obj.search(cr, uid, move_domain, order='picking_id, line_number', context=context)
 
             if not move_ids:
                 raise osv.except_osv(
