@@ -48480,8 +48480,8 @@ msgstr "Funding pool - Nom"
 
 #. module: procurement_request
 #: help:sale.order,location_requestor_id:0
-msgid "Location where the products will be delivered"
-msgstr "Zone où les produits seront livrés"
+msgid "The location where the products will be delivered to"
+msgstr "La zone où les produits seront livrés"
 
 #. module: base
 #: field:ir.ui.menu,child_id:0
