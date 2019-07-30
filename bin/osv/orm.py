@@ -3204,8 +3204,8 @@ class orm(orm_template):
                                 cr.execute('UPDATE "%s" SET "%s"=temp_change_size::VARCHAR(%d)' % (self._table, k, f.size))  # not_a_user_entry
                                 cr.execute('ALTER TABLE "%s" DROP COLUMN temp_change_size CASCADE' % (self._table,))  # not_a_user_entry
                                 cr.commit()
-                                self.__schema.debug("Table '%s': column '%s' (type varchar) changed size from %s to %s",
-                                                    self._table, k, f_pg_size, f.size)
+                                self.__schema.warn("Table '%s': column '%s' (type varchar) changed size from %s to %s",
+                                                   self._table, k, f_pg_size, f.size)
                             for c in casts:
                                 if (f_pg_type==c[0]) and (f._type==c[1]):
                                     if f_pg_type != f_obj_type:
@@ -3215,8 +3215,8 @@ class orm(orm_template):
                                         cr.execute(('UPDATE "%s" SET "%s"=temp_change_size'+c[3]) % (self._table, k))  # not_a_user_entry
                                         cr.execute('ALTER TABLE "%s" DROP COLUMN temp_change_size CASCADE' % (self._table,))  # not_a_user_entry
                                         cr.commit()
-                                        self.__schema.debug("Table '%s': column '%s' changed type from %s to %s",
-                                                            self._table, k, c[0], c[1])
+                                        self.__schema.warn("Table '%s': column '%s' changed type from %s to %s",
+                                                           self._table, k, c[0], c[1])
                                     break
 
                             if f_pg_type != f_obj_type:
@@ -3236,8 +3236,8 @@ class orm(orm_template):
                                     cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO "%s"' % (self._table, k, newname))  # not_a_user_entry
                                     cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, get_pg_type(f)[1]))  # not_a_user_entry
                                     cr.execute("COMMENT ON COLUMN %s.%s IS '%s'" % (self._table, k, f.string.replace("'", "''")))  # not_a_user_entry
-                                    self.__schema.debug("Table '%s': column '%s' has changed type (DB=%s, def=%s), data moved to column %s !",
-                                                        self._table, k, f_pg_type, f._type, newname)
+                                    self.__schema.warn("Table '%s': column '%s' has changed type (DB=%s, def=%s), data moved to column %s !",
+                                                       self._table, k, f_pg_type, f._type, newname)
                                     to_migrate.append((newname, k))
 
                             # if the field is required and hasn't got a NOT NULL constraint

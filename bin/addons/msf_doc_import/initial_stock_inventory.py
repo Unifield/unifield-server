@@ -421,7 +421,6 @@ class stock_inventory_line(osv.osv):
         'batch_name': fields.char(size=128, string='Batch name'),
         'inv_expiry_date': fields.date(string='Invisible expiry date'),
         'to_correct_ok': fields.boolean('To correct'),
-        'comment': fields.text('Comment', readonly=True),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
     }

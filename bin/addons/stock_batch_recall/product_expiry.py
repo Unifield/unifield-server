@@ -1,5 +1,5 @@
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 MSF, TeMPO consulting
 #
@@ -14,36 +14,15 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
-import datetime
 from osv import fields, osv
-import pooler
-from dateutil.relativedelta import relativedelta
 
 class stock_production_lot(osv.osv):
     _inherit = 'stock.production.lot'
-    
-    # @@@override@product_expiry.product_expiry._get_date(dtype)
-    def _get_date(dtype):
-        """Return a function to compute the limit date for this type"""
-        def calc_date(self, cr, uid, context=None):
-            """Compute the limit date for a given date"""
-            if context is None:
-                context = {}
-            if not context.get('product_id', False):
-                date = False
-            else:
-                product = pooler.get_pool(cr.dbname).get('product.product').browse(
-                    cr, uid, context['product_id'])
-                duration = getattr(product, dtype)
-                # set date to False when no expiry time specified on the product
-                date = duration and (datetime.datetime.today() + relativedelta(months=duration))
-            return date and date.strftime('%Y-%m-%d') or False
-        return calc_date
-    # @@@end
+
 
     # UF-1617: Handle the instance in the batch number object
     def copy(self, cr, uid, id, default=None, context=None):
@@ -53,7 +32,7 @@ class stock_production_lot(osv.osv):
             'partner_name': False,
         })
         return super(stock_production_lot, self).copy(cr, uid, id, default, context=context)
-    
+
     # UF-1617: Handle the instance in the batch number object
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
@@ -76,16 +55,16 @@ class stock_production_lot(osv.osv):
         """
         Search if an internal batch exists in the system with this expiry date.
         If no, create the batch.
-        """ 
+        """
         # Objects
         seq_obj = self.pool.get('ir.sequence')
 
         # Double check to find the corresponding batch
         lot_ids = self.search(cr, uid, [
-                            ('life_date', '=', expiry_date),
-                            ('type', '=', 'internal'),
-                            ('product_id', '=', product_id),
-                            ], context=context)
+            ('life_date', '=', expiry_date),
+            ('type', '=', 'internal'),
+            ('product_id', '=', product_id),
+        ], context=context)
 
         # No batch found, create a new one
         if not lot_ids:
@@ -103,30 +82,15 @@ class stock_production_lot(osv.osv):
         return lot_id
 
     _columns = {
-        # renamed from End of Life Date
-        'life_date': fields.date('Expiry Date',
-            help='The date on which the lot may become dangerous and should not be consumed.', required=True),
-        'use_date': fields.date('Best before Date',
-            help='The date on which the lot starts deteriorating without becoming dangerous.'),
-        'removal_date': fields.date('Removal Date',
-            help='The date on which the lot should be removed.'),
-        'alert_date': fields.date('Alert Date', help="The date on which an alert should be notified about the production lot."),
-
         # UF-1617: field only used for sync purpose
         'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=False),
         'partner_name': fields.char('Partner', size=128),
         'xmlid_name': fields.char('XML Code, hidden field', size=128), # UF-2148, this field is used only for xml_id
     }
 
-    _defaults = {
-        'life_date': _get_date('life_time'),
-        'use_date': _get_date('use_time'),
-        'removal_date': _get_date('removal_time'),
-        'alert_date': _get_date('alert_time'),
-    }
-    
-    # UF-2148: Removed the name unique constraint in specific_rules and use only this constraint with 3 attrs: name, prod and instance 
+
+    # UF-2148: Removed the name unique constraint in specific_rules and use only this constraint with 3 attrs: name, prod and instance
     _sql_constraints = [('batch_name_uniq', 'unique(name, product_id, life_date)', 'Batch name must be unique per product and expiry date!'),]
-    
+
 stock_production_lot()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
