@@ -35,7 +35,37 @@
             <field name="beforepatching"/>
             <field name="scheduledbackup"/>
             </group>
-            <button type="object" string="Backup" name="button_exp_dump" />
+            <button type="object" string="Backup" name="button_exp_dump" icon="db_dump.png" />
+            <button type="object" string="Send Last Backup to remote" name="send_to_cloud" icon="cloud.png"/>
+            <group colspan="6">
+                <html>
+                    <br /><br />
+                </html>
+            </group>
+            <group col="6" colspan="6">
+            <separator colspan="6" string="Backup" />
+            <field name="backup_date" />
+            <field name="backup_size" widget="human_size"/>
+            <field name="backup_path" colspan="6" />
+            <group colspan="6">
+                <html>
+                    <br /><br />
+                </html>
+            </group>
+            <separator colspan="6" string="Cloud" />
+            <field name="cloud_url" widget="url" colspan="6"/>
+            <newline />
+            <field name="cloud_date" />
+            <field name="cloud_backup" />
+            <field name="cloud_size" widget="human_size"/>
+            <button colspan="2" icon="monitor.png" name="test_cloud" string="Test Cloud" type="object" />
+            <group colspan="6">
+                <html>
+                    <br /><br />
+                </html>
+            </group>
+            <field name="cloud_error" colspan="6" widget="full_text"/>
+        </group>
         </form>
       </field>
     </record>
@@ -164,6 +194,35 @@ action = {
         <field name="sequence" eval="50"/>
         <field name="parent_id" ref="syncback_menu"/>
         <field name="action" ref="backup_download_open_wiz"/>
+    </record>
+
+    <record id="upload_backup_form" model="ir.ui.view">
+      <field name="name">msf.instance.cloud.progress.form</field>
+      <field name="model">msf.instance.cloud.progress</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form string="Upload in progress">
+              <field name="start" />
+              <newline />
+              <field name="name" widget="progressbar"/>
+              <newline />
+              <field name="state" invisible="1"/>
+              <newline />
+              <field name="message" nolabel="1" colspan="4" widget="full_text" />
+              <button type="special" special="cancel" string="Close" colspan="2" icon="gtk-cancel"/>
+            <html>
+              <script language="javascript">
+                $(document).ready(function() {
+                    if ($('#state').val() != 'Done') {
+                        setTimeout(function(){
+                         location = ''
+                        },600)
+                    }
+                });
+              </script>
+            </html>
+        </form>
+      </field>
     </record>
     </data>
 </openerp>

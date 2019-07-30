@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="finance_sync_query_form" model="ir.ui.view">
+            <field name="name">finance.sync.query.form</field>
+            <field name="model">finance.sync.query</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Finance HQ Query">
+                    <field name="name" />
+                    <field name="model" attrs="{'readonly': [('template_id', '!=', 0)]}"/>
+                    <field name="last_modification" />
+                    <field name="synced" />
+                    <field name="template_id" invisible="1" />
+                    <separator colspan="4" />
+                    <group colspan="4" col="6">
+                        <button type="object" icon="gtk-go-forward" name="open_template" string="Open Template" colspan="2"/>
+                        <button type="object" icon="gtk-connect" name="deactivate_sync" string="Deactivate Sync" attrs="{'invisible': [('synced', '=', False)]}" colspan="2" />
+                        <button type="object" icon="gtk-disconnect" name="activate_sync" string="Activate Sync" attrs="{'invisible': [('synced', '=', True)]}" colspan="2" />
+                    </group>
+
+                </form>
+            </field>
+        </record>
+
+        <record id="finance_sync_query_search" model="ir.ui.view">
+            <field name="name">finance.sync.query.search</field>
+            <field name="model">finance.sync.query</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <filter string="Group by Model" name="model" icon="terp-go-year" context="{'group_by':'model'}" />
+                    <separator />
+                    <field name="name" />
+                    <field name="model" />
+                    <field name="synced" />
+                </search>
+            </field>
+        </record>
+
+        <record id="finance_sync_query_tree" model="ir.ui.view">
+            <field name="name">finance.sync.query.tree</field>
+            <field name="model">finance.sync.query</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Finance Queries">
+                    <field name="name" />
+                    <field name="model" />
+                    <button type="object" icon="gtk-go-forward" name="open_template" string="Open Template" />
+                    <button type="object" icon="gtk-connect" name="deactivate_sync" string="Deactivate Sync" attrs="{'invisible': [('synced', '=', False)]}"/>
+                    <button type="object" icon="gtk-disconnect" name="activate_sync" string="Activate Sync" attrs="{'invisible': [('synced', '=', True)]}"/>
+                    <field name="last_modification" />
+                    <field name="synced" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="finance_sync_query_action" model="ir.actions.act_window">
+            <field name="name">Finance Queries</field>
+            <field name="res_model">finance.sync.query</field>
+            <field name="view_type">form</field>
+            <field name="domain" eval="'[(\'user_id\', \'!=\', '+str(ref('base.user_sync'))+ ')]'" />
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="finance_sync_query_menu"
+                  action="finance_sync_query_action"
+                  parent="object_query.menu_preferences"
+                  sequence="2" />
+
+        <!-- Actions -->
+        <act_window name="Activate Sync"
+            res_model="finance.sync.query.activation_wizard"
+            src_model="finance.sync.query"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            context="{'state': 'activate'}"
+            id="finance_sync_query_wiz_activate"/>
+
+        <act_window name="Deactivate Sync"
+            res_model="finance.sync.query.activation_wizard"
+            src_model="finance.sync.query"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            context="{'state': 'deactivate'}"
+            id="finance_sync_query_wiz_deactivate"/>
+
+        <!-- Wizard -->
+        <record id="finance_sync_query_activation_wizard_form" model="ir.ui.view">
+            <field name="name">finance.sync.query.activation_wizard.form</field>
+            <field name="model">finance.sync.query.activation_wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Queries Sync">
+					<field name="state" invisible="1" />
+					<field name="nb" colspan="4" />
+					<newline />
+					<separator colspan="4" />
+					<field name="list" nolabel="1" colspan="4" widget="full_text"/>
+					<separator colspan="4" />
+                    <group colspan="4" attrs="{'invisible': [('state', '=', 'activate')]}">
+                        <separator string="Do you want to Deactivate sync on the selected queries ?" />
+                            <button type="object" icon="gtk-disconnect" name="deactivate_sync" string="Deactivate Sync"/>
+                            <button string="Cancel" special="cancel" icon="gtk-cancel"/> 
+                    </group>
+                    <group colspan="4" attrs="{'invisible': [('state', '=', 'deactivate')]}" >
+                        <separator string="Do you want to Activate sync on the selected queries ?" />
+                        <button type="object" icon="gtk-connect" name="activate_sync" string="Activate Sync" />
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

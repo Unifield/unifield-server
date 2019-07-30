@@ -36,14 +36,23 @@ class account_period_create(osv.osv_memory):
 
 
     def account_period_create_periods(self, cr, uid, ids, context=None):
-        data = self.read(cr, uid, ids, [], context=context)[0]
-        year = datetime.date.today().year
-        if data['fiscalyear'] == 'next':
-            year += 1
+        if context is None:
+            context = {}
+
+
+        if context.get('force_open_year'):
+            year = context['force_open_year']
+        else:
+            data = self.read(cr, uid, ids, [], context=context)[0]
+            year = datetime.date.today().year
+            if data['fiscalyear'] == 'next':
+                year += 1
+
         start_date = datetime.date(year, 1, 1)
         end_date = datetime.date(year, 12, 31)
 
         fiscalyear_obj = self.pool.get('account.fiscalyear')
+        period_obj = self.pool.get('account.period')
 
         ds = start_date
         while ds < end_date:
@@ -60,8 +69,8 @@ class account_period_create(osv.osv_memory):
                     'date_start': ds,
                     'date_stop': end_date})
 
-            if not self.pool.get('account.period').name_search(cr, uid, ds.strftime('%b %Y'), [('fiscalyear_id', '=', fiscalyear_id)]):
-                self.pool.get('account.period').create(cr, uid, {
+            if not period_obj.name_search(cr, uid, ds.strftime('%b %Y'), [('fiscalyear_id', '=', fiscalyear_id)]):
+                period_obj.create(cr, uid, {
                     'name': ds.strftime('%b %Y'),
                     'code': ds.strftime('%b %Y'),
                     'date_start': ds.strftime('%Y-%m-%d'),
@@ -73,10 +82,11 @@ class account_period_create(osv.osv_memory):
 
         fiscalyear_id = fiscalyear_obj.find(cr, uid, start_date, exception=False, context=context)
         for period_nb in (13, 14, 15):
-            if not self.pool.get('account.period').name_search(cr, uid, 'Period %d' % (period_nb), [('fiscalyear_id', '=', fiscalyear_id)]):
-                self.pool.get('account.period').create(cr, uid, {
-                    'name': 'Period %d' % (period_nb),
-                    'code': 'Period %d' % (period_nb),
+            if not period_obj.name_search(cr, uid, 'Period %d' % (period_nb),
+                                          [('fiscalyear_id', '=', fiscalyear_id)], operator='ilike'):
+                period_obj.create(cr, uid, {
+                    'name': 'Period %d %d' % (period_nb, start_date.year),
+                    'code': 'Period %d %d' % (period_nb, start_date.year),
                     'date_start': '%d-12-01' % (start_date.year),
                     'date_stop': '%d-12-31' % (start_date.year),
                     'fiscalyear_id': fiscalyear_id,

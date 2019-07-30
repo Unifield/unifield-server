@@ -41,17 +41,18 @@ class report_pending_cheque(report_sxw.rml_parse):
         pool = pooler.get_pool(self.cr.dbname)
         aml_obj = pool.get('account.move.line')
 
-        period_r = self.pool.get('account.period').read(self.cr, self.uid, register.period_id.id, ['date_start'])
+        period_r = self.pool.get('account.period').read(self.cr, self.uid, register.period_id.id,
+                                                        ['date_start', 'date_stop'])  # used not to format dates in the user language
         # Search for all registers with the same Journal, and the same period or a previous period
         period_ids = self.pool.get('account.period').\
             search(self.cr, self.uid, [('date_start', '<=', period_r['date_start'])])
-        registers_ids = self.pool.get('account.bank.statement').\
-            search(self.cr, self.uid, ['&', ('journal_id', '=', journal.id), ('period_id', 'in', period_ids)])
+        reg_obj = self.pool.get('account.bank.statement')
+        registers_ids = reg_obj.search(self.cr, self.uid, ['&', ('journal_id', '=', journal.id), ('period_id', 'in', period_ids)])
 
         # Search register lines
-        aml_ids = aml_obj.search(self.cr, self.uid, [('statement_id', 'in', registers_ids), ('is_reconciled', '=', False), ('account_id', 'in', account_ids),], order='date DESC')
-        if isinstance(aml_ids, (int, long)):
-            aml_ids = [aml_ids]
+        # include in the report only the JIs that are either not reconciled,
+        # or reconciled (totally or partially) with at least one entry belonging to a later period
+        aml_ids = reg_obj.get_pending_cheque_ids(self.cr, self.uid, registers_ids, account_ids, period_r['date_stop'])
         return aml_obj.browse(self.cr, self.uid, aml_ids)
 
     def getTotals(self, register):

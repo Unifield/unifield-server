@@ -34,7 +34,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form//field[@name='product_line_ids_return_claim']" position="before">
-                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     </xpath>                                                    
                 </data>
             </field>

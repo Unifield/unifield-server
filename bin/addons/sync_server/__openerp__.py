@@ -30,7 +30,7 @@
     'author': 'OpenERP SA',
     'website': 'http://openerp.com',
     'depends': ['sync_common', 'msf_tools', 'useability_dashboard_and_menu',
-                'sync_client', 'product_attributes', 'sale_override'],
+                'sync_client', 'product_attributes', 'sale'],
     'init_xml': [
         'sync_server_menu.xml',
     ],
@@ -45,6 +45,7 @@
         'data/alert_email.xml',
         'data/audittrail_sync_server.yml',
         'data/automated_import_sync_groups.xml',
+        'sync_disabled_view.xml',
     ],
     'demo_xml': [
     ],

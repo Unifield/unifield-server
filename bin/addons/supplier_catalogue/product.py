@@ -56,7 +56,7 @@ class product_supplierinfo(osv.osv):
         if not context:
             context = {}
 
-        new_res = [] 
+        new_res = []
         res = super(product_supplierinfo, self).search(cr, uid, args, offset, limit,
                                                        order, context=context, count=count)
         if count:
@@ -84,26 +84,10 @@ class product_supplierinfo(osv.osv):
 
         return res
 
-    def _get_seller_delay(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        Returns the supplier lt
-        '''
-        res = {}
-        for price in self.browse(cr, uid, ids, context=context):
-            product_id = self.pool.get('product.product').search(cr, uid, [('product_tmpl_id', '=', price.id)])
-            product = self.pool.get('product.product').browse(cr, uid, product_id)
-            res[price.id] = (price.name and price.name.supplier_lt) or (product_id and int(product[0].procure_delay)) or 1
-
-        return res
-
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
         'editable': fields.function(_get_editable, method=True, string='Editable', store=False, type='boolean'),
-        'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
-        'product_uom': fields.related('product_id', 'uom_id', string="Supplier UoM", type='many2one', relation='product.uom',  
-                                      help="Choose here the Unit of Measure in which the prices and quantities are expressed below."),
-        'delay': fields.function(_get_seller_delay, method=True, type='integer', string='Indicative Delivery LT', help='Lead time in days between the confirmation of the purchase order and the reception of the products in your warehouse. Used by the scheduler for automatic computation of the purchase order planning.'),
-
+        'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise.", related_uom='product_uom'),
     }
 
     _defaults = {
@@ -248,8 +232,8 @@ class pricelist_partnerinfo(osv.osv):
     _columns = {
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'rounding': fields.float(digits=(16,2), string='SoQ Rounding',
-                                 help='The ordered quantity must be a multiple of this rounding value.'),
-        'min_order_qty': fields.float(digits=(16, 2), string='Min. Order Qty'),
+                                 help='The ordered quantity must be a multiple of this rounding value.', related_uom='uom_id'),
+        'min_order_qty': fields.float(digits=(16, 2), string='Min. Order Qty', related_uom='uom_id'),
         'valid_from': fields.date(string='Valid from'),
         'partner_id': fields.related('suppinfo_id', 'name', string='Partner', type='many2one', relation='res.partner'),
         'product_id': fields.related('suppinfo_id', 'product_id', string='Product', type='many2one', relation='product.template'),
@@ -342,7 +326,7 @@ class product_product(osv.osv):
                 #            info = partner_price.browse(cr, uid, info_price, context=context)[0]
                 info = partner_price.browse(cr, uid, info_prices[0], context=context)
                 price = cur_obj.compute(cr, uid, info.currency_id.id, currency_id, info.price, round=False, context=context)
-                res[product.id] = (price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00) 
+                res[product.id] = (price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00)
             else:
                 res[product.id] = (False, 1.0, 1.0)
 
@@ -439,8 +423,8 @@ class product_pricelist(osv.osv):
         '''
         Returns pricelists according to partner type
         '''
-        user_obj = self.pool.get('res.users')
         cur_obj = self.pool.get('res.currency')
+        user_obj = self.pool.get('res.users')
         dom = []
 
         for arg in args:
@@ -448,7 +432,7 @@ class product_pricelist(osv.osv):
                 if arg[1] != '=':
                     raise osv.except_osv(_('Error !'), _('Bad operator !'))
                 else:
-                    if arg[2] in ('internal', 'intermission'):
+                    if arg[2] == 'intermission':
                         func_currency_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
                         dom.append(('currency_id', '=', func_currency_id))
                     elif arg[2] == 'section':
@@ -463,7 +447,7 @@ class product_pricelist(osv.osv):
     def _get_currency_name(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return the name of the related currency
-        '''  
+        '''
         res = {}
 
         for p_list in self.browse(cr, uid, ids, context=context):
@@ -537,7 +521,7 @@ class product_pricelist(osv.osv):
                                                                 [('name', operator, name)], order='NO_ORDER', context=context)
             ids = self.search(cr, uid, [('currency_id', 'in', currency_ids)] + (args or []))
 
-        return self.name_get(cr, uid, ids)          
+        return self.name_get(cr, uid, ids)
 
 
 product_pricelist()
@@ -601,9 +585,9 @@ class res_currency(osv.osv):
         return dom
 
     _columns = {
-        'is_section_currency': fields.boolean(string='Functional currency', 
+        'is_section_currency': fields.boolean(string='Functional currency',
                                               help='If this box is checked, this currency is used as a functional currency for at least one section in MSF.'),
-        'is_esc_currency': fields.boolean(string='ESC currency', 
+        'is_esc_currency': fields.boolean(string='ESC currency',
                                           help='If this box is checked, this currency is used as a currency for at least one ESC.'),
         'is_po_functional': fields.function(_get_in_search, fnct_search=_search_in_search, method=True,
                                             type='boolean', string='transport PO currencies'),
@@ -659,7 +643,7 @@ class res_currency(osv.osv):
             if property_ids:
                 properties = property_obj.browse(cr, uid, property_ids, context=context)
                 partner_list = ' / '.join(x.res_id.name for x in properties)
-                raise osv.except_osv(_('Error !'), 
+                raise osv.except_osv(_('Error !'),
                                      _('You cannot uncheck the ESC checkbox because this currency is used on these \'ESC\' partners : \
                                       %s' % partner_list))
 

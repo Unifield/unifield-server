@@ -21,7 +21,6 @@
 import datetime
 from osv import fields, osv
 from tools.translate import _
-import netsvc
 
 class financing_contract_funding_pool_line(osv.osv):
     _name = "financing.contract.funding.pool.line"
@@ -107,7 +106,7 @@ class financing_contract_funding_pool_line(osv.osv):
         if context is None:
             context = {}
 
-        # US-180: Check if it comes from the sync update, and if any contract  
+        # US-180: Check if it comes from the sync update, and if any contract
         if context.get('sync_update_execution') and vals.get('format_id', False):
             # Check if this format line belongs to any financing contract/format
             ctr_obj = self.pool.get('financing.contract.contract')
@@ -131,6 +130,19 @@ class financing_contract_contract(osv.osv):
         # utp-1030/7: check grant amount when going on in workflow
         return self._check_grant_amount_proxy(cr, uid, ids,
                                               'contract_open', context=context)
+
+    def contract_reopen_proxy(self, cr, uid, ids, context=None):
+        """
+        Sets the contract state from Soft-Closed BACK to Open (no check needed)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        for contract in self.read(cr, uid, ids, ['state'], context=context):
+            if contract.get('state', '') == 'soft_closed':
+                self.write(cr, uid, contract['id'], {'state': 'open'}, context=context)
+        return True
 
     def contract_open(self, cr, uid, ids, *args):
         self.write(cr, uid, ids, {
@@ -250,7 +262,7 @@ class financing_contract_contract(osv.osv):
                 # Calculate the all the children lines account domain
                 temp = format_line_obj._get_analytic_domain(cr, uid, line, reporting_type, isFirst, context=context)
                 if analytic_domain:
-                    if temp: # US-385: Added this check, otherwise there will be a extra "|" causing error! 
+                    if temp: # US-385: Added this check, otherwise there will be a extra "|" causing error!
                         # if there exist already previous view, just add an OR operator
                         analytic_domain = ['|'] + analytic_domain + temp
                 else:
@@ -628,6 +640,8 @@ class financing_contract_contract(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if context is None:
             context = {}
 
@@ -656,7 +670,7 @@ class financing_contract_contract(osv.osv):
 
         res = super(financing_contract_contract, self).write(cr, uid, ids, vals, context=context)
         if fp_added_flag: # if the previous save has been recovered thanks to the flag set to True, then reset it back to False
-            cr.execute('''update financing_contract_contract set fp_added_flag = 'f' where id = %s''' % (ids[0]))
+            cr.execute('''update financing_contract_contract set fp_added_flag = 'f' where id = %s''', (ids[0],))
 
         # uf-2342 delete any assigned quads that are no longer valid due to changes in the contract
         # get list of all valid ids for this contract
@@ -716,6 +730,26 @@ class financing_contract_contract(osv.osv):
 
         return res
 
+    def change_contract_state(self, cr, uid, ids, signal, context=None):
+        """
+        Changes the contract state:
+        - from Draft to Open (signal contract_open)
+        - from Open to Soft-closed (signal contract_soft_closed)
+        - from Soft-closed to Hard-closed (signal contract_hard_closed)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        for contract in self.read(cr, uid, ids, ['state'], context=context):
+            state = contract.get('state', '')
+            if state == 'draft' and signal == 'contract_open':
+                self.contract_open(cr, uid, contract['id'])
+            elif state == 'open' and signal == 'contract_soft_closed':
+                self.contract_soft_closed(cr, uid, contract['id'])
+            elif state == 'soft_closed' and signal == 'contract_hard_closed':
+                self.contract_hard_closed(cr, uid, contract['id'])
+
     def _check_grant_amount_proxy(self, cr, uid, ids, signal, context=None):
         if isinstance(ids, (long, int)):
             ids = [ids]
@@ -723,9 +757,7 @@ class financing_contract_contract(osv.osv):
                                                 context=context)
         if check_action:
             return check_action
-        wf_service = netsvc.LocalService("workflow")
-        for id in ids:
-            wf_service.trg_validate(uid, self._name, id, signal, cr)
+        self.change_contract_state(cr, uid, ids, signal, context=context)
         return True
 
     def _check_grant_amount(self, cr, uid, ids, signal, context=None):
@@ -777,7 +809,7 @@ class financing_contract_contract(osv.osv):
 
         return False
 
-    # US-113: unlink all relevant objects of this FC, because it's not automatic and would left orphan data, also impact to the sync 
+    # US-113: unlink all relevant objects of this FC, because it's not automatic and would left orphan data, also impact to the sync
     def unlink(self, cr, uid, ids, context=None):
         format_obj = self.pool.get('financing.contract.format')
         format_line_obj = self.pool.get('financing.contract.format.line')

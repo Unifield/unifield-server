@@ -157,10 +157,10 @@ class register_creation(osv.osv_memory):
                         reg_id = reg_to_create_obj.create(cr, uid, vals, context=context)
                         reg_to_create_obj.browse(cr, uid, [reg_id], context=context)[0]
 
-        # Delete lines that have no previous_register_id
+        # Delete lines that have no previous_register_id or whose previous register is in Draft state
         line_to_create_ids = reg_to_create_obj.search(cr, uid, [('wizard_id', '=', wizard.id)], context=context)
         for line in reg_to_create_obj.browse(cr, uid, line_to_create_ids, context=context):
-            if not line.prev_reg_id:
+            if not line.prev_reg_id or line.prev_reg_id.state == 'draft':
                 reg_to_create_obj.unlink(cr, uid, [line.id], context=context)
 
         # Verify that there is some lines to treat

@@ -741,7 +741,7 @@
             <field name="act_window_id" ref="action_res_users"/>
         </record>
 
-        <menuitem action="action_res_users" id="menu_action_res_users" parent="base.menu_users"/>
+        <menuitem action="action_res_users" id="menu_action_res_users" parent="base.menu_users" sequence="10"/>
 
         <record id="view_users_white_list_tree" model="ir.ui.view">
             <field name="name">res.users.tree</field>
@@ -775,7 +775,7 @@
                 using the right dropdown menu and click on action "Add Users".</field>
         </record>
 
-        <menuitem action="action_res_users_white_list" id="menu_action_res_users_whitelist" parent="base.menu_users" groups="base.group_erp_manager"/>
+        <menuitem action="action_res_users_white_list" id="menu_action_res_users_whitelist" parent="base.menu_users" groups="base.group_erp_manager" sequence="30"/>
 
         <record id="add_users_to_white_list" model="ir.ui.view">
             <field name="name">add.users.to.whitelist.view</field>
@@ -810,6 +810,7 @@
 
 
         <act_window name="Add Users"
+            view_ids="view_users_white_list_tree"
             res_model="wizard.add.users.synchronized"
             src_model="res.users"
             view_mode="form"
@@ -847,7 +848,7 @@
             <field name="help">A group is a set of functional areas that will be assigned to the user in order to give them access and rights to specific applications and tasks in the system. You can create custom groups or edit the ones existing by default in order to customize the view of the menu that users will be able to see. Whether they can have a read, write, create and delete access right can be managed from here.</field>
         </record>
         <menuitem action="action_res_groups" id="menu_action_res_groups" parent="base.menu_users"
-            groups="base.group_extended"/>
+            groups="base.group_extended" sequence="20"/>
 
         <!-- View -->
         <record id="view_view_form" model="ir.ui.view">
@@ -1448,13 +1449,6 @@
             </field>
         </record>
 
-        <record id="action_translation" model="ir.actions.act_window">
-            <field name="name">Translation Terms</field>
-            <field name="res_model">ir.translation</field>
-            <field name="view_type">form</field>
-            <field name="view_id" ref="view_translation_tree"/>
-        </record>
-        <menuitem action="action_translation" id="menu_action_translation" parent="base.menu_translation_app" />
 
         <!--
     =============================================================

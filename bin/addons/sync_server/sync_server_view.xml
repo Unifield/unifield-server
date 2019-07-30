@@ -41,6 +41,7 @@
                     <field name="last_dateactivity" allow_sort="1"/>
                     <field name="country_id" />
                     <field name="mission" />
+                    <field name="state"/>
                 </tree>
             </field>
         </record>
@@ -103,6 +104,7 @@
                     <field name="parent_right" />
                     <field name="country_id" />
                     <field name="mission" />
+                    <field name="state"/>
                 </search>
             </field>
         </record>
@@ -133,6 +135,19 @@
                     <field name="oc" />
                     <field name="entity_ids" nolabel="1" colspan="4"/>
                 </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="entity_group_form_search">
+            <field name="name">entity.group.search</field>
+            <field name="model">sync.server.entity_group</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Groups">
+                    <field name="name"/>
+                    <field name="type_id"/>
+                    <field name="oc" />
+                </search>
             </field>
         </record>
 
@@ -182,7 +197,7 @@
             action="entity_action"/>
 
         <menuitem id="group_menu" name="Groups" parent="conf_menu" sequence="20"
-            groups="base.group_erp_manager"
+            groups="base.group_erp_manager,sync_common.sync_read_group"
             action="group_action"/>
 
         <menuitem id="group_type_menu" name="Type of Group" parent="conf_menu" sequence="30"

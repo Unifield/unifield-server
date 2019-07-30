@@ -34,7 +34,7 @@
                     <field name="name" colspan="4" on_change="check_inactive_catalogues(partner_id)" />
                     <field name="period_from" attrs="{'required': [('is_esc', '=', False)], 'invisible': [('is_esc', '=', True)]}" />
                     <field name="period_to" attrs="{'invisible': [('is_esc', '=', True)]}" />
-                    <field name="currency_id" domain="[('partner_currency', '=', partner_id)]" />
+                    <field name="currency_id" attrs="{'readonly': [('state', '=', 'confirmed')]}" domain="[('partner_currency', '=', partner_id)]" />
                     <field name="partner_id" readonly="1" />
                     <field name="is_esc" invisible="1" />
                     <field name="esc_update_ts" attrs="{'invisible': [('is_esc', '=', False)]}" /> <!-- UTP-746 -->
@@ -112,6 +112,7 @@
                     <field name="default_code"/>
                     <field name="name"/>
                     <field name="categ_id" widget="selection" operator="child_of" />
+                    <field name="product_code" />
                     <newline/>
                     <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
                     <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
@@ -164,6 +165,7 @@
             <field name="arch" type="xml">
                 <form string="Supplier catalogue line">
                     <field name="product_id" on_change="product_change(product_id)" />
+                    <field name="product_code" />
                     <field name="line_uom_id" />
                     <field name="min_qty" />
                     <field name="unit_price" />
@@ -184,6 +186,7 @@
                 <tree string="Supplier catalogue lines" min_rows="20" editable="top" colors="red: to_correct_ok == True">
                     <field name="line_number" readonly="1"/>
                     <field name="product_id" on_change="product_change(product_id, min_qty, min_order_qty)" />
+                    <field name="product_code" />
                     <field name="line_uom_id" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty)" 
                            domain="[('uom_by_product', '=', product_id)]" />
                     <field name="min_qty" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty, False)" />
@@ -207,6 +210,7 @@
                     editable="top" noteditable="1" notselectable="0"
                     hide_new_button="1" hide_delete_button="1">
                     <field name="product_id" on_change="product_change(product_id)" />
+                    <field name="product_code" />
                     <field name="line_uom_id" />
                     <field name="min_qty" />
                     <field name="unit_price" />

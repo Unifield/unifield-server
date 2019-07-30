@@ -25,8 +25,8 @@ class stock_move(osv.osv):
     _inherit = 'stock.move'
     _columns = {
         'purchase_line_id': fields.many2one('purchase.order.line',
-            'Purchase Order Line', ondelete='set null', select=True,
-            readonly=True),
+                                            'Purchase Order Line', ondelete='set null', select=True,
+                                            readonly=True),
     }
 
     def _get_reference_accounting_values_for_valuation(self, cr, uid, move, context=None):
@@ -52,7 +52,7 @@ class stock_picking(osv.osv):
     _inherit = 'stock.picking'
     _columns = {
         'purchase_id': fields.many2one('purchase.order', 'Purchase Order',
-            ondelete='set null', select=True),
+                                       ondelete='set null', select=True),
     }
     _defaults = {
         'purchase_id': False,
@@ -67,7 +67,7 @@ class stock_picking(osv.osv):
             partner_obj = self.pool.get('res.partner')
             partner = picking.purchase_id.partner_id or picking.address_id.partner_id
             data = partner_obj.address_get(cr, uid, [partner.id],
-                ['contact', 'invoice'])
+                                           ['contact', 'invoice'])
             res.update(data)
         return res
 
@@ -104,12 +104,6 @@ class stock_picking(osv.osv):
         if move_line.purchase_line_id:
             return move_line.purchase_line_id.account_analytic_id.id
         return super(stock_picking, self)._get_account_analytic_invoice(cursor, user, picking, move_line)
-
-    def _invoice_line_hook(self, cursor, user, move_line, invoice_line_id):
-        if move_line.purchase_line_id:
-            invoice_line_obj = self.pool.get('account.invoice.line')
-            invoice_line_obj.write(cursor, user, [invoice_line_id], {'note':  move_line.purchase_line_id.notes,})
-        return super(stock_picking, self)._invoice_line_hook(cursor, user, move_line, invoice_line_id)
 
     def _invoice_hook(self, cursor, user, picking, invoice_id):
         purchase_obj = self.pool.get('purchase.order')
@@ -169,15 +163,15 @@ class stock_partial_move(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
         for m in move_obj.browse(cr, uid, context.get('active_ids', []), context=context):
             if m.picking_id.type == 'in' and m.product_id.cost_method == 'average' \
-                and m.purchase_line_id and m.picking_id.purchase_id:
+                    and m.purchase_line_id and m.picking_id.purchase_id:
                     # We use the original PO unit purchase price as the basis for the cost, expressed
                     # in the currency of the PO (i.e the PO's pricelist currency)
-                    list_index = 0
-                    for item in res['product_moves_in']:
-                        if item['move_id'] == m.id:
-                            res['product_moves_in'][list_index]['cost'] = m.purchase_line_id.price_unit
-                            res['product_moves_in'][list_index]['currency'] = m.picking_id.purchase_id.pricelist_id.currency_id.id
-                        list_index += 1
+                list_index = 0
+                for item in res['product_moves_in']:
+                    if item['move_id'] == m.id:
+                        res['product_moves_in'][list_index]['cost'] = m.purchase_line_id.price_unit
+                        res['product_moves_in'][list_index]['currency'] = m.picking_id.purchase_id.pricelist_id.currency_id.id
+                    list_index += 1
         return res
 stock_partial_move()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

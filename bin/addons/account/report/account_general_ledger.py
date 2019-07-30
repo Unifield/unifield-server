@@ -50,7 +50,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             used_context['report_cross_fy'] = True
             data['form']['initial_balance'] = False  # IB not applicable
         self.query = obj_move._query_get(self.cr, self.uid, obj='l',
-            context=used_context)
+                                         context=used_context)
 
         # IB entries query
         self.init_balance = data['form']['initial_balance']
@@ -79,7 +79,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 'periods': False,
             })
             self.init_query = obj_move._query_get(self.cr, self.uid, obj='l',
-                context=ib_local_context)
+                                                  context=ib_local_context)
         else:
             self.init_query = False
 
@@ -149,9 +149,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         self.output_currency_code = ''
         if self.output_currency_id:
             ouput_cur_r = self.pool.get('res.currency').read(self.cr,
-                                            self.uid,
-                                            [self.output_currency_id],
-                                            ['name'])
+                                                             self.uid,
+                                                             [self.output_currency_id],
+                                                             ['name'])
             if ouput_cur_r and ouput_cur_r[0] and ouput_cur_r[0]['name']:
                 self.output_currency_code = ouput_cur_r[0]['name']
 
@@ -180,21 +180,29 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if self.account_ids:
             # add parent(s) of filtered accounts
             self.account_ids += self.pool.get('account.account')._get_parent_of(
-                    self.cr, self.uid, self.account_ids)
+                self.cr, self.uid, self.account_ids)
+
+        # "Open Items at" filter
+        if data['form'].get('open_items'):
+            aml_ids = obj_move.search(self.cr, self.uid, [('open_items', '=', data['form']['open_items'])],
+                                      order='NO_ORDER', context=self.context) or [0]
+            self.query += " AND l.id in(%s) " % (",".join(map(str, aml_ids)))
 
         query = self.query
         if self.reconciled_filter:
             query += self.reconciled_filter
+        if self.target_move == 'posted':
+            query += " AND am.state = 'posted' "
+        else:
+            query += " AND am.state in ('draft', 'posted') "
 
-        move_states = [ 'posted', ] if self.target_move == 'posted' \
-            else [ 'draft', 'posted', ]
         self._drill = self.pool.get("account.drill").build_tree(self.cr,
-            self.uid, query, self.init_query, move_states=move_states,
-            include_accounts=self.account_ids,
-            account_report_types=self.account_report_types,
-            with_balance_only=self.display_account == 'bal_solde',
-            reconcile_filter=self.reconciled_filter,
-            context=used_context)
+                                                                self.uid, query, self.init_query,
+                                                                include_accounts=self.account_ids,
+                                                                account_report_types=self.account_report_types,
+                                                                with_balance_only=self.display_account == 'bal_solde',
+                                                                reconcile_filter=self.reconciled_filter,
+                                                                context=used_context)
 
         return res
 
@@ -269,15 +277,15 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         if node.is_zero \
                 and (self.account_ids
-                    or self.account_report_types
-                    or self.reconciled_filter
-                    or self.display_account == 'bal_movement'):
+                     or self.account_report_types
+                     or self.reconciled_filter
+                     or self.display_account == 'bal_movement'):
             # hide zero amounts for above filters on
             # no movements <=> no amount
             node.displayed = False
 
         if node.displayed \
-            and node.is_zero_bal and self.display_account == 'bal_solde':
+                and node.is_zero_bal and self.display_account == 'bal_solde':
             # to filter zero balance
             node.displayed = False
 
@@ -343,7 +351,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 c.symbol AS currency_code,
                 i.id AS invoice_id, i.type AS invoice_type,
                 i.number AS invoice_number,
-                p.name AS partner_name, c.name as currency_name
+                p.name AS partner_name, c.name as currency_name, l.partner_txt as third_party
                 FROM account_move_line l
                 JOIN account_move m on (l.move_id=m.id)
                 LEFT JOIN res_currency c on (l.currency_id=c.id)
@@ -480,21 +488,21 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             return 0.
         if not self._is_company_currency():
             amount = self.pool.get('res.currency').compute(self.cr, self.uid,
-                self.currency_id, self.output_currency_id, amount)
+                                                           self.currency_id, self.output_currency_id, amount)
         if not amount or abs(amount) < 0.001:
             amount = 0.
         return amount
 
     def _get_prop_instances_str(self):
         return ', '.join([ i.code \
-            for i in self.pool.get('msf.instance').browse(self.cr, self.uid, self.selected_instance_ids) \
-            if i.code ])
+                           for i in self.pool.get('msf.instance').browse(self.cr, self.uid, self.selected_instance_ids) \
+                           if i.code ])
 
     def _get_journals_str(self, data):
         if 'all_journals' in data['form']:
             return _('All Journals')
         return ', '.join(list(set(self._get_journal(data,
-            instance_ids=self.selected_instance_ids))))
+                                                    instance_ids=self.selected_instance_ids))))
 
     # internal filter functions
     def _get_data_form(self, data, key, default=False):
@@ -519,7 +527,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         # reconciled account
         info_data.append((_('Unreconciled'),
-            self.reconciled_filter and yes_str or no_str, ))
+                          self.reconciled_filter and yes_str or no_str, ))
 
         display_account = all_str
         if 'display_account' in data['form']:
@@ -536,9 +544,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             # US-1197/2: display filtered accounts
             account_obj = self.pool.get('account.account')
             info_data.append((_('Selected Accounts'), ', '.join(
-                    [ a.code for a in account_obj.browse(
-                        self.cr, self.uid, account_ids) \
-                        if a.type != 'view' ], )))
+                [ a.code for a in account_obj.browse(
+                  self.cr, self.uid, account_ids) \
+                  if a.type != 'view' ], )))
 
         res = [ "%s: %s" % (label, val, ) for label, val in info_data ]
         return ', \n'.join(res)

@@ -38,6 +38,7 @@ class account_account(osv.osv):
     '''
     _name = "account.account"
     _inherit = "account.account"
+    _trace = True
 
     def _get_active(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -48,7 +49,7 @@ class account_account(osv.osv):
         cmp_date = datetime.date.today().strftime('%Y-%m-%d')
         if context.get('date', False):
             cmp_date = context.get('date')
-        for a in self.browse(cr, uid, ids):
+        for a in self.browse(cr, uid, ids, fields_to_fetch=['activation_date', 'inactivation_date']):
             res[a.id] = True
             if a.activation_date > cmp_date:
                 res[a.id] = False
@@ -76,7 +77,6 @@ class account_account(osv.osv):
                 arg.append(('inactivation_date', '<=', cmp_date))
         return arg
 
-    #@@@override account.account_account.__compute
     def __compute(self, cr, uid, ids, field_names, arg=None, context=None,
                   query='', query_params=()):
         """ compute the balance, debit and/or credit for the provided
@@ -136,7 +136,8 @@ class account_account(osv.osv):
             # target_move from chart of account wizard
             filters = filters.replace("AND l.state <> 'draft'", '')
             prefilters = " "
-            if context.get('move_state', False):
+            possible_states = [x[0] for x in self.pool.get('account.move')._columns['state'].selection]
+            if context.get('move_state', False) and context['move_state'] in possible_states:
                 prefilters += "AND l.move_id = m.id AND m.state = '%s'" % context.get('move_state')
             else:
                 prefilters += "AND l.move_id = m.id AND m.state in ('posted', 'draft')"
@@ -150,12 +151,10 @@ class account_account(osv.osv):
             # INNER JOIN (VALUES (id1), (id2), (id3), ...) AS tmp (id)
             # ON l.account_id = tmp.id
             # or make _get_children_and_consol return a query and join on that
-            request = ("SELECT l.account_id as id, " +\
-                       ', '.join(map(mapping.__getitem__, field_names)) +
-                       " FROM account_move_line l, account_move m" +\
-                       " WHERE l.account_id IN %s " \
-                       + prefilters + filters +
-                       " GROUP BY l.account_id")
+            request = """SELECT l.account_id as id, %s
+                       FROM account_move_line l, account_move m
+                       WHERE l.account_id IN %%s %s
+                       GROUP BY l.account_id""" % (', '.join(map(mapping.__getitem__, field_names)), prefilters + filters)  # not_a_user_entry
             params = [tuple(children_and_consolidated)]
             if query_params:
                 for qp in query_params:
@@ -197,7 +196,6 @@ class account_account(osv.osv):
                     new_amount = currency_obj.compute(cr, uid, context.get('output_currency_id'), company_currency, res[i].get(f_name), context=context)
                     res[i][f_name] = new_amount
         return res
-    #@@@end
 
     def _get_restricted_area(self, cr, uid, ids, field_name, args, context=None):
         """
@@ -243,22 +241,22 @@ class account_account(osv.osv):
         if args == [('restricted_area', '=', 'invoice_lines')]:
             # LINES of Stock Transfer Vouchers:
             # restrict to Expense/Income/Receivable accounts
-            if context_stv:
+            if context_stv or context.get('check_line_stv'):
                 arg.append(('user_type_code', 'in', ['expense', 'income', 'receivables']))
         elif args == [('restricted_area', '=', 'intermission_header')]:
-            if context_ivo:
+            if context_ivo or context.get('check_header_ivo'):
                 # HEADER of Intermission Voucher OUT:
                 # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash
                 # + prevent from using donation accounts
-                arg = [('type_for_register', '!=', 'donation'),
+                arg = [('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
                        '|', '|', ('is_intermission_counterpart', '=', True),
                        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
                        '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash'])]
-            elif context_ivi:
+            elif context_ivi or context.get('check_header_ivi'):
                 # HEADER of Intermission Voucher IN:
                 # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Payable/Payables
                 # + prevent from using donation accounts
-                arg = [('type_for_register', '!=', 'donation'),
+                arg = [('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
                        '|', '|', ('is_intermission_counterpart', '=', True),
                        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
                        '&', ('user_type_code', '=', 'payables'), ('type', '=', 'payable')]
@@ -420,6 +418,8 @@ class account_account(osv.osv):
         """
         Use "-" instead of " " between name and code for account's default name
         """
+        if context is None:
+            context = {}
         if not ids:
             return []
         reads = self.read(cr, uid, ids, ['name', 'code'], context=context)
@@ -427,7 +427,10 @@ class account_account(osv.osv):
         for record in reads:
             name = record['name']
             if record['code']:
-                name = record['code'] + ' - '+name
+                if context.get('account_only_code'):
+                    name = record['code']
+                else:
+                    name = record['code'] + ' - '+name
             res.append((record['id'], name))
         return res
 
@@ -497,17 +500,81 @@ class account_account(osv.osv):
                 'has_partner_type_section' in vals and not vals['has_partner_type_section']:
             raise osv.except_osv(_('Warning !'), _('At least one Allowed Partner type must be selected.'))
 
+    def _check_reconcile_status(self, cr, uid, account_id, context=None):
+        """
+        Prevents an account:
+        - from being set as reconcilable if it is included in the yearly move to 0
+        - from NOT being set as reconcilable if it is included in revaluation (except for liquidity accounts)
+        """
+        if context is None:
+            context = {}
+        if account_id:
+            account_fields = ['reconcile', 'include_in_yearly_move', 'currency_revaluation', 'type']
+            account = self.browse(cr, uid, account_id, fields_to_fetch=account_fields, context=context)
+            reconcile = account.reconcile
+            include_in_yearly_move = account.include_in_yearly_move
+            currency_revaluation = account.currency_revaluation
+            is_liquidity = account.type == 'liquidity'
+            if reconcile and include_in_yearly_move:
+                raise osv.except_osv(_('Warning !'),
+                                     _("An account can't be both reconcilable and included in the yearly move to 0."))
+            elif not reconcile and currency_revaluation and not is_liquidity:
+                raise osv.except_osv(_('Warning !'),
+                                     _('An account set as "Included in revaluation" must be set as "Reconcile".'))
+
+    def _set_prevent_multi_curr_rec(self, vals):
+        """
+        Updates vals to set prevent_multi_curr_rec to False when "reconcile" is False.
+        Cf: when "reconcile" is unticked, prevent_multi_curr_rec is in readonly so its value (False in that case) is ignored
+        """
+        if 'reconcile' in vals and not vals['reconcile'] and 'prevent_multi_curr_rec' not in vals:
+            vals['prevent_multi_curr_rec'] = False
+
+    def _check_existing_entries(self, cr, uid, account_id, context=None):
+        """
+        Displays a message visible on top of the page in case some JI booked on the account_id have a posting date
+        outside the account activation time interval
+        """
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        if account_id and not context.get('sync_update_execution'):
+            account_fields = ['activation_date', 'inactivation_date', 'code', 'name']
+            account = self.browse(cr, uid, account_id, fields_to_fetch=account_fields, context=context)
+            aml_dom = [('account_id', '=', account_id), '|', ('date', '<', account.activation_date), ('date', '>=', account.inactivation_date)]
+            if aml_obj.search_exist(cr, uid, aml_dom, context=context):
+                self.log(cr, uid, account_id, _('At least one Journal Item using the Account "%s - %s" has a Posting Date '
+                                                'outside the activation dates selected.') % (account.code, account.name))
+
     def create(self, cr, uid, vals, context=None):
+        self._set_prevent_multi_curr_rec(vals)  # update vals
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
-        return super(account_account, self).create(cr, uid, vals, context=context)
+        account_id = super(account_account, self).create(cr, uid, vals, context=context)
+        self._check_reconcile_status(cr, uid, account_id, context=context)
+        return account_id
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        self._set_prevent_multi_curr_rec(vals)  # update vals
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
-        return super(account_account, self).write(cr, uid, ids, vals, context=context)
+        # remove user_type from vals if it hasn't been modified to avoid the recomputation on JI Account Type (due to store feature)
+        res = True
+        for acc in self.browse(cr, uid, ids, fields_to_fetch=['user_type'], context=context):
+            newvals = vals.copy()
+            if newvals.get('user_type') and newvals['user_type'] == acc.user_type.id:
+                del newvals['user_type']
+            res = res and super(account_account, self).write(cr, uid, [acc.id], newvals, context=context)
+        for account_id in ids:
+            self._check_reconcile_status(cr, uid, account_id, context=context)
+            self._check_existing_entries(cr, uid, account_id, context=context)
+        return res
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         """
@@ -542,6 +609,7 @@ class account_account(osv.osv):
                 # existing partner
                 emp_obj = self.pool.get('hr.employee')
                 partner_obj = self.pool.get('res.partner')
+                journal_obj = self.pool.get('account.journal')
                 if partner_type:
                     pt_model, pt_id = tuple(partner_type.split(',')) if from_vals \
                         else (partner_type._name, partner_type.id, )
@@ -555,15 +623,18 @@ class account_account(osv.osv):
                     elif pt_model == 'res.partner':
                         partner_id = pt_id
                 elif partner_txt:
-                    employee_ids = emp_obj.search(cr, uid, [('name', '=', partner_txt)],
-                                                  order='NO_ORDER', limit=1, context=context)
+                    employee_ids = emp_obj.search(cr, uid, [('name', '=', partner_txt)], limit=1, context=context)
                     if employee_ids:
                         employee_id = employee_ids[0]
                     else:
-                        partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt)],
-                                                         order='NO_ORDER', limit=1, context=context)
+                        partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt), ('active', 'in', ['t', 'f'])],
+                                                         limit=1, context=context)
                         if partner_ids:
                             partner_id = partner_ids[0]
+                        else:
+                            transfer_journal_ids = journal_obj.search(cr, uid, [('code', '=', partner_txt)], limit=1, context=context)
+                            if transfer_journal_ids:
+                                transfer_journal_id = transfer_journal_ids[0]
                 if employee_id:
                     tp_rec = emp_obj.browse(cr, uid, employee_id, fields_to_fetch=['employee_type'], context=context)
                     # note: allowed for employees with no type
@@ -578,6 +649,78 @@ class account_account(osv.osv):
             # store the returned value in context in order not to do the same check several times
             context.update({'allowed_partner_field': allowed_partner_field})
         return allowed_partner_field
+
+    def _display_account_partner_compatibility_error(self, cr, uid, not_compatible_ids,
+                                                     context=None, type_for_specific_treatment=False):
+        """
+        Raises an error with the list of the accounts which are incompatible with the partner used
+        """
+        if context is None:
+            context = {}
+        error_msg = ''
+        acc_obj = self.pool.get('account.account')
+        if not_compatible_ids:
+            errors = [_('following accounts are not compatible with partner:')]
+            for acc in acc_obj.browse(cr, uid, not_compatible_ids, fields_to_fetch=['code', 'name'], context=context):
+                errors.append(_('%s - %s') % (acc.code, acc.name))
+                error_msg = "\n- ".join(errors)
+                if type_for_specific_treatment:
+                    error_msg += '%s%s' % ('\n\n', _('Please check the Type for specific treatment of the accounts used.'))
+            raise osv.except_osv(_('Error'), error_msg)
+
+    def check_type_for_specific_treatment(self, cr, uid, account_ids, partner_id=False, employee_id=False,
+                                          journal_id=False, partner_txt=False, currency_id=False, context=None):
+        """
+        Checks if the Third parties and accounts in parameter are compatible regarding the "Type for specific treatment"
+        of the accounts (raises an error if not).
+        Note that the currency_id is the one of the entry to be checked and is used ONLY for the checks on
+        transfer journals (if a currency is given).
+        """
+        if isinstance(account_ids, (int, long)):
+            account_ids = [account_ids]
+        if context is None:
+            context = {}
+        acc_obj = self.pool.get('account.account')
+        employee_obj = self.pool.get('hr.employee')
+        partner_obj = self.pool.get('res.partner')
+        journal_obj = self.pool.get('account.journal')
+        not_compatible_ids = []
+        for acc_id in acc_obj.browse(cr, uid, account_ids, fields_to_fetch=['type_for_register'], context=context):
+            # get the right Third Party if a partner_txt only has been given
+            if partner_txt and not partner_id and not employee_id and not journal_id:
+                employee_ids = employee_obj.search(cr, uid, [('name', '=', partner_txt)], limit=1, context=context)
+                if employee_ids:
+                    employee_id = employee_ids[0]
+                else:
+                    partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt), ('active', 'in', ['t', 'f'])],
+                                                     limit=1, context=context)
+                    if partner_ids:
+                        partner_id = partner_ids[0]
+                    else:
+                        journal_ids = journal_obj.search(cr, uid, [('code', '=', partner_txt)], limit=1, context=context)
+                        if journal_ids:
+                            journal_id = journal_ids[0]
+                # if there is a partner_txt but no related Third Party found:
+                # ignore the check if "ignore_non_existing_tp" is in context (e.g. when validating HQ entries)
+                if not partner_id and not employee_id and not journal_id and context.get('ignore_non_existing_tp', False):
+                    continue
+            acc_type = acc_id.type_for_register
+            advance_not_ok = acc_type == 'advance' and (not employee_id or journal_id or partner_id)
+            dp_not_ok = acc_type == 'down_payment' and (not partner_id or journal_id or employee_id)
+            payroll_not_ok = acc_type == 'payroll' and ((not partner_id and not employee_id) or journal_id)
+            transfer_not_ok = acc_type in ['transfer', 'transfer_same'] and (not journal_id or partner_id or employee_id)
+            if currency_id and journal_id and not transfer_not_ok:
+                # check the journal type and currency
+                journal = journal_obj.browse(cr, uid, journal_id, fields_to_fetch=['type', 'currency'], context=context)
+                is_liquidity = journal and journal.type in ['cash', 'bank', 'cheque'] and journal.currency
+                if acc_type == 'transfer_same' and (not is_liquidity or journal.currency.id != currency_id):
+                    transfer_not_ok = True
+                elif acc_type == 'transfer' and (not is_liquidity or journal.currency.id == currency_id):
+                    transfer_not_ok = True
+            if advance_not_ok or dp_not_ok or payroll_not_ok or transfer_not_ok:
+                not_compatible_ids.append(acc_id.id)
+        if not_compatible_ids:
+            self._display_account_partner_compatibility_error(cr, uid, not_compatible_ids, context, type_for_specific_treatment=True)
 
     def is_allowed_for_thirdparty(self, cr, uid, ids, partner_type=False, partner_txt=False, employee_id=False,
                                   transfer_journal_id=False, partner_id=False, from_vals=False, raise_it=False, context=None):
@@ -611,7 +754,7 @@ class account_account(osv.osv):
                 allowed_partner_field = self._get_allowed_partner_field(cr, uid, partner_type, partner_txt, employee_id,
                                                                         transfer_journal_id, partner_id, from_vals, context)
                 if not allowed_partner_field:
-                    res[r.id] = True  # allowed with no specific field
+                    res[r.id] = True  # allowed with no specific field (e.g. don't block validation of HQ entries with non-existing 3d Party)
                 else:
                     res[r.id] = hasattr(r, allowed_partner_field) and getattr(r, allowed_partner_field) or False
         # once the checks are done, remove allowed_partner_field from context so as not to reuse it for another record
@@ -620,11 +763,7 @@ class account_account(osv.osv):
         if raise_it:
             not_compatible_ids = [ id for id in res if not res[id] ]
             if not_compatible_ids:
-                errors = [_('following accounts are not compatible with partner:')]
-                for r in self.pool.get('account.account').browse(cr, uid, not_compatible_ids,
-                                                                 fields_to_fetch=['code', 'name'], context=context):
-                    errors.append(_('%s - %s') % (r.code, r.name))
-                raise osv.except_osv(_('Error'), "\n- ".join(errors))
+                self._display_account_partner_compatibility_error(cr, uid, not_compatible_ids, context)
         return res
 
     def activate_destination(self, cr, uid, ids, context=None):
@@ -695,27 +834,24 @@ class account_journal(osv.osv):
             self_instance = self.pool.get('res.users').browse(cr, uid, [uid],
                                                               context=context)[0].company_id.instance_id
             if self_instance:
-                forbid_levels = []
                 if self_instance.level:
                     if self_instance.level == 'coordo':
                         # BKLG-19/7: forbid creation of MANUAL journal entries
                         # from COORDO on a PROJECT journal
-                        forbid_levels = ['project']
+                        msf_instance_obj = self.pool.get('msf.instance')
+                        forbid_instance_ids = msf_instance_obj.search(cr, uid,
+                                                                      [('level', '=', 'project')], context=context)
+                        if forbid_instance_ids:
+                            return [('instance_id', 'not in', forbid_instance_ids)]
                     elif self_instance.level == 'project':
                         # US-896: project should only see project journals
                         # (coordo register journals sync down to project for
                         #  example)
-                        forbid_levels = ['coordo', 'section']
-                if forbid_levels:
-                    msf_instance_obj = self.pool.get('msf.instance')
-                    forbid_instance_ids = msf_instance_obj.search(cr, uid, 
-                                                                  [('level', 'in', forbid_levels)], context=context)
-                    if forbid_instance_ids:
-                        res = [('instance_id', 'not in', forbid_instance_ids)]
+                        return [('is_current_instance', '=', True)]
         return res
 
     _columns = {
-        # BKLG-19/7: journals instance filter 
+        # BKLG-19/7: journals instance filter
         'instance_filter': fields.function(
             _get_fake, fnct_search=_search_instance_filter,
             method=True, type='boolean', string='Instance filter'
@@ -734,7 +870,7 @@ class account_move(osv.osv):
         return self.pool.get('account.journal').get_journal_type(cr, uid, context)
 
     _columns = {
-        'name': fields.char('Entry Sequence', size=64, required=True),
+        'name': fields.char('Entry Sequence', size=64, required=True, select=True),
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id',
                                                string="Statement lines", help="This field give all statement lines linked to this move."),
         'ref': fields.char('Reference', size=64, readonly=True, states={'draft':[('readonly',False)]}),
@@ -744,7 +880,7 @@ class account_move(osv.osv):
                                      domain="[('state', '=', 'draft')]", hide_default_menu=True),
         'journal_id': fields.many2one('account.journal', 'Journal',
                                       required=True, states={'posted':[('readonly',True)]},
-                                      domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj', 'system']), ('instance_filter', '=', True)]",
+                                      domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj', 'system', 'extra']), ('instance_filter', '=', True)]",
                                       hide_default_menu=True),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
@@ -876,8 +1012,9 @@ class account_move(osv.osv):
                 raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (vals['date'] or ''))
             period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
             # UF-2479: If the period is not open yet, raise exception for the move
-            if period and (period.state == 'created' or \
-                           (manual_je and period.state != 'draft')):  # don't save manual JE in a non-open period
+            # US-2563: do not raise in case of duplicate
+            if not context.get('copy', False) and period and (period.state == 'created' or \
+                                                              (manual_je and period.state != 'draft')):  # don't save manual JE in a non-open period
                 raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Journal Entry is created') % (period.name,))
 
             # Context is very important to fetch the RIGHT sequence linked to the fiscalyear!
@@ -995,10 +1132,6 @@ class account_move(osv.osv):
                         context[el] = vals.get(el)
                         ml_vals.update({el: vals.get(el)})
 
-                # UFTP-262: For manual_name (description on account.move), update "name" on account.move.line
-                if 'manual_name' in vals:
-                    ml_vals.update({'name': vals.get('manual_name', '')})
-
                 # Update document date AND date at the same time
                 if ml_vals:
                     ml_id_list  = [ml.id for ml in m.line_id]
@@ -1072,12 +1205,33 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Warning'),
                                              _('Account: %s - %s. The journal used for the internal transfer must be different from the '
                                                'Journal Entry Journal.') % (ml.account_id.code, ml.account_id.name))
+                    # Only Donation accounts are allowed with an ODX journal
+                    if m.journal_id.type == 'extra' and type_for_reg != 'donation':
+                        raise osv.except_osv(_('Warning'), _('The account %s - %s is not compatible with the '
+                                                             'journal %s.') % (ml.account_id.code, ml.account_id.name, m.journal_id.code))
+                    # Only Internal transfers are allowed with liquidity journals in manual JE
+                    if m.journal_id.type in ('bank', 'cash', 'cheque') and type_for_reg not in ('transfer', 'transfer_same'):
+                        raise osv.except_osv(_('Warning'), _('The account %s - %s is not allowed.\n'
+                                                             'Only internal transfers (in the same currency or not) '
+                                                             'are allowed in manual journal entries on a liquidity journal.') %
+                                             (ml.account_id.code, ml.account_id.name))
                     if not prev_currency_id:
                         prev_currency_id = curr_aml.id
                         continue
                     if curr_aml.id != prev_currency_id:
                         raise osv.except_osv(_('Warning'), _('You cannot have two different currencies for the same Journal Entry!'))
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
+
+    def update_line_description(self, cr, uid, ids, context=None):
+        """
+        Updates the description of the JIs with the one of the JE
+        """
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        for m in self.browse(cr, uid, ids, fields_to_fetch=['manual_name', 'line_id'], context=context):
+            if m.manual_name and m.line_id:
+                aml_obj.write(cr, uid, [ml.id for ml in m.line_id], {'name': m.manual_name}, context=context)
 
     def copy(self, cr, uid, a_id, default={}, context=None):
         """
@@ -1148,6 +1302,7 @@ class account_move(osv.osv):
         user_id = hasattr(uid, 'realUid') and uid.realUid or uid
         # First delete move lines to avoid "check=True" problem on account_move_line item
         if to_delete:
+            context.update({'move_ids_to_delete': to_delete})
             ml_ids = self.pool.get('account.move.line').search(cr, user_id, [('move_id', 'in', to_delete)])
             if ml_ids:
                 if isinstance(ml_ids, (int, long)):

@@ -1,0 +1,16 @@
+code,currency,default_credit_account_id,default_debit_account_id,name,type,analytic_journal_id
+ACC,,,,Accruals,accrual,Accruals
+HQ,,,,Headquarters,hq,Headquarters
+HR,,,,Human Resources,hr,Human Resources
+FXA,,71110,67040,FX adjustment,cur_adj,FX adjustment
+OD,,,,Corrections,correction,Corrections
+PUR,,,,Purchase,purchase,Purchase
+PUF,,,,Purchase Refund,purchase_refund,Purchase Refund
+SAL,,,,Sales,sale,Sales
+SAR,,,,Sales Refund,sale_refund,Sales Refund
+STO,,,,Stock,stock,
+IKD,,,,In-Kind Donation,inkind,In-Kind Donation
+INT,,,,Intermission,intermission,Intermission
+ODX,,,,Extra-Accounting corrections,extra,Extra-Accounting corrections
+REV,,,,Revaluation,revaluation,Revaluation
+MIG,,,,Migration,migration,Migration

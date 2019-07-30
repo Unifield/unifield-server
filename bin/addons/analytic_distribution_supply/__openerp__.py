@@ -30,14 +30,10 @@
     "depends" : ["base", "account_journal", "analytic_distribution", "purchase_override", "stock", "res_currency_functional"],
     "init_xml" : [],
     "update_xml" : [
-            "purchase_view.xml",
-            "account_commitment_view.xml",
-            "sale_view.xml",
+        "account_commitment_view.xml",
     ],
     "demo_xml" : [],
     "test": [
-        "test/analytic_data.yml",
-        "test/commitment.yml",
     ],
     "installable": True,
     "active": False

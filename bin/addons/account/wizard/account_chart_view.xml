@@ -8,7 +8,7 @@
             <field name="arch" type="xml">
                 <form string="Account charts">
                     <group colspan="4">
-                        <field name="fiscalyear" on_change="onchange_fiscalyear(fiscalyear)"/>
+                        <field name="fiscalyear" on_change="onchange_fiscalyear(fiscalyear)" default_focus="1"/>
                         <field name="target_move"/>
                         <label align="0.7" colspan="4" string="(If you do not select Fiscal year it will take all open fiscal years)"/>
                         <separator string="Periods" colspan="4"/>

@@ -22,3 +22,4 @@
 import module
 import wizard
 import report
+import instance_auto_creation

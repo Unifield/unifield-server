@@ -27,5 +27,6 @@ import wizard_actual_export
 import wizard_local_expenses
 import wizard_budget_summary
 import wizard_budget_monthly
+import wizard_order_impact_vs_budget
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

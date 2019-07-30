@@ -38,7 +38,7 @@ class account_report_general_ledger(osv.osv_memory):
 
     _columns = {
         'initial_balance': fields.boolean("Include initial balances",
-            help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
+                                          help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
         'is_initial_balance_available': fields.function(_get_fake, method=True, type='boolean', string="Is initial balance filter available ?"),
         'amount_currency': fields.boolean("With Currency", help="It adds the currency column if the currency is different then the company currency"),
         'sortby': fields.selection([('sort_date', 'Date'), ('sort_journal_partner', 'Journal & Partner')], 'Sort By', required=True),
@@ -59,12 +59,13 @@ class account_report_general_ledger(osv.osv_memory):
             ('yes', 'Yes'),
             ('no', 'No'),
         ], "Reconciled",
-        help="filter will apply only on the B/S accounts except for the non reconciliable account like 10100 and 10200 which will never be displayed per details"),
+            help="filter will apply only on the B/S accounts except for the non reconciliable account like 10100 and 10200 which will never be displayed per details"),
         'reconcile_date': fields.date("At"),
+        'open_items': fields.many2one('account.period', string='Open Items at', domain=[('state', '!=', 'created')]),
 
         'account_ids': fields.many2many('account.account',
-            'account_report_general_ledger_account_account_rel',
-            'report_id', 'account_id', 'Accounts'),
+                                        'account_report_general_ledger_account_account_rel',
+                                        'report_id', 'account_id', 'Accounts'),
 
         'filter': fields.selection([
             ('filter_no', 'No Filters'),
@@ -88,7 +89,7 @@ class account_report_general_ledger(osv.osv_memory):
         'is_initial_balance_available': False,  # as no FY selection, not available by default US-926 point 7)
         'display_account': 'bal_movement',  # by default only result with JIs
     }
-    
+
     def default_get(self, cr, uid, fields, context=None):
         if context is None:
             context = {}
@@ -110,7 +111,7 @@ class account_report_general_ledger(osv.osv_memory):
 
     def onchange_filter(self, cr, uid, ids, fiscalyear_id=False, context=None):
         res = super(account_report_general_ledger, self).onchange_filter(cr,
-            uid, ids, fiscalyear_id=fiscalyear_id, context=context)
+                                                                         uid, ids, fiscalyear_id=fiscalyear_id, context=context)
         if res is None:
             res = {}
         if not 'value' in res:
@@ -123,7 +124,7 @@ class account_report_general_ledger(osv.osv_memory):
         return res
 
     def onchange_filter_date(self, cr, uid, ids, filter, fiscalyear_id,
-        date_from, date_to, period_from, period_to, context=None):
+                             date_from, date_to, period_from, period_to, context=None):
         # US-822: initial balance available if FY/01/01 included in the
         # date selection (posting date of initial balance)
         # AND if only one FY included in the selection
@@ -132,7 +133,7 @@ class account_report_general_ledger(osv.osv_memory):
         ib_available = fiscalyear_id or False
         if ib_available and filter and filter != 'filter_no':
             fy_rec = self.pool.get('account.fiscalyear').browse(cr, uid,
-                fiscalyear_id, context=context)
+                                                                fiscalyear_id, context=context)
             if filter in ('filter_date_doc', 'filter_date', ):
                 ib_available = date_from and date_from == fy_rec.date_start
             elif filter in 'filter_period':
@@ -140,16 +141,16 @@ class account_report_general_ledger(osv.osv_memory):
                     ib_available = False
                 else:
                     period_from_rec = self.pool.get('account.period').browse(cr,
-                        uid,  period_from, context=context)
+                                                                             uid,  period_from, context=context)
                     period_to_rec = self.pool.get('account.period').browse(cr,
-                        uid,  period_to, context=context)
+                                                                           uid,  period_to, context=context)
                     ib_available = \
                         period_from_rec.date_start == fy_rec.date_start \
                         and period_to_rec.date_stop <= fy_rec.date_stop
 
         res['value'] = {'is_initial_balance_available': ib_available, }
         return res
-        
+
     def remove_journals(self, cr, uid, ids, context=None):
         if ids:
             self.write(cr, uid, ids, { 'journal_ids': [(6, 0, [])] },
@@ -167,19 +168,19 @@ class account_report_general_ledger(osv.osv_memory):
         data['form']['report_mode'] = 'gl'  # general ledger mode
 
         form_fields = [ 'initial_balance', 'amount_currency', 'sortby',
-            'output_currency', 'instance_ids', 'export_format',
-            'account_type', 'reconciled', 'reconcile_date',
-            'account_ids', ]
+                        'output_currency', 'instance_ids', 'export_format',
+                        'account_type', 'reconciled', 'reconcile_date',
+                        'account_ids', 'open_items', ]
         data['form'].update(self.read(cr, uid, ids, form_fields)[0])
 
         # US-822: safe initial balance check box
         rec = self.browse(cr, uid, ids[0], context=context)
         ofd_res = self.onchange_filter_date(cr, uid, [ids[0]],
-            rec.filter, rec.fiscalyear_id.id,
-            rec.date_from, rec.date_to,
-            rec.period_from.id, rec.period_to.id, context=context)
+                                            rec.filter, rec.fiscalyear_id.id,
+                                            rec.date_from, rec.date_to,
+                                            rec.period_from.id, rec.period_to.id, context=context)
         if ofd_res and 'value' in ofd_res \
-            and not ofd_res['value'].get('is_initial_balance_available', True):
+                and not ofd_res['value'].get('is_initial_balance_available', True):
             # initial balance not applicable
             # (check onchange_filter_date comments)
             data['form']['initial_balance'] = False
@@ -204,8 +205,8 @@ class account_report_general_ledger(osv.osv_memory):
             'type': 'ir.actions.report.xml',
             'report_name': 'account.general.ledger_landscape',
             'datas': data,
-            }
-        
+        }
+
 account_report_general_ledger()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -80,6 +80,10 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Justification Coordination')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('HQ Remarks')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Justification Y/N')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cold chain type')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Dangerous Good Type')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Controlled Substance Type')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Status')}</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>
@@ -103,6 +107,10 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.heat_sensitive_item and line.product_id.heat_sensitive_item.code == 'yes' and line.product_id.cold_chain and line.product_id.cold_chain.code or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.dangerous_goods != 'False' and getSel(line.product_id, 'dangerous_goods') or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and (line.product_id.controlled_substance == 'True' and 'CS / NP' or line.product_id.controlled_substance) or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(line, 'state_to_display') or '')|x}</Data></Cell>
     </Row>
     % endfor
 </Table>

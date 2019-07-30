@@ -9,7 +9,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="10" />
             <field name="arch" type="xml">
-                <tree string="Latest Connections">
+                <tree string="Group members">
                     <field name="name"/>
                     <field name="date"/>
                 </tree>

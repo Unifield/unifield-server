@@ -53,13 +53,13 @@
                 <form string="Invoice Line">
                     <notebook>
                         <page string="Line">
-                            <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"/>
+                            <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})" default_focus="1"/>
                             <field name="uos_id"  on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"/>
                             <field name="quantity"/>
                             <field name="price_unit"/>
                             <field name="discount" groups="base.group_extended"/>
                             <field colspan="4" name="name"/>
-                            <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id" on_change="onchange_account_id(parent.fiscal_position,account_id)"/>
+                            <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
                             <field domain="[('type','&lt;&gt;','view'), ('company_id', '=', parent.company_id), ('parent_id', '!=', False)]" name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
                             <newline/>
                             <field name="company_id" groups="base.group_multi_company" readonly="1"/>
@@ -149,7 +149,7 @@
             <field name="arch" type="xml">
                 <form string="Supplier Invoice">
                     <group col="8" colspan="4">
-                        <field name="journal_id" on_change="onchange_journal_id(journal_id)" widget="selection"/>
+                        <field name="journal_id" widget="selection"/>
                         <field name="number" readonly="1"/>
                         <field name="type" invisible="1"/>
                         <field name="currency_id" width="50"/>
@@ -175,7 +175,7 @@
                             <field colspan="4" default_get="{'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" name="invoice_line" nolabel="1">
                                 <tree string="Invoice lines">
                                     <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"/>
-                                    <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id" on_change="onchange_account_id(parent.fiscal_position,account_id)"/>
+                                    <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
                                     <field name="invoice_line_tax_id" view_mode="2" context="{'type':parent.type}" domain="[('parent_id','=',False)]"/>
                                     <field domain="[('type','&lt;&gt;','view'), ('company_id', '=', parent.company_id), ('parent_id', '!=', False)]" name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
                                     <field name="quantity"/>
@@ -193,9 +193,10 @@
                                         <field name="account_tax_id" on_change="tax_code_change(account_tax_id,parent.amount_untaxed,context)"/>
                                         <field name="name"/>
 
-                                        <field name="account_id" groups="account.group_account_invoice" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation'),('user_type.code','not in',['income','expense'])]"/>
-
-
+                                        <field name="account_id" groups="account.group_account_invoice"
+                                               domain="[('type', 'not in', ['view', 'consolidation']),
+                                                        ('user_type_code', '=', 'tax')]"/>
+                                        
                                         <field name="base" on_change="base_change(base,parent.currency_id,parent.company_id,parent.date_invoice)" readonly="1"/>
                                         <field name="amount" on_change="amount_change(amount,parent.currency_id,parent.company_id,parent.date_invoice)"/>
 
@@ -239,7 +240,7 @@
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                         <page string="Payments" groups="base.group_extended">
-                            <field name="payment_ids" colspan="4" nolabel="1" >
+                            <field name="payment_to_display_ids" colspan="4" nolabel="1" >
                                 <tree string="Payments">
                                     <field name="move_id"/>
                                     <field name="name"/>
@@ -266,7 +267,7 @@
             <field name="arch" type="xml">
                 <form string="Invoice">
                     <group colspan="4" col="8">
-                    <field name="journal_id" groups="base.group_user" on_change="onchange_journal_id(journal_id)" widget="selection"/>
+                    <field name="journal_id" groups="base.group_user" widget="selection"/>
                     <field name="number"/>
                     <field name="type" invisible="1"/>
                     <field name="currency_id" width="50"/>
@@ -339,7 +340,7 @@
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                         <page string="Payments">
-                            <field name="payment_ids" colspan="4" nolabel="1">
+                            <field name="payment_to_display_ids" colspan="4" nolabel="1">
                                 <tree string="Payments">
                                     <field name="date"/>
                                     <field name="ref"/>

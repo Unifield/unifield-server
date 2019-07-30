@@ -28,16 +28,19 @@
                                 <field name="claim_type" 
                                        attrs="{'readonly': [('register_a_claim', '=', False)]}"/>
                                 <field name="claim_replacement_picking_expected" 
-                                       attrs="{'invisible': [('claim_type', '!=', 'return')]}"/>
+                                       attrs="{'invisible': [('claim_type', 'not in', ('accept', 'scrap', 'quarantine', 'return'))],
+                                               'readonly': [('claim_type', 'not in', ('accept', 'scrap', 'quarantine', 'return'))]}"/>
                             </page>
                             <page string="Claim Description">
                                 <field name="claim_description" colspan="4" nolabel="True"/>
                             </page>
                         </notebook>
                     </group>
+                    <field name="draft" invisible="1"/>
                     <group colspan="4" col="6" name="actions">
                         <separator string="Actions" colspan="6" />
-                        <label colspan="4"> </label>
+                        <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
+                        <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
                         <button name="do_partial" type="object" string="Process" icon="gtk-go-forward" />
                     </group>

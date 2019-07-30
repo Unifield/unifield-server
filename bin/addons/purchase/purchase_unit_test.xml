@@ -52,7 +52,7 @@
         <!-- Disallow analytic distribution verification -->
         <function model="account.invoice" name="write">
             <value model="purchase.order" eval="[obj(ref('test_purchase_1')).invoice_ids[0].id]" />
-            <value eval="{'from_yml_test': True, 'document_date': time.strftime('%Y-%m-%d')}"/>
+            <value eval="{'document_date': time.strftime('%Y-%m-%d')}"/>
         </function>
 
         <workflow model="account.invoice" action="invoice_open">

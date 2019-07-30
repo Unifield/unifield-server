@@ -122,13 +122,8 @@ SELECT res_id
     WHERE module = 'sd' AND
           model = %s AND
           """+add_sql+"""
-          ("""+field+""" < last_modification OR """+field+""" IS NULL) AND
-          (create_date is NULL or create_date <= NOW())""",
-                       sql_params)
-        # NOW() is the sql transaction begin date
-        # can't use (sync_date IS NULL or last_modification <= NOW()) bc UTP-1201 use case failed
-        # can't use (last_modification <= NOW()) bc a record created before the sync but updated during the sync will not be sent
-        #                                        and if this record is used in a m2o it will be set to false
+          ("""+field+""" < last_modification OR """+field+""" IS NULL)""",
+                       sql_params) # not_a_user_entry
             result = [row[0] for row in cr.fetchall()]
         else:
             touched_fields = set(touched_fields)
@@ -137,10 +132,10 @@ SELECT res_id, touched
     FROM ir_model_data
     WHERE module = 'sd' AND
           model = %s AND
+          COALESCE(touched, '') != '[]' AND
           """+add_sql+"""
-          ("""+field+""" < last_modification OR """+field+""" IS NULL) AND
-          (create_date is NULL or create_date <= NOW())""",
-                       sql_params)
+          ("""+field+""" < last_modification OR """+field+""" IS NULL)""",
+                       sql_params) # not_a_user_entry
             result = [row[0] for row in cr.fetchall()
                       if row[1] is None \
                       or touched_fields.intersection(eval(row[1]) if row[1] else [])]
@@ -271,6 +266,8 @@ SELECT res_id, touched
         write_skip_o2m = {
             'supplier.catalogue': [],
             'account.bank.statement': ['line_ids'],
+            'res.currency': ['rate_ids'],
+            'product.list': [],
         }
 
         _previous_calls = _previous_calls or []
@@ -442,11 +439,10 @@ SELECT res_id, touched
         field, real_field = ('id' if field == 'is_deleted' else field), field
         if self._name == "ir.model.data":
             cr.execute("""\
-SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND name IN %%s""" % field, [sdrefs])
+SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND name IN %%s""" % field, [sdrefs])  # not_a_user_entry
         else:
             cr.execute("""\
-SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name IN %%s""" \
-% field, [self._name,sdrefs])
+SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name IN %%s""" % field, [self._name,sdrefs])  # not_a_user_entry
         try:
             result = RejectingDict(cr.fetchall())
         except DuplicateKey, e:
@@ -669,7 +665,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
         cr.execute('''
         select d.res_id from ir_model_data d
         left join '''+self._table+''' t on t.id = d.res_id and d.model=%(model)s
-        where t.id is null and d.model=%(model)s'''+sql_add, sql_params)
+        where t.id is null and d.model=%(model)s'''+sql_add, sql_params)  # not_a_user_entry
         return [x[0] for x in cr.fetchall()]
 
     def search_ext(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):

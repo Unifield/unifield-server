@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+
+    <data>
+
+        <record id="ir_followup_location_wizard_form_view" model="ir.ui.view">
+            <field name="name">ir.followup.location.wizard.form.view</field>
+            <field name="model">ir.followup.location.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="IR Follow-up per location">
+                    <separator colspan="4" string="Request parameters" />
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <field name="location_id" on_change="onchange(location_id, order_id)" domain="[('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&amp;', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')]"/>
+                    <field name="order_id" domain="[('procurement_request', '=', 't')]" />
+                    <separator colspan="4" string="Order statuses" />
+                    <group colspan="4" col="8">
+                        <field name="draft_ok" />
+                        <field name="validated_ok" />
+                        <field name="sourced_ok" />
+                        <field name="confirmed_ok" />
+                        <field name="closed_ok" />
+                        <field name="cancel_ok" />
+                    </group>
+                    <separator colspan="4" string="Report parameters" />
+                    <field name="only_bo" />
+                    <field name="include_notes_ok" />
+                    <separator colspan="4" string="Actions" />
+                    <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="2" />
+                    <button name="print_pdf" string="PDF report" icon="gtk-print" type="object" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <record id="action_ir_followup_location_wizard" model="ir.actions.act_window">
+            <field name="name">IR Follow-up per location</field>
+            <field name="res_model">ir.followup.location.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem
+            id="menu_ir_followup_location"
+            action="action_ir_followup_location_wizard"
+            parent="base.menu_sales"
+            sequence="3"
+            />
+
+    </data>
+
+</openerp>

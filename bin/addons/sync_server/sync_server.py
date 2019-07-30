@@ -230,6 +230,7 @@ class entity(osv.osv):
         'mission': fields.char('Mission', size=64),
         'latitude': fields.float('Latitude',digits=(16,6)),
         'longitude': fields.float('Longitude', digits=(16,6)),
+        'pgversion': fields.char('Postgres Version', size=64),
     }
     _defaults = {
         'version': lambda *a: 0,
@@ -320,9 +321,9 @@ class entity(osv.osv):
     def ack_update(self, cr, uid, uuid, hardware_id, token, context=None):
         ids = self.search(cr, uid, [('identifier', '=' , uuid),
                                     ('hardware_id', '=', hardware_id),
-                                    ('user_id', '=', uid), 
-                                    ('state', '=', 'updated'), 
-                                    ('update_token', '=', token)], 
+                                    ('user_id', '=', uid),
+                                    ('state', '=', 'updated'),
+                                    ('update_token', '=', token)],
                           order='NO_ORDER', context=context)
         if not ids:
             return (False, 'Ack not valid')
@@ -479,6 +480,21 @@ class entity(osv.osv):
         self._send_invalidation_email(cr, uid, entity, ids_to_validate, context=context)
         return (True, "Instance %s are now invalidated" % ", ".join(uuid_list))
 
+    def is_validated(self, cr, uid, uuid, context=None):
+        entity_pool = self.pool.get("sync.server.entity")
+        id = entity_pool.get(cr, uid, uuid=uuid)
+        if not id:
+            return (False, "Error: Instance does not exist in the server database")
+        entity = entity_pool.browse(cr, uid, id)[0]
+        if entity.state == 'validated':
+            return (True, "The instance is validated")
+        return (False, "The instance has not yet been validated by its parent")
+
+    @check_validated
+    def set_pg_version(self, cr, uid, entity, pg_version, context=None):
+        self.write(cr, 1, entity.id, {'pgversion': pg_version}, context=context)
+        return True
+
     def validate_action(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -603,7 +619,7 @@ class entity(osv.osv):
             order = order.replace('last_dateactivity', 'datetime')
             limit_str = init_limit and ' limit %d' % init_limit or ''
             offset_str = init_offset and ' offset %d' % init_offset or ''
-            cr.execute('select entity_id from sync_server_entity_activity where entity_id in %s order by ' + order + limit_str + offset_str, (tuple(ids),))
+            cr.execute('select entity_id from sync_server_entity_activity where entity_id in %s order by ' + order + limit_str + offset_str, (tuple(ids),))  # not_a_user_entry
             return [x[0] for x in cr.fetchall()]
         return ids
 
@@ -623,6 +639,21 @@ class sync_manager(osv.osv):
     """
         Data synchronization
     """
+    @check_validated
+    def get_last_user_rights_info(self, cr, uid, entity, context=None):
+        data = self.pool.get('sync_server.user_rights').get_last_user_rights_info(cr, 1, context)
+        self._logger.info("::::::::[%s] get UR info sum: %s" % (entity.name, data['sum']))
+        return data
+
+    @check_validated
+    def get_last_user_rights_file(self, cr, uid, entity, check_sum, context=None):
+        ur_obj = self.pool.get('sync_server.user_rights')
+        ids = ur_obj.search(cr, 1, [('sum', '=', check_sum)], context=context)
+        self._logger.info("::::::::[%s] download UR (sum: %s)" % (entity.name, check_sum))
+        if not ids:
+            return ''
+        return ur_obj.get_md5_zip(cr, 1, ids[0], context=context)
+
     @check_validated
     def get_model_to_sync(self, cr, uid, entity, context=None):
         """
@@ -710,7 +741,7 @@ class sync_manager(osv.osv):
         return (True, last_seq, get_md5(last_seq))
 
     @check_validated
-    def get_update(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
+    def get_update(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, init_sync=False, context=None):
         """
             @param entity : string : uuid of the synchronizing entity
             @param last_seq : integer : Last sequence of update receive succefully in the previous pull session.
@@ -741,7 +772,7 @@ class sync_manager(osv.osv):
                               }
 
         """
-        package = self.pool.get("sync.server.update").get_package(cr, uid, entity, last_seq, offset, max_size, max_seq, recover=recover, context=context)
+        package = self.pool.get("sync.server.update").get_package(cr, uid, entity, last_seq, offset, max_size, max_seq, recover=recover, init_sync=init_sync, context=context)
         return (True, package or False, not package, get_md5(package))
 
     """
@@ -848,6 +879,7 @@ class sync_manager(osv.osv):
     @check_validated
     def message_received(self, cr, uid, entity, message_ids, context=None):
         """
+        #### deprecated used only for migration
             @param entity: string : uuid of the synchronizing entity
             @param message_ids: list of string : The list of message identifier : ['message_uuid1', 'message_uuid2', ....]
             @return: tuple : (a,b)
@@ -859,7 +891,23 @@ class sync_manager(osv.osv):
             context = {}
         if context.get('md5'):
             check_md5(context['md5'], message_ids, _('server method message_received'))
-        return (True, self.pool.get('sync.server.message').set_message_as_received(cr, 1, entity, message_ids, context=context))
+        return (True, self.pool.get('sync.server.message').set_message_as_received(cr, 1, entity, message_uuids=message_ids, context=context))
+
+    @check_validated
+    def message_received_by_sync_id(self, cr, uid, entity, message_ids, context=None):
+        """
+            @param entity: string : uuid of the synchronizing entity
+            @param message_ids: list of string : The list of message id
+            @return: tuple : (a,b)
+                     a : boolean : is True is if the call is succesfull, False otherwise
+                     b : message : is an error message if a is False
+
+        """
+        if context is None:
+            context = {}
+        if context.get('md5'):
+            check_md5(context['md5'], message_ids, _('server method message_received'))
+        return (True, self.pool.get('sync.server.message').set_message_as_received(cr, 1, entity, message_ids=message_ids, context=context))
 
     @check_validated
     def message_recover_from_seq(self, cr, uid, entity, start_seq, context=None):

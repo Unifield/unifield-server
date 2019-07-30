@@ -67,13 +67,13 @@
         'wizard/internal_move_processor_view.xml',
         'wizard/outgoing_delivery_processor_view.xml',
         'wizard/return_pack_shipment_processor_view.xml',
+        'wizard/check_ppl_integrity.xml',
         'msf_outgoing_report.xml',
         'msf_outgoing_workflow.xml',
     ],
     "demo_xml": ['data/msf_outgoing_data.xml',
                  ],
-    'test': ['test/data.yml',
-             'test/msf_outgoing.yml'
+    'test': [
     ],
     'installable': True,
 }

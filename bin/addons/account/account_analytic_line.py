@@ -54,7 +54,7 @@ class account_analytic_line(osv.osv):
         if context.get('to_date',False):
             args.append(['date','<=', context['to_date']])
         return super(account_analytic_line, self).search(cr, uid, args, offset, limit,
-                order, context=context, count=count)
+                                                         order, context=context, count=count)
 
     def _check_company(self, cr, uid, ids, context=None):
         lines = self.browse(cr, uid, ids, context=context)
@@ -66,7 +66,7 @@ class account_analytic_line(osv.osv):
     # Compute the cost based on the price type define into company
     # property_valuation_price_type property
     def on_change_unit_amount(self, cr, uid, id, prod_id, quantity, company_id,
-            unit=False, journal_id=False, context=None):
+                              unit=False, journal_id=False, context=None):
         if context==None:
             context={}
         if not journal_id:
@@ -87,18 +87,18 @@ class account_analytic_line(osv.osv):
                 a = prod.categ_id.property_account_expense_categ.id
             if not a:
                 raise osv.except_osv(_('Error !'),
-                        _('There is no expense account defined ' \
-                                'for this product: "%s" (id:%d)') % \
-                                (prod.name, prod.id,))
+                                     _('There is no expense account defined ' \
+                                       'for this product: "%s" (id:%d)') % \
+                                     (prod.name, prod.id,))
         else:
             a = prod.product_tmpl_id.property_account_income.id
             if not a:
                 a = prod.categ_id.property_account_income_categ.id
             if not a:
                 raise osv.except_osv(_('Error !'),
-                        _('There is no income account defined ' \
-                                'for this product: "%s" (id:%d)') % \
-                                (prod.name, prod_id,))
+                                     _('There is no income account defined ' \
+                                       'for this product: "%s" (id:%d)') % \
+                                     (prod.name, prod_id,))
 
         flag = False
         # Compute based on pricetype
@@ -127,7 +127,7 @@ class account_analytic_line(osv.osv):
         return {'value': {
             'amount': result,
             'general_account_id': a,
-            }
+        }
         }
 
     def view_header_get(self, cr, user, view_id, view_type, context=None):
@@ -142,7 +142,111 @@ class account_analytic_line(osv.osv):
             return res
         return False
 
+    def get_related_entry_ids(self, cr, uid, ids=False, entry_seqs=None, context=None):
+        """
+        Returns the ids of all the AJIs related to the selected AJIs and/or Entry Sequences (list), i.e.:
+        1) those having the same Entry Sequence as the selected ones (including the selected lines themselves)
+        2) those having the same reference as one of the lines found in 1)
+        3) those having an Entry Sequence matching exactly with the reference of one of the lines found in 1)
+        4) those whose reference contains EXACTLY the Entry Sequence of one of the selected lines
+        5) those having the same Entry Sequence as one of the lines found in 2), 3), or 4)
+        """
+        if context is None:
+            context = {}
+        if entry_seqs is None:
+            entry_seqs = []
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        related_aals = set()
+
+        categories = []
+        if entry_seqs:
+            aal_ids = self.search(cr, uid, [('entry_sequence', 'in', entry_seqs)], order='NO_ORDER', context=context)
+            aals = self.browse(cr, uid, aal_ids, fields_to_fetch=['account_id'], context=context)
+            categories = [aal.account_id.category or '' for aal in aals]
+        if ids:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            selected_aals = self.browse(cr, uid, ids, fields_to_fetch=['entry_sequence', 'account_id'], context=context)
+            for selected_aal in selected_aals:
+                entry_seqs.append(selected_aal.entry_sequence or '')
+                categories.append(selected_aal.account_id.category or '')
+        if entry_seqs and categories:
+            # get the ids of all the related lines
+
+            categories = list(set(categories))
+            entry_seqs = list(set(entry_seqs))
+            analytic_account_ids = analytic_acc_obj.search(cr, uid, [('category', 'in', categories)],
+                                                           order='NO_ORDER', context=context)
+            # lines having the same Entry Sequence
+            same_seq_domain = [('entry_sequence', 'in', entry_seqs),
+                               ('account_id', 'in', analytic_account_ids)]
+            same_seq_line_ids = self.search(cr, uid, same_seq_domain, order='NO_ORDER', context=context)
+            related_aals.update(same_seq_line_ids)
+
+            # check on ref
+            set_of_refs = set()
+            for aal in self.browse(cr, uid, same_seq_line_ids, fields_to_fetch=['ref'], context=context):
+                aal.ref and set_of_refs.add(aal.ref)
+
+            domain_related_lines = ['&', '|', '|',
+                                    '&', ('ref', 'in', list(set_of_refs)), ('ref', '!=', ''),
+                                    ('entry_sequence', 'in', list(set_of_refs)),
+                                    ('ref', 'in', entry_seqs),
+                                    ('account_id', 'in', analytic_account_ids)]
+            related_line_ids = self.search(cr, uid, domain_related_lines, order='NO_ORDER', context=context)
+            related_aals.update(related_line_ids)
+
+            # check on Entry Seq. (compared with those of the related lines found)
+            aal_seqs = set(aal.entry_sequence for aal in self.browse(cr, uid, related_line_ids,
+                                                                     fields_to_fetch=['entry_sequence'], context=context))
+            same_seq_related_line_domain = [('entry_sequence', 'in', list(aal_seqs)),
+                                            ('account_id', 'in', analytic_account_ids)]
+            same_seq_related_line_ids = self.search(cr, uid, same_seq_related_line_domain, order='NO_ORDER',
+                                                    context=context)
+            related_aals.update(same_seq_related_line_ids)
+        return list(related_aals)
+
+    def get_aal_related_entries(self, cr, uid, ids, context=None):
+        """
+        Returns a view with all the Analytic Lines related to the selected one (see get_related_entry_ids for details)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        active_ids = context.get('active_ids', [])  # to detect if the user has selected several lines
+        if len(ids) != 1 or len(active_ids) > 1:
+            raise osv.except_osv(_('Error'),
+                                 _('The related entries feature can only be used with one Analytic Line.'))
+        ir_model_obj = self.pool.get('ir.model.data')
+        selected_aal = self.browse(cr, uid, ids[0], fields_to_fetch=['entry_sequence', 'account_id'], context=context)
+        selected_entry_seq = selected_aal.entry_sequence or ''
+        selected_category = selected_aal.account_id.category or ''
+        related_entry_ids = self.get_related_entry_ids(cr, uid, ids=ids, context=context)
+        domain = [('id', 'in', related_entry_ids)]
+        # same views whatever the category displayed (FP or Free1/2)
+        view_id = ir_model_obj.get_object_reference(cr, uid, 'account', 'view_account_analytic_line_tree')
+        view_id = view_id and view_id[1] or False
+        search_view_id = ir_model_obj.get_object_reference(cr, uid, 'account', 'view_account_analytic_line_filter')
+        search_view_id = search_view_id and search_view_id[1] or False
+        if selected_category == 'FUNDING':
+            context.update({'display_fp': True})
+        return {
+            'name': _('Related entries: Entry Sequence %s') % selected_entry_seq,
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': [search_view_id],
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
+
 account_analytic_line()
+
 
 class res_partner(osv.osv):
     """ Inherits partner and adds contract information in the partner form """
@@ -150,7 +254,7 @@ class res_partner(osv.osv):
 
     _columns = {
         'contract_ids': fields.one2many('account.analytic.account', \
-                                                    'partner_id', 'Contracts', readonly=True),
+                                        'partner_id', 'Contracts', readonly=True),
     }
 
 res_partner()

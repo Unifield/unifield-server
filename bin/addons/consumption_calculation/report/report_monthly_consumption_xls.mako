@@ -81,13 +81,9 @@
     </Row>
 
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('AMC')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('FMC')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Safety Stock (qty)')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Valid Until')}</Data></Cell>
+         % for h in o.pool.get('wizard.export.fmc').get_headers(context=context):
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${h|x}</Data></Cell>
+        % endfor
     </Row>
     ## we loop over the products line
     % for line in o.line_ids:

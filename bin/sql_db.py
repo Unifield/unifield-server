@@ -211,10 +211,12 @@ class Cursor(object):
         return res
 
 
-    def split_for_in_conditions(self, ids):
+    def split_for_in_conditions(self, ids, max_split=None):
         """Split a list of identifiers into one or more smaller tuples
            safe for IN conditions, after uniquifying them."""
-        return tools.misc.split_every(self.IN_MAX, set(ids))
+        if max_split is None:
+            max_split = self.IN_MAX
+        return tools.misc.split_every(max_split, set(ids))
 
     def print_log(self):
         global sql_counter
@@ -295,6 +297,26 @@ class Cursor(object):
         self.execute("SELECT relname FROM pg_class WHERE relkind in ('r', 'v') AND relname=%s", (table,))
         return self.rowcount
 
+    @check
+    def column_exists(self, table, column):
+        self.execute("""SELECT c.relname
+            FROM pg_class c, pg_attribute a
+            WHERE c.relname=%s AND a.attname=%s AND c.oid=a.attrelid
+        """, (table, column))
+        return self.rowcount
+
+    @check
+    def drop_constraint_if_exists(self, table, constraint):
+        self.execute("SELECT conname FROM pg_constraint WHERE conname = %s", (constraint, ))
+        if self.fetchone():
+            self.execute('ALTER table '+table+' DROP CONSTRAINT "%s"' % (constraint,))
+
+    @check
+    def drop_index_if_exists(self, table, indexname):
+        self.execute("SELECT indexname FROM pg_indexes WHERE indexname = %s and tablename = %s", (indexname, table))
+        if self.fetchone():
+            self.execute('DROP INDEX "%s"' % (indexname,))
+
 class PsycoConnection(psycopg2.extensions.connection):
     pass
 
@@ -370,6 +392,9 @@ class ConnectionPool(object):
         try:
             result = psycopg2.connect(dsn=dsn, connection_factory=PsycoConnection)
         except psycopg2.Error:
+            log = logging.getLogger()
+            if len(log.handlers) > 1:
+                log.removeHandler(log.handlers[1])
             self.__logger.exception('Connection to the database failed')
             raise
         self._connections.append((result, True, time.time()))

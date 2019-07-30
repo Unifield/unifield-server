@@ -26,7 +26,7 @@ class account_period(osv.osv):
     _name = 'account.period'
     _inherit = 'account.period'
 
-    def _get_child_mission_closed(self, cr, uid, ids, name, args, context=None):
+    def _get_child_state(self, cr, uid, ids, name, args, context=None):
         """
         Fake method / always returns False
         """
@@ -39,12 +39,14 @@ class account_period(osv.osv):
             res[id] = False
         return res
 
-    def _search_child_mission_closed(self, cr, uid, obj, name, args, context=None):
-        '''
-        Returns a domain corresponding to mission-closed periods for the selected fiscal year
-        - if in HQ: the periods must be "mission-closed" in the selected coordo (the status in HQ doesn't matter)
-        - else: the periods must be "mission-closed" in the current instance
-        '''
+    def _search_child_states(self, cr, uid, obj, name, args, period_states=None, context=None):
+        """
+        Returns a domain corresponding to periods having specific states for the selected fiscal year.
+        The period states:
+        - correspond to: the tuple of period_states given in parameter, or mission-closed by default
+        - if in HQ: are those from the selected coordo
+        - else: are those from the current instance
+        """
         res = []
         period_ids = []
         user_obj = self.pool.get('res.users')
@@ -56,12 +58,14 @@ class account_period(osv.osv):
         if args[0][1] != '=':
             msg = _("Operator %s not supported") % (args[0][1], )
             raise osv.except_osv(_('Error'), msg)
-        if args[0][0] != 'child_mission_closed' or not args[0][2]:
+        if not args[0][2]:
             return res
         # if no fiscal year selected: don't display any periods
         fy = args[0][2][1]
         if not fy:
             return [('id', 'in', [])]
+        if not period_states:
+            period_states = ('mission-closed',)
         # if the current instance is an HQ
         instance_id = user_obj.browse(cr, uid, uid, context=context).company_id.instance_id
         if instance_id and instance_id.level == 'section':
@@ -69,30 +73,48 @@ class account_period(osv.osv):
             prop_inst = args[0][2][0]
             if not prop_inst:
                 return [('id', 'in', [])]
-            # else get the mission-closed periods
+            # else get the periods having the required state(s)
             sql_get_periods = """
                   SELECT ps.period_id
                   FROM account_period_state ps
                   INNER JOIN account_period p
                   ON ps.period_id = p.id
-                  WHERE ps.state = 'mission-closed'
+                  WHERE ps.state in %s
                   AND ps.instance_id = %s
                   AND p.fiscalyear_id = %s;"""
-            cr.execute(sql_get_periods, (prop_inst, fy))
+            cr.execute(sql_get_periods, (period_states, prop_inst, fy))
             for line in cr.fetchall():
                 period_ids.append(line[0])
             res.append(('id', 'in', period_ids))
         else:
             # if not in HQ
-            res.extend([('state', '=', 'mission-closed'), ('fiscalyear_id', '=', fy)])
+            res.extend([('state', 'in', period_states), ('fiscalyear_id', '=', fy)])
         return res
 
+    def _search_child_mission_closed(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain with mission-closed periods for the selected FY & coordo (or for the current inst. if not in HQ)
+        """
+        return self._search_child_states(cr, uid, obj, name, args, context=context)
+
+    def _search_child_mission_hq_closed(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain with mission-closed or HQ-closed periods for the selected FY & coordo (or for the current inst. if not in HQ)
+        """
+        states = ('mission-closed', 'done',)
+        return self._search_child_states(cr, uid, obj, name, args, period_states=states, context=context)
+
     _columns = {
-        'child_mission_closed': fields.function(_get_child_mission_closed, method=True, store=False,
-                                              string='Child Mission Closed',
-                                              help='In HQ, check the periods being mission-closed in the selected coordo',
-                                              type='boolean',
-                                              fnct_search=_search_child_mission_closed),
+        'child_mission_closed': fields.function(_get_child_state, method=True, store=False,
+                                                string='Child Mission Closed',
+                                                help='In HQ, check the periods being mission-closed in the selected coordo',
+                                                type='boolean',
+                                                fnct_search=_search_child_mission_closed),
+        'child_mission_hq_closed': fields.function(_get_child_state, method=True, store=False,
+                                                   string='Child Mission or HQ Closed',
+                                                   help='In HQ, checks the periods being mission or HQ-closed in the selected coordo',
+                                                   type='boolean',
+                                                   fnct_search=_search_child_mission_hq_closed),
     }
 
     def action_set_state(self, cr, uid, ids, context=None):
@@ -106,13 +128,13 @@ class account_period(osv.osv):
         # Are we in coordo level?
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         if user and user.company_id and user.company_id.instance_id and user.company_id.instance_id.level and user.company_id.instance_id.level == 'coordo':
-          # Check hq entries
-          period_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')])
-          if isinstance(period_ids, (int, long)):
-              period_ids = [period_ids]
-          hq_ids = self.pool.get('hq.entries').search(cr, uid, [('period_id', 'in', period_ids), ('user_validated', '=', False)])
-          if hq_ids:
-             raise osv.except_osv(_('Warning'), _('Some HQ entries are not validated in this period. Please validate them before field-closing this period.'))
+            # Check hq entries
+            period_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')])
+            if isinstance(period_ids, (int, long)):
+                period_ids = [period_ids]
+            hq_ids = self.pool.get('hq.entries').search(cr, uid, [('period_id', 'in', period_ids), ('user_validated', '=', False)])
+            if hq_ids:
+                raise osv.except_osv(_('Warning'), _('Some HQ entries are not validated in this period. Please validate them before field-closing this period.'))
         return super(account_period, self).action_set_state(cr, uid, ids, context)
 
 account_period()

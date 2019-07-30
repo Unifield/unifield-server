@@ -1,8 +1,7 @@
 from __future__ import with_statement
 import os
 import logging
-import urllib2
-import threading
+import socket
 from base64 import b64decode
 from StringIO import StringIO
 import tarfile
@@ -15,28 +14,27 @@ import updater
 
 from version import IMPORT_PATCH_SUCCESS, IMPORT_PATCH_INVALID, IMPORT_PATCH_UNKNOWN, IMPORT_PATCH_IGNORED
 
-th_local = threading.local()
-
-def is_online():
-    if hasattr(th_local, 'is_online'):
-        print "Quick answer:", th_local.is_online
-        return th_local.is_online
-    print "Pinging..."
-    res = True
-    try:
-        urllib2.urlopen(os.environ.get('UF_TEST_URL', 'http://www.google.com'), timeout=2)
-    except urllib2.URLError:
-        res = False
-    print res
-    th_local.is_online = res
-    return res
-
-
 class upgrade(osv.osv_memory):
     _name = 'sync_client.upgrade'
     _description = "OpenERP Upgrade Wizard"
 
     _logger = logging.getLogger('sync.client.upgrade')
+
+    def is_sync_server_reachable(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        res = True
+        try:
+            con = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context)
+            address = os.environ.get('UF_TEST_URL', con.host)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._logger.info("Check the connection is open: %s port %s ..." % (address, con.port))
+            result = sock.connect_ex((address, con.port))
+            res = result == 0
+            self._logger.info("%s:%s %s reachable." % (address, con.port, res and 'is' or 'is not'))
+        except:
+            res = False
+        return res
 
     def restart(self, cr, uid, ids, context=None):
         os.chdir( config['root_path'] )
@@ -212,7 +210,7 @@ class upgrade(osv.osv_memory):
                 need_download = _("(need to be downloaded)") if rev.need_download else ''
                 text += (" - %s\n   " % " ".join([info, need_download])) + \
                         (_("Comment: %(comment)s (sum is %(sum)s)") % rev) + "\n\n"
-            if any(rev.need_download for rev in next_revisions) and not is_online():
+            if any(rev.need_download for rev in next_revisions) and not self.is_sync_server_reachable(cr, uid):
                 text += _("But it seems you don't have an Internet access. " \
                           "Please provide the patches manually.")+"\n"
         else:

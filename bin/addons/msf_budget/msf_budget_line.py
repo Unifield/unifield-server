@@ -270,7 +270,7 @@ class msf_budget_line(osv.osv):
                             cr.execute(sql2, (tuple(ana_ids),))
                             mnt_result = cr.fetchall()
                             if mnt_result:
-                                    actual_amounts[line_id] += mnt_result[0][0] * -1
+                                actual_amounts[line_id] += mnt_result[0][0] * -1
                     # fill in COMMITMENT AMOUNTS
                     if commitment_ok:
                         commitment_criteria = list(criteria) + [('journal_id.type', '=', 'engagement')]
@@ -322,7 +322,7 @@ class msf_budget_line(osv.osv):
             SELECT id, COALESCE(""" + '+'.join(month_names) + """, 0.0)
             FROM msf_budget_line
             WHERE id IN %s;
-            """
+            """ # not_a_user_entry
             cr.execute(sql, (tuple(ids),))
             tmp_res = cr.fetchall()
             if tmp_res:
@@ -368,7 +368,7 @@ class msf_budget_line(osv.osv):
         sql = """
             SELECT id, COALESCE(""" + '+'.join(month_names) + """, 0.0)
             FROM msf_budget_line
-            WHERE id IN %s"""
+            WHERE id IN %s""" # not_a_user_entry
         cr.execute(sql, (tuple(ids),))
         tmp_res = cr.fetchall()
         if tmp_res:

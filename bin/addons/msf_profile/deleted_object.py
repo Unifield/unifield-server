@@ -80,14 +80,13 @@ class extended_orm_delete_method:
             return True
 
         # we don't need to keep a track of all deleted objects
-        model_deleted_black_list = ['funding.pool.distribution.line',
-                                    ]
+        model_deleted_black_list = ['funding.pool.distribution.line', 'hr.contract.msf']
         if self._name in model_deleted_black_list or \
                 not self.pool.get('sync.client.entity') or  \
                 self._name.startswith('ir.') or\
                 isinstance(self, orm.orm_memory): # don't track object from
                                                   # orm.orm_memory class
-                return original_unlink(self, cr, uid, ids, context=context)
+            return original_unlink(self, cr, uid, ids, context=context)
 
         if isinstance(ids, (int, long)):
             ids = [ids]

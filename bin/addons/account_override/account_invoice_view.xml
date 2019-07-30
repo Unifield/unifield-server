@@ -186,9 +186,6 @@
             </field>
         </record>
 
-    <!-- Delete payment lines link from invoices -->
-        <delete model="ir.actions.act_window" search="[('name', 'ilike', '%Payment Lines%')]"/>
-
     <!-- Add Split Invoice Button on invoices -->
         <record id="invoice_form_3" model="ir.ui.view">
             <field name="name">account.invoice.form.3</field>
@@ -239,8 +236,7 @@
             <field name="arch" type="xml">
                 <form string="Debit Note" hide_duplicate_button="1">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"
-                               on_change="onchange_journal_id(journal_id)"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
                         <field name="currency_id" width="50"/>
@@ -303,7 +299,7 @@
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                         <page string="Payments">
-                            <field name="payment_ids" colspan="4" nolabel="1">
+                            <field name="payment_to_display_ids" colspan="4" nolabel="1">
                                 <tree string="Payments">
                                     <field name="date"/>
                                     <field name="ref"/>
@@ -355,14 +351,17 @@
             <field name="arch" type="xml">
                 <form string="In-kind Donation">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', 'in', ('inkind', 'extra'))]" on_change="onchange_journal_id(journal_id)"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', 'in', ('inkind', 'extra'))]"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
                         <field name="is_inkind_donation" invisible="1"/>
                         <field name="currency_id" width="50"/>
                         <button name="%(account.action_account_change_currency)d" type="action" icon="terp-stock_effects-object-colorize" string="Change" attrs="{'invisible':[('state','!=','draft')]}" />
                         <newline/>
-                        <field string="Donor" name="partner_id" domain="[('supplier', '=', True)]" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id, is_inkind_donation)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}"/>
+                        <field string="Donor" name="partner_id"
+                               domain="[('supplier', '=', True), ('partner_type', 'in', ['external', 'section', 'esc'])]"
+                               on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id, is_inkind_donation)"
+                               context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}"/>
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" string="Address"/>
                         <newline/>
                         <field name="document_date"/>
@@ -412,7 +411,7 @@
                                     <field name="inactive_error" invisible="1" />
                                 </tree>
                                 <form string="Donation Line">
-                                    <field name="product_id" on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)"/>
+                                    <field name="product_id" on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)" default_focus="1"/>
                                     <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]"/>
                                     <field name="name" colspan="4" />
                                     <field name="quantity" on_change="onchange_donation_qty_price(quantity, price_unit, context)"/>
@@ -533,7 +532,7 @@
                                 <form string="Intermission Voucher Lines">
                                     <notebook>
                                         <page string="Line">
-                                            <field name="name"/>
+                                            <field name="name" default_focus="1"/>
                                             <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]"/>
                                             <field name="quantity"/>
                                             <field name="uos_id" string="UOM" invisible="1"/>

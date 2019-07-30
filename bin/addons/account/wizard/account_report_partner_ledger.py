@@ -30,7 +30,11 @@ class account_partner_ledger(osv.osv_memory):
     _description = 'Account Partner Ledger'
 
     _columns = {
-        'reconcil': fields.boolean('Include Reconciled Entries', help='Consider reconciled entries'),
+        'reconciled': fields.selection([
+            ('empty', ''),
+            ('yes', 'Yes'),
+            ('no', 'No'),
+        ], string='Reconciled'),
         'page_split': fields.boolean('One Partner Per Page', help='Display Ledger Report with One partner per page (PDF version only)'),
         'partner_ids': fields.many2many('res.partner', 'account_partner_ledger_partner_rel', 'wizard_id', 'partner_id',
                                         string='Partners', help='Display the report for specific partners only'),
@@ -40,24 +44,30 @@ class account_partner_ledger(osv.osv_memory):
         'account_ids': fields.many2many('account.account', 'account_partner_ledger_account_rel', 'wizard_id', 'account_id',
                                         string='Accounts', help='Display the report for specific accounts only'),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
+        'display_partner': fields.selection([('all', 'All Partners'),
+                                             ('with_movements', 'With movements'),
+                                             ('non-zero_balance', 'With balance is not equal to 0')],
+                                            string='Display Partners', required=True),
     }
 
     _defaults = {
-        'reconcil': False,
-       'page_split': False,
-       'result_selection': 'customer_supplier',
-       'account_domain': "[('type', 'in', ['payable', 'receivable'])]",
-       'only_active_partners': False,
-       'tax': False, # UFTP-312: Add an exclude tax account possibility
-       'fiscalyear_id': False,
+        'reconciled': 'empty',
+        'page_split': False,
+        'result_selection': 'customer_supplier',
+        'account_domain': "[('type', 'in', ['payable', 'receivable'])]",
+        'only_active_partners': False,
+        'tax': False, # UFTP-312: Add an exclude tax account possibility
+        'fiscalyear_id': False,
+        'display_partner': 'with_movements',
     }
 
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['reconcil', 'page_split', 'tax', 'partner_ids',
-                                                     'only_active_partners', 'instance_ids', 'account_ids'])[0])
+        data['form'].update(self.read(cr, uid, ids, ['reconciled', 'page_split', 'tax', 'partner_ids',
+                                                     'only_active_partners', 'instance_ids', 'account_ids',
+                                                     'display_partner'])[0])
         self._check_dates_fy_consistency(cr, uid, data, context)
         if data['form']['page_split']:
             return {
@@ -67,8 +77,8 @@ class account_partner_ledger(osv.osv_memory):
             }
         return {
             'type': 'ir.actions.report.xml',
-                'report_name': 'account.third_party_ledger_other',
-                'datas': data,
+            'report_name': 'account.third_party_ledger_other',
+            'datas': data,
         }
 
     def print_report_xls(self, cr, uid, ids, data, context=None):
@@ -84,13 +94,14 @@ class account_partner_ledger(osv.osv_memory):
         data['form']['used_context'] = used_context
 
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['reconcil', 'page_split', 'tax', 'partner_ids',
-                                                     'only_active_partners', 'instance_ids', 'account_ids'])[0])
+        data['form'].update(self.read(cr, uid, ids, ['reconciled', 'page_split', 'tax', 'partner_ids',
+                                                     'only_active_partners', 'instance_ids', 'account_ids',
+                                                     'display_partner'])[0])
         self._check_dates_fy_consistency(cr, uid, data, context)
         return {
             'type': 'ir.actions.report.xml',
-                'report_name': 'account.third_party_ledger_xls',
-                'datas': data,
+            'report_name': 'account.third_party_ledger_xls',
+            'datas': data,
         }
 
 account_partner_ledger()

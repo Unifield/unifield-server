@@ -34,7 +34,6 @@ from lxml import etree
 import base64
 from reportlab.platypus.doctemplate import ActionFlowable
 from tools.safe_eval import safe_eval as eval
-from reportlab.lib.units import inch,cm,mm
 from tools.misc import file_open
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.textsplit import wordSplit
@@ -113,7 +112,7 @@ class NumberedCanvas(canvas.Canvas):
     def showPage(self):
         self._currentPage +=1
         if not self._flag:
-           self._pageCount += 1
+            self._pageCount += 1
         else:
             self.pages.update({self._currentPage:self._pageCount})
         self._codes.append({'code': self._code, 'stack': self._codeStack})
@@ -130,10 +129,10 @@ class NumberedCanvas(canvas.Canvas):
                 key = key + 1
         self.setFont("Helvetica", 8)
         self.drawRightString((self._pagesize[0]-30), (self._pagesize[1]-40),
-            "Page %(this)i of %(total)i" % {
-               'this': self._pageNumber+1,
-               'total': self.pages.get(key,False),
-            }
+                             "Page %(this)i / %(total)i" % {
+            'this': self._pageNumber+1,
+            'total': self.pages.get(key,False),
+        }
         )
 
     def save(self):
@@ -194,8 +193,8 @@ class _rml_styles(object,):
             if node.get(attr):
                 data[attr] = node.get(attr)
         for attr in ['fontSize', 'leftIndent', 'rightIndent', 'spaceBefore', 'spaceAfter',
-            'firstLineIndent', 'bulletIndent', 'bulletFontSize', 'leading',
-            'borderWidth','borderPadding','borderRadius']:
+                     'firstLineIndent', 'bulletIndent', 'bulletFontSize', 'leading',
+                     'borderWidth','borderPadding','borderRadius']:
             if node.get(attr):
                 data[attr] = utils.unit_get(node.get(attr))
         if node.get('alignment'):
@@ -415,7 +414,6 @@ class _rml_canvas(object):
 
     def _curves(self, node):
         line_str = node.text.split()
-        lines = []
         while len(line_str)>7:
             self.canvas.bezier(*[utils.unit_get(l) for l in line_str[0:8]])
             line_str = line_str[8:]
@@ -565,15 +563,15 @@ class _rml_canvas(object):
     def setFont(self, node):
         fontname = node.get('name')
         if fontname not in pdfmetrics.getRegisteredFontNames()\
-             or fontname not in pdfmetrics.standardFonts:
+                or fontname not in pdfmetrics.standardFonts:
                 # let reportlab attempt to find it
-                try:
-                    pdfmetrics.getFont(fontname)
-                except Exception:
-                    logging.getLogger('report.fonts').debug('Could not locate font %s, substituting default: %s',
-                                 fontname,
-                                 self.canvas._fontname)
-                    fontname = self.canvas._fontname
+            try:
+                pdfmetrics.getFont(fontname)
+            except Exception:
+                logging.getLogger('report.fonts').debug('Could not locate font %s, substituting default: %s',
+                                                        fontname,
+                                                        self.canvas._fontname)
+                fontname = self.canvas._fontname
         return self.canvas.setFont(fontname, utils.unit_get(node.get('size')))
 
     def render(self, node):
@@ -765,20 +763,17 @@ class _rml_flowable(object):
             style = self.styles.para_style_get(node)
             if extra_style:
                 style.__dict__.update(extra_style)
-            result = []
-            for i in self._textual(node).split('\n'):
-                if node.tag == 'para':
-                    result.append(platypus.Paragraph(i, style, **(utils.attr_get(node, [], {'bulletText':'str'}))))
-                else:
-                    result.append(ParaWrap(i, style, **(utils.attr_get(node, [], {'bulletText':'str'}))))
-            return result
+            txt = self._textual(node)
+            if node.tag == 'para':
+                return platypus.Paragraph(txt, style, **(utils.attr_get(node, [], {'bulletText':'str'})))
+            else:
+                return ParaWrap(txt, style, **(utils.attr_get(node, [], {'bulletText':'str'})))
         elif node.tag=='barCode':
             try:
                 from reportlab.graphics.barcode import code128
                 from reportlab.graphics.barcode import code39
                 from reportlab.graphics.barcode import code93
                 from reportlab.graphics.barcode import common
-                from reportlab.graphics.barcode import fourstate
                 from reportlab.graphics.barcode import usps
                 from reportlab.graphics.barcode import createBarcodeDrawing
 
@@ -984,7 +979,7 @@ class _rml_template(object):
             except Exception: # FIXME: be even more specific, perhaps?
                 gr=''
             if len(gr):
-#                self.image=[ n for n in utils._child_get(gr[0], self) if n.tag=='image' or not self.localcontext]
+                #                self.image=[ n for n in utils._child_get(gr[0], self) if n.tag=='image' or not self.localcontext]
                 drw = _rml_draw(self.localcontext,gr[0], self.doc, images=images, path=self.path, title=self.title)
                 self.page_templates.append( platypus.PageTemplate(frames=frames, onPage=drw.render, **utils.attr_get(pt, [], {'id':'str'}) ))
             else:

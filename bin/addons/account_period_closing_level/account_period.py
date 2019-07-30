@@ -24,6 +24,8 @@ from tools.translate import _
 import logging
 from tools.safe_eval import safe_eval
 from account_period_closing_level import ACCOUNT_PERIOD_STATE_SELECTION
+from register_accounting import register_tools
+from datetime import datetime
 
 
 class account_period(osv.osv):
@@ -46,8 +48,8 @@ class account_period(osv.osv):
         """
         Check that no oustanding unposted entries remain
         """
-        sql = """SELECT COUNT(id) FROM account_move WHERE period_id = %s AND state != 'posted'""" % period_id
-        cr.execute(sql)
+        sql = """SELECT COUNT(id) FROM account_move WHERE period_id = %s AND state != 'posted'"""
+        cr.execute(sql, (period_id,))
         sql_res = cr.fetchall()
         count_moves = sql_res and sql_res[0] and sql_res[0][0] or 0
         if count_moves > 0:
@@ -67,7 +69,8 @@ class account_period(osv.osv):
 
         # Prepare some elements
         reg_obj = self.pool.get('account.bank.statement')
-        sub_obj = self.pool.get('account.subscription.line')
+        sub_obj = self.pool.get('account.subscription')
+        sub_line_obj = self.pool.get('account.subscription.line')
         curr_obj = self.pool.get('res.currency')
         curr_rate_obj = self.pool.get('res.currency.rate')
 
@@ -102,7 +105,7 @@ class account_period(osv.osv):
             if level == 'coordo':
                 #US-1433: If the FY is already mission-closed, do not allow this to be done!
                 self.check_reopen_period_with_fy(cr, uid, ids, context['state'], context)
-                
+
                 if previous_state == 'created' and context['state'] == 'draft':
                     self.write(cr, uid, ids, {'state_sync_flag': 'none'})
                 if previous_state == 'draft' and context['state'] == 'field-closed':
@@ -192,19 +195,52 @@ class account_period(osv.osv):
 
                 # first verify that all existent registers for this period are closed
                 reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
+                journal_ok = []
                 for register in reg_obj.browse(cr, uid, reg_ids, context=context):
+                    journal_ok.append(register.journal_id.id)
                     if register.state not in ['confirm']:
                         raise osv.except_osv(_('Warning'), _("The register '%s' is not closed. Please close it before closing period") % (register.name,))
-                # check if subscriptions lines were not created for this period
-                sub_ids = sub_obj.search(cr, uid, [('date', '<', period.date_stop), ('move_id', '=', False)], context=context)
-                if len(sub_ids) > 0:
-                    raise osv.except_osv(_('Warning'), _("Recurring entries were not created for period '%s'. Please create them before closing period") % (period.name,))
+
+                # prevent period closing if one of the registers of the previous period
+                # has no corresponding register in the period to close AND has a non 0 balance. (except for period 13..16)
+                if not period.special:
+                    prev_period_id = register_tools.previous_period_id(self, cr, uid, period.id, context=context, raise_error=False)
+                    if prev_period_id:
+                        all_prev_reg_ids = reg_obj.search(cr, uid, [('period_id', '=', prev_period_id), ('journal_id.type', 'in', ['bank', 'cash']), ('journal_id', 'not in', journal_ok)], order='NO_ORDER', context=context)
+                        # get the registers of the previous period which are NOT linked to a register of the period to close
+                        reg_ko = []
+                        for reg in reg_obj.browse(cr, uid, all_prev_reg_ids,
+                                                  fields_to_fetch=['balance_end', 'balance_end_real', 'balance_end_cash', 'name'],
+                                                  context=context):
+                            if abs(reg.balance_end) > 10**-3 or abs(reg.balance_end_real) > 10**-3 or abs(reg.balance_end_cash) > 10**-3:
+                                reg_ko.append(reg)
+                        if len(reg_ko) > 0:
+                            raise osv.except_osv(_('Warning'),
+                                                 _("One or several registers have not been generated for the period "
+                                                   "to close and have a balance which isn't equal to 0:\n"
+                                                   "%s") % ", ".join([r.name for r in reg_ko]))
+
+                # check if subscriptions lines haven't been generated yet for this period
+                draft_sub_ids = sub_obj.search(cr, uid, [('state', '=', 'draft')], order='NO_ORDER', context=context)
+                for draft_sub_id in draft_sub_ids:
+                    dates_to_create = sub_obj.get_dates_to_create(cr, uid, draft_sub_id, context=context)
+                    date_stop_dt = datetime.strptime(period.date_stop, "%Y-%m-%d")
+                    for date_to_create in dates_to_create:
+                        date_to_create_dt = datetime.strptime(date_to_create, "%Y-%m-%d")
+                        if date_to_create_dt <= date_stop_dt:
+                            raise osv.except_osv(_('Warning'), _("Subscription Lines included in the Period \"%s\" or before haven't been generated. "
+                                                                 "Please generate them and create the related recurring entries "
+                                                                 "before closing the period.") % (period.name,))
+                # for subscription lines generated check if some related recurring entries haven't been created yet
+                if sub_line_obj.search_exist(cr, uid, [('date', '<=', period.date_stop), ('move_id', '=', False)], context=context):
+                    raise osv.except_osv(_('Warning'), _("Recurring entries included in the Period \"%s\" or before haven't been created. "
+                                                         "Please create them before closing the period.") % (period.name,))
                 # then verify that all currencies have a fx rate in this period
                 # retrieve currencies for this period (in account_move_lines)
                 sql = """SELECT DISTINCT currency_id
                 FROM account_move_line
-                WHERE period_id = %s""" % period.id
-                cr.execute(sql)
+                WHERE period_id = %s"""
+                cr.execute(sql, (period.id,))
                 res = [x[0] for x in cr.fetchall()]
                 comp_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
                 # for each currency do a verification about fx rate
@@ -336,7 +372,7 @@ class account_period(osv.osv):
     def check_reopen_period_with_fy(self, cr, uid, ids, new_state, context):
         ap_dict = self.read(cr, uid, ids)[0]
         previous_state = ap_dict['state']
-    
+
         # If the state is currently in mission-closed and the fiscal year is also in mission closed, then do not allow to reopen the period
         if previous_state == 'mission-closed' and new_state in ['field-closed', 'draft']:
             for period in self.browse(cr, uid, ids, context=context):

@@ -1,8 +1,0 @@
--
-  In order to test the PDF reports defined on a product asset, we will print a sale order
--
-  !python {model: product.asset}: |
-    import netsvc, tools, os
-    (data, format) = netsvc.LocalService('report.product.asset').create(cr, uid, [ref('product_asset_testassetcamembert0')], {}, {})
-    if tools.config['test_report_directory']:
-        file(os.path.join(tools.config['test_report_directory'], 'product_asset-asset_form.'+format), 'wb+').write(data)

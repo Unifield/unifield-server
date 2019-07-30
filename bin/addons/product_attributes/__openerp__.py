@@ -45,16 +45,9 @@
         'product_remove_demo.xml',
     ],
     'test': [
-        'test/deactivate_product.yml',
-        'test/deactivate_with_stock.yml',
-        'test/deactivate_product_po_draft.yml',
-        'test/deactivate_product_valid_po.yml',
-        'test/deactivate_product_validate_po.yml',
-        'test/deactivate_product_fo_draft.yml',
-        'test/deactivate_product_ir_draft.yml',
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

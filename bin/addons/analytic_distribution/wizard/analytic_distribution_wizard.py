@@ -71,7 +71,6 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         Verify that percentage or amount are correctly set
         """
         res = super(analytic_distribution_wizard_lines, self).default_get(cr, uid, fields, context=context)
-        # Fetch some values
         if not context or not context.get('mode', False) or not context.get('parent_id', False):
             return res
         if not 'percentage' in fields or not 'amount' in fields:
@@ -81,14 +80,6 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         amount = abs(res.get('amount', 0.0))
         wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [context.get('parent_id')], context=context)
         if wiz and wiz[0]:
-            #purchase = wiz[0].purchase_id or wiz[0].purchase_line_id.order_id
-            # UTP-952: Remove the default intermission CC
-            #            if purchase and wiz[0].partner_type == 'intermission':
-            #                try:
-            #                    res['analytic_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-            #                            'analytic_account_project_intermission')[1]
-            #                except ValueError:
-            #                    pass
             if 'destination_id' in fields and wiz[0].account_id:
                 res['destination_id'] = wiz[0].account_id.default_destination_id and wiz[0].account_id.default_destination_id.id or False
 
@@ -168,6 +159,18 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         percentage = abs((amount / total_amount) * 100)
         return {'value': {'percentage': percentage, 'is_percentage_amount_touched': True}}
 
+    def _dest_compatible_with_cc_domain_part(self, tree):
+        """
+        Returns the domain condition to restrict the destination regarding the cost_center_id (for finance views),
+        or if this field doesn't exist in the view, to the analytic_id (Cost Center in Supply views)
+        """
+        dom_part = ""
+        if tree.xpath('/tree/field[@name="cost_center_id"]'):
+            dom_part = "('dest_compatible_with_cc_ids', '=', cost_center_id)"
+        elif tree.xpath('/tree/field[@name="analytic_id"]'):
+            dom_part = "('dest_compatible_with_cc_ids', '=', analytic_id)"
+        return dom_part
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         Rewrite view in order:
@@ -204,9 +207,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                             or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
                             or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
                     else:
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST'), " \
+                                 "('destination_ids', '=', parent.account_id) %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
             ## FUNDING POOL
             if line_type == 'analytic.distribution.wizard.fp.lines':
                 # Change OC field
@@ -244,9 +252,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
                             or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
 
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
                     else:
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST'), " \
+                                 "('destination_ids', '=', parent.account_id) %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
 
             ## FREE 1
             if line_type == 'analytic.distribution.wizard.f1.lines':
@@ -492,10 +505,10 @@ class analytic_distribution_wizard(osv.osv_memory):
         for el in self.browse(cr, uid, ids, context=context):
             res[el.id] = True
             # verify purchase state
-            if el.purchase_id and el.purchase_id.state not in ['draft', 'confirmed']:
+            if el.purchase_id and el.purchase_id.state not in ['draft', 'draft_p', 'validated_n', 'validated']:
                 res[el.id] = False
             # verify purchase line state
-            if el.purchase_line_id and el.purchase_line_id.order_id and el.purchase_line_id.order_id.state not in ['draft', 'confirmed']:
+            if el.purchase_line_id and el.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
                 res[el.id] = False
             # verify invoice state
             if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
@@ -513,10 +526,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.accrual_line_id and el.accrual_line_id.state != 'draft':
                 res[el.id] = False
             # verify sale order state
-            if el.sale_order_id and el.sale_order_id.state not in ['draft', 'validated']:
+            if el.sale_order_id and el.sale_order_id.state not in ['draft', 'draft_p', 'validated']:
                 res[el.id] = False
             # verify sale order line state
-            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft', 'validated']:
+            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft', 'draft_p', 'validated']:
                 res[el.id] = False
             # verify move state
             # UFTP-363: Do not edit any element of JI or JE if the JE is imported
@@ -745,10 +758,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             ids = [ids]
         for wiz in self.browse(cr, uid, ids, context=context):
             # Verify that purchase is in good state if necessary
-            if wiz.purchase_id and wiz.purchase_id.state in ['approved', 'done']:
+            if wiz.purchase_id and wiz.purchase_id.state not in ['draft', 'validated_n', 'validated', 'draft_p', 'validated_p']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that purchase from purchase line is in good state if necessary
-            if wiz.purchase_line_id and wiz.purchase_line_id.order_id and wiz.purchase_line_id.order_id.state in ['approved', 'done']:
+            if wiz.purchase_line_id and wiz.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice is in good state if necessary
             if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
@@ -1062,6 +1075,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     if getattr(wiz, el[0], False):
                         obj_id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [obj_id], {'analytic_distribution_id': distrib_id}, context=context)
+
             # Finally do registration for each type
             new_distrib = False
             for line_type in ['cost.center', 'funding.pool', 'free.1', 'free.2']:
@@ -1149,10 +1163,14 @@ class analytic_distribution_wizard(osv.osv_memory):
             move_id = False
             if wiz.move_id:
                 move_id = wiz.move_id.id
-                wiz.move_id.write({'id': move_id})
             elif wiz.move_line_id:
                 move_id = wiz.move_line_id.move_id.id
-                wiz.move_line_id.write({'id': wiz.move_line_id.id})
+
+            # check access rights
+            if move_id:
+                self.pool.get('ir.model.access').check(cr, uid, 'account.move', 'write', context=context)
+                self.pool.get('account.move').check_access_rule(cr, uid, [move_id], 'write', context=context)
+
             # Prepare some values
             ana_obj = self.pool.get('account.analytic.line')
             move = self.pool.get('account.move').browse(cr, uid, [move_id])[0]
@@ -1166,7 +1184,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     correction = True
             # AD changed at header level: all JIs should recreate AJI
             # if an AD is set on a new line, this JI and all JIs in the same move can be valide
-            self.pool.get('account.move').validate(cr, uid, [move_id])
+            # if we change the G/L account or Third Party, new JE will be created => no need to validate original JE
+            if not context.get('ji_correction_account_or_tp_changed'):
+                self.pool.get('account.move').validate(cr, uid, [move_id])
 
             # As analytic lines were deleted and recreated, we need to recreate links between reversal, corrections, etc.
             if reversal or correction:
@@ -1232,7 +1252,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     {'analytic_distribution_id': distr_id},
                     context=context)
             return_wiz = {
-                'name': "Cash Return- Wizard",
+                'name': _('Advance Return - Wizard'),
                 'type': 'ir.actions.act_window',
                 'res_model': wizard_name,
                 'target': 'new',

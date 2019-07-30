@@ -190,7 +190,7 @@ class account_invoice(osv.osv):
                     'date': inv.date_invoice,
                     'partner_id': inv.partner_id.id,
                     'ref': '%s:%s' % (inv.name or '',
-                        ':'.join(['%s' % (x.name or '') for x in inv.purchase_ids],), ),
+                                      ':'.join(['%s' % (x.name or '') for x in inv.purchase_ids],), ),
                 }
                 move_id = self.pool.get('account.move').create(cr, uid, vals)
                 # then 2 lines for this move
@@ -256,7 +256,6 @@ class account_invoice(osv.osv):
             ids = [ids]
         # Browse all invoice and check PO
         for inv in self.browse(cr, uid, ids):
-            total_payments = 0.0
             # Check that no register lines not hard posted are linked to these PO
             st_lines = self.pool.get('account.bank.statement.line').search(cr, uid, [('state', 'in', ['draft', 'temp']), ('down_payment_id', 'in', [x.id for x in inv.purchase_ids])])
             if st_lines:
@@ -278,9 +277,11 @@ class account_invoice(osv.osv):
             account_bank_statement_line.write(cr, uid, [absl.id], {'document_date': direct_invoice.document_date, \
                                                                    'partner_id': direct_invoice.partner_id.id , \
                                                                    'account_id': direct_invoice.account_id.id}, # UFTP-166: Saved also the account change to reg line
-                                                                   context=context)
-        if (direct_invoice.reference != absl.ref):
-            account_bank_statement_line.write(cr, uid, [absl.id], {'ref': direct_invoice.reference }, context=context)
+                                              context=context)
+        # the regline ref should match the DI reference if any, else the DI number
+        new_ref = direct_invoice.reference or direct_invoice.number
+        if new_ref != absl.ref:
+            account_bank_statement_line.write(cr, uid, [absl.id], {'ref': new_ref}, context=context)
         # Delete moves
         # existing seqnums are saved into context here. utp917
         account_bank_statement_line.unlink_moves(cr, uid, [absl.id], context=context)

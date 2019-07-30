@@ -2,20 +2,6 @@
 <openerp>
     <data>
 
-        <record id="sale_order_form_view_incoterm" model="ir.ui.view">
-            <field name="name">sale.order.form.view.incoterm</field>
-            <field name="model">sale.order</field>
-            <field name="type">form</field>
-            <field name="priority">30</field>
-            <field name="inherit_id" ref="sale.view_order_form" />
-            <field name="arch" type="xml">
-                <xpath expr="/form//field[@name='incoterm']" position="replace">
-                    <field name="intl_customer_ok" invisible="1" />
-                    <field name="incoterm" attrs="{'invisible': [('intl_customer_ok', '=', False)]}" widget="selection" />
-                </xpath>
-            </field>
-        </record>
-
         <!-- Add a field in SO search view to have the possibility to search on details -->
         <record id="sale_order_search_details_view" model="ir.ui.view">
             <field name="name">sale.order.search.details.view</field>

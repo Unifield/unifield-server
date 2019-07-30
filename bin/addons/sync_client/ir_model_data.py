@@ -70,8 +70,7 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
     FROM ir_model_data
     LEFT JOIN %(table)s ON %(table)s.id = ir_model_data.res_id
         WHERE ir_model_data.model = %%s AND ir_model_data.res_id IN %%s AND ir_model_data.id IN %%s
-        GROUP BY ir_model_data.model, ir_model_data.res_id HAVING COUNT(%(table)s.id) = 0""" \
-                % {'table':self.pool.get(model)._table}, [model, tuple(res_ids), tuple(ids)])
+        GROUP BY ir_model_data.model, ir_model_data.res_id HAVING COUNT(%(table)s.id) = 0""" % {'table':self.pool.get(model)._table}, [model, tuple(res_ids), tuple(ids)])  # not_a_user_entry
             for data_ids, exists in cr.fetchall():
                 res.update(dict((id, not exists) for id in data_ids))
         return res
@@ -125,7 +124,7 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
                 FROM %s r
                     LEFT JOIN ir_model_data data ON data.module = 'sd' AND
                         data.model = %%s AND r.id = data.res_id
-                WHERE data.res_id IS NULL;""" % obj._table, [obj._name])
+                WHERE data.res_id IS NULL;""" % obj._table, [obj._name])  # not_a_user_entry
             record_ids = map(lambda x: x[0], cr.fetchall())
 
             # if we have some records that doesn't have an sdref
@@ -192,7 +191,7 @@ GROUP BY module, model, res_id
 DELETE FROM ir_model_data WHERE id IN %s""", [tuple(to_delete)])
                 for id, rec in to_write:
                     cr.execute("""\
-UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" WHERE id = %s""", rec.values() + [id])
+UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" WHERE id = %s""", rec.values() + [id])  # not_a_user_entry
                 cr.execute("""CREATE UNIQUE INDEX unique_sdref_constraint ON ir_model_data (model, res_id) WHERE module = 'sd'""")
                 cr.commit()
                 self._logger.info("%d sdref(s) deleted, %d kept." % (len(to_delete), len(to_write)))
@@ -228,8 +227,6 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
                 DELETE FROM ir_model_data
                 WHERE module = 'sd' AND model = %s AND res_id = %s""",
                        [values['model'], values['res_id']])
-            if cr._obj.rowcount:
-                self._logger.warn("The following record has to be re-created: sd.%(name)s" % values)
 
         # idem for xmlids
         # different res_id means re-creation
@@ -238,7 +235,6 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
             WHERE module = %s AND name = %s""",
                    [values['module'], values['name']])
         if cr._obj.rowcount and values['module'] == 'sd':
-            self._logger.warn("The following record has to be re-created: sd.%(name)s" % values)
             values['force_recreation'] = not context.get('sync_update_execution', False)
 
         id = super(ir_model_data_sync, self).create(cr, uid, values, context=context)
@@ -259,8 +255,6 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
                        [sdref_name, values['model'], values['res_id']])
             values['force_recreation'] = cr._obj.rowcount > 0 \
                 and not context.get('sync_update_execution', False)
-            if values['force_recreation']:
-                self._logger.warn("The following record has to be re-created: sd.%(module)s_%(name)s" % values)
             cr.execute("""\
                 UPDATE ir_model_data sdref
                 SET

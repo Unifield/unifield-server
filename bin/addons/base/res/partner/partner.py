@@ -26,6 +26,7 @@ import tools
 import pooler
 from tools.translate import _
 
+
 class res_payterm(osv.osv):
     _description = 'Payment term'
     _name = 'res.payterm'
@@ -108,7 +109,7 @@ def _lang_get(self, cr, uid, context={}):
 class res_partner(osv.osv):
     _description='Partner'
     _name = "res.partner"
-    _order = "name"
+    _order = "name, id"
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True),
         'date': fields.date('Date', select=1),
@@ -144,9 +145,36 @@ class res_partner(osv.osv):
             return [context['category_id']]
         return []
 
+    def _default_customer(self, cr, uid, context=None):
+        """
+        If we come from a register by default the partner isn't a customer (returns False), else it is (returns True)
+        """
+        if context is None:
+            context = {}
+        journal_obj = self.pool.get('account.journal')
+        if context.get('journal') and isinstance(context['journal'], int):
+            journal_type = journal_obj.read(cr, uid, context['journal'], ['type'], context=context)['type']
+            if journal_type in ('cash', 'bank', 'cheque'):
+                return False
+        return True
+
+    def _default_supplier(self, cr, uid, context=None):
+        """
+        If we come from a register by default the partner is a supplier (returns True), else it isn't (returns False)
+        """
+        if context is None:
+            context = {}
+        journal_obj = self.pool.get('account.journal')
+        if context.get('journal') and isinstance(context['journal'], int):
+            journal_type = journal_obj.read(cr, uid, context['journal'], ['type'], context=context)['type']
+            if journal_type in ('cash', 'bank', 'cheque'):
+                return True
+        return False
+
     _defaults = {
         'active': lambda *a: 1,
-        'customer': lambda *a: 1,
+        'customer': _default_customer,
+        'supplier': _default_supplier,
         'category_id': _default_category,
         'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'res.partner', context=c),
     }
@@ -213,11 +241,11 @@ class res_partner(osv.osv):
             self.pool.get('ir.cron').create(cr, uid, {
                 'name': 'Send Partner Emails',
                 'user_id': uid,
-#               'nextcall': False,
-                'model': 'res.partner',
-                'function': '_email_send',
-                'args': repr([ids[:16], email_from, subject, body, on_error])
-            })
+                                            #               'nextcall': False,
+                                            'model': 'res.partner',
+                                            'function': '_email_send',
+                                            'args': repr([ids[:16], email_from, subject, body, on_error])
+                                            })
             ids = ids[16:]
         return True
 
@@ -269,13 +297,13 @@ class res_partner(osv.osv):
             cr, uid,
             model_data.search(cr, uid, [('module','=','base'),
                                         ('name','=','main_partner')])[0],
-            ).res_id
+        ).res_id
 res_partner()
 
 class res_partner_address(osv.osv):
     _description ='Partner Addresses'
     _name = 'res.partner.address'
-    _order = 'type, name'
+    _order = 'id'
     _columns = {
         'partner_id': fields.many2one('res.partner', 'Partner Name', ondelete='set null', select=True, help="Keep empty for a private address, not related to partner."),
         'type': fields.selection( [ ('default','Default'),('invoice','Invoice'), ('delivery','Delivery'), ('contact','Contact'), ('other','Other') ],'Address Type', help="Used to select automatically the right address according to the context in sales and purchases documents."),
@@ -296,7 +324,7 @@ class res_partner_address(osv.osv):
         'is_customer_add': fields.related('partner_id', 'customer', type='boolean', string='Customer'),
         'is_supplier_add': fields.related('partner_id', 'supplier', type='boolean', string='Supplier'),
         'active': fields.boolean('Active', help="Uncheck the active field to hide the contact."),
-#        'company_id': fields.related('partner_id','company_id',type='many2one',relation='res.company',string='Company', store=True),
+        #        'company_id': fields.related('partner_id','company_id',type='many2one',relation='res.company',string='Company', store=True),
         'company_id': fields.many2one('res.company', 'Company',select=1),
     }
     _defaults = {
@@ -411,13 +439,13 @@ class res_partner_bank(osv.osv):
         'zip': fields.char('Zip', change_default=True, size=24),
         'city': fields.char('City', size=128),
         'country_id': fields.many2one('res.country', 'Country',
-            change_default=True),
+                                      change_default=True),
         'state_id': fields.many2one("res.country.state", 'State',
-            change_default=True, domain="[('country_id','=',country_id)]"),
+                                    change_default=True, domain="[('country_id','=',country_id)]"),
         'partner_id': fields.many2one('res.partner', 'Partner', required=True,
-            ondelete='cascade', select=True),
+                                      ondelete='cascade', select=True),
         'state': fields.selection(_bank_type_get, 'Bank Type', required=True,
-            change_default=True),
+                                  change_default=True),
         'sequence': fields.integer('Sequence'),
     }
     _defaults = {
@@ -435,7 +463,7 @@ class res_partner_bank(osv.osv):
             cursor, user, 'state_id', context=context),
     }
 
-    def fields_get(self, cr, uid, fields=None, context=None):
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
         res = super(res_partner_bank, self).fields_get(cr, uid, fields, context)
         bank_type_obj = self.pool.get('res.partner.bank.type')
         type_ids = bank_type_obj.search(cr, uid, [])
@@ -445,8 +473,8 @@ class res_partner_bank(osv.osv):
                 if field.name in res:
                     res[field.name].setdefault('states', {})
                     res[field.name]['states'][type.code] = [
-                            ('readonly', field.readonly),
-                            ('required', field.required)]
+                        ('readonly', field.readonly),
+                        ('required', field.required)]
         return res
 
     def name_get(self, cr, uid, ids, context=None):

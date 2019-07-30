@@ -8,6 +8,8 @@
 		    target="new"
             key2="client_action_multi"
             multi="True"
-		    id="act_stock_return_picking"/>
+		    id="act_stock_return_picking"
+            view_ids="stock.view_picking_in_tree,stock.view_picking_in_form"
+            />
 	</data>
 </openerp>

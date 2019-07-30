@@ -107,7 +107,7 @@ class configmanager(object):
             'create_db_dir_for_attachment': True,
         }
 
-        self.blacklist_for_save = set(["publisher_warranty_url", "load_language"])
+        self.blacklist_for_save = set(["publisher_warranty_url", "load_language", "netrpc", "netrpc_gzip", "netrpc_interface", "netrpc_port", "xmlrpcs_port", "xmlrpcs_interface"])
 
         self.misc = {}
         self.config_file = fname
@@ -470,7 +470,10 @@ class configmanager(object):
                     value = False
                 elif 'pass' in name:
                     try:
-                        value = b64decode(value)
+                        decoded = b64decode(value)
+                        # check if the result can be utf-8 encoded, otherwise the initial string is not a b64 string
+                        decoded.decode('UTF-8')
+                        value = decoded
                     except:
                         pass
                 self.options[name] = value

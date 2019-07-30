@@ -19,10 +19,17 @@
 #
 ##############################################################################
 
+import psutil
+import os
 from osv import osv, fields
 import logging
 import threading
 from histogram import Histogram
+from datetime import datetime
+
+LINUX_PROCESS_LIST = ['openerp-server.py', 'openerp-web.py']
+WINDOWS_PROCESS_LIST = ['openerp-server.exe', 'openerp-web.exe', 'postgres.exe', 'revprox.exe']
+
 
 class ratelimit():
     ''' A mix-in class to implement rate limiting. '''
@@ -70,7 +77,7 @@ class operations_event(osv.osv, ratelimit):
 
     _name = 'operations.event'
     _rec_name = 'time'
-    _order = 'time desc'
+    _order = 'time desc, id desc'
     _log_access = False
 
     def __init__(self, pool, cr):
@@ -167,7 +174,71 @@ class operations_event(osv.osv, ratelimit):
             vals = { 'kind': 'slow-query', 'data': str(x) }
             self.create(cr, uid, vals)
 
+    def get_memory_information(self, cr, uid, proc_name, context=None):
+        """return a sting containing average memory, max memory, and current
+        memory like:
+        "avg_mem:123|max_mem:4568|cur_mem:56"
+        """
+        now = fields.datetime.now()
+        mem_usg_obj = self.pool.get('memory.usage')
+
+        mem_ids = mem_usg_obj.search(cr, uid,
+                                     [('time', '<=', now),
+                                      ('process', '=', proc_name)],
+                                     order='time',
+                                     context=context)
+        mem_read = mem_usg_obj.read(cr, uid, mem_ids, ['memory_usage', 'time'], context=context)
+        mem_list = [x['memory_usage'] for x in mem_read]
+        avg_mem = float(sum(mem_list)/len(mem_list))/1024/1024
+        max_mem = 0
+        max_mem_date = ''
+        for mem in mem_read:
+            if mem['memory_usage'] >= max_mem:
+                max_mem = mem['memory_usage']
+                max_mem_date = mem['time']
+
+        max_mem = float(max_mem)/1024/1024
+        # format the date for an easier parsing, ie 20170629_09_31_18 for
+        # 29/06/2017 09h31m18s
+        try:
+            max_mem_date = datetime.strptime(max_mem_date, '%Y-%m-%d %H:%M:%S').strftime('%Y%m%d_%H_%M_%S')
+        except ValueError:
+            # if max_mem_date is '', do not raise
+            pass
+
+        # current memory usage is the last one
+        cur_men = float(mem_list[-1])/1024/1024
+        return 'avg_mem:%s|max_mem:%s|max_mem_date:%s|cur_mem:%s' % \
+            (round(avg_mem, 2), round(max_mem, 2), max_mem_date, round(cur_men, 2))
+
+    def log_memory_usage(self, cr, uid, context=None):
+        """Add an entry in operation.event with data related the memory usage
+        of openerp-server, openerp-web, revprox and postgresql
+        """
+        # create entries for now:
+        mem_usg_obj = self.pool.get('memory.usage')
+        mem_usg_obj.create_memory_entries(cr, uid, context=context)
+
+        now = fields.datetime.now()
+        instance = self._get_inst(cr, uid)
+        if os.name == 'nt':
+            proc_name_list = WINDOWS_PROCESS_LIST
+        else:
+            proc_name_list = LINUX_PROCESS_LIST
+
+        for proc_name in proc_name_list:
+            mem_info = self.get_memory_information(cr, uid, proc_name, context=context)
+            vals = {
+                'time': now,
+                'instance': instance,
+                'kind': proc_name,
+                'data': mem_info
+            }
+            self.create(cr, uid, vals, context=context)
+        self.pool.get('memory.usage').purge(cr, uid, instance=instance)
+
 operations_event()
+
 
 class operations_count(osv.osv, ratelimit):
     """Operational counts are gathered in memory at runtime
@@ -261,3 +332,100 @@ class operations_count(osv.osv, ratelimit):
         self._rl = self._rl_max
 
 operations_count()
+
+
+class memory_usage(osv.osv, ratelimit):
+    """memory usages are used to have a track of past memory usage and be able
+    to do average and max for a certain period.
+    """
+
+    _name = 'memory.usage'
+    _log_access = False
+    _columns = {
+        'time': fields.datetime('Time', readonly=True, select=True, required=True, help="When the measurement was collected."),
+        'instance': fields.char('Instance', readonly=True, size=64, required=True, help="The originating instance."),
+        'remote_id': fields.integer('Remote id', help="Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during count centralization."),
+        'process': fields.char('Process', readonly=True, size=64, required=True, help="Which process is concerned?"),
+        'memory_usage': fields.integer_big('Memory Usage', readonly=True, required=True, help="Size of RAM (in bytes) used by the process.")
+    }
+
+    _logger = logging.getLogger('memory.usage')
+
+    def __init__(self, pool, cr):
+        osv.osv.__init__(self, pool, cr)
+        self.lock = threading.Lock()
+
+        self._rl_name = 'memory'
+        self._rl_max = ratelimit.MAX
+        self._rl = self._rl_max
+
+    def _get_inst(self, cr, uid):
+        i = self.pool.get('sync.client.entity').get_entity(cr, uid).name;
+        if i is None:
+            return "unknown"
+        return i
+
+    def create(self, cr, uid, vals, context=None):
+        """Override create in order to respect the rate limit."""
+        ratelimit.create(self, cr, uid, vals, context=context)
+
+    def get_proc_name_list(self, proc_name):
+        """return a list of process matching proc_name
+        """
+        proc_list = [proc for proc in psutil.process_iter() if proc.name() == proc_name]
+        if os.name != 'nt':
+            import getpass
+            current_user_name = getpass.getuser()
+            if not proc_list:
+                proc_list = []
+                for proc in psutil.process_iter():
+                    if proc.username() != current_user_name:
+                        continue
+                    command_list = proc.cmdline()
+                    if len(command_list) >1 \
+                            and command_list[0] == 'python'\
+                            and proc_name in command_list[1]:
+                        proc_list.append(proc)
+        return proc_list
+
+    def get_memory_usage(self, proc_name):
+        """return a int representing the memory usage in bytes
+        """
+        proc_list = self.get_proc_name_list(proc_name)
+        memory_usage = 0
+        for proc in proc_list:
+            memory_usage += proc.memory_info()[0]
+        return memory_usage
+
+    def create_memory_entries(self, cr, uid, context=None):
+        """create entries for all process to monitor
+        """
+        if os.name == 'nt':
+            proc_name_list = WINDOWS_PROCESS_LIST
+        else:
+            proc_name_list = LINUX_PROCESS_LIST
+
+        instance = self._get_inst(cr, uid)
+        for proc_name in proc_name_list:
+            memory_usg = self.get_memory_usage(proc_name)
+            now = fields.datetime.now()
+            vals = {
+                'time': now,
+                'instance': instance,
+                'process': proc_name,
+                'memory_usage': memory_usg,
+            }
+            self.create(cr, uid, vals, context=context)
+
+    def purge(self, cr, uid, instance, until=None):
+        """Called from ir.cron every day to purge all memory.usage until 'until'
+        """
+        if until is None:
+            until = fields.datetime.now()
+        self._logger.info("Memory usage purge")
+        cr.execute("DELETE FROM memory_usage WHERE instance=%s AND time <= %s;",
+                   (instance, until))
+        self._rl = self._rl_max
+
+
+memory_usage()

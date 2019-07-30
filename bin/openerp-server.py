@@ -96,6 +96,7 @@ for name, value in [('addons_path', tools.config['addons_path']),
                     ('database port', tools.config['db_port'] or '5432'),
                     ('database user', tools.config['db_user'])]:
     logger.info("%s - %s", name, value)
+updater.do_pg_update()
 
 # Don't allow if the connection to PostgreSQL done by postgres user
 if tools.config['db_user'] == 'postgres':

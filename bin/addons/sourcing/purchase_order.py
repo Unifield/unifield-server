@@ -23,6 +23,17 @@ from osv import fields
 from osv import osv
 
 
+COMPATS = {
+    'regular':       ['internal', 'intermission', 'section', 'external', 'esc'],
+    'donation_st':   ['internal', 'intermission', 'section'],
+    'loan':          ['internal', 'intermission', 'section', 'external'],
+    'donation_exp':  ['internal', 'intermission', 'section'],
+    'in_kind':       ['external', 'esc'],
+    'direct':        ['external', 'esc'],
+    'purchase_list': ['external'],
+}
+
+
 class purchase_order(osv.osv):
     """
     override for workflow modification
@@ -72,20 +83,37 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order.'
         """
         Check order type and partner type compatibilities.
         """
-        compats = {
-            'regular':       ['internal', 'intermission', 'section', 'external', 'esc'],
-            'donation_st':   ['internal', 'intermission', 'section'],
-            'loan':          ['internal', 'intermission', 'section', 'external'],
-            'donation_exp':  ['internal', 'intermission', 'section'],
-            'in_kind':       ['external', 'esc'],
-            'direct':        ['external', 'esc'],
-            'purchase_list': ['external'],
-        }
         # Browse PO
         for po in self.browse(cr, uid, ids):
-            if po.order_type not in compats or po.partner_id.partner_type not in compats[po.order_type]:
+            if po.order_type not in COMPATS or po.partner_id.partner_type not in COMPATS[po.order_type]:
                 return False
         return True
+
+    def update_source_document(self, cr, uid, ids, source_document_id, context=None):
+        '''
+        update the field 'source document' of the purchase.order
+        @param source_document_id: id of source sale.order to add in fields purchase.order.origin
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        # get the source document name:
+        source_doc_name = self.pool.get('sale.order').browse(cr, uid, source_document_id, fields_to_fetch=['name'], context=context).name
+        if not source_doc_name:
+            return False
+        source_doc_name = source_doc_name.strip()
+
+        # udpate origin field:
+        for po in self.browse(cr, uid, ids, context=context):
+            if not po.origin :
+                self.write(cr, uid, [po.id], {'origin': '%s' % source_doc_name}, context=context)
+            elif po.origin.find(source_doc_name.strip()) == -1:
+                self.write(cr, uid, [po.id], {'origin': '%s:%s' % (po.origin, source_doc_name)}, context=context)
+
+        return True
+
 
     _constraints = [
         (

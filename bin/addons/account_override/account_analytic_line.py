@@ -24,6 +24,8 @@
 from osv import osv
 from osv import fields
 import decimal_precision as dp
+import finance_export
+
 
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
@@ -47,12 +49,29 @@ class account_analytic_line(osv.osv):
     def join_without_redundancy(self, text='', string=''):
         return self.pool.get('account.move.line').join_without_redundancy(text, string)
 
+    def _get_db_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Returns a dict. with key containing the AJI id, and value containing its DB id used for Vertical Integration
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ret = {}
+        for i in ids:
+            ret[i] = finance_export.finance_archive._get_hash(cr, uid, [i], 'account.analytic.line')
+        return ret
+
     _columns = {
         'amount_currency': fields.float(string="Book. Amount", digits_compute=dp.get_precision('Account'), readonly=True, required=True, help="The amount expressed in an optional other currency.",),
         'currency_id': fields.many2one('res.currency', string="Book. Currency", required=True, readonly=True),
         'journal_id': fields.many2one('account.analytic.journal', 'Journal Code', required=True, ondelete='restrict', select=True, readonly=True),
         'journal_type': fields.related('journal_id', 'type', 'Journal type', readonly=True),
         'move_id': fields.many2one('account.move.line', 'Entry Sequence', ondelete='restrict', select=True, readonly=True, domain="[('account_id.user_type.code', 'in', ['expense', 'income'])]"), # UF-1719: Domain added for search view
+        'invoice_id': fields.related('move_id', 'invoice', type='many2one', relation='account.invoice',
+                                     string='Invoice', readonly=True, store=False),
+        'purchase_order_id': fields.related('move_id', 'purchase_order_id', type='many2one', relation='purchase.order',
+                                            string='Purchase Order', readonly=True, store=False),
+        'db_id': fields.function(_get_db_id, method=True, type='char', size=32, string='DB ID',
+                                 store=False, help='DB ID used for Vertical Integration'),
     }
 
 account_analytic_line()

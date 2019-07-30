@@ -115,9 +115,19 @@ class sale_order_line(osv.osv):
         # either line_number is not specified or set to False from copy, we need a new value
         if vals.get('order_id', False):
             if not vals.get('line_number', False):
+                # get max line number of all sol of the same order:
+                cr.execute('''
+                    select order_id, max(line_number)
+                    from sale_order_line
+                    where order_id = %s
+                    group by order_id
+                ''', (vals['order_id'],))
+                res = cr.fetchone()
                 # new number needed - gather the line number from the sequence
                 sequence_id = so_obj.read(cr, uid, [vals['order_id']], ['sequence_id'], context=context)[0]['sequence_id'][0]
                 line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
+                while line and res and int(line) <= res[1]:
+                    line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
                 vals.update({'line_number': line})
 
         # create the new sale order line
@@ -440,6 +450,10 @@ class ir_sequence(osv.osv):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         return company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.code or ''
 
+    def _get_instance_missioncode(self, cr, uid):
+        company = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id
+        return company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.mission or ''
+
     def _get_hqcode(self, cr, uid):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         parent_id = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.parent_id or False
@@ -458,7 +472,7 @@ class ir_sequence(osv.osv):
             if parent_id in parent_seen:
                 raise osv.except_osv(_('Error'), _('Loop detected in Proprietary Instance tree, you should have a top level instance without any parent.'))
 
-            # UFTP-341: When it come to HQ code, just take the prop instance code instead of the cost center code, to avoid having same code for different HQs 
+            # UFTP-341: When it come to HQ code, just take the prop instance code instead of the cost center code, to avoid having same code for different HQs
             if parent_id is False:
                 code = hq_instance_code
 
@@ -487,6 +501,8 @@ class ir_sequence(osv.osv):
                 data['hqcode'] = self._get_hqcode(cr, uid)
             if '%(instance_code)s' in s:
                 data['instance_code'] = self._get_instance_code(cr, uid)
+            if '%(missioncode)s' in s:
+                data['missioncode'] = self._get_instance_missioncode(cr, uid)
 
         return (s or '') % data
 ir_sequence()

@@ -22,12 +22,8 @@
 ##############################################################################
 
 from osv import osv, orm
-from lxml import etree
 import pooler
-import random
-import string
 import logging
-import traceback
 
 super_view_look_dom_arch = orm.orm_template._orm_template__view_look_dom_arch
 
@@ -76,8 +72,7 @@ def view_look_dom_arch(self, cr, uid, node, view_id, context=None):
                     access = False
 
                     if groups:
-                        user = self.pool.get('res.users').read(cr, 1, uid,
-                                ['groups_id'])
+                        user = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'])
                         if set(user['groups_id']).intersection(groups):
                             access = True
                     else:
@@ -149,14 +144,22 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
     else:
         # load button access rights for this method
         pool = pooler.get_pool(cr.dbname)
-        model_id = pool.get('ir.model').search(cr, adminUid, [('model','=',obj)])
+        search_obj = [obj]
+        if obj == 'sale.order.line':
+            search_obj = ['sale.order.line', 'sale.order']
+        elif obj == 'purchase.order.line':
+            search_obj = ['purchase.order.line', 'purchase.order']
+
+        model_id = pool.get('ir.model').search(cr, adminUid, [('model', 'in', search_obj)])
         rules_pool = pool.get('msf_button_access_rights.button_access_rule')
         if rules_pool:
-            rules_search = rules_pool.search(cr, adminUid, [('name','=',method),('model_id','=',model_id)])
+            rules_search = rules_pool.search(cr, adminUid, [('name', '=', method), ('model_id', 'in', model_id)])
+
+            if not rules_search:
+                return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
 
             # do we have rules?
-            if rules_search:
-                rule = rules_pool.browse(cr, adminUid, rules_search[0])
+            for rule in rules_pool.browse(cr, adminUid, rules_search):
 
                 # does user have access?
                 access = False
@@ -183,12 +186,10 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
                     context['real_user'] = uid
                     return super_execute_cr(self, cr, adminUid, obj, method, *args, **kw)
 
-                else:
-                    # throw access denied
-                    raise osv.except_osv('Access Denied', 'You do not have permission to use this button')
 
-            else:
-                return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
+            # throw access denied
+            raise osv.except_osv('Access Denied', 'You do not have permission to use this button')
+
         else:
             logging.getLogger(self._name).warn('Could not get model pool for button_access_rule')
             return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
@@ -216,15 +217,23 @@ def exec_workflow_cr(self, cr, uid, obj, method, *args):
     else:
         # load button access rights for this method
         pool = pooler.get_pool(cr.dbname)
-        object_id = pool.get('ir.model').search(cr, adminUid, [('model','=',obj)])
+        search_obj = [obj]
+        if obj == 'sale.order.line':
+            search_obj = ['sale.order.line', 'sale.order']
+        elif obj == 'purchase.order.line':
+            search_obj = ['purchase.order.line', 'purchase.order']
+
+        object_id = pool.get('ir.model').search(cr, adminUid, [('model','in', search_obj)])
         rules_pool = pool.get('msf_button_access_rights.button_access_rule')
         if rules_pool:
-            rules_search = rules_pool.search(cr, adminUid, [('name','=',method),('model_id','=',object_id)])
+            rules_search = rules_pool.search(cr, adminUid, [('name','=',method), ('model_id','in',object_id)])
+
+            if not rules_search:
+                return super_execute_workflow_cr(self, cr, uid, obj, method, *args)
+
 
             # do we have rules?
-            if rules_search:
-                rule = rules_pool.browse(cr, adminUid, rules_search[0])
-
+            for rule in rules_pool.browse(cr, adminUid, rules_search):
                 # does user have access?
                 access = False
                 if rule.group_ids:
@@ -237,11 +246,8 @@ def exec_workflow_cr(self, cr, uid, obj, method, *args):
                 if access:
                     # execute workflow as admin
                     return super_execute_workflow_cr(self, cr, adminUid, obj, method, *args)
-                else:
-                    # throw access denied
-                    raise osv.except_osv('Access Denied', 'You do not have permission to use this button')
-            else:
-                return super_execute_workflow_cr(self, cr, uid, obj, method, *args)
+            # throw access denied
+            raise osv.except_osv('Access Denied', 'You do not have permission to use this button')
         else:
             logging.getLogger(self._name).warn('Could not get model pool for button_access_rule')
             return super_execute_workflow_cr(self, cr, uid, obj, method, *args)

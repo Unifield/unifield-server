@@ -60,11 +60,13 @@
                             <field name="date_done" />
                             <field name="doc_ref" />
                             <field name="origin" />
+                            <field name="partner_or_loc" />
                             <field name="qty_in" />
                             <field name="qty_out" />
                             <field name="balance" />
                             <field name="src_dest" />
                             <field name="notes" />
+                            <field name="uom_id" invisible="1" />
                         </tree>
                     </field>
                 </form>

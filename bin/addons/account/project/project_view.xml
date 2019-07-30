@@ -212,7 +212,7 @@
                             <filter name="engagements" string="Engagements" domain="[('journal_id.type','=','engagement')]" icon="terp-folder-violet"
                                     help="Analytic Journal Items related to an engagement journal."/>
                             <filter name="intl_engagements" string="ENGI"
-                                domain="[('imported_commitment', '=', True), ('journal_id.type', '=', 'engagement'), ('journal_id.code', '=', 'ENGI')]"
+                                domain="[('journal_id.type', '=', 'engagement'), ('journal_id.code', '=', 'ENGI')]"
                                 icon="terp-folder-violet"
                                 help="Analytic Journal Items related to an ENGI journal."
                                 />
@@ -221,6 +221,7 @@
                             <field name="document_date" select="1"/>
                             <field name="date"/>
                             <field name="period_id"/>
+                            <field name="fiscalyear_id"/>
                         </group>
                         <newline/>
                         <group>
@@ -248,6 +249,7 @@
                         <group>
                             <field name="amount" select="1"/>
                             <field name="amount_currency"/>
+                            <field name="currency_id" domain="[('active', '=', True)]"/>
                         </group>
                     </group>
                     <newline/>
@@ -363,10 +365,12 @@
             <field name="model">account.analytic.journal</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Analytic Journal">
-                    <field name="name" select="1"/>
-                    <field name="code" select="1"/>
-                    <field name="type" select="2"/>
+                <form string="Analytic Journal" hide_duplicate_button="True" noteditable="is_current_instance==False">
+                    <field name="has_ajis" invisible="1"/>
+                    <field name="is_current_instance" invisible="1"/>
+                    <field name="name" select="1" default_focus="1"/>
+                    <field name="code" select="1" attrs="{'readonly': [('has_ajis', '=', True)]}"/>
+                    <field name="type" select="2" attrs="{'readonly': [('has_ajis', '=', True)]}"/>
                     <field name="active" select="2"/>
                     <field name="company_id" groups="base.group_multi_company" widget="selection"/>
                 </form>

@@ -30,6 +30,7 @@ from account_period_closing_level import ACCOUNT_FY_STATE_SELECTION
 
 class account_period_state(osv.osv):
     _name = "account.period.state"
+    _description = "Period States"
 
     _columns = {
         'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade', select=1),
@@ -63,7 +64,7 @@ class account_period_state(osv.osv):
             'type': 'ir.actions.act_window',
             'res_model': 'account.period.state',
             'view_type': 'form',
-            'view_mode': 'tree',
+            'view_mode': 'tree,form',
             'search_view_id': search_id,
             'view_id': [view_id],
             'context': context,
@@ -99,7 +100,7 @@ class account_period_state(osv.osv):
                     for period_state_id in ids:
                         period_state_xml_id = self.get_sd_ref(cr, uid, period_state_id)
                         ids_to_write.append(model_data._get_id(cr, uid, 'sd',
-                            period_state_xml_id))
+                                                               period_state_xml_id))
 
                 else:
                     vals = {
@@ -108,7 +109,7 @@ class account_period_state(osv.osv):
                         'state': period['state']}
                     new_period_state_id = self.create(cr, uid, vals, context=context)
                     new_period_state_xml_id = self.get_sd_ref(cr, uid,
-                                                                    new_period_state_id)
+                                                              new_period_state_id)
                     ids_to_write.append(model_data._get_id(cr, uid, 'sd',
                                                            new_period_state_xml_id))
 
@@ -117,7 +118,7 @@ class account_period_state(osv.osv):
         # they need to be sync down to other instances
         if ids_to_write:
             model_data.write(cr, uid, ids_to_write,
-                {'last_modification': fields.datetime.now(), 'touched': "['state']"})
+                             {'last_modification': fields.datetime.now(), 'touched': "['state']"})
         return True
 
 account_period_state()
@@ -126,13 +127,14 @@ account_period_state()
 class account_fiscalyear_state(osv.osv):
     # model since US-822
     _name = "account.fiscalyear.state"
+    _description = "Fiscal Year States"
 
     _columns = {
         'fy_id': fields.many2one('account.fiscalyear', 'Fiscal Year',
-            required=True, ondelete='cascade', select=1),
+                                 required=True, ondelete='cascade', select=1),
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
         'state': fields.selection(ACCOUNT_FY_STATE_SELECTION, 'State',
-            readonly=True),
+                                  readonly=True),
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -145,14 +147,67 @@ class account_fiscalyear_state(osv.osv):
 
         return super(account_fiscalyear_state, self).create(cr, uid, vals, context=context)
 
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        When the "FY HQ-closure" update is received via sync in coordo: if during FY mission-closure "Balance move to 0" lines
+        had been generated, the system will reconcile each of these lines together with the lines there have balanced
+        """
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        year_end_closing_obj = self.pool.get('account.year.end.closing')
+        user_obj = self.pool.get('res.users')
+        journal_code = 'EOY'
+        period_number = 16
+        company_instance = user_obj.browse(cr, uid, [uid], fields_to_fetch=['company_id'], context=context)[0].company_id.instance_id
+        instance_ids = year_end_closing_obj._get_mission_ids_from_coordo(cr, uid, company_instance.id, context=context)
+        if context.get('sync_update_execution', False) and vals.get('state', False) == 'done' and company_instance.level == 'coordo':
+            sql = '''SELECT ml.id
+                     FROM account_move_line ml
+                     INNER JOIN account_move m ON m.id = ml.move_id
+                     WHERE ml.instance_id in %s
+                     AND ml.date >= %s AND ml.date <= %s AND m.period_id != %s
+                     AND ml.account_id = %s AND ml.currency_id = %s;
+                  '''
+            for fy_state_id in ids:
+                fy_state = self.browse(cr, uid, fy_state_id, fields_to_fetch=['fy_id', 'instance_id'], context=context)
+                if fy_state.instance_id.id != company_instance.id:
+                    # trigger reconcile only if instance FY is closed, not when update is received from project
+                    break
+                fy = fy_state.fy_id
+                period_id = year_end_closing_obj._get_period_id(cr, uid, fy.id, period_number, context=context)
+                if not period_id:
+                    raise osv.except_osv(_('Error'), _("FY 'Period %d' not found") % (period_number,))
+                balance_line_domain = [('journal_id.code', '=', journal_code),
+                                       ('period_id.number', '=', period_number),
+                                       ('period_id.fiscalyear_id', '=', fy.id),
+                                       ('account_id.include_in_yearly_move', '=', True)]
+                balance_line_ids = aml_obj.search(cr, uid, balance_line_domain, context=context, order='NO_ORDER')
+                # get the entries balanced by each "Balance move to 0" line
+                for balance_line in aml_obj.browse(cr, uid, balance_line_ids,
+                                                   fields_to_fetch=['account_id', 'currency_id'], context=context):
+                    cr.execute(sql, (tuple(instance_ids), fy.date_start, fy.date_stop, period_id,
+                                     balance_line.account_id.id,  balance_line.currency_id.id,))
+                    aml_ids = map(lambda x: x[0], cr.fetchall())
+                    aml_ids.append(balance_line.id)
+                    # with 'fy_hq_closing' in context we don't check if the account is reconcilable
+                    # (but the check that no entry is already reconciled is kept)
+                    context['fy_hq_closing'] = True
+                    aml_obj.reconcile(cr, uid, aml_ids, context=context)
+        return super(account_fiscalyear_state, self).write(cr, uid, ids, vals, context=context)
+
     def get_fy(self, cr, uid, ids, context=None):
         mod_obj = self.pool.get('ir.model.data')
         view_id = mod_obj.get_object_reference(cr, uid, 'account_mcdb',
-            'account_fiscalyear_state_view')
+                                               'account_fiscalyear_state_view')
         view_id = view_id and view_id[1] or False
 
         search_id = mod_obj.get_object_reference(cr, uid, 'account_mcdb',
-            'account_fiscalyear_state_filter')
+                                                 'account_fiscalyear_state_filter')
         search_id = search_id and search_id[1] or False
 
         view = {
@@ -160,7 +215,7 @@ class account_fiscalyear_state(osv.osv):
             'type': 'ir.actions.act_window',
             'res_model': 'account.fiscalyear.state',
             'view_type': 'form',
-            'view_mode': 'tree',
+            'view_mode': 'tree,form',
             'search_view_id': search_id,
             'view_id': [view_id],
             'context': context,
@@ -182,10 +237,10 @@ class account_fiscalyear_state(osv.osv):
         state_to_update = []
         for fy_id in fy_ids:
             user = self.pool.get('res.users').browse(cr, uid, uid,
-                context=context)
+                                                     context=context)
             parent = user.company_id.instance_id.id
             fy = self.pool.get('account.fiscalyear').read(cr, uid, fy_id,
-                ['id', 'state'], context=context)
+                                                          ['id', 'state'], context=context)
             if parent and fy and parent != '':
                 args = [
                     ('instance_id', '=', parent),
@@ -216,7 +271,7 @@ class account_fiscalyear_state(osv.osv):
         # created with synchro and they need to be sync down to other instances
         if ids_to_write:
             model_data.write(cr, uid, ids_to_write,
-                {'last_modification': fields.datetime.now(), 'touched': "['state']"})
+                             {'last_modification': fields.datetime.now(), 'touched': "['state']"})
         return True
 
 account_fiscalyear_state()

@@ -27,6 +27,8 @@ import re
 import decimal_precision as dp
 from tools.translate import _
 from time import strftime
+import finance_export
+
 
 class account_move_line(osv.osv):
     _name = 'account.move.line'
@@ -101,7 +103,7 @@ class account_move_line(osv.osv):
         Just used to not break default OpenERP behaviour
         """
         if name and value:
-            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"
+            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s" # not_a_user_entry
             cr.execute(sql, (value, aml_id))
         return True
 
@@ -180,7 +182,7 @@ class account_move_line(osv.osv):
                       AND l1.id <= l2.id
                       AND l2.id IN %s AND """ + \
             self._query_get(cr, uid, obj='l1', context=c) + \
-            " GROUP BY l2.id"
+            " GROUP BY l2.id" # not_a_user_entry
 
         cr.execute(sql, [tuple(ids)])
         result = dict(cr.fetchall())
@@ -196,7 +198,7 @@ class account_move_line(osv.osv):
             return []
         where = ' AND '.join(map(lambda x: '(abs(sum(debit_currency-credit_currency))'+x[1]+str(x[2])+')',args))
         cursor.execute('SELECT id, SUM(debit_currency-credit_currency) FROM account_move_line \
-                     GROUP BY id, debit_currency, credit_currency having '+where)
+                     GROUP BY id, debit_currency, credit_currency having '+where) # not_a_user_entry
         res = cursor.fetchall()
         if not res:
             return [('id', '=', '0')]
@@ -234,7 +236,7 @@ class account_move_line(osv.osv):
                 ('account_id.reconcile', '!=', False),
                 '|',
                 ('reconcile_id', '=', False),
-                ('reconcile_partial_id', '!=', False),    
+                ('reconcile_partial_id', '!=', False),
             ]
 
         return []
@@ -242,6 +244,64 @@ class account_move_line(osv.osv):
     def _init_status_move(self, cr, ids, *a, **b):
         cr.execute('update account_move_line l set status_move = (select status from account_move m where m.id = l.move_id)')
 
+    def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Returns False for all ids
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ret = {}
+        for i in ids:
+            ret[i] = False
+        return ret
+
+    def _search_open_items(self, cr, uid, obj, name, args, context):
+        """
+        Returns a domain with all reconcilable JIs EXCEPT:
+        - those fully reconciled at the period end date or before
+        - those fully reconciled after the period end date, if all legs of the reconciliation are <= to the period end date
+        """
+        if not args:
+            return []
+        if args[0][1] != '=' or not args[0][2] or not isinstance(args[0][2], int):
+            raise osv.except_osv(_('Error'), _('Filter not implemented. '
+                                               'Please check that you have selected one Period in \"Open Items at\".'))
+        if context is None:
+            context = {}
+        aml_list = []
+        period_obj = self.pool.get('account.period')
+        period_id = period_obj.browse(cr, uid, args[0][2], fields_to_fetch=['date_stop'], context=context)
+        period_end_date = period_id.date_stop
+        aml_query = '''
+              SELECT aml.id, aml.reconcile_id
+              FROM account_move_line aml
+              INNER JOIN account_account acc ON aml.account_id = acc.id
+              WHERE acc.reconcile = 't'
+              AND (aml.reconcile_id IS NULL OR reconcile_date > %s);
+              '''
+        cr.execute(aml_query, (period_end_date,))
+        lines = cr.dictfetchall()
+        for l in lines:
+            if not l['reconcile_id']:
+                aml_list.append(l['id'])
+            else:
+                # get the JIs with the same reconcile_id
+                same_rec_list = self.search(cr, uid, [('reconcile_id', '=', l['reconcile_id'])], order='NO_ORDER', context=context)
+                # check that at least one of them has a posting date later than the period end date
+                if self.search_exist(cr, uid, [('id', 'in', same_rec_list), ('date', '>', period_end_date)], context=context):
+                    aml_list.append(l['id'])
+        return [('id', 'in', aml_list)]
+
+    def _get_db_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Returns a dict. with key containing the JI id, and value containing its DB id used for Vertical Integration
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ret = {}
+        for i in ids:
+            ret[i] = finance_export.finance_archive._get_hash(cr, uid, [i], 'account.move.line')
+        return ret
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
@@ -277,6 +337,8 @@ class account_move_line(osv.osv):
                                          }
                                          ),
         'is_reconciled': fields.function(_get_is_reconciled, fnct_search=_search_is_reconciled, type='boolean', method=True, string="Is reconciled", help="Is that line partially/totally reconciled?"),
+        'open_items': fields.function(_get_fake, method=True, type='many2one', relation='account.period', string='Open Items at',
+                                      store=False, fnct_search=_search_open_items, domain=[('state', '!=', 'created')]),
         'balance_currency': fields.function(_balance_currency, fnct_search=_balance_currency_search, method=True, string='Balance Booking'),
         'corrected_upstream': fields.boolean('Corrected from CC/HQ', readonly=True, help='This line have been corrected from Coordo or HQ level to a cost center that have the same level or superior.'),
         'line_number': fields.integer(string='Line Number'),
@@ -288,6 +350,17 @@ class account_move_line(osv.osv):
         'sequence_move': fields.related('move_id', 'name', type='char',
                                         readonly=True, size=128, store=False, write_relate=False,
                                         string="Sequence"),
+        'imported': fields.related('move_id', 'imported', string='Imported', type='boolean', required=False, readonly=True),
+        'is_si_refund': fields.boolean('Is a SI refund line', help="In case of a refund Cancel or Modify all the lines linked "
+                                                                   "to the original SI and to the SR created are marked as 'is_si_refund'"),
+        'revaluation_date': fields.datetime(string='Revaluation date'),
+        'revaluation_reference': fields.char(string='Revaluation reference', size=64,
+                                             help="Entry sequence of the related Revaluation Entry"),
+        # US-3874
+        'partner_register_line_id': fields.many2one('account.bank.statement.line', string="Register Line", required=False, readonly=True,
+                                                    help="Register line to which this partner automated entry is linked"),
+        'db_id': fields.function(_get_db_id, method=True, type='char', size=32, string='DB ID',
+                                 store=False, help='DB ID used for Vertical Integration'),
     }
 
     _defaults = {
@@ -298,6 +371,7 @@ class account_move_line(osv.osv):
         'exported': lambda *a: False,
         'corrected_upstream': lambda *a: False,
         'line_number': lambda *a: 0,
+        'is_si_refund': lambda *a: False,
     }
 
     _order = 'move_id DESC'
@@ -473,8 +547,8 @@ class account_move_line(osv.osv):
             if m and m.date:
                 vals.update({'date': m.date})
                 context.update({'date': m.date})
-            # UFTP-262: Add description from the move_id
-            if m and m.manual_name:
+            # UFTP-262: Add description from the move_id (US-2027) if there is not descr. on the line
+            if m and m.manual_name and not vals.get('name'):
                 vals.update({'name': m.manual_name})
         # US-220: vals.ref must have 64 digits max
         if vals.get('ref'):
@@ -508,8 +582,15 @@ class account_move_line(osv.osv):
                     reconciliation = ml.reconcile_id or ml.reconcile_partial_id or False
                     if reconciliation and reconciliation.type == 'auto':
                         raise osv.except_osv(_('Warning'), _('Only manually reconciled entries can be unreconciled.'))
-                elif ml.move_id and ml.move_id.status == 'sys':
+                # prevent from modifying system JIs except for reversing a manual correction
+                elif ml.move_id and ml.move_id.status == 'sys' and not context.get('from_manual_corr_reversal'):
                     raise osv.except_osv(_('Warning'), _('You cannot change Journal Items that comes from the system!'))
+                # By default the name of a manual JI is the JE description
+                if ml.status_move == 'manu':
+                    no_ji_name = not vals.get('name') and not ml.name
+                    new_ji_name_empty = 'name' in vals and not vals['name']
+                    if no_ji_name or new_ji_name_empty:
+                        vals.update({'name': ml.move_id.manual_name})
             # Check date validity with period
             self._check_date_validity(cr, uid, ids, vals)
             if 'move_id' in vals:
@@ -541,16 +622,40 @@ class account_move_line(osv.osv):
             args.append(('currency_id', '=', context.get('currency_id')))
         if context.get('move_state'):
             args.append(('move_state', '=', context.get('move_state')))
+        if context.get('account_id'):
+            args.append(('account_id', '=', context.get('account_id')))
+
+        period_ids = []
+        if context.get('periods'):
+            period_ids = context.get('periods')
+            if isinstance(period_ids, (int, long)):
+                period_ids = [period_ids]
+        elif context.get('fiscalyear'):
+            fy = context.get('fiscalyear')
+            period_obj = self.pool.get('account.period')
+            period_ids = period_obj.search(cr, uid,
+                                           [('fiscalyear_id', '=', fy)],
+                                           context=context)
+        elif context.get('period_from') and context.get('period_to'):
+            p_from = context.get('period_from')
+            p_to = context.get('period_to')
+            period_obj = self.pool.get('account.period')
+            period_ids = period_obj.build_ctx_periods(cr, uid, p_from, p_to)
+        if period_ids:
+            args.append(('period_id', 'in', period_ids))
+
         return super(account_move_line, self).search(cr, uid, args, offset,
                                                      limit, order, context=context, count=count)
 
     def copy(self, cr, uid, aml_id, default=None, context=None):
         """
         When duplicate a JI, don't copy:
-        - the link to register lines
+        - the links to register lines
         - the reconciliation date
         - the unreconciliation date
         - the old reconciliation ref (unreconcile_txt)
+        - the tag 'is_si_refund'
+        - the fields related to revaluation
         """
         if context is None:
             context = {}
@@ -558,9 +663,13 @@ class account_move_line(osv.osv):
             default = {}
         default.update({
             'imported_invoice_line_ids': [],
+            'partner_register_line_id': False,
             'reconcile_date': None,
             'unreconcile_date': None,
             'unreconcile_txt': '',
+            'is_si_refund': False,
+            'revaluation_date': None,
+            'revaluation_reference': '',
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 

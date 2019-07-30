@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+        <!-- CASH REQUEST - SEQUENCE -->
+        <record id="sequence_cash_request_type" model="ir.sequence.type">
+            <field name="name">Cash Request</field>
+            <field name="code">cash.request</field>
+        </record>
+        
+        <record id="sequence_cash_request" model="ir.sequence">
+            <field name="name">Cash Request</field>
+            <field name="code">cash.request</field>
+            <field name="prefix">%(missioncode)s_Cash_request - </field>
+            <field name="padding">4</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+    </data>
+</openerp>

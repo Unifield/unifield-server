@@ -2,48 +2,6 @@
 <openerp>
     <data>
 
-        <!-- sale order -->
-        <record id="view_order_form" model="ir.ui.view">
-            <field name="name">sale.order.form</field>
-            <field name="model">sale.order</field>
-            <field name="type">form</field>
-            <field name="priority" eval="100" />
-            <field name="inherit_id" ref="sale.view_order_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//form[@string='Sales Order']//tree[@string='Sales Order Lines']//field[@name='name']" position="before">
-                        <field name="line_number" />
-                    </xpath>
-                    <!-- 
-                    <xpath expr="/form/notebook//field[@name='order_line']" position="before" >
-	                    <button name="reorder_line_numbering" string="Reorder" icon="gtk-remove" colspan="1" type="object" />
-                	</xpath>
-                	 -->
-                </data>
-            </field>
-        </record>
-
-        <!-- purchase order -->
-        <record id="purchase_order_form" model="ir.ui.view">
-            <field name="name">purchase.order.form</field>
-            <field name="model">purchase.order</field>
-            <field name="type">form</field>
-            <field name="priority">80</field>
-            <field name="inherit_id" ref="purchase.purchase_order_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='date_planned']" position="before">
-                        <field name="line_number" />
-                    </xpath>
-                    <!-- 
-                    <xpath expr="/form/notebook//field[@name='order_line']" position="before" >
-	                    <button name="reorder_line_numbering" string="Reorder" icon="gtk-remove" colspan="1" type="object" />
-                	</xpath>
-                	 -->
-                </data>
-            </field>
-        </record>
-
         <record id="ir_sequence_new_legend" model="ir.ui.view">
             <field name="name">ir.sequence.form.legend</field>
             <field name="model">ir.sequence</field>

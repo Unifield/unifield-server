@@ -52,6 +52,7 @@
     <paraStyle name="center" alignment="CENTER"/>
     <paraStyle name="text" leftIndent="3mm"/>
     <paraStyle name="text_right" rightIndent="3mm" alignment="RIGHT"/>
+    <paraStyle name="medium_text" fontName="Helvetica" fontSize="9" alignment="LEFT"/>
   </stylesheet>
 
   <story>
@@ -82,7 +83,7 @@
       <para style="text"><b>Cashbox</b></para>
       <blockTable colWidths="30mm,30mm,30mm,30mm,30mm,30mm" style="table_reconciliation_balance">
         <tr>
-          <td><para style="center"><b>Opening balance</b></para></td>
+          <td><para style="center"><b>Starting balance</b></para></td>
           <td></td>
           <td></td>
           <td><para style="center"><b>Closing balance</b></para></td>
@@ -133,7 +134,7 @@
       <blockTable colWidths="90mm, 90mm" style="table_reconciliation">
         <tr>
           <td>
-            <para>Opening balance: <b>[[ o.balance_start and o.balance_start or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
+            <para>Starting balance: <b>[[ o.balance_start and o.balance_start or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
             <para>Cash Transaction: <b>[[ o.total_entry_encoding and o.total_entry_encoding or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
             <para>Calculated Balance: <b>[[ o.msf_calculated_balance and o.msf_calculated_balance or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
             <para>Unrecorded Advances: <b>[[ o.open_advance_amount and o.open_advance_amount or '0.0' ]]</b> [[ o.currency and o.currency.name or '' ]]</para>
@@ -150,9 +151,9 @@
       <spacer length="5"/>
 
       <para style="text"><b>Comments:</b></para>
-      <blockTable colWidths="180mm" rowHeights="15mm" style="table_comments">
+      <blockTable colWidths="180mm" rowHeights="20mm" style="table_comments">
         <tr>
-          <td>[[ format(o.notes or '') ]]</td>
+          <td>[[ format(formatComments(o.notes or '')) ]]</td>
         </tr>
       </blockTable>
 
@@ -168,7 +169,7 @@
       <spacer length="5"/>
       <blockTable colWidths="120mm, 60mm" style="table_sign">
         <tr>
-          <td></td>
+          <td><para style="medium_text">[[ o.register_closed_by or '' ]]</para></td>
           <td></td>
         </tr>
         <tr>

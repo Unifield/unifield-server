@@ -39,7 +39,7 @@ class wizard_financing_currency_export(osv.osv_memory):
             if contract:
                 return contract.reporting_currency.id
         return False
-    
+
     _defaults = {
         'out_currency': _get_reporting_currency,
     }
@@ -60,6 +60,7 @@ class wizard_financing_currency_export(osv.osv_memory):
     def button_create_budget_2(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+        bg_obj = self.pool.get('memory.background.report')
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
         data['ids'] = context.get('active_ids', [])
@@ -70,6 +71,18 @@ class wizard_financing_currency_export(osv.osv_memory):
         instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
 
         data['target_filename'] = 'Interactive Report_%s_%s' % (instance and instance.code or '', time.strftime('%Y%m%d'))
-        return {'type': 'ir.actions.report.xml', 'report_name': 'financing.interactive.2', 'datas': data}
-    
+
+        # make the report run in background
+        report_name = 'financing.interactive.2'
+        background_id = bg_obj.create(cr, uid,
+                                      {'file_name': data['target_filename'],
+                                       'report_name': report_name,
+                                       },
+                                      context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 2
+        data['context'] = context
+
+        return {'type': 'ir.actions.report.xml', 'report_name': report_name, 'datas': data, 'context': context}
+
 wizard_financing_currency_export()

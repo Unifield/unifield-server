@@ -12,5 +12,21 @@
         auto="False"
         menu="True"
         />
+
+        <report
+            id="msf_supply_doc_export.report_request_for_quotation_xls"
+            string="Request For Quotation Excel Export"
+            model="purchase.order"
+            name="request.for.quotation_xls"
+            file="msf_supply_doc_export/report/report_request_for_quotation_xls.mako"
+            report_type="webkit"
+            view_ids="tender_flow.view_rfq_tree,tender_flow.view_rfq_form"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+
+        <report auto="False" id="stock.report_purchase_quotation" model="purchase.order" name="purchase.quotation" rml="purchase/report/request_quotation.rml" string="Request for Quotation" view_ids="tender_flow.view_rfq_tree,tender_flow.view_rfq_form"/>
+        <report auto="False" id="purchase_override.report_purchase_msf_quotation" model="purchase.order" name="msf.purchase.quotation" rml="purchase_override/report/rfq.rml" string="Request for Quotation" view_ids="tender_flow.view_rfq_tree,tender_flow.view_rfq_form"/>
   </data>
 </openerp>

@@ -37,13 +37,12 @@
         'security/ir.model.access.csv',
     ],
     "test": [
-        'tests/rules.yml'
     ],
     "depends": [
         'msf_instance',
     ],
     'active': False,
     'installable': True,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

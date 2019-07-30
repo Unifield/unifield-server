@@ -10,23 +10,43 @@
             <field name="inherit_id" ref="account.view_account_journal_form"/>
             <field name="arch" type="xml">
                 <form string="Account Journal" position="replace">
-                    <form string="Account Journal" hide_duplicate_button="1">
+                    <form string="Account Journal" hide_duplicate_button="1" noteditable="is_current_instance==False">
                         <group colspan="4" col="6">
+                            <field name="is_current_instance" invisible="1"/>
                             <field name="has_entries" invisible="1"/>
                             <field name="name" select="1"/>
-                            <field name="code" select="1" attrs="{'readonly': [('has_entries', '=', True)]}"/>
-                            <field name="type" on_change="onchange_type(type, currency, context)"/>
+                            <field name="code" select="1"
+                                   attrs="{'readonly': [('has_entries', '=', True)]}"/>
+                            <field name="type" on_change="onchange_type(type, currency, context)"
+                                   attrs="{'readonly': [('has_entries', '=', True)]}"/>
                         </group>
                         <group col="2" colspan="2">
                                <separator string="Accounts" colspan="4"/>
-                               <field name="default_debit_account_id" domain="[('type','&lt;&gt;','view'), ('cash_domain', '=', type)]" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))]}"/>
-                               <field name="default_credit_account_id" domain="[('type','&lt;&gt;','view'), ('cash_domain', '=', type)]" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))]}"/>
+                               <field name="default_debit_account_id" domain="[('type','&lt;&gt;','view'), ('cash_domain', '=', type)]"
+                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))]}"/>
+                               <field name="default_credit_account_id" domain="[('type','&lt;&gt;','view'), ('cash_domain', '=', type)]"
+                                      attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))]}"/>
                         </group>
                         <group colspan="2" col="2">
                             <separator string="Company" colspan="4"/>
-                            <field name="currency" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))]}"/>
-                            <field name="analytic_journal_id" domain="[('is_current_instance','=',True)]" attrs="{'required': [('type', 'not in', ('situation', 'stock'))]}"/>
-                            <field name="bank_journal_id" attrs="{'invisible': [('type', '!=', 'cheque')], 'required': [('type', '=', 'cheque')]}"/>
+                            <field name="currency"
+                                   attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))],
+                                           'readonly': [('has_entries', '=', True)]}"/>
+                            <field name="analytic_journal_id" domain="[('is_current_instance','=',True)]"
+                                   attrs="{'required': [('type', 'not in', ('situation', 'stock'))],
+                                           'readonly': [('has_entries', '=', True)]}"/>
+                            <field name="bank_account_name"
+                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                            <field name="bank_account_number"
+                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                            <field name="bank_swift_code"
+                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                            <field name="bank_address"
+                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                            <field name="bank_journal_id"
+                                   attrs="{'invisible': [('type', '!=', 'cheque')],
+                                           'required': [('type', '=', 'cheque')],
+                                           'readonly': [('has_entries', '=', True)]}"/>
                         </group>
                         <group colspan="4" col="4">
                             <label string="" colspan="2"/>

@@ -46,6 +46,27 @@
             </Borders>
             <Protection ss:Protected="0" />
         </Style>
+        <Style ss:ID="Boolean">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+            <Borders>
+              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+            </Borders>
+            <Protection ss:Protected="0" />
+        </Style>
+        <Style ss:ID="Float">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+            <Borders>
+              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+            </Borders>
+            <NumberFormat ss:Format="Fixed" />
+            <Protection ss:Protected="0" />
+        </Style>
         <Style ss:ID="Number">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
             <Borders>

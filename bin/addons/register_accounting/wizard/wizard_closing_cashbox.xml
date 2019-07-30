@@ -23,31 +23,6 @@
                         view_type="form"
                         target="new"
                         id="act_wizard_closing_cashbox" />
-                        
-                        
-            <record model="ir.ui.view" id="wizard_open_empty_cashbox_form1">
-                  <field name='name'>wizard.open.empty.cashbox.form1</field>
-                  <field name='model'>wizard.open.empty.cashbox</field>
-                  <field name='type'>form</field>
-                  <field name='arch' type='xml'>
-                        <form string="Open Empty Cashbox Confirmation - Wizard">
-                            <separator string="Open Empty Cashbox Confirmation" />
-                            <field name="be_sure" colspan="4" readonly="1" />
-                            <group colspan="4">
-                                <button string='No' special='cancel' icon='gtk-cancel' colspan="2" />
-                                <button name="button_open_empty_cashbox" string="Yes" type="object" icon="gtk-apply" colspan="2" />
-                            </group>
-                        </form>
-                  </field>
-            </record>
-            <!-- Activities -->
-            <act_window name="Open Empty CashBox"
-                        res_model="wizard.open.empty.cashbox"
-                        view_mode="form"
-                        view_type="form"
-                        target="new"
-                        id="act_wizard_open_empty_cashbox" />
-                        
-                        
+
       </data>
 </openerp>

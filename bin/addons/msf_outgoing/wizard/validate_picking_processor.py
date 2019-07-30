@@ -41,11 +41,36 @@ class validate_picking_processor(osv.osv):
             'wizard_id',
             string='Moves to process',
         ),
+        'draft': fields.boolean('Draft'),
     }
 
-    """
-    Model methods
-    """
+
+    def import_pick(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids,(int,long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No PICK selected'))
+
+        processor = self.browse(cr, uid, ids[0], context=context)
+
+        wiz_id = self.pool.get('wizard.pick.import').create(cr, uid, {
+            'picking_id': processor.picking_id.id,
+            'validate_processor_id': ids[0],
+        }, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.pick.import',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+        }
+
+
     def do_validate_picking(self, cr, uid, ids, context=None):
         """
         Made some integrity checks and launch the do_validate_picking method
@@ -58,8 +83,10 @@ class validate_picking_processor(osv.osv):
         if context is None:
             context = {}
 
-        to_unlink = []
+        # disable "save as draft":
+        self.write(cr, uid, ids, {'draft': False}, context=context)
 
+        to_unlink = []
         for proc in self.browse(cr, uid, ids, context=context):
             total_qty = 0.00
 
@@ -153,6 +180,42 @@ class validate_picking_processor(osv.osv):
                            ))
 
         return True
+
+
+    def do_reset(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        pick_id = []
+        for proc in self.browse(cr, uid, ids, context=context):
+            pick_id = proc['picking_id']['id']
+
+        self.write(cr, uid, ids, {'draft': False}, context=context)
+
+        return self.pool.get('stock.picking').validate_picking(cr, uid, pick_id, context=context)
+
+
+    def do_save_draft(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(
+                _('Processing Error'),
+                _('No data to process !'),
+            )
+
+        self.write(cr, uid, ids, {'draft': True}, context=context)
+
+        return {}
 
 validate_picking_processor()
 

@@ -47,6 +47,8 @@ from itertools import islice, izip
 from lxml import etree
 from which import which
 from threading import local
+import math
+
 try:
     from html2text import html2text
 except ImportError:
@@ -55,6 +57,13 @@ except ImportError:
 import netsvc
 from config import config
 from lru import LRU
+from xml.sax.saxutils import escape
+
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import base64
 
 _logger = logging.getLogger('tools')
 
@@ -162,17 +171,25 @@ def pg_dump(db_name, outfile=False):
         if outfile:
             res = exec_pg_command(*tuple(cmd))
         else:
+            # TODO: current pg_dump method do not return the same type of
+            # variable depending of outfile, if outfile, it return an int, else
+            # a tuple, this make this method unreliable
             stdin, stdout = exec_pg_command_pipe(*tuple(cmd))
             stdin.close()
             data = stdout.read()
             error = stdout.close()
             res = (data, error)
-
-        _set_env_pg(remove=True)
-        return res
     except Exception:
         _logger.error('Dump', exc_info=1)
-        raise
+        if outfile:
+            try:
+                os.remove(outfile)
+            except:
+                pass
+            res = -1
+    finally:
+        _set_env_pg(remove=True)
+        return res
 
 def find_pg_tool(name):
     path = None
@@ -1758,6 +1775,49 @@ class Path():
         self.path = path
         self.delete = delete
 
+def use_prod_sync(cr):
+    cr.execute('''SELECT host, database
+            FROM sync_client_sync_server_connection''')
+    host, database = cr.fetchone()
+
+    if host and database and database.strip() == 'SYNC_SERVER' and \
+            ('sync.unifield.net' in host.lower() or '212.95.73.129' in host):
+        return True
+
+    return False
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
+def escape_html(string):
+    return escape(string, {'"': '&quot;', "'": '&apos;'})
+
+def float_uom_to_str(value, uom_obj):
+    """
+        round the value according to uom rounding attribute
+    """
+    if not isinstance(value, (int, long, float)):
+        return value
+    digit = int(abs(math.log10(uom_obj.rounding)))
+    return '%.*f' % (digit, value)
+
+class crypt():
+    def __init__(self, password):
+        password = bytes(password)
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            iterations=100000,
+            salt=password,
+            backend=default_backend()
+        )
+        key = base64.urlsafe_b64encode(kdf.derive(password))
+        self.Fernet = Fernet(key)
+
+    def encrypt(self, string):
+        return self.Fernet.encrypt(string)
+
+    def decrypt(self, string):
+        return self.Fernet.decrypt(bytes(string))
+
 

@@ -33,6 +33,11 @@ import hq_report_ocb_matching
 from report import report_sxw
 
 class finance_archive(finance_export.finance_archive):
+    """
+    Extends existing class with new methods for OCP Matching Export.
+
+    Note: this report has NOT been translated: headers of all reports for OCP VI remain in English whatever the language selected
+    """
 
     def postprocess_reconciliable(self, cr, uid, data, model, column_deletion=False):
         """
@@ -125,7 +130,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
         pool = pooler.get_pool(cr.dbname)
         instance_obj = pool.get('msf.instance')
         period_obj = pool.get('account.period')
-        excluded_journal_types = ['hq', 'cur_adj']
+        excluded_journal_types = ['hq', 'migration']
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -167,8 +172,8 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
         }
 
         # Define the file name according to the following format:
-        # First3DigitsOfInstanceCode_chosenPeriod_currentDatetime_Check on reconcilable entries.csv
-        # (ex: KE1_201610_171116110306_Check on reconcilable entries.csv)
+        # First3DigitsOfInstanceCode_chosenPeriod_currentDatetime_Check_on_reconcilable_entries.csv
+        # (ex: KE1_201610_171116110306_Check_on_reconcilable_entries.csv)
         instance = instance_obj.browse(cr, uid, instance_id, context=context, fields_to_fetch=['code'])
         instance_code = instance and instance.code[:3] or ''
         period = period_obj.browse(cr, uid, period_id, context=context, fields_to_fetch=['date_start', 'date_stop'])
@@ -176,7 +181,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
         date_stop = period.date_stop
         selected_period = strftime('%Y%m', strptime(date_start, '%Y-%m-%d')) or ''
         current_time = time.strftime('%d%m%y%H%M%S')
-        reconcilable_entries_filename = '%s_%s_%s_Check on reconcilable entries.csv' % (instance_code, selected_period, current_time)
+        reconcilable_entries_filename = '%s_%s_%s_Check_on_reconcilable_entries.csv' % (instance_code, selected_period, current_time)
 
         processrequests = [
             {

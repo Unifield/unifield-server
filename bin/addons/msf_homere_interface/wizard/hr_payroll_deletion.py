@@ -30,7 +30,7 @@ class hr_payroll_deletion(osv.osv):
 
     def button_validate(self, cr, uid, ids, context=None):
         """
-        Validate ALL draft payroll entries
+        Delete ALL draft payroll entries
         """
         # Some verifications
         if not context:

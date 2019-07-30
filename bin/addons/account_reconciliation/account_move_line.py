@@ -116,11 +116,32 @@ class account_move_line(osv.osv):
             raise osv.except_osv(_('Warning'), _('Reconciliation of lines that come from a "Pending payment" wizard should be done via registers. Lines: %s') % (' - '.join(msg),))
         return True
 
+    def check_multi_curr_rec(self, cr, uid, ids, context=None):
+        """
+        Raises an error in case a reconciliation includes several currencies whereas the account is set as prevent_multi_curr_rec
+        (Note that we don't directly use the rec. field "different_currencies" as it could be False in case of a transfer with change)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        amls = self.browse(cr, uid, ids, fields_to_fetch=['account_id', 'currency_id'], context=context)
+        rec_account = amls and amls[0].account_id or False
+        if rec_account and rec_account.prevent_multi_curr_rec:
+            currencies = set()
+            for aml in amls:
+                if aml.currency_id:
+                    currencies.add(aml.currency_id.id)
+            if len(currencies) > 1:
+                raise osv.except_osv(_('Warning'), _('The account "%s - %s" is set as "Prevent Reconciliation with different currencies".') %
+                                     (rec_account.code, rec_account.name))
+
     def reconcile_partial(self, cr, uid, ids, type='auto', context=None):
         """
         WARNING: This method has been taken from account module from OpenERP
         """
         self.check_imported_invoice(cr, uid, ids, context)
+        self.check_multi_curr_rec(cr, uid, ids, context=context)
         move_rec_obj = self.pool.get('account.move.reconcile')
         merges = []
         unmerge = []
@@ -194,6 +215,7 @@ class account_move_line(osv.osv):
         WARNING: This method has been taken from account module from OpenERP
         """
         self.check_imported_invoice(cr, uid, ids, context)
+        self.check_multi_curr_rec(cr, uid, ids, context=context)
         account_obj = self.pool.get('account.account')
         move_rec_obj = self.pool.get('account.move.reconcile')
         partner_obj = self.pool.get('res.partner')
@@ -243,6 +265,7 @@ class account_move_line(osv.osv):
             account_id = line['account_id']['id']
             partner_id = (line['partner_id'] and line['partner_id']['id']) or False
         func_balance = func_debit - func_credit
+        book_balance = debit - credit
 
         cr.execute('SELECT account_id, reconcile_id '\
                    'FROM account_move_line '\
@@ -256,12 +279,18 @@ class account_move_line(osv.osv):
         if not unrec_lines:
             raise osv.except_osv(_('Error'), _('Entry is already reconciled'))
         account = account_obj.browse(cr, uid, account_id, context=context)
-        if not context.get('fy_closing', False) and not account.reconcile:
+        if not context.get('fy_closing', False) and not context.get('fy_hq_closing', False) and not account.reconcile:
             raise osv.except_osv(_('Error'), _('The account is not defined to be reconciled !'))
         if r[0][1] != None:
             raise osv.except_osv(_('Error'), _('Some entries are already reconciled !'))
 
-        if abs(func_balance) > 10**-3: # FIX UF-1903 problem
+        if context.get('fy_hq_closing', False):
+            if abs(func_balance) > 10**-3 or abs(book_balance) > 10**-3:
+                # yearly move to zero entries should be balanced in functional and booking currency
+                raise osv.except_osv(_('Error'),
+                                     _("The entries included in the yearly move to zero can't be reconciled together "
+                                       "because they are unbalanced."))
+        elif abs(func_balance) > 10**-3:  # FIX UF-1903 problem
             partner_line_id = self.create_addendum_line(cr, uid, [x.id for x in unrec_lines], func_balance)
             if partner_line_id:
                 # Add partner_line to do total reconciliation
@@ -315,7 +344,7 @@ class account_move_line(osv.osv):
         Returns a tuple with the date and the period to use for the reversal FX entry.
         Rules:
         - if the period of the original FXA is Open, the reversal FXA uses its posting date and Period
-        - if the period isn't Open, the posting date is the first date of the next open period. Period 13-16 are excluded.
+        - if the period isn't Open, the posting date is the first date of the next open period. Periods 0 and 16 are excluded.
         - note that the Document date is always the same as the Posting Date (to avoid FY differences)
         '''
         period_obj = self.pool.get('account.period')
@@ -325,10 +354,10 @@ class account_move_line(osv.osv):
         else:
             period_ids = period_obj.search(
                 cr, uid,
-                [('date_start', '>', fxa_period.date_start),
+                [('date_start', '>=', fxa_period.date_start),
                  ('state', '=', 'draft'),
-                 ('number', '>', 0), ('number', '<', 13)],
-                order='date_start', limit=1, context=context)
+                 ('number', 'not in', [0, 16])],
+                order='date_start, number', limit=1, context=context)
             if not period_ids:
                 raise osv.except_osv(_('Warning !'),
                                      _('There is no open period to book the reversal FX entry.'))
@@ -457,11 +486,76 @@ class account_move_line(osv.osv):
                 self._check_instance(cr, uid, reconcile_id, context)
                 fxa_set.update(fxa_line_ids)
         # first we delete the reconciliation for all lines including FXA
+        context.update({'from_remove_move_reconcile': True})
         res = super(account_move_line, self)._remove_move_reconcile(cr, uid, move_ids, context=context)
         if fxa_set:
             # then for each FXA we create a reversal entry and reconcile them together
             self.reverse_fxa(cr, uid, list(fxa_set), context)
         return res
+
+    def log_reconcile(self, cr, uid, reconcile_obj, aml_id=None, previous=None, delete=False, rec_name=False, context=None):
+        """
+        create a track change line for a reconcile obj (partial or full)
+        this line must be logged on account.move
+
+        Args:
+            reconcile_obj: browse record of account.move.reconcile
+            aml_id: account_move_line id, if set account.move.line linked to the reconcile will not be processed
+            previous: dict indexed by account.move.line.id, contains the value of the previous reconcile
+            delete: True when called from reconcile_obj unlink, no new value, old value extracted from reconcile_obj
+            rec_name: reconciliation ref, used for partial rec when name contains the diff amount, otherwise reconcile_obj.name is used
+        """
+        if previous is None:
+            previous = {}
+        if context is None:
+            context = {}
+
+        # build list of account.move.line to compute
+        if aml_id:
+            aml_obj = self.browse(cr, uid, aml_id, context=context)
+            if aml_obj.reconcile_id:
+                rec_type = 'Reconcile'
+            else:
+                rec_type = 'Partial Reconcile'
+            to_compute = [(rec_type, [aml_obj])]
+        else:
+            to_compute = [('Reconcile', reconcile_obj.line_id), ('Partial Reconcile', reconcile_obj.line_partial_ids)]
+
+        model_id_tolog = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'account.move')])[0]
+        fct_id_tolog = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'account.move.line')])[0]
+        rule_obj = self.pool.get('audittrail.rule')
+
+        if delete:
+            old_value = rec_name or reconcile_obj.name
+            new_value = ''
+        else:
+            new_value = rec_name or reconcile_obj.name
+
+        user_id =  hasattr(uid, 'realUid') and uid.realUid or uid
+        for desc, amls in to_compute:
+            for aml in amls:
+                if not delete:
+                    old_value = previous.get(aml.id, '')
+
+                self.pool.get('audittrail.log.line').create(cr, uid, {
+                    'name': desc,
+                    'field_description': desc,
+                    'method': 'write',
+                    'object_id': model_id_tolog,
+                    'fct_object_id': fct_id_tolog,
+                    'user_id': user_id,
+                    'res_id': aml.move_id.id,
+                    'fct_res_id': aml.id,
+                    'log': rule_obj.get_sequence(cr, uid, 'account.move', aml.move_id.id, context=context),
+                    'old_value': old_value,
+                    'old_value_text': old_value,
+                    'new_value': new_value,
+                    'new_value_text': new_value,
+                    'other_column': aml.sequence_move,
+                    'sub_obj_name': aml.name,
+                }, context=context)
+
+        return True
 
 account_move_line()
 
@@ -489,6 +583,31 @@ class account_move_reconcile(osv.osv):
         """
         if not context:
             context = {}
+
+
+
+        # track changes: we need the old value, the previous reconcile if any
+
+        prev = {}
+        aml_ids = []
+
+        # use one2many codification (x,values) to get account.move.line tied to this new rec
+        # x=5 to delete existing links is ignored as we are in create mode
+        for rec_type in ['line_id', 'line_partial_ids']:
+            if vals.get(rec_type):
+                for x in vals.get(rec_type):
+                    if x[0] in (1, 2, 3, 4):
+                        aml_ids.append(x[1])
+                    elif x[0] == 6:
+                        aml_ids += x[2]
+
+        # get previous reconcile from _txt
+        if aml_ids:
+            cr.execute('select id, reconcile_txt from account_move_line where id in %s', (tuple(aml_ids),))
+            for x in cr.fetchall():
+                prev[x[0]] = x[1]
+
+
         res = super(account_move_reconcile, self).create(cr, uid, vals, context)
         if res:
             tmp_res = res
@@ -502,9 +621,20 @@ class account_move_reconcile(osv.osv):
                 if d and d[0] and d[0][1]:
                     name = d[0][1]
                 if p or t:
-                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"
+                    self.pool.get('account.move.line').log_reconcile(cr, uid, r, previous=prev, rec_name=name, context=context)
+                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"  # not_a_user_entry
                     cr.execute(sql, (name, tuple(p+t)))
         return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for rec in self.browse(cr, uid, list(set(ids)), fields_to_fetch=['name', 'line_id', 'line_partial_ids'], context=context):
+            self.pool.get('account.move.line').log_reconcile(cr, uid, rec, delete=True, context=context)
+
+        return super(account_move_reconcile, self).unlink(cr, uid, ids, context=context)
+
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -526,60 +656,9 @@ class account_move_reconcile(osv.osv):
                 if d and d[0] and d[0][1]:
                     name = d[0][1]
                 if p or t:
-                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"
+                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"  # not_a_user_entry
                     cr.execute(sql, (name, tuple(p+t)))
         return res
-
-    def reset_addendum_line(self, cr, uid, fxa_line_ids, context):
-        '''
-        For each addendum line in parameter, put the amount back to 0.0 for:
-        - the addendum line and its counterpart (JIs)
-        - the related AJI
-        '''
-        aml_obj = self.pool.get('account.move.line')
-        for fxa_line in aml_obj.browse(cr, uid, fxa_line_ids, context=context, fields_to_fetch=['move_id']):
-            account_move_id = fxa_line.move_id.id
-            counterpart_id = aml_obj.search(cr, uid, [('move_id', '=', account_move_id), ('id', '!=', fxa_line.id)],
-                                            order='NO_ORDER', limit=1, context=context)
-            counterpart_id = counterpart_id and counterpart_id[0]
-            aji = counterpart_id and aml_obj.browse(cr, uid, counterpart_id, context=context,
-                                                    fields_to_fetch=['analytic_lines']).analytic_lines
-            aji_id = aji and aji[0].id
-            # reset the JIs
-            # We use an UPDATE in SQL instead of a "write" otherwise we'll end up with a value in functional
-            sql_ji = """
-                UPDATE account_move_line
-                SET debit_currency=0.0, credit_currency=0.0, amount_currency=0.0, debit=0.0, credit=0.0,
-                unreconcile_txt=reconcile_txt, unreconcile_date=reconcile_date,
-                reconcile_id=NULL, reconcile_txt='', reconcile_date=NULL
-                WHERE id IN %s;
-            """
-            cr.execute(sql_ji, (tuple([fxa_line.id, counterpart_id]),))
-            # reset the AJI
-            if aji_id:
-                sql_aji = """
-                UPDATE account_analytic_line
-                SET amount=0.0, amount_currency=0.0
-                WHERE id = %s;
-                """
-                cr.execute(sql_aji, (aji_id,))
-
-    def unlink(self, cr, uid, ids, context=None):
-        aml_obj = self.pool.get('account.move.line')
-        if context is None:
-            context = {}
-        if context.get('sync_update_execution'):
-            # US-1997 While synchronizing if there is an FXA line linked to the reconciliation about to be deleted,
-            # update the FXA line with the amount "0.0" (don't delete it to avoid gaps in FX entry sequences).
-            # (Cover the use case where balanced entries from an instance are reconciled in an upper instance,
-            # sync is done in the upper instance, entries are unreconciled in the upper instance, sync is done in the
-            # upper instance and only then sync is done in the lower instance
-            # ==> it wrongly creates an FXA line in the lower instance with the amount of one of the legs)
-            fxa_line_ids = aml_obj.search(cr, uid, [('reconcile_id', '=', ids), ('is_addendum_line', '=', True)],
-                                          context=context, order='NO_ORDER')
-            if fxa_line_ids:
-                self.reset_addendum_line(cr, uid, fxa_line_ids, context)
-        return super(account_move_reconcile, self).unlink(cr, uid, ids, context=context)
 
 account_move_reconcile()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

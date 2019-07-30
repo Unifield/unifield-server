@@ -26,21 +26,14 @@
     "author" : "MSF, TeMPO Consulting",
     "developer": "pam",
     "category" : "Generic Modules/Inventory Control",
-    "depends" : ["sale", "purchase", "stock", 
-                 "partner_modification", "sourcing", 
+    "depends" : ["sale", "purchase", "stock",
+                 "partner_modification", "sourcing",
                  "msf_order_date", "supplier_catalogue",],
     "init_xml" : [],
     "demo_xml" : [],
     "description": """
     Add sourcing specification
     """,
-    'test': ['test/tender_flow.yml',
-             'test/deactivate_product_rfq_draft.yml',
-             'test/deactivate_product_sent_rfq.yml',
-             'test/deactivate_product_send_rfq.yml',
-             'test/deactivate_product_tender_draft.yml',
-             'test/deactivate_product_tender_gen_rfq.yml',
-             ],
     'update_xml': [
         'security/ir.model.access.csv',
         'tender_flow_sequence.xml',
@@ -49,6 +42,7 @@
         'report/purchase_report_view.xml',
         'board_purchase_view.xml',
         'tender_flow_report.xml',
+        'audittrail_data_tender.yml',
     ],
     'installable': True,
 }

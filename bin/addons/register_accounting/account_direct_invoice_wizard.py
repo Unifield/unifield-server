@@ -46,71 +46,71 @@ class account_direct_invoice_wizard(osv.osv_memory):
         return res
 
     _columns = {
-            'account_id': fields.many2one('account.account', 'Account',
-                required=True,
-                states={'draft':[('readonly', False)]},
-                help="The partner account used for this invoice."),
-            'address_contact_id': fields.many2one('res.partner.address',
-                'Contact Address',
-                states={'draft':[('readonly',False)]}),
-            'address_invoice_id': fields.many2one('res.partner.address',
-                'Invoice Address', required=False),
-            'amount_total': fields.float('Total',
-                digits_compute=dp.get_precision('Account'), readonly=True),
-            'analytic_distribution_id':
+        'account_id': fields.many2one('account.account', 'Account',
+                                      required=True,
+                                      states={'draft':[('readonly', False)]},
+                                      help="The partner account used for this invoice."),
+        'address_contact_id': fields.many2one('res.partner.address',
+                                              'Contact Address',
+                                              states={'draft':[('readonly',False)]}),
+        'address_invoice_id': fields.many2one('res.partner.address',
+                                              'Invoice Address', required=False),
+        'amount_total': fields.float('Total',
+                                     digits_compute=dp.get_precision('Account'), readonly=True),
+        'analytic_distribution_id':
             fields.many2one('analytic.distribution', 'Analytic Distribution',
-                select="1"),
+                            select="1"),
             'check_total': fields.float('Total',
-                digits_compute=dp.get_precision('Account'),
-                states={'open':[('readonly', True)],
-                        'close':[('readonly', True)],
-                        'paid':[('readonly', True)]}),
+                                        digits_compute=dp.get_precision('Account'),
+                                        states={'open':[('readonly', True)],
+                                                'close':[('readonly', True)],
+                                                'paid':[('readonly', True)]}),
             'comment': fields.text('Additional Information'),
             'company_id': fields.many2one('res.company', 'Company',
-                required=True, change_default=True,
-                states={'draft':[('readonly',False)]}),
+                                          required=True, change_default=True,
+                                          states={'draft':[('readonly',False)]}),
             'create_date': fields.datetime('Created', readonly=True),
             'currency_id': fields.many2one('res.currency', string="Currency"),
             'date_invoice': fields.date('Posting Date', select=True),
             'document_date': fields.date('Document date'),
             'invoice_wizard_line': fields.one2many('account.direct.invoice.wizard.line',
-                'invoice_wizard_id', 'Invoice Wizard Lines',
-                states={'draft':[('readonly',False)]}),
+                                                   'invoice_wizard_id', 'Invoice Wizard Lines',
+                                                   states={'draft':[('readonly',False)]}),
             'is_direct_invoice': fields.boolean("Is direct invoice?",
-                readonly=True, default=True),
+                                                readonly=True, default=True),
             'journal_id': fields.many2one('account.journal', 'Journal',
-                required=True, readonly=True),
+                                          required=True, readonly=True),
             'name': fields.char('Description', size=64, select=True,
-                readonly=True, states={'draft':[('readonly',False)]}),
+                                readonly=True, states={'draft':[('readonly',False)]}),
             'number': fields.related('move_id','name', type='char',
-                readonly=True, size=64, relation='account.move', store=True,
-                string='Number'),
+                                     readonly=True, size=64, relation='account.move', store=True,
+                                     string='Number'),
             'origin': fields.char('Source Document', size=512,
-                help="Referencie of the document that produced this invoice.",
-                readonly=True, states={'draft':[('readonly',False)]}),
+                                  help="Referencie of the document that produced this invoice.",
+                                  readonly=True, states={'draft':[('readonly',False)]}),
             'original_invoice_id': fields.many2one('account.invoice', 'Original Invoice'),
             'partner_id': fields.many2one('res.partner', 'Partner',
-                change_default=True, required=True),
+                                          change_default=True, required=True),
             'partner_bank_id': fields.many2one('res.partner.bank',
                                                'Bank Account',
-                    help='Bank Account Number, Company bank account if '
-                    'Invoice is customer or supplier refund, otherwise '
-                    'Partner bank account number.', readonly=True,
-                            states={'draft':[('readonly',False)]}),
+                                               help='Bank Account Number, Company bank account if '
+                                               'Invoice is customer or supplier refund, otherwise '
+                                               'Partner bank account number.', readonly=True,
+                                               states={'draft':[('readonly',False)]}),
             'payment_term': fields.many2one('account.payment.term',
-                'Payment Term', states={'draft':[('readonly',False)]},
-                help="If you use payment terms, the due date will be computed "
-                "automatically at the generation of accounting entries. If you"
-                " keep the payment term and the due date empty, it means "
-                "direct payment. The payment term may compute several due "
-                "dates, for example 50% now, 50% in one month."),
+                                            'Payment Term', states={'draft':[('readonly',False)]},
+                                            help="If you use payment terms, the due date will be computed "
+                                            "automatically at the generation of accounting entries. If you"
+                                            " keep the payment term and the due date empty, it means "
+                                            "direct payment. The payment term may compute several due "
+                                            "dates, for example 50% now, 50% in one month."),
             'reference': fields.char('Invoice Reference', size=64,
-                help="The partner reference of this invoice."),
+                                     help="The partner reference of this invoice."),
             'register_posting_date': fields.date(string=\
-                    "Register posting date for Direct Invoice", required=False),
+                                                 "Register posting date for Direct Invoice", required=False),
             'register_id': fields.many2one('account.bank.statement', 'Register', readonly=True),
             'register_line_id': fields.many2one('account.bank.statement.line',
-                    'Register Line', readonly=True),
+                                                'Register Line', readonly=True),
             'user_id': fields.many2one('res.users', 'Salesman'),
             'state': fields.selection([
                 ('draft','Draft'),
@@ -119,14 +119,14 @@ class account_direct_invoice_wizard(osv.osv_memory):
                 ('open','Open'),
                 ('paid','Paid'),
                 ('cancel','Cancelled')
-                ],'State', select=True, readonly=True,),
-            'type': fields.selection([
-                ('out_invoice','Customer Invoice'),
-                ('in_invoice','Supplier Invoice'),
-                ('out_refund','Customer Refund'),
-                ('in_refund','Supplier Refund'),
-                ],'Type', readonly=True, select=True, change_default=True),
-            }
+            ],'State', select=True, readonly=True,),
+        'type': fields.selection([
+            ('out_invoice','Customer Invoice'),
+            ('in_invoice','Supplier Invoice'),
+            ('out_refund','Customer Refund'),
+            ('in_refund','Supplier Refund'),
+        ],'Type', readonly=True, select=True, change_default=True),
+    }
 
     _defaults = {
         'register_id': False,
@@ -152,7 +152,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
             # delete analytic_distribution linked to this wizard
             if obj.analytic_distribution_id:
                 analytic_distribution.unlink(cr, uid,
-                        obj.analytic_distribution_id.id)
+                                             obj.analytic_distribution_id.id)
         return super(account_direct_invoice_wizard, self).unlink(cr, uid, ids)
 
     def compute_wizard(self, cr, uid, ids, context=None):
@@ -176,13 +176,16 @@ class account_direct_invoice_wizard(osv.osv_memory):
             for l in w.invoice_wizard_line:
                 if l.analytic_distribution_state != 'valid':
                     raise osv.except_osv(_('Warning'),
-                            _('Analytic distribution is not valid for this line: %s') % (l.name or '',))
+                                         _('Analytic distribution is not valid for this line: %s') % (l.name or '',))
         return True
 
     def invoice_create_wizard(self, cr, uid, ids, context=None):
         """
         Take information from wizard in order to create an invoice, invoice lines and to post a register line that permit to reconcile the invoice.
         """
+        if context is None:
+            context = {}
+
         self.check_analytic_distribution(cr, uid, ids)
 
         # Prepare some value
@@ -199,7 +202,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
 
         if invoice and invoice.state != 'draft':
             raise osv.except_osv(_('Error'), _('The invoice cannot be modified'
-                ' as it is in %s state (should be draft).') % (invoice.state))
+                                               ' as it is in %s state (should be draft).') % (invoice.state))
 
         vals = {}
         inv = self.read(cr, uid, ids[0], [])
@@ -216,7 +219,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
         amount = 0
         if inv['invoice_wizard_line']:
             for line in wiz_line_obj.browse(cr, uid,
-                    inv['invoice_wizard_line']):
+                                            inv['invoice_wizard_line']):
                 # line level reference overrides header level reference
                 line_reference = False
                 if line.reference:
@@ -224,19 +227,19 @@ class account_direct_invoice_wizard(osv.osv_memory):
                 elif inv['reference']:
                     line_reference = inv['reference']
                 vals['invoice_line'].append((line.original_invoice_line_id.id,
-                    {
-                        'product_id': line.product_id.id,
-                        'account_id': line.account_id.id,
-                        'account_analytic_id': line.account_analytic_id.id,
-                        'analytic_distribution_id': line.analytic_distribution_id.id,
-                        'quantity': line.quantity,
-                        'invoice_id': vals['original_invoice_id'],
-                        'price_unit': line.price_unit,
-                        'name': line.name,
-                        'uos_id': line.uos_id.id,
-                        'reference': line_reference,
-                    })
-                )
+                                             {
+                                                 'product_id': line.product_id.id,
+                                                 'account_id': line.account_id.id,
+                                                 'account_analytic_id': line.account_analytic_id.id,
+                                                 'analytic_distribution_id': line.analytic_distribution_id.id,
+                                                 'quantity': line.quantity,
+                                                 'invoice_id': vals['original_invoice_id'],
+                                                 'price_unit': line.price_unit,
+                                                 'name': line.name,
+                                                 'uos_id': line.uos_id.id,
+                                                 'reference': line_reference,
+                                             })
+                                            )
                 amount += line.price_subtotal
 
         # Retrieve period
@@ -248,7 +251,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
                vals['date_invoice'] > register.period_id.date_stop:
                 raise osv.except_osv(_('Warning'), _('Direct Invoice posting date is outside of the register period!'))
             elif vals['register_posting_date'] < register.period_id.date_start or \
-                 vals['register_posting_date'] > register.period_id.date_stop:
+                    vals['register_posting_date'] > register.period_id.date_stop:
                 raise osv.except_osv(_('Warning'), _('Register Line posting date is outside of the register period!'))
             elif vals['date_invoice'] > vals['register_posting_date']:
                 raise osv.except_osv(_('Warning'), _('Direct Invoice posting date must be sooner or equal to the register line posting date!'))
@@ -264,11 +267,13 @@ class account_direct_invoice_wizard(osv.osv_memory):
         vals_copy = vals.copy()
         # invoice lines are processed just after
         vals_copy.pop('invoice_line')
+        context.update({'skip_ad_date_check': True})
         inv_obj.write(cr, uid, [inv_id], vals_copy, context)
+        del context['skip_ad_date_check']
 
         # get line id list
         invl_id_list = [x.id for x in wiz_obj.browse(cr, uid, ids,
-                context)[0].original_invoice_id.invoice_line]
+                                                     context)[0].original_invoice_id.invoice_line]
 
         # update the invoice lines
         not_deleted_id_list = []
@@ -280,7 +285,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
                 orig_line = invl_obj.browse(cr, uid, original_line_id, context)
                 if orig_line.analytic_distribution_id:
                     analytic_distribution.unlink(cr, uid,
-                            orig_line.analytic_distribution_id.id)
+                                                 orig_line.analytic_distribution_id.id)
                 not_deleted_id_list.append(original_line_id)
                 invl_obj.write(cr, uid, [original_line_id], vals_dict, context)
             else:
@@ -299,10 +304,10 @@ class account_direct_invoice_wizard(osv.osv_memory):
         for l in invoice.invoice_line:
             amount += l.price_subtotal
         inv_obj.write(cr, uid, [inv_id],
-                {'check_total': amount,
-                 'is_direct_invoice': True,
-                 'register_line_ids': [(4, vals['register_line_id'])]},
-                context)
+                      {'check_total': amount,
+                       'is_direct_invoice': True,
+                       'register_line_ids': [(4, vals['register_line_id'])]},
+                      context)
         absl_obj.write(cr, uid, [x.id for x in invoice.register_line_ids], {'amount': -1 * amount}, context)
 
         # Update the attached register line and link the invoice to the register
@@ -311,8 +316,8 @@ class account_direct_invoice_wizard(osv.osv_memory):
             'account_id': vals['account_id'],
             'currency_id': vals['currency_id'],
             'date': _get_date_in_period(self, cr, uid,
-                vals['register_posting_date'] or\
-                        time.strftime('%Y-%m-%d'), period, context=context),
+                                        vals['register_posting_date'] or\
+                                        time.strftime('%Y-%m-%d'), period, context=context),
             'document_date': vals['document_date'],
             'direct_invoice': True,
             'amount_out': amount,
@@ -327,7 +332,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
         # set analytic_ditribution to None on the wizard line not to
         # delete it when the wizard will be deleted
         wiz_line_obj.write(cr, uid, inv['invoice_wizard_line'],
-                {'analytic_distribution_id': None})
+                           {'analytic_distribution_id': None})
         # Delete the wizard lines:
         wiz_line_obj.unlink(cr, uid, inv['invoice_wizard_line'], context=context)
 
@@ -362,7 +367,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
             'state': 'draft',
             'analytic_distribution_id': False,
             'document_date': time.strftime('%Y-%m-%d'),
-            })
+        })
         return True
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
@@ -406,14 +411,14 @@ class account_direct_invoice_wizard(osv.osv_memory):
         })
         # Open it!
         return {
-                'name': _('Global analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Global analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def button_reset_distribution(self, cr, uid, ids, context=None):
@@ -433,15 +438,15 @@ class account_direct_invoice_wizard(osv.osv_memory):
         return True
 
     def onchange_partner_id(self, cr, uid, ids, ctype, partner_id,\
-                    date_invoice=False, payment_term=False,
-                    partner_bank_id=False, company_id=False,
-                    is_inkind_donation=False, is_intermission=False,
-                    is_debit_note=False, is_direct_invoice=False):
+                            date_invoice=False, payment_term=False,
+                            partner_bank_id=False, company_id=False,
+                            is_inkind_donation=False, is_intermission=False,
+                            is_debit_note=False, is_direct_invoice=False):
         # just call the original method from account.invoice
         return self.pool.get('account.invoice').onchange_partner_id(cr, uid, [],
-                ctype, partner_id, date_invoice, payment_term, partner_bank_id,
-                company_id, is_inkind_donation, is_intermission, is_debit_note,
-                True)
+                                                                    ctype, partner_id, date_invoice, payment_term, partner_bank_id,
+                                                                    company_id, is_inkind_donation, is_intermission, is_debit_note,
+                                                                    True)
 
 account_direct_invoice_wizard()
 
@@ -467,20 +472,17 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         res = {}
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
-            if line.from_yml_test:
-                res[line.id] = 'valid'
-            else:
-                # UF-2115: test for elements
-                line_distribution_id = False
-                invoice_distribution_id = False
-                line_account_id = False
-                if line.analytic_distribution_id:
-                    line_distribution_id = line.analytic_distribution_id.id
-                if line.invoice_wizard_id and line.invoice_wizard_id.analytic_distribution_id:
-                    invoice_distribution_id = line.invoice_wizard_id.analytic_distribution_id.id
-                if line.account_id:
-                    line_account_id = line.account_id.id
-                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distribution_id, invoice_distribution_id, line_account_id)
+            # UF-2115: test for elements
+            line_distribution_id = False
+            invoice_distribution_id = False
+            line_account_id = False
+            if line.analytic_distribution_id:
+                line_distribution_id = line.analytic_distribution_id.id
+            if line.invoice_wizard_id and line.invoice_wizard_id.analytic_distribution_id:
+                invoice_distribution_id = line.invoice_wizard_id.analytic_distribution_id.id
+            if line.account_id:
+                line_account_id = line.account_id.id
+            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distribution_id, invoice_distribution_id, line_account_id)
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
@@ -551,9 +553,9 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         for line in self.browse(cr, uid, ids):
             price = line.price_unit * (1-(line.discount or 0.0)/100.0)
             taxes = tax_obj.compute_all(cr, uid, line.invoice_line_tax_id,
-                    price, line.quantity, product=line.product_id,
-                    address_id=line.invoice_wizard_id.address_invoice_id,
-                    partner=line.invoice_wizard_id.partner_id)
+                                        price, line.quantity, product=line.product_id,
+                                        address_id=line.invoice_wizard_id.address_invoice_id,
+                                        partner=line.invoice_wizard_id.partner_id)
             res[line.id] = taxes['total']
             if line.invoice_wizard_id:
                 cur = line.invoice_wizard_id.currency_id
@@ -562,72 +564,70 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
 
     _columns = {
         'move_id': fields.many2one('account.move', 'Journal Entry',
-            readonly=True, select=1, ondelete='restrict',
-            help="Link to the automatically generated Journal Items."),
+                                   readonly=True, select=1, ondelete='restrict',
+                                   help="Link to the automatically generated Journal Items."),
         'analytic_distribution_id': fields.many2one('analytic.distribution',
-            'Analytic Distribution', select="1"),
+                                                    'Analytic Distribution', select="1"),
         'analytic_distribution_state': fields.function(_get_distribution_state,
-            method=True, type='selection',
-                        selection=[('none', 'None'),
-                            ('valid', 'Valid'),
-                            ('invalid', 'Invalid')],
-            string="Distribution state",
-            help="Informs from distribution state among 'none',"
-                 " 'valid', 'invalid."),
+                                                       method=True, type='selection',
+                                                       selection=[('none', 'None'),
+                                                                  ('valid', 'Valid'),
+                                                                  ('invalid', 'Invalid')],
+                                                       string="Distribution state",
+                                                       help="Informs from distribution state among 'none',"
+                                                       " 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap,
-            method=True, type='char', size=30,
-            string="Distribution",
-            help="Informs you about analaytic distribution state among 'none',"
-            " 'valid', 'invalid', from header or not, or no analytic distribution"),
+                                                             method=True, type='char', size=30,
+                                                             string="Distribution",
+                                                             help="Informs you about analaytic distribution state among 'none',"
+                                                             " 'valid', 'invalid', from header or not, or no analytic distribution"),
         'create_date': fields.datetime('Created', readonly=True),
-        'from_yml_test': fields.boolean('Only used to pass addons unit test',
-            readonly=True, help='Never set this field to true !'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header,
-            method=True, type='boolean', string='Header Distrib.?'),
+                                                                  method=True, type='boolean', string='Header Distrib.?'),
         'inactive_product': fields.function(_get_inactive_product, method=True,
-            type='boolean', string='Product is inactive', store=False,
-            multi='inactive'),
+                                            type='boolean', string='Product is inactive', store=False,
+                                            multi='inactive'),
         'invoice_wizard_id': fields.many2one('account.direct.invoice.wizard',
-            'Invoice Wizard',
-            ondelete='cascade', select=True),
+                                             'Invoice Wizard',
+                                             ondelete='cascade', select=True),
         'is_allocatable': fields.function(_get_is_allocatable, method=True,
-            type='boolean', string="Is allocatable?", readonly=True, store=False),
+                                          type='boolean', string="Is allocatable?", readonly=True, store=False),
         'reference': fields.char(string="Reference", size=64),
         'name': fields.char('Description', size=256, required=True),
         'origin': fields.char('Origin', size=512,
-            help="Reference of the document that produced this invoice."),
+                              help="Reference of the document that produced this invoice."),
         'uos_id': fields.many2one('product.uom', 'Unit of Measure',
-            ondelete='set null'),
+                                  ondelete='set null'),
         'original_invoice_line_id': fields.many2one('account.invoice.line',
-            'Original Invoice Line'),
+                                                    'Original Invoice Line'),
         'product_id': fields.many2one('product.product', 'Product',
-            ondelete='set null'),
+                                      ondelete='set null'),
         'account_id': fields.many2one('account.account', 'Account',
-            required=True, domain=[('type','<>','view'), ('type', '<>',
-                'closed')],
-            help="The income or expense account related to the selected product."),
+                                      required=True, domain=[('type','<>','view'), ('type', '<>',
+                                                                                    'closed')],
+                                      help="The income or expense account related to the selected product."),
         'price_unit': fields.float('Unit Price', required=True,
-            digits_compute=dp.get_precision('Account')),
+                                   digits_compute=dp.get_precision('Account')),
         'price_subtotal': fields.function(_amount_line, method=True,
-            string='Subtotal', type="float",
-            digits_compute=dp.get_precision('Account'), store=False),
+                                          string='Subtotal', type="float",
+                                          digits_compute=dp.get_precision('Account'), store=False),
         'quantity': fields.float('Quantity', required=True),
         'discount': fields.float('Discount (%)',
-            digits_compute=dp.get_precision('Account')),
+                                 digits_compute=dp.get_precision('Account')),
         'invoice_line_tax_id': fields.many2many('account.tax',
-            'account_invoice_line_tax', 'invoice_line_id', 'tax_id', 'Taxes',
-            domain=[('parent_id','=',False)]),
+                                                'account_invoice_line_tax', 'invoice_line_id', 'tax_id', 'Taxes',
+                                                domain=[('parent_id','=',False)]),
         'note': fields.text('Notes'),
         'account_analytic_id':  fields.many2one('account.analytic.account',
-            'Analytic Account'),
+                                                'Analytic Account'),
         'company_id': fields.related('invoice_wizard_id','company_id',type='many2one',
-            relation='res.company', string='Company', store=True, readonly=True),
+                                     relation='res.company', string='Company', store=True, readonly=True),
         'partner_id': fields.related('invoice_wizard_id','partner_id',type='many2one',
-            relation='res.partner', string='Partner',store=True),
+                                     relation='res.partner', string='Partner',store=True),
         'inactive_error': fields.function(_get_inactive_product, method=True,
-                type='char', string='Comment', store=False, multi='inactive'),
+                                          type='char', string='Comment', store=False, multi='inactive'),
         'newline': fields.boolean('New line'),
-            }
+    }
 
     _defaults = {
         'quantity': lambda *x: 1,
@@ -650,13 +650,8 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
             # delete analytic_distribution linked to this wizard
             if obj.analytic_distribution_id:
                 analytic_distribution.unlink(cr, uid,
-                        obj.analytic_distribution_id.id)
+                                             obj.analytic_distribution_id.id)
         return super(account_direct_invoice_wizard_line, self).unlink(cr, uid, ids)
-
-    def onchange_account_id(self, cr, uid, ids, fposition_id, account_id):
-        # just call the original method from account.invoice.line
-        return self.pool.get('account.invoice.line').onchange_account_id(cr, uid, ids,
-                fposition_id, account_id)
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
@@ -669,16 +664,16 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
             ids = [ids]
         if not ids:
             raise osv.except_osv(_('Error'), _('No invoice line given. '
-                'Please save your invoice line before.'))
+                                               'Please save your invoice line before.'))
         # Prepare some values
         invoice_line = self.browse(cr, uid, ids[0], context=context)
         negative_inv = False
         amount = invoice_line.price_subtotal or 0.0
         # Search elements for currency
         company_currency = self.pool.get('res.users').browse(cr, uid, uid,
-                context=context).company_id.currency_id.id
+                                                             context=context).company_id.currency_id.id
         currency = invoice_line.invoice_wizard_id.currency_id and \
-                invoice_line.invoice_wizard_id.currency_id.id or company_currency
+            invoice_line.invoice_wizard_id.currency_id.id or company_currency
         # Change amount sign if necessary
         if invoice_line.invoice_wizard_id.type in ['out_invoice', 'in_refund']:
             negative_inv = True
@@ -686,7 +681,7 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
             amount = -1 * amount
         # Get analytic distribution id from this line
         distrib_id = invoice_line and invoice_line.analytic_distribution_id and\
-                invoice_line.analytic_distribution_id.id or False
+            invoice_line.analytic_distribution_id.id or False
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
@@ -709,22 +704,22 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         })
         # Open it!
         return {
-                'name': _('Analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def product_id_change(self, cr, uid, ids, product, uom, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, address_invoice_id=False, currency_id=False, context=None):
         # just call the original method from account.invoice.line
         return self.pool.get('account.invoice.line').product_id_change(cr, uid, ids,
-        product, uom, qty=qty, name=name, type=type, partner_id=partner_id,
-        fposition_id=fposition_id, price_unit=price_unit,
-        address_invoice_id=address_invoice_id, currency_id=currency_id,
-        context=context)
+                                                                       product, uom, qty=qty, name=name, type=type, partner_id=partner_id,
+                                                                       fposition_id=fposition_id, price_unit=price_unit,
+                                                                       address_invoice_id=address_invoice_id, currency_id=currency_id,
+                                                                       context=context)
 
 account_direct_invoice_wizard_line()

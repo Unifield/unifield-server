@@ -2,14 +2,6 @@
 <openerp>
     <data noupdate="0">
 
-        <!-- INCOTERM -->
-        <delete model="stock.incoterms" id="stock.incoterm_FCA" />
-        <delete model="stock.incoterms" id="stock.incoterm_DAS" />
-        <delete model="stock.incoterms" id="stock.incoterm_DAF" />
-        <delete model="stock.incoterms" id="stock.incoterm_FAS" />
-        <delete model="stock.incoterms" id="stock.incoterm_DES" />
-        <delete model="stock.incoterms" id="stock.incoterm_DEQ" />
-
         <record id="stock.incoterm_EXW" model="stock.incoterms">
           <field name="name">Ex Works (named place of delivery)</field>
           <field name="code">EXW</field>

@@ -1,0 +1,329 @@
+<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+  <Author>MSFUser</Author>
+  <LastAuthor>Sarah BARDAG</LastAuthor>
+  <Created>2012-06-18T15:46:09Z</Created>
+  <Company>Medecins Sans Frontieres</Company>
+  <Version>14.00</Version>
+ </DocumentProperties>
+ <OfficeDocumentSettings xmlns="urn:schemas-microsoft-com:office:office">
+  <AllowPNG/>
+ </OfficeDocumentSettings>
+ <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">
+  <WindowHeight>12540</WindowHeight>
+  <WindowWidth>18720</WindowWidth>
+  <WindowTopX>270</WindowTopX>
+  <WindowTopY>540</WindowTopY>
+  <ProtectStructure>False</ProtectStructure>
+  <ProtectWindows>False</ProtectWindows>
+ </ExcelWorkbook>
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="m67344800">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+   <Interior ss:Color="#FFCC99" ss:Pattern="Solid"/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s62">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+   <Interior ss:Color="#FFCC99" ss:Pattern="Solid"/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s63">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection ss:Protected="0"/>
+  </Style>
+  <Style ss:ID="s64">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat ss:Format="Short Date"/>
+   <Protection ss:Protected="0"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="PO00006">
+  <Table ss:ExpandedRowCount="27" x:FullColumns="1"
+   x:FullRows="1" ss:DefaultRowHeight="15">
+   <Column ss:Width="120"/>
+   <Column ss:Width="300"/>
+   <Column ss:Width="60" ss:Span="13"/>
+   <Column ss:Index="17" ss:Width="249.75"/>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Order Reference*</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{PO_REF_COO}}</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Order Type</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Regular</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Order Category</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Other</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Creation Date</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-11T00:00:00.000</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Supplier Reference</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Details</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="30">
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Delivery Requested Date</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-12T00:00:00.000</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Transport mode</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">RTS Date</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Address name</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Address street</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Rue de Lausanne 78</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Address street 2</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">CP 116</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Zip</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">1211</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">City</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Geneva</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Country</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Switzerland</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Shipment Date</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Notes</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Origin</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Project Ref.</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Message ESC Header</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:MergeDown="1" ss:StyleID="m67344800"><Data ss:Type="String">Analytic Distribution</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Destination</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Cost Center</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">%</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Subtotal</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="2" ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Line number</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Ext. Ref.</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Product Code*</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Product Description</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Product Qty*</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Product UoM*</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Price Unit*</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Currency*</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Origin*</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Delivery requested date</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Delivery confirmed date*</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Nomen Name</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Nomen Group</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Nomen Family</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Comment</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Notes</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Project Ref</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">ESC Message 1</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">ESC Message 2</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Destination</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Cost Center</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">%</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Subtotal</Data></Cell>
+   </Row>
+   <Row ss:Height="75">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">1</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">ADAPCOLABAG</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">(laptop computer) CARRYING BAG</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">20</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">27.880849999999999</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">SUP</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">HT111</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">100</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">557.62</Data></Cell>
+   </Row>
+   <Row ss:Height="75">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">2</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">ADAPMOUSOUS</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">MOUSE, optical, USB port</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">15</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">7.5</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">SUP</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">HT111</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">100</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">760.64</Data></Cell>
+   </Row>
+   <Row ss:Height="75">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">3</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">ADAPDCDRB&#45;-</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">DISK, CD-R (recordable), data, cakebox of 25</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">20</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">0.32191999999999998</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:Index="15" ss:StyleID="s63"><Data ss:Type="String">[DELETE]</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">SUP</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">HT111</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">100</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">6.44</Data></Cell>
+   </Row>
+   <Row ss:Height="75">
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">EXTRA</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">ADAPKBDAUSB</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">KEYBOARD, AZERTY, external, USB</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">25</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">20.100000000000001</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">SUP</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">HT111</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">100</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">6.44</Data></Cell>
+   </Row>
+  </Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <Selected/>
+   <TopRowVisible>14</TopRowVisible>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+     <ActiveRow>25</ActiveRow>
+     <ActiveCol>15</ActiveCol>
+    </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+   <EnableSelection>UnlockedCells</EnableSelection>
+   <AllowInsertRows/>
+  </WorksheetOptions>
+ </Worksheet>
+</Workbook>

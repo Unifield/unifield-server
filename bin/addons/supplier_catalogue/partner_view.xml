@@ -29,7 +29,6 @@
             </field>
         </record>
 
-        <delete id="action_new_catalogue_supplier" model="ir.actions.act_window" />
         <record id="action_create_new_catalogue" model="ir.actions.server">
             <field name="name">New Catalogue</field>
             <field name="model_id" ref="model_supplier_catalogue"/>

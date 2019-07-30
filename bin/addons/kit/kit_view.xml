@@ -410,54 +410,7 @@
 		<menuitem action="kit_composition_real_action" id="kit_composition_real_menu" parent="kit_real" sequence="1" />
 		<menuitem action="kit_composition_real_item_action" id="kit_composition_real_item_menu" parent="kit_real" sequence="10" />
 		
-		<record id="purchase_order_form" model="ir.ui.view">
-            <field name="name">purchase.order.form</field>
-            <field name="model">purchase.order</field>
-			<field name="type">form</field>
-			<field name="inherit_id" ref="purchase.purchase_order_form" />
-            <field name="priority">20</field>
-			<field name="arch" type="xml">
-				<data>
-					<field name="price_subtotal" position="after">
-						<field name="kit_pol_check" invisible="True" />
-						<field name="po_state_stored" invisible="True" />
-						<button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check', '=', False), ('po_state_stored', '!=', 'confirmed')]}" />
-					</field>
-				</data>
-			</field>
-		</record>
 		
-        <record id="view_order_form_inherit" model="ir.ui.view">
-            <field name="name">sale.order.form.inherit</field>
-            <field name="model">sale.order</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="sale.view_order_form"/>
-            <field name="priority" eval="4"/>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']/tree/field[@name='price_subtotal']" position="after">
-                    	<field name="kit_pol_check_sale_order_line" invisible="True" />
-                    	<field name="so_state_stored" invisible="True" />
-                        <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check_sale_order_line', '=', False), ('so_state_stored', 'not in', ['draft', 'validated'])]}" />
-                    </xpath>
-                </data>
-            </field>
-        </record>
-		
-		<record id="purchase_order_line_form_view" model="ir.ui.view">
-            <field name="name">purchase.order.line.form.view</field>
-            <field name="model">purchase.order.line</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="purchase.purchase_order_line_form" />
-            <field name="priority">20</field>
-            <field name="arch" type="xml">
-            	<data>
-	                <field name="company_id" position="after">
-						<button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" colspan="2" invisible="True" />
-					</field>
-                </data>
-            </field>
-        </record>
     	
     </data>
 </openerp>

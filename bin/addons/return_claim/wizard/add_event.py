@@ -21,17 +21,15 @@
 
 from osv import fields, osv
 from tools.translate import _
-import decimal_precision as dp
 import time
 
-import netsvc
 
 class add_event(osv.osv_memory):
     '''
     wizard called to confirm an action
     '''
     _name = "add.event"
-    
+
     def _get_types(self, cr, uid, context=None):
         '''
         filter available types according to existing events
@@ -44,7 +42,7 @@ class add_event(osv.osv_memory):
             return []
         available_list = context['data'][claim_id]['list']
         return available_list
-    
+
     def _vals_get_claim(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -58,32 +56,32 @@ class add_event(osv.osv_memory):
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             dest_loc_id = self.pool.get('claim.event').get_location_for_event_type(cr, uid, context=context,
-                                                           event_type=obj.event_type,
-                                                           claim_partner_id=obj.claim_partner_id.id,
-                                                           claim_type=obj.claim_type,
-                                                           claim_picking=obj.claim_id.picking_id_return_claim)
+                                                                                   event_type=obj.event_type,
+                                                                                   claim_partner_id=obj.claim_partner_id.id,
+                                                                                   claim_type=obj.claim_type,
+                                                                                   claim_picking=obj.claim_id.picking_id_return_claim)
             result[obj.id] = {'location_id_claim_event': dest_loc_id}
-            
+
         return result
-    
+
     _columns = {'claim_id': fields.many2one('return.claim', string='Claim', readonly=True),
                 'claim_type': fields.selection(lambda s, cr, uid, c: s.pool.get('return.claim').get_claim_type(), string='Claim Type', readonly=True),
                 'claim_partner_id': fields.many2one('res.partner', string='Claim Partner', readonly=True),
                 'claim_picking_id': fields.many2one('stock.picking', string='Claim Origin', readonly=True),
                 'creation_date': fields.date(string='Creation Date', required=True),
                 'event_type': fields.selection(_get_types, string='Event Type', required=True),
-                'replacement_picking_expected_partial_picking': fields.boolean(string='Replacement expected?'),
+                'replacement_picking_expected_partial_picking': fields.boolean(string='Replacement expected ?'),
                 # functions
                 'dest_location_id': fields.function(_vals_get_claim, method=True, string='Associated Location', type='many2one', relation='stock.location', readonly=True, multi='get_vals_claim'),
                 }
-    
+
     _defaults = {'claim_id': lambda s, cr, uid, c: c.get('claim_id', False),
                  'claim_type': lambda s, cr, uid, c: c.get('claim_type', False),
                  'claim_partner_id': lambda s, cr, uid, c: c.get('claim_partner_id', False),
                  'claim_picking_id': lambda s, cr, uid, c: c.get('claim_picking_id', False),
                  'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
                  }
-    
+
     def on_change_event_type(self, cr, uid, ids, event_type, claim_partner_id, claim_type, claim_picking_id, context=None):
         '''
         the event changes
@@ -117,7 +115,7 @@ class add_event(osv.osv_memory):
             if not obj.event_type:
                 raise osv.except_osv(_('Warning !'), _('You need to specify an event type.'))
             # reset replacement if not return
-            if obj.event_type != 'return':
+            if obj.event_type not in ('accept', 'scrap', 'return'):
                 replacement = False
             else:
                 replacement = obj.replacement_picking_expected_partial_picking
@@ -129,7 +127,7 @@ class add_event(osv.osv_memory):
                             'replacement_picking_expected_claim_event': replacement,
                             }
             # create event
-            event_id = event_obj.create(cr, uid, event_values, context=context)
+            event_obj.create(cr, uid, event_values, context=context)
 #        return {'type': 'ir.actions.act_window_close'}
         return {'type': 'ir.actions.act_window',
                 'res_model': 'return.claim',
@@ -138,5 +136,5 @@ class add_event(osv.osv_memory):
                 'res_id': claim_id,
                 'target': 'crunch',
                 'context': context}
-    
+
 add_event()

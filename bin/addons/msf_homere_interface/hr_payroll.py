@@ -42,9 +42,10 @@ class hr_payroll(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        ad_obj = self.pool.get('analytic.distribution')
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
                                                                         'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
@@ -57,13 +58,14 @@ class hr_payroll(osv.osv):
         # E/ DEST in list of available DEST in ACCOUNT
         # F/ Check posting date with cost center and destination if exists
         # G/ Check document date with funding pool
+        # H/ Check Cost Center / Destination compatibility
         ## CASES where FP is filled in (or not) and/or DEST is filled in (or not).
         ## CC is mandatory, so always available:
         # 1/ no FP, no DEST => Distro = valid
         # 2/ FP, no DEST => Check D except B
         # 3/ no FP, DEST => Check E
         # 4/ FP, DEST => Check C, D except B, E
-        ## 
+        ##
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = 'valid' # by default
             #### SOME CASE WHERE DISTRO IS OK
@@ -124,6 +126,11 @@ class hr_payroll(osv.osv):
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
                     continue
+            # H check
+            if line.destination_id and line.cost_center_id and \
+                    not ad_obj.check_dest_cc_compatibility(cr, uid, line.destination_id.id, line.cost_center_id.id, context=context):
+                res[line.id] = 'invalid'
+                continue
         return res
 
     def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -135,8 +142,6 @@ class hr_payroll(osv.osv):
             if line.employee_id:
                 res[line.id] = {'third_parties': 'hr.employee,%s' % line.employee_id.id}
                 res[line.id] = 'hr.employee,%s' % line.employee_id.id
-            elif line.journal_id:
-                res[line.id] = 'account.journal,%s' % line.transfer_journal_id.id
             elif line.partner_id:
                 res[line.id] = 'res.partner,%s' % line.partner_id.id
             else:
@@ -191,6 +196,21 @@ class hr_payroll(osv.osv):
             ])
         return to_update
 
+    def _has_third_party(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns True if the Payroll entry is linked to either an Employee or a Supplier
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for p in self.browse(cr, uid, ids, fields_to_fetch=['employee_id', 'partner_id'], context=context):
+            res[p.id] = False
+            if p.employee_id or p.partner_id:
+                res[p.id] = True
+        return res
+
     _columns = {
         'date': fields.date(string='Date', required=True, readonly=True),
         'document_date': fields.date(string='Document Date', required=True, readonly=True),
@@ -220,11 +240,12 @@ class hr_payroll(osv.osv):
                                           }
                                           ),
         'partner_type': fields.function(_get_third_parties, type='reference', method=True, string="Third Parties", readonly=True,
-                                        selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')]),
+                                        selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee')]),
         'field': fields.char(string='Field', readonly=True, size=255, help="Field this line come from in Homère."),
+        'has_third_party': fields.function(_has_third_party, method=True, type='boolean', string='Has a Third Party', store=True, readonly=True),
     }
 
-    _order = 'employee_id, date desc'
+    _order = 'has_third_party, employee_id, date desc'
 
     _defaults = {
         'date': lambda *a: strftime('%Y-%m-%d'),
@@ -277,7 +298,7 @@ class hr_payroll(osv.osv):
             fp_line = self.pool.get('account.analytic.account').browse(cr, uid, funding_pool_id)
             # Search MSF Private Fund element, because it's valid with all accounts
             try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
                                                                             'analytic_account_msf_private_funds')[1]
             except ValueError:
                 fp_id = 0
@@ -291,7 +312,7 @@ class hr_payroll(osv.osv):
         # Otherway: delete FP
         else:
             res = {'value': {'funding_pool_id': False}}
-        # If destination given, search if given 
+        # If destination given, search if given
         return res
 
     def create(self, cr, uid, vals, context=None):
@@ -312,5 +333,59 @@ class hr_payroll(osv.osv):
                 vals.update({'funding_pool_id': fp_id,})
         return super(osv.osv, self).create(cr, uid, vals, context)
 
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        In the B/S lines change the values of partner_id and employee_id according to the value of the partner_type field
+        """
+        if not ids:
+            return True
+        if context is None:
+            context = {}
+        if context.get('payroll_bs_lines'):
+            if 'partner_type' in vals:
+                employee_id = False
+                partner_id = False
+                if vals['partner_type']:
+                    p_model, p_id = tuple(vals['partner_type'].split(','))
+                    if p_model == 'hr.employee' and p_id:
+                        employee_id = p_id
+                    elif p_model == 'res.partner' and p_id:
+                        partner_id = p_id
+                vals.update({'employee_id': employee_id, 'partner_id': partner_id})
+        return super(hr_payroll, self).write(cr, uid, ids, vals, context=context)
+
+    def move_to_payroll_bs_lines(self, cr, uid, ids, context=None):
+        """
+        Checks the AD on the Payroll expense lines and returns a view with the Payroll B/S lines
+        """
+        if context is None:
+            context = {}
+        ir_model_obj = self.pool.get('ir.model.data')
+        payroll_obj = self.pool.get('hr.payroll.msf')
+        line_ids = payroll_obj.search(cr, uid, [('state', '=', 'draft')], order='NO_ORDER', context=context)
+        for line in payroll_obj.browse(cr, uid, line_ids, fields_to_fetch=['account_id', 'analytic_state'], context=context):
+            if line.account_id.is_analytic_addicted and line.analytic_state != 'valid':
+                raise osv.except_osv(_('Warning'), _('Some lines have analytic distribution problems!'))
+        view_id = ir_model_obj.get_object_reference(cr, uid, 'msf_homere_interface', 'view_payroll_bs_lines_tree')
+        view_id = view_id and view_id[1] or False
+        search_view_id = ir_model_obj.get_object_reference(cr, uid, 'msf_homere_interface', 'view_hr_payroll_msf_bs_filter')
+        search_view_id = search_view_id and search_view_id[1] or False
+        domain = [('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', False)]
+        context.update({'payroll_bs_lines': True})
+        return {
+            'name': _('Payroll B/S lines'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.payroll.msf',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': [search_view_id],
+            'context': context,
+            'domain': domain,
+            'target': 'self',  # don't open a new tab
+        }
+
 hr_payroll()
+
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

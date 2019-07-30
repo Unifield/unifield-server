@@ -35,6 +35,7 @@
         'version.xml',
         'wizard/manage_version.xml',
         'security/ir.model.access.csv',
+        'update_server_report.xml',
     ],
     'installable': True,
 }

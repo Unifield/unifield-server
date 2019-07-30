@@ -65,6 +65,12 @@
             <lineStyle kind="GRID" colorName="#000000" />
         </blockTableStyle>
 
+        <blockTableStyle id="NoteTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="OUTLINE" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
         <blockTableStyle id="FooterInfo">
             <blockAlignment value="CENTER" />
             <blockValign value="MIDDLE" />
@@ -180,7 +186,7 @@
         <setNextTemplate name="second" />
 
         <section>
-        <blockTable colWidths="20.0,70.0,120.0,50.0,60.0,45.0,40.0,70.0,70.0,70.0,65.0,65.0,65.0" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="20.0,100.0,120.0,50.0,45.0,45.0,40.0,55.0,70.0,70.0,65.0,65.0,65.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line</para>
@@ -224,6 +230,7 @@
             </tr>
             <tr>
             [[ repeatIn(get_lines(picking), 'line', 'tr') ]]
+                [[ line.state != 'cancel' or removeParentNode('tr') ]]
                 <td>
                     <para style="Line">[[ line.line_number ]]</para>
                 </td>
@@ -267,6 +274,19 @@
         </blockTable>
 
         </section>
+
+        <para style="Header">
+            <font color="white"> </font>
+        </para>
+
+        <blockTable style="NoteTable">
+            <tr>
+                <td>
+                    <para style="LHeader">Notes :</para>
+                    <para style="Header">[[ picking.note or '-' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
 
         <para style="Header">
             <font color="white"> </font>

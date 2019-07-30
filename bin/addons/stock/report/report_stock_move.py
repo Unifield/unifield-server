@@ -33,8 +33,8 @@ class report_stock_move(osv.osv):
         'year': fields.char('Year', size=4, readonly=True),
         'day': fields.char('Day', size=128, readonly=True),
         'month':fields.selection([('01','January'), ('02','February'), ('03','March'), ('04','April'),
-            ('05','May'), ('06','June'), ('07','July'), ('08','August'), ('09','September'),
-            ('10','October'), ('11','November'), ('12','December')], 'Month',readonly=True),
+                                  ('05','May'), ('06','June'), ('07','July'), ('08','August'), ('09','September'),
+                                  ('10','October'), ('11','November'), ('12','December')], 'Month',readonly=True),
         'partner_id':fields.many2one('res.partner.address', 'Partner', readonly=True),
         'product_id':fields.many2one('product.product', 'Product', readonly=True),
         'company_id':fields.many2one('res.company', 'Company', readonly=True),
@@ -159,10 +159,11 @@ class report_stock_inventory(osv.osv):
         'location_id': fields.many2one('stock.location', 'Location', readonly=True),
         'prodlot_id': fields.many2one('stock.production.lot', 'Lot', readonly=True),
         'company_id': fields.many2one('res.company', 'Company', readonly=True),
-        'product_qty':fields.float('Quantity',  digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'product_qty':fields.float('Quantity',  digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='uom_id'),
+        'uom_id': fields.many2one('product.uom', 'UoM', readonly=True, group_operator='max'),
         'value' : fields.float('Total Value',  digits_compute=dp.get_precision('Account'), required=True),
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Confirmed'), ('assigned', 'Available'), ('done', 'Done'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
-              help='When the stock move is created it is in the \'Draft\' state.\n After that it is set to \'Confirmed\' state.\n If stock is available state is set to \'Avaiable\'.\n When the picking it done the state is \'Done\'.\
+                                  help='When the stock move is created it is in the \'Draft\' state.\n After that it is set to \'Confirmed\' state.\n If stock is available state is set to \'Avaiable\'.\n When the picking it done the state is \'Done\'.\
               \nThe state is \'Waiting\' if the move is waiting for another one.'),
         'location_type': fields.selection([('supplier', 'Supplier Location'), ('view', 'View'), ('internal', 'Internal Location'), ('customer', 'Customer Location'), ('inventory', 'Inventory'), ('procurement', 'Procurement'), ('production', 'Production'), ('transit', 'Transit Location for Inter-Companies Transfers')], 'Location Type', required=True),
     }

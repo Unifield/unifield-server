@@ -21,6 +21,7 @@
 
 from osv import fields, osv
 import tools
+import logging
 
 TRANSLATION_TYPE = [
     ('field', 'Field'),
@@ -65,27 +66,47 @@ class ir_translation(osv.osv):
         # They are used to resolve the res_id above after loading is done.
         'module': fields.char('Module', size=64, help='Maps to the ir_model_data for which this translation is provided.'),
         'xml_id': fields.char('XML Id', size=128, help='Maps to the ir_model_data for which this translation is provided.', select=True),
+        'updated_by_modules': fields.boolean('Updated by last msf_profile update'),
     }
+
+    _defaults = {
+        'updated_by_modules': False,
+    }
+
+    def has_duplicate(self, cr, uid, verbose=False, context=None):
+
+        cr.execute("""select src,type,count(*), lang
+            from ir_translation
+            where
+                type in ('code', 'sql_constraint') and
+                lang in ('fr_MF', 'en_MF')
+            group by src,type, lang
+            having count(distinct(value)) > 1"""
+                   )
+
+        nb = cr.rowcount
+        if verbose:
+            logger = logging.getLogger('translate')
+            for x in cr.fetchall():
+                logger.warn("%s duplicated %s %s translations: %s" % (x[2], x[3], x[1], x[0]))
+        return nb
 
     def _auto_init(self, cr, context={}):
         super(ir_translation, self)._auto_init(cr, context)
 
-        # FIXME: there is a size limit on btree indexed values so we can't index src column with normal btree.
-        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('ir_translation_ltns',))
-        if cr.fetchone():
-            #temporarily removed: cr.execute('CREATE INDEX ir_translation_ltns ON ir_translation (name, lang, type, src)')
-            cr.execute('DROP INDEX ir_translation_ltns')
-            cr.commit()
-        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('ir_translation_lts',))
-        if cr.fetchone():
-            #temporarily removed: cr.execute('CREATE INDEX ir_translation_lts ON ir_translation (lang, type, src)')
-            cr.execute('DROP INDEX ir_translation_lts')
-            cr.commit()
+        # there is a size limit on btree indexed values so we can't index src column with normal btree.
+        # hash indexes are not compatible with postgres streaming replication
+        for idx in ['ir_translation_ltns', 'ir_translation_lts', 'ir_translation_src_hash_idx']:
+            cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', (idx,))
+            if cr.fetchone():
+                query = 'DROP INDEX %s' % (idx,) # not_a_user_entry
+                cr.execute(query)
+                cr.commit()
 
-        # add separate hash index on src (no size limit on values), as postgres 8.1+ is able to combine separate indexes
-        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('ir_translation_src_hash_idx',))
+        # Add separate md5 index on src (no size limit on values, and good performance).
+        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('ir_translation_src_md5_idx',))
         if not cr.fetchone():
-            cr.execute('CREATE INDEX ir_translation_src_hash_idx ON ir_translation using hash (src)')
+            cr.execute('CREATE INDEX ir_translation_src_md5_idx ON ir_translation (md5(src))')
 
         cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('ir_translation_ltn',))
         if not cr.fetchone():
@@ -233,15 +254,15 @@ class ir_translation(osv.osv):
         # truncate value if required
         if ',' in other_vals['name'] and other_vals.get('type') == 'model' \
                 and vals.get('value'):
-                model_name = other_vals['name'].split(",")[0]
-                field = other_vals['name'].split(",")[1]
-                if field:
-                    model_obj = self.pool.get(model_name)
-                    if hasattr(model_obj, 'fields_get'):
-                        field_obj = model_obj.fields_get(cursor, user, context=context)
-                        if 'size' in field_obj.get(field, {}):
-                            size = field_obj[field]['size']
-                            vals['value'] = tools.ustr(vals['value'])[:size]
+            model_name = other_vals['name'].split(",")[0]
+            field = other_vals['name'].split(",")[1]
+            if field:
+                model_obj = self.pool.get(model_name)
+                if hasattr(model_obj, 'fields_get'):
+                    field_obj = model_obj.fields_get(cursor, user, context=context)
+                    if 'size' in field_obj.get(field, {}):
+                        size = field_obj[field]['size']
+                        vals['value'] = tools.ustr(vals['value'])[:size]
 
     def create(self, cursor, user, vals, clear=True, context=None):
         if context is None:
@@ -254,12 +275,7 @@ class ir_translation(osv.osv):
 
         ids = super(ir_translation, self).create(cursor, user, vals, context=context)
         if clear:
-            for trans_obj in self.read(cursor, user, [ids], ['name','type','res_id','src','lang'], context=context):
-                self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
-                self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
-                self._get_ids_dict.clear_cache(cursor.dbname, user,
-                                               trans_obj['name'], trans_obj['type'],
-                                               trans_obj['lang'], [trans_obj['res_id']])
+            self.clear_transid(cursor, user, ids, context=context)
         return ids
 
     def write(self, cursor, user, ids, vals, clear=True, context=None):
@@ -290,13 +306,23 @@ class ir_translation(osv.osv):
                 result = super(ir_translation, self).write(cursor, user, ids, vals, context=context)
 
         if clear:
-            for trans_obj in self.read(cursor, user, ids, ['name','type','res_id','src','lang'], context=context):
-                self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
-                self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
-                self._get_ids_dict.clear_cache(cursor.dbname, user,
-                                               trans_obj['name'], trans_obj['type'],
-                                               trans_obj['lang'], [trans_obj['res_id']])
+            self.clear_transid(cursor, user, ids, context=context)
         return result
+
+    def clear_transid(self, cr, uid, ids, context=None):
+        """
+        Clears the translation cache
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for trans_obj in self.read(cr, uid, ids, ['name','type','res_id','src','lang'], context=context):
+            self._get_source.clear_cache(cr.dbname, uid, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
+            self._get_ids.clear_cache(cr.dbname, uid, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
+            self._get_ids_dict.clear_cache(cr.dbname, uid, trans_obj['name'], trans_obj['type'],trans_obj['lang'], [trans_obj['res_id']])
+        return True
 
     def unlink(self, cursor, user, ids, clear=True, context=None):
         if context is None:

@@ -87,6 +87,12 @@
                                     <field name="manual_currency_id" attrs="{'required': [('status', '=', 'manu')], 'readonly': ['|', '|', ('status', '=', 'sys'), ('block_manual_currency_id', '=', True), ('state', '=', 'posted')], 'invisible': ['|', ('status', '=', 'sys'), ('imported', '=', True)]}"/>
                                     <field name="currency_id" readonly="True" attrs="{'invisible': [('status', '=', 'manu')]}"/>
                                 </group>
+                                <group colspan="2" col="2">
+                                    <button name="update_line_description" string="Update Lines"
+                                            type="object" icon="gtk-indent"
+                                            attrs="{'invisible': ['|', '|', ('state', '=', 'posted'), ('status', '=', 'sys'), ('imported', '=', True)]}"
+                                            help="Update Description for Lines"/>
+                                </group>
                           </group>
                         </group>
                         <group attrs="{'readonly': [('state', '=', 'posted')]}">
@@ -100,7 +106,10 @@
                                 <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines': [], 'journal':journal_id, 'period_id':period_id, 'move_reference': ref}" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('imported', '=', True)]}">
                                     <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" string="Journal Items">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
-                                        <field name="name"/>
+                                        <field name="status_move" invisible="1"/>
+                                        <field name="imported" invisible="1"/>
+                                        <field name="name" attrs="{'readonly': ['|', ('status_move', '=', 'sys'), ('imported', '=', True)],
+                                                                   'required': ['|', ('status_move', '=', 'sys'), ('imported', '=', True)]}"/>
                                         <field name="reference"/>
                                         <field name="partner_type_mandatory" invisible="1"/>
                                         <field name="account_id" domain="[('restricted_area', '=', 'account_move_lines')]"/>
@@ -174,9 +183,6 @@
             <field name="domain">[('period_id.number', '!=', 0)]</field>
             <field name="context">{'from_web_menu': True}</field>
         </record>
-
-    <!-- Delete Confirm Draft Invoices wizard from supplier invoices -->
-    <delete id="account.action_account_invoice_confirm" model="ir.actions.act_window"/>
 
     <!-- Account View -->
         <record id="inherit_view_account_form" model="ir.ui.view">

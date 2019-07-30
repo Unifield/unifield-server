@@ -137,11 +137,11 @@
 
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Transport mode')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(o, 'transport_mode') or '')|x}</Data></Cell>
-        % if o.imp_transport_mode != o.transport_mode:
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(o, 'imp_transport_mode') or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(o, 'transport_type') or '')|x}</Data></Cell>
+        % if o.imp_transport_type != o.transport_type:
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(o, 'imp_transport_type') or '')|x}</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(o, 'imp_transport_mode') or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(o, 'imp_transport_type') or '')|x}</Data></Cell>
         % endif
     </Row>
 
@@ -218,8 +218,8 @@
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.imp_currency_id.name or '')|x}</Data></Cell>
         % endif
-        % if l.imp_batch_id:
-        <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(l.imp_batch_id.name or '')|x}</Data></Cell>
+        % if l.imp_batch_name:
+        <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(l.imp_batch_name or '')|x}</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif

@@ -22,6 +22,9 @@
 ##############################################################################
 
 from osv import osv
+from tools.translate import _
+from time import strptime
+
 
 def get_period_from_date(self, cr, uid, date=False, context=None):
     """
@@ -46,18 +49,18 @@ def get_period_from_date(self, cr, uid, date=False, context=None):
 
     # Search period in which this date come from
     period_ids = self.pool.get('account.period').search(cr, uid, [
-            ('date_start', '<=', date),
-            ('date_stop', '>=', date),
-            number_criteria,
-        ], limit=limit,
+        ('date_start', '<=', date),
+        ('date_stop', '>=', date),
+        number_criteria,
+    ], limit=limit,
         order='date_start asc, name asc', context=context) or []
     # Get last period if no period found
     if not period_ids:
         period_ids = self.pool.get('account.period').search(cr, uid, [
-                ('state', '=', 'open'),
-                number_criteria,
+            ('state', '=', 'open'),
+            number_criteria,
         ], limit=limit,
-        order='date_stop desc, name desc', context=context) or []
+            order='date_stop desc, name desc', context=context) or []
 
     if isinstance(period_ids, (int, long)):
         period_ids = [period_ids]
@@ -78,6 +81,98 @@ def get_date_in_period(self, cr, uid, date=None, period_id=None, context=None):
         return period.date_stop
     return date
 
+def get_next_period_id(self, cr, uid, period_id, context=None):
+    """
+    Returns the id of the next period if it exists (ignores special periods), else returns False
+    """
+    if context is None:
+        context = {}
+    period = self.browse(cr, uid, period_id, fields_to_fetch=['date_stop'], context=context)
+    next_period_ids = self.search(cr, uid, [('date_start', '>', period.date_stop), ('special', '=', False)],
+                                  order='date_start', limit=1, context=context)
+    return next_period_ids and next_period_ids[0] or False
+
+def get_next_period_id_at_index(self, cr, uid, period_id, index, context=None):
+    """
+    Returns the id of the period N+index, or False if it doesn't exist (ignores special periods)
+    Ex: Nov.2017 + index 2 => Jan.2018
+    """
+    if context is None:
+        context = {}
+    for i in range(index):
+        period_id = period_id and get_next_period_id(self, cr, uid, period_id, context=context)
+    return period_id or False
+
+def _get_middle_years(self, cr, uid, fy1, fy2, context=None):
+    """
+    Returns the list of the FY ids included between both Fiscal Years in parameter.
+    (e.g.: FY2015, FY2018 ==> FY2016, FY2017)
+    """
+    if context is None:
+        context = {}
+    middle_years = []
+    fy_obj = self.pool.get('account.fiscalyear')
+    y1 = strptime(fy1.date_start, '%Y-%m-%d').tm_year
+    y2 = strptime(fy2.date_start, '%Y-%m-%d').tm_year
+    if y2 > y1+1:  # non-successive years
+        year_numbers = []
+        year = y1+1
+        while year < y2:
+            year_numbers.append(year)
+            year += 1
+        for year_number in year_numbers:
+            date_start = '%s-01-01' % year_number
+            fy_ids = fy_obj.search(cr, uid, [('date_start', '=', date_start)], context=context, limit=1)
+            if fy_ids:
+                middle_years.append(fy_ids[0])
+    return middle_years
+
+
+def get_period_range(self, cr, uid, period_from_id, period_to_id, context=None):
+    """
+    Returns the ids of all the periods included between 2 other periods.
+    Special periods 13 to 16 are included, period 0 is excluded.
+    """
+    if context is None:
+        context = {}
+    field_list = ['number', 'fiscalyear_id', 'date_start']
+    initial_period = self.browse(cr, uid, period_from_id, fields_to_fetch=field_list, context=context)
+    final_period = self.browse(cr, uid, period_to_id, fields_to_fetch=field_list, context=context)
+    initial_fy_id = initial_period.fiscalyear_id.id
+    initial_number = initial_period.number
+    final_fy_id = final_period.fiscalyear_id.id
+    final_number = final_period.number
+    same_fy = initial_fy_id == final_fy_id
+    if (final_period.date_start < initial_period.date_start) or \
+            (same_fy and final_period.number < initial_period.number):  # e.g. Period 13 2018 precedes Period 14 2018
+        raise osv.except_osv(_('Error'), _("The End period can't precede the Start period."))
+    if same_fy:  # all the periods are within the same Fiscal Year
+        period_dom = [
+            ('number', '!=', 0),
+            ('number', '>=', initial_number),
+            ('number', '<=', final_number),
+            ('fiscalyear_id', '=', initial_fy_id)]
+    else:
+        # check if there are "middle" years to include completely (e.g. Nov. 2018 to Jan. 2020 => all FY2019 periods should be included)
+        middle_years = _get_middle_years(self, cr, uid, initial_period.fiscalyear_id, final_period.fiscalyear_id, context=context)
+        if middle_years:
+            period_dom = [
+                ('number', '!=', 0),
+                '|', '|',
+                '&', ('number', '>=', initial_number), ('fiscalyear_id', '=', initial_fy_id),
+                ('fiscalyear_id', 'in', middle_years),
+                '&', ('number', '<=', final_number), ('fiscalyear_id', '=', final_fy_id)]
+        else:
+            # e.g.: from Nov. 2018 to Jan. 2019 => Nov 2018 / Dec 2018 / Periods 13->16 2018 / Jan 2019
+            period_dom = [
+                ('number', '!=', 0),
+                '|',
+                '&', ('number', '>=', initial_number), ('fiscalyear_id', '=', initial_fy_id),
+                '&', ('number', '<=', final_number), ('fiscalyear_id', '=', final_fy_id)]
+    period_ids = self.search(cr, uid, period_dom, order='id', context=context)
+    return period_ids
+
+
 class account_period(osv.osv):
     _name = 'account.period'
     _inherit = 'account.period'
@@ -87,6 +182,16 @@ class account_period(osv.osv):
 
     def get_date_in_period(self, cr, uid, date=None, period_id=None, context=None):
         return get_date_in_period(self, cr, uid, date, period_id, context)
+
+    def get_next_period_id(self, cr, uid, period_id, context=None):
+        return get_next_period_id(self, cr, uid, period_id, context)
+
+    def get_next_period_id_at_index(self, cr, uid, period_id, index, context=None):
+        return get_next_period_id_at_index(self, cr, uid, period_id, index, context)
+
+    def get_period_range(self, cr, uid, period_from_id, period_to_id, context=None):
+        return get_period_range(self, cr, uid, period_from_id, period_to_id, context=context)
+
 
 account_period()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

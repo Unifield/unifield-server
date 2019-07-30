@@ -7,7 +7,7 @@ Created on 15 mai 2012
 from osv import osv
 from osv import fields
 from product_nomenclature.product_nomenclature import RANDOM_XMLID_CODE_PREFIX
-
+import time
 
 # Note:
 #
@@ -110,25 +110,6 @@ class bank_statement(osv.osv):
             model_data_obj.write(cr, uid, data_ids, {'name': xml_id}, context=context)
         return True
 
-    def button_open_bank(self, cr, uid, ids, context=None):
-        res = super(bank_statement, self).button_open_bank(cr, uid, ids, context=context)
-        self.update_xml_id_register(cr, uid, ids[0], context)
-        return res
-
-    def button_open_cheque(self, cr, uid, ids, context=None):
-        res = super(bank_statement, self).button_open_cheque(cr, uid, ids, context=context)
-        self.update_xml_id_register(cr, uid, ids[0], context)
-        return res
-
-    def button_open_cash(self, cr, uid, ids, context=None):
-        """
-        The update of xml_id may be done when opening the register
-        --> set the value of xml_id based on the period as period is no more modifiable
-        """
-        res = super(bank_statement, self).button_open_cash(cr, uid, ids, context=context)
-        self.update_xml_id_register(cr, uid, ids[0], context)
-        return res
-
 bank_statement()
 
 class account_period_sync(osv.osv):
@@ -165,23 +146,53 @@ class hq_entries(osv.osv):
 
     _inherit = 'hq.entries'
 
+    def get_target_id(self, cr, uid, cost_center_id, context=None):
+        """
+        Returns the id of the target CC linked to the cost_center_id, or to its parent if there isn't any.
+        """
+        if context is None:
+            context = {}
+        target_ids = []
+        if cost_center_id:
+            analytic_cc_obj = self.pool.get('account.analytic.account')
+            target_cc_obj = self.pool.get('account.target.costcenter')
+            target_ids = target_cc_obj.search(cr, uid,
+                                              [('cost_center_id', '=', cost_center_id), ('is_target', '=', True)],
+                                              context=context)
+            if not target_ids:
+                cc = analytic_cc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['parent_id'], context=context)
+                if cc and cc.parent_id:
+                    target_ids = target_cc_obj.search(cr, uid,
+                                                      [('cost_center_id', '=', cc.parent_id.id), ('is_target', '=', True)],
+                                                      context=context)
+        return target_ids and target_ids[0] or False
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        """
+        Gets the instances to which the HQ entries should sync.
+        For each HQ entry:
+        1) Search for the instance:
+           - to which the CC used in the entry is targeted to
+           - if there isn't any, to which the PARENT CC is targeted to
+        2) The entry will sync to the coordo of the corresponding mission
+        """
+        if context is None:
+            context = {}
+        target_cc_obj = self.pool.get('account.target.costcenter')
         if dest_field == 'cost_center_id':
             res = dict.fromkeys(ids, False)
             for line_data in self.browse(cr, uid, ids, context=context):
                 if line_data.cost_center_id:
-                    cost_center_name = line_data.cost_center_id and \
-                        line_data.cost_center_id.code and \
-                        line_data.cost_center_id.code[:3] or ""
-                    cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),
-                                                                                                 ('code', '=', cost_center_name)], context=context)
-                    if len(cost_center_ids) > 0:
-                        target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_ids[0]),
-                                                                                                 ('is_target', '=', True)])
-                        if len(target_ids) > 0:
-                            target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
-                            if target.instance_id and target.instance_id.instance:
-                                res[line_data.id] = target.instance_id.instance
+                    targeted_instance = False
+                    target_id = self.get_target_id(cr, uid, line_data.cost_center_id.id, context=context)
+                    if target_id:
+                        target = target_cc_obj.browse(cr, uid, target_id, fields_to_fetch=['instance_id'], context=context)
+                        if target.instance_id.level == 'coordo':
+                            targeted_instance = target.instance_id
+                        elif target.instance_id.level == 'project':
+                            targeted_instance = target.instance_id.parent_id or False
+                    if targeted_instance:
+                        res[line_data.id] = targeted_instance.instance
             return res
         return super(hq_entries, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
@@ -218,7 +229,9 @@ class account_target_costcenter(osv.osv):
             return res
         return super(account_target_costcenter, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
-    def create(self, cr, uid, vals, context={}):
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
         res_id = super(account_target_costcenter, self).create(cr, uid, vals, context=context)
         # create lines in instance's children
         if 'instance_id' in vals:
@@ -228,6 +241,27 @@ class account_target_costcenter(osv.osv):
                 # "touch" cost center if instance is active (to sync to new targets)
                 self.pool.get('account.analytic.account').synchronize(cr, uid, [vals['cost_center_id']], context=context)
         return res_id
+
+    def unlink(self, cr, uid, ids, context=None):
+        ''' target CC deletion: set the inactivation date on CC '''
+
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context.get('sync_update_execution'):
+            to_inactivate = []
+            now = time.strftime('%Y-%m-%d')
+            current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.instance_id.id
+            search_target = self.search(cr, uid, [('id', 'in', ids), ('instance_id', '=', current_instance_id)], context=context)
+            for cc in self.browse(cr, uid, search_target, fields_to_fetch=['cost_center_id', 'instance_id'], context=context):
+                if cc.cost_center_id and (not cc.cost_center_id.date or cc.cost_center_id.date > now):
+                    to_inactivate.append(cc.cost_center_id.id)
+            if to_inactivate:
+                self.pool.get('account.analytic.account').write(cr, uid, to_inactivate, {'date': now}, context=context)
+
+        return super(account_target_costcenter, self).unlink(cr, uid, ids, context)
 
 account_target_costcenter()
 
@@ -241,17 +275,17 @@ class account_analytic_account(osv.osv):
             if isinstance(ids, (long, int)):
                 ids = [ids]
             res = dict.fromkeys(ids, False)
-            for id in ids:
-                cr.execute("select instance_id from account_target_costcenter where cost_center_id = %s" % (id))
+            for account_id in ids:
+                cr.execute("select instance_id from account_target_costcenter where cost_center_id = %s", (account_id,))
                 instance_ids = [x[0] for x in cr.fetchall()]
                 if len(instance_ids) > 0:
                     res_temp = []
                     for instance_id in instance_ids:
-                        cr.execute("select instance from msf_instance where id = %s and state = 'active'" % (instance_id))
+                        cr.execute("select instance from msf_instance where id = %s and state = 'active'", (instance_id,))
                         result = cr.fetchone()
                         if result:
                             res_temp.append(result[0])
-                    res[id] = res_temp
+                    res[account_id] = res_temp
             return res
 
         # UFTP-2: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
@@ -472,10 +506,13 @@ class account_analytic_line(osv.osv):
                 # Instance has a parent
                 browse_instance = current_instance.parent_id
                 res[line_data.id] = current_instance.parent_id.instance
+
             # UFTP-382/BKLG-24: sync the line associated to a register line to the register owner and to the target CC
             # UF-450: send also the AJI to the journal owner
             if line_data and line_data.move_id and line_data.move_id.journal_id and line_data.move_id.journal_id.instance_id and line_data.move_id.journal_id.instance_id.id != current_instance.id:
                 if res[line_data.id]:
+                    if not browse_instance:
+                        raise osv.except_osv('Error', "Cost center %s must have 'Is Target' set" % (line_data.cost_center_id.code, ))
                     res[line_data.id] = self.get_lower_instance_name(cr, uid, browse_instance, line_data.move_id.journal_id.instance_id, context=context)
                 else:
                     res[line_data.id] = line_data.move_id.journal_id.instance_id.instance
@@ -632,6 +669,8 @@ class funding_pool_distribution_line(osv.osv):
                 for move_line in line_data.distribution_id.move_line_ids:
                     if move_line.journal_id:
                         inst = move_line.journal_id and move_line.journal_id.instance_id
+                        if not browse_instance:
+                            raise osv.except_osv('Error', "Cost center %s must have 'Is Target' set" % (line_data.cost_center_id.code, ))
                         if inst and inst.id != current_instance.id and inst.instance != res[line_id]:
                             res[line_id] = ana_obj.get_lower_instance_name(cr, uid, browse_instance, inst, context=context)
                         break
@@ -823,6 +862,16 @@ class hr_employee(osv.osv):
             return super(hr_employee, self).get_unique_xml_name(cr, uid, uuid,
                                                                 table_name, res_id)
 
+    def create(self, cr, uid, vals, context=None):
+        if not context:
+            context = {}
+
+        if context.get('sync_update_execution') and vals.get('employee_type') == 'ex':
+            vals['active'] = False
+
+        return super(hr_employee, self).create(cr, uid, vals, context)
+
+
     def unlink(self, cr, uid, ids, context=None):
         super(hr_employee, self).unlink(cr, uid, ids, context)
         if isinstance(ids, (int, long)):
@@ -831,3 +880,12 @@ class hr_employee(osv.osv):
         return True
 
 hr_employee()
+
+class hr_payment_method(osv.osv):
+    _inherit = 'hr.payment.method'
+
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        r = self.read(cr, uid, [res_id], ['name'])[0]
+        return get_valid_xml_name('hr_payment_method', r['name'])
+
+hr_payment_method()

@@ -210,6 +210,9 @@
                         <separator string="Domain" />
                         <field name="domain" on_change="invalidate(model_ref)" colspan="2" nolabel="1" attrs="{'readonly': [('filter_method', '!=', '')]}"/>
                         <newline />
+                        <separator string="Wait while" />
+                        <field name="wait_while" on_change="invalidate(model_ref)" colspan="2" nolabel="1" attrs="{'readonly': [('filter_method', '!=', '')]}"/>
+                        <newline />
                         <field name="filter_method" on_change="invalidate(model_ref)" colspan="2" />
                         <separator string="Remote Call" />
                         <field name="remote_call" on_change="invalidate(model_ref)" nolabel="1" required="True" colspan="2" />

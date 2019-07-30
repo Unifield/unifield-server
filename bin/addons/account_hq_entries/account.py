@@ -29,8 +29,30 @@ class account_account(osv.osv):
     _inherit = 'account.account'
 
     _columns = {
-        'is_not_hq_correctible': fields.boolean("Can not be corrected on HQ entries", help='If checked, this attribute will prevent user from correcting the account on the entry imported from HQ system'),
+        'is_not_hq_correctible': fields.boolean("Prevent correction on account codes",
+                                                help="If checked, this attribute will prevent the user from correcting the account on the entries"),
+        'is_not_ad_correctable': fields.boolean("Prevent correction on analytic accounts",
+                                                help="If this option is checked AD correction on this account will be prevented in the HQ entries and via the correction wizard.")
     }
+
+    def onchange_is_not_ad_correctable(self, cr, uid, ids, is_not_ad_correctable):
+        """
+        If is_not_ad_correctable is set to TRUE, also set is_not_hq_correctible to True
+        """
+        res = {}
+        if is_not_ad_correctable:
+            res['value'] = {'is_not_hq_correctible': True}
+        return res
+
+    def onchange_is_not_hq_correctible(self, cr, uid, ids, is_not_hq_correctible):
+        """
+        If is_not_hq_correctible is set to FALSE, also set is_not_ad_correctable to False
+        """
+        res = {}
+        if not is_not_hq_correctible:
+            res['value'] = {'is_not_ad_correctable': False}
+        return res
+
 
 account_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

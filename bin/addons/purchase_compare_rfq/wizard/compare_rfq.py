@@ -416,7 +416,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
         ),
     }
 
-    def fields_get(self, cr, uid, fields=None, context=None):
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
         """
         Add some fields according to number of suppliers on the tender.
         """

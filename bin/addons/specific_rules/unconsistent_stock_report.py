@@ -88,7 +88,7 @@ class unconsistent_stock_report(osv.osv):
                 %s
             GROUP BY
                 srp.prodlot_id, srp.location_id, srp.product_id, spl.life_date
-        ''' % extra_where
+        ''' % extra_where  # not_a_user_entry
         cr.execute(request, (bm, perishable))
 
         for r in cr.dictfetchall():
@@ -198,7 +198,7 @@ class unconsistent_stock_report(osv.osv):
               AND
                 pp.perishable = %%s
                 %s
-        ''' % extra_where
+        ''' % extra_where  # not_a_user_entry
         cr.execute(request, (bm, perishable))
 
         for r in cr.dictfetchall():
@@ -264,7 +264,7 @@ class unconsistent_stock_report(osv.osv):
                 )
             GROUP BY
                 sil.product_id, sil.prod_lot_id, sil.expiry_date, sil.location_id, document_number
-        ''' % (name, model, model)
+        ''' % (name, model, model)  # not_a_user_entry
         cr.execute(request)
 
         for r in cr.dictfetchall():

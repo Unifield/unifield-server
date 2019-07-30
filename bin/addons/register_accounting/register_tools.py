@@ -36,7 +36,7 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=No
         elif st_line.transfer_journal_id:
             res[st_line.id] = {'third_parties': 'account.journal,%s' % st_line.transfer_journal_id.id}
             res[st_line.id]['partner_type'] = {'options': [('account.journal', 'Journal')],
-                'selection': 'account.journal,%s' % st_line.transfer_journal_id.id}
+                                               'selection': 'account.journal,%s' % st_line.transfer_journal_id.id}
         elif st_line.partner_id:
             res[st_line.id] = {'third_parties': 'res.partner,%s' % st_line.partner_id.id}
             res[st_line.id]['partner_type'] = {'options': [('res.partner', 'Partner')], 'selection': 'res.partner,%s' % st_line.partner_id.id}
@@ -65,7 +65,7 @@ def _set_third_parties(self, cr, uid, obj_id, name=None, value=None, fnct_inv_ar
         if value:
             fields = value.split(",")
             element = fields[0]
-        sql = "UPDATE %s SET " % self._table
+        sql = "UPDATE %s SET " % self._table  # not_a_user_entry
         emp_val = 'Null'
         par_val = 'Null'
         tra_val = 'Null'
@@ -80,7 +80,7 @@ def _set_third_parties(self, cr, uid, obj_id, name=None, value=None, fnct_inv_ar
         cr.execute(sql)
     # Delete values for Third Parties if no value given
     elif name == 'partner_type' and not value:
-        cr.execute("UPDATE %s SET employee_id = Null, partner_id = Null, transfer_journal_id = Null WHERE id = %s" % (self._table, obj_id))
+        cr.execute("UPDATE %s SET employee_id = Null, partner_id = Null, transfer_journal_id = Null WHERE id = %%s" % self._table, (obj_id,))  # not_a_user_entry
     return True
 
 
@@ -110,7 +110,7 @@ def _populate_third_party_name(self, cr, uid, obj_id, field_name, name=None, con
             # just in case of posted JIs returned by _get_move_ids
             ('move_id.state', '=', 'draft'),
             # only records with previous name
-            ('partner_txt', '!=', name),  
+            ('partner_txt', '!=', name),
         ]
         aml_ids = aml_obj.search(cr, uid, domain, context=context)
 
@@ -118,7 +118,7 @@ def _populate_third_party_name(self, cr, uid, obj_id, field_name, name=None, con
             # register_line to update the partner_txt field
             # (using write to send sync messages)
             aml_obj.write(cr, uid, aml_ids, {'partner_txt': name},
-                context=context)
+                          context=context)
 
             # get reg line AJIs
             domain = [
@@ -207,7 +207,8 @@ def _get_date_in_period(self, cr, uid, date=None, period_id=None, context=None):
         return period.date_stop
     return date
 
-def previous_period_id(self, cr, uid, period_id, context=None):
+
+def previous_period_id(self, cr, uid, period_id, context=None, raise_error=True):
     """
     Give previous period of those given
     """
@@ -220,24 +221,28 @@ def previous_period_id(self, cr, uid, period_id, context=None):
     p_obj = self.pool.get('account.period')
     # Search period and previous one
     period = p_obj.browse(cr, uid, [period_id], context=context)[0]
-    first_period_id = p_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id)], order='date_start', limit=1, context=context)[0]
+    first_period_id = p_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('number', '!=', 0)], order='date_start', limit=1, context=context)[0]
     previous_period_ids = p_obj.search(cr, uid, [('date_start', '<=', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id),
-        ('id', '!=', period_id), ('number', '<=', 12.0)], order='number desc', context=context)
+                                                 ('id', '!=', period_id), ('number', '<=', 12.0)], order='number desc', context=context)
     if period_id == first_period_id:
         # if the current period is the first period of fiscalyear we have to search the last period of previous fiscalyear
         previous_fiscalyear = self.pool.get('account.fiscalyear').search(cr, uid, [('date_start', '<', period.fiscalyear_id.date_start)],
-            order="date_start desc", context=context)
+                                                                         order="date_start desc", context=context)
         if not previous_fiscalyear:
-            raise osv.except_osv(_('Error'),
-                _('No previous fiscalyear found. Is your period the first one of a fiscalyear that have no previous fiscalyear ?'))
+            if raise_error:
+                raise osv.except_osv(_('Error'),
+                                     _('No previous fiscal year found. Is your period the first one of a fiscal year '
+                                       'that has no previous fiscal year?'))
+            else:
+                return False
         previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0]), ('id', '!=', period_id), ('number', '<=', 12.0)],
-            order='number desc') # this work only for msf because of the last period name which is "Period 13", "Period 14"
-            # and "Period 15"
+                                           order='number desc') # this work only for msf because of the last period name which is "Period 13", "Period 14"
+        # and "Period 15"
     if previous_period_ids:
         return previous_period_ids[0]
     return False
 
-def previous_register_id(self, cr, uid, period_id, journal_id, context=None):
+def previous_register_id(self, cr, uid, period_id, journal_id, context=None, raise_error=True):
     """
     Give the previous register id regarding some criteria:
      - period_id: the period of current register
@@ -252,7 +257,9 @@ def previous_register_id(self, cr, uid, period_id, journal_id, context=None):
     # Prepare some values
     st_obj = self.pool.get('account.bank.statement')
     # Search journal_ids that have the type we search
-    prev_period_id = previous_period_id(self, cr, uid, period_id, context=context)
+    prev_period_id = previous_period_id(self, cr, uid, period_id, context=context, raise_error=raise_error)
+    if not prev_period_id:
+        return False
     previous_reg_ids = st_obj.search(cr, uid, [('journal_id', '=', journal_id), ('period_id', '=', prev_period_id)], context=context)
     if len(previous_reg_ids) != 1:
         return False
@@ -298,8 +305,8 @@ def previous_register_is_closed(self, cr, uid, ids, context=None):
         if reg.prev_reg_id:
             if reg.prev_reg_id.state not in ['partial_close', 'confirm']:
                 raise osv.except_osv(_('Error'),
-                    _('The previous register "%s" for period "%s" has not been closed properly.') %
-                        (reg.prev_reg_id.name, reg.prev_reg_id.period_id.name))
+                                     _('The previous register "%s" for period "%s" has not been closed properly.') %
+                                     (reg.prev_reg_id.name, reg.prev_reg_id.period_id.name))
     return True
 
 def totally_or_partial_reconciled(self, cr, uid, ids, context=None):

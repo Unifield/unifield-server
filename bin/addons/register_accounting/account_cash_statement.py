@@ -35,6 +35,8 @@ class account_cash_statement(osv.osv):
         'state': lambda *a: 'draft',
     }
 
+    _order = 'state, period_id, instance_id, journal_id'
+
     def _get_starting_balance(self, cr, uid, ids, context=None):
         """ Find starting balance
         @param name: Names of fields.
@@ -52,11 +54,7 @@ class account_cash_statement(osv.osv):
                 for line in statement.starting_details_ids:
                     amount_total+= line.pieces * line.number
             else:
-                if context and context.get('from_open'):
-                    # US-948 carry other cashbox balance at open register
-                    amount_total = statement.prev_reg_id.balance_end_cash
-                else:
-                    amount_total = statement.prev_reg_id.msf_calculated_balance
+                amount_total = statement.prev_reg_id.msf_calculated_balance
 
             res[statement.id] = {
                 'balance_start': amount_total
@@ -113,7 +111,7 @@ class account_cash_statement(osv.osv):
                 vals.update({'balance_start': prev_reg.balance_end_real})
 
         if not prev_reg and sync_update and vals.get('period_id') and vals.get('journal_id'):
-            prev_reg_id = previous_register_id(self, cr, uid, vals['period_id'], vals['journal_id'], context=context)
+            prev_reg_id = previous_register_id(self, cr, uid, vals['period_id'], vals['journal_id'], context=context, raise_error=False)
             if prev_reg_id:
                 prev_reg = self.browse(cr, uid, [prev_reg_id], fields_to_fetch=['responsible_ids'], context=context)[0]
 
@@ -158,38 +156,13 @@ class account_cash_statement(osv.osv):
                                     to_write_id_list.extend(search_ids)
                 self.write(cr, uid, to_write_id_list, new_vals, context=context)
 
+        if not vals:
+            return True
+
         return super(account_cash_statement, self).write(cr, uid, ids, vals,
                                                          context=context)
 
-    def button_open_cash(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids] # Calculate the starting balance
-
-        context['from_open'] = True
-        res = self._get_starting_balance(cr, uid, ids, context=context)
-        del context['from_open']
-        for rs in res:
-            self.write(cr, uid, [rs], res.get(rs)) # Verify that the starting balance is superior to 0 only if this register has prev_reg_id to False
-            register = self.browse(cr, uid, [rs], context=context)[0]
-            if register and not register.prev_reg_id:
-                if not register.balance_start > 0:
-                    return {'name' : "Open Empty CashBox Confirmation",
-                            'type' : 'ir.actions.act_window',
-                            'res_model' :"wizard.open.empty.cashbox",
-                            'target': 'new',
-                            'view_mode': 'form',
-                            'view_type': 'form',
-                            'context': {'active_id': ids[0],
-                                        'active_ids': ids
-                                        }
-                            }
-
-        # if the cashbox is valid for opening, just continue the method do open
-        return self.do_button_open_cash(cr, uid, ids, context)
-
-    def do_button_open_cash(self, cr, uid, ids, context=None):
+    def do_button_open_cash(self, cr, uid, ids, opening_balance=None, context=None):
         """
         when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
         """
@@ -219,7 +192,11 @@ class account_cash_statement(osv.osv):
         # Give a Cash Register Name with the following composition :
         #+ Cash Journal Name
         if st.journal_id and st.journal_id.name:
-            return self.write(cr, uid, ids, {'state' : 'open', 'name': st.journal_id.name})
+            cash_reg_vals = {'state': 'open', 'name': st.journal_id.name}
+            # update Opening Balance
+            if opening_balance:
+                cash_reg_vals.update({'balance_start': opening_balance})
+            return self.write(cr, uid, ids, cash_reg_vals, context=context)
         else:
             return False
 
@@ -279,19 +256,22 @@ class account_cash_statement(osv.osv):
 
     def _msf_calculated_balance_compute(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
-        Sum of opening balance (balance_start) and sum of cash transaction (total_entry_encoding)
+        Sum of starting balance (balance_start) and sum of cash transaction (total_entry_encoding)
         """
+        if context is None:
+            context = {}
         # Prepare some values
         res = {}
         for st in self.browse(cr, uid, ids):
             amount = (st.balance_start or 0.0) + (st.total_entry_encoding or 0.0)
             res[st.id] = amount
-            # Update next register opening balance
+            # Update next register starting balance
             if st.journal_id and st.journal_id.type == 'cash':
                 next_st_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)])
+                context.update({'update_next_reg_balance_start': True})
                 for next_st in self.browse(cr, uid, next_st_ids):
                     if next_st.state != 'confirm':
-                        self.write(cr, 1, [next_st.id], {'balance_start': amount})
+                        self.write(cr, 1, [next_st.id], {'balance_start': amount}, context=context)
         return res
 
     def _get_sum_entry_encoding(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -328,7 +308,7 @@ class account_cash_statement(osv.osv):
         'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
         'comments': fields.char('Comments', size=64, required=False, readonly=False),
         'msf_calculated_balance': fields.function(_msf_calculated_balance_compute, method=True, readonly=True, string='Calculated Balance',
-                                                  help="Opening balance + Cash Transaction"),
+                                                  help="Starting Balance + Cash Transactions"),
         # Because of UTP-382, need to change store=True to FALSE for total_entry_encoding (which do not update fields at register line deletion/copy)
         'total_entry_encoding': fields.function(_get_sum_entry_encoding, method=True, store=False, string="Cash Transaction", help="Total cash transactions"),
     }
@@ -337,6 +317,8 @@ class account_cash_statement(osv.osv):
         """
         When pressing 'Temp Posting' button then opening a wizard to select some account_bank_statement_line and change them into temp posting state.
         """
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
         domain = [('statement_id', '=', ids[0]), ('state', '=', 'draft')]
         if context is None:
             context = {}
@@ -364,6 +346,8 @@ class account_cash_statement(osv.osv):
         """
         When pressing 'Hard Posting' button then opening a wizard to select some account_bank_statement_line and change them into hard posting state.
         """
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
         domain = [('statement_id', '=', ids[0]), ('state', 'in', ['draft','temp'])]
         if context is None:
             context = {}

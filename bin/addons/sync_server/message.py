@@ -70,23 +70,6 @@ class message(osv.osv):
             if not destination:
                 sync_log(self, 'destination %s does not exist' % data['dest'])
                 continue
-
-            #SP-135/UF-1617: Message unique key is from identifier PLUS destination: sending the same batch number and asset to different destinations
-            ids = self.search(cr, uid, [('identifier', '=', data['id']),
-                ('destination', '=', data['dest'])], order='NO_ORDER', context=context)
-            if ids:
-                sync_log(self, 'Message %s already in the server database' % data['id'])
-                #SP-135/UF-1617: Overwrite the message and set the sent to False
-                self.write(cr, uid, ids, {
-                    'identifier': data['id'],
-                    'remote_call': data['call'],
-                    'arguments': data['args'],
-                    'destination': destination,
-                    'sent': False, # SP-135: Set the sent flag to become "not sent"
-                    'source': entity.id,
-                }, context=context)
-
-                continue
             self.create(cr, uid, {
                 'identifier': data['id'],
                 'remote_call': data['call'],
@@ -133,14 +116,14 @@ class message(osv.osv):
 
         # UTP-1179: Instead of recalculating the ids to send, retrieve it from the entity list
         # ORIGINAL STATEMENT: ids = self.search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], limit=size, context=context)
-        
+
         # The list of msg_ids_tmp needs to be calculated with the given size to make sure that it will retrieve the right number of ids
         # and remove what are retrieved at this around
         # Also the msg_ids_tmp is a text type --> need to convert to list
         if entity.msg_ids_tmp:
             # convert the string into list of ids, then get only those not sent
             msg_ids_tmp = entity.msg_ids_tmp[1:-1]
-            msg_ids_tmp = map(int, msg_ids_tmp.split(',')) 
+            msg_ids_tmp = map(int, msg_ids_tmp.split(','))
             ids = self.search(cr, uid, [('id', 'in', msg_ids_tmp), ('sent', '=', False)], limit=size, context=context)
         else:
             return False
@@ -153,13 +136,14 @@ class message(osv.osv):
                 'args': data.arguments,
                 'source': data.source.name,
                 'sequence' : data.sequence,
+                'sync_id': data.id,
             }
             packet.append(message)
 
         self._logger.info("::::::::[%s] Message pull :: Number of message pulled: %s" % (entity.name, len(packet)))
         return packet
 
-    def set_message_as_received(self, cr, uid, entity, message_uuids, context=None):
+    def set_message_as_received(self, cr, uid, entity, message_uuids=None, message_ids=None, context=None):
         """
             Called by XML RPC method message_received when the client instance pull messages and it succeeds.
 
@@ -174,8 +158,14 @@ class message(osv.osv):
         self._logger.info("::::::::[%s] Set messages as received" % (entity.name,))
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm messages...'))
 
-        ids = self.search(cr, uid, [('identifier', 'in', message_uuids),
-            ('destination', '=', entity.id)], order='NO_ORDER', context=context)
+        domain = [('destination', '=', entity.id)]
+        if message_ids:
+            domain.append(('id', 'in', message_ids))
+        else:
+            domain.append(('identifier', 'in', message_uuids))
+
+        ids = self.search(cr, uid, domain, order='NO_ORDER', context=context)
+
         if ids:
             self.write(cr, uid, ids, {'sent' : True}, context=context)
         self._logger.info("::::::::[%s] %s messages confirmed" % (entity.name, len(ids)))
@@ -201,7 +191,7 @@ class message(osv.osv):
         if ids:
             self.write(cr, uid, ids, {'sent' : False}, context=context)
             self._logger.debug("These ids will be recovered: %s" %
-                    str(sorted(ids)))
+                               str(sorted(ids)))
         else:
             self._logger.debug("No ids to recover! domain=%s" % domain)
         return True

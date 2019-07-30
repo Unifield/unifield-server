@@ -251,7 +251,7 @@ class process_process(osv.osv):
 
         if not default:
             default = {}
-        
+
         pool = pooler.get_pool(cr.dbname)
         process = pool.get('process.process').browse(cr, uid, id, context=context)
 
@@ -335,7 +335,7 @@ class process_transition(osv.osv):
     _name = 'process.transition'
     _description ='Process Transition'
     _columns = {
-        'name': fields.char('Name', size=32, required=True, translate=True),
+        'name': fields.char('Name', size=64, required=True, translate=True),
         'source_node_id': fields.many2one('process.node', 'Source Node', required=True, ondelete='cascade'),
         'target_node_id': fields.many2one('process.node', 'Target Node', required=True, ondelete='cascade'),
         'action_ids': fields.one2many('process.transition.action', 'transition_id', 'Buttons'),
@@ -369,7 +369,7 @@ class process_transition_action(osv.osv):
     def copy_data(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
-            
+
         state = self.pool.get('process.transition.action').browse(cr, uid, id, context=context).state
         if state:
             default['state'] = state

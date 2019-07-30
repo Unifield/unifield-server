@@ -13,17 +13,17 @@
             <field name="res_model">purchase.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('state','=','draft'), ('rfq_ok', '=', False)]</field>
+            <field name="domain">[('state','in',['draft', 'draft_p']), ('rfq_ok', '=', False)]</field>
             <field name="search_view_id" ref="purchase.purchase_order_tree"/>
         </record>
         
         <record id="purchase_waiting" model="ir.actions.act_window">
-            <field name="name">Purchase Order Waiting Approval</field>
+            <field name="name">Purchase Orders Waiting Confirmation</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">purchase.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('state','in',('wait','confirmed')), ('rfq_ok', '=', False)]</field>
+            <field name="domain">[('state','in',('validated_p','validated')), ('rfq_ok', '=', False)]</field>
             <field name="search_view_id" ref="purchase.purchase_order_tree"/>
         </record>
         
@@ -34,7 +34,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="context">{'rfq_ok': True}</field>
-            <field name="domain">[('state','=','draft'), ('rfq_ok', '=', True)]</field>
+            <field name="domain">[('rfq_state','=','draft'), ('rfq_ok', '=', True)]</field>
             <field name="view_id" ref="tender_flow.view_rfq_tree"/>
         </record>
         
@@ -45,7 +45,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="context">{'rfq_ok': True}</field>
-            <field name="domain">[('state','in',('rfq_sent','rfq_updated')), ('rfq_ok', '=', True)]</field>
+            <field name="domain">[('rfq_state','in',('rfq_sent','rfq_updated')), ('rfq_ok', '=', True)]</field>
             <field name="view_id" ref="tender_flow.view_rfq_tree"/>
         </record>
 

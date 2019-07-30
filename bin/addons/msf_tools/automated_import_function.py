@@ -44,11 +44,14 @@ class automated_import_function(osv.osv):
             string='Method to call',
             required=True,
         ),
+        'startswith': fields.char('Starts with', size=56),
     }
 
     _defaults = {
         'method_to_call': lambda *a: 'import_data_from_csv',
     }
+
+    _order = 'name'
 
     def check_method_to_call(self, cr, uid, model_id, method):
         """

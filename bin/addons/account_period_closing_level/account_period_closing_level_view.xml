@@ -230,7 +230,5 @@
             parent="account.menu_account_end_year_treatments"
             sequence="0"/>
 
-        <delete model="ir.values" id="account.action_idea_post_vote_values"/>
-
     </data>
 </openerp>

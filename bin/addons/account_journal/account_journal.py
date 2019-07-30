@@ -28,6 +28,7 @@ import tools
 from tools.translate import _
 
 from account_override import ACCOUNT_RESTRICTED_AREA
+from msf_field_access_rights.osv_override import _get_instance_level
 
 class account_journal(osv.osv):
     _inherit = "account.journal"
@@ -60,7 +61,7 @@ class account_journal(osv.osv):
                 ('cash','Cash'),
                 ('cheque', 'Cheque'),
                 ('correction','Correction'),
-                ('cur_adj', 'Currency Adjustement'),
+                ('cur_adj', 'Currency Adjustment'),
                 ('depreciation', 'Depreciation'),
                 ('general', 'General'),
                 ('hq', 'HQ'),
@@ -216,6 +217,38 @@ class account_journal(osv.osv):
         self.pool.get('account.sequence.fiscalyear').create(cr, uid, {'sequence_id': sequence_id, 'fiscalyear_id': fiscalyear, 'sequence_main_id': main_sequence,})
         return True
 
+    def _create_linked_register(self, cr, uid, journal_id, vals, context):
+        """
+        If the journal is a liquidity journal creates the register linked to it if it doesn't exist yet
+        """
+        reg_obj = self.pool.get('account.bank.statement')
+        # UTP-182: the register isn't created if the journal comes from another instance via the synchronization
+        if 'type' in vals and vals['type'] in ('cash', 'bank', 'cheque') \
+                and not context.get('sync_update_execution', False) and \
+                not reg_obj.search_exist(cr, uid, [('journal_id', '=', journal_id)], context=context):
+
+            if _get_instance_level(self, cr, uid) == 'project' and self.search_exist(cr, uid, [('id', '=', journal_id), ('is_current_instance', '=', False)], context=context):
+                # no way: you are on P1 and you're trying to create a P2 register !
+                return False
+
+            # 'from_journal_creation' in context permits to pass register creation that have a
+            #  'prev_reg_id' mandatory field. This is because this register is the first register from this journal.
+            context.update({'from_journal_creation': True})
+
+            #BKLG-53 get the next draft period from today
+            current_date = datetime.date.today().strftime('%Y-%m-%d')
+            periods = self.pool.get('account.period').search(cr, uid, [
+                ('date_stop', '>=',current_date),
+                ('state', '=', 'draft'),
+                ('special', '=', False),
+            ], context=context, limit=1, order='date_stop')
+            if not periods:
+                raise osv.except_osv(_('Warning'), _('Sorry, No open period for creating the register!'))
+            reg_obj.create(cr, uid, {'journal_id': journal_id,
+                                     'name': vals['name'],
+                                     'period_id': periods[0],
+                                     'currency': vals.get('currency')}, context=context)
+
     def create(self, cr, uid, vals, context=None):
         """
         Create the journal with its sequence, a sequence linked to the fiscalyear and some register if this journal type is bank, cash or cheque.
@@ -228,8 +261,8 @@ class account_journal(osv.osv):
             not context.get('allow_journal_system_create', False) and \
                 vals.get('type', '') == 'system':
                     # user not allowed to create 'system' journal
-                    raise osv.except_osv(_('Warning'),
-                                         _('You can not create a System journal'))
+            raise osv.except_osv(_('Warning'),
+                                 _('You can not create a System journal'))
 
         # Prepare some values
         seq_pool = self.pool.get('ir.sequence')
@@ -270,36 +303,15 @@ class account_journal(osv.osv):
         if vals['type'] in ['cash', 'bank', 'cheque', 'cur_adj']:
             if not vals.get('default_debit_account_id'):
                 raise osv.except_osv(_('Warning'), _('Default Debit Account is missing.'))
-
-        # if the journal can be linked to a register, the register is also created
-        # UTP-182: but not create if the journal came from another instance via the synchronization
-        if vals['type'] in ('cash','bank','cheque') and not context.get('sync_update_execution', False):
-            # 'from_journal_creation' in context permits to pass register creation that have a
-            #  'prev_reg_id' mandatory field. This is because this register is the first register from this journal.
-            context.update({'from_journal_creation': True})
-
-            #BKLG-53 get the next draft period from today
-            current_date = datetime.date.today().strftime('%Y-%m-%d')
-            periods = self.pool.get('account.period').search(cr, uid, [
-                ('date_stop','>=',current_date),
-                    ('state','=','draft'),
-                    ('special', '=', False),
-            ], context=context, limit=1, order='date_stop')
-            if not periods:
-                raise osv.except_osv(_('Warning'), _('Sorry, No open period for creating the register!'))
-            self.pool.get('account.bank.statement') \
-                .create(cr, uid, {'journal_id': journal_id,
-                                  'name': vals['name'],
-                                  'period_id': periods[0],
-                                  'currency': vals.get('currency')}, \
-                        context=context)
+        # if it is a liquidity journal create the linked register
+        self._create_linked_register(cr, uid, journal_id, vals, context)
 
         # Prevent user that default account for cur_adj type should be an expense account
         if vals['type'] in ['cur_adj']:
             account_id = vals['default_debit_account_id']
             user_type_code = self.pool.get('account.account').read(cr, uid, account_id, ['user_type_code']).get('user_type_code', False)
             if user_type_code != 'expense':
-                raise osv.except_osv(_('Warning'), _('Default Debit Account should be an expense account for Adjustement Journals!'))
+                raise osv.except_osv(_('Warning'), _('Default Debit Account should be an expense account for Adjustment Journals!'))
         return journal_id
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -308,6 +320,8 @@ class account_journal(osv.osv):
         """
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if context is None:
             context = {}
 
@@ -321,7 +335,8 @@ class account_journal(osv.osv):
         res = super(account_journal, self).write(cr, uid, ids, vals, context=context)
         for j in self.browse(cr, uid, ids):
             if j.type == 'cur_adj' and j.default_debit_account_id.user_type_code != 'expense':
-                raise osv.except_osv(_('Warning'), _('Default Debit Account should be an expense account for Adjustement Journals!'))
+                raise osv.except_osv(_('Warning'), _('Default Debit Account should be an expense account for Adjustment Journals!'))
+            self._create_linked_register(cr, uid, j.id, vals, context)
             # US-265: Check account bank statements if name change
             if not context.get('sync_update_execution'):
                 if vals.get('name', False):

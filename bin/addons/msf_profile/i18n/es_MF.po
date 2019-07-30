@@ -603,7 +603,6 @@ msgstr "Fusionar órdenes de compra"
 #: field:wizard.import.po.line,message:0
 #: field:wizard.import.tender.line,message:0
 #: field:hr.payroll.employee.import.errors,msg:0
-#: field:procurement.request.import,message:0
 #: view:wizard.down.payment:0
 #: field:initial.stock.inventory.line,err_msg:0
 #: view:stock.forecast.export:0
@@ -6193,7 +6192,6 @@ msgstr "Excluir la selección de centro de coste"
 #: field:product.likely.expire.report.item.line,item_id:0
 #: field:real.average.consumption.line,ref:0
 #: field:hr.employee,partner_id:0
-#: field:procurement.request.import,file:0
 #: field:purchase.order.followup,line_ids:0
 #: field:sale.order,split_type_sale_order:0
 #: field:purchase.order.line,order_type:0
@@ -7475,7 +7473,6 @@ msgstr "Estado del movimiento"
 #: view:documents.done.wizard:0
 #: view:composition.kit:0
 #: view:user.access.results:0
-#: view:procurement.request.import:0
 #: view:product.price_list:0
 #: view:purchase.order.followup:0
 #: view:purchase.order.change.currency:0
@@ -7657,12 +7654,6 @@ msgstr "¡Acción no válida!"
 msgid "To Close"
 msgstr "Para cerrar"
 
-#. module: account_mcdb
-#: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb_analytic
-#: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_analytic_move_line_search
-msgid "Analytic Selector - Saved queries"
-msgstr "Selector analítico- consultas guardadas"
-
 #. module: stock
 #: selection:stock.move.split.lines,action:0
 msgid "Keep in one lot"
@@ -7809,7 +7800,7 @@ msgstr "El origen seleccionado debe estar en estado 'Realizado'."
 #: code:addons/account_journal/account_journal.py:248
 #: code:addons/account_journal/account_journal.py:258
 #, python-format
-msgid "Default Debit Account should be an expense account for Adjustement Journals!"
+msgid "Default Debit Account should be an expense account for Adjustment Journals!"
 msgstr "La cuenta de débito por defecto debería ser una cuenta de gastos para los diarios de ajustes!"
 
 #. module: stock_schedule
@@ -11366,13 +11357,15 @@ msgstr "El plan de cuentas por defecto está adaptado al país seleccionado. Si 
 msgid "Shipping Type of the Picking List that will contain the chained move (leave empty to automatically detect the type based on the source and destination locations)."
 msgstr "Tipo de envío de la lista de picking que contendrá el movimiento encadenado (déjelo vacío para detectar automáticamente el tipo en función de las ubicaciones de origen y de destino)."
 
-#. modules: register_accounting, account_voucher
+#. modules: register_accounting, account_voucher, msf_doc_import
 #: view:account.statement.from.invoice.lines:0
 #: code:addons/account_voucher/wizard/account_statement_from_invoice.py:187
 #: model:ir.actions.act_window,name:account_voucher.action_view_account_statement_from_invoice_lines
 #: view:wizard.import.cheque:0
 #: view:wizard.import.invoice:0
-#, python-format
+#: model:ir.actions.act_window,name:msf_doc_import.action_migration_accounting_import_wizard
+#: model:ir.ui.menu,name:msf_doc_import.menu_finance_migration_accounting
+#: view:msf.doc.import.accounting:0
 msgid "Import Entries"
 msgstr "Importar asientos"
 
@@ -12309,7 +12302,7 @@ msgstr "Contabilización"
 #: code:addons/res_currency_functional/account_move_line_compute_currency.py:75
 #: code:addons/res_currency_functional/account_move_line_compute_currency.py:222
 #, python-format
-msgid "No Currency Adjustement journal found!"
+msgid "No Currency Adjustment journal found!"
 msgstr "¡No se encontró diario de ajuste de divisas!"
 
 #. module: msf_homere_interface
@@ -12388,20 +12381,6 @@ msgstr "Semana del año"
 #: selection:res.users,context_tz:0
 msgid "America/St_Lucia"
 msgstr "America / St_Lucia"
-
-#. modules: register_accounting, stock_override, purchase_override, account_override, sale_override, analytic_distribution
-#: field:account.invoice,from_yml_test:0
-#: field:account.invoice.line,from_yml_test:0
-#: field:account.commitment,from_yml_test:0
-#: field:account.commitment.line,from_yml_test:0
-#: field:purchase.order,from_yml_test:0
-#: field:wizard.account.invoice,from_yml_test:0
-#: field:wizard.account.invoice.line,from_yml_test:0
-#: field:sale.order,from_yml_test:0
-#: field:procurement.order,from_yml_test:0
-#: field:stock.picking,from_yml_test:0
-msgid "Only used to pass addons unit test"
-msgstr "Utilizado solo para pasar la prueba de unidad de addons "
 
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.kr
@@ -12622,7 +12601,6 @@ msgstr "Rellene desde los campos de búsqueda"
 #: view:wizard.import.po:0
 #: view:wizard.import.po.line:0
 #: view:wizard.import.tender.line:0
-#: view:procurement.request.import:0
 #: view:product.product:0
 #: view:product.template:0
 #: view:product.product:0
@@ -13987,9 +13965,7 @@ msgid "Tax codes"
 msgstr "Códigos de impuestos"
 
 #. module: transport_mgmt
-#: field:international.transport.cost.report,transport_mode:0
 #: field:local.transport.cost.report,transport_mode:0
-#: field:purchase.order,transport_mode:0
 msgid "Transport mode"
 msgstr "Modo de transporte"
 
@@ -15798,12 +15774,6 @@ msgstr "Desencadenat configuración "
 msgid "You try to assign a lot which is not from the same product"
 msgstr "Está intentando asignar un lote que no es del mismo producto"
 
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air regular"
-msgstr "Aéreo regular"
-
 #. module: account_voucher
 #: view:account.voucher:0
 msgid "Supplier Voucher"
@@ -16888,20 +16858,6 @@ msgstr "Referencia UdM"
 #: field:ir.model.fields,selection:0
 msgid "Selection Options"
 msgstr "Opciones de selección"
-
-#. modules: register_accounting, stock_override, purchase_override, account_override, sale_override, analytic_distribution
-#: help:account.invoice,from_yml_test:0
-#: help:account.invoice.line,from_yml_test:0
-#: help:account.commitment,from_yml_test:0
-#: help:account.commitment.line,from_yml_test:0
-#: help:purchase.order,from_yml_test:0
-#: help:wizard.account.invoice,from_yml_test:0
-#: help:wizard.account.invoice.line,from_yml_test:0
-#: help:sale.order,from_yml_test:0
-#: help:procurement.order,from_yml_test:0
-#: help:stock.picking,from_yml_test:0
-msgid "Never set this field to true !"
-msgstr "¡Nunca configure este campo en 'verdadero'!"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -19419,11 +19375,6 @@ msgstr "button_cancel - (procurement.order)"
 msgid "Chart of Accounts for MSF"
 msgstr "Plan de cuentas MSF"
 
-#. module: sync_client
-#: view:sync.client.register_entity:0
-msgid "Generate a new UUID"
-msgstr "Generar un nuevo identificador de usuario único"
-
 #. modules: account, account_activable
 #: view:account.account:0
 #: field:account.account,type:0
@@ -20492,11 +20443,6 @@ msgstr "Canada / Eastern"
 msgid "If you have more than one shop reselling your company products, you can create and manage that from here. Whenever you will record a new quotation or sales order, it has to be linked to a shop. The shop also defines the warehouse from which the products will be delivered for each particular sales."
 msgstr "Si hay más de una tienda que vende los productos de su empresa, puede crearlas y administrarlas desde aquí. Cada vez que registre un nuevo presupuesto o pedido de venta, deberá vincularlo a la tienda correspondiente. La tienda también define el almacén desde el que se enviarán los productos para cada venta concreta."
 
-#. module: register_accounting
-#: field:wizard.cash.return,display_invoice:0
-msgid "Display Invoice"
-msgstr "Mostrar factura"
-
 #. modules: account, register_accounting
 #: view:account.bank.statement:0
 #: field:account.bank.statement.line,statement_id:0
@@ -21556,7 +21502,6 @@ msgstr "Svalbard and Jan Mayen Islands"
 #: view:stock.cost.reevaluation:0
 #: view:tender:0
 #: model:ir.actions.act_window,name:procurement_request.action_open_wizard_import
-#: view:procurement.request.import:0
 #: view:catalogue.import.lines:0
 #: view:supplier.catalogue:0
 msgid "Import lines"
@@ -29594,12 +29539,6 @@ msgstr "¡No se puede cambiar el impuesto!"
 msgid "New Jersey"
 msgstr "Nueva Jersey"
 
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air express"
-msgstr "Air express"
-
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:446
 #, python-format
@@ -36470,11 +36409,6 @@ msgstr "Recibir un informe"
 msgid "Need Sourcing"
 msgstr "Requiere abastecimiento"
 
-#. module: analytic_distribution
-#: view:mass.reallocation.wizard:0
-msgid "- Free 1 / Free 2 items"
-msgstr "- Free 1 / Free 2 items"
-
 #. modules: account, msf_outgoing, analytic_distribution_supply, register_accounting, purchase_allocation_report, analytic_distribution_invoice, account_subscription, analytic_distribution
 #: selection:account.journal.column,field:0
 #: field:account.model.line,analytic_distribution_state_recap:0
@@ -36576,12 +36510,6 @@ msgstr "Peso neto"
 #: field:sync.client.update_to_send,owner:0
 msgid "Owner"
 msgstr "Propietario"
-
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air FFC"
-msgstr "Aire FFC"
 
 #. module: resource
 #: field:resource.calendar.attendance,hour_from:0
@@ -37575,12 +37503,6 @@ msgstr "Balance general (Cuentas de pasivos)"
 msgid "Asia/Dushanbe"
 msgstr "Asia / Dushanbe"
 
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:92
-#, python-format
-msgid "You cannot import lines in a Sale Order"
-msgstr "No puede importar líneas en una orden de venta"
-
 #. module: sale
 #: report:msf.report_reception_in:0
 msgid "Expected Receipt Date :"
@@ -37972,12 +37894,6 @@ msgstr "Uzbekistán"
 #: model:ir.ui.menu,name:msf_homere_interface.menu_finance_payroll_entries
 msgid "Payroll entries"
 msgstr "Asientos de nómina"
-
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:114
-#, python-format
-msgid "The system hasn't found a Internal Request to import lines"
-msgstr "El sistema no ha encontrado una solicitud interna para importar líneas"
 
 #. module: purchase_compare_rfq
 #: view:wizard.choose.supplier:0
@@ -38375,11 +38291,10 @@ msgstr "Error de actualización de centro de coste."
 msgid "Progress"
 msgstr "Anticipo"
 
-#. modules: return_claim, procurement_request, account_hq_entries, kit
+#. modules: return_claim, account_hq_entries, kit
 #: field:hq.entries.split.lines,state_info:0
 #: code:addons/kit/wizard/substitute.py:681
 #: code:addons/kit/wizard/substitute.py:1018
-#: field:procurement.request.import,info:0
 #: code:addons/return_claim/return_claim.py:1136
 #, python-format
 msgid "Info"
@@ -39850,11 +39765,6 @@ msgstr "Ventas por mes"
 msgid "Let this field empty if this location is shared between all companies"
 msgstr "Deje este campo vacío si esta ubicación se comparte entre todas las empresas"
 
-#. module: procurement_request
-#: view:procurement.request.import:0
-msgid "Result of importation"
-msgstr "Resultado de la importación"
-
 #. module: sync_remote_warehouse
 #: field:sync.monitor,usb:0
 msgid "USB Sync"
@@ -40465,7 +40375,6 @@ msgstr "Expended amount"
 #: view:procurement.cycle.compute.all:0
 #: view:procurement.min.max.compute.all:0
 #: view:procurement.purchase.compute.all:0
-#: view:procurement.request.import:0
 #: view:sale.order:0
 #: view:product.list.add.products:0
 #: view:product.to.list:0
@@ -41620,8 +41529,6 @@ msgstr "Se produjo un error en el equilibrio y no hay línea de redondeo de nóm
 #: selection:res.partner,transport_0:0
 #: selection:res.partner,transport_1:0
 #: selection:res.partner,transport_2:0
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
 msgid "Sea"
 msgstr "Mar"
 
@@ -42819,7 +42726,6 @@ msgstr "Consumo histórico de producto"
 #: view:wizard.import.tender.line:0
 #: field:wizard.import.tender.line,file:0
 #: field:user.access.configurator,file_to_import_uac:0
-#: view:procurement.request.import:0
 #: field:supplier.catalogue,file_to_import:0
 msgid "File to import"
 msgstr "Archivo para importar"
@@ -43397,8 +43303,6 @@ msgstr "Total débito registrado"
 #: code:addons/procurement_request/procurement_request.py:327
 #: code:addons/procurement_request/procurement_request.py:343
 #: code:addons/procurement_request/procurement_request.py:350
-#: code:addons/procurement_request/wizard/wizard_import_list.py:92
-#: code:addons/procurement_request/wizard/wizard_import_list.py:114
 #: code:addons/product_attributes/product_attributes.py:61
 #: code:addons/product_attributes/product_attributes.py:85
 #: code:addons/product_attributes/product_attributes.py:94
@@ -44754,12 +44658,6 @@ msgstr "Se puede alquilar"
 msgid "Text Error"
 msgstr "Error de texto"
 
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/analytic_distribution.py:448
-#, python-format
-msgid "Not an expense account"
-msgstr "Not an expense account"
-
 #. module: service_purchasing
 #: code:addons/service_purchasing/service_purchasing.py:244
 #, python-format
@@ -44771,13 +44669,6 @@ msgstr "Los productos de servicio deben tener una ubicación de servicio o de cr
 #: selection:res.users,context_tz:0
 msgid "America/Argentina/Salta"
 msgstr "America/Argentina/Salta"
-
-#. module: msf_doc_import
-#: model:ir.actions.act_window,name:msf_doc_import.action_migration_accounting_import_wizard
-#: model:ir.ui.menu,name:msf_doc_import.menu_finance_migration_accounting
-#: view:msf.doc.import.accounting:0
-msgid "Import Entries"
-msgstr "Importar asientos de migración"
 
 #. module: base
 #: view:ir.model.access:0
@@ -46543,12 +46434,6 @@ msgstr "Desde orden: se genera un borrador de factura  a partir de la orden de c
 #: field:threshold.value.rules.report,nomen_name:0
 msgid "Nomenclature level"
 msgstr "Nivel de nomenclatura"
-
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Hand carry"
-msgstr "Transportado en mano"
 
 #. module: account
 #: model:process.transition,note:account.process_transition_invoiceimport0
@@ -49844,8 +49729,6 @@ msgstr "Fallido"
 #: selection:res.partner,transport_0:0
 #: selection:res.partner,transport_1:0
 #: selection:res.partner,transport_2:0
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
 msgid "Road"
 msgstr "Tierra"
 
@@ -52193,7 +52076,7 @@ msgstr "Fusión de orden de compra"
 #. module: account
 #: field:account.journal,default_debit_account_id:0
 msgid "Default Debit Account"
-msgstr "Cuenta de crédito por defecto"
+msgstr "Cuenta de débito por defecto"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -56824,7 +56707,7 @@ msgstr "SWEDISH KRONA"
 #: selection:account.move.line,journal_type:0
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
-msgid "Currency Adjustement"
+msgid "Currency Adjustment"
 msgstr "Ajuste de divisa"
 
 #. module: sale
@@ -58315,8 +58198,6 @@ msgstr "Territorio Británico del Océano Índico"
 #: view:stock.picking.not.available:0
 #: code:addons/procurement_request/procurement_request.py:353
 #: code:addons/procurement_request/procurement_request.py:563
-#: code:addons/procurement_request/wizard/wizard_import_list.py:87
-#: code:addons/procurement_request/wizard/wizard_import_list.py:94
 #: code:addons/product_attributes/product_attributes.py:602
 #: code:addons/product_attributes/product_attributes.py:973
 #: code:addons/purchase/purchase.py:730
@@ -59900,12 +59781,6 @@ msgstr "Archivo para exportar"
 msgid "Proprietary instance"
 msgstr "Instancia propietaria"
 
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:94
-#, python-format
-msgid "You cannot import lines in a confirmed Internal Request"
-msgstr "No puede importar líneas en una solicitud interna confirmada"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -60523,12 +60398,6 @@ msgstr "¡El nombre del grupo debe ser único!"
 #: model:process.node,name:tender_flow.process_node_tender_draft
 msgid "Tender - draft"
 msgstr "Licitación - borrador"
-
-#. module: account_mcdb
-#: model:ir.actions.act_window,name:account_mcdb.action_account_mcdb
-#: model:ir.ui.menu,name:account_mcdb.menu_finance_mcdb_move_line_search
-msgid "G/L Selector - Saved queries"
-msgstr "Selector contable- consultas guardadas"
 
 #. module: product
 #: view:product.product:0
@@ -61233,12 +61102,6 @@ msgstr "Referencia del documento que generó esta factura."
 #: view:account.tax.code:0
 msgid "Reporting Configuration"
 msgstr "Configuración de informes"
-
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:87
-#, python-format
-msgid "Please save the Internal Request before importing lines"
-msgstr "Guarde la solicitud interna antes de importar las líneas"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/history_consumption.py:107
@@ -63107,7 +62970,6 @@ msgstr "¡Los módulos seleccionados han sido actualizados/ instalados!"
 #: report:account.bank.statement.line_csv:0
 #: field:account.mcdb,currency_id:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:252
-#: field:account.invoice,fake_currency_id:0
 #: model:ir.model,name:account_override.model_res_currency
 #: report:payment.order:0
 #: field:account.model,currency_id:0
@@ -69965,7 +69827,6 @@ msgstr "No link to a journal item found!"
 #: view:wizard.import.po:0
 #: view:wizard.import.po.line:0
 #: view:wizard.import.tender.line:0
-#: view:procurement.request.import:0
 msgid "Import file"
 msgstr "Importar archivo"
 
@@ -71225,11 +71086,6 @@ msgstr "Mercancías peligrosas"
 #: sql_constraint:msf_field_access_rights.field_access_rule_line:0
 msgid "You cannot have two Field Access Rule Lines for the same Field in the same Rule"
 msgstr "No puede tener dos líneas de reglas de acceso a campo para el mismo campo en la misma regla"
-
-#. module: procurement_request
-#: model:ir.model,name:procurement_request.model_procurement_request_import
-msgid "Import of Internal Request"
-msgstr "Importación de solicitud interna"
 
 #. module: base
 #: help:ir.actions.wizard,multi:0

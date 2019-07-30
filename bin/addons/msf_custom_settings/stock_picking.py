@@ -23,7 +23,6 @@
 
 from osv import osv
 from osv import fields
-from tools.translate import _
 
 class stock_picking(osv.osv):
     _inherit = 'stock.picking'
@@ -35,16 +34,6 @@ class stock_picking(osv.osv):
         '''
         context.update({'picking_screen': True, 'from_so':True})
         return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
-
-# I delete the method below because the mecanism was already done by PMA
-#    def allow_cancel(self, cr, uid, ids, context=None):
-#        res = super(stock_picking, self).allow_cancel(cr, uid, ids, context=context)
-#        for pick in self.browse(cr, uid, ids, context=context):
-#            if not pick.sale_id:
-#                return res
-#            else:
-#                raise osv.except_osv(_('Error'), _('You cannot cancel picking because it comes from a Field Order !'))
-#        return True
 
     def _vals_get_bool(self, cr, uid, ids, fields, arg, context=None):
         '''

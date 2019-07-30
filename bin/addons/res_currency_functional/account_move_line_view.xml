@@ -61,8 +61,18 @@
                         <newline />
                         <field name="document_date"/>
                         <field name="date"/>
+                        <field name="reconcile_date" invisible="1"/>
+                        <field name="unreconcile_date" invisible="1"/>
+                        <field name="unreconcile_txt" invisible="1"/>
+                        <field name="revaluation_reference" invisible="1"/>
+                        <field name="revaluation_date" invisible="1"/>
+                        <field name="invoice" invisible="1"/>
+                        <field name="purchase_order_id" invisible="1"/>
+                        <field name="cheque_number" invisible="1"/>
+                        <field name="db_id" invisible="1"/>
+                        <field name="amount_currency" invisible="1"/>
                     </group>
-                    
+
                     <group col="6" colspan="4">
                         <separator colspan="6" string="Amount"/>
                         <newline/>
@@ -73,6 +83,8 @@
                             context="{'curr': currency_id}"
                             />
                         <field name="partner_type_mandatory" invisible="1" colspan="2"/>
+                        <field name="employee_id" invisible="1"/>
+                        <field name="transfer_journal_id" invisible="1"/>
                         <newline />
                         <field name="credit" readonly="0" colspan="2"/>
                         <field name="debit" readonly="0" colspan="2"/>

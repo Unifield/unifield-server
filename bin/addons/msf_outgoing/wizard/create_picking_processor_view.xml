@@ -12,12 +12,15 @@
                     <field name="picking_id" invisible="1" />
                     <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all" />
                     <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" />
+                    <button name="import_pick" type="object" icon="gtk-undo" colspan="4" string="Import PICK" />
                     <separator colspan="4" string="Move lines" />
                     <field name="move_ids" mode="tree"
                            colspan="4" nolabel="1" />
+                    <field name="draft" invisible="1"/>
                     <group colspan="4" col="6" name="actions">
                         <separator string="Actions" colspan="6" />
-                        <label colspan="4"> </label>
+                        <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
+                        <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
                         <button name="do_create_picking" type="object" string="Create Picking" icon="gtk-go-forward" />
                     </group>

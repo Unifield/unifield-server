@@ -59,7 +59,6 @@ import threading
 import pooler
 from osv import osv, fields
 from tools.translate import _
-from mx import DateTime
 import base64
 import decimal_precision as dp
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -86,7 +85,7 @@ class purchase_line_import_xml_line(osv.osv_memory):
         'line_number': fields.integer(string='Line number'),
         'product_id': fields.many2one('product.product', string='Product'),
         'product_uom': fields.many2one('product.uom', string='UoM'),
-        'product_qty': fields.float(digits=(16,2), string='Quantity'),
+        'product_qty': fields.float(digits=(16,2), string='Quantity', related_uom='product_uom'),
         'price_unit': fields.float(digits=(16,2), string='Price'),
         'price_unit_defined': fields.boolean('Price Unit Defined?'),
         'confirmed_delivery_date': fields.date('Confirmed Delivery Date'),
@@ -100,7 +99,7 @@ class purchase_line_import_xml_line(osv.osv_memory):
     }
     _defaults = {
         'line_ignored_ok': False,
-        }
+    }
 
 purchase_line_import_xml_line()
 
@@ -133,7 +132,7 @@ class purchase_import_xml_line(osv.osv_memory):
     }
     _defaults = {
         'line_ignored_ok': False,
-        }
+    }
 
 purchase_import_xml_line()
 
@@ -223,7 +222,7 @@ The columns should be in this values:
                 if k == 'Delivery requested date':
                     continue  # 'Delivery requested date' tolerated (for Rfq vs 'Delivery Requested Date' of PO_COLUMNS_HEADER_FOR_IMPORT)
                 vals = {'message': _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: \n %s')
-                                                   % (k, ', \n'.join(columns_for_po_integration))}
+                        % (k, ', \n'.join(columns_for_po_integration))}
                 return self.write(cr, uid, ids, vals, context), False
         list_of_required_values = ['Line', 'Product Code']
         for required_value in list_of_required_values:
@@ -254,7 +253,7 @@ The columns should be in this values:
                     to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)" has a wrong format and was reset to "30-12-1899" which is the default Excel date.'))
                     to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
             else:
-                    to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)" %s has a wrong format. Please format the cell in Excel as date.') % (delivery_confirmed_date, ))
+                to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)" %s has a wrong format. Please format the cell in Excel as date.') % (delivery_confirmed_date, ))
 
         # Supplier Reference
         cell_nb = header_index.get('Supplier Reference', False)
@@ -467,7 +466,7 @@ The columns should be in this values:
                     to_write['error_list'].append(_('"The Delivery Confirmed Date" has a wrong format and was reset to "30-12-1899" which is the default Excel date.'))
                     to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
             else:
-                    to_write['error_list'].append(_('"The Delivery Confirmed Date" %s has a wrong format. Please format the cell in Excel as date.') % (confirmed_delivery_date,))
+                to_write['error_list'].append(_('"The Delivery Confirmed Date" %s has a wrong format. Please format the cell in Excel as date.') % (confirmed_delivery_date,))
 
         #  Comment
         cell_nb = header_index.get('Comment', False)
@@ -500,7 +499,6 @@ The columns should be in this values:
         pol_obj = self.pool.get('purchase.order.line')
         import_po_obj = self.pool.get('purchase.import.xml.line')
         import_obj = self.pool.get('purchase.line.import.xml.line')
-        simu_line_obj = self.pool.get('wizard.simu.import.po.line')
         context.update({'import_in_progress': True, 'po_integration': True})
         cell_data = self.pool.get('import.cell.data')
         start_time = time.time()
@@ -509,7 +507,7 @@ The columns should be in this values:
         po_id = po_browse.id
         header_index = context['header_index']
 
-        processed_lines, ignore_lines, complete_lines, lines_to_correct = 0, 0, 0, 0
+        processed_lines, ignore_lines, complete_lines = 0, 0, 0
         line_with_error, error_list, notif_list = [], [], []
         error_log, notif_log = '', ''
 
@@ -681,9 +679,9 @@ The columns should be in this values:
                         for line in import_obj.read(cr, uid, same_file_line_nb):
                             if not line.get('line_ignored_ok', False) and line.get('id', False) not in file_line_proceed:
                                 error_log += _("""Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""") % (
-                                                                                        line['file_line_number']+1,
-                                                                                        count_same_pol_line_nb, line_number,
-                                                                                        file_values[line.get('file_line_number', False)] and file_values[line.get('file_line_number', False)][header_index['Product Code']])
+                                    line['file_line_number']+1,
+                                    count_same_pol_line_nb, line_number,
+                                    file_values[line.get('file_line_number', False)] and file_values[line.get('file_line_number', False)][header_index['Product Code']])
                                 data = file_values[line['file_line_number']].items()
                                 line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                 ignore_lines += 1
@@ -775,9 +773,9 @@ The columns should be in this values:
                             for line in import_obj.read(cr, uid, same_file_line_nb):
                                 if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
                                     error_log += _("""Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""") % (
-                                                                                        line['file_line_number']+1,
-                                                                                        count_same_pol_line_nb, line_number,
-                                                                                        file_values[line['file_line_number']][header_index['Product Code']])
+                                        line['file_line_number']+1,
+                                        count_same_pol_line_nb, line_number,
+                                        file_values[line['file_line_number']][header_index['Product Code']])
                                     data = file_values[line.get('file_line_number', False)].items()
                                     line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                     ignore_lines += 1
@@ -951,7 +949,7 @@ class wizard_simu_import_po_line(osv.osv_memory):
         'initial_product_name': fields.char(size=256, string='Product Description'),
         'initial_nomenclature': fields.char(size=256, string='Nomenclature'),
         'initial_comment': fields.char(size=256, string='Comment'),
-        'initial_qty': fields.float(digits=(16,2), string='Qty'),
+        'initial_qty': fields.float(digits=(16,2), string='Qty', related_uom='initial_uom_id'),
         'initial_uom_id': fields.many2one('product.uom', string='UoM'),
         'initial_req_date': fields.date(string='Delivery Requested Date'),
         'initial_unit_price': fields.float(digits_compute=dp.get_precision('Sale Price Computation'), string='Unit Price'),
@@ -964,7 +962,7 @@ class wizard_simu_import_po_line(osv.osv_memory):
                                          ('new', 'New')], string='CHG'),
         'import_product_code': fields.char(size=32, string='Product Code'),
         'import_product_name': fields.char(size=256, string='Product Description'),
-        'import_qty': fields.float(digits=(16,2), string='Qty'),
+        'import_qty': fields.float(digits=(16,2), string='Qty', related_uom='import_uom_id'),
         'import_uom_id': fields.many2one('product.uom', string='UoM'),
         'import_unit_price': fields.float(digits_compute=dp.get_precision('Sale Price Computation'), string='Unit Price'),
         'discrepancy': fields.function(_get_discrepancy, method=True, string='Discrepancy', type='float',

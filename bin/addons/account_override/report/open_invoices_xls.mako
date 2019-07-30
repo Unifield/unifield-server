@@ -113,8 +113,16 @@
    </Borders>
    <NumberFormat ss:Format="Standard"/>
   </Style>
-
-
+  <Style ss:ID="s33Wrap">
+   <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <NumberFormat ss:Format="Standard"/>
+  </Style>
   <Style ss:ID="s34">
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -227,26 +235,33 @@
 
  </Styles>
 
-<Worksheet ss:Name="${_('Open Invoices')}">
+<Worksheet ss:Name="${context.get('paid_invoice') and _('Paid Invoices') or _('Open Invoices')}">
     <Table>
-    <Column ss:AutoFitWidth="0" ss:Width="70.5" ss:Span="1"/>
-    <Column ss:Index="3" ss:Width="88.5"/>
+    <Column ss:Width="88.5"/>
+    <Column ss:AutoFitWidth="0" ss:Width="75.5" ss:Span="1"/>
     <Column ss:Width="91.5"/>
     <Column ss:Width="108"/>
-    <Column ss:Width="63"/>
-    <Column ss:Width="53.25"/>
     <Column ss:Width="105.75"/>
-    <Column ss:Width="51"/>
-    <Column ss:Width="42.75"/>
-    <Column ss:Width="46.5" ss:Span="1"/>
-    <Column ss:Index="13" ss:Width="49.5"/>
+    <Column ss:Width="53.25"/>
+    % if not context.get('paid_invoice'):
+        <Column ss:Width="61"/>
+    % endif
+    <Column ss:Width="52.75"/>
+    <Column ss:Width="46.5"/>
+    % if not context.get('paid_invoice'):
+        <Column ss:Width="56.5"/>
+    % endif
+    <Column ss:Width="59.5"/>
     <Column ss:Width="39.75"/>
-    <Column ss:Width="45.5"/>
+    <Column ss:Width="80"/>
+    <Column ss:Width="110"/>
+    <Column ss:Width="200"/>
+    <Column ss:Width="200"/>
 
 
     <Row ss:AutoFitHeight="0" ss:Height="18">
         <Cell ss:StyleID="s25b">
-        <Data ss:Type="String">${_('OPEN INVOICES')}</Data>
+        <Data ss:Type="String">${context.get('paid_invoice') and _('PAID INVOICES') or _('OPEN INVOICES')}</Data>
         </Cell>
     </Row>
 
@@ -266,9 +281,31 @@
         </Cell>
         <Cell ss:StyleID="short_date2a" ><Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data></Cell>
     </Row>
+
+    <% beginning_date = data.get('form', '') and data['form'].get('beginning_date', '')%>
+    <% ending_date = data.get('form', '') and data['form'].get('ending_date', '')%>
+    % if context.get('paid_invoice') and beginning_date and ending_date:
+        <Row>
+            <Cell>
+            <Data ss:Type="String">${_('Beginning date:')}</Data>
+            </Cell>
+            <Cell ss:StyleID="short_date2a"><Data ss:Type="DateTime">${beginning_date|n}T00:00:00.000</Data></Cell>
+        </Row>
+        <Row>
+            <Cell>
+            <Data ss:Type="String">${_('Ending date:')}</Data>
+            </Cell>
+            <Cell ss:StyleID="short_date2a"><Data ss:Type="DateTime">${ending_date|n}T00:00:00.000</Data></Cell>
+        </Row>
+    % endif
+
     <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
-% for (type, title) in [('out_invoice', _('Stock Transfer Vouchers')), ('in_invoice', _('Supplier Invoices')), ('out_refund', _('Customer Refunds')), ('in_refund', _('Supplier Refunds'))]:
+<% inv = invoices(data) %>
+<% doc_type_list = [('si_di', _('Supplier Invoices')), ('sr', _('Supplier Refunds')), ('donation', _('Donations')),
+                    ('ivi', _('Intermission Vouchers IN')), ('stv', _('Stock Transfer Vouchers')), ('cr', _('Customer Refunds')),
+                    ('dn', _('Debit Notes')), ('ivo', _('Intermission Vouchers OUT'))] %>
+% for (type, title) in doc_type_list:
    <Row >
     <Cell ss:StyleID="s23"><Data ss:Type="String">${title}</Data></Cell>
     <Cell ss:StyleID="s24"/>
@@ -283,39 +320,49 @@
     <Cell ss:StyleID="s24"/>
     <Cell ss:StyleID="s24"/>
     <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
+    <Cell ss:StyleID="s25"/>
+    <Cell ss:StyleID="s25"/>
+    <Cell ss:StyleID="s25"/>
     <Cell ss:StyleID="s25"/>
    </Row>
     <Row ss:AutoFitHeight="0" ss:Height="51" ss:StyleID="s26">
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Document Date')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
-        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
-% if type in ['out_invoice', 'out_refund']:
+% if type in ['stv', 'ivo', 'dn', 'cr']:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Customer')}</Data></Cell>
-% elif type in ['in_invoice', 'in_refund']:
+% elif type in ['si_di', 'ivi', 'donation', 'sr']:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Supplier')}</Data></Cell>
 % else:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Partner')}</Data></Cell>
 % endif
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Description')}</Data></Cell>
-        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Responsible')}</Data></Cell>
-        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Due Date')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Source Document')}</Data></Cell>
-        <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Residual amt booking ccy')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Due Date')}</Data></Cell>
+        % if not context.get('paid_invoice'):
+            <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Residual amt booking ccy')}</Data></Cell>
+        % endif
         <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Total amt booking ccy')}</Data></Cell>
         <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Booking Currency')}</Data></Cell>
-        <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Residual amt func. ccy')}</Data></Cell>
+        % if not context.get('paid_invoice'):
+            <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Residual amt func. ccy')}</Data></Cell>
+        % endif
         <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Total amt func. ccy')}</Data></Cell>
         <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Func. Ccy')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('State')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Reconcile')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Payment Sequence Number')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Down Payment Sequence Number')}</Data></Cell>
     </Row>
 
 <% nb_line = 0 %>
 
-% if type in invoices:
-% for o in invoices[type]:
+% if type in inv:
+% for o in inv[type]:
     <Row>
         <% nb_line += 1 %>
+        <% update_percent(nb_line, context) %>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.move_id and o.move_id.name or '')|x}</Data></Cell>
         % if isDate(o.document_date):
             <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.document_date or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
@@ -327,23 +374,28 @@
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
         % endif
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.move_id and o.move_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.partner_id and o.partner_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.user_id and o.user_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.origin or '')|x}</Data></Cell>
         % if isDate(o.date_due):
             <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.date_due or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
         % endif
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.origin or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.residual or 0.0)|x}</Data></Cell>
+        % if not context.get('paid_invoice'):
+            <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.residual or 0.0)|x}</Data></Cell>
+        % endif
         <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.amount_total or 0.0)|x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.currency_id and o.currency_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.residual, o.currency_id.id) or 0.0 )|x}</Data></Cell>
+        % if not context.get('paid_invoice'):
+            <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.residual, o.currency_id.id) or 0.0 )|x}</Data></Cell>
+        % endif
         <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.amount_total, o.currency_id.id) or 0.0 )|x}</Data></Cell>
         <Cell ss:StyleID="s50"><Data ss:Type="String">${getFuncCur() |x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.imported_state and getSelValue('account.invoice', 'imported_state', o.imported_state) or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.payment_to_display_ids and ", ".join(set([ p.reconcile_txt for p in o.payment_to_display_ids if p.reconcile_txt != False])) or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.payment_to_display_ids and ", ".join([ p.move_id.name for p in o.payment_to_display_ids]) or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.down_payment_ids and ", ".join([ p.move_id.name for p in o.down_payment_ids]) or '')|x}</Data></Cell>
     </Row>
 % endfor
 % endif
@@ -355,15 +407,15 @@
         <Cell ss:StyleID="s39"/>
         <Cell ss:StyleID="s39"/>
         <Cell ss:StyleID="s39"/>
-        <Cell ss:StyleID="s39"/>
         <Cell ss:StyleID="s40"/>
-        <Cell ss:StyleID="s40"/>
+        % if not context.get('paid_invoice'):
+            <Cell ss:StyleID="s40"/>
+            <Cell ss:StyleID="s40"/>
+        % endif
         <Cell ss:StyleID="s44"><Data ss:Type="String">${_('Subtotal')} =</Data></Cell>
         % if nb_line:
-            <Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${nb_line}]C:R[-1]C)"><Data ss:Type="Number" ></Data></Cell>
             <Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${nb_line}]C:R[-1]C)"><Data ss:Type="Number"></Data></Cell>
         % else:
-            <Cell ss:StyleID="s49" />
             <Cell ss:StyleID="s49" />
         % endif
         <Cell ss:StyleID="s29"><Data ss:Type="String">${getFuncCur() |x}</Data></Cell>

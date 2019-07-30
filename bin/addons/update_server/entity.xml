@@ -10,6 +10,7 @@
             <field name="arch" type="xml">
             	<field name="identifier" position="after">
             	 <field name="version_id" ></field>
+            	 <field name="pgversion" ></field>
                 </field>
             </field>
         </record>
@@ -22,6 +23,7 @@
             <field name="arch" type="xml">
             	<field name="state" position="after">
                 	<field name="version_id" ></field>
+                    <field name="pgversion" ></field>
                 </field>
             </field>
         </record>

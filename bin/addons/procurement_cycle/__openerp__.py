@@ -56,12 +56,10 @@
     'demo_xml': [
     ],
     'test': [
-        'test/data.yml',
-        'test/proc_cycle.yml',
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

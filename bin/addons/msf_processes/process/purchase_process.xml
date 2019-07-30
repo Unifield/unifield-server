@@ -118,28 +118,7 @@
             <field eval="0" name="flow_start"/>
         </record>
         
-        <delete model="process.node" id="purchase.process_node_invoiceafterpacking0"/>
 
-        <!--
-            Process Condition
-        -->
-<!-- 
-        <record id="purchase.process_condition_conditionorigin" model="process.condition">
-            <field name="model_id" ref="purchase.model_purchase_order"/>
-            <field name="node_id" ref="purchase.process_node_draftpurchaseorder1"/>
-            <field eval="&quot;&quot;&quot;object.origin==''&quot;&quot;&quot;" name="model_states"/>
-            <field eval="&quot;&quot;&quot;condition_origin&quot;&quot;&quot;" name="name"/>
-        </record>
- -->
-<!-- 
-        <record id="purchase.process_condition_conditioninvoicemanual" model="process.condition">
-            <field name="model_id" ref="purchase.model_purchase_order"/>
-            <field name="node_id" ref="purchase.process_node_invoicecontrol0"/>
-            <field eval="&quot;&quot;&quot;object.invoice_method=='manual'&quot;&quot;&quot;" name="model_states"/>
-            <field eval="&quot;&quot;&quot;condition_invoice_manual&quot;&quot;&quot;" name="name"/>
-        </record>
- -->
- 
  		<record id="purchase.process_condition_po_draft_not_rfq" model="process.condition">
             <field name="model_id" ref="purchase.model_purchase_order"/>
             <field name="node_id" ref="purchase.process_node_draftpurchaseorder0"/>
@@ -171,7 +150,7 @@
         <!--
             Process Transition
         -->
-        
+<!--
         <record id="purchase.process_transition_confirmingpurchaseorder0" model="process.transition">
             <field eval="[(6,0,[])]" name="transition_ids"/>
             <field eval="&quot;&quot;&quot;Confirmation&quot;&quot;&quot;" name="name"/>
@@ -180,7 +159,7 @@
             <field model="process.node" name="source_node_id" ref="purchase.process_node_draftpurchaseorder0"/>
             <field eval="[(6,0,[ref('purchase.trans_draft_confirmed')])]" name="transition_ids"/>
         </record>
- 
+-->
         <record id="purchase.process_transition_confirmingpurchaseorder1" model="process.transition">
             <field eval="[(6,0,[])]" name="transition_ids"/>
             <field eval="&quot;&quot;&quot;Confirmation&quot;&quot;&quot;" name="name"/>
@@ -265,7 +244,7 @@
         <!--
             Process Action
         -->
-
+<!--
         <record id="purchase.process_transition_action_confirmpurchaseorder0" model="process.transition.action">
             <field eval="&quot;&quot;&quot;wkf_confirm_order&quot;&quot;&quot;" name="action"/>
             <field eval="&quot;&quot;&quot;object&quot;&quot;&quot;" name="state"/>
@@ -293,7 +272,7 @@
             <field eval="&quot;&quot;&quot;Cancel&quot;&quot;&quot;" name="name"/>
             <field name="transition_id" ref="purchase.process_transition_approvingpurchaseorder0"/>
         </record>
-<!-- 
+
         <record id="purchase.process_transition_action_invoicefrompurchaseorder0" model="process.transition.action">
             <field eval="&quot;&quot;&quot;action_invoice_create&quot;&quot;&quot;" name="action"/>
             <field eval="&quot;&quot;&quot;object&quot;&quot;&quot;" name="state"/>

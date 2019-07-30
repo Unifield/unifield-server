@@ -1,5 +1,7 @@
-from osv import osv, orm
+from osv import osv
 from osv import fields
+from tools.safe_eval import safe_eval
+import logging
 
 class res_log(osv.osv):
 
@@ -10,6 +12,7 @@ class res_log(osv.osv):
             string='Read OK',
             help='Indicate if the user is able to open the document in res.log',
         ),
+        'action_xmlid': fields.char('Xmlid of action to open', size=512),
     }
 
     _defaults = {
@@ -139,6 +142,7 @@ class res_log(osv.osv):
             'context',
             'domain',
             'read_ok',
+            'action_xmlid',
         ]
 
         read_rights = {}
@@ -147,13 +151,53 @@ class res_log(osv.osv):
         res.reverse()
 
         res_dict = {}
-
+        action_seen = {}
         for r in res:
-           r['read_ok'] = self._check_read_rights(cr, uid, r['res_model'], read_rights, context=context)
-           t = (r['name'], r['res_model'], r['res_id'])
-           if t not in res_dict:
-               res_dict[t] = True
-               result.insert(0,r)
+            if r['action_xmlid'] and (not r['domain'] or r['domain'] == '[]' or not r['context']):
+                if r['action_xmlid'] not in action_seen:
+                    try:
+                        module, xmlid = r['action_xmlid'].split('.', 1)
+                        action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)
+                        action_seen[r['action_xmlid']] = self.pool.get('ir.actions.act_window').read(cr, uid, action_id[1], ['domain', 'context', 'views', 'view_mode', 'search_view_id'], context=context)
+                    except ValueError:
+                        action_seen[r['action_xmlid']] = False
+                        logging.getLogger('res.log').warning('Action %s not found' % (r['action_xmlid']))
+
+                action_data = action_seen.get(r['action_xmlid'])
+                if action_data:
+                    r['action_id'] = action_data['id']
+                    res_log_ctx = {}
+                    if r['context']:
+                        try:
+                            res_log_ctx = safe_eval(r['context'])
+                            if action_data['search_view_id']:
+                                res_log_ctx['search_view'] = action_data['search_view_id'][0]
+                            if 'view_id' in res_log_ctx:
+                                del(res_log_ctx['view_id'])
+                            try:
+                                # try to merge context from res.log with context from ir.actions.act_window
+                                # but do not overwrite keys in res.log ctx (i.e res.log context takes precedence)
+                                if action_data['context']:
+                                    action_data_ctx = safe_eval(action_data['context'])
+                                    action_data_ctx.update(res_log_ctx)
+                                    res_log_ctx = action_data_ctx
+                            except:
+                                pass
+                            r['context'] = res_log_ctx
+                        except:
+                            pass
+
+                    r['view_mode'] = '%s' % (action_data['view_mode'].split(','),)
+                    r['view_ids'] = [x[0] for x in action_data['views']]
+                    if action_data['domain'] and (not r['domain'] or r['domain'] == '[]'):
+                        r['domain'] = action_data['domain']
+                    if action_data['context'] and not r['context']:
+                        r['context'] = action_data['context']
+            r['read_ok'] = self._check_read_rights(cr, uid, r['res_model'], read_rights, context=context)
+            t = (r['name'], r['res_model'], r['res_id'])
+            if t not in res_dict:
+                res_dict[t] = True
+                result.insert(0,r)
 
         self.write(cr, uid, unread_log_ids, {'read': True}, context=context)
         return result

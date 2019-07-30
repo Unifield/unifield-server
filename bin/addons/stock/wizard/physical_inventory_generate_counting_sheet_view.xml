@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="physical_inventory_generate_counting_sheet" model="ir.ui.view">
+            <field name="name">Generate Counting Sheet</field>
+            <field name="model">physical.inventory.generate.counting.sheet</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Generate Counting Sheet">
+                    <field name="prefill_bn" colspan="4"/>
+                    <field name="prefill_ed" colspan="4"/>
+                    <field name="only_with_stock_level" colspan="4"/>
+                    <button name="generate_counting_sheet" string="Generate counting sheet" icon="gtk-go-forward" colspan="4" type="object" />
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

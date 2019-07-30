@@ -104,7 +104,7 @@
         </record>
         
         <!-- transitions -->
-        
+<!--
         <record id="procurement.process_transition_draft_confirmed" model="process.transition">
             <field eval="[(6,0,[])]" name="transition_ids"/>
             <field eval="&quot;&quot;&quot;Confirm Procurement Order&quot;&quot;&quot;" name="name"/>
@@ -113,7 +113,7 @@
             <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_confirmed"/>
             <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
         </record>
-        
+
         <record id="procurement.process_transition_confirmed_exception" model="process.transition">
             <field eval="[(6,0,[])]" name="transition_ids"/>
             <field eval="&quot;&quot;&quot;The Procurement Order goes in exception&quot;&quot;&quot;" name="name"/>
@@ -176,7 +176,7 @@
             <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_po"/>
             <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
         </record>
-        
+
         <record id="procurement.process_transition_po_in" model="process.transition">
             <field eval="[(6,0,[])]" name="transition_ids"/>
             <field eval="&quot;&quot;&quot;Incoming Products is created.&quot;&quot;&quot;" name="name"/>
@@ -185,7 +185,7 @@
             <field model="process.node" name="target_node_id" ref="procurement.process_node_procure_in"/>
             <field eval="[(6,0,[ref('sale.trans_draft_router')])]" name="transition_ids"/>
         </record>
-        
+-->
         <!-- Process process Service -->
         
 		<record id="procurement.process_process_serviceproductprocess0" model="process.process">

@@ -38,6 +38,14 @@ class wizard_hq_report_ocg(osv.osv_memory):
         'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, time.strftime('%Y-%m-%d'), context=c)
     }
 
+    def onchange_instance_id(self, cr, uid, ids, context=None):
+        """
+        Resets the period field when another prop. instance is selected.
+        Covers the case when in HQ the user selects a period closed in a coordo,
+        and then select another coordo in which the period previously selected is not closed
+        """
+        return {'value': {'period_id': False}}
+
     def button_create_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}

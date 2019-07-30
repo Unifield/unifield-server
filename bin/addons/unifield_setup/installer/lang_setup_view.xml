@@ -43,7 +43,8 @@
     <record id="lang_setup_todo" model="ir.actions.todo">
         <field name="action_id" ref="action_lang_setup"/>
         <field name="sequence">19</field>
-        <field name="restart">always</field>
+        <field name="restart">never</field>
+        <field name="state">done</field>
     </record>
   </data>
 </openerp>

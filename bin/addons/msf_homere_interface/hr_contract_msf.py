@@ -30,8 +30,8 @@ class hr_contract_msf(osv.osv):
     _description = 'MSF Employee contract from Homère'
 
     _columns = {
-        'homere_codeterrain': fields.char(string='Homere field: codeterrain', size=20, readonly=True, required=True),
-        'homere_id_staff': fields.integer(string='Homere field: id_staff', size=10, readonly=True, required=True),
+        'homere_codeterrain': fields.char(string='Homere field: codeterrain', size=20, readonly=True, required=True, select=1),
+        'homere_id_staff': fields.integer(string='Homere field: id_staff', size=10, readonly=True, required=True, select=1),
         'homere_id_unique': fields.char(string='Homere field: id_unique', size=42, readonly=True, required=True),
         'date_start': fields.date(string="Contract ' starting date", readonly=True, required=False),
         'date_end': fields.date(string="Contract's ending date", readonly=True, required=False),

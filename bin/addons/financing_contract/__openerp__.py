@@ -31,17 +31,15 @@
     "update_xml": [
         'security/ir.model.access.csv',
         'financing_contract_view.xml',
-        'financing_contract_workflow.xml',
         'financing_contract_report.xml',
         'wizard/wizard_financing_currency_export_view.xml'
     ],
     'test': [
-        'test/financing_contract.yml'
     ],
     'demo_xml': [
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

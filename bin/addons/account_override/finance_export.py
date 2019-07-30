@@ -234,7 +234,7 @@ class finance_archive():
                 ids = [x and x[key_column_number] or 0 for x in sqlres]
                 # mark lines as exported
                 if ids:
-                    update_request = 'UPDATE ' + tablename + ' SET exported=\'t\' WHERE id in %s'
+                    update_request = 'UPDATE ' + tablename + ' SET exported=\'t\' WHERE id in %s'  # not_a_user_entry
                     try:
                         cr.execute(update_request, (tuple(ids),))
                     except Exception, e:

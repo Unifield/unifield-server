@@ -57,9 +57,7 @@ class account_line_csv_export(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('An error occurred. Please contact an administrator to resolve this problem.'))
         # Prepare some value
         currency_name = ""
-        if currency_id:
-            currency_obj = self.pool.get('res.currency')
-            currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
+
         # Prepare csv head
         head = [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Reference'), _('Document Date'), _('Posting Date'), _('Period'), _('Account'), _('Third party'), _('Book. Debit'), _('Book. Credit'), _('Book. currency')]
         if not currency_id:
@@ -68,8 +66,6 @@ class account_line_csv_export(osv.osv_memory):
             head += [_('Output Debit'), _('Output Credit'), _('Output Currency')]
         head += [_('Reconcile'), _('State')]
         writer.writerow(map(lambda x: x.encode('utf-8'), head))
-        # Sort items
-        ids.sort()
         # Then write lines
         account_move_line_obj = self.pool.get('account.move.line')
         len_ids = len(ids)
@@ -120,22 +116,16 @@ class account_line_csv_export(osv.osv_memory):
                     #functional_currency_id
                     csv_line.append(ml.functional_currency_id and ml.functional_currency_id.name and ml.functional_currency_id.name.encode('utf-8') or '')
                 else:
-                    context['date'] = ml.source_date or ml.date  # uf-2333 [FIX] reversal line: source_date or posting_date
-                    amount = account_move_line_obj.calculate_output(cr, uid, currency_id, ml, round=False, context=context)
-                    if amount < 0.0:
-                        csv_line.append(0.0)
-                        csv_line.append(abs(amount) or 0.0)
-                    else:
-                        #output amount (debit/credit) regarding booking currency
-                        amount = currency_obj.compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=False, context=context)
-                        if amount < 0.0:
-                            csv_line.append(0.0)
-                            csv_line.append(abs(amount) or 0.0)
-                        else:
-                            csv_line.append(abs(amount) or 0.0)
-                            csv_line.append(0.0)
-                    #output currency
-                    csv_line.append(currency_name.encode('utf-8') or '')
+                    # output debit
+                    csv_line.append(ml.output_amount_debit or 0.0)
+
+                    # output credit
+                    csv_line.append(ml.output_amount_credit or 0.0)
+
+                    # output currency
+                    currency_name = ml.output_currency and ml.output_currency.name or ''
+                    currency_name = currency_name.encode('utf-8')
+                    csv_line.append(currency_name)
                     #reconcile
                     csv_line.append(ml.reconcile_txt and ml.reconcile_txt.encode('utf-8') or '')
                     #state

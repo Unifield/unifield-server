@@ -33,13 +33,11 @@ from tools.translate import _
 from tools import config
 import time
 import sys
-from account_override import ACCOUNT_RESTRICTED_AREA
 
 
 UF_SIDE_ROUNDING_LINE = {
     'account_code': '67000',
     'name': _('UF Payroll rounding'),
-    'destination_code': 'SUP',
 
     'eur_gap_limit': 1.,  # EUR amount gap limit to not reach
 
@@ -80,9 +78,44 @@ class hr_payroll_import(osv.osv_memory):
         'state': 'simu',
     }
 
+    def _check_on_employee(self, cr, uid, third, second_description, debit, credit, account, is_counterpart, context=None):
+        """
+        Searches for the employee corresponding to data in "Third" or "Secondary description" column.
+        Returns a tuple with the employee Identification No, and the employee id if it exists (else False).
+        Raises an error if:
+        - the employee doesn't exist and the account is analytic-a-holic
+        - the same Identification ID matches several employees
+        """
+        if context is None:
+            context = {}
+        employee_obj = self.pool.get('hr.employee')
+        employee_ids = []
+        employee_identification_id = ""
+        if third and third[0]:
+            # the Third column should contain the exact code of the employee
+            employee_identification_id = third[0]
+            employee_ids = employee_obj.search(cr, uid,
+                                               [('identification_id', '=', employee_identification_id)],
+                                               context=context, order='NO_ORDER')
+        # check the Secondary description if no employee found (no matter if the Third column is empty or not)
+        if not employee_ids and second_description and second_description[0]:
+            # Secondary description looks like "John Smith MWNP0001" => extract the employee code MWNP0001
+            employee_identification_id = ustr(second_description[0]).split(' ')[-1]
+            employee_ids = employee_obj.search(cr, uid,
+                                               [('identification_id', '=', employee_identification_id)],
+                                               context=context, order='NO_ORDER')
+        if employee_identification_id and not employee_ids and account.is_analytic_addicted and not is_counterpart:
+            raise osv.except_osv(_('Error'), _('No employee found for this code: %s.\nDEBIT: %s.\nCREDIT: %s.') % (
+                employee_identification_id, debit, credit,))
+        if employee_ids and len(employee_ids) > 1:
+            raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (
+                employee_identification_id,))
+        employee_id = employee_ids and employee_ids[0] or False
+        return employee_identification_id, employee_id
+
     def update_payroll_entries(self, cr, uid,
                                data='', field='', date_format='%d/%m/%Y',
-                               wiz_state='simu',
+                               wiz_state='simu', bs_only=True,
                                context=None):
         """
         Import payroll entries regarding all elements given in "data"
@@ -95,14 +128,16 @@ class hr_payroll_import(osv.osv_memory):
         res_amount = 0.0
         res = False
         created = 0
+        vals = {}
+        error_message = ""
         # verify that some data exists
         if not data:
-            return False, res_amount, created
+            return False, res_amount, created, vals, "", error_message, bs_only
         if not field:
             raise osv.except_osv(_('Error'), _('No field given for payroll import!'))
         # Prepare some values
-        vals = {}
         employee_id = False
+        partner_id = False
         line_date = False
         name = ''
         ref = ''
@@ -110,8 +145,11 @@ class hr_payroll_import(osv.osv_memory):
         cost_center_id = False
         # US-671: This flag is used to indicate whether the DEST and CC of employee needs to be updated
         to_update_employee = False
-        error_message = ""
+        partner_obj = self.pool.get('res.partner')
 
+        # strip spaces in all columns
+        for i in range(len(data)):
+            data[i] = data[i].strip()
         if len(data) == 13:
             accounting_code, description, second_description, third, expense, receipt, project, financing_line, \
                 financing_contract, date, currency, project, analytic_line = zip(data)
@@ -180,40 +218,38 @@ class hr_payroll_import(osv.osv_memory):
             credit = float(receipt[0])
         amount = round(debit - credit, 2)
         # Verify account type
-        # if view type, raise an error
+        # if view type or donation account, raise an error
         account = self.pool.get('account.account').browse(cr, uid, account_ids[0])
         if account.type == 'view':
             raise osv.except_osv(_('Warning'), _('This account is a view type account: %s') % (ustr(accounting_code[0]),))
+        elif account.type_for_register == 'donation':
+            raise osv.except_osv(_('Warning'), _('This account is a Donation account: %s') % (ustr(accounting_code[0]),))
         # Check if it's a payroll rounding line
         is_payroll_rounding = False
         if third and third[0] and ustr(third[0]) == 'SAGA_BALANCE' or accounting_code[0] == '67000':
             is_payroll_rounding = True
-        # Check if it's a counterpart line (In HOMERE import, it seems to be lines that have a filled in column "third")
+        # Check if it's a counterpart line (=> amount in credit)
         is_counterpart = False
-        if third and third[0] and third[0] != '':
+        if credit:
             is_counterpart = True
 
-        # For non counterpart lines, check expected accounts
-        if not is_counterpart:
-            if not self.pool.get('account.account').search(cr, uid, ACCOUNT_RESTRICTED_AREA['payroll_lines'] + [('id', '=', account.id)]):
-                raise osv.except_osv(_('Warning'), _('This account is not authorized: %s') % (account.code,))
-
-        # If account is analytic-a-holic, fetch employee ID
+        # Check on partner
+        employee_identification_id = ''
+        if not is_payroll_rounding:
+            if third and third[0]:
+                # If Third Party field is filled, check if it matches a Supplier (inactive partners are ignored by default)
+                partner_id = partner_obj.search(cr, uid, [('name', '=ilike', third[0])], order='id', limit=1, context=context)
+                partner_id = partner_id and partner_id[0] or False
+            if not partner_id:
+                # if no partner is found check that either the Third or the Secondary Description column matches an employee
+                employee_identification_id, employee_id = self._check_on_employee(cr, uid, third, second_description,
+                                                                                  debit, credit, account, is_counterpart, context)
         if account.is_analytic_addicted:
-            if second_description and second_description[0] and not is_payroll_rounding:
+            bs_only = False
+            if employee_id:
                 # Create description
                 name = 'Salary ' + str(time.strftime('%b %Y', time.strptime(date[0], date_format)))
-
                 if not is_counterpart:
-                    # fetch employee ID
-                    employee_identification_id = ustr(second_description[0]).split(' ')[-1]
-                    employee_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', employee_identification_id)])
-                    if not employee_ids:
-                        employee_name = ustr(second_description[0]).replace(employee_identification_id, '')
-                        raise osv.except_osv(_('Error'), _('No employee found for this code: %s (%s).\nDEBIT: %s.\nCREDIT: %s.') % (employee_identification_id, employee_name, debit, credit,))
-                    if len(employee_ids) > 1:
-                        raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (employee_identification_id,))
-                    employee_id = employee_ids[0]
                     # US_374: Add Employee number to description
                     name += " - " + employee_identification_id
                 # Create reference
@@ -263,6 +299,7 @@ class hr_payroll_import(osv.osv_memory):
             'document_date': line_date,
             'period_id': period_id,
             'employee_id': employee_id,
+            'partner_id': partner_id,
             'name': name,
             'ref': ref,
             'account_id': account.id,
@@ -300,7 +337,7 @@ class hr_payroll_import(osv.osv_memory):
                 created += 1
         else:
             created += 1
-        return True, amount, created, vals, currency[0], error_message
+        return True, amount, created, vals, currency[0], error_message, bs_only
 
     def _get_homere_password(self, cr, uid, pass_type='payroll'):
         ##### UPDATE HOMERE.CONF FILE #####
@@ -366,7 +403,7 @@ class hr_payroll_import(osv.osv_memory):
                 raise osv.except_osv(_('Error'), msg)
 
     def _uf_side_rounding_line_create(self, cr, uid, ids,
-                                      header_vals=None, amount=0., context=None):
+                                      header_vals=None, amount=0., context=None, field=None):
         """
         US-201: no payroll rounding line, create a rounding payroll entry
         UF side (has importer users can not update the Homere archive)
@@ -393,18 +430,12 @@ class hr_payroll_import(osv.osv_memory):
         if not account_ids:
             err_account(account_code=account_code)
 
-        # get default AD values
-        # destination: from code
-        dest_ids = self.pool.get('account.analytic.account').search(cr, uid, [
-            ('category', '=', 'DEST'),
-            ('code', '=', UF_SIDE_ROUNDING_LINE['destination_code']),
-        ], context=context)
-        if not dest_ids:
-            msg = _("%s: No default destination found '%s'") % (
-                UF_SIDE_ROUNDING_LINE['name'],
-                UF_SIDE_ROUNDING_LINE['destination_code'],
-            )
-            raise osv.except_osv(_('Error'), msg)
+        # get the default Destination to use
+        acc_fields = ['default_destination_id', 'code', 'name']
+        acc = self.pool.get('account.account').browse(cr, uid, account_ids[0], fields_to_fetch=acc_fields, context=context)
+        if not acc.default_destination_id:
+            raise osv.except_osv(_('Error'), _('The account %s - %s has no Default Destination.') % (acc.code, acc.name))
+        dest = acc.default_destination_id
 
         # cost center: 1st FX gain loss of instance
         instance = self.pool.get('res.users').browse(cr, uid, [uid],
@@ -433,10 +464,11 @@ class hr_payroll_import(osv.osv_memory):
             'currency_id': header_vals['currency_id'],
             'state': 'draft',
             'amount': amount,
+            'field': field or False,
 
             # AD
             'cost_center_id': cc_ids[0],
-            'destination_id': dest_ids[0],
+            'destination_id': dest.id,
             #'funding_pool_id':  # default is PF
         }, context=context)
 
@@ -472,6 +504,7 @@ class hr_payroll_import(osv.osv_memory):
         xyargv = self._get_homere_password(cr, uid, pass_type='payroll')
 
         filename = ""
+        error_msg = ""
         wiz_state = False
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
@@ -494,10 +527,11 @@ class hr_payroll_import(osv.osv_memory):
             if zipobj.namelist():
                 namelist = zipobj.namelist()
                 # Search CSV
-                csvfile = None
+                csvfiles = []
+                currency_list = []
                 for name in namelist:
                     if name.split(file_ext_separator) and name.split(file_ext_separator)[-1] == file_ext:
-                        csvfile = name
+                        csvfiles.append(name)
                 if not 'envoi.ini' in namelist:
                     raise osv.except_osv(_('Warning'), _('No envoi.ini file found in given ZIP file!'))
                 # Read information from 'envoi.ini' file
@@ -511,8 +545,8 @@ class hr_payroll_import(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _('Could not read envoi.ini file in given ZIP file.'))
                 if not field:
                     raise osv.except_osv(_('Warning'), _('Field not found in envoi.ini file.'))
-                # Read CSV file
-                if csvfile:
+                # Read CSV files
+                for csvfile in csvfiles:
                     try:
                         reader = csv.reader(zipobj.open(csvfile, 'r', xyargv), delimiter=';', quotechar='"', doublequote=False, escapechar='\\')
                         reader.next()
@@ -522,23 +556,39 @@ class hr_payroll_import(osv.osv_memory):
                     res = True
                     res_amount = 0.0
                     amount = 0.0
-                    error_msg = ""
+                    num_line = 1  # the header line is not taken into account
+                    file_error_msg = ""  # store the error/warning messages for the current file
+                    bs_only = True  # will be set to False as soon as one expense line is found in the file
                     for line in reader:
+                        num_line += 1
                         processed += 1
-                        update, amount, nb_created, vals, ccy, msg = self.update_payroll_entries(
+                        update, amount, nb_created, vals, ccy, msg, bs_only = self.update_payroll_entries(
                             cr, uid, data=line, field=field,
                             date_format=wiz.date_format,
-                            wiz_state=wiz.state)
+                            wiz_state=wiz.state,
+                            bs_only=bs_only)
                         res_amount += round(amount, 2)
                         if not update:
                             res = False
-                        if created == 0:
+                        if num_line == 2:  # the first line containing data
                             header_vals = vals
-                            header_vals['currency_code'] = ccy
+                            header_vals['currency_code'] = ccy  # note that the curr. is different from one file to another
+                            if ccy in currency_list:
+                                raise osv.except_osv(_('Error'), _('Several files contain lines with the currency %s. '
+                                                                   'Please use one file per currency.') % ccy)
+                            currency_list.append(ccy)
                         created += nb_created
 
                         if msg:
-                            error_msg += "Line " + str(processed) + ": " + msg + " \n"
+                            file_error_msg += _("Line %s: %s\n") % (str(num_line), msg)
+
+                    if bs_only:
+                        raise osv.except_osv(_('Error'), _('The file "%s" contains only B/S lines.') % csvfile)
+
+                    # complete the list of error messages with the ones from this file if any
+                    if file_error_msg:
+                        # add a line break between files
+                        error_msg += _("%sFile %s:\n%s") % (error_msg and "\n" or "", csvfile, file_error_msg)
 
                     # Check balance
                     res_amount_rounded = round(res_amount, 2)
@@ -554,7 +604,8 @@ class hr_payroll_import(osv.osv_memory):
                         pr_ids = self.pool.get('hr.payroll.msf').search(
                             cr, uid, [
                                 ('state', '=', 'draft'),
-                                ('name', '=', 'Payroll rounding')
+                                ('name', '=', 'Payroll rounding'),
+                                ('currency_id', '=', header_vals['currency_id']),
                             ])
                         if not pr_ids:
                             # no SAGA BALANCE rounding line in file
@@ -569,7 +620,7 @@ class hr_payroll_import(osv.osv_memory):
                             else:
                                 self._uf_side_rounding_line_create(cr, uid, ids,
                                                                    context=context, header_vals=header_vals,
-                                                                   amount=-1 * res_amount_rounded)
+                                                                   amount=-1 * res_amount_rounded, field=field)
                             #raise osv.except_osv(_('Error'), _('An error occurred on balance and no payroll rounding line found.'))
                         else:
                             # Fetch Payroll rounding amount line and update
@@ -580,7 +631,7 @@ class hr_payroll_import(osv.osv_memory):
                             # - add both
                             new_amount = round(pr.amount, 2) + (-1 * res_amount_rounded)
                             self.pool.get('hr.payroll.msf').write(cr, uid, pr_ids[0], {'amount': round(new_amount, 2),})
-                else:
+                if not csvfiles:
                     raise osv.except_osv(_('Error'), _('Right CSV is not present in this zip file. Please use "File > File sending > Monthly" in Homère.'))
             fileobj.close()
 

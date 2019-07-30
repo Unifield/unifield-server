@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -22,8 +22,6 @@
 import time
 
 from report import report_sxw
-from osv import osv
-from tools.translate import _
 
 class donation_certificate(report_sxw.rml_parse):
 
@@ -31,18 +29,45 @@ class donation_certificate(report_sxw.rml_parse):
         super(donation_certificate, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'get_lines': self._get_lines,
+            'getLines': self._get_lines,
+            'getTotalValue': self._get_total_value,
         })
-        
-    def _get_lines(self, pick_id):
-        pick_obj = self.pool.get('stock.picking')
-        pick = pick_obj.browse(self.cr, self.uid, pick_id)
-            
-        return pick.move_lines
-    
-report_sxw.report_sxw('report.order.type.donation.certificate', 
-                      'stock.picking', 
-                      'addons/order_types/report/donation_certificate.rml', 
-                      parser= donation_certificate)
+
+    def _get_total_value(self, pick):
+        '''
+        Return a message with a calculated price
+        '''
+        curr_obj = self.pool.get('res.currency')
+        tot_value = 0
+        for move in pick.move_lines:
+            tot_value += move.product_qty * round(curr_obj.compute(self.cr, self.uid, move.price_currency_id.id,
+                                                                   pick.company_id.currency_id.id, move.price_unit,
+                                                                   round=False, context=self.localcontext), 2)
+
+        return tot_value
+
+    def _get_lines(self, pick):
+        lines = []
+        for move in pick.move_lines:
+            lines.append({
+                'item': move.line_number,
+                'p_code': move.product_id and move.product_id.default_code or '',
+                'p_desc': move.product_id and move.product_id.name or '',
+                'qty_and_uom': '%s %s' % (round(move.product_qty, 0), move.product_uom and move.product_uom.name or ''),
+                'batch': move.prodlot_id and move.prodlot_id.name or '',
+                'exp_date': move.prodlot_id and move.prodlot_id.life_date or move.expired_date or '',
+                'currency': move.price_currency_id.name,
+                'unit_price': move.price_unit,
+                'tot_value': move.product_qty * move.price_unit,
+                'comments': move.comment or '',
+            })
+
+        return lines
+
+
+report_sxw.report_sxw('report.order.type.donation.certificate',
+                      'stock.picking',
+                      'addons/order_types/report/donation_certificate.rml',
+                      parser=donation_certificate, header=False)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

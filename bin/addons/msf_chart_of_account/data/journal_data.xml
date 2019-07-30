@@ -27,9 +27,6 @@
             <field name="analytic_journal_id" ref="purchase_refund_analytic_journal"/>
         </record>
        
-        <!-- delete old analytic journal -->
-        <delete model="account.analytic.journal" id="account.analytic_journal_sale"/>
-
         <record id="sale_analytic_journal" model="account.analytic.journal">
             <field name="name">Sale</field>
             <field name="code">SAL</field>

@@ -55,7 +55,6 @@ class res_currency(osv.osv):
         'rounding': fields.float('Rounding factor', digits=(12,6)),
         'active': fields.boolean('Active'),
         'company_id':fields.many2one('res.company', 'Company'),
-        'date': fields.date('Date'),
         'base': fields.boolean('Base'),
         'currency_name': fields.char('Currency Name', size=64, required=True, translate=1),
     }
@@ -138,7 +137,7 @@ class res_currency(osv.osv):
         res = self.name_get(cr, uid, ids, context)
         return res
 
-    def auto_import(self, cr, uid, file_to_import):
+    def auto_import(self, cr, uid, file_to_import, context=None):
         import base64
         processed = []
         rejected = []

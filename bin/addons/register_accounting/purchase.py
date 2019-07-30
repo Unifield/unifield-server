@@ -51,14 +51,14 @@ class purchase_order(osv.osv):
         - the partner should be the same as given partner in args
 
         To be 100% invoiced, a PO should have some linked invoiced that are validated ('open' state or 'paid' state) and that sum of amount is greater or equal to PO total amount. So to find PO that are not 100% invoiced, you should find those from which all invoice are not created or which amount is inferior to PO total amount.
-        
-        BKLG-51: new filters
-        1) On PO state: only allow "confirmed" or "confirmed (waiting)" POs to be selected in the wizard
-        (keeping 'done' for not completly invoiced)
-        2) On PO type: only allow regular, purchase list and direct purchase order PO types
+
+        BKLG-51 / US-3782: new filters
+        1) On PO LINE state: only allow PO having at least one line in Confirmed State, or Closed State if the related
+           invoice is still in Draft state or Cancelled
+        2) On PO type: only allow regular and "purchase list" purchase order types
         3) Make sure that RFQs or tenders can not be linked to down payments
-        1) state 'confirm_waiting' + 'approved' + 'done' (done tolerated if partially invoiced)
-        2) order_type 'regular', 'purchase_list', 'direct'
+        1) line state 'confirmed' + 'done' (done tolerated if invoice still in Draft state)
+        2) order_type 'regular', 'purchase_list'
         3) rfq_ok != True
 
         US-1064: new rule: as soon as all goods are received on a PO (state 'done') no new Down Payment is possible
@@ -73,19 +73,24 @@ class purchase_order(osv.osv):
             # Create SQL request
             c_id = args[0][2].get('currency_id', False)
             p_id = args[0][2].get('partner_id', False)
-            sql = """SELECT po.id
-            FROM purchase_order as po
-            LEFT JOIN purchase_invoice_rel as pir ON (po.id = pir.purchase_id)
-            LEFT JOIN account_invoice as inv ON (pir.invoice_id = inv.id AND inv.state not in ('draft', 'cancel'))
-            LEFT JOIN product_pricelist as prod ON (po.pricelist_id = prod.id AND prod.currency_id = %s)
-            WHERE po.state in ('confirmed_wait', 'approved')
-            AND po.pricelist_id = prod.id
-            AND NOT (po.order_type = 'regular' AND po.partner_type in ('internal', 'esc'))
-            AND po.order_type in ('regular', 'purchase_list', 'direct')
-            AND po.partner_id = %s
-            AND po.rfq_ok != TRUE
-            GROUP BY po.id, po.amount_total
-            HAVING COALESCE(po.amount_total - sum(inv.amount_total), 10) != 0"""
+            sql = """SELECT po.id 
+            FROM purchase_order as po 
+            LEFT JOIN purchase_invoice_rel as pir ON (po.id = pir.purchase_id) 
+            LEFT JOIN (select pir.purchase_id, sum(inv.amount_total) as inv_total 
+                       from purchase_invoice_rel pir, account_invoice as inv 
+                       where pir.invoice_id = inv.id AND inv.state not in ('draft', 'cancel') 
+                       group by pir.purchase_id) inv on inv.purchase_id = po.id 
+            LEFT JOIN product_pricelist as prod ON (po.pricelist_id = prod.id AND prod.currency_id = %s) 
+            INNER JOIN (select pol1.order_id, sum(pol1.price_unit * pol1.product_qty) as total 
+                       from purchase_order_line pol1 
+                       where pol1.state in ('confirmed', 'done') group by pol1.order_id) pol on pol.order_id=po.id 
+            WHERE po.pricelist_id = prod.id 
+            AND NOT (po.order_type = 'regular' AND po.partner_type in ('internal', 'esc')) 
+            AND po.order_type in ('regular', 'purchase_list') 
+            AND po.partner_id = %s AND po.rfq_ok != TRUE 
+            GROUP BY po.id, po.name 
+            HAVING abs(COALESCE(sum(pol.total) - sum(inv.inv_total), 10)) > 0.001;
+            """
             cr.execute(sql, (c_id, p_id))
             sql_res = cr.fetchall()
             # Transform result

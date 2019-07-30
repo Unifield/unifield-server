@@ -21,8 +21,7 @@
 
 from osv import fields
 from osv import osv
-
-import netsvc
+from tools.translate import _
 
 
 class sale_order(osv.osv):
@@ -54,15 +53,16 @@ class sale_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # objects
-        wf_service = netsvc.LocalService("workflow")
-        sol_obj = self.pool.get('sale.order.line')
+        for so in self.browse(cr, uid, ids, fields_to_fetch=['order_line'], context=context):
+            to_source = []
+            for sol in so.order_line:
+                if sol.state.startswith('validated'):
+                    if sol.type == 'make_to_order' and sol.po_cft in ('po','rfq') and not sol.supplier:
+                        raise osv.except_osv(_('Error'), _('Supplier is not defined for all Field Order lines. Please check the line %s') % sol.line_number)
+                    to_source.append(sol.id)
 
-        sol_ids = sol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
-        sol_obj.write(cr, uid, sol_ids, {'state': 'sourced'}, context=context)
-
-        for order_id in ids:
-            wf_service.trg_validate(uid, 'sale.order', order_id, 'order_confirm', cr)
+            if to_source:
+                self.pool.get('sale.order.line').source_line(cr, uid, [sol.id], context=context)
 
         return True
 

@@ -36,14 +36,23 @@
         <field name="grouping">[3,0]</field>
     </record>
 
+    <function name="set_default_partner_lang" model="res.users" />
 <!--    <function name="install_lang" model="res.lang"/> -->
     
     <record model="res.users" id="base.user_root">
     	<field name="context_lang">en_MF</field>
     </record>
 
+    <record model="res.users" id="base.user_sync">
+        <field name="signature">Synch</field>
+        <field name="name">Synch</field>
+        <field name="login">synch</field>
+    	<field name="context_lang">en_MF</field>
+    </record>
+
     <record id="sale.shop" model="sale.shop">
         <field name="name">MSF</field>
+        <field name="warehouse_id" ref="stock.warehouse0" />
     </record>
     <record id="uom_category_percentage" model="product.uom.categ">
         <field name="name">Percentage</field>
@@ -81,6 +90,9 @@
     <record id="smtp_config" model="email.configuration">
         <field name="smtp_server">127.0.0.1</field>
         <field name="email_from">no-reply@unifield.org</field>
+    </record>
+    <record id="communication_config_default" model="communication.config">
+        <field name="message"></field>
     </record>
 </data>
 </openerp>

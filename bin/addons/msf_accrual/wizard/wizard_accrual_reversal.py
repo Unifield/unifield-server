@@ -70,7 +70,7 @@ class wizard_accrual_reversal(osv.osv_memory):
                     raise osv.except_osv(_('Warning !'), _("The reversal period '%s' is not open!" % reversal_period.name))
 
                 # post the accrual reversal
-                accrual_line_obj.accrual_reversal_post(cr, uid, context['active_ids'], document_date,
+                accrual_line_obj.accrual_reversal_post(cr, uid, [accrual_line.id], document_date,
                                                        posting_date, context=context)
 
         # close the wizard

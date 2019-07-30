@@ -24,7 +24,8 @@ from osv import fields, osv
 class account_target_costcenter(osv.osv):
     _name = 'account.target.costcenter'
     _rec_name = 'cost_center_id'
-    
+    _trace = True
+
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Instance', required=True),
         'cost_center_id': fields.many2one('account.analytic.account', 'Code', domain=[('category', '=', 'OC')], required=True),
@@ -35,7 +36,7 @@ class account_target_costcenter(osv.osv):
         'parent_id': fields.many2one('account.target.costcenter', 'Parent'),
         'child_ids': fields.one2many('account.target.costcenter', 'parent_id', 'Children'),
     }
-    
+
     _defaults = {
         'is_target': False,
         'is_top_cost_center': False,
@@ -87,7 +88,7 @@ class account_target_costcenter(osv.osv):
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
-    
+
     _constraints = [
         (_check_target, 'This cost centre is already defined as target in another proprietary instance.', ['is_target', 'cost_center_id', 'instance_id']),
         (_check_top_cost_center, 'This cost centre is already defined as the budget consolidation in another proprietary instance.', ['is_top_cost_center', 'cost_center_id', 'instance_id']),
@@ -95,7 +96,7 @@ class account_target_costcenter(osv.osv):
         (_check_po_fo_cost_center, 'This cost centre is already defined as the PO/FO reference in another proprietary instance.', ['is_po_fo_cost_center', 'cost_center_id', 'instance_id']),
         (_check_po_fo_cost_center_unicity, 'Another cost centre is already defined as the PO/FO reference in this proprietary instance.', ['is_po_fo_cost_center', 'cost_center_id', 'instance_id']),
     ]
-    
+
     def create(self, cr, uid, vals, context={}):
         res_id = super(account_target_costcenter, self).create(cr, uid, vals, context=context)
         # create lines in instance's children
@@ -109,7 +110,7 @@ class account_target_costcenter(osv.osv):
                                           'is_target': False,
                                           'parent_id': res_id})
         return res_id
-    
+
     def unlink(self, cr, uid, ids, context={}):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -118,6 +119,6 @@ class account_target_costcenter(osv.osv):
         if len(lines_to_delete_ids) > 0:
             self.unlink(cr, uid, lines_to_delete_ids, context=context)
         return super(account_target_costcenter, self).unlink(cr, uid, ids, context)
-    
+
 account_target_costcenter()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

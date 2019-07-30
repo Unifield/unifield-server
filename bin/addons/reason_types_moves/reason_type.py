@@ -180,7 +180,7 @@ class stock_inventory(osv.osv):
         if inventory_line:
             move_vals.update({
                 'comment': inventory_line.comment,
-                    'reason_type_id': inventory_line.reason_type_id.id,
+                'reason_type_id': inventory_line.reason_type_id.id,
             })
         move_vals.update({'not_chained': True})
 
@@ -284,14 +284,10 @@ class stock_picking(osv.osv):
     def _check_reason_type(self, cr, uid, ids, context=None):
         """
         Do not permit user to create/write a OUT from scratch with some reason types:
-         - GOODS RETURN
+         - GOODS RETURN UNIT
          - GOODS REPLACEMENT
         """
         res = True
-        try:
-            rt_return_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
-        except ValueError:
-            rt_return_id = 0
         try:
             rt_replacement_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
         except ValueError:
@@ -303,12 +299,63 @@ class stock_picking(osv.osv):
 
         for sp in self.read(cr, uid, ids, ['purchase_id', 'sale_id', 'type', 'reason_type_id'], context=context):
             if not sp['purchase_id'] and not sp['sale_id'] and sp['type'] == 'out' and sp['reason_type_id']:
-                if sp['reason_type_id'][0] in [rt_return_id, rt_replacement_id, rt_return_unit_id]:
+                if sp['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id]:
                     return False
         return res
 
+    def _get_type_donation_ids(self, cr, uid, context=None):
+        data_obj = self.pool.get('ir.model.data')
+        type_ids = []
+        type_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1])
+        type_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1])
+        type_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_in_kind_donation')[1])
+        return type_ids
+
+    def _get_is_donation(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for rid in ids:
+            res[rid] = False
+        don_ids = self._get_type_donation_ids(cr, uid)
+        for x in self.search(cr, uid, [('id', 'in', ids), ('reason_type_id', 'in', don_ids)], context=context):
+            res[x] = True
+
+        return res
+
+    def _search_is_donation(self, cr, uid, obj, name, args, context=None):
+        don_ids = self._get_type_donation_ids(cr, uid)
+        if not args:
+            return []
+        if args[0][1] != '=' or not args[0][2]:
+            raise osv.except_osv(_('Error'), _('Filter not implemented on field %') % (name, ))
+
+        return [('reason_type_id', 'in', don_ids)]
+
+
+    def _get_is_loan(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for rid in ids:
+            res[rid] = False
+        data_obj = self.pool.get('ir.model.data')
+        loan_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        res = self.search(cr, uid, [('id', 'in', ids), ('reason_type_id', 'in', loan_id)], context=context)
+
+        return res
+
+    def _search_is_loan(self, cr, uid, obj, name, args, context=None):
+        data_obj = self.pool.get('ir.model.data')
+        loan_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        if not args:
+            return []
+        if args[0][1] != '=' or not args[0][2]:
+
+            raise osv.except_osv(_('Error'), _('Filter not implemented on field %') % (name,))
+
+        return [('reason_type_id', '=', loan_id)]
+
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
+        'is_donation': fields.function(_get_is_donation, string='Is Donation ?', method=True, type='boolean', fnct_search=_search_is_donation),
+        'is_loan': fields.function(_get_is_loan, string='Is Loan ?', method=True, type='boolean', fnct_search=_search_is_loan),
     }
 
     _constraints = [
@@ -373,14 +420,10 @@ class stock_move(osv.osv):
     def _check_reason_type(self, cr, uid, ids, context=None):
         """
         Do not permit user to create/write a OUT from scratch with some reason types:
-         - GOODS RETURN
+         - GOODS RETURN UNIT
          - GOODS REPLACEMENT
         """
         res = True
-        try:
-            rt_return_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
-        except ValueError:
-            rt_return_id = 0
         try:
             rt_replacement_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
         except ValueError:
@@ -390,10 +433,9 @@ class stock_move(osv.osv):
         except ValueError:
             rt_return_unit_id = 0
 
-
         for sm in self.read(cr, uid, ids, ['reason_type_id', 'picking_id']):
             if sm['reason_type_id'] and sm['picking_id']:
-                if sm['reason_type_id'][0] in [rt_return_id, rt_replacement_id, rt_return_unit_id]:
+                if sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id]:
                     pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type'], context=context)
                     if not pick['purchase_id'] and not pick['sale_id'] and pick['type'] == 'out':
                         return False
@@ -401,7 +443,7 @@ class stock_move(osv.osv):
 
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
-        'comment': fields.char(size=128, string='Comment'),
+        'comment': fields.char(size=300, string='Comment'),
         'product_type': fields.function(_get_product_type, method=True, type='selection', selection=_get_product_type_selection, string='Product type',
                                         store={'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 20), }),
         'not_chained': fields.boolean(string='Not chained', help='If checked, the chaining move will not be run.'),

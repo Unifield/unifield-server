@@ -19,18 +19,10 @@
 #
 ##############################################################################
 
-import time
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 
 from osv import osv, fields
-import netsvc
-import pooler
 from tools.translate import _
-import decimal_precision as dp
-from osv.orm import browse_record, browse_null
 
-import product_nomenclature as pn
 
 def _order_nomenclature_get_product_code_name(module, cr, uid, ids, fieldname, args, context=None):
     res = {}
@@ -48,10 +40,10 @@ def _order_nomenclature_get_product_code_name(module, cr, uid, ids, fieldname, a
             res[rpol['id']][fields[f]] = ''
         if rpol['product_id']:
             rp = module.pool.get('product.product').read(cr, uid,
-                [rpol['product_id'][0]], fields.keys(), context=context)
+                                                         [rpol['product_id'][0]], fields.keys(), context=context)
             if rp and rp[0]:
                 for f in fields:
-                   res[rpol['id']][fields[f]] = rp[0].get(f, '')
+                    res[rpol['id']][fields[f]] = rp[0].get(f, '')
     return res
 
 #
@@ -65,14 +57,14 @@ class purchase_order_line(osv.osv):
        - nomenclature_description : contains the corresponding description
     '''
     def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
-            partner_id, date_order=False, fiscal_position=False, date_planned=False,
-            name=False, price_unit=False, notes=False):
+                          partner_id, date_order=False, fiscal_position=False, date_planned=False,
+                          name=False, price_unit=False, notes=False):
         '''
         overriden on_change function
         '''
         result = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty, uom,
-            partner_id, date_order, fiscal_position, date_planned,
-            name, price_unit, notes)
+                                                                    partner_id, date_order, fiscal_position, date_planned,
+                                                                    name, price_unit, notes)
 
         # comment is cleared
         result['value'].update({'comment':False})
@@ -95,15 +87,15 @@ class purchase_order_line(osv.osv):
         return result
 
     def product_uom_change(self, cr, uid, ids, pricelist, product, qty, uom,
-            partner_id, date_order=False, fiscal_position=False, date_planned=False,
-            name=False, price_unit=False, notes=False):
+                           partner_id, date_order=False, fiscal_position=False, date_planned=False,
+                           name=False, price_unit=False, notes=False):
         '''
         override product_uom_change to avoid the reset of Comment when the UOM is changed
         '''
         # call to super
         result = super(purchase_order_line, self).product_uom_change(cr, uid, ids, pricelist, product, qty, uom,
-            partner_id, date_order, fiscal_position, date_planned,
-            name, price_unit, notes)
+                                                                     partner_id, date_order, fiscal_position, date_planned,
+                                                                     name, price_unit, notes)
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
@@ -116,17 +108,28 @@ class purchase_order_line(osv.osv):
 
         return result
 
+    def check_digits(self, cr, uid, result, qty=0, price_unit=0, context=None):
+        if result.get('value', {}).get('product_qty', qty) >= self._max_qty or result.get('value', {}).get('product_qty', qty)*result.get('value', {}).get('price_unit', price_unit) >= self._max_amount:
+            result.setdefault('warning', {'title': '', 'message': ''})
+            result['warning'].setdefault('title', '')
+            result['warning'].setdefault('message', '')
+            result['warning']['message'] = "\n".join([result['warning']['message'], _(self._max_msg)])
+        return True
+
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty, uom,
-            partner_id, date_order=False, fiscal_position=False, date_planned=False,
-            name=False, price_unit=False, notes=False, state=False, old_unit_price=False,
-            nomen_manda_0=False, comment=False,context=None):
+                           partner_id, date_order=False, fiscal_position=False, date_planned=False,
+                           name=False, price_unit=False, notes=False, state=False, old_unit_price=False,
+                           nomen_manda_0=False, comment=False,context=None):
         '''
         interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
+
         if not context:
             context = {}
 
         if not product and not comment and not nomen_manda_0 and qty != 0.00:
+            if qty >= self._max_qty or qty*price_unit >= self._max_amount:
+                return {'warning': {'title': '', 'message': _(self._max_msg)}}
             return {}
 
         prod_context = context.copy()
@@ -134,8 +137,8 @@ class purchase_order_line(osv.osv):
             del prod_context['categ']
 
         result = self.product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
-            partner_id, date_order, fiscal_position, date_planned,
-            name, price_unit, notes, state, old_unit_price,nomen_manda_0,comment,context=prod_context)
+                                           partner_id, date_order, fiscal_position, date_planned,
+                                           name, price_unit, notes, state, old_unit_price,nomen_manda_0,comment,context=prod_context)
 
         if result.get('warning') and result['warning'].get('title') == 'Short Shelf Life product':
             del result['warning']
@@ -151,6 +154,7 @@ class purchase_order_line(osv.osv):
             uom = uom or result.get('value', {}).get('product_uom')
             result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
 
+        self.check_digits(cr, uid, result, context=context)
         return result
 
     def _relatedFields(self, cr, uid, vals, context=None):
@@ -171,14 +175,16 @@ class purchase_order_line(osv.osv):
             # erase the nomenclature - readonly
             self.pool.get('product.product')._resetNomenclatureFields(vals)
         elif ('product_id' in vals) and (not vals['product_id']):
-            sale = self.pool.get('sale.order.line')
-            sale._setNomenclatureInfo(cr, uid, vals, context)
+            if 'nomen_manda_0' in vals:
+                sale = self.pool.get('sale.order.line')
+                sale._setNomenclatureInfo(cr, uid, vals, context)
             # erase default code
             vals.update({'default_code':False})
             vals.update({'default_name':False})
 
             if 'comment' in vals:
                 vals.update({'name':vals['comment']})
+
         # clear nomenclature filter values
         #self.pool.get('product.product')._resetNomenclatureFields(vals)
 
@@ -216,7 +222,7 @@ class purchase_order_line(osv.osv):
         '''
         sale = self.pool.get('sale.order.line')
         return sale.codeChange(cr, uid, id, fieldNumber, code, nomenclatureType,
-                   nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, *optionalList)
+                               nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, context, *optionalList)
 
     def _get_product_code_name(self, cr, uid, ids, fieldname, args, context=None):
         return _order_nomenclature_get_product_code_name(self, cr, uid, ids, fieldname, args, context=context)
@@ -225,11 +231,11 @@ class purchase_order_line(osv.osv):
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=1024),
         'comment': fields.char('Comment', size=1024),
-        'name': fields.char('Comment', size=1024, required=True),
+        'name': fields.char('Product description', size=1024, required=True),
         'default_code': fields.function(_get_product_code_name, type='char', size=1024,
-            method=True, string='Product Code', multi="product",),
+                                        method=True, string='Product Code', multi="product",),
         'default_name': fields.function(_get_product_code_name, type='char', size=1024,
-            method=True, string='Product Description', multi="product",),
+                                        method=True, string='Product Description', multi="product",),
 
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
         # mandatory nomenclature levels -> not mandatory on screen here
@@ -283,9 +289,9 @@ class purchase_order_merged_line(osv.osv):
         'comment': fields.char('Comment', size=1024),
         'name': fields.char('Comment', size=1024, required=True),
         'default_code': fields.function(_get_product_code_name, type='char', size=1024,
-            method=True, string='Product Code', multi="product",),
+                                        method=True, string='Product Code', multi="product",),
         'default_name': fields.function(_get_product_code_name, type='char', size=1024,
-            method=True, string='Product Description', multi="product",),
+                                        method=True, string='Product Description', multi="product",),
 
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
         # mandatory nomenclature levels -> not mandatory on screen here
@@ -319,14 +325,14 @@ class sale_order_line(osv.osv):
        - nomenclature_description : contains the corresponding description
     '''
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
-        uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-        lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+                          uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+                          lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
         '''
         overriden on_change function
         '''
         result = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
-            uom, qty_uos, uos, name, partner_id,
-            lang, update_tax, date_order, packaging, fiscal_position, flag)
+                                                                uom, qty_uos, uos, name, partner_id,
+                                                                lang, update_tax, date_order, packaging, fiscal_position, flag)
 
         # comment is cleared
         result['value'].update({'comment':False})
@@ -349,14 +355,14 @@ class sale_order_line(osv.osv):
         return result
 
     def product_uom_change(self, cr, uid, ids, pricelist, product, qty=0,
-            uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-            lang=False, update_tax=True, date_order=False):
+                           uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+                           lang=False, update_tax=True, date_order=False):
         '''
         override product_uom_change to avoid the reset of Comment when the UOM is changed
         '''
         # call to super
         result = super(sale_order_line, self).product_uom_change(cr, uid, ids, pricelist, product, qty,
-            uom, qty_uos, uos, name, partner_id, lang, update_tax, date_order)
+                                                                 uom, qty_uos, uos, name, partner_id, lang, update_tax, date_order)
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
@@ -370,9 +376,22 @@ class sale_order_line(osv.osv):
 
         return result
 
+    def check_digits(self, cr, uid, result, qty=0, price_unit=0, context=None):
+        if result.get('value', {}).get('product_uom_qty', qty) >= self._max_value or result.get('value', {}).get('product_uom_qty', qty)*result.get('value', {}).get('price_unit', price_unit) >= self._max_value:
+            result.setdefault('warning', {'title': '', 'message': ''})
+            result['warning'].setdefault('title', '')
+            result['warning'].setdefault('message', '')
+            result['warning']['message'] = "\n".join([result['warning']['message'], _(self._max_msg)])
+        return True
+
+    def change_price_unit(self, cr, uid, ids, product_uom_qty, price_unit, context):
+        result = {}
+        self.check_digits(cr, uid, result, product_uom_qty, price_unit, context)
+        return result
+
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty=0,
-        uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-        lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+                           uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+                           lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, price_unit=0, context=None):
         '''
         interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
@@ -400,17 +419,18 @@ class sale_order_line(osv.osv):
         if qty:
             result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, ['product_uom_qty', 'product_uos_qty'], result=result)
 
+        self.check_digits(cr, uid, result, qty, price_unit, context)
         return result
 
     def product_packaging_change(self, cr, uid, ids, pricelist, product, qty=0,
-        uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-        lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+                                 uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+                                 lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
         '''
         interface product_id_change to avoid the reset of Comment field when the qty is changed
         '''
         result = self.product_qty_change(cr, uid, ids, pricelist, product, qty,
-                                        uom, qty_uos, uos, name, partner_id,
-                                        lang, update_tax, date_order, packaging, fiscal_position, flag)
+                                         uom, qty_uos, uos, name, partner_id,
+                                         lang, update_tax, date_order, packaging, fiscal_position, flag)
 
         return result
 
@@ -560,11 +580,11 @@ class sale_order_line(osv.osv):
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=1024),
         'comment': fields.char('Comment', size=1024),
-        'name': fields.char('Comment', size=1024, required=True, select=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'name': fields.char('Product description', size=1024, required=True, select=True, readonly=True, states={'draft': [('readonly', False)]}),
         'default_code': fields.function(_get_product_code_name, type='char', size=1024,
-            method=True, string='Product Code', multi="product",),
+                                        method=True, string='Product Code', multi="product",),
         'default_name': fields.function(_get_product_code_name, type='char', size=1024,
-            method=True, string='Product Description', multi="product",),
+                                        method=True, string='Product Description', multi="product",),
 
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
         # mandatory nomenclature levels -> not mandatory on screen here

@@ -31,7 +31,7 @@ class split_memory_move(osv.osv_memory):
     _name = "split.memory.move"
     _description = "Split Memory Move"
     _columns = {
-        'quantity': fields.float('Quantity',digits_compute=dp.get_precision('Product UOM')),
+        'quantity': fields.float('Quantity',digits_compute=dp.get_precision('Product UOM'), related_uom='uom_id'),
         'uom_id': fields.many2one('product.uom', string='UoM', readonly=True),
     }
 
@@ -49,7 +49,7 @@ class split_memory_move(osv.osv_memory):
             res['uom_id'] = self.pool.get(context.get('class_name')).browse(cr, uid, move_id[0]).product_uom.id
 
         res['quantity'] = 0.00
-        
+
         return res
 
     def change_uom(self, cr, uid, ids, uom_id, qty):
@@ -57,16 +57,16 @@ class split_memory_move(osv.osv_memory):
         Check the round of the qty according to the UoM
         '''
         return self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'quantity')
-    
+
     def cancel(self, cr, uid, ids, context=None):
         '''
         return to picking creation wizard
         '''
         # we need the context for the wizard switch
         assert context, 'no context defined'
-        
+
         wiz_obj = self.pool.get('wizard')
-        
+
         # no data for type 'back'
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], w_type='back', context=context)
 
@@ -79,19 +79,19 @@ class split_memory_move(osv.osv_memory):
         wiz_obj = self.pool.get('wizard')
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         # memory moves selected
         memory_move_ids = context['memory_move_ids']
         memory_move_obj = self.pool.get(class_name)
         # quantity input
         leave_qty = self.browse(cr, uid, ids[0], context=context).quantity
         for memory_move in memory_move_obj.browse(cr, uid, memory_move_ids, context=context):
-            
+
             # quantity from memory move
 
             available_qty = memory_move.ordered_quantity
             available_qty_to_process = memory_move.quantity
-            
+
             # leave quantity must be greater than zero
             if leave_qty <= 0:
                 raise osv.except_osv(_('Error!'),  _('Selected quantity must be greater than 0.0.'))
@@ -99,14 +99,14 @@ class split_memory_move(osv.osv_memory):
             # cannot select more than available
             if leave_qty > available_qty:
                 raise osv.except_osv(_('Error!'),  _('Selected quantity (%0.1f %s) exceeds the available quantity (%0.1f %s)')%(leave_qty, memory_move.product_uom.name, available_qty, memory_move.product_uom.name))
-            
+
             # cannot select all available
             if leave_qty == available_qty:
                 raise osv.except_osv(_('Error !'),_('Selected quantity is equal to available quantity (%0.1f %s).')%(available_qty, memory_move.product_uom.name))
-            
+
             # quantity difference for new memory stock move
             new_qty = available_qty - leave_qty
-            
+
             # update the selected memory move
             if class_name == 'stock.move.memory.ppl':
                 values = {'quantity': new_qty, 'ordered_quantity': new_qty}
@@ -116,9 +116,9 @@ class split_memory_move(osv.osv_memory):
             if available_qty_to_process > 0.0 and class_name != 'stock.move.memory.ppl':
                 if not context.get('import_in_progress'):
                     values['quantity'] = 0.0
-            # update the object    
+            # update the object
             memory_move_obj.write(cr, uid, [memory_move.id], values)
-            
+
             # create new memory move - copy for memory is not implemented
             default_val = {'line_number': memory_move.line_number,
                            'product_id': memory_move.product_id.id,
@@ -142,8 +142,8 @@ class split_memory_move(osv.osv_memory):
 
             new_memory_move = memory_move_obj.create(cr, uid, default_val, context=context)
             context.update({'new_memory_move_id': new_memory_move})
-        
+
         # no data for type 'back'
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], w_type='back', context=context)
-    
+
 split_memory_move()

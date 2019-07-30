@@ -12,6 +12,57 @@
             header="False"
             auto="False"
             menu="True"/>
+        <!-- put "Open Invoices" at the top of the menu -->
+        <function model="ir.values" name="write">
+            <function model="ir.values" name="search"
+                      eval="[[('key', '=', 'action'),
+                              ('key2', '=', 'client_print_multi'),
+                              ('model', '=', 'account.invoice'),
+                              ('name', '=', 'Open Invoices')]]" />
+            <value eval="{'sequence': 90}" />
+        </function>
+
+        <!-- PAID INVOICES REPORT -->
+        <report id="paid_invoices"
+            string="Paid Invoices"
+            model="account.invoice"
+            name="paid.invoices"
+            file="account_override/report/open_invoices_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"/>
+        <record id="action_paid_invoices_menu" model="ir.actions.act_window">
+            <field name="name">Paid Invoices</field>
+            <field name="res_model">wizard.report.paid.invoice</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+        <record model="ir.values" id="action_paid_invoices_values">
+            <field name="object" eval="1" />
+            <field name="name">Paid Invoices</field>
+            <field name="key2">client_print_multi</field>
+            <field name="value" eval="'ir.actions.act_window,' +str(ref('action_paid_invoices_menu'))" />
+            <field name="key">action</field>
+            <field name="model">account.invoice</field>
+            <field name="sequence" eval="95"/>
+        </record>
+        <record id="wizard_paid_invoices_view" model="ir.ui.view">
+            <field name="name">Paid Invoices</field>
+            <field name="model">wizard.report.paid.invoice</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Select currency">
+                    <field name="beginning_date"/>
+                    <field name="ending_date"/>
+                    <group colspan="4" >
+                        <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                        <button name="button_paid_invoices_report" string="Create report" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
 
         <report id="synthesis_invoices_report"
             string="Allocation synthesis"

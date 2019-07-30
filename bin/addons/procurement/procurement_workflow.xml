@@ -80,17 +80,20 @@
         <record id="trans_draft_confirm" model="workflow.transition">
             <field name="act_from" ref="act_draft"/>
             <field name="act_to" ref="act_confirm"/>
+            <field name="sequence" eval="10" />
             <field name="signal">button_confirm</field>
         </record>
         <record id="trans_confirm_cancel2" model="workflow.transition">
             <field name="act_from" ref="act_confirm"/>
             <field name="act_to" ref="act_wait_done"/>
+            <field name="sequence" eval="10" />
             <field name="signal">button_wait_done</field>
             <field name="condition">True</field>
         </record>
         <record id="trans_confirm_wait_done" model="workflow.transition">
             <field name="act_from" ref="act_wait_done"/>
             <field name="act_to" ref="act_done"/>
+            <field name="sequence" eval="10" />
             <field name="condition">check_move_done()</field>
             <field name="trigger_model">stock.move</field>
             <field name="trigger_expr_id">[move_id.id]</field>
@@ -99,68 +102,81 @@
         <record id="trans_confirm_cancel" model="workflow.transition">
             <field name="act_from" ref="act_confirm"/>
             <field name="act_to" ref="act_cancel"/>
+            <field name="sequence" eval="20" />
             <field name="signal">button_check</field>
             <field name="condition">test_cancel()</field>
         </record>
         <record id="trans_confirm_confirm_wait" model="workflow.transition">
             <field name="act_from" ref="act_confirm"/>
             <field name="act_to" ref="act_confirm_wait"/>
+            <field name="sequence" eval="30" />
             <field name="signal">button_check</field>
             <field name="condition">not test_cancel()</field>
         </record>
         <record id="trans_confirm_wait_confirm_mto" model="workflow.transition">
             <field name="act_from" ref="act_confirm_wait"/>
             <field name="act_to" ref="act_confirm_mto"/>
+            <field name="sequence" eval="10" />
             <field name="condition">procure_method=='make_to_order'</field>
         </record>
         <record id="trans_confirm_wait_confirm_mts" model="workflow.transition">
             <field name="act_from" ref="act_confirm_wait"/>
             <field name="act_to" ref="act_confirm_mts"/>
+            <field name="sequence" eval="20" />
             <field name="condition">procure_method=='make_to_stock'</field>
         </record>
         <record id="trans_confirm_mts_cancel" model="workflow.transition">
             <field name="act_from" ref="act_confirm_mts"/>
             <field name="act_to" ref="act_cancel"/>
+            <field name="sequence" eval="10" />
             <field name="signal">button_cancel</field>
         </record>
         <record id="trans_confirm_waiting_cancel" model="workflow.transition">
             <field name="act_from" ref="act_wait_done"/>
             <field name="act_to" ref="act_cancel"/>
+            <field name="sequence" eval="20" />
             <field name="signal">button_cancel</field>
         </record>
         <record id="trans_confirm_mts_confirm" model="workflow.transition">
             <field name="act_from" ref="act_confirm_mts"/>
             <field name="act_to" ref="act_confirm"/>
+            <field name="sequence" eval="20" />
             <field name="signal">button_restart</field>
         </record>
         <record id="trans_confirm_mto_cancel" model="workflow.transition">
             <field name="act_from" ref="act_confirm_mto"/>
             <field name="act_to" ref="act_cancel"/>
+            <field name="sequence" eval="10" />
             <field name="signal">button_cancel</field>
         </record>
         <record id="trans_confirm_mto_purchase" model="workflow.transition">
             <field name="act_from" ref="act_confirm_mto"/>
             <field name="act_to" ref="act_make_done"/>
+            <field name="sequence" eval="20" />
             <field name="condition">check_buy()</field>
         </record>
         <record id="trans_confirm_mto_confirm" model="workflow.transition">
             <field name="act_from" ref="act_confirm_mto"/>
             <field name="act_to" ref="act_confirm"/>
+            <field name="sequence" eval="30" />
             <field name="signal">button_restart</field>
         </record>
         <record id="trans_draft_cancel" model="workflow.transition">
             <field name="act_from" ref="act_draft"/>
             <field name="act_to" ref="act_cancel"/>
+            <field name="sequence" eval="20" />
             <field name="signal">button_cancel</field>
         </record>
         <record id="trans_confirm_mts_make_to_stock" model="workflow.transition">
             <field name="act_from" ref="act_confirm_mts"/>
             <field name="act_to" ref="act_make_to_stock"/>
+            <field name="sequence" eval="30" />
             <field name="condition">check_make_to_stock()</field>
         </record>
         <record id="trans_confirm_mto_produce_check" model="workflow.transition">
             <field name="act_from" ref="act_confirm_mto"/>
             <field name="act_to" ref="act_produce_check"/>
+            <field name="sequence" eval="40" />
             <field name="condition">check_produce()</field>
         </record>
         <record id="trans_product_check_produce_service" model="workflow.transition">
@@ -178,15 +194,18 @@
         <record id="trans_produce_service_cancel" model="workflow.transition">
             <field name="act_from" ref="act_produce_service"/>
             <field name="act_to" ref="act_cancel"/>
+            <field name="sequence" eval="10" />
             <field name="signal">subflow.cancel</field>
         </record>
         <record id="trans_produce_service_make_done" model="workflow.transition">
             <field name="act_from" ref="act_produce_service"/>
             <field name="act_to" ref="act_make_done"/>
+            <field name="sequence" eval="20" />
         </record>
         <record id="trans_make_done_done" model="workflow.transition">
             <field name="act_from" ref="act_make_done"/>
             <field name="act_to" ref="act_done"/>
+            <field name="sequence" eval="10" />
             <field name="condition">action_check_finished()</field>
             <field name="trigger_model">stock.move</field>
             <field name="trigger_expr_id">move_id and [move_id.id] or []</field>
@@ -194,6 +213,7 @@
         <record id="trans_make_done_confirm" model="workflow.transition">
             <field name="act_from" ref="act_make_done"/>
             <field name="act_to" ref="act_cancel"/>
+            <field name="sequence" eval="20" />
             <field name="condition">check_move_cancel()</field>
         </record>
 

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from osv import osv, fields
-from tools.translate import _
 import csv
 from mx import DateTime
 from tempfile import TemporaryFile
@@ -106,7 +105,7 @@ class import_analytic_lines(osv.osv_memory):
                                                 ('type', '=', 'bank'),
                                                 ('is_current_instance', '=', True)])
             if not jids:
-                cr.execute('SELECT max(code) from account_account where parent_id=%s'%(parent_account,))
+                cr.execute('SELECT max(code) from account_account where parent_id=%s', (parent_account,))
 
                 code = int(cr.fetchone()[0])+1
                 acc_id = account_obj.create(cr, uid, {
@@ -143,7 +142,7 @@ class import_analytic_lines(osv.osv_memory):
             try:
                 creation_id = creation_obj.create(cr, uid, {'period_id': period[0]}, context=context)
                 creation_obj.button_confirm_period(cr, uid, [creation_id])
-            except osv.except_osv, e:
+            except osv.except_osv:
                 pass
             else:
                 creation_obj.button_create_registers(cr, uid, [creation_id])
@@ -186,7 +185,7 @@ class import_analytic_lines(osv.osv_memory):
                 if reg_data['state'] == 'draft':
                     if not reg_data['prev_reg_id']:
                         reg_obj.write(cr, uid, reg_data['id'], {'balance_start': 44.56})
-                    reg_obj.button_open_bank(cr, uid, reg_data['id'])
+                    reg_obj.open_register(cr, uid, reg_data['id'])
 
             if row[2] not in cc:
                 acc_id = analytic_obj.search(cr, uid, [('category', '=', 'OC'), ('code', '=like', row[2])])

@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<openerp>
-    <data>
-        <record id="sale_override.trans_draft_validated" model="workflow.transition">
-            <field name="condition">check_lines_to_fix()</field>
-        </record>
-    </data>
-</openerp>

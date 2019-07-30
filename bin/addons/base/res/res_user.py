@@ -207,6 +207,8 @@ class groups(osv.osv):
                 new_args = [('level', 'in', ['project', False])]
             elif instance_level == 'coordo':
                 new_args = [('level', 'in', ['project', 'coordo', False])]
+            if instance_level in ('project', 'coordo'):
+                new_args += [('is_an_admin_profile', '=', False)]
             for arg in args:
                 new_args.append(arg)
 
@@ -233,6 +235,7 @@ def _tz_get(self,cr,uid, context=None):
 
 class users(osv.osv):
     __admin_ids = {}
+    __sync_user_ids = {}
     _uid_cache = {}
     _name = "res.users"
     _order = 'name'
@@ -484,12 +487,14 @@ class users(osv.osv):
         'user_email': fields.function(_email_get, method=True, fnct_inv=_email_set, string='Email', type="char", size=240),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'date': fields.datetime('Last Connection', readonly=True),
-        'synchronize': fields.boolean('Synchronize', help="Synchronize down this user"),
-        'is_synchronizable': fields.boolean('Is Synchronizable?', help="Can this user be synchronized? The Synchronize checkbox is available only for the synchronizable users."),
+        'synchronize': fields.boolean('Synchronize', help="Synchronize down this user", select=1),
+        'is_synchronizable': fields.boolean('Is Synchronizable?', help="Can this user be synchronized? The Synchronize checkbox is available only for the synchronizable users.", select=1),
         'is_erp_manager': fields.function(_is_erp_manager, fnct_search=_search_role, method=True, string='Is ERP Manager ?', type="boolean"),
         'is_sync_config': fields.function(_is_sync_config, fnct_search=_search_role, method=True, string='Is Sync Config ?', type="boolean"),
         'instance_level': fields.function(_get_instance_level, fnct_search=_search_instance_level, method=True, string='Instance level', type="char"),
         'log_xmlrpc': fields.boolean('Log XMLRPC requests', help="Log the XMLRPC requests of this user into a dedicated file"),
+        'last_use_shortcut': fields.datetime('Last use of shortcut', help="Last date when a shortcut was used", readonly=True),
+        'nb_shortcut_used': fields.integer('Number of shortcut used', help="Number of time a shortcut has been used by this user", readonly=True),
     }
 
     def on_change_company_id(self, cr, uid, ids, company_id):
@@ -544,6 +549,13 @@ class users(osv.osv):
             self.__admin_ids[cr.dbname] = ir_model_data_obj.read(cr, 1, [mdid], ['res_id'])[0]['res_id']
         return self.__admin_ids[cr.dbname]
 
+    def _get_sync_user_id(self, cr):
+        if self.__sync_user_ids.get(cr.dbname) is None:
+            ir_model_data_obj = self.pool.get('ir.model.data')
+            mdid = ir_model_data_obj._get_id(cr, 1, 'base', 'user_sync')
+            self.__sync_user_ids[cr.dbname] = ir_model_data_obj.read(cr, 1, [mdid], ['res_id'])[0]['res_id']
+        return self.__sync_user_ids[cr.dbname]
+
     def _get_company(self,cr, uid, context=None, uid2=False):
         if not uid2:
             uid2 = uid
@@ -593,6 +605,7 @@ class users(osv.osv):
         'force_password_change': False,
         'view': 'simple',
         'is_synchronizable': False,
+        'synchronize': False,
     }
 
     @tools.cache()
@@ -639,10 +652,6 @@ class users(osv.osv):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
 
-        if not values.get('is_synchronizable', False):
-            # a user which is not synchronizable should not be synchronized
-            values['synchronize'] = False
-
         user_id = super(users, self).create(cr, uid, values, context)
         if 'log_xmlrpc' in values:
             # clear the cache of the list of uid to log
@@ -670,11 +679,6 @@ class users(osv.osv):
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
-
-        if 'is_synchronizable' in values and not values.get('is_synchronizable',
-                                                            False):
-            # desactivate synchronize if is_synchronizable is set to False
-            values['synchronize'] = False
 
         old_groups = []
         if values.get('groups_id'):
@@ -773,7 +777,7 @@ class users(osv.osv):
         return encrypted password from the database using uid
         '''
         cr.execute("""SELECT password from res_users
-                      WHERE id=%s AND active""",
+                      WHERE id=%s AND active AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
                    (uid,))
         res = cr.fetchone()
         if res:
@@ -786,7 +790,7 @@ class users(osv.osv):
         '''
         login = tools.ustr(login).lower()
         cr.execute("""SELECT password from res_users
-                      WHERE login=%s AND active""",
+                      WHERE login=%s AND active AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
                    (login,))
         res = cr.fetchone()
         if res:
@@ -910,9 +914,10 @@ class users(osv.osv):
         if new_passwd:
             cr = pooler.get_db(db_name).cursor()
             try:
+                login = tools.ustr(login).lower()
                 # get user_uid
                 cr.execute("""SELECT id from res_users
-                              WHERE login=%s AND active=%s""",
+                              WHERE login=%s AND active=%s AND (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""",
                            (login, True))
                 res = cr.fetchone()
                 uid = None
@@ -959,35 +964,6 @@ class wizard_add_users_synchronized(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 wizard_add_users_synchronized()
-
-class ir_values(osv.osv):
-    """
-    we override ir.values because we need to filter where the button add users to the white list is displayed
-    """
-
-    _name = 'ir.values'
-    _inherit = 'ir.values'
-
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
-        if context is None:
-            context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
-        new_values = values
-        if context.get('user_white_list', False):
-            # add the action_open_wizard_add_users_to_white_list only if 'user_white_list' is in context
-            return new_values
-
-        if key == 'action' and key2 == 'client_action_multi' and 'res.users' in [x[0] for x in models]:
-            action_list = [x[1] for x in values if x]
-            if 'action_open_wizard_add_users_to_white_list' in action_list:
-                new_values = []
-                for v in values:
-                    if v[1] != 'action_open_wizard_add_users_to_white_list':
-                        new_values.append(v)
-        return new_values
-
-ir_values()
-
 
 class config_users(osv.osv_memory):
     _name = 'res.config.users'
@@ -1069,13 +1045,21 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
                     return
                 audit_rule_ids = user_obj.check_audit(cr, uid, 'write')
                 if users_deleted:
-                    previous_values = [x for x in previous_values if x['id'] in users_deleted]
+                    users_deleted_previous_values = [x for x in previous_values if x['id'] in users_deleted]
                     current_values = dict((x['id'], x) for x in user_obj.read(cr, uid, users_deleted, ['groups_id'], context=context))
-                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj, users_deleted, 'write', previous_values, current_values, context=context)
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj,
+                                        users_deleted, 'write',
+                                        users_deleted_previous_values,
+                                        current_values,
+                                        context=context)
                 if users_added:
-                    previous_values = [x for x in previous_values if x['id'] in users_added]
+                    users_added_previous_values = [x for x in previous_values if x['id'] in users_added]
                     current_values = dict((x['id'], x) for x in user_obj.read(cr, uid, users_added, ['groups_id'], context=context))
-                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj, users_added, 'write', previous_values, current_values, context=context)
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj,
+                                        users_added, 'write',
+                                        users_added_previous_values,
+                                        current_values,
+                                        context=context)
 
     def create(self, cr, uid, vals, context=None):
         '''

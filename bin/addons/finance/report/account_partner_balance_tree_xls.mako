@@ -171,16 +171,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
-<Style ss:ID="ssIBLine">
-<Alignment ss:Vertical="Top" ss:Horizontal="Right" ss:WrapText="1"/>
-<Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-</Style>
 <Style ss:ID="ssAccountLineWrap">
    <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -222,17 +212,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Borders>
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-<NumberFormat ss:Format="#,##0.00"/>
-</Style>
-<Style ss:ID="ssIBLineNumber">
-<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
-<Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 <NumberFormat ss:Format="#,##0.00"/>
 </Style>
@@ -278,71 +257,70 @@ entries = get_partners(data)
 % else:
 % for p_entries in entries:
 <%
-if p_entries[0].account_type == 'payable':
-    worsheet_name = _('Payable Accounts')
-else:
-    worsheet_name = _('Receivable Accounts')
+worksheet_name = get_type_of_accounts()
 %>
-<Worksheet ss:Name="${worsheet_name}">
+<Worksheet ss:Name="${worksheet_name}">
 <%
     col_count = 9
     if data['model'] == 'account.account':
         header_company_or_chart_of_account = _('Company')
     else:
         header_company_or_chart_of_account = _('Chart of Account')
-    if data['form'].get('display_partner', '') == 'non-zero_balance':
-        display_account = _('With balance is not equal to 0')
-    else:
-        display_account = _('All')
 %>
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="140" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="150" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="70" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="100" />
+<Column ss:AutoFitWidth="1" ss:Width="100" />
+<Column ss:AutoFitWidth="1" ss:Width="100" />
+<Column ss:AutoFitWidth="1" ss:Width="100" />
 ## header
 <%
 header_col_merge_count = col_count - 1
+selected_filter = get_filter(data) or ''
 %>
 <Row>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}&#10;${_('Fiscal Year')}</Data></Cell>
- <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Journals')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Display Partners')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filter By'), (get_filter(data) or ''))|x}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Target Moves')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Functional Currency')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Proprietary Instances')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Fiscal Year')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Journals')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Accounts')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Proprietary Instances')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filter By'), (selected_filter != _('No Filter') and selected_filter or ''))|x}</Data></Cell>
+ <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Display')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Func. Currency')}</Data></Cell>
 </Row>
 <Row>
  <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${(get_account(data) or '')|x}&#10;&#10;${(get_fiscalyear(data) or '')|x}</Data>
+     <Data ss:Type="String">${(get_account(data) or '')|x}</Data>
  </Cell>
- <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
+ <Cell ss:StyleID="ssHeaderCell">
+     <Data ss:Type="String">${(get_fiscalyear(data) or '')|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${ get_journals_str(data)|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${(display_account or '')|x}</Data>
- </Cell>
- <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${(get_filter_info(data) or '')|x}</Data>
- </Cell>
- <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
- </Cell>
- <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${company.currency_id.name|x}</Data>
+    <Data ss:Type="String">${ get_accounts_str(data)|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${ get_prop_instances_str(data)|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${ get_accounts_str(data)|x}</Data>
+     <Data ss:Type="String">${(get_filter_info(data) or '')|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
+     <Data ss:Type="String">${ "%s: %s, %s: %s, %s: %s, %s: %s" % (
+                            _("Partner's"), get_type_of_accounts() or '',
+                            _('Target Moves'), get_target_move(data) or '',
+                            _('Reconciled'), get_reconcile_selection(data),
+                            _('Display Partners'), get_display_partners_selection(data),
+                            )|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+     <Data ss:Type="String">${company.currency_id.name|x}</Data>
  </Cell>
 </Row>
 ## separation line after header
@@ -355,11 +333,8 @@ header_col_merge_count = col_count - 1
 </Row>
 ## partner header
 <Row>
-<Cell ss:StyleID="ssHeader">
+<Cell ss:StyleID="ssHeader" ss:MergeAcross="2">
     <Data ss:Type="String">${_('Partner')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader" ss:MergeAcross="1">
-    <Data ss:Type="String">${_('Partner Ref.')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
     <Data ss:Type="String">${_('Account')}</Data>
@@ -384,7 +359,7 @@ header_col_merge_count = col_count - 1
 <Row>
 ## total debit / credit / balance row
 <%
-debit, credit, balance = get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)
+debit, credit, balance = get_partners_total_debit_credit_balance(data)
 %>
 <Cell ss:StyleID="ssCellRightBold" ss:MergeAcross="3">
     <Data ss:Type="String">${_('TOTAL PARTNERS')}</Data>
@@ -410,14 +385,10 @@ debit, credit, balance = get_partners_total_debit_credit_balance_by_account_type
 % for p_obj in p_entries:
 <%
 partner_name = (p_obj.name or '')
-partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 %>
 <Row>
-<Cell ss:StyleID="ssPartner">
+<Cell ss:StyleID="ssPartner" ss:MergeAcross="3">
     <Data ss:Type="String">${partner_name|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssPartner" ss:MergeAcross="2">
-    <Data ss:Type="String">${partner_ref|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerRight">
     <Data ss:Type="String">${company.currency_id.name|x}</Data>
@@ -436,35 +407,8 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 </Cell>
 </Row>
 
-<!-- INITIAL BALANCE Section -->
-% if get_display_ib():
-<Row>
-<Cell ss:StyleID="ssIBLine" ss:MergeAcross="2">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssIBLine">
-    <Data ss:Type="String">${_('Initial Balance')}</Data>
-</Cell>
-<Cell ss:StyleID="ssIBLine">
-    <Data ss:Type="String">${company.currency_id.name|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssIBLineNumber">
-    <Data ss:Type="Number">${p_obj.ib_debit or 0.|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssIBLineNumber">
-    <Data ss:Type="Number">${p_obj.ib_credit or 0.|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssIBLineNumber">
-    <Data ss:Type="Number">${p_obj.ib_balance or 0.|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssIBLineNumber">
-    <Data ss:Type="Number">${p_obj.ib_balance or 0.|x}</Data>
-</Cell>
-</Row>
-% endif
-
 ## account move line row
-% for aml in get_partner_account_move_lines(p_entries[0].account_type, p_obj.partner_id.id, data):
+% for aml in get_partner_account_move_lines(p_obj.partner_id.id, data):
 <Row>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
@@ -496,7 +440,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 </Row>
 
 <!-- SUBTOTALS per currency -->
-% for detail_line in get_lines_per_currency(p_entries[0].account_type, p_obj.partner_id.id, data, aml.get('account', '')):
+% for detail_line in get_lines_per_currency(p_obj.partner_id.id, data, aml.get('account', '')):
 <Row>
 <Cell ss:StyleID="ssSubtotalLine" ss:MergeAcross="2">
     <Data ss:Type="String"></Data>

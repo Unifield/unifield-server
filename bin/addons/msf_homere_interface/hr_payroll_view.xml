@@ -30,11 +30,11 @@
                                 </group>
                                 <group colspan="2" col="4">
                                     <separator string="Analytic Accounting"/>
-                                    <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
-                                    <field name="cost_center_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
-                                    <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"/>
-                                    <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
-                                    <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                                    <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}" readonly="1"/>
+                                    <field name="cost_center_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}" readonly="1"/>
+                                    <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}" readonly="1"/>
+                                    <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}" readonly="1"/>
+                                    <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}" readonly="1"/>
                                 </group>
                             </group>
                         </page>
@@ -44,7 +44,6 @@
                         <field name="state" colspan="2"/>
                         <field name="employee_id" invisible="1"/>
                         <field name="partner_id" invisible="1"/>
-                        <field name="journal_id" invisible="1"/>
                     </group>
                 </form>
             </field>
@@ -53,7 +52,7 @@
     <!--
         Payroll Search
     -->
-
+        <!-- Expense lines -->
         <record id="view_hr_payroll_msf_filter" model="ir.ui.view">
             <field name="name">Payroll Entries</field>
             <field name="model">hr.payroll.msf</field>
@@ -63,6 +62,24 @@
                     <filter name="active" icon="terp-check" domain="[('analytic_state', '=', 'valid')]" string="Valid"/>
                     <filter name="inactive" icon="gtk-dialog-error" domain="[('analytic_state', '!=', 'valid')]" string="Invalid"/>
                     <separator orientation="vertical"/>
+                    <field name="employee_id" select="1"/>
+                    <field name="account_id" select="1"/>
+                </search>
+            </field>
+        </record>
+
+        <!-- B/S lines (search) -->
+        <record id="view_hr_payroll_msf_bs_filter" model="ir.ui.view">
+            <field name="name">Payroll B/S lines</field>
+            <field name="model">hr.payroll.msf</field>
+            <field name="type">search</field>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <search>
+                    <filter name="empty_third_party" icon="terp-emblem-important"
+                            domain="[('has_third_party', '=', False)]" string="Empty Third Party"/>
+                    <separator orientation="vertical"/>
+                    <field name="partner_id" select="1"/>
                     <field name="employee_id" select="1"/>
                     <field name="account_id" select="1"/>
                 </search>
@@ -83,7 +100,6 @@
                     <field name="period_id"/>
                     <field name="employee_id" invisible="1"/>
                     <field name="partner_id" invisible="1"/>
-                    <field name="journal_id" invisible="1"/>
                     <field name="partner_type"/>
                     <field name="employee_id_number"/>
                     <field name="name"/>
@@ -98,6 +114,47 @@
                     <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
                     <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
                     <field name="analytic_state"/>
+                </tree>
+            </field>
+        </record>
+
+    <!--
+        Payroll B/S lines
+    -->
+        <record id="action_move_to_payroll_bs_lines" model="ir.actions.server">
+            <field name="name">Validate Payroll Expenses and move to Payroll B/S lines</field>
+            <field name="model_id" ref="model_hr_payroll_msf"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.move_to_payroll_bs_lines(context=context)</field>
+        </record>
+        <record id="ir_move_to_payroll_bs_lines" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">hr.payroll.msf</field>
+            <field name="name">action_move_to_payroll_bs_lines</field>
+            <field name="view_ids" ref="view_hr_payroll_msf_tree" />
+            <field eval="'ir.actions.server,%d'%action_move_to_payroll_bs_lines" name="value"/>
+            <field eval="True" name="object"/>
+            <field name="sequence" eval="105"/>
+        </record>
+        <record id="view_payroll_bs_lines_tree" model="ir.ui.view">
+            <field name="name">payroll.bs.lines.tree</field>
+            <field name="model">hr.payroll.msf</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <tree string="Payroll List" editable="bottom" hide_delete_button="1" hide_new_button="1">
+                    <field name="document_date"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="partner_type" readonly="0"/>
+                    <field name="partner_id"/>
+                    <field name="employee_id"/>
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="account_id"/>
+                    <field name="amount" sum="Total amount"/>
+                    <field name="currency_id"/>
+                    <field name="state"/>
                 </tree>
             </field>
         </record>
@@ -126,30 +183,11 @@
             <field name="domain">[('employee_type', '=', 'local')]</field>
         </record>
 
-        <record id="action_employee_import_wizard" model="ir.actions.act_window">
-            <field name="name">Employee Update</field>
-            <field name="res_model">hr.payroll.employee.import</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="payroll_employee_import"/>
-            <field name="target">new</field>
-        </record>
-
-        <record id="action_payroll_import_wizard" model="ir.actions.act_window">
-            <field name="name">Import Payroll</field>
-            <field name="res_model">hr.payroll.import</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="payroll_import_wizard"/>
-            <field name="target">new</field>
-        </record>
 
     <!--
         Menu
     -->
         <menuitem id="menu_finance_payroll" name="Payroll" parent="account.menu_finance" sequence="5"/>
-        <menuitem string="Employee Update" action="action_employee_import_wizard" id="menu_finance_employees_import" parent="menu_finance_payroll" sequence="1"/>
-        <menuitem string="Import Payroll" action="action_payroll_import_wizard" id="menu_finance_payroll_import" parent="menu_finance_payroll" sequence="2"/>
         <menuitem string="Payroll entries" action="action_payroll_tree" id="menu_finance_payroll_entries" parent="menu_finance_payroll" sequence="3"/>
         <menuitem string="Local Staff Allocation" action="action_employee_allocation_tree" id="menu_finance_payroll_employees" parent="menu_finance_payroll" sequence="4"/>
 

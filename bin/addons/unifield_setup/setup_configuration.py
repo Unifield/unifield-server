@@ -24,28 +24,11 @@ from osv import fields
 
 from tools.translate import _
 
-import logging
-import tools
-from os import path
-
 
 # Class to save all configuration value
 class unifield_setup_configuration(osv.osv):
     _name = 'unifield.setup.configuration'
-    
-    def init(self, cr):
-        """
-        Load setup_data.xml before self
-        """
-        if hasattr(super(unifield_setup_configuration, self), 'init'):
-            super(unifield_setup_configuration, self).init(cr)
 
-        mod_obj = self.pool.get('ir.module.module')
-        logging.getLogger('init').info('HOOK: module unifield_setup: loading setup_data.xml')
-        pathname = path.join('unifield_setup', 'setup_data.xml')
-        file = tools.file_open(pathname)
-        tools.convert_xml_import(cr, 'unifield_setup', file, {}, mode='init', noupdate=False)
-    
     def _check_uniqueness(self, cr, uid, ids, context=None):
         '''
         Limit the creation of one and only one instance configuration
@@ -53,12 +36,12 @@ class unifield_setup_configuration(osv.osv):
         setup_ids = self.pool.get('unifield.setup.configuration').search(cr, uid, [], context=context)
         if len(setup_ids) > 1:
             return False
-        
+
         return True
-    
+
     def _non_uniqueness_msg(self, cr, uid, ids, context=None):
         return _('An instance of Unifield setup is already running.')
-    
+
     _columns = {
         'name': fields.char(size=64, string='Name'),
         'delivery_process': fields.selection([('simple', 'Simple OUT'), ('complex', 'PICK/PACK/SHIP')], string='Delivery process'),
@@ -69,33 +52,35 @@ class unifield_setup_configuration(osv.osv):
         'fixed_asset_ok': fields.boolean(string='System manages fixed asset ?'),
         'sale_price': fields.float(digits=(16,2), string='Fields price percentage',
                                    help='This percentage will be applied on field price from product form view.'),
-        'restrict_country_ids': fields.many2many('res.country', 'restrictive_countries', 'wizard_id', 'country_id', 
+        'restrict_country_ids': fields.many2many('res.country', 'restrictive_countries', 'wizard_id', 'country_id',
                                                  string='Restrictive countries'),
         'field_orders_ok': fields.boolean(string='Activate the Field Orders feature ?'),
         'lang_id': fields.char(size=5, string='Default language'),
         'payroll_ok': fields.boolean(string='System manages payrolls ?'),
         'import_commitments': fields.boolean(string='Manage commitments corresponding to international order through specific import ?'),
         'vat_ok': fields.boolean(string='System manages VAT locally ?'),
+        'previous_fy_dates_allowed': fields.boolean(string='Does the system allow document dates on previous Fiscal Year?'),
     }
-    
+
     _defaults = {
         'name': lambda *a: 'Unifield setup',
         'delivery_process': lambda *a: 'complex',
         'allocation_setup': lambda *a: 'mixed',
         'sale_price': lambda *a: 0.00,
         'field_orders_ok': lambda *a: True,
-        'lang_id': lambda *a: False,
+        'lang_id': lambda *a: 'en_MF',
         'unallocated_ok': lambda *a: False,
         'fixed_asset_ok': lambda *a: False,
         'payroll_ok': lambda *a: True,
         'import_commitments': lambda *a: True,
         'vat_ok': lambda *a: True,
+        'previous_fy_dates_allowed': lambda *a: False,
     }
-    
+
     _constraints = [
         (_check_uniqueness, _non_uniqueness_msg, ['id'])
     ]
-    
+
     def get_config(self, cr, uid):
         '''
         Return the current config or create a new one
@@ -108,9 +93,9 @@ class unifield_setup_configuration(osv.osv):
 
         if not setup_id:
             raise osv.except_osv(_('Error'), _('No configuration found !'))
-            
+
         return self.browse(cr, uid, setup_id)
-    
+
     def write(self, cr, uid, ids, vals, context=None):
         '''
         On write,  update the list_price = Field Price of Product according to the sale_price of the configurator
@@ -124,7 +109,7 @@ class unifield_setup_configuration(osv.osv):
             cr.execute("UPDATE product_template SET list_price = standard_price * %s", ((1 + (percentage/100.00)),))
         return super(unifield_setup_configuration, self).write(cr, uid, ids, vals, context=context)
 
-    
+
 unifield_setup_configuration()
 
 class res_config_view(osv.osv_memory):

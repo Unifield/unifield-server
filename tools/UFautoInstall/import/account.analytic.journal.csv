@@ -1,0 +1,19 @@
+active,code,name,type
+TRUE,PUR,Purchase,purchase
+TRUE,PUF,Purchase Refund,purchase
+TRUE,SAL,Sales,sale
+TRUE,SAR,Sales Refund,sale
+TRUE,OD,Corrections,correction
+TRUE,HQ,Headquarters,hq
+TRUE,HR,Human Resources,hr
+TRUE,ENG,Engagement,engagement
+TRUE,FXA,FX adjustment,cur_adj
+TRUE,ACC,Accruals,general
+TRUE,IKD,In-Kind Donation,inkind
+TRUE,INT,Intermission,intermission
+TRUE,ODX,Extra-Accounting corrections,extra
+TRUE,BNK,Bank,cash
+TRUE,CAS,Cash,cash
+TRUE,CHK,Cheque,cash
+TRUE,REV,Revaluation,revaluation
+TRUE,MIG,Migration,migration

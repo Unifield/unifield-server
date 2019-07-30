@@ -32,7 +32,6 @@
     "description": """
     Add locations capabilities
     """,
-    'test': ['test/specific_locations.yml'],
     'update_xml': [
         'specific_locations_view.xml',
     ],

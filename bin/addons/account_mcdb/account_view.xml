@@ -149,6 +149,7 @@
                             <field name="document_date"/>
                             <field name="date" select='1'/>
                             <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                            <field name="fiscalyear_id"/>
                         </group>
                         <newline/>
                         <group>
@@ -168,6 +169,7 @@
                             <field name="reconcile_total_partial_id" select='1'/>
                             <field name="is_reconciled" select='1'/>
                             <field name="reconcile_date" select='1' string="At"/>
+                            <field name="open_items" select='1'/>
                         </group>
                         <newline/>
                         <group>
@@ -176,9 +178,10 @@
                             <field name="journal_type"/>
                         </group>
                         <newline/>
-                        <group col="2" colspan="4">
+                        <group col="6" colspan="4">
                             <field name="balance" string="Debit/Credit Fonctional" select='1'/>
                             <field name="balance_currency" string="Debit/Credit Booking" select='1'/>
+                            <field name="currency_id" help="" domain="[('active', '=', True)]"/>
                         </group>
                         <newline/>
                         <group expand="0" string="Group By..." colspan="4" col="20">
@@ -278,9 +281,6 @@
                     <field name="credit" sum="Total Func. Credit"/>
                     <field name="functional_currency_id"/>
                     <field name="reconcile_total_partial_id"/>
-                    <field name="reconcile_date" invisible="1"/>
-                    <field name="unreconcile_date" invisible="1"/>
-                    <field name="unreconcile_txt" invisible="1"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -341,6 +341,7 @@
                                 <field name="document_date" select="1"/>
                                 <field name="date" select="1" string="Posting Date"/>
                                 <field name="period_id" domain="[]"/>
+                                <field name="fiscalyear_id"/>
                             </group>
                             <newline/>
                             <group col='8' colspan='4'>

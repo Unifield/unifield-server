@@ -20,7 +20,7 @@
 #
 ##############################################################################
 
-import os, sys, imp, getpass
+import os, sys, imp
 from os.path import join as opj
 import itertools
 import zipimport
@@ -333,7 +333,7 @@ def get_modules_with_version():
         try:
             info = load_information_from_description_file(module)
             res[module] = "%s.%s" % (release.major_version, info['version'])
-        except Exception, e:
+        except Exception:
             continue
     return res
 
@@ -409,10 +409,21 @@ def upgrade_graph(graph, cr, module_list, force=None):
 def init_module_objects(cr, module_name, obj_list):
     logger.notifyChannel('init', netsvc.LOG_INFO, 'module %s: creating or updating database tables' % module_name)
     todo = []
+    missing_fk = {}
+    missing_m2m = {}
     for obj in obj_list:
         try:
-            result = obj._auto_init(cr, {'module': module_name})
-        except Exception, e:
+            auto_init = obj._auto_init(cr, {'module': module_name})
+            result = None
+            if auto_init:
+                result, fk, m2m = auto_init
+                for obj, missing in fk.iteritems():
+                    missing_fk.setdefault(obj, [])
+                    missing_fk[obj] += missing
+                for obj, missing in m2m.iteritems():
+                    missing_m2m.setdefault(obj, [])
+                    missing_m2m[obj] += missing
+        except Exception:
             raise
         if result:
             todo += result
@@ -423,7 +434,7 @@ def init_module_objects(cr, module_name, obj_list):
     for t in todo:
         t[1](cr, *t[2])
     cr.commit()
-
+    return missing_fk, missing_m2m
 
 def register_class(m):
     """
@@ -512,7 +523,7 @@ class MigrationManager(object):
         assert stage in ('pre', 'post')
         stageformat = {'pre': '[>%s]',
                        'post': '[%s>]',
-                      }
+                       }
 
         if not (hasattr(pkg, 'update') or pkg.state == 'to upgrade'):
             return
@@ -541,7 +552,7 @@ class MigrationManager(object):
 
             mapping = {'module': opj(pkg.name, 'migrations'),
                        'maintenance': opj('base', 'maintenance', 'migrations', pkg.name),
-                      }
+                       }
 
             for x in mapping.keys():
                 if version in m[x]:
@@ -659,7 +670,7 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
 
     def load_data(cr, module_name, id_map, mode):
         _load_data(cr, module_name, id_map, mode, 'data')
-        
+
     def load_function(cr, module_name, id_map, mode):
         '''
         load module function defined to be executed after module installation/upgrade
@@ -671,7 +682,7 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
             # call function with uid 1 ?!? -> uid is not passed to restart_pool from upgrade_module...
             logger.notifyChannel('init', netsvc.LOG_INFO, 'module %s: calling function %s.%s()' % (module_name, call_module_name, call_function_name))
             getattr(module, call_function_name)(cr, 1, mode, context={})
-        
+
         return True
 
     def load_demo(cr, module_name, id_map, mode):
@@ -682,7 +693,7 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
         if not tools.config.options['test_disable']:
             try:
                 _load_data(cr, module_name, id_map, mode, 'test')
-            except Exception, e:
+            except Exception:
                 logging.getLogger('test').exception('Tests failed to execute in module %s', module_name)
             finally:
                 if tools.config.options['test_commit']:
@@ -722,6 +733,8 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
     modobj = None
     logger.notifyChannel('init', netsvc.LOG_DEBUG, 'loading %d packages..' % len(graph))
 
+    missing_fk = {}
+    missing_m2m = {}
     for package in graph:
         if skip_modules and package.name in skip_modules:
             continue
@@ -730,8 +743,21 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
         register_class(package.name)
         modules = pool.instanciate(package.name, cr)
         if hasattr(package, 'init') or hasattr(package, 'update') or package.state in ('to install', 'to upgrade'):
-            init_module_objects(cr, package.name, modules)
+            fk, m2m = init_module_objects(cr, package.name, modules)
+            for obj, missing in fk.iteritems():
+                missing_fk.setdefault(obj, [])
+                missing_fk[obj] += missing
+            for obj, missing in m2m.iteritems():
+                missing_m2m.setdefault(obj, [])
+                missing_m2m[obj] += missing
         cr.commit()
+
+    for related_obj, to_create in missing_fk.iteritems():
+        for x in to_create:
+            x[0]._create_fk(cr, x[1], x[2], x[3])
+    for related_obj, to_create in missing_m2m.iteritems():
+        for x in to_create:
+            x[0]._create_m2m_table(cr, x[1])
 
     for package in graph:
         status['progress'] = (float(statusi)+0.1) / len(graph)
@@ -792,7 +818,7 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
             package.state = 'installed'
             # execute the selected functions
             load_function(cr, m, idref, mode)
-            
+
             for kind in ('init', 'demo', 'update'):
                 if hasattr(package, kind):
                     delattr(package, kind)
@@ -840,6 +866,7 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
     try:
         processed_modules = []
         report = tools.assertion_report()
+        reload_base_module = False
         # NOTE: Try to also load the modules that have been marked as uninstallable previously...
         STATES_TO_LOAD = ['installed', 'to upgrade', 'uninstallable']
         if 'base' in tools.config['update'] or 'all' in tools.config['update']:
@@ -848,11 +875,15 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
         # STEP 0: Check if BASE module is marked as to upgrade or to install
         cr.execute("SELECT name FROM ir_module_module WHERE name = 'base' AND state IN ('to install', 'to upgrade')")
         if cr.fetchone():
+            reload_base_module = True
             cr.execute("SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename = 'ir_model_fields'")
             if cr.fetchone():
                 cr.execute("update ir_model_fields set state='deprecated' where state='base'")
 
-        # STEP 1: LOAD BASE (must be done before module dependencies can be computed for later steps) 
+            if cr.column_exists('msf_button_access_rights_button_access_rule', 'deprecated'):
+                cr.execute("update msf_button_access_rights_button_access_rule set deprecated='t'")
+
+        # STEP 1: LOAD BASE (must be done before module dependencies can be computed for later steps)
         graph = create_graph(cr, ['base'], force)
         if not graph:
             logger.notifyChannel('init', netsvc.LOG_CRITICAL, 'module base cannot be loaded! (hint: verify addons-path)')
@@ -916,12 +947,6 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
 
         # STEP 4: Finish and cleanup
         if processed_modules:
-            cr.execute("""select model,name from ir_model where id NOT IN (select distinct model_id from ir_model_access)""")
-            for (model, name) in cr.fetchall():
-                model_obj = pool.get(model)
-                if model_obj and not isinstance(model_obj, osv.osv.osv_memory):
-                    logger.notifyChannel('init', netsvc.LOG_WARNING, 'object %s (%s) has no access rules!' % (model, name))
-
             # Temporary warning while we remove access rights on osv_memory objects, as they have
             # been replaced by owner-only access rights
             cr.execute("""select distinct mod.model, mod.name from ir_model_access acc, ir_model mod where acc.model_id = mod.id""")
@@ -946,6 +971,9 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
 
         for kind in ('init', 'demo', 'update'):
             tools.config[kind] = {}
+
+        if update_module:
+            pool.get('ir.translation').has_duplicate(cr, 1, verbose=True)
 
         cr.commit()
         if update_module:
@@ -981,6 +1009,17 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
 
             cr.execute("update ir_module_module set state=%s where state=%s", ('uninstalled', 'to remove',))
             cr.commit()
+
+        if reload_base_module and cr.column_exists('msf_button_access_rights_button_access_rule', 'deprecated'):
+            cr.execute("""
+                select d.module||'.'||d.name from msf_button_access_rights_button_access_rule r
+                left join ir_model_data d on d.res_id = r.id and d.model='msf_button_access_rights.button_access_rule' and d.module='sd'
+                where r.deprecated='t'
+            """)
+            deleted_sdref = [x[0] for x in cr.fetchall()]
+            cr.execute("delete from msf_button_access_rights_button_access_rule where deprecated='t'")
+            cr.commit()
+            logger.notifyChannel('init', netsvc.LOG_INFO, 'BAR: %d deprecated rules deleted: %s' % (cr.rowcount,', '.join(deleted_sdref)))
     finally:
         cr.close()
 

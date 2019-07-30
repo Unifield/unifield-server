@@ -23,26 +23,100 @@ from report import report_sxw
 
 
 class report_open_invoices2(report_sxw.rml_parse):
+    """
+    Used for the reports "Open Invoices" and "Paid Invoices" (same display but the state of the docs displayed changes)
+    """
+
     def __init__(self, cr, uid, name, context=None):
+        if context is None:
+            context = {}
+        context.update({'paid_invoice': name == 'paid.invoices'})  # for the "Paid Invoices" report
         super(report_open_invoices2, self).__init__(cr, uid, name, context=context)
+        self.percent = 0.0
+        self.nb_lines = 0
+        self.ratio_search = 0.25  # consider that the search in get_invoices takes 25% of the total time of the process
         self.funcCur = ''
         self.localcontext.update({
             'getConvert':self.getConvert,
             'getFuncCur':self.getFuncCur,
-            'invoices': self.get_invoices(cr, uid, context)
+            'invoices': self.get_invoices,
+            'update_percent': self.update_percent,
         })
         return
 
-    def get_invoices(self, cr, uid, context):
+    def update_percent(self, current_line_position, context):
         """
-        Get only open invoices
+        Update the percentage of the Report Generation
+        """
+        if context.get('background_id'):
+            bg_obj = self.pool.get('memory.background.report')
+            if current_line_position % 50 == 0:  # update percentage every 50 lines
+                # self.ratio_search is the ratio already used for the search method
+                self.percent = self.ratio_search + (current_line_position / float(self.nb_lines) * (1 - self.ratio_search))
+                bg_obj.update_percent(self.cr, self.uid, [context.get('background_id')], self.percent)
+
+    def get_invoices(self, data):
+        """
+        Gets only open account.invoices by default, or only paid ones for the Paid Invoices Report.
+        Returns a dict with key = document type, and value = list of account.invoice browse records.
         """
         res = {}
-        for option_type in ['out_invoice', 'in_invoice', 'out_refund', 'in_refund']:
-            type_ids = self.pool.get('account.invoice').search(cr, uid, [('state', '=', 'open'), ('type', '=', option_type)], context=context)
+        inv_obj = self.pool.get('account.invoice')
+        bg_obj = self.pool.get('memory.background.report')
+        beginning_date = data.get('form') and data['form'].get('beginning_date')
+        ending_date = data.get('form') and data['form'].get('ending_date')
+        context = self.localcontext or {}
+        bg_id = False
+        if context.get('background_id'):
+            bg_id = context['background_id']
+            self.percent = 0.05  # 5% of the process
+            bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
+        state = context.get('paid_invoice') and 'paid' or 'open'
+        for type in ['si_di', 'sr', 'donation', 'ivi', 'stv', 'cr', 'dn', 'ivo']:
+            # determine the domain to use according to the report type and the doc type
+            domain = [('state', '=', state)]
+            if context.get('paid_invoice') and beginning_date and ending_date:
+                domain += [('date_invoice', '>=', beginning_date), ('date_invoice', '<=', ending_date)]
+            if type == 'si_di':
+                domain += [('type', '=', 'in_invoice'),
+                           ('is_inkind_donation', '=', False),
+                           ('is_debit_note', '=', False),
+                           ('is_intermission', '=', False)]
+            elif type == 'sr':
+                domain += [('type', '=', 'in_refund')]
+            elif type == 'donation':
+                domain += [('type', '=', 'in_invoice'),
+                           ('is_debit_note', '=', False),
+                           ('is_inkind_donation', '=', True)]
+            elif type == 'ivi':
+                domain += [('type', '=', 'in_invoice'),
+                           ('is_debit_note', '=', False),
+                           ('is_inkind_donation', '=', False),
+                           ('is_intermission', '=', True)]
+            elif type == 'stv':
+                domain += [('type', '=', 'out_invoice'),
+                           ('is_debit_note', '=', False),
+                           ('is_inkind_donation', '=', False),
+                           ('is_intermission', '=', False)]
+            elif type == 'cr':
+                domain += [('type', '=', 'out_refund')]
+            elif type == 'dn':
+                domain += [('type', '=', 'out_invoice'),
+                           ('is_debit_note', '!=', False),
+                           ('is_inkind_donation', '=', False)]
+            elif type == 'ivo':
+                domain += [('type','=','out_invoice'),
+                           ('is_debit_note', '=', False),
+                           ('is_inkind_donation', '=', False),
+                           ('is_intermission', '=', True)]
+            type_ids = inv_obj.search(self.cr, self.uid, domain, context=context, order='move_name')
             if isinstance(type_ids, (int, long)):
                 type_ids = [type_ids]
-            res.update({option_type: self.pool.get('account.invoice').browse(cr, uid, type_ids, context)})
+            self.nb_lines += len(type_ids)
+            res.update({type: inv_obj.browse(self.cr, self.uid, type_ids, context)})
+        if bg_id:
+            self.percent += 0.20  # 25% of the process
+            bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
         return res
 
     def getConvert(self, amount, currency_id):
@@ -57,4 +131,5 @@ class report_open_invoices2(report_sxw.rml_parse):
 
 
 SpreadsheetReport('report.open.invoices.2','account.invoice','addons/account_override/report/open_invoices_xls.mako', parser=report_open_invoices2)
+SpreadsheetReport('report.paid.invoices', 'account.invoice', 'addons/account_override/report/open_invoices_xls.mako', parser=report_open_invoices2)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

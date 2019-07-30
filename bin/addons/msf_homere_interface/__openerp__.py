@@ -27,14 +27,13 @@
     "description" : "Homere interface with OpenERP",
     "author" : "MSF - TeMPO Consulting",
     "category" : "Human Resources",
-    # TODO: delete analytic distribution dependancy when we integrate analytic distribution into finance module
     "depends" : ["base", "finance", "hr", "analytic_distribution", "spreadsheet_xml"],
     "init_xml" : [],
     "update_xml" : [
         'security/ir.model.access.csv',
         'hr_view.xml',
-        'hr_payroll_wizard.xml',
         'hr_payroll_view.xml',
+        'hr_payroll_wizard.xml',
     ],
     "demo_xml" : [],
     "test": [],
