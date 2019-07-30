@@ -36171,12 +36171,11 @@ msgstr "    - %s :\n"
 msgid "cancel_voucher - (account.voucher)"
 msgstr "cancel_voucher - (account.voucher)"
 
-#. modules: sales_followup, msf_homere_interface, msf_field_access_rights, consumption_calculation, sale, update_client, product_attributes, purchase_followup, sf_doc_import, register_accounting, finance, msf_supply_doc_export, product_nomenclature, account_mcdb, product, hr, account_override, procurement, msf_accrual, sync_client, product_nomenclature, account_mcdb
+#. modules: sales_followup, msf_homere_interface, msf_field_access_rights, consumption_calculation, sale, update_client, product_attributes, purchase_followup, sf_doc_import, register_accounting, finance, msf_supply_doc_export, product_nomenclature, account_mcdb, product, hr, account_override, procurement, msf_accrual, sync_client, product_nomenclature, account_mcdb, msf_doc_import
 #: field:cash.request.liquidity,status:0
 #: field:cash.request.liquidity.bank,status:0
 #: field:cash.request.liquidity.cash,status:0
 #: field:cash.request.liquidity.cheque,status:0
-#: code:addons/msf_doc_import/wizard/__init__.py:83
 #: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:65
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:83
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:82
@@ -36218,6 +36217,9 @@ msgstr "cancel_voucher - (account.voucher)"
 #: field:product.mass.update,product_state:0
 #: field:product.mass.update,state:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:235
+#: code:addons/msf_doc_import/wizard/__init__.py:58
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#: code:addons/msf_doc_import/wizard/__init__.py:58
 #, python-format
 msgid "Status"
 msgstr "Statut"
@@ -83071,9 +83073,6 @@ msgstr "Confirmer les factures sélectionnées"
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:173
 #: field:internal.request.import,state:0
 #: field:wizard.import.ppl.to.create.ship,state:0
-#: code:addons/msf_doc_import/wizard/__init__.py:58
-#: code:addons/msf_doc_import/wizard/__init__.py:63
-#: code:addons/msf_doc_import/wizard/__init__.py:58
 #: field:wizard.import.product.line,state:0
 #: field:stock.expired.damaged.report,state:0
 #, python-format
