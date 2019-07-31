@@ -107481,3 +107481,8 @@ msgstr "Afficher les détails des NL/EXP"
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:175
 msgid "Line State"
 msgstr "État de la Ligne"
+
+#. module: msf_homere_interface
+#: view:hr.payroll.import.confirmation:0
+msgid "The import of the file failed!"
+msgstr "L'import du fichier a échoué !"
