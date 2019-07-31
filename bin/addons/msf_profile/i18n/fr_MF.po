@@ -36217,9 +36217,6 @@ msgstr "cancel_voucher - (account.voucher)"
 #: field:product.mass.update,product_state:0
 #: field:product.mass.update,state:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:235
-#: code:addons/msf_doc_import/wizard/__init__.py:58
-#: code:addons/msf_doc_import/wizard/__init__.py:63
-#: code:addons/msf_doc_import/wizard/__init__.py:58
 #, python-format
 msgid "Status"
 msgstr "Statut"
@@ -83075,6 +83072,9 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:wizard.import.ppl.to.create.ship,state:0
 #: field:wizard.import.product.line,state:0
 #: field:stock.expired.damaged.report,state:0
+#: code:addons/msf_doc_import/wizard/__init__.py:58
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#: code:addons/msf_doc_import/wizard/__init__.py:58
 #, python-format
 msgid "State"
 msgstr "Statut"
