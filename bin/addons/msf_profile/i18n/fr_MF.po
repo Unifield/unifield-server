@@ -26027,6 +26027,7 @@ msgstr "Veuillez choisir une devise d'impression avant d'exporter!"
 
 #. module: account_override
 #: view:account.invoice:0
+#: report:account.invoice2:0
 msgid "I/MI voucher date"
 msgstr "I/MI date du bon"
 
@@ -37843,7 +37844,6 @@ msgstr "Sur Plusieurs Documents"
 #: field:account.entries.report,date:0
 #: selection:account.general.journal,filter:0
 #: field:account.invoice.report,date:0
-#: report:account.invoice2:0
 #: report:account.journal.period.print:0
 #: view:account.move:0
 #: field:account.move,date:0
@@ -66051,6 +66051,7 @@ msgstr "PO line to confirm"
 #: report:addons/register_accounting/report/open_advances_xls.mako:148
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:218
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:291
+#: report:account.invoice2:0
 #: field:hq.entries.split,date:0
 #: selection:integrity.finance.wizard,filter:0
 #, python-format
@@ -97453,6 +97454,7 @@ msgstr "wizard.export.po.validated"
 #: field:wizard.advance.line,document_date:0
 #: field:wizard.invoice.line,document_date:0
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:290
+#: report:account.invoice2:0
 #, python-format
 msgid "Document Date"
 msgstr "Date du Document"
