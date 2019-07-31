@@ -37,14 +37,10 @@ class stock_delivery_wizard(osv.osv_memory):
         'moves_ids': fields.text(string='Moves', readonly=True),
         'start_date': fields.date(string='Date from'),
         'end_date': fields.date(string='Date to'),
-        'partner_id': fields.many2one('res.partner', string='Partner', help="The partner you want have the IN data"),
+        'partner_id': fields.many2one('res.partner', string='Partner'),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Product Main Type'),
-        'location_id': fields.many2one('stock.location', 'Location',
-                                       help="Keep empty if you produce at the location where the finished products are needed. "
-                                            "Set a location if you produce at a fixed location. This can be a partner "
-                                            "location if you subcontract the manufacturing operations.", select=True),
-        'location_dest_id': fields.many2one('stock.location', 'Dest. Location', select=True,
-                                            help="Location where the system will stock the finished products."),
+        'location_id': fields.many2one('stock.location', 'Source Location', select=True),
+        'location_dest_id': fields.many2one('stock.location', 'Dest. Location', select=True),
     }
 
     _defaults = {

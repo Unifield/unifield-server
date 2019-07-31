@@ -19866,6 +19866,7 @@ msgstr "Incorrectly formatted expiry date: %s. The expected date should be > 01/
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:227
 #: report:addons/stock/report/stock_delivery_report_xls.mako:194
 #: report:addons/stock/report/stock_delivery_report_xls.mako:223
+#: field:stock.delivery.wizard,location_id:0
 #, python-format
 msgid "Source Location"
 msgstr "Zone Source"
@@ -65608,7 +65609,6 @@ msgstr "Zone - Stock"
 #: report:addons/stock/report/unreserved_stock_report_xls.mako:120
 #: view:stock.reserved.products:0
 #: view:products.situation.report:0
-#: field:stock.delivery.wizard,location_id:0
 msgid "Location"
 msgstr "Zone"
 
