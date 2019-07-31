@@ -80266,6 +80266,9 @@ msgstr "Êtes-vous sûr de vouloir supprimer ces lignes ?"
 #: field:account.mcdb,open_items:0
 #: field:account.move.line,open_items:0
 #: field:account.balance.report,open_items:0
+#: report:account.general.ledger_landscape:0
+#: report:account.general.ledger_landscape_tb:0
+#: report:addons/account/report/account_general_ledger_xls.mako:213
 msgid "Open Items at"
 msgstr "Écritures ouvertes à"
 
