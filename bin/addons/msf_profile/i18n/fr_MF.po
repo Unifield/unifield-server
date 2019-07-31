@@ -48468,8 +48468,8 @@ msgstr "Funding pool - Nom"
 
 #. module: procurement_request
 #: help:sale.order,location_requestor_id:0
-msgid "You can only select an internal location"
-msgstr "Vous ne pouvez sélectionner qu'un lieu interne"
+msgid "The location where the products will be delivered to"
+msgstr "La zone où les produits seront livrés"
 
 #. module: base
 #: field:ir.ui.menu,child_id:0
