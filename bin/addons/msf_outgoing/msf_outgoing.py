@@ -1801,10 +1801,9 @@ class shipment(osv.osv):
             # gather the corresponding packing and trigger the corresponding function
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'done')], context=context)
             # set delivered all packings
-            pick_obj.set_delivered(cr, uid, packing_ids, context=context)
+            pick_obj.write(cr, uid, packing_ids, {'delivered': True}, context=context)
 
         return True
-
 
 
 shipment()
@@ -5408,7 +5407,7 @@ class pack_family_memory(osv.osv):
         for pack in pack_obj:
             res_id = pack['draft_packing_id'][0]
             return {
-                'name': 'Change description',
+                'name': _('Change description'),
                 'view_type': 'form',
                 'view_mode': 'form',
                 'view_id': [res and res[1] or False],

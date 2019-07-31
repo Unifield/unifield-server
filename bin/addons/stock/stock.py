@@ -680,13 +680,15 @@ class stock_picking(osv.osv):
             ('confirmed', 'Confirmed'),
             ('assigned', 'Available'),
             ('done', 'Done'),
+            ('delivered', 'Delivered'),
             ('cancel', 'Cancelled'),
         ], 'State', readonly=True, select=True,
             help="* Draft: not confirmed yet and will not be scheduled until confirmed\n"\
                  "* Confirmed: still waiting for the availability of products\n"\
                  "* Available: products reserved, simply waiting for confirmation.\n"\
                  "* Waiting: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows)\n"\
-                 "* Done: has been processed, can't be modified or cancelled anymore\n"\
+                 "* Done: has been processed, can't be modified or cancelled anymore. Can be processed to Delivered if the document is an OUT\n"\
+                 "* Delivered: has been delivered, only for a closed OUT\n"\
                  "* Cancelled: has been cancelled, can't be confirmed anymore"),
         'min_date': fields.function(get_min_max_date, fnct_inv=_set_minimum_date, multi="min_max_date",
                                     method=True, store=True, type='datetime', string='Expected Date', select=1, help="Expected date for the picking to be processed"),
@@ -1775,6 +1777,7 @@ class stock_picking(osv.osv):
                 'assigned': _('is ready to process.'),
                 'cancel': _('is cancelled.'),
                 'done': _('is done.'),
+                'delivered': _('is delivered.'),
                 'draft':_('is in draft state.'),
             }
             state_list = self._hook_state_list(cr, uid, state_list=state_list, msg=msg)
@@ -1794,7 +1797,22 @@ class stock_picking(osv.osv):
                 self.infolog(cr, uid, message)
         return True
 
+    def set_delivered(self, cr, uid, ids, context=None):
+        '''
+        Set the picking and its moves to delivered
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'delivered'}, context=context)
+
+        return True
+
+
 stock_picking()
+
 
 class stock_production_lot(osv.osv):
 

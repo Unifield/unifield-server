@@ -1082,17 +1082,6 @@ class initial_stock_inventory_line(osv.osv):
                 else:
                     comment += _('Expiry date is missing.\n')
 
-        if hidden_batch_management_mandatory and batch and expiry:
-            pl_ids = pl_obj.search(cr, uid, [('name', '=', batch), ('product_id', '=', vals.get('product_id'))], context=context)
-            if pl_ids and pl_obj.read(cr, uid, pl_ids[0], ['life_date'], context=context)['life_date'] != expiry:
-                comment += _('Please check expiry date is correct.\n')
-                vals.update({
-                    'prod_lot_id': False,
-                    'prodlot_name': '',
-                    'expiry_date': False,
-                    'to_correct_ok': True,
-                })
-
         if not comment:
             if vals.get('comment'):
                 comment = vals.get('comment')

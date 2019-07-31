@@ -312,8 +312,7 @@ class product_product(osv.osv):
             display_message = True
 
         if display_message:
-            return 'Warning you are about to add a product which does not conform to this' \
-                ' order category, do you wish to proceed ?'
+            return _('Warning you are about to add a product which does not conform to this order category, do you wish to proceed ?')
         else:
             return False
 

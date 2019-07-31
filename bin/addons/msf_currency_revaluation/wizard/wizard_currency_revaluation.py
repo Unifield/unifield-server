@@ -975,7 +975,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 'debit': line.credit,
                 'credit': line.debit,
                 # (US-1682) Set the booking amounts to False in order not to trigger the recomputation of the functional amounts
-                # in _update_amount_bis (in account_move_line_compute_currency) that could generate slight amount differences
+                # in _compute_currency_on_create_write (in account_move_line_compute_currency) that could generate slight amount differences
                 'credit_currency': False,
                 'debit_currency': False,
                 'amount_currency': False,

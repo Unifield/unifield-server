@@ -151,9 +151,9 @@ class return_claim(osv.osv):
             ids = [ids]
 
         # objects
-        fields_tools = self.pool.get('fields.tools')
         # we test if new event are allowed
         data = self.allow_new_event(cr, uid, ids, context=context)
+        fields_tools = self.pool.get('fields.tools')
         if not all(x['allow'] for x in data.values()):
             # we get an event type and new event are not allowed, the specified type does not allow further events
             event_type_name = [x['last_type'][1] for x in data.values() if (not x['allow'] and x['last_type'])]
@@ -1840,7 +1840,6 @@ class claim_event(osv.osv):
         """
         # Objects
         claim_obj = self.pool.get('return.claim')
-        fields_tools = self.pool.get('fields.tools')
         data_tools = self.pool.get('data.tools')
         pick_obj = self.pool.get('stock.picking')
 
@@ -1971,14 +1970,11 @@ class claim_event(osv.osv):
         log_msgs = []
         base_func = '_do_process_'
         # Reload browse_record values to get last updated values
+        event_type_dict = dict(self.fields_get(cr, uid, ['type_claim_event'], context=context).get('type_claim_event', {}).get('selection', []))
         for event in self.browse(cr, uid, ids, context=context):
             getattr(self, base_func + event.type_claim_event)(cr, uid, event, context=context)
             # Log process message
-            event_type_name = fields_tools.get_selection_name(cr, uid,
-                                                              object=self,
-                                                              field='type_claim_event',
-                                                              key=event.type_claim_event,
-                                                              context=context)
+            event_type_name = event_type_dict.get(event.type_claim_event, event.type_claim_event)
             # Cancel created INT backorder in case of claim from scratch
             if not event.from_picking_wizard_claim_event and event.event_picking_id_claim_event.type == 'internal' \
                     and event.type_claim_event in ('return', 'surplus'):

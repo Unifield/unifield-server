@@ -679,7 +679,11 @@ class procurement_request_line(osv.osv):
         product_obj = self.pool.get('product.product')
         if product_id and type != 'make_to_stock':
             product = product_obj.browse(cr, uid, product_id, context=context)
-            v.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
+            if product.seller_ids and (product.seller_ids[0].name.supplier or product.seller_ids[0].name.manufacturer or
+                                       product.seller_ids[0].name.transporter):
+                v.update({'supplier': product.seller_ids[0].name.id})
+            else:
+                v.update({'supplier': False})
         elif product_id and type == 'make_to_stock':
             v.update({'supplier': False})
             product = product_obj.browse(cr, uid, product_id, context=context)

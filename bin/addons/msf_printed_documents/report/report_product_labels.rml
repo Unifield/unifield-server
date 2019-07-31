@@ -1,0 +1,227 @@
+<?xml version="1.0" ?>
+<document filename="Product Labels.pdf">
+
+    <template pageSize="(595.0,842.0)" title="Product Labels" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+          <frame id="first" x1="20.0" y1="45.0" width="535" height="770"/>
+        </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <initialize>
+            <paraStyle name="all" alignment="justify"/>
+        </initialize>
+
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+
+        <!-- Lines font style -->
+        <paraStyle name="Lines" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" />
+        <paraStyle name="LeftLines" fontName="Helvetica" fontSize="15.0" alignment="LEFT" leading="15.0" />
+        <paraStyle name="BoldLeftLines" fontName="Helvetica-Bold" fontSize="15.0" alignment="LEFT" leading="15.0" />
+        <paraStyle name="RightLines" fontName="Helvetica" fontSize="15.0" alignment="RIGHT" leading="15.0" />
+        <paraStyle name="BoldRightLines" fontName="Helvetica-Bold" fontSize="15.0" alignment="RIGHT" leading="15.0" />
+        <paraStyle name="BigLines" fontName="Helvetica" fontSize="20.0" alignment="CENTER" leading="15.0" />
+        <paraStyle name="HugeLines" fontName="Helvetica" fontSize="25.0" alignment="CENTER" leading="25.0" />
+        <paraStyle name="WhiteSpace" fontName="Helvetica" fontSize="6.0" alignment="CENTER" leading="7.0" spaceBefore="10.0" spaceAfter="10.0"/>
+        <paraStyle name="BigWhiteSpace" fontName="Helvetica" fontSize="6.0" alignment="CENTER" leading="7.0" spaceBefore="20.0" spaceAfter="20.0"/>
+    </stylesheet>
+
+    <story>
+        <para>[[ getData(objects) ]]</para>
+
+        <!-- FIRST LABEL -->
+        <blockTable colWidths="145.5,254.0,145.5">
+            <tr>
+                <td>
+                    <illustration>
+                        <image x="0" y="-20" height="140" width="140" file="images/msf.png" />
+                    </illustration>
+                </td>
+                <td>
+                    <para style="BigLines">[[ data['rep_data']['product_code'] ]]</para>
+                </td>
+                <td>
+                    <illustration>
+                        <image x="0" y="-20" height="120" width="120" file="images/unifield.png" />
+                    </illustration>
+                </td>
+            </tr>
+        </blockTable>
+	    <para style="WhiteSpace">
+	    	<font color="white"> </font>
+	    </para>
+	    <blockTable colWidths="15.0,90.0,219.5,95.0,95.5,30.0">
+            <tr>
+                <td>
+                    <para style="BigLines"></para>
+                </td>
+                <td>
+                    <para style="BoldRightLines">[[ (data['rep_data']['prodlot'] != False and translate('Btch nr')) or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                    <para style="LeftLines">[[ data['rep_data']['prodlot'] or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                    <para style="BoldRightLines">[[ (data['rep_data']['exp_date'] != False and translate('Expiry')) or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                    <para style="RightLines">[[ (data['rep_data']['exp_date'] and formatLang(data['rep_data']['exp_date'], date = True)) or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                    <para style="BigLines"></para>
+                </td>
+            </tr>
+        </blockTable>
+        <para style="Standard">
+	    	<font color="white"> </font>
+	    </para>
+	    <blockTable colWidths="545.0">
+            <tr>
+                <td>
+                    <para style="HugeLines">[[ data['rep_data']['product_desc'] ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+        <para style="BigWhiteSpace">
+	    	<font color="white"> </font>
+	    </para>
+	    <blockTable colWidths="545.0">
+            <tr>
+                <td>
+                    <para style="HugeLines">--------------------------------------------------------</para>
+                </td>
+            </tr>
+        </blockTable>
+	    <para style="WhiteSpace">
+	    	<font color="white"> </font>
+	    </para>
+
+	    <!-- SECOND LABEL -->
+	    <para style="Standard">
+	    	<font color="white"> </font>
+	    </para>
+        <blockTable colWidths="145.5,254.0,145.5">
+            <tr>
+                <td>
+                    <illustration>
+                        <image x="0" y="-20" height="140" width="140" file="images/msf.png" />
+                    </illustration>
+                </td>
+                <td>
+                    <para style="BigLines">[[ data['rep_data']['product_code'] ]]</para>
+                </td>
+                <td>
+                    <illustration>
+                        <image x="0" y="-20" height="120" width="120" file="images/unifield.png" />
+                    </illustration>
+                </td>
+            </tr>
+        </blockTable>
+	    <para style="WhiteSpace">
+	    	<font color="white"> </font>
+	    </para>
+	    <blockTable colWidths="15.0,90.0,219.5,95.0,95.5,30.0">
+            <tr>
+                <td>
+                    <para style="BigLines"></para>
+                </td>
+                <td>
+                    <para style="BoldRightLines">[[ (data['rep_data']['prodlot'] != False and translate('Btch nr')) or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                    <para style="LeftLines">[[ data['rep_data']['prodlot'] or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                    <para style="BoldRightLines">[[ (data['rep_data']['exp_date'] != False and translate('Expiry')) or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                    <para style="RightLines">[[ (data['rep_data']['exp_date'] and formatLang(data['rep_data']['exp_date'], date = True)) or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                    <para style="BigLines"></para>
+                </td>
+            </tr>
+        </blockTable>
+        <para style="Standard">
+	    	<font color="white"> </font>
+	    </para>
+	    <blockTable colWidths="545.0">
+            <tr>
+                <td>
+                    <para style="HugeLines">[[ data['rep_data']['product_desc'] ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+        <para style="BigWhiteSpace">
+	    	<font color="white"> </font>
+	    </para>
+	    <blockTable colWidths="545.0">
+            <tr>
+                <td>
+                    <para style="HugeLines">--------------------------------------------------------</para>
+                </td>
+            </tr>
+        </blockTable>
+	    <para style="WhiteSpace">
+	    	<font color="white"> </font>
+	    </para>
+
+	    <!-- THIRD LABEL -->
+	    <para style="Standard">
+	    	<font color="white"> </font>
+	    </para>
+        <blockTable colWidths="145.5,254.0,145.5">
+            <tr>
+                <td>
+                    <illustration>
+                        <image x="0" y="-20" height="140" width="140" file="images/msf.png" />
+                    </illustration>
+                </td>
+                <td>
+                    <para style="BigLines">[[ data['rep_data']['product_code'] ]]</para>
+                </td>
+                <td>
+                    <illustration>
+                        <image x="0" y="-20" height="120" width="120" file="images/unifield.png" />
+                    </illustration>
+                </td>
+            </tr>
+        </blockTable>
+	    <para style="WhiteSpace">
+	    	<font color="white"> </font>
+	    </para>
+	    <blockTable colWidths="15.0,90.0,219.5,95.0,95.5,30.0">
+            <tr>
+                <td>
+                    <para style="BigLines"></para>
+                </td>
+                <td>
+                    <para style="BoldRightLines">[[ (data['rep_data']['prodlot'] != False and translate('Btch nr')) or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                    <para style="LeftLines">[[ data['rep_data']['prodlot'] or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                    <para style="BoldRightLines">[[ (data['rep_data']['exp_date'] != False and translate('Expiry')) or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                    <para style="RightLines">[[ (data['rep_data']['exp_date'] and formatLang(data['rep_data']['exp_date'], date = True)) or removeParentNode('para') ]]</para>
+                </td>
+                <td>
+                    <para style="BigLines"></para>
+                </td>
+            </tr>
+        </blockTable>
+        <para style="Standard">
+	    	<font color="white"> </font>
+	    </para>
+	    <blockTable colWidths="545.0">
+            <tr>
+                <td>
+                    <para style="HugeLines">[[ data['rep_data']['product_desc'] ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+    </story>
+
+</document>
