@@ -24,23 +24,24 @@
         <record id="act_open" model="workflow.activity">
             <field name="wkf_id" ref="wkf"/>
             <field name="name">open</field>
-            <field name="action">action_date_assign()
-action_move_create()
-action_number()
-write({'state':'open'})</field>
+            <field name="action">action_open_invoice()
+write({'state':'open'})
+action_gen_sync_msg()</field>
             <field name="kind">function</field>
         </record>
         <record model="workflow.activity" id="act_open_test">
             <field name="wkf_id" ref="wkf"/>
             <field name="name">re-open</field>
-            <field name="action">write({'state':'open'})</field>
+            <field name="action">write({'state':'open'})
+action_gen_sync_msg()</field>
             <field name="kind">function</field>
            </record>
         <record id="act_paid" model="workflow.activity">
             <field name="wkf_id" ref="wkf"/>
             <field name="name">paid</field>
             <!--<field name="flow_stop">True</field>-->
-            <field name="action">confirm_paid()</field>
+            <field name="action">confirm_paid()
+action_gen_sync_msg()</field>
             <field name="kind">function</field>
             <field name="signal_send">subflow.paid</field>
         </record>
@@ -49,7 +50,8 @@ write({'state':'open'})</field>
             <field name="name">cancel</field>
             <field name="flow_stop">True</field>
             <field name="action">action_cancel()
-write({'state':'cancel'})</field>
+write({'state':'cancel'})
+action_gen_sync_msg()</field>
             <field name="kind">function</field>
         </record>
 
