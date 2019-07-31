@@ -80265,6 +80265,7 @@ msgstr "Êtes-vous sûr de vouloir supprimer ces lignes ?"
 #: field:account.report.general.ledger,open_items:0
 #: field:account.mcdb,open_items:0
 #: field:account.move.line,open_items:0
+#: field:account.balance.report,open_items:0
 msgid "Open Items at"
 msgstr "Écritures ouvertes à"
 
