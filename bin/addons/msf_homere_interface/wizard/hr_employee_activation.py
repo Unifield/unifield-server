@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Copyright (C) 2019 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,14 +19,34 @@
 #
 ##############################################################################
 
-import hr_analytic_reallocation
-import hr_payroll_import
-import hr_payroll_validation
-import hr_payroll_employee_import
-import hr_payroll_deletion
-import hr_expat_import
-import hr_nat_staff_import
-import hr_payment_order
-import hr_employee_activation
+from osv import fields, osv
 
+
+class hr_employee_activation(osv.osv_memory):
+    _name = 'hr.employee.activation'
+    
+    _columns = {
+        'active_status': fields.boolean('Set selected employees as active'),
+    }
+    
+    _defaults = {
+        'active_status': True,
+    }
+    
+    def change_employee_status(self, cr, uid, ids, context=None):
+        """
+        Sets the selected employees to active or inactive
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        employee_obj = self.pool.get('hr.employee')
+        data = self.read(cr, uid, ids, ['active_status'], context=context)[0]
+        for employee_id in context.get('active_ids', []):
+            employee_obj.write(cr, uid, employee_id, {'active': data['active_status']}, context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+
+hr_employee_activation()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
