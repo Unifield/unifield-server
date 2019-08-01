@@ -37,7 +37,7 @@ class stock_delivery_report(report_sxw.rml_parse):
         for move in move_obj.browse(self.cr, self.uid, moves_ids, context=self.localcontext):
             pick = move.picking_id
             ppl = pick.subtype == 'packing' and pick.previous_step_id or False
-            ship = move.pick_shipment_id
+            ship = pick.shipment_id
             fo = pick.sale_id or False
             prod = move.product_id
             price = prod and prod.standard_price

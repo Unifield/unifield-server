@@ -61,19 +61,18 @@ class stock_delivery_wizard(osv.osv_memory):
             ids = [ids]
 
         for wizard in self.browse(cr, uid, ids, context=context):
-            move_domain = [
-                ('picking_id.type', '=', 'out'),
+            move_domain = [('picking_id.type', '=', 'out'), '|']
+            out_domain = [
+                '&', '&',
                 ('state', '=', 'done'),
-                '|',
+                ('picking_id.subtype', '=', 'standard'),
+                ('picking_id.state', 'in', ['done', 'delivered'])
             ]
-            out_domain = ['&', ('picking_id.subtype', '=', 'standard'), ('picking_id.state', 'in', ['done', 'delivered'])]
             ppl_domain = [
-                '&', '&', '&', '&',
+                '&', '&',
+                ('picking_id.previous_step_id.state', '=', 'done'),
                 ('picking_id.subtype', '=', 'packing'),
-                ('picking_id.already_shipped', '=', 't'),
-                ('pick_shipment_id', '!=', 'f'),
-                ('pick_shipment_id.parent_id', '!=', 'f'),
-                ('pick_shipment_id.state', 'in', ['done', 'delivered']),
+                ('picking_id.shipment_id', '!=', 'f'),
             ]
 
             if wizard.start_date:
