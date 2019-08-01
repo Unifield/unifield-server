@@ -590,7 +590,6 @@ class purchase_order_line(osv.osv):
         'cancelled_by_sync': False,
     }
 
-
     def _check_max_price(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -617,6 +616,34 @@ class purchase_order_line(osv.osv):
     _constraints = [
         (_check_max_price, _("The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"), ['price_unit', 'product_qty']),
     ]
+
+    def _check_stock_take_date(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # Do not prevent modification during synchro
+        if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+            error_lines = []
+            linked_orders = []
+            for pol in self.browse(cr, uid, ids, context=context):
+                linked_order = pol.order_id.name
+                if linked_order not in linked_orders:
+                    linked_orders.append(linked_order)
+                if pol.state in ['draft', 'validated', 'validated_n'] and pol.stock_take_date and \
+                        pol.stock_take_date > pol.order_id.date_order:
+                    error_lines.append(str(pol.line_number))
+                if len(error_lines) >= 10:  # To not display too much
+                    break
+            if error_lines:
+                raise osv.except_osv(
+                    _('Error'), _('The Stock Take Date of the lines %s is not consistent! It should not be later than %s\'s creation date')
+                    % (', '.join(error_lines), linked_orders and ', '.join(linked_orders) or _('the PO'))
+                )
+
+        return True
 
     def _get_destination_ok(self, cr, uid, lines, context):
         dest_ok = False
@@ -1180,6 +1207,9 @@ class purchase_order_line(osv.osv):
                                                    {'sync_order_line_db_id': name + "_" + str(po_line_id), },
                                                    context=context)
 
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, po_line_id, context=context)
+
         if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('linked_sol_id'):
             so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], context=context)
             for so_id in so_ids:
@@ -1231,7 +1261,7 @@ class purchase_order_line(osv.osv):
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False, 'stock_take_date': False})
 
         # from RfQ line to PO line: grab the linked sol if has:
         if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):
@@ -1326,6 +1356,9 @@ class purchase_order_line(osv.osv):
                         'order_id': so_id,
                         'po_line_id': line.id,
                     }, context=context)
+
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, ids, context=context)
 
         # Check the selected product UoM
         if not context.get('import_in_progress', False):

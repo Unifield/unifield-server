@@ -369,7 +369,8 @@ class shipment(osv.osv):
         'backshipment_id': fields.function(_vals_get, method=True, type='many2one', relation='shipment', string='Draft Shipment', multi='get_vals',),
         # added by Quentin https://bazaar.launchpad.net/~unifield-team/unifield-wm/trunk/revision/426.20.14
         'parent_id': fields.many2one('shipment', string='Parent shipment'),
-        'invoice_id': fields.many2one('account.invoice', string='Related invoice'),
+        # TODO check if really deprecated ?
+        'invoice_id': fields.many2one('account.invoice', string='Related invoice (deprecated)'),
         'additional_items_ids': fields.one2many('shipment.additionalitems', 'shipment_id', string='Additional Items'),
         'picking_ids': fields.one2many(
             'stock.picking',
@@ -1579,6 +1580,7 @@ class shipment(osv.osv):
                 'fiscal_position': partner.property_account_position.id,
                 'date_invoice': context.get('date_inv', False) or today,
                 'user_id': uid,
+                'from_supply': True,
             }
 
             cur_id = shipment.pack_family_memory_ids[0].currency_id.id
@@ -1613,32 +1615,7 @@ class shipment(osv.osv):
             if is_stv and partner.partner_type == 'internal':
                 continue
 
-            if is_ivo or is_stv:
-                origin_inv = 'origin' in invoice_vals and invoice_vals['origin'] or False
-                fo = move and move.sale_line_id and move.sale_line_id.order_id or False
-                new_origin = origin_inv and fo and "%s:%s" % (origin_inv, fo.name)
-                new_origin = new_origin and new_origin[:64]  # keep only 64 characters (because of the JE ref size)
-                if new_origin:
-                    invoice_vals.update({'origin': new_origin})
-                name_inv = 'name' in invoice_vals and invoice_vals['name'] or False
-                new_name_inv = name_inv and fo and fo.client_order_ref and "%s : %s" % (fo.client_order_ref, name_inv)
-                if new_name_inv:
-                    invoice_vals.update({'name': new_name_inv})
-
-            invoice_id = invoice_obj.create(cr, uid, invoice_vals,
-                                            context=context)
-
-            # Change currency for the intermission invoice
-            if shipment.partner_id2.partner_type == 'intermission':
-                company_currency = company.currency_id and company.currency_id.id or False
-                if not company_currency:
-                    raise osv.except_osv(_('Warning'), _('No company currency found!'))
-                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency}, context=context)
-                self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': invoice_id})
-
-            # Link the invoice to the shipment
-            self.write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
-
+            invoice_id_by_fo = {}
             # For each stock moves, create an invoice line
             for pack in shipment.pack_family_memory_ids:
                 for move in pack.move_lines:
@@ -1647,6 +1624,41 @@ class shipment(osv.osv):
 
                     if move.sale_line_id and move.sale_line_id.order_id.order_policy != 'picking':
                         continue
+
+                    # create 1 FO = 1 Invoice
+                    order_id = move.sale_line_id and move.sale_line_id.order_id or False
+                    if order_id not in invoice_id_by_fo:
+                        new_invoice_vals = invoice_vals.copy()
+                        if is_ivo or is_stv:
+                            new_invoice_vals.update({'synced': True, })  # add "synced" tag for STV and IVO created from Supply flow
+                            origin_inv = 'origin' in new_invoice_vals and new_invoice_vals['origin'] or False
+                            fo = move and move.sale_line_id and move.sale_line_id.order_id or False
+                            new_origin = origin_inv and fo and "%s:%s" % (origin_inv, fo.name)
+                            new_origin = new_origin and new_origin[:64]  # keep only 64 characters (because of the JE ref size)
+                            if new_origin:
+                                new_invoice_vals.update({'origin': new_origin})
+                            name_inv = 'name' in new_invoice_vals and new_invoice_vals['name'] or False
+                            new_name_inv = name_inv and fo and fo.client_order_ref and "%s : %s" % (fo.client_order_ref, name_inv)
+                            if new_name_inv:
+                                new_invoice_vals.update({'name': new_name_inv})
+                            # this one does not work (check with new pps process US-5859)
+                            #new_invoice_vals['picking_id'] = pack.draft_packing_id and pack.draft_packing_id.id or False
+
+                        invoice_id = invoice_obj.create(cr, uid, new_invoice_vals,
+                                                        context=context)
+
+                        # Change currency for the intermission invoice
+                        if shipment.partner_id2.partner_type == 'intermission':
+                            company_currency = company.currency_id and company.currency_id.id or False
+                            if not company_currency:
+                                raise osv.except_osv(_('Warning'), _('No company currency found!'))
+                            wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency}, context=context)
+                            self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': invoice_id})
+
+                        invoice_id_by_fo[order_id] = invoice_id
+
+                    invoice_id = invoice_id_by_fo[order_id]
+
 
                     origin = move.picking_id.name or ''
                     if move.picking_id.origin:
@@ -1714,7 +1726,6 @@ class shipment(osv.osv):
                                                         'analytic_distribution_id': distrib_id,
                                                         }, context=context)
 
-                    self.pool.get('shipment').write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
                     if move.sale_line_id:
                         sale_obj.write(cr, uid, [move.sale_line_id.order_id.id], {'invoice_ids': [(4, invoice_id)], })
                         sale_line_obj.write(cr, uid, [move.sale_line_id.id], {'invoiced': True,

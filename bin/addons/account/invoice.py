@@ -26,6 +26,7 @@ import decimal_precision as dp
 import netsvc
 from osv import fields, osv, orm
 from tools.translate import _
+from msf_partner import PARTNER_TYPE
 
 
 class account_invoice(osv.osv):
@@ -93,7 +94,7 @@ class account_invoice(osv.osv):
         for invoice in self.browse(cr, uid, ids, context=context):
             # UNIFIELD REFACTORING: UF-1536 have change this method
             # Not needed to do process if invoice is draft or paid
-            if invoice.state in ['draft', 'paid']:
+            if invoice.state in ['draft', 'paid', 'inv_close']:
                 result[invoice.id] = 0.0
                 continue
             result[invoice.id] = invoice.amount_total
@@ -167,8 +168,7 @@ class account_invoice(osv.osv):
             if invoice.move_id:
                 # US-1882 The payments should only concern the "header line" of the SI on the counterpart account.
                 # For example the import of a tax line shouldn't be considered as a payment (out or in).
-                invoice_amls = [ml for ml in invoice.move_id.line_id if ml.account_id == invoice.account_id
-                                and abs(abs(invoice.amount_total) - abs(ml.amount_currency)) <= 10**-3]
+                invoice_amls = [ml for ml in invoice.move_id.line_id if ml.account_id == invoice.account_id and ml.is_counterpart]
                 for m in invoice_amls:
                     temp_lines = set()
                     if m.reconcile_id:
@@ -257,7 +257,7 @@ class account_invoice(osv.osv):
     _order = "id desc"
 
     _columns = {
-        'name': fields.char('Description', size=64, select=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'name': fields.char('Description', size=256, select=True, readonly=True, states={'draft': [('readonly', False)]}),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that produced this invoice.", readonly=True, states={'draft':[('readonly',False)]}),
         'type': fields.selection([
             ('out_invoice','Customer Invoice'),
@@ -279,6 +279,7 @@ class account_invoice(osv.osv):
             ('proforma2','Pro-forma'),
             ('open','Open'),
             ('paid','Paid'),
+            ('inv_close','Closed'),
             ('cancel','Cancelled')
         ],'State', select=True, readonly=True,
             help=' * The \'Draft\' state is used when a user is encoding a new and unconfirmed Invoice. \
@@ -286,8 +287,8 @@ class account_invoice(osv.osv):
             \n* The \'Open\' state is used when user create invoice,a invoice number is generated.Its in open state till user does not pay invoice. \
             \n* The \'Paid\' state is set automatically when invoice is paid.\
             \n* The \'Cancelled\' state is used when user cancel invoice.'),
-        'date_invoice': fields.date('Invoice Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 'close':[('readonly',True)]}, select=True, help="Keep empty to use the current date"),
-        'date_due': fields.date('Due Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 'close':[('readonly',True)]}, select=True,
+        'date_invoice': fields.date('Invoice Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 'inv_close':[('readonly',True)]}, select=True, help="Keep empty to use the current date"),
+        'date_due': fields.date('Due Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)], 'inv_close':[('readonly',True)]}, select=True,
                                 help="If you use payment terms, the due date will be computed automatically at the generation "\
                                 "of accounting entries. If you keep the payment term and the due date empty, it means direct payment. The payment term may compute several due dates, for example 50% now, 50% in one month."),
         'partner_id': fields.many2one('res.partner', 'Partner', change_default=True, readonly=True, required=True, states={'draft':[('readonly',False)]}),
@@ -301,8 +302,7 @@ class account_invoice(osv.osv):
 
         'account_id': fields.many2one('account.account', 'Account', required=True, readonly=True, states={'draft':[('readonly',False)]}, help="The partner account used for this invoice."),
         'invoice_line': fields.one2many('account.invoice.line', 'invoice_id', 'Invoice Lines', readonly=True, states={'draft':[('readonly',False)]}),
-        'tax_line': fields.one2many('account.invoice.tax', 'invoice_id', 'Tax Lines', readonly=True, states={'draft':[('readonly',False)]}),
-
+        'tax_line': fields.one2many('account.invoice.tax', 'invoice_id', 'Tax Lines'),
         'move_id': fields.many2one('account.move', 'Journal Entry', readonly=True, select=1, ondelete='restrict', help="Link to the automatically generated Journal Items."),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Account'), string='Untaxed',
                                           store={
@@ -328,7 +328,7 @@ class account_invoice(osv.osv):
         'currency_id': fields.many2one('res.currency', 'Currency', required=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, hide_default_menu=True, readonly=True, states={'draft':[('readonly',False)]}),
         'company_id': fields.many2one('res.company', 'Company', required=True, change_default=True, readonly=True, states={'draft':[('readonly',False)]}),
-        'check_total': fields.float('Total', digits_compute=dp.get_precision('Account'), states={'open':[('readonly',True)],'close':[('readonly',True)],'paid':[('readonly',True)]}),
+        'check_total': fields.float('Total', digits_compute=dp.get_precision('Account'), states={'open':[('readonly',True)],'inv_close':[('readonly',True)],'paid':[('readonly',True)]}),
         'reconciled': fields.function(_reconciled, method=True, string='Paid/Reconciled', type='boolean',
                                       store={
                                           'account.invoice': (lambda self, cr, uid, ids, c={}: ids, None, 50), # Check if we can remove ?
@@ -454,22 +454,47 @@ class account_invoice(osv.osv):
     def confirm_paid(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        self.write(cr, uid, ids, {'state':'paid'}, context=context)
-        for inv_id, name in self.name_get(cr, uid, ids, context=context):
-            message = _("Invoice '%s' is paid.") % name
-            self.log(cr, uid, inv_id, message)
+        # if reconciled with at least 1 liquidity journal then paid else cancel aka Closed
+        cr.execute("""
+            SELECT i.id, min(j.id), i.number
+            FROM account_invoice i
+            LEFT JOIN account_move_line l ON i.move_id=l.move_id
+            LEFT JOIN account_move_line rec_line ON rec_line.reconcile_id = l.reconcile_id
+            LEFT JOIN account_journal j ON j.id = rec_line.journal_id AND j.type in ('cash', 'bank', 'cheque')
+            WHERE i.id IN %s
+            AND l.reconcile_id is not null
+            AND l.account_id=i.account_id
+            AND l.is_counterpart
+            GROUP BY i.id, i.number""", (tuple(ids), )
+                   )
+
+        for x in cr.fetchall():
+            if x[1]:
+                state = 'paid'
+                display_state = _('paid')
+            else:
+                state = 'inv_close'
+                display_state = _('closed')
+
+            self.write(cr, uid, x[0], {'state': state}, context=context)
+            self.log(cr, uid, x[0], _("Invoice '%s' is %s.") % (x[2], display_state))
+
         return True
 
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        invoices = self.read(cr, uid, ids, ['state'], context=context)
+        invoices = self.read(cr, uid, ids, ['state', 'synced', 'from_supply'], context=context)
         unlink_ids = []
         for t in invoices:
-            if t['state'] in ('draft', 'cancel'):
-                unlink_ids.append(t['id'])
-            else:
+            if t['state'] not in ('draft', 'cancel'):
                 raise osv.except_osv(_('Invalid action !'), _('Cannot delete invoice(s) that are already opened or paid !'))
+            elif t['from_supply']:
+                raise osv.except_osv(_('Invalid action !'), _('Cannot delete invoice(s) generated by a Supply workflow!'))
+            elif t['synced']:
+                raise osv.except_osv(_('Invalid action !'), _('Cannot delete invoice(s) set as "Synchronized"!'))
+            else:
+                unlink_ids.append(t['id'])
         osv.osv.unlink(self, cr, uid, unlink_ids, context=context)
         return True
 
@@ -481,6 +506,7 @@ class account_invoice(osv.osv):
         acc_id = False
         bank_id = False
         fiscal_position = False
+        partner_type = False
 
         opt = [('uid', str(uid))]
         if partner_id:
@@ -490,6 +516,8 @@ class account_invoice(osv.osv):
             contact_addr_id = res['contact']
             invoice_addr_id = res['invoice']
             p = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            partner_type = p.partner_type  # update the partner type immediately as it is used in a domain in attrs
+
             if company_id:
                 if p.property_account_receivable.company_id.id != company_id and p.property_account_payable.company_id.id != company_id:
                     property_obj = self.pool.get('ir.property')
@@ -526,7 +554,8 @@ class account_invoice(osv.osv):
             'address_invoice_id': invoice_addr_id,
             'account_id': acc_id,
             'payment_term': partner_payment_term,
-            'fiscal_position': fiscal_position
+            'fiscal_position': fiscal_position,
+            'partner_type': partner_type,
         }
         }
 
@@ -662,6 +691,22 @@ class account_invoice(osv.osv):
                 val['currency_id'] = currency.id
         return {'value': val, 'domain': dom}
 
+    def onchange_synced(self, cr, uid, ids, synced, partner_id):
+        """
+        Resets "synced" field and informs the user in case the box is ticked whereas the partner is neither Intermission nor Intersection
+        """
+        res = {}
+        partner_obj = self.pool.get('res.partner')
+        if synced and partner_id:
+            if partner_obj.browse(cr, uid, partner_id, fields_to_fetch=['partner_type']).partner_type not in ('intermission', 'section'):
+                warning = {
+                    'title': _('Warning!'),
+                    'message': _('Synchronization is allowed only with Intermission and Intersection partners.')
+                }
+                res['warning'] = warning
+                res['value'] = {'synced': False, }
+        return res
+
     # go from canceled state to draft state
     def action_cancel_draft(self, cr, uid, ids, *args):
         self.write(cr, uid, ids, {'state':'draft'})
@@ -674,25 +719,31 @@ class account_invoice(osv.osv):
     # Workflow stuff
     #################
 
-    # return the ids of the move lines which has the same account than the invoice
-    # whose id is in ids
     def move_line_id_payment_get(self, cr, uid, ids, *args):
-        if not ids: return []
+        '''
+            return the ids of the SI header move line
+        '''
+        if not ids:
+            return []
         result = self.move_line_id_payment_gets(cr, uid, ids, *args)
         return result.get(ids[0], [])
 
     def move_line_id_payment_gets(self, cr, uid, ids, *args):
+        if not ids:
+            return {}
+
         res = {}
-        if not ids: return res
-        cr.execute('SELECT i.id, l.id '\
-                   'FROM account_move_line l '\
-                   'LEFT JOIN account_invoice i ON (i.move_id=l.move_id) '\
-                   'WHERE i.id IN %s '\
-                   'AND l.account_id=i.account_id',
-                   (tuple(ids),))
+        cr.execute("""
+            SELECT i.id, l.id
+            FROM account_move_line l
+            LEFT JOIN account_invoice i ON (i.move_id=l.move_id)
+            WHERE i.id IN %s
+            AND l.account_id=i.account_id
+            AND l.is_counterpart""", (tuple(ids), )
+                   )
         for r in cr.fetchall():
             res.setdefault(r[0], [])
-            res[r[0]].append( r[1] )
+            res[r[0]].append(r[1])
         return res
 
     def copy(self, cr, uid, id, default={}, context=None):
@@ -705,6 +756,10 @@ class account_invoice(osv.osv):
             'move_name':False,
             'internal_number': False,
             'main_purchase_id': False,
+            'from_supply': False,
+            'synced': False,
+            'counterpart_inv_number': False,
+            'counterpart_inv_status': False,
         })
         if 'date_invoice' not in default:
             default.update({
@@ -1324,12 +1379,18 @@ class account_invoice(osv.osv):
         for invoice in invoices:
             del invoice['id']
 
-            type_dict = {
-                'out_invoice': 'out_refund', # Customer Invoice
-                'in_invoice': 'in_refund',   # Supplier Invoice
-                'out_refund': 'out_invoice', # Customer Refund
-                'in_refund': 'in_invoice',   # Supplier Refund
-            }
+            if context.get('is_intermission', False):
+                type_dict = {
+                    'out_invoice': 'in_invoice',  # IVO
+                    'in_invoice': 'out_invoice',  # IVI
+                }
+            else:
+                type_dict = {
+                    'out_invoice': 'out_refund', # Customer Invoice
+                    'in_invoice': 'in_refund',   # Supplier Invoice
+                    'out_refund': 'out_invoice', # Customer Refund
+                    'in_refund': 'in_invoice',   # Supplier Refund
+                }
 
             invoice_lines = obj_invoice_line.read(cr, uid, invoice['invoice_line'])
             invoice_lines = self._refund_cleanup_lines(cr, uid, invoice_lines, is_account_inv_line=True, context=context)
@@ -1355,6 +1416,10 @@ class account_invoice(osv.osv):
                 'journal_id': refund_journal_ids,
                 'origin': invoice['number']
             })
+            if context.get('is_intermission', False):
+                invoice.update({
+                    'is_intermission': True,
+                })
             if period_id:
                 invoice.update({
                     'period_id': period_id,
@@ -1475,6 +1540,13 @@ class account_invoice(osv.osv):
         self.pool.get('account.invoice').write(cr, uid, ids, {}, context=context)
         return True
 
+
+    def action_gen_sync_msg(self, cr, uid, ids, context=None):
+        for inv_id in ids:
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'account.invoice', inv_id, {},
+                                                                                  'account.invoice.update_counterpart_inv', self._logger, check_identifier=False, context=context)
+        return True
+
 account_invoice()
 
 class account_invoice_line(osv.osv):
@@ -1515,6 +1587,8 @@ class account_invoice_line(osv.osv):
         'name': fields.char('Description', size=256, required=True),
         'origin': fields.char('Origin', size=512, help="Reference of the document that produced this invoice."),
         'invoice_id': fields.many2one('account.invoice', 'Invoice Reference', ondelete='cascade', select=True),
+        'partner_type': fields.related('invoice_id', 'partner_type', string='Partner Type', type='selection',
+                                       selection=PARTNER_TYPE, readonly=True, store=False),
         'uos_id': fields.many2one('product.uom', 'Unit of Measure', ondelete='set null'),
         'product_id': fields.many2one('product.product', 'Product', ondelete='set null'),
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type','<>','view'), ('type', '<>', 'closed')], help="The income or expense account related to the selected product."),

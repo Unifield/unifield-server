@@ -59,7 +59,7 @@ RFQ_COLUMNS_HEADER_FOR_IMPORT = [
 RFQ_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in RFQ_COLUMNS_HEADER_FOR_IMPORT]
 
 PO_COLUMNS_HEADER_FOR_IMPORT=[
-    (_('Line Number'), 'number'), (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Price'), 'number'), (_('Delivery Request Date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string'), (_('Justification Code'), 'string'), (_('Justification Coordination'), 'string'), (_('HQ Remarks'), 'string'), (_('Justification Y/N'), 'string'), (_('Cold chain type'), 'string'), (_('Dangerous Good Type'), 'string'), (_('Controlled Substance Type'), 'string'), (_('Status'), 'string')]
+    (_('Line Number'), 'number'), (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Price'), 'number'), (_('Delivery Request Date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string'), (_('Justification Code'), 'string'), (_('Justification Coordination'), 'string'), (_('HQ Remarks'), 'string'), (_('Justification Y/N'), 'string'), (_('Cold chain type'), 'string'), (_('Dangerous Good Type'), 'string'), (_('Controlled Substance Type'), 'string'), (_('State'), 'string')]
 PO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in PO_COLUMNS_HEADER_FOR_IMPORT]
 
 FO_COLUMNS_HEADER_FOR_IMPORT=[
@@ -84,7 +84,7 @@ OUT_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in OUT_COLUMNS_HEADER_FOR_IMPORT]
 
 IR_COLUMNS_HEADER_FOR_IMPORT=[
     (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('Cost Price'), 'number'), (_('UoM'), 'string'),
-    (_('Currency'), 'string'), (_('Comment'), 'string'), (_('Status'), 'string')]
+    (_('Currency'), 'string'), (_('Comment'), 'string'), (_('State'), 'string')]
 IR_COLUMNS_FOR_IMPORT = [x for (x, y) in IR_COLUMNS_HEADER_FOR_IMPORT]
 
 TENDER_COLUMNS_HEADER_FOR_IMPORT=[

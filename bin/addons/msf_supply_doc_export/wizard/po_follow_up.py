@@ -298,8 +298,24 @@ class po_follow_up(osv.osv_memory):
         po_ids = po_obj.search(cr, uid, domain)
 
         if not po_ids:
-            raise osv.except_osv(_('Error'), _('No Purchase Orders match the specified criteria.'))
-            return True
+            raise osv.except_osv(_('Warning'), _('No Purchase Orders match the specified criteria.'))
+
+        cr.execute("""SELECT COUNT(id) FROM purchase_order_line WHERE order_id IN %s""", (tuple(po_ids),))
+        nb_lines = 0
+        for x in cr.fetchall():
+            nb_lines = x[0]
+
+        # Parameter to define the maximum number of lines. For a custom number:
+        # "INSERT INTO ir_config_parameter (key, value) VALUES ('FOLLOWUP_MAX_LINE', 'chosen_number');"
+        # Or update the existing one
+        config_line = self.pool.get('ir.config_parameter').get_param(cr, 1, 'PO_FOLLOWUP_MAX_LINE')
+        if config_line:
+            max_line = int(config_line)
+        else:
+            max_line = 20000
+
+        if nb_lines > max_line:
+            raise osv.except_osv(_('Error'), _('The requested report is too heavy to generate: requested %d lines, maximum allowed %d. Please apply further filters so that report can be generated.'), (nb_lines, max_line))
 
         if wiz.pending_only_ok and report_name == 'po.follow.up_rml':
             filtered_po_ids = []
