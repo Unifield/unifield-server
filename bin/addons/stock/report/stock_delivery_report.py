@@ -49,7 +49,7 @@ class stock_delivery_report(report_sxw.rml_parse):
                 'reason_type': move.reason_type_id and move.reason_type_id.name or pick.reason_type_id
                                and pick.reason_type_id.name or '',
                 'ship': ship and ship.name or '',
-                'origin': pick.origin,
+                'origin': pick.origin or '',
                 'partner': pick.partner_id and pick.partner_id.name or '',
                 'fo': fo,
                 'line_num': move.line_number,
