@@ -69,23 +69,25 @@ class stock_delivery_wizard(osv.osv_memory):
                 ('picking_id.state', 'in', ['done', 'delivered'])
             ]
             ppl_domain = [
-                '&', '&',
+                '&', '&', '&',
                 ('picking_id.previous_step_id.state', '=', 'done'),
                 ('picking_id.subtype', '=', 'packing'),
                 ('picking_id.shipment_id', '!=', 'f'),
+                '|', '&', '&', ('picking_id.shipment_id.parent_id', '=', None), ('picking_id.shipment_id.state', '=', 'draft'), ('product_qty', '!=', 0),
+                    '&', ('picking_id.shipment_id.parent_id', '!=', 'f'), ('picking_id.shipment_id.state', '!=', 'draft'),
             ]
 
             if wizard.start_date:
                 out_domain.insert(0, '&')
                 out_domain.append(('picking_id.date_done', '>=', wizard.start_date))
                 ppl_domain.insert(0, '&')
-                ppl_domain.append(('pick_shipment_id.shipment_expected_date', '>=', wizard.start_date))
+                ppl_domain.append(('picking_id.shipment_id.shipment_expected_date', '>=', wizard.start_date))
 
             if wizard.end_date:
                 out_domain.insert(0, '&')
                 out_domain.append(('picking_id.date_done', '<=', wizard.end_date))
                 ppl_domain.insert(0, '&')
-                ppl_domain.append(('pick_shipment_id.shipment_expected_date', '<=', wizard.end_date))
+                ppl_domain.append(('picking_id.shipment_id.shipment_expected_date', '<=', wizard.end_date))
 
             if wizard.location_id:
                 out_domain.insert(0, '&')
