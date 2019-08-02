@@ -53,6 +53,9 @@ class stock_delivery_wizard(osv.osv_memory):
         Retrieve the data according to values in wizard
         '''
         move_obj = self.pool.get('stock.move')
+        ir_data = self.pool.get('ir.model.data')
+
+        dispatch_location = ir_data.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_dispatch')[1]
 
         if context is None:
             context = {}
@@ -61,7 +64,7 @@ class stock_delivery_wizard(osv.osv_memory):
             ids = [ids]
 
         for wizard in self.browse(cr, uid, ids, context=context):
-            move_domain = [('picking_id.type', '=', 'out'), '|']
+            move_domain = [('picking_id.type', '=', 'out'), ('product_qty', '!=', 0), '|']
             out_domain = [
                 '&', '&',
                 ('state', '=', 'done'),
@@ -69,11 +72,12 @@ class stock_delivery_wizard(osv.osv_memory):
                 ('picking_id.state', 'in', ['done', 'delivered'])
             ]
             ppl_domain = [
-                '&', '&', '&',
+                '&', '&', '&', '&',
+                ('location_dest_id', '!=', dispatch_location),
                 ('picking_id.previous_step_id.state', '=', 'done'),
                 ('picking_id.subtype', '=', 'packing'),
                 ('picking_id.shipment_id', '!=', 'f'),
-                '|', '&', '&', ('picking_id.shipment_id.parent_id', '=', None), ('picking_id.shipment_id.state', '=', 'draft'), ('product_qty', '!=', 0),
+                '|', '&', ('picking_id.shipment_id.parent_id', '=', None), ('picking_id.shipment_id.state', '=', 'draft'),
                     '&', ('picking_id.shipment_id.parent_id', '!=', 'f'), ('picking_id.shipment_id.state', '!=', 'draft'),
             ]
 
