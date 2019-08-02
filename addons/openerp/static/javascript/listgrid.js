@@ -191,10 +191,11 @@ ListView.prototype = {
     },
 
     $getSelectedItems: function () {
+       var ignore_tick = this.name+'_check_all';
        return jQuery(idSelector(this.name))
                 .find('input.grid-record-selector')
                 .filter(function() {
-            return this.id && this.checked;
+            return this.id && this.checked && this.id!=ignore_tick;
         })
     },
 
