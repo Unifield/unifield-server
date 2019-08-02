@@ -54,6 +54,17 @@ class hr_payroll_import_confirmation(osv.osv_memory):
     _name = 'hr.payroll.import.confirmation'
     _description = 'Import Confirmation'
 
+    def _get_from(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns the value stored in context at index "from" = from where the wizard has been opened
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for wiz_id in ids:
+            res[wiz_id] = context.get('from')
+        return res
+
     _columns = {
         'updated': fields.integer(string="Updated", size=64, readonly=True),
         'created': fields.integer(string="Created", size=64, readonly=True),
@@ -66,6 +77,8 @@ class hr_payroll_import_confirmation(osv.osv_memory):
         'errors': fields.text(string="Errors", readonly=True),
         'nberrors': fields.integer(string="Errors", readonly=True),
         'filename': fields.char(string="Filename", size=256, readonly=True),
+        # WARNING: this wizard model is used for the import of employees from Homere, expats, nat. staff, Payroll, HQ entries...
+        'from': fields.function(_get_from, type='char', method=True, string="From where has this wizard been opened?", store=False),
     }
 
     _defaults = {

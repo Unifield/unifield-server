@@ -109,13 +109,14 @@
                 <form string="Import Confirmation">
                     <field name="filename" attrs="{'invisible': [('filename', '=', False)]}"/>
                     <field name="nberrors" invisible="1"/>
+                    <field name="from" invisible="1"/>
                     <group colspan="4" col="8">
                         <field name="total" attrs="{'invisible': [('state', 'in', ['none', 'payroll'])]}"/>
                         <field name="created" attrs="{'invisible': [('state', '=', 'none')]}"/>
                         <field name="updated" invisible="context.get('from', False) not in ['expat_employee_import', 'employee_import']"/>
                         <field name="rejected" invisible="context.get('from', False) != 'employee_import'"/>
                     </group>
-                    <group colspan="4" attrs="{'invisible': [('nberrors', '=', 0)]}">
+                    <group colspan="4" attrs="{'invisible': ['|', ('nberrors', '=', 0), ('from', '!=', 'employee_import')]}">
                         <html>
                             <p id="label_import_employee_fail"
                                style="text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
