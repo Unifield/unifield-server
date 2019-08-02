@@ -209,7 +209,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             error_obj.unlink(cr, uid, error_ids, context=context)
         for wiz_id in errors:
             for err in errors[wiz_id]:
-                error_obj.create(cr, uid, {'wizard_id': wiz_id, 'msg': err})
+                error_obj.create(cr, uid, {'wizard_id': wiz_id, 'msg': err}, context=context)
 
     def update_employee_check(self, cr, uid,
                               staffcode=False, missioncode=False, staff_id=False, uniq_id=False,
@@ -315,8 +315,8 @@ class hr_payroll_employee_import(osv.osv_memory):
         """
         Method used to check if the Identification No to be used for the employee about to be created/edited doesn't
         already exist for another employee in UniField.
-        Returns False if there is a duplication AND we are in the use case where the related and detailed
-        "hr.payroll.employee.import.error" has already been created (but the process wasn't blocked earlier since "what_changed" had a value).
+        Returns False if there is a duplication AND we are in the use case where the related and detailed error has
+        already been stored in the list of errors to display (but the process wasn't blocked earlier since "what_changed" had a value).
         Otherwise returns True => the generic create/write checks will then apply (i.e. a generic error msg will be displayed)
         """
         if context is None:
