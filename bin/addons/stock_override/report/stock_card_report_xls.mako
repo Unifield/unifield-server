@@ -100,7 +100,7 @@ def parse_origin(origin):
 <Column ss:AutoFitWidth="0" ss:Width="104.00" />
 
     <Row AutoFitHeight="1">
-        <Cell ss:StyleID="MainTitle" ss:MergeAcross="7" ><Data ss:Type="String">STOCK CARD</Data></Cell>
+        <Cell ss:StyleID="MainTitle" ss:MergeAcross="7" ><Data ss:Type="String">${_('STOCK CARD')|x}</Data></Cell>
     </Row>
 
     <Row >
@@ -109,9 +109,9 @@ def parse_origin(origin):
 
 
     <Row AutoFitHeight="1">
-        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">From</Data></Cell>
+        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('From')|x}</Data></Cell>
         <Cell><Data ss:Type="String">${o.from_date or ''}</Data></Cell>
-        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">To</Data></Cell>
+        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('To')|x}</Data></Cell>
         <Cell><Data ss:Type="String">${o.to_date or ''}</Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
@@ -119,29 +119,29 @@ def parse_origin(origin):
         <Cell><Data ss:Type="String"></Data></Cell>
     </Row>
     <Row AutoFitHeight="1">
-        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">Location</Data></Cell>
+        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('Location')|x}</Data></Cell>
         <Cell><Data ss:Type="String">${o.location_id and o.location_id.name or ''}</Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">Stock Balance</Data></Cell>
+        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('Stock Balance')|x}</Data></Cell>
         <Cell ss:StyleID="balance"><Data ss:Type="Number">${o.available_stock or 0.00}</Data></Cell>
-        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">UoM</Data></Cell>
+        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('UoM')|x}</Data></Cell>
         <Cell><Data ss:Type="String">${o.product_id and o.product_id.uom_id and o.product_id.uom_id.name or ''}</Data></Cell>
     </Row>
     <Row AutoFitHeight="1">
-        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">Code</Data></Cell>
+        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('Code')|x}</Data></Cell>
         <Cell><Data ss:Type="String">${o.product_id and o.product_id.default_code or ''}</Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">Batch Number</Data></Cell>
+        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('Batch Number')|x}</Data></Cell>
         <Cell><Data ss:Type="String">${o.prodlot_id and o.prodlot_id.name or ''}</Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
     </Row>
     <Row AutoFitHeight="1">
-        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">Description</Data></Cell>
+        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
         <Cell ss:MergeAcross="2"><Data ss:Type="String">${o.product_id.name}</Data></Cell>
-        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">Expiry Date</Data></Cell>
+        <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('Expiry Date')|x}</Data></Cell>
         <Cell><Data ss:Type="String">${o.prodlot_id and o.prodlot_id.life_date or ''}</Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>

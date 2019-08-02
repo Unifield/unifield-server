@@ -502,15 +502,15 @@ class purchase_order_line(osv.osv):
 
     def check_po_tax(self, cr, uid, ids, context=None):
         """
-        Prevents from validating a PO with taxes when using an Intermission partner
+        Prevents from validating a PO with taxes when using an Intermission or Intersection partner
         """
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         for po_line in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'taxes_id'], context=context):
-            if po_line.taxes_id and po_line.order_id.partner_type == 'intermission':
-                raise osv.except_osv(_('Error'), _("You can't use taxes with an intermission partner."))
+            if po_line.taxes_id and po_line.order_id.partner_type in ('intermission', 'section'):
+                raise osv.except_osv(_('Error'), _("Taxes are forbidden with Intermission and Intersection partners."))
 
     def check_origin_for_validation(self, cr, uid, ids, context=None):
         if not context:

@@ -246,20 +246,28 @@ class account_account(osv.osv):
         elif args == [('restricted_area', '=', 'intermission_header')]:
             if context_ivo or context.get('check_header_ivo'):
                 # HEADER of Intermission Voucher OUT:
-                # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash
+                # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash,
+                # or Payable/Payables (for refund UC)
                 # + prevent from using donation accounts
-                arg = [('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
-                       '|', '|', ('is_intermission_counterpart', '=', True),
-                       '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
-                       '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash'])]
+                arg = [
+                    ('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
+                    '|', '|', '|', ('is_intermission_counterpart', '=', True),
+                    '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
+                    '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash']),
+                    '&', ('user_type_code', '=', 'payables'), ('type', '=', 'payable')
+                ]
             elif context_ivi or context.get('check_header_ivi'):
                 # HEADER of Intermission Voucher IN:
                 # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Payable/Payables
+                # or Receivable/Receivables or Cash (for refund UC)
                 # + prevent from using donation accounts
-                arg = [('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
-                       '|', '|', ('is_intermission_counterpart', '=', True),
-                       '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
-                       '&', ('user_type_code', '=', 'payables'), ('type', '=', 'payable')]
+                arg = [
+                    ('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
+                    '|', '|', '|', ('is_intermission_counterpart', '=', True),
+                    '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
+                    '&', ('user_type_code', '=', 'payables'), ('type', '=', 'payable'),
+                    '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash']),
+                ]
         return arg
 
     def _get_fake_cash_domain(self, cr, uid, ids, field_name, arg, context=None):
@@ -359,7 +367,6 @@ class account_account(osv.osv):
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'activation_date': fields.date('Active from', required=True),
         'inactivation_date': fields.date('Inactive from'),
-        'note': fields.char('Note', size=160),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'),
                                                ('advance', 'Operational Advance'), ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation'), ('disregard_rec', 'Reconciliation - Disregard 3rd party')], string="Type for specific treatment", required=True,
                                               help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element
@@ -418,6 +425,8 @@ class account_account(osv.osv):
         """
         Use "-" instead of " " between name and code for account's default name
         """
+        if context is None:
+            context = {}
         if not ids:
             return []
         reads = self.read(cr, uid, ids, ['name', 'code'], context=context)
@@ -425,7 +434,10 @@ class account_account(osv.osv):
         for record in reads:
             name = record['name']
             if record['code']:
-                name = record['code'] + ' - '+name
+                if context.get('account_only_code'):
+                    name = record['code']
+                else:
+                    name = record['code'] + ' - '+name
             res.append((record['id'], name))
         return res
 

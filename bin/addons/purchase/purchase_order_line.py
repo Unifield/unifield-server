@@ -9,6 +9,8 @@ from tools.translate import _
 import decimal_precision as dp
 from . import PURCHASE_ORDER_STATE_SELECTION
 from . import PURCHASE_ORDER_LINE_STATE_SELECTION
+from . import PURCHASE_ORDER_LINE_DISPLAY_STATE_SELECTION
+from . import ORDER_TYPES_SELECTION
 from msf_partner import PARTNER_TYPE
 from lxml import etree
 
@@ -175,21 +177,21 @@ class purchase_order_line(osv.osv):
             # if PO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
             if (pol.resourced_original_line or pol.set_as_resourced) and pol.state not in ['done', 'cancel', 'cancel_r']:
                 if pol.state.startswith('validated'):
-                    res[pol.id] = 'Resourced-v'
+                    res[pol.id] = 'resourced_v'
                 elif pol.state.startswith('sourced'):
                     if pol.state == 'sourced_v':
-                        res[pol.id] = 'Resourced-pv'
+                        res[pol.id] = 'resourced_pv'
                     #elif pol.state == 'sourced_sy':
                     #    res[pol.id] = 'Resourced-sy'
                     else:
                         # debatable
-                        res[pol.id] = 'Resourced-s'
+                        res[pol.id] = 'resourced_s'
                 elif pol.state.startswith('confirmed'):
-                    res[pol.id] = 'Resourced-c'
+                    res[pol.id] = 'resourced_c'
                 else: # draft + unexpected PO line state
-                    res[pol.id] = 'Resourced-d'
+                    res[pol.id] = 'resourced_d'
             else: # state_to_display == state
-                res[pol.id] = self.pool.get('ir.model.fields').get_browse_selection(cr, uid, pol, 'state', context=context)
+                res[pol.id] = pol.state
 
         return res
 
@@ -507,7 +509,7 @@ class purchase_order_line(osv.osv):
                                        \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                                        \n* The \'Done\' state is set automatically when purchase order is set as done. \
                                        \n* The \'Cancelled\' state is set automatically when user cancel purchase order.'),
-        'state_to_display': fields.function(_get_state_to_display, string='State', type='text', method=True, readonly=True,
+        'state_to_display': fields.function(_get_state_to_display, string='State', type='selection', selection=PURCHASE_ORDER_LINE_DISPLAY_STATE_SELECTION, method=True, readonly=True,
                                             help=' * The \'Draft\' state is set automatically when purchase order in draft state. \
                \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                \n* The \'Done\' state is set automatically when purchase order is set as done. \
@@ -528,6 +530,7 @@ class purchase_order_line(osv.osv):
         # not replacing the po_state from sale_followup - should ?
         'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
         'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
+        'po_order_type': fields.related('order_id', 'order_type', type='selection', selection=ORDER_TYPES_SELECTION, string='Po Order Type', readonly=True, write_relate=False),
         'original_product': fields.many2one('product.product', 'Original Product'),
         'original_qty': fields.float('Original Qty', related_uom='original_uom'),
         'original_price': fields.float('Original Price', digits_compute=dp.get_precision('Purchase Price Computation')),
@@ -587,7 +590,6 @@ class purchase_order_line(osv.osv):
         'cancelled_by_sync': False,
     }
 
-
     def _check_max_price(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -614,6 +616,34 @@ class purchase_order_line(osv.osv):
     _constraints = [
         (_check_max_price, _("The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"), ['price_unit', 'product_qty']),
     ]
+
+    def _check_stock_take_date(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # Do not prevent modification during synchro
+        if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+            error_lines = []
+            linked_orders = []
+            for pol in self.browse(cr, uid, ids, context=context):
+                linked_order = pol.order_id.name
+                if linked_order not in linked_orders:
+                    linked_orders.append(linked_order)
+                if pol.state in ['draft', 'validated', 'validated_n'] and pol.stock_take_date and \
+                        pol.stock_take_date > pol.order_id.date_order:
+                    error_lines.append(str(pol.line_number))
+                if len(error_lines) >= 10:  # To not display too much
+                    break
+            if error_lines:
+                raise osv.except_osv(
+                    _('Error'), _('The Stock Take Date of the lines %s is not consistent! It should not be later than %s\'s creation date')
+                    % (', '.join(error_lines), linked_orders and ', '.join(linked_orders) or _('the PO'))
+                )
+
+        return True
 
     def _get_destination_ok(self, cr, uid, lines, context):
         dest_ok = False
@@ -1177,6 +1207,9 @@ class purchase_order_line(osv.osv):
                                                    {'sync_order_line_db_id': name + "_" + str(po_line_id), },
                                                    context=context)
 
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, po_line_id, context=context)
+
         if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('linked_sol_id'):
             so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], context=context)
             for so_id in so_ids:
@@ -1228,7 +1261,7 @@ class purchase_order_line(osv.osv):
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False, 'stock_take_date': False})
 
         # from RfQ line to PO line: grab the linked sol if has:
         if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):
@@ -1323,6 +1356,9 @@ class purchase_order_line(osv.osv):
                         'order_id': so_id,
                         'po_line_id': line.id,
                     }, context=context)
+
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, ids, context=context)
 
         # Check the selected product UoM
         if not context.get('import_in_progress', False):
@@ -1480,16 +1516,18 @@ class purchase_order_line(osv.osv):
         Fill the origin field if a FO is selected
         '''
         if fo_id:
-            fo = self.pool.get('sale.order').read(cr, uid, fo_id, ['name', 'sourced_references'], context=context)
-            return {
-                'value': {
-                    'origin': fo['name'],
-                    'display_sync_ref': len(fo['sourced_references']) and True or False,
-                },
-                'warning': {
-                    'message': _(self.msg_selected_po),
+            fo_domain = ['name', 'sourced_references', 'state', 'order_type']
+            fo = self.pool.get('sale.order').read(cr, uid, fo_id, fo_domain, context=context)
+            if fo['state'] not in ['done', 'cancel'] and fo['order_type'] == 'regular':
+                return {
+                    'value': {
+                        'origin': fo['name'],
+                        'display_sync_ref': len(fo['sourced_references']) and True or False,
+                    },
+                    'warning': {
+                        'message': _(self.msg_selected_po),
+                    }
                 }
-            }
         return {}
 
     def on_change_origin(self, cr, uid, ids, origin, linked_sol_id=False, partner_type='external', context=None):
@@ -1501,12 +1539,13 @@ class purchase_order_line(osv.osv):
             sale_id = self.pool.get('sale.order').search(cr, uid, [
                 ('name', '=', origin),
                 ('state', 'not in', ['done', 'cancel']),
-                ('procurement_request', 'in', ['t', 'f'])
+                ('procurement_request', 'in', ['t', 'f']),
+                ('order_type', '=', 'regular'),
             ], limit=1, order='NO_ORDER', context=context)
             if not sale_id:
                 res['warning'] = {
                     'title': _('Warning'),
-                    'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line') % origin,
+                    'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a non-closed/cancelled regular FO/IR. No FO/IR line will be created for this PO line') % origin,
                 }
                 res['value'] = {
                     'display_sync_ref': False,

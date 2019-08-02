@@ -49,8 +49,8 @@
                             <separator colspan="2" string="Imported values"/>
                             <field name="freight_number" />
                             <field name="imp_freight_number" />
-                            <field name="transport_mode" />
-                            <field name="imp_transport_mode" />
+                            <field name="transport_type" />
+                            <field name="imp_transport_type" />
                             <separator colspan="2" string="Original notes" />
                             <separator colspan="2" string="Imported notes" />
                             <field name="header_notes" colspan="2" nolabel="1" />

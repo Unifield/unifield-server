@@ -1324,19 +1324,19 @@ class Entity(osv.osv):
         if not connection_obj.is_connected:
             login, password = connection_obj._info_connection_from_config_file(cr)
             if login == -1 or not login or not password:
-                return "Not Connected"
+                return _("Not Connected")
 
         if self.is_syncing():
             if self.aborting:
-                return "Aborting..."
-            return "Syncing..."
+                return _("Aborting...")
+            return _("Syncing...")
 
         monitor = self.pool.get("sync.monitor")
         last_log = monitor.last_status
         if last_log:
-            return "Last Sync: %s at %s, Not run upd: %s, Not run msg: %s" \
+            return _("Last Sync: %s at %s, Not run upd: %s, Not run msg: %s") \
                 % (_(monitor.status_dict[last_log[0]]), last_log[1], last_log[2], last_log[3])
-        return "Connected"
+        return _("Connected")
 
     def update_nb_shortcut_used(self, cr, uid, nb_shortcut_used, context=None):
         '''

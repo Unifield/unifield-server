@@ -174,7 +174,11 @@ class account_fiscalyear_state(osv.osv):
                      AND ml.account_id = %s AND ml.currency_id = %s;
                   '''
             for fy_state_id in ids:
-                fy = self.browse(cr, uid, fy_state_id, fields_to_fetch=['fy_id'], context=context).fy_id
+                fy_state = self.browse(cr, uid, fy_state_id, fields_to_fetch=['fy_id', 'instance_id'], context=context)
+                if fy_state.instance_id.id != company_instance.id:
+                    # trigger reconcile only if instance FY is closed, not when update is received from project
+                    break
+                fy = fy_state.fy_id
                 period_id = year_end_closing_obj._get_period_id(cr, uid, fy.id, period_number, context=context)
                 if not period_id:
                     raise osv.except_osv(_('Error'), _("FY 'Period %d' not found") % (period_number,))

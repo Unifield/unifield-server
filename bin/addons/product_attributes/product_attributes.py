@@ -41,7 +41,7 @@ class product_status(osv.osv):
     _name = "product.status"
     _columns = {
         'code': fields.char('Code', size=256),
-        'name': fields.char('Name', size=256, required=True),
+        'name': fields.char('Name', size=256, required=True, translate=1),
         'no_external': fields.boolean(string='External partners orders'),
         'no_esc': fields.boolean(string='ESC partners orders'),
         'no_internal': fields.boolean(string='Internal partners orders'),
@@ -66,7 +66,7 @@ class product_international_status(osv.osv):
     _name = "product.international.status"
     _columns = {
         'code': fields.char('Code', size=256),
-        'name': fields.char('Name', size=256, required=True),
+        'name': fields.char('Name', size=256, required=True, translate=1),
         'no_external': fields.boolean(string='External partners orders'),
         'no_esc': fields.boolean(string='ESC partners orders'),
         'no_internal': fields.boolean(string='Internal partners orders'),
@@ -112,6 +112,7 @@ class product_heat_sensitive(osv.osv):
             string='Name',
             size=256,
             required=True,
+            translate=1,
         ),
         'active': fields.boolean(
             string='Active',
@@ -172,7 +173,7 @@ class product_cold_chain(osv.osv):
     _name = "product.cold_chain"
     _columns = {
         'code': fields.char('Code', size=256),
-        'name': fields.char('Name', size=256, required=True),
+        'name': fields.char('Name', size=256, required=True, translate=1),
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -343,6 +344,24 @@ class product_attributes(osv.osv):
             cr.execute(request)
 
         return
+
+    def _search_mandatory_creator(self, cr, uid, obj, name, args, context=None):
+        '''
+        Filter the search according to the args parameter
+        '''
+        if context is None:
+            context = {}
+
+        data_obj = self.pool.get('ir.model.data')
+
+        res_id = 0  # To prevent search
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level
+        if instance_level == 'section':
+            res_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
+        elif instance_level == 'coordo':
+            res_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+
+        return [('international_status', '=', res_id)]
 
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -628,6 +647,8 @@ class product_attributes(osv.osv):
         ),
         'new_code' : fields.char('New code', size=64),
         'international_status': fields.many2one('product.international.status', 'Product Creator', required=False),
+        'mandatory_creator': fields.function(_get_dummy, fnct_search=_search_mandatory_creator, type='many2one',
+                                             relation='product.international.status', method=True, string='Mandatory Product Creator'),
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
@@ -1563,7 +1584,7 @@ class product_attributes(osv.osv):
             # Check if the product is in an invoice
             has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
                                                             ('invoice_id', '!=', False),
-                                                            ('invoice_id.state', 'not in', ['paid', 'proforma', 'proforma2', 'cancel'])], context=context)
+                                                            ('invoice_id.state', 'not in', ['paid', 'inv_close', 'proforma', 'proforma2', 'cancel'])], context=context)
 
             # Check if the product has stock in internal locations
             for loc_id in internal_loc:
@@ -1906,31 +1927,6 @@ class product_attributes(osv.osv):
     ]
 
 product_attributes()
-
-
-class product_template(osv.osv):
-    _inherit = 'product.template'
-
-    _columns = {
-        'volume': fields.float(
-            string='Volume',
-            digits=(16, 5),
-            help="The volume in dm3.",
-        ),
-        'volume_updated': fields.boolean(
-            string='Volume updated (deprecated)',
-            readonly=True,
-        ),
-        'weight': fields.float('Gross weight', digits=(16,5), help="The gross weight in Kg."),
-        'weight_net': fields.float('Net weight', digits=(16,5), help="The net weight in Kg."),
-    }
-
-    _defaults = {
-        'volume_updated': False,
-    }
-
-
-product_template()
 
 
 class product_deactivation_error(osv.osv_memory):

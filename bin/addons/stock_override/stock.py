@@ -294,6 +294,7 @@ class stock_picking(osv.osv):
             ('shipped', 'Available Shipped'),  # UF-1617: new state of IN for partial shipment
             ('updated', 'Available Updated'),
             ('done', 'Closed'),
+            ('delivered', 'Delivered'),
             ('cancel', 'Cancelled'),
             ('import', 'Import in progress'),
         ], 'State', readonly=True, select=True,
@@ -302,7 +303,8 @@ class stock_picking(osv.osv):
                  "* Available: products reserved, simply waiting for confirmation.\n"\
                  "* Available Shipped: products already shipped at supplier, simply waiting for arrival confirmation.\n"\
                  "* Waiting: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows)\n"\
-                 "* Closed: has been processed, can't be modified or cancelled anymore\n"\
+                 "* Closed: has been processed, can't be modified or cancelled anymore. Can still be processed to Delivered if the document is an OUT\n"
+                 "* Delivered: has been delivered, only for a closed OUT\n"\
                  "* Cancelled: has been cancelled, can't be confirmed anymore"),
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
@@ -908,6 +910,11 @@ You cannot choose this supplier because some destination locations are not avail
         # (US-952) Move out on an external partner should not create a Stock Transfer Voucher
         # US-1212: but should create refund
         if sp.type == 'out' and sp.partner_id.partner_type == 'external' and invoice_type != 'in_refund':
+            res = False
+
+        # Move in on an intermission or intersection partner should not create an IVI / SI (generation of Donations shouldn't be blocked)
+        if sp.type == 'in' and sp.purchase_id and sp.purchase_id.order_type not in ('donation_st', 'donation_exp') \
+                and sp.partner_id and sp.partner_id.partner_type in ('intermission', 'section') and invoice_type == 'in_invoice':
             res = False
 
         return res

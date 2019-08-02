@@ -407,6 +407,35 @@
         </record>
 
         <!-- UF13.1 -->
+        <record id="us_3413_align_in_partner_to_po" model="patch.scripts">
+            <field name="method">us_3413_align_in_partner_to_po</field>
+        </record>
+
+        <record id="us_6128_delete_auto_group" model="patch.scripts">
+            <field name="method">us_6128_delete_auto_group</field>
+        </record>
+
+        <record id="us_6111_nr_field_closed_mar_2018" model="patch.scripts">
+            <field name="method">us_6111_nr_field_closed_mar_2018</field>
+        </record>
+
+        <!-- UF14.0 -->
+        <record id="us_5952_delivered_closed_outs_to_delivered_state" model="patch.scripts">
+            <field name="method">us_5952_delivered_closed_outs_to_delivered_state</field>
+        </record>
+
+        <record id="us_6108_onedrive_bg" model="patch.scripts">
+            <field name="method">us_6108_onedrive_bg</field>
+        </record>
+
+        <record id="us_6075_set_paid_invoices_as_closed" model="patch.scripts">
+            <field name="method">us_6075_set_paid_invoices_as_closed</field>
+        </record>
+
+        <record id="us_6076_set_inv_as_from_supply" model="patch.scripts">
+            <field name="method">us_6076_set_inv_as_from_supply</field>
+        </record>
+
         <record id="us_5859_set_flag_on_sub_pick" model="patch.scripts">
             <field name="method">us_5859_set_flag_on_sub_pick</field>
         </record>

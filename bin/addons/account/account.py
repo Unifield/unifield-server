@@ -335,7 +335,7 @@ class account_account(osv.osv):
         'shortcut': fields.char('Shortcut', size=12),
         'tax_ids': fields.many2many('account.tax', 'account_account_tax_default_rel',
                                     'account_id', 'tax_id', 'Default Taxes'),
-        'note': fields.text('Note'),
+        'note': fields.char('Note', size=160),
         'company_currency_id': fields.function(_get_company_currency, method=True, type='many2one', relation='res.currency', string='Company Currency'),
         'company_id': fields.many2one('res.company', 'Company', required=True),
         'active': fields.boolean('Active', select=2, help="If the active field is set to False, it will allow you to hide the account without removing it."),

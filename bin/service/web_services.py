@@ -233,6 +233,7 @@ class db(netsvc.ExportService):
                                          args=(cr, pool, 1, creation_id))
         create_thread.start()
         create_thread.join(1)
+        return True
 
     def exp_creation_get_resume_progress(self, db_name):
         db, pool = pooler.get_db_and_pool(db_name)

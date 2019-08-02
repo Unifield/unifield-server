@@ -23,7 +23,7 @@ import datetime
 from osv import fields, osv
 import pooler
 import logging
-
+from dateutil.relativedelta import relativedelta
 
 class stock_production_lot(osv.osv):
     _inherit = 'stock.production.lot'
@@ -42,19 +42,18 @@ class stock_production_lot(osv.osv):
                     cr, uid, context['product_id'])
                 duration = getattr(product, dtype)
                 # set date to False when no expiry time specified on the product
-                date = duration and (datetime.datetime.today()
-                                     + datetime.timedelta(days=duration))
-            return date and date.strftime('%Y-%m-%d %H:%M:%S') or False
+                date = duration and (datetime.datetime.today() + relativedelta(months=duration))
+            return date and date.strftime('%Y-%m-%d') or False
         return calc_date
 
     _columns = {
-        'life_date': fields.datetime('End of Life Date',
-                                     help='The date on which the lot may become dangerous and should not be consumed.'),
-        'use_date': fields.datetime('Best before Date',
-                                    help='The date on which the lot starts deteriorating without becoming dangerous.'),
-        'removal_date': fields.datetime('Removal Date',
-                                        help='The date on which the lot should be removed.'),
-        'alert_date': fields.datetime('Alert Date', help="The date on which an alert should be notified about the production lot."),
+        'life_date': fields.date('Expiry Date',
+                                 help='The date on which the lot may become dangerous and should not be consumed.', required=True),
+        'use_date': fields.date('Best before Date',
+                                help='The date on which the lot starts deteriorating without becoming dangerous.'),
+        'removal_date': fields.date('Removal Date',
+                                    help='The date on which the lot should be removed.'),
+        'alert_date': fields.date('Alert Date', help="The date on which an alert should be notified about the production lot."),
     }
     # Assign dates according to products data
     def create(self, cr, uid, vals, context=None):
@@ -117,6 +116,7 @@ class stock_production_lot(osv.osv):
         'removal_date': _get_date('removal_time'),
         'alert_date': _get_date('alert_time'),
     }
+
 stock_production_lot()
 
 class product_product(osv.osv):

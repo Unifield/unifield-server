@@ -1,36 +1,19 @@
 # -*- coding: utf-8 -*-
-#
-#
-#    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-#
 
 import tools
 import time
 import threading
-
-from report import report_sxw
+import uuid
+import logging
 from osv import fields, osv
 from decimal_precision import decimal_precision as dp
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
-from service.web_services import report_spool
-from datetime import datetime
+import pooler
+import datetime
 
+from xlwt import Workbook, easyxf, Borders
+import tempfile
+import base64
 
 class report_stock_move(osv.osv):
     _name = "report.stock.move"
@@ -261,8 +244,55 @@ class report_stock_move(osv.osv):
 report_stock_move()
 
 
+class export_report_stock_move_progress(osv.osv_memory):
+    _name = 'export.report.stock.move.progress'
+    _columns = {
+        'name': fields.many2one('export.report.stock.move', 'Report'),
+        'progress': fields.char('Nb lines', size=256),
+        'uuid': fields.char('uuid', size=256),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        vals['uuid'] = str(uuid.uuid4())
+        osv._recorded_psql_pid.set(vals['uuid'], cr._cnx.get_backend_pid())
+        return super(export_report_stock_move_progress, self).create(cr, uid, vals, context)
+
+export_report_stock_move_progress()
+
 class export_report_stock_move(osv.osv):
     _name = 'export.report.stock.move'
+
+    def kill_request(self, cr, uid, ids, context=None):
+        pg_ids = self.pool.get('export.report.stock.move.progress').search(cr, uid, [('name', 'in', ids)])
+        if pg_ids:
+            for x in self.pool.get('export.report.stock.move.progress').read(cr, uid, pg_ids, ['uuid']):
+                osv._recorded_psql_pid.kill(cr, x['uuid'])
+        self.write(cr, uid, ids, {'state': 'cancel', 'error': _('Request cancelled by user')})
+        return True
+
+    def _get_progress(self, cr, uid, ids, field, arg, context=None):
+        ret = {}
+        for id in ids:
+            ret[id] = False
+        pg_ids = self.pool.get('export.report.stock.move.progress').search(cr, uid, [('name', 'in', ids)])
+        if pg_ids:
+            for x in self.pool.get('export.report.stock.move.progress').read(cr, uid, pg_ids, ['name', 'progress']):
+                ret[x['name']] = x['progress']
+        return ret
+
+    def _get_has_locations(self, cr, uid, ids, field, arg, context=None):
+        '''
+        Return True if the report has a location
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for report in self.browse(cr, uid, ids, fields_to_fetch=['location_ids'], context=context):
+            res[report.id] = report.location_ids and True or False
+
+        return res
 
     _columns = {
         'company_id': fields.many2one(
@@ -302,12 +332,22 @@ product will be shown.""",
         'expiry_date': fields.date(
             string='Specific expiry date',
         ),
-        'location_id': fields.many2one(
+        'location_ids': fields.many2many(
             'stock.location',
-            string='Specific location',
-            help="""If a location is choosen, only stock moves that comes
-from/to this location will be shown.""",
+            'report_stock_move_location_rel',
+            'report_id',
+            'location_id',
+            string='Specific location(s)',
+            help="If a location is choosen, only stock moves that comes from/to this location will be shown.",
+            domain=['|', ('active', '=', True), ('active', '=', False)],
         ),
+        'has_locations': fields.function(_get_has_locations, method=True, type='boolean', string='Report has locations', store=True, readonly=True),
+        'product_list_id': fields.many2one(
+            'product.list',
+            string='Specific product list',
+        ),
+        'progress': fields.function(_get_progress, method=True, type='char', string='Progress', store=False),
+        'only_standard_loc': fields.boolean('Only display standard stock location(s)'),
         'date_from': fields.date(
             string='From',
         ),
@@ -319,6 +359,8 @@ from/to this location will be shown.""",
                 ('draft', 'Draft'),
                 ('in_progress', 'In Progress'),
                 ('ready', 'Ready'),
+                ('error', 'Error'),
+                ('cancel', 'Cancel'),
             ],
             string='State',
             readonly=True,
@@ -331,14 +373,17 @@ from/to this location will be shown.""",
             string='Filename',
             readonly=True,
         ),
+        'error': fields.text('Error', readonly=1),
     }
 
     _defaults = {
         'state': 'draft',
-        'company_id': lambda s, cr, uid, c: s.pool.get('res.company').\
-        _company_default_get(
-            cr, uid, 'export.report.stock.move', context=c)
+        'company_id': lambda s, cr, uid, c: s.pool.get('res.company')._company_default_get(cr, uid, 'export.report.stock.move', context=c),
+        'only_standard_loc': True,
+        'name': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
     }
+
+    _order = 'id desc'
 
     def update(self, cr, uid, ids, context=None):
         return {}
@@ -366,6 +411,9 @@ from/to this location will be shown.""",
             ]
             if report.partner_id:
                 domain.append(('partner_id', '=', report.partner_id.id))
+            if report.product_list_id:
+                p_ids = self.pool.get('product.product').search(cr, uid, [('list_ids', '=', report.product_list_id.id)])
+                domain.append(('product_id', 'in', p_ids))
             if report.product_id:
                 domain.append(('product_id', '=', report.product_id.id))
             if report.prodlot_id:
@@ -383,16 +431,35 @@ from/to this location will be shown.""",
             if rt_ids:
                 domain.append(('reason_type_id', 'in', rt_ids))
 
-            if report.location_id:
-                domain.extend([
-                    '|',
-                    ('location_id', '=', report.location_id.id),
-                    ('location_dest_id', '=', report.location_id.id),
-                ])
+            loc_ids = [l.id for l in report.location_ids]
+            selected_locs = False
+            non_standard_loc_ids = []
+            if loc_ids:
+                selected_locs = True
+                domain.extend(['|', ('location_id', 'in', loc_ids), ('location_dest_id', 'in', loc_ids)])
+                context['location'] = loc_ids
+            else:
+                if report.only_standard_loc:
+                    # Input
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1])
+                    # Cross Docking
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1])
+                    # Packing
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1])
+                    # Shipment
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_dispatch')[1])
+                    # Distribution
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_distribution')[1])
+                    # Quarantine (analyze)
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_analyze')[1])
+                    # Quarantine (before scap)
+                    non_standard_loc_ids.append(data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1])
+
+                    domain.extend(['|', ('location_id', 'not in', non_standard_loc_ids), ('location_dest_id', 'not in', non_standard_loc_ids)])
 
             context['domain'] = domain
             context['active_test'] = False
-            rsm_ids = rsm_obj.search(cr, uid, domain, order='date', context=context)
+            rsm_ids = rsm_obj.search(cr, uid, domain, order='product_id, date', context=context)
             context['active_test'] = True
             self.write(cr, uid, [report.id], {
                 'name': time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -402,6 +469,7 @@ from/to this location will be shown.""",
             datas = {
                 'ids': [report.id],
                 'moves': rsm_ids,
+                'selected_locs': selected_locs,
             }
 
             cr.commit()
@@ -410,7 +478,7 @@ from/to this location will be shown.""",
                 args=(cr, uid, report.id, datas, context)
             )
             new_thread.start()
-            new_thread.join(30.0)
+            new_thread.join(6.0)
 
             res = {
                 'type': 'ir.actions.act_window',
@@ -434,6 +502,168 @@ from/to this location will be shown.""",
             _('No stock moves found for these parameters')
         )
 
+    def getLines(self, cr, uid, datas, currency_id, context=None):
+
+        if context is None:
+            context = {}
+
+        _logger = logging.getLogger('in.out.report')
+        prod_obj = self.pool.get('product.product')
+        curr_obj = self.pool.get('res.currency')
+        loc_obj = self.pool.get('stock.location')
+        data_obj = self.pool.get('ir.model.data')
+        rate_cache = {}
+
+        if not datas['moves']:
+            raise StopIteration
+        if not datas['selected_locs']:
+            inst_full_view_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_locations')[1]
+            loc_domain = [('location_id', 'child_of', inst_full_view_id), ('active', 'in', ['t', 'f'])]
+            location_ids = loc_obj.search(cr, uid, loc_domain, context=context)
+            context.update({'location': location_ids})
+        context['compute_child'] = False
+        nb_lines = len(datas['moves'])
+        _logger.info('Report started on %d lines' % nb_lines)
+
+        lang_ctx = {'lang': context.get('lang', 'en_MF')}
+        reason_ids = self.pool.get('stock.reason.type').search(cr, uid, [])
+        reason_info = {}
+        for x in self.pool.get('stock.reason.type').read(cr, uid, reason_ids, ['complete_name'], context=lang_ctx):
+            reason_info[x['id']] = x['complete_name']
+
+        all_loc_ids = loc_obj.search(cr, uid, [('active', 'in', ['t', 'f'])])
+        location_info = {}
+        for x in loc_obj.read(cr, uid, all_loc_ids, ['name'], context=lang_ctx):
+            location_info[x['id']] = x['name']
+
+        new_cr =  pooler.get_db(cr.dbname).cursor()
+        try:
+            new_cr.execute('''select
+                    m.product_id as product_id,
+                    m.prodlot_id as prodlot_id,
+                    m.product_qty as product_qty,
+                    t.uom_id as prod_uom,
+                    m.name as move_name,
+                    p.default_code as default_code,
+                    p.batch_management as batch_management,
+                    COALESCE(trans.value, t.name) as product_name,
+                    m.price_unit as price_unit,
+                    m.price_currency_id as price_currency_id,
+                    pick.name as pick_name,
+                    m.date as date,
+                    uom.name as uom_name,
+                    t.standard_price as standard_price,
+                    m.location_id as location_src_id,
+                    m.location_dest_id as location_dest_id,
+                    m.reason_type_id as reason_type_id,
+                    lot.name as lot_name,
+                    lot.life_date as life_date,
+                    case when pick.subtype not in ('ppl', 'packing') then null when so.procurement_request then %s else pl.currency_id end as bug_pl
+                from
+                    stock_move m
+                    inner join product_uom uom on uom.id = m.product_uom
+                    inner join product_product p on p.id = m.product_id
+                    inner join product_template t on t.id = p.product_tmpl_id
+                    left join stock_picking pick on m.picking_id = pick.id
+                    left join stock_production_lot lot on lot.id = m.prodlot_id
+                    left join ir_translation trans on trans.name='product.template,name' and trans.res_id=t.id and lang=%s
+                    left join sale_order_line sol on m.sale_line_id = sol.id
+                    left join sale_order so on sol.order_id = so.id
+                    left join product_pricelist pl on so.pricelist_id = pl.id
+                where
+                    m.id in %s
+                order by p.default_code, m.date asc, lot.name
+            ''', (currency_id, lang_ctx.get('lang'), tuple(datas['moves'])))
+            # do not change order by or stock level computation will be wrong
+
+            start_time = time.time()
+            nb_done = 0
+            bn_stock_cache = {}
+            prod_stock_cache = {}
+            while True:
+                rows = new_cr.dictfetchmany(600)
+                if not rows:
+                    raise StopIteration
+                for move in rows:
+                    nb_done += 1
+                    if nb_done % 300 == 0:
+                        _logger.info('%d/%d %s seconds' % (nb_done, nb_lines, time.time() - start_time))
+                        if context.get('progress_id'):
+                            self.pool.get('export.report.stock.move.progress').write(cr, uid, context.get('progress_id'), {'progress': '%d / %d' % (nb_done, nb_lines)})
+                        start_time = time.time()
+
+                    move_date = move['date'] or False
+                    # Get stock
+                    ctx = context.copy()
+                    prod_stock_bn = _('NA')
+                    prod_stock = 0
+                    ctx.update({'to_date': move_date, 'prodlot_id': False, 'from_strict_date': prod_stock_cache.get(move['product_id'], {}).get('to_date', False)})
+
+                    if ctx['to_date'] != ctx['from_strict_date']:
+                        prod_stock = prod_obj.read(cr, uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
+                        if move['product_id'] in prod_stock_cache:
+                            prod_stock += prod_stock_cache[move['product_id']]['stock']
+                        prod_stock_cache[move['product_id']] = {'to_date': move_date, 'stock': prod_stock}
+                    else:
+                        prod_stock = prod_stock_cache[move['product_id']]['stock']
+
+
+                    if move['prodlot_id']:
+                        ctx.update({'prodlot_id': move['prodlot_id'], 'from_strict_date': bn_stock_cache.get(move['prodlot_id'], {}).get('to_date', False)})
+                        if ctx['to_date'] != ctx['from_strict_date']:
+                            prod_stock_bn = prod_obj.read(cr, uid, move['product_id'], ['qty_available'], context=ctx)['qty_available']
+                            if move['prodlot_id'] in bn_stock_cache:
+                                prod_stock_bn += bn_stock_cache[move['prodlot_id']]['stock']
+                            bn_stock_cache[move['prodlot_id']] = {'to_date': move_date, 'stock': prod_stock_bn}
+                        else:
+                            prod_stock_bn = bn_stock_cache[move['prodlot_id']]['stock']
+
+                    # Get Unit Price at date
+                    prod_price = move['price_unit'] or 0
+                    if not prod_price:
+                        if move_date:
+                            cr.execute("""SELECT old_standard_price
+                                        FROM standard_price_track_changes
+                                        WHERE product_id = %s AND change_date >= %s
+                                        ORDER BY change_date ASC
+                                        LIMIT 1
+                                        """, (move['product_id'], move_date))
+                            for x in cr.fetchall():
+                                prod_price = x[0]
+                        if not prod_price:
+                            prod_price = move['standard_price']
+                    elif move_date:
+                        move_currency = move['bug_pl'] or move['price_currency_id']
+                        if move_currency and move_currency != currency_id:
+                            first_day = time.strftime('%Y-%m-01', time.strptime(move_date, '%Y-%m-%d %H:%M:%S'))
+                            rate_key = '%s-%s' % (move_currency, first_day)
+                            if rate_key not in rate_cache:
+                                rate_cache[rate_key] = curr_obj.read(cr, uid, move_currency, ['rate'], {'date': first_day})['rate'] or 1
+                            prod_price = prod_price/rate_cache[rate_key]
+
+                    yield [
+                        move['default_code'],
+                        move['product_name'],
+                        move['uom_name'],
+                        move_date and datetime.datetime.strptime(move_date, '%Y-%m-%d %H:%M:%S') or '',
+                        move['lot_name'] or '',
+                        move['life_date'] and datetime.datetime.strptime(move['life_date'], '%Y-%m-%d'),
+                        move['product_qty'],
+                        prod_price,
+                        move['product_qty'] * prod_price,
+                        prod_stock_bn,
+                        prod_stock,
+                        location_info.get(move['location_src_id']),
+                        location_info.get(move['location_dest_id']),
+                        reason_info.get(move['reason_type_id']) or '',
+                        move['pick_name'] or move['move_name'] or '',
+                    ]
+
+            raise StopIteration
+        finally:
+            new_cr.commit()
+            new_cr.close(True)
+
     def generate_report_bkg(self, cr, uid, ids, datas, context=None):
         """
         Generate the report in background
@@ -444,35 +674,162 @@ from/to this location will be shown.""",
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        import pooler
         new_cr = pooler.get_db(cr.dbname).cursor()
+        try:
+            context['progress_id'] = self.pool.get('export.report.stock.move.progress').create(new_cr, uid, {'name': ids[0]})
+            context['report_id'] = ids[0]
 
-        rp_spool = report_spool()
-        result = rp_spool.exp_report(cr.dbname, uid, 'stock.move.xls', ids, datas, context)
-        file_res = {'state': False}
-        while not file_res.get('state'):
-            file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
-            time.sleep(0.5)
-        attachment = self.pool.get('ir.attachment')
-        attachment.create(new_cr, uid, {
-            'name': 'move_analysis_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-            'datas_fname': 'move_analysis_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-            'description': 'Move analysis',
-            'res_model': 'export.report.stock.move',
-            'res_id': ids[0],
-            'datas': file_res.get('result'),
-        })
-        self.write(new_cr, uid, ids, {'state': 'ready'}, context=context)
+            borders = Borders()
+            borders.left = Borders.THIN
+            borders.right = Borders.THIN
+            borders.top = Borders.THIN
+            borders.bottom = Borders.THIN
 
-        new_cr.commit()
-        new_cr.close(True)
+            top_header1 = easyxf("""
+                    font: height 200;
+                    font: name Calibri;
+                    pattern: pattern solid, fore_colour gray25;
+                    align: wrap on, vert center, horiz center;
+            """)
+            top_header2 = easyxf("""
+                    font: height 200;
+                    font: name Calibri;
+                    pattern: pattern solid, fore_colour tan;
+                    align: wrap on, vert center, horiz center;
+            """)
+            header_style = easyxf("""
+                    font: height 200;
+                    font: name Calibri;
+                    pattern: pattern solid, fore_colour gray25;
+                    align: wrap on, vert center, horiz center;
+                """)
+            header_style.borders = borders
+
+            header2_date_style = easyxf("""
+                    font: height 200;
+                    font: name Calibri;
+                    pattern: pattern solid, fore_colour tan;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='dd/mm/yyyy')
+
+            header2_date_time_style = easyxf("""
+                    font: height 200;
+                    font: name Calibri;
+                    pattern: pattern solid, fore_colour tan;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='dd/mm/yyyy h:mm')
+
+            row_style = easyxf("""
+                    font: height 200;
+                    font: name Calibri;
+                    align: wrap on, vert center, horiz center;
+                """)
+            row_style.borders = borders
+
+            date_time_format = easyxf(
+                """
+                    font: height 200;
+                    font: name Calibri;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='dd/mm/yyyy h:mm')
+            date_time_format.borders = borders
+
+            date_format = easyxf(
+                """
+                    font: height 200;
+                    font: name Calibri;
+                    align: wrap on, vert center, horiz center;
+                """, num_format_str='dd/mm/yyyy')
+            date_format.borders = borders
+
+            book = Workbook()
+            sheet = book.add_sheet(_('IN & OUT Report'))
+            sheet.row_default_height = 10*20
+
+            report = self.browse(cr, uid, ids[0], context=context)
+            currency = report.company_id.currency_id
+            header = [
+                (_('DB/instance name'), report.company_id.name or '', ''),
+                (_('Generated on'), report.name and  datetime.datetime.strptime(report.name, '%Y-%m-%d %H:%M:%S') or '', header2_date_time_style),
+                (_('From'), report.date_from and  datetime.datetime.strptime(report.date_from, '%Y-%m-%d') or '', header2_date_style),
+                (_('To'), report.date_to and datetime.datetime.strptime(report.date_to, '%Y-%m-%d') or '', header2_date_style),
+                (_('Specific partner'), report.partner_id and report.partner_id.name or '', ''),
+                (_('Specific location(s)'), report.location_ids and ' ; '.join([l.name for l in report.location_ids]) or '', ''),
+                (_('Specific product list'), report.product_list_id and report.product_list_id.name or '', ''),
+                (_('Specific product'), report.product_id and report.product_id.default_code or '', ''),
+                (_('Specific batch'), report.prodlot_id and report.prodlot_id.name or '', ''),
+                (_('Specific expiry date'), report.expiry_date and datetime.datetime.strptime(report.expiry_date, '%Y-%m-%d') or '', header2_date_style),
+                (_('Only display standard stock location(s)'), report.only_standard_loc and _('Yes') or _('No'), ''),
+                (_('Specific reason types'), report.reason_type_ids and ' ; '.join([r.complete_name for r in report.reason_type_ids]) or '', '')
+            ]
+            row_count = 0
+            #sheet.write_merge(2, 2, begin, max_size, instance_dict[inst_id], style=header_styles[i])
+            for col_name, col_value, style in header:
+                sheet.write_merge(row_count, row_count, 0, 1, col_name, top_header1)
+                if not style:
+                    style = top_header2
+
+                sheet.write_merge(row_count, row_count, 2, 4, col_value, style)
+                row_count += 1
+
+            row_count += 1
+            pos = 0
+            headers = [(_('Product Code'), '', 25), (_('Product Description'), '', 70), (_('UoM'), '', 11),  (_('Stock Move Date'), date_time_format,20), (_('Batch'), '',30), (_('Exp Date'), date_format, 11), (_('Quantity'), '', 10), (_('Unit Price (%s)') % (currency.name,), '', 10), (_('Movement value (%s)') % (currency.name,) , '', 10), (_('BN stock after movement (instance)'), '', 10), (_('Total stock after movement (instance)'), '', 10),  (_('Source'), '', 40), (_('Destination'), '', 40), (_('Reason Type'), '', 30), (_('Document Ref.'), '', 40)]
+
+            for header_row, col_type, size in headers:
+                sheet.col(pos).width = size * 256
+                sheet.write(row_count, pos, header_row, header_style)
+                pos += 1
+
+            sheet.set_horz_split_pos(row_count+1)
+            sheet.panes_frozen = True
+            sheet.remove_splits = True
+            sheet.row(row_count).height_mismatch = True
+            sheet.row(row_count).height = 45*20
+            for data_list in self.getLines(new_cr, uid, datas, currency.id, context):
+                row_count += 1
+                col_count = 0
+                for value in data_list:
+                    if value and headers[col_count][1]:
+                        style = headers[col_count][1]
+                    else:
+                        style = row_style
+                    sheet.write(row_count, col_count, value, style)
+                    col_count += 1
+                #sheet.row(row_count).height = 60*20
+
+            export_file = tempfile.NamedTemporaryFile(delete=False)
+            file_name = export_file.name
+            book.save(export_file)
+            export_file.close()
+
+            attachment = self.pool.get('ir.attachment')
+            attachment.create(new_cr, uid, {
+                'name': 'in_out_report_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'datas_fname': 'in_out_report_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+                'description': 'IN & OUT Report',
+                'res_model': 'export.report.stock.move',
+                'res_id': ids[0],
+                'datas': base64.encodestring(open(file_name, 'rb').read()),
+            })
+            self.write(new_cr, uid, ids, {'state': 'ready'}, context=context)
+        except Exception, e:
+            new_cr.rollback()
+            if context.get('report_id'):
+                msg = hasattr(e, 'value') and e.value or e.message
+                self.pool.get('export.report.stock.move').write(new_cr, uid, context['report_id'], {'state': 'error', 'error': tools.ustr(msg)})
+            raise
+        finally:
+            if context.get('progress_id'):
+                self.pool.get('export.report.stock.move.progress').unlink(new_cr, uid, [context['progress_id']])
+            new_cr.commit()
+            new_cr.close(True)
 
         return True
 
     def onchange_prodlot(self, cr, uid, ids, prodlot_id):
         """
-        Select the good product and the good expiry date according to
-        selected batch number.
+        Change the product when change the prodlot
         """
         if not prodlot_id:
             return {
@@ -482,8 +839,8 @@ from/to this location will be shown.""",
                 },
             }
 
-        prodlot = self.pool.get('stock.production.lot')\
-            .browse(cr, uid, prodlot_id)
+        prodlot = self.pool.get('stock.production.lot'). \
+            browse(cr, uid, prodlot_id)
         return {
             'value': {
                 'product_id': prodlot.product_id.id,
@@ -491,19 +848,35 @@ from/to this location will be shown.""",
             },
         }
 
+    def onchange_location_ids(self, cr, uid, ids, location_ids):
+        """
+        Disable the checkbox if there are locations selected
+        """
+        if location_ids != [(6, 0, [])]:
+            return {
+                'value': {
+                    'only_standard_loc': False,
+                    'has_locations': True,
+                },
+            }
+        else:
+            return {
+                'value': {
+                    'has_locations': False,
+                },
+            }
+
     def create(self, cr, uid, vals, context=None):
         """
         Call onchange_prodlot() if a prodlot is specified
         """
         if vals.get('prodlot_id'):
-            vals.update(
-                self.onchange_prodlot(
-                    cr, uid, False, vals.get('prodlot_id')
-                )
-            )
+            vals.update(self.onchange_prodlot(cr, uid, False, vals.get('prodlot_id')))
 
-        return super(export_report_stock_move, self).\
-            create(cr, uid, vals, context=context)
+        if vals.get('location_ids') and vals['location_ids'] != [(6, 0, [])]:
+            vals['only_standard_loc'] = False
+
+        return super(export_report_stock_move, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -512,93 +885,13 @@ from/to this location will be shown.""",
         if not ids:
             return True
         if vals.get('prodlot_id'):
-            vals.update(
-                self.onchange_prodlot(
-                    cr, uid, ids, vals.get('prodlot_id')
-                )
-            )
+            vals.update(self.onchange_prodlot(cr, uid, ids, vals.get('prodlot_id')))
 
-        return super(export_report_stock_move, self).\
-            write(cr, uid, ids, vals, context=context)
+        if vals.get('location_ids') and vals['location_ids'] != [(6, 0, [])]:
+            vals['only_standard_loc'] = False
+
+        return super(export_report_stock_move, self).write(cr, uid, ids, vals, context=context)
+
 
 export_report_stock_move()
 
-
-class parser_report_stock_move_xls(report_sxw.rml_parse):
-
-    def __init__(self, cr, uid, name, context=None):
-        super(parser_report_stock_move_xls, self).__init__(cr, uid, name, context=context)
-        self.localcontext.update({
-            'time': time,
-            'getLines': self.getLines,
-            'dateFormatdmY': self.date_format_dmY,
-        })
-
-    def getLines(self):
-        res = []
-        company_id = self.pool.get('res.users').browse(
-            self.cr, self.uid, self.uid).company_id.partner_id.id
-
-        def get_src_dest(m, f='location_id'):
-            if m[f].usage in ('supplier', 'customer') and m.picking_id and m.picking_id.partner_id and m.picking_id.partner_id.id != company_id:
-                return m.picking_id.partner_id.name
-            else:
-                return m[f].name
-
-        for move in self.pool.get('stock.move').browse(
-            self.cr,
-            self.uid,
-            self.datas['moves'],
-            context=self.localcontext
-        ):
-            move_vals = {
-                'product_code': move.product_id.default_code,
-                'product_name': move.product_id.name,
-                'uom': move.product_uom.name,
-                'batch': move.prodlot_id and move.prodlot_id.name or '',
-                'expiry_date': move.prodlot_id and move.prodlot_id.life_date or False,
-                'qty_in': 0.00,
-                'qty_out': 0.00,
-                'source': get_src_dest(move, 'location_id'),
-                'destination': get_src_dest(move, 'location_dest_id'),
-                'reason_code': move.reason_type_id and move.reason_type_id.name or '',
-                'doc_ref': move.picking_id and move.picking_id.name or move.name or '',
-                'date_done': move.picking_id and move.picking_id.date_done or move.date or False,
-            }
-            if move.type in ('in', 'out') and (
-                move.location_id.usage in ['customer', 'supplier'] or
-                    move.location_dest_id.usage in ['customer', 'supplier']):
-                if move.type == 'in':
-                    move_vals['qty_in'] = move.product_qty
-                else:
-                    move_vals['qty_out'] = move.product_qty
-                res.append(move_vals)
-            else:
-                move_vals_in = move_vals.copy()
-                move_vals_out = move_vals.copy()
-                move_vals_in.update({
-                    'qty_in': move.product_qty,
-                    'qty_out': 0.00,
-                })
-                move_vals_out.update({
-                    'qty_in': 0.00,
-                    'qty_out': move.product_qty,
-                })
-                res.append(move_vals_in)
-                res.append(move_vals_out)
-        return res
-
-    def date_format_dmY(self, date):
-        return datetime.strftime(datetime.strptime(date[:10], '%Y-%m-%d'), '%d-%m-%Y')
-
-
-class report_stock_move_xls(SpreadsheetReport):
-
-    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-        super(report_stock_move_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
-
-    def create(self, cr, uid, ids, data, context=None):
-        a = super(report_stock_move_xls, self).create(cr, uid, ids, data, context=context)
-        return (a[0], 'xls')
-
-report_stock_move_xls('report.stock.move.xls', 'export.report.stock.move', 'addons/stock_override/report/report_stock_move_xls.mako', parser=parser_report_stock_move_xls, header='internal')

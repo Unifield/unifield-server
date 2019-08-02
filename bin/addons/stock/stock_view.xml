@@ -598,6 +598,7 @@
                     <field name="complete_name"/>
                     <field name="usage"/>
                     <field name="location_category" />
+                    <field name="active" invisible="'display_active' not in context" />
                 </tree>
             </field>
         </record>
@@ -784,7 +785,7 @@
             <field name="type">tree</field>
             <field name="priority">21</field>
             <field name="arch" type="xml">
-                <tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Delivery Orders">
+                <tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done', 'delivered') and date &lt; current_date" string="Delivery Orders">
                     <field name="name"/>
                     <field name="partner_id"/>
                     <field name="destinations_list"/>

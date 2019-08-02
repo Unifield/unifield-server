@@ -47,7 +47,7 @@
   </stylesheet>
   <story>
     <para style="terp_default_8">[[repeatIn([objects[0]],'o')]]</para>
-    <para style="P1">[[ setLang(o.user_id.context_lang) ]]</para>
+    <para style="P1"> </para>
     <para style="P2">
       <font face="Helvetica" size="8.0"> </font>
     </para>
@@ -55,7 +55,7 @@
       <tr>
         <td>
           <para style="P3">
-            <font face="Helvetica">Modifications[[ (order_name(o.id) and " on %s" % order_name(o.id)) ]]</font>
+            <font face="Helvetica">Modifications[[ (order_name(o.id) and " %s %s" % (translate('on'), order_name(o.id))) ]]</font>
           </para>
         </td>
       </tr>

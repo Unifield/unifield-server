@@ -982,13 +982,13 @@ class ir_model_access_empty(osv.osv):
         tools.drop_view_if_exists(cr, 'ir_model_access_empty')
         cr.execute("""CREATE OR REPLACE VIEW ir_model_access_empty AS (
         SELECT model.id as id,
-        '' as name,
+        ''::varchar as name,
         model.id as model_id,
-        NULL as group_id,
-        'f' as perm_read,
-        'f' as perm_write,
-        'f' as perm_create,
-        'f' as perm_unlink
+        NULL::integer as group_id,
+        'f'::boolean as perm_read,
+        'f'::boolean as perm_write,
+        'f'::boolean as perm_create,
+        'f'::boolean as perm_unlink
         from ir_model model
         left join ir_model_access ac on ac.model_id = model.id
         where ac.id is null)""")
