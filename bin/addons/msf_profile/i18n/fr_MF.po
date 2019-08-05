@@ -107570,6 +107570,16 @@ msgstr "Afficher les détails des NL/EXP"
 msgid "Line State"
 msgstr "État de la Ligne"
 
+#. module: msf_homere_interface
+#: view:hr.payroll.import.confirmation:0
+msgid "The import of the file failed!"
+msgstr "L'import du fichier a échoué !"
+
+#. module: msf_homere_interface
+#: field:hr.payroll.import.confirmation,from:0
+msgid "From where has this wizard been opened?"
+msgstr "Depuis où cet assistant a-t-il été ouvert ?"
+
 #. modules: sales_followup, msf_supply_doc_export
 #: code:sales_followup/wizard/sale_followup_multi_wizard.py:190
 #: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:297
