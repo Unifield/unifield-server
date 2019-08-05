@@ -51116,6 +51116,11 @@ msgstr "Facture Sur Commande après la Livraison"
 msgid "No open period found for given date: %s"
 msgstr "Pas de période ouverte trouvée pour la date donnée: %s"
 
+# module: account_override
+#, python-format
+msgid "No open period found"
+msgstr "Aucune période n'est ouverte"
+
 #. module: sale
 #: report:msf.freight_manifest:0
 msgid "Driver :"
@@ -74693,6 +74698,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/account/wizard/account_report_liquidity_balance.py:73
 #: code:addons/account/wizard/account_report_liquidity_balance.py:75
 #: code:addons/account_override/period.py:148
+#: code:addons/account_override/account.py:1256
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
