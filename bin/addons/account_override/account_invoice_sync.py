@@ -95,6 +95,7 @@ class account_invoice_sync(osv.osv):
         account_obj = self.pool.get('account.account')
         product_uom_obj = self.pool.get('product.uom')
         inv_line_obj = self.pool.get('account.invoice.line')
+        pol_obj = self.pool.get('purchase.order.line')
         for inv_line in inv_lines_data:
             line_name = inv_line.get('name', '')
             if not line_name:  # required field
@@ -149,16 +150,12 @@ class account_invoice_sync(osv.osv):
                 'product_id': product_id,
                 'uos_id': uom_id,
             }
-            if from_supply and inv_linked_po:
+            if from_supply and inv_linked_po and inv_line.get('sale_order_line_id', {}).get('sync_local_id'):
                 # fill in the AD at line level if applicable
-                # search the matching between PO line and invoice line based on description/product/quantity
-                matching_po_line = False
-                for po_line in inv_linked_po.order_line:
-                    if po_line.name == line_name and po_line.product_id and po_line.product_id.id == product_id and \
-                            po_line.product_qty == quantity and po_line.state not in ('draft', 'cancel', 'cancel_r'):
-                        matching_po_line = po_line
-                        break
-                if matching_po_line:
+                # search the matching between PO line and invoice line
+                po_line_ids = pol_obj.search(cr, uid, [('order_id', '=', inv_linked_po.id), ('sync_linked_sol', '=', inv_line['sale_order_line_id']['sync_local_id'])], context=context)
+                if po_line_ids:
+                    matching_po_line = pol_obj.browse(cr, uid, po_line_ids[0], fields_to_fetch=['analytic_distribution_id'], context=context)
                     po_line_distrib = matching_po_line.analytic_distribution_id
                     self._create_analytic_distrib(cr, uid, inv_line_vals, po_line_distrib, context=context)  # update inv_line_vals
             inv_line_obj.create(cr, uid, inv_line_vals, context=context)
@@ -304,9 +301,11 @@ class account_invoice_sync(osv.osv):
         if inv_id:
             self._create_invoice_lines(cr, uid, inv_lines, inv_id, posting_date, po, from_supply, context=context)
             if journal_type == 'sale':
-                self._logger.info("SI No. %s created successfully." % inv_id)
+                msg = "SI No. %s created successfully." % inv_id
             elif journal_type == 'intermission':
-                self._logger.info("IVI No. %s created successfully." % inv_id)
+                msg = "IVI No. %s created successfully." % inv_id
+            self._logger.info(msg)
+            return msg
 
     def update_counterpart_inv(self, cr, uid, source, invoice_data, context=None):
         """
@@ -338,7 +337,9 @@ class account_invoice_sync(osv.osv):
             if inv_ids:
                 self.write(cr, uid, inv_ids[0], vals, context=context)
                 # note that the "Counterpart Inv. Number" received is the "Number" of the invoice updated!
-                self._logger.info("account.invoice %s: Counterpart Invoice %s set to %s" % (counterpart_inv_number, number, state))
+                msg = "account.invoice %s: Counterpart Invoice %s set to %s" % (counterpart_inv_number, number, state)
+                self._logger.info(msg)
+                return msg
 
 account_invoice_sync()
 
