@@ -30,8 +30,8 @@ class stock_location(osv.osv):
     '''
     _name = "stock.location"
     _inherit = 'stock.location'
-    _parent_order = 'location_id, posz'
-    _order = 'location_id, posz'
+    _parent_order = 'location_id, posz, name'
+    _order = 'location_id, posz, name'
 
 
     def _get_input_output(self, cr, uid, ids, field_name, args, context=None):
