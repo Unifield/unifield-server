@@ -140,7 +140,7 @@
             view_mode="form"
             view_type="form"
             context="{'analytic_account_from': context.get('analytic_account_from', False) }"
-            target="new"/>
+            target="current"/>
 
         <act_window id="action_mass_reallocation_search"
             name="Mass reallocation - All search results"
@@ -150,7 +150,7 @@
             view_mode="form"
             view_type="form"
             context="{'all_search': True, 'search_domain': search_domain, 'analytic_account_from': context.get('analytic_account_from', False) }"
-            target="new"/>
+            target="current"/>
 
     <!-- Mass reallocation wizard -->
         <record id="mass_reallocation_wizard_view" model="ir.ui.view">
@@ -225,8 +225,7 @@
                     <separator string=""/>
                     <group col="6" colspan="4">
                         <label string="" colspan="2"/>
-                        <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
-                        <button name="button_validate" type="object" string="Verify" icon="terp-camera_test" colspan="1"/>
+                        <button name="button_validate" type="object" string="Verify" icon="terp-camera_test" colspan="6"/>
                     </group>
                     <field name="state" invisible="1"/>
                 </form>
@@ -262,10 +261,14 @@
                     <newline/>
                     <field name="other_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
                     <newline/>
-                    <group col="6" colspan="4"/>
-                        <label string="" colspan="2"/>
-                        <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
-                        <button name="button_validate" type="object" string="Process" icon="gtk-ok" colspan="1"/>
+                    <field name="message" nolabel="1" widget="text" colspan="4" attrs="{'invisible': [('state', '=', 'draft')]}"/>
+                    <field name="state" invisible="1" readonly="1" attrs="{'invisible': [('state', '=', 'draft')]}"/>
+                    <field name="percent" widget="progressbar" nolabel="1" colspan="4" attrs="{'invisible': [('state', '=', 'draft')]}"/>
+                    <group colspan="4" col="6">
+                        <button name="button_validate" type="object" string="Process" icon="gtk-ok" attrs="{'invisible': [('state', '!=', 'draft')]}" colspan="2"/>
+                        <button name="button_update" type="object" string="Update" icon="gtk-refresh" attrs="{'invisible': [('state', '!=', 'inprogress')]}" colspan="2"/>
+                        <button name="button_ok" type="object" string="OK" icon="terp-camera_test" attrs="{'invisible': [('state', '!=', 'done')]}" colspan="2"/>
+                    </group>
                 </form>
             </field>
         </record>

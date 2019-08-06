@@ -28,6 +28,7 @@ from collections import defaultdict
 from time import strftime
 from lxml import etree
 import threading
+import logging
 import pooler
 from msf_field_access_rights.osv_override import _get_instance_level
 
@@ -62,11 +63,17 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         'nb_other': fields.function(_get_total, string="Excluded lines", type='integer', method=True, store=False, multi="mass_reallocation_check"),
         'display_fp': fields.boolean('Display FP'),
         'process_in_progress': fields.boolean('Process in progress'),
+        'state': fields.selection([('draft', 'Draft'), ('inprogress', 'In Progress'), ('done', 'Done')], string='State', readonly=True),
+        'percent': fields.float('Process percentage', readonly=True),
+        'message': fields.char(string='Message', size=256, readonly=True),
     }
 
     _defaults = {
         'display_fp': lambda *a: False,
         'process_in_progress': lambda *a: False,
+        'state': lambda *a: 'draft',
+        'percent': 0.0,
+        'message': _('Processing to the Mass Reallocation...'),
     }
 
     def default_get(self, cr, uid, fields=None, context=None):
@@ -116,12 +123,64 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
             super(mass_reallocation_verification_wizard, self).write(cr, uid, ids, values, context=context)
             cr.close(True)
 
+    def button_update(self, cr, uid, ids, context=None):
+        """
+        Updates view to update the progress bar
+        """
+        return False
+
+    def _update_percent(self, cr, uid, ids, percent, context=None, use_new_cursor=False):
+        """
+        Updates the process percentage
+        """
+        self.write(cr, uid, ids, {
+            'percent': percent,
+        }, context=context)
+
+    def _update_message(self, cr, uid, ids, message, context=None, use_new_cursor=False):
+        """
+        Updates the message displayed in the wizard
+        """
+        self.write(cr, uid, ids, {
+            'message': message,
+        }, context=context)
+
+    def _mass_reallocation_process(self, cr, uid, ids, context=None, use_new_cursor=False):
+        """
+        Updates all the allocatable AJIs
+        """
+        if context is None:
+            context = {}
+        if use_new_cursor:
+            cr = pooler.get_db(cr.dbname).cursor()
+        try:
+            self.write(cr, uid, ids, {
+                'state': 'inprogress',
+            }, context=context)
+            # TODO: update AJI (see process_thread) + update msg + update percent + create & update Reallocated items list
+            self._update_percent(cr, uid, ids, 1, context, use_new_cursor)  # 1% of the total process time
+            self._update_message(cr, uid, ids, _('Processing...'), context, use_new_cursor)
+        except Exception as e:
+            logger = logging.getLogger('mass.reallocation.process')
+            logger.error(e)
+            if use_new_cursor:
+                cr.rollback()
+            error_msg = _("An error occurred%s") % (e.value and ':\n%s' % e.value or '')
+            self._update_message(cr, uid, ids, error_msg, context, use_new_cursor)
+        finally:
+            self._update_percent(cr, uid, ids, 100, context, use_new_cursor)
+            self.write(cr, uid, ids, {
+                'state': 'done',
+            }, context=context)
+            if use_new_cursor:
+                cr.commit()
+                cr.close(True)
+
     def button_validate(self, cr, uid, ids, context=None):
         """
-        Launch mass reallocation on "process_ids".
+        Launches the mass reallocation process in a separate thread
         """
-        # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -130,13 +189,42 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
         wiz_mass_obj = self.pool.get('mass.reallocation.verification.wizard')
         wiz_in_progress = wiz_mass_obj.search(cr, 1, [('process_in_progress', '=', True)], context=context)
         if wiz_in_progress:
-            raise osv.except_osv(_('Error'), _('A wizard is already \
-                                               in progress'))
-        process = threading.Thread(None,
-                                   wiz_mass_obj.process_thread, None,
-                                   (cr, uid, ids), {'context': context})
-        process.start()
-        return {'type': 'ir.actions.act_window_close'}
+            # don't use the word "Wizard" in the msg as it is displayed in a tab
+            raise osv.except_osv(_('Error'), _('A Mass Reallocation process is already in progress'))
+        th = threading.Thread(
+            target=self._mass_reallocation_process,
+            args=(cr, uid, ids, context, True),
+        )
+        th.start()
+        th.join(1.0)
+        return True
+
+    def button_ok(self, cr, uid, ids, context=None):
+        """
+        Goes back to the analytic lines view
+        """
+        ir_model_obj = self.pool.get('ir.model.data')
+        # TODO: update the context to display either the AJI or the Free1/2 view + the domain if necessary + the name of the view returned
+        if context is None:
+            context = {}
+        domain = []
+        view_id = ir_model_obj.get_object_reference(cr, uid, 'account', 'view_account_analytic_line_tree')
+        view_id = view_id and view_id[1] or False
+        search_view_id = ir_model_obj.get_object_reference(cr, uid, 'account', 'view_account_analytic_line_filter')
+        search_view_id = search_view_id and search_view_id[1] or False
+        return {
+            'name': _('Analytic Journal Items'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'search_view_id': [search_view_id],
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
 
 mass_reallocation_verification_wizard()
 
@@ -326,8 +414,8 @@ class mass_reallocation_wizard(osv.osv_memory):
         wiz_mass_obj = self.pool.get('mass.reallocation.verification.wizard')
         wiz_in_progress = wiz_mass_obj.search(cr, 1, [('process_in_progress', '=', True)], context=context)
         if wiz_in_progress:
-            raise osv.except_osv(_('Error'), _('A wizard is already \
-                                               in progress'))
+            # don't use the word "Wizard" in the msg as it is displayed in a tab
+            raise osv.except_osv(_('Error'), _('A Mass Reallocation process is already in progress'))
 
         # Prepare some values
         error_ids = []
@@ -411,7 +499,7 @@ class mass_reallocation_wizard(osv.osv_memory):
             'res_model': 'mass.reallocation.verification.wizard',
             'view_type': 'form',
             'view_mode': 'form',
-            'target': 'new',
+            'target': 'self',
             'res_id': [verif_id],
             'context': context,
         }
