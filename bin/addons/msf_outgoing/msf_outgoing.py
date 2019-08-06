@@ -1713,18 +1713,23 @@ class shipment(osv.osv):
                         uos_id = move.product_uom.id
                     account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, partner.property_account_position, account_id)
 
-                    line_id = line_obj.create(cr, uid, {'name': move.name,
-                                                        'origin': origin,
-                                                        'invoice_id': invoice_id,
-                                                        'uos_id': uos_id,
-                                                        'product_id': move.product_id.id,
-                                                        'account_id': account_id,
-                                                        'price_unit': price_unit,
-                                                        'discount': discount,
-                                                        'quantity': move.product_qty or move.product_uos_qty,
-                                                        'invoice_line_tax_id': [(6, 0, tax_ids)],
-                                                        'analytic_distribution_id': distrib_id,
-                                                        }, context=context)
+                    line_data = {
+                        'name': move.name,
+                        'origin': origin,
+                        'invoice_id': invoice_id,
+                        'uos_id': uos_id,
+                        'product_id': move.product_id.id,
+                        'account_id': account_id,
+                        'price_unit': price_unit,
+                        'discount': discount,
+                        'quantity': move.product_qty or move.product_uos_qty,
+                        'invoice_line_tax_id': [(6, 0, tax_ids)],
+                        'analytic_distribution_id': distrib_id,
+                    }
+                    if move.sale_line_id:
+                        line_data['sale_order_line_id'] = move.sale_line_id.id
+
+                    line_id = line_obj.create(cr, uid, line_data, context=context)
 
                     if move.sale_line_id:
                         sale_obj.write(cr, uid, [move.sale_line_id.order_id.id], {'invoice_ids': [(4, invoice_id)], })
