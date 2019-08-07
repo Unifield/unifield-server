@@ -107760,3 +107760,15 @@ msgstr "Impossible d'Annuler / Modifier si le compte n'est pas lettrable."
 #: view:account.invoice:0
 msgid "This invoice will sync to its counterpart instance."
 msgstr "Cette facture sera synchronisée à l'instance de Contrepartie."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1759
+#, python-format
+msgid "This Order in sync. instance reference is not linked with the FO in 'Origin'"
+msgstr "Cette référence de commande en instance sync. n'a pas de lien avec le FO de 'Origine'"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1763
+#, python-format
+msgid "No Order in sync. instance with an open FO was found with the data in 'Origin'"
+msgstr "Aucune commande en instance sync. avec une CdT ouverte n'a été trouvée avec les données dans 'Origine'"
