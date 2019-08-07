@@ -206,6 +206,13 @@ class purchase_order_line_sync(osv.osv):
                 original_claim_line = self.pool.get('purchase.order.line').search(cr, uid, [('line_number', '=', pol_values['line_number']), ('order_id', '=', po_ids[0]), ('state', 'not in', ['cancel', 'cancel_r'])])
                 if original_claim_line:
                     pol_values['resourced_original_line'] = original_claim_line[0]
+                    # if SOL claim if for full qty of PO line, just link the existing POL with the new claim SOL
+                    claim_po_lines = self.pool.get('purchase.order.line').browse(cr, uid, original_claim_line, fields_to_fetch=['origin', 'product_qty', 'state'], context=context)
+                    for claim_po_line in claim_po_lines:
+                        if claim_po_line.state == 'confirmed' and claim_po_line.product_qty == pol_values['product_uom_qty']:
+                            self.pool.get('purchase.order.line').write(cr, uid, [claim_po_line.id], {'sync_linked_sol': pol_values['sync_linked_sol']}, context=context)
+                            return 'Claim missing processed'
+
                 pol_values['origin'] = self.pool.get('purchase.order').browse(cr, uid, po_ids[0], context=context).origin
                 pol_values['from_synchro_return_goods'] = True
 
@@ -240,7 +247,6 @@ class purchase_order_line_sync(osv.osv):
                     pending_move = self.pool.get('stock.move').search(cr, uid, [('type', '=', 'in'), ('purchase_line_id', '=', claim_pol_id[0]), ('state', 'not in', ['done', 'cancel', 'cancel_r'])], context=context)
                     if not pending_move:
                         wf_service.trg_validate(uid, 'purchase.order.line', claim_pol_id[0], 'done', cr)
-
             pol_updated = new_pol
             pol_state = ''
             parent_so_id = False
