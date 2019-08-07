@@ -58108,8 +58108,8 @@ msgstr "Réf Ext."
 #: code:addons/purchase/purchase_order_line.py:598
 #: code:addons/purchase/purchase_order_line.py:1668
 #, python-format
-msgid "Analytic allocation is mandatory for this line: %s!"
-msgstr "Analytic allocation is mandatory for this line: %s!"
+msgid "Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually."
+msgstr "Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually."
 
 #. module: tender_flow
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:623
