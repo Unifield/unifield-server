@@ -50684,6 +50684,7 @@ msgid "No open period found for given date: %s"
 msgstr "Pas de période ouverte trouvée pour la date donnée: %s"
 
 # module: account_override
+#: code:addons/account_override/account.py:1256
 #, python-format
 msgid "No open period found"
 msgstr "Aucune période n'est ouverte"
