@@ -163,8 +163,9 @@ class stock_picking(osv.osv):
                     if 'life_date' in batch_values:
                         # If name exists in the sync message, search by name and product, not by xmlid
                         life_date = batch_values['life_date']
+                        lot_comment = batch_values.get('comment', False)
                         # US-838: use different way to retrieve the EP object
-                        batch_id = prodlot_obj._get_prodlot_from_expiry_date(cr, uid, life_date, product_id, context=context)
+                        batch_id = prodlot_obj._get_prodlot_from_expiry_date(cr, uid, life_date, product_id, lot_comment, context=context)
                         if not batch_id:
                             raise Exception, "Error while retrieving or creating the expiry date %s for the product %s" % (batch_values, prod.name)
                 else:
@@ -841,12 +842,20 @@ class stock_picking(osv.osv):
         existing_bn = batch_obj.search(cr, uid, [('name', '=', batch_dict['name']), ('product_id', '=', product_id),
                                                  ('life_date', '=', batch_dict['life_date'])], context=context)
         if existing_bn:  # existed already, then don't need to create a new one
+            # Add comment through synchro
+            if batch_dict.get('comment'):
+                batch_obj.write(cr, uid, existing_bn[0], {'comment': batch_dict['comment']}, context=context)
             message = "Batch object exists in the current system. No new batch created."
             self._logger.info(message)
             return existing_bn[0], message
 
         # If not exists, then create this new batch object
-        new_bn_vals = {'name': batch_dict['name'], 'product_id': product_id, 'life_date': batch_dict['life_date']}
+        new_bn_vals = {
+            'name': batch_dict['name'],
+            'product_id': product_id,
+            'life_date': batch_dict['life_date'],
+            'comment': batch_dict.get('comment', False),  # Add comment through synchro
+        }
         message = "The new BN " + batch_dict['name'] + " has been created"
         self._logger.info(message)
         bn_id = batch_obj.create(cr, uid, new_bn_vals, context=context)

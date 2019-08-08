@@ -25095,6 +25095,7 @@ msgstr "Produits Stoppés"
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:256
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:431
 #: field:check.products.supplier.updated.wizard,comment:0
+#: field:stock.production.lot,comment:0
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"

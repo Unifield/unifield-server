@@ -51,7 +51,7 @@ class stock_production_lot(osv.osv):
 
 
     # US-838: This method got moved from addons/msf_outgoing/wizard/incoming_shipment_processor.py
-    def _get_prodlot_from_expiry_date(self, cr, uid, expiry_date, product_id, context=None):
+    def _get_prodlot_from_expiry_date(self, cr, uid, expiry_date, product_id, comment, context=None):
         """
         Search if an internal batch exists in the system with this expiry date.
         If no, create the batch.
@@ -74,10 +74,13 @@ class stock_production_lot(osv.osv):
                 'life_date': expiry_date,
                 'name': seq_ed,
                 'type': 'internal',
+                'comment': comment,  # Add comment through synchro
             }
             lot_id = self.create(cr, uid, vals, context)
         else:
             lot_id = lot_ids[0]
+            # Add comment through synchro
+            self.write(cr, uid, lot_id, {'comment': comment}, context=context)
 
         return lot_id
 

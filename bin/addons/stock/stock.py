@@ -1919,6 +1919,7 @@ class stock_production_lot(osv.osv):
         'revisions': fields.one2many('stock.production.lot.revision', 'lot_id', 'Revisions'),
         'company_id': fields.many2one('res.company', 'Company', select=True),
         'move_ids': fields.one2many('stock.move', 'prodlot_id', 'Moves for this production lot', readonly=True),
+        'comment': fields.char('Comment', size=100),
     }
     _defaults = {
         'date':  lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
