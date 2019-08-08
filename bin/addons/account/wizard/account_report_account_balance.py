@@ -28,7 +28,7 @@ class account_balance_report(osv.osv_memory):
 
     _columns = {
         'initial_balance': fields.boolean("Include initial balances",
-            help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
+                                          help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
         'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
 
@@ -44,12 +44,14 @@ class account_balance_report(osv.osv_memory):
             ('yes', 'Yes'),
             ('no', 'No'),
         ], "Reconciled",
-        help="filter will apply only on the B/S accounts except for the non reconciliable account like 10100 and 10200 which will never be displayed per details"),
+            help="filter will apply only on the B/S accounts except for the non reconciliable account like 10100 and 10200 which will never be displayed per details"),
         'reconcile_date': fields.date("At"),
 
+        'open_items': fields.many2one('account.period', string='Open Items at', domain=[('state', '!=', 'created')]),
+
         'account_ids': fields.many2many('account.account',
-            'account_report_general_ledger_account_account_rel',
-            'report_id', 'account_id', 'Accounts'),
+                                        'account_report_general_ledger_account_account_rel',
+                                        'report_id', 'account_id', 'Accounts'),
 
         'filter': fields.selection([
             ('filter_no', 'No Filters'),
@@ -95,7 +97,7 @@ class account_balance_report(osv.osv_memory):
 
         data['form']['initial_balance'] = False
         form_fields = [ 'initial_balance', 'instance_ids', 'export_format',
-            'account_type', 'account_ids', 'reconciled', 'reconcile_date', ]
+                        'account_type', 'account_ids', 'reconciled', 'reconcile_date', 'open_items']
         data['form'].update(self.read(cr, uid, ids, form_fields)[0])
 
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record

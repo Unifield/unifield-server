@@ -421,7 +421,6 @@ class stock_inventory_line(osv.osv):
         'batch_name': fields.char(size=128, string='Batch name'),
         'inv_expiry_date': fields.date(string='Invisible expiry date'),
         'to_correct_ok': fields.boolean('To correct'),
-        'comment': fields.text('Comment', readonly=True),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
     }
@@ -1112,17 +1111,6 @@ class initial_stock_inventory_line(osv.osv):
                     vals['prodlot_name'] = False
                 else:
                     comment += _('Expiry date is missing.\n')
-
-        if hidden_batch_management_mandatory and batch and expiry:
-            pl_ids = pl_obj.search(cr, uid, [('name', '=', batch), ('product_id', '=', vals.get('product_id'))], context=context)
-            if pl_ids and pl_obj.read(cr, uid, pl_ids[0], ['life_date'], context=context)['life_date'] != expiry:
-                comment += _('Please check expiry date is correct.\n')
-                vals.update({
-                    'prod_lot_id': False,
-                    'prodlot_name': '',
-                    'expiry_date': False,
-                    'to_correct_ok': True,
-                })
 
         if not comment:
             if vals.get('comment'):

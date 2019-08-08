@@ -61,18 +61,31 @@ class po_follow_up(osv.osv_memory):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'export_format': 'xls'}, context=context)
-        return self.button_validate(cr, uid, ids, report_name='po.follow.up_xls', context=None)
+        # Create background report
+        report_name = 'po.follow.up_xls'
+        background_id = self.pool.get('memory.background.report').\
+            create(cr, uid, {'file_name': report_name, 'report_name': report_name}, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 3
 
+        self.write(cr, uid, ids, {'export_format': 'xls'}, context=context)
+        return self.button_validate(cr, uid, ids, report_name=report_name, context=context)
 
     def pdf_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
-        self.write(cr, uid, ids, {'export_format': 'pdf'}, context=context)
 
-        return self.button_validate(cr, uid, ids, report_name='po.follow.up_rml', context=None)
+        report_name = 'po.follow.up_rml'
+        # Create background report
+        background_id = self.pool.get('memory.background.report').\
+            create(cr, uid, {'file_name': report_name, 'report_name': report_name}, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 3
+
+        self.write(cr, uid, ids, {'export_format': 'pdf'}, context=context)
+        return self.button_validate(cr, uid, ids, report_name=report_name, context=context)
 
 
     def get_state_list(self, cr, uid, wiz, context=None):
@@ -222,8 +235,6 @@ class po_follow_up(osv.osv_memory):
 
         return report_lines
 
-
-
     def button_validate(self, cr, uid, ids, report_name, context=None):
         if context is None:
             context = {}
@@ -287,8 +298,24 @@ class po_follow_up(osv.osv_memory):
         po_ids = po_obj.search(cr, uid, domain)
 
         if not po_ids:
-            raise osv.except_osv(_('Error'), _('No Purchase Orders match the specified criteria.'))
-            return True
+            raise osv.except_osv(_('Warning'), _('No Purchase Orders match the specified criteria.'))
+
+        cr.execute("""SELECT COUNT(id) FROM purchase_order_line WHERE order_id IN %s""", (tuple(po_ids),))
+        nb_lines = 0
+        for x in cr.fetchall():
+            nb_lines = x[0]
+
+        # Parameter to define the maximum number of lines. For a custom number:
+        # "INSERT INTO ir_config_parameter (key, value) VALUES ('FOLLOWUP_MAX_LINE', 'chosen_number');"
+        # Or update the existing one
+        config_line = self.pool.get('ir.config_parameter').get_param(cr, 1, 'PO_FOLLOWUP_MAX_LINE')
+        if config_line:
+            max_line = int(config_line)
+        else:
+            max_line = 20000
+
+        if nb_lines > max_line:
+            raise osv.except_osv(_('Error'), _('The requested report is too heavy to generate: requested %d lines, maximum allowed %d. Please apply further filters so that report can be generated.'), (nb_lines, max_line))
 
         if wiz.pending_only_ok and report_name == 'po.follow.up_rml':
             filtered_po_ids = []
@@ -318,9 +345,7 @@ class po_follow_up(osv.osv_memory):
         if wiz.po_date_from:
             domain.append(('date_order', '>=', wiz.po_date_from))
 
-        background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': report_name, 'report_name': report_name}, context=context)
-        context['background_id'] = background_id
-        context['background_time'] = wiz.background_time
+        # For background report
         context['nb_orders'] = len(po_ids)
 
         return {
@@ -333,19 +358,3 @@ class po_follow_up(osv.osv_memory):
 
 po_follow_up()
 
-
-# already defined in account_mcdb/wizard/output_currency_for_export.py
-# class background_report(osv.osv_memory):
-#        _name = 'memory.background.report'
-#        _description = 'Report result'
-#
-#        _columns = {
-#            'file_name': fields.char('Filename', size=256),
-#            'report_name': fields.char('Report Name', size=256),
-#            'report_id': fields.integer('Report id'),
-#            'percent': fields.float('Percent'),
-#            'finished': fields.boolean('Finished'),
-#        }
-#        def update_percent(self, cr, uid, ids, percent, context=None):
-#            self.write(cr, uid, ids, {'percent': percent})
-# background_report()

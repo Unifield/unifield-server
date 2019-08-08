@@ -35,7 +35,6 @@
     "demo_xml" : [],
     "update_xml" : [
         'board_account_view.xml',
-        'account_invoice_workflow.xml',
         'account_view.xml',
         'account_invoice_view.xml',
         'account_analytic_line_view.xml',

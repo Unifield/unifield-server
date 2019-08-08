@@ -65,11 +65,14 @@ class sale_loan_stock_moves(osv.osv_memory):
             string='Stock Moves',
             readonly=True
         ),
+        'display_bn_ed': fields.boolean(
+            string='Display BN/ED details',
+        ),
     }
 
     _defaults = {
+        'display_bn_ed': False,
     }
-
 
     def get_values(self, cr, uid, ids, context=None):
         '''
@@ -89,7 +92,6 @@ class sale_loan_stock_moves(osv.osv_memory):
             sm_domain = []
 
             sm_domain.append(('reason_type_id', '=', type_loan_id))
-            sm_domain.append(('state', '=', 'done'))
             sm_domain += ['|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
                           ('location_dest_id.usage', 'in', ['customer', 'supplier'])]
 
@@ -110,6 +112,11 @@ class sale_loan_stock_moves(osv.osv_memory):
 
             if wizard.origin:
                 sm_domain.append(('origin', 'like', wizard.origin))
+
+            if wizard.display_bn_ed:
+                sm_domain.append(('state', '!=', 'cancel'))
+            else:
+                sm_domain.append(('state', '=', 'done'))
 
             remove_completed = False
             if wizard.remove_completed:
@@ -154,5 +161,6 @@ class sale_loan_stock_moves(osv.osv_memory):
             'datas': data,
             'context': context,
         }
+
 
 sale_loan_stock_moves()

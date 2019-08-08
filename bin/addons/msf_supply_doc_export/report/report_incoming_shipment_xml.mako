@@ -8,7 +8,7 @@
         <field name="partner_id" key="name">
             <field name="name">${o.partner_id and o.partner_id.name or ''}</field>
         </field>
-        <field name="transport_mode">${(o.purchase_id and getSel(o.purchase_id, 'transport_type') or '')|x}</field>
+        <field name="transport_type">${(o.purchase_id and getSel(o.purchase_id, 'transport_type') or '')|x}</field>
         <field name="note">${o.note or ''}</field>
         <field name="message_esc"></field>
         <field name="move_lines">

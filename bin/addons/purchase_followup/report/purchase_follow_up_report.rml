@@ -32,7 +32,7 @@
     <stylesheet>
 
         <blockTableStyle id="TitleTable">
-            <blockAlignment value="CENTRE"/>
+            <blockAlignment value="CENTER"/>
             <blockValign value="MIDDLE"/>
             <lineStyle kind="OUTLINE" colorName="black" />
         </blockTableStyle>
@@ -61,7 +61,7 @@
 
         <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
 
-        <paraStyle name="Title" fontName="Helvetica-Bold" fontSize="12.0" leading="15.0" alignement="CENTER" />
+        <paraStyle name="Title" fontName="Helvetica-Bold" fontSize="12.0" leading="15.0" alignment="CENTER" />
         <paraStyle name="TextInfo" fontName="Helvetica" fontSize="8.0" leading="7.0" textColor="blue" alignment="CENTER" />
         <paraStyle name="TextInfoLeft" fontName="Helvetica" fontSize="8.0" leading="7.0" textColor="blue" alignment="LEFT" />
         <paraStyle name="TextInfoRight" fontName="Helvetica" fontSize="8.0" leading="7.0" textColor="blue" alignment="RIGHT" />
@@ -73,16 +73,10 @@
 
     <story>
 
-        <blockTable colWidths="170.0,192.0,170.0" style="TitleTable">
+        <blockTable colWidths="532" style="TitleTable">
             <tr>
                 <td>
-                    <para style="Title"> </para>
-                </td>
-                <td>
                     <para style="Title">PURCHASE FOLLOW UP</para>
-                </td>
-                <td>
-                    <para style="Title"> </para>
                 </td>
             </tr>
         </blockTable>
@@ -93,7 +87,7 @@
 
         <setNextTemplate name="second" />
 
-        <blockTable colWidths="112.0,250.0,410.0" style="DocInfo">
+        <blockTable colWidths="132.0,250.0,380.0" style="DocInfo">
             <tr>
                 <td>
                     <para style="TextInfoBold">Order reference:</para>
