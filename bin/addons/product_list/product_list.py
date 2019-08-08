@@ -243,6 +243,16 @@ class product_list_line(osv.osv):
         return self.pool.get('product.list.line').\
             search(cr, uid, [('name', 'in', ids)], context=context)
 
+    def name_get(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        ret = []
+        for pl in self.browse(cr, uid, ids, fields_to_fetch=['name'], context=context):
+            ret.append((pl.id, '[%s] %s' % (pl.name.default_code, pl.name.name)))
+
+        return ret
+
     _columns = {
         'name': fields.many2one(
             'product.product',
