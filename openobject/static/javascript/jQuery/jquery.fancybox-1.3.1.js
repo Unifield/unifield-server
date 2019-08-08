@@ -261,7 +261,11 @@
 			if (currentOpts.showCloseButton) {
 				close.show();
 			}
-
+            close.unbind('click');
+            if ($.isFunction(currentOpts.onClickClosed)) {
+               close.click(currentOpts.onClickClosed);
+            }
+			close.click($.fancybox.close);
 			fancybox_set_navigation();
 
 			$(window).bind("resize.fb", $.fancybox.center);
@@ -533,7 +537,6 @@
             if(!close)
                 close = $('#fancybox-close');
 			fancybox_abort();
-
 			var obj	= selectedArray[ selectedIndex ],
 				href, 
 				type, 
@@ -753,8 +756,6 @@
 				nav_left	= $('<a href="javascript:;" id="fancybox-left"><span class="fancy-ico" id="fancybox-left-ico"></span></a>'),
 				nav_right	= $('<a href="javascript:;" id="fancybox-right"><span class="fancy-ico" id="fancybox-right-ico"></span></a>')
 			);
-
-			close.click($.fancybox.close);
 			loading.click($.fancybox.cancel);
 
 			nav_left.click(function(e) {
@@ -1081,7 +1082,8 @@
 		onCancel			:	null,
 		onComplete			:	null,
 		onCleanup			:	null,
-		onClosed			:	null
+		onClosed			:	null,
+        onClickClosed       : null,
 	};
 
 	$(document).ready(function() {

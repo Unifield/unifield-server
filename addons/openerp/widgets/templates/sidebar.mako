@@ -9,7 +9,11 @@
             % if icon:
                 <img src="${icon}" alt=""/>
             % endif
-           <a href="javascript: void(0)" onclick="return false">${item['name']}</a>
+           <a href="javascript: void(0)" onclick="return false"
+            % if item.get('update_title'):
+                id="update_me_with_title"
+            % endif
+            >${item['name']}</a>
         </li>
     % else:
         <li>

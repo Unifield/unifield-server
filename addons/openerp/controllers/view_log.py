@@ -23,6 +23,46 @@ from openerp.utils import rpc
 
 from openobject.tools import expose
 
+import base64
+import urllib
+import zlib
+
+class progress_bar(SecuredController):
+    _cp_path = '/openerp/progressbar'
+
+    @expose('json')
+    def get(self, id, model, job_id):
+        job = rpc.RPCProxy('job.in_progress').read(int(job_id))
+        if not job or job['state'] == 'done' or job['res_id'] != int(id) or job['model'] != model:
+            url = ''
+            if job['target_link']:
+                payload = str({
+                    'action': job['target_link'],
+                    'data': {}
+                })
+                compressed_payload = base64.urlsafe_b64encode(zlib.compress(payload))
+                url = ('/openerp/execute?' + urllib.urlencode({'payload': compressed_payload}))
+            return {'progress': 100, 'state': 'done', 'target': url, 'target_name': job['target_name'], 'src_name': job['src_name'], 'job_name': job['name']}
+
+        percent = 100*(job['nb_processed'] or 0)/(job['total'] or 1)
+        if job['state'] == 'error':
+            return {'state': 'error', 'errormsg': job['error'], 'progress': percent}
+
+        return {'progress': percent, 'state': 'in-progress'}
+
+    @expose('json')
+    def setread(self, id, model, job_id):
+        job_obj = rpc.RPCProxy('job.in_progress')
+        job_id = job_obj.search([('id', '=', int(job_id)), ('res_id', '=', int(id)), ('model', '=', model)])
+        if job_id:
+            job_obj.write(job_id, {'read': True})
+
+        return {}
+
+    @expose(template="/openerp/controllers/templates/progress.mako")
+    def index(self, id, model, job_id):
+        return {'id': id, 'model': model, 'job_id': job_id}
+
 
 class View_Log(SecuredController):
 

@@ -97,7 +97,8 @@ if (auto_field && auto_field.val()){
         % if not data['id'] or data['id'] not in notselectable:
             % if not m2m:
                 <%
-                    selector_click = "new ListView('%s').onBooleanClicked(!this.checked, '%s');" % (name, data['id'])
+                    nosidedar = name != '_terp_list' and 'true' or 'false'
+                    selector_click = "new ListView('%s').onBooleanClicked(!this.checked, '%s', %s);" % (name, data['id'], nosidedar)
                     if selector == "radio":
                         selector_click += " do_select();"
                 %>
@@ -132,10 +133,12 @@ if (auto_field && auto_field.val()){
                     <img alt="edit record" src="${edit_image}"
                         class="listImage" border="0" title="${_('Inline Edit')}"
                         onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']})"/>
-                    % if not edit_inline or edit_inline == 'null':
+                    % if (not nopopup or not data['id'] or data['id'] not in nopopup) and not edit_inline or edit_inline == 'null':
                     <img alt="edit record" src="/openerp/static/images/icons/stock_align_left_24.png"
                         class="listImage" border="0" title="${_('Edit')}"
                         onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']}, false)" />
+                    % else:
+                        <img src="/openobject/static/images/fancybox/blank.gif" alt="" width="24" class="listImage" border="0" title="" onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']})"/>
                     % endif
 
                 % else:
@@ -303,7 +306,7 @@ if (auto_field && auto_field.val()){
                                 % if selector:
                                     <th width="1" class="grid-cell selector">
                                         % if selector == 'checkbox' and not m2m:
-                                            <input type="checkbox" class="checkbox grid-record-selector" onclick="new ListView('${name}').checkAll(!this.checked)"/>
+                                            <input type="checkbox" class="checkbox grid-record-selector" id="${name}_check_all"  onclick="new ListView('${name}').checkAll(!this.checked)"/>
                                         % endif
                                         % if selector != 'checkbox' and not m2m:
                                             <span>&nbsp;</span>
@@ -460,7 +463,15 @@ if (auto_field && auto_field.val()){
                                % if bothedit:
                                 else {
                                     jQuery(row).click(function(event) {
-                                        new One2Many('${name}', false).edit(parseInt(jQuery(row).attr('record'), 10),  true);
+                                        var rec_id = parseInt(jQuery(row).attr('record'), 10);
+                                        if (rec_id) {
+                                            new One2Many('${name}', false).edit(rec_id,  true);
+                                        } else {
+                                            var current_id = jQuery(idSelector('${name}')).attr('current_id');
+                                            if (current_id) {
+                                                new ListView('${name}').save(current_id);
+                                            }
+                                        }
                                     });
                                 }
                                % endif

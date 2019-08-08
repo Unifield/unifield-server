@@ -28,6 +28,13 @@
             setTimeout(function() {
                 jQuery('[autofocus="autofocus"]').focus();
             }, 10);
+
+            % if form.screen.view_type == 'form':
+            sidebar_to_update = $('#update_me_with_title');
+            if (sidebar_to_update.length) {
+                sidebar_to_update.html($('#form_title').html());
+            }
+            % endif
         });
     </script>
 
@@ -87,13 +94,13 @@
                     % if can_shortcut:
                         <a id="shortcut_add_remove" title="${_('Add / Remove Shortcut...')}" href="javascript: void(0)" class="${shortcut_class}"></a>
                     % endif
-
+                    <span id="form_title">
                     % if form.screen.view_type == 'tree':
                         ${_('Search: %s') % form.screen.string}
                     % else:
                         ${form.screen.string}
                     % endif
-
+                    </span>
                     % if obj_process:
                         <a class="help" href="${py.url('/view_diagram/process', res_model=form.screen.model, title=form.screen.string, res_id=form.screen.id)}"
                            title="${_('Corporate Intelligence...')}">
@@ -170,6 +177,7 @@
                 </div>
                 % endif
                 <div${ " class='non-editable'" if not form.screen.editable and form.screen.view_type == 'form' else "" | n }>${form.display()}</div>
+
                 </div>
 
             </td>
@@ -213,6 +221,9 @@
 
             % if tg_errors:
             error_display(_("The form contains errors."));
+            % endif
+            % if loading_id:
+            jQuery.fancybox({'href': "/openerp/progressbar?model=${form.screen.model}&id=${form.screen.id}&job_id=${loading_id}", 'modal': false, 'onClickClosed': function() {window.editRecord(${form.screen.id})}});
             % endif
         })
     </script>

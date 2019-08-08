@@ -192,6 +192,21 @@ class Form(SecuredController):
     def create(self, params, tg_errors=None):
         params.view_type = params.view_type or params.view_mode[0]
 
+        loading_id = False
+        if params.view_type == 'form' and params.id:
+            try:
+                loading_ids = rpc.RPCProxy('job.in_progress').search([('model', '=', params.model), ('res_id', '=', params.id), ('read', '=', False)])
+            except openobject.errors.TinyWarning, e:
+                # backkground compatibility between web and server
+                if e.message == "Object job.in_progress doesn't exist":
+                    loading_ids = []
+                else:
+                    raise
+            if loading_ids:
+                loading_id = [loading_ids[-1]]
+                params.editable = False
+                params.readonly = True
+                params.force_readonly = True
         if params.view_type == 'tree':
             params.editable = True
 
@@ -257,6 +272,11 @@ class Form(SecuredController):
         display_name = {}
         if params.view_type == 'form':
             if params.id:
+                title_field = form.screen.view.get('title_field')
+                if form.screen.widget.force_string and form.screen.widget.string:
+                    form.screen.string = form.screen.widget.string
+                elif title_field and form.screen.view['fields'].get(title_field, {}).get('value'):
+                    form.screen.string = form.screen.view['fields'][title_field]['value']
                 if form.screen.view.get('fields') and form.screen.view['fields'].get('name'):
                     display_name = {'field': form.screen.view['fields']['name']['string'], 'value': ustr(form.screen.view['fields']['name']['value'])}
                     title= ustr(display_name['field']) + ':' + ustr(display_name['value'])
@@ -272,7 +292,7 @@ class Form(SecuredController):
 
         is_dashboard = form.screen.is_dashboard or False
 
-        return dict(form=form, pager=pager, buttons=buttons, path=self.path, can_shortcut=can_shortcut, shortcut_ids=shortcut_ids, display_name=display_name, title=title, tips=tips, obj_process=obj_process, is_dashboard=is_dashboard, sidebar_closed=params._terp_sidebar_closed, sidebar_open=params.sidebar_open, auto_refresh=params.auto_refresh, tg_errors=tg_errors)
+        return dict(form=form, pager=pager, buttons=buttons, path=self.path, can_shortcut=can_shortcut, shortcut_ids=shortcut_ids, display_name=display_name, title=title, tips=tips, obj_process=obj_process, is_dashboard=is_dashboard, sidebar_closed=params._terp_sidebar_closed, sidebar_open=params.sidebar_open, auto_refresh=params.auto_refresh, tg_errors=tg_errors, loading_id=loading_id)
 
     @expose('json', methods=('POST',))
     def close_or_disable_tips(self):

@@ -72,7 +72,6 @@ class Widget(object):
                 pass
 
         self._resources = OrderedSet()
-
         # Set default css class for the widget
         if not getattr(self, 'css_class', None):
             self.css_class = self.__class__.__name__.lower()

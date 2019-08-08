@@ -671,6 +671,12 @@ table.fields td {
     padding-right: 16px;
     white-space: nowrap;
 }
+
+.m2o_container_nowrap {
+    white-space: normal;
+    padding-right: 16px;
+
+}
 .m2o {
     position: relative;
 }

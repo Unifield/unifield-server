@@ -94,7 +94,7 @@ class ViewForm(Form):
 
         get_source = params.get_source or False
         self.screen = Screen(prefix='', hastoolbar=True, hassubmenu=True, editable=editable, readonly=readonly,
-                             selectable=params.selectable or 2, get_source=get_source)
+                             selectable=params.selectable or 2, get_source=get_source, force_readonly=params.readonly)
 
         if self.screen.widget and self.screen.view_type in ['form', 'tree']:
             self.logs = Logs()
@@ -115,6 +115,7 @@ class ViewForm(Form):
             self.screen.widget.editable = False
 
         # get the correct view title
+        #if params.context and (params.view_type !='form' or not self.screen.string):
         if params.context:
             self.screen.string = params.context.get('_terp_view_name', self.screen.string)
         self.screen.string = self.screen.string

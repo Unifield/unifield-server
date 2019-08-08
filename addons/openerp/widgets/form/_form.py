@@ -532,7 +532,6 @@ class Selection(TinyInputWidget):
 
     def __init__(self, **attrs):
         super(Selection, self).__init__(**attrs)
-
         self.options = attrs.get('selection', [])
         self.type2 = attrs.get('type2')
         self.operator = attrs.get('operator', '=')
@@ -687,7 +686,6 @@ class Button(TinyInputWidget):
     visible = True
     def __init__(self, **attrs):
         super(Button, self).__init__(**attrs)
-
         # remove mnemonic
         self.string = re.sub('_(?!_)', '', self.string or '')
 
@@ -801,9 +799,9 @@ class Form(TinyInputWidget):
     params = ['id']
     member_widgets = ['frame', 'concurrency_info']
 
-    def __init__(self, prefix, model, view, ids=[], domain=[], context=None, editable=True, readonly=False, nodefault=False, nolinks=1, get_source=False):
+    def __init__(self, prefix, model, view, ids=[], domain=[], context=None, editable=True, readonly=False, nodefault=False, nolinks=1, get_source=False, force_readonly=False):
 
-        super(Form, self).__init__(prefix=prefix, model=model, editable=editable, readonly=readonly, nodefault=nodefault)
+        super(Form, self).__init__(prefix=prefix, model=model, editable=editable, readonly=readonly, nodefault=nodefault, force_readonly=force_readonly)
         dom = xml.dom.minidom.parseString(view['arch'].encode('utf-8'))
         root = dom.childNodes[0]
         attrs = node_attributes(root)
@@ -815,6 +813,7 @@ class Form(TinyInputWidget):
         self.hide_button_edit = attrs.get('hide_edit_button', False)
         self.hide_button_save = attrs.get('hide_save_button', False)
         self.hide_button_cancel = attrs.get('hide_cancel_button', False)
+        self.force_string = attrs.get('force_string')
         self.noteditable = False
         self.link = attrs.get('link', nolinks)
         self.model = model
@@ -973,6 +972,8 @@ class Form(TinyInputWidget):
 
             elif node.localName=='button':
                 attrs['editable'] = self.editable
+                if self.force_readonly:
+                    attrs['force_readonly'] = True
                 views.append(Button(model=self.model, id=self.id, **attrs))
 
             elif node.localName == 'form':
@@ -1080,6 +1081,7 @@ class Form(TinyInputWidget):
         attrs.setdefault('context', self.context)
         attrs.setdefault('model', self.model)
         attrs.setdefault('state', self.state)
+        attrs.setdefault('force_readonly', self.force_readonly)
 
         if attrs.get('widget'):
             if attrs['widget']=='one2many_list':

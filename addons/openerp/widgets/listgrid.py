@@ -38,7 +38,7 @@ from pager import Pager
 class List(TinyWidget):
 
     template = "/openerp/widgets/templates/listgrid/listgrid.mako"
-    params = ['name', 'data', 'columns', 'headers', 'model', 'selectable', 'editable', 'noteditable', 'resequencable',
+    params = ['name', 'data', 'columns', 'headers', 'model', 'selectable', 'editable', 'noteditable', 'nopopup', 'resequencable',
               'pageable', 'selector', 'source', 'offset', 'limit', 'show_links', 'editors', 'view_mode',
               'hiddens', 'edit_inline', 'field_total', 'field_real_total',
               'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m',
@@ -60,6 +60,7 @@ class List(TinyWidget):
     headers = None
     noteditable = None
     notselectable = None
+    nopopup = False
     model = None
     selectable = False
     editable = False
@@ -76,7 +77,7 @@ class List(TinyWidget):
 
     def __init__(self, name, model, view, ids=[], domain=[], context={}, **kw):
 
-        super(List, self).__init__(name=name, model=model, ids=ids)
+        super(List, self).__init__(name=name, model=model, ids=ids, force_readonly=kw.get('force_readonly'))
         self.context = context or {}
         self.domain = domain or []
         custom_search_domain = getattr(cherrypy.request, 'custom_search_domain', [])
@@ -93,6 +94,7 @@ class List(TinyWidget):
         self.dashboard = 0
         self.noteditable = []
         self.notselectable = []
+        self.nopopup = []
         self.selectable = kw.get('selectable', 0)
         self.editable = kw.get('editable', False)
         self.pageable = kw.get('pageable', True)
@@ -296,6 +298,13 @@ class List(TinyWidget):
                         self.noteditable.append(x['id'])
                 except:
                     pass
+        if self.editable and attrs.get('nopopup'):
+            for x in self.values:
+                try:
+                    if expr_eval(attrs.get('nopopup'), x):
+                        self.nopopup.append(x['id'])
+                except:
+                    pass
 
         if self.editable and attrs.get('editable') in ('top', 'bottom', 'both'):
             self.bothedit = attrs.get('editable') == 'both'
@@ -307,6 +316,7 @@ class List(TinyWidget):
                         self.edit_inline = False
                         self.editors = {}
                         break
+                    fa['editable_style'] = attrs.get('editable_style', False)
                     Widget = get_widget(fa.get('type', 'char')) or get_widget('char')
                     self.editors[f] = Widget(**fa)
 

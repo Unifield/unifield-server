@@ -118,3 +118,19 @@ msgstr "Vous ne pouvez pas envoyer des fichiers plus gros que %(max_size)sMB, la
 #: addons/openerp/controllers/templates/form.mako
 msgid "The form contains errors."
 msgstr "Le formulaire comporte des erreurs."
+
+#: addons/openerp/controllers/templates/progress.mako
+msgid "Last Processing Error"
+msgstr "Dernière Erreur de Traitement"
+
+#: addons/openerp/controllers/templates/progress.mako
+msgid "Done"
+msgstr "Fini"
+
+#: addons/openerp/controllers/templates/progress.mako
+msgid "In Progress"
+msgstr "En cours"
+
+#: addons/openerp/controllers/templates/progress.mako
+msgid "View "
+msgstr "Voir "

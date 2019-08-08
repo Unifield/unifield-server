@@ -116,7 +116,7 @@ ListView.prototype = {
 
     checkAll: function(clear) {
         var self = this
-        jQuery('[id="' + this.name + '"] input.grid-record-selector').each(function(){
+        jQuery('[id="' + this.name + '"] input.grid-record-selector[id!="'+this.name+'_check_all"]').each(function(){
             jthis = jQuery(this)
             if (clear && jthis.attr('checked')) {
                 self.remove_previously_selected(jthis.val());
@@ -191,10 +191,11 @@ ListView.prototype = {
     },
 
     $getSelectedItems: function () {
+       var ignore_tick = this.name+'_check_all';
        return jQuery(idSelector(this.name))
                 .find('input.grid-record-selector')
                 .filter(function() {
-            return this.id && this.checked;
+            return this.id && this.checked && this.id!=ignore_tick;
         })
     },
 
@@ -210,11 +211,18 @@ ListView.prototype = {
             nosidebar = arguments[2];
             if (clicked) {
                 this.add_previously_selected(id);
+                if (this.name != '_terp_list' && jQuery('[id="' + this.name + '"] input.grid-record-selector[id!="'+this.name+'_check_all"]').length == this.getSelectedRecords().length) {
+                    $('#'+this.name+'_check_all').attr('checked', true);
+                }
             } else {
                 this.remove_previously_selected(id);
+                if (this.name != '_terp_list') {
+                    $('#'+this.name+'_check_all').attr('checked', false);
+                }
             }
+        } else if (this.name != '_terp_list') {
+            nosidebar = true;
         }
-
         if (!nosidebar) {
             var $sidebar = jQuery('.toggle-sidebar');
             if ($sidebar.is('.closed')) {
@@ -914,6 +922,9 @@ MochiKit.Base.update(ListView.prototype, {
         this.reload();
     },
 
+    after_reload: function() {
+    },
+
     reload_from_wizard: function() {
         return this.reload(undefined, undefined, undefined, undefined, undefined, true);
     },
@@ -1045,6 +1056,10 @@ MochiKit.Base.update(ListView.prototype, {
                         //console.log('Set readonly');
                         new One2Many(self.name).setReadonly(true);
                     }
+                    __listview.after_reload()
+                    jQuery('#view_form .editors (input|select):not([type="hidden"]):[fld_readonly="1"][editable_style="1"], #view_form .editors (input|select):[kind="many2one"]:[fld_readonly="1"][editable_style="1"]').each(function() {
+                        form_setReadonly(this, this, true);
+                    });
                 }
 
                 var selfname = self.name

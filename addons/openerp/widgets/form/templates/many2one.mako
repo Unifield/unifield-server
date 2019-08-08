@@ -1,9 +1,9 @@
 <%def name="display_open_resource(name)">
-    <img id="${name}_open" alt="${_('Open')}" title="${_('Open a resource')}"
+<img id="${name}_open" alt="${_('Open')}" title="${_('Open a resource')}"
         src="/openerp/static/images/iconset-d-drop.gif" class="m2o_open"/>
 </%def>
 <%def name="m2o_container()">
-    <div class="m2o_container">
+    <div class="m2o_container${editable_style and readonly_before_state and '_nowrap' or ''}">
         ${caller.body()}
     </div>
 </%def>
@@ -14,6 +14,9 @@
                 ${py.attrs(attrs, kind=kind, domain=domain, context=ctx,
                 relation=relation, required=required and 1 or 0,
                 fld_readonly=1 if readonly_before_state else 0)}/>
+            % if editable_style:
+            <span id="${name}_ro" />
+            % endif
             <input type="text" id="${name}_text" class="${css_class}" size="1"
                 ${py.attrs(attrs, kind=kind, relation=relation, value=text)}/>
 

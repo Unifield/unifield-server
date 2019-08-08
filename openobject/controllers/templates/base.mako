@@ -19,7 +19,7 @@
     <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery-ui-1.8.6.custom.min.js"></script>
     <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery.form.js"></script>
     <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery.ba-hashchange.js"></script>
-    <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery.fancybox-1.3.1.js"></script>
+    <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery.fancybox-1.3.1.js?v=14.0"></script>
     <script type="text/javascript" src="/openobject/static/javascript/jQuery/jquery.dialogextend.js"></script>
     
     <script type="text/javascript">

@@ -17,6 +17,9 @@
             <option value="${val or ''}" ${py.selector(val==(value or False))}>${label}</option>
         % endfor
     </select>
+    % if editable_style:
+    <span id="${name}_ro" />
+    % endif
     % if error:
     <span class="fielderror">${error}</span>
     % endif

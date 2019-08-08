@@ -426,6 +426,8 @@ function buttonClicked(name, btype, model, id, sure, target, context){
     s_ids = [];
     if (jQuery('[id="order_line"]').length > 0) {
         s_ids = ListView('order_line').getSelectedRecords();
+    } else if (jQuery('[id="move_lines"]').length > 0){
+        s_ids = ListView('move_lines').getSelectedRecords();
     }
 
     var params = {
@@ -798,6 +800,7 @@ function onChangePop(caller){
                 fld.value = value;
                 var $current_field = jQuery(fld);
                 var kind = $current_field.attr('kind')
+                var type2 = $current_field.attr('type2')
 
                 //o2m and m2m
                 if ($current_field.hasClass('gridview') && !kind){
@@ -926,7 +929,10 @@ function onChangePop(caller){
                         $('#' + prefix + k).val(value || '');
                         break;
                     case 'selection':
-                        if (typeof(value)=='object') {
+                        if (type2 == 'many2one' && typeof(value)=='object') {
+                            fld.value = value[0];
+                        }
+                        else if (typeof(value)=='object') {
                             var opts = [OPTION({'value': ''})];
                             for (var opt = 0; opt < value.length; opt++) {
                                 if (value[opt].length > 0) {
@@ -1008,9 +1014,19 @@ function onChangePop(caller){
                 }
                 $fld.trigger('change');
                 MochiKit.Signal.signal(window.document, 'onfieldchange', fld);
+
+                var fld_ro = jQuery(idSelector(prefix + k + '_ro'));
+                    if (fld_ro) {
+                        if (fld.nodeName == 'SELECT') {
+                            fld_ro.html($fld.children("option:selected").html());
+                        } else {
+                            fld_ro.html($fld.val());
+                        }
+                    }
             }
 
             fld.__lock_onchange = false;
+
         }
 
         if (obj.warning && obj.warning.message) {
