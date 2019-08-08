@@ -2263,11 +2263,13 @@ class sale_order_line(osv.osv):
             'created_by_po_line': False,
             'created_by_rfq': False,
             'created_by_rfq_line': False,
-            'in_name_goods_return': '',
             'from_cancel_out': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
         })
+
+        if 'in_name_goods_return' not in default:
+            default['in_name_goods_return'] = False
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
@@ -2958,7 +2960,6 @@ class sale_order_line(osv.osv):
             vals.update({'type': 'make_to_order'})
 
         self.check_empty_line(cr, uid, False, vals, context=context)
-
         # UF-1739: as we do not have product_uos_qty in PO (only in FO), we recompute here the product_uos_qty for the SYNCHRO
         qty = vals.get('product_uom_qty')
         product_id = vals.get('product_id')
