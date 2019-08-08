@@ -501,6 +501,14 @@ class Database(BaseController):
                 }
                 return
 
+            # silent uprade True only if autosync True
+            if (not config.has_option('silentupgrade', 'active') or config.get('silentupgrade', 'active') in TRUE_LIST) and config.has_option('autosync', 'active') and config.get('autosync', 'active') not in TRUE_LIST:
+                self.msg = {
+                    'message': _('Silent Upgrade active value and Autosync active value are not consistent '),
+                    'title': _('Auto sync / silent upgrade'),
+                }
+                return
+
             # check date betweens auto patch and sync scheduler
             if config.has_option('autosync', 'next_exec_date') and config.has_option('silentupgrade', 'hour_to') and config.has_option('silentupgrade', 'hour_from'):
                 if (not config.has_option('autosync', 'active') or config.get('autosync', 'active') in TRUE_LIST) and (not config.has_option('silentupgrade', 'active') or config.get('silentupgrade', 'active') in TRUE_LIST):
