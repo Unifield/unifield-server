@@ -39961,7 +39961,7 @@ msgstr "audittrail.log.sequence"
 msgid "Document date"
 msgstr "Date du document"
 
-#. modules: msf_budget, res_currency_functional, account, register_accounting, finance
+#. modules: msf_budget, res_currency_functional, account, register_accounting, finance, msf_homere_interface
 #: view:account.invoice:0
 #: view:account.move:0
 #: view:validate.account.move:0
@@ -39970,6 +39970,7 @@ msgstr "Date du document"
 #: view:msf.budget:0
 #: view:account.invoice:0
 #: view:activate.currencies:0
+#: view:hr.employee.activation:0
 msgid "Approve"
 msgstr "Approuver"
 
@@ -97389,6 +97390,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:shipment.add.pack.processor:0
 #: code:addons/msf_doc_import/purchase_order.py:60
 #: view:wizard.import.product.line:0
+#: view:hr.employee.activation:0
 #: selection:export.report.stock.move,state:0
 #, python-format
 msgid "Cancel"
@@ -107215,3 +107217,14 @@ msgstr "Impossible d'Annuler / Modifier si le compte n'est pas lettrable."
 #: view:account.invoice:0
 msgid "This invoice will sync to its counterpart instance."
 msgstr "Cette facture sera synchronisée à l'instance de Contrepartie."
+
+#. module: msf_homere_interface
+#: view:hr.employee.activation:0
+#: model:ir.actions.act_window,name:msf_homere_interface.employee_activation_action
+msgid "Activate/Deactivate Employees"
+msgstr "Activer / Désactiver les Employés"
+
+#. module: msf_homere_interface
+#: field:hr.employee.activation,active_status:0
+msgid "Set selected employees as active"
+msgstr "Marquer les employés sélectionnés comme actifs"
