@@ -1187,7 +1187,7 @@ class account_move(osv.osv):
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'sys':
-                    raise osv.except_osv(_('Warning'), _('You are not able to approve a Journal Entry that comes from the system!'))
+                    raise osv.except_osv(_('Warning'), _("You can't approve a Journal Entry that comes from the system!"))
                 # UFTP-105: Do not permit to validate a journal entry on a period that is not open
                 if m.period_id and m.period_id.state != 'draft':
                     raise osv.except_osv(_('Warning'), _('You cannot post entries in a non-opened period: %s') % (m.period_id.name))
