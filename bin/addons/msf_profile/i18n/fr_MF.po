@@ -80684,7 +80684,7 @@ msgstr "Nom de l'export "
 #. module: account_override
 #: code:addons/account_override/account.py:1111
 #, python-format
-msgid "You are not able to approve a Journal Entry that comes from the system!"
+msgid "You can't approve a Journal Entry that comes from the system!"
 msgstr "Vous ne pouvez pas approuver une écriture comptable provenant du système !"
 
 #. module: account
