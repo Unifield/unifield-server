@@ -153,6 +153,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         ml = wizard.move_line_id
         orig_date = ml.source_date or ml.date
         orig_document_date = ml.document_date
+        cor_line_ids = []
 
         jtype = 'correction'
         if wizard.move_line_id.account_id and wizard.move_line_id.account_id.type_for_register == 'donation':
@@ -364,6 +365,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         name = self.pool.get('account.analytic.line').join_without_redundancy(keep_seq_and_corrected[4], 'COR')
 
             created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date, name=name, context=context)
+            cor_line_ids.extend(created_analytic_line_ids.values())
             # Set right analytic correction journal to these lines
             if period_closed or is_HQ_origin:
                 sql_to_cor = ['journal_id=%s']
@@ -428,6 +430,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
             ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name,context=context)
+            cor_line_ids.extend(ret.values())
             # Add link to first analytic lines
             for ret_id in ret:
                 self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
@@ -490,6 +493,18 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if aji_ids:
                     greater_amount['aji_id'] = aji_ids[0]
 
+            # US-6100 in case of a corr. the adjustment should be made on the biggest COR amount
+            # instead of the biggest amount of all AJIs (cf. don't modify the entry being corrected)
+            if cor_line_ids:
+                greater_amount.update({
+                    'aji_id': False,
+                    'amount': 0.,
+                })
+                for cor_line in ana_obj.browse(cr, uid, cor_line_ids, fields_to_fetch=['amount_currency'], context=context):
+                    if cor_line.amount_currency and abs(cor_line.amount_currency) > greater_amount['amount']:
+                        greater_amount['amount'] = abs(cor_line.amount_currency)
+                        greater_amount['aji_id'] = cor_line.id
+
             if greater_amount['aji_id']:
                 # US-676 greater amount update to fix (deduce) rounding gap
                 # we read the aji created for distri then fix it
@@ -501,7 +516,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         and aji_rec['currency_id'][0] or False
 
                     # fix booking amount
-                    fix_aji_amount_currency = round(greater_amount['wl'].amount, 2) \
+                    fix_aji_amount_currency = round(abs(fix_aji_old_amount), 2) \
                         - greater_amount['gap_amount']
                     if fix_aji_old_amount < 0:
                         fix_aji_amount_currency *= -1
