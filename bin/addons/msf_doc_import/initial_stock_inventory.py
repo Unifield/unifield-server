@@ -624,29 +624,6 @@ class initial_stock_inventory(osv.osv):
         (_check_active_product, "You cannot confirm this stock inventory because it contains a line with an inactive product", ['order_line', 'state'])
     ]
 
-    def check_location_id(self, cr, uid, location_id, line_num, wrong_location, context=None):
-        if context is None:
-            context = {}
-
-        assert isinstance(location_id, (int,long))
-
-        forbidden_location = [
-            'msf_cross_docking_stock_location_input',
-            'stock_stock_location_stock',
-            'stock_stock_location_output', 
-            'msf_outgoing_stock_location_packing',
-            'msf_outgoing_stock_location_dispatch',
-            'msf_outgoing_stock_location_distribution',
-        ]
-        ir_mod_ids = self.pool.get('ir.model.data').search(cr, uid, [('model', '=', 'stock.location'), ('res_id', '=', location_id), ('name', 'in', forbidden_location), ], context=context)
-        forbidden_loc_ids = [x.get('res_id') for x in self.pool.get('ir.model.data').read(cr, uid, ir_mod_ids, ['res_id'], context=context)]
-
-        if location_id in forbidden_loc_ids:
-            loc_name = self.pool.get('stock.location').read(cr, uid, location_id, ['name'], context=context)['name']
-            wrong_location.append(_('Line #%s: The location "%s" is not allowed') % (line_num, loc_name))
-
-        return True
-
     def import_file(self, cr, uid, ids, context=None):
         '''
         Import lines form file
@@ -776,7 +753,9 @@ Product Code, Product Description, Initial Average Cost, Location, Batch, Expiry
                         location_not_found = True
                     else:
                         location_id = loc_ids[0]
-                        self.check_location_id(cr, uid, location_id, line_num, wrong_location, context=context)
+                        if not location_obj.browse(cr, uid, location_id, fields_to_fetch=['initial_stock_inv_display'],
+                                                   context=context).initial_stock_inv_display:
+                            wrong_location.append(_('Line #%s: The location "%s" is not allowed') % (line_num, location_name))
                 except Exception:
                     location_id = False
 
