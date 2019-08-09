@@ -96,6 +96,16 @@
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
+        <NumberFormat ss:Format="Short Date" />
+    </Style>
+    <Style ss:ID="general_date">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1" />
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
         <NumberFormat ss:Format="General Date" />
     </Style>
  </Styles>
@@ -253,12 +263,12 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['location']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['destination']|x}</Data></Cell>
                 % if move['create_date'] and isDateTime(move['create_date']):
-                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${move['create_date'][:10]|n}T${move['create_date'][-8:]|n}.000</Data></Cell>
+                <Cell ss:StyleID="general_date"><Data ss:Type="DateTime">${move['create_date'][:10]|n}T${move['create_date'][-8:]|n}.000</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if move['shipped_date'] and isDateTime(move['shipped_date']):
-                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${move['shipped_date'][:10]|n}T${move['shipped_date'][-8:]|n}.000</Data></Cell>
+                <Cell ss:StyleID="general_date"><Data ss:Type="DateTime">${move['shipped_date'][:10]|n}T${move['shipped_date'][-8:]|n}.000</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
