@@ -96,7 +96,7 @@
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <NumberFormat ss:Format="Short Date" />
+        <NumberFormat ss:Format="General Date" />
     </Style>
  </Styles>
 
@@ -106,7 +106,7 @@
         ## Reference
         <Column ss:AutoFitWidth="1" ss:Width="100.0" />
         ## Reason Type
-        <Column ss:AutoFitWidth="1" ss:Width="110.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="115.0" />
         ## SHIP
         <Column ss:AutoFitWidth="1" ss:Width="80.0" />
         ## Origin
@@ -140,9 +140,9 @@
         ## Destination Location
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
         ## Creation Date
-        <Column ss:AutoFitWidth="1" ss:Width="63.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="120.0" />
         ## Shipped Date
-        <Column ss:AutoFitWidth="1" ss:Width="63.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="110.0" />
 
         ## WORKSHEET HEADER
         <Row>
@@ -240,7 +240,7 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['origin']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['partner']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['fo'] and getSel(move['fo'], 'order_type') or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['fo'] and getSel(move['fo'], 'categ') or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['header'] and getSel(move['header'], 'order_category') or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['fo'] and getSel(move['fo'], 'priority') or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['line_num']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['prod_code']|x}</Data></Cell>
@@ -253,12 +253,12 @@
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['location']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['destination']|x}</Data></Cell>
                 % if move['create_date'] and isDateTime(move['create_date']):
-                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(move['create_date'])|n}</Data></Cell>
+                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${move['create_date'][:10]|n}T${move['create_date'][-8:]|n}.000</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if move['shipped_date'] and isDateTime(move['shipped_date']):
-                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(move['shipped_date'])|n}</Data></Cell>
+                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${move['shipped_date'][:10]|n}T${move['shipped_date'][-8:]|n}.000</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif

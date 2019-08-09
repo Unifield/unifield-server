@@ -46,12 +46,13 @@ class stock_delivery_report(report_sxw.rml_parse):
                                                                and currency.id or False, price, context=self.localcontext)
             res.append({
                 'ref': ppl and ppl.name or pick.name,
-                'reason_type': move.reason_type_id and move.reason_type_id.name or pick.reason_type_id
-                               and pick.reason_type_id.name or '',
+                'reason_type': ppl and ppl.reason_type_id.complete_name or pick.reason_type_id
+                               and pick.reason_type_id.complete_name or '',
                 'ship': ship and ship.name or '',
                 'origin': pick.origin or '',
                 'partner': pick.partner_id and pick.partner_id.name or '',
                 'fo': fo,
+                'header': ppl or pick,
                 'line_num': move.line_number,
                 'prod_code': prod and prod.default_code or '',
                 'prod_desc': prod and prod.name or '',
