@@ -482,7 +482,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         if greater_amount['gap_amount']:
             aal_obj = self.pool.get('account.analytic.line')
 
-            if not greater_amount['aji_id'] and greater_amount['wl']:
+            if not greater_amount['aji_id'] and greater_amount['wl'] and not cor_line_ids:
                 # untouched greater amount, get analytic line id:
                 # (not in to_create, to_delete, to_override, to_reverse)
                 aji_ids = aal_obj.search(cr, uid, [
