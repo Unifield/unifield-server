@@ -89,10 +89,8 @@ class product_list(osv.osv):
             context = {}
         if not args:
             return []
-        if args[0][1] != '=':
-            raise osv.except_osv(_('Error'), _('Filter %s not implemented on field real_product_ids') % (args[0][1],))
 
-        return [('product_ids.name', '=', args[0][2])]
+        return [('product_ids.name', args[0][1], args[0][2])]
 
     _columns = {
         'name': fields.char(
