@@ -929,7 +929,11 @@ function onChangePop(caller){
                         $('#' + prefix + k).val(value || '');
                         break;
                     case 'selection':
-                        if (type2 == 'many2one' && typeof(value)=='object') {
+                        // quick fix: better to check if typeof(value[0])=='object' instead of name of field
+                        // we need to make distinction between:
+                        //   1/ list of selection sent by server (i.e: product nomen in search view) 
+                        //   2/ or a value of a m2o widget  selection (reason type in picking)
+                        if (type2 == 'many2one' && typeof(value)=='object' && k == 'reason_type_id') {
                             fld.value = value[0];
                         }
                         else if (typeof(value)=='object') {
