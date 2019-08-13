@@ -261,7 +261,7 @@ class return_claim(osv.osv):
                 ('origin', 'like', claim.picking_id_return_claim.origin),
             ]
             original_in_id = pick_obj.search(cr, uid, in_domain, order='id asc', limit=1, context=context)[0]
-            original_in = pick_obj.browse(cr, uid, original_in_id, fields_to_fetch=['name', 'partner_id'], context=context)
+            original_in = pick_obj.browse(cr, uid, original_in_id, fields_to_fetch=['name', 'partner_id', 'origin', 'purchase_id'], context=context)
 
             # Creating the new Claim
             current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
