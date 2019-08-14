@@ -1819,3 +1819,9 @@ msgstr "Nom du rapport demandé: "
 #, python-format
 msgid "Download report"
 msgstr "Télécharger le rapport"
+
+#: addons/openerp/controllers/templates/progress.mako
+#, python-format
+msgid "In Progress"
+msgstr "En cours"
+

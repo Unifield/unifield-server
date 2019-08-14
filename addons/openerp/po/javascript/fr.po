@@ -128,9 +128,5 @@ msgid "Done"
 msgstr "Fini"
 
 #: addons/openerp/controllers/templates/progress.mako
-msgid "In Progress"
-msgstr "En cours"
-
-#: addons/openerp/controllers/templates/progress.mako
 msgid "View "
 msgstr "Voir "
