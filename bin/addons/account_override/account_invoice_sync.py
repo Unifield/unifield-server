@@ -316,7 +316,7 @@ class account_invoice_sync(osv.osv):
             context = {}
         invoice_dict = invoice_data.to_dict()
         number = invoice_dict.get('number', '')
-        state =  invoice_dict.get('state')
+        state = invoice_dict.get('state')
         counterpart_inv_number = invoice_dict.get('counterpart_inv_number', '')
         if state:
             vals = {
@@ -337,7 +337,7 @@ class account_invoice_sync(osv.osv):
             if inv_ids:
                 self.write(cr, uid, inv_ids[0], vals, context=context)
                 # note that the "Counterpart Inv. Number" received is the "Number" of the invoice updated!
-                msg = "account.invoice %s: Counterpart Invoice %s set to %s" % (counterpart_inv_number, number, state)
+                msg = "account.invoice %s: Counterpart Invoice %s set to %s" % (counterpart_inv_number or '', number, state)
                 self._logger.info(msg)
                 return msg
 
