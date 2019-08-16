@@ -106889,7 +106889,7 @@ msgstr "Modèle du Kit Théorique"
 #: report:addons/stock_override/report/stock_card_report_xls.mako:159
 #: report:stock.card.report:0
 msgid "Partner/Location"
-msgstr "Partneraire/Zone"
+msgstr "Partenaire/Zone"
 
 #. module: msf_printed_documents
 #: code:addons/msf_printed_documents/report/report_product_labels.py:67
