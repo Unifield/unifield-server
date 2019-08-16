@@ -1238,6 +1238,7 @@ class account_move(osv.osv):
         for m in self.browse(cr, uid, ids, fields_to_fetch=['manual_name', 'line_id'], context=context):
             if m.manual_name and m.line_id:
                 aml_obj.write(cr, uid, [ml.id for ml in m.line_id], {'name': m.manual_name}, context=context)
+        return True
 
     def copy(self, cr, uid, a_id, default=None, context=None):
         """
