@@ -7043,7 +7043,7 @@ msgstr "Champ utilisé que pour la recherche de lignes."
 #: code:addons/account/invoice.py:400
 #, python-format
 msgid "Amount to be refunded"
-msgstr "Amount to be refunded"
+msgstr "Montant à rembourser"
 
 #. module: base_setup
 #: help:base.setup.company,rml_footer1:0
@@ -7801,7 +7801,7 @@ msgstr "Compte Analytique Parent"
 #. module: analytic_distribution
 #: view:int.commitment.clear.wizard:0
 msgid "Delete ALL"
-msgstr "Delete ALL"
+msgstr "TOUT Supprimer"
 
 #. module: stock
 #: field:stock.location,stock_virtual_value:0
@@ -14123,7 +14123,7 @@ msgstr "Compte - Annuler le Lettrage"
 #. module: register_accounting
 #: view:register.reopen:0
 msgid "Decision about the action to do on this register"
-msgstr "Decision about the action to do on this register"
+msgstr "Choix de l'action à faire sur le registre"
 
 #. modules: product_nomenclature, product_asset, stock_schedule, product_attributes, product_expiry, return_claim, msf_doc_import, supplier_catalogue, unifield_setup, product_list, stock, product, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, sync_so, product_manufacturer, account_override, msf_outgoing, transport_mgmt, msf_audittrail, purchase_msf
 #: sql_constraint:product.product:0
@@ -15451,7 +15451,7 @@ msgstr "Destination de l'Activité"
 #: model:ir.actions.act_window,name:analytic_distribution.action_intl_commitment_realloc_wizard
 #: model:ir.model,name:analytic_distribution.model_int_commitment_realloc_wizard
 msgid "Intl Commitments Analytic Reallocation"
-msgstr "Intl Commitments Analytic Reallocation"
+msgstr "Engagements Int. Réallocation Analytique"
 
 #. module: base
 #: selection:ir.actions.act_window,view_type:0
@@ -16770,6 +16770,7 @@ msgstr ","
 #: report:addons/stock/report/stock_reception_report_xls.mako:245
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:228
 #: field:stock.picking,destinations_list:0
+#: field:product.history.consumption,location_dest_id:0
 #, python-format
 msgid "Destination Location"
 msgstr "Zone Destination"
@@ -18991,7 +18992,7 @@ msgstr "Ancienne valeur"
 #. module: register_accounting
 #: model:ir.actions.act_window,name:register_accounting.action_wizard_reopen_register
 msgid "Re-open closed register"
-msgstr "Re-open closed register"
+msgstr "Réouvrir le registre"
 
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:587
@@ -19615,6 +19616,7 @@ msgstr "Incorrectly formatted expiry date: %s. The expected date should be > 01/
 #: view:manage.expired.stock:0
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:227
 #: field:change.dest.location,src_location_id:0
+#: field:product.history.consumption,location_id:0
 #, python-format
 msgid "Source Location"
 msgstr "Zone Source"
@@ -21035,7 +21037,7 @@ msgstr "S'il y a une ligne sans besoin de sourcing pour les lignes sélectionné
 #. module: analytic_distribution
 #: view:int.commitment.clear.wizard:0
 msgid "Clear Intl Commitments"
-msgstr "Clear Intl Commitments"
+msgstr "Vider Engagements Int."
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -23011,11 +23013,6 @@ msgstr "Montant Résiduel"
 #: help:stock.location,internal_dest:0
 msgid "Returns the available locations for destination location of an internal picking according to the product."
 msgstr "Livre les zones disponibles comme zone de destination d'un picking interne selon le produit."
-
-#. module: msf_outgoing
-#: view:shipment:0
-msgid "Shipper"
-msgstr "Expéditeur"
 
 #. module: account
 #: help:account.account,type:0
@@ -25362,13 +25359,14 @@ msgstr "Nicaragua"
 msgid "Reference Guide"
 msgstr "Guide de Références"
 
-#. module: msf_outgoing
+#. modules: msf_outgoing, msf_printed_documents
 #: view:shipment:0
 #: view:shipment.additionalitems:0
 #: model:ir.model,name:msf_outgoing.model_memory_additionalitems
 #: model:ir.model,name:msf_outgoing.model_shipment_additionalitems
 #: model:ir.model,name:msf_outgoing.model_stock_move_memory_shipment_additionalitems
 #: field:shipment,additional_items_ids:0
+#: report:msf.freight_manifest:0
 msgid "Additional Items"
 msgstr "Éléments supplémentaires"
 
@@ -27494,8 +27492,8 @@ msgstr "Une ligne de budget n'a pas de compte!"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/stock_picking.py:298
 #, python-format
-msgid "You must select a file type before print the template"
-msgstr "You must select a file type before print the template"
+msgid "You must select a file type"
+msgstr "Vous devez sélectionner un type de fichier"
 
 #. module: base
 #: code:addons/base/ir/ir_model.py:258
@@ -30057,6 +30055,7 @@ msgstr "Incohérences stock"
 #: field:product.international.status,no_consumption:0
 #: field:product.status,no_consumption:0
 #: report:addons/consumption_calculation/report/product_likely_expire_xls.mako:87
+#: field:product.likely.expire.report,amc_consumption_text:0
 msgid "Consumption"
 msgstr "Consommation"
 
@@ -34407,7 +34406,7 @@ msgstr "Information Spécifique:"
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:218
 #: report:sales.follow.up.report_pdf:0
 msgid "PROC. METHOD"
-msgstr "METHOD d'ACQ."
+msgstr "MÉTHODE d'ACQ."
 
 #. module: sale
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:171
@@ -35371,7 +35370,7 @@ msgstr "Montant sous la Devise du Partenaire"
 #. module: account_override
 #: model:ir.actions.report.xml,name:account_override.allocation_invoices_report
 msgid "Invoice allocation"
-msgstr "Invoice allocation"
+msgstr "Allocation de la Facture"
 
 #. module: stock
 #: code:addons/stock/wizard/stock_splitinto.py:49
@@ -35639,7 +35638,7 @@ msgstr "Terminé"
 #: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:530
 #, python-format
 msgid "Revaluation account is not set in company settings"
-msgstr "Revaluation account is not set in company settings"
+msgstr "Le Compte de réévaluation n'est pas défini dans la configuration de la société"
 
 #. modules: account, analytic_distribution
 #: view:account.analytic.chart:0
@@ -37999,7 +37998,7 @@ msgstr "%s: No 'FX gain loss' cost center found for instance '%s'"
 #. module: analytic_distribution
 #: model:ir.actions.act_window,name:analytic_distribution.action_mass_reallocation_search
 msgid "Mass reallocation - All search results"
-msgstr "Mass reallocation - All search results"
+msgstr "Réallocation groupée - Toutes lignes résultats"
 
 #. modules: account, msf_outgoing, sale, register_accounting, purchase_override, procurement, stock
 #: report:invoice:0
@@ -40118,7 +40117,7 @@ msgstr "Allocation Centre de Coût"
 #. module: msf_homere_interface
 #: view:hr.payroll.import:0
 msgid "Check"
-msgstr "Check"
+msgstr "Vérifier"
 
 #. module: product_asset
 #: field:product.asset,invo_donator_code:0
@@ -40934,7 +40933,7 @@ msgstr "Estonian / Eesti keel"
 #. module: account_mcdb
 #: view:account.mcdb:0
 msgid "G/L journals"
-msgstr "G/L journals"
+msgstr "Journaux G/L"
 
 #. module: account
 #: help:account.account,currency_mode:0
@@ -51318,7 +51317,7 @@ msgstr "Lignes à facturer"
 #: code:addons/register_accounting/wizard/wizard_liquidity_position.py:76
 #, python-format
 msgid "No register found for the period selected %s"
-msgstr "No register found for the period selected %s"
+msgstr "Aucun Registre trouvé pour la période %s"
 
 #. modules: supplier_catalogue, unifield_setup
 #: field:res.currency,is_esc_currency:0
@@ -53177,7 +53176,7 @@ msgstr "Le process est en cours"
 #. module: msf_homere_interface
 #: help:hr.payroll.import,date_format:0
 msgid "This is the date format used in the Homère file in order to recognize them."
-msgstr "This is the date format used in the Homère file in order to recognize them."
+msgstr "Indiquez le format de la date utilisé par Homère."
 
 #. module: stock
 #: help:stock.location,valuation_out_account_id:0
@@ -55770,7 +55769,7 @@ msgstr "Synchronization Engine - Client Module\n"
 #. module: register_accounting
 #: selection:register.reopen,choice:0
 msgid "Reopen Register"
-msgstr "Reopen Register"
+msgstr "Réouvrir le Registre"
 
 #. module: msf_budget
 #: code:addons/msf_budget/report/msf_budget_summary.py:162
@@ -56256,7 +56255,7 @@ msgstr "Salvador"
 #. module: analytic_distribution
 #: model:ir.model,name:analytic_distribution.model_int_commitment_export_wizard
 msgid "Export Intl Commitments"
-msgstr "Export Intl Commitments"
+msgstr "Exportation des Engagements Int."
 
 #. modules: procurement_cycle, threshold_value, consumption_calculation
 #: view:expiry.quantity.report:0
@@ -56852,7 +56851,7 @@ msgstr "Une table temporaire utilisée pour la vue Tableau de Bord"
 #. module: account_override
 #: report:allocation.invoices.report:0
 msgid "INVOICE LINES ALLOCATION REPORT"
-msgstr "INVOICE LINES ALLOCATION REPORT"
+msgstr "RAPPORT D'ALLOCATION DES LIGNES DE FACTURE"
 
 #. module: stock
 #: view:stock.inventory:0
@@ -62237,7 +62236,7 @@ msgstr "Auteur"
 #. module: account_override
 #: model:ir.actions.report.xml,name:account_override.synthesis_invoices_report
 msgid "Allocation synthesis"
-msgstr "Allocation synthesis"
+msgstr "Synthèse d'allocation"
 
 #. module: msf_outgoing
 #: field:in.family.processor,integrity_status:0
@@ -64151,7 +64150,7 @@ msgstr "Rapports"
 #. module: analytic_distribution
 #: view:int.commitment.clear.wizard:0
 msgid "Are you sure to delete ALL international commitments entries ?"
-msgstr "Are you sure to delete ALL international commitments entries ?"
+msgstr "Êtes-vous certain de vouloir supprimer TOUS les engagements internationaux ?"
 
 #. module: stock_schedule
 #: field:stock.frequence,recurrence_type:0
@@ -64482,6 +64481,12 @@ msgstr "Dernière Sauvegarde"
 #: report:purchase.order:0
 msgid "Request for Quotation N°"
 msgstr "Demande de Devis - N°"
+
+#. module: tender_flow
+#: code:addons/tender_flow/tender_flow.py:416
+#, python-format
+msgid "Request for Quotation '%s' has been created."
+msgstr "La Demande de Devis '%s' a été créée."
 
 #. module: base
 #: selection:ir.translation,type:0
@@ -67250,7 +67255,7 @@ msgstr "Vos comptes de Banque et Caisse"
 #. module: register_accounting
 #: field:register.reopen,choice:0
 msgid "Decision to make"
-msgstr "Decision to make"
+msgstr "Action"
 
 #. module: stock
 #: help:product.product,track_production:0
@@ -71517,7 +71522,7 @@ msgstr "8.  %I:%M:%S %p ==> 06:25:20 PM"
 #: model:ir.actions.server,name:account_mcdb.action_server_period_state
 #, python-format
 msgid "Period states"
-msgstr "Period states"
+msgstr "Statuts des Periodes"
 
 #. module: financing_contract
 #: field:financing.contract.format.line,project_budget_value:0
@@ -78818,7 +78823,7 @@ msgstr "Veuillez choisir un format d'exportation!"
 #: view:export.report.stock.move:0
 #: view:export.report.stock.inventory:0
 msgid "Due to the volume of data, your report cannot be shown immediatly."
-msgstr "À cause du volume de donnée, votre rapport ne peut pas être affiché immédiatement."
+msgstr "À cause du volume de données, votre rapport ne peut pas être affiché immédiatement."
 
 #. module: consumption_calculation
 #: field:stock.picking,rac_id:0
@@ -80667,7 +80672,7 @@ msgstr "Nationalité"
 #: code:addons/register_accounting/wizard/register_reopen.py:75
 #, python-format
 msgid "The period '%s' of this register is already '%s', the register cannot be reopen!"
-msgstr "The period '%s' of this register is already '%s', the register cannot be reopen!"
+msgstr "La période '%s' du registre est '%s', le registre ne peut pas être ré-ouvert!"
 
 #. module: product
 #: model:product.pricelist.version,name:product.ver0
@@ -85585,7 +85590,7 @@ msgstr "Prix - Types"
 #. module: analytic_distribution
 #: model:ir.actions.act_window,name:analytic_distribution.action_intl_commitment_export_wizard
 msgid "Export intl commitments"
-msgstr "Export intl commitments"
+msgstr "Exportation des Engagements Int."
 
 #. modules: stock, stock_batch_recall, specific_rules, product_expiry
 #: sql_constraint:stock.production.lot:0
@@ -90711,7 +90716,7 @@ msgstr "SINGAPORE DOLLAR"
 #. module: analytic_distribution
 #: model:ir.actions.act_window,name:analytic_distribution.action_intl_commitment_clear_wizard
 msgid "Clear intl commitments"
-msgstr "Clear intl commitments"
+msgstr "Vider les engagements int."
 
 #. module: vertical_integration
 #: code:addons/vertical_integration/report/hq_report_ocp.py:224
@@ -94192,11 +94197,6 @@ msgstr "Etc/GMT-12"
 #: selection:res.users,context_tz:0
 msgid "Antarctica/Syowa"
 msgstr "Antarctica/Syowa"
-
-#. module: msf_outgoing
-#: view:shipment:0
-msgid "Consignee"
-msgstr "Destinataire"
 
 #. module: account
 #: field:account.installer.modules,account_anglo_saxon:0
@@ -97873,9 +97873,10 @@ msgstr "dd/mm/yyyy"
 msgid "Decision Moment"
 msgstr "Moment de Décision"
 
-#. module: msf_outgoing
+#. modules: msf_outgoing, msf_printed_documents
 #: field:shipment,carrier_id:0
 #: view:shipment:0
+#: report:msf.freight_manifest:0
 msgid "Carrier"
 msgstr "Transporteur"
 
@@ -102156,10 +102157,12 @@ msgstr "Poids\\nP.C.[KG]"
 msgid "Total\\nWeight[KG]"
 msgstr "Poids\\nTotal[KG]"
 
-#. module: msf_doc_import, purchase
+#. module: msf_doc_import, purchase, consumption_calculation
 #: code:addons/msf_doc_import/sale_order.py:257
 #: code:addons/msf_doc_import/tender.py:288
 #: code:addons/purchase/purchase_order_line.py:835
+#: code:addons/consumption_calculation/consumption_calculation.py:898
+#: code:addons/consumption_calculation/consumption_calculation.py:923
 #, python-format
 msgid "You have to select a product UOM in the same category than the purchase UOM of the product"
 msgstr "Vous devez sélectionner une UdM du produit dans la même catégorie que l'unité de mesure de l'achat du produit"
@@ -103811,18 +103814,20 @@ msgid " Import in progress... \n"
 msgstr " Import en cours... \n"
 " Veuillez attendre que l'import soit terminer avant de faire des modifications."
 
-#. modules: msf_doc_import, msf_outgoing
+#. modules: msf_doc_import, msf_outgoing, msf_printed_documents
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:71
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:192
 #: view:shipment:0
+#: report:msf.freight_manifest:0
 #, python-format
 msgid "Consignee"
 msgstr "Destinataire"
 
-#. modules: msf_doc_import, msf_outgoing
+#. modules: msf_doc_import, msf_outgoing,msf_printed_documents
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:71
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:191
 #: view:shipment:0
+#: report:msf.freight_manifest:0
 #, python-format
 msgid "Shipper"
 msgstr "Expéditeur"
@@ -104999,7 +105004,7 @@ msgstr "Réf. Doc."
 
 #. module: stock_override
 #: view:export.report.stock.move:0
-msgid "When the report will be ready, you can access to it by the menu Warehouse / Reporting /  IN & OUT Report."
+msgid "When the report will be ready, you can access to it by the menu Warehouse / Reporting / IN & OUT Report."
 msgstr "Quand le rapport sera prêt, il sera disponible dans le menu Entrepôt / Rapports / Rapport sur IN & OUT"
 
 #. module: stock_override
@@ -107238,3 +107243,53 @@ msgstr "Activer / Désactiver les Employés"
 #: field:hr.employee.activation,active_status:0
 msgid "Set selected employees as active"
 msgstr "Marquer les employés sélectionnés comme actifs"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/history_consumption.py:517
+#, python-format
+msgid "Av."
+msgstr "Moy."
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/expiry_calculation.py:593
+#, python-format
+msgid "Go to item"
+msgstr "Voir l'élément"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/consumption_calculation.py:349
+#, python-format
+msgid "Destination Location %s is inactive"
+msgstr "La zone de destination %s est inactive."
+
+#. module: consumption_calculation
+#: view:product.likely.expire.report:0
+#: view:weekly.forecast.report:0
+msgid "Due to the volume of data, your demand cannot be shown immediatly."
+msgstr "À cause du volume de données, votre rapport ne peut pas être affiché immédiatement."
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/weekly_forecast_report.py:253
+#, python-format
+msgid "Periodical Forecast Report"
+msgstr "Rapport Périodique Prévisionnel"
+
+#. module: consumption_calculation
+#: view:product.likely.expire.report:0
+msgid "When the report will be ready, you can access to it by the menu Warehouse / Reporting / Expiry / Products likely to expire."
+msgstr "Quand le rapport sera prêt, il sera accessible par le menu Entrepôt / Rapports / Expiration / Produits susceptibles d'expirer."
+
+#. module: consumption_calculation
+#: view:product.likely.expire.report:0
+msgid "Your products likely to expire demand will be treated quickly."
+msgstr "Votre demande de génération des produits expirés est en cours de traitement."
+
+#. module: consumption_calculation
+#: view:weekly.forecast.report:0
+msgid "When the report will be ready, you can access to it by the menu Warehouse / Reporting / Periodical forecast report."
+msgstr "Quand le rapport sera prêt, il sera accessible par le menu Entrepôt / Rapports / Rapport périodique prévisionnel."
+
+#. module: consumption_calculation
+#: view:weekly.forecast.report:0
+msgid "Your demand of periodical forecast report will be treated quickly."
+msgstr "Votre demande de Rapport périodique prévisionnel est en cours de traitement."
