@@ -23,10 +23,16 @@ from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from osv import osv
 from tools.translate import _
+import os
+import psutil
+import logging
 
+def print_memory():
+    process = psutil.Process(os.getpid())
+    logging.getLogger('Combined').warn('Mem: %s MB' % (process.memory_info()[0]/1024/1024,))
 
 class combined_journals_report(report_sxw.rml_parse):
-
+    _logger = logging.getLogger('Combined')
     def __init__(self, cr, uid, name, context=None):
         super(combined_journals_report, self).__init__(cr, uid, name, context=context)
         self.context = {}
@@ -101,37 +107,49 @@ class combined_journals_report(report_sxw.rml_parse):
                       'partner_txt', 'debit_currency', 'credit_currency', 'currency_id', 'debit', 'credit', 'reconcile_txt',
                       'move_state']
         current_line_position = 0
+        aml_num = len(aml_ids)
+        processed = 0
+        step = 1000
+        self._logger.warn("%d AML IDS" % aml_num)
+        #while processed < aml_num:
+        #    limit = processed
+        #    processed += step
+        #    self._logger.warn("READ 1000")
+        #    print_memory()
+        #    for aml in aml_obj.browse(self.cr, self.uid, aml_ids[limit:processed], fields_to_fetch=aml_fields, context=self.context):
         for aml in aml_obj.browse(self.cr, self.uid, aml_ids, fields_to_fetch=aml_fields, context=self.context):
-            current_line_position += 1
-            aml_dict = {
-                'type': 'aml',
-                'id': aml.id,
-                'prop_instance': aml.instance_id and aml.instance_id.code or '',
-                'journal_code': aml.journal_id.code,
-                'entry_sequence': aml.move_id.name,
-                'description': aml.name,
-                'reference': aml.ref or '',
-                'document_date': aml.document_date,
-                'posting_date': aml.date,
-                'period': aml.period_id.code or '',
-                'gl_account': '%s - %s' % (aml.account_id.code, aml.account_id.name),
-                'account_analytic_addicted': aml.account_id.is_analytic_addicted and 1 or 0,
-                'third_party': aml.partner_txt or '',
-                'cost_center': '',
-                'destination': '',
-                'funding_pool': '',
-                'analytic_account': '',
-                'booking_debit': aml.debit_currency or 0.0,
-                'booking_credit': aml.credit_currency or 0.0,
-                'booking_currency': aml.currency_id and aml.currency_id.name or '',
-                'func_debit': aml.debit or 0.0,
-                'func_credit': aml.credit or 0.0,
-                'func_currency': func_currency_name,
-                'reconcile': aml.reconcile_txt or '',
-                'status': aml.move_state,
-            }
-            amls.append(aml_dict)
-            self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(aml_ids), before=0.05, after=0.15, context=self.context)
+                current_line_position += 1
+                aml_dict = {
+                    'type': 'aml',
+                    'id': aml.id,
+                    'prop_instance': aml.instance_id and aml.instance_id.code or '',
+                    'journal_code': aml.journal_id.code,
+                    'entry_sequence': aml.move_id.name,
+                    'description': aml.name,
+                    'reference': aml.ref or '',
+                    'document_date': aml.document_date,
+                    'posting_date': aml.date,
+                    'period': aml.period_id.code or '',
+                    'gl_account': '%s - %s' % (aml.account_id.code, aml.account_id.name),
+                    'account_analytic_addicted': aml.account_id.is_analytic_addicted and 1 or 0,
+                    'third_party': aml.partner_txt or '',
+                    'cost_center': '',
+                    'destination': '',
+                    'funding_pool': '',
+                    'analytic_account': '',
+                    'booking_debit': aml.debit_currency or 0.0,
+                    'booking_credit': aml.credit_currency or 0.0,
+                    'booking_currency': aml.currency_id and aml.currency_id.name or '',
+                    'func_debit': aml.debit or 0.0,
+                    'func_credit': aml.credit or 0.0,
+                    'func_currency': func_currency_name,
+                    'reconcile': aml.reconcile_txt or '',
+                    'status': aml.move_state,
+                }
+                amls.append(aml_dict)
+                self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(aml_ids), before=0.05, after=0.15, context=self.context)
+        self._logger.warn("END OF MAIN FETCH")
+        print_memory()
         amls.sort(self._cmp_sequence_account_type)
         if bg_id:
             self.percent += 0.05  # 20% of the total process
@@ -194,6 +212,8 @@ class combined_journals_report(report_sxw.rml_parse):
                     self.total_func_credit += aal_dict['func_credit']
                     self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(amls), before=0.20, after=0.45, context=self.context)
         # get the AJIs corresponding to the criteria selected AND not linked to a JI (use self.aal_domain)
+        self._logger.warn("END OF SUB FETCH")
+        print_memory()
         orphan_aal_ids = aal_obj.search(self.cr, self.uid, self.aal_domain, context=self.context, order='entry_sequence')
         current_line_position = 0
         for al in aal_obj.browse(self.cr, self.uid, orphan_aal_ids, fields_to_fetch=aal_fields, context=self.context):
@@ -232,6 +252,7 @@ class combined_journals_report(report_sxw.rml_parse):
             self.total_func_credit += al_dict['func_credit']
             self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(orphan_aal_ids), before=0.45, after=0.5, context=self.context)
         self.nb_lines = len(res)
+        self._logger.warn("END OF GET LINES")
         return res
 
     def _get_criteria(self):
