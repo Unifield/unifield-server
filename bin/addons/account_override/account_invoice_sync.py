@@ -262,10 +262,10 @@ class account_invoice_sync(osv.osv):
             if inv_name_split:
                 ship_or_out_ref = inv_name_split[-1]
                 po_ids = po_obj.search(cr, uid, [('name', '=', inv_name_split[0].split('.')[-1])], limit=1, context=context)
-                if not po_ids and fo_number:
+                if not po_ids and source and fo_number:
                     # use the FO number if the PO wasn't found by using the description
                     # (e.g. the description doesn't contain the PO number when the FO is created and processed first)
-                    po_ids = po_obj.search(cr, uid, [('short_partner_ref', '=', fo_number)], limit=1, context=context)
+                    po_ids = po_obj.search(cr, uid, [('partner_ref', '=', '%s.%s' % (source, fo_number))], limit=1, context=context)
                 if po_ids:
                     po_id = po_ids[0]
             if po_id:
