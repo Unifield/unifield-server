@@ -1264,15 +1264,16 @@ class account_move(osv.osv):
             date_start = period_obj.read(cr, uid, period_id, ['date_start'], context=context)['date_start']
             date_start_dt = datetime.datetime.strptime(date_start, '%Y-%m-%d')
             post_date = (datetime.datetime.strptime(je.date, '%Y-%m-%d') + relativedelta(month=date_start_dt.month,year=date_start_dt.year)).strftime('%Y-%m-%d')
+            setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+            if not setup or not setup.previous_fy_dates_allowed:
+                post_date_dt = datetime.datetime.strptime(post_date, '%Y-%m-%d')
+                doc_date = '%s-01-01' % post_date_dt.year
+            else:
+                doc_date = je.document_date
         else:
             period_id = je.period_id and je.period_id.id or False
             post_date = je.date
-
-        doc_date = je.document_date
-        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        if not setup or not setup.previous_fy_dates_allowed:
-            post_date_dt = datetime.datetime.strptime(post_date, '%Y-%m-%d')
-            doc_date = '%s-01-01' % post_date_dt.year
+            doc_date = je.document_date
 
         vals = {
             'line_id': [],
