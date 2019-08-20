@@ -82,6 +82,14 @@ class analytic_distribution(osv.osv):
         # - If analytic account is MSF Private funds
         # - Cost center and funding pool compatibility
         for fp_line in distrib.funding_pool_lines:
+            if manual:
+                if posting_date:
+                    if not analytic_acc_obj.is_account_active(fp_line.destination_id, posting_date):
+                        return 'invalid'
+                    if not analytic_acc_obj.is_account_active(fp_line.cost_center_id, posting_date):
+                        return 'invalid'
+                if doc_date and not analytic_acc_obj.is_account_active(fp_line.analytic_id, doc_date):
+                    return 'invalid'
             if fp_line.destination_id.id not in account.get('destination_ids', []):
                 return 'invalid'
             if not self.check_dest_cc_compatibility(cr, uid, fp_line.destination_id.id, fp_line.cost_center_id.id, context=context):
@@ -93,15 +101,6 @@ class analytic_distribution(osv.osv):
                 return 'invalid'
             if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
                 return 'invalid'
-            if manual:
-                if posting_date:
-                    if not analytic_acc_obj.is_account_active(fp_line.destination_id, posting_date):
-                        return 'invalid'
-                    if not analytic_acc_obj.is_account_active(fp_line.cost_center_id, posting_date):
-                        return 'invalid'
-                if doc_date:
-                    if not analytic_acc_obj.is_account_active(fp_line.analytic_id, doc_date):
-                        return 'invalid'
         return 'valid'
 
     def analytic_state_from_info(self, cr, uid, account_id, destination_id, cost_center_id, analytic_id, context=None):
