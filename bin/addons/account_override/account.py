@@ -1269,6 +1269,10 @@ class account_move(osv.osv):
             post_date = je.date
 
         doc_date = je.document_date
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if not setup or not setup.previous_fy_dates_allowed:
+            post_date_dt = datetime.datetime.strptime(post_date, '%Y-%m-%d')
+            doc_date = '%s-01-01' % post_date_dt.year
 
         vals = {
             'line_id': [],
@@ -1281,6 +1285,7 @@ class account_move(osv.osv):
         res = super(account_move, self).copy(cr, uid, a_id, vals, context=context)
         for line in je.line_id:
             line_default = {
+                'analytic_lines': [],
                 'move_id': res,
                 'document_date': doc_date,
                 'date': post_date,

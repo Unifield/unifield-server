@@ -56,14 +56,17 @@ class account_move_line(osv.osv):
         res = {}
         distrib_obj = self.pool.get('analytic.distribution')
         sql = """
-            SELECT aml.id, aml.analytic_distribution_id AS distrib_id, m.analytic_distribution_id AS move_distrib_id, aml.account_id
+            SELECT aml.id, aml.analytic_distribution_id AS distrib_id, m.analytic_distribution_id AS move_distrib_id, aml.account_id, 
+            aml.document_date, aml.date, m.status
             FROM account_move_line AS aml, account_move AS m
             WHERE aml.move_id = m.id
             AND aml.id IN %s
             ORDER BY aml.id;"""
         cr.execute(sql, (tuple(ids),))
         for line in cr.fetchall():
-            res[line[0]] = distrib_obj._get_distribution_state(cr, uid, line[1], line[2], line[3])
+            manual = line[6] == 'manu'
+            res[line[0]] = distrib_obj._get_distribution_state(cr, uid, line[1], line[2], line[3],
+                                                               doc_date=line[4], posting_date=line[5], manual=manual)
         return res
 
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
@@ -483,7 +486,10 @@ class account_move_line(osv.osv):
         if context.get('from_web_menu', False):
             res = []
             for ml in self.browse(cr, uid, ids):
-                distrib_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, ml.analytic_distribution_id.id, ml.move_id and ml.move_id.analytic_distribution_id and ml.move_id.analytic_distribution_id.id or False, vals.get('account_id') or ml.account_id.id)
+                distrib_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, ml.analytic_distribution_id.id,
+                                                                                               ml.move_id and ml.move_id.analytic_distribution_id and ml.move_id.analytic_distribution_id.id or False,
+                                                                                               vals.get('account_id') or ml.account_id.id,
+                                                                                               doc_date=ml.document_date, posting_date=ml.date, manual=True)
                 if distrib_state in ['invalid', 'none']:
                     vals.update({'state': 'draft'})
                 # Add account_id because of an error with account_activable module for checking date

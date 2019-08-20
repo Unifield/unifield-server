@@ -705,5 +705,13 @@ class analytic_account(osv.osv):
             'target': 'current',
         }
 
+    def is_account_active(self, analytic_acc_br, date_to_check):
+        """
+        Returns True if the analytic account is active at the date selected, else returns False.
+        """
+        if date_to_check < analytic_acc_br.date_start or (analytic_acc_br.date and date_to_check >= analytic_acc_br.date):
+            return False
+        return True
+
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
