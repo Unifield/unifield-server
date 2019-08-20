@@ -88,7 +88,7 @@ class analytic_distribution(osv.osv):
                         return 'invalid'
                     if not analytic_acc_obj.is_account_active(fp_line.cost_center_id, posting_date):
                         return 'invalid'
-                if doc_date and not analytic_acc_obj.is_account_active(fp_line.analytic_id, doc_date):
+                if doc_date and fp_line.analytic_id and not analytic_acc_obj.is_account_active(fp_line.analytic_id, doc_date):
                     return 'invalid'
             if fp_line.destination_id.id not in account.get('destination_ids', []):
                 return 'invalid'
@@ -101,6 +101,13 @@ class analytic_distribution(osv.osv):
                 return 'invalid'
             if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
                 return 'invalid'
+        if manual and doc_date:
+            for free1_line in distrib.free_1_lines:
+                if free1_line.analytic_id and not analytic_acc_obj.is_account_active(free1_line.analytic_id, doc_date):
+                    return 'invalid'
+            for free2_line in distrib.free_2_lines:
+                if free2_line.analytic_id and not analytic_acc_obj.is_account_active(free2_line.analytic_id, doc_date):
+                    return 'invalid'
         return 'valid'
 
     def analytic_state_from_info(self, cr, uid, account_id, destination_id, cost_center_id, analytic_id, context=None):
