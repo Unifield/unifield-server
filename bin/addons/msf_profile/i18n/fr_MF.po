@@ -1081,6 +1081,12 @@ msgstr "Information Partenaire"
 msgid "The currency on the file is not the same as the currency of the PO line - You must have the same currency on both side - Currency of the initial line kept."
 msgstr "La devise du fichier n'est pas la même devise que celle de la ligne du BC.Vous devez avoir la même devise des deux côtés - Devise de la ligne initiale maintenue."
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1485
+#, python-format
+msgid "Invalid AD in file"
+msgstr "DA du fichier invalide"
+
 #. module: kit
 #: code:addons/kit/kit.py:1174
 #, python-format
