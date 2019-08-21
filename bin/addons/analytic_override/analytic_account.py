@@ -713,5 +713,6 @@ class analytic_account(osv.osv):
             return False
         return True
 
+
 analytic_account()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

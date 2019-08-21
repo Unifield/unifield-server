@@ -77,6 +77,7 @@ class analytic_distribution(osv.osv):
                                                     cc_line.analytic_id and cc_line.analytic_id.id or False, context=context):
                 return 'invalid'
         # Check Funding pool lines regarding:
+        # - date validity for manual entries only
         # - destination / account
         # - destination / cost center
         # - If analytic account is MSF Private funds
@@ -101,6 +102,7 @@ class analytic_distribution(osv.osv):
                 return 'invalid'
             if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
                 return 'invalid'
+        # Check the date validity of the free accounts used in manual entries
         if manual and doc_date:
             for free1_line in distrib.free_1_lines:
                 if free1_line.analytic_id and not analytic_acc_obj.is_account_active(free1_line.analytic_id, doc_date):
