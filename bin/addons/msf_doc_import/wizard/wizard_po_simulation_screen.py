@@ -1663,7 +1663,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     existing_ad = False
                 errors_ad, ad_info = self.pool.get('wizard.import.po.simulation.screen').check_ad(cr, uid, values[20:], existing_ad, product_id=write_vals.get('imp_product_id'), po_type=line.simu_id.order_id.order_type,cc_cache=cc_cache, context=context)
                 if errors_ad:
-                    if not existing_ad:
+                    if not line.po_line_id.analytic_distribution_id or not existing_ad:
                         errors += errors_ad
                         write_vals['error_msg'] = _('Invalid AD in file')
                         write_vals['ad_error'] = 'ok'
