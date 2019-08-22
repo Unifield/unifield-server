@@ -251,22 +251,27 @@ class account_invoice_sync(osv.osv):
             fo_number = ''
             ship_or_out_ref = ''
             main_in = False
-            # extract PO number, and Shipment or Simple Out ref, from refs looking like:
-            # "se_HQ2C1.19/se_HQ2/HT101/PO00001 : SHIP/00002-01" or "se_HQ1C2.19/se_HQ1/HT201/PO00003 : OUT/00001"
-            inv_name_split = description.split()
-            if inv_name_split:
-                po_number = inv_name_split[0].split('.')[-1]
-                po_ids = po_obj.search(cr, uid, [('name', '=', po_number)], limit=1, context=context)
-                if po_ids:
-                    po_id = po_ids[0]
-                ship_or_out_ref = inv_name_split[-1]
             # extract FO number from source docs looking like:
             # "SHIP/00001-04:19/se_HQ1/HT101/FO00007" or "OUT/00003:19/se_HQ1/HT101/FO00008"
             inv_source_doc_split = source_doc.split(':')
             if inv_source_doc_split:
                 fo_number = inv_source_doc_split[-1]
+            # extract PO number, and Shipment or Simple Out ref, from refs looking like:
+            # "se_HQ2C1.19/se_HQ2/HT101/PO00001 : SHIP/00002-01" or "se_HQ1C2.19/se_HQ1/HT201/PO00003 : OUT/00001"
+            inv_name_split = description.split()
+            if inv_name_split:
+                ship_or_out_ref = inv_name_split[-1]
+                po_ids = po_obj.search(cr, uid, [('name', '=', inv_name_split[0].split('.')[-1])], limit=1, context=context)
+                if not po_ids and source and fo_number:
+                    # use the FO number if the PO wasn't found by using the description
+                    # (e.g. the description doesn't contain the PO number when the FO is created and processed first)
+                    po_ids = po_obj.search(cr, uid, [('partner_ref', '=', '%s.%s' % (source, fo_number))], limit=1, context=context)
+                if po_ids:
+                    po_id = po_ids[0]
             if po_id:
-                po = po_obj.browse(cr, uid, po_id, fields_to_fetch=['picking_ids', 'analytic_distribution_id', 'order_line'], context=context)
+                po_fields = ['picking_ids', 'analytic_distribution_id', 'order_line', 'name']
+                po = po_obj.browse(cr, uid, po_id, fields_to_fetch=po_fields, context=context)
+                po_number = po.name
                 shipment_ref = "%s.%s" % (source or '', ship_or_out_ref or '')
                 # get the "main" IN
                 main_in_ids = stock_picking_obj.search(cr, uid,
@@ -316,7 +321,7 @@ class account_invoice_sync(osv.osv):
             context = {}
         invoice_dict = invoice_data.to_dict()
         number = invoice_dict.get('number', '')
-        state =  invoice_dict.get('state')
+        state = invoice_dict.get('state')
         counterpart_inv_number = invoice_dict.get('counterpart_inv_number', '')
         if state:
             vals = {
@@ -337,7 +342,7 @@ class account_invoice_sync(osv.osv):
             if inv_ids:
                 self.write(cr, uid, inv_ids[0], vals, context=context)
                 # note that the "Counterpart Inv. Number" received is the "Number" of the invoice updated!
-                msg = "account.invoice %s: Counterpart Invoice %s set to %s" % (counterpart_inv_number, number, state)
+                msg = "account.invoice %s: Counterpart Invoice %s set to %s" % (counterpart_inv_number or '', number, state)
                 self._logger.info(msg)
                 return msg
 
