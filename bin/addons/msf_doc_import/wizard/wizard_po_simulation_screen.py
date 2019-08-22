@@ -1548,6 +1548,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'change_ok': fields.function(_get_line_info, method=True, multi='line',
                                      type='boolean', string='Change', store=False),
         'error_msg': fields.text(string='Error message', readonly=True),
+        'ad_error': fields.char(string='Display warning on line', size=12, readonly=True),
         'parent_line_id': fields.many2one('wizard.import.po.simulation.screen.line',
                                           string='Parent line id',
                                           help='Use to split the good PO line',
@@ -1557,6 +1558,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'ad_info': fields.text(string='New AD', readonly=True),
     }
 
+    _defaults = {
+        'ad_error': '',
+    }
     def get_error_msg(self, cr, uid, ids, context=None):
         '''
         Display the error message
@@ -1656,7 +1660,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     existing_ad = False
                 errors_ad, ad_info = self.pool.get('wizard.import.po.simulation.screen').check_ad(cr, uid, values[20:], existing_ad, product_id=write_vals.get('imp_product_id'), po_type=line.simu_id.order_id.order_type,cc_cache=cc_cache, context=context)
                 if errors_ad:
-                    errors += errors_ad
+                    if not line.po_line_id.analytic_distribution_id or not existing_ad:
+                        errors += errors_ad
+                        write_vals['error_msg'] = _('Invalid AD in file')
+                        write_vals['ad_error'] = 'ok'
+                    else:
+                        warnings += errors_ad
                 elif ad_info:
                     write_vals['ad_info'] = ad_info
 
