@@ -117,7 +117,7 @@
             id="menu_stock_expired_damaged_report"
             action="action_stock_expired_damaged_report"
             parent="stock.next_id_61"
-            sequence="10"
+            sequence="11"
             />
 
         <report
