@@ -8648,6 +8648,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:stock.expired.damaged.report,state:0
 #: selection:account.invoice,counterpart_inv_status:0
 #: selection:wizard.account.invoice,counterpart_inv_status:0
+#: code:addons/stock_override/report/delivery_order.py:59
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -10352,7 +10353,7 @@ msgstr "Base Language '%s' can not be deleted !"
 msgid "Yearly closure"
 msgstr "Clôture Annuelle"
 
-#. modules: msf_order_date, purchase, account, msf_outgoing, purchase_allocation_report, account_payment, procurement, supplier_catalogue, documents_done, purchase_override, sale, sales_followup, out_step, sourcing, transport_mgmt, msf_supply_doc_export, stock_forecast, procurement_request, stock
+#. modules: msf_order_date, purchase, account, msf_outgoing, purchase_allocation_report, account_payment, procurement, supplier_catalogue, documents_done, purchase_override, sale, sales_followup, out_step, sourcing, transport_mgmt, msf_supply_doc_export, stock_forecast, procurement_request, stock, stock_override
 #: field:po.follow.up,confirmed_ok:0
 #: view:account.bank.statement:0
 #: view:payment.order:0
@@ -10399,6 +10400,7 @@ msgstr "Clôture Annuelle"
 #: selection:local.transport.cost.report,order_state:0
 #: selection:sale.order.line,state_to_display:0
 #: selection:purchase.order.line,state_to_display:0
+#: code:addons/stock_override/report/delivery_order.py:61
 #, python-format
 msgid "Confirmed"
 msgstr "Confirmé"
@@ -24290,7 +24292,7 @@ msgstr "Incohérences du statut des produits"
 msgid "Canada/Pacific"
 msgstr "Canada/Pacific"
 
-#. modules: sales_followup, msf_outgoing, specific_rules, kit, stock_forecast, out_step, stock
+#. modules: sales_followup, msf_outgoing, specific_rules, kit, stock_forecast, out_step, stock, stock_override
 #: selection:kit.creation.to.consume,availability_to_consume:0
 #: selection:stock.move,hidden_state:0
 #: selection:substitute.item,availability_status_hidden_func_substitute_item:0
@@ -24310,6 +24312,7 @@ msgstr "Canada/Pacific"
 #: selection:stock.picking,state:0
 #: view:stock.production.lot:0
 #: selection:stock.forecast.line,state:0
+#: code:addons/stock_override/report/delivery_order.py:62
 #, python-format
 msgid "Available"
 msgstr "Disponible"
@@ -29956,7 +29959,7 @@ msgstr "Date de Début"
 msgid "Certificate attached ?"
 msgstr "Certificat attaché ?"
 
-#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, msf_supply_doc_export, purchase, account_override, account, register_accounting
+#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, msf_supply_doc_export, purchase, account_override, account, register_accounting, stock_override
 #: field:po.follow.up,closed_ok:0
 #: selection:real.average.consumption,state:0
 #: selection:po.follow.up,state:0
@@ -29971,6 +29974,7 @@ msgstr "Certificat attaché ?"
 #: view:account.invoice:0
 #: selection:wizard.account.invoice,state:0
 #: selection:account.invoice,counterpart_inv_status:0
+#: code:addons/stock_override/report/delivery_order.py:64
 msgid "Closed"
 msgstr "Fermé"
 
@@ -41775,7 +41779,7 @@ msgstr "L'Expedition %s est déjà en statut fermé!"
 msgid "Order n°"
 msgstr "n° de Commande"
 
-#. modules: sales_followup, procurement, kit, stock_forecast, out_step, base, export_import_lang, stock
+#. modules: sales_followup, procurement, kit, stock_forecast, out_step, base, export_import_lang, stock, stock_override
 #: view:res.request:0
 #: view:res.request:0
 #: selection:stock.move,hidden_state:0
@@ -41792,6 +41796,7 @@ msgstr "n° de Commande"
 #: selection:stock.move,state:0
 #: selection:stock.picking,state:0
 #: selection:stock.forecast.line,state:0
+#: code:addons/stock_override/report/delivery_order.py:60
 #, python-format
 msgid "Waiting"
 msgstr "En attente"
@@ -77685,7 +77690,7 @@ msgstr "Description is mandatory!"
 msgid "Indicative Total Value"
 msgstr "Valeur totale"
 
-#. modules: tender_flow, account_voucher, account_override, purchase_allocation_report, register_accounting, msf_accrual, stock_forecast, analytic, msf_supply_doc_export, stock, msf_order_date, account_payment, sales_followup, consumption_calculation, purchase_override, specific_rules, kit, out_step, base, purchase, account, msf_outgoing, sale, procurement, sourcing
+#. modules: tender_flow, account_voucher, account_override, purchase_allocation_report, register_accounting, msf_accrual, stock_forecast, analytic, msf_supply_doc_export, stock, msf_order_date, account_payment, sales_followup, consumption_calculation, purchase_override, specific_rules, kit, out_step, base, purchase, account, msf_outgoing, sale, procurement, sourcing, stock_override
 #: selection:account.invoice,state:0
 #: selection:account.invoice.report,state:0
 #: selection:report.invoice.created,state:0
@@ -77754,6 +77759,7 @@ msgstr "Valeur totale"
 #: selection:account.invoice,counterpart_inv_status:0
 #: selection:wizard.account.invoice,counterpart_inv_status:0
 #: field:po.follow.up,cancel_ok:0
+#: code:addons/stock_override/report/delivery_order.py:65
 #, python-format
 msgid "Cancelled"
 msgstr "Annulé"
@@ -98956,10 +98962,11 @@ msgstr "Colonne du Journal"
 msgid "Analytic Accounting"
 msgstr "Comptabilité Analytique"
 
-#. modules: stock_forecast, out_step, stock
+#. modules: stock_forecast, out_step, stock, stock_override
 #: selection:stock.picking,state_hidden:0
 #: selection:stock.picking,state:0
 #: selection:stock.forecast.line,state:0
+#: code:addons/stock_override/report/delivery_order.py:63
 msgid "Available Shipped"
 msgstr "Disponible expédié"
 
@@ -99222,7 +99229,7 @@ msgstr "Vérifier Intégrité"
 msgid "PO line to delete"
 msgstr "PO line to delete"
 
-#. modules: kit, stock_forecast, out_step, msf_doc_import, analytic_distribution, stock, sale
+#. modules: kit, stock_forecast, out_step, msf_doc_import, analytic_distribution, stock, sale, stock_override
 #: field:import.commitment.wizard,progress:0
 #: selection:kit.mass.import,state:0
 #: field:purchase.order,import_in_progress:0
@@ -99232,6 +99239,7 @@ msgstr "PO line to delete"
 #: selection:stock.picking,state:0
 #: selection:stock.forecast.line,state:0
 #: selection:internal.request.import,state:0
+#: code:addons/stock_override/report/delivery_order.py:66
 msgid "Import in progress"
 msgstr "Import en cours"
 
@@ -106912,6 +106920,8 @@ msgstr "Modèle du Kit Théorique"
 
 #. module: stock_override
 #: field:stock.card.wizard.line,partner_or_loc:0
+#: report:addons/stock_override/report/stock_card_report_xls.mako:159
+#: report:stock.card.report:0
 msgid "Partner/Location"
 msgstr "Partneraire/Zone"
 
