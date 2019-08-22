@@ -62,7 +62,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Status')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('State')}</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>

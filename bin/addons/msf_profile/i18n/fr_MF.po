@@ -35846,9 +35846,6 @@ msgstr "cancel_voucher - (account.voucher)"
 #: field:cash.request.liquidity.bank,status:0
 #: field:cash.request.liquidity.cash,status:0
 #: field:cash.request.liquidity.cheque,status:0
-#: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:65
-#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:83
-#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:82
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:173
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:324
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:476
@@ -82457,6 +82454,9 @@ msgstr "Confirmer les factures sélectionnées"
 #: code:addons/msf_doc_import/wizard/__init__.py:58
 #: code:addons/msf_doc_import/wizard/__init__.py:63
 #: code:addons/msf_doc_import/wizard/__init__.py:58
+#: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:65
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:83
+#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:82
 #, python-format
 msgid "State"
 msgstr "Statut"
