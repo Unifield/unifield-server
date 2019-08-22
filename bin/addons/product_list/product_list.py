@@ -73,6 +73,25 @@ class product_list(osv.osv):
             'reviewer_id': False,
         }, context=context)
 
+    def _get_real_product_ids(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        for _id in ids:
+            res[_id] = []
+
+        cr.execute('select list_id, name from product_list_line where list_id in %s', (tuple(ids),))
+        for x in cr.fetchall():
+            res[x[0]].append(x[1])
+
+        return res
+
+    def _search_real_product_ids(self, cr, uid, obj, name, args, context):
+        if not context:
+            context = {}
+        if not args:
+            return []
+
+        return [('product_ids.name', args[0][1], args[0][2])]
+
     _columns = {
         'name': fields.char(
             size=128,
@@ -149,6 +168,7 @@ class product_list(osv.osv):
             type='integer',
             string='# of products',
         ),
+        'real_product_ids': fields.function(_get_real_product_ids, method=True, type='many2many', relation='product.product', fnct_search=_search_real_product_ids, string='Products', domain=[('in_any_product_list', '=', True)]),
 
     }
 

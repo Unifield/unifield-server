@@ -69160,6 +69160,7 @@ msgstr "Date Justificatif"
 #: field:res.country.restriction,product_ids:0
 #: view:product.list:0
 #: field:product.list,product_ids:0
+#: field:product.list,real_product_ids:0
 #: view:product.list.add.products:0
 #: field:product.list.add.products,product_ids:0
 #: view:product.list.line:0
