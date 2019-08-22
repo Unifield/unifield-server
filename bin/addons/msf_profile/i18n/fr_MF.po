@@ -38903,6 +38903,7 @@ msgstr "base.report.sxw"
 #: selection:international.transport.cost.report,transport_mode:0
 #: selection:purchase.order,transport_mode:0
 #: selection:shipment.add.pack.processor,transport_type:0
+#: selection:international.transport.cost.report,transport_type:0
 msgid "Sea"
 msgstr "Mer"
 
@@ -82695,6 +82696,7 @@ msgstr "analytic.distribution"
 #: selection:return.shipment.processor,transport_type:0
 #: selection:shipment,transport_type:0
 #: selection:shipment.add.pack.processor,transport_type:0
+#: selection:international.transport.cost.report,transport_type:0
 msgid "Road"
 msgstr "Route"
 
@@ -89443,7 +89445,7 @@ msgstr "Un assistant qui relie quelques lignes d'avances à certaines lig"
 #: field:wizard.import.po.simulation.screen,imp_shipment_date:0
 #: field:wizard.import.po.simulation.screen,in_shipment_date:0
 msgid "Shipment date"
-msgstr "Shipment date"
+msgstr "Date d'expédition"
 
 #. module: msf_homere_interface
 #: view:hr.payroll.employee.import:0
@@ -101054,8 +101056,8 @@ msgstr "L'UdM '%s' n'existe pas dans la base de données. "
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1374
 #, python-format
-msgid "PO line has been confirmed or cancelled and consequently is not editable"
-msgstr "La ligne du BC a été confirmée ou annulée et n'est donc plus éditable"
+msgid "PO line has been confirmed and consequently is not editable"
+msgstr "La ligne du BC a été confirmée et n'est donc plus éditable"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:303
@@ -106929,7 +106931,7 @@ msgstr "Modèle du Kit Théorique"
 #: report:addons/stock_override/report/stock_card_report_xls.mako:159
 #: report:stock.card.report:0
 msgid "Partner/Location"
-msgstr "Partneraire/Zone"
+msgstr "Partenaire/Zone"
 
 #. module: msf_printed_documents
 #: code:addons/msf_printed_documents/report/report_product_labels.py:67
@@ -107364,3 +107366,9 @@ msgstr "Total dans la Devise"
 #: report:addons/stock/report/stock_delivery_report_xls.mako:226
 msgid "Shipped Date"
 msgstr "Date d'Expédition"
+
+#. module: purchase_override
+#: report:msf.purchase.order:0
+#: report:purchase.order.merged:0
+msgid "Functional total cost :"
+msgstr "Total Coût Fonctionnel :"

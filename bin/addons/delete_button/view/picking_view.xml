@@ -99,7 +99,7 @@
                 <data>
                     <xpath expr="/tree" position="attributes">
                         <attribute name='hide_delete_button'>1</attribute>
-                        <attribute name='colors'>blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date</attribute>
+                        <attribute name='colors'>blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done', 'delivered') and min_date &lt; current_date</attribute>
                     </xpath>
                     <xpath expr="/tree/field[@name='state']" position="after">
                         <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
