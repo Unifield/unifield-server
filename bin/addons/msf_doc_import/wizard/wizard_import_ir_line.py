@@ -27,7 +27,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
 from msf_doc_import import check_line
 from msf_doc_import.wizard import IR_COLUMNS_FOR_IMPORT as columns_for_ir_line_import
-
+from tools import ustr
 
 class wizard_import_ir_line(osv.osv_memory):
     _name = 'wizard.import.ir.line'
@@ -77,8 +77,8 @@ class wizard_import_ir_line(osv.osv_memory):
         sale_line_obj = self.pool.get('sale.order.line')
         line_with_error = []
         vals = {'order_line': []}
-
-        for wiz_browse in self.browse(cr, uid, ids, context):
+        wiz_browse = self.browse(cr, uid, ids, context)[0]
+        try:
             fo_browse = wiz_browse.fo_id
             if not fo_browse.functional_currency_id:
                 raise osv.except_osv(_("Error!"), _("Order currency not found!"))
@@ -254,7 +254,7 @@ class wizard_import_ir_line(osv.osv_memory):
                         cr.commit()
             error_log += '\n'.join(error_list)
             if error_log:
-                error_log = _("Reported errors for ignored lines : \n") + error_log.decode('utf-8')
+                error_log = _("Reported errors for ignored lines : \n") + ustr(error_log)
             end_time = time.time()
             total_time = str(round(end_time-start_time)) + _(' second(s)')
             final_message = _(''' 
@@ -271,6 +271,15 @@ Importation completed in %s!
                 file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
                 wizard_vals.update(file_to_export)
             self.write(cr, uid, ids, wizard_vals, context=context)
+        except Exception, e:
+            cr.rollback()
+            if isinstance(e, osv.except_osv):
+                error = e.value
+            else:
+                error = e
+            self.write(cr, uid, ids, {'message': ustr(error), 'state': 'done'})
+
+        finally:
             # we reset the state of the FO to draft (initial state)
             sale_obj.write(cr, uid, fo_id, {'state': 'draft', 'import_in_progress': False}, context)
             cr.commit()
