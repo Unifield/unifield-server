@@ -62,10 +62,7 @@ class wizard_import_ir_line(osv.osv_memory):
         '''
         if not context:
             context = {}
-        if not context.get('yml_test', False):
-            cr = pooler.get_db(dbname).cursor()
-        else:
-            cr = dbname
+        cr = pooler.get_db(dbname).cursor()
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -141,10 +138,6 @@ class wizard_import_ir_line(osv.osv_memory):
                         'price_unit': 1,  # in case that the product is not found and we do not have price
                         'cost_price': 0,
                         'product_qty': 1,
-                        #                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
-                        #                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
-                        #                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
-                        #                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
                         'proc_type': 'make_to_order',
                         'default_code': False,
                         'confirmed_delivery_date': False,
@@ -258,8 +251,7 @@ class wizard_import_ir_line(osv.osv_memory):
                         continue
                     finally:
                         self.write(cr, uid, ids, {'percent_completed':percent_completed})
-                        if not context.get('yml_test', False):
-                            cr.commit()
+                        cr.commit()
             error_log += '\n'.join(error_list)
             if error_log:
                 error_log = _("Reported errors for ignored lines : \n") + error_log.decode('utf-8')
@@ -281,9 +273,8 @@ Importation completed in %s!
             self.write(cr, uid, ids, wizard_vals, context=context)
             # we reset the state of the FO to draft (initial state)
             sale_obj.write(cr, uid, fo_id, {'state': 'draft', 'import_in_progress': False}, context)
-            if not context.get('yml_test', False):
-                cr.commit()
-                cr.close(True)
+            cr.commit()
+            cr.close(True)
 
     def import_file(self, cr, uid, ids, context=None):
         """
@@ -314,11 +305,8 @@ Importation completed in %s!
                 return self.write(cr, uid, ids, {'message': message})
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
             sale_obj.write(cr, uid, fo_id, {'state': 'done', 'import_in_progress': True}, context)
-        if not context.get('yml_test'):
-            thread = threading.Thread(target=self._import_internal_req, args=(cr.dbname, uid, ids, context))
-            thread.start()
-        else:
-            self._import_internal_req(cr, uid, ids, context)
+        thread = threading.Thread(target=self._import_internal_req, args=(cr.dbname, uid, ids, context))
+        thread.start()
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
 Otherwise, you can continue to use Unifield.""")
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
