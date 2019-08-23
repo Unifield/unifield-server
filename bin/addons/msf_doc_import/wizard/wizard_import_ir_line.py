@@ -278,6 +278,7 @@ Importation completed in %s!
             else:
                 error = e
             self.write(cr, uid, ids, {'message': ustr(error), 'state': 'done'})
+            raise
 
         finally:
             # we reset the state of the FO to draft (initial state)
