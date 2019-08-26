@@ -2663,35 +2663,42 @@ class stock_move(osv.osv):
         """ Changes the state to assigned.
         @return: True
         """
-        product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
+        if context is None:
+            context = {}
 
-        picking_name_dict = {}
-        pick_obj = self.pool.get('stock.picking')
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for move in self.read(cr, uid, ids,
-                              ['product_id', 'from_wkf_line', 'picking_id', 'line_number', 'product_qty', 'qty_to_process'], context=context):
-            if move['product_id'][0] == product_tbd and move['from_wkf_line']:
-                ids.pop(ids.index(move['id']))
+        ir_data = self.pool.get('ir.model.data')
+
+        product_tbd = ir_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
+        stock_loc_id = ir_data.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+        log_loc_id = ir_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
+        med_loc_id = ir_data.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
+
+        ftf = ['product_id', 'from_wkf_line', 'picking_id', 'line_number', 'product_qty', 'qty_to_process',
+               'location_id']
+        for move in self.browse(cr, uid, ids, fields_to_fetch=ftf, context=context):
+            if move.product_id.id == product_tbd and move.from_wkf_line:
+                ids.pop(ids.index(move.id))
             else:
-                picking_id = move['picking_id'] and move['picking_id'][0] or False
-                if picking_id not in picking_name_dict:
-                    picking_id_name = pick_obj.read(cr, uid,
-                                                    picking_id, ['name'], context)['name']
-                    picking_name_dict[picking_id] = picking_id_name
-                else:
-                    picking_id_name = picking_name_dict[picking_id]
-
+                pick = move.picking_id or False
                 self.infolog(cr, uid, 'Force availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
-                    move['line_number'], move['id'], picking_id, picking_id_name,
+                    move.line_number, move.id, pick and pick.id or False, pick and pick.name or False,
                 ))
-                to_write = {'state': 'assigned'}
-                if not manual or not move['qty_to_process']:
-                    to_write['qty_to_process'] = move['product_qty']
-                self.write(cr, uid, [move['id']], to_write)
-        return True
 
+                to_write = {'state': 'assigned'}
+                # Set the source to LOG or MED depending on the product's Nomenclature
+                if move.location_id.id == stock_loc_id and move.product_id.nomen_manda_0.name in ['LOG', 'MED']:
+                    if move.product_id.nomen_manda_0.name == 'LOG':
+                        to_write['location_id'] = log_loc_id
+                    if move.product_id.nomen_manda_0.name == 'MED':
+                        to_write['location_id'] = med_loc_id
+
+                if not manual or not move.qty_to_process:
+                    to_write['qty_to_process'] = move.product_qty
+                self.write(cr, uid, [move.id], to_write)
+        return True
 
     def cancel_assign(self, cr, uid, ids, context=None):
         """ Changes the state to confirmed.
