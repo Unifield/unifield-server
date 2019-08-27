@@ -182,13 +182,15 @@ class report_rml(report_int):
 
     def create_pdf(self, rml, localcontext = None, logo=None, title=None):
         if not localcontext:
-           localcontext={}
+            localcontext={}
         localcontext.update({'internal_header':self.internal_header})
         if logo:
             self.bin_datas['logo'] = logo
         else:
             if 'logo' in self.bin_datas:
                 del self.bin_datas['logo']
+        if 'get_pdf_title' in localcontext:
+            title = localcontext['get_pdf_title']()
         obj = render.rml(rml, localcontext, self.bin_datas, self._get_path(), title)
         obj.render()
         return obj.get()

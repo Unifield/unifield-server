@@ -73,7 +73,6 @@ module named account_voucher.
         'wizard/account_report_central_journal_view.xml',
         'wizard/account_subscription_generate_view.xml',
         'wizard/account_fiscalyear_close_view.xml',
-        'wizard/account_state_open_view.xml',
         'wizard/account_journal_select_view.xml',
         'wizard/account_change_currency_view.xml',
         'wizard/account_validate_move_view.xml',

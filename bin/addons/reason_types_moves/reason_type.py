@@ -152,7 +152,7 @@ class stock_inventory_line(osv.osv):
 
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', required=True),
-        'comment': fields.char(size=128, string='Comment'),
+        'comment': fields.text('Comment', readonly=True),
     }
 
     def create(self, cr, uid, vals, context=None):

@@ -30,7 +30,7 @@ class check_ppl_integrity(osv.osv_memory):
     _description = 'Wizard to check PPL integrity'
 
     _columns = {
-        'ppl_processor_id': fields.many2one('ppl.processor', string='PPL processor', readonly=True),
+        'picking_id': fields.many2one('stock.picking', string='PPL', readonly=True),
         'incoming_processor_id': fields.many2one('stock.incoming.processor', string='IN processor', readonly=True),
         'line_number_with_issue': fields.char('Line # with issue', size=512, readonly=True),
     }
@@ -43,8 +43,8 @@ class check_ppl_integrity(osv.osv_memory):
 
         wiz = self.browse(cr, uid, ids[0], context=context)
 
-        if wiz.ppl_processor_id:
-            res = self.pool.get('stock.picking').do_ppl_step1(cr, uid, [wiz.ppl_processor_id.id], context=context)
+        if wiz.picking_id:
+            res = self.pool.get('stock.picking').ppl_step2_run_wiz(cr, uid, [wiz.picking_id.id], context=context)
         elif wiz.incoming_processor_id:
             res = self.pool.get('stock.incoming.processor').do_process_to_ship(cr, uid, [wiz.incoming_processor_id.id], context=context)
 
@@ -63,11 +63,10 @@ class check_ppl_integrity(osv.osv_memory):
             )
 
         wiz = self.browse(cr, uid, ids[0], context=context)
-        if wiz.ppl_processor_id:
-            res_model = 'ppl.processor'
-            res_id = wiz.ppl_processor_id.id
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
-        elif wiz.incoming_processor_id:
+        if wiz.picking_id:
+            return {'type': 'ir.actions.act_window_close'}
+
+        if wiz.incoming_processor_id:
             res_model = 'stock.incoming.processor'
             res_id = wiz.incoming_processor_id.id
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_incoming_processor_form_view')[1]
@@ -82,11 +81,6 @@ class check_ppl_integrity(osv.osv_memory):
             'target': 'new',
             'context': context,
         }
-
-
-    def cancel(self, cr, uid, ids, context=None):
-        return self.return_to_wizard(cr, uid, ids, context=context)
-
 
 check_ppl_integrity()
 

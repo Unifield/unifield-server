@@ -337,6 +337,7 @@
                     <field name="model" invisible="1"/>
                     &general;
                     &gl_journals_and_periods;
+                    &account;
                     &currency;
                     <separator string=" " colspan="4"/>
                     <group colspan="4" col="6">

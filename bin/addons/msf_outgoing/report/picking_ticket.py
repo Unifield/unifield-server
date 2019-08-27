@@ -69,7 +69,13 @@ class picking_ticket(report_sxw.rml_parse):
             'getShipper': self.get_shipper,
             'getPickingShipper': self.get_picking_shipper,
             'getConsignee': self.get_consignee,
+            'get_pdf_title': self.get_pdf_title,
         })
+
+    def get_pdf_title(self):
+        if self.objects[0].is_subpick:
+            return _('Picking Ticket')
+        return _('Picking List')
 
     def get_consignee(self, picking):
         """
@@ -240,11 +246,11 @@ class picking_ticket(report_sxw.rml_parse):
 
         for m in picking.move_lines:
             if m.kc_check:
-                kc = 'heat sensitive'
+                kc = _('heat sensitive')
             if m.dg_check:
-                dg = 'dangerous goods'
+                dg = _('dangerous goods')
             if kc and dg:
-                and_msg = ' and '
+                and_msg = _(' and ')
                 break
 
         if kc or dg:

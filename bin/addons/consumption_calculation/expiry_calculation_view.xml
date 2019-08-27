@@ -91,13 +91,13 @@
                         <html>
                             <div style="align: center">
                                 <p style="font-size:14px;align:center">
-                                    Your products likely to expire demand will be treated quickly.<br />
+                                    <translate>Your products likely to expire demand will be treated quickly.</translate><br />
                                 </p>
                                 <p style="font-size:14px;align:center">
-                                    Due to the volume of data, your demand cannot be shown immediatly.<br />
+                                    <translate>Due to the volume of data, your demand cannot be shown immediatly.</translate><br />
                                 </p>
                                 <p style="font-size:14px;align:center">
-                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / Expiry / Products likely to expire.<br />
+                                    <translate>When the report will be ready, you can access to it by the menu Warehouse / Reporting / Expiry / Products likely to expire.</translate><br />
                                 </p>
                             </div>
                         </html>
@@ -184,7 +184,8 @@
                     <separator colspan="4" string="Period of calculation" />
                     <field name="date_from" readonly="1" />
                     <field name="date_to" readonly="1" />
-                    <field name="consumption_type" colspan="4" readonly="1" />
+                    <field name="consumption_type" colspan="4" readonly="1" attrs="{'invisible': [('consumption_type', '=', 'amc')]}" />
+                    <field name="amc_consumption_text" colspan="4" readonly="1" attrs="{'invisible': [('consumption_type', '!=', 'amc')]}" />
                     <separator colspan="4" string="Expired products" />
                     <field colspan="4" nolabel="1" name="line_ids" mode="tree" readonly="1">
                         <tree string="Expired products">

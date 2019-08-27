@@ -908,7 +908,7 @@ class purchase_order(osv.osv):
             else:
                 json_info = json.loads(order['fixed_order_type'])
                 if json_info and order['order_type'] not in json_info:
-                    allowed_type = ' / '.join(order_types_dict.get(x) for x in json_info)
+                    allowed_type = ' / '.join([_(order_types_dict.get(x)) for x in json_info])
                     err.append(_('%s: Only %s order types are allowed for this purchase order') % (order['name'], allowed_type))
 
         if err:
@@ -920,8 +920,27 @@ class purchase_order(osv.osv):
         return True
 
     _constraints = [
-        (_check_order_type, 'The order type of the order is not consistent with the order type of the source', ['order_type'])
+        (_check_order_type, 'The order type of the order is not consistent with the order type of the source', ['order_type']),
     ]
+
+    def _check_stock_take_date(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # Do not prevent modification during synchro
+        if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+            for po in self.browse(cr, uid, ids, context=context):
+                if po.state in ['draft', 'draft_p', 'validated'] and po.stock_take_date \
+                        and po.stock_take_date > po.date_order:
+                    raise osv.except_osv(
+                        _('Error'), _('The Stock Take Date of %s is not consistent! It should not be later than its creation date')
+                        % (po.name,)
+                    )
+
+        return True
 
     def default_get(self, cr, uid, fields, context=None):
         '''
@@ -977,6 +996,10 @@ class purchase_order(osv.osv):
         # we need to update the location_id because it is readonly and so does not pass in the vals of create and write
         vals = self._get_location_id(cr, uid, vals, warehouse_id=vals.get('warehouse_id', False), context=context)
         res = super(purchase_order, self).create(cr, uid, vals, context=context)
+
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, res, context=context)
+
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -1050,6 +1073,9 @@ class purchase_order(osv.osv):
                 )
 
         res = super(purchase_order, self).write(cr, uid, ids, vals, context=context)
+
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, ids, context=context)
 
         # Delete expected sale order line
         if 'state' in vals and vals.get('state') not in ('draft', 'validated'):
@@ -1222,7 +1248,7 @@ class purchase_order(osv.osv):
             default = {}
         if context is None:
             context = {}
-        fields_to_reset = ['delivery_requested_date', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve', 'analytic_distribution_id', 'empty_po_cancelled']
+        fields_to_reset = ['delivery_requested_date', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date']
         to_del = []
         for ftr in fields_to_reset:
             if ftr not in default:
@@ -1461,44 +1487,6 @@ class purchase_order(osv.osv):
     def button_dummy(self, cr, uid, ids, context=None):
         return True
 
-    def _hook_o_line_value(self, cr, uid, *args, **kwargs):
-        o_line = kwargs['o_line']
-        order_line = kwargs['order_line']
-
-        # Copy all fields except order_id and analytic_distribution_id
-        fields = ['product_uom', 'price_unit', 'move_dest_id', 'product_qty', 'partner_id',
-                  'confirmed_delivery_date', 'nomenclature_description', 'default_code',
-                  'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3',
-                  'nomenclature_code', 'name', 'default_name', 'comment', 'date_planned',
-                  'to_correct_ok', 'text_error', 'select_fo', 'project_ref', 'external_ref',
-                  'nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4',
-                  'nomen_sub_5', 'linked_sol_id', 'change_price_manually', 'old_price_unit',
-                  'origin', 'account_analytic_id', 'product_id', 'company_id', 'notes', 'taxes_id',
-                  'link_so_id', 'from_fo', 'sale_order_line_id', 'tender_line_id', 'dest_partner_id']
-
-        for field in fields:
-            field_val = getattr(order_line, field)
-            if isinstance(field_val, browse_record):
-                field_val = field_val.id
-            elif isinstance(field_val, browse_null):
-                field_val = False
-            elif isinstance(field_val, list):
-                field_val = ((6, 0, tuple([v.id for v in field_val])),)
-            o_line[field] = field_val
-
-
-        # Set the analytic distribution
-        distrib_id = False
-        if order_line.analytic_distribution_id:
-            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.analytic_distribution_id.id)
-        elif order_line.order_id.analytic_distribution_id:
-            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.order_id.analytic_distribution_id.id)
-
-        o_line['analytic_distribution_id'] = distrib_id
-
-        return o_line
-
-
     def _hook_order_infos(self, cr, uid, *args, **kwargs):
         '''
         Hook to change the values of the PO
@@ -1510,7 +1498,7 @@ class purchase_order(osv.osv):
                   'categ', 'priority', 'internal_type', 'arrival_date',
                   'transport_type', 'shipment_date', 'ready_to_ship_date',
                   'cross_docking_ok', 'delivery_confirmed_date',
-                  'est_transport_lead_time', 'transport_mode', 'location_id',
+                  'est_transport_lead_time', 'location_id',
                   'dest_address_id', 'incoterm_id']
 
 
@@ -1551,6 +1539,7 @@ class purchase_order(osv.osv):
 
         """
         wf_service = netsvc.LocalService("workflow")
+
         def make_key(br, fields):
             list_key = []
             for field in fields:
@@ -1568,7 +1557,7 @@ class purchase_order(osv.osv):
             list_key.sort()
             return tuple(list_key)
 
-    # compute what the new orders should contain
+        # compute what the new orders should contain
 
         new_orders = {}
 
@@ -1599,22 +1588,25 @@ class purchase_order(osv.osv):
                     order_infos['origin'] = (order_infos['origin'] or '') + ' ' + porder.origin
             order_infos = self._hook_order_infos(cr, uid, order_infos=order_infos, order_id=porder)
 
-            for order_line in porder.order_line:
+            for order_line in [line for line in porder.order_line if line.state == 'draft']:
                 line_key = make_key(order_line, ('id', 'order_id', 'name', 'date_planned', 'taxes_id', 'price_unit', 'notes', 'product_id', 'move_dest_id', 'account_analytic_id'))
                 o_line = order_infos['order_line'].setdefault(line_key, {})
-                if o_line:
-                    o_line = self._hook_o_line_value(cr, uid, o_line=o_line, order_line=order_line)
-                    # merge the line with an existing line
-                    o_line['product_qty'] += order_line.product_qty * order_line.product_uom.factor / o_line['uom_factor']
+                # append a new line
+                for field in ('product_qty', 'product_uom'):
+                    field_val = getattr(order_line, field)
+                    if isinstance(field_val, browse_record):
+                        field_val = field_val.id
+                    o_line[field] = field_val
+                if order_line.analytic_distribution_id:
+                    ad_to_copy = order_line.analytic_distribution_id.id
+                elif order_line.order_id.analytic_distribution_id:
+                    ad_to_copy = order_line.order_id.analytic_distribution_id.id
                 else:
-                    # append a new "standalone" line
-                    for field in ('product_qty', 'product_uom'):
-                        field_val = getattr(order_line, field)
-                        if isinstance(field_val, browse_record):
-                            field_val = field_val.id
-                        o_line[field] = field_val
-                    o_line['uom_factor'] = order_line.product_uom and order_line.product_uom.factor or 1.0
-                    o_line = self._hook_o_line_value(cr, uid, o_line=o_line, order_line=order_line)
+                    ad_to_copy = False
+                if ad_to_copy:
+                    o_line['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ad_to_copy)
+
+                o_line['uom_factor'] = order_line.product_uom and order_line.product_uom.factor or 1.0
 
         allorders = []
         orders_info = {}
@@ -1734,7 +1726,7 @@ class purchase_order(osv.osv):
                 else:
                     json_info = json.loads(order['fixed_order_type'])
                     if json_info and order_type not in json_info:
-                        allowed_type = ' / '.join(order_types_dict.get(x) for x in json_info)
+                        allowed_type = ' / '.join([_(order_types_dict.get(x)) for x in json_info])
                         err.append(
                             _('%s: Only %s order types are allowed for this purchase order') % (order['name'], allowed_type))
 
@@ -2798,8 +2790,9 @@ class purchase_order(osv.osv):
             'fct_object_id': False,
             'fct_res_id': False,
             'sub_obj_name': '',
+            'field_id': fld_ids[0],
             'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
-            'field_description': _('Order state'),
+            'field_description': 'Order state',
             'trans_field_description': _('Order state'),
             'new_value': new_state,
             'new_value_text': new_state_txt or new_state,
