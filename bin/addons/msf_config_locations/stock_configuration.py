@@ -235,7 +235,7 @@ class stock_location(osv.osv):
         Returns the available locations for destination location of an internal picking according to the product
         '''
         # Inventory, destruction, quarantine and all internal and virtual locations
-        res = [('service_location', '=', False), '|', '|', '|', ('usage', 'in', ['internal', 'inventory']), ('destruction_location', '=', True), ('quarantine_location', '=', True), ('virtual_ok', '=', True)]
+        res = [('input_ok', '!=', True), ('service_location', '=', False), '|', '|', '|', ('usage', 'in', ['internal', 'inventory']), ('destruction_location', '=', True), ('quarantine_location', '=', True), ('virtual_ok', '=', True)]
         for arg in args:
             if arg[0] == 'internal_dest' and arg[1] == '=':
                 if arg[2] == False:
@@ -245,13 +245,13 @@ class stock_location(osv.osv):
                 product = self.pool.get('product.product').browse(cr, uid, arg[2])
                 if product.type == 'consu':
                     # Inventory, destruction and quarantine location
-                    res = [('service_location', '=', False), '|', '|', ('usage', '=', 'inventory'), ('destruction_location', '=', True), ('quarantine_location', '=', True)]
+                    res = [('input_ok', '!=', True), ('service_location', '=', False), '|', '|', ('usage', '=', 'inventory'), ('destruction_location', '=', True), ('quarantine_location', '=', True)]
                 elif product.type == 'service_recep':
                     # Service location
                     res = [('service_location', '=', True)]
                 else:
                     # All internal and virtual locations
-                    res = [('non_stockable_ok', '=', False), ('service_location', '=', False), '|', ('usage', '=', 'internal'), ('virtual_ok', '=', True)]
+                    res = [('input_ok', '!=', True), ('non_stockable_ok', '=', False), ('service_location', '=', False), '|', ('usage', '=', 'internal'), ('virtual_ok', '=', True)]
 
         return res
 
