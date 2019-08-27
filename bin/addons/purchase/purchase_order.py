@@ -1597,6 +1597,15 @@ class purchase_order(osv.osv):
                     if isinstance(field_val, browse_record):
                         field_val = field_val.id
                     o_line[field] = field_val
+                if order_line.analytic_distribution_id:
+                    ad_to_copy = order_line.analytic_distribution_id.id
+                elif order_line.order_id.analytic_distribution_id:
+                    ad_to_copy = order_line.order_id.analytic_distribution_id.id
+                else:
+                    ad_to_copy = False
+                if ad_to_copy:
+                    o_line['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, ad_to_copy)
+
                 o_line['uom_factor'] = order_line.product_uom and order_line.product_uom.factor or 1.0
 
         allorders = []

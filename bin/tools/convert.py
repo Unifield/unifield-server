@@ -337,7 +337,7 @@ form: module.record_id""" % (xml_id,)
 
         xml_id = rec.get('id','').encode('utf8')
         self._test_xml_id(xml_id)
-
+        res['update_title'] = rec.get('update_title', False)
         if rec.get('groups'):
             g_names = rec.get('groups','').split(',')
             groups_value = []

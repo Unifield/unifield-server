@@ -413,7 +413,7 @@ class tender(osv.osv):
                                   }
                         # create purchase order line
                         pol_obj.create(cr, uid, values, context=context)
-                        message = "Request for Quotation '%s' has been created." % po_obj.browse(cr, uid, po_id, context=context).name
+                        message = _("Request for Quotation '%s' has been created.") % po_obj.browse(cr, uid, po_id, context=context).name
                         # create the log message
                         self.pool.get('res.log').create(cr, uid,
                                                         {'name': message,
@@ -642,7 +642,7 @@ class tender(osv.osv):
                     po_to_use = self.pool.get('tender.line').create_po_from_tender_line(cr, uid, [tender_line.id], context=context)
                     # log new PO:
                     po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
-                    self.pool.get('purchase.order').log(cr, uid, po_to_use, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                    self.pool.get('purchase.order').log(cr, uid, po_to_use, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
                     self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
 
                 anal_dist_to_copy = tender_line.sale_order_line_id and tender_line.sale_order_line_id.analytic_distribution_id.id or False

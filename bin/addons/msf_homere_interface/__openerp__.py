@@ -34,6 +34,7 @@
         'hr_view.xml',
         'hr_payroll_view.xml',
         'hr_payroll_wizard.xml',
+        'hr_employee_activation_wizard.xml',
     ],
     "demo_xml" : [],
     "test": [],

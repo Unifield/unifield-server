@@ -122,7 +122,7 @@ class module(osv.osv):
                 key = data_id.model
                 res_mod_dic = res[mnames[data_id.module]]
                 if key=='ir.ui.view':
-                    v = view_obj.browse(cr,uid,data_id.res_id)
+                    v = view_obj.browse(cr,uid,data_id.res_id, fields_to_fetch=['inherit_id', 'name', 'type'])
                     aa = v.inherit_id and '* INHERIT ' or ''
                     res_mod_dic['views_by_module'].append(aa + v.name + '('+v.type+')')
                 elif key=='ir.actions.report.xml':
