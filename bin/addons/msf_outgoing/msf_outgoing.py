@@ -646,10 +646,12 @@ class shipment(osv.osv):
             # if all packs have been selected, from/to have been set to 0
             # update the original move object - the corresponding original shipment (draft)
             # is automatically updated generically in the write method
+            new_max_selected = initial_to_pack - initial_from_pack + 1
             move_obj.write(cr, uid, [move.id], {
                 'product_qty': initial_qty,
                 'from_pack': initial_from_pack,
                 'to_pack': initial_to_pack,
+                'selected_number': min(new_max_selected, move.selected_number),
             }, context=context)
 
             nb_processed += 1
