@@ -1242,7 +1242,6 @@ class shipment(osv.osv):
                             treat_draft = False
                         elif move.from_pack or move.to_pack:
                             # qty = 0, from/to pack should have been set to zero
-                            print move.id
                             raise osv.except_osv(
                                 _('Error'),
                                 _('There are stock moves with 0 quantity on the pack family sequence: %s %s') % (draft_packing.name, move.line_number)
