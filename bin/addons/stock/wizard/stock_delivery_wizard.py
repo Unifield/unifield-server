@@ -84,13 +84,13 @@ class stock_delivery_wizard(osv.osv_memory):
                 out_domain.insert(0, '&')
                 out_domain.append(('picking_id.date_done', '>=', wizard.start_date))
                 ppl_domain.insert(0, '&')
-                ppl_domain.append(('picking_id.shipment_id.shipment_expected_date', '>=', wizard.start_date))
+                ppl_domain.append(('picking_id.shipment_id.shipment_actual_date', '>=', wizard.start_date))
 
             if wizard.end_date:
                 out_domain.insert(0, '&')
                 out_domain.append(('picking_id.date_done', '<=', wizard.end_date))
                 ppl_domain.insert(0, '&')
-                ppl_domain.append(('picking_id.shipment_id.shipment_expected_date', '<=', wizard.end_date))
+                ppl_domain.append(('picking_id.shipment_id.shipment_actual_date', '<=', wizard.end_date))
 
             if wizard.location_id:
                 out_domain.insert(0, '&')
