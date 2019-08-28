@@ -929,7 +929,7 @@ class shipment(osv.osv):
 
                     draft_initial_qty = draft_move.product_qty + return_qty
                     qty_processed = draft_move.qty_processed - return_qty
-                    move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty, 'qty_to_process': draft_initial_qty, 'qty_processed': qty_processed}, context=context)
+                    move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty, 'qty_to_process': draft_initial_qty, 'qty_processed': qty_processed, 'pack_info_id': False}, context=context)
 
 
             # log the increase action - display the picking ticket view form - log message for each draft packing because each corresponds to a different draft picking
