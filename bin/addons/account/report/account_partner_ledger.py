@@ -38,6 +38,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         self.debit_balances = {}
         self.credit_balances = {}
         self.current_partner_number = 0
+        self.third_party_type = context and context.get('third_party_type', 'partner')  # TODO: adapt the report accordingly
         self.localcontext.update({
             'partners_to_display': self._partners_to_display,
             'time': time,
@@ -71,7 +72,8 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
 
     def set_context(self, objects, data, ids, report_type=None):
         obj_move = self.pool.get('account.move.line')
-        obj_partner = self.pool.get('res.partner')
+        # obj_partner = self.pool.get('res.partner')
+        obj_partner = self.pool.get('hr.employee')
         obj_fy = self.pool.get('account.fiscalyear')
         used_context = data['form'].get('used_context', {})
         self.reconciled = data['form'].get('reconciled', False)
@@ -140,24 +142,31 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 " " + self.TAX_REQUEST + " " \
                 "AND a.active", (tuple(self.ACCOUNT_TYPE), ))
             self.account_ids = [a for (a,) in self.cr.fetchall()]
-        if data['form'].get('partner_ids', False):
-            new_ids = data['form']['partner_ids']  # some partners are specifically selected
+        if data['form'].get('employee_ids', False):
+            new_ids = data['form']['employee_ids']  # some employees are specifically selected
         else:
             partner_to_use = []
             # check if we should display all partners or only active ones
             active_selection = data['form'].get('only_active_partners') and ('t',) or ('t', 'f')
+            # self.cr.execute(
+            #     "SELECT id as partner_id, name "
+            #     "FROM res_partner "
+            #     "WHERE active IN %s "
+            #     "AND name != 'To be defined'"
+            #     "ORDER BY name;",
+            #     (active_selection,))
             self.cr.execute(
-                "SELECT id as partner_id, name "
-                "FROM res_partner "
-                "WHERE active IN %s "
-                "AND name != 'To be defined'"
-                "ORDER BY name;",
+                "SELECT emp.id as employee_id, emp.name_resource "
+                "FROM hr_employee emp "
+                "INNER JOIN resource_resource res ON emp.resource_id = res.id "
+                "WHERE res.active IN %s "
+                "ORDER BY name_resource;",
                 (active_selection,))
             res = self.cr.dictfetchall()
             for res_line in res:
-                partner_to_use.append(res_line['partner_id'])
+                partner_to_use.append(res_line['employee_id'])
             new_ids = partner_to_use
-        self.partner_ids = new_ids
+        self.employee_ids = new_ids
         objects = obj_partner.browse(self.cr, self.uid, new_ids)
         res = super(third_party_ledger, self).set_context(objects, data, new_ids, report_type)
         common_report_header._set_context(self, data)
@@ -210,7 +219,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         else:  # 'empty'
             reconcile_tag = " "
         self.cr.execute(
-            "SELECT l.partner_id, acc.code "
+            "SELECT l.employee_id, acc.code "
             "FROM account_move_line l "
             "LEFT JOIN account_journal j ON l.journal_id = j.id "
             "LEFT JOIN account_account acc ON l.account_id = acc.id "
@@ -222,7 +231,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             " " + reconcile_tag + " "
             " " + self.DATE_FROM + " "
             " " + self.INSTANCE_REQUEST + " "
-            "GROUP BY l.partner_id, acc.code ORDER BY acc.code;",
+            "GROUP BY l.employee_id, acc.code ORDER BY acc.code;",
             (tuple(self.account_ids), tuple(move_state)))
         for x in self.cr.fetchall():
             self.accounts_to_display.setdefault(x[0], []).append(x[1])
@@ -254,7 +263,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             "ON (l.account_id = acc.id) " \
             "LEFT JOIN res_currency c ON (l.currency_id=c.id)" \
             "LEFT JOIN account_move m ON (m.id=l.move_id)" \
-            "WHERE l.partner_id = %s " \
+            "WHERE l.employee_id = %s " \
             "AND l.account_id = (SELECT id FROM account_account WHERE code = %s LIMIT 1) "
             "AND " + self.query + " " \
             "AND m.state IN %s " \
@@ -344,7 +353,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             "FROM account_move_line AS l, " \
             "account_move AS m, "
             "account_account AS acc "
-            "WHERE l.partner_id = %s " \
+            "WHERE l.employee_id = %s " \
             "AND m.id = l.move_id " \
             "AND l.account_id = acc.id "
             "AND m.state IN %s "
@@ -384,7 +393,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             "FROM account_move_line AS l, " \
             "account_move AS m, "
             "account_account AS acc "
-            "WHERE l.partner_id=%s " \
+            "WHERE l.employee_id=%s " \
             "AND m.id = l.move_id " \
             "AND l.account_id = acc.id "
             "AND m.state IN %s "

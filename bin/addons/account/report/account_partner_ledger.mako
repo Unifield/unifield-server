@@ -330,7 +330,7 @@ else:
 <!-- PARTNER HEADER -->
 <Row>
 <Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String">${p.name or ''|x}</Data>
+    <Data ss:Type="String">${p.name_resource or ''|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartner" ss:MergeAcross="5">
     <Data ss:Type="String"></Data>
@@ -359,7 +359,7 @@ else:
     %>
     <Row>
       <Cell ss:StyleID="ssSubtotalLineRight">
-        <Data ss:Type="String">${p.name or ''|x}</Data>
+        <Data ss:Type="String">${p.name_resource or ''|x}</Data>
       </Cell>
       <Cell ss:MergeAcross="5" ss:StyleID="ssSubtotalLineRight">
         <Data ss:Type="String">${ account_code |x}</Data>
@@ -387,7 +387,7 @@ else:
     % for curr in subtotals:
     <Row>
       <Cell ss:StyleID="ssSubtotalLineRight">
-        <Data ss:Type="String">${p.name or ''|x}</Data>
+        <Data ss:Type="String">${p.name_resource or ''|x}</Data>
       </Cell>
       <Cell ss:MergeAcross="5" ss:StyleID="ssSubtotalLineRight">
         <Data ss:Type="String">${ _('Subtotal') |x}</Data>

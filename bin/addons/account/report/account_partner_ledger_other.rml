@@ -520,7 +520,7 @@
             <blockTable colWidths="420.0,30.0,70.0,70.0,80.0,92.0" style="Table12">
                 <tr>
                     <td>
-                        <para style="terp_default_Bold_9">[[ p.name ]]</para>
+                        <para style="terp_default_Bold_9">[[ p.name_resource ]]</para>
                     </td>
                     <td>
                         <para style="terp_default_Bold_9">[[ company.currency_id.name ]]</para>
@@ -547,7 +547,7 @@
                     <blockTable colWidths="296.0,124.0,30.0,70.0,70.0,80.0,92.0" style="Table14">
                         <tr>
                             <td>
-                                <para style="PCenteredBold">[[ p.name or '' ]]</para>
+                                <para style="PCenteredBold">[[ p.name_resource or '' ]]</para>
                             </td>
                             <td>
                                 <para style="PRightBold">[[ account_code ]]</para>
@@ -579,7 +579,7 @@
                     <blockTable colWidths="296.0,124.0,30.0,70.0,70.0,80.0,92.0" style="Table14">
                         <tr>
                             <td>
-                                <para style="PCenteredBold">[[ p.name or '' ]]</para>
+                                <para style="PCenteredBold">[[ p.name_resource or '' ]]</para>
                             </td>
                             <td>
                                 <para style="PRightBold">Subtotal</para>

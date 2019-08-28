@@ -8,7 +8,8 @@
         <field name="type">search</field>
         <field name="arch" type="xml">
             <search string="Partner Balance Search">
-                <field name="partner_id" string="Partner" />
+<!--                <field name="partner_id" string="Partner" />-->
+                    <field name="employee_id" string="Employee" />
             </search>
         </field>
     </record>
@@ -96,13 +97,18 @@
                             <field name="name" />
                     </tree>
                 </field>
-                <field name="partner_ids"
-                       domain="['&amp;', '|', ('supplier', '=', True), ('customer', '=', True), ('name', '!=', 'To be defined')]"
+<!--                <field name="partner_ids"-->
+<!--                       domain="['&amp;', '|', ('supplier', '=', True), ('customer', '=', True), ('name', '!=', 'To be defined')]"-->
+<!--                       context="{'active_test': only_active_partners}">-->
+                <field name="employee_ids"
                        context="{'active_test': only_active_partners}">
                     <tree noteditable="1">
-                        <field name="name"/>
-                        <field name="ref"/>
-                        <field name="partner_type"/>
+<!--                        <field name="name"/>-->
+<!--                        <field name="ref"/>-->
+<!--                        <field name="partner_type"/>-->
+                            <field name="name_resource"/>
+                            <field name="identification_id"/>
+                            <field name="employee_type"/>
                     </tree>
                 </field>
                 <field name="account_domain" invisible="1"/>
@@ -160,9 +166,21 @@
              <field name="view_type">form</field>
              <field name="view_mode">form</field>
              <field name="view_id" ref="wizard_account_report_partner_balance_tree_view"/>
-             <field name="context">{'record_id': active_id}</field>
+             <field name="context">{'record_id': active_id, 'third_party_type': 'partner'}</field>
              <field name="target">new</field>
        </record>
+
+        <record id="action_account_employee_balance_tree" model="ir.actions.act_window">
+             <field name="name">Employee Balance View</field>
+             <field name="res_model">wizard.account.partner.balance.tree</field>
+             <field name="type">ir.actions.act_window</field>
+             <field name="view_type">form</field>
+             <field name="view_mode">form</field>
+             <!-- TODO: see if the whole view will differ, or if only some fields will depend on the third party type? -->
+             <field name="view_id" ref="wizard_account_report_partner_balance_tree_view"/>
+             <field name="context">{'record_id': active_id, 'third_party_type': 'employee'}</field>
+             <field name="target">new</field>
+        </record>
        
 
        <menuitem icon="STOCK_PRINT"
@@ -171,6 +189,13 @@
             id="menu_account_partner_balance_tree"
             parent="account.next_id_22"
             sequence="11" /> <!-- just after partner ledger menu -->
+
+         <menuitem icon="STOCK_PRINT"
+            name="Employee Balance"
+            action="action_account_employee_balance_tree"
+            id="menu_account_employee_balance_tree"
+            parent="account.employee_menu"
+            sequence="11" /> <!-- just after the Employee Ledger menu -->
 
      </data>
  </openerp>

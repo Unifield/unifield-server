@@ -38,6 +38,8 @@ class account_partner_ledger(osv.osv_memory):
         'page_split': fields.boolean('One Partner Per Page', help='Display Ledger Report with One partner per page (PDF version only)'),
         'partner_ids': fields.many2many('res.partner', 'account_partner_ledger_partner_rel', 'wizard_id', 'partner_id',
                                         string='Partners', help='Display the report for specific partners only'),
+        'employee_ids': fields.many2many('hr.employee', 'account_partner_ledger_employee_rel', 'wizard_id', 'employee_id',
+                                         string='Employees', help='Display the report for specific employees only'),
         'only_active_partners': fields.boolean('Only active partners', help='Display the report for active partners only'),
         'instance_ids': fields.many2many('msf.instance', 'account_partner_ledger_instance_rel', 'wizard_id', 'instance_id',
                                          string='Proprietary Instances', help='Display the report for specific proprietary instances only'),
@@ -65,7 +67,7 @@ class account_partner_ledger(osv.osv_memory):
         if context is None:
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['reconciled', 'page_split', 'tax', 'partner_ids',
+        data['form'].update(self.read(cr, uid, ids, ['reconciled', 'page_split', 'tax', 'partner_ids', 'employee_ids',
                                                      'only_active_partners', 'instance_ids', 'account_ids',
                                                      'display_partner'])[0])
         self._check_dates_fy_consistency(cr, uid, data, context)
@@ -94,7 +96,7 @@ class account_partner_ledger(osv.osv_memory):
         data['form']['used_context'] = used_context
 
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['reconciled', 'page_split', 'tax', 'partner_ids',
+        data['form'].update(self.read(cr, uid, ids, ['reconciled', 'page_split', 'tax', 'partner_ids', 'employee_ids',
                                                      'only_active_partners', 'instance_ids', 'account_ids',
                                                      'display_partner'])[0])
         self._check_dates_fy_consistency(cr, uid, data, context)

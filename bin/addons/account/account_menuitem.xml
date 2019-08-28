@@ -53,6 +53,8 @@
             name="Journals"/>
         <menuitem id="next_id_22" name="Partners" parent="final_accounting_reports" sequence="120"/>
 
+        <menuitem id="employee_menu" name="Employees" parent="final_accounting_reports" sequence="130"/>
+
     </data>
 </openerp>
 
