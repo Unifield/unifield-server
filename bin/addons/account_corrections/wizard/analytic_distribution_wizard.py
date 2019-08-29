@@ -482,7 +482,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         if greater_amount['gap_amount']:
             aal_obj = self.pool.get('account.analytic.line')
 
-            if not greater_amount['aji_id'] and greater_amount['wl'] and (not new_line_ids or not to_reverse):
+            has_generated_corr = new_line_ids and (to_reverse or any_reverse)  # check if COR lines have been generated
+            if not greater_amount['aji_id'] and greater_amount['wl'] and not has_generated_corr:
                 # untouched greater amount, get analytic line id:
                 # (not in to_create, to_delete, to_override, to_reverse)
                 aji_ids = aal_obj.search(cr, uid, [
@@ -495,7 +496,7 @@ class analytic_distribution_wizard(osv.osv_memory):
 
             # US-6100 in case of a corr. the adjustment should be made on the biggest COR amount
             # instead of the biggest amount of all AJIs (cf. don't modify the entry being corrected)
-            if new_line_ids and to_reverse:
+            if has_generated_corr:
                 greater_amount.update({
                     'aji_id': False,
                     'amount': 0.,
