@@ -46,7 +46,7 @@ class sale_report(osv.osv):
             else:
                 res[report.id] = True
                 for invoice in sale.invoice_ids:
-                    if invoice.state != 'paid':
+                    if invoice.state not in ('paid', 'inv_close'):
                         res[report.id] = False
                         break
                 if not sale.invoice_ids:
@@ -85,7 +85,7 @@ class sale_report(osv.osv):
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
                                     type='boolean', help="It indicates that an invoice has been paid."),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
-                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'),], 
+                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'),],
                                        string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),

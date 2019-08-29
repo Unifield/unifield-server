@@ -1,0 +1,1485 @@
+Feature: SSL NEW US4517
+
+@supply @US4517
+Scenario: SSL US4517 FO to ESC split
+
+   
+#PARAMETRIZATION: 
+
+
+# HQ1C1: need to have 100000 quantity of ALIFCOFM1E- in LOG
+
+
+   ###################################################################
+    ## CREATE AN IR IN HQ1C1P1 (reference in IR_REFERENCE)
+    ###################################################################
+
+#LINE 2	
+ 
+    I log into instance "HQ1C1P1"
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I click on "New"
+	
+	I fill "Order category" with "Other"	
+
+    I fill "Supplier" with "HQ1C1"
+#    I fill "Supplier" with "HQ1C1" and open the window
+#	I click "option" on line and close the window:
+#	  | NAME     |
+#	  | HQ1C1    |
+	  
+	  
+    # Add multiple products at the same time
+	I click on "Add multiple lines" and open the window
+	I click on "Add" and open the window
+	I fill "Code" with "DINJPEN"
+	I click on "Search"
+	I click "checkbox" on line:
+	 | CODE        |
+	 | DINJPENB1V- |
+	 | DINJPENG5V- |
+ 
+	 
+	I click on "Select" and close the window
+	I click "Edit" on line:
+	 | CODE        |
+	 | DINJPENB1V- |
+	I fill "20000.00" within column "QTY"
+	I validate the line
+	I click "Edit" on line:
+	 | CODE        |
+	 | DINJPENG5V- |
+	I fill "30000.00" within column "QTY"
+	I validate the line
+
+	I click on "Add products" and close the window
+	
+	
+    # Add products line by line
+    I click on "New"
+    I fill "ALIFCLOC1--" within column "PRODUCT CODE"
+    I fill "50000.00" within column "QTY"
+    I validate the line
+
+
+    I click on "New"
+    I click on "OK"
+    I fill "ALIFCOFM1E-" within column "PRODUCT CODE"
+    I fill "10000.00" within column "QTY"
+    I validate the line
+	
+
+    I click on "Analytical Distribution" and open the window
+    I click on "New"
+    I fill "OPS" within column "Destination"
+    I fill "HT101" within column "Cost Center"
+    I validate the line
+    I click on "Save" and close the window
+
+
+#LINE 3	
+	
+    I click on "Validate document"
+	I should see "Validated" in "Order State"
+
+    I store "Order Reference" in "PO_REF"
+	
+#LINE 4	 & 5
+	I synchronize "HQ1C1P1"
+	
+    I synchronize "HQ1C1"
+    I log into instance "HQ1C1"
+
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+    I toggle on "DRAFT"
+
+	I click "Edit" on line:
+        | CUSTOMER REFERENCE |
+        | *{{PO_REF}}  |
+
+    I should see in the main table the following data:
+       | PRODUCT CODE|  QTY  |
+       | DINJPENB1V- | 20,000 |
+	   | DINJPENG5V- | 30,000 |
+	   | ALIFCLOC1-- | 50,000 |
+       | ALIFCOFM1E- | 10,000 |
+
+#Line 6
+
+    I click on "Validate document"
+	I should see "Validated" in "State"
+
+    I store "Order Reference" in "FO_REFERENCE"
+	
+#LINE 7
+
+	I click on menu "Orders Sourcing Tool"
+	I fill "Order" with "{{FO_REFERENCE}}"
+	I click on "Search"
+	
+	
+	I click "Edit" on line:
+        | PRODUCT         |
+        | [DINJPENB1V-] * |
+	I fill "Local Market" within column "SUPPLIER"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT        |
+        | [DINJPENB1V-]* |	
+
+	I click "Edit" on line:
+        | PRODUCT         |
+        | [DINJPENG5V-] * |
+	I fill "Local Market" within column "SUPPLIER"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT        |
+        | [DINJPENG5V-]* |	
+
+
+	I click "Edit" on line:
+        | PRODUCT         |
+        | [ALIFCLOC1--] * |
+	I fill "Local Market" within column "SUPPLIER"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT        |
+        | [ALIFCLOC1--]* |	
+
+#LINE 8		
+	I click "Split line" on line and open the window:
+        | PRODUCT         |
+        | [ALIFCOFM1E-] * |
+		
+	I fill "New line quantity" with "3000"
+	I click on "Split line" and close the window
+	
+	I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+
+	I click "Edit" on line:
+        | ORDER REFERENCE  |
+        | {{FO_REFERENCE}} |
+
+    I should see in the main table the following data:
+       | PRODUCT CODE|  QTY  | STATE     |
+       | DINJPENB1V- | 20,000 | Sourced   |
+	   | DINJPENG5V- | 30,000 | Sourced   |
+	   | ALIFCLOC1-- | 50,000 | Sourced   |
+       | ALIFCOFM1E- |  7,000 | Validated |	
+       | ALIFCOFM1E- |  3,000 | Validated |	 
+	
+
+#LINE 9
+    I click on menu "Orders Sourcing Tool"
+    I fill "Order" with "{{FO_REFERENCE}}"
+    I click on "Search"
+	
+    I click "Edit" on line:
+        | PRODUCT          |  QTY |
+        |  [ALIFCOFM1E-] * | 7,000 |
+
+	I fill "Local Market" within column "SUPPLIER"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT          |  QTY |
+        |  [ALIFCOFM1E-] * | 7,000 |		
+    
+     I click "Edit" on line:
+        | PRODUCT          |  QTY |
+        |  [ALIFCOFM1E-] * | 3,000 |
+		
+	I fill "from stock" within column "PROC. METHOD"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT          |  QTY |
+        |  [ALIFCOFM1E-] * | 3,000 |
+
+    
+	I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+
+	I click "Edit" on line:
+        | ORDER REFERENCE  |
+        | {{FO_REFERENCE}} |
+
+    I should see in the main table the following data:
+       | PRODUCT CODE|  QTY  | STATE     |
+       | DINJPENB1V- | 20,000 | Sourced   |
+	   | DINJPENG5V- | 30,000 | Sourced   |
+	   | ALIFCLOC1-- | 50,000 | Sourced   |
+       | ALIFCOFM1E- |  7,000 | Sourced   |	
+       | ALIFCOFM1E- |  3,000 | Confirmed |	 
+
+#LINE 10
+	   
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+
+    I click "Edit" on line:
+        | SOURCE DOCUMENT   | SUPPLIER     |
+        | *{{FO_REFERENCE}} | Local Market | 
+
+	I should see in the main table the following data:
+       | PRODUCT CODE | STATE  |  QTY  |
+       | DINJPENB1V-  | Draft  | 20,000 |
+       | DINJPENG5V-  | Draft  | 30,000 |
+       | ALIFCLOC1--  | Draft  | 50,000 |
+       | ALIFCOFM1E-  | Draft  |  7,000 |
+
+		
+    I click on "Validate document"	   
+	I should see "Validated" in "Order State"
+	
+	I store "Order Reference" in "PO_REF_COO1"		
+
+
+	
+	I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+
+	I click "Edit" on line:
+        | ORDER REFERENCE  |
+        | {{FO_REFERENCE}} |
+
+    I should see in the main table the following data:
+       | PRODUCT CODE|  QTY  | STATE     |
+       | DINJPENB1V- | 20,000 | Sourced-v |
+	   | DINJPENG5V- | 30,000 | Sourced-v |
+	   | ALIFCLOC1-- | 50,000 | Sourced-v |
+       | ALIFCOFM1E- |  7,000 | Sourced-v |	
+       | ALIFCOFM1E- |  3,000 | Confirmed |		
+	   
+#LINE 11
+
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+    I click "Edit" on line:
+        | REFERENCE       |
+        | {{PO_REF_COO1}} |	
+	
+ 
+    I click "Split line" on line and open the window:
+       |LINE | PRODUCT CODE |
+       |  1  | DINJPENB1V-  |	
+	   
+	I fill "New line quantity" with "15,000"
+	I click on "Split line" and close the window
+	
+	I should see in the main table the following data:
+        |LINE |  PRODUCT CODE |STATE      | QTY       | 
+        |  1  | DINJPENB1V-   | Validated |  5,000 |
+        |  1  | DINJPENB1V-   | Validated | 15,000 |
+        |  2  | DINJPENG5V-   | Validated | 30,000 |
+        |  3  | ALIFCLOC1--   | Validated | 50,000 |
+		|  4  | ALIFCOFM1E-   | Validated |  7,000 |
+
+		
+	I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+
+	I click "Edit" on line:
+        | ORDER REFERENCE  |
+        | {{FO_REFERENCE}} |
+
+    I should see in the main table the following data:
+	   | LINE | PRODUCT CODE|  QTY  | STATE     |
+       |   1  | DINJPENB1V- |  5,000 | Sourced-v |
+       |   1  | DINJPENB1V- | 15,000 | Sourced-v |
+	   |   2  | DINJPENG5V- | 30,000 | Sourced-v |
+	   |   3  | ALIFCLOC1-- | 50,000 | Sourced-v |
+       |   4  | ALIFCOFM1E- |  7,000 | Sourced-v |	
+       |   4  | ALIFCOFM1E- |  3,000 | Confirmed |			
+		
+		
+		
+		
+#LINE 12
+
+
+    I open tab menu "PURCHASES"	   
+    I click on menu "Purchase Orders"
+    I click "Edit" on line:
+        | REFERENCE       |
+        | {{PO_REF_COO1}} |	
+	
+	I open tab "Delivery"
+	I fill "Delivery Confirmed Date" with "28/May/2018"
+	
+    I click on "Apply to lines@2" and open the window
+	I click on "Yes - All lines" and close the window
+
+    I open tab "Purchase Order"
+    I click "Inline Edit" on line:
+        |LINE |  PRODUCT CODE | QTY    | 
+        |  1  | DINJPENB1V-   | 15,000 |
+    I fill "id=_terp_listfields/order_line/confirmed_delivery_date" with "05/Oct/2018"
+    I validate the line		
+			
+
+	I should see in the main table the following data:
+	   | LINE  |  PRODUCT CODE |  QTY  | STATE       | DELIVERY CONFIRMED DATE |                     
+       |   1   | DINJPENB1V-   |  5,000 | Validated   |       28/May/2018       |
+	   |   1   | DINJPENB1V-   | 15,000 | Validated   |       05/Oct/2018       |
+       |   2   | DINJPENG5V-   | 30,000 | Validated   |       28/May/2018       |
+	   |   3   | ALIFCLOC1--   | 50,000 | Validated   |       28/May/2018       |
+       |   4   | ALIFCOFM1E-   |  7,000 | Validated   |       28/May/2018       |	   
+	  
+
+#LINE 13
+
+   I click "Split line" on line and open the window:
+       |LINE | PRODUCT CODE |
+       |  2  | DINJPENG5V-  |	
+	   
+	I fill "New line quantity" with "20,000"
+	I click on "Split line" and close the window
+	
+	I should see in the main table the following data:
+        |LINE |  PRODUCT CODE |STATE      | QTY    | DELIVERY CONFIRMED DATE |  
+        |  1  | DINJPENB1V-   | Validated |  5,000 |       28/May/2018       |
+        |  1  | DINJPENB1V-   | Validated | 15,000 |       05/Oct/2018       |
+        |  2  | DINJPENG5V-   | Validated | 10,000 |       28/May/2018       |
+        |  2  | DINJPENG5V-   | Validated | 20,000 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Validated | 50,000 |       28/May/2018       |
+		|  4  | ALIFCOFM1E-   | Validated |  7,000 |       28/May/2018       |
+
+
+	I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+
+	I click "Edit" on line:
+        | ORDER REFERENCE  |
+        | {{FO_REFERENCE}} |
+
+    I should see in the main table the following data:
+	   | LINE | PRODUCT CODE|  QTY  | STATE     |
+       |   1  | DINJPENB1V- |  5,000 | Sourced-v |
+       |   1  | DINJPENB1V- | 15,000 | Sourced-v |
+	   |   2  | DINJPENG5V- | 10,000 | Sourced-v |
+	   |   2  | DINJPENG5V- | 20,000 | Sourced-v |
+	   |   3  | ALIFCLOC1-- | 50,000 | Sourced-v |
+       |   4  | ALIFCOFM1E- |  7,000 | Sourced-v |	
+       |   4  | ALIFCOFM1E- |  3,000 | Confirmed |	
+
+	   
+#LINE 14
+
+    I open tab menu "PURCHASES"	   
+    I click on menu "Purchase Orders"
+    I click "Edit" on line:
+        | REFERENCE       |
+        | {{PO_REF_COO1}} |	
+
+
+	I click "Cancel" on line and open the window:
+        |LINE | PRODUCT CODE |  QTY    |  
+        |  1  | DINJPENB1V-  |   5,000 |
+	I click on "Cancel & Resource" and close the window
+
+    I set "Show all" on lines filter		
+	I should see in the main table the following data:
+        |LINE |  PRODUCT CODE |STATE        | QTY    | DELIVERY CONFIRMED DATE |  
+        |  1  | DINJPENB1V-   | Cancelled-r |  5,000 |       28/May/2018       |
+        |  1  | DINJPENB1V-   | Validated   | 15,000 |       05/Oct/2018       |
+
+    I should see "Validated" in "Order State"			
+
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE}}* |
+
+    I set "Show all" on lines filter		
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY   | 
+        |  1  | DINJPENB1V-  | Cancelled-r |  5,000 |
+        |  1  | DINJPENB1V-  | Sourced-v   | 15,000 |
+        |  2  | DINJPENG5V-  | Sourced-v   | 10,000 |
+        |  2  | DINJPENG5V-  | Sourced-v   | 20,000 |
+        |  3  | ALIFCLOC1--  | Sourced-v   | 50,000 |	
+		|  4  | ALIFCOFM1E-  | Sourced-v   |  7,000 |
+ 		|  4  | ALIFCOFM1E-  | Confirmed   |  3,000 |
+        |  5  | DINJPENB1V-  | Resourced-v |  5,000 |
+	   
+	   
+	   
+#LINE 15
+
+    I open tab menu "PURCHASES"	   
+    I click on menu "Purchase Orders"
+    I click "Edit" on line:
+        | REFERENCE       |
+        | {{PO_REF_COO1}} |	
+	
+
+	I click "Cancel" on line and open the window:
+        |LINE | PRODUCT CODE |  QTY    |  
+        |  2  | DINJPENG5V-  |  20,000 |
+	I click on "Cancel & Resource" and close the window
+
+    I set "Show all" on lines filter		
+	I should see in the main table the following data:
+        |LINE |  PRODUCT CODE | STATE       | QTY    | DELIVERY CONFIRMED DATE |  
+        |  2  | DINJPENG5V-   | Validated   | 10,000 |       28/May/2018       |
+        |  2  | DINJPENG5V-   | Cancelled-r | 20,000 |       28/May/2018       |
+
+    I should see "Validated" in "Order State"		
+	
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE}}* |
+
+    I set "Show all" on lines filter		
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY   | 
+        |  1  | DINJPENB1V-  | Cancelled-r |  5,000 |
+        |  1  | DINJPENB1V-  | Sourced-v   | 15,000 |
+        |  2  | DINJPENG5V-  | Sourced-v   | 10,000 |
+        |  2  | DINJPENG5V-  | Cancelled-r | 20,000 |
+        |  3  | ALIFCLOC1--  | Sourced-v   | 50,000 |	
+		|  4  | ALIFCOFM1E-  | Sourced-v   |  7,000 |
+ 		|  4  | ALIFCOFM1E-  | Confirmed   |  3,000 |
+        |  5  | DINJPENB1V-  | Resourced-v |  5,000 |
+        |  6  | DINJPENG5V-  | Resourced-v | 20,000 |
+	  
+
+#LINE 16	  
+	   
+    I open tab menu "PURCHASES"	   
+    I click on menu "Purchase Orders"
+    I click "Edit" on line:
+        | REFERENCE       |
+        | {{PO_REF_COO1}} |	
+
+	
+    I click "Split line" on line and open the window:
+       |LINE | PRODUCT CODE |
+       |  3  | ALIFCLOC1--  |	
+	   
+	I fill "New line quantity" with "30,000"
+	I click on "Split line" and close the window
+	
+	I should see in the main table the following data:
+        |LINE |  PRODUCT CODE |STATE      | QTY    | DELIVERY CONFIRMED DATE |  
+        |  3  | ALIFCLOC1--   | Validated | 20,000 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Validated | 30,000 |       28/May/2018       |
+		|  4  | ALIFCOFM1E-   | Validated |  7,000 |       28/May/2018       |	   
+	   
+	   
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE}}* |
+
+	
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY   | 
+        |  3  | ALIFCLOC1--  | Sourced-v   | 20,000 |	
+        |  3  | ALIFCLOC1--  | Sourced-v   | 30,000 |
+
+
+#LINE 17
+
+
+    I open tab menu "PURCHASES"	   
+    I click on menu "Purchase Orders"
+    I click "Edit" on line:
+        | REFERENCE       |
+        | {{PO_REF_COO1}} |	
+
+
+    I click "Inline Edit" on line:
+        |LINE | PRODUCT CODE | QTY       | 
+        |  3  | ALIFCLOC1--  | 30,000 |
+    I fill "id=_terp_listfields/order_line/confirmed_delivery_date" with "05/Oct/2018"
+    I validate the line
+
+	
+	I should see in the main table the following data:
+        |LINE |  PRODUCT CODE |STATE        | QTY       | DELIVERY CONFIRMED DATE |  
+        |  3  | ALIFCLOC1--   | Validated   | 20,000 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Validated   | 30,000 |       05/Oct/2018       |
+
+
+#LINE 18
+
+	I click "Cancel" on line and open the window:
+        |LINE | PRODUCT CODE |  QTY      |  
+        |  4  | ALIFCOFM1E-  |  7,000 |
+	I click on "Cancel & Resource" and close the window
+
+    I set "Show all" on lines filter		
+	I should see in the main table the following data:
+        |LINE |  PRODUCT CODE | STATE       | QTY       | 
+        |  4  | ALIFCOFM1E-   | Cancelled-r |  7,000 |
+
+
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE}}* |
+
+    I set "Show all" on lines filter		
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY  | 
+        |  4  | ALIFCOFM1E-  | Cancelled-r | 7,000 |	
+        |  7  | ALIFCOFM1E-  | Resourced-v | 7,000 |
+
+#LINE 19
+
+    I open tab menu "PURCHASES"	   
+    I click on menu "Purchase Orders"
+    I click "Edit" on line:
+        | SOURCE DOCUMENT    | SUPPLIER     |
+        | *{{FO_REFERENCE}}* | Local Market |
+
+    I click on "Confirm document"	
+
+    I set "Show all" on lines filter	
+	I should see in the main table the following data:
+        |LINE |  PRODUCT CODE |STATE        | QTY       | DELIVERY CONFIRMED DATE |  
+        |  1  | DINJPENB1V-   | Cancelled-r |  5,000 |       28/May/2018       |
+        |  1  | DINJPENB1V-   | Confirmed   | 15,000 |       05/Oct/2018       |
+        |  2  | DINJPENG5V-   | Confirmed   | 10,000 |       28/May/2018       |
+        |  2  | DINJPENG5V-   | Cancelled-r | 20,000 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Confirmed   | 20,000 |       28/May/2018       |
+        |  3  | ALIFCLOC1--   | Confirmed   | 30,000 |       05/Oct/2018       |
+		|  4  | ALIFCOFM1E-   | Cancelled-r |  7,000 |       28/May/2018       |
+	
+    I should see "Confirmed" in "Order State"			
+
+	
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE}}* |
+
+    I set "Show all" on lines filter		
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY   | 
+        |  1  | DINJPENB1V-  | Cancelled-r |  5,000 |
+        |  1  | DINJPENB1V-  | Confirmed   | 15,000 |
+        |  2  | DINJPENG5V-  | Confirmed   | 10,000 |
+        |  2  | DINJPENG5V-  | Cancelled-r | 20,000 |
+        |  3  | ALIFCLOC1--  | Confirmed   | 20,000 |	
+        |  3  | ALIFCLOC1--  | Confirmed   | 30,000 |	
+		|  4  | ALIFCOFM1E-  | Cancelled-r |  7,000 |
+ 		|  4  | ALIFCOFM1E-  | Confirmed   |  3,000 |
+        |  5  | DINJPENB1V-  | Resourced-v |  5,000 |
+        |  6  | DINJPENG5V-  | Resourced-v | 20,000 |	
+		|  7  | ALIFCOFM1E-  | Resourced-v |  7,000 |	
+	
+#LINE 20
+  I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER   |
+		| {{PO_REF_COO1}} |
+
+    I click "Cancel" on line and open the window:
+        |  PRODUCT                                 | STATE       | QUANTITY | ACTUAL RECEIPT DATE | 
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical   | Available   |  20,000  |     28/May/2018*     |	
+
+    I click on "Cancel and Resource" and close the window		
+
+	I should see in the main table the following data:
+        |  PRODUCT                                                                  | STATE       | QUANTITY | ACTUAL RECEIPT DATE | 
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available   |   15,000 |     05/Oct/2018*     |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |   10,000 |     28/May/2018*     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |   20,000 |     28/May/2018*     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |   30,000 |     05/Oct/2018*     |		
+
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE}}* |
+
+    I set "Show all" on lines filter		
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY   | 
+        |  1  | DINJPENB1V-  | Cancelled-r |  5,000 |
+        |  1  | DINJPENB1V-  | Confirmed   | 15,000 |
+        |  2  | DINJPENG5V-  | Confirmed   | 10,000 |
+        |  2  | DINJPENG5V-  | Cancelled-r | 20,000 |
+        |  3  | ALIFCLOC1--  | Cancelled-r | 20,000 |	
+        |  3  | ALIFCLOC1--  | Confirmed   | 30,000 |	
+		|  4  | ALIFCOFM1E-  | Cancelled-r |  7,000 |
+ 		|  4  | ALIFCOFM1E-  | Confirmed   |  3,000 |
+        |  5  | DINJPENB1V-  | Resourced-v |  5,000 |
+        |  6  | DINJPENG5V-  | Resourced-v | 20,000 |	
+		|  7  | ALIFCOFM1E-  | Resourced-v |  7,000 |	
+        |  8  | ALIFCLOC1--  | Resourced-v | 20,000 |		
+		
+			
+		
+#LINE 21
+
+	I synchronize "HQ1C1"
+	
+    I synchronize "HQ1C1P1"
+    I log into instance "HQ1C1P1"
+
+
+#LINE 22
+
+
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+    I click "Edit" on line:
+        | REFERENCE   |
+        | {{PO_REF}} |	
+
+		
+    I should see in the main table the following data:
+    I set "Show all" on lines filter		
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY   | 
+        |  1  | DINJPENB1V-  | Cancelled-r |  5,000 |
+        |  1  | DINJPENB1V-  | Confirmed   | 15,000 |
+        |  2  | DINJPENG5V-  | Confirmed   | 10,000 |
+        |  2  | DINJPENG5V-  | Cancelled-r | 20,000 |
+        |  3  | ALIFCLOC1--  | Cancelled-r | 20,000 |	
+        |  3  | ALIFCLOC1--  | Confirmed   | 30,000 |	
+		|  4  | ALIFCOFM1E-  | Cancelled-r |  7,000 |
+ 		|  4  | ALIFCOFM1E-  | Confirmed   |  3,000 |
+        |  5  | DINJPENB1V-  | Resourced-v |  5,000 |
+        |  6  | DINJPENG5V-  | Resourced-v | 20,000 |	
+		|  7  | ALIFCOFM1E-  | Resourced-v |  7,000 |	
+        |  8  | ALIFCLOC1--  | Resourced-v | 20,000 |	
+	
+    I should see "Sourced-p" in "Order State"
+
+	
+#LINE 23
+    I log into instance "HQ1C1"	
+	
+    I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER   |
+		| {{PO_REF_COO1}} |
+
+    I click on "Process" and open the window
+	I click "Split" on line:
+        | PRODUCT                                                           |
+	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |
+		
+	I fill "Quantity" with "5000"
+    I click on "Ok" and close the window	
+
+	I click on "Copy all"
+	
+	I click "Edit" on line:
+        | PRODUCT                                                           | QUANTITY TO PROCESS |
+	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |  10,000  |
+
+	I fill "lotA{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "20/May/2020"
+    I click on "Save" and close the window
+    I validate the line
+		
+	I click "Edit" on line:
+        | PRODUCT                                                           | QUANTITY TO PROCESS |
+	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |  5,000   |
+
+	I fill "lotB{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "20/Dec/2022"
+    I click on "Save" and close the window
+    I validate the line
+
+
+	I click "Edit" on line:
+        | PRODUCT                                                                   |
+	    | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |
+
+	I fill "lotC{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "20/May/2020"
+    I click on "Save" and close the window
+	I fill "8000" within column "QUANTITY TO PROCESS"
+    I validate the line
+	
+     I click "Edit" on line:
+        | PRODUCT                                                           | QUANTITY TO PROCESS |
+        | [ALIFCLOC1--]*  |  30,000   |
+	I fill "0" within column "QUANTITY TO PROCESS"
+    I validate the line
+
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open    				
+		
+		
+	I should see in the main table the following data:
+        |  PRODUCT                                                                  | STATE       | QUANTITY | ACTUAL RECEIPT DATE | 
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available   |   2,000  |     28/May/2018*     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000  |     28/May/2018*     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000  |     05/Oct/2018*     |	
+	
+	I should see "Available" in "State"			
+	
+	I click on menu "Incoming Shipments"
+	I toggle off "AVAILABLE"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER   | STATE  | 
+		| {{PO_REF_COO1}} | Closed |
+		
+	I should see in the main table the following data:
+        |  PRODUCT                                                                  | STATE    | QUANTITY | BATCH      | 
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed   |  10,000  | lotA{{ID}} |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed   |   5,000  | lotB{{ID}} |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed   |   8,000  | lotC{{ID}} |
+
+		
+#LINE 24
+
+    I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER   |
+		| {{PO_REF_COO1}} |
+
+   I click "Cancel" on line and open the window:
+        |  PRODUCT                                                                | STATE     | QUANTITY | 
+        |[DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial| Available |   2,000  |	
+
+    I click on "Cancel and Resource" and close the window		
+
+		
+	I should see in the main table the following data:
+        |  PRODUCT                                                                  | STATE       | QUANTITY | ACTUAL RECEIPT DATE | 
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000  |     28/May/2018*     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000 |     28/May/2018*     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available   |  30,000 |     05/Oct/2018*     |	
+
+		
+#LINE 25
+
+    I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER   |
+		| {{PO_REF_COO1}} |
+
+    I click "Cancel" on line and open the window:
+        |  PRODUCT                              | STATE     | QUANTITY| 
+        |[ALIFCLOC1--] CLOCK, ALARM, mechanical | Available |  30,000 |	
+
+    I click on "Cancel and Resource" and close the window		
+
+		
+	I should see in the main table the following data:
+        |  PRODUCT                                                                  | STATE       | QUANTITY | ACTUAL RECEIPT DATE | 
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Cancelled-r |   2,000  |     28/May/2018*     |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Cancelled-r |  20,000  |     28/May/2018*     |	
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical 		                            | Cancelled-r |  30,000 |     05/Oct/2018*     |
+		
+		
+		
+    I open tab menu "PURCHASES"	   
+    I click on menu "Purchase Orders"
+     I click "Edit" on line:
+        | REFERENCE        |
+        | {{PO_REF_COO1}} |	
+
+    I set "Show all" on lines filter	
+	I should see in the main table the following data:
+        |LINE |  PRODUCT CODE |STATE        |  QTY   |  
+        |  3  | ALIFCLOC1--   | Cancelled-r | 30,000 |
+	    |  3  | ALIFCLOC1--   | Cancelled-r | 20,000 |
+
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE}}* |
+
+    I set "Show all" on lines filter		
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY   | 
+        |  2  | DINJPENG5V-  | Confirmed   |  8,000 |
+        |  2  | DINJPENG5V-  | Cancelled-r | 20,000 |
+        |  2  | DINJPENG5V-  | Cancelled-r |  2,000 | 
+        |  3  | ALIFCLOC1--  | Cancelled-r | 20,000 |	
+        |  3  | ALIFCLOC1--  | Cancelled-r | 30,000 |	
+        |  9  | DINJPENG5V-  | Resourced-v |  2,000 |		
+        | 10  | ALIFCLOC1--  | Resourced-v | 30,000 |			
+		
+		
+#LINE 26		
+		
+		
+	I synchronize "HQ1C1"
+	
+    I synchronize "HQ1C1P1"
+    I log into instance "HQ1C1P1"
+
+
+#LINE 27
+
+		
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+    I click "Edit" on line:
+        | REFERENCE   |
+        | {{PO_REF}} |	
+
+		
+    I should see in the main table the following data:
+    I set "Show all" on lines filter		
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY   | 
+        |  1  | DINJPENB1V-  | Cancelled-r |  5,000 |
+        |  1  | DINJPENB1V-  | Confirmed   | 15,000 |
+        |  2  | DINJPENG5V-  | Confirmed   |  8,000 |
+        |  2  | DINJPENG5V-  | Cancelled-r | 20,000 |
+        |  2  | DINJPENG5V-  | Cancelled-r |  2,000 |
+        |  3  | ALIFCLOC1--  | Cancelled-r | 20,000 |	
+        |  3  | ALIFCLOC1--  | Cancelled-r | 30,000 |	
+		|  4  | ALIFCOFM1E-  | Cancelled-r |  7,000 |
+ 		|  4  | ALIFCOFM1E-  | Confirmed   |  3,000 |
+        |  5  | DINJPENB1V-  | Resourced-v |  5,000 |
+        |  6  | DINJPENG5V-  | Resourced-v | 20,000 |	
+		|  7  | ALIFCOFM1E-  | Resourced-v |  7,000 |	
+        |  8  | ALIFCLOC1--  | Resourced-v | 20,000 |	
+        |  9  | DINJPENG5V-  | Resourced-v |  2,000 |
+        |  10 | ALIFCLOC1--  | Resourced-v | 30,000 |
+
+
+    I should see "Sourced-p" in "Order State"	
+
+
+#LINE 28
+    I log into instance "HQ1C1"
+
+
+
+    I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"   	
+	I click on menu "Deliveries|Picking"
+
+	I click "Search" until I see:
+        | ORIGIN           | LINES STATE |
+        | {{FO_REFERENCE}} | *vailable*  |
+		
+	I click "Edit" on line:
+        | ORIGIN           | LINES STATE |
+        | {{FO_REFERENCE}} | *vailable*  |	
+	
+    
+       I should see in the main table the following data:
+        |  PRODUCT                                                                  | STATE     | QTY    | BATCH NUMBER | 
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available | 10,000 | lotA{{ID}}   |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available |  5,000 | lotB{{ID}}   |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  8,000 | lotC{{ID}}   |
+        | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Available |  3,000 |              |
+#IMPORTANT: As mentioned ALIFCOFM1E- should be "Available" (pre-requisite is to have some stock)	
+	
+	I click on "Create Picking..." and open the window
+	I click on "Copy all"
+	I click on "Create Picking" and close the window
+
+	I click on "Validate Picking..." and open the window
+	I click on "Copy all"
+	I click on "Validate Picking" and close the window
+
+    I click on "Pack..." and open the window
+	I click on "Next"
+	I click "Edit" on line:
+        | FROM P. |
+        | 1       |
+
+	I fill "2" within column "Weight P.P [KG]"
+	I validate the line
+
+	I click on "Process" and close the window
+
+	I click on "Create Shipment..." and open the window
+	I click on "Create Shipment" and close the window
+
+	I click on "Validate"
+
+	I store "Reference" in "SHIPREF_1"
+
+
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE}}* |
+	
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE  |  QTY   | 
+        |  1  | DINJPENB1V-  | Closed | 15,000 |
+        |  2  | DINJPENG5V-  | Closed |  8,000 |
+        |  4  | ALIFCOFM1E-  | Closed |  3,000 | 
+#see line 901 
+		
+		
+#LINE 29
+
+	I click on menu "Orders Sourcing Tool"
+	I fill "Order" with "{{FO_REFERENCE}}"
+	I click on "Search"
+
+	I click "Split line" on line and open the window:
+        |LINE | PRODUCT                                                           |
+        |  5  | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |
+	I fill "New line quantity" with "3000.00"
+	I click on "Split line" and close the window
+
+	
+    I click "Edit" on line:
+        | PRODUCT                                                           | QTY     |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | 3,000 |
+
+	I fill "Local Market" within column "SUPPLIER"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT                                                           | QTY     |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | 3,000 |
+
+    		
+    I tick all the lines
+    I click "Source lines" in the side panel and open the window
+
+    I fill "Supplier" with "ITCompany"
+    I click on "Save & source" and close the window		
+		
+		
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I toggle on "DRAFT"
+
+    I click "Edit" on line:
+        | SOURCE DOCUMENT    | SUPPLIER  |
+        | *{{FO_REFERENCE}}* | ITCompany |
+
+	I should see in the main table the following data:
+        |LINE | PRODUCT CODE |STATE  | QTY    |
+        |  1  | DINJPENB1V-  | Draft |  2,000 |
+        |  2  | DINJPENG5V-  | Draft | 20,000 |	
+        |  3  | ALIFCOFM1E-  | Draft |  7,000 |
+	    |  4  | ALIFCLOC1--  | Draft | 20,000 |
+	    |  5  | DINJPENG5V-  | Draft |  2,000 |	
+        |  6  | ALIFCLOC1--  | Draft | 30,000 |
+	
+    I should see "Draft" in "Order State"		
+	I store "Order Reference" in "PO_REF_COO_2"		
+		
+		
+		
+#LINE 30
+
+
+    I click "Split line" on line and open the window:
+        | PRODUCT CODE |STATE  | QTY    |
+        | DINJPENG5V-  | Draft | 20,000 |	
+	   
+	I fill "New line quantity" with "13,000"
+	I click on "Split line" and close the window		
+		
+	I should see in the main table the following data:
+        | LINE | PRODUCT CODE |STATE  | QTY    |
+        |  2   | DINJPENG5V-  | Draft |  7,000 |
+        |  2   | DINJPENG5V-  | Draft | 13,000 |	
+	    |  5   | DINJPENG5V-  | Draft |  2,000 |	
+
+
+#LINE 31
+
+    I click on menu "Purchase Orders"
+    I toggle on "DRAFT"
+
+    I click "Edit" on line:
+        | SOURCE DOCUMENT    | SUPPLIER     |
+        | *{{FO_REFERENCE}}* | Local Market |
+
+	I should see in the main table the following data:
+        | PRODUCT CODE |STATE  | QTY    |
+        | DINJPENB1V-  | Draft |  3,000 |
+
+		
+    I click on "Analytical Distribution" and open the window
+	I click on "New"
+	I fill "SUP" within column "DESTINATION"
+	I fill "HT101" within column "COST CENTER"
+	I validate the line
+	I click on "Save" and close the window
+	
+	I click on "Validate document"		
+		
+		
+    I should see "Validated" in "Order State"		
+	I store "Order Reference" in "PO_REF_COO_3"	
+
+
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE}}* |
+	
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY   | 
+        |  5  | DINJPENB1V-  | Resourced-s |  2,000 |
+        |  5  | DINJPENB1V-  | Resourced-pv |  3,000 |
+        |  6  | DINJPENG5V-  | Resourced-s |  7,000 |	
+        |  6  | DINJPENG5V-  | Resourced-s | 13,000 |	
+        |  7  | ALIFCOFM1E-  | Resourced-s |  7,000 |
+	    |  8  | ALIFCLOC1--  | Resourced-s | 20,000 |
+	    |  9  | DINJPENG5V-  | Resourced-s |  2,000 |	
+        | 10  | ALIFCLOC1--  | Resourced-s | 30,000 |
+
+
+#LINE 32
+
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I toggle on "Validated"
+
+
+    I click "Edit" on line:
+        | SOURCE DOCUMENT    | SUPPLIER     |
+        | *{{FO_REFERENCE}}* | Local Market |
+
+	I click "Inline Edit" on line:
+        | PRODUCT CODE |
+	    | DINJPENB1V-  |
+
+    I fill "id=_terp_listfields/order_line/confirmed_delivery_date" with "08/Aug/2018"
+    I validate the line
+
+
+	I click "Confirm" on line:
+        | PRODUCT CODE |
+	    | DINJPENB1V-  |
+		
+	I should see in the main table the following data:
+        | PRODUCT CODE | STATE     |
+	    | DINJPENB1V-  | Confirmed |
+
+	I should see "Confirmed" in "Order State"
+
+
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE}}* |
+	
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY   | 
+        |  5  | DINJPENB1V-  | Resourced-s |  2,000 |
+        |  5  | DINJPENB1V-  | Resourced-c |  3,000 |	
+		
+		
+#LINE 33
+
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+    I click "Edit" on line:
+        | REFERENCE          |
+        | *{{PO_REF_COO_2}}* |
+		
+	I click on "Analytical Distribution" and open the window
+	I click on "New"
+	I fill "SUP" within column "DESTINATION"
+	I fill "HT101" within column "COST CENTER"
+	I validate the line
+	I click on "Save" and close the window
+	
+	I click on "Validate document"
+	
+    I should see "Validated" in "Order State"	
+
+#LINE 34
+
+	I click "Cancel" on line and open the window:
+        |LINE | PRODUCT CODE |  QTY      |  
+        |  2  | DINJPENG5V-  | 13,000 |
+	I click on "Cancel & Resource" and close the window
+
+	I click "Cancel" on line and open the window:
+        |LINE | PRODUCT CODE |  QTY      |  
+        |  3  | ALIFCOFM1E-  |  7,000 |
+	I click on "Cancel & Resource" and close the window	
+	
+	
+    I set "Show all" on lines filter		
+	I should see in the main table the following data:
+        |LINE |  PRODUCT CODE | STATE       | QTY       | 
+        |  2  | DINJPENG5V-   | Cancelled-r | 13,000 |
+        |  3  | ALIFCOFM1E-   | Cancelled-r |  7,000 |
+
+		
+	
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE}}* |
+
+    I set "Show all" on lines filter			
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE        |  QTY   | 
+        |  5  | DINJPENB1V-  | Resourced-pv |  2,000 |
+        |  5  | DINJPENB1V-  | Resourced-c  |  3,000 |
+        |  6  | DINJPENG5V-  | Resourced-pv |  7,000 |	
+        |  6  | DINJPENG5V-  | Cancelled-r  | 13,000 |	
+        |  7  | ALIFCOFM1E-  | Cancelled-r  |  7,000 |
+	    |  8  | ALIFCLOC1--  | Resourced-pv | 20,000 |
+	    |  9  | DINJPENG5V-  | Resourced-pv |  2,000 |	
+        | 10  | ALIFCLOC1--  | Resourced-pv | 30,000 |	
+        | 11  | DINJPENG5V-  | Resourced-v  | 13,000 |	
+        | 12  | ALIFCOFM1E-  | Resourced-v  |  7,000 |	
+	
+	
+	
+#LINE 35
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+    I click "Edit" on line:
+        | REFERENCE          |
+        | *{{PO_REF_COO_2}}* |
+
+	I open tab "Delivery"
+	I fill "Delivery Confirmed Date" with "28/Oct/2018"
+	
+    I click on "Apply to lines@2" and open the window
+	I click on "Yes - All lines" and close the window
+  
+	I click on "Confirm document"		
+	I should see "Confirmed" in "Order State"  
+	
+	
+   I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE}}* |
+
+    I set "Show all" on lines filter			
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY   | 
+        |  5  | DINJPENB1V-  | Resourced-c |  2,000 |
+        |  5  | DINJPENB1V-  | Resourced-c |  3,000 |
+        |  6  | DINJPENG5V-  | Resourced-c |  7,000 |	
+        |  6  | DINJPENG5V-  | Cancelled-r | 13,000 |	
+        |  7  | ALIFCOFM1E-  | Cancelled-r |  7,000 |
+	    |  8  | ALIFCLOC1--  | Resourced-c | 20,000 |
+	    |  9  | DINJPENG5V-  | Resourced-c |  2,000 |	
+        | 10  | ALIFCLOC1--  | Resourced-c | 30,000 |	
+        | 11  | DINJPENG5V-  | Resourced-v | 13,000 |	
+        | 12  | ALIFCOFM1E-  | Resourced-v |  7,000 |	
+		
+		
+#LINE 36		
+		
+    I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER   |
+		| {{PO_REF_COO_2}} |
+
+    I click on "Process" and open the window
+	I click on "Copy all"
+	
+	I click "Edit" on line:
+        | PRODUCT                                                           | QUANTITY TO PROCESS |
+	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |  2,000   |
+
+	I fill "LotoA{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "20/May/2022"
+    I click on "Save" and close the window
+    I validate the line
+		
+	I click "Edit" on line:
+        | PRODUCT                                                                   |  QUANTITY TO PROCESS |
+	    | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |  7,000    |
+
+	I fill "LotoB{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "20/Dec/2025"
+    I click on "Save" and close the window
+    I validate the line	
+	
+	
+	I click "Edit" on line:
+        | PRODUCT                                                                   |  QUANTITY TO PROCESS |
+	    | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial |  2,000    |
+
+	I fill "LotoC{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "30/Jun/2024"
+    I click on "Save" and close the window
+    I validate the line		
+	
+	
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open
+	
+	I should see "Closed" in "State"
+		
+	I should see in the main table the following data:
+        |  PRODUCT                                                                  | STATE  |QUANTITY | 
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |   2,000 |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   7,000 |
+	    | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed |  20,000 |	
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   2,000 |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed |  30,000 |	
+	
+
+#LINE 37
+
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER   |
+		| {{PO_REF_COO_3}} |
+
+    I click on "Process" and open the window
+	I click on "Copy all"
+	
+	I click "Edit" on line:
+        | PRODUCT                                                           | QUANTITY TO PROCESS |
+	    | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial |  3,000   |
+
+	I fill "LotoD{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "30/Dec/2022"
+    I click on "Save" and close the window
+    I validate the line		
+	
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open
+	
+	I should see "Closed" in "State"
+		
+	I should see in the main table the following data:
+        |  PRODUCT                                                          | STATE  | QUANTITY | 
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial | Closed |   3,000  |
+	
+
+#LINE 38
+
+    I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"   	
+	I click on menu "Deliveries|Picking"
+
+	I click "Search" until I see:
+        | ORIGIN           | LINES STATE |
+        | {{FO_REFERENCE}} | *vailable*  |
+		
+	I click "Edit" on line:
+        | ORIGIN           | LINES STATE |
+        | {{FO_REFERENCE}} | *vailable*  |	
+	
+	
+	I should see in the main table the following data:
+        |  PRODUCT                                                                  | STATE     | QTY    | BATCH NUMBER | 
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available |  2,000 | LotoA{{ID}}  |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  7,000 | LotoB{{ID}}  |
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available | 20,000 |              |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Available |  2,000 | LotoC{{ID}}  |    
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Available | 30,000 |              |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Available |  3,000 | LotoD{{ID}}  |
+
+	
+	I click on "Create Picking..." and open the window
+	I click on "Copy all"
+	I click on "Create Picking" and close the window
+
+	I click on "Validate Picking..." and open the window
+	I click on "Copy all"
+	I click on "Validate Picking" and close the window
+
+    I click on "Pack..." and open the window
+	I click on "Next"
+	I click "Edit" on line:
+        | FROM P. |
+        | 1       |
+
+	I fill "2" within column "Weight P.P [KG]"
+	I validate the line
+
+	I click on "Process" and close the window
+
+	I click on "Create Shipment..." and open the window
+	I click on "Create Shipment" and close the window
+
+	I click on "Validate"
+
+	I store "Reference" in "SHIPREF_2"
+
+
+#LINE 39
+
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE}}* |
+
+    I set "Show all" on lines filter			
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY   | 
+        |  5  | DINJPENB1V-  | Closed      |  2,000 |
+        |  5  | DINJPENB1V-  | Closed      |  3,000 |
+        |  6  | DINJPENG5V-  | Closed      |  7,000 |	
+        |  6  | DINJPENG5V-  | Cancelled-r | 13,000 |	
+        |  7  | ALIFCOFM1E-  | Cancelled-r |  7,000 |
+	    |  8  | ALIFCLOC1--  | Closed      | 20,000 |
+	    |  9  | DINJPENG5V-  | Closed      |  2,000 |	
+        | 10  | ALIFCLOC1--  | Closed      | 30,000 |	
+        | 11  | DINJPENG5V-  | Resourced-v | 13,000 |	
+        | 12  | ALIFCOFM1E-  | Resourced-v |  7,000 |	
+
+
+	I click "Cancel" on line and open the window:
+        |LINE |  PRODUCT CODE | STATE        | QTY   | 
+        |  11 | DINJPENG5V-   | Resourced-v  | 13,000|
+   
+	I click on "OK, cancel line" and close the window
+	
+	I click "Cancel" on line and open the window:
+        |LINE | PRODUCT CODE| STATE        |QTY    | 
+		|  12 | ALIFCOFM1E- | Resourced-v  | 7,000 |
+
+	I click on "OK, cancel line" and close the window			
+	
+    I set "Show all" on lines filter		
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE     |  QTY   | 
+        | 11  | DINJPENG5V-  | Cancelled | 13,000 |	
+        | 12  | ALIFCOFM1E-  | Cancelled |  7,000 |		
+	
+	
+#LINE 40
+
+	I synchronize "HQ1C1"
+	
+    I synchronize "HQ1C1P1"
+    I log into instance "HQ1C1P1"
+
+#LINE 41
+	
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+    I click "Edit" on line:
+        | REFERENCE   |
+        | {{PO_REF}} |	
+
+		
+    I should see in the main table the following data:
+    I set "Show all" on lines filter		
+    I should see in the main table the following data:
+        |LINE | PRODUCT CODE | STATE       |  QTY   | 
+        |  1  | DINJPENB1V-  | Cancelled-r |  5,000 |
+        |  1  | DINJPENB1V-  | Confirmed   | 15,000 |
+        |  2  | DINJPENG5V-  | Confirmed   |  8,000 |
+        |  2  | DINJPENG5V-  | Cancelled-r | 20,000 |
+        |  2  | DINJPENG5V-  | Cancelled-r |  2,000 |
+        |  3  | ALIFCLOC1--  | Cancelled-r | 20,000 |	
+        |  3  | ALIFCLOC1--  | Cancelled-r | 30,000 |	
+		|  4  | ALIFCOFM1E-  | Cancelled-r |  7,000 |
+ 		|  4  | ALIFCOFM1E-  | Confirmed   |  3,000 |
+        |  5  | DINJPENB1V-  | Resourced-c |  2,000 |
+        |  5  | DINJPENB1V-  | Resourced-c |  3,000 |
+        |  6  | DINJPENG5V-  | Resourced-c | 7,000 |	
+        |  6  | DINJPENG5V-  | Cancelled-r | 13,000 |	
+		|  7  | ALIFCOFM1E-  | Cancelled-r |  7,000 |	
+        |  8  | ALIFCLOC1--  | Resourced-c | 20,000 |	
+        |  9  | DINJPENG5V-  | Resourced-c |  2,000 |
+        |  10 | ALIFCLOC1--  | Resourced-c | 30,000 |
+        |  11 | DINJPENG5V-  | Cancelled   | 13,000 |
+		|  12 | ALIFCOFM1E-  | Cancelled   |  7,000 |
+
+		
+    #I should see "Confirmed-p" in "Order State"		
+    I should see "Confirmed" in "Order State"		
+	
+	
+#LINE 41
+
+    I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Incoming Shipments"
+
+	I set new filter "Ship Reference" "contains" "{{SHIPREF_1}}"
+	I click on "Search"
+	I click "Edit" on line:
+        | PURCHASE ORDER | STATE             |
+        | *{{PO_REF}}*   | Available Shipped |	
+
+
+    I click on "Process" and open the window
+	I click on "Copy all"	
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open
+	
+     I should see in the main table the following data:
+        |  PRODUCT                                                                  | STATE  | QUANTITY |  BATCH     |  
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |  10,000  | lotA{{ID}} |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |   5,000  | lotB{{ID}} |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   8,000  | lotC{{ID}} |
+        | [ALIFCOFM1E-] COFFEE MACHINE, electrical, 220 V, 12 cups                  | Closed |   3,000  |            |
+#ADDED: line above re-added (see line 901)
+
+
+	I click on menu "Incoming Shipments"
+	I set new filter "Ship Reference" "contains" "{{SHIPREF_2}}"
+	I click on "Search"
+	I click "Edit" on line:
+        | PURCHASE ORDER | STATE             |
+        | *{{PO_REF}}*   | Available Shipped |	
+
+
+    I click on "Process" and open the window
+	I click on "Copy all"	
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open
+	
+    I should see in the main table the following data:
+        |  PRODUCT                                                                  | STATE  | QUANTITY | BATCH      |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |   2,000  | LotoA{{ID}}|
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   7,000  | LotoB{{ID}}|
+	    | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed |  20,000  |	         |
+        | [DINJPENG5V-] BENZYLPENICILLIN (peni G, crystal peni), 5 MIU, powder,vial | Closed |   2,000  | LotoC{{ID}}|
+        | [ALIFCLOC1--] CLOCK, ALARM, mechanical                                    | Closed |  30,000  |	         |
+        | [DINJPENB1V-] BENZATHINE BENZYLPENICILLIN, 1.2 M IU, powder, vial         | Closed |   3,000  | LotoD{{ID}}|

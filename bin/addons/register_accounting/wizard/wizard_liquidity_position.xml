@@ -26,6 +26,7 @@
         <!-- Actions -->
         <act_window id="action_report_liquidity_position"
             name="Liquidity Position"
+            view_ids="account.view_bank_statement_tree,account.view_bank_statement_form,register_accounting.view_cash_statement_tree,account.view_bank_statement_form2"
             res_model="wizard.liquidity.position"
             src_model="account.bank.statement"
             view_mode='form'

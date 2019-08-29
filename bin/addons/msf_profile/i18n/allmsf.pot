@@ -4535,12 +4535,6 @@ msgstr ""
 msgid "OpenERP Tweets"
 msgstr ""
 
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air regular"
-msgstr ""
-
 #. module: analytic_distribution
 #: field:mass.reallocation.verification.wizard,nb_error:0
 msgid "Lines in error"
@@ -5154,7 +5148,6 @@ msgstr ""
 #: field:wizard.export.rac,message:0
 #: field:wizard.import.fmc,message:0
 #: field:wizard.import.rac,message:0
-#: field:procurement.request.import,message:0
 #: view:product.list.export:0
 #: field:product.list.export,message:0
 #: view:product.list.import:0
@@ -5338,7 +5331,6 @@ msgstr ""
 #: wizard_button:server.action.create,init,end:0
 #: wizard_button:server.action.create,step_1,end:0
 #: view:documents.done.wizard:0
-#: view:procurement.request.import:0
 #: view:product.price_list:0
 #: view:sale.open.invoice:0
 #: view:sale.order.followup:0
@@ -6806,7 +6798,6 @@ msgstr ""
 #: view:procurement.orderpoint.compute:0
 #: view:procurement.supply.compute.all:0
 #: view:procurement.cycle.compute.all:0
-#: view:procurement.request.import:0
 #: view:sale.order:0
 #: view:product.list.add.products:0
 #: view:product.list.import:0
@@ -8647,12 +8638,6 @@ msgstr ""
 #. module: purchase
 #: field:res.company,po_lead:0
 msgid "Purchase Lead Time"
-msgstr ""
-
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:83
-#, python-format
-msgid "Please save the Internal Request before importing lines"
 msgstr ""
 
 #. module: financing_contract
@@ -10681,8 +10666,6 @@ msgstr ""
 #: code:addons/msf_order_date/order_dates.py:219
 #: code:addons/msf_order_date/order_dates.py:339
 #: code:addons/order_types/stock.py:178
-#: code:addons/procurement_request/wizard/wizard_import_list.py:83
-#: code:addons/procurement_request/wizard/wizard_import_list.py:90
 #: code:addons/purchase/purchase.py:711
 #: code:addons/purchase/purchase.py:758
 #: code:addons/purchase/wizard/purchase_order_group.py:47
@@ -18491,12 +18474,6 @@ msgstr ""
 msgid "You can't re-post a hard posted entry !"
 msgstr ""
 
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:88
-#, python-format
-msgid "You cannot import lines in a Sale Order"
-msgstr ""
-
 #. module: procurement
 #: view:procurement.order:0
 msgid "Late"
@@ -20763,7 +20740,6 @@ msgstr ""
 #: field:ir.model,info:0
 #: view:wizard.import.fmc:0
 #: view:wizard.import.rac:0
-#: view:procurement.request.import:0
 #: view:product.product:0
 #: view:product.template:0
 #: view:product.product:0
@@ -22565,12 +22541,6 @@ msgstr ""
 msgid "Purchase Lines"
 msgstr ""
 
-#. module: procurement_request
-#: model:ir.actions.act_window,name:procurement_request.action_open_wizard_import
-#: view:procurement.request.import:0
-msgid "Import lines"
-msgstr ""
-
 #. module: register_accounting
 #: model:ir.actions.act_window,name:register_accounting.action_register_creation_form
 #: model:ir.ui.menu,name:register_accounting.menu_register_creation
@@ -22605,12 +22575,6 @@ msgstr ""
 #: code:addons/base/ir/ir_model.py:328
 #, python-format
 msgid "Properties of base fields cannot be altered in this manner! Please modify them through Python code, preferably through a custom addon!"
-msgstr ""
-
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:90
-#, python-format
-msgid "You cannot import lines in a confirmed Internal Request"
 msgstr ""
 
 #. module: sale
@@ -23333,12 +23297,6 @@ msgstr ""
 #: model:ir.actions.act_window,name:base.action_view_base_module_upgrade
 #: model:ir.model,name:base.model_base_module_upgrade
 msgid "Module Upgrade"
-msgstr ""
-
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air express"
 msgstr ""
 
 #. module: msf_outgoing
@@ -24784,9 +24742,7 @@ msgid "Valid"
 msgstr ""
 
 #. module: transport_mgmt
-#: field:international.transport.cost.report,transport_mode:0
 #: field:local.transport.cost.report,transport_mode:0
-#: field:purchase.order,transport_mode:0
 msgid "Transport mode"
 msgstr ""
 
@@ -29573,8 +29529,6 @@ msgstr ""
 #: selection:res.partner,transport_0:0
 #: selection:res.partner,transport_1:0
 #: selection:res.partner,transport_2:0
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
 msgid "Sea"
 msgstr ""
 
@@ -31333,11 +31287,6 @@ msgstr ""
 msgid "Latest Inventory Date"
 msgstr ""
 
-#. module: procurement_request
-#: model:ir.model,name:procurement_request.model_procurement_request_import
-msgid "Import of Internal Request"
-msgstr ""
-
 #. module: msf_outgoing
 #: selection:stock.picking,flow_type:0
 msgid "Quick"
@@ -32211,12 +32160,6 @@ msgid "Invalid group_by specification: \"%s\".\n"
 "A group_by specification must be a list of valid fields."
 msgstr ""
 
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Air FFC"
-msgstr ""
-
 #. module: msf_outgoing
 #: field:stock.picking,previous_step_id:0
 msgid "Previous step"
@@ -32378,12 +32321,6 @@ msgstr ""
 #: selection:account.analytic.account,state:0
 #: view:account.analytic.account:0
 msgid "Pending"
-msgstr ""
-
-#. module: procurement_request
-#: code:addons/procurement_request/wizard/wizard_import_list.py:109
-#, python-format
-msgid "The system hasn't found a Internal Request to import lines"
 msgstr ""
 
 #. module: product
@@ -33908,11 +33845,6 @@ msgstr ""
 msgid "You can not add/modify entries in a closed journal."
 msgstr ""
 
-#. module: procurement_request
-#: view:procurement.request.import:0
-msgid "Result of importation"
-msgstr ""
-
 #. module: resource
 #: code:addons/resource/faces/resource.py:340
 #, python-format
@@ -34108,7 +34040,6 @@ msgstr ""
 #: field:wizard.import.fmc,file:0
 #: view:wizard.import.rac:0
 #: field:wizard.import.rac,file:0
-#: view:procurement.request.import:0
 #: field:product.list.export,file:0
 #: view:product.list.import:0
 #: field:product.list.import,file_to_import:0
@@ -34765,7 +34696,6 @@ msgstr ""
 #. modules: product_list, consumption_calculation, procurement_request
 #: view:wizard.import.fmc:0
 #: view:wizard.import.rac:0
-#: view:procurement.request.import:0
 #: view:product.list.import:0
 msgid "Import file"
 msgstr ""
@@ -35098,8 +35028,7 @@ msgstr ""
 msgid "Quarantine View"
 msgstr ""
 
-#. modules: specific_rules, procurement_request
-#: field:procurement.request.import,info:0
+#. modules: specific_rules
 #: code:addons/specific_rules/specific_rules.py:480
 #: code:addons/specific_rules/specific_rules.py:485
 #: code:addons/specific_rules/specific_rules.py:1103
@@ -39205,8 +39134,6 @@ msgstr ""
 #: code:addons/order_nomenclature/wizard/order_nomenclature_select_product.py:100
 #: code:addons/procurement_cycle/procurement.py:37
 #: code:addons/procurement_cycle/procurement.py:48
-#: code:addons/procurement_request/wizard/wizard_import_list.py:88
-#: code:addons/procurement_request/wizard/wizard_import_list.py:109
 #: code:addons/product_list/wizard/add_products.py:47
 #: code:addons/product_list/wizard/list_export.py:47
 #: code:addons/product_list/wizard/list_export.py:49
@@ -40793,8 +40720,6 @@ msgstr ""
 #: selection:res.partner,transport_0:0
 #: selection:res.partner,transport_1:0
 #: selection:res.partner,transport_2:0
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
 msgid "Road"
 msgstr ""
 
@@ -41084,12 +41009,6 @@ msgstr ""
 #: selection:account.analytic.account,category:0
 #: view:analytic.distribution.wizard:0
 msgid "Free 2"
-msgstr ""
-
-#. module: transport_mgmt
-#: selection:international.transport.cost.report,transport_mode:0
-#: selection:purchase.order,transport_mode:0
-msgid "Hand carry"
 msgstr ""
 
 #. modules: delivery_mechanism, purchase, stock_override, product_asset, specific_rules, stock
@@ -43649,7 +43568,6 @@ msgstr ""
 #: field:monthly.review.consumption.line,mrc_creation_date:0
 #: field:product.likely.expire.report.item.line,item_id:0
 #: field:hr.employee,partner_id:0
-#: field:procurement.request.import,file:0
 #: field:purchase.order.line,order_type:0
 #: field:purchase.order.line,po_state:0
 #: field:sourcing.line,sale_order_line_state:0

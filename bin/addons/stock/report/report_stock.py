@@ -21,7 +21,6 @@
 
 from osv import osv, fields
 from tools.translate import _
-import tools
 from tools.sql import drop_view_if_exists
 
 class stock_report_prodlots(osv.osv):
@@ -130,7 +129,7 @@ class stock_report_tracklots(osv.osv):
                 ) as report
                 group by location_id, product_id, tracking_id
             )""")
-        
+
     def unlink(self, cr, uid, ids, context={}):
         raise osv.except_osv(_('Error !'), _('You cannot delete any record!'))
 
@@ -163,12 +162,15 @@ class report_stock_lines_date(osv.osv):
                 select
                 p.id as id,
                 p.id as product_id,
-                max(s.date) as date
+                max(GREATEST(i.date_done, i.date_confirmed, s.date)) as date
             from
                 product_product p
                     left outer join stock_inventory_line l on (p.id=l.product_id)
                     left join stock_inventory s on (l.inventory_id=s.id)
                 and s.state = 'done'
+                    left join physical_inventory_counting c on (p.id = c.product_id)
+                    left join physical_inventory i on (c.inventory_id=i.id)
+                and i.state in ('confirmed', 'closed')
                 where p.active = True
                 group by p.id
             )""")

@@ -303,7 +303,7 @@ liquidity_sql = """
                         LEFT JOIN account_journal j 
                             ON aml.journal_id = j.id 
                         WHERE j.type IN %s
-                        AND aml.period_id = %s
+                        AND aml.date >= %s AND aml.date <= %s
                         AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
                         GROUP BY aml.journal_id, aml.account_id
                     )
@@ -716,7 +716,8 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'headers': ['Instance', 'Code', 'Name', 'Period', 'Starting balance', 'Calculated balance', 'Closing balance', 'Currency'],
                 'filename': instance_name + '_' + year + month + '_Liquidity Balances.csv',
                 'key': 'liquidity',
-                'query_params': (tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, period.id, reg_types, last_day_of_period, tuple(instance_ids)),
+                'query_params': (tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, first_day_of_period,
+                                 last_day_of_period, reg_types, last_day_of_period, tuple(instance_ids)),
                 'function': 'postprocess_liquidity_balances',
                 'fnct_params': context,
             },

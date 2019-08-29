@@ -29,10 +29,8 @@ class free_allocation_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(free_allocation_report, self).__init__(cr, uid, name, context=context)
         self.lines = {}
-        self.total_lines = {}
         self.localcontext.update({
             'lines': self._get_lines,
-            'total_line': self._get_total_line,
             'get_proprietary_instance': self._get_proprietary_instance,
             'get_accounts': self._get_accounts,
             'get_journals': self._get_journals,
@@ -49,7 +47,6 @@ class free_allocation_report(report_sxw.rml_parse):
         """
         Returns the report lines as a dict where key = Entry Sequence,
         and value = list of dicts, each corresponding to a line to display
-        + fills in the self.total_lines for each Entry Sequence
 
         Formula for one combination with all axis:
         total_JI x (amount_DEST_CC_FP_A/total_JI) x (amount_free1A/total_JI) x (amount_free2A/total_JI)
@@ -97,9 +94,6 @@ class free_allocation_report(report_sxw.rml_parse):
             for move in move_obj.browse(self.cr, self.uid, move_ids, fields_to_fetch=['name'], context=context):
                 current_line_position += 1
                 self.lines[move.name] = []
-                book_total = 0.0
-                func_total = 0.0
-                book_currency = ''
                 aml_dom = [('move_id', '=', move.id)]
                 if account_ids:
                     aml_dom.append(('account_id', 'in', account_ids))
@@ -235,34 +229,9 @@ class free_allocation_report(report_sxw.rml_parse):
                                     'func_currency': aml.functional_currency_id and aml.functional_currency_id.name or '',
                                 }
                                 self.lines[move.name].append(line)
-                                book_total += book_amount or 0.0
-                                func_total += func_amount or 0.0
-                # create the total line for each Entry Sequence
-                if self.lines[move.name]:
-                    self.total_lines[move.name] = {
-                        'book_amount': book_total,
-                        'book_currency': book_currency,
-                        'func_amount': func_total,
-                    }
-                else:
-                    # empty total line in case there is no analytic line for this move
-                    self.total_lines[move.name] = {}
                 # update percentage of the report loading
                 bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(move_ids), context=context)
         return self.lines
-
-    def _get_total_line(self, entry_sequence):
-        """
-        Returns a dict with functional amount, and booking amount & currency for the Entry Seq. in parameter
-        """
-        if entry_sequence in self.total_lines:
-            return self.total_lines[entry_sequence]
-        else:
-            return {
-                'book_amount': 0.0,
-                'book_currency': '',
-                'func_amount': 0.0,
-            }
 
     def _get_proprietary_instance(self, data):
         """

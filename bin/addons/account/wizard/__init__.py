@@ -53,8 +53,6 @@ import account_tax_chart
 import account_validate_account_move
 import account_use_model
 
-import account_state_open
-
 import account_report_print_journal
 import account_report_central_journal
 import account_report_general_journal

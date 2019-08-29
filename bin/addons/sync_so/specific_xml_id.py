@@ -8,6 +8,7 @@ from osv import osv
 from osv import fields
 from product_nomenclature.product_nomenclature import RANDOM_XMLID_CODE_PREFIX
 import time
+import netsvc
 
 # Note:
 #
@@ -146,23 +147,53 @@ class hq_entries(osv.osv):
 
     _inherit = 'hq.entries'
 
+    def get_target_id(self, cr, uid, cost_center_id, context=None):
+        """
+        Returns the id of the target CC linked to the cost_center_id, or to its parent if there isn't any.
+        """
+        if context is None:
+            context = {}
+        target_ids = []
+        if cost_center_id:
+            analytic_cc_obj = self.pool.get('account.analytic.account')
+            target_cc_obj = self.pool.get('account.target.costcenter')
+            target_ids = target_cc_obj.search(cr, uid,
+                                              [('cost_center_id', '=', cost_center_id), ('is_target', '=', True)],
+                                              context=context)
+            if not target_ids:
+                cc = analytic_cc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['parent_id'], context=context)
+                if cc and cc.parent_id:
+                    target_ids = target_cc_obj.search(cr, uid,
+                                                      [('cost_center_id', '=', cc.parent_id.id), ('is_target', '=', True)],
+                                                      context=context)
+        return target_ids and target_ids[0] or False
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        """
+        Gets the instances to which the HQ entries should sync.
+        For each HQ entry:
+        1) Search for the instance:
+           - to which the CC used in the entry is targeted to
+           - if there isn't any, to which the PARENT CC is targeted to
+        2) The entry will sync to the coordo of the corresponding mission
+        """
+        if context is None:
+            context = {}
+        target_cc_obj = self.pool.get('account.target.costcenter')
         if dest_field == 'cost_center_id':
             res = dict.fromkeys(ids, False)
             for line_data in self.browse(cr, uid, ids, context=context):
                 if line_data.cost_center_id:
-                    cost_center_name = line_data.cost_center_id and \
-                        line_data.cost_center_id.code and \
-                        line_data.cost_center_id.code[:3] or ""
-                    cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),
-                                                                                                 ('code', '=', cost_center_name)], context=context)
-                    if len(cost_center_ids) > 0:
-                        target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_ids[0]),
-                                                                                                 ('is_target', '=', True)])
-                        if len(target_ids) > 0:
-                            target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
-                            if target.instance_id and target.instance_id.instance:
-                                res[line_data.id] = target.instance_id.instance
+                    targeted_instance = False
+                    target_id = self.get_target_id(cr, uid, line_data.cost_center_id.id, context=context)
+                    if target_id:
+                        target = target_cc_obj.browse(cr, uid, target_id, fields_to_fetch=['instance_id'], context=context)
+                        if target.instance_id.level == 'coordo':
+                            targeted_instance = target.instance_id
+                        elif target.instance_id.level == 'project':
+                            targeted_instance = target.instance_id.parent_id or False
+                    if targeted_instance:
+                        res[line_data.id] = targeted_instance.instance
             return res
         return super(hq_entries, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
@@ -589,15 +620,26 @@ class account_move_line(osv.osv):
             return True
         if context is None:
             context = {}
+
+        # if unreconcile linked to paid/close invoice, then reopen SI
+        invoice_reopen = []
+        if context.get('sync_update_execution') and 'reconcile_id' in vals and not vals['reconcile_id']:
+            move_lines = self.browse(cr, uid, ids, fields_to_fetch=['invoice', 'reconcile_id'], context=context)
+            invoice_reopen = [line.invoice.id for line in move_lines if line.reconcile_id and line.invoice and line.invoice.state in ['paid','inv_close']]
+
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         # Do workflow if line is coming from sync, is now reconciled and it has an unpaid invoice
         if context.get('sync_update_execution', False) and 'reconcile_id' in vals and vals['reconcile_id']:
             invoice_ids = []
-            line_list = self.browse(cr, uid, ids, context=context)
+            line_list = self.browse(cr, uid, ids, fields_to_fetch=['invoice'], context=context)
             invoice_ids = [line.invoice.id for line in line_list if
-                           line.invoice and line.invoice.state != 'paid']
+                           line.invoice and line.invoice.state not in ('paid','inv_close')]
             if self.pool.get('account.invoice').test_paid(cr, uid, invoice_ids):
                 self.pool.get('account.invoice').confirm_paid(cr, uid, invoice_ids)
+
+        if invoice_reopen:
+            netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', invoice_reopen, 'open_test', cr)
+
         return res
 
 account_move_line()

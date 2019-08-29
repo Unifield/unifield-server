@@ -28,11 +28,13 @@ from time import strftime
 from tools.translate import _
 from lxml import etree
 from datetime import datetime
+from msf_partner import PARTNER_TYPE
 import re
 import netsvc
 
 
 import decimal_precision as dp
+
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
@@ -223,9 +225,9 @@ class account_invoice(osv.osv):
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
         'date_invoice': fields.date('Posting Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)],
-                                                            'close':[('readonly',True)]}, select=True),
+                                                            'inv_close':[('readonly',True)]}, select=True),
         'document_date': fields.date('Document Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)],
-                                                              'close':[('readonly',True)]}, select=True),
+                                                              'inv_close':[('readonly',True)]}, select=True),
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
         'is_inkind_donation': fields.boolean(string="Is an In-kind Donation?"),
         'is_intermission': fields.boolean(string="Is an Intermission Voucher?"),
@@ -251,6 +253,8 @@ class account_invoice(osv.osv):
         'st_lines': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register lines", readonly=True, help="Register lines that have a link to this invoice."),
         'can_merge_lines': fields.function(_get_can_merge_lines, method=True, type='boolean', string='Can merge lines ?'),
         'is_merged_by_account': fields.boolean("Is merged by account"),
+        'partner_type': fields.related('partner_id', 'partner_type', string='Partner Type', type='selection',
+                                       selection=PARTNER_TYPE, readonly=True, store=False),
     }
 
     _defaults = {
@@ -500,18 +504,6 @@ class account_invoice(osv.osv):
                             ' before invoice validation')
                     )
 
-    def _refund_cleanup_lines(self, cr, uid, lines, is_account_inv_line=False, context=None):
-        """
-        Remove useless fields
-        """
-        for line in lines:
-            if line.get('move_lines',False):
-                del line['move_lines']
-            if line.get('import_invoice_id',False):
-                del line['import_invoice_id']
-        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines, is_account_inv_line=is_account_inv_line, context=context)
-        return res
-
     def check_po_link(self, cr, uid, ids, context=None):
         """
         Check that invoice (only supplier invoices) has no link with a PO. This is because of commitments presence.
@@ -532,30 +524,6 @@ class account_invoice(osv.osv):
                         raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
         return True
 
-    def _hook_period_id(self, cr, uid, inv, context=None):
-        """
-        Give matches period that are not draft and not HQ-closed from given date.
-        Do not use special periods as period 13, 14 and 15.
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if not inv:
-            return False
-        # NB: there is some period state. So we define that we choose only open period (so not draft and not done)
-        res = self.pool.get('account.period').search(cr, uid, [('date_start','<=',inv.date_invoice or strftime('%Y-%m-%d')),
-                                                               ('date_stop','>=',inv.date_invoice or strftime('%Y-%m-%d')), ('state', 'not in', ['created', 'done']),
-                                                               ('company_id', '=', inv.company_id.id), ('special', '=', False)], context=context, order="date_start ASC, name ASC")
-        return res
-
-    def __hook_lines_before_pay_and_reconcile(self, cr, uid, lines):
-        """
-        Add document date to account_move_line before pay and reconcile
-        """
-        for line in lines:
-            if line[2] and 'date' in line[2] and not line[2].get('document_date', False):
-                line[2].update({'document_date': line[2].get('date')})
-        return lines
 
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
         """
@@ -850,6 +818,35 @@ class account_invoice(osv.osv):
                              'view_id': supplier_view_id}
         return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, action_xmlid, local_ctx)
 
+    def _check_tax_allowed(self, cr, uid, ids, context=None):
+        """
+        Raises an error if a tax is used with an Intermission or Intersection partner
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        warning_msg = _('Taxes are forbidden with Intermission and Intersection partners.')
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['partner_id', 'tax_line', 'invoice_line'], context=context):
+            if inv.partner_id.partner_type in ('intermission', 'section'):
+                if inv.tax_line:
+                    raise osv.except_osv(_('Warning'), warning_msg)
+                for inv_line in inv.invoice_line:
+                    if inv_line.invoice_line_tax_id:
+                        raise osv.except_osv(_('Warning'), warning_msg)
+
+    def _check_sync_allowed(self, cr, uid, ids, context=None):
+        """
+        Raises an error if the doc is marked as Synced whereas the Partner is neither Intermission nor Intersection
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['partner_id', 'synced'], context=context):
+            if inv.partner_id.partner_type not in ('intermission', 'section') and inv.synced:
+                raise osv.except_osv(_('Warning'), _('Synchronized invoices are allowed only with Intermission and Intersection partners.'))
+
     def invoice_open(self, cr, uid, ids, context=None):
         """
         No longer fills the date automatically, but requires it to be set
@@ -859,6 +856,8 @@ class account_invoice(osv.osv):
             context = {}
         self._check_invoice_merged_lines(cr, uid, ids, context=context)
         self.check_accounts_for_partner(cr, uid, ids, context=context)
+        self._check_tax_allowed(cr, uid, ids, context=context)
+        self._check_sync_allowed(cr, uid, ids, context=context)
 
         # Prepare workflow object
         wf_service = netsvc.LocalService("workflow")
@@ -906,6 +905,18 @@ class account_invoice(osv.osv):
             wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
 
         return True
+
+    def invoice_open_with_confirmation(self, cr, uid, ids, context=None):
+        """
+        Simply calls "invoice_open" (asking for confirmation is done at form level)
+        """
+        return self.invoice_open(cr, uid, ids, context=context)
+
+    def invoice_open_with_sync_confirmation(self, cr, uid, ids, context=None):
+        """
+        Simply calls "invoice_open" (asking for confirmation is done at form level)
+        """
+        return self.invoice_open(cr, uid, ids, context=context)
 
     def action_reconcile_imported_invoice(self, cr, uid, ids, context=None):
         """
@@ -1143,6 +1154,21 @@ class account_invoice(osv.osv):
             self._check_header_account(cr, uid, inv_id, inv_type=inv_type, context=context)
             self._check_line_accounts(cr, uid, inv_id, inv_type=inv_type, context=context)
 
+    def update_counterpart_inv_status(self, cr, uid, ids, context=None):
+        """
+        In case an IVO or STV, with an Intermission or Intersection partner and set as Synchronized, is being opened:
+        set the Counterpart Invoice Status to Draft automatically
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        inv_fields = ['type', 'is_debit_note', 'synced', 'partner_type', 'counterpart_inv_status']
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=inv_fields, context=context):
+            is_ivo_or_stv = inv.type == 'out_invoice' and not inv.is_debit_note
+            if is_ivo_or_stv and inv.synced and inv.partner_type in ('intermission', 'section') and not inv.counterpart_inv_status:
+                self.write(cr, uid, inv.id, {'counterpart_inv_status': 'draft'}, context=context)
+
     def action_open_invoice(self, cr, uid, ids, context=None, *args):
         """
         Give function to use when changing invoice to open state
@@ -1160,43 +1186,9 @@ class account_invoice(osv.osv):
         if not self.action_reconcile_imported_invoice(cr, uid, ids, context):
             return False
         self.check_domain_restrictions(cr, uid, ids, context)  # raises an error if one unauthorized element is used
+        self.update_counterpart_inv_status(cr, uid, ids, context=context)
         return True
 
-    def line_get_convert(self, cr, uid, x, part, date, context=None):
-        """
-        Add these field into invoice line:
-        - invoice_line_id
-        """
-        if not context:
-            context = {}
-        res = super(account_invoice, self).line_get_convert(cr, uid, x, part, date, context)
-        res.update({'invoice_line_id': x.get('invoice_line_id', False)})
-        return res
-
-    def finalize_invoice_move_lines(self, cr, uid, inv, line):
-        """
-        Hook that changes move line data before write them.
-        Add a link between partner move line and invoice.
-        Add invoice document date to data.
-        """
-        def is_partner_line(dico):
-            if isinstance(dico, dict):
-                if dico:
-                    # In case where no amount_currency filled in, then take debit - credit for amount comparison
-                    amount = dico.get('amount_currency', False) or (dico.get('debit', 0.0) - dico.get('credit', 0.0))
-                    if amount == inv.amount_total and dico.get('partner_id', False) == inv.partner_id.id:
-                        return True
-            return False
-        new_line = []
-        for el in line:
-            if el[2]:
-                el[2].update({'document_date': inv.document_date})
-            if el[2] and is_partner_line(el[2]):
-                el[2].update({'invoice_partner_link': inv.id})
-                new_line.append((el[0], el[1], el[2]))
-            else:
-                new_line.append(el)
-        return super(account_invoice, self).finalize_invoice_move_lines(cr, uid, inv, new_line)
 
     def button_debit_note_import_invoice(self, cr, uid, ids, context=None):
         """
@@ -1700,6 +1692,13 @@ class account_invoice_line(osv.osv):
                                            relation="account.analytic.account", string='Funding Pool',
                                            states={'draft': [('readonly', False)]},
                                            help="Field used for import only"),
+        'from_supply': fields.related('invoice_id', 'from_supply', type='boolean', string='From Supply', readonly=True, store=False),
+        'synced': fields.related('invoice_id', 'synced', type='boolean', string='Synchronized', readonly=True, store=False),
+        'invoice_type': fields.related('invoice_id', 'type', string='Invoice Type', type='selection', readonly=True, store=False,
+                                       selection=[('out_invoice', 'Customer Invoice'),
+                                                  ('in_invoice', 'Supplier Invoice'),
+                                                  ('out_refund', 'Customer Refund'),
+                                                  ('in_refund', 'Supplier Refund')]),
     }
 
     _defaults = {
@@ -1709,6 +1708,48 @@ class account_invoice_line(osv.osv):
     }
 
     _order = 'line_number'
+
+    def _check_on_invoice_line_big_amounts(self, cr, uid, ids, context=None):
+        """
+        Prevents booking amounts having more than 10 digits before the comma, i.e. amounts starting from 10 billions.
+        The goal is to avoid losing precision, see e.g.: "%s" % 10000000000.01  # '10000000000.0'
+        (and to avoid decimal.InvalidOperation due to huge amounts).
+        This applies to all types of account.invoice.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        too_big_amount = 10**10
+        inv_line_fields = ['quantity', 'price_unit', 'discount', 'name']
+        for inv_line in self.browse(cr, uid, ids, fields_to_fetch=inv_line_fields, context=context):
+            # check amounts entered manually (cf. huge amounts could cause decimal.InvalidOperation), and the total to be used in JI
+            qty = inv_line.quantity or 0.0
+            pu = inv_line.price_unit or 0.0
+            discount = inv_line.discount or 0.0
+            subtotal = self._amount_line(cr, uid, [inv_line.id], 'price_subtotal', None, context)[inv_line.id]
+            if abs(qty) >= too_big_amount or abs(pu) >= too_big_amount or abs(discount) >= too_big_amount or abs(subtotal) >= too_big_amount:
+                raise osv.except_osv(_('Error'), _('Line "%s": one of the numbers entered is more than 10 digits.') % inv_line.name)
+
+    def _check_automated_invoice(self, cr, uid, invoice_id, context=None):
+        """
+        Prevents the creation of manual inv. lines if the related invoice has been generated via Sync. or
+        by a Supply workflow (for Intermission/Intersection partners)
+        """
+        if context is None:
+            context = {}
+        if self._name == 'wizard.account.invoice.line':
+            # no check on Direct Invoice
+            return True
+        inv_obj = self.pool.get('account.invoice')
+        if invoice_id:
+            inv_fields = ['from_supply', 'synced', 'type', 'is_inkind_donation', 'partner_type']
+            inv = inv_obj.browse(cr, uid, invoice_id, fields_to_fetch=inv_fields, context=context)
+            ivi_or_si_synced = inv.type == 'in_invoice' and not inv.is_inkind_donation and inv.synced
+            intermission_or_section_from_supply = inv.partner_type in ('intermission', 'section') and inv.from_supply
+            if context.get('from_inv_form') and (ivi_or_si_synced or intermission_or_section_from_supply):
+                raise osv.except_osv(_('Error'), _('This document has been generated via a Supply workflow or via synchronization. '
+                                                   'You can\'t add lines manually.'))
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -1720,6 +1761,7 @@ class account_invoice_line(osv.osv):
         """
         if not context:
             context = {}
+        self._check_automated_invoice(cr, uid, vals.get('invoice_id'), context=context)
         # Create new number with invoice sequence
         if vals.get('invoice_id') and self._name in ['account.invoice.line']:
             invoice = self.pool.get('account.invoice').browse(cr, uid, vals['invoice_id'])
@@ -1727,7 +1769,9 @@ class account_invoice_line(osv.osv):
                 sequence = invoice.sequence_id
                 line = sequence.get_id(code_or_id='id', context=context)
                 vals.update({'line_number': line})
-        return super(account_invoice_line, self).create(cr, uid, vals, context)
+        inv_line_id = super(account_invoice_line, self).create(cr, uid, vals, context)
+        self._check_on_invoice_line_big_amounts(cr, uid, inv_line_id, context=context)
+        return inv_line_id
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -1758,6 +1802,7 @@ class account_invoice_line(osv.osv):
                     amount += l.price_subtotal
                 self.pool.get('account.invoice').write(cr, uid, [invl.invoice_id.id], {'check_total': amount}, context)
                 self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invl.invoice_id.register_line_ids], {'amount': -1 * amount}, context)
+        self._check_on_invoice_line_big_amounts(cr, uid, ids, context=context)
         return res
 
     def copy(self, cr, uid, inv_id, default=None, context=None):
@@ -1812,9 +1857,10 @@ class account_invoice_line(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         """
-        If invoice is a Direct Invoice and is in draft state:
-         - compute total amount (check_total field)
-         - write total to the register line
+        - If invoice is a Direct Invoice and is in draft state:
+            - compute total amount (check_total field)
+            - write total to the register line
+        - Raise error msg if the related inv. has been generated via Sync. or by a Supply workflow (for Intermission/Intersection partners)
         """
         if not context:
             context = {}
@@ -1822,16 +1868,25 @@ class account_invoice_line(osv.osv):
             ids = [ids]
         # Fetch all invoice_id to check
         direct_invoice_ids = []
+        invoice_ids = []
         abst_obj = self.pool.get('account.bank.statement.line')
         for invl in self.browse(cr, uid, ids):
-            if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
-                direct_invoice_ids.append(invl.invoice_id.id)
-                # find account_bank_statement_lines and used this to delete the account_moves and associated records
-                absl_ids = abst_obj.search(cr, uid,
-                                           [('invoice_id','=',invl.invoice_id.id)],
-                                           order='NO_ORDER')
-                if absl_ids:
-                    abst_obj.unlink_moves(cr, uid, absl_ids, context)
+            if invl.invoice_id and invl.invoice_id.id not in invoice_ids:
+                invoice = invl.invoice_id
+                invoice_ids.append(invoice.id)  # check each invoice only once
+                is_ivi_or_si = invoice.type == 'in_invoice' and not invoice.is_inkind_donation
+                if (is_ivi_or_si and invoice.synced) or (invoice.from_supply and invoice.partner_type in ('intermission', 'section')):
+                    # will be displayed when trying to delete lines manually / merge lines / or split invoices
+                    raise osv.except_osv(_('Error'), _("This document has been generated via a Supply workflow or via synchronization. "
+                                                       "Existing lines can't be deleted."))
+                if invoice.is_direct_invoice and invoice.state == 'draft':
+                    direct_invoice_ids.append(invoice.id)
+                    # find account_bank_statement_lines and use this to delete the account_moves and associated records
+                    absl_ids = abst_obj.search(cr, uid,
+                                               [('invoice_id', '=', invoice.id)],
+                                               order='NO_ORDER')
+                    if absl_ids:
+                        abst_obj.unlink_moves(cr, uid, absl_ids, context)
         # Normal behaviour
         res = super(account_invoice_line, self).unlink(cr, uid, ids, context)
         # See all direct invoice
@@ -1841,18 +1896,6 @@ class account_invoice_line(osv.osv):
                 amount += l.price_subtotal
             self.pool.get('account.invoice').write(cr, uid, [inv.id], {'check_total': amount}, context)
             self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in inv.register_line_ids], {'amount': -1 * amount}, context)
-        return res
-
-    def move_line_get_item(self, cr, uid, line, context=None):
-        """
-        Add a link between move line and its invoice line
-        """
-        # some verification
-        if not context:
-            context = {}
-        # update default dict with invoice line ID
-        res = super(account_invoice_line, self).move_line_get_item(cr, uid, line, context=context)
-        res.update({'invoice_line_id': line.id})
         return res
 
     def button_open_analytic_lines(self, cr, uid, ids, context=None):

@@ -22,7 +22,6 @@
 from osv import osv, fields
 from tools.translate import _
 import netsvc
-from datetime import datetime
 import decimal_precision as dp
 import time
 
@@ -551,10 +550,7 @@ class kit_creation(osv.osv):
 
         # objects
         move_obj = self.pool.get('stock.move')
-        loc_obj = self.pool.get('stock.location')
-        prodlot_obj = self.pool.get('stock.production.lot')
         data_tools_obj = self.pool.get('data.tools')
-        uom_obj = self.pool.get('product.uom')
         # load data into the context
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
 
@@ -563,163 +559,36 @@ class kit_creation(osv.osv):
             data, move_list, move_manual = self._consolidate_data(cr, uid, obj.id, context=context)
             # default location
             default_location_id = obj.default_location_src_id_kit_creation.id
-
             # Check availability of manual moves
-            for move in move_obj.browse(cr, uid, move_manual, context=context):
-                if move.state != 'confirmed' or not move.prodlot_id:
-                    continue
-
-                location_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', move.location_id.id)], context=context)
-                needed_qty = move.product_qty
-                for loc in location_ids:
-                    available_qty = prodlot_obj.browse(cr, uid, move.prodlot_id.id, context=dict(context, location_id=loc)).stock_virtual
-                    diff_qty = available_qty - uom_obj._compute_qty(cr, uid, move.product_uom.id, needed_qty, move.product_id.uom_id.id)
-                    if diff_qty >= 0:
-                        move_obj.write(cr, uid, [move.id], {'state': 'assigned'}, context=context)
-                        break
-                    else:
-                        if available_qty:
-                            move_obj.copy(cr, uid, move.id, {'product_qty': available_qty, 'state': 'assigned'}, context=context)
-                        needed_qty -= available_qty
-                        move_obj.write(cr, uid, [move.id], {'product_qty': needed_qty}, context=context)
-                else:
-                    move_obj.write(cr, uid, [move.id], {'prodlot_id': False, 'kol_lot_manual': False}, context=context)
-
-            data, move_list, move_manual = self._consolidate_data(cr, uid, obj.id, context=context)
+            create_move_ids = move_manual
             # delete stock moves
             move_obj.unlink(cr, uid, move_list, context=dict(context, call_unlink=True))
-
             # create consolidated stock moves
             for product_id in data.keys():
                 for uom_id in data[product_id]['uoms'].keys():
                     # we check the availability - we use default location from kitting order object
-                    res = loc_obj.compute_availability(cr, uid, [default_location_id], obj.consider_child_locations_kit_creation, product_id, uom_id, context=context)
-                    # total qty needed for this product/uom
                     needed_qty = data[product_id]['uoms'][uom_id]['qty']
-                    # the consolidated data contains a move which was original
-                    original_flag = data[product_id]['uoms'][uom_id].get('original', False)
-                    if res['total'] < needed_qty:
-                        if res['total'] <= 0:
-                            diff_qty = needed_qty
-                        else:
-                            diff_qty = needed_qty - res['total']
-                        needed_qty -= diff_qty
-                        # we don't have enough availability, a first move 'confirmed' is created with missing qty
-                        # true for both batch management and not batch management products
-                        values = {'kit_creation_id_stock_move': obj.id,
-                                  'name': data[product_id]['object'].name,
-                                  'picking_id': obj.internal_picking_id_kit_creation.id,
-                                  'product_uom': uom_id,
-                                  'product_id': product_id,
-                                  'date_expected': context['common']['date'],
-                                  'date': context['common']['date'],
-                                  'product_qty': diff_qty,
-                                  'prodlot_id': False, # the qty is not available
-                                  'location_id': default_location_id,
-                                  'location_dest_id': context['common']['kitting_id'],
-                                  'state': 'confirmed', # not available
-                                  'reason_type_id': context['common']['reason_type_id'],
-                                  'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
-                                  'original_from_process_stock_move': original_flag,
-                                  }
-                        move_obj.create(cr, uid, values, context=context)
-                        # we reset original move flag
-                        original_flag = False
-
-                    if data[product_id]['object'].perishable: # perishable for perishable or batch management
-                        # the product is batch management we use the FEFO list
-                        for loc in res['fefo']:
-                            # we ignore the batch that are outdated
-                            expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
-                            if datetime.strptime(expired_date, "%Y-%m-%d") < datetime.today():
-                                continue
-                            # as long all needed are not fulfilled
-                            if needed_qty > 0.0:
-                                # we treat the available qty from FEFO list corresponding to needed quantity
-                                if loc['qty'] > needed_qty:
-                                    # we have everything !
-                                    selected_qty = needed_qty
-                                    needed_qty = 0.0
-                                else:
-                                    # we take all available
-                                    selected_qty = loc['qty']
-                                    needed_qty -= selected_qty
-                                # stock move values
-                                values = {'kit_creation_id_stock_move': obj.id,
-                                          'name': data[product_id]['object'].name,
-                                          'picking_id': obj.internal_picking_id_kit_creation.id,
-                                          'product_uom': uom_id,
-                                          'product_id': product_id,
-                                          'date_expected': context['common']['date'],
-                                          'date': context['common']['date'],
-                                          'product_qty': selected_qty,
-                                          'prodlot_id': loc['prodlot_id'],
-                                          'location_id': loc['location_id'],
-                                          'location_dest_id': context['common']['kitting_id'],
-                                          'state': 'assigned', # available
-                                          'reason_type_id': context['common']['reason_type_id'],
-                                          'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
-                                          'original_from_process_stock_move': original_flag,
-                                          }
-                                move_obj.create(cr, uid, values, context=context)
-                                # we reset original move flag
-                                original_flag = False
-                        if needed_qty:
-                            values = {'kit_creation_id_stock_move': obj.id,
-                                      'name': data[product_id]['object'].name,
-                                      'picking_id': obj.internal_picking_id_kit_creation.id,
-                                      'product_uom': uom_id,
-                                      'product_id': product_id,
-                                      'date_expected': context['common']['date'],
-                                      'date': context['common']['date'],
-                                      'product_qty': needed_qty,
-                                      'prodlot_id': False,
-                                      'location_id': loc['location_id'],
-                                      'location_dest_id': context['common']['kitting_id'],
-                                      'state': 'confirmed', # not available
-                                      'reason_type_id': context['common']['reason_type_id'],
-                                      'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
-                                      'original_from_process_stock_move': original_flag,
-                                      }
-                            move_obj.create(cr, uid, values, context=context)
-                            # we reset original move flag
-                            original_flag = False
-
-                    else:
-                        # the product is not batch management, we use locations in id order
-                        for loc in sorted(res.keys()):
-                            if isinstance(loc, int) and res[loc]['total'] > 0.0:
-                                # as long all needed are not fulfilled
-                                if needed_qty > 0.0:
-                                    # we treat the available qty from locations corresponding to needed quantity
-                                    if res[loc]['total'] > needed_qty:
-                                        # we have everything !
-                                        selected_qty = needed_qty
-                                        needed_qty = 0.0
-                                    else:
-                                        # we take all available
-                                        selected_qty = res[loc]['total']
-                                        needed_qty -= selected_qty
-                                    # stock move values
-                                    values = {'kit_creation_id_stock_move': obj.id,
-                                              'name': data[product_id]['object'].name,
-                                              'picking_id': obj.internal_picking_id_kit_creation.id,
-                                              'product_uom': uom_id,
-                                              'product_id': product_id,
-                                              'date_expected': context['common']['date'],
-                                              'date': context['common']['date'],
-                                              'product_qty': selected_qty,
-                                              'prodlot_id': False, # not batch management
-                                              'location_id': loc,
-                                              'location_dest_id': context['common']['kitting_id'],
-                                              'state': 'assigned',
-                                              'reason_type_id': context['common']['reason_type_id'],
-                                              'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
-                                              'original_from_process_stock_move': original_flag,
-                                              }
-                                    move_obj.create(cr, uid, values, context=context)
-                                    # we reset original move flag
-                                    original_flag = False
+                    values = {
+                        'kit_creation_id_stock_move': obj.id,
+                        'name': data[product_id]['object'].name,
+                        'picking_id': obj.internal_picking_id_kit_creation.id,
+                        'product_uom': uom_id,
+                        'product_id': product_id,
+                        'date_expected': context['common']['date'],
+                        'date': context['common']['date'],
+                        'product_qty': needed_qty,
+                        'prodlot_id': False, # the qty is not available
+                        'location_id': default_location_id,
+                        'location_dest_id': context['common']['kitting_id'],
+                        'state': 'confirmed', # not available
+                        'reason_type_id': context['common']['reason_type_id'],
+                        'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
+                        'original_from_process_stock_move': False,
+                    }
+                    create_move_ids.append(move_obj.create(cr, uid, values, context=context))
+            ctx = context.copy()
+            ctx['compute_child'] = obj.consider_child_locations_kit_creation
+            self.pool.get('stock.picking').check_availability_manually(cr, uid, [obj.internal_picking_id_kit_creation.id], context=ctx, initial_location=default_location_id)
 
         return True
 
@@ -1362,6 +1231,12 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             kit_creation_id = move.kit_creation_id_stock_move.id
             if move.state == 'assigned':
+                if move.product_id.perishable:
+                    qty = self.pool.get('product.uom')._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
+                    av_qty = self.pool.get('stock.production.lot').read(cr, uid, move.prodlot_id.id, ['stock_available'], context={'location_id': move.location_id.id})['stock_available']
+                    if qty > av_qty:
+                        raise osv.except_osv(_('Warning !'), _('Product %s, BN: %s not enough stock to process quantity %s %s (stock level: %s)') % ( move.product_id.default_code, move.prodlot_id.name, qty, move.product_id.uom_id.name, av_qty))
+
                 self.write(cr, uid, [move.id], {'state': 'done'}, context=context)
 
             # we assign automatically the lot to the kit only for products perishable at least (perishable and batch management)
@@ -1391,68 +1266,6 @@ class stock_move(osv.osv):
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
                 }
-
-    def check_assign_lot(self, cr, uid, ids, context=None):
-        """
-        check the assignation of stock move taking into account lot and FEFO rule
-        """
-        # treated move ids
-        done = []
-        count = 0
-        pickings = {}
-        if context is None:
-            context = {}
-        for move in self.browse(cr, uid, ids, context=context):
-            if self._hook_check_assign(cr, uid, move=move):
-                #            if move.product_id.type == 'consu' or move.location_id.usage == 'supplier':
-                if move.state in ('confirmed', 'waiting'):
-                    done.append(move.id)
-                pickings[move.picking_id.id] = 1
-                continue
-            if move.state in ('confirmed', 'waiting'):
-                # Important: we must pass lock=True to _product_reserve() to avoid race conditions and double reservations
-                res = self.pool.get('stock.location')._product_reserve(cr, uid, [move.location_id.id], move.product_id.id, move.product_qty, {'uom': move.product_uom.id}, lock=True)
-                if res:
-                    #_product_available_test depends on the next status for correct functioning
-                    #the test does not work correctly if the same product occurs multiple times
-                    #in the same order. This is e.g. the case when using the button 'split in two' of
-                    #the stock outgoing form
-                    self.write(cr, uid, [move.id], {'state':'assigned'})
-                    done.append(move.id)
-                    pickings[move.picking_id.id] = 1
-                    r = res.pop(0)
-                    cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
-
-                    while res:
-                        r = res.pop(0)
-                        move_id = self.copy(cr, uid, move.id, {'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
-                        done.append(move_id)
-        if done:
-            count += len(done)
-            self.write(cr, uid, done, {'state': 'assigned'})
-
-        if count:
-            for pick_id in pickings:
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
-        return count
-
-    def unlink(self, cr, uid, ids, context=None, force=False):
-        '''
-        override the function so we prevent deletion of original_from_process_stock_move stock.moves
-        '''
-        # Some verifications
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.original_from_process_stock_move and not context.get('call_unlink', False):
-                raise osv.except_osv(_('Warning !'), _('Original Stock Move cannot be deleted.'))
-
-        return super(stock_move, self).unlink(cr, uid, ids, context=context,
-                                              force=force)
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''

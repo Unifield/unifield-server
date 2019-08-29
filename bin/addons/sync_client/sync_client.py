@@ -814,6 +814,10 @@ class Entity(osv.osv):
                 self.pool.get('sync.trigger.something').delete_ir_model_access(cr, uid)
             self.install_user_rights(cr, uid, context=context)
             entity.write({'user_rights_state': 'installed'})
+
+        cr.commit()
+        self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+        self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
         return True
 
     @sync_process('data_pull')
@@ -1105,6 +1109,7 @@ class Entity(osv.osv):
         max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         instance_uuid = entity.identifier
+
         while True:
             res = proxy.get_message(instance_uuid, self._hardware_id,
                                     max_packet_size, last_seq)
@@ -1116,15 +1121,10 @@ class Entity(osv.osv):
 
             messages_count += len(packet)
             messages.unfold_package(cr, uid, packet, context=context)
-            if packet and packet[0].get('sync_id'):
-                data_ids = [data['sync_id'] for data in packet]
-                res = proxy.message_received_by_sync_id(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
-            else:
-                # migration
-                data_ids = [data['id'] for data in packet]
-                res = proxy.message_received(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
-            if not res[0]: raise Exception, res[1]
             cr.commit()
+            data_ids = [data['sync_id'] for data in packet]
+            res = proxy.message_received_by_sync_id(instance_uuid, self._hardware_id, data_ids, {'md5': get_md5(data_ids)})
+            if not res[0]: raise Exception, res[1]
 
             if logger and messages_count:
                 if logger_index is None: logger_index = logger.append()
@@ -1269,7 +1269,7 @@ class Entity(osv.osv):
         self.pull_message(cr, uid, context=context)
         self.push_update(cr, uid, context=context)
         self.push_message(cr, uid, context=context)
-        self._logger.info("Synchronization succesfully done")
+        self._logger.info("Synchronization successfully done")
         if logger:
             logger.info['nb_msg_not_run'] = self.pool.get('sync.client.message_received').search(cr, uid, [('run', '=', False)], count=True)
             logger.info['nb_data_not_run'] = self.pool.get('sync.client.update_received').search(cr, uid, [('run', '=', False)], count=True)
@@ -1324,19 +1324,19 @@ class Entity(osv.osv):
         if not connection_obj.is_connected:
             login, password = connection_obj._info_connection_from_config_file(cr)
             if login == -1 or not login or not password:
-                return "Not Connected"
+                return _("Not Connected")
 
         if self.is_syncing():
             if self.aborting:
-                return "Aborting..."
-            return "Syncing..."
+                return _("Aborting...")
+            return _("Syncing...")
 
         monitor = self.pool.get("sync.monitor")
         last_log = monitor.last_status
         if last_log:
-            return "Last Sync: %s at %s, Not run upd: %s, Not run msg: %s" \
+            return _("Last Sync: %s at %s, Not run upd: %s, Not run msg: %s") \
                 % (_(monitor.status_dict[last_log[0]]), last_log[1], last_log[2], last_log[3])
-        return "Connected"
+        return _("Connected")
 
     def update_nb_shortcut_used(self, cr, uid, nb_shortcut_used, context=None):
         '''
@@ -1533,6 +1533,8 @@ class Connection(osv.osv):
 
         if date is None:
             date = datetime.today()
+        if isinstance(date, basestring):
+            date = datetime.strptime(date, '%Y-%m-%d %H:%M')
 
         if not hour_from:
             hour_from = connection.automatic_patching_hour_from

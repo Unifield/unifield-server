@@ -8,7 +8,7 @@
             <field name='model'>msf_button_access_rights.button_access_rule</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <form string="Button Access Rule">
+                <tree string="Button Access Rule">
                     <field name="active" invisible='1' />
                     <field name="model_id" />
                     <field name="view_id" />
@@ -16,7 +16,8 @@
                     <field name="name" />
                     <field name="group_names" />
                     <field name="type" />
-                </form>
+                    <field name="bar_type" />
+                </tree>
             </field>
         </record>
 
@@ -37,6 +38,7 @@
                         <field name="name" />
                         <field name="group_ids" />
                         <field name="type" />
+                        <field name="bar_type" />
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">

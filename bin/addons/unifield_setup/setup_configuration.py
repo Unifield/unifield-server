@@ -52,13 +52,14 @@ class unifield_setup_configuration(osv.osv):
         'fixed_asset_ok': fields.boolean(string='System manages fixed asset ?'),
         'sale_price': fields.float(digits=(16,2), string='Fields price percentage',
                                    help='This percentage will be applied on field price from product form view.'),
-        'restrict_country_ids': fields.many2many('res.country', 'restrictive_countries', 'wizard_id', 'country_id', 
+        'restrict_country_ids': fields.many2many('res.country', 'restrictive_countries', 'wizard_id', 'country_id',
                                                  string='Restrictive countries'),
         'field_orders_ok': fields.boolean(string='Activate the Field Orders feature ?'),
         'lang_id': fields.char(size=5, string='Default language'),
         'payroll_ok': fields.boolean(string='System manages payrolls ?'),
         'import_commitments': fields.boolean(string='Manage commitments corresponding to international order through specific import ?'),
         'vat_ok': fields.boolean(string='System manages VAT locally ?'),
+        'previous_fy_dates_allowed': fields.boolean(string='Does the system allow document dates on previous Fiscal Year?'),
     }
 
     _defaults = {
@@ -73,6 +74,7 @@ class unifield_setup_configuration(osv.osv):
         'payroll_ok': lambda *a: True,
         'import_commitments': lambda *a: True,
         'vat_ok': lambda *a: True,
+        'previous_fy_dates_allowed': lambda *a: False,
     }
 
     _constraints = [

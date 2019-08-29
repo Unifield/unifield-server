@@ -29,12 +29,12 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
-
+import logging
 
 
 class automated_export_job(osv.osv):
     _name = 'automated.export.job'
-
+    logger = logging.getLogger('automated.export.job')
     def _get_name(self, cr, uid, ids, field_name, args, context=None):
         """
         Build the name of the job by using the function_id and the date and time
@@ -136,17 +136,17 @@ class automated_export_job(osv.osv):
 
             ftp_connec = None
             sftp = None
-            context.update({'no_raise_if_ok': True})
-            if job.export_id.ftp_ok and job.export_id.ftp_protocol == 'ftp':
-                ftp_connec = self.pool.get('automated.export').ftp_test_connection(cr, uid, job.export_id.id, context=context)
-            elif job.export_id.ftp_ok and job.export_id.ftp_protocol == 'sftp':
-                sftp = self.pool.get('automated.export').sftp_test_connection(cr, uid, job.export_id.id, context=context)
-            context.pop('no_raise_if_ok')
-
-            # Process export
-            error_message = []
-            state = 'done'
             try:
+                context.update({'no_raise_if_ok': True})
+                if job.export_id.ftp_ok and job.export_id.ftp_protocol == 'ftp':
+                    ftp_connec = self.pool.get('automated.export').ftp_test_connection(cr, uid, job.export_id.id, context=context)
+                elif job.export_id.ftp_ok and job.export_id.ftp_protocol == 'sftp':
+                    sftp = self.pool.get('automated.export').sftp_test_connection(cr, uid, job.export_id.id, context=context)
+                context.pop('no_raise_if_ok')
+                # Process export
+                error_message = []
+                state = 'done'
+
                 processed, rejected, headers = getattr(
                     self.pool.get(job.export_id.function_id.model_id.model),
                     job.export_id.function_id.method_to_call
@@ -175,6 +175,7 @@ class automated_export_job(osv.osv):
                     'state': state,
                 }, context=context)
             except Exception as e:
+                self.logger.error('Unable to process export Job %s (%s)' % (job.id, job.name), exc_info=True)
                 self.write(cr, uid, [job.id], {
                     'start_time': start_time,
                     'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -241,12 +242,9 @@ class automated_export_job(osv.osv):
                 if not rep.startswith('2'):
                     raise osv.except_osv(_('Error'), _('Unable to write report on FTP server'))
         elif on_ftp and job_brw.export_id.ftp_protocol == 'sftp':
-            new_tmp_file_name = os.path.join(os.path.dirname(temp_path), filename)
-            os.rename(temp_path, new_tmp_file_name)
-            temp_path = new_tmp_file_name
             try:
                 with sftp.cd(job_brw.export_id.report_path):
-                    sftp.put(new_tmp_file_name, preserve_mtime=True)
+                    sftp.put(temp_path, filename, preserve_mtime=True)
             except:
                 raise osv.except_osv(_('Error'), _('Unable to write report on SFTP server'))
 

@@ -26,12 +26,30 @@ class analytic_distribution(osv.osv):
     _name = 'analytic.distribution'
     _inherit = 'analytic.distribution'
 
-    def _get_distribution_state(self, cr, uid, distrib_id, parent_id, account_id, context=None):
+    def check_dest_cc_compatibility(self, cr, uid, destination_id, cost_center_id, context=None):
+        """
+        Checks the compatibility between the Destination and the Cost Center (cf. CC tab in the Destination form).
+        Returns False if they aren't compatible.
+        """
+        if context is None:
+            context = {}
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        if destination_id and cost_center_id:
+            dest = analytic_acc_obj.browse(cr, uid, destination_id, fields_to_fetch=['category', 'allow_all_cc', 'dest_cc_ids'], context=context)
+            cc = analytic_acc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['category'], context=context)
+            if dest and cc and dest.category == 'DEST' and cc.category == 'OC' and not dest.allow_all_cc and \
+                    cc.id not in [c.id for c in dest.dest_cc_ids]:
+                return False
+        return True
+
+    def _get_distribution_state(self, cr, uid, distrib_id, parent_id, account_id, context=None,
+                                doc_date=False, posting_date=False, manual=False):
         """
         Return distribution state
         """
         if context is None:
             context = {}
+        analytic_acc_obj = self.pool.get('account.analytic.account')
         # Have an analytic distribution on another account than analytic-a-holic account make no sense. So their analytic distribution is valid
         if account_id:
             account =  self.pool.get('account.account').read(cr, uid, account_id, ['is_analytic_addicted'])
@@ -51,16 +69,31 @@ class analytic_distribution(osv.osv):
         except ValueError:
             fp_id = 0
         account = self.pool.get('account.account').read(cr, uid, account_id, ['destination_ids'])
-        # Check Cost Center lines with destination/account link
+        # Check Cost Center lines regarding destination/account and destination/CC links
         for cc_line in distrib.cost_center_lines:
             if cc_line.destination_id.id not in account.get('destination_ids', []):
                 return 'invalid'
+            if not self.check_dest_cc_compatibility(cr, uid, cc_line.destination_id.id,
+                                                    cc_line.analytic_id and cc_line.analytic_id.id or False, context=context):
+                return 'invalid'
         # Check Funding pool lines regarding:
+        # - date validity for manual entries only
         # - destination / account
+        # - destination / cost center
         # - If analytic account is MSF Private funds
         # - Cost center and funding pool compatibility
         for fp_line in distrib.funding_pool_lines:
+            if manual:
+                if posting_date:
+                    if not analytic_acc_obj.is_account_active(fp_line.destination_id, posting_date):
+                        return 'invalid'
+                    if not analytic_acc_obj.is_account_active(fp_line.cost_center_id, posting_date):
+                        return 'invalid'
+                if doc_date and fp_line.analytic_id and not analytic_acc_obj.is_account_active(fp_line.analytic_id, doc_date):
+                    return 'invalid'
             if fp_line.destination_id.id not in account.get('destination_ids', []):
+                return 'invalid'
+            if not self.check_dest_cc_compatibility(cr, uid, fp_line.destination_id.id, fp_line.cost_center_id.id, context=context):
                 return 'invalid'
             # If fp_line is MSF Private Fund, all is ok
             if fp_line.analytic_id.id == fp_id:
@@ -69,6 +102,14 @@ class analytic_distribution(osv.osv):
                 return 'invalid'
             if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
                 return 'invalid'
+        # Check the date validity of the free accounts used in manual entries
+        if manual and doc_date:
+            for free1_line in distrib.free_1_lines:
+                if free1_line.analytic_id and not analytic_acc_obj.is_account_active(free1_line.analytic_id, doc_date):
+                    return 'invalid'
+            for free2_line in distrib.free_2_lines:
+                if free2_line.analytic_id and not analytic_acc_obj.is_account_active(free2_line.analytic_id, doc_date):
+                    return 'invalid'
         return 'valid'
 
     def analytic_state_from_info(self, cr, uid, account_id, destination_id, cost_center_id, analytic_id, context=None):
@@ -93,12 +134,12 @@ class analytic_distribution(osv.osv):
         if analytic_id == fp_id:
             is_private_fund = True
         # DISTRIBUTION VERIFICATION
-        # Check account user_type
-        if account.user_type_code != 'expense':
-            return res, _('Not an expense account')
         # Check that destination is compatible with account
         if destination_id not in [x.id for x in account.destination_ids]:
             return 'invalid', _('Destination not compatible with account')
+        # Check that Destination and Cost Center are compatible
+        if not self.check_dest_cc_compatibility(cr, uid, destination_id, cost_center_id, context=context):
+            return 'invalid', _('Cost Center not compatible with destination')
         if not is_private_fund:
             # Check that cost center is compatible with FP (except if FP is MSF Private Fund)
             if cost_center_id not in [x.id for x in fp.cost_center_ids]:

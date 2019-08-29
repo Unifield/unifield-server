@@ -9,7 +9,7 @@
       <field name="model">sync.client.message_received</field>
       <field name="type">tree</field>
       <field name="arch" type="xml">
-        <tree colors="red:run == False" string="Instance Tree" hide_new_button="1">
+        <tree colors="red:run == False" string="Instance Tree" hide_new_button="1" hide_delete_button="1">
           <field name="identifier"/>
           <field name="source"/>
           <field name="remote_call"/>
@@ -26,8 +26,9 @@
       <field name="model">sync.client.message_received</field>
       <field name="type">form</field>
       <field name="arch" type="xml">
-        <form string="Message Received" hide_new_button="1" hide_duplicate_button="1" >
+        <form string="Message Received" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
           <group col="6" colspan="4">
+            <field name="manually_ran" invisible="1" />
             <field name="identifier"/>
             <field name="source"/>
             <field name="run"/>
@@ -49,8 +50,14 @@
           <label string="" colspan="3"/>
           <group colspan="1" col="3">
             <field name="editable" attrs="{'invisible':[('run','=',True)]}"/>
-            <button string="Run manually" name="execute"
-                    type="object" attrs="{'invisible':[('run','=',True)]}"/>
+            <button string="Run manually" name="manual_execute"
+                    type="object" attrs="{'invisible':[('run','=',True)]}"
+                    icon="gtk-refresh" />
+          <label string="" colspan="2"/>
+          <button string="Run without execution" name="manual_set_as_run" type="object" icon="gtk-del"
+                    attrs="{'invisible':['|', ('run','=',True), ('manually_ran', '=', False)]}" confirm="Do you want to set this message as run without execution ?"/>
+
+
           </group>
         </form>
       </field>

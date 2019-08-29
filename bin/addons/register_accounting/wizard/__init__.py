@@ -2,7 +2,7 @@
 #-*- encoding:utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
@@ -34,7 +34,6 @@ import register_creation
 import wizard_confirm_bank
 import invoice_date
 import down_payment
-import transfer_with_change
 import wizard_register_import
 import wizard_liquidity_position
 import register_opening

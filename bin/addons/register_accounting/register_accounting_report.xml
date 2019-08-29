@@ -4,6 +4,7 @@
 
         <report id="cash_inventory"
         string="Cash Reconciliation"
+        view_ids="register_accounting.view_cash_statement_tree,account.view_bank_statement_form2"
         target_filename="Cash Reconciliation_${name}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="cash.inventory"
@@ -20,6 +21,7 @@
 
         <report id="bank_reconciliation"
         string="Bank Reconciliation"
+        view_ids="account.view_bank_statement_tree,account.view_bank_statement_form"
         target_filename="Bank Reconciliation_${name}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="bank.reconciliation"
@@ -31,6 +33,7 @@
         <report
         id="cheque_inventory_2"
         string="Cheque Inventory"
+        view_ids="register_accounting.view_cheque_register_tree,register_accounting.view_cheque_register_form"
         target_filename="Cheque Inventory_${name}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="cheque.inventory.2"
@@ -44,6 +47,7 @@
         <report
         id="pending_cheque"
         string="Pending Cheque"
+        view_ids="register_accounting.view_cheque_register_tree,register_accounting.view_cheque_register_form"
         target_filename="Pending Cheque_${name}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="pending.cheque"
@@ -57,6 +61,7 @@
         <report
         id="open_advances_2"
         string="Open Advances"
+        view_ids="account.view_bank_statement_tree,account.view_bank_statement_form,register_accounting.view_cash_statement_tree,account.view_bank_statement_form2"
         target_filename="Open Advances_${instance_id.code}_%(year)s%(month)s%(day)s"
         model="account.bank.statement"
         name="open.advances.2"

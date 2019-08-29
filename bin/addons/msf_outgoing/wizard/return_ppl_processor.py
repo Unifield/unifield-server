@@ -109,8 +109,8 @@ class return_ppl_move_processor(osv.osv):
     Lines with products to return from a PPL
     """
     _name = 'return.ppl.move.processor'
-    _inherit = 'ppl.move.processor'
     _description = 'Line of the wizard to return products from a PPL'
+    _inherit = 'stock.move.processor'
 
     def _get_move_info(self, cr, uid, ids, field_name, args, context=None):
         return super(return_ppl_move_processor, self)._get_move_info(cr, uid, ids, field_name, args, context=context)
@@ -323,6 +323,24 @@ class return_ppl_move_processor(osv.osv):
         Just put the 0 as quantity into the return.ppl.move.processor
         """
         res = super(return_ppl_move_processor, self)._get_line_data(cr, uid, wizard, move, context=context)
+        # For Remote Warehouse purpose
+        from_pack = move.from_pack
+        to_pack = move.to_pack
+        if from_pack == 0 or to_pack == 0:
+            from_pack == 1
+            to_pack == 1
+
+        res.update({
+            'quantity': 0,
+            'ordered_quantity': move.product_qty,
+            'from_pack': from_pack,
+            'to_pack': to_pack,
+            'length': move.length,
+            'width': move.width,
+            'height': move.height,
+            'weight': move.weight,
+            'move_id': move.id,
+        })
 
         res['quantity'] = 0.00
 

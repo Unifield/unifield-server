@@ -159,6 +159,18 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         percentage = abs((amount / total_amount) * 100)
         return {'value': {'percentage': percentage, 'is_percentage_amount_touched': True}}
 
+    def _dest_compatible_with_cc_domain_part(self, tree):
+        """
+        Returns the domain condition to restrict the destination regarding the cost_center_id (for finance views),
+        or if this field doesn't exist in the view, to the analytic_id (Cost Center in Supply views)
+        """
+        dom_part = ""
+        if tree.xpath('/tree/field[@name="cost_center_id"]'):
+            dom_part = "('dest_compatible_with_cc_ids', '=', cost_center_id)"
+        elif tree.xpath('/tree/field[@name="analytic_id"]'):
+            dom_part = "('dest_compatible_with_cc_ids', '=', analytic_id)"
+        return dom_part
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         Rewrite view in order:
@@ -195,9 +207,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                             or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
                             or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
                     else:
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST'), " \
+                                 "('destination_ids', '=', parent.account_id) %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
             ## FUNDING POOL
             if line_type == 'analytic.distribution.wizard.fp.lines':
                 # Change OC field
@@ -235,9 +252,14 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
                             or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
 
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST') %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
                     else:
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
+                        domain_part = self._dest_compatible_with_cc_domain_part(tree)
+                        domain = "[('type', '!=', 'view'), ('category', '=', 'DEST'), " \
+                                 "('destination_ids', '=', parent.account_id) %s]" % (domain_part and ', %s' % domain_part or '')
+                        field.set('domain', domain)
 
             ## FREE 1
             if line_type == 'analytic.distribution.wizard.f1.lines':
@@ -485,14 +507,16 @@ class analytic_distribution_wizard(osv.osv_memory):
             # verify purchase state
             if el.purchase_id and el.purchase_id.state not in ['draft', 'draft_p', 'validated_n', 'validated']:
                 res[el.id] = False
-            # verify purchase line state
-            if el.purchase_line_id and el.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
+            # verify purchase line state and allow modification if the line is created by sync and blocked at validated
+            if el.purchase_line_id and el.purchase_line_id.state not in ['draft', 'validated_n', 'validated'] and \
+                    not (not el.purchase_line_id.analytic_distribution_id and el.purchase_line_id.created_by_sync and
+                         el.purchase_line_id.state == 'sourced_v'):
                 res[el.id] = False
             # verify invoice state
-            if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
+            if el.invoice_id and el.invoice_id.state in ['open', 'paid', 'inv_close']:
                 res[el.id] = False
             # verify invoice line state
-            if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid']:
+            if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid', 'inv_close']:
                 res[el.id] = False
             # verify commitment state
             if el.commitment_id and el.commitment_id.state in ['done']:
@@ -739,13 +763,15 @@ class analytic_distribution_wizard(osv.osv_memory):
             if wiz.purchase_id and wiz.purchase_id.state not in ['draft', 'validated_n', 'validated', 'draft_p', 'validated_p']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that purchase from purchase line is in good state if necessary
-            if wiz.purchase_line_id and wiz.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
+            if wiz.purchase_line_id and wiz.purchase_line_id.state not in ['draft', 'validated_n', 'validated'] and\
+                    not (not wiz.purchase_line_id.analytic_distribution_id and wiz.purchase_line_id.created_by_sync and
+                         wiz.purchase_line_id.state == 'sourced_v'):
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice is in good state if necessary
-            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
+            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid', 'inv_close']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice from invoice line is in good state if necessary
-            if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in ['open', 'paid']:
+            if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in ['open', 'paid', 'inv_close']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that commitment is in good state if necessary
             if wiz.commitment_id and wiz.commitment_id.state in ['done']:

@@ -33,11 +33,12 @@ from mx import DateTime
 import logging
 import requests
 import time
-
-
+import threading
+import pooler
 
 class msf_instance(osv.osv):
     _name = 'msf.instance'
+    _trace = True
 
     def _get_current_instance_level(self, cr, uid, ids, fields, arg, context=None):
         if not context:
@@ -226,6 +227,9 @@ class msf_instance(osv.osv):
         }
 
     def create(self, cr, uid, vals, context=None):
+        if 'state' not in vals:
+            # state by default at creation time = Draft: add it in vals to make it appear in the Track Changes
+            vals['state'] = 'draft'
         # Check if lines are imported from coordo; if now, create those
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         if 'parent_id' in vals and 'level' in vals and vals['level'] == 'project':
@@ -679,11 +683,11 @@ class msf_instance_cloud(osv.osv):
                     to_write['active'] = True
 
                 next_cron = DateTime.strptime(cron_data.nextcall, '%Y-%m-%d %H:%M:%S')
-                if not cron_data.active or abs(next_cron.hour + next_cron.minute/60. - myself['cloud_schedule_time']) > 0.1:
-                    next_time = DateTime.now() + DateTime.RelativeDateTime(minute=0, second=0, hour=myself['cloud_schedule_time'])
+                if not cron_data.active or abs(round(next_cron.hour + next_cron.minute/60.,2) - round(myself['cloud_schedule_time'],2)) > 0.001:
+                    next_time = DateTime.now()  + DateTime.RelativeDateTime(minute=0, second=0, hour=round(myself['cloud_schedule_time'],3)) + DateTime.RelativeDateTime(seconds=0)
                     if next_time < DateTime.now():
                         next_time += DateTime.RelativeDateTime(days=1)
-                    to_write['nextcall'] = next_time.strftime('%Y-%m-%d %H:%M:%S')
+                    to_write['nextcall'] = next_time.strftime('%Y-%m-%d %H:%M:00')
             if to_write:
                 self._logger.info('Update scheduled task to send backup: active: %s, next call: %s (previous active: %s, next: %s)' % (to_write.get('active', ''), to_write.get('nextcall', ''), cron_data.active, cron_data.nextcall))
                 self.pool.get('ir.cron').write(cr, uid, [cron_data.id], to_write, context=context)
@@ -701,6 +705,22 @@ class msf_instance_cloud(osv.osv):
             return now_dt >= start_dt and now_dt <= end_dt
 
         return now_dt >= start_dt or now_dt <= end_dt
+
+    def send_backup_bg(self, cr, uid, progress=False, context=None):
+        thread = threading.Thread(target=self.send_backup_run, args=(cr.dbname, uid, progress, context))
+        thread.start()
+        return True
+
+    def send_backup_run(self, dbname, uid, progress=False, context=None):
+        new_cr = pooler.get_db(dbname).cursor()
+        try:
+            self.send_backup(new_cr, uid, progress=progress, context=context)
+        except:
+            new_cr.rollback()
+            raise
+        finally:
+            new_cr.commit()
+            new_cr.close(True)
 
     def send_backup(self, cr, uid, progress=False, context=None):
         day_abr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']

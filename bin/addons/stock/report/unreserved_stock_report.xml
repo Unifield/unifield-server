@@ -12,7 +12,7 @@
             report_type="webkit"
             header="False"
             auto="False"
-            menu="True"
+            menu="False"
         />
 
         <menuitem

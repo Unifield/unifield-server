@@ -24,7 +24,7 @@
                             <action colspan="4" height="220" name="%(tender_flow.purchase_draft)d" string="Purchase Orders Waiting For Validation"  width="510" menu_ref="%(purchase.menu_purchase_form_action)d,%(purchase.menu_procurement_management)d" />
                             <action colspan="4" height="220" name="%(purchase_sourced)d" string="Purchase Orders Sourced" width="510" menu_ref="%(purchase.menu_purchase_form_action)d,%(purchase.menu_procurement_management)d" />
                             <action colspan="4" height="220" name="%(tender_flow.purchase_waiting)d" string="Purchase Orders Waiting Confirmation"  width="510" menu_ref="%(purchase.menu_purchase_form_action)d,%(purchase.menu_procurement_management)d" />
-                            <action colspan="4" height="220" name="%(tender_flow.tender_action)d" string="Tender" width="510" menu_ref="%(tender_flow.menu_tender)d,%(purchase.menu_procurement_management)d" />
+                            <action colspan="4" height="220" name="%(tender_flow.tender_action_dashboard)d" string="Tender" width="510" menu_ref="%(tender_flow.menu_tender)d,%(purchase.menu_procurement_management)d" />
                             <action colspan="4" height="220" name="%(tender_flow.rfq_draft)d" string="Requests for Quotation Waiting For Validation"  width="510" menu_ref="%(purchase.menu_purchase_rfq)d,%(purchase.menu_procurement_management)d" />
                             <action colspan="4" height="220" name="%(tender_flow.rfq_waiting)d" string="Requests for Quotation Waiting For Confirmation"  width="510" menu_ref="%(purchase.menu_purchase_rfq)d,%(purchase.menu_procurement_management)d" />
                         </child1>

@@ -60,6 +60,7 @@
                             <field name="date_done" />
                             <field name="doc_ref" />
                             <field name="origin" />
+                            <field name="partner_or_loc" />
                             <field name="qty_in" />
                             <field name="qty_out" />
                             <field name="balance" />

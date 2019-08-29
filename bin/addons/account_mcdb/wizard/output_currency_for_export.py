@@ -98,10 +98,66 @@ class output_currency_for_export(osv.osv_memory):
             res.update({'domain': {'currency_id': [('currency_table_id', '=', fx_table_id), ('active', 'in', ['True', 'False'])]}, 'value': {'currency_id' : False}})
         return res
 
-    def button_validate(self, cr, uid, ids, context=None, data_from_selector={}):
+    def get_dom_from_context(self, cr, uid, model, context):
+        dom = context.get('search_domain', [])
+        if context.get('original_domain'):
+            dom.extend(context['original_domain'])
+        if context.get('new_filter_domain'):
+            dom.extend(context['new_filter_domain'])
+        if model == 'account.move.line':
+            dom.append(('period_id.number', '!=', 0))  # exclude IB entries
+        return dom
+
+    def button_validate(self, cr, uid, ids, context=None, data_from_selector=None):
+        """
+            Display warning msg if number of records > 50000
+        """
+
+        if context is None:
+            context = {}
+
+        wiz = False
+        choice = False
+
+        if not data_from_selector:
+            data_from_selector = {}
+            wiz = self.browse(cr, uid, ids, context=context)[0]
+            choice = wiz and wiz.export_format or False
+
+        count_ids = 0
+        if choice != 'pdf':
+            if data_from_selector and 'ids' in data_from_selector:
+                count_ids = len(data_from_selector['ids'])
+            elif wiz and wiz.export_selected:
+                count_ids = len(context.get('active_ids', []))
+            elif wiz :
+                model = data_from_selector.get('model') or context.get('active_model')
+                dom = self.get_dom_from_context(cr, uid, model, context)
+                count_ids = self.pool.get(model).search(cr, uid, dom, count=True, context=context)
+
+        if count_ids > 50000:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', 'output_currency_for_export_confirm_view')[1]
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'output.currency.for.export',
+                'res_id': ids,
+                'view_id': [view_id],
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+            }
+
+        return self.launch_export(cr, uid, ids, context=context, data_from_selector=data_from_selector)
+
+    def launch_export(self, cr, uid, ids, context=None, data_from_selector=None):
         """
         Launch export wizard
         """
+
+        if data_from_selector is None:
+            data_from_selector = {}
+
         # Some verifications
         if (not context or not context.get('active_ids', False) or not context.get('active_model', False)) and not data_from_selector:
             raise osv.except_osv(_('Error'), _('An error has occurred. Please contact an administrator.'))
@@ -132,13 +188,7 @@ class output_currency_for_export(osv.osv_memory):
         elif wiz and not wiz.export_selected and choice == 'pdf':
                 # get the ids of the entries and the header to display
                 # (for gl.selector/analytic.selector report if we come from JI/AJI view)
-            dom = context.get('search_domain', [])
-            if context.get('original_domain'):
-                dom.extend(context['original_domain'])
-            if context.get('new_filter_domain'):
-                dom.extend(context['new_filter_domain'])
-            if model == 'account.move.line':
-                dom.append(('period_id.number', '!=', 0))  # exclude IB entries
+            dom = self.get_dom_from_context(cr, uid, model, context)
             export_obj = self.pool.get(model)
             if export_obj:
                 limit = 5000  # max for PDF + issue if a large number of entries is exported (cf US-661)

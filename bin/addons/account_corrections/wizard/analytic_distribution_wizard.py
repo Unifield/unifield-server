@@ -148,6 +148,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             context = {}
         # Prepare some values
         wizard = self.browse(cr, uid, wizard_id)
+        ad_obj = self.pool.get('analytic.distribution')
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         ml = wizard.move_line_id
         orig_date = ml.source_date or ml.date
@@ -240,6 +241,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                     break
 
         for wiz_line in self.pool.get('analytic.distribution.wizard.fp.lines').browse(cr, uid, wiz_line_ids):
+            if not ad_obj.check_dest_cc_compatibility(cr, uid, wiz_line.destination_id.id, wiz_line.cost_center_id.id, context=context):
+                raise osv.except_osv(_('Error'),
+                                     _('The Cost Center %s is not compatible with the Destination %s.') %
+                                     (wiz_line.cost_center_id.code or '', wiz_line.destination_id.code or ''))
+
             if not wiz_line.distribution_line_id or wiz_line.distribution_line_id.id not in old_line_ids:
                 # new distribution line
                 #if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [wiz_line.analytic_id.id]):

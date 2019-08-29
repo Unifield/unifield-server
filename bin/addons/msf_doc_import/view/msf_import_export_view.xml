@@ -29,7 +29,7 @@
                         <field name="display_import_buttons" invisible="1" />
                         <field name="import_file" colspan="4" on_change="file_change(import_file)"/>
                         <button name="test_import" string="Test file" type="object" icon="gtk-ok" colspan="4" attrs="{'invisible':[('display_import_buttons', '=', False)]}" />
-                        <button name="import_xml" string="Run import" type="object" icon="gtk-execute" colspan="4" attrs="{'invisible': ['|', '|', ('display_import_buttons', '=', False), ('state', '!=', 'draft'), ('csv_button', '=', True)]}" />
+                        <button name="button_import_xml" string="Run import" type="object" icon="gtk-execute" colspan="4" attrs="{'invisible': ['|', '|', ('display_import_buttons', '=', False), ('state', '!=', 'draft'), ('csv_button', '=', True)]}" />
                         <button name="import_csv" string="Run import" type="object" icon="gtk-execute" colspan="4" attrs="{'invisible': ['|', '|', ('display_import_buttons', '=', False), ('state', '!=', 'draft'), ('csv_button', '=', False)]}" />
                         <separator colspan="4" string="Information" />
                         <field name="info_message" colspan="4" nolabel="1" widget="full_text"/>

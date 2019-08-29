@@ -61,8 +61,12 @@ class po_track_changes_report_parser(report_sxw.rml_parse):
         currency_obj = self.pool.get('res.currency')
 
         from_currency_id = pol.currency_id.id
-        if original and pol.original_currency_id:
-            from_currency_id = pol.original_currency_id.id
+        price = pol.price_unit
+        if original:
+            if pol.original_currency_id:
+                from_currency_id = pol.original_currency_id.id
+            if pol.original_price:
+                price = pol.original_price
 
         context = {'date': pol.date_planned}
         to_currency_id = self.user_company['currency_id'].id
@@ -70,7 +74,7 @@ class po_track_changes_report_parser(report_sxw.rml_parse):
         if from_currency_id == to_currency_id:
             return round(pol.price_unit, 2)
 
-        return round(currency_obj.compute(self.cr, self.uid, from_currency_id, to_currency_id, pol.price_unit, round=False, context=context), 2)
+        return round(currency_obj.compute(self.cr, self.uid, from_currency_id, to_currency_id, price, round=False, context=context), 2)
 
 
 class po_track_changes_report_xls(SpreadsheetReport):

@@ -98,7 +98,8 @@ class combined_journals_report(report_sxw.rml_parse):
         aml_ids = aml_obj.search(self.cr, self.uid, self.aml_domain, context=self.context, order='move_id ASC')
         amls = []
         aml_fields = ['instance_id', 'journal_id', 'move_id', 'name', 'ref', 'document_date', 'date', 'period_id', 'account_id',
-                      'partner_txt', 'debit_currency', 'credit_currency', 'currency_id', 'debit', 'credit']
+                      'partner_txt', 'debit_currency', 'credit_currency', 'currency_id', 'debit', 'credit', 'reconcile_txt',
+                      'move_state']
         current_line_position = 0
         for aml in aml_obj.browse(self.cr, self.uid, aml_ids, fields_to_fetch=aml_fields, context=self.context):
             current_line_position += 1
@@ -126,6 +127,8 @@ class combined_journals_report(report_sxw.rml_parse):
                 'func_debit': aml.debit or 0.0,
                 'func_credit': aml.credit or 0.0,
                 'func_currency': func_currency_name,
+                'reconcile': aml.reconcile_txt or '',
+                'status': aml.move_state,
             }
             amls.append(aml_dict)
             self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(aml_ids), before=0.05, after=0.15, context=self.context)
@@ -135,7 +138,7 @@ class combined_journals_report(report_sxw.rml_parse):
             bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
         aal_fields = ['instance_id', 'journal_id', 'entry_sequence', 'name', 'ref', 'document_date', 'date',
                       'period_id', 'general_account_id', 'partner_txt', 'cost_center_id', 'destination_id', 'account_id',
-                      'amount_currency', 'currency_id', 'amount']
+                      'amount_currency', 'currency_id', 'amount', 'move_id']
         current_line_position = 0
         for ml in amls:
             current_line_position += 1
@@ -181,6 +184,8 @@ class combined_journals_report(report_sxw.rml_parse):
                         'func_debit': aal.amount < 0 and abs(aal.amount) or 0.0,
                         'func_credit': aal.amount >= 0 and aal.amount or 0.0,
                         'func_currency': func_currency_name,
+                        'reconcile': aal.move_id and aal.move_id.reconcile_txt or '',
+                        'status': aal.move_id and aal.move_id.move_state or '',
                     }
                     res.append(aal_dict)
                     self.total_booking_debit += aal_dict['booking_debit']
@@ -217,6 +222,8 @@ class combined_journals_report(report_sxw.rml_parse):
                 'func_debit': al.amount < 0 and abs(al.amount) or 0.0,
                 'func_credit': al.amount >= 0 and al.amount or 0.0,
                 'func_currency': func_currency_name,
+                'reconcile': '',
+                'status': '',
             }
             res.append(al_dict)
             self.total_booking_debit += al_dict['booking_debit']

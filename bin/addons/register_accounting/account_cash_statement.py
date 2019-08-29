@@ -35,6 +35,8 @@ class account_cash_statement(osv.osv):
         'state': lambda *a: 'draft',
     }
 
+    _order = 'state, period_id, instance_id, journal_id'
+
     def _get_starting_balance(self, cr, uid, ids, context=None):
         """ Find starting balance
         @param name: Names of fields.

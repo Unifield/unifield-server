@@ -108,8 +108,8 @@ class hq_report_ocg(report_sxw.report_sxw):
                                     'Closing balance',
                                     'Currency']
         liquidity_sql = hq_report_ocb.liquidity_sql
-        liquidity_params = (tuple([period_yyyymm]), reg_types, period.date_start, reg_types, period.id, reg_types,
-                            period.date_stop, tuple(instance_ids))
+        liquidity_params = (tuple([period_yyyymm]), reg_types, period.date_start, reg_types, period.date_start,
+                            period.date_stop, reg_types, period.date_stop, tuple(instance_ids))
         cr.execute(liquidity_sql, liquidity_params)
         liquidity_balance_lines = [list(lbl) for lbl in cr.fetchall()]
         liquidity_balance_lines = hq_report_ocb.postprocess_liquidity_balances(self, cr, uid, liquidity_balance_lines, context=context)

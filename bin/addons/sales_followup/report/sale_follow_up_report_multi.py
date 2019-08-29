@@ -25,7 +25,6 @@ import time
 from datetime import datetime
 from datetime import timedelta
 
-import tools
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
@@ -35,12 +34,12 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         super(sale_follow_up_multi_report_parser, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'getLang': self._get_lang,
             'parse_date_xls': self._parse_date_xls,
             'upper': self._upper,
             'getLines': self._get_lines,
             'getOrders': self._get_orders,
             'getProducts': self._get_products,
-            'saleUstr': self._sale_ustr,
         })
         self._order_iterator = 0
         self._nb_orders = 0
@@ -52,8 +51,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         else:
             self.back_browse = None
 
-    def _sale_ustr(self, string):
-        return tools.ustr(string)
+    def _get_lang(self):
+        return self.localcontext.get('lang', 'en_MF')
 
     def _get_orders(self, report, grouped=False, only_bo=False):
         orders = []
@@ -116,6 +115,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         if not isinstance(order_id, int):
             order_id = order_id.id
 
+        line_state_display_dict = dict(self.pool.get('sale.order.line').fields_get(self.cr, self.uid, ['state_to_display'], context=self.localcontext).get('state_to_display', {}).get('selection', []))
         for line in self._get_order_line(order_id):
             if not grouped:
                 keys = []
@@ -138,7 +138,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
             data = {
                 'state': line.state,
-                'state_display': line.state_to_display,
+                'state_display': line_state_display_dict.get(line.state_to_display),
             }
 
             for move in line.move_ids:
@@ -214,9 +214,9 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             is_shipment_done = move.picking_id.state == 'done'
                             packing = '-'
                         if not grouped:
-                            key = (packing, False, move.product_uom.name)
+                            key = (packing, s_out and shipment or False, move.product_uom.name)
                         else:
-                            key = (packing, False, move.product_uom.name, line.line_number)
+                            key = (packing, s_out and shipment or False, move.product_uom.name, line.line_number)
                         if not only_bo:
                             data.update({
                                 'packing': packing,

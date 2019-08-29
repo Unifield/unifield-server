@@ -204,6 +204,8 @@ class real_average_consumption(osv.osv):
         (_check_active_product, "You cannot confirm this real consumption report because it contains a line with an inactive product", ['line_ids', 'created_ok']),
     ]
 
+    _order = 'id desc'
+
     def create(self, cr, uid, vals, context=None):
         '''
         Add name of the report at creation
@@ -1153,6 +1155,7 @@ class monthly_review_consumption(osv.osv):
     _name = 'monthly.review.consumption'
     _description = 'Monthly review consumption'
     _rec_name = 'creation_date'
+    _order = 'id desc'
 
     def _get_nb_lines(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -1749,16 +1752,19 @@ class product_product(osv.osv):
         for id in ids:
             res[id] = 0.00
             if from_date and to_date:
-                rac_ids = self.pool.get('real.average.consumption').search(cr, uid, [
+                rac_search_domain = [
                     ('cons_location_id', 'in', location_ids),
-                    ('state', '!=', 'cancel'),
+                    ('state', 'not in', ['draft', 'cancel']),
                     # All lines with a report started out the period and finished in the period
                     '|', '&', ('period_to', '>=', from_date), ('period_to', '<=', to_date),
                     #  All lines with a report started in the period and finished out the period
                     '|', '&', ('period_from', '<=', to_date), ('period_from', '>=', from_date),
                     #  All lines with a report started before the period  and finished after the period
                     '&', ('period_from', '<=', from_date), ('period_to', '>=', to_date),
-                ])
+                ]
+                if context.get('location_dest_id'):
+                    rac_search_domain.append(('activity_id', '=', context['location_dest_id']))
+                rac_ids = self.pool.get('real.average.consumption').search(cr, uid, rac_search_domain)
                 rcr_domain = [('product_id', '=', id), ('rac_id', 'in', rac_ids)]
 
                 rcr_line_ids = self.pool.get('real.average.consumption.line').search(cr, uid, rcr_domain, context=context)
@@ -1852,7 +1858,7 @@ class product_product(osv.osv):
         # Search all real consumption line included in the period
         # If no period found, take all stock moves
         if from_date and to_date:
-            rcr_domain = ['&', '&', ('rac_id.state', '!=', 'cancel'), ('product_id', 'in', ids),
+            rcr_domain = ['&', '&', ('rac_id.state', 'not in', ['draft', 'cancel']), ('product_id', 'in', ids),
                           # All lines with a report started out the period and finished in the period
                           '|', '&', ('rac_id.period_to', '>=', from_date), ('rac_id.period_to', '<=', to_date),
                           # All lines with a report started in the period and finished out the period
