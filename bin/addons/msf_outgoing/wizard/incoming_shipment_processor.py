@@ -78,12 +78,6 @@ class in_family_processor(osv.osv):
         'integrity_status': 'empty',
     }
 
-    def write(self, cr, uid, ids, vals, context=None):
-        if not ids:
-            return True
-        if 'weight' in vals:
-            vals['integrity_status'] = 'empty' if (vals['weight'] and vals['weight'] > 0) else 'missing_weight'
-        return super(in_family_processor, self).write(cr, uid, ids, vals, context=context)
 
     """
     Controller methods
@@ -836,7 +830,7 @@ class stock_incoming_processor(osv.osv):
                     'integrity_status': fam.integrity_status,
                     'packing_list': fam.packing_list,
                 }
-                for manda_field in ['parcel_from', 'parcel_to', 'total_weight']:
+                for manda_field in ['parcel_from', 'parcel_to']:
                     if not pack_info.get(manda_field):
                         raise osv.except_osv(_('Error'), _('Field %s should not be empty in case of pick and pack mode') % manda_field)
                 pack_info_id = self.pool.get('wizard.import.in.pack.simulation.screen').create(cr, uid, pack_info, context=context)

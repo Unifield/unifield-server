@@ -237,6 +237,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'currency_conv': self._currency_conv,
             'get_prop_instances': self._get_prop_instances_str,
             'get_display_info': self._get_display_info,
+            'get_open_items_selection': self._get_open_items_selection,
             'get_show_move_lines': self.get_show_move_lines,
             'get_ccy_label': self.get_ccy_label,
             'get_title': self._get_title,
@@ -550,6 +551,15 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         res = [ "%s: %s" % (label, val, ) for label, val in info_data ]
         return ', \n'.join(res)
+
+    def _get_open_items_selection(self, data):
+        """
+        Returns the name of the period selected in the filter "Open Items at" if any
+        """
+        period_obj = self.pool.get('account.period')
+        if data.get('form', {}).get('open_items'):
+            return period_obj.read(self.cr, self.uid, data['form']['open_items'], ['name'], context=self.context)['name']
+        return ''
 
     def get_show_move_lines(self):
         return self.show_move_lines

@@ -1487,6 +1487,42 @@ class purchase_order(osv.osv):
     def button_dummy(self, cr, uid, ids, context=None):
         return True
 
+    def _copy_line_value(self, cr, uid, *args, **kwargs):
+        new_data = {}
+        order_line = kwargs['order_line']
+        # Copy all fields except order_id and analytic_distribution_id
+        fields = ['product_uom', 'price_unit', 'move_dest_id', 'product_qty', 'partner_id',
+                  'confirmed_delivery_date', 'nomenclature_description', 'default_code',
+                  'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3',
+                  'nomenclature_code', 'name', 'default_name', 'comment', 'date_planned',
+                  'to_correct_ok', 'text_error', 'select_fo', 'project_ref', 'external_ref',
+                  'nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4',
+                  'nomen_sub_5', 'linked_sol_id', 'change_price_manually', 'old_price_unit',
+                  'origin', 'account_analytic_id', 'product_id', 'company_id', 'notes', 'taxes_id',
+                  'link_so_id', 'from_fo', 'sale_order_line_id', 'tender_line_id', 'dest_partner_id']
+
+        for field in fields:
+            field_val = getattr(order_line, field)
+            if isinstance(field_val, browse_record):
+                field_val = field_val.id
+            elif isinstance(field_val, browse_null):
+                field_val = False
+            elif isinstance(field_val, list):
+                field_val = ((6, 0, tuple([v.id for v in field_val])),)
+            new_data[field] = field_val
+
+
+        # Set the analytic distribution
+        distrib_id = False
+        if order_line.analytic_distribution_id:
+            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.analytic_distribution_id.id)
+        elif order_line.order_id.analytic_distribution_id:
+            distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, order_line.order_id.analytic_distribution_id.id)
+
+        new_data['analytic_distribution_id'] = distrib_id
+
+        return new_data
+
     def _hook_order_infos(self, cr, uid, *args, **kwargs):
         '''
         Hook to change the values of the PO
@@ -1539,7 +1575,6 @@ class purchase_order(osv.osv):
 
         """
         wf_service = netsvc.LocalService("workflow")
-
         def make_key(br, fields):
             list_key = []
             for field in fields:
@@ -1557,15 +1592,19 @@ class purchase_order(osv.osv):
             list_key.sort()
             return tuple(list_key)
 
-        # compute what the new orders should contain
+    # compute what the new orders should contain
 
         new_orders = {}
+        old_po_name = {}
 
         for porder in [order for order in self.browse(cr, uid, ids, context=context) if order.state == 'draft']:
+            # group PO to be merged together
             order_key = make_key(porder, ('partner_id', 'pricelist_id', 'loan_id'))
             new_order = new_orders.setdefault(order_key, ({}, []))
             new_order[1].append(porder.id)
             order_infos = new_order[0]
+
+            old_po_name[porder.id] = porder.name
             if not order_infos:
                 order_infos.update({
                     'origin': porder.origin,
@@ -1577,7 +1616,7 @@ class purchase_order(osv.osv):
                     'location_id': porder.location_id.id,
                     'pricelist_id': porder.pricelist_id.id,
                     'state': 'draft',
-                    'order_line': {},
+                    'order_line': [],
                     'notes': '%s' % (porder.notes or '',),
                     'fiscal_position': porder.fiscal_position and porder.fiscal_position.id or False,
                 })
@@ -1588,46 +1627,38 @@ class purchase_order(osv.osv):
                     order_infos['origin'] = (order_infos['origin'] or '') + ' ' + porder.origin
             order_infos = self._hook_order_infos(cr, uid, order_infos=order_infos, order_id=porder)
 
-            for order_line in [line for line in porder.order_line if line.state == 'draft']:
-                line_key = make_key(order_line, ('id', 'order_id', 'name', 'date_planned', 'taxes_id', 'price_unit', 'notes', 'product_id', 'move_dest_id', 'account_analytic_id'))
-                o_line = order_infos['order_line'].setdefault(line_key, {})
-                # append a new line
-                for field in ('product_qty', 'product_uom'):
-                    field_val = getattr(order_line, field)
-                    if isinstance(field_val, browse_record):
-                        field_val = field_val.id
-                    o_line[field] = field_val
-                o_line['uom_factor'] = order_line.product_uom and order_line.product_uom.factor or 1.0
+            for order_line in porder.order_line:
+                if order_line.state != 'draft':
+                    continue
+                order_infos['order_line'].append((0, 0, self._copy_line_value(cr, uid, order_line=order_line)))
 
-        allorders = []
-        orders_info = {}
+        return_info = {}
         for order_key, (order_data, old_ids) in new_orders.iteritems():
             # skip merges with only one order
             if len(old_ids) < 2:
-                allorders += (old_ids or [])
                 continue
-
-            # cleanup order line data
-            for key, value in order_data['order_line'].iteritems():
-                del value['uom_factor']
-                value.update(dict(key))
-            order_data['order_line'] = [(0, 0, value) for value in order_data['order_line'].itervalues()]
 
             # create the new order
             neworder_id = self.create(cr, uid, order_data)
-            orders_info.update({neworder_id: old_ids})
-            allorders.append(neworder_id)
+            self.log(cr, uid, neworder_id, _('PO %s have been merged into %s.') % (', '.join([old_po_name.get(x,'') for x in old_ids]), self.read(cr, uid, neworder_id, ['name'])['name'] ), action_xmlid='purchase.purchase_form_action')
+            return_info.update({neworder_id: old_ids})
 
             # make triggers pointing to the old orders point to the new order
             for old_po in self.pool.get('purchase.order').browse(cr, uid, old_ids, fields_to_fetch=['order_line'], context=context):
+                reset_linked_sol_id = []
+                cancel_pol = []
                 for old_pol in old_po.order_line:
-                    # if pol has a linked sol, then we set it to null before cancelling in order not to cancel the sol (because sol will be
-                    # linked to newly created PO line):
-                    if old_pol.linked_sol_id:
-                        self.pool.get('purchase.order.line').write(cr, uid, [old_pol.id], {'linked_sol_id': False}, context=context)
-                    wf_service.trg_validate(uid, 'purchase.order.line', old_pol.id, 'cancel', cr)
+                    if old_pol.state == 'draft':
+                        cancel_pol.append(old_pol.id)
+                        if old_pol.linked_sol_id:
+                            reset_linked_sol_id.append(old_pol.id)
+                if reset_linked_sol_id:
+                    self.pool.get('purchase.order.line').write(cr, uid, reset_linked_sol_id, {'linked_sol_id': False}, context=context)
+                if cancel_pol:
+                    wf_service.trg_validate(uid, 'purchase.order.line', cancel_pol, 'cancel', cr)
 
-        return orders_info
+        return return_info
+
 
     def purchase_cancel(self, cr, uid, ids, context=None):
         '''
