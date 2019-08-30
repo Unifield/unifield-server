@@ -203,12 +203,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         # => apply these deduce only if: lines are created as some line are
         # created/resplit. do nothing if only cc/dest of lines changes.
         total_rounded_amount = 0.
-        gap_amount = 0.  # adjustment amount
-        greater_amount = {  # US-676
-            'wl': False,  # wizard line with greater amount
-            'aji_id': False,  # related aji: not touched wizard line one or created, overrided, reversed
-            'amount': 0.,  # greater amount
-        }
         #####
         ## FUNDING POOL
         ###
@@ -291,11 +285,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                             to_override.append(wiz_line)
 
                     old_line_ok.append(old_line.id)
-            if wiz_line.amount > greater_amount['amount']:
-                greater_amount.update({
-                    'amount': wiz_line.amount,
-                    'wl':wiz_line,
-                })
 
         to_reverse_ids = []
         for wiz_line in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x for x in old_line_ids if x not in old_line_ok]):
@@ -481,7 +470,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         ('is_reallocated', '=', False),
                       ], order='NO_ORDER', context=context)
         max_line = {'amount': 0, 'aji_bro': False}
-        for aji in ana_line_obj.browse(cr, uid, all_aji_ids, fields_to_fetch=['amount_currency'], context=context):
+        for aji in ana_line_obj.browse(cr, uid, all_aji_ids, fields_to_fetch=['amount_currency', 'period_id'], context=context):
             total_rounded_amount += round(abs(aji.amount_currency or 0.0), 2)
             if has_generated_cor and aji.id in new_line_ids and abs(aji.amount_currency or 0.0) > max_line['amount']:
                 max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}
@@ -490,7 +479,6 @@ class analytic_distribution_wizard(osv.osv_memory):
 
         amount_diff = total_rounded_amount - abs(wizard.amount)
         if abs(amount_diff) > 10 ** -3 and max_line['aji_bro']:
-            gap_amount = amount_diff
 
             # US-676 greater amount update to fix (deduce) rounding gap
             # we read the aji created for distri then fix it
@@ -501,7 +489,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 fix_aji_currency_id = aji_rec.currency_id and aji_rec.currency_id.id or False
 
                 # fix booking amount
-                fix_aji_amount_currency = round(abs(fix_aji_old_amount), 2) - gap_amount
+                fix_aji_amount_currency = round(abs(fix_aji_old_amount), 2) - amount_diff
                 if fix_aji_old_amount < 0:
                     fix_aji_amount_currency *= -1
                 aji_fix_vals = {
