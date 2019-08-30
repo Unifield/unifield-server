@@ -469,8 +469,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'destination_id': line.destination_id.id
             })
 
+        # US-6100 in case of a corr. the adjustment should be made on the biggest COR amount
+        # instead of the biggest amount of all AJIs (cf. don't modify the entry being corrected)
+        has_generated_cor = False
+        if new_line_ids and (to_reverse or any_reverse):  # check if COR lines have been generated
+            has_generated_cor = True
         # compute the adjustment amount
-        has_generated_cor = new_line_ids and (to_reverse or any_reverse)  # check if COR lines have been generated
         all_aji_ids = ana_line_obj.search(cr, uid, [
                         ('move_id', '=', ml.id),
                         ('is_reversal', '=', False),
@@ -480,10 +484,10 @@ class analytic_distribution_wizard(osv.osv_memory):
         for aji in ana_line_obj.browse(cr, uid, all_aji_ids, fields_to_fetch=['amount_currency'], context=context):
             total_rounded_amount += round(abs(aji.amount_currency or 0.0), 2)
             if has_generated_cor:
-                if aji.id in new_line_ids and abs(aji.amount_currency) > max_line['amount']:
-                    max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency)}
-            elif working_period_id and aji.period_id.id == working_period_id[0] and abs(aji.amount_currency) > max_line['amount']:
-                max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency)}
+                if aji.id in new_line_ids and abs(aji.amount_currency or 0.0) > max_line['amount']:
+                    max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}
+            elif working_period_id and aji.period_id.id == working_period_id[0] and abs(aji.amount_currency or 0.0) > max_line['amount']:
+                max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}
 
         amount_diff = total_rounded_amount - abs(wizard.amount)
         if abs(amount_diff) > 10 ** -3 and max_line['aji_bro']:
