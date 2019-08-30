@@ -477,7 +477,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         ('is_reallocated', '=', False),
                       ], order='NO_ORDER', context=context)
         for aji in ana_obj.browse(cr, uid, all_aji_ids, fields_to_fetch=['amount_currency'], context=context):
-            total_rounded_amount += round(abs(aji.amount_currency), 2)
+            total_rounded_amount += round(abs(aji.amount_currency or 0.0), 2)
         amount_diff = total_rounded_amount - abs(wizard.amount)
         if abs(amount_diff) > 10**-3:
             gap_amount = amount_diff
