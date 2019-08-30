@@ -153,6 +153,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         ml = wizard.move_line_id
         orig_date = ml.source_date or ml.date
         orig_document_date = ml.document_date
+        working_period_id = False
         new_line_ids = []
 
         jtype = 'correction'
@@ -366,6 +367,7 @@ class analytic_distribution_wizard(osv.osv_memory):
 
             created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date, name=name, context=context)
             new_line_ids.extend(created_analytic_line_ids.values())
+            working_period_id = self.pool.get('account.period').get_period_from_date(cr, uid, create_date)
             # Set right analytic correction journal to these lines
             if period_closed or is_HQ_origin:
                 sql_to_cor = ['journal_id=%s']
@@ -377,8 +379,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                 cr.execute('update account_analytic_line set '+','.join(sql_to_cor)+' where id = %s',  # not_a_user_entry
                            sql_data)
             have_been_created.append(created_analytic_line_ids[new_distrib_line])
-            if created_analytic_line_ids and greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
-                greater_amount['aji_id'] = created_analytic_line_ids[created_analytic_line_ids.keys()[0]]
 
         #####
         ## FP: TO DELETE
@@ -422,21 +422,18 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'destination_id': line.destination_id.id,
             })
             # UTP-943: Check that new ana line is on an open period
-            correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)
-            if not correction_period_ids:
-                raise osv.except_osv(_('Error'), _('No period found for the given date: %s') % (wizard.date,))
+            correction_period_ids = period_ids
             for cp in self.pool.get('account.period').browse(cr, uid, correction_period_ids):
                 if cp.state != 'draft':
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
             ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name,context=context)
             new_line_ids.extend(ret.values())
+            working_period_id = period_ids
             # Add link to first analytic lines
             for ret_id in ret:
                 self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
                 cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (get_entry_seq(entry_seq_data), ret[ret_id]) )
-            if ret and greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
-                greater_amount['aji_id'] = ret[ret.keys()[0]]
         # UFTP-194: Set missing entry sequence for created analytic lines
         if have_been_created and to_reverse_ids:
             cr.execute('update account_analytic_line set entry_sequence = %s, last_corrected_id = %s where id in %s', (get_entry_seq(entry_seq_data), to_reverse_ids[0], tuple(have_been_created)))
@@ -466,6 +463,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'date': aal_date,
                 'document_date': orig_document_date,
             })
+            working_period_id = self.pool.get('account.period').get_period_from_date(cr, uid, aal_date)
             self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, vals)
             # update the distib line
             self.pool.get('funding.pool.distribution.line').write(cr, uid, [line.distribution_line_id.id], {
@@ -474,8 +472,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'percentage': line.percentage,
                 'destination_id': line.destination_id.id
             })
-            if greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
-                greater_amount['aji_id'] = to_override_ids[0]
 
         #####
         # US-676
@@ -483,20 +479,20 @@ class analytic_distribution_wizard(osv.osv_memory):
             aal_obj = self.pool.get('account.analytic.line')
 
             has_generated_cor = new_line_ids and (to_reverse or any_reverse)  # check if COR lines have been generated
-            if not greater_amount['aji_id'] and greater_amount['wl'] and not has_generated_cor:
-                # untouched greater amount, get analytic line id:
-                # (not in to_create, to_delete, to_override, to_reverse)
-                aji_ids = aal_obj.search(cr, uid, [
-                    ('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%greater_amount['wl'].distribution_line_id.id),
-                    ('is_reversal', '=', False),
-                    ('is_reallocated', '=', False),
-                ])
-                if aji_ids:
-                    greater_amount['aji_id'] = aji_ids[0]
+            if not has_generated_cor:
+                if greater_amount['wl']:
+                    aji_ids = aal_obj.search(cr, uid, [
+                        ('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%greater_amount['wl'].distribution_line_id.id),
+                        ('is_reversal', '=', False),
+                        ('is_reallocated', '=', False),
+                        ('period_id', '=', working_period_id and working_period_id[0] or False)
+                    ])
+                    if aji_ids:
+                        greater_amount['aji_id'] = aji_ids[0]
 
             # US-6100 in case of a corr. the adjustment should be made on the biggest COR amount
             # instead of the biggest amount of all AJIs (cf. don't modify the entry being corrected)
-            if has_generated_cor:
+            else:
                 greater_amount.update({
                     'aji_id': False,
                     'amount': 0.,

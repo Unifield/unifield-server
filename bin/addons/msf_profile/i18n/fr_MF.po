@@ -50674,7 +50674,6 @@ msgid "Processing quantity %d for %s is larger than the available quantity %d!"
 msgstr "Traitement quantité %d pour %s est plus grande que la quantité disponible %d !"
 
 #. modules: account_corrections, sync_client
-#: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:415
 #: code:addons/account_corrections/wizard/journal_items_corrections.py:397
 #: code:addons/sync_client/special_handling.py:56
 #, python-format
