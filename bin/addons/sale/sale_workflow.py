@@ -509,8 +509,11 @@ class sale_order_line(osv.osv):
 
                 # confirm the OUT if in draft state:
                 pick_state = self.pool.get('stock.picking').read(cr, uid, pick_to_use, ['state'], context=context)['state']
-                if picking_data['type'] == 'out' and picking_data['subtype'] == 'standard' and pick_state == 'draft':
-                    self.pool.get('stock.picking').draft_force_assign(cr, uid, [pick_to_use], context=context)
+                if picking_data['type'] == 'out' and pick_state == 'draft':
+                    if picking_data['subtype'] == 'standard':
+                        self.pool.get('stock.picking').draft_force_assign(cr, uid, [pick_to_use], context=context)
+                    elif picking_data['subtype'] == 'picking':  # Add interface log for PICK
+                        self.pool.get('stock.picking').log_picking(cr, uid, [pick_to_use], context=context)
                 # run check availability on PICK/OUT:
                 if picking_data['type'] == 'out' and picking_data['subtype'] in ['picking', 'standard']:
                     self.pool.get('stock.move').action_assign(cr, uid, [move_id])
