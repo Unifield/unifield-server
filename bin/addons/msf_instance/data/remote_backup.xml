@@ -2,7 +2,7 @@
     <data noupdate="1">
 
         <record id="ir_cron_remote_backup" model="ir.cron" forcecreate="1">
-            <field name="function">send_backup</field>
+            <field name="function">send_backup_bg</field>
             <field name="user_id">1</field>
             <field name="name">Send Remote Backup</field>
             <field name="interval_type">days</field>

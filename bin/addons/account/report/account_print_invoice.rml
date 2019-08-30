@@ -140,7 +140,7 @@
   <story>
   <pto>
     <para style="terp_default_8">[[ repeatIn(objects,'o') ]]</para>
-    <para style="terp_default_8">[[ setLang(o.partner_id.lang) ]]</para>
+    <para style="terp_default_8"></para>
     <pto_header><!-- Must be after setLang() -->
 	<blockTable colWidths="202.0,87.0,71.0,57.0,42.0,71.0" style="Table7">
 	<tr>

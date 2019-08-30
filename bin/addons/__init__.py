@@ -972,6 +972,9 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
         for kind in ('init', 'demo', 'update'):
             tools.config[kind] = {}
 
+        if update_module:
+            pool.get('ir.translation').has_duplicate(cr, 1, verbose=True)
+
         cr.commit()
         if update_module:
             cr.execute("select id,name from ir_module_module where state=%s", ('to remove',))

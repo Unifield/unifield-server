@@ -103,17 +103,19 @@ class product_supplier(osv.osv):
             ('model', '=', 'product.template'),
             ('res_id', '=', res_id),
         ]
-
+        field_id = False
         log_sequence = audit_seq_obj.search(cr, uid, domain)
         if log_sequence:
             log_seq = audit_seq_obj.browse(cr, uid, log_sequence[0]).sequence
             log = log_seq.get_id(code_or_id='id')
 
-        if name == 'seller_ids' and context.get('real_user'):
-            user_id = self.pool.get('res.users').browse(cr, uid, context['real_user'], fields_to_fetch=['id'], context=context).id
-        else:
-            user_id = uid
-
+        user_id = uid
+        if name == 'seller_ids':
+            field_id = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'product.template'), ('name', '=', 'seller_ids')], limit=1, context=context)
+            if field_id:
+                field_id = field_id[0]
+            if context.get('real_user'):
+                user_id = context['real_user']
         vals = {
             'user_id': user_id,
             'method': 'write',
@@ -122,6 +124,7 @@ class product_supplier(osv.osv):
             'res_id': res_id,
             'fct_object_id': fct_object_id,
             'fct_res_id': fct_res_id,
+            'field_id': field_id or False,
             'sub_obj_name': sub_obj_name,
             'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
             'field_description': field_description,
@@ -884,15 +887,19 @@ class audittrail_log_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'old_value_fct': False, 'new_value_fct': False}
+            obj_to_log = line.fct_object_id or line.object_id
+
+            # translate value of fields.selection
+            to_compute = line.field_id.name in ('state_to_display', 'state', 'state_hidden_sale_order') and obj_to_log.model in ('sale.order', 'sale.order.line', 'purchase.order', 'purchase.order.line')
             if line.method == 'create':
                 res[line.id]['old_value_fct'] = False
-            elif not line.old_value_text:
-                res[line.id]['old_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.old_value, line.fct_object_id or line.object_id, context=context)
+            elif to_compute or not line.old_value_text:
+                res[line.id]['old_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.old_value, obj_to_log, context=context)
             else:
                 res[line.id]['old_value_fct'] = line.old_value_text
 
-            if not line.new_value_text:
-                res[line.id]['new_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.new_value, line.fct_object_id or line.object_id, context=context)
+            if to_compute or not line.new_value_text:
+                res[line.id]['new_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.new_value, obj_to_log, context=context)
             else:
                 res[line.id]['new_value_fct'] = line.new_value_text
 
@@ -916,11 +923,12 @@ class audittrail_log_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, fields_to_fetch=['field_id', 'object_id', 'fct_object_id', 'res_id', 'name', 'field_description'], context=context):
             res[line.id] = False
-
             # Translation of field name
             if line.field_id:
-                field_name = '%s,%s' % (line.object_id.model, line.field_id.name)
-                tr_ids = tr_obj.search(cr, uid, [('name', '=', field_name),
+                field_name = ['%s,%s' % (line.object_id.model, line.field_id.name)]
+                if line.object_id.model == 'product.template':
+                    field_name.append('product.product,%s' % (line.field_id.name))
+                tr_ids = tr_obj.search(cr, uid, [('name', 'in', field_name),
                                                  ('lang', '=', lang),
                                                  ('type', '=', 'field'),
                                                  ('src', '=', line.field_id.field_description)], context=context)
@@ -1149,16 +1157,10 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         elif field['ttype'] == 'selection':
             res = False
             if values:
-                translation_obj = self.pool.get('ir.translation')
                 fct_object = model_pool.browse(cr, uid, model.id, fields_to_fetch=['model'], context=context).model
-                sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']])
+                sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']], context=context)
                 if field['name'] in sel:
                     res = dict(sel[field['name']]['selection']).get(values)
-                    name = '%s,%s' % (fct_object, field['name'])
-                    # Search translation
-                    res_tr_ids = translation_obj.search(cr, uid, [('type', '=', 'selection'), ('name', '=', name), ('src', 'in', [values])])
-                    if res_tr_ids:
-                        res = translation_obj.read(cr, uid, res_tr_ids, ['value'])[0]['value']
                 else:
                     res = values
             return res

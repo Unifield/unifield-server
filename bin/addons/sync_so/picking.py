@@ -316,10 +316,7 @@ class stock_picking(osv.osv):
         if shipment:
             shipment_ref = shipment['name'] # shipment made
         else:
-            #UFTP-332: Check if name is really an OUT, because DPO could have PICk but no SHIP nor OUT --> do not link this PICK to IN
             shipment_ref = pick_dict.get('name', False) # the case of OUT
-            if shipment_ref and 'OUT' not in shipment_ref:
-                shipment_ref = False
         if not po_id and pick_dict.get('sale_id') and pick_dict.get('sale_id', {}).get('claim_name_goods_return'):
             po_sync_name = pick_dict.get('sale_id', {}).get('client_order_ref')
             if po_sync_name:
@@ -741,21 +738,24 @@ class stock_picking(osv.osv):
                     return "Recovery: the reference to " + in_name + " at " + source + " will be set to void."
 
         elif 'OUT' in out_doc_name:
-            ship_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'done')], context=context)
-            if ship_ids:
+            out_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'done')], context=context)
+            if out_ids:
                 # set the Shipment to become delivered
                 context['InShipOut'] = "OUT"  # asking OUT object to be logged (model stock.picking)
-                self.set_delivered(cr, uid, ship_ids, context=context)
+                self.set_delivered(cr, uid, out_ids, context=context)
                 message = "The OUTcoming " + out_doc_name + " has been well delivered to its partner " + source + ": " + out_info.name
             else:
-                ship_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'delivered')], context=context)
-                if ship_ids:
+                out_ids = self.search(cr, uid, [('name', '=', out_doc_name), ('state', '=', 'delivered')], context=context)
+                if out_ids:
                     message = "The OUTcoming " + out_doc_name + " has been MANUALLY confirmed as delivered."
                 elif context.get('restore_flag'):
                     # UF-1830: Create a message to remove the invalid reference to the inexistent document
                     so_po_common = self.pool.get('so.po.common')
                     so_po_common.create_invalid_recovery_message(cr, uid, source, in_name, context)
                     return "Recovery: the reference to " + in_name + " at " + source + " will be set to void."
+        elif 'PICK' in out_doc_name:
+            return "Msg ignored"
+
         if message:
             self._logger.info(message)
             return message

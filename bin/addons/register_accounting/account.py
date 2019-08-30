@@ -52,7 +52,7 @@ class account_move(osv.osv):
 
     _columns = {
         'partner_type': fields.function(_get_third_parties_from_move_line, string="Third Parties", selection=[('hr.employee', 'Employee'),
-            ('res.partner', 'Partner'), ('account.journal', 'Journal')], size=128, readonly="1", type="reference", method=True),
+                                                                                                              ('res.partner', 'Partner'), ('account.journal', 'Journal')], size=128, readonly="1", type="reference", method=True),
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
         'partner_id2': fields.many2one("res.partner", "Partner", ondelete="restrict"),
@@ -67,6 +67,8 @@ class hr_employee(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        elif isinstance(ids, (int, long)):
+            ids = [ids]
         if context is None:
             context = {}
 

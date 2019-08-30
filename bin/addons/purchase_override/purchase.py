@@ -159,45 +159,6 @@ class purchase_order_merged_line(osv.osv):
 
 purchase_order_merged_line()
 
-class purchase_order_group(osv.osv_memory):
-    _name = "purchase.order.group"
-    _inherit = "purchase.order.group"
-    _description = "Purchase Order Merge"
-
-    _columns = {
-        'po_value_id': fields.many2one('purchase.order', string='Template PO', help='All values in this PO will be used as default values for the merged PO'),
-        'unmatched_categ': fields.boolean(string='Unmatched categories'),
-    }
-
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(purchase_order_group, self).default_get(cr, uid, fields, context=context)
-        if context.get('active_model','') == 'purchase.order' and len(context['active_ids']) < 2:
-            raise osv.except_osv(_('Warning'),
-                                 _('Please select multiple order to merge in the list view.'))
-
-        res['po_value_id'] = context['active_ids'][-1]
-
-        categories = set()
-        for po in self.pool.get('purchase.order').read(cr, uid, context['active_ids'], ['categ'], context=context):
-            categories.add(po['categ'])
-
-        if len(categories) > 1:
-            res['unmatched_categ'] = True
-
-        return res
-
-    def merge_orders(self, cr, uid, ids, context=None):
-        res = super(purchase_order_group, self).merge_orders(cr, uid, ids, context=context)
-        res.update({'context': {'search_default_draft': 1, 'search_default_approved': 0,'search_default_create_uid':uid, 'purchase_order': True}})
-
-        if 'domain' in res and eval(res['domain'])[0][2]:
-            return res
-
-        raise osv.except_osv(_('Error'), _('No PO merged !'))
-        return {'type': 'ir.actions.act_window_close'}
-
-purchase_order_group()
-
 class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
@@ -312,8 +273,7 @@ class product_product(osv.osv):
             display_message = True
 
         if display_message:
-            return 'Warning you are about to add a product which does not conform to this' \
-                ' order category, do you wish to proceed ?'
+            return _('Warning you are about to add a product which does not conform to this order category, do you wish to proceed ?')
         else:
             return False
 

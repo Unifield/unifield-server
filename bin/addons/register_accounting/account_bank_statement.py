@@ -451,16 +451,25 @@ class account_bank_statement(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = []
+
+        # check if write is allowed
+        user_id = hasattr(uid, 'realUid') and uid.realUid or uid
         for reg in self.browse(cr, uid, ids, context=context):
             # Validate register only if this one is open
             if reg.state == 'open':
                 now_orm = self.pool.get('date.tools').date2orm(
                     datetime.datetime.now().date())
-                res_id = self.write(cr, uid, [reg.id], {
+                res_id = self.write(cr, user_id, [reg.id], {
                     'closing_balance_frozen': True,
                     'closing_balance_frozen_date': now_orm,
                 }, context=context)
                 res.append(res_id)
+
+            else:
+                # question: is it possible to click on the button if the register state != 'open' ?
+                # check user access
+                self.write(cr, user_id, [reg.id], {'closing_balance_frozen': reg.closing_balance_frozen}, context=context)
+
             # Create next starting balance for cash registers
             if reg.journal_id.type == 'cash':
                 create_cashbox_lines(self, cr, uid, reg.id, context=context)
