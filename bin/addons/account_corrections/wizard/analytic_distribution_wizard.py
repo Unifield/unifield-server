@@ -203,11 +203,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         # => apply these deduce only if: lines are created as some line are
         # created/resplit. do nothing if only cc/dest of lines changes.
         total_rounded_amount = 0.
+        gap_amount = 0.  # adjustment amount
         greater_amount = {  # US-676
             'wl': False,  # wizard line with greater amount
             'aji_id': False,  # related aji: not touched wizard line one or created, overrided, reversed
             'amount': 0.,  # greater amount
-            'gap_amount': 0,  # gap amount to fix from greater amount line
         }
         #####
         ## FUNDING POOL
@@ -291,15 +291,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                             to_override.append(wiz_line)
 
                     old_line_ok.append(old_line.id)
-            total_rounded_amount += round(wiz_line.amount, 2)
             if wiz_line.amount > greater_amount['amount']:
                 greater_amount.update({
                     'amount': wiz_line.amount,
                     'wl':wiz_line,
                 })
-        match_amount_diff = total_rounded_amount - abs(wizard.amount)
-        if abs(match_amount_diff) > 0.001:
-            greater_amount['gap_amount'] = match_amount_diff
+
         to_reverse_ids = []
         for wiz_line in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x for x in old_line_ids if x not in old_line_ok]):
             # distribution line deleted by user
@@ -473,9 +470,21 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'destination_id': line.destination_id.id
             })
 
+        # compute the adjustment amount
+        all_aji_ids = ana_obj.search(cr, uid, [
+                        ('move_id', '=', ml.id),
+                        ('is_reversal', '=', False),
+                        ('is_reallocated', '=', False),
+                      ], order='NO_ORDER', context=context)
+        for aji in ana_obj.browse(cr, uid, all_aji_ids, fields_to_fetch=['amount_currency'], context=context):
+            total_rounded_amount += round(abs(aji.amount_currency), 2)
+        amount_diff = total_rounded_amount - abs(wizard.amount)
+        if abs(amount_diff) > 10**-3:
+            gap_amount = amount_diff
+
         #####
         # US-676
-        if greater_amount['gap_amount']:
+        if gap_amount:
             aal_obj = self.pool.get('account.analytic.line')
 
             has_generated_cor = new_line_ids and (to_reverse or any_reverse)  # check if COR lines have been generated
@@ -513,8 +522,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         and aji_rec['currency_id'][0] or False
 
                     # fix booking amount
-                    fix_aji_amount_currency = round(abs(fix_aji_old_amount), 2) \
-                        - greater_amount['gap_amount']
+                    fix_aji_amount_currency = round(abs(fix_aji_old_amount), 2) - gap_amount
                     if fix_aji_old_amount < 0:
                         fix_aji_amount_currency *= -1
                     aji_fix_vals = {
