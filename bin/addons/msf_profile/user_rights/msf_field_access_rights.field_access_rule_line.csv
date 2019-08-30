@@ -82,7 +82,6 @@ PO Coordo,tender_flow.field_purchase_order_tender_id,TRUE,FALSE,FALSE,msf_profil
 PO Coordo,transport_mgmt.field_purchase_order_total_price_include_transport,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/82
 PO Coordo,transport_mgmt.field_purchase_order_transport_cost,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/83
 PO Coordo,transport_mgmt.field_purchase_order_transport_currency_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/84
-PO Coordo,transport_mgmt.field_purchase_order_transport_mode,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/85
 PO Coordo,transport_mgmt.field_purchase_order_transport_order_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/86
 PO Coordo,msf_order_date.field_sale_order_transport_type,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/87
 PO Coordo,purchase.field_purchase_order_unallocation_ok,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/88
@@ -173,7 +172,6 @@ PO Project,tender_flow.field_purchase_order_tender_id,FALSE,FALSE,FALSE,msf_prof
 PO Project,transport_mgmt.field_purchase_order_total_price_include_transport,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/174
 PO Project,transport_mgmt.field_purchase_order_transport_cost,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/175
 PO Project,transport_mgmt.field_purchase_order_transport_currency_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/176
-PO Project,transport_mgmt.field_purchase_order_transport_mode,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/177
 PO Project,transport_mgmt.field_purchase_order_transport_order_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/178
 PO Project,msf_order_date.field_sale_order_transport_type,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/179
 PO Project,purchase.field_purchase_order_unallocation_ok,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/180
@@ -264,7 +262,6 @@ PO HQ,tender_flow.field_purchase_order_tender_id,FALSE,FALSE,FALSE,msf_profile/f
 PO HQ,transport_mgmt.field_purchase_order_total_price_include_transport,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/266
 PO HQ,transport_mgmt.field_purchase_order_transport_cost,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/267
 PO HQ,transport_mgmt.field_purchase_order_transport_currency_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/268
-PO HQ,transport_mgmt.field_purchase_order_transport_mode,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/269
 PO HQ,transport_mgmt.field_purchase_order_transport_order_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/270
 PO HQ,msf_order_date.field_sale_order_transport_type,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/271
 PO HQ,purchase.field_purchase_order_unallocation_ok,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/272

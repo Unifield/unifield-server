@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="ppl_set_pack_on_lines_form_view" model="ir.ui.view">
+            <field name="name">ppl.set_pack_on_lines.form.view</field>
+            <field name="model">ppl.set_pack_on_lines</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Pack Lines">
+                    <label string="From P.:" colspan="2" align="0.0" />
+                    <label string="To P.:" colspan="2" align="0.0"/>
+                    <field name="from_pack" nolabel="1" colspan="2" on_change="change_pack(from_pack, to_pack)"/>
+                    <field name="to_pack" nolabel="1" colspan="2" on_change="change_pack(from_pack, to_pack)"/>
+                    <group colspan="4">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                        <button name="set_pack" type="object" string="OK" icon="gtk-go-forward" />
+                    </group>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>
+

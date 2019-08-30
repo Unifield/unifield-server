@@ -351,7 +351,8 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         res = False
         for line in self.pool.get('sale.order.line').browse(cr, uid, sols[0][2], fields_to_fetch=['product_id'], context=context):
-            if line.product_id and line.product_id.seller_id:
+            if line.product_id and line.product_id.seller_id and (line.product_id.seller_id.supplier or
+                                                                  line.product_id.seller_id.manufacturer or line.product_id.seller_id.transporter):
                 if res and res != line.product_id.seller_id.id:
                     res = False
                     break

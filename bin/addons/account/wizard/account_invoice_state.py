@@ -47,28 +47,5 @@ class account_invoice_confirm(osv.osv_memory):
 
 account_invoice_confirm()
 
-class account_invoice_cancel(osv.osv_memory):
-    """
-    This wizard will cancel the all the selected invoices.
-    If in the journal, the option allow cancelling entry is not selected then it will give warning message.
-    """
-
-    _name = "account.invoice.cancel"
-    _description = "Cancel the Selected Invoices"
-
-    def invoice_cancel(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        wf_service = netsvc.LocalService('workflow')
-        pool_obj = pooler.get_pool(cr.dbname)
-        data_inv = pool_obj.get('account.invoice').read(cr, uid, context['active_ids'], ['state'], context=context)
-
-        for record in data_inv:
-            if record['state'] in ('cancel','paid'):
-                raise osv.except_osv(_('Warning'), _("Selected Invoice(s) cannot be cancelled as they are already in 'Cancelled' or 'Done' state!"))
-            wf_service.trg_validate(uid, 'account.invoice', record['id'], 'invoice_cancel', cr)
-        return {'type': 'ir.actions.act_window_close'}
-
-account_invoice_cancel()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

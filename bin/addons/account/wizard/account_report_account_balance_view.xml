@@ -26,6 +26,7 @@
                 <newline/>
                 <field name="reconciled" />
                 <field name="reconcile_date" />
+                <field name="open_items" />
                 <newline/>
                 <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">
