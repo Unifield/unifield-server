@@ -483,9 +483,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         max_line = {'amount': 0, 'aji_bro': False}
         for aji in ana_line_obj.browse(cr, uid, all_aji_ids, fields_to_fetch=['amount_currency'], context=context):
             total_rounded_amount += round(abs(aji.amount_currency or 0.0), 2)
-            if has_generated_cor:
-                if aji.id in new_line_ids and abs(aji.amount_currency or 0.0) > max_line['amount']:
-                    max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}
+            if has_generated_cor and aji.id in new_line_ids and abs(aji.amount_currency or 0.0) > max_line['amount']:
+                max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}
             elif working_period_id and aji.period_id.id == working_period_id[0] and abs(aji.amount_currency or 0.0) > max_line['amount']:
                 max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}
 
@@ -499,8 +498,7 @@ class analytic_distribution_wizard(osv.osv_memory):
 
             if aji_rec:
                 fix_aji_old_amount = aji_rec.amount_currency
-                fix_aji_currency_id = aji_rec.currency_id \
-                    and aji_rec.currency_id.id or False
+                fix_aji_currency_id = aji_rec.currency_id and aji_rec.currency_id.id or False
 
                 # fix booking amount
                 fix_aji_amount_currency = round(abs(fix_aji_old_amount), 2) - gap_amount
