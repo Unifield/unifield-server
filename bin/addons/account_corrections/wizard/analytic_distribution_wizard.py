@@ -470,7 +470,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                         ('is_reallocated', '=', False),
                       ], order='NO_ORDER', context=context)
         max_line = {'amount': 0, 'aji_bro': False}
-        for aji in ana_line_obj.browse(cr, uid, all_aji_ids, fields_to_fetch=['amount_currency', 'period_id'], context=context):
+        aji_fields = ['amount_currency', 'period_id', 'currency_id', 'source_date', 'date']
+        for aji in ana_line_obj.browse(cr, uid, all_aji_ids, fields_to_fetch=aji_fields, context=context):
             total_rounded_amount += round(abs(aji.amount_currency or 0.0), 2)
             if has_generated_cor and aji.id in new_line_ids and abs(aji.amount_currency or 0.0) > max_line['amount']:
                 max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}
