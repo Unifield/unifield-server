@@ -722,7 +722,7 @@ class tender(osv.osv):
             # search for the rfqs
             rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id), ('rfq_ok', '=', True)], context=context)
             # trigger all related rfqs
-            po_obj.cancel_rfq(cr, uid, rfq_ids, context=context)
+            po_obj.cancel_rfq(cr, uid, rfq_ids, context=context, resource=False)
 
             for line in tender.tender_line_ids:
                 t_line_obj.cancel_sourcing(cr, uid, [line.id], context=context)
@@ -1669,8 +1669,7 @@ class purchase_order(osv.osv):
 
         return super(purchase_order, self).create(cr, uid, vals, context=context)
 
-
-    def cancel_rfq(self, cr, uid, ids, context=None):
+    def cancel_rfq(self, cr, uid, ids, context=None, resource=False):
         '''
         method to cancel a RfQ and its lines
         '''
@@ -1686,7 +1685,10 @@ class purchase_order(osv.osv):
             for rfq_line in rfq.order_line:
                 if (rfq_line.order_id.partner_type in ('external', 'esc') and rfq_line.state in ('draft', 'validated', 'validated_n'))\
                         or (rfq_line.order_id.partner_type not in ('external', 'esc') and rfq_line.state == 'draft'):
-                    wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, 'cancel', cr)
+                    signal = 'cancel'
+                    if resource and rfq_line.linked_sol_id:
+                        signal = 'cancel_r'
+                    wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, signal, cr)
 
             self.write(cr, uid, [rfq.id], {'rfq_state': 'cancel'}, context=context)
 
@@ -2118,7 +2120,7 @@ class tender_cancel_wizard(osv.osv_memory):
 
         line_obj.fake_unlink(cr, uid, line_ids, context=context)
 
-        self.pool.get('purchase.order').cancel_rfq(cr, uid, rfq_ids, context=context)
+        self.pool.get('purchase.order').cancel_rfq(cr, uid, rfq_ids, context=context, resource=False)
 
         for tender in tender_ids:
             wf_service.trg_validate(uid, 'tender', tender, 'tender_cancel', cr)
