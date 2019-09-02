@@ -475,7 +475,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             total_rounded_amount += round(abs(aji.amount_currency or 0.0), 2)
             if has_generated_cor and aji.id in new_line_ids and abs(aji.amount_currency or 0.0) > max_line['amount']:
                 max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}
-            elif working_period_id and aji.period_id.id == working_period_id[0] and abs(aji.amount_currency or 0.0) > max_line['amount']:
+            elif not has_generated_cor and working_period_id and aji.period_id.id == working_period_id[0] and abs(aji.amount_currency or 0.0) > max_line['amount']:
                 max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}
 
         amount_diff = total_rounded_amount - abs(wizard.amount)
