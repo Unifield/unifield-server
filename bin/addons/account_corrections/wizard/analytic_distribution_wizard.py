@@ -483,35 +483,32 @@ class analytic_distribution_wizard(osv.osv_memory):
 
             # US-676 greater amount update to fix (deduce) rounding gap
             # we read the aji created for distri then fix it
-            aji_rec = max_line['aji_bro']
+            fix_aji_old_amount = max_line['aji_bro'].amount_currency
+            fix_aji_currency_id = max_line['aji_bro'].currency_id and max_line['aji_bro'].currency_id.id or False
 
-            if aji_rec:
-                fix_aji_old_amount = aji_rec.amount_currency
-                fix_aji_currency_id = aji_rec.currency_id and aji_rec.currency_id.id or False
+            # fix booking amount
+            fix_aji_amount_currency = round(abs(fix_aji_old_amount), 2) - amount_diff
+            if fix_aji_old_amount < 0:
+                fix_aji_amount_currency *= -1
+            aji_fix_vals = {
+                'amount_currency': fix_aji_amount_currency,
+            }
 
-                # fix booking amount
-                fix_aji_amount_currency = round(abs(fix_aji_old_amount), 2) - amount_diff
-                if fix_aji_old_amount < 0:
-                    fix_aji_amount_currency *= -1
-                aji_fix_vals = {
-                    'amount_currency': fix_aji_amount_currency,
-                }
-
-                # then recompute functional amount
-                if fix_aji_currency_id:
-                    new_context = context.copy()
-                    if aji_rec.source_date:
-                        new_context['date'] = aji_rec.source_date
-                    else:
-                        new_context['date'] = aji_rec.date
-                    aji_fix_vals['amount'] = \
-                        self.pool.get('res.currency').compute(cr, uid,
-                                                              fix_aji_currency_id, company_currency_id,
-                                                              fix_aji_amount_currency, round=False,
-                                                              context=new_context)
+            # then recompute functional amount
+            if fix_aji_currency_id:
+                new_context = context.copy()
+                if max_line['aji_bro'].source_date:
+                    new_context['date'] = max_line['aji_bro'].source_date
+                else:
+                    new_context['date'] = max_line['aji_bro'].date
+                aji_fix_vals['amount'] = \
+                    self.pool.get('res.currency').compute(cr, uid,
+                                                          fix_aji_currency_id, company_currency_id,
+                                                          fix_aji_amount_currency, round=False,
+                                                          context=new_context)
 
                 # fix aji
-                ana_line_obj.write(cr, uid, [aji_rec.id], aji_fix_vals, context=context)
+                ana_line_obj.write(cr, uid, [max_line['aji_bro'].id], aji_fix_vals, context=context)
 
         #####
         ## Set move line as corrected upstream if needed
