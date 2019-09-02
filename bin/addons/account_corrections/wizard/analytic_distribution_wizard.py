@@ -143,7 +143,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                 entry_seq_data['sequence'] = res
             return res
 
-
         if context is None:
             context = {}
         # Prepare some values
@@ -186,7 +185,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         journal_id = journal_sql_res[0]
         code = journal_sql_res[1]
         journal = self.pool.get('account.journal').browse(cr, uid, journal_id, context=context)
-        period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)
+        period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date=wizard.date, context=context)
         if not period_ids:
             raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (wizard.date or ''))
         period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
@@ -353,7 +352,7 @@ class analytic_distribution_wizard(osv.osv_memory):
 
             created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date, name=name, context=context)
             new_line_ids.extend(created_analytic_line_ids.values())
-            working_period_id = self.pool.get('account.period').get_period_from_date(cr, uid, create_date)
+            working_period_id = self.pool.get('account.period').get_period_from_date(cr, uid, date=create_date, context=context)
             # Set right analytic correction journal to these lines
             if period_closed or is_HQ_origin:
                 sql_to_cor = ['journal_id=%s']
@@ -448,7 +447,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'date': aal_date,
                 'document_date': orig_document_date,
             })
-            working_period_id = self.pool.get('account.period').get_period_from_date(cr, uid, aal_date)
+            working_period_id = self.pool.get('account.period').get_period_from_date(cr, uid, date=aal_date, context=context)
             ana_line_obj.write(cr, uid, to_override_ids, vals)
             # update the distib line
             self.pool.get('funding.pool.distribution.line').write(cr, uid, [line.distribution_line_id.id], {
@@ -481,9 +480,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         amount_diff = total_rounded_amount - abs(wizard.amount)
         if abs(amount_diff) > 10 ** -3 and max_line['aji_bro']:
 
-            # US-676 greater amount update to fix (deduce) rounding gap
-            # we read the aji created for distri then fix it
-            fix_aji_old_amount = max_line['aji_bro'].amount_currency
+            # get data from the biggest AJI, on which the adjustment will be applied
+            fix_aji_old_amount = max_line['aji_bro'].amount_currency or 0.0
             fix_aji_currency_id = max_line['aji_bro'].currency_id and max_line['aji_bro'].currency_id.id or False
 
             # fix booking amount
