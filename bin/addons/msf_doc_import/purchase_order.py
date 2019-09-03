@@ -293,6 +293,8 @@ class purchase_order(osv.osv):
             context = {}
 
         import_success = False
+        # Reset part of the context updated in the PO import
+        context.update({'line_number_to_confirm': [], 'ext_ref_to_confirm': [], 'job_comment': []})
         try:
             # get filetype
             filetype = self.pool.get('stock.picking').get_import_filetype(cr, uid, file_path, context=context)
