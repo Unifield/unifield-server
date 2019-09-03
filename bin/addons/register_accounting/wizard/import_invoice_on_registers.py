@@ -155,7 +155,9 @@ class wizard_import_invoice(osv.osv_memory):
                 already.append(inv.id)
 
         ordered_lines = {}
+        employees = set()
         for line in wizard.line_ids:
+            employees.add(line.employee_id and line.employee_id.id or False)
             if line.id in already:
                 raise osv.except_osv(_('Warning'), _('This invoice: %s %s has already been added. Please choose another invoice.')%(line.name, line.amount_currency))
             if group:
@@ -167,6 +169,10 @@ class wizard_import_invoice(osv.osv_memory):
                 ordered_lines[key] = [line]
             elif line not in ordered_lines[key]:
                 ordered_lines[key].append(line)
+
+        # all lines must be either not linked to an employee, or linked to the same employee
+        if group and len(employees) > 1:
+            raise osv.except_osv(_('Warning'), _("You can't group these lines together as they are linked to different employees."))
 
         # For each partner, do an account_move with all lines => lines merge
         new_lines = []

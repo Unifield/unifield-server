@@ -107372,3 +107372,9 @@ msgstr "Date d'Expédition"
 #: report:purchase.order.merged:0
 msgid "Functional total cost :"
 msgstr "Total Coût Fonctionnel :"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/import_invoice_on_registers.py:175
+#, python-format
+msgid "You can't group these lines together as they are linked to different employees."
+msgstr "Vous ne pouvez pas regrouper ces lignes car elles sont liées à des employés différents."
