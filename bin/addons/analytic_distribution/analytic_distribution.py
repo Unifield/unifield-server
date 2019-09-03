@@ -82,7 +82,9 @@ class analytic_distribution(osv.osv):
         # - destination / cost center
         # - If analytic account is MSF Private funds
         # - Cost center and funding pool compatibility
+        count_distrib_lines = 0
         for fp_line in distrib.funding_pool_lines:
+            count_distrib_lines += 1
             if manual:
                 if posting_date:
                     if not analytic_acc_obj.is_account_active(fp_line.destination_id, posting_date):
@@ -110,6 +112,11 @@ class analytic_distribution(osv.osv):
             for free2_line in distrib.free_2_lines:
                 if free2_line.analytic_id and not analytic_acc_obj.is_account_active(free2_line.analytic_id, doc_date):
                     return 'invalid'
+        if count_distrib_lines > 1:
+            # note: it's a one2many but only 1 invoice line can be linked to each distrib
+            invoice_line = distrib.invoice_line_ids and distrib.invoice_line_ids[0]
+            if invoice_line and invoice_line.price_subtotal <= 1:
+                return 'invalid'
         return 'valid'
 
     def analytic_state_from_info(self, cr, uid, account_id, destination_id, cost_center_id, analytic_id, context=None):
