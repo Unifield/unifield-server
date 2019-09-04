@@ -76,6 +76,18 @@ class BackupConfig(osv.osv):
         'backup_date': fields.function(_get_bck_info, type='datetime', string='Last Backup Date', method=True, multi='cloud'),
         'backup_path': fields.function(_get_bck_info, type='char', string='Last Backup', method=True, multi='cloud'),
         'backup_size': fields.function(_get_bck_info, type='float', string='Backup Size', method=True, multi='cloud'),
+
+        'continuous_backup_enabled': fields.boolean('Activate continuous backup'),
+        'wal_directory': fields.char('Local Path to WAL Archive Dir', help='Must be set in postgresql.conf', size=256),
+        'remote_user': fields.char('Remote User', help='Keep empty to use default value', size=256),
+        'remote_host': fields.char('Remote Host', help='Keep empty to use default value', size=256),
+        'exe_dir': fields.char('Local Path to ssh/rsync exe', size=512),
+        'ssh_config_dir': fields.char('Local Path to ssh config dir', size=512),
+
+        'basebackup_date': fields.datetime('Date of base backup', readonly=1),
+        'basebackup_error': fields.text('Base backup error', readonly=1),
+        'rsync_date': fields.datetime('Date of last rsync', readonly=1),
+        'rsync_error': fields.text('Rsync error', readonly=1),
     }
 
     _defaults = {
@@ -85,7 +97,80 @@ class BackupConfig(osv.osv):
         'aftermanualsync' : True,
         'afterautomaticsync' : True,
         'beforepatching': True,
+        'continuous_backup_enabled': False,
     }
+
+    def button_basebackup(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'basebackup_error': False}, context=context)
+        new_thread = threading.Thread(
+            target=self.generate_basebackup_bg,
+            args=(cr, uid, ids, context)
+        )
+        new_thread.start()
+        return True
+
+    def generate_basebackup_bg(self, old_cr, uid, ids, context=None):
+        try:
+            cr = pooler.get_db(old_cr.dbname).cursor()
+            bk = self.browse(cr, uid, ids[0], context)
+            if not bk.continuous_backup_enabled:
+                raise Exception('Continuous Backup is disabled')
+            if not bk.wal_directory:
+                raise Exception('"Path to WAL Dir" is empty')
+            if not os.path.isdir(bk.wal_directory):
+                raise Exception('%s not found' % (bk.wal_directory,))
+
+            szexe = False
+            if bk.exe_dir:
+                szexe = os.path.join(bk.exe_dir, '7za.exe')
+                if not os.path.exists(szexe):
+                    szexe = False
+
+            tools.misc.pg_basebackup(cr.dbname, bk.wal_directory, szexe)
+            self.write(cr, uid, [bk.id], {'basebackup_date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+            return True
+        except Exception, e:
+            cr.rollback()
+            import traceback, sys
+            tb_s = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+            self.write(cr, uid, [bk.id], {'basebackup_error': '%s\n\n%s' % (tools.ustr(e.message), tools.ustr(tb_s))}, context=context)
+            return False
+        finally:
+            cr.commit()
+            cr.close(True)
+
+    def button_rsync(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'rsync_error': False}, context=context)
+        new_thread = threading.Thread(
+            target=self.sent_to_remote_bg,
+            args=(cr, uid, ids, context)
+        )
+        new_thread.start()
+        return True
+
+    def sent_to_remote_bg(self, old_cr, uid, ids, context=None):
+        try:
+            cr = pooler.get_db(old_cr.dbname).cursor()
+            dbname = cr.dbname
+            bk = self.browse(cr, uid, ids[0], context)
+            if not bk.continuous_backup_enabled:
+                raise Exception('Continuous Backup is disabled')
+            if not bk.wal_directory:
+                raise Exception('"Path to WAL Dir" is empty')
+
+            tools.misc.sent_to_remote(bk.wal_directory, exe_dir=bk.exe_dir, config_dir=bk.ssh_config_dir, remote_user=bk.remote_user, remote_host=bk.remote_host, remote_dir=dbname)
+            self.write(cr, uid, [bk.id], {'rsync_date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+            return True
+        except Exception, e:
+            cr.rollback()
+            import traceback, sys
+            tb_s = reduce(lambda x, y: x+y, traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback))
+            self.write(cr, uid, [bk.id], {'rsync_error': '%s\n\n%s' % (tools.ustr(e.message), tools.ustr(tb_s))}, context=context)
+            return False
+        finally:
+            cr.commit()
+            cr.close(True)
+
 
     def _send_to_cloud_bg(self, cr, uid, wiz_id, context=None):
         new_cr = pooler.get_db(cr.dbname).cursor()

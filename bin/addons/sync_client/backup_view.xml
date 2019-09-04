@@ -65,6 +65,24 @@
                 </html>
             </group>
             <field name="cloud_error" colspan="6" widget="full_text"/>
+
+            <separator colspan="6" string="Continuous Backup" />
+            <field name="continuous_backup_enabled" />
+            <group colspan="6" attrs="{'invisible': [('continuous_backup_enabled', '=', False)]}">
+                <field name="wal_directory" attrs="{'required': [('continuous_backup_enabled', '=', True)]}" colspan="3"/>
+                <field name="ssh_config_dir"  attrs="{'required': [('continuous_backup_enabled', '=', True)]}" colspan="3"/>
+                <field name="exe_dir" colspan="3" />
+                <newline />
+                <field name="remote_user" />
+                <field name="remote_host" />
+                <button type="object" string="Genereate Base Backup" name="button_basebackup" icon="db_dump.png" colspan="2"/>
+                <button type="object" string="Send WAL/Base backup to remote" name="button_rsync" icon="cloud.png" colspan="2"/>
+
+                <field name="basebackup_date" />
+                <field name="rsync_date" />
+                <field name="basebackup_error" colspan="6" attrs="{'invisible': [('basebackup_error', '=', False)]}"/>
+                <field name="rsync_error" colspan="6" attrs="{'invisible': [('rsync_error', '=', False)]}"/>
+            </group>
         </group>
         </form>
       </field>
