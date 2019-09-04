@@ -107376,5 +107376,5 @@ msgstr "Total Coût Fonctionnel :"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/import_invoice_on_registers.py:175
 #, python-format
-msgid "You can't group these lines together as they are linked to different employees."
-msgstr "Vous ne pouvez pas regrouper ces lignes car elles sont liées à des employés différents."
+msgid "You can't group these lines together as they aren't all linked to the same employee."
+msgstr "Vous ne pouvez pas regrouper ces lignes car elles ne sont pas toutes liées au même employé."

@@ -172,7 +172,7 @@ class wizard_import_invoice(osv.osv_memory):
 
         # all lines must be either not linked to an employee, or linked to the same employee
         if group and len(employees) > 1:
-            raise osv.except_osv(_('Warning'), _("You can't group these lines together as they are linked to different employees."))
+            raise osv.except_osv(_('Warning'), _("You can't group these lines together as they aren't all linked to the same employee."))
 
         # For each partner, do an account_move with all lines => lines merge
         new_lines = []
