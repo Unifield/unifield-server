@@ -156,11 +156,12 @@ def _set_env_pg(remove=False):
             os.environ['PGPASSWORD'] = ''
 
 def path_to_cygwin(path):
+    # TODO: make it generic
     return path.replace('C:', '/cygdrive/c').replace('D:', '/cygdrive/d').replace('\\', '/')
-def sent_to_remote(local_path, exe_dir=False, config_dir=False, remote_user=False, remote_host=False, remote_dir=False):
 
-    if not exe_dir:
-        exe_dir = os.path.join(os.path.normcase(os.path.abspath(config['root_path'])), '..', '..', 'RSYNC')
+def sent_to_remote(local_path, config_dir=False, remote_user=False, remote_host=False, remote_dir=False):
+
+    exe_dir = os.path.join(os.path.normcase(os.path.abspath(config['root_path'])), 'rsync')
     sync = os.path.join(exe_dir, 'rsync.exe')
     ssh = os.path.join(exe_dir, 'ssh.exe')
 
@@ -171,7 +172,7 @@ def sent_to_remote(local_path, exe_dir=False, config_dir=False, remote_user=Fals
         remote_host = '51.91.31.142'
 
     if not config_dir:
-        config_dir = os.path.join(os.path.normcase(os.path.abspath(config['root_path'])), '..', '..', 'KEY')
+        config_dir = os.path.join(os.path.normcase(os.path.abspath(config['root_path'])), '..', '..', 'SSH_CONFIG')
     sshconfig = os.path.join(config_dir, 'config')
 
     for to_check in [sshconfig, sync, ssh]:
@@ -194,15 +195,18 @@ def sent_to_remote(local_path, exe_dir=False, config_dir=False, remote_user=Fals
     except Exception, e:
         raise e
 
-def pg_basebackup(db_name, dest_dir, szexe=False):
+def pg_basebackup(db_name, wal_dir):
+    if not os.path.isdir(wal_dir):
+        raise Exception("Destination directory %s not found" % (wal_dir,))
+    dest_dir = os.path.join(wal_dir, 'base')
     if not os.path.isdir(dest_dir):
-        raise Exception("Destination directory %s not found" % (dest_dir,))
+        os.makedirs(dest_dir)
     try:
         _logger.info('pg_basebackup %s to %s' % (db_name, dest_dir))
         _set_env_pg()
         pg_basebackup = find_pg_tool('pg_basebackup')
         if not pg_basebackup:
-            raise Exception('Couldn\'t find %s' % pg_basebackup)
+            raise Exception("Couldn't find %s" % pg_basebackup)
         cmd = [pg_basebackup, '--format=t', '-D', dest_dir]
         if config['db_user']:
             cmd.append('--username=' + config['db_user'])
@@ -211,10 +215,9 @@ def pg_basebackup(db_name, dest_dir, szexe=False):
         if config['db_port']:
             cmd.append('--port=' + str(config['db_port']))
 
-        if not szexe:
-            szexe = os.path.join(os.path.normcase(os.path.abspath(config['root_path'])), '..', '..', 'RSYNC', '7za.exe')
-            if not os.path.exists(szexe):
-                raise Exception('7za.exe not found')
+        szexe = os.path.join(os.path.normcase(os.path.abspath(config['root_path'])), 'rsync' , '7za.exe')
+        if not os.path.exists(szexe):
+            raise Exception('7za.exe not found')
 
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         _logger.info('pg_basebackup done')
@@ -1900,3 +1903,8 @@ class crypt():
         return self.Fernet.decrypt(bytes(string))
 
 
+def get_fake(self, cr, uid, ids, *a, **b):
+    ret = {}
+    for x in ids:
+        ret[x] = False
+    return ret

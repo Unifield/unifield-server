@@ -128,6 +128,7 @@ def data_files():
         files.append(('tools', [join('bin', 'tools', 'validators.py')]))
         files.append(('tools', [join('bin', 'tools', 'webdav.py')]))
         files.append(('fonts', filter(isfile, glob.glob('bin/fonts/*'))))
+        files.append(('rsync', filter(isfile, glob.glob('bin/rsync/*'))))
         os.chdir('bin')
         for (dp, dn, names) in os.walk('addons'):
             files.append((dp, map(lambda x: join('bin', dp, x), names)))

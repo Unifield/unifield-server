@@ -67,15 +67,49 @@
             <field name="cloud_error" colspan="6" widget="full_text"/>
 
             <separator colspan="6" string="Continuous Backup" />
+            <field name="help_wal" readonly="0"/>
+            <group colspan="6" attrs="{'invisible': [('help_wal', '=', False)]}">
+            <html>
+                <h4>Steps to activate Continuous backup</h4>
+                <ul>
+                    <li>Unzip your keys in in C:/Program Files (x86)/msf/</li>
+                    <li>Edit pg_hba.conf and add:
+<pre>
+host    replication     openpg        127.0.0.1/32            md5
+host    replication     openpg        ::1/128                 md5
+</pre>
+</li>
+
+                    <li>Edit postgresql.conf and set:
+<pre>
+wal_level = replica
+wal_compression = on
+archive_mode = on
+archive_command = 'copy "%%p" "C:\\WAL\\%%f" &amp;&amp; "C:\\Program Files (x86)\\msf\\Unifield\\Server\\rsync\\7za.exe" -bd -bso0 -sdel a "C:\\WAL\\%%f.7z" "C:\\WAL\\%%f"'
+max_wal_senders = 3
+wal_keep_segments = 6
+archive_timeout = 43200
+</pre>
+Replace the 3 occurences of "C:\\WAL\\" with the path to the local WAL Archive directory.
+</li>
+
+                    <li>Stop OpenERP server</li>
+                    <li>Restart postgresql</li>
+                    <li>Start OpenERP server</li>
+                 </ul>
+            <br />
+            <br />
+            <br />
+            </html>
+            </group>
             <field name="continuous_backup_enabled" />
             <group colspan="6" attrs="{'invisible': [('continuous_backup_enabled', '=', False)]}">
                 <field name="wal_directory" attrs="{'required': [('continuous_backup_enabled', '=', True)]}" colspan="3"/>
                 <field name="ssh_config_dir"  attrs="{'required': [('continuous_backup_enabled', '=', True)]}" colspan="3"/>
-                <field name="exe_dir" colspan="3" />
                 <newline />
                 <field name="remote_user" />
                 <field name="remote_host" />
-                <button type="object" string="Genereate Base Backup" name="button_basebackup" icon="db_dump.png" colspan="2"/>
+                <button type="object" string="Generate Base Backup" name="button_basebackup" icon="db_dump.png" colspan="2"/>
                 <button type="object" string="Send WAL/Base backup to remote" name="button_rsync" icon="cloud.png" colspan="2"/>
 
                 <field name="basebackup_date" />
