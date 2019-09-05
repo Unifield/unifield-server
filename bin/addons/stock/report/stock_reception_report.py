@@ -33,6 +33,7 @@ class stock_reception_report(report_sxw.rml_parse):
             sol = move.purchase_line_id.sale_order_line_id
             func_price_unit = move.price_unit
             if move.company_id.currency_id.id != po.pricelist_id.currency_id.id:
+                self.localcontext['date'] = move.date
                 func_price_unit = round(curr_obj.compute(self.cr, self.uid, po.pricelist_id.currency_id.id,
                                                          move.company_id.currency_id.id, move.price_unit,
                                                          round=False, context=self.localcontext), 2)
