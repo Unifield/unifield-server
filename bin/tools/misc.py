@@ -187,7 +187,7 @@ def sent_to_remote(local_path, config_dir=False, remote_user=False, remote_host=
     try:
         command = [sync, '--remove-source-files', '-a', '-e', '"%s" -F "%s"'%(ssh, sshconfig), '--include=*/', '--include=*7z', '--exclude=*', path_to_cygwin(local_path), "%s@%s:%s" % (remote_user, remote_host, remote_path)]
         _logger.info(' '.join(command))
-        subprocess.check_output(command)
+        subprocess.check_output(command, stderr=subprocess.STDOUT)
         _logger.info('Rsync ends')
         return True
     except subprocess.CalledProcessError, e:
