@@ -14,6 +14,7 @@
                     <field name="partner_type" />
                     <field name="product_id" />
                     <field name="origin" />
+                    <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection"/>
                     <separator colspan="4" string="Report parameters" />
                     <field name="remove_completed" />
                     <field name="display_bn_ed" />
