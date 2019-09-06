@@ -107372,3 +107372,9 @@ msgstr "Date d'Expédition"
 #: report:purchase.order.merged:0
 msgid "Functional total cost :"
 msgstr "Total Coût Fonctionnel :"
+
+#. module: msf_instance
+#: code:addons/msf_instance/add_instance.py:119
+#, python-format
+msgid "No Analytic Journal %s found for the Proprietary Instance %s."
+msgstr "Aucun Journal Analytique %s trouvé pour l'Instance Propriétaire %s."

@@ -112,6 +112,12 @@ class account_journal(osv.osv):
         ('name_company_uniq', 'unique (name, company_id, instance_id)', 'The name of the journal must be unique per company and instance !'),
     ]
 
+    def _raise_no_analytic_journal_error(self, cr, uid, journal_name, instance_id, context=None):
+        inst_obj = self.pool.get('msf.instance')
+        inst_code = inst_obj.read(cr, uid, instance_id, context=context)['code']
+        raise osv.except_osv(_('Error'),
+                             _('No Analytic Journal %s found for the Proprietary Instance %s.') % (journal_name, inst_code))
+
     # SP-72: in order to always get an analytic journal with the same instance,
     # the create and write check and replace with the "good" journal if necessary.
     def create(self, cr, uid, vals, context=None):
@@ -131,6 +137,8 @@ class account_journal(osv.osv):
                                                                 ('instance_id', '=', vals['instance_id'])], context=context)
                 if len(new_journal_ids) > 0:
                     vals['analytic_journal_id'] = new_journal_ids[0]
+                else:
+                    self._raise_no_analytic_journal_error(cr, uid, analytic_journal.name, vals['instance_id'], context=context)
         return super(account_journal, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -155,6 +163,8 @@ class account_journal(osv.osv):
                                                                 ('instance_id','=',instance_id)], context=context)
                 if len(new_journal_ids) > 0:
                     vals['analytic_journal_id'] = new_journal_ids[0]
+                else:
+                    self._raise_no_analytic_journal_error(cr, uid, analytic_journal.name, instance_id, context=context)
         return super(account_journal, self).write(cr, uid, ids, vals, context=context)
 
 account_journal()
