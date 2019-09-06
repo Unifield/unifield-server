@@ -185,7 +185,7 @@ def sent_to_remote(local_path, config_dir=False, remote_user=False, remote_host=
 
     remote_path = '%s/' % remote_dir
     try:
-        command = [sync, '--remove-source-files', '-a', '-e', '"%s" -F "%s"'%(ssh, sshconfig), '--include=*/', '--include=*7z', '--exclude=*', path_to_cygwin(local_path), "%s@%s:%s" % (remote_user, remote_host, remote_path)]
+        command = [sync, '--remove-source-files', '--partial-dir=.rsync-partial', '-a', '-e', '"%s" -F "%s"'%(ssh, sshconfig), '--include=*/', '--include=*7z', '--exclude=*', path_to_cygwin(local_path), "%s@%s:%s" % (remote_user, remote_host, remote_path)]
         _logger.info(' '.join(command))
         subprocess.check_output(command, stderr=subprocess.STDOUT)
         _logger.info('Rsync ends')
@@ -224,7 +224,7 @@ def pg_basebackup(db_name, wal_dir):
         base_path = os.path.join(dest_dir, 'base.tar')
         if not os.path.exists(base_path):
             raise Exception('%s not found' % base_path)
-        command_7z = [szexe, '-sdel', '-bd', '-bso0', 'a', '%s.7z' % base_path, base_path]
+        command_7z = [szexe, '-sdel', '-bd', '-bso0', '-w', 'a', '%s.7z' % base_path, base_path]
         _logger.info(' '.join(command_7z))
         subprocess.check_output(command_7z, stderr=subprocess.STDOUT)
         _logger.info('7z done')

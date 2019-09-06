@@ -85,7 +85,7 @@ host    replication     openpg        ::1/128                 md5
 wal_level = replica
 wal_compression = on
 archive_mode = on
-archive_command = 'copy "%%p" "C:\\WAL\\%%f" &amp;&amp; "C:\\Program Files (x86)\\msf\\Unifield\\Server\\rsync\\7za.exe" -bd -bso0 -sdel a "C:\\WAL\\%%f.7z" "C:\\WAL\\%%f"'
+archive_command = 'copy "%%p" "C:\\WAL\\%%f" &amp;&amp; "C:\\Program Files (x86)\\msf\\Unifield\\Server\\rsync\\7za.exe" -bd -bso0 -sdel -w a "C:\\WAL\\%%f.7z" "C:\\WAL\\%%f"'
 max_wal_senders = 3
 wal_keep_segments = 6
 archive_timeout = 43200
