@@ -156,8 +156,7 @@ def _set_env_pg(remove=False):
             os.environ['PGPASSWORD'] = ''
 
 def path_to_cygwin(path):
-    # TODO: make it generic
-    return path.replace('C:', '/cygdrive/c').replace('D:', '/cygdrive/d').replace('\\', '/')
+    return  re.sub(r'^(.):', '/cygrdive/\\1', path).replace('\\', '/')
 
 def sent_to_remote(local_path, config_dir=False, remote_user=False, remote_host=False, remote_dir=False):
 
