@@ -125,7 +125,7 @@ class account_journal(osv.osv):
         user_obj = self.pool.get('res.users')
         if 'instance_id' not in vals:  # ensure that the instance_id always exists, in particular for the Track Changes
             vals['instance_id'] = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.instance_id.id
-        if vals.get('type') and vals.get('type') not in ['situation', 'stock'] and vals.get('analytic_journal_id'):
+        if vals.get('analytic_journal_id'):
             analytic_journal = analytic_obj.browse(cr, uid, vals['analytic_journal_id'], context=context)
 
             if analytic_journal and \
@@ -145,7 +145,7 @@ class account_journal(osv.osv):
         if not ids:
             return True
         analytic_obj = self.pool.get('account.analytic.journal')
-        if vals.get('type') and vals.get('type') not in ['situation', 'stock'] and vals.get('analytic_journal_id'):
+        if vals.get('analytic_journal_id'):
             analytic_journal = analytic_obj.browse(cr, uid, vals['analytic_journal_id'], context=context)
 
             instance_id = False
