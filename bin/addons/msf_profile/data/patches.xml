@@ -447,5 +447,10 @@
             <field name="method">us_6342_cancel_ir</field>
         </record>
 
+        <!-- UF15.0 -->
+        <record id="us_6354_trigger_donation_account_sync" model="patch.scripts">
+            <field name="method">us_6354_trigger_donation_account_sync</field>
+        </record>
+
     </data>
 </openerp>
