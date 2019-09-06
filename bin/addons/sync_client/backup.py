@@ -31,6 +31,7 @@ import time
 import logging
 import pooler
 import threading
+from config import config
 
 class BackupConfig(osv.osv):
     """ Backup configurations """
@@ -190,6 +191,10 @@ class BackupConfig(osv.osv):
                 cr = pooler.get_db(old_cr.dbname).cursor()
             else:
                 cr = old_cr
+
+            if not config.get('send_to_onedrive') and not tools.misc.use_prod_sync(cr):
+                raise Exception(_('Only production instances are allowed !'))
+
             dbname = cr.dbname
             bk = self.browse(cr, uid, ids[0], context)
             if not bk.continuous_backup_enabled:

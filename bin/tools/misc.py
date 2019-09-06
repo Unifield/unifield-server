@@ -156,7 +156,7 @@ def _set_env_pg(remove=False):
             os.environ['PGPASSWORD'] = ''
 
 def path_to_cygwin(path):
-    return  re.sub(r'^(.):', '/cygrdive/\\1', path).replace('\\', '/')
+    return  re.sub(r'^(.):', '/cygdrive/\\1', path).replace('\\', '/')
 
 def sent_to_remote(local_path, config_dir=False, remote_user=False, remote_host=False, remote_dir=False):
 
@@ -190,6 +190,7 @@ def sent_to_remote(local_path, config_dir=False, remote_user=False, remote_host=
         _logger.info('Rsync ends')
         return True
     except subprocess.CalledProcessError, e:
+        _logger.error('rsync %s' % e.output)
         raise Exception(e.output)
     except Exception, e:
         raise e
@@ -229,6 +230,7 @@ def pg_basebackup(db_name, wal_dir):
         _logger.info('7z done')
         return True
     except subprocess.CalledProcessError, e:
+        _logger.error('pg_base %s' % e.output)
         raise Exception(e.output)
     except Exception, e:
         raise e
