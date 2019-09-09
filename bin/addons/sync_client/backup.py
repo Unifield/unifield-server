@@ -114,13 +114,13 @@ class BackupConfig(osv.osv):
         try:
             if context is None:
                 context = {}
+            ctx_no_write = context.copy()
+            ctx_no_write['no_write_access'] = True
             if new_cr:
                 cr = pooler.get_db(old_cr.dbname).cursor()
             else:
                 cr = old_cr
             bk = self.browse(cr, uid, ids[0], context)
-            ctx_no_write = context.copy()
-            ctx_no_write['no_write_access'] = True
             if not bk.continuous_backup_enabled:
                 raise Exception(_('Continuous Backup is disabled'))
             if not bk.wal_directory:
@@ -136,7 +136,7 @@ class BackupConfig(osv.osv):
             cr.rollback()
             import traceback, sys
             tb_s = reduce(lambda x, y: x+y, traceback.format_exception(*sys.exc_info()))
-            self.write(cr, uid, [bk.id], {'basebackup_error': '%s\n\n%s' % (tools.ustr(e.message), tools.ustr(tb_s))}, context=ctx_no_write)
+            self.write(cr, uid, [ids[0]], {'basebackup_error': '%s\n\n%s' % (tools.ustr(e.message), tools.ustr(tb_s))}, context=ctx_no_write)
             cr.commit()
             raise e
 
@@ -186,6 +186,8 @@ class BackupConfig(osv.osv):
         try:
             if context is None:
                 context = {}
+            ctx_no_write = context.copy()
+            ctx_no_write['no_write_access'] = True
             if new_cr:
                 cr = pooler.get_db(old_cr.dbname).cursor()
             else:
@@ -200,8 +202,6 @@ class BackupConfig(osv.osv):
                 raise Exception('Continuous Backup is disabled')
             if not bk.wal_directory:
                 raise Exception('"Path to WAL Dir" is empty')
-            ctx_no_write = context.copy()
-            ctx_no_write['no_write_access'] = True
             tools.misc.sent_to_remote(bk.wal_directory, config_dir=bk.ssh_config_dir, remote_user=bk.remote_user, remote_host=bk.remote_host, remote_dir=dbname)
             self.write(cr, uid, [bk.id], {'rsync_date': time.strftime('%Y-%m-%d %H:%M:%S'), 'rsync_error': False}, context=ctx_no_write)
             return True
@@ -209,7 +209,7 @@ class BackupConfig(osv.osv):
             cr.rollback()
             import traceback, sys
             tb_s = reduce(lambda x, y: x+y, traceback.format_exception(*sys.exc_info()))
-            self.write(cr, uid, [bk.id], {'rsync_error': '%s\n\n%s' % (tools.ustr(e.message), tools.ustr(tb_s))}, context=ctx_no_write)
+            self.write(cr, uid, [ids[0]], {'rsync_error': '%s\n\n%s' % (tools.ustr(e.message), tools.ustr(tb_s))}, context=ctx_no_write)
             cr.commit()
             raise e
         finally:
