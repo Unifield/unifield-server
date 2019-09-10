@@ -989,7 +989,7 @@ class user_rights_tools(osv.osv_memory):
                 file_d.close()
                 self.pool.get('msf.import.export').import_xml(cr, uid, [wiz], raise_on_error=True, context=context)
                 if sync_server and model == 'msf_field_access_rights.field_access_rule_line':
-                    cr.execute("""select d.name from msf_field_access_rights_field_access_rule_line line
+                    cr.execute("""select coalesce(d.name, f.model || ' ' || f.name)  from msf_field_access_rights_field_access_rule_line line
                             left join ir_model_fields f on f.id = line.field
                             left join ir_model_data d on d.res_id = line.id and d.model='msf_field_access_rights.field_access_rule_line' and d.module!='sd'
                         where f.state='deprecated'
