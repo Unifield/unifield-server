@@ -116,11 +116,12 @@ class account_invoice_refund(osv.osv_memory):
     def _get_reconcilable_amls(self, aml_list, to_reconcile_dict):
         """
         Fill in to_reconcile_dict with the aml from aml_list having a reconcilable account
-        (key = account id, value = list of aml ids)
+        key = tuple with (account id, partner_id, is_counterpart)
+        value = list of aml ids
         """
         for ml in aml_list:
             if ml.account_id.reconcile:
-                key = (ml.account_id.id, ml.is_counterpart)
+                key = (ml.account_id.id, ml.partner_id and ml.partner_id.id, ml.is_counterpart)
                 to_reconcile_dict.setdefault(key, []).append(ml.id)
 
     def compute_refund(self, cr, uid, ids, mode='refund', context=None):
@@ -234,8 +235,8 @@ class account_invoice_refund(osv.osv_memory):
                     self._get_reconcilable_amls(movelines, to_reconcile)
                     self._get_reconcilable_amls(refund.move_id.line_id, to_reconcile)
                     # reconcile the lines grouped by account
-                    for account_id, is_counterpart in to_reconcile:
-                        account_m_line_obj.reconcile(cr, uid, to_reconcile[(account_id, is_counterpart)],
+                    for account_id, partner_id, is_counterpart in to_reconcile:
+                        account_m_line_obj.reconcile(cr, uid, to_reconcile[(account_id, partner_id, is_counterpart)],
                                                      writeoff_period_id=period,
                                                      writeoff_journal_id = inv.journal_id.id,
                                                      writeoff_acc_id=account_id
