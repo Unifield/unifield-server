@@ -1909,6 +1909,7 @@ class account_tax(osv.osv):
         'parent_id':fields.many2one('account.tax', 'Parent Tax Account', select=True),
         'child_ids':fields.one2many('account.tax', 'parent_id', 'Child Tax Accounts'),
         'child_depend':fields.boolean('Tax on Children', help="Set if the tax computation is based on the computation of child taxes rather than on the total amount."),
+        'partner_id': fields.many2one('res.partner', 'Partner', domain=[('partner_type', '=', 'external'), ('active', '=', True)]),
         'python_compute':fields.text('Python Code'),
         'python_compute_inv':fields.text('Python Code (reverse)'),
         'python_applicable':fields.text('Python Code'),

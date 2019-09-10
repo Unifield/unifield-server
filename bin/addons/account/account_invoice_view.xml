@@ -223,6 +223,8 @@
                                                domain="[('type', 'not in', ['view', 'consolidation']),
                                                         ('user_type_code', '=', 'tax')]"/>
 
+                                        <field name="partner_id" readonly="1"/>
+
                                         <field name="base" on_change="base_change(base,parent.currency_id,parent.company_id,parent.date_invoice)" readonly="1"/>
                                         <field name="amount" on_change="amount_change(amount,parent.currency_id,parent.company_id,parent.date_invoice)"/>
 

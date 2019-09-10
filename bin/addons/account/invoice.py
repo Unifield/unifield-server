@@ -1111,7 +1111,7 @@ class account_invoice(osv.osv):
     def line_get_convert(self, cr, uid, x, part, date, context=None):
         return {
             'date_maturity': x.get('date_maturity', False),
-            'partner_id': part,
+            'partner_id': x.get('partner_id') or part,
             'name': x['name'][:64],
             'date': date,
             'debit_currency': x['price']>0 and x['price'],
@@ -1856,13 +1856,29 @@ class account_invoice_tax(osv.osv):
             raise osv.except_osv(_('Warning !'), _('The Untaxed Amount is zero. Please press the Save & Edit button before saving the %s tax.') % (vals['name']))
         return True
 
+    def _update_tax_partner(self, cr, uid, vals, context=None):
+        """
+        Updates vals with the partner of the related tax
+        """
+        if context is None:
+            context = {}
+        tax_obj = self.pool.get('account.tax')
+        if vals.get('account_tax_id'):
+            tax = tax_obj.browse(cr, uid, vals['account_tax_id'], fields_to_fetch=['partner_id'], context=context)
+            vals.update({'partner_id': tax.partner_id and tax.partner_id.id or False})
 
     def create(self, cr, uid, vals, context=None):
-        if context == None:
+        if context is None:
             context = {}
         self._check_untaxed_amount(cr, uid, vals, context)
+        self._update_tax_partner(cr, uid, vals, context)
         return super(account_invoice_tax, self).create(cr, uid, vals, context=context)
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        self._update_tax_partner(cr, uid, vals, context)
+        return super(account_invoice_tax, self).write(cr, uid, ids, vals, context=context)
 
     def _count_factor(self, cr, uid, ids, name, args, context=None):
         res = {}
@@ -1896,7 +1912,8 @@ class account_invoice_tax(osv.osv):
         'company_id': fields.related('account_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
         'factor_base': fields.function(_count_factor, method=True, string='Multipication factor for Base code', type='float', multi="all"),
         'factor_tax': fields.function(_count_factor, method=True, string='Multipication factor Tax code', type='float', multi="all"),
-        'account_tax_id': fields.many2one('account.tax', 'Tax', domain=[('price_include', '=', False)])
+        'account_tax_id': fields.many2one('account.tax', 'Tax', domain=[('price_include', '=', False)]),
+        'partner_id': fields.many2one('res.partner', 'Partner'),
     }
 
 
@@ -2023,7 +2040,8 @@ class account_invoice_tax(osv.osv):
                 'price': t['amount'] or 0.0,
                 'account_id': t['account_id'],
                 'tax_code_id': t['tax_code_id'],
-                'tax_amount': t['tax_amount']
+                'tax_amount': t['tax_amount'],
+                'partner_id': t['partner_id'],
             })
         return res
 
