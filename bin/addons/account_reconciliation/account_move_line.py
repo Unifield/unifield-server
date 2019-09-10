@@ -640,9 +640,17 @@ class account_move_reconcile(osv.osv):
                     sql_params = [name, tuple(p+t)]
                     new_field = ""
                     self.pool.get('account.move.line').log_reconcile(cr, uid, r, previous=prev, rec_name=name, context=context)
-                    if context.get('sync_update_execution') and t and vals.get('action_date'):
-                        new_field = "unreconcile_date=NULL, unreconcile_txt='', reconcile_date=%s,"
-                        sql_params.insert(0, vals.get('action_date'))
+                    if context.get('sync_update_execution') and t:
+                        if vals.get('action_date'):
+                            new_field = "unreconcile_date=NULL, unreconcile_txt='', reconcile_date=%s,"
+                            sql_params.insert(0, vals.get('action_date'))
+
+                        # during sync exec, check if invoices must be set as paid / closed
+                        invoice_ids = [line.invoice.id for line in r.line_id if
+                                       line.invoice and line.invoice.state not in ('paid','inv_close')]
+                        if invoice_ids and self.pool.get('account.invoice').test_paid(cr, uid, invoice_ids):
+                            self.pool.get('account.invoice').confirm_paid(cr, uid, invoice_ids)
+
 
                     sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET " + new_field + " reconcile_txt = %s WHERE id in %s"  # not_a_user_entry
                     cr.execute(sql, sql_params)
@@ -719,9 +727,23 @@ class account_move_unreconcile(osv.osv):
         if context is None:
             context = {}
         if context.get('sync_update_execution') and vals.get('move_sdref_txt'):
-            move_ids = self.pool.get('account.move.line').find_sd_ref(cr, uid, vals['move_sdref_txt'].split(","), context=context)
+            move_line_obj = self.pool.get('account.move.line')
+            invoice_reopen = []
+            move_ids = move_line_obj.find_sd_ref(cr, uid, vals['move_sdref_txt'].split(","), context=context)
             if move_ids:
+                move_lines = move_line_obj.browse(cr, uid, move_ids.values(), fields_to_fetch=['invoice', 'reconcile_id'], context=context)
+                invoice_reopen = [line.invoice.id for line in move_lines if line.reconcile_id and line.invoice and line.invoice.state in ['paid','inv_close']]
                 cr.execute("UPDATE account_move_line SET unreconcile_txt=%s, unreconcile_date=%s, reconcile_txt='', reconcile_date=NULL WHERE id in %s", (vals.get('delete_reconcile_txt'), vals.get('unreconcile_date'), tuple(move_ids.values())))
+
+            if vals.get('delete_reconcile_txt'):
+                # do not sync reconcile delete, to prevent any error in case of account_move_unreconcile update NR
+                delete_rec = self.pool.get('account.move.reconcile').search(cr, uid, [('name', '=', vals.get('delete_reconcile_txt'))], context=context)
+                if delete_rec:
+                    self.pool.get('account.move.reconcile').unlink(cr, uid, delete_rec, context=context)
+            if invoice_reopen:
+                # invoices unreconciled on upper level to reopen
+                netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', invoice_reopen, 'open_test', cr)
         return super(account_move_unreconcile, self).create(cr, uid, vals, context)
+
 account_move_unreconcile()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
