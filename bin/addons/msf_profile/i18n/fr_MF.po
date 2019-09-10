@@ -49841,6 +49841,8 @@ msgstr "Montant total"
 #: report:addons/stock/report/stock_delivery_report_xls.mako:186
 #: report:addons/stock/report/stock_delivery_report_xls.mako:211
 #: field:stock.delivery.wizard,partner_id:0
+#: field:account.invoice.tax,partner_id:0
+#: field:account.tax,partner_id:0
 #, python-format
 msgid "Partner"
 msgstr "Partenaire"
@@ -107372,3 +107374,9 @@ msgstr "Date d'Expédition"
 #: report:purchase.order.merged:0
 msgid "Functional total cost :"
 msgstr "Total Coût Fonctionnel :"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:706
+#, python-format
+msgid "Impossible to deactivate a partner used in a tax."
+msgstr "Impossible de désactiver un partenaire utilisé dans une taxe."
