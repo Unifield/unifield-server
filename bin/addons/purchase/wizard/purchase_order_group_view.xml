@@ -9,23 +9,44 @@
                <form string="Merge orders">
                     <separator string="Are you sure you want to merge these orders ?" colspan="4"/>
                        <newline/>
-                    <label string="
-Please note that: &#10; &#10;
-Orders will only be merged if: &#10;
-* Purchase Orders are in draft &#10;
-* Purchase Orders belong to the same supplier &#10;
-* Purchase Orders are have same stock location, same pricelist &#10; &#10;
-Lines will only be merged if: &#10;
-* Order lines are exactly the same except for the product,quantity and unit &#10;
-" colspan="4"/>                
-                    <newline/>                    
+                    <group colspan="4">
+                        <html>
+                            <p><translate>Please note that Orders will only be merged if: </translate></p>
+                            <ul>
+                                <li><translate>Purchase Orders are in draft</translate></li>
+                                <li><translate>Purchase Orders belong to the same supplier and the same currency</translate></li>
+                            </ul>
+                        </html>
+                    </group>
+                    <separator colspan="4" />
+                    <group colspan="4">
+                        <field name="po_value_id" readonly="1" colspan="2" />
+                        <newline />
+                        <field name="unmatched_categ" invisible="1" />
+                        <html colspan="4">
+                            <p>
+                                <translate>
+                                    All information of the PO template will be written in the new PO, <br />except the Delivery Requested date which will be the earliest date of all POs.<br />Any sourcing group will be lost.
+                                </translate>
+                            </p>
+                        </html>
+                        <newline />
+                        <group colspan="4" col="4" attrs="{'invisible': [('unmatched_categ', '=', False)]}">
+                            <html colspan="4">
+                                <p style="margin-top:10px;padding-left:5px;border-style:solid;border-width:1px;background-color:#F0EBA4;border-radius:5px;">
+                                    <span style="font-weight:bold"><translate>WARNING: </translate></span>
+                                    <span><translate>The category of the new PO is not consistent with the category of the other POs being merged</translate></span>
+                                </p>
+                            </html>
+                        </group>
+                    </group>
+                    <newline/>
                     <separator string="" colspan="4" />
                     <button special="cancel" string="Cancel" icon="gtk-cancel"/>
                     <button name="merge_orders" string="Merge orders" type="object" icon="gtk-convert"/>
                 </form>
             </field>
         </record>
-                        
     </data>
 </openerp>
 

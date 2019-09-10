@@ -90,7 +90,7 @@ class procurement_request(osv.osv):
     _columns = {
         'date_order': fields.date('Ordered Date', required=True, readonly=False, select=True, states={}),
         'location_requestor_id': fields.many2one('stock.location', string='Location Requestor', ondelete="cascade",
-                                                 domain=[('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], help='You can only select an internal location'),
+                                                 domain=[('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], help='The location where the products will be delivered to'),
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
@@ -679,7 +679,11 @@ class procurement_request_line(osv.osv):
         product_obj = self.pool.get('product.product')
         if product_id and type != 'make_to_stock':
             product = product_obj.browse(cr, uid, product_id, context=context)
-            v.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
+            if product.seller_ids and (product.seller_ids[0].name.supplier or product.seller_ids[0].name.manufacturer or
+                                       product.seller_ids[0].name.transporter):
+                v.update({'supplier': product.seller_ids[0].name.id})
+            else:
+                v.update({'supplier': False})
         elif product_id and type == 'make_to_stock':
             v.update({'supplier': False})
             product = product_obj.browse(cr, uid, product_id, context=context)

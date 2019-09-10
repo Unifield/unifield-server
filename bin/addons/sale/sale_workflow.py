@@ -529,15 +529,15 @@ class sale_order_line(osv.osv):
 
     def check_fo_tax(self, cr, uid, ids, context=None):
         """
-        Prevents from validating a FO with taxes when using an Intermission partner
+        Prevents from validating a FO with taxes when using an Intermission or Intersection partner
         """
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         for fo_line in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'tax_id'], context=context):
-            if fo_line.tax_id and fo_line.order_id.partner_type == 'intermission':
-                raise osv.except_osv(_('Error'), _("You can't use taxes with an intermission partner."))
+            if fo_line.tax_id and fo_line.order_id.partner_type in ('intermission', 'section'):
+                raise osv.except_osv(_('Error'), _("Taxes are forbidden with Intermission and Intersection partners."))
 
     def action_validate(self, cr, uid, ids, context=None):
         '''
@@ -575,7 +575,8 @@ class sale_order_line(osv.osv):
 
             # US-4576: Set supplier
             if sol.type == 'make_to_order' and sol.order_id.order_type not in ['loan', 'donation_st', 'donation_exp']\
-                    and sol.product_id and sol.product_id.seller_id:
+                    and sol.product_id and sol.product_id.seller_id and (sol.product_id.seller_id.supplier or
+                                                                         sol.product_id.seller_id.manufacturer or sol.product_id.seller_id.transporter):
                 to_write['supplier'] = sol.product_id.seller_id.id
 
             if sol.order_id.order_type == 'loan':
