@@ -590,6 +590,37 @@ class account_move_reconcile(osv.osv):
         'action_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 
+    def common_create_write(self, cr, uid, ids, action_date, prev=None, context=None):
+        if context is None:
+            context = {}
+        for r in self.browse(cr, uid, ids):
+            t = [x.id for x in r.line_id]
+            p = [x.id for x in r.line_partial_ids]
+            d = self.name_get(cr, uid, [r.id])
+            name = ''
+            if d and d[0] and d[0][1]:
+                name = d[0][1]
+            if p or t:
+                sql_params = [name, tuple(p+t)]
+                new_field = ""
+                if prev is not None:
+                    self.pool.get('account.move.line').log_reconcile(cr, uid, r, previous=prev, rec_name=name, context=context)
+                if context.get('sync_update_execution') and t:
+                    if action_date:
+                        new_field = "unreconcile_date=NULL, unreconcile_txt='', reconcile_date=%s,"
+                        sql_params.insert(0, action_date)
+
+                    # during sync exec, check if invoices must be set as paid / closed
+                    invoice_ids = [line.invoice.id for line in r.line_id if
+                                   line.invoice and line.invoice.state not in ('paid','inv_close')]
+                    if invoice_ids and self.pool.get('account.invoice').test_paid(cr, uid, invoice_ids):
+                        self.pool.get('account.invoice').confirm_paid(cr, uid, invoice_ids)
+
+
+                sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET " + new_field + " reconcile_txt = %s WHERE id in %s"  # not_a_user_entry
+                cr.execute(sql, sql_params)
+        return True
+
     def create(self, cr, uid, vals, context=None):
         """
         Write reconcile_txt on linked account_move_lines if any changes on this reconciliation.
@@ -629,31 +660,21 @@ class account_move_reconcile(osv.osv):
             tmp_res = res
             if isinstance(res, (int, long)):
                 tmp_res = [tmp_res]
-            for r in self.browse(cr, uid, tmp_res):
-                t = [x.id for x in r.line_id]
-                p = [x.id for x in r.line_partial_ids]
-                d = self.name_get(cr, uid, [r.id])
-                name = ''
-                if d and d[0] and d[0][1]:
-                    name = d[0][1]
-                if p or t:
-                    sql_params = [name, tuple(p+t)]
-                    new_field = ""
-                    self.pool.get('account.move.line').log_reconcile(cr, uid, r, previous=prev, rec_name=name, context=context)
-                    if context.get('sync_update_execution') and t:
-                        if vals.get('action_date'):
-                            new_field = "unreconcile_date=NULL, unreconcile_txt='', reconcile_date=%s,"
-                            sql_params.insert(0, vals.get('action_date'))
+            self.common_create_write(cr, uid, tmp_res, vals.get('action_date'), prev=prev, context=context)
+        return res
 
-                        # during sync exec, check if invoices must be set as paid / closed
-                        invoice_ids = [line.invoice.id for line in r.line_id if
-                                       line.invoice and line.invoice.state not in ('paid','inv_close')]
-                        if invoice_ids and self.pool.get('account.invoice').test_paid(cr, uid, invoice_ids):
-                            self.pool.get('account.invoice').confirm_paid(cr, uid, invoice_ids)
-
-
-                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET " + new_field + " reconcile_txt = %s WHERE id in %s"  # not_a_user_entry
-                    cr.execute(sql, sql_params)
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Write reconcile_txt on linked account_move_lines if any changes on this reconciliation.
+        """
+        if not ids:
+            return True
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = super(account_move_reconcile, self).write(cr, uid, ids, vals, context)
+        self.common_create_write(cr, uid,  ids, vals.get('action_date'), context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
@@ -674,35 +695,6 @@ class account_move_reconcile(osv.osv):
 
         return super(account_move_reconcile, self).unlink(cr, uid, ids, context=context)
 
-
-    def write(self, cr, uid, ids, vals, context=None):
-        """
-        Write reconcile_txt on linked account_move_lines if any changes on this reconciliation.
-        """
-        if not ids:
-            return True
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = super(account_move_reconcile, self).write(cr, uid, ids, vals, context)
-        if res:
-            for r in self.browse(cr, uid, ids):
-                t = [x.id for x in r.line_id]
-                p = [x.id for x in r.line_partial_ids]
-                d = self.name_get(cr, uid, [r.id])
-                name = ''
-                if d and d[0] and d[0][1]:
-                    name = d[0][1]
-                if p or t:
-                    sql_params = [name, tuple(p+t)]
-                    new_field = ""
-                    if context.get('sync_update_execution') and t and vals.get('action_date'):
-                        new_field = "unreconcile_date=NULL, unreconcile_txt='', reconcile_date=%s,"
-                        sql_params.insert(0, vals.get('action_date'))
-                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET " + new_field + " reconcile_txt = %s WHERE id in %s"  # not_a_user_entry
-                    cr.execute(sql, sql_params)
-        return res
 
 account_move_reconcile()
 
