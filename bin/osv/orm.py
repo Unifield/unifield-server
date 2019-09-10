@@ -1763,6 +1763,7 @@ class orm_template(object):
         if context is None:
             context = {}
 
+        view_id_orig = view_id
         def encode(s):
             if isinstance(s, unicode):
                 return s.encode('utf8')
@@ -1869,6 +1870,7 @@ class orm_template(object):
         is_inherited_view = True
         sql_res = False
         parent_view_model = None
+        view_id_kept = False
         while is_inherited_view:
             view_ref = context.get(view_type + '_view_ref', False)
             if view_ref and not view_id:
@@ -1880,7 +1882,7 @@ class orm_template(object):
                         view_id = view_ref_res[0]
 
             if view_id:
-                query = "SELECT arch,name,field_parent,id,type,inherit_id,model FROM ir_ui_view WHERE id=%s"
+                query = "SELECT arch,name,field_parent,id,type,inherit_id,model, duplicate_view_id, title_field FROM ir_ui_view WHERE id=%s"
                 params = (view_id,)
                 if model:
                     query += " AND model = %s"
@@ -1888,7 +1890,7 @@ class orm_template(object):
                 cr.execute(query, params)
             else:
                 cr.execute('''SELECT
-                        arch,name,field_parent,id,type,inherit_id,model
+                        arch,name,field_parent,id,type,inherit_id,model, 'f', title_field
                     FROM
                         ir_ui_view
                     WHERE
@@ -1904,17 +1906,24 @@ class orm_template(object):
             view_id = is_inherited_view or sql_res[3]
             model = False
             parent_view_model = sql_res[6]
+            if sql_res[7] and view_id_orig:
+                view_id_kept = view_id_orig
+                is_inherited_view = True
+                view_id = sql_res[7]
+            # use view_id_orig only on 1st loop
+            view_id_orig = False
 
         # if a view was found
         if sql_res:
             result['type'] = sql_res[4]
-            result['view_id'] = sql_res[3]
+            result['view_id'] = view_id_kept or sql_res[3]
             result['arch'] = sql_res[0]
+            result['title_field'] = sql_res[8]
 
             # Reverse the search on models to apply view inheritance in a good way
             def _inherit_apply_rec(result, inherit_id):
                 # get all views which inherit from (ie modify) this view
-                cr.execute('select arch,id from ir_ui_view where inherit_id=%s and model = %s order by priority', (inherit_id, self._name))
+                cr.execute('select arch, id from ir_ui_view where inherit_id=%s and model = %s order by priority', (inherit_id, self._name))
                 sql_inherit = cr.fetchall()
                 for (inherit, id) in sql_inherit:
                     result = _inherit_apply(result, inherit, id)
@@ -1923,7 +1932,6 @@ class orm_template(object):
 
             inherit_result = etree.fromstring(encode(result['arch']))
             result['arch'] = _inherit_apply_rec(inherit_result, sql_res[3])
-
             result['name'] = sql_res[1]
             result['field_parent'] = sql_res[2] or False
         else:
@@ -1995,14 +2003,14 @@ class orm_template(object):
             ir_values_obj = self.pool.get('ir.values')
             resprint = ir_values_obj.get(cr, user, 'action',
                                          'client_print_multi', [(self._name, False)], False,
-                                         context, view_id=view_id)
+                                         context, view_id=view_id_kept or view_id)
             resaction = ir_values_obj.get(cr, user, 'action',
                                           'client_action_multi', [(self._name, False)], False,
-                                          context, view_id=view_id)
+                                          context, view_id=view_id_kept or view_id)
 
             resrelate = ir_values_obj.get(cr, user, 'action',
                                           'client_action_relate', [(self._name, False)], False,
-                                          context, view_id=view_id)
+                                          context, view_id=view_id_kept or view_id)
             resprint = map(clean, resprint)
             resaction = map(clean, resaction)
             resaction = filter(lambda x: not x.get('multi', False), resaction)
@@ -3217,8 +3225,8 @@ class orm(orm_template):
                                 cr.execute('UPDATE "%s" SET "%s"=temp_change_size::VARCHAR(%d)' % (self._table, k, f.size))  # not_a_user_entry
                                 cr.execute('ALTER TABLE "%s" DROP COLUMN temp_change_size CASCADE' % (self._table,))  # not_a_user_entry
                                 cr.commit()
-                                self.__schema.debug("Table '%s': column '%s' (type varchar) changed size from %s to %s",
-                                                    self._table, k, f_pg_size, f.size)
+                                self.__schema.warn("Table '%s': column '%s' (type varchar) changed size from %s to %s",
+                                                   self._table, k, f_pg_size, f.size)
                             for c in casts:
                                 if (f_pg_type==c[0]) and (f._type==c[1]):
                                     if f_pg_type != f_obj_type:
@@ -3228,8 +3236,8 @@ class orm(orm_template):
                                         cr.execute(('UPDATE "%s" SET "%s"=temp_change_size'+c[3]) % (self._table, k))  # not_a_user_entry
                                         cr.execute('ALTER TABLE "%s" DROP COLUMN temp_change_size CASCADE' % (self._table,))  # not_a_user_entry
                                         cr.commit()
-                                        self.__schema.debug("Table '%s': column '%s' changed type from %s to %s",
-                                                            self._table, k, c[0], c[1])
+                                        self.__schema.warn("Table '%s': column '%s' changed type from %s to %s",
+                                                           self._table, k, c[0], c[1])
                                     break
 
                             if f_pg_type != f_obj_type:
@@ -3249,8 +3257,8 @@ class orm(orm_template):
                                     cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO "%s"' % (self._table, k, newname))  # not_a_user_entry
                                     cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, get_pg_type(f)[1]))  # not_a_user_entry
                                     cr.execute("COMMENT ON COLUMN %s.%s IS '%s'" % (self._table, k, f.string.replace("'", "''")))  # not_a_user_entry
-                                    self.__schema.debug("Table '%s': column '%s' has changed type (DB=%s, def=%s), data moved to column %s !",
-                                                        self._table, k, f_pg_type, f._type, newname)
+                                    self.__schema.warn("Table '%s': column '%s' has changed type (DB=%s, def=%s), data moved to column %s !",
+                                                       self._table, k, f_pg_type, f._type, newname)
                                     to_migrate.append((newname, k))
 
                             # if the field is required and hasn't got a NOT NULL constraint

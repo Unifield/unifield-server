@@ -51,6 +51,8 @@
         'data/audittrail_res_users.yml',
         'data/audittrail_hr_employee.yml',
         'data/audittrail_res_partner.yml',
+        'data/audittrail_account_analytic_journal.yml',
+        'data/audittrail_account_journal.yml',
         'data/audittrail_account_account.yml',
         'audittrail_report.xml',
         'audittrail_invoice_data.yml',

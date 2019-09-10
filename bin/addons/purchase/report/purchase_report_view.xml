@@ -153,7 +153,7 @@
         <field name="view_type">form</field>
         <field name="view_mode">tree,graph</field>
         <field name="view_id" ref="view_purchase_order_tree"></field>
-        <field name="context">{'search_default_month':1,'search_default_group_partner_id':1,'search_default_group_product_id': 1, 'search_default_orders': 1, 'group_by_no_leaf':1,'group_by':[]}</field>
+        <field name="context">{'search_default_month':1,'search_default_group_product_id': 1,'search_default_orders': 1, 'group_by_no_leaf':1,'group_by':[]}</field>
         <field name="help">Purchase Analysis allows you to easily check and analyse your company purchase history and performance. From this menu you can track your negotiation performance, the delivery performance of your suppliers, etc.</field>
     </record>
 
