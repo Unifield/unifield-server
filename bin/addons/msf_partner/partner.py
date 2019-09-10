@@ -669,6 +669,7 @@ class res_partner(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        tax_obj = self.pool.get('account.tax')
         vals = self.check_pricelists_vals(cr, uid, vals, context=context)
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -701,6 +702,9 @@ class res_partner(osv.osv):
                     raise osv.except_osv(_('Warning'),
                                          _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
                                            ) % (objects_linked_to_partner))
+                if tax_obj.search_exist(cr, uid, [('partner_id', 'in', ids)], context=context):
+                    raise osv.except_osv(_('Warning'),
+                                         _("Impossible to deactivate a partner used in a tax."))
 
         if vals.get('name'):
             vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()

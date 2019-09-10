@@ -1913,7 +1913,7 @@ class account_invoice_tax(osv.osv):
         'factor_base': fields.function(_count_factor, method=True, string='Multipication factor for Base code', type='float', multi="all"),
         'factor_tax': fields.function(_count_factor, method=True, string='Multipication factor Tax code', type='float', multi="all"),
         'account_tax_id': fields.many2one('account.tax', 'Tax', domain=[('price_include', '=', False)]),
-        'partner_id': fields.many2one('res.partner', 'Partner'),
+        'partner_id': fields.many2one('res.partner', 'Partner', ondelete='restrict'),
     }
 
 
