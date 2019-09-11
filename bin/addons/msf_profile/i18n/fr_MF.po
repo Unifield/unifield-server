@@ -46584,7 +46584,7 @@ msgstr "Scinder la qté de stock en entrepôt en stock et stock non affecté."
 msgid "Europe/Ulyanovsk"
 msgstr "Europe/Ulyanovsk"
 
-#. modules: purchase, sync_client, sales_followup, msf_homere_interface, tender_flow, stock_forecast, mission_stock, msf_profile
+#. modules: purchase, sync_client, sales_followup, msf_homere_interface, tender_flow, stock_forecast, mission_stock, msf_profile, purchase_override
 #: field:stock.mission.report.line,updated:0
 #: field:hr.payroll.import.confirmation,updated:0
 #: selection:purchase.report,state:0
@@ -46596,6 +46596,8 @@ msgstr "Europe/Ulyanovsk"
 #: selection:user.access.results.menus.line,type_user_access_results_line:0
 #: selection:user.access.results.users.line,type_user_access_results_line:0
 #: selection:purchase.order,rfq_state:0
+#: selection:purchase.order.line,state_to_display:0
+#: selection:purchase.order.merged.line,state_to_display:0
 msgid "Updated"
 msgstr "Mise à jour"
 
@@ -47147,12 +47149,14 @@ msgstr "UdM échangeable "
 msgid "Illinois"
 msgstr "Illinois"
 
-#. modules: stock_forecast, purchase, tender_flow, sales_followup
+#. modules: stock_forecast, purchase, tender_flow, sales_followup, purchase_override
 #: selection:purchase.report,state:0
 #: selection:purchase.order.line,po_state:0
 #: selection:purchase.order.line,order_state:0
 #: view:purchase.order:0
 #: selection:purchase.order,rfq_state:0
+#: selection:purchase.order.line,state_to_display:0
+#: selection:purchase.order.merged.line,state_to_display:0
 msgid "Sent"
 msgstr "Envoyé"
 

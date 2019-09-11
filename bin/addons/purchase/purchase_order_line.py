@@ -174,24 +174,28 @@ class purchase_order_line(osv.osv):
 
         res = {}
         for pol in self.browse(cr, uid, ids, context=context):
-            # if PO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
-            if (pol.resourced_original_line or pol.set_as_resourced) and pol.state not in ['done', 'cancel', 'cancel_r']:
-                if pol.state.startswith('validated'):
-                    res[pol.id] = 'resourced_v'
-                elif pol.state.startswith('sourced'):
-                    if pol.state == 'sourced_v':
-                        res[pol.id] = 'resourced_pv'
-                    #elif pol.state == 'sourced_sy':
-                    #    res[pol.id] = 'Resourced-sy'
-                    else:
-                        # debatable
-                        res[pol.id] = 'resourced_s'
-                elif pol.state.startswith('confirmed'):
-                    res[pol.id] = 'resourced_c'
-                else: # draft + unexpected PO line state
-                    res[pol.id] = 'resourced_d'
-            else: # state_to_display == state
-                res[pol.id] = pol.state
+            if pol.order_id.rfq_ok and pol.state not in ['cancel', 'cancel_r'] and \
+                    pol.order_id.rfq_state in ['sent', 'updated', 'done']:
+                res[pol.id] = pol.order_id.rfq_state
+            else:
+                # if PO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
+                if (pol.resourced_original_line or pol.set_as_resourced) and pol.state not in ['done', 'cancel', 'cancel_r']:
+                    if pol.state.startswith('validated'):
+                        res[pol.id] = 'resourced_v'
+                    elif pol.state.startswith('sourced'):
+                        if pol.state == 'sourced_v':
+                            res[pol.id] = 'resourced_pv'
+                        #elif pol.state == 'sourced_sy':
+                        #    res[pol.id] = 'Resourced-sy'
+                        else:
+                            # debatable
+                            res[pol.id] = 'resourced_s'
+                    elif pol.state.startswith('confirmed'):
+                        res[pol.id] = 'resourced_c'
+                    else: # draft + unexpected PO line state
+                        res[pol.id] = 'resourced_d'
+                else: # state_to_display == state
+                    res[pol.id] = pol.state
 
         return res
 

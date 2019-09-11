@@ -54,6 +54,8 @@ PURCHASE_ORDER_LINE_DISPLAY_STATE_SELECTION = PURCHASE_ORDER_LINE_STATE_SELECTIO
     ('resourced_s', 'Resourced-s'),
     ('resourced_c', 'Resourced-c'),
     ('resourced_d', 'Resourced-d'),
+    ('sent', 'Sent'),
+    ('updated', 'Updated'),
 ]
 
 
