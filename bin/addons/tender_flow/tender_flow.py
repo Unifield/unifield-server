@@ -30,6 +30,7 @@ import time
 import tools
 
 from purchase import PURCHASE_ORDER_STATE_SELECTION
+from . import RFQ_LINE_STATE_DISPLAY_SELECTION
 
 class tender(osv.osv):
     '''
@@ -1916,10 +1917,33 @@ class purchase_order_line(osv.osv):
     add a tender_id related field
     '''
     _inherit = 'purchase.order.line'
+
+    def _get_rfq_line_state_to_display(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        return the state to display for RfQ lines
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.order_id.rfq_ok and pol.state not in ['cancel', 'cancel_r'] and \
+                    pol.order_id.rfq_state in ['sent', 'updated', 'done']:
+                res[pol.id] = pol.order_id.rfq_state
+            else:
+                res[pol.id] = pol.state_to_display
+
+        return res
+
     _columns = {'tender_id': fields.related('order_id', 'tender_id', type='many2one', relation='tender', string='Tender',),
                 'tender_line_id': fields.many2one('tender.line', string='Tender Line'),
                 'rfq_ok': fields.related('order_id', 'rfq_ok', type='boolean', string='RfQ ?'),
                 'sale_order_line_id': fields.many2one('sale.order.line', string='FO line', readonly=True),
+                'rfq_line_state_to_display': fields.function(_get_rfq_line_state_to_display, string='State',
+                                                             type='selection', selection=RFQ_LINE_STATE_DISPLAY_SELECTION,
+                                                             method=True, readonly=True)
                 }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

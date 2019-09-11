@@ -18,6 +18,18 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
 #
 ##############################################################################
+
+from tools.translate import _
+
+RFQ_LINE_STATE_DISPLAY_SELECTION = [
+    ('draft', 'Draft'),
+    ('sent', 'Sent'),
+    ('updated', 'Updated'),
+    ('done', 'Closed'),
+    ('cancel', 'Cancelled'),
+    ('cancel_r', 'Cancelled-r'),
+]
+
 import tender_flow
 import wizard
 import report

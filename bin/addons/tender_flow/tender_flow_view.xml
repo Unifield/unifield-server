@@ -328,7 +328,7 @@
                                     <field name="currency_id"/>
                                     <field name="tender_line_id" invisible="1" />
                                     <field name="fake_state" invisible="1"/>
-                                    <field name="state_to_display"/>
+                                    <field name="rfq_line_state_to_display"/>
                                     <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': ['|', ('fake_state', 'in', ['cancel', 'cancel_r', 'done']), ('rfq_state', 'in', ['updated', 'done', 'cancel'])]}" />
                                 </tree>
                             </field>
