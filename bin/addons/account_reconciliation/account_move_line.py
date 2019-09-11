@@ -645,11 +645,11 @@ class account_move_reconcile(osv.osv):
         # get previous reconcile from _txt
         already_reconciled = []
         if aml_ids:
-            cr.execute('select id, reconcile_txt, reconcile_id, reconcile_partial_id, name from account_move_line where id in %s', (tuple(aml_ids),))
+            cr.execute('select l.id, l.reconcile_txt, l.reconcile_id, l.name, m.name from account_move_line l left join account_move m on m.id = l.move_id where l.id in %s', (tuple(aml_ids),))
             for x in cr.fetchall():
                 prev[x[0]] = x[1]
             if context.get('sync_update_execution') and x[2]:
-                already_reconciled.append('%s already reconciled on the instance, id:%s, rec_txt:%s' % (x[4], x[0], x[1]))
+                already_reconciled.append('%s %s already reconciled on the instance, id:%s, rec_txt:%s' % (x[3], x[4], x[0], x[1]))
 
         if already_reconciled:
             raise osv.except_osv(_('Warning'), "\n".join(already_reconciled))
@@ -722,12 +722,16 @@ class account_move_unreconcile(osv.osv):
             invoice_reopen = []
             move_ids = move_line_obj.find_sd_ref(cr, uid, vals['move_sdref_txt'].split(","), context=context)
             if move_ids:
-                move_lines = move_line_obj.browse(cr, uid, move_ids.values(), fields_to_fetch=['invoice', 'reconcile_id'], context=context)
-                invoice_reopen = [line.invoice.id for line in move_lines if line.reconcile_id and line.invoice and line.invoice.state in ['paid','inv_close']]
-                cr.execute("UPDATE account_move_line SET unreconcile_txt=%s, unreconcile_date=%s, reconcile_txt='', reconcile_date=NULL WHERE id in %s", (vals.get('delete_reconcile_txt'), vals.get('unreconcile_date'), tuple(move_ids.values())))
+                move_lines = []
+                for move_line in move_line_obj.browse(cr, uid, move_ids.values(), fields_to_fetch=['invoice', 'reconcile_id'], context=context):
+                    if move_line.reconcile_id and move_line.reconcile_id.name == vals.get('delete_reconcile_txt'):
+                        move_lines.append(move_line)
+                if move_lines:
+                    invoice_reopen = [line.invoice.id for line in move_lines if line.invoice and line.invoice.state in ['paid','inv_close']]
+                    cr.execute("UPDATE account_move_line SET unreconcile_txt=%s, unreconcile_date=%s, reconcile_txt='', reconcile_date=NULL WHERE id in %s", (vals.get('delete_reconcile_txt'), vals.get('unreconcile_date'), tuple([x.id for x in move_lines])))
 
             if vals.get('delete_reconcile_txt'):
-                # do not sync reconcile delete, to prevent any error in case of account_move_unreconcile update NR
+                # do not sync reconcile delete, to prevent any error in case of account_move_unreconcile update is NR
                 delete_rec = self.pool.get('account.move.reconcile').search(cr, uid, [('name', '=', vals.get('delete_reconcile_txt'))], context=context)
                 if delete_rec:
                     self.pool.get('account.move.reconcile').unlink(cr, uid, delete_rec, context=context)
