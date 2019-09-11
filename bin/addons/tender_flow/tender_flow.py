@@ -30,6 +30,7 @@ import time
 import tools
 
 from purchase import PURCHASE_ORDER_STATE_SELECTION
+from . import RFQ_STATE_SELECTION
 from . import RFQ_LINE_STATE_DISPLAY_SELECTION
 
 class tender(osv.osv):
@@ -1624,7 +1625,7 @@ class purchase_order(osv.osv):
                 'valid_till': fields.date(string='Valid Till', internal="purchase_order"),
                 # add readonly when state is Done
                 'sale_order_id': fields.many2one('sale.order', string='Link between RfQ and FO', readonly=True, internal="purchase_order"),
-                'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'Order state', required=True, readonly=True, internal="purchase_order"),
+                'rfq_state': fields.selection(RFQ_STATE_SELECTION, 'Order state', required=True, readonly=True, internal="purchase_order"),
                 }
 
     _defaults = {
@@ -1929,8 +1930,7 @@ class purchase_order_line(osv.osv):
 
         res = {}
         for pol in self.browse(cr, uid, ids, context=context):
-            if pol.order_id.rfq_ok and pol.state not in ['cancel', 'cancel_r'] and \
-                    pol.order_id.rfq_state in ['sent', 'updated', 'done']:
+            if pol.order_id.rfq_ok and pol.state not in ['cancel', 'cancel_r']:
                 res[pol.id] = pol.order_id.rfq_state
             else:
                 res[pol.id] = pol.state_to_display

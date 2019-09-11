@@ -21,12 +21,15 @@
 
 from tools.translate import _
 
-RFQ_LINE_STATE_DISPLAY_SELECTION = [
+RFQ_STATE_SELECTION = [
     ('draft', 'Draft'),
     ('sent', 'Sent'),
     ('updated', 'Updated'),
     ('done', 'Closed'),
     ('cancel', 'Cancelled'),
+]
+
+RFQ_LINE_STATE_DISPLAY_SELECTION = RFQ_STATE_SELECTION + [
     ('cancel_r', 'Cancelled-r'),
 ]
 

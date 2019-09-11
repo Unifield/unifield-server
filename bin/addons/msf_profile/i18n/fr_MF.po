@@ -8655,8 +8655,6 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:account.invoice,counterpart_inv_status:0
 #: selection:wizard.account.invoice,counterpart_inv_status:0
 #: code:addons/stock_override/report/delivery_order.py:59
-#: selection:purchase.order.line,rfq_line_state_to_display:0
-#: selection:purchase.order.merged.line,rfq_line_state_to_display:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -29985,8 +29983,6 @@ msgstr "Certificat attaché ?"
 #: selection:wizard.account.invoice,state:0
 #: selection:account.invoice,counterpart_inv_status:0
 #: code:addons/stock_override/report/delivery_order.py:64
-#: selection:purchase.order.line,rfq_line_state_to_display:0
-#: selection:purchase.order.merged.line,rfq_line_state_to_display:0
 msgid "Closed"
 msgstr "Fermé"
 
@@ -46602,8 +46598,6 @@ msgstr "Europe/Ulyanovsk"
 #: selection:user.access.results.menus.line,type_user_access_results_line:0
 #: selection:user.access.results.users.line,type_user_access_results_line:0
 #: selection:purchase.order,rfq_state:0
-#: selection:purchase.order.line,rfq_line_state_to_display:0
-#: selection:purchase.order.merged.line,rfq_line_state_to_display:0
 msgid "Updated"
 msgstr "Mise à jour"
 
@@ -47161,8 +47155,6 @@ msgstr "Illinois"
 #: selection:purchase.order.line,order_state:0
 #: view:purchase.order:0
 #: selection:purchase.order,rfq_state:0
-#: selection:purchase.order.line,rfq_line_state_to_display:0
-#: selection:purchase.order.merged.line,rfq_line_state_to_display:0
 msgid "Sent"
 msgstr "Envoyé"
 
@@ -77777,8 +77769,6 @@ msgstr "Valeur totale"
 #: selection:wizard.account.invoice,counterpart_inv_status:0
 #: field:po.follow.up,cancel_ok:0
 #: code:addons/stock_override/report/delivery_order.py:65
-#: selection:purchase.order.line,rfq_line_state_to_display:0
-#: selection:purchase.order.merged.line,rfq_line_state_to_display:0
 #, python-format
 msgid "Cancelled"
 msgstr "Annulé"
