@@ -229,8 +229,7 @@ class hq_report_oca(report_sxw.report_sxw):
         move_share = 0.4  # 40% of the total process
 
         for move_line in aml_obj.browse(cr, uid, move_line_ids, context=context):
-            zero_move_line = not move_line.debit_currency and not move_line.credit_currency and not move_line.debit and not move_line.credit
-            if move_line.move_id.state != 'posted' or zero_move_line:  # only non-zero posted move lines are kept
+            if move_line.move_id.state != 'posted':  # only posted move lines are kept
                 move_line_count += 1
                 continue
             journal = move_line.journal_id
@@ -260,8 +259,9 @@ class hq_report_oca(report_sxw.report_sxw):
             first_result_lines.append(formatted_data)
 
             # For the second report:
-            # exclude In-kind Donations and OD-Extra Accounting entries from the "formatted data" file
-            if move_line.journal_id.type not in ['inkind', 'extra']:
+            # exclude In-kind Donations, OD-Extra Accounting entries, and lines with zero amount from the "formatted data" file
+            zero_move_line = not move_line.debit_currency and not move_line.credit_currency and not move_line.debit and not move_line.credit
+            if move_line.journal_id.type not in ['inkind', 'extra'] and not zero_move_line:
                 if not account.shrink_entries_for_hq:
                     # data for the "Employee Id" column
                     employee_id = ''
@@ -346,9 +346,8 @@ class hq_report_oca(report_sxw.report_sxw):
         analytic_share = 0.5  # 50% of the total process
 
         for analytic_line in aal_obj.browse(cr, uid, analytic_line_ids, context=context):
-            # restrict to non-zero analytic lines coming from posted move lines
-            zero_analytic_line = not analytic_line.amount and not analytic_line.amount_currency
-            if analytic_line.move_state != 'posted' or zero_analytic_line:
+            # restrict to analytic lines coming from posted move lines
+            if analytic_line.move_state != 'posted':
                 analytic_line_count += 1
                 continue
             journal = analytic_line.move_id and analytic_line.move_id.journal_id
@@ -380,8 +379,9 @@ class hq_report_oca(report_sxw.report_sxw):
                               analytic_line.functional_currency_id and analytic_line.functional_currency_id.name or ""]
             first_result_lines.append(formatted_data)
 
-            # exclude In-kind Donations and OD-Extra Accounting entries from the "formatted data" file
-            if analytic_line.journal_id.type not in ['inkind', 'extra']:
+            # exclude In-kind Donations, OD-Extra Accounting entries, and lines with zero amount from the "formatted data" file
+            zero_analytic_line = not analytic_line.amount and not analytic_line.amount_currency
+            if analytic_line.journal_id.type not in ['inkind', 'extra'] and not zero_analytic_line:
                 # format CC as: P + the 4 digits from the right
                 cost_center = formatted_data[11] and "P%s" % formatted_data[11][-4:] or ""
                 # data for the "Employee Id" column
