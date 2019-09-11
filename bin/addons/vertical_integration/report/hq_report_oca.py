@@ -229,7 +229,8 @@ class hq_report_oca(report_sxw.report_sxw):
         move_share = 0.4  # 40% of the total process
 
         for move_line in aml_obj.browse(cr, uid, move_line_ids, context=context):
-            if move_line.move_id.state != 'posted':  # only posted move lines are kept
+            zero_move_line = not move_line.debit_currency and not move_line.credit_currency and not move_line.debit and not move_line.credit
+            if move_line.move_id.state != 'posted' or zero_move_line:  # only non-zero posted move lines are kept
                 move_line_count += 1
                 continue
             journal = move_line.journal_id
@@ -345,8 +346,9 @@ class hq_report_oca(report_sxw.report_sxw):
         analytic_share = 0.5  # 50% of the total process
 
         for analytic_line in aal_obj.browse(cr, uid, analytic_line_ids, context=context):
-            # restrict to analytic lines coming from posted move lines
-            if analytic_line.move_state != 'posted':
+            # restrict to non-zero analytic lines coming from posted move lines
+            zero_analytic_line = not analytic_line.amount and not analytic_line.amount_currency
+            if analytic_line.move_state != 'posted' or zero_analytic_line:
                 analytic_line_count += 1
                 continue
             journal = analytic_line.move_id and analytic_line.move_id.journal_id
