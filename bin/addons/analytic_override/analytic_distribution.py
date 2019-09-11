@@ -231,7 +231,7 @@ class distribution_line(osv.osv):
     _columns = {
         'name': fields.char('Name', size=64),
         "distribution_id": fields.many2one('analytic.distribution', 'Associated Analytic Distribution', ondelete='cascade', select="1"),
-        "analytic_id": fields.many2one('account.analytic.account', 'Analytical Account'),
+        "analytic_id": fields.many2one('account.analytic.account', 'Analytical Account', ondelete='restrict'),
         "amount": fields.float('Amount', digits_compute=dp.get_precision('Account')),
         "percentage": fields.float('Percentage', digits=(16,4)),
         "currency_id": fields.many2one('res.currency', 'Currency', required=True),
@@ -319,7 +319,7 @@ class cost_center_distribution_line(osv.osv):
     _name = "cost.center.distribution.line"
     _inherit = "distribution.line"
     _columns = {
-        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True),
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True, ondelete='restrict'),
     }
 
 cost_center_distribution_line()
@@ -328,8 +328,8 @@ class funding_pool_distribution_line(osv.osv):
     _name = "funding.pool.distribution.line"
     _inherit = "distribution.line"
     _columns = {
-        "cost_center_id": fields.many2one('account.analytic.account', 'Cost Center Account', required=True),
-        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True),
+        "cost_center_id": fields.many2one('account.analytic.account', 'Cost Center Account', required=True, ondelete='restrict'),
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True, ondelete='restrict'),
     }
 
 funding_pool_distribution_line()
@@ -338,7 +338,7 @@ class free_1_distribution_line(osv.osv):
     _name = "free.1.distribution.line"
     _inherit = "distribution.line"
     _columns = {
-        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=False),
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=False, ondelete='restrict'),
     }
 
 free_1_distribution_line()
@@ -347,7 +347,7 @@ class free_2_distribution_line(osv.osv):
     _name = "free.2.distribution.line"
     _inherit = "distribution.line"
     _columns = {
-        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=False),
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=False, ondelete='restrict'),
     }
 
 free_2_distribution_line()

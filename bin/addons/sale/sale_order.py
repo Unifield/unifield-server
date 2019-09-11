@@ -2152,10 +2152,10 @@ class sale_order_line(osv.osv):
         if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
             error_lines = []
             linked_order = ''
-            for sol in self.browse(cr, uid, ids, context=context):
+            for sol in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'state'], context=context):
                 if not linked_order:
                     linked_order = sol.order_id.name
-                if sol.state in ['draft', 'validated', 'sourced', 'sourced_v', 'sourced_sy', 'sourced_n', 'confirmed'] \
+                if sol.state in ['draft', 'validated', 'validated_n'] \
                         and sol.stock_take_date and sol.stock_take_date > sol.order_id.date_order:
                     error_lines.append(str(sol.line_number))
                 if len(error_lines) >= 10:  # To not display too much

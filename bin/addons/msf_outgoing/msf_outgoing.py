@@ -646,10 +646,12 @@ class shipment(osv.osv):
             # if all packs have been selected, from/to have been set to 0
             # update the original move object - the corresponding original shipment (draft)
             # is automatically updated generically in the write method
+            new_max_selected = initial_to_pack - initial_from_pack + 1
             move_obj.write(cr, uid, [move.id], {
                 'product_qty': initial_qty,
                 'from_pack': initial_from_pack,
                 'to_pack': initial_to_pack,
+                'selected_number': min(new_max_selected, move.selected_number),
             }, context=context)
 
             nb_processed += 1
@@ -929,7 +931,7 @@ class shipment(osv.osv):
 
                     draft_initial_qty = draft_move.product_qty + return_qty
                     qty_processed = draft_move.qty_processed - return_qty
-                    move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty, 'qty_to_process': draft_initial_qty, 'qty_processed': qty_processed}, context=context)
+                    move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty, 'qty_to_process': draft_initial_qty, 'qty_processed': qty_processed, 'pack_info_id': False}, context=context)
 
 
             # log the increase action - display the picking ticket view form - log message for each draft packing because each corresponds to a different draft picking
@@ -956,7 +958,7 @@ class shipment(osv.osv):
     def add_packs(self, cr, uid, ids, context=None):
         ship = self.browse(cr, uid, ids[0], fields_to_fetch=['partner_id'], context=context)
         other_ship_ids = self.search(cr, uid, [('state', '=', 'draft'), ('partner_id', '=', ship.partner_id.id)], context=context)
-        pack_ids = self.pool.get('pack.family.memory').search(cr, uid, [('pack_state', '=', 'draft'), ('shipment_id', 'in', other_ship_ids)], context=context)
+        pack_ids = self.pool.get('pack.family.memory').search(cr, uid, [('pack_state', '=', 'draft'), ('state', '!=', 'done'), ('shipment_id', 'in', other_ship_ids)], context=context)
         if not pack_ids:
             raise osv.except_osv(_('Warning !'), _('No Pack Available'))
         proc_id = self.pool.get('shipment.add.pack.processor').create(cr, uid, {'shipment_id': ids[0]}, context=context)
@@ -1242,7 +1244,6 @@ class shipment(osv.osv):
                             treat_draft = False
                         elif move.from_pack or move.to_pack:
                             # qty = 0, from/to pack should have been set to zero
-                            print move.id
                             raise osv.except_osv(
                                 _('Error'),
                                 _('There are stock moves with 0 quantity on the pack family sequence: %s %s') % (draft_packing.name, move.line_number)
