@@ -203,15 +203,12 @@ class account_move_line(osv.osv):
             where id in %s
             """, (time.strftime('%Y-%m-%d'), tuple(merges+unmerge), )
         )
-        # UF-2011: synchronize move lines (not "marked" after reconcile creation)
-        #if self.pool.get('sync.client.orm_extended'):
-        #    self.pool.get('account.move.line').synchronize(cr, uid, merges+unmerge, context=context)
-
-        move_rec_obj.reconcile_partial_check(cr, uid, [r_id] + merges_rec, context=context)
 
         # delete old partial rec
         if merges_rec:
             self.pool.get('account.move.reconcile').unlink(cr, uid, merges_rec, context=context)
+
+        move_rec_obj.reconcile_partial_check(cr, uid, [r_id] + merges_rec, context=context)
         return True
 
     def reconcile(self, cr, uid, ids, type='auto', writeoff_acc_id=False, writeoff_period_id=False, writeoff_journal_id=False, context=None):
@@ -303,6 +300,10 @@ class account_move_line(osv.osv):
                 # Add partner_line to do total reconciliation
                 ids.append(partner_line_id)
 
+        if partial_reconcile_ids:
+            # delete old partial rec
+            self.pool.get('account.move.reconcile').unlink(cr, uid, list(partial_reconcile_ids), context=context)
+
         r_id = move_rec_obj.create(cr, uid, {
             'type': type,
             'line_id': map(lambda x: (4, x, False), ids),
@@ -335,9 +336,6 @@ class account_move_line(osv.osv):
             if partner_id and context and context.get('stop_reconcile', False):
                 partner_obj.write(cr, uid, [partner_id], {'last_reconciliation_date': time.strftime('%Y-%m-%d %H:%M:%S')})
 
-        if partial_reconcile_ids:
-            # delete old partial rec
-            self.pool.get('account.move.reconcile').unlink(cr, uid, list(partial_reconcile_ids), context=context)
         return r_id
 
     def _hook_check_period_state(self, cr, uid, result=False, context=None, *args, **kargs):
@@ -645,11 +643,11 @@ class account_move_reconcile(osv.osv):
         # get previous reconcile from _txt
         already_reconciled = []
         if aml_ids:
-            cr.execute('select l.id, l.reconcile_txt, l.reconcile_id, l.name, m.name from account_move_line l left join account_move m on m.id = l.move_id where l.id in %s', (tuple(aml_ids),))
+            cr.execute('select l.id, l.reconcile_txt, l.reconcile_id, l.reconcile_partial_id, l.name, m.name from account_move_line l left join account_move m on m.id = l.move_id where l.id in %s', (tuple(aml_ids),))
             for x in cr.fetchall():
                 prev[x[0]] = x[1]
-            if context.get('sync_update_execution') and x[2]:
-                already_reconciled.append('%s %s already reconciled on the instance, id:%s, rec_txt:%s' % (x[3], x[4], x[0], x[1]))
+            if context.get('sync_update_execution') and (x[2] or x[3]):
+                already_reconciled.append('%s %s already reconciled on the instance, id:%s, rec_txt:%s' % (x[4], x[5], x[0], x[1]))
 
         if already_reconciled:
             raise osv.except_osv(_('Warning'), "\n".join(already_reconciled))
@@ -723,11 +721,13 @@ class account_move_unreconcile(osv.osv):
             move_ids = move_line_obj.find_sd_ref(cr, uid, vals['move_sdref_txt'].split(","), context=context)
             if move_ids:
                 move_lines = []
-                for move_line in move_line_obj.browse(cr, uid, move_ids.values(), fields_to_fetch=['invoice', 'reconcile_id'], context=context):
-                    if move_line.reconcile_id and move_line.reconcile_id.name == vals.get('delete_reconcile_txt'):
+                for move_line in move_line_obj.browse(cr, uid, move_ids.values(), fields_to_fetch=['invoice', 'reconcile_id', 'reconcile_partial_id'], context=context):
+                    if not move_line.reconcile_id and not move_line.reconcile_partial_id or \
+                            move_line.reconcile_id and move_line.reconcile_id.name == vals.get('delete_reconcile_txt') or \
+                            move_line.reconcile_partial_id and move_line.reconcile_partial_id.name == vals.get('delete_reconcile_txt'):
                         move_lines.append(move_line)
                 if move_lines:
-                    invoice_reopen = [line.invoice.id for line in move_lines if line.invoice and line.invoice.state in ['paid','inv_close']]
+                    invoice_reopen = [line.invoice.id for line in move_lines if line.reconcile_id and line.invoice and line.invoice.state in ['paid','inv_close']]
                     cr.execute("UPDATE account_move_line SET unreconcile_txt=%s, unreconcile_date=%s, reconcile_txt='', reconcile_date=NULL WHERE id in %s", (vals.get('delete_reconcile_txt'), vals.get('unreconcile_date'), tuple([x.id for x in move_lines])))
 
             if vals.get('delete_reconcile_txt'):
