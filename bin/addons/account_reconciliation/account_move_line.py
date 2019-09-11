@@ -648,9 +648,8 @@ class account_move_reconcile(osv.osv):
             cr.execute('select id, reconcile_txt, reconcile_id, reconcile_partial_id, name from account_move_line where id in %s', (tuple(aml_ids),))
             for x in cr.fetchall():
                 prev[x[0]] = x[1]
-            if context.get('sync_update_execution'):
-                if x[2] or x[3]:
-                    already_reconciled.append('%s already reconciled on the instance, id:%s, rec_txt:%s' % (x[4], x[0], x[1]))
+            if context.get('sync_update_execution') and x[2]:
+                already_reconciled.append('%s already reconciled on the instance, id:%s, rec_txt:%s' % (x[4], x[0], x[1]))
 
         if already_reconciled:
             raise osv.except_osv(_('Warning'), "\n".join(already_reconciled))
