@@ -136,10 +136,16 @@ class analytic_distribution_wizard(osv.osv_memory):
         def get_entry_seq(entry_seq_data):
             res = entry_seq_data.get('sequence', False)
             if not res:
-                seqnum = self.pool.get('ir.sequence').get_id(
-                    cr, uid, journal.sequence_id.id,
-                    context={'fiscalyear_id': period.fiscalyear_id.id})
-                res = "%s-%s-%s" % (move_prefix, code, seqnum)
+                if working_period_id:
+                    corr_aji_ids = ana_line_obj.search(cr, uid, [('period_id', '=', working_period_id),
+                                                                 ('id', 'in', old_corr_aji_ids)],
+                                                       context=context, limit=1)
+                    if corr_aji_ids:
+                        res = ana_line_obj.read(cr, uid, corr_aji_ids[0], ['entry_sequence'], context=context)['entry_sequence']
+                if not res:
+                    seqnum = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id,
+                                                                 context={'fiscalyear_id': period.fiscalyear_id.id})
+                    res = "%s-%s-%s" % (move_prefix, code, seqnum)
                 entry_seq_data['sequence'] = res
             return res
 
@@ -148,12 +154,20 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Prepare some values
         wizard = self.browse(cr, uid, wizard_id)
         ad_obj = self.pool.get('analytic.distribution')
+        ana_line_obj = self.pool.get('account.analytic.line')
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         ml = wizard.move_line_id
         orig_date = ml.source_date or ml.date
         orig_document_date = ml.document_date
-        working_period_id = False
         new_line_ids = []
+        working_period_id = False
+
+        # get the AJIs created BEFORE this correction
+        original_aji_ids = ana_line_obj.search(cr, uid, [('move_id', '=', ml.id),
+                                                         ('reversal_origin', '=', False),
+                                                         ('last_corrected_id', '=', False)],
+                                               order='NO_ORDER', context=context)
+        old_corr_aji_ids = ana_line_obj.search(cr, uid, [('last_corrected_id', 'in', original_aji_ids)], order='NO_ORDER', context=context)
 
         jtype = 'correction'
         if wizard.move_line_id.account_id and wizard.move_line_id.account_id.type_for_register == 'donation':
@@ -170,7 +184,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         to_reverse = []
         old_line_ok = []
         any_reverse = False
-        ana_line_obj = self.pool.get('account.analytic.line')
         # Prepare journal and period information for entry sequences
         journal_sql = """
             SELECT id, code
