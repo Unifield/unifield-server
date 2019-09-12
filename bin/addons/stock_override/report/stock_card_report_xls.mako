@@ -54,13 +54,7 @@
     </Style>
   <Style ss:ID="short_date">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-   </Borders>
-   <NumberFormat ss:Format="Long Time"/>
+   <NumberFormat ss:Format="Short Date"/>
   </Style>
   <Style ss:ID="header_date">
    <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
@@ -110,9 +104,17 @@ def parse_origin(origin):
 
     <Row AutoFitHeight="1">
         <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('From')|x}</Data></Cell>
-        <Cell><Data ss:Type="String">${o.from_date or ''}</Data></Cell>
+        % if o.from_date and isDate(o.from_date):
+        <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(o.from_date)|n}</Data></Cell>
+        % else:
+        <Cell><Data ss:Type="String"></Data></Cell>
+        % endif
         <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('To')|x}</Data></Cell>
-        <Cell><Data ss:Type="String">${o.to_date or ''}</Data></Cell>
+        % if o.to_date and isDate(o.to_date):
+        <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(o.to_date)|n}</Data></Cell>
+        % else:
+        <Cell><Data ss:Type="String"></Data></Cell>
+        % endif
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
@@ -120,29 +122,33 @@ def parse_origin(origin):
     </Row>
     <Row AutoFitHeight="1">
         <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('Location')|x}</Data></Cell>
-        <Cell><Data ss:Type="String">${o.location_id and o.location_id.name or ''}</Data></Cell>
+        <Cell><Data ss:Type="String">${o.location_id and o.location_id.name or ''|x}</Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('Stock Balance')|x}</Data></Cell>
-        <Cell ss:StyleID="balance"><Data ss:Type="Number">${o.real_stock or 0.00}</Data></Cell>
+        <Cell ss:StyleID="balance"><Data ss:Type="Number">${o.real_stock or 0.00|x}</Data></Cell>
         <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('UoM')|x}</Data></Cell>
-        <Cell><Data ss:Type="String">${o.product_id and o.product_id.uom_id and o.product_id.uom_id.name or ''}</Data></Cell>
+        <Cell><Data ss:Type="String">${o.product_id and o.product_id.uom_id and o.product_id.uom_id.name or ''|x}</Data></Cell>
     </Row>
     <Row AutoFitHeight="1">
         <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('Code')|x}</Data></Cell>
-        <Cell><Data ss:Type="String">${o.product_id and o.product_id.default_code or ''}</Data></Cell>
+        <Cell><Data ss:Type="String">${o.product_id and o.product_id.default_code or ''|x}</Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('Batch Number')|x}</Data></Cell>
-        <Cell><Data ss:Type="String">${o.prodlot_id and o.prodlot_id.name or ''}</Data></Cell>
+        <Cell><Data ss:Type="String">${o.prodlot_id and o.prodlot_id.name or ''|x}</Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
     </Row>
     <Row AutoFitHeight="1">
         <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
-        <Cell ss:MergeAcross="2"><Data ss:Type="String">${o.product_id.name}</Data></Cell>
+        <Cell ss:MergeAcross="2"><Data ss:Type="String">${o.product_id.name|x}</Data></Cell>
         <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('Expiry Date')|x}</Data></Cell>
-        <Cell><Data ss:Type="String">${o.prodlot_id and o.prodlot_id.life_date or ''}</Data></Cell>
+        % if o.prodlot_id and isDate(o.prodlot_id.life_date):
+        <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(o.prodlot_id.life_date)|n}</Data></Cell>
+        % else:
+        <Cell><Data ss:Type="String"></Data></Cell>
+        % endif
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
     </Row>
@@ -165,7 +171,11 @@ def parse_origin(origin):
     </Row>
     % for line in o.card_lines:
     <Row AutoFitHeight="1">
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.date_done or ''|x}</Data></Cell>
+        % if line.date_done and isDateTime(line.date_done):
+        <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(line.date_done)|n}</Data></Cell>
+        % else:
+        <Cell><Data ss:Type="String"></Data></Cell>
+        % endif
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.doc_ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${parse_origin(line.origin)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.partner_or_loc or '')|x}</Data></Cell>
