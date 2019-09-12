@@ -124,7 +124,7 @@ def parse_origin(origin):
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('Stock Balance')|x}</Data></Cell>
-        <Cell ss:StyleID="balance"><Data ss:Type="Number">${o.available_stock or 0.00}</Data></Cell>
+        <Cell ss:StyleID="balance"><Data ss:Type="Number">${o.real_stock or 0.00}</Data></Cell>
         <Cell ss:StyleID="BoldHeader"><Data ss:Type="String">${_('UoM')|x}</Data></Cell>
         <Cell><Data ss:Type="String">${o.product_id and o.product_id.uom_id and o.product_id.uom_id.name or ''}</Data></Cell>
     </Row>
