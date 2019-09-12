@@ -152,6 +152,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         ml = wizard.move_line_id
         orig_date = ml.source_date or ml.date
         orig_document_date = ml.document_date
+        posting_date = wizard.date
         working_period_id = []
         new_line_ids = []
         entry_seq_data = {}
@@ -166,6 +167,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             if biggest_reversal_aji.period_id and biggest_reversal_aji.period_id.state == 'draft':  # Open
                 working_period_id = [biggest_reversal_aji.period_id.id]
                 entry_seq_data['sequence'] = biggest_reversal_aji.entry_sequence
+                posting_date = biggest_reversal_aji.date
 
         jtype = 'correction'
         if wizard.move_line_id.account_id and wizard.move_line_id.account_id.type_for_register == 'donation':
@@ -196,9 +198,9 @@ class analytic_distribution_wizard(osv.osv_memory):
         journal_id = journal_sql_res[0]
         code = journal_sql_res[1]
         journal = self.pool.get('account.journal').browse(cr, uid, journal_id, context=context)
-        period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date=wizard.date, context=context)
+        period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date=posting_date, context=context)
         if not period_ids:
-            raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (wizard.date or ''))
+            raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (posting_date or ''))
         period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
         move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
 
@@ -306,7 +308,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 #to_reverse_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
                 if period.state != 'draft':
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (period.name,))
-                reversed_ids = ana_line_obj.reverse(cr, uid, to_reverse_ids, posting_date=wizard.date)
+                reversed_ids = ana_line_obj.reverse(cr, uid, to_reverse_ids, posting_date=posting_date)
                 # Set initial lines as non correctible
                 ana_line_obj.write(cr, uid, to_reverse_ids, {'is_reallocated': True})
                 # Set right journal and right entry sequence
@@ -353,7 +355,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             name = False
             if period_closed or is_HQ_origin:
                 if period_closed or is_HQ_origin:
-                    create_date = wizard.date
+                    create_date = posting_date
                 name = ana_line_obj.join_without_redundancy(ml.name, 'COR')
                 if keep_seq_and_corrected:
                     create_date = keep_seq_and_corrected[2]  # is_HQ_origin keep date too
@@ -397,7 +399,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             orig_line = ana_line_obj.browse(cr, uid, to_reverse_ids)[0]
 
             # UTP-943: Set wizard date as date for REVERSAL AND CORRECTION lines
-            reversed_id = ana_line_obj.reverse(cr, uid, to_reverse_ids[0], posting_date=wizard.date, context=context)[0]
+            reversed_id = ana_line_obj.reverse(cr, uid, to_reverse_ids[0], posting_date=posting_date, context=context)[0]
             # Add reversal origin link (to not loose it). last_corrected_id is to prevent case where you do a reverse a line that have been already corrected
 
             ana_line_obj.write(cr, uid, [reversed_id], {'reversal_origin': to_reverse_ids[0], 'last_corrected_id': False, 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence})
@@ -422,7 +424,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if cp.state != 'draft':
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
-            ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name,context=context)
+            ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=posting_date, document_date=orig_document_date, source_date=orig_date, name=name,context=context)
             new_line_ids.extend(ret.values())
             working_period_id = working_period_id or period_ids
             # Add link to first analytic lines
