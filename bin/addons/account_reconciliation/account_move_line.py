@@ -601,7 +601,7 @@ class account_move_reconcile(osv.osv):
             if p or t:
                 sql_params = [name, tuple(p+t)]
                 new_field = ""
-                if prev is not None:
+                if prev is not None and not context.get('sync_update_execution'):
                     self.pool.get('account.move.line').log_reconcile(cr, uid, r, previous=prev, rec_name=name, context=context)
                 if context.get('sync_update_execution') and t:
                     if action_date:
