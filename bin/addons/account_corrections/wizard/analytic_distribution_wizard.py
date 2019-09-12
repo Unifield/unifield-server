@@ -163,7 +163,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                                                        order='id DESC', limit=1, context=context)
         if biggest_reversal_aji_ids:
             biggest_reversal_aji = ana_line_obj.browse(cr, uid, biggest_reversal_aji_ids[0],
-                                                       fields_to_fetch=['period_id', 'entry_sequence'], context=context)
+                                                       fields_to_fetch=['period_id', 'entry_sequence', 'date'], context=context)
             if biggest_reversal_aji.period_id and biggest_reversal_aji.period_id.state == 'draft':  # Open
                 working_period_id = [biggest_reversal_aji.period_id.id]
                 entry_seq_data['sequence'] = biggest_reversal_aji.entry_sequence
@@ -424,7 +424,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if cp.state != 'draft':
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
-            ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=posting_date, document_date=orig_document_date, source_date=orig_date, name=name,context=context)
+            ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=posting_date,
+                                                       document_date=orig_document_date, source_date=orig_date, name=name,context=context)
             new_line_ids.extend(ret.values())
             working_period_id = working_period_id or period_ids
             # Add link to first analytic lines
