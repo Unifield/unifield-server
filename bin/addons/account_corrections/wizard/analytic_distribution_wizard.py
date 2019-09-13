@@ -164,10 +164,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         if biggest_reversal_aji_ids:
             biggest_reversal_aji = ana_line_obj.browse(cr, uid, biggest_reversal_aji_ids[0],
                                                        fields_to_fetch=['period_id', 'entry_sequence', 'date'], context=context)
+            # use the period / date and Entry Sequence of the reversal AJI in case its period is still open
             if biggest_reversal_aji.period_id and biggest_reversal_aji.period_id.state == 'draft':  # Open
                 working_period_id = [biggest_reversal_aji.period_id.id]
-                entry_seq_data['sequence'] = biggest_reversal_aji.entry_sequence
                 posting_date = biggest_reversal_aji.date
+                entry_seq_data['sequence'] = biggest_reversal_aji.entry_sequence
 
         jtype = 'correction'
         if wizard.move_line_id.account_id and wizard.move_line_id.account_id.type_for_register == 'donation':
@@ -425,7 +426,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
             ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=posting_date,
-                                                       document_date=orig_document_date, source_date=orig_date, name=name,context=context)
+                                                       document_date=orig_document_date, source_date=orig_date, name=name, context=context)
             new_line_ids.extend(ret.values())
             working_period_id = working_period_id or period_ids
             # Add link to first analytic lines
