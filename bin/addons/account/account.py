@@ -2064,7 +2064,7 @@ class account_tax(osv.osv):
         obj_partener_address = self.pool.get('res.partner.address')
         for tax in taxes:
             # we compute the amount for the current tax object and append it to the result
-            description = "%s%s%s" % (tax.name, partner and ' - ' or '', partner and partner.name or '')
+            description = "%s%s%s" % (tax.name, partner and ' - ' or '', partner and partner.name or '')  # tax name and INVOICE partner name
             data = {'id':tax.id,
                     'name': description,
                     'account_collected_id':tax.account_collected_id.id,
@@ -2223,7 +2223,7 @@ class account_tax(osv.osv):
                 todo = 0
             else:
                 todo = 1
-            description = "%s%s%s" % (tax.name, partner and ' - ' or '', partner and partner.name or '')
+            description = "%s%s%s" % (tax.name, partner and ' - ' or '', partner and partner.name or '')  # tax name and INVOICE partner name
             res.append({
                 'id': tax.id,
                 'todo': todo,

@@ -1922,8 +1922,8 @@ class account_invoice_tax(osv.osv):
             atx_obj = self.pool.get('account.tax')
             partner_obj = self.pool.get('res.partner')
             atx = atx_obj.browse(cr, uid, account_tax_id, context=context)
-            partner_name = inv_partner_id and partner_obj.read(cr, uid, inv_partner_id, ['name'], context=context)['name'] or ''
-            description = "%s%s%s" % (atx.name, partner_name and ' - ' or '', partner_name or '')
+            inv_partner_name = inv_partner_id and partner_obj.read(cr, uid, inv_partner_id, ['name'], context=context)['name'] or ''
+            description = "%s%s%s" % (atx.name, inv_partner_name and ' - ' or '', inv_partner_name or '')
             ret = {'value': {'account_id': atx.account_collected_id.id, 'name': description, 'base_amount': amount_untaxed,
                              'amount': self._calculate_tax(cr, uid, account_tax_id, amount_untaxed)}}
         return ret
