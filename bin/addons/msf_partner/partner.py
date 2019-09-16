@@ -704,7 +704,7 @@ class res_partner(osv.osv):
                                            ) % (objects_linked_to_partner))
                 if tax_obj.search_exist(cr, uid, [('partner_id', 'in', ids)], context=context):
                     raise osv.except_osv(_('Warning'),
-                                         _("Impossible to deactivate a partner used in a tax."))
+                                         _("Impossible to deactivate a partner used for a tax."))
 
         if vals.get('name'):
             vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()

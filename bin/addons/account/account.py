@@ -1966,11 +1966,31 @@ class account_tax(osv.osv):
             ids = self.search(cr, user, args, limit=limit, context=context or {})
         return self.name_get(cr, user, ids, context=context)
 
+    def _check_tax_partner(self, cr, uid, vals, context=None):
+        """
+        Raises an error in case the partner selected for the tax isn't allowed
+        """
+        if context is None:
+            context = {}
+        partner_obj = self.pool.get('res.partner')
+        if vals.get('partner_id'):
+            partner = partner_obj.browse(cr, uid, vals['partner_id'], fields_to_fetch=['active', 'partner_type', 'name'], context=context)
+            if not partner.active or partner.partner_type != 'external':
+                raise osv.except_osv(_('Error'),
+                                     _("You can't link the tax to the Partner %s: only active external partners are allowed.") % partner.name)
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        self._check_tax_partner(cr, uid, vals, context=context)
+        return super(account_tax, self).create(cr, uid, vals, context=context)
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
         if vals.get('type', False) and vals['type'] in ('none', 'code'):
             vals.update({'amount': 0.0})
+        self._check_tax_partner(cr, uid, vals, context=context)
         return super(account_tax, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
