@@ -2064,9 +2064,9 @@ class account_tax(osv.osv):
         obj_partener_address = self.pool.get('res.partner.address')
         for tax in taxes:
             # we compute the amount for the current tax object and append it to the result
-
+            description = "%s%s%s" % (tax.name, partner and ' - ' or '', partner and partner.name or '')
             data = {'id':tax.id,
-                    'name':tax.description and tax.description + " - " + tax.name or tax.name,
+                    'name': description,
                     'account_collected_id':tax.account_collected_id.id,
                     'account_paid_id':tax.account_paid_id.id,
                     'base_code_id': tax.base_code_id.id,
@@ -2223,10 +2223,11 @@ class account_tax(osv.osv):
                 todo = 0
             else:
                 todo = 1
+            description = "%s%s%s" % (tax.name, partner and ' - ' or '', partner and partner.name or '')
             res.append({
                 'id': tax.id,
                 'todo': todo,
-                'name': tax.name,
+                'name': description,
                 'amount': amount,
                 'account_collected_id': tax.account_collected_id.id,
                 'account_paid_id': tax.account_paid_id.id,
@@ -2268,7 +2269,7 @@ class account_tax(osv.osv):
             tax = {'name':'', 'amount':0.0, 'account_collected_id':1, 'account_paid_id':2}
             one tax for each tax id in IDS and their children
         """
-        res = self._unit_compute_inv(cr, uid, taxes, price_unit, address_id, product, partner=None)
+        res = self._unit_compute_inv(cr, uid, taxes, price_unit, address_id, product, partner=partner)
         total = 0.0
         obj_precision = self.pool.get('decimal.precision')
         for r in res:
