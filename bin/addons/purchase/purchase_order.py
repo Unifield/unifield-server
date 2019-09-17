@@ -2590,7 +2590,7 @@ class purchase_order(osv.osv):
             to_update = {}
             to_updateBis = {}
 
-            t_MinQty_Price = {}
+
 
             for pol in pol_obj.browse(cr, uid, pol_ids, context=context):
                 # Check only products with defined SoQ quantity
@@ -2608,8 +2608,13 @@ class purchase_order(osv.osv):
 
                 if sup_ids:
                     for sup in sup_obj.browse(cr, uid, sup_ids, context=context):
+                        t_MinQty_Price = {}
                         for pcl in sup.pricelist_ids:
                             t_MinQty_Price[pcl.min_quantity] = pcl.price
+
+
+                        for pcl in sup.pricelist_ids:
+
                             if pcl.rounding:
                                 if pcl.min_quantity == pol.product_qty:
                                     if soq_cat != -1:
@@ -2626,10 +2631,7 @@ class purchase_order(osv.osv):
                                     soq_PU = pcl.price
                                     min_qty = pcl.min_quantity
 
-
                                 else:
-
-
                                     if soq_cat == 0:
                                         soq_tmp = pcl.rounding
                                         soq_uom = pcl.uom_id
