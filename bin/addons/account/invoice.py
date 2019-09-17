@@ -1863,21 +1863,24 @@ class account_invoice_tax(osv.osv):
         if context is None:
             context = {}
         tax_obj = self.pool.get('account.tax')
-        if vals.get('account_tax_id'):
-            tax = tax_obj.browse(cr, uid, vals['account_tax_id'], fields_to_fetch=['partner_id'], context=context)
-            vals.update({'partner_id': tax.partner_id and tax.partner_id.id or False})
+        if 'account_tax_id' in vals:
+            tax_partner_id = False
+            if vals['account_tax_id']:  # note that at doc level it's possible not to have any link to a tax from the system
+                tax = tax_obj.browse(cr, uid, vals['account_tax_id'], fields_to_fetch=['partner_id'], context=context)
+                tax_partner_id = tax.partner_id and tax.partner_id.id or False
+            vals.update({'partner_id': tax_partner_id})
 
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
         self._check_untaxed_amount(cr, uid, vals, context)
-        self._update_tax_partner(cr, uid, vals, context)
+        self._update_tax_partner(cr, uid, vals, context=context)
         return super(account_invoice_tax, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
-        self._update_tax_partner(cr, uid, vals, context)
+        self._update_tax_partner(cr, uid, vals, context=context)
         return super(account_invoice_tax, self).write(cr, uid, ids, vals, context=context)
 
     def _count_factor(self, cr, uid, ids, name, args, context=None):
