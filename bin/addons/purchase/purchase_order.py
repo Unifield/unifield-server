@@ -2590,6 +2590,8 @@ class purchase_order(osv.osv):
             to_update = {}
             to_updateBis = {}
 
+            t_MinQty_Price = {}
+
             for pol in pol_obj.browse(cr, uid, pol_ids, context=context):
                 # Check only products with defined SoQ quantity
                 sup_ids = sup_obj.search(cr, uid, [
@@ -2599,22 +2601,19 @@ class purchase_order(osv.osv):
                 if not sup_ids and not pol.product_id.soq_quantity:
                     continue
 
-                # Get SoQ value
-                soq = pol.product_id.soq_quantity
-                soq_uom = pol.product_id.uom_id
-
                 min_qty = 0
                 soq_tmp = 0
                 soq_PU = 0
-
+                soq_cat = 0
 
                 if sup_ids:
                     for sup in sup_obj.browse(cr, uid, sup_ids, context=context):
                         for pcl in sup.pricelist_ids:
+                            t_MinQty_Price[pcl.min_quantity] = pcl.price
                             if pcl.rounding:
                                 if pcl.min_quantity == pol.product_qty:
-                                    if soq != 0:
-                                        soq = pcl.rounding
+                                    if soq_cat != -1:
+                                        soq_cat = pcl.rounding
                                         soq_uom = pcl.uom_id
                                         soq_PU = pcl.price
                                         min_qty = pcl.min_quantity
@@ -2622,26 +2621,37 @@ class purchase_order(osv.osv):
                                         break
 
                                 if pcl.min_quantity < pol.product_qty:
-                                    soq = pcl.rounding
+                                    soq_cat = pcl.rounding
                                     soq_uom = pcl.uom_id
                                     soq_PU = pcl.price
                                     min_qty = pcl.min_quantity
 
 
                                 else:
-                                    if soq != -1:
-                                        if soq != 0:
-                                            soq_tmp = soq
-                                        else:
-                                            soq_tmp = pcl.rounding
-                                            min_qty = pcl.min_quantity
-                                            soq_PU = pcl.price
 
-                                        soq = -1
+
+                                    if soq_cat == 0:
+                                        soq_tmp = pcl.rounding
+                                        soq_uom = pcl.uom_id
+                                        min_qty = pcl.min_quantity
+                                        soq_PU = pcl.price
+
+                                        soq_cat = -1
 
                                     else:
                                         break
 
+
+                if soq_cat != 0:
+                    if soq_cat == -1:
+                        soq = soq_tmp
+                    else:
+                        soq = soq_cat
+
+                # Get SoQ value (from product not catalogue)
+                if soq == 0:
+                    soq = pol.product_id.soq_quantity
+                    soq_uom = pol.product_id.uom_id
 
                 if not soq:
                     continue
@@ -2659,19 +2669,20 @@ class purchase_order(osv.osv):
                 good_price = soq_PU
 
                 if line_qty % soq:
-                    good_quantity = soq_tmp
-#                    good_quantity = (line_qty - (line_qty % soq)) + soq
+                    good_quantity = (line_qty - (line_qty % soq)) + soq
 
                 if good_quantity and pol.product_uom.id != soq_uom.id:
                     good_quantity = uom_obj._compute_qty_obj(cr, uid, soq_uom, good_quantity, pol.product_uom,
                                                              context=context)
 
-                if soq < 0:
+                if soq_cat < 0:
                     if line_qty < min_qty:
                         good_quantity = min_qty
                     else:
                         good_quantity = soq_tmp
 
+                if t_MinQty_Price.has_key(good_quantity):
+                    good_price = t_MinQty_Price.get(good_quantity)
 
 
                 if good_quantity:
@@ -2679,9 +2690,8 @@ class purchase_order(osv.osv):
                     to_update[good_quantity].append(pol.id)
 
                 if good_price:
-                    to_updateBis.setdefault(good_price,[])
+                    to_updateBis.setdefault(good_price, [])
                     to_updateBis[good_price].append(pol.id)
-
 
 
             for qty, line_ids in to_update.iteritems():
