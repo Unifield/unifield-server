@@ -121,7 +121,7 @@ class account_invoice_refund(osv.osv_memory):
         """
         for ml in aml_list:
             if ml.account_id.reconcile:
-                key = (ml.account_id.id, ml.partner_id and ml.partner_id.id, ml.is_counterpart)
+                key = (ml.account_id.id, ml.partner_id and ml.partner_id.id or False, ml.is_counterpart)
                 to_reconcile_dict.setdefault(key, []).append(ml.id)
 
     def compute_refund(self, cr, uid, ids, mode='refund', context=None):
