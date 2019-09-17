@@ -443,6 +443,9 @@
         <record id="us_5859_remove_deprecated_objects" model="patch.scripts">
             <field name="method">us_5859_remove_deprecated_objects</field>
         </record>
+        <record id="us_6342_cancel_ir" model="patch.scripts">
+            <field name="method">us_6342_cancel_ir</field>
+        </record>
 
     </data>
 </openerp>

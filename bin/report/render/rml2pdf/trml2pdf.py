@@ -94,7 +94,7 @@ def _open_image(filename, path=None):
                 fullpath = os.path.join(p, filename)
             else:
                 fullpath = filename
-            return file_open(fullpath)
+            return file_open(fullpath, mode='rb')
         except IOError:
             pass
     raise IOError("File %s cannot be found in image path" % filename)

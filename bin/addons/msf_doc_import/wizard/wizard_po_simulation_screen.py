@@ -1404,7 +1404,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'change_ok': False,
                             'chg_text': chg
                             }
-
             if line.po_line_id:
                 l = line.po_line_id
                 res[line.id]['in_product_id'] = l.product_id and l.product_id.id or False
@@ -1548,6 +1547,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'change_ok': fields.function(_get_line_info, method=True, multi='line',
                                      type='boolean', string='Change', store=False),
         'error_msg': fields.text(string='Error message', readonly=True),
+        'ad_error': fields.char(string='Display warning on line', size=12, readonly=True),
         'parent_line_id': fields.many2one('wizard.import.po.simulation.screen.line',
                                           string='Parent line id',
                                           help='Use to split the good PO line',
@@ -1557,6 +1557,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'ad_info': fields.text(string='New AD', readonly=True),
     }
 
+    _defaults = {
+        'ad_error': '',
+    }
     def get_error_msg(self, cr, uid, ids, context=None):
         '''
         Display the error message
@@ -1590,9 +1593,13 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             # Comment
             write_vals['imp_comment'] = values[15] and values[15].strip()
 
-            if line.po_line_id.state in ('confirmed', 'done') or (line.po_line_id.state in ('cancel', 'cancel_r') and write_vals['imp_comment'] != '[DELETE]'):
+            if line.po_line_id.state in ['cancel', 'cancel_r']:
+                self.write(cr, uid, [line.id], {'type_change': 'ignore'}, context=context)
+                continue
+
+            if line.po_line_id.state in ('confirmed', 'done'):
                 write_vals['type_change'] = 'warning'
-                warnings.append(_('PO line has been confirmed or cancelled and consequently is not editable'))
+                warnings.append(_('PO line has been confirmed and consequently is not editable'))
 
             # External Ref.
             write_vals['imp_external_ref'] = values[1]
@@ -1656,7 +1663,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     existing_ad = False
                 errors_ad, ad_info = self.pool.get('wizard.import.po.simulation.screen').check_ad(cr, uid, values[20:], existing_ad, product_id=write_vals.get('imp_product_id'), po_type=line.simu_id.order_id.order_type,cc_cache=cc_cache, context=context)
                 if errors_ad:
-                    errors += errors_ad
+                    if not line.po_line_id.analytic_distribution_id or not existing_ad:
+                        errors += errors_ad
+                        write_vals['error_msg'] = _('Invalid AD in file')
+                        write_vals['ad_error'] = 'ok'
+                    else:
+                        warnings += errors_ad
                 elif ad_info:
                     write_vals['ad_info'] = ad_info
 
