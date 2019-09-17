@@ -1920,14 +1920,25 @@ class account_invoice_tax(osv.osv):
     }
 
     def tax_code_change(self, cr, uid, ids, account_tax_id, amount_untaxed, inv_partner_id, context=None):
+        if context is None:
+            context = {}
         ret = {}
         if account_tax_id:
             atx_obj = self.pool.get('account.tax')
             partner_obj = self.pool.get('res.partner')
-            atx = atx_obj.browse(cr, uid, account_tax_id, context=context)
-            inv_partner_name = inv_partner_id and partner_obj.read(cr, uid, inv_partner_id, ['name'], context=context)['name'] or ''
-            description = "%s%s%s" % (atx.name, inv_partner_name and ' - ' or '', inv_partner_name or '')
-            ret = {'value': {'account_id': atx.account_collected_id.id, 'name': description, 'base_amount': amount_untaxed,
+            inv_partner = inv_partner_id and partner_obj.browse(cr, uid, inv_partner_id,
+                                                                fields_to_fetch=['name', 'lang'], context=context) or None
+            inv_partner_name = inv_partner and inv_partner.name or ''
+            # use the language of the partner for the tax name (to be consistent with what's done when clicking on Compute Taxes)
+            inv_partner_lang = inv_partner and inv_partner.lang or ''
+            new_context = context.copy()
+            if inv_partner_lang:
+                new_context.update({'lang': inv_partner_lang})
+            tax = atx_obj.browse(cr, uid, account_tax_id, fields_to_fetch=['name', 'account_collected_id'], context=new_context)
+            description = "%s%s%s" % (tax.name, inv_partner_name and ' - ' or '', inv_partner_name or '')
+            ret = {'value': {'account_id': tax.account_collected_id and tax.account_collected_id.id or False,
+                             'name': description,
+                             'base_amount': amount_untaxed,
                              'amount': self._calculate_tax(cr, uid, account_tax_id, amount_untaxed)}}
         return ret
 
