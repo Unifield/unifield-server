@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-# Copyright (c) 2010 Camptocamp SA (http://www.camptocamp.com) 
+# Copyright (c) 2010 Camptocamp SA (http://www.camptocamp.com)
 # All Right Reserved
 #
 # Author : Nicolas Bessi (Camptocamp)
@@ -34,7 +34,6 @@ import subprocess
 import os
 import tempfile
 import time
-import datetime
 from mako.template import Template
 from mako import exceptions
 import netsvc
@@ -83,11 +82,10 @@ class WebKitParser(report_sxw):
        Code partially taken from report openoffice. Thanks guys :)
     """
 
-    def __init__(self, name, table, rml=False, parser=False, 
+    def __init__(self, name, table, rml=False, parser=False,
                  header=True, store=False):
-        self.parser_instance = False
         self.localcontext={}
-        report_sxw.__init__(self, name, table, rml, parser, 
+        report_sxw.__init__(self, name, table, rml, parser,
                             header, store)
 
     def getObjects(self, cr, uid, ids, context):
@@ -107,7 +105,7 @@ class WebKitParser(report_sxw):
                   ' http://code.google.com/p/wkhtmltopdf/downloads/list and set the'+
                   ' path to the executable on the Company form.'+
                   'Minimal version is 0.9.9')
-            ) 
+            )
         if os.path.isabs(path) :
             if (os.path.exists(path) and os.access(path, os.X_OK)\
                     and os.path.basename(path).startswith('wkhtmltopdf')):
@@ -143,7 +141,7 @@ class WebKitParser(report_sxw):
             head_file = file( os.path.join(
                 tmp_dir,
                 str(time.time()) + '.head.html'
-            ), 
+            ),
                 'w'
             )
             head_file.write(header)
@@ -154,7 +152,7 @@ class WebKitParser(report_sxw):
             foot_file = file(  os.path.join(
                 tmp_dir,
                 str(time.time()) + '.foot.html'
-            ), 
+            ),
                 'w'
             )
             foot_file.write(footer)
@@ -187,7 +185,7 @@ class WebKitParser(report_sxw):
             status = subprocess.call(command, stderr=subprocess.PIPE) # ignore stderr
             if status :
                 raise except_osv(
-                    _('Webkit raise an error' ), 
+                    _('Webkit raise an error' ),
                     status
                 )
         except Exception:
@@ -207,45 +205,6 @@ class WebKitParser(report_sxw):
             lang = 'en_US'
         self.localcontext['lang'] = lang
 
-    def translate_call(self, src):
-        """Translate String."""
-        ir_translation = self.pool.get('ir.translation')
-        orig_file = self.report_xml.report_file or self.tmpl
-        res = ir_translation._get_source(self.parser_instance.cr, self.parser_instance.uid, orig_file and "addons/%s"%orig_file or self.name, 'report', self.localcontext.get('lang', 'en_US'), src)
-        if not res :
-            return src
-        return res 
-
-    def formatLang(self, value, digits=None, date=False, date_time=False, grouping=True, monetary=False):
-        """format using the know cursor, language from localcontext"""
-        if digits is None:
-            digits = self.parser_instance.get_digits(value)
-        if isinstance(value, (str, unicode)) and not value:
-            return ''
-        pool_lang = self.pool.get('res.lang')
-        lang = self.localcontext['lang']
-
-        lang_ids = pool_lang.search(self.parser_instance.cr, self.parser_instance.uid, [('code','=',lang)])[0]
-        lang_obj = pool_lang.browse(self.parser_instance.cr, self.parser_instance.uid, lang_ids)
-
-        if date or date_time:
-            if not str(value):
-                return ''
-
-            date_format = lang_obj.date_format
-            parse_format = '%Y-%m-%d'
-            if date_time:
-                value=value.split('.')[0]
-                date_format = date_format + " " + lang_obj.time_format
-                parse_format = '%Y-%m-%d %H:%M:%S'
-            if not isinstance(value, time.struct_time):
-                return time.strftime(date_format, time.strptime(value, parse_format))
-
-            else:
-                date = datetime(*value.timetuple()[:6])
-            return date.strftime(date_format)
-
-        return lang_obj.format('%.' + str(digits) + 'f', value, grouping=grouping, monetary=monetary)
 
     # override needed to keep the attachments' storing procedure
     def create_single_pdf(self, cursor, uid, ids, data, report_xml, context=None):
@@ -258,16 +217,18 @@ class WebKitParser(report_sxw):
             return super(WebKitParser,self).create_single_pdf(cursor, uid, ids, data, report_xml, context=context)
 
         self.report_xml = report_xml
-        self.parser_instance = self.parser(
+        parser_instance = self.parser(
             cursor,
             uid,
             self.name2,
             context=context
         )
+        orig_file = self.report_xml.report_file or self.tmpl
+        parser_instance.orig_file = orig_file and "addons/%s"%orig_file or self.name
 
         self.pool = pooler.get_pool(cursor.dbname)
         objs = self.getObjects(cursor, uid, ids, context)
-        self.parser_instance.set_context(objs, data, ids, report_xml.report_type)
+        parser_instance.set_context(objs, data, ids, report_xml.report_type)
 
         template =  False
         if report_xml.report_file :
@@ -320,13 +281,13 @@ class WebKitParser(report_sxw):
         body_mako_tpl = mako_template(template)
         helper = WebKitHelper(cursor, uid, report_xml.id, context)
         self.localcontext.update({'lang': context.get('lang')})
-        self.parser_instance.localcontext.update({'setLang':self.setLang})
-        self.parser_instance.localcontext.update({'formatLang':self.formatLang})
+        parser_instance.localcontext.update({'setLang':self.setLang})
+        parser_instance.localcontext.update({'formatLang':parser_instance.format_xls_lang})
         try :
             html = body_mako_tpl.render(     helper=helper,
                                              css=css,
-                                             _=self.translate_call,
-                                             **self.parser_instance.localcontext
+                                             _=parser_instance.translate_call,
+                                             **parser_instance.localcontext
                                              )
         except Exception:
             msg = exceptions.text_error_template().render()
@@ -339,9 +300,9 @@ class WebKitParser(report_sxw):
                 time=time,
                 helper=helper,
                 css=css,
-                formatLang=self.formatLang,
+                formatLang=parser_instance.format_xls_lang,
                 setLang=self.setLang,
-                _=self.translate_call,
+                _=parser_instance.translate_call,
                 _debug=False
             )
         except Exception:
@@ -356,9 +317,9 @@ class WebKitParser(report_sxw):
                     time=time,
                     helper=helper,
                     css=css,
-                    formatLang=self.formatLang,
+                    formatLang=parser_instance.format_xls_lang,
                     setLang=self.setLang,
-                    _=self.translate_call,
+                    _=parser_instance.translate_call,
                 )
             except:
                 msg = exceptions.text_error_template().render()
@@ -372,9 +333,9 @@ class WebKitParser(report_sxw):
                     helper=helper,
                     css=css,
                     _debug=tools.ustr(html),
-                    formatLang=self.formatLang,
+                    formatLang=parser_instance.format_xls_lang,
                     setLang=self.setLang,
-                    _=self.translate_call,
+                    _=parser_instance.translate_call,
                 )
             except Exception:
                 msg = exceptions.text_error_template().render()
@@ -395,9 +356,9 @@ class WebKitParser(report_sxw):
                                        [('report_name', '=', self.name[7:])], context=context)
         if report_xml_ids:
             report_xml = ir_obj.browse(
-                cursor, 
-                uid, 
-                report_xml_ids[0], 
+                cursor,
+                uid,
+                report_xml_ids[0],
                 context=context
             )
             report_xml.report_rml = None
