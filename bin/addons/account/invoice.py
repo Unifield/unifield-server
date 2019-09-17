@@ -1859,11 +1859,14 @@ class account_invoice_tax(osv.osv):
     def _update_tax_partner(self, cr, uid, vals, context=None):
         """
         Updates vals with the partner of the related tax
+
+        Note that in case a partner_id is already in vals, it is used (e.g. in case of a SI refund the SR tax lines must be exactly
+        the same as the SI ones, even if the partner linked to the related account.tax has changed in the meantime)
         """
         if context is None:
             context = {}
         tax_obj = self.pool.get('account.tax')
-        if 'account_tax_id' in vals:
+        if 'partner_id' not in vals and 'account_tax_id' in vals:
             tax_partner_id = False
             if vals['account_tax_id']:  # note that at doc level it's possible not to have any link to a tax from the system
                 tax = tax_obj.browse(cr, uid, vals['account_tax_id'], fields_to_fetch=['partner_id'], context=context)
