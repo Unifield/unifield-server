@@ -107376,10 +107376,16 @@ msgid "Functional total cost :"
 msgstr "Total Coût Fonctionnel :"
 
 #. module: msf_partner
-#: code:addons/msf_partner/partner.py:706
+#: code:addons/msf_partner/partner.py:680
 #, python-format
 msgid "Impossible to deactivate a partner used for a tax."
 msgstr "Impossible de désactiver un partenaire utilisé pour une taxe."
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:687
+#, python-format
+msgid "Impossible to deactivate a partner used in the tax line of an invoice."
+msgstr "Impossible de désactiver un partenaire utilisé dans la ligne de taxe d'une facture."
 
 #. module: account
 #: code:addons/account/account.py:1980
