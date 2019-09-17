@@ -1905,6 +1905,8 @@ class product_attributes(osv.osv):
                        prodlot_ids=False,
                        attribute_ids=False,
                        packaging=False,
+                       uf_create_date=False,
+                       uf_write_date=False
                        )
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
