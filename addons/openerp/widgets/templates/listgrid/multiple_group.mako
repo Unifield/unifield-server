@@ -205,28 +205,6 @@ elif selector:
       % endif
   </tr>
 
-  % if 'sequence' in map(lambda x: x[0], itertools.chain(headers,hiddens)):
-      <script type="text/javascript">
-          jQuery('[parent=${grp_row.get('group_by_id')}]').filter('tr.grid-row-group').draggable({
-              revert: 'invalid',
-              connectToSortable: 'tr.grid-row-group',
-              helper: function() {
-                 var htmlStr = jQuery(this).html();
-                 return jQuery('<table><tr class="ui-widget-header">'+htmlStr+'</tr></table>');
-              },
-              axis: 'y'
-          });
-
-          jQuery('[parent=${grp_row.get('group_by_id')}]').filter('tr.grid-row-group').droppable({
-              accept : 'tr.grid-row-group[parent=${grp_row.get('group_by_id')}]',
-              hoverClass: 'grid-rowdrop',
-              drop: function(ev, ui) {
-                      new ListView('${name}').groupbyDrag(ui.draggable, jQuery(this), '${name}');
-              }
-          });
-      </script>
-  % endif
-
 
   % endfor
 % endfor

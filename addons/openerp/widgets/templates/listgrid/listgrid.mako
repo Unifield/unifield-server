@@ -422,27 +422,6 @@ if (auto_field && auto_field.val()){
                             </tfoot>
                         % endif
                     </table>
-                    % if data and 'sequence' in map(lambda x: x[0], itertools.chain(headers,hiddens)) and resequencable:
-                        <script type="text/javascript">
-                            // flag is used to check sorting is active or not //
-                            var is_column_sorted = "${'_terp_sort_key' in cherrypy.request.params.keys()}";
-                            if (is_column_sorted == 'False') {
-                                jQuery('#${name} tr.grid-row').closest('tbody').sortable({
-                                    axis: 'y',
-                                    helper: 'clone',
-                                    dropOnEmpty: false,
-                                    items: '> tr.grid-row[record][record!=-1]',
-                                    stop: function (e, $ui) {
-                                        new ListView('${name}').dragRow(
-                                            $ui.item.attr('record'),
-                                            $ui.item.prevAll().length);
-                                    }
-                                }).bind('mousedown.ui-disableSelection selectstart.ui-disableSelection', function(event) {
-                                    event.stopImmediatePropagation();
-                                }).disableSelection();
-                            }
-                        </script>
-                    % endif
                     % if editors:
                         <script type="text/javascript">
                             /* In editable grid, clicking on empty row will create new and on existing row will edit. */
