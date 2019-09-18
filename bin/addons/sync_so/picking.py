@@ -126,57 +126,20 @@ class stock_picking(osv.osv):
         # UF-1617: Handle batch and asset object
         batch_id = False
         batch_values = data['prodlot_id']
+        expired_date = False
         if batch_values and product_id:
-            # us-838: WORK IN PROGRESS ..................................
-            # US-838: check first if this product is EP-only? if yes, treat differently, here we treat only for BN
             prodlot_obj = self.pool.get('stock.production.lot')
-            prod = prod_obj.browse(cr, uid,product_id,context=context)
+            prod = prod_obj.browse(cr, uid, product_id, context=context)
 
-            '''
-            US-838: The following block is for treating the sync message in pipeline!
-            If the sync message was made with old message rule, then in the message it contains ONLY the xmlid of the batch, NO life_date.
-            For this case, we have to retrieve the batch name from this xmlid, by using the double product_code in the search.
-            From this batch name + product_id, we can find the batch object in the system. There should only be one batch name for the same product 
-            since the migration has already done, which merged all dup batch name into one.
-
-            The old sync message has the following xmlid format: sd.batch_numer_se_HQ1C1_DORADIDA15T_DORADIDA15T_MSFBN/000005
-            '''
-            xmlid = batch_values['id']
-            if 'life_date' not in batch_values and 'batch_numer' in xmlid: # it must have the 'batch_numer' as prefix
-                prod_code = "_" + prod.default_code + "_" + prod.default_code + "_" # This is how the old xmlid has been made: using double prod.default_code
-                len_code = xmlid.find(prod_code)
-                batch_name = 'batch_not_found'
-                if len_code != -1:
-                    indexOfProdCode = len_code  + len(prod_code)
-                    batch_name = xmlid[indexOfProdCode:]
-                else: # US-1449+1435, if the product code is not found in this batch number xmlid value, then try to find another way
-                    bn_id = xmlid.rfind('_', 0, len(xmlid))
-                    if bn_id != -1:
-                        batch_name = xmlid[bn_id + 1:]
-
-                existing_bn = prodlot_obj.search(cr, uid, [('name', '=', batch_name), ('product_id', '=', product_id)], context=context)
-                if existing_bn:
-                    batch_id = existing_bn[0]
-            else:
-                if prod.perishable and not prod.batch_management:
-                    # In case it's a EP only product, then search for date and product, no need to search for batch name
-                    if 'life_date' in batch_values:
-                        # If name exists in the sync message, search by name and product, not by xmlid
-                        life_date = batch_values['life_date']
-                        # US-838: use different way to retrieve the EP object
-                        batch_id = prodlot_obj._get_prodlot_from_expiry_date(cr, uid, life_date, product_id, context=context)
-                        if not batch_id:
-                            raise Exception, "Error while retrieving or creating the expiry date %s for the product %s" % (batch_values, prod.name)
-                else:
-                    # US-838: for BN, retrieve it or create it, in the follwing method
-                    batch_id, msg = self.retrieve_batch_number(cr, uid, product_id, batch_values, context) # return False if the batch object is not found, or cannot be created
-
-            ################## TODO: Treat the case for Remote Warehouse: WORK IN PROGRESS BELOW!!!!!!!!!!
-
-            if not batch_id:
-                raise Exception, "Batch Number %s not found for this sync data record" % batch_values
-
-        expired_date = data['expired_date']
+            if prod.perishable and not prod.batch_management and batch_values.get('life_date'):
+                # In case it's a ED only product, then search for date and product, no need to search for batch name
+                batch_id = prodlot_obj._get_prodlot_from_expiry_date(cr, uid, batch_values['life_date'], product_id, context=context)
+                expired_date = data['expired_date']
+            elif prod.perishable and prod.batch_management and batch_values.get('name') and batch_values.get('life_date'):
+                # TODO: if ED on sender batch values contains an internal name MSFBN ? create a real name ?
+                # US-838: for BN, retrieve it or create it, in the follwing method
+                batch_id, msg = self.retrieve_batch_number(cr, uid, product_id, batch_values, context) # return False if the batch object is not found, or cannot be created
+                expired_date = data['expired_date']
 
         # UTP-872: Add also the state into the move line, but if it is done, then change it to assigned (available)
         state = data['state']
