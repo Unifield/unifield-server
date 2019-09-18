@@ -2588,7 +2588,6 @@ class purchase_order(osv.osv):
             ], context=context)
 
             to_update = {}
-            to_updateBis = {}
 
             for pol in pol_obj.browse(cr, uid, pol_ids, context=context):
                 # Check only products with defined SoQ quantity
@@ -2600,17 +2599,17 @@ class purchase_order(osv.osv):
                     continue
 
                 min_qty = 0
-                soq_tmp = 0
+                soq_rounding = 0
                 soq_PU = 0
-                soq_cat = 0
-
+                stop = False
 
                 if sup_ids:
                     for sup in sup_obj.browse(cr, uid, sup_ids, context=context):
-                        t_MinQty_Price = {}
+
+                        t_minqty_price = {}
                         # fill the dictionary
                         for pcl in sup.pricelist_ids:
-                            t_MinQty_Price[pcl.min_quantity] = pcl.price
+                            t_minqty_price[pcl.min_quantity] = pcl.price
 
                         for pcl in sup.pricelist_ids:
 
@@ -2624,46 +2623,34 @@ class purchase_order(osv.osv):
                                     line_qty = pol.product_qty
 
                                 if pcl.min_quantity == line_qty:
-                                    if soq_cat != -1:
-                                        soq_cat = pcl.rounding
-                                        soq_PU = pcl.price
-                                        min_qty = pcl.min_quantity
-                                    else:
-                                        break
-
-                                if pcl.min_quantity < line_qty:
-                                    soq_cat = pcl.rounding
+                                    soq_rounding = pcl.rounding
                                     soq_PU = pcl.price
                                     min_qty = pcl.min_quantity
+                                    break
+
+                                if pcl.min_quantity < line_qty:
+                                    soq_rounding = pcl.rounding
+                                    soq_PU = pcl.price
+                                    min_qty = pcl.min_quantity
+                                    stop = True
                                 else:
-                                    if soq_cat == 0:
-                                        soq_tmp = pcl.rounding
-                                        soq_cat = -1
+                                    if not stop:
+                                        soq_rounding = pcl.rounding
                                         soq_PU = pcl.price
                                         min_qty = pcl.min_quantity
-                                    else:
-                                        break
-
-                if soq_cat != 0:
-                    if soq_cat == -1:
-                        soq = soq_tmp
-                    else:
-                        soq = soq_cat
+                                        stop = True
+                                    break
 
                 # Get SoQ value (from product not supplier catalogue)
-                if soq == 0:
-                    soq = pol.product_id.soq_quantity
+                if soq_rounding == 0:
+                    soq_rounding = pol.product_id.soq_quantity
                     soq_uom = pol.product_id.uom_id
 
-                if not soq:
+                if not soq_rounding:
                     continue
 
-                if soq_tmp == 0:
-                    soq_tmp = soq
-
-                #Get line quantity in SoQ UoM
+                # Get line quantity in SoQ UoM
                 line_qty = pol.product_qty
-
 
                 if pol.product_uom.id != soq_uom.id:
                     line_qty = uom_obj._compute_qty_obj(cr, uid, pol.product_uom, pol.product_qty, soq_uom,
@@ -2673,44 +2660,34 @@ class purchase_order(osv.osv):
                     good_price = soq_PU
 
                 good_quantity = 0
-                #good_price = soq_PU
 
-                if line_qty % soq:
-                    good_quantity = (line_qty - (line_qty % soq)) + soq
+                if line_qty % soq_rounding:
+                    good_quantity = (line_qty - (line_qty % soq_rounding)) + soq_rounding
 
                 if good_quantity and pol.product_uom.id != soq_uom.id:
                     good_quantity = uom_obj._compute_qty_obj(cr, uid, soq_uom, good_quantity, pol.product_uom,
                                                              context=context)
 
-                if soq_cat < 0:
-                    if line_qty < min_qty:
-                        good_quantity = min_qty
-                    else:
-                        good_quantity = soq_tmp
+                if line_qty <= min_qty:
+                    good_quantity = min_qty
 
-                if t_MinQty_Price.has_key(good_quantity):
-                    good_price = t_MinQty_Price.get(good_quantity)
+                if t_minqty_price.has_key(good_quantity):
+                    good_price = t_minqty_price.get(good_quantity)
 
+                if good_quantity or good_price:
+                    to_update.setdefault(pol.id, [])
 
                 if good_quantity:
-                    to_update.setdefault(good_quantity, [])
-                    to_update[good_quantity].append(pol.id)
+                    to_update[pol.id].append(good_quantity)
 
                 if good_price:
-                    to_updateBis.setdefault(good_price, [])
-                    to_updateBis[good_price].append(pol.id)
+                    to_update[pol.id].append(good_price)
 
-
-            for qty, line_ids in to_update.iteritems():
+            for line_ids, data in to_update.iteritems():
                 pol_obj.write(cr, uid, line_ids, {
-                    'product_qty': qty,
+                    'product_qty': data[0],
+                    'price_unit': data[1],
                     'soq_updated': True,
-                }, context=context)
-
-            for pu, line_ids in to_updateBis.iteritems():
-                pol_obj.write(cr, uid, line_ids, {
-                    'price_unit': pu,
-                    'soq_updated' : True,
                 }, context=context)
 
         except Exception as e:
