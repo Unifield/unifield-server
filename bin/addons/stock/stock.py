@@ -155,24 +155,33 @@ class stock_location(osv.osv):
                         result[loc_id][f] += amount
         return result
 
+    def _get_loc_ids_to_hide(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        loc_to_hide = [
+            'msf_cross_docking_stock_location_input',
+            'stock_stock_location_stock',
+            'stock_stock_location_output',
+            'msf_outgoing_stock_location_packing',
+            'msf_outgoing_stock_location_dispatch',
+            'msf_outgoing_stock_location_distribution',
+        ]
+
+        data_domain = [('model', '=', 'stock.location'), ('name', 'in', loc_to_hide)]
+        if ids:
+            data_domain.append(('res_id', 'in', ids))
+        loc_ids_to_hide = self.pool.get('ir.model.data').search(cr, uid, data_domain, context=context)
+
+        return [x.get('res_id') for x in self.pool.get('ir.model.data').read(cr, uid, loc_ids_to_hide, ['res_id'], context=context)]
 
     def _get_initial_stock_inv_display(self, cr, uid, ids, name, args, context=None):
         if context is None:
             context = {}
 
         res = {}
-        loc_to_hide = [
-            'msf_cross_docking_stock_location_input',
-            'stock_stock_location_stock',
-            'stock_stock_location_output', 
-            'msf_outgoing_stock_location_packing',
-            'msf_outgoing_stock_location_dispatch',
-            'msf_outgoing_stock_location_distribution',
-        ]
 
-        loc_ids_to_hide = self.pool.get('ir.model.data').search(cr, uid, [('model', '=', 'stock.location'), ('res_id', 'in', ids), ('name', 'in', loc_to_hide), ], context=context)
-        loc_ids_to_hide = [x.get('res_id') for x in self.pool.get('ir.model.data').read(cr, uid, loc_ids_to_hide, ['res_id'], context=context)]
-
+        loc_ids_to_hide = self._get_loc_ids_to_hide(cr, uid, ids, context=context)
         for _id in ids:
             res[_id] = True 
             if _id in loc_ids_to_hide:
@@ -180,6 +189,14 @@ class stock_location(osv.osv):
 
         return res
 
+    def _search_initial_stock_inv_display(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns locations allowed in the Initial Stock Inventory
+        '''
+        if context is None:
+            context = {}
+
+        return [('id', 'not in', self._get_loc_ids_to_hide(cr, uid, [], context=context))]
 
     _columns = {
         'name': fields.char('Location Name', size=64, required=True, translate=True),
@@ -240,7 +257,7 @@ class stock_location(osv.osv):
         'scrap_location': fields.boolean('Scrap Location', help='Check this box to allow using this location to put scrapped/damaged goods.'),
         'valuation_in_account_id': fields.many2one('account.account', 'Stock Input Account',domain = [('type','=','other')], help='This account will be used to value stock moves that have this location as destination, instead of the stock output account from the product.'),
         'valuation_out_account_id': fields.many2one('account.account', 'Stock Output Account',domain = [('type','=','other')], help='This account will be used to value stock moves that have this location as source, instead of the stock input account from the product.'),
-        'initial_stock_inv_display': fields.function(_get_initial_stock_inv_display, method=True, type='boolean', store=True, string='Display in Initial stock inventory', readonly=True),
+        'initial_stock_inv_display': fields.function(_get_initial_stock_inv_display, method=True, type='boolean', store=False, fnct_search=_search_initial_stock_inv_display, string='Display in Initial stock inventory', readonly=True),
     }
     _defaults = {
         'active': True,
