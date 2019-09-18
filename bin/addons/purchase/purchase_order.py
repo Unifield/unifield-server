@@ -2590,8 +2590,6 @@ class purchase_order(osv.osv):
             to_update = {}
             to_updateBis = {}
 
-
-
             for pol in pol_obj.browse(cr, uid, pol_ids, context=context):
                 # Check only products with defined SoQ quantity
                 sup_ids = sup_obj.search(cr, uid, [
@@ -2606,43 +2604,45 @@ class purchase_order(osv.osv):
                 soq_PU = 0
                 soq_cat = 0
 
+
                 if sup_ids:
                     for sup in sup_obj.browse(cr, uid, sup_ids, context=context):
                         t_MinQty_Price = {}
+                        # fill the dictionary
                         for pcl in sup.pricelist_ids:
                             t_MinQty_Price[pcl.min_quantity] = pcl.price
-
 
                         for pcl in sup.pricelist_ids:
 
                             if pcl.rounding:
-                                if pcl.min_quantity == pol.product_qty:
+
+                                soq_uom = pcl.uom_id
+
+                                if pol.product_uom.id != soq_uom.id:
+                                    line_qty = uom_obj._compute_qty_obj(cr, uid, pol.product_uom, pol.product_qty, soq_uom,context=context)
+                                else:
+                                    line_qty = pol.product_qty
+
+                                if pcl.min_quantity == line_qty:
                                     if soq_cat != -1:
                                         soq_cat = pcl.rounding
-                                        soq_uom = pcl.uom_id
                                         soq_PU = pcl.price
                                         min_qty = pcl.min_quantity
                                     else:
                                         break
 
-                                if pcl.min_quantity < pol.product_qty:
+                                if pcl.min_quantity < line_qty:
                                     soq_cat = pcl.rounding
-                                    soq_uom = pcl.uom_id
                                     soq_PU = pcl.price
                                     min_qty = pcl.min_quantity
-
                                 else:
                                     if soq_cat == 0:
                                         soq_tmp = pcl.rounding
-                                        soq_uom = pcl.uom_id
-                                        min_qty = pcl.min_quantity
-                                        soq_PU = pcl.price
-
                                         soq_cat = -1
-
+                                        soq_PU = pcl.price
+                                        min_qty = pcl.min_quantity
                                     else:
                                         break
-
 
                 if soq_cat != 0:
                     if soq_cat == -1:
@@ -2650,7 +2650,7 @@ class purchase_order(osv.osv):
                     else:
                         soq = soq_cat
 
-                # Get SoQ value (from product not catalogue)
+                # Get SoQ value (from product not supplier catalogue)
                 if soq == 0:
                     soq = pol.product_id.soq_quantity
                     soq_uom = pol.product_id.uom_id
@@ -2661,14 +2661,19 @@ class purchase_order(osv.osv):
                 if soq_tmp == 0:
                     soq_tmp = soq
 
-                # Get line quantity in SoQ UoM
+                #Get line quantity in SoQ UoM
                 line_qty = pol.product_qty
+
+
                 if pol.product_uom.id != soq_uom.id:
                     line_qty = uom_obj._compute_qty_obj(cr, uid, pol.product_uom, pol.product_qty, soq_uom,
                                                         context=context)
+                    good_price = soq_PU * pol.product_uom.factor_inv
+                else:
+                    good_price = soq_PU
 
                 good_quantity = 0
-                good_price = soq_PU
+                #good_price = soq_PU
 
                 if line_qty % soq:
                     good_quantity = (line_qty - (line_qty % soq)) + soq
