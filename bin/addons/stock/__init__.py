@@ -19,7 +19,9 @@
 #
 ##############################################################################
 
-from stock import *
+import stock
+import stock_move
+import stock_inventory
 import partner
 import product
 import physical_inventory
