@@ -2017,7 +2017,6 @@ class stock_move(osv.osv):
         '''
         Get the requestor_location_id in case of IR to update the location_dest_id of each move
         '''
-        location_dest_id = super(stock_move, self)._get_location_for_internal_request(cr, uid, context=context, **kwargs)
         move = kwargs['move']
         linked_sol = move.purchase_line_id.linked_sol_id or False
         if linked_sol and linked_sol.order_id.procurement_request and linked_sol.order_id.location_requestor_id.usage != 'customer':
