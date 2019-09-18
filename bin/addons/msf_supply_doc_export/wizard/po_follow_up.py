@@ -254,6 +254,7 @@ class po_follow_up(osv.osv_memory):
             'supplier': '',
             'pending_only_ok': wiz.pending_only_ok,
             'include_notes_ok': wiz.include_notes_ok,
+            'export_format': wiz.export_format,
         }
 
         # PO number
