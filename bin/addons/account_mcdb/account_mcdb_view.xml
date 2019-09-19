@@ -371,8 +371,11 @@
             <field name="priority" eval="17"/>
             <field name="arch" type="xml">
                 <search string="Selector">
+                    <filter name="user_active" icon="terp-check" string="Active Users" domain="[('user.active', '=', True)]" />
+                    <newline/>
                     <field name="description" select="1"/>
-                    <field name="user" select="1"/>
+                    <!-- TODO: instead of domain use something like context="{'active_test': ????}" -->
+                    <field name="user" select="1" domain="[('active', 'in', ['t', 'f'])]"/>
                     <field name="hq_template" />
                 </search>
             </field>

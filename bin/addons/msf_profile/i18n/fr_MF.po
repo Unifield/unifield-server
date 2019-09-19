@@ -107372,3 +107372,8 @@ msgstr "Date d'Expédition"
 #: report:purchase.order.merged:0
 msgid "Functional total cost :"
 msgstr "Total Coût Fonctionnel :"
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+msgid "Active Users"
+msgstr "Utilisateurs Actifs"
