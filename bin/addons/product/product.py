@@ -616,15 +616,23 @@ class product_product(osv.osv):
 
         obj_data = self.pool.get('ir.model.data')
         instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
-        prod_creator_id = False
+        prod_creator_id = []
         for arg in args:
             if arg[0] == 'expected_prod_creator':
                 if instance_level == 'section':
-                    prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
+                    if arg[2] == 'bned':
+                        # ITC, ESC, HQ, Local, ED
+                        prod_creator_id.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_1')[1])
+                        prod_creator_id.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_2')[1])
+                        prod_creator_id.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1])
+                        prod_creator_id.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1])
+                        prod_creator_id.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1])
+                    else:
+                        prod_creator_id = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]]
                 elif instance_level == 'coordo':
-                    prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+                    prod_creator_id = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]]
 
-        return [('international_status', '=', prod_creator_id)]
+        return [('international_status', 'in', prod_creator_id)]
 
     _defaults = {
         'active': lambda *a: 1,

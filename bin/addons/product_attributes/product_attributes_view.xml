@@ -477,6 +477,7 @@
                    <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
                    <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
                    <filter string="Asset" icon="terp-accessories-archiver" domain="[('subtype','=','asset')]"/>
+                   <field name="batch_attributes" />
                    <newline/>
                    <group expand="0" string="Extended Filters..." />
                    <newline/>

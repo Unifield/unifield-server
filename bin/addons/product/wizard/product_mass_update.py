@@ -39,14 +39,13 @@ class product_mass_update(osv.osv):
     _columns = {
         'name': fields.char(size=64, string='Update Reference'),
         'state': fields.selection(selection=[('draft', 'Draft'), ('in_progress', 'In Progress'), ('error', 'Error'), ('done', 'Done')], string='Status', readonly=True),
-        'date_done': fields.datetime(string='Date of the update'),
+        'date_done': fields.datetime(string='Date of the update', readonly=True),
         'user_id': fields.many2one('res.users', string='User who Updated', readonly=True),
         'import_in_progress': fields.boolean(string='Import in progress'),
         'percent_completed': fields.function(_get_percent_completed, method=True, string='% completed', type='integer', readonly=True),
         'message': fields.text(string='Message', readonly=True),
         'product_ids': fields.many2many('product.product', 'prod_mass_update_product_rel', 'product_id',
-                                        'prod_mass_update_id', string="Product selection", order_by="default_code",
-                                        domain=[('expected_prod_creator', '=', 'True'), '|', ('active', '=', True), ('active', '=', False)]),
+                                        'prod_mass_update_id', string="Product selection", order_by="default_code"),
         'not_deactivated_product_ids': fields.one2many('product.mass.update.errors', 'p_mass_upd_id',
                                                        string="Product(s) that can not be deactivated"),
         'has_not_deactivable': fields.boolean(string='Document has non-deactivable product(s)', readonly=True),
@@ -75,8 +74,7 @@ class product_mass_update(osv.osv):
         'empty_status': fields.boolean(string='Set Status as empty'),
         'empty_inc_account': fields.boolean(string='Set Income Account as empty'),
         'empty_exp_account': fields.boolean(string='Set Expense Account as empty'),
-        'type_of_ed_bn': fields.selection([('no_bn_no_ed', 'No BN/No ED'), ('bn', 'BN+ED'), ('ed', 'ED Only')], string='Type of change'),
-        'date_of_change': fields.datetime('Date of change', readonly=1),
+        'type_of_ed_bn': fields.selection([('no_bn_no_ed', 'No BN/No ED'), ('bn', 'BN+ED'), ('ed', 'ED Only')], string='Target Attributes'),
         'product_history_ids': fields.one2many('product.ed_bn.mass.update.history', 'p_mass_upd_id', 'History'),
     }
 
@@ -93,7 +91,6 @@ class product_mass_update(osv.osv):
         'sterilized': '',
         'supply_method': '',
         'type_of_ed_bn': False,
-        'date_of_change': False,
     }
 
     def write(self, cr, user, ids, vals, context=None):
@@ -376,17 +373,27 @@ class product_mass_update(osv.osv):
     def change_bn_ed(self, cr, uid, ids, context=None):
         prod_obj = self.pool.get('product.product')
         history_obj = self.pool.get('product.ed_bn.mass.update.history')
+        real_user = hasattr(uid, 'realUid') and uid.realUid or uid
+
         for _id in ids:
-            real_user = hasattr(uid, 'realUid') and uid.realUid or uid
             wiz = self.browse(cr, uid, _id, context=context)
-            prod_ids = [x.id for x in wiz.product_ids]
+            prod_ids = prod_obj.search(cr, uid, [('id', 'in', [x.id for x in wiz.product_ids]), ('expected_prod_creator', '=', 'bned'), ('active', 'in', ['t', 'f'])], context=context)
             for x in prod_obj.search(cr, uid, [('id', 'in', prod_ids), ('perishable', '=', False), ('batch_management', '=', False)], context=context):
                 history_obj.create(cr, uid, {'product_id': x, 'p_mass_upd_id': _id, 'old_bn': False, 'old_ed': False}, context=context)
+
             for x in prod_obj.search(cr, uid, [('id', 'in', prod_ids), ('perishable', '=', True), ('batch_management', '=', False)], context=context):
                 history_obj.create(cr, uid, {'product_id': x, 'p_mass_upd_id': _id, 'old_bn': False, 'old_ed': True}, context=context)
+
             for x in prod_obj.search(cr, uid, [('id', 'in', prod_ids), ('perishable', '=', True), ('batch_management', '=', True)], context=context):
                 history_obj.create(cr, uid, {'product_id': x, 'p_mass_upd_id': _id, 'old_bn': True, 'old_ed': True}, context=context)
-            self.write(cr, uid, _id, {'state': 'done', 'date_of_change': time.strftime('%Y-%m-%d %H:%M:%S'), 'user_id': real_user}, context=context)
+
+            if wiz.type_of_ed_bn == 'no_bn_no_ed':
+                prod_obj.set_as_nobn_noed(cr, uid, prod_ids, context=context)
+            elif wiz.type_of_ed_bn == 'bn':
+                prod_obj.set_as_bned(cr, uid, prod_ids, context=context)
+            elif wiz.type_of_ed_bn == 'ed':
+                prod_obj.set_as_edonly(cr, uid, prod_ids, context=context)
+            self.write(cr, uid, _id, {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S'), 'user_id': real_user}, context=context)
         return True
 
 

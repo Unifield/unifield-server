@@ -75,14 +75,22 @@ class wizard_import_product_line(osv.osv_memory):
 
         # Get the expected product creator id
         instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
-        prod_creator_id = False
-        if instance_level == 'section':
-            prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
-        elif instance_level == 'coordo':
-            prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
 
         for wiz_browse in self.browse(cr, uid, ids, context):
             p_mass_upd_id = wiz_browse.product_mass_upd_id.id
+            prod_creator_id = []
+            if instance_level == 'section':
+                if wiz_browse.product_mass_upd_id.type_of_ed_bn:
+                    prod_creator_id = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_1')[1]]
+                    prod_creator_id.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_2')[1])
+                    prod_creator_id.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1])
+                    prod_creator_id.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1])
+                    prod_creator_id.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1])
+
+                else:
+                    prod_creator_id = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]]
+            elif instance_level == 'coordo':
+                prod_creator_id = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]]
             try:
                 product_ids = [prod.id for prod in wiz_browse.product_mass_upd_id.product_ids]
 
@@ -160,12 +168,16 @@ class wizard_import_product_line(osv.osv_memory):
                                                                         ('active', 'in', ['t', 'f'])], context=context)
                                 if prod_ids and prod_ids[0] not in product_ids:
                                     prod = product_obj.browse(cr, uid, prod_ids[0], fields_to_fetch=['international_status'], context=context)
-                                    if prod_creator_id and prod.international_status.id == prod_creator_id:
+                                    if prod_creator_id and prod.international_status.id in prod_creator_id:
                                         product_ids.append(prod.id)
                                     else:
                                         if instance_level == 'section':
-                                            error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "HQ". ')
-                                                                   % (row[0].data,))
+                                            if wiz_browse.product_mass_upd_id.type_of_ed_bn:
+                                                error_list_line.append(_('Product %s doesn\'t have the expected Product Creator. ')
+                                                                       % (row[0].data,))
+                                            else:
+                                                error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "HQ". ')
+                                                                       % (row[0].data,))
                                         elif instance_level == 'coordo':
                                             error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "Local". ')
                                                                    % (row[0].data,))
