@@ -1922,6 +1922,112 @@ class product_attributes(osv.osv):
                 res.update({'warning': {'title': 'Warning', 'message':'The Code already exists'}})
         return res
 
+    fake_ed = '2999-12-31'
+    fake_bn = 'TO-BE-REPLACED'
+
+    def _update_bn_id_on_fk(self, cr, new_id, old_ids):
+        # get all fk
+        cr.execute("""
+            SELECT tc.table_name, kcu.column_name, ref.delete_rule
+            FROM information_schema.table_constraints AS tc
+                JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name
+                JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = tc.constraint_name
+                JOIN information_schema.referential_constraints AS ref ON ref.constraint_name = tc.constraint_name
+            WHERE
+                tc.constraint_type = 'FOREIGN KEY' AND
+                ccu.table_name='stock_production_lot' AND
+                ccu.column_name='id'
+        """)
+
+        # following records have on delete casace and we want to delete them
+        ignore = [ 'stock_production_lot_revision.lot_id', 'unconsistent_stock_report_line.prodlot_id']
+
+        for table, column, const_type in cr.fetchall():
+            if '%s.%s' % (table, column) in ignore:
+                continue
+            cr.execute("update "+table+" set "+column+"=%s where "+column+" in %s", (new_id, tuple(old_ids))) # not_a_user_entry
+
+        return True
+
+    def switch_bn_to_no(self, cr, uid, ids, context=None):
+        # i
+        prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', True), ('perishable', '=', True)], context=context)
+        if prod_to_change:
+            self.write(cr, uid, prod_to_change, {'perishable': False, 'batch_management': False}, context=context)
+            cr.execute("update stock_move set prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(prod_to_change), ))
+            cr.execute("delete from stock_production_lot where product_id in %s", (tuple(prod_to_change), ))
+        return True
+
+    def switch_no_to_bn(self, cr, uid, ids, context=None):
+        # ii
+        lot_obj = self.pool.get('stock.production.lot')
+        prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', False)], context=context)
+        self.write(cr, uid, prod_to_change, {'perishable': True, 'batch_management': True}, context=context)
+        for prod_id in prod_to_change:
+            batch_id = lot_obj._get_or_create_lot(cr, uid, name=self.fake_bn, expiry_date=self.fake_ed, product_id=prod_id, context=context)
+            cr.execute("update stock_move set prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel', 'assigned')", (batch_id, self.fake_ed, prod_id))
+        return len(prod_to_change)
+
+    def switch_ed_to_no(self, cr, uid, ids, context=None):
+        # iii
+        prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', True)], context=context)
+        if prod_to_change:
+            self.write(cr, uid, prod_to_change, {'perishable': False}, context=context)
+            cr.execute("update stock_move set prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(prod_to_change), ))
+            cr.execute("delete from stock_production_lot where product_id in %s", (tuple(prod_to_change), ))
+        return len(prod_to_change)
+
+    def switch_bn_to_ed(self, cr, uid, ids, context=None):
+        # iv
+
+        prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', True), ('perishable', '=', True)], context=context)
+        if prod_to_change:
+            self.write(cr, uid, prod_to_change, {'batch_management': False}, context=context)
+            # check if we should merge lot: i.e P1 BN1 EDA / P1 BN2 EDA : same EDA BN1+BN2 must be merged
+            cr.execute("select min(id), array_agg(id) from stock_production_lot where product_id in %s group by product_id, life_date having count(*)>1", (tuple(prod_to_change),))
+            for to_merge in cr.fetchall():
+                to_keep = to_merge[0]
+                merged = to_merge[1]
+                merged.remove(to_keep)
+                cr.execute("update stock_move set prodlot_id=%s, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id in %s",  (to_keep, tuple(merged)))
+                self._update_bn_id_on_fk(cr, to_keep, merged)
+                cr.execute("delete from stock_production_lot where id in %s", (tuple(merged), ))
+            cr.execute("update stock_production_lot set type='internal' where type='standard' and product_id in %s", (tuple(prod_to_change),))
+        return len(prod_to_change)
+
+    def switch_no_to_ed(self, cr, uid, ids, context=None):
+        # vi
+        lot_obj = self.pool.get('stock.production.lot')
+        prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', False)], context=context)
+        self.write(cr, uid, prod_to_change, {'perishable': True}, context=context)
+        for prod_id in prod_to_change:
+            batch_id = lot_obj._get_or_create_lot(cr, uid, name=False, expiry_date=self.fake_ed, product_id=prod_id, context=context)
+            cr.execute("update stock_move set prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel', 'assigned')", (batch_id, self.fake_ed, prod_id))
+        return len(prod_to_change)
+
+    def switch_ed_to_bn(self, cr, uid, ids, context=None):
+        # v
+        prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', True)], context=context)
+        self.write(cr, uid, prod_to_change, {'batch_management': True}, context=context)
+        if prod_to_change:
+            cr.execute("update stock_production_lot set type='standard' where product_id in %s", (tuple(prod_to_change), ))
+        return len(prod_to_change)
+
+    def set_as_edonly(self, cr, uid, ids, context=None):
+        nb = self.switch_no_to_ed(cr, uid, ids, context)
+        nb += self.switch_bn_to_ed(cr, uid, ids, context)
+        return nb
+
+    def set_as_bned(self, cr, uid, ids, context=None):
+        nb = self.switch_no_to_bn(cr, uid, ids, context)
+        nb += self.switch_ed_to_bn(cr, uid, ids, context)
+        return nb
+
+    def set_as_nobn_noed(self, cr, uid, ids, context=None):
+        nb = self.switch_ed_to_no(cr, uid, ids, context)
+        nb += self.switch_bn_to_no(cr, uid, ids, context)
+        return nb
+
     _constraints = [
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])
     ]

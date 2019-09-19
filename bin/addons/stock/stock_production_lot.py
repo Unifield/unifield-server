@@ -21,7 +21,6 @@ class stock_production_lot(osv.osv):
 
         reads = self.read(cr, uid, ids, ['name', 'prefix', 'ref', 'life_date'], context)
         res = []
-        # TODO replace by _get_format in uf-651
         if context.get('with_expiry'):
             user_obj = self.pool.get('res.users')
             lang_obj = self.pool.get('res.lang')
@@ -506,6 +505,36 @@ class stock_production_lot(osv.osv):
             'revisions': [],
         })
         return super(stock_production_lot, self).copy_data(cr, uid, id, default, context=context)
+
+    def _get_or_create_lot(self, cr, uid, name, expiry_date, product_id, context=None):
+        dom = [
+            ('life_date', '=', expiry_date),
+            ('product_id', '=', product_id),
+        ]
+        if not name:
+            dom += [('type', '=', 'internal')]
+        else:
+            dom += [
+                ('type', '=', 'standard'),
+                ('name', '=', name)
+            ]
+
+        lot_ids = self.search(cr, uid, dom, context=context)
+        if lot_ids:
+            return lot_ids[0]
+
+        vals = {
+            'product_id': product_id,
+            'life_date': expiry_date,
+        }
+        if not name:
+            vals['type'] = 'internal'
+            vals['name'] = self.pool.get('ir.sequence').get(cr, uid, 'stock.lot.serial')
+        else:
+            vals['type'] = 'standard'
+            vals['name'] = name
+
+        return self.create(cr, uid, vals, context=context)
 
     def _get_prodlot_from_expiry_date(self, cr, uid, expiry_date, product_id, context=None):
         """
