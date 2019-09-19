@@ -377,6 +377,7 @@ class product_mass_update(osv.osv):
         prod_obj = self.pool.get('product.product')
         history_obj = self.pool.get('product.ed_bn.mass.update.history')
         for _id in ids:
+            real_user = hasattr(uid, 'realUid') and uid.realUid or uid
             wiz = self.browse(cr, uid, _id, context=context)
             prod_ids = [x.id for x in wiz.product_ids]
             for x in prod_obj.search(cr, uid, [('id', 'in', prod_ids), ('perishable', '=', False), ('batch_management', '=', False)], context=context):
@@ -385,7 +386,7 @@ class product_mass_update(osv.osv):
                 history_obj.create(cr, uid, {'product_id': x, 'p_mass_upd_id': _id, 'old_bn': False, 'old_ed': True}, context=context)
             for x in prod_obj.search(cr, uid, [('id', 'in', prod_ids), ('perishable', '=', True), ('batch_management', '=', True)], context=context):
                 history_obj.create(cr, uid, {'product_id': x, 'p_mass_upd_id': _id, 'old_bn': True, 'old_ed': True}, context=context)
-            self.write(cr, uid, _id, {'state': 'done'}, context=context)
+            self.write(cr, uid, _id, {'state': 'done', 'date_of_change': time.strftime('%Y-%m-%d %H:%M:%S'), 'user_id': real_user}, context=context)
         return True
 
 
