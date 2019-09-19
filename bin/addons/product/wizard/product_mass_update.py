@@ -75,6 +75,9 @@ class product_mass_update(osv.osv):
         'empty_status': fields.boolean(string='Set Status as empty'),
         'empty_inc_account': fields.boolean(string='Set Income Account as empty'),
         'empty_exp_account': fields.boolean(string='Set Expense Account as empty'),
+        'type_of_ed_bn': fields.selection([('no_bn_no_ed', 'No BN/No ED'), ('bn', 'BN+ED'), ('ed', 'ED Only')], string='Type of change'),
+        'date_of_change': fields.datetime('Date of change', readonly=1),
+        'product_history_ids': fields.one2many('product.ed_bn.mass.update.history', 'p_mass_upd_id', 'History'),
     }
 
     _defaults = {
@@ -89,6 +92,8 @@ class product_mass_update(osv.osv):
         'procure_method': '',
         'sterilized': '',
         'supply_method': '',
+        'type_of_ed_bn': False,
+        'date_of_change': False,
     }
 
     def write(self, cr, user, ids, vals, context=None):
@@ -129,6 +134,7 @@ class product_mass_update(osv.osv):
             'empty_status': False,
             'empty_inc_account': False,
             'empty_exp_account': False,
+            'product_history_ids': [],
         })
 
         return super(product_mass_update, self).copy(cr, uid, id, default=default, context=context)
@@ -367,6 +373,22 @@ class product_mass_update(osv.osv):
 
         return True
 
+    def change_bn_ed(self, cr, uid, ids, context=None):
+        prod_obj = self.pool.get('product.product')
+        history_obj = self.pool.get('product.ed_bn.mass.update.history')
+        for _id in ids:
+            wiz = self.browse(cr, uid, _id, context=context)
+            prod_ids = [x.id for x in wiz.product_ids]
+            for x in prod_obj.search(cr, uid, [('id', 'in', prod_ids), ('perishable', '=', False), ('batch_management', '=', False)], context=context):
+                history_obj.create(cr, uid, {'product_id': x, 'p_mass_upd_id': _id, 'old_bn': False, 'old_ed': False}, context=context)
+            for x in prod_obj.search(cr, uid, [('id', 'in', prod_ids), ('perishable', '=', True), ('batch_management', '=', False)], context=context):
+                history_obj.create(cr, uid, {'product_id': x, 'p_mass_upd_id': _id, 'old_bn': False, 'old_ed': True}, context=context)
+            for x in prod_obj.search(cr, uid, [('id', 'in', prod_ids), ('perishable', '=', True), ('batch_management', '=', True)], context=context):
+                history_obj.create(cr, uid, {'product_id': x, 'p_mass_upd_id': _id, 'old_bn': True, 'old_ed': True}, context=context)
+            self.write(cr, uid, _id, {'state': 'done'}, context=context)
+        return True
+
+
     def wizard_import_products(self, cr, uid, ids, context=None):
         '''
         Launches the wizard to import lines from a file
@@ -449,3 +471,16 @@ class product_mass_update_errors(osv.osv):
 
 
 product_mass_update_errors()
+
+class product_ed_bn_mass_update_history(osv.osv):
+    _name = 'product.ed_bn.mass.update.history'
+    _description = 'List of change'
+
+    _columns = {
+        'product_id': fields.many2one('product.product', string='Product', required=True),
+        'p_mass_upd_id': fields.many2one('product.mass.update', 'Product Mass Update', ondelete='cascade'),
+        'old_bn': fields.boolean('Old BN'),
+        'old_ed': fields.boolean('Old ED'),
+    }
+
+product_ed_bn_mass_update_history()
