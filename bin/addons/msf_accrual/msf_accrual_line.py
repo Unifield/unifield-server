@@ -23,6 +23,8 @@ from osv import fields, osv
 from tools.translate import _
 import datetime
 from dateutil.relativedelta import relativedelta
+from base import currency_date
+
 
 class msf_accrual_line(osv.osv):
     _name = 'msf.accrual.line'
@@ -38,7 +40,9 @@ class msf_accrual_line(osv.osv):
     def _get_functional_amount(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         for accrual_line in self.browse(cr, uid, ids, context=context):
-            date_context = {'date': accrual_line.date}
+            # TODO: TEST JN
+            curr_date = currency_date.get_date(self, cr, accrual_line.document_date, accrual_line.date)
+            date_context = {'currency_date': curr_date}
             res[accrual_line.id] =  self.pool.get('res.currency').compute(cr,
                                                                           uid,
                                                                           accrual_line.currency_id.id,

@@ -23,9 +23,11 @@ from osv import osv
 from osv import fields
 from lxml import etree
 from tools.translate import _
+from base import currency_date
 import decimal_precision as dp
 from time import strftime
 import logging
+
 
 class account_analytic_line(osv.osv):
     _name = "account.analytic.line"
@@ -312,7 +314,7 @@ class account_analytic_line(osv.osv):
     def reverse(self, cr, uid, ids, posting_date=None, context=None):
         """
         Reverse an analytic line:
-         - keep date as source_date
+         - use as source_date the original one if any, or the doc/posting date depending on the OC
          - mark this line as reversal
         """
         if context is None:
@@ -334,11 +336,13 @@ class account_analytic_line(osv.osv):
             period_id_dec_hq_entry = context['period_id_for_dec_hq_entries']
         res = []
         for al in self.browse(cr, uid, ids, context=context):
+            # TODO: TEST JN
+            curr_date = currency_date.get_date(self, cr, al.document_date, al.date, source_date=al.source_date)
             vals = {
                 'name': self.join_without_redundancy(al.name, 'REV'),
                 'amount': al.amount * -1,
                 'date': posting_date,
-                'source_date': al.source_date or al.date,
+                'source_date': curr_date,
                 'reversal_origin': al.id,
                 'amount_currency': al.amount_currency * -1,
                 'currency_id': al.currency_id.id,
