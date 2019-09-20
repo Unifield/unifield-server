@@ -102,13 +102,13 @@
 <ss:Worksheet ss:Name="${_('Product BN/ED Mass Update Report')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Product code
-        <Column ss:AutoFitWidth="1" ss:Width="130.00" />
+        <Column ss:AutoFitWidth="1" ss:Width="135.00" />
         ## Product Description
         <Column ss:AutoFitWidth="1" ss:Width="275.00" />
         ## Old BN
-        <Column ss:AutoFitWidth="1" ss:Width="50.00" />
+        <Column ss:AutoFitWidth="1" ss:Width="60.00" />
         ## Old ED
-        <Column ss:AutoFitWidth="1" ss:Width="50.00" />
+        <Column ss:AutoFitWidth="1" ss:Width="60.00" />
 
         <Row ss:Height="18">
             <Cell ss:StyleID="big_header" ss:MergeAcross="1"><Data ss:Type="String">${_('PRODUCT BN/ED MASS UPDATE REPORT')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
