@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="product_ed_bn_mass_update_export_xls"
+            string="Product BN/ED Mass Update Excel Export"
+            model="product.mass.update"
+            name="product_ed_bn_mass_update_export_xls"
+            rml="product/report/product_ed_bn_mass_update_export_xls.mako"
+            header="False"
+            auto="False"
+            menu="True"
+            view_ids="view_product_bn_ed_mass_update_tree,view_product_bn_ed_mass_update_form"
+        />
+    </data>
+</openerp>
