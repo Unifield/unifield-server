@@ -197,9 +197,10 @@ class account_move_line(osv.osv):
 
                     dl_total_amount_rounded = 0.
                     for distrib_line in distrib_lines:
+                        # TODO: TEST JN
                         curr_date = currency_date.get_date(self, cr, obj_line.get('document_date', False),
-                                                           obj_line.get('date', False), obj_line.get('source_date', False))
-                        context.update({'date': curr_date})
+                                                           obj_line.get('date', False), source_date=obj_line.get('source_date', False))
+                        context.update({'currency_date': curr_date})
                         anal_amount = distrib_line.percentage*amount/100
                         anal_amount_rounded = round(anal_amount, 2)
                         dl_total_amount_rounded += anal_amount_rounded

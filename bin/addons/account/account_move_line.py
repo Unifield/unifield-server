@@ -25,9 +25,11 @@ from operator import itemgetter
 
 from osv import fields, osv
 from tools.translate import _
+from base import currency_date
 import decimal_precision as dp
 import tools
 import netsvc
+
 
 class account_move_line(osv.osv):
     _name = "account.move.line"
@@ -188,7 +190,9 @@ class account_move_line(osv.osv):
                         move_line_total += payment_line.amount_currency
                     else:
                         if move_line.currency_id:
-                            context_unreconciled.update({'date': payment_line.date})
+                            # TODO: TEST JN
+                            curr_date = currency_date.get_date(self, cr, payment_line.document_date, payment_line.date)
+                            context_unreconciled.update({'currency_date': curr_date})
                             amount_in_foreign_currency = cur_obj.compute(cr, uid, move_line.company_id.currency_id.id, move_line.currency_id.id, (payment_line.debit - payment_line.credit), round=False, context=context_unreconciled)
                             move_line_total += amount_in_foreign_currency
                         else:
@@ -1335,8 +1339,10 @@ class account_move_line(osv.osv):
             if account.currency_id and 'amount_currency' not in vals and account.currency_id.id != account.company_id.currency_id.id:
                 vals['currency_id'] = account.currency_id.id
                 ctx = {}
-                if 'date' in vals:
-                    ctx['date'] = vals['date']
+                # TODO: TEST JN
+                curr_date = currency_date.get_date(self, cr, vals.get('document_date'), vals.get('date'))
+                if curr_date:
+                    ctx['currency_date'] = curr_date
                 vals['amount_currency'] = cur_obj.compute(cr, uid, account.company_id.currency_id.id,
                                                           account.currency_id.id, vals.get('debit', 0.0)-vals.get('credit', 0.0), context=ctx)
         if not ok:

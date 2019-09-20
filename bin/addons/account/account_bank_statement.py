@@ -23,7 +23,9 @@ import time
 
 from osv import fields, osv
 from tools.translate import _
+from base import currency_date
 import decimal_precision as dp
+
 
 class account_bank_statement(osv.osv):
 
@@ -209,7 +211,9 @@ class account_bank_statement(osv.osv):
         st_line = account_bank_statement_line_obj.browse(cr, uid, st_line_id, context=context)
         st = st_line.statement_id
 
-        context.update({'date': st_line.date})
+        # TODO: TEST JN
+        curr_date = currency_date.get_date(self, cr, st_line.document_date, st_line.date)
+        context.update({'currency_date': curr_date})
 
         move_id = account_move_obj.create(cr, uid, {
             'journal_id': st.journal_id.id,
