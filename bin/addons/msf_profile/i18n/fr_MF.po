@@ -16739,6 +16739,8 @@ msgstr "%s update%s"
 #: selection:products.situation.report,perishable:0
 #: selection:products.situation.report,batch_management:0
 #: code:addons/stock_override/report/report_stock_move.py:747
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:160
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:161
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -25051,6 +25053,8 @@ msgstr "Europe/Bucharest"
 #: selection:products.situation.report,perishable:0
 #: selection:products.situation.report,batch_management:0
 #: code:addons/stock_override/report/report_stock_move.py:747
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:160
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:161
 #, python-format
 msgid "Yes"
 msgstr "Oui"
@@ -43808,6 +43812,7 @@ msgstr "Contient des Produits Dangereux"
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:233
 #: code:addons/stock_override/report/report_stock_move.py:759
 #: report:addons/stock/report/stock_delivery_report_xls.mako:216
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:143
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -76352,6 +76357,7 @@ msgstr "Sorte de Node"
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:234
 #: code:addons/stock_override/report/report_stock_move.py:759
 #: report:addons/stock/report/stock_delivery_report_xls.mako:217
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:144
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -103614,6 +103620,7 @@ msgstr "MàJ de Produits en Masse"
 
 #. module: product
 #: field:product.mass.update,date_done:0
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:125
 msgid "Date of the update"
 msgstr "Date de la mise à jour"
 
@@ -106322,6 +106329,7 @@ msgstr "Certains produits n'ont pas pu être désactivés. Aucun produit ne sera
 
 #. module: product
 #: field:product.mass.update,name:0
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:117
 msgid "Update Reference"
 msgstr "Référence de la MàJ"
 
@@ -106347,6 +106355,7 @@ msgstr "Une erreur est survenue lors de la mise à jour:\n"
 
 #. module: product
 #: field:product.mass.update,user_id:0
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:133
 msgid "User who Updated"
 msgstr "Utilisateur qui a Mis à Jour"
 
@@ -107372,3 +107381,35 @@ msgstr "Date d'Expédition"
 #: report:purchase.order.merged:0
 msgid "Functional total cost :"
 msgstr "Total Coût Fonctionnel :"
+
+#. module: product
+#: model:ir.actions.report.xml,name:product.product_ed_bn_mass_update_export_xls
+msgid "Product BN/ED Mass Update Excel Export"
+msgstr "Export Excel de la MàJ en Masse de Produits NL/EXP"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:114
+msgid "PRODUCT BN/ED MASS UPDATE REPORT"
+msgstr "RAPPORT DE LA MÀJ EN MASSE DE PRODUITS NL/EXP"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:102
+msgid "Product BN/ED Mass Update Report"
+msgstr "Rapport de la MàJ en Masse de Produits NL/EXP"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:121
+msgid "Type of change"
+msgstr "Type du changement"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:145
+#: field:product.ed_bn.mass.update.history,old_bn:0
+msgid "Old BN"
+msgstr "Vieux NL"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:146
+#: field:product.ed_bn.mass.update.history,old_ed:0
+msgid "Old ED"
+msgstr "Vieux EXP"

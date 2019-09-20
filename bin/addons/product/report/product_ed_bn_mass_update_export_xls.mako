@@ -102,9 +102,9 @@
 <ss:Worksheet ss:Name="${_('Product BN/ED Mass Update Report')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Product code
-        <Column ss:AutoFitWidth="1" ss:Width="100.00" />
+        <Column ss:AutoFitWidth="1" ss:Width="130.00" />
         ## Product Description
-        <Column ss:AutoFitWidth="1" ss:Width="250.00" />
+        <Column ss:AutoFitWidth="1" ss:Width="275.00" />
         ## Old BN
         <Column ss:AutoFitWidth="1" ss:Width="50.00" />
         ## Old ED
@@ -122,9 +122,9 @@
             <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(r, 'type_of_ed_bn')|x}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Date of change')|x}</Data></Cell>
-            % if r.date_of_change and isDateTime(r.date_of_change):
-                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(r.date_of_change)|n}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Date of the update')|x}</Data></Cell>
+            % if r.date_done and isDateTime(r.date_done):
+                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(r.date_done)|n}</Data></Cell>
             % else:
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
             % endif
