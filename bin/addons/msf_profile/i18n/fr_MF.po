@@ -65565,6 +65565,7 @@ msgstr "PO line to confirm"
 #: report:account.invoice2:0
 #: field:hq.entries.split,date:0
 #: selection:integrity.finance.wizard,filter:0
+#: code:addons/account_override/res_company.py:40
 #, python-format
 msgid "Posting Date"
 msgstr "Date de Comptabilisation"
@@ -96724,6 +96725,7 @@ msgstr "wizard.export.po.validated"
 #: field:wizard.invoice.line,document_date:0
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:290
 #: report:account.invoice2:0
+#: code:addons/account_override/res_company.py:40
 #, python-format
 msgid "Document Date"
 msgstr "Date du Document"
@@ -107372,3 +107374,18 @@ msgstr "Date d'Expédition"
 #: report:purchase.order.merged:0
 msgid "Functional total cost :"
 msgstr "Total Coût Fonctionnel :"
+
+#. module: account_override
+#: field:res.company,currency_date_type:0
+msgid "Date Type Used"
+msgstr "Type de Date Utilisé"
+
+#. module: account_override
+#: field:res.company,currency_date_beginning:0
+msgid "Since"
+msgstr "Depuis"
+
+#. module: msf_instance
+#: view:res.company:0
+msgid "Computation in functional currency"
+msgstr "Calcul en devise fonctionnelle"
