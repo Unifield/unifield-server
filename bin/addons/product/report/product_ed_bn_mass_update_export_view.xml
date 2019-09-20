@@ -6,10 +6,9 @@
             string="Product BN/ED Mass Update Excel Export"
             model="product.mass.update"
             name="product_ed_bn_mass_update_export_xls"
-            rml="product/report/product_ed_bn_mass_update_export_xls.mako"
-            header="False"
-            auto="False"
+            file="product/report/product_ed_bn_mass_update_export_xls.mako"
             menu="True"
+            report_type="webkit"
             view_ids="view_product_bn_ed_mass_update_tree,view_product_bn_ed_mass_update_form"
         />
     </data>

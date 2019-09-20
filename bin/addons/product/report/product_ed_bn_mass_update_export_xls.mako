@@ -48,7 +48,7 @@
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
         <Font x:Family="Swiss" ss:Size="10" ss:Bold="1"/>
-        <Interior/>
+        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
     </Style>
 
     <!-- Lines -->
@@ -86,7 +86,7 @@
         <NumberFormat ss:Format="#0"/>
     </Style>
     <Style ss:ID="short_date">
-        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
         <Borders>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -102,7 +102,7 @@
 <ss:Worksheet ss:Name="${_('Product BN/ED Mass Update Report')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Product code
-        <Column ss:AutoFitWidth="1" ss:Width="150.00" />
+        <Column ss:AutoFitWidth="1" ss:Width="100.00" />
         ## Product Description
         <Column ss:AutoFitWidth="1" ss:Width="250.00" />
         ## Old BN
@@ -119,12 +119,12 @@
         </Row>
         <Row>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Type of change')|x}</Data></Cell>
-            <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(r, 'type_of_bn_ed')|x}</Data></Cell>
+            <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(r, 'type_of_ed_bn')|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('Date of change')|x}</Data></Cell>
             % if r.date_of_change and isDateTime(r.date_of_change):
-                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${r.date_of_change|n}00.000</Data></Cell>
+                <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(r.date_of_change)|n}</Data></Cell>
             % else:
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
             % endif
@@ -133,6 +133,7 @@
             <Cell ss:StyleID="line_header"><Data ss:Type="String">${_('User who Updated')|x}</Data></Cell>
             <Cell ss:StyleID="line_left"><Data ss:Type="String">${r.user_id.name|x}</Data></Cell>
         </Row>
+
         <Row></Row>
 
         ## WORKSHEET HEADER
@@ -141,7 +142,7 @@
         headers_list = [
                 _('Product Code'),
                 _('Product Description'),
-                _('Old BN''),
+                _('Old BN'),
                 _('Old ED'),
             ]
         %>
@@ -152,15 +153,33 @@
         % endfor
         </Row>
 
-        % for hist_line in getData(r.id):
+        % for hist_line in r.product_history_ids:
             <Row>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${hist_line.default_code|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${hist_line.description|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${hist_line.product_id.default_code|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${hist_line.product_id.name|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${hist_line.old_bn and _('Yes') or _('No')|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${hist_line.old_ed and _('Yes') or _('No')|x}</Data></Cell>
             </Row>
         % endfor
     </Table>
+    <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+        <Selected/>
+        <FreezePanes/>
+        <FrozenNoSplit/>
+        <SplitHorizontal>7</SplitHorizontal>
+        <TopRowBottomPane>7</TopRowBottomPane>
+        <ActivePane>2</ActivePane>
+        <Panes>
+            <Pane>
+                <Number>3</Number>
+            </Pane>
+            <Pane>
+                <Number>2</Number>
+            </Pane>
+        </Panes>
+        <ProtectObjects>False</ProtectObjects>
+        <ProtectScenarios>False</ProtectScenarios>
+    </WorksheetOptions>
 
 </ss:Worksheet>
 % endfor
