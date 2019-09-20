@@ -25,6 +25,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from time import strftime
+from base import currency_date
+
 
 class hq_entries_validation(osv.osv_memory):
     _name = 'hq.entries.validation'
@@ -105,11 +107,13 @@ class hq_entries_validation(osv.osv_memory):
                          (account.default_destination_id and account.default_destination_id.id) or False
         distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
         if distrib_id:
+            # TODO: TEST JN
+            curr_date = currency_date.get_date(self, cr, line.document_date, line.date)
             common_vals = {'distribution_id':distrib_id,
                            'currency_id':currency_id,
                            'percentage':100.0,
                            'date':line.date or current_date,
-                           'source_date':line.date or current_date,
+                           'source_date': curr_date or current_date,
                            'destination_id':destination_id}
             common_vals.update({'analytic_id':cc_id})
             self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
@@ -490,13 +494,15 @@ class hq_entries_validation(osv.osv_memory):
                             self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
 
             for line in account_change:
+                # TODO: TEST JN
+                curr_date = currency_date.get_date(self, cr, line.document_date, line.date)
                 corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
                     'funding_pool_lines': [(0, 0, {
                         'percentage': 100,
                         'analytic_id': line.analytic_id.id,
                         'cost_center_id': line.cost_center_id.id,
                         'currency_id': line.currency_id.id,
-                        'source_date': line.date,
+                        'source_date': curr_date,
                         'destination_id': line.destination_id.id,
                     })]
                 })
@@ -507,9 +513,11 @@ class hq_entries_validation(osv.osv_memory):
                 distrib_id = self.pool.get('account.move.line').read(cr, uid, all_lines[line.id], ['analytic_distribution_id'])['analytic_distribution_id'][0]
                 # update the distribution
                 distrib_fp_lines = distrib_fp_line_obj.search(cr, uid, [('cost_center_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
-                distrib_fp_line_obj.write(cr, uid, distrib_fp_lines, {'cost_center_id': line.cost_center_id.id, 'source_date': line.date, 'destination_id': line.destination_id.id})
+                distrib_fp_line_obj.write(cr, uid, distrib_fp_lines, {'cost_center_id': line.cost_center_id.id,
+                                                                      'source_date': curr_date, 'destination_id': line.destination_id.id})
                 distrib_cc_lines = distrib_cc_line_obj.search(cr, uid, [('analytic_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
-                distrib_cc_line_obj.write(cr, uid, distrib_cc_lines, {'analytic_id': line.cost_center_id.id, 'source_date': line.date, 'destination_id': line.destination_id.id})
+                distrib_cc_line_obj.write(cr, uid, distrib_cc_lines, {'analytic_id': line.cost_center_id.id,
+                                                                      'source_date': curr_date, 'destination_id': line.destination_id.id})
 
                 # reverse ana lines
                 fp_old_lines = ana_line_obj.search(cr, uid, [
@@ -529,8 +537,9 @@ class hq_entries_validation(osv.osv_memory):
                     continue
 
                 # UTP-1118: posting date should be those from initial HQ entry line
-                vals_cor = {'date':line.date, 'source_date':line.date, 'cost_center_id':line.cost_center_id.id,
-                            'account_id':line.analytic_id.id, 'destination_id':line.destination_id.id, 'journal_id':acor_journal_id, 'last_correction_id':fp_old_lines[0]}
+                vals_cor = {'date': line.date, 'source_date': curr_date, 'cost_center_id': line.cost_center_id.id,
+                            'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id,
+                            'journal_id': acor_journal_id, 'last_correction_id':fp_old_lines[0]}
 
                 # US-1347: Use the entry sequence of HQ for reference, not the description
                 entry_seq = ana_line_obj.read(cr, uid, res_reverse, ['ref'], context=context)
@@ -578,13 +587,15 @@ class hq_entries_validation(osv.osv_memory):
                 pure_ad_cor_ji_ids.append(all_lines[line.id])
 
             for line in cc_account_change:
+                # TODO: TEST JN
+                curr_date = currency_date.get_date(self, cr, line.document_date, line.date)
                 # call correct_account with a new arg: new_distrib
                 corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
                     'cost_center_lines': [(0, 0, {
                         'percentage': 100,
                         'analytic_id': line.cost_center_id.id,
                         'currency_id': line.currency_id.id,
-                        'source_date': line.date,
+                        'source_date': curr_date,
                         'destination_id': line.destination_id.id,
                     })],
                     'funding_pool_lines': [(0, 0, {
@@ -592,7 +603,7 @@ class hq_entries_validation(osv.osv_memory):
                         'analytic_id': line.analytic_id.id,
                         'cost_center_id': line.cost_center_id.id,
                         'currency_id': line.currency_id.id,
-                        'source_date': line.date,
+                        'source_date': curr_date,
                         'destination_id': line.destination_id.id,
                     })]
                 })
