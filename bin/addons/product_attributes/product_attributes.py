@@ -345,24 +345,6 @@ class product_attributes(osv.osv):
 
         return
 
-    def _search_mandatory_creator(self, cr, uid, obj, name, args, context=None):
-        '''
-        Filter the search according to the args parameter
-        '''
-        if context is None:
-            context = {}
-
-        data_obj = self.pool.get('ir.model.data')
-
-        res_id = 0  # To prevent search
-        instance_level = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level
-        if instance_level == 'section':
-            res_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
-        elif instance_level == 'coordo':
-            res_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
-
-        return [('international_status', '=', res_id)]
-
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
@@ -637,6 +619,33 @@ class product_attributes(osv.osv):
         """
         return True
 
+    def _get_batch_attributes(self, cr, uid, ids, field_name, args, context=None):
+        ret = {}
+        for prod in self.read(cr, uid, ids, ['batch_management', 'perishable'], context=context):
+            if prod['batch_management']:
+                ret[prod['id']] = 'bn'
+            elif prod['perishable']:
+                ret[prod['id']] = 'ed'
+            else:
+                ret[prod['id']] = 'no'
+        return ret
+
+    def _search_batch_attributes(self, cr, uid, obj, name, args, context=None):
+
+        dom = []
+        for arg in args:
+            if arg[0] == 'batch_attributes':
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Warning'), _('This filter is not implemented yet'))
+                if arg[2] == 'no':
+                    dom += [ '&', ('batch_management', '=', False), ('perishable', '=', False)]
+                elif arg[2] == 'bn':
+                    dom += [ '&', ('batch_management', '=', True), ('perishable', '=', True)]
+                elif arg[2] == 'ed':
+                    dom += [ '&', ('batch_management', '=', False), ('perishable', '=', True)]
+        return dom
+
+
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
@@ -647,10 +656,9 @@ class product_attributes(osv.osv):
         ),
         'new_code' : fields.char('New code', size=64),
         'international_status': fields.many2one('product.international.status', 'Product Creator', required=False),
-        'mandatory_creator': fields.function(_get_dummy, fnct_search=_search_mandatory_creator, type='many2one',
-                                             relation='product.international.status', method=True, string='Mandatory Product Creator'),
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
+        'batch_attributes': fields.function(_get_batch_attributes, type='selection', selection=[('no', 'X'), ('bn', 'BN+ED'), ('ed', 'ED only')], method=True, fnct_search=_search_batch_attributes, string="Batch Attr."),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
         'product_catalog_path' : fields.char('Product Catalog Path', size=1024),
         'is_ssl': fields.function(
@@ -2010,7 +2018,8 @@ class product_attributes(osv.osv):
         prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', True)], context=context)
         self.write(cr, uid, prod_to_change, {'batch_management': True}, context=context)
         if prod_to_change:
-            cr.execute("update stock_production_lot set type='standard' where product_id in %s", (tuple(prod_to_change), ))
+            cr.execute("update stock_move set old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id is not null and product_id in %s",  (tuple(prod_to_change), ))
+            cr.execute("update stock_production_lot set name=%s, type='standard' where product_id in %s", (self.fake_bn, tuple(prod_to_change)))
         return len(prod_to_change)
 
     def set_as_edonly(self, cr, uid, ids, context=None):

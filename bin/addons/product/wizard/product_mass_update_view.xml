@@ -70,7 +70,7 @@
                             <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                                 <button name="wizard_import_products" string="Import products" icon="gtk-dnd" colspan="2" type="object"/>
                             </group>
-                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('active', 'in', ['t', 'f']), ('mandatory_creator', '=', True)]">
+                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('active', 'in', ['t', 'f']), ('expected_prod_creator', '=', True)]">
                                 <tree string="Products" hide_edit_button="1" colors="grey:active == False">
                                     <field name="default_code" />
                                     <field name="name" />
@@ -170,20 +170,28 @@
                         <button name="dummy" string="Update" icon="gtk-execute" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'in_progress')]}"/>
                         <button name="reset_update" string="Reset Update" icon="gtk-undo" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'error')]}"/>
                     </group>
+                    <group colspan="4" col="6">
+                        <field name="state" colspan="2" />
+                        <field name="date_done"  attrs="{'invisible': [('state', '!=', 'done')]}" />
+                        <field name="user_id"  attrs="{'invisible': [('state', '!=', 'done')]}" />
+                    </group>
+                    <button name="change_bn_ed" string="Apply Update" icon="gtk-go-forward" colspan="4" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     <notebook colspan="4">
-                        <page string="Products">
+                        <page string="Products" attrs="{'invisible': [('state', '=', 'done')]}">
                             <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                                 <button name="wizard_import_products" string="Import products" icon="gtk-dnd" colspan="2" type="object"/>
                             </group>
-                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('active', 'in', ['t', 'f']), ('mandatory_creator', '=', True)]">
+                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('expected_prod_creator', '=', 'bned')]">
                                 <tree string="Products" hide_edit_button="1" colors="grey:active == False">
                                     <field name="default_code" />
                                     <field name="name" />
+                                    <field name="perishable" />
+                                    <field name="batch_management" />
                                     <field name="active" invisible="1" />
                                 </tree>
                             </field>
                         </page>
-                        <page string="History">
+                        <page string="History" attrs="{'invisible': [('state', '!=', 'done')]}">
                             <field name="product_history_ids" colspan="4" nolabel="1" readonly="1">
                                 <tree>
                                     <field name="product_id" />
@@ -193,12 +201,6 @@
                             </field>
                         </page>
                     </notebook>
-                    <group colspan="6">
-                        <field name="state" colspan="2" />
-                        <field name="date_of_change"  attrs="{'invisible': [('state', '!=', 'done')]}" />
-                        <field name="user_id"  attrs="{'invisible': [('state', '!=', 'done')]}" />
-                        <button name="change_bn_ed" string="Apply Update" icon="gtk-go-forward" colspan="1" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                    </group>
                 </form>
             </field>
         </record>
