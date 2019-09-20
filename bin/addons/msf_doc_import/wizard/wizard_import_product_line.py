@@ -68,7 +68,6 @@ class wizard_import_product_line(osv.osv_memory):
         wiz_common_import = self.pool.get('wiz.common.import')
         context.update({'import_in_progress': True, 'noraise': True})
         start_time = time.time()
-        obj_data = self.pool.get('ir.model.data')
         product_obj = self.pool.get('product.product')
         p_mass_upd_obj = self.pool.get('product.mass.update')
         line_with_error = []
@@ -78,19 +77,7 @@ class wizard_import_product_line(osv.osv_memory):
 
         for wiz_browse in self.browse(cr, uid, ids, context):
             p_mass_upd_id = wiz_browse.product_mass_upd_id.id
-            prod_creator_id = []
-            if instance_level == 'section':
-                if wiz_browse.product_mass_upd_id.type_of_ed_bn:
-                    prod_creator_id = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_1')[1]]
-                    prod_creator_id.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_2')[1])
-                    prod_creator_id.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1])
-                    prod_creator_id.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1])
-                    prod_creator_id.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1])
-
-                else:
-                    prod_creator_id = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]]
-            elif instance_level == 'coordo':
-                prod_creator_id = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]]
+            prod_creator_id = product_obj._get_authorized_creator(cr, uid, bool(wiz_browse.product_mass_upd_id.type_of_ed_bn), context)
             try:
                 product_ids = [prod.id for prod in wiz_browse.product_mass_upd_id.product_ids]
 

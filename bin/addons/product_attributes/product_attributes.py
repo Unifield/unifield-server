@@ -1824,20 +1824,10 @@ class product_attributes(osv.osv):
             return True
 
         product = self.browse(cr, uid, ids[0], fields_to_fetch=['qty_available', 'batch_management', 'perishable'], context=context)
-        vals = {}
 
-        if context.get('needed_batch_mngmt') is not None:
-            vals.update({'batch_management': context['needed_batch_mngmt']})
-            context.pop('needed_batch_mngmt')
-            if vals['batch_management'] and not (product.perishable or context.get('needed_perishable')):
-                raise osv.except_osv(_('Error'),
-                                     _('You are not allowed to have a Batch managed product without an Expiry Date'))
-        if context.get('needed_perishable') is not None:
-            vals.update({'perishable': context['needed_perishable']})
-            context.pop('needed_perishable')
-            if not vals['perishable'] and (product.batch_management or vals.get('batch_management')):
-                raise osv.except_osv(_('Error'),
-                                     _('You are not allowed to have a Batch managed product without an Expiry Date'))
+        change_target = context.get('change_target')
+        if not change_target:
+            raise osv.except_osv(_('Error'), _('Missing Target in context'))
 
         in_use_stock = product.qty_available > 0 or False
         if not in_use_stock:  # Check stock IN - stock OUT
@@ -1883,7 +1873,7 @@ class product_attributes(osv.osv):
                 in_use_stock = True
 
         if in_use_stock:
-            context['prod_data'] = {'id': product.id, 'vals': vals}
+            context['prod_data'] = {'id': product.id, 'change_target': change_target}
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'change.bn.ed.mandatory.wizard',
@@ -1892,8 +1882,20 @@ class product_attributes(osv.osv):
                 'target': 'new',
                 'context': context,
             }
+
+        self._apply_change_bn_ed(cr, uid, ids, change_target, context)
+        return True
+
+    def _apply_change_bn_ed(self, cr, uid, ids, change_target, context=None):
+        if change_target == 'edonly':
+            self.set_as_edonly(cr, uid, ids, context=context)
+        elif change_target == 'bn':
+            self.set_as_bned(cr, uid, ids, context=context)
+        elif change_target == 'nobn_noed':
+            self.set_as_nobn_noed(cr, uid, ids, context=context)
         else:
-            return self.write(cr, uid, ids, vals, context=context)
+            raise osv.except_osv(_('Error'), _('Unknown %s target') % (change_target, ))
+        return True
 
     def copy(self, cr, uid, id, default=None, context=None):
         product_xxx = self.search(cr, uid, [('default_code', '=', 'XXX')])
@@ -2277,10 +2279,8 @@ class change_bn_ed_mandatory_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        prod_obj = self.pool.get('product.product')
         if context.get('prod_data'):
-            prod_obj.write(cr, uid, context['prod_data']['id'], context['prod_data']['vals'], context=context)
-            context.pop('prod_data')
+            self.pool.get('product.product')._apply_change_bn_ed(cr, uid, [context['prod_data']['id']], context['prod_data']['change_target'], context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
