@@ -166,7 +166,7 @@
                         </html>
                     </group>
                     <group colspan="4">
-                        <field name="percent_completed" widget="progressbar" colspan="2" attrs="{'invisible':[('state', 'not in', ['in_progress', 'done'])]}"/>
+                        <field name="percent_completed" widget="progressbar" colspan="2" attrs="{'invisible':[('state', '!=', 'in_progress')]}"/>
                         <button name="dummy" string="Update" icon="gtk-execute" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'in_progress')]}"/>
                         <button name="reset_update" string="Reset Update" icon="gtk-undo" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'error')]}"/>
                     </group>
@@ -193,7 +193,7 @@
                         </page>
                         <page string="History" attrs="{'invisible': [('state', '!=', 'done')]}">
                             <field name="product_history_ids" colspan="4" nolabel="1" readonly="1">
-                                <tree>
+                                <tree editable="top">
                                     <field name="product_id" />
                                     <field name="old_bn" />
                                     <field name="old_ed" />

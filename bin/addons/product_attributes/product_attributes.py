@@ -1966,6 +1966,7 @@ class product_attributes(osv.osv):
             self.write(cr, uid, prod_to_change, {'perishable': False, 'batch_management': False}, context=context)
             cr.execute("update stock_move set prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(prod_to_change), ))
             cr.execute("delete from stock_production_lot where product_id in %s", (tuple(prod_to_change), ))
+            # initial stock inventory draft / confirmed to reset
         return True
 
     def switch_no_to_bn(self, cr, uid, ids, context=None):
@@ -1985,6 +1986,7 @@ class product_attributes(osv.osv):
             self.write(cr, uid, prod_to_change, {'perishable': False}, context=context)
             cr.execute("update stock_move set prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(prod_to_change), ))
             cr.execute("delete from stock_production_lot where product_id in %s", (tuple(prod_to_change), ))
+            # initial stock inventory draft / confirmed to reset
         return len(prod_to_change)
 
     def switch_bn_to_ed(self, cr, uid, ids, context=None):

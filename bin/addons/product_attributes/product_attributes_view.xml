@@ -126,8 +126,8 @@
                                 <field name="uf_create_date" invisible="1"/>
                                 <separator string="Quality" colspan="3"/>
                                 <group colspan="1" col="2">
-                                    <field name="perishable" attrs="{'readonly': [('uf_create_date', '!=', False)]}"/>
-                                    <field name="batch_management" attrs="{'readonly': [('uf_create_date', '!=', False)]}"/>
+                                    <field name="perishable" readonly="1"/>
+                                    <field name="batch_management" readonly="1"/>
                                 </group>
                                 <group colspan="2" col="1" attrs="{'invisible': [('expected_prod_creator', '=', False)]}">
                                     <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Change to ED only" type="object" attrs="{'invisible': [('batch_management', '=', False), ('perishable', '=', True)]}" context="{'change_target': 'edonly'}"/>
