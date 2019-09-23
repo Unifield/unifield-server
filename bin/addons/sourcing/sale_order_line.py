@@ -2113,10 +2113,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             line = self.browse(cr, uid, ids[0])
 
         if product and type:
-            seller = product_obj.browse(cr, uid, product).seller_id
-            sellerId = (seller and (seller.supplier or seller.manufacturer or seller.transporter) and seller.id) or False
-
             if l_type == 'make_to_order':
+                seller = product_obj.browse(cr, uid, product).seller_id
+                sellerId = (seller and (seller.supplier or seller.manufacturer or seller.transporter) and seller.id) or False
+
                 po_cft = 'po'
                 if line and \
                     ((line.product_id and line.product_id.type in ('service', 'service_recep')) or \
