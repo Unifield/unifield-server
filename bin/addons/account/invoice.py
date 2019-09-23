@@ -1919,7 +1919,7 @@ class account_invoice_tax(osv.osv):
             tax_amount = round(atx.amount * amount_untaxed, 2)
         return tax_amount
 
-    def base_change(self, cr, uid, ids, base, currency_id=False, company_id=False, date_invoice=False):
+    def base_change(self, cr, uid, ids, base, currency_id=False, company_id=False, document_date=False, date_invoice=False):
         cur_obj = self.pool.get('res.currency')
         company_obj = self.pool.get('res.company')
         company_currency = False
@@ -1929,10 +1929,13 @@ class account_invoice_tax(osv.osv):
         if company_id:
             company_currency = company_obj.read(cr, uid, [company_id], ['currency_id'])[0]['currency_id'][0]
         if currency_id and company_currency:
-            base = cur_obj.compute(cr, uid, currency_id, company_currency, base*factor, context={'date': date_invoice or time.strftime('%Y-%m-%d')}, round=False)
+            # TODO: TEST JN => from both entry points
+            curr_date = currency_date.get_date(self, cr, document_date, date_invoice)
+            base = cur_obj.compute(cr, uid, currency_id, company_currency, base*factor,
+                                   context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
         return {'value': {'base_amount':base}}
 
-    def amount_change(self, cr, uid, ids, amount, currency_id=False, company_id=False, date_invoice=False):
+    def amount_change(self, cr, uid, ids, amount, currency_id=False, company_id=False, document_date=False, date_invoice=False):
         cur_obj = self.pool.get('res.currency')
         company_obj = self.pool.get('res.company')
         company_currency = False
@@ -1942,7 +1945,10 @@ class account_invoice_tax(osv.osv):
         if company_id:
             company_currency = company_obj.read(cr, uid, [company_id], ['currency_id'])[0]['currency_id'][0]
         if currency_id and company_currency:
-            amount = cur_obj.compute(cr, uid, currency_id, company_currency, amount*factor, context={'date': date_invoice or time.strftime('%Y-%m-%d')}, round=False)
+            # TODO: TEST JN => from both entry points
+            curr_date = currency_date.get_date(self, cr, document_date, date_invoice)
+            amount = cur_obj.compute(cr, uid, currency_id, company_currency, amount*factor,
+                                     context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
         return {'value': {'tax_amount': amount}}
 
     _order = 'sequence'

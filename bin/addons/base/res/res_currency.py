@@ -29,6 +29,7 @@ class res_currency(osv.osv):
         if context is None:
             context = {}
         res = {}
+        # TODO: TEST JN
         if 'currency_date' in context:
             date = context['currency_date']
         else:
