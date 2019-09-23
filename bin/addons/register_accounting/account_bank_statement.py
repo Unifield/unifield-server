@@ -29,6 +29,7 @@ from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 from register_tools import create_cashbox_lines
 from register_tools import open_register_view
+from base import currency_date
 import time
 import datetime
 import decimal_precision as dp
@@ -1412,7 +1413,9 @@ class account_bank_statement_line(osv.osv):
         account_move_line_obj = self.pool.get('account.move.line')
         st = st_line.statement_id
 
-        context.update({'date': st_line.date})
+        # TODO: TEST JN
+        curr_date = currency_date.get_date(self, cr, st_line.document_date, st_line.date)
+        context.update({'currency_date': curr_date})
 
 #        # Prepare partner_type
 #        partner_type = False
@@ -1618,12 +1621,14 @@ class account_bank_statement_line(osv.osv):
                 st = self.pool.get('account.bank.statement').browse(cr, uid, statement_id)
                 currency_id = st.journal_id and st.journal_id.currency and st.journal_id.currency.id or False
                 if distrib_id:
+                    # TODO: TEST JN
+                    curr_date = currency_date.get_date(self, cr, values.get('document_date', False), values.get('date', False))
                     common_vals = {
                         'distribution_id': distrib_id,
                         'currency_id': currency_id,
                         'percentage': 100.0,
                         'date': values.get('date', False),
-                        'source_date': values.get('date', False),
+                        'source_date': curr_date,
                         'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cc_id,})
@@ -1733,7 +1738,10 @@ class account_bank_statement_line(osv.osv):
                     # Prepare value
                     res_currency_obj = self.pool.get('res.currency')
                     # Get date for having a good change rate
-                    context.update({'date': move_line_values.get('date', st_line.date)})
+                    # TODO: TEST JN
+                    curr_date = currency_date.get_date(self, cr, move_line_values.get('document_date', st_line.document_date),
+                                                       move_line_values.get('date', st_line.date))
+                    context.update({'currency_date': curr_date})
                     # Change amount
                     new_amount = res_currency_obj.compute(cr, uid, \
                                                           st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, abs(amount), round=False, context=context)
@@ -1846,7 +1854,7 @@ class account_bank_statement_line(osv.osv):
                 st_line.direct_invoice is False:
             # Prepare some elements
             move_line_obj = self.pool.get('account.move.line')
-            curr_date = time.strftime('%Y-%m-%d')
+            current_date = time.strftime('%Y-%m-%d')
             # Create move lines
             account_id = False
             if st_line.account_id.user_type.code == 'expense':
@@ -1879,7 +1887,9 @@ class account_bank_statement_line(osv.osv):
             amount = abs(st_line.amount)
             # update values if we have a different currency that company currency
             if st_line.statement_id.currency.id != st_line.statement_id.company_id.currency_id.id:
-                context['date'] = st_line.document_date or st_line.date or curr_date
+                # TODO: TEST JN => the doc. date was previously used as a priority here
+                curr_date = currency_date.get_date(self, cr, st_line.document_date, st_line.date)
+                context['currency_date'] = curr_date or current_date
                 amount = self.pool.get('res.currency').compute(cr, uid, st_line.statement_id.currency.id,
                                                                st_line.statement_id.company_id.currency_id.id, amount, round=False, context=context)
             val.update({'debit': amount, 'credit': 0.0, 'amount_currency': abs(st_line.amount)})

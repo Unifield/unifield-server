@@ -25,6 +25,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from base import currency_date
 import time
 from lxml import etree
 
@@ -471,11 +472,11 @@ class wizard_cash_return(osv.osv_memory):
         # Prepare values
         journal_id = journal.id
         period_id = register.period_id.id
-        curr_date = time.strftime('%Y-%m-%d')
-        if date:
-            curr_date = date
+        current_date = time.strftime('%Y-%m-%d')
         if not document_date:
             document_date = date
+        # TODO: TEST JN
+        curr_date = currency_date.get_date(self, cr, document_date, date)
         currency_id = register.currency.id
         register_id = register.id
         amount_currency = 0.0
@@ -486,7 +487,7 @@ class wizard_cash_return(osv.osv_memory):
         # Case where currency is different from company currency
         if currency_id != register.company_id.currency_id.id:
             currency_obj = self.pool.get('res.currency')
-            context['date'] = curr_date
+            context['currency_date'] = curr_date or current_date
             new_amount = 0.0
             if debit > 0:
                 amount_currency = debit
@@ -510,7 +511,7 @@ class wizard_cash_return(osv.osv_memory):
         # Create an account move line
         move_line_vals = {
             'name': description,
-            'date': curr_date,
+            'date': date or current_date,  # TODO: TEST JN
             'document_date': document_date,
             'move_id': move_id,
             'partner_id': partner_id or False,
@@ -776,7 +777,7 @@ class wizard_cash_return(osv.osv_memory):
         account_obj = self.pool.get('account.account')
         absl_obj = self.pool.get('account.bank.statement.line')
         wizard = self.browse(cr, uid, ids[0], context=context)
-        curr_date = wizard.date
+        wiz_date = wizard.date
 
         # US-672/2
         self.pool.get('account.invoice').check_accounts_for_partner(cr, uid,
@@ -950,7 +951,7 @@ class wizard_cash_return(osv.osv_memory):
                 if total > 0:
                     supp_move_info = wiz_adv_line_obj.read(cr, uid, advances_with_supplier[supplier_id][0], ['description', 'document_date'], context=context)
                     supp_move_name = supp_move_info.get('description', "/")
-                    supp_move_date = supp_move_info.get('document_date', curr_date)
+                    supp_move_date = supp_move_info.get('document_date', wiz_date)
                     # search account_id of the supplier
                     account_id = self.pool.get('res.partner').read(cr, uid, supplier_id, ['property_account_payable'], context=context)
                     if 'property_account_payable' in account_id and account_id.get('property_account_payable', False):
