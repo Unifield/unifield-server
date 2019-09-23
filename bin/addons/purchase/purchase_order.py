@@ -2606,38 +2606,37 @@ class purchase_order(osv.osv):
                 if sup_ids:
                     for sup in sup_obj.browse(cr, uid, sup_ids, context=context):
 
-                        t_minqty_price = {}
-                        # fill the dictionary
+                        t_min_qty_price = {}
+                        # fill the dictionary with prices according to quantity
                         for pcl in sup.pricelist_ids:
-                            t_minqty_price[pcl.min_quantity] = pcl.price
+                            t_min_qty_price[pcl.min_quantity] = pcl.price
+
+                        l_key = list(t_min_qty_price.keys())
 
                         for pcl in sup.pricelist_ids:
 
                             if pcl.rounding:
 
                                 soq_uom = pcl.uom_id
+                                line_qty = pol.product_qty
+                                min_qty = pcl.min_quantity
 
                                 if pol.product_uom.id != soq_uom.id:
                                     line_qty = uom_obj._compute_qty_obj(cr, uid, pol.product_uom, pol.product_qty, soq_uom,context=context)
-                                else:
-                                    line_qty = pol.product_qty
 
-                                if pcl.min_quantity == line_qty:
+                                if min_qty == line_qty:
                                     soq_rounding = pcl.rounding
                                     soq_PU = pcl.price
-                                    min_qty = pcl.min_quantity
                                     break
 
-                                if pcl.min_quantity < line_qty:
+                                if min_qty < line_qty:
                                     soq_rounding = pcl.rounding
                                     soq_PU = pcl.price
-                                    min_qty = pcl.min_quantity
                                     stop = True
                                 else:
                                     if not stop:
                                         soq_rounding = pcl.rounding
                                         soq_PU = pcl.price
-                                        min_qty = pcl.min_quantity
                                         stop = True
                                     break
 
@@ -2649,17 +2648,12 @@ class purchase_order(osv.osv):
                 if not soq_rounding:
                     continue
 
-                # Get line quantity in SoQ UoM
-                line_qty = pol.product_qty
-
                 if pol.product_uom.id != soq_uom.id:
-                    line_qty = uom_obj._compute_qty_obj(cr, uid, pol.product_uom, pol.product_qty, soq_uom,
-                                                        context=context)
-                    good_price = soq_PU * pol.product_uom.factor_inv
+                    good_price = uom_obj._compute_price(cr, uid, soq_uom.id, soq_PU, pol.product_uom.id)
                 else:
                     good_price = soq_PU
 
-                good_quantity = 0
+                good_quantity = line_qty
 
                 if line_qty % soq_rounding:
                     good_quantity = (line_qty - (line_qty % soq_rounding)) + soq_rounding
@@ -2668,11 +2662,11 @@ class purchase_order(osv.osv):
                     good_quantity = uom_obj._compute_qty_obj(cr, uid, soq_uom, good_quantity, pol.product_uom,
                                                              context=context)
 
-                if line_qty <= min_qty:
-                    good_quantity = min_qty
+                if line_qty <= l_key[0]: #min qty
+                    good_quantity = l_key[0]
 
-                if t_minqty_price.has_key(good_quantity):
-                    good_price = t_minqty_price.get(good_quantity)
+                if t_min_qty_price.has_key(good_quantity):
+                    good_price = t_min_qty_price.get(good_quantity)
 
                 if good_quantity or good_price:
                     to_update.setdefault(pol.id, [])
