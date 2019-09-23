@@ -22,6 +22,8 @@
 from osv import osv
 import datetime
 from tools.translate import _
+from base import currency_date
+
 
 class msf_budget_tools(osv.osv):
     _name = "msf.budget.tools"
@@ -301,7 +303,9 @@ class msf_budget_tools(osv.osv):
         # parse each line and add it to the right array
         analytic_line_count = 0
         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-            date_context = {'date': analytic_line.source_date or analytic_line.date,
+            # TODO: TEST JN
+            curr_date = currency_date.get_date(self, cr, analytic_line.document_date, analytic_line.date, source_date=analytic_line.source_date)
+            date_context = {'currency_date': curr_date,
                             'currency_table_id': currency_table}
             actual_amount = self.pool.get('res.currency').compute(cr,
                                                                   uid,

@@ -31,9 +31,11 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import threading
 import pooler
 import mx
+from base import currency_date
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
 from spreadsheet_xml import SPECIAL_CHAR
 import re
+
 
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
@@ -106,12 +108,14 @@ class msf_doc_import_accounting(osv.osv_memory):
                     # Create analytic distribution
                     if l.account_id.is_analytic_addicted:
                         distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
+                        # TODO: TEST JN
+                        curr_date = currency_date.get_date(self, cr, l.document_date, l.date)
                         common_vals = {
                             'distribution_id': distrib_id,
                             'currency_id': currency_id,
                             'percentage': 100.0,
                             'date': l.date,
-                            'source_date': l.date,
+                            'source_date': curr_date,
                             'destination_id': l.destination_id.id,
                         }
                         common_vals.update({'analytic_id': l.cost_center_id.id,})
