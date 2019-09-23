@@ -21,6 +21,8 @@
 
 from osv import fields, osv
 from tools.translate import _
+from base import currency_date
+
 
 class res_currency_rate_functional(osv.osv):
     _inherit = "res.currency.rate"
@@ -37,7 +39,9 @@ class res_currency_rate_functional(osv.osv):
             currency = currency_obj['currency_id'][0]
         move_line_search_params = [('currency_id', '=', currency), ('is_revaluated_ok', '=', False)]
         if date is not None:
-            move_line_search_params.append(('date', '>=', date))
+            # TODO: TEST JN
+            date_type = currency_date.get_date_type == 'document' and 'document_date' or 'date'
+            move_line_search_params.append((date_type, '>=', date))
 
         move_line_ids = move_line_obj.search(cr, uid, move_line_search_params)
         move_line_obj.update_amounts(cr, uid, move_line_ids)
@@ -69,11 +73,13 @@ class res_currency_rate_functional(osv.osv):
         if currency:
             search_params.append(('currency_id', '=', currency))
         if date:
+            # TODO: TEST JN
+            date_type = currency_date.get_date_type == 'document' and 'document_date' or 'date'
             search_params.append('|')
             search_params.append(('source_date', '>=', date))
             search_params.append('&')  # UFTP-361 in case source_date no set
             search_params.append(('source_date', '=', False))
-            search_params.append(('date', '>=', date))
+            search_params.append((date_type, '>=', date))
         eng_ids = eng_obj.search(cr, uid, search_params, context=context)
         if eng_ids:
             eng_obj.update_amounts(cr, uid, eng_ids, context=context)
