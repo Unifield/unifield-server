@@ -1959,6 +1959,27 @@ class product_attributes(osv.osv):
 
         return True
 
+    def _set_all_bn(self, cr, uid, product_ids, context=None):
+        cr.execute("""update initial_stock_inventory_line set
+            hidden_batch_management_mandatory='t', prodlot_name=''
+            where product_id in %s and inventory_id in
+                (select id from  initial_stock_inventory where state in ('confirm', 'draft'))
+        """, (tuple(product_ids), ))
+
+    def _reset_all_bn(self, cr, uid, product_ids, context=None):
+        cr.execute("""update initial_stock_inventory_line set
+            hidden_batch_management_mandatory='f', prodlot_name=''
+            where product_id in %s and inventory_id in
+                (select id from  initial_stock_inventory where state in ('confirm', 'draft'))
+        """, (tuple(product_ids), ))
+
+    def _reset_all_bned(self, cr, uid, product_ids, context=None):
+        cr.execute("""update initial_stock_inventory_line set
+            hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', expiry_date=NULL, prodlot_name=''
+            where product_id in %s and inventory_id in
+                (select id from  initial_stock_inventory where state in ('confirm', 'draft'))
+        """, (tuple(product_ids), ))
+
     def switch_bn_to_no(self, cr, uid, ids, context=None):
         # i
         prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', True), ('perishable', '=', True)], context=context)
@@ -1967,6 +1988,7 @@ class product_attributes(osv.osv):
             cr.execute("update stock_move set prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(prod_to_change), ))
             cr.execute("delete from stock_production_lot where product_id in %s", (tuple(prod_to_change), ))
             # initial stock inventory draft / confirmed to reset
+            self._reset_all_bned(cr, uid,  prod_to_change, context=None)
         return True
 
     def switch_no_to_bn(self, cr, uid, ids, context=None):
@@ -1987,11 +2009,11 @@ class product_attributes(osv.osv):
             cr.execute("update stock_move set prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(prod_to_change), ))
             cr.execute("delete from stock_production_lot where product_id in %s", (tuple(prod_to_change), ))
             # initial stock inventory draft / confirmed to reset
+            self._reset_all_bned(cr, uid, prod_to_change, context=None)
         return len(prod_to_change)
 
     def switch_bn_to_ed(self, cr, uid, ids, context=None):
         # iv
-
         prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', True), ('perishable', '=', True)], context=context)
         if prod_to_change:
             self.write(cr, uid, prod_to_change, {'batch_management': False}, context=context)
@@ -2004,7 +2026,14 @@ class product_attributes(osv.osv):
                 cr.execute("update stock_move set prodlot_id=%s, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id in %s",  (to_keep, tuple(merged)))
                 self._update_bn_id_on_fk(cr, to_keep, merged)
                 cr.execute("delete from stock_production_lot where id in %s", (tuple(merged), ))
-            cr.execute("update stock_production_lot set type='internal' where type='standard' and product_id in %s", (tuple(prod_to_change),))
+            # ASSIGN INTERNAL NAME
+            seq_obj = self.pool.get('ir.sequence')
+            cr.execute("select id from stock_production_lot  where type='standard' and product_id in %s", (tuple(prod_to_change),))
+            for bn_lot_to_internal in cr.fetchall():
+                seq_obj = self.pool.get('ir.sequence')
+                cr.execute("update stock_production_lot set type='internal', name=%s where id=%s", (seq_obj.get(cr, uid, 'stock.lot.serial'), bn_lot_to_internal[0]))
+            #cr.execute("update stock_production_lot set type='internal' where type='standard' and product_id in %s", (tuple(prod_to_change),))
+            self._reset_all_bn(cr, uid, prod_to_change, context=None)
         return len(prod_to_change)
 
     def switch_no_to_ed(self, cr, uid, ids, context=None):
@@ -2024,6 +2053,7 @@ class product_attributes(osv.osv):
         if prod_to_change:
             cr.execute("update stock_move set old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id is not null and product_id in %s",  (tuple(prod_to_change), ))
             cr.execute("update stock_production_lot set name=%s, type='standard' where product_id in %s", (self.fake_bn, tuple(prod_to_change)))
+            self._set_all_bn(cr, uid, prod_to_change, context=None)
         return len(prod_to_change)
 
     def set_as_edonly(self, cr, uid, ids, context=None):

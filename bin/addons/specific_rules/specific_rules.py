@@ -1145,9 +1145,12 @@ class stock_inventory_line(osv.osv):
             elif product.perishable:
                 vals.update(hidden_perishable_mandatory=True)
             else:
-                vals.update(hidden_batch_management_mandatory=False,
-                            hidden_perishable_mandatory=False,
-                            )
+                vals.update(
+                    hidden_batch_management_mandatory=False,
+                    hidden_perishable_mandatory=False,
+                    expiry_date=False,
+                    prodlot_name=False,
+                )
         # complete expiry date from production lot - needed if not created from GUI
         #prodlot_obj = self.pool.get('stock.production.lot')
         #if vals.get('prod_lot_id', False):
@@ -1180,9 +1183,12 @@ class stock_inventory_line(osv.osv):
             elif product.perishable:
                 vals.update(hidden_perishable_mandatory=True)
             else:
-                vals.update(hidden_batch_management_mandatory=False,
-                            hidden_perishable_mandatory=False,
-                            )
+                vals.update(
+                    hidden_batch_management_mandatory=False,
+                    hidden_perishable_mandatory=False,
+                    expiry_date=False,
+                    prodlot_name=False,
+                )
         # complete expiry date from production lot - needed if not created from GUI
         prodlot_obj = self.pool.get('stock.production.lot')
         if vals.get('prod_lot_id', False):
