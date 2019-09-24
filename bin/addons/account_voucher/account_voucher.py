@@ -409,7 +409,8 @@ class account_voucher(osv.osv):
             return {}
         context_multi_currency = context.copy()
         if date:
-            context_multi_currency.update({'date': date})
+            # TODO: TEST JN
+            context_multi_currency.update({'currency_date': date})
 
         line_pool = self.pool.get('account.voucher.line')
         line_ids = ids and line_pool.search(cr, uid, [('voucher_id', '=', ids[0])]) or False
@@ -646,7 +647,8 @@ class account_voucher(osv.osv):
             if inv.move_id:
                 continue
             context_multi_currency = context.copy()
-            context_multi_currency.update({'date': inv.date})
+            # TODO: TEST JN
+            context_multi_currency.update({'currency_date': inv.date})
 
             if inv.number:
                 name = inv.number

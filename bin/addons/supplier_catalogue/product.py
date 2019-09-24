@@ -121,6 +121,7 @@ class product_supplierinfo(osv.osv):
         product_pool = self.pool.get('product.product')
         partner_pool = self.pool.get('res.partner')
         currency_id = context.get('currency_id', False) or self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        # TODO: TEST JN => should we keep getting the 'date' in context here (and not the currency_date)?
         date = context.get('date', False) or time.strftime('%Y-%m-%d')
         uom_id = context.get('uom', False) or product_pool.browse(cr, uid, product_id, context=context).uom_id.id
         for supplier in partner_pool.browse(cr, uid, supplier_ids, context=context):

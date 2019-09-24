@@ -288,7 +288,8 @@ class import_commitment_wizard(osv.osv_memory):
                             else:
                                 # lookup id for code
                                 line_currency_id = self.pool.get('res.currency').search(cr,uid,[('name','=',booking_currency)])[0]
-                                date_context = {'date': line_date }
+                                # TODO: TEST JN
+                                date_context = {'currency_date': line_date}
                                 converted_amount = self.pool.get('res.currency').compute(
                                     cr,
                                     uid,
