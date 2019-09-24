@@ -279,8 +279,7 @@ class distribution_line(osv.osv):
         for line in self.browse(cr, uid, ids):
             amount_cur = round((move_line.credit_currency - move_line.debit_currency) * line.percentage / 100, 2)
             # TODO: TEST JN
-            curr_date = currency_date.get_date(self, cr, document_date, date, source_date=source_date)
-            ctx = {'currency_date': curr_date}
+            ctx = {'currency_date': currency_date.get_date(self, cr, document_date, date, source_date=source_date)}
             amount = self.pool.get('res.currency').compute(cr, uid, move_line.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
 
             # US-945: deduce real period id from date
@@ -289,6 +288,7 @@ class distribution_line(osv.osv):
             period_ids = self.pool.get('account.period').get_period_from_date(
                 cr, uid, date=date, context=context)
 
+            cur_date = currency_date.get_date(self, cr, move_line.document_date, move_line.date, source_date=source_date or move_line.source_date)
             vals = {
                 'instance_id': instance_id,
                 'account_id': line.analytic_id.id,
@@ -299,7 +299,7 @@ class distribution_line(osv.osv):
                 'date': date,
                 # UFTP-361: source_date or source date from line or from line posting date if any
                 # for rev line must be the source date of the move line: posting date of reversed line
-                'source_date': source_date or move_line.source_date or move_line.date,  # TODO: TEST JN => should we use the dates from the parameters or the move_line?
+                'source_date': cur_date,  # TODO: TEST JN
                 'document_date': document_date,
                 'journal_id': move_line.journal_id and move_line.journal_id.analytic_journal_id and move_line.journal_id.analytic_journal_id.id or False,
                 'move_id': move_line.id,
