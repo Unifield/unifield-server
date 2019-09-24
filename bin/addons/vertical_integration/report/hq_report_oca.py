@@ -259,8 +259,9 @@ class hq_report_oca(report_sxw.report_sxw):
             first_result_lines.append(formatted_data)
 
             # For the second report:
-            # exclude In-kind Donations and OD-Extra Accounting entries from the "formatted data" file
-            if move_line.journal_id.type not in ['inkind', 'extra']:
+            # exclude In-kind Donations, OD-Extra Accounting entries, and lines with zero amount from the "formatted data" file
+            zero_move_line = not move_line.debit_currency and not move_line.credit_currency and not move_line.debit and not move_line.credit
+            if move_line.journal_id.type not in ['inkind', 'extra'] and not zero_move_line:
                 if not account.shrink_entries_for_hq:
                     # data for the "Employee Id" column
                     employee_id = ''
@@ -378,8 +379,9 @@ class hq_report_oca(report_sxw.report_sxw):
                               analytic_line.functional_currency_id and analytic_line.functional_currency_id.name or ""]
             first_result_lines.append(formatted_data)
 
-            # exclude In-kind Donations and OD-Extra Accounting entries from the "formatted data" file
-            if analytic_line.journal_id.type not in ['inkind', 'extra']:
+            # exclude In-kind Donations, OD-Extra Accounting entries, and lines with zero amount from the "formatted data" file
+            zero_analytic_line = not analytic_line.amount and not analytic_line.amount_currency
+            if analytic_line.journal_id.type not in ['inkind', 'extra'] and not zero_analytic_line:
                 # format CC as: P + the 4 digits from the right
                 cost_center = formatted_data[11] and "P%s" % formatted_data[11][-4:] or ""
                 # data for the "Employee Id" column
