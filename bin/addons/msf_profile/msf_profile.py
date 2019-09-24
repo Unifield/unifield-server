@@ -52,6 +52,19 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+
+    # UF14.1
+    def us_6498_set_qty_to_process(self, cr, uid, *a, **b):
+        cr.execute('''
+            update stock_move
+                set selected_number=to_pack-from_pack+1
+            where id =ANY(
+                select unnest(move_lines) from pack_family_memory where shipment_id in (select id from shipment where state='shipped') and state!='done'
+                )
+        ''')
+        self._logger.warn('Set qty to process on %d stock.move' % cr.rowcount)
+        return True
+
     # UF14.0
     def us_6342_cancel_ir(self, cr, uid, *a, **b):
         """

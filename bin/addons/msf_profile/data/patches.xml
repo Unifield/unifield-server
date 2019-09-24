@@ -447,5 +447,9 @@
             <field name="method">us_6342_cancel_ir</field>
         </record>
 
+        <!-- UF14.1 -->
+        <record id="us_6498_set_qty_to_process" model="patch.scripts">
+            <field name="method">us_6498_set_qty_to_process</field>
+        </record>
     </data>
 </openerp>
