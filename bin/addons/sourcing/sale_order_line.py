@@ -983,11 +983,11 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         _('Warning'),
                         _("You can't Source 'from stock' if you don't have product."),
                     )
-                if line.supplier and line.supplier.partner_type in ('external'):
-                    raise osv.except_osv(
-                        _('Warning'),
-                        _("You can't Source to an 'External' partner if you don't have product."),
-                    )
+                #if line.supplier and line.supplier.partner_type in ('external'):
+                    #raise osv.except_osv(
+                    #    _('Warning'),
+                    #    _("You can't Source to an 'External' partner if you don't have product."),
+                    #)
 
             if line.state not in ('draft', 'cancel') and line.product_id and line.supplier and not context.get('bypass_product_constraints'):
                 # Check product constraints (no external supply, no storage...)
@@ -1192,10 +1192,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             ('supplier.partner_type', '!=', 'esc'),
         ], count=True, context=context)
 
-        if no_prod:
-            raise osv.except_osv(_('Warning'), _("""The product must be chosen before sourcing the line.
-                Please select it within the lines of the associated Field Order (through the "Field Orders" menu).
-                """))
+        #if no_prod:
+        #    raise osv.except_osv(_('Warning'), _("""The product must be chosen before sourcing the line.
+        #        Please select it within the lines of the associated Field Order (through the "Field Orders" menu).
+        #        """))
 
         temp_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]
         temp_products = product_obj.search(cr, uid, [('international_status', '=', temp_status)], context=context)
