@@ -107378,3 +107378,15 @@ msgstr "Date d'Expédition"
 #: report:purchase.order.merged:0
 msgid "Functional total cost :"
 msgstr "Total Coût Fonctionnel :"
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_period.py:203
+#, python-format
+msgid "Impossible to check the revaluation entries of the period: Revaluation Journal not found."
+msgstr "Impossible de vérifier les écritures de réévaluation de la période : Journal de Réévaluation non trouvé."
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_period.py:207
+#, python-format
+msgid "You should run the month-end revaluation before closing the period."
+msgstr "Veuillez lancer la réévaluation de fin de mois avant de fermer la période."
