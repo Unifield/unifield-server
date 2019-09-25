@@ -1161,7 +1161,9 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             else:
                 ex_curr = invoices[key]['curr_id']
                 if inv['curr_id'] != ex_curr:
-                    price = curr_obj.compute(self.cr, self.uid, inv['curr_id'], ex_curr, inv['price_total'], round=False, context={'date': inv['date'] or time.strftime('%Y-%m-%d')})
+                    # TODO: TEST JN
+                    price = curr_obj.compute(self.cr, self.uid, inv['curr_id'], ex_curr, inv['price_total'], round=False,
+                                             context={'currency_date': inv['date'] or time.strftime('%Y-%m-%d')})
                 else:
                     price = inv['price_total']
                 invoices[key]['price_total'] += price*inv['qty']
@@ -1225,7 +1227,9 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 si_ref = invoices[key]['inv_number'] or ''
                 si_unit_price = invoices[key]['price_total'] / invoices[key]['qty']
                 if invoices[key]['curr_id'] != line[24]:
-                    si_unit_price = curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], line[24], si_unit_price, round=False, context={'date': inv['date'] or time.strftime('%Y-%m-%d')})
+                    # TODO: TEST JN
+                    si_unit_price = curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], line[24], si_unit_price, round=False,
+                                                     context={'currency_date': inv['date'] or time.strftime('%Y-%m-%d')})
                 func_si_unit_price = round(curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], wizard.company_currency_id.id,
                                                             si_unit_price, round=False, context=self.localcontext), 2)
             func_pol_unit_price = round(curr_obj.compute(self.cr, self.uid, line[17], wizard.company_currency_id.id,

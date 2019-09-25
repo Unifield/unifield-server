@@ -546,6 +546,7 @@ class account_move_line(osv.osv):
                 context.update({'document_date': m.document_date})
             if m and m.date:
                 vals.update({'date': m.date})
+                # TODO: TEST JN => check that this date in context is never used for amount computation
                 context.update({'date': m.date})
             # UFTP-262: Add description from the move_id (US-2027) if there is not descr. on the line
             if m and m.manual_name and not vals.get('name'):
@@ -600,6 +601,7 @@ class account_move_line(osv.osv):
                     context.update({'document_date': m.document_date})
                 if m and m.date:
                     vals.update({'date': m.date})
+                    # TODO: TEST JN => check that this date in context is never used for amount computation
                     context.update({'date': m.date})
         # Note that _check_document_date HAVE TO be BEFORE the super write. If not, some problems appears in ournal entries document/posting date changes at the same time!
         self._check_document_date(cr, uid, ids, vals, context=context)

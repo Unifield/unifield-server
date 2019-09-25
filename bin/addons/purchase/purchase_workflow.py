@@ -126,8 +126,9 @@ class purchase_order_line(osv.osv):
                 continue
 
             # convert from currency of pol to currency of sol
+            # TODO: TEST JN
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
-                                                                         round=False, context={'date': pol.order_id.date_order})
+                                                                         round=False, context={'currency_date': pol.order_id.date_order})
 
             if sale_order.order_type == 'regular' and price_unit_converted < 0.00001:
                 price_unit_converted = 0.00001
@@ -280,8 +281,9 @@ class purchase_order_line(osv.osv):
         new_sol_id = False
         for pol in self.browse(cr, uid, ids, context=context):
             # convert from currency of pol to currency of sol
+            # TODO: TEST JN
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
-                                                                         round=False, context={'date': pol.order_id.date_order})
+                                                                         round=False, context={'currency_date': pol.order_id.date_order})
 
             if sale_order.order_type == 'regular' and price_unit_converted < 0.00001:
                 price_unit_converted = 0.00001

@@ -191,6 +191,7 @@ class product_pricelist(osv.osv):
             context = {}
 
         date = time.strftime('%Y-%m-%d')
+        # TODO: TEST JN => should we keep getting the 'date' in context here (and not the currency_date)?
         if 'date' in context:
             date = context['date']
 
@@ -349,6 +350,7 @@ class product_pricelist(osv.osv):
             partner = context['partner_id']
         context['partner_id'] = partner
         date = time.strftime('%Y-%m-%d')
+        # TODO: TEST JN => should we keep getting the 'date' in context here (and not the currency_date)?
         if context and ('date' in context):
             date = context['date']
         result = {}
