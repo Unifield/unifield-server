@@ -2417,14 +2417,16 @@ class stock_move(osv.osv):
             'product_uos': uos_id,
             'subtype': product.product_tmpl_id.subtype,
             'asset_id': False,
-            'hidden_batch_management_mandatory': product.batch_management,
-            'hidden_perishable_mandatory': product.perishable,
             'lot_check': product.batch_management,
             'exp_check': product.perishable,
             'product_qty': 0,
             'product_uos_qty': 0,
             'product_type': product.type,
         }
+        if product.batch_management:
+            result['value']['hidden_batch_management_mandatory'] = True
+        elif product.perishable:
+            result['value']['hidden_perishable_mandatory'] = True
         if not ids:
             result['value']['name'] = product.partner_ref
         if loc_id:
