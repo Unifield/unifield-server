@@ -11323,11 +11323,11 @@ msgstr "Sourced references"
 msgid "This informs system if this item is corrigible. Criteria: the entry state should be posted, account should not be payable or receivable, item have not been corrected, item have not been reversed and account is not the default one of the linked register (statement)."
 msgstr "Ce système informe si cette écriture est corrigible. Critères:  le statut de l'écriture doit être comptabilisé, ce ne doit pas être un compte de crédit ou de débit, l'écriture n'a pas été contrepassée et le compte n'est pas le compte par défaut du registre connexe (relevé)."
 
-#. module: res_currency_functional
-#: code:addons/res_currency_functional/account_move_line_compute_currency.py:684
+#. module: account
+#: code:addons/account/account_move_line.py:582
 #, python-format
 msgid "Operator not supported!"
-msgstr "Operator not supported!"
+msgstr "Opérateur non pris en charge !"
 
 #. module: msf_outgoing
 #: report:invoice:0
