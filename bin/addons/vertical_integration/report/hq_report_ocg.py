@@ -54,7 +54,7 @@ class hq_report_ocg(report_sxw.report_sxw):
     def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, period_name, department_info):
         pool = pooler.get_pool(cr.dbname)
         # method to create subtotal + counterpart line
-        if len(line_key) > 1 and line_debit != 0.0:
+        if len(line_key) > 1 and abs(line_debit) > 10**-3:
             currency = pool.get('res.currency').browse(cr, uid, line_key[1])
             description = ""
             # Description for the line
