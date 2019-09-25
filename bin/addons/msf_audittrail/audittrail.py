@@ -1161,7 +1161,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                 sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']], context=context)
                 if field['name'] in sel:
                     res = dict(sel[field['name']]['selection']).get(values)
-                    if not res:
+                    if not res:  # if values is not found as key in selection
                         res = values
                 else:
                     res = values
