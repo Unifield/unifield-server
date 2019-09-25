@@ -105708,6 +105708,12 @@ msgid "Qty to process must be positive, line(s): %s"
 msgstr "La qté à traiter doit être positive, ligne(s): %s"
 
 #. module: stock
+#: code:addons/stock/stock.py:3172
+#, python-format
+msgid "Selected quantity must be greater than 0 !"
+msgstr "La quantité doit être supérieure à 0 !"
+
+#. module: stock
 #: code:addons/stock/stock.py:3174
 #, python-format
 msgid "Qty to split %s is more or equal to original qty %s"

@@ -3257,6 +3257,9 @@ class stock_move(osv.osv):
         keepLineNumber = context.get('keepLineNumber')
         context['keepLineNumber'] = True
         init_data = self.browse(cr, uid, id, fields_to_fetch=['product_qty', 'state', 'qty_to_process', 'pt_created'], context=context)
+        if quantity <= 0:
+            raise osv.except_osv(_('Warning'), _('Selected quantity must be greater than 0 !'))
+
         if quantity >= init_data.product_qty:
             raise osv.except_osv(_('Warning'), _('Qty to split %s is more or equal to original qty %s') % (quantity, init_data.product_qty))
 
