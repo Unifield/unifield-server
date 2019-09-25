@@ -223,7 +223,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 line.product_uom.id,
                             )
                         delivery_order = move.picking_id.name
-                        if move.picking_id.state != 'done':
+                        if move.picking_id.state not in ('done', 'delivered'):
                             delivery_order = '-'
                         data.update({
                             'po_name': po_name,
@@ -286,7 +286,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 state = move.picking_id.state
                             else:
                                 shipment = move.picking_id.name or '-'
-                                is_shipment_done = move.picking_id.state == 'done'
+                                is_shipment_done = move.picking_id.state in ('done', 'delivered')
                                 packing = '-'
                             key = (packing, shipment, move.product_uom.name, line.line_number, state)
                             data.update({
@@ -305,7 +305,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 is_shipment_done = move.picking_id.shipment_id.state == 'done'
                             else:
                                 shipment = move.picking_id.name or '-'
-                                is_shipment_done = move.picking_id.state == 'done'
+                                is_shipment_done = move.picking_id.state in ('done', 'delivered')
                                 packing = '-'
                             key = (packing, False, move.product_uom.name, line.line_number)
                             data.update({
