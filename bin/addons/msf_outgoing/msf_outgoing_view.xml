@@ -266,7 +266,7 @@
 
                                     <field name="prodlot_id"
                                             string="Batch Number"
-                                            context="{'location_id':location_id, 'product_id':product_id, 'search_default_real': True, 'hidden_perishable_mandatory': exp_check}"
+                                            context="{'location_id':location_id, 'product_id':product_id, 'search_default_real': True, 'hidden_perishable_mandatory': not lot_check}"
                                             domain="[('product_id','=?',product_id), ('check_type','=', True)]"
                                             on_change="onchange_lot_processor(prodlot_id, product_qty, location_id, product_uom, context)"
                                             attrs="{'readonly': ['|', '&amp;', ('lot_check','=',False), ('exp_check','=',False), ('fake_state', '=', 'assigned')]}"
