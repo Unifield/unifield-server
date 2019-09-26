@@ -364,6 +364,24 @@
         </record>
 
     <!-- Search view -->
+        <!-- related User Search View -->
+        <record id="user_search_with_active_filter" model="ir.ui.view">
+            <field name="name">user.search.with.active.filter</field>
+            <field name="model">res.users</field>
+            <field name="type">search</field>
+            <field name="priority" eval="105" />
+            <field name="arch" type="xml">
+                <search>
+                    <filter name="user_active" icon="terp-check" string="Active" domain="[('active', '=', True)]" />
+                    <newline/>
+                    <field name="name"/>
+                    <field name="login"/>
+                    <field name="address_id"/>
+                    <field name="synchronize"/>
+                </search>
+            </field>
+        </record>
+
         <record id="account_mcdb_search" model="ir.ui.view">
             <field name="name">account.mcdb.search</field>
             <field name="model">account.mcdb</field>
@@ -374,8 +392,9 @@
                     <filter name="user_active" icon="terp-check" string="Active Users" domain="[('user.active', '=', True)]" />
                     <newline/>
                     <field name="description" select="1"/>
-                    <!-- TODO: instead of domain use something like context="{'active_test': ????}" -->
-                    <field name="user" select="1" domain="[('active', 'in', ['t', 'f'])]"/>
+                    <field name="user" select="1" domain="[('active', 'in', ['t', 'f'])]"
+                           context="{'user_with_active_filter': True,
+                                     'search_default_user_active': True}"/>
                     <field name="hq_template" />
                 </search>
             </field>

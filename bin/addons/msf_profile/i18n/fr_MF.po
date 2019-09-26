@@ -72250,7 +72250,7 @@ msgstr "Ligne num."
 msgid "Navajo"
 msgstr "Navajo"
 
-#. modules: product_nomenclature, process, financing_contract, mission_stock, procurement_cycle, sync_client, supplier_catalogue, analytic_distribution, product, finance, hr, msf_instance, kit, base, msf_tools, res_currency_functional, procurement_report, threshold_value, purchase, account, resource, msf_partner, procurement_auto, msf_field_access_rights, sale, procurement, msf_button_access_rights, stock, product_attributes, account_period_closing_level
+#. modules: product_nomenclature, process, financing_contract, mission_stock, procurement_cycle, sync_client, supplier_catalogue, analytic_distribution, product, finance, hr, msf_instance, kit, base, msf_tools, res_currency_functional, procurement_report, threshold_value, purchase, account, resource, msf_partner, procurement_auto, msf_field_access_rights, sale, procurement, msf_button_access_rights, stock, product_attributes, account_period_closing_level, account_mcdb
 #: field:account.account,active:0
 #: field:account.analytic.journal,active:0
 #: field:account.journal.period,active:0
@@ -72315,6 +72315,7 @@ msgstr "Navajo"
 #: field:account.period,active:0
 #: report:addons/kit/report/kit_mass_import_export_xls.mako:114
 #: view:msf.instance:0
+#: view:res.users:0
 #: field:automated.export,active:0
 #: field:product.heat_sensitive,active:0
 #: field:sync.client.message_rule,active:0
