@@ -930,7 +930,7 @@ class shipment(osv.osv):
                     # Increase the draft move with the move quantity
 
                     draft_initial_qty = draft_move.product_qty + return_qty
-                    qty_processed = draft_move.qty_processed - return_qty
+                    qty_processed = max(draft_move.qty_processed - return_qty, 0)
                     move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty, 'qty_to_process': draft_initial_qty, 'qty_processed': qty_processed, 'pack_info_id': False}, context=context)
 
 
@@ -3547,9 +3547,7 @@ class stock_picking(osv.osv):
                             diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, diff_qty, line.backmove_id.product_uom.id)
                         backorder_qty = max(line.backmove_id.product_qty + diff_qty, 0)
                         if backorder_qty != 0.00:
-                            new_val = {'product_qty': backorder_qty, 'qty_processed': (line.backmove_id.qty_processed or 0)+diff_qty}
-                            if line.backmove_id.product_qty == 0:
-                                new_val['qty_to_process'] = diff_qty
+                            new_val = {'product_qty': backorder_qty, 'qty_processed': line.backmove_id.qty_processed and line.backmove_id.qty_processed - diff_qty or 0, 'qty_to_process': backorder_qty}
                             move_obj.write(cr, uid, [line.backmove_id.id], new_val, context=context)
 
                 if line.qty_to_process:
@@ -4153,9 +4151,10 @@ class stock_picking(osv.osv):
                     draft_move = move.backmove_id
                     if draft_move:
                         # increase the draft move with the move quantity
-                        initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
+                        mainpick_move = move_obj.read(cr, uid, [draft_move.id], ['product_qty', 'qty_processed'], context=context)[0]
+                        initial_qty = mainpick_move['product_qty']
                         initial_qty += move.product_qty
-                        move_obj.write(cr, uid, [draft_move.id], {'product_qty': initial_qty}, context=context)
+                        move_obj.write(cr, uid, [draft_move.id], {'product_qty': initial_qty, 'qty_processed': mainpick_move['qty_processed'] and mainpick_move['qty_processed'] - move.product_qty or 0, 'qty_to_process': initial_qty}, context=context)
 
                         # log the increase action
                         # TODO refactoring needed
