@@ -2652,7 +2652,6 @@ class purchase_order(osv.osv):
                 if soq_rounding == 0:
                     soq_rounding = pol.product_id.soq_quantity
                     soq_uom = pol.product_id.uom_id
-                    line_qty = pol.product_qty
                     l_key = []
 
                 if not soq_rounding:
