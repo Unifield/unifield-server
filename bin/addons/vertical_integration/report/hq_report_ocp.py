@@ -198,7 +198,7 @@ class finance_archive(finance_export.finance_archive):
         return hq_report_ocb.postprocess_liquidity_balances(self, cr, uid, data, context=context)
 
 
-# request used for OCP and OCG VI
+# request used for OCP VI only (removed from OCG VI in US-6516)
 # Journals excluded from the Account Balances: Migration, In-kind Donation, OD-Extra Accounting
 account_balances_per_currency_sql = """
     SELECT i.code AS instance, acc.code, acc.name, %s AS period, req.opening, req.calculated, req.closing, 
