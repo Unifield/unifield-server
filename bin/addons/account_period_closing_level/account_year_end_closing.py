@@ -22,7 +22,6 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from base import currency_date
 
 
 class res_company(osv.osv):
