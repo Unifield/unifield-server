@@ -68,14 +68,14 @@
 <Column ss:AutoFitWidth="1" ss:Width="100" />
 
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Log ID</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Date</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Order Line</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Method</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Field description</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Old value</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">New value</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">User</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Log ID')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Order Line')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Method')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Field description')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Old value')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('New value')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('User')}</Data></Cell>
     </Row>
 
     % for line in get_lines(order_id(objects[0].id)):

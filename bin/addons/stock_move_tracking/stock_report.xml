@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
-    
-        <!-- <report auto="False" 
-                id="tracking_move_report" 
-                model="stock.move" 
+
+        <report auto="False"
+                id="tracking_move_report"
+                model="stock.move"
                 name="tracking.move.report"
                 header="False"
                 rml="addons/stock_move_tracking/report/move_tracking.rml"
-                string="Tracking Move Report" /> -->
-    
+                string="Tracking Move Report" />
+
     </data>
 </openerp>

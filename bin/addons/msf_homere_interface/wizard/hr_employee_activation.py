@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2019 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,27 +18,35 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-from osv import osv
 
-import netsvc
-from tools.translate import _
+from osv import fields, osv
 
-class account_state_open(osv.osv_memory):
-    _name = 'account.state.open'
-    _description = 'Account State Open'
 
-    def change_inv_state(self, cr, uid, ids, context=None):
-        obj_invoice = self.pool.get('account.invoice')
+class hr_employee_activation(osv.osv_memory):
+    _name = 'hr.employee.activation'
+
+    _columns = {
+        'active_status': fields.boolean('Set selected employees as active'),
+    }
+
+    _defaults = {
+        'active_status': True,
+    }
+
+    def change_employee_status(self, cr, uid, ids, context=None):
+        """
+        Sets the selected employees to active or inactive
+        """
         if context is None:
             context = {}
-        if 'active_ids' in context:
-            data_inv = obj_invoice.browse(cr, uid, context['active_ids'][0], context=context)
-            if data_inv.reconciled:
-                raise osv.except_osv(_('Warning'), _('Invoice is already reconciled'))
-            wf_service = netsvc.LocalService("workflow")
-            res = wf_service.trg_validate(uid, 'account.invoice', context['active_ids'][0], 'open_test', cr)
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        employee_obj = self.pool.get('hr.employee')
+        data = self.read(cr, uid, ids, ['active_status'], context=context)[0]
+        for employee_id in context.get('active_ids', []):
+            employee_obj.write(cr, uid, employee_id, {'active': data['active_status']}, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
-account_state_open()
 
+hr_employee_activation()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

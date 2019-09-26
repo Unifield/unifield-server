@@ -42,7 +42,10 @@ class tender(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         if not default:
             default = {}
-        default['internal_state'] = 'draft'  # UF-733: Reset the internal_state
+        default.update({
+            'internal_state': 'draft',  # UF-733: Reset the internal_state
+            'supplier_info_updated': False,
+        })
         if not 'sale_order_id' in default:
             default['sale_order_id'] = False
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
@@ -138,6 +141,7 @@ class tender(osv.osv):
         'delivery_address': fields.many2one('res.partner.address', string='Delivery address', required=True),
         'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
         'diff_nb_rfq_supplier': fields.function(_diff_nb_rfq_supplier, method=True, type="boolean", string="Compare the number of rfqs and the number of suppliers", store=False),
+        'supplier_info_updated': fields.boolean(string="Did the Product's Suppliers have been updated", readonly=True, help="Flag to see if the 'Update Product's Suppliers' button has been used"),
     }
 
     _defaults = {
@@ -409,7 +413,7 @@ class tender(osv.osv):
                                   }
                         # create purchase order line
                         pol_obj.create(cr, uid, values, context=context)
-                        message = "Request for Quotation '%s' has been created." % po_obj.browse(cr, uid, po_id, context=context).name
+                        message = _("Request for Quotation '%s' has been created.") % po_obj.browse(cr, uid, po_id, context=context).name
                         # create the log message
                         self.pool.get('res.log').create(cr, uid,
                                                         {'name': message,
@@ -445,6 +449,29 @@ class tender(osv.osv):
             wf_service.trg_validate(uid, 'tender', tender_id, 'button_done', cr)
 
         return True
+
+    def check_update_for_done(self, cr, uid, ids, context=None):
+        '''
+        Check if the tender has updated the product's supplier before closing it
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for tender in self.browse(cr, uid, ids, fields_to_fetch=['supplier_info_updated'], context=context):
+            if not tender.supplier_info_updated:
+                context['tender_id_to_close'] = tender.id
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'check.products.supplier.updated.wizard',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'context': context,
+                }
+
+        return self.wkf_action_done(cr, uid, ids, context=context)
 
     def wkf_action_done(self, cr, uid, ids, context=None):
         '''
@@ -581,6 +608,8 @@ class tender(osv.osv):
             # warn the user if no update has been performed
             if not updated:
                 raise osv.except_osv(_('Warning !'), _('No information available for update!'))
+            else:
+                self.write(cr, uid, tender.id, {'supplier_info_updated': True}, context=context)
 
         return True
 
@@ -613,7 +642,7 @@ class tender(osv.osv):
                     po_to_use = self.pool.get('tender.line').create_po_from_tender_line(cr, uid, [tender_line.id], context=context)
                     # log new PO:
                     po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
-                    self.pool.get('purchase.order').log(cr, uid, po_to_use, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                    self.pool.get('purchase.order').log(cr, uid, po_to_use, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
                     self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
 
                 anal_dist_to_copy = tender_line.sale_order_line_id and tender_line.sale_order_line_id.analytic_distribution_id.id or False
@@ -2293,3 +2322,38 @@ class res_partner(osv.osv):
         'is_rfq_generated': fields.function(_get_is_rfq_generated, method=1, internal=1, type='boolean', string='RfQ Generated for the tender in context'),
     }
 res_partner()
+
+
+class check_products_supplier_updated_wizard(osv.osv_memory):
+    _name = 'check.products.supplier.updated.wizard'
+
+    _columns = {
+        'comment': fields.text('Comment'),
+    }
+
+    def yes_close_tender(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        tender_obj = self.pool.get('tender')
+
+        if context.get('tender_id_to_close'):
+            comment = self.browse(cr, uid, ids[0], context=context).comment
+            if comment:
+                tend_notes = tender_obj.browse(cr, uid, context['tender_id_to_close'], fields_to_fetch=['notes'],
+                                               context=context).notes
+                new_notes = tend_notes and (tend_notes + ' ' + comment) or comment
+                tender_obj.write(cr, uid, context['tender_id_to_close'], {'notes': new_notes}, context=context)
+            tender_obj.wkf_action_done(cr, uid, [context['tender_id_to_close']], context=context)
+            context.pop('tender_id_to_close')
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def no_close_tender(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        return {'type': 'ir.actions.act_window_close'}
+
+
+check_products_supplier_updated_wizard()

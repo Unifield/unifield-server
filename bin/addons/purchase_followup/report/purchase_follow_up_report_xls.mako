@@ -121,7 +121,7 @@ col_count = 13
 header_merge_accross_count = col_count - 2  ## merging cell self deduced
 %>
 % for o in objects:
-<ss:Worksheet ss:Name="PO Follow Up">
+<ss:Worksheet ss:Name="${_('PO Follow Up')}">
 <Table x:FullColumns="1" x:FullRows="1">
 ## order line
 <Column ss:AutoFitWidth="1" ss:Width="80" />

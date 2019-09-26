@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            id="report_stock_delivery_report_xls"
+            name="stock.delivery.report_xls"
+            model="stock.delivery.wizard"
+            string="Deliveries Report"
+            file="stock/report/stock_delivery_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+
+    </data>
+</openerp>

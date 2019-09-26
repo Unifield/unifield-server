@@ -29,5 +29,6 @@ import hr_payroll_deletion
 import hr_expat_import
 import hr_nat_staff_import
 import hr_payment_order
+import hr_employee_activation
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -27,6 +27,7 @@ from osv import fields, osv
 from tools.translate import _
 import decimal_precision as dp
 import tools
+import netsvc
 
 class account_move_line(osv.osv):
     _name = "account.move.line"
@@ -535,6 +536,54 @@ class account_move_line(osv.osv):
                 result.append(line.id)
         return result
 
+    def _get_line_account_type(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        ret = {}
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['account_id']):
+            ret[line.id] = line.account_id and line.account_id.user_type and line.account_id.user_type.name or False
+        return ret
+
+    def _store_journal_account(self, cr, uid, ids, context=None):
+        return self.pool.get('account.move.line').search(cr, uid, [('account_id', 'in', ids)])
+
+    def _store_journal_account_type(self, cr, uid, ids, context=None):
+        return self.pool.get('account.move.line').search(cr, uid, [('account_id.user_type', 'in', ids)])
+
+    def _get_reconcile_total_partial_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Informs for each move line if a reconciliation or a partial reconciliation have been made. Else return False.
+        """
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        ret = {}
+        for line in self.read(cr, uid, ids, ['reconcile_id','reconcile_partial_id']):
+            if line['reconcile_id']:
+                ret[line['id']] = line['reconcile_id']
+            elif line['reconcile_partial_id']:
+                ret[line['id']] = line['reconcile_partial_id']
+            else:
+                ret[line['id']] = False
+        return ret
+
+    def _search_reconcile_total_partial(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Search either total reconciliation name or partial reconciliation name
+        """
+        if context is None:
+            context = {}
+        arg = []
+        for x in args:
+            if x[0] == 'reconcile_total_partial_id' and x[1] in ['=','ilike','like'] and x[2]:
+                arg.append('|')
+                arg.append(('reconcile_id', x[1], x[2]))
+                arg.append(('reconcile_partial_id', x[1], x[2]))
+            elif x[0] == 'reconcile_total_partial_id':
+                raise osv.except_osv(_('Error'), _('Operator not supported!'))
+            else:
+                arg.append(x)
+        return arg
+
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         'quantity': fields.float('Quantity', digits=(16,2), help="The optional quantity expressed by this line, eg: number of product sold. The quantity is not a legal requirement but is very useful for some reports."),
@@ -585,6 +634,21 @@ class account_move_line(osv.osv):
         'company_id': fields.related('account_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
         # UF-1536: Fix residual amount (to be checked during UNIFIELD REFACTORING)
         'is_counterpart': fields.boolean('Is counterpart?', readonly=True),
+        'debit_currency': fields.float('Book. Debit', digits_compute=dp.get_precision('Account')),
+        'credit_currency': fields.float('Book. Credit', digits_compute=dp.get_precision('Account')),
+        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency",
+                                                 string="Func. Currency", store=False, write_relate=False),
+        # Those fields are for UF-173: Accounting Journals.
+        # Since they are used in the move line view, they are added in Multi-Currency.
+        'account_type': fields.function(_get_line_account_type, type='char', size=64, method=True, string="Account Type",
+                                        store={
+                                            'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['account_id'], 10),
+                                            'account.account': (_store_journal_account, ['user_type'], 10),
+                                            'account.account.type': (_store_journal_account_type, ['name'], 10),
+                                        }
+                                        ),
+        'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, fnct_search=_search_reconcile_total_partial,
+                                                      type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
     }
 
     def _get_date(self, cr, uid, context=None):
@@ -628,6 +692,8 @@ class account_move_line(osv.osv):
         # prevent NULL value in sql record
         'debit': 0,
         'credit': 0,
+        'debit_currency': 0.0,
+        'credit_currency': 0.0,
     }
     _order = "date desc, id desc"
     _sql_constraints = [
@@ -993,8 +1059,24 @@ class account_move_line(osv.osv):
                     'unreconcile_date': time.strftime('%Y-%m-%d'),
                     'unreconcile_txt': obj_move_line.browse(cr, uid, aml, context=context, fields_to_fetch=['reconcile_txt']).reconcile_txt,
                 }, context=context)
+
+            # if full reconcile linked to an invoice, set it as (re-)open
+            cr.execute('''
+                select distinct(inv.id)
+                    from account_invoice inv
+                    left join account_move_line move_line on move_line.move_id = inv.move_id
+                    where
+                        move_line.reconcile_id in %s and
+                        move_line.is_counterpart
+                ''', (tuple(unlink_ids), )
+            )
+            inv_ids = [x[0] for x in cr.fetchall()]
+
             # then delete the account.move.reconciles
             obj_move_rec.unlink(cr, uid, unlink_ids)
+
+            if inv_ids:
+                netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', inv_ids, 'open_test', cr)
         return True
 
     def check_unlink(self, cr, uid, ids, context=None):

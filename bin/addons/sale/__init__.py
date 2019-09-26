@@ -36,6 +36,14 @@ SALE_ORDER_LINE_STATE_SELECTION = [
     ('cancel_r', 'Cancelled-r'),
 ]
 
+SALE_ORDER_LINE_DISPLAY_STATE_SELECTION = SALE_ORDER_LINE_STATE_SELECTION + [
+    ('resourced_v', 'Resourced-v'),
+    ('resourced_pv', 'Resourced-pv'),
+    ('resourced_s', 'Resourced-s'),
+    ('resourced_c', 'Resourced-c'),
+    ('resourced_d', 'Resourced-d'),
+]
+
 SALE_ORDER_STATE_SELECTION = [
     ('draft', 'Draft'),
     ('draft_p', 'Draft-p'),
@@ -48,6 +56,7 @@ SALE_ORDER_STATE_SELECTION = [
     ('done', 'Closed'),
     ('cancel', 'Cancelled'),
 ]
+
 
 SALE_ORDER_SPLIT_SELECTION = [
     ('original_sale_order', 'Original'),

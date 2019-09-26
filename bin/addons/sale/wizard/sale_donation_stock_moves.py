@@ -65,9 +65,13 @@ class sale_donation_stock_moves(osv.osv_memory):
             string='Stock Moves',
             readonly=True
         ),
+        'display_bn_ed': fields.boolean(
+            string='Display BN/ED details',
+        ),
     }
 
     _defaults = {
+        'display_bn_ed': False,
     }
 
 
@@ -90,7 +94,6 @@ class sale_donation_stock_moves(osv.osv_memory):
             sm_domain = []
 
             sm_domain.append(('reason_type_id', 'in', type_donation_ids))
-            sm_domain.append(('state', '=', 'done'))
             sm_domain += ['|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'), ('location_dest_id.usage', 'in', ['customer', 'supplier'])]
 
             if wizard.move_id:
@@ -123,6 +126,11 @@ class sale_donation_stock_moves(osv.osv_memory):
                     prod_ids = prod_obj.search(cr, uid, [('nomen_manda_0', '=', wizard.nomen_manda_0.id)], context=context)
                     if prod_ids:
                         sm_domain.append(('product_id', 'in', prod_ids))
+
+                if wizard.display_bn_ed:
+                    sm_domain.append(('state', '!=', 'cancel'))
+                else:
+                    sm_domain.append(('state', '=', 'done'))
 
                 sm_ids = sm_obj.search(cr, uid, sm_domain, context=context)
 
@@ -164,9 +172,10 @@ class sale_donation_stock_moves(osv.osv_memory):
             'context': context,
         }
 
-    def partner_onchange(self, cr, uid, ids, partner_id=False, move_id=False):
+    def donation_report_onchange(self, cr, uid, ids, partner_id=False, move_id=False, display_bn_ed=False):
         '''
         If the partner is changed, check if the move is to this partner
+        If the BN/ED checkbox is changed, check if the move is state-restricted
         '''
         sm_obj = self.pool.get('stock.move')
 
@@ -185,17 +194,23 @@ class sale_donation_stock_moves(osv.osv_memory):
                         match with the selected partner. The selected move has been reset'),
                 }
 
-        if partner_id:
-            res['domain'] = {'move_id': [('reason_type_id.name', 'in', ['In-Kind Donation', 'Donation before expiry', 'Donation (standard)']),
-                                         ('state', '=', 'done'), ('partner_id', '=', partner_id),
-                                         '|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
-                                         ('location_dest_id.usage', 'in', ['customer', 'supplier'])]}
+        sm_domain = [
+            ('reason_type_id.name', 'in', ['In-Kind Donation', 'Donation before expiry', 'Donation (standard)']),
+            '|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
+            ('location_dest_id.usage', 'in', ['customer', 'supplier'])
+        ]
+
+        if display_bn_ed:
+            sm_domain.append(('state', '!=', 'cancel'))
         else:
-            res['domain'] = {'move_id': [('reason_type_id.name', 'in', ['In-Kind Donation', 'Donation before expiry', 'Donation (standard)']),
-                                         ('state', '=', 'done'),
-                                         '|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
-                                         ('location_dest_id.usage', 'in', ['customer', 'supplier'])]}
+            sm_domain.append(('state', '=', 'done'))
+
+        if partner_id:
+            sm_domain.append(('partner_id', '=', partner_id))
+
+        res['domain'] = {'move_id': sm_domain}
 
         return res
+
 
 sale_donation_stock_moves()
