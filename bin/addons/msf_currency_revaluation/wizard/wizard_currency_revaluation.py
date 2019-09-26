@@ -539,7 +539,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                  'destination_id': destination_id,
                  'currency_id': currency_id,
                  'percentage': 100.0,
-                 'source_date': form.posting_date,
+                 'source_date': form.posting_date,  # revaluation entry doc & posting date
                  },
                 context=context)
             fp_distrib_obj.create(
@@ -550,7 +550,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                  'cost_center_id': cost_center_id,
                  'currency_id': currency_id,
                  'percentage': 100.0,
-                 'source_date': form.posting_date,
+                 'source_date': form.posting_date,  # revaluation entry doc & posting date
                  },
                 context=context)
 

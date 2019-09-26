@@ -167,7 +167,9 @@ class account_commitment(osv.osv):
                             for distrib_line in distrib_lines:
                                 if (distrib_line.analytic_id.date_start and date < distrib_line.analytic_id.date_start) or (distrib_line.analytic_id.date and date > distrib_line.analytic_id.date):
                                     raise osv.except_osv(_('Error'), _('The analytic account %s is not active for given date.') % (distrib_line.analytic_id.name,))
-                        self.pool.get('account.analytic.line').write(cr, uid, [x.id for x in cl.analytic_lines], {'date': date, 'source_date': date, 'document_date': date,}, context=context)
+                        self.pool.get('account.analytic.line').write(cr, uid, [x.id for x in cl.analytic_lines],
+                                                                     {'date': date, 'source_date': date, 'document_date': date, },
+                                                                     context=context)
         # Default behaviour
         res = super(account_commitment, self).write(cr, uid, ids, vals, context=context)
         return res
