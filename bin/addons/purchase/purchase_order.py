@@ -2601,6 +2601,7 @@ class purchase_order(osv.osv):
                 min_qty = 0
                 soq_rounding = 0
                 soq_PU = 0
+                line_qty = pol.product_qty
 
                 if sup_ids:
                     for sup in sup_obj.browse(cr, uid, sup_ids, context=context):
@@ -2616,33 +2617,36 @@ class purchase_order(osv.osv):
 
                         l_key = list(t_min_qty_price.keys())
                         l_key.sort()
+                        first = True
 
                         for pcl in sup.pricelist_ids:
 
                             if pcl.rounding:
 
                                 soq_uom = pcl.uom_id
-                                line_qty = pol.product_qty
 
                                 if pol.product_uom.id != soq_uom.id:
                                     min_qty = uom_obj._compute_qty_obj(cr, uid, soq_uom, pcl.min_quantity, pol.product_uom, context=context)
-                                    soq_rounding = uom_obj._compute_qty_obj(cr, uid, soq_uom, pcl.rounding, pol.product_uom, context=context)
-                                    soq_PU = uom_obj._compute_price(cr, uid, soq_uom.id, pcl.price, pol.product_uom.id)
                                 else:
                                     min_qty = pcl.min_quantity
-                                    soq_rounding = pcl.rounding
-                                    soq_PU = pcl.price
 
-                                if line_qty <= min_qty:
+                                if line_qty < min_qty:
+                                    if first:
+                                        if pol.product_uom.id != soq_uom.id:
+                                            soq_rounding = uom_obj._compute_qty_obj(cr, uid, soq_uom, pcl.rounding, pol.product_uom, context=context)
+                                            soq_PU = uom_obj._compute_price(cr, uid, soq_uom.id, pcl.price, pol.product_uom.id)
+                                        else:
+                                            soq_rounding = pcl.rounding
+                                            soq_PU = pcl.price
                                     break
                                 else:
+                                    first = False
                                     if pol.product_uom.id != soq_uom.id:
                                         soq_rounding = uom_obj._compute_qty_obj(cr, uid, soq_uom, pcl.rounding, pol.product_uom, context=context)
                                         soq_PU = uom_obj._compute_price(cr, uid, soq_uom.id, pcl.price, pol.product_uom.id)
                                     else:
                                         soq_rounding = pcl.rounding
                                         soq_PU = pcl.price
-                                    break
 
                 # Get SoQ value (from product not supplier catalogue)
                 if soq_rounding == 0:
