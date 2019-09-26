@@ -206,9 +206,9 @@ class shipment(osv.osv):
 
             pack_fam_ids = shipment['pack_family_memory_ids']
             for pack_fam_id in pack_fam_ids:
-                memory_family = pack_family_dict[pack_fam_id]
+                memory_family = pack_family_dict.get(pack_fam_id)
                 # taken only into account if not done (done means returned packs)
-                if not memory_family['not_shipped'] and (shipment['state'] in ('delivered', 'done') or memory_family['state'] not in ('done',)):
+                if memory_family and not memory_family['not_shipped'] and (shipment['state'] in ('delivered', 'done') or memory_family['state'] not in ('done',)):
                     # num of packs
                     num_of_packs = memory_family['num_of_packs']
                     current_result['num_of_packs'] += int(num_of_packs)
@@ -4821,6 +4821,13 @@ class pack_family_memory(osv.osv):
         '''
         result = {}
         compute_moves = not fields or 'move_lines' in fields
+        for _id in ids:
+            result[_id] = {
+                'amount': 0.0,
+                'total_weight': 0.0,
+                'total_volume': 0.0,
+                'move_lines': []
+            }
         for pf_memory in self.read(cr, uid, ids, ['num_of_packs',
                                                   'total_amount', 'weight', 'length', 'width', 'height', 'state'],
                                    context=context):

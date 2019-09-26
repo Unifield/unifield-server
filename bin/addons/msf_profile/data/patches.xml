@@ -446,9 +446,14 @@
         <record id="us_6342_cancel_ir" model="patch.scripts">
             <field name="method">us_6342_cancel_ir</field>
         </record>
+
+        <!-- UF14.1 -->
         <record id="us_6433_remove_sale_override_sourcing" model="patch.scripts">
             <field name="method">us_6433_remove_sale_override_sourcing</field>
         </record>
 
+        <record id="us_6498_set_qty_to_process" model="patch.scripts">
+            <field name="method">us_6498_set_qty_to_process</field>
+        </record>
     </data>
 </openerp>
