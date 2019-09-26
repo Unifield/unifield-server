@@ -1021,17 +1021,18 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
                 cr.execute("delete from msf_button_access_rights_button_access_rule where deprecated='t'")
                 cr.commit()
                 logger.notifyChannel('init', netsvc.LOG_INFO, 'BAR: %d deprecated rules deleted: %s' % (cr.rowcount,', '.join(deleted_sdref)))
-            cr.execute("""
-                select d.module||'.'||d.name, r.id, f.model, f.name from msf_field_access_rights_field_access_rule_line r
-                    left join ir_model_data d on d.res_id = r.id and d.model='msf_field_access_rights.field_access_rule_line' and d.module='sd'
-                    left join ir_model_fields f on f.id = r.field
-                    where f.state='deprecated'
-            """)
-            deleted_far_lines = cr.fetchall()
-            if deleted_far_lines:
-                cr.execute("delete from msf_field_access_rights_field_access_rule_line where id in %s", (tuple([x[1] for x in deleted_far_lines]),))
-                cr.commit()
-                logger.notifyChannel('init', netsvc.LOG_INFO, 'FARL: %d deprecated rules deleted: %s' % (cr.rowcount,', '.join(["%s (%s %s)"%(x[0],x[2], x[3]) for x in deleted_far_lines])))
+            if cr.table_exists('msf_field_access_rights_field_access_rule_line'):
+                cr.execute("""
+                    select d.module||'.'||d.name, r.id, f.model, f.name from msf_field_access_rights_field_access_rule_line r
+                        left join ir_model_data d on d.res_id = r.id and d.model='msf_field_access_rights.field_access_rule_line' and d.module='sd'
+                        left join ir_model_fields f on f.id = r.field
+                        where f.state='deprecated'
+                """)
+                deleted_far_lines = cr.fetchall()
+                if deleted_far_lines:
+                    cr.execute("delete from msf_field_access_rights_field_access_rule_line where id in %s", (tuple([x[1] for x in deleted_far_lines]),))
+                    cr.commit()
+                    logger.notifyChannel('init', netsvc.LOG_INFO, 'FARL: %d deprecated rules deleted: %s' % (cr.rowcount,', '.join(["%s (%s %s)"%(x[0],x[2], x[3]) for x in deleted_far_lines])))
 
     finally:
         cr.close()
