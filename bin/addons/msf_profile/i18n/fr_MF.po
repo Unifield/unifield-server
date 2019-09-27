@@ -104292,6 +104292,7 @@ msgid "Line %s: Column \"Qty to Process\" should contains the quantity to proces
 msgstr "Ligne %s: La colonne \"Qté à Traiter\" devrait contenir la quantité à traiter et ne peut pas être vide, merci de la remplir avec un \"0\""
 
 #. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:191
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:336
 #, python-format
 msgid "The total quantity of line #%s in the import file doesn't match with the total qty on screen"
@@ -105515,12 +105516,6 @@ msgstr "Depuis le flux rapide"
 msgid "Line %s : The new source location is not compatible with the product type, so the destination location has not been changed for this move. \n"
 ""
 msgstr "Ligne %s: La nouvelle zone source n'est pas compatible avec le type du produit. Zone non modifiée."
-
-#. module: msf_supply_doc_export
-#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:191
-#, python-format
-msgid "Line %s: Matching move not found"
-msgstr "Ligne %s: aucun mouvement correspondant trouvé"
 
 #. module: stock
 #: field:stock.picking,is_subpick:0
