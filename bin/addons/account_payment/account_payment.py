@@ -235,7 +235,8 @@ class payment_line(osv.osv):
 
         for line in self.browse(cursor, user, ids, context=context):
             ctx = context.copy()
-            ctx['date'] = line.order_id.date_done or time.strftime('%Y-%m-%d')
+            # TODO: TEST JN
+            ctx['currency_date'] = line.order_id.date_done or time.strftime('%Y-%m-%d')
             res[line.id] = currency_obj.compute(cursor, user, line.currency.id,
                                                 line.company_currency.id,
                                                 line.amount_currency, context=ctx)

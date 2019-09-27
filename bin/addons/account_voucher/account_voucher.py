@@ -784,8 +784,6 @@ class account_voucher(osv.osv):
                     'date': inv.date,
                     'credit': diff > 0 and diff or 0.0,
                     'debit': diff < 0 and -diff or 0.0,
-                    #'amount_currency': company_currency <> current_currency and currency_pool.compute(cr, uid, company_currency, current_currency, diff * -1, context=context_multi_currency) or 0.0,
-                    #'currency_id': company_currency <> current_currency and current_currency or False,
                 }
                 move_line = self.__hook_move_line_values_before_creation(cr, uid, move_line)
                 move_line_pool.create(cr, uid, move_line)
@@ -825,7 +823,8 @@ class account_voucher_line(osv.osv):
         rs_data = {}
         for line in self.browse(cr, uid, ids, context=context):
             ctx = context.copy()
-            ctx.update({'date': line.voucher_id.date})
+            # TODO: TEST JN
+            ctx.update({'currency_date': line.voucher_id.date})
             res = {}
             company_currency = line.voucher_id.journal_id.company_id.currency_id.id
             voucher_currency = line.voucher_id.currency_id.id
@@ -978,15 +977,9 @@ class account_bank_statement_line(osv.osv):
             return {}
 
         res = {}
-#        company_currency_id = False
         for line in self.browse(cursor, user, ids, context=context):
-#            if not company_currency_id:
-#                company_currency_id = line.company_id.id
             if line.voucher_id:
-                res[line.id] = line.voucher_id.amount#
-#                        res_currency_obj.compute(cursor, user,
-#                        company_currency_id, line.statement_id.currency.id,
-#                        line.voucher_id.amount, context=context)
+                res[line.id] = line.voucher_id.amount
             else:
                 res[line.id] = 0.0
         return res

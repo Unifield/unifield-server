@@ -59,7 +59,8 @@ class account_statement_from_invoice_lines(osv.osv_memory):
             voucher_res = {}
             ctx = context.copy()
             #  take the date for computation of currency => use payment date
-            ctx['date'] = line_date
+            # TODO: TEST JN
+            ctx['currency_date'] = line_date
             amount = 0.0
 
             if line.debit > 0:

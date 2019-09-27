@@ -3169,6 +3169,7 @@ class stock_move(osv.osv):
         src_main_currency_id = src_acct.company_id.currency_id.id
         dest_main_currency_id = dest_acct.company_id.currency_id.id
         cur_obj = self.pool.get('res.currency')
+        # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
         if reference_currency_id != src_main_currency_id:
             # fix credit line:
             credit_line_vals['credit'] = cur_obj.compute(cr, uid, reference_currency_id, src_main_currency_id, reference_amount, context=context)

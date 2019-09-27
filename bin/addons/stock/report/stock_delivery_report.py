@@ -42,6 +42,7 @@ class stock_delivery_report(report_sxw.rml_parse):
             prod = move.product_id
             price = prod and prod.standard_price
             currency = prod and prod.currency_id or False
+            # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
             curr_price = self.pool.get('res.currency').compute(self.cr, self.uid, move.price_currency_id.id, currency
                                                                and currency.id or False, price, context=self.localcontext)
             res.append({

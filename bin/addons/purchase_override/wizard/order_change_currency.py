@@ -81,6 +81,7 @@ class purchase_order_change_currency(osv.osv_memory):
             
         for wiz in self.browse(cr, uid, ids, context=context):            
             for line in wiz.order_id.order_line:
+                # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                 new_price = currency_obj.compute(cr, uid, wiz.old_pricelist_id.currency_id.id, wiz.new_pricelist_id.currency_id.id, line.price_unit, round=False, context=context)
                 line_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=c)
                 

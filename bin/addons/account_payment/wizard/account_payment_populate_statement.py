@@ -71,7 +71,8 @@ class account_payment_populate_statement(osv.osv_memory):
 
         for line in line_obj.browse(cr, uid, line_ids, context=context):
             ctx = context.copy()
-            ctx['date'] = line.ml_maturity_date # was value_date earlier,but this field exists no more now
+            # TODO: TEST JN
+            ctx['currency_date'] = line.ml_maturity_date  # was value_date earlier, but this field exists no more now
             amount = currency_obj.compute(cr, uid, line.currency.id,
                     statement.currency.id, line.amount_currency, context=ctx)
 
