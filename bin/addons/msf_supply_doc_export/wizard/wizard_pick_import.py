@@ -265,11 +265,13 @@ class wizard_pick_import(osv.osv_memory):
             except:
                 raise osv.except_osv(_('Error'), _('File line %s: Column "Item" must be an integer') % xls_line_number)
 
-            if line_data['qty_to_process'] is None:
-                raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should contains the quantity to process and cannot be empty, please fill it with "0" instead') % line_data['item'])
+            # if line_data['qty_to_process'] is None:
+            #     raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should contains the quantity to process and cannot be empty, please fill it with "0" instead') % line_data['item'])
+            if line_data['qty_to_process'] and line_data['qty_to_process'] < 0:
+                raise osv.except_osv(_('Error'), _('Line %s: Column "Qty to Process" should be greater than 0') % line_data['item'])
 
             line_data = self.normalize_data(cr, uid, line_data)
-            if line_data['qty_to_process'] and line_data['qty']:
+            if line_data['qty']:
                 to_write = {}
                 # Save qties by line
                 if qty_per_line.get(line_data['item']):
@@ -289,7 +291,7 @@ class wizard_pick_import(osv.osv_memory):
 
                 move = self.pool.get('stock.move').browse(cr, uid, to_write['move_id'], context=context)
                 to_write['qty_to_process'] = line_data['qty_to_process']
-                if move.product_id.batch_management:
+                if line_data['qty_to_process'] and move.product_id.batch_management:
                     if line_data['batch'] and line_data['expiry_date']:
                         prodlot_ids = self.pool.get('stock.production.lot').search(cr, uid, [
                             ('product_id', '=', move.product_id.id),
@@ -307,7 +309,8 @@ class wizard_pick_import(osv.osv_memory):
                         raise osv.except_osv(_('Error'),
                                              _('Line %s: Product %s must have a batch number and an expiry date')
                                              % (line_data['item'], line_data['code']))
-                elif not move.product_id.batch_management and move.product_id.perishable and line_data['expiry_date']:
+                elif line_data['qty_to_process'] and not move.product_id.batch_management and move.product_id.perishable \
+                        and line_data['expiry_date']:
                     prodlot_ids = self.pool.get('stock.production.lot').search(cr, uid, [
                         ('life_date', '=', line_data['expiry_date']),
                         ('type', '=', 'internal'),
