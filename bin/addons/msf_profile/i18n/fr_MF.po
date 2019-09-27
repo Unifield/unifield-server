@@ -106538,12 +106538,6 @@ msgstr "Veuillez vous assurer que vous avez selectionné la bonne valeur pour le
 msgid "Line %s. Period is missing."
 msgstr "Ligne %s. Il manque la Période."
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:615
-#, python-format
-msgid "All Document Dates should be in the same period."
-msgstr "Toutes les Dates de Document doivent être dans la même période."
-
 #. module: order_types
 #: report:order.type.donation.certificate:0
 msgid "CERTIFICATE of DONATION"
