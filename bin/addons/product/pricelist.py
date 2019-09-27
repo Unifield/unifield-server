@@ -162,6 +162,7 @@ class product_pricelist(osv.osv):
                        'ORDER BY min_quantity DESC LIMIT 1', (tuple(sinfo),qty_in_product_uom,))
             res2 = cr.dictfetchone()
             if res2:
+                # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                 price = self.pool.get('res.currency').compute(cr, uid, supplier_currency,\
                                                               res2['currency_id'], res2['price'], round=False, context=context)
         return price, uom_price_already_computed
@@ -286,6 +287,7 @@ class product_pricelist(osv.osv):
                                                                                                  context=context)
                         else:
                             price_type = price_type_obj.browse(cr, uid, int(res['base']))
+                            # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                             price = currency_obj.compute(cr, uid,
                                                          price_type.currency_id.id, res['currency_id'],
                                                          product_obj.price_get(cr, uid, [product_id],
@@ -441,6 +443,7 @@ class product_pricelist(osv.osv):
                                 break
                     else:
                         price_type = price_type_obj.browse(cr, uid, int(res['base']))
+                        # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                         price = currency_obj.compute(cr, uid,
                                                      price_type.currency_id.id, res['currency_id'],
                                                      product_obj.price_get(cr, uid, [prod_id],

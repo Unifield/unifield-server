@@ -81,6 +81,7 @@ class res_currency(osv.osv):
             new_to_currency_id = self._get_table_currency(cr, uid, to_currency_id, context['currency_table_id'], context=context)
             if new_to_currency_id:
                 to_currency_id = new_to_currency_id
+        # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
         return super(res_currency, self).compute(cr, uid, from_currency_id, to_currency_id, from_amount, round, context=context)
 
     def create_associated_pricelist(self, cr, uid, currency_id, context=None):

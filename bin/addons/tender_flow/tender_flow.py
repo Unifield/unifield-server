@@ -921,6 +921,7 @@ class tender_line(osv.osv):
             else:
                 result[line.id]['currency_id'] = result[line.id]['func_currency_id']
 
+            # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
             result[line.id]['func_total_price'] = self.pool.get('res.currency').compute(cr, uid, result[line.id]['currency_id'],
                                                                                         result[line.id]['func_currency_id'],
                                                                                         result[line.id]['total_price'],

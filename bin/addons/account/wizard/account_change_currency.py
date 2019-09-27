@@ -50,6 +50,7 @@ class account_change_currency(osv.osv_memory):
         invoice = obj_inv.browse(cr, uid, context['active_id'], context=context)
         if invoice.currency_id.id == new_currency:
             return {}
+        # TODO: TEST JN: should we use the invoice doc/posting date instead of the current date?
         rate = obj_currency.browse(cr, uid, new_currency, context=context).rate
         for line in invoice.invoice_line:
             new_price = 0

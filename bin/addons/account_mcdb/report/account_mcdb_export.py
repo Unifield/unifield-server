@@ -317,6 +317,7 @@ class account_line_csv_export(osv.osv_memory):
                 csv_line.append(absl.functional_currency_id and absl.functional_currency_id.name and absl.functional_currency_id.name.encode('utf-8') or '')
             else:
                 #output amount (debit/credit) regarding booking currency
+                # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                 amount = currency_obj.compute(cr, uid, absl.currency_id.id, currency_id, absl.amount, round=True, context=context)
                 if amount < 0.0:
                     csv_line.append(0.0)

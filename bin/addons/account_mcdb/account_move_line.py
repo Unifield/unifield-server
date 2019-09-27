@@ -55,6 +55,7 @@ class account_move_line(osv.osv):
                 return func_amount
             original_currency = ml.functional_currency_id.id
         # Perform the conversion from original currency to selected currency
+        # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
         return currency_obj.compute(cr, uid, original_currency, currency_id, func_amount, round=round, context=context)
 
     def _get_output(self, cr, uid, ids, field_name, arg, context=None):

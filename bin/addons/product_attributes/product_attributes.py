@@ -1317,6 +1317,7 @@ class product_attributes(osv.osv):
                 curr_obj = self.pool.get('res.currency')
                 if vals.get('standard_price') and vals.get('currency_id') != company.currency_id.id:
                     if vals['standard_price'] != 1:
+                        # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                         vals['standard_price'] = round(curr_obj.compute(cr, 1, vals['currency_id'], company.currency_id.id, vals['standard_price'], round=False, context=context), 5)
                     vals['currency_id'] = company.currency_id.id
                     converted = True
