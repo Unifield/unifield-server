@@ -70,17 +70,17 @@
             <field name="help_wal" readonly="0"/>
             <group colspan="6" attrs="{'invisible': [('help_wal', '=', False)]}">
             <html>
-                <h4>Steps to activate Continuous backup</h4>
+                <h4><translate>Steps to activate Continuous backup</translate></h4>
                 <ul>
-                    <li>Unzip your keys in in C:/Program Files (x86)/msf/</li>
-                    <li>Edit pg_hba.conf and add:
+                    <li><translate>Unzip your keys in in C:\Program Files (x86)\msf\</translate></li>
+                    <li><translate>Edit pg_hba.conf and add:</translate>
 <pre>
 host    replication     openpg        127.0.0.1/32            md5
 host    replication     openpg        ::1/128                 md5
 </pre>
 </li>
 
-                    <li>Edit postgresql.conf and set:
+                    <li><translate>Edit postgresql.conf and set:</translate>
 <pre>
 wal_level = replica
 wal_compression = on
@@ -90,12 +90,12 @@ max_wal_senders = 3
 wal_keep_segments = 6
 archive_timeout = 43200
 </pre>
-Replace the 3 occurences of "C:\\WAL\\" with the path to the local WAL Archive directory.
+<translate>Replace the 3 occurences of "C:\\WAL\\" with the path to the local WAL Archive directory.</translate>
 </li>
 
-                    <li>Stop OpenERP server</li>
-                    <li>Restart postgresql</li>
-                    <li>Start OpenERP server</li>
+                    <li><translate>Stop OpenERP server</translate></li>
+                    <li><translate>Restart PostgreSQL</translate></li>
+                    <li><translate>Start OpenERP server</translate></li>
                  </ul>
             <br />
             <br />

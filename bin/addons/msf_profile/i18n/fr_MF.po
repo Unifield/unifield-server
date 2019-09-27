@@ -62841,7 +62841,7 @@ msgstr "Asie/Irkutsk"
 msgid "Functional Amount"
 msgstr "Montant Fonctionnel"
 
-#. modules: delivery_mechanism, msf_doc_import, msf_tools, return_claim
+#. modules: delivery_mechanism, msf_doc_import, msf_tools, return_claim, sync_client
 #: code:addons/delivery_mechanism/delivery_mechanism.py:1228
 #: code:addons/delivery_mechanism/delivery_mechanism.py:1315
 #: code:addons/delivery_mechanism/delivery_mechanism.py:1379
@@ -62855,6 +62855,8 @@ msgstr "Montant Fonctionnel"
 #: selection:automated.export.job,state:0
 #: selection:claim.event,hidden_state:0
 #: selection:claim.event,state:0
+#: code:addons/sync_client/backup.py:105
+#: code:addons/sync_client/backup.py:177
 #, python-format
 msgid "In progress"
 msgstr "En cours"
@@ -96309,8 +96311,9 @@ msgstr "Réallocation"
 msgid "Product available"
 msgstr "Produit disponible"
 
-#. module: msf_instance
+#. module: msf_instance, sync_client
 #: code:addons/msf_instance/msf_instance.py:754
+#: code:addons/sync_client/backup.py:197
 #, python-format
 msgid "Only production instances are allowed !"
 msgstr "Seules les instances de production sont autorisées !"
@@ -107372,3 +107375,146 @@ msgstr "Date d'Expédition"
 #: report:purchase.order.merged:0
 msgid "Functional total cost :"
 msgstr "Total Coût Fonctionnel :"
+
+#. module: sync_client
+#: code:addons/sync_client/backup.py:127
+#, python-format
+msgid "\"Path to WAL Dir\" is empty"
+msgstr "Le chemin vers le \"dossier WAL\" est vide"
+
+#. module: sync_client
+#: code:addons/sync_client/backup.py:129
+#, python-format
+msgid "%s not found"
+msgstr "%s non trouvé"
+
+#. module: sync_client
+#: field:backup.config,continuous_backup_enabled:0
+msgid "Activate continuous backup"
+msgstr "Activer la sauvegarde continue"
+
+#. module: sync_client
+#: field:backup.config,basebackup_error:0
+msgid "Base backup error"
+msgstr "Erreur Sauvegarde Base"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Continuous Backup"
+msgstr "Sauvegarde Continue"
+
+#. module: sync_client
+#: code:addons/sync_client/backup.py:125
+#, python-format
+msgid "Continuous Backup is disabled"
+msgstr "Sauvegarde Continue désactivée"
+
+#. module: sync_client
+#: code:addons/sync_client/backup.py:162
+#, python-format
+msgid "Continuous backup disabled"
+msgstr "Sauvegarde Continue désactivée"
+
+#. module: sync_client
+#: field:backup.config,basebackup_date:0
+msgid "Date of base backup"
+msgstr "Date de la sauvegarde Base"
+
+#. module: sync_client
+#: field:backup.config,rsync_date:0
+msgid "Date of last rsync"
+msgstr "Date du dernier rsync"
+
+#. module: sync_client
+#: field:backup.config,help_wal:0
+msgid "Display steps to set Continuous Backup"
+msgstr "Afficher les étapes pour configurer la Sauvegarde Continue"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Generate Base Backup"
+msgstr "Générer la sauvegarde Base"
+
+#. module: sync_client
+#: help:backup.config,remote_host:0
+#: help:backup.config,remote_user:0
+msgid "Keep empty to use default value"
+msgstr "Laisser vide pour utiliser les valeurs par défaut"
+
+#. module: sync_client
+#: field:backup.config,wal_directory:0
+msgid "Local Path to WAL Archive Dir"
+msgstr "Dossier Local des archives WAL"
+
+#. module: sync_client
+#: field:backup.config,ssh_config_dir:0
+msgid "Local Path to ssh config dir"
+msgstr "Dossier Local de la configuration ssh"
+
+#. module: sync_client
+#: help:backup.config,wal_directory:0
+msgid "Must be set in postgresql.conf"
+msgstr "Doit être mis dans postgresql.conf"
+
+#. module: sync_client
+#: field:backup.config,remote_host:0
+msgid "Remote Host"
+msgstr "Serveur Distant"
+
+#. module: sync_client
+#: field:backup.config,remote_user:0
+msgid "Remote User"
+msgstr "Utilisateur Distant"
+
+#. module: sync_client
+#: field:backup.config,rsync_error:0
+msgid "Rsync error"
+msgstr "Erreur Rsync"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Send WAL/Base backup to remote"
+msgstr "Envoyer WAL/Base vers le serveur"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Edit pg_hba.conf and add:"
+msgstr "Éditer pg_hba.conf et ajouter:"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Edit postgresql.conf and set:"
+msgstr "Éditer postgresql.conf et indiquer:"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid ""
+"Replace the 3 occurences of \"C:\\\\WAL\\\\\" with the path to the local WAL"
+" Archive directory."
+msgstr "Remplacer les 3 occurrences de  \"C:\\\\WAL\\\\\" par votre répertoire local"
+" des archives WAL"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Restart PostgreSQL"
+msgstr "Redémarrer PostgreSQL"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Start OpenERP server"
+msgstr "Démarrer le serveur OpenERP"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Steps to activate Continuous backup"
+msgstr "Étapes pour activer la Sauvegarde Continue"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Stop OpenERP server"
+msgstr "Arrêter le serveur OpenEPR"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Unzip your keys in in C:\\Program Files (x86)\\msf\\"
+msgstr "Dé-zipper vos clés dans C:\\Program Files (x86)\\msf\\"
