@@ -52,6 +52,15 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF15.0
+    def us_6457_update_uf_create_date_product(self, cr, uid, *a, **b):
+        """
+        Fill the uf_create_date for existing products
+        """
+        cr.execute("""UPDATE product_product SET uf_create_date = create_date WHERE uf_create_date IS NULL""")
+
+        return True
+
     # UF14.0
     def us_6342_cancel_ir(self, cr, uid, *a, **b):
         """
