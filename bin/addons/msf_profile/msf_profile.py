@@ -52,6 +52,26 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF14.1
+    def us_6433_remove_sale_override_sourcing(self, cr, uid, *a, **b):
+        cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where name='sale_order_sourcing_progress_action' and module='sale_override' and model='ir.actions.act_window')")
+        l1 = cr.rowcount
+        cr.execute("delete from ir_model_data where name='sale_order_sourcing_progress_action' and module='sale_override' and model='ir.actions.act_window'")
+        l2 = cr.rowcount
+        self._logger.warn("Deleted %d+%d old sourcing progress entry" % (l1, l2))
+        return True
+
+    def us_6498_set_qty_to_process(self, cr, uid, *a, **b):
+        cr.execute('''
+            update stock_move
+                set selected_number=to_pack-from_pack+1
+            where id =ANY(
+                select unnest(move_lines) from pack_family_memory where shipment_id in (select id from shipment where state='shipped') and state!='done'
+                )
+        ''')
+        self._logger.warn('Set qty to process on %d stock.move' % cr.rowcount)
+        return True
+
     # UF14.0
     def us_6342_cancel_ir(self, cr, uid, *a, **b):
         """

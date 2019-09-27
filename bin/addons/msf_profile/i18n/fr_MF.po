@@ -105710,6 +105710,12 @@ msgid "Qty to process must be positive, line(s): %s"
 msgstr "La qté à traiter doit être positive, ligne(s): %s"
 
 #. module: stock
+#: code:addons/stock/stock.py:3172
+#, python-format
+msgid "Selected quantity must be greater than 0 !"
+msgstr "La quantité doit être supérieure à 0 !"
+
+#. module: stock
 #: code:addons/stock/stock.py:3174
 #, python-format
 msgid "Qty to split %s is more or equal to original qty %s"
@@ -107389,3 +107395,15 @@ msgstr "Depuis"
 #: view:res.company:0
 msgid "Computation in functional currency"
 msgstr "Calcul en devise fonctionnelle"
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_period.py:203
+#, python-format
+msgid "Impossible to check the revaluation entries of the period: Revaluation Journal not found."
+msgstr "Impossible de vérifier les écritures de réévaluation de la période : Journal de Réévaluation non trouvé."
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_period.py:207
+#, python-format
+msgid "You should run the month-end revaluation before closing the period."
+msgstr "Veuillez lancer la réévaluation de fin de mois avant de fermer la période."

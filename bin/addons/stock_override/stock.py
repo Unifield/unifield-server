@@ -1490,8 +1490,10 @@ class stock_move(osv.osv):
 
             if product['batch_management']:
                 vals['hidden_batch_management_mandatory'] = True
+                vals['hidden_perishable_mandatory'] = False
             elif product['perishable']:
                 vals['hidden_perishable_mandatory'] = True
+                vals['hidden_batch_management_mandatory'] = False
             else:
                 vals.update({'hidden_batch_management_mandatory': False,
                              'hidden_perishable_mandatory': False})
@@ -1581,10 +1583,15 @@ class stock_move(osv.osv):
             # complete hidden flags - needed if not created from GUI
             product = prod_obj.read(cr, uid, vals['product_id'],
                                     ['batch_management', 'perishable', 'type'], context=context)
+
             vals.update({
-                'hidden_batch_management_mandatory': product['batch_management'],
-                'hidden_perishable_mandatory': product['perishable'],
+                'hidden_batch_management_mandatory': False,
+                'hidden_perishable_mandatory': False,
             })
+            if product['batch_management']:
+                vals['hidden_batch_management_mandatory'] = True
+            elif product['perishable']:
+                vals['hidden_perishable_mandatory'] = True
 
             if vals.get('picking_id'):
                 pick_dict = pick_obj.read(cr, uid, vals['picking_id'], ['type'], context=context)
