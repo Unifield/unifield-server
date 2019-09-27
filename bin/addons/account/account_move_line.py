@@ -396,6 +396,7 @@ class account_move_line(osv.osv):
             acc = account
             if s>0:
                 acc = acc1
+            # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
             compute_ctx = context.copy()
             compute_ctx.update({
                 'res.currency.compute.account': acc,
@@ -755,8 +756,9 @@ class account_move_line(osv.osv):
         if (amount>0) and journal:
             x = journal_obj.browse(cr, uid, journal).default_credit_account_id
             if x: acc = x
+        # TODO: TEST JN
         context.update({
-            'date': date,
+            'currency_date': date,
             'res.currency.compute.account': acc,
         })
         v = currency_obj.compute(cr, uid, currency_id, acc.company_id.currency_id.id, amount, context=context)

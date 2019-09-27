@@ -90,6 +90,7 @@ class account_account(osv.osv):
                         (__compute will handle their escaping) as a
                         tuple
         """
+        # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
         mapping = {
             'balance': "COALESCE(SUM(l.debit),0) " \
                        "- COALESCE(SUM(l.credit), 0) as balance",

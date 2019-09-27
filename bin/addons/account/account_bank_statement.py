@@ -70,6 +70,7 @@ class account_bank_statement(osv.osv):
         return 0.0
 
     def _end_balance(self, cursor, user, ids, name, attr, context=None):
+        # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
         res_currency_obj = self.pool.get('res.currency')
         res_users_obj = self.pool.get('res.users')
         res = {}
