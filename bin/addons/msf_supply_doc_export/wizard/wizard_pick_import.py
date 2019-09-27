@@ -171,11 +171,16 @@ class wizard_pick_import(osv.osv_memory):
         exact_move_domain.append(('product_qty', '=', line_data['qty']))
         move_ids = move_obj.search(cr, uid, exact_move_domain, limit=1, context=context)
         if move_ids:
-            return move_ids[0]
+            exact_move = move_obj.browse(cr, uid, move_ids[0], fields_to_fetch=['product_qty', 'state'], context=context)
+            if exact_move.product_qty == 0 or exact_move.state == 'confirmed':
+                # Prevent modification of confirmed (Not Available) or processed (qty at 0) line
+                return False
+            else:
+                return move_ids[0]
         else:
             move_ids = move_obj.search(cr, uid, move_domain, context=context)
-            for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=['product_qty'], context=context):
-                if line_data['qty'] < move.product_qty:
+            for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=['product_qty', 'state'], context=context):
+                if 0 < line_data['qty'] < move.product_qty and move.state == 'assigned':
                     new_move_id = self.split_move(cr, uid, move.id, move.product_qty, line_data['qty'], context=context)
                     if not new_move_id:
                         raise osv.except_osv(
@@ -185,6 +190,9 @@ class wizard_pick_import(osv.osv_memory):
                         )
                     else:
                         return new_move_id
+                else:
+                    # Prevent modification of confirmed (Not Available) line
+                    return False
 
         raise osv.except_osv(
             _('Error'),
@@ -332,7 +340,7 @@ class wizard_pick_import(osv.osv_memory):
             GROUP BY m.line_number, p.default_code
         """, (wiz.picking_id.id,))
         for prod in cr.fetchall():
-            if qty_per_line.get(prod[0]) and qty_per_line[prod[0]] != prod[2]:
+            if prod[2] != 0 and qty_per_line.get(prod[0]) and qty_per_line[prod[0]] != prod[2]:
                 raise osv.except_osv(
                     _('Error'),
                     _('The total quantity of line #%s in the import file doesn\'t match with the total qty on screen')
