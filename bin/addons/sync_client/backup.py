@@ -98,7 +98,7 @@ class BackupConfig(osv.osv):
         'afterautomaticsync' : True,
         'beforepatching': True,
         'continuous_backup_enabled': False,
-        'ssh_config_dir': 'C:/Program Files (x86)/msf/SSH_CONFIG',
+        'ssh_config_dir': 'C:\\Program Files (x86)\\msf\\SSH_CONFIG',
     }
 
     def button_basebackup(self, cr, uid, ids, context=None):
