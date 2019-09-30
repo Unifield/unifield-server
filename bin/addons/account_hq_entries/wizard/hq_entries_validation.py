@@ -512,12 +512,12 @@ class hq_entries_validation(osv.osv_memory):
                 # actual distrib_id
                 distrib_id = self.pool.get('account.move.line').read(cr, uid, all_lines[line.id], ['analytic_distribution_id'])['analytic_distribution_id'][0]
                 # update the distribution
-                distrib_fp_lines = distrib_fp_line_obj.search(cr, uid, [('cost_center_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
                 # TODO: TEST JN
+                curr_date = currency_date.get_date(self, cr, line.document_date, line.date)
+                distrib_fp_lines = distrib_fp_line_obj.search(cr, uid, [('cost_center_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
                 distrib_fp_line_obj.write(cr, uid, distrib_fp_lines, {'cost_center_id': line.cost_center_id.id,
                                                                       'source_date': curr_date, 'destination_id': line.destination_id.id})
                 distrib_cc_lines = distrib_cc_line_obj.search(cr, uid, [('analytic_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
-                # TODO: TEST JN
                 distrib_cc_line_obj.write(cr, uid, distrib_cc_lines, {'analytic_id': line.cost_center_id.id,
                                                                       'source_date': curr_date, 'destination_id': line.destination_id.id})
 
