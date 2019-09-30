@@ -1959,36 +1959,42 @@ class product_attributes(osv.osv):
 
         return True
 
-    def _set_all_bn(self, cr, uid, product_ids, context=None):
-        cr.execute("""update initial_stock_inventory_line set
-            hidden_batch_management_mandatory='t', prodlot_name=''
-            where product_id in %s and inventory_id in
-                (select id from  initial_stock_inventory where state in ('confirm', 'draft'))
-        """, (tuple(product_ids), ))
 
-    def _reset_all_bn(self, cr, uid, product_ids, context=None):
-        cr.execute("""update initial_stock_inventory_line set
-            hidden_batch_management_mandatory='f', prodlot_name=''
-            where product_id in %s and inventory_id in
-                (select id from  initial_stock_inventory where state in ('confirm', 'draft'))
-        """, (tuple(product_ids), ))
-
-    def _reset_all_bned(self, cr, uid, product_ids, context=None):
+    def _remove_all_bned(self, cr, uid, product_ids, context=None):
+        '''
+            Reset BN
+            Rest ED
+        '''
+        self.write(cr, uid, product_ids, {'perishable': False, 'batch_management': False}, context=context)
+        cr.execute("update stock_move set prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(product_ids), ))
+        cr.execute("delete from stock_production_lot where product_id in %s", (tuple(product_ids), ))
+        # ISI
         cr.execute("""update initial_stock_inventory_line set
             hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', expiry_date=NULL, prodlot_name=''
-            where product_id in %s and inventory_id in
-                (select id from  initial_stock_inventory where state in ('confirm', 'draft'))
+            where product_id in %s
         """, (tuple(product_ids), ))
+
+        # Previous Inventory
+        cr.execute("""update stock_inventory_line set
+            hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', expiry_date=NULL
+            where product_id in %s""", (tuple(product_ids), ))
+
+        # Consump
+        cr.execute("""update real_average_consumption_line set
+            date_mandatory='f', batch_mandatory='f', expiry_date=NULL
+            where product_id in %s""", (tuple(product_ids), ))
+
+        #PI CS
+        cr.execute("update physical_inventory_counting set batch_number='', expiry_date=NULL where product_id in %s", (tuple(product_ids), ))
+
+        #PI Disc.
+        cr.execute("update physical_inventory_discrepancy set batch_number='', expiry_date=NULL where product_id in %s", (tuple(product_ids), ))
 
     def switch_bn_to_no(self, cr, uid, ids, context=None):
         # i
         prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', True), ('perishable', '=', True)], context=context)
         if prod_to_change:
-            self.write(cr, uid, prod_to_change, {'perishable': False, 'batch_management': False}, context=context)
-            cr.execute("update stock_move set prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(prod_to_change), ))
-            cr.execute("delete from stock_production_lot where product_id in %s", (tuple(prod_to_change), ))
-            # initial stock inventory draft / confirmed to reset
-            self._reset_all_bned(cr, uid,  prod_to_change, context=None)
+            self._remove_all_bned(cr, uid,  prod_to_change, context=None)
         return True
 
     def switch_no_to_bn(self, cr, uid, ids, context=None):
@@ -1999,21 +2005,48 @@ class product_attributes(osv.osv):
         for prod_id in prod_to_change:
             batch_id = lot_obj._get_or_create_lot(cr, uid, name=self.fake_bn, expiry_date=self.fake_ed, product_id=prod_id, context=context)
             cr.execute("update stock_move set prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel', 'assigned')", (batch_id, self.fake_ed, prod_id))
+
+            # Previous Inventory
+            cr.execute("""update stock_inventory_line set
+                hidden_batch_management_mandatory='t', hidden_perishable_mandatory='t', prod_lot_id=%s, expiry_date=%s
+                where product_id = %s""", (batch_id, self.fake_ed, prod_id ))
+
+            # Consump.
+            cr.execute("update real_average_consumption_line set date_mandatory='t', batch_mandatory='t', prodlot_id=%s, expiry_date=%s where product_id = %s", (batch_id, self.fake_ed, prod_id))
+
+        if prod_to_change:
+            # ISI done
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='t',  hidden_perishable_mandatory='t', prodlot_name=%s, expiry_date=%s
+                where product_id in %s and inventory_id in
+                    (select id from  initial_stock_inventory where state = 'done')
+            """, (self.fake_bn, self.fake_ed, tuple(prod_to_change) ))
+
+            # ISI confirm /drart
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='t',  hidden_perishable_mandatory='t'
+                where product_id in %s and inventory_id in
+                    (select id from  initial_stock_inventory where state in ('confirm', 'draft'))
+            """, (tuple(prod_to_change), ))
+
+            #PI CS
+            cr.execute("update physical_inventory_counting set batch_number=%s, expiry_date=%s where product_id in %s", (self.fake_bn, self.fake_ed, tuple(prod_to_change), ))
+
+            #PI CS
+            cr.execute("update physical_inventory_discrepancy set batch_number=%s, expiry_date=%s where product_id in %s", (self.fake_bn, self.fake_ed, tuple(prod_to_change), ))
+
         return len(prod_to_change)
 
     def switch_ed_to_no(self, cr, uid, ids, context=None):
         # iii
         prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', True)], context=context)
         if prod_to_change:
-            self.write(cr, uid, prod_to_change, {'perishable': False}, context=context)
-            cr.execute("update stock_move set prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(prod_to_change), ))
-            cr.execute("delete from stock_production_lot where product_id in %s", (tuple(prod_to_change), ))
-            # initial stock inventory draft / confirmed to reset
-            self._reset_all_bned(cr, uid, prod_to_change, context=None)
+            self._remove_all_bned(cr, uid, prod_to_change, context=None)
         return len(prod_to_change)
 
     def switch_bn_to_ed(self, cr, uid, ids, context=None):
         # iv
+        seq_obj = self.pool.get('ir.sequence')
         prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', True), ('perishable', '=', True)], context=context)
         if prod_to_change:
             self.write(cr, uid, prod_to_change, {'batch_management': False}, context=context)
@@ -2026,14 +2059,39 @@ class product_attributes(osv.osv):
                 cr.execute("update stock_move set prodlot_id=%s, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id in %s",  (to_keep, tuple(merged)))
                 self._update_bn_id_on_fk(cr, to_keep, merged)
                 cr.execute("delete from stock_production_lot where id in %s", (tuple(merged), ))
-            # ASSIGN INTERNAL NAME
+
+            # rename lot
             seq_obj = self.pool.get('ir.sequence')
-            cr.execute("select id from stock_production_lot  where type='standard' and product_id in %s", (tuple(prod_to_change),))
+            cr.execute("select id from stock_production_lot where type='standard' and product_id in %s order by life_date", (tuple(prod_to_change),))
             for bn_lot_to_internal in cr.fetchall():
-                seq_obj = self.pool.get('ir.sequence')
-                cr.execute("update stock_production_lot set type='internal', name=%s where id=%s", (seq_obj.get(cr, uid, 'stock.lot.serial'), bn_lot_to_internal[0]))
-            #cr.execute("update stock_production_lot set type='internal' where type='standard' and product_id in %s", (tuple(prod_to_change),))
-            self._reset_all_bn(cr, uid, prod_to_change, context=None)
+                new_name = seq_obj.get(cr, uid, 'stock.lot.serial')
+                cr.execute("update stock_production_lot set type='internal', name=%s where id=%s", (new_name, bn_lot_to_internal[0]))
+
+            # ISI draft / confirm / done
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='f', prodlot_name=''
+                where product_id in %s
+            """, (tuple(prod_to_change), ))
+
+            # Previous Inventory
+            cr.execute("""update stock_inventory_line set
+                hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t'
+                where product_id in %s""", (tuple(prod_to_change), ))
+
+            # Consump
+            cr.execute("""update real_average_consumption_line set
+                batch_mandatory='f'
+                where product_id in %s""", (tuple(prod_to_change), ))
+            #PI CS
+            # untouch batch_number for dupliactes ED/prod id
+            cr.execute("""update physical_inventory_counting set batch_number=NULL where product_id in %s""", (tuple(prod_to_change), ))
+
+            #PI Disc.
+            cr.execute("update physical_inventory_discrepancy set batch_number=NULL where product_id in %s", (tuple(prod_to_change), ))
+            #cr.execute("""update physical_inventory_counting set batch_number='' where id in (
+            #    select min(id) from physical_inventory_counting where product_id in %s group by inventory_id, product_id, expiry_date having count(*) < 2
+            #    ) """, (tuple(prod_to_change), ))
+
         return len(prod_to_change)
 
     def switch_no_to_ed(self, cr, uid, ids, context=None):
@@ -2044,6 +2102,34 @@ class product_attributes(osv.osv):
         for prod_id in prod_to_change:
             batch_id = lot_obj._get_or_create_lot(cr, uid, name=False, expiry_date=self.fake_ed, product_id=prod_id, context=context)
             cr.execute("update stock_move set prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel', 'assigned')", (batch_id, self.fake_ed, prod_id))
+            # Consump.
+            cr.execute("update real_average_consumption_line set date_mandatory='t', batch_mandatory='f', prodlot_id=%s, expiry_date=%s where product_id = %s", (batch_id, self.fake_ed, prod_id))
+            # Previous Inventory
+            cr.execute("""update stock_inventory_line set
+                hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prod_lot_id=%s, expiry_date=%s
+                where product_id = %s""", (batch_id, self.fake_ed, prod_id))
+
+
+        if prod_to_change:
+            # ISI done
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='f',  hidden_perishable_mandatory='t', prodlot_name=%s, expiry_date=%s
+                where product_id in %s and inventory_id in
+                    (select id from  initial_stock_inventory where state = 'done')
+            """, (self.fake_bn, self.fake_ed, tuple(prod_to_change) ))
+
+            # ISI confirm /draft
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='t',  hidden_perishable_mandatory='t'
+                where product_id in %s and inventory_id in
+                    (select id from  initial_stock_inventory where state in ('confirm', 'draft'))
+            """, (tuple(prod_to_change), ))
+
+            #PI CS
+            cr.execute("update physical_inventory_counting set batch_number='', expiry_date=%s where product_id in %s", (self.fake_ed, tuple(prod_to_change), ))
+            #PI Disc
+            cr.execute("update physical_inventory_discrepancy set batch_number='', expiry_date=%s where product_id in %s", (self.fake_ed, tuple(prod_to_change), ))
+
         return len(prod_to_change)
 
     def switch_ed_to_bn(self, cr, uid, ids, context=None):
@@ -2053,7 +2139,33 @@ class product_attributes(osv.osv):
         if prod_to_change:
             cr.execute("update stock_move set old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id is not null and product_id in %s",  (tuple(prod_to_change), ))
             cr.execute("update stock_production_lot set name=%s, type='standard' where product_id in %s", (self.fake_bn, tuple(prod_to_change)))
-            self._set_all_bn(cr, uid, prod_to_change, context=None)
+            # ISI
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='t', prodlot_name=''
+                where product_id in %s and inventory_id in
+                    (select id from  initial_stock_inventory where state in ('confirm', 'draft'))
+            """, (tuple(prod_to_change), ))
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='t', prodlot_name=%s
+                where product_id in %s and inventory_id in
+                    (select id from  initial_stock_inventory where state ='done')
+            """, (self.fake_bn, tuple(prod_to_change), ))
+
+            # Previous Inventory
+            cr.execute("""update stock_inventory_line set
+                hidden_batch_management_mandatory='t', hidden_perishable_mandatory='t'
+                where product_id in %s""", (tuple(prod_to_change), ))
+
+            # Consumption Report
+            cr.execute("""update real_average_consumption_line set
+                date_mandatory='t', batch_mandatory='t'
+                where product_id in %s""", (tuple(prod_to_change), ))
+
+            #PI CS
+            cr.execute("update physical_inventory_counting set batch_number=%s where product_id in %s", (self.fake_bn, tuple(prod_to_change), ))
+            #PI Disc.
+            cr.execute("update physical_inventory_discrepancy set batch_number=%s where product_id in %s", (self.fake_bn, tuple(prod_to_change), ))
+
         return len(prod_to_change)
 
     def set_as_edonly(self, cr, uid, ids, context=None):
