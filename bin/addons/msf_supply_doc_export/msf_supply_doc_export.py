@@ -1132,6 +1132,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
         return (date2 - date1).days
 
     def get_lines(self, wizard):
+        # TODO: TEST JN => can there be a "date" in self.localcontext? (If so replace the key by "currency_date")
         supl_info_obj = self.pool.get('product.supplierinfo')
         catl_obj = self.pool.get('supplier.catalogue.line')
         curr_obj = self.pool.get('res.currency')

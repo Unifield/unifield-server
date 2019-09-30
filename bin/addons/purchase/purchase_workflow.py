@@ -425,6 +425,7 @@ class purchase_order_line(osv.osv):
             'pricelist_id': pricelist_id,
             'order_line': [(0, 0, {
                 'product_id': x.product_id.id,
+                # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                 'price_unit': curr_obj.compute(cr, uid, p_order.pricelist_id.currency_id.id, company_currency_id,
                                                x.price_unit, round=False, context=context),
                 'product_uom': x.product_uom.id,

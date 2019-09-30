@@ -84,6 +84,7 @@ class analytic_account(osv.osv):
         if context.get('output_currency_id', False):
             for res_id in res:
                 if res[res_id].get('balance', False):
+                    # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                     new_balance = self.pool.get('res.currency').compute(cr, uid, context.get('output_currency_id'), company_currency, res[res_id].get('balance'), context=context)
                     res[res_id].update({'balance': new_balance,})
         return res
