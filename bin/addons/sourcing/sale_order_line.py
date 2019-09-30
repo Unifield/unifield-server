@@ -1691,6 +1691,9 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
                         if not price:
                             price = sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0
+                            if not price:
+                                price = sourcing_line.price_unit #US-5995
+
                             if price and company_currency_id != target_currency_id:
                                 price = self.pool.get('res.currency').compute(cr, uid, company_currency_id, target_currency_id, price, round=False, context=context)
 
