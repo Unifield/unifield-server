@@ -162,7 +162,6 @@ class wizard_pick_import(osv.osv_memory):
 
         move_domain = [
             ('id', 'not in', treated_lines),
-            ('state', 'in', ['confirmed', 'assigned']),
             ('picking_id', '=', picking_id),
             ('line_number', '=', line_data['item']),
             ('product_id', '=', product_id),
@@ -172,7 +171,7 @@ class wizard_pick_import(osv.osv_memory):
         move_ids = move_obj.search(cr, uid, exact_move_domain, limit=1, context=context)
         if move_ids:
             exact_move = move_obj.browse(cr, uid, move_ids[0], fields_to_fetch=['product_qty', 'state'], context=context)
-            if exact_move.product_qty == 0 or exact_move.state == 'confirmed':
+            if exact_move.product_qty == 0 or exact_move.state != 'assigned':
                 # Prevent modification of confirmed (Not Available) or processed (qty at 0) line
                 return False
             else:
