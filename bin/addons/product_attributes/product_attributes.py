@@ -1977,6 +1977,10 @@ class product_attributes(osv.osv):
         self.write(cr, uid, product_ids, {'perishable': False, 'batch_management': False}, context=context)
         cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(product_ids), ))
         cr.execute("delete from stock_production_lot where product_id in %s", (tuple(product_ids), ))
+
+        # save as draft
+        for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+            cr.execute("update "+ table + " set prodlot_id=NULL, expiry_date=NULL, lot_check='f', exp_check='f' where product_id in %s", (tuple(product_ids), )) # not_a_user_entry
         # ISI
         cr.execute("""update initial_stock_inventory_line set
             hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', expiry_date=NULL, prodlot_name=''
@@ -2015,6 +2019,10 @@ class product_attributes(osv.osv):
             batch_id = lot_obj._get_or_create_lot(cr, uid, name=self.fake_bn, expiry_date=self.fake_ed, product_id=prod_id, context=context)
             cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel', 'assigned')", (batch_id, self.fake_ed, prod_id))
 
+            # save as draft
+            for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+                cr.execute("update "+ table + " set prodlot_id=%s, expiry_date=%s, lot_check='t', exp_check='t' where product_id = %s and quantity>0", (batch_id, self.fake_ed, prod_id,)) # not_a_user_entry
+
             # Previous Inventory
             cr.execute("""update stock_inventory_line set
                 hidden_batch_management_mandatory='t', hidden_perishable_mandatory='t', prod_lot_id=%s, expiry_date=%s
@@ -2024,6 +2032,9 @@ class product_attributes(osv.osv):
             cr.execute("update real_average_consumption_line set date_mandatory='t', batch_mandatory='t', prodlot_id=%s, expiry_date=%s where product_id = %s", (batch_id, self.fake_ed, prod_id))
 
         if prod_to_change:
+            # save as draft
+            for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+                cr.execute("update "+ table + " set lot_check='t', exp_check='t' where product_id in %s and quantity=0", (tuple(prod_to_change),)) # not_a_user_entry
             # ISI done
             cr.execute("""update initial_stock_inventory_line set
                 hidden_batch_management_mandatory='t',  hidden_perishable_mandatory='t', prodlot_name=%s, expiry_date=%s
@@ -2065,16 +2076,21 @@ class product_attributes(osv.osv):
                 to_keep = to_merge[0]
                 merged = to_merge[1]
                 merged.remove(to_keep)
-                cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id in %s",  (to_keep, tuple(merged)))
+                cr.execute("update stock_move set prodlot_id=%s, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id in %s",  (to_keep, tuple(merged)))
                 self._update_bn_id_on_fk(cr, to_keep, merged)
                 cr.execute("delete from stock_production_lot where id in %s", (tuple(merged), ))
 
+            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t' where product_id in %s" , (tuple(prod_to_change),))
             # rename lot
             seq_obj = self.pool.get('ir.sequence')
             cr.execute("select id from stock_production_lot where type='standard' and product_id in %s order by life_date", (tuple(prod_to_change),))
             for bn_lot_to_internal in cr.fetchall():
                 new_name = seq_obj.get(cr, uid, 'stock.lot.serial')
                 cr.execute("update stock_production_lot set type='internal', name=%s where id=%s", (new_name, bn_lot_to_internal[0]))
+
+            # save as draft
+            for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+                cr.execute("update "+ table + " set lot_check='f', exp_check='t' where product_id in %s", (tuple(prod_to_change),)) # not_a_user_entry
 
             # ISI draft / confirm / done
             cr.execute("""update initial_stock_inventory_line set
@@ -2111,6 +2127,9 @@ class product_attributes(osv.osv):
         for prod_id in prod_to_change:
             batch_id = lot_obj._get_or_create_lot(cr, uid, name=False, expiry_date=self.fake_ed, product_id=prod_id, context=context)
             cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel', 'assigned')", (batch_id, self.fake_ed, prod_id))
+            # save as draft
+            for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+                cr.execute("update "+ table + " set prodlot_id=%s, expiry_date=%s, lot_check='f', exp_check='t' where product_id in %s", (batch_id, self.fake_ed, tuple(prod_to_change),)) # not_a_user_entry
             # Consump.
             cr.execute("update real_average_consumption_line set date_mandatory='t', batch_mandatory='f', prodlot_id=%s, expiry_date=%s where product_id = %s", (batch_id, self.fake_ed, prod_id))
             # Previous Inventory
@@ -2146,8 +2165,15 @@ class product_attributes(osv.osv):
         prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', True)], context=context)
         self.write(cr, uid, prod_to_change, {'batch_management': True}, context=context)
         if prod_to_change:
-            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id is not null and product_id in %s",  (tuple(prod_to_change), ))
+            cr.execute("update stock_move set old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id is not null and product_id in %s",  (tuple(prod_to_change), ))
+            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f' where product_id in %s",  (tuple(prod_to_change), ))
             cr.execute("update stock_production_lot set name=%s, type='standard' where product_id in %s", (self.fake_bn, tuple(prod_to_change)))
+            # save as draft
+            for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+                cr.execute("update "+ table + " set prodlot_id=(select id from stock_production_lot where life_date=expiry_date and product_id=product_id), lot_check='t', exp_check='t' where product_id in %s and expiry_date is not null", (tuple(prod_to_change),)) # not_a_user_entry
+                cr.execute("update "+ table + " set integrity_status='missing_lot' where product_id in %s and prodlot_id is null and expiry_date is not null", (tuple(prod_to_change),)) # not_a_user_entry
+                cr.execute("update "+ table + " set lot_check='t', exp_check='t' where product_id in %s and prodlot_id is null and expiry_date is null", (tuple(prod_to_change),)) # not_a_user_entry
+
             # ISI
             cr.execute("""update initial_stock_inventory_line set
                 hidden_batch_management_mandatory='t', prodlot_name=''
