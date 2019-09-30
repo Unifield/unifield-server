@@ -74,7 +74,7 @@ class purchase_order_change_currency(osv.osv_memory):
             
         c = context.copy()
         c.update({'update_merge': True})
-            
+
         currency_obj = self.pool.get('res.currency')
         line_obj = self.pool.get('purchase.order.line')
         order_obj = self.pool.get('purchase.order')
