@@ -2687,7 +2687,7 @@ class purchase_order(osv.osv):
                 if good_price:
                     data_to_write['price_unit'] = good_price
 
-                pol_obj.write(cr, uid, pol_ids, data_to_write, context=context)
+                pol_obj.write(cr, uid, pol.id, data_to_write, context=context)
 
         except Exception as e:
             logger = logging.getLogger('purchase.order.round_to_soq')
