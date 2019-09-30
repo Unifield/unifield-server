@@ -242,6 +242,5 @@
             <field name="act_window_id" ref="products_bn_ed_mass_update_action"/>
         </record>
 
-        <menuitem action="products_bn_ed_mass_update_action" id="products_bn_ed_mass_update_menu" sequence="20" parent="product.parent_product_mass_update" />
     </data>
 </openerp>
