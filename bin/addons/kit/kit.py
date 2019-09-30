@@ -1397,6 +1397,7 @@ class stock_location(osv.osv):
         # do we want the child location
         stock_context = dict(context, compute_child=consider_child_locations)
         stock_context['uom'] = uom_id
+        stock_context['location'] = ids
         # we check for the available qty (in:done, out: assigned, done)
         return {'total': self.pool.get('product.product').read(cr, uid, product_id, ['qty_allocable'], context=stock_context).get('qty_allocable', 0)}
 
