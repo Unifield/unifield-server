@@ -1738,7 +1738,7 @@ class account_bank_statement_line(osv.osv):
                     # Prepare value
                     res_currency_obj = self.pool.get('res.currency')
                     # Get date for having a good change rate
-                    # TODO: TEST JN
+                    # [DONE] TEST JN
                     curr_date = currency_date.get_date(self, cr, move_line_values.get('document_date', st_line.document_date),
                                                        move_line_values.get('date', st_line.date))
                     context.update({'currency_date': curr_date})
