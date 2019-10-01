@@ -28,6 +28,19 @@
             <field name="model">backup.config</field>
         </record>
 
+        <record id="ir_cron_wal" model="ir.cron">
+            <field name="function">sent_continuous_backup_bg</field>
+            <field name="user_id">1</field>
+            <field name="name">Sent Continuous Backup</field>
+            <field name="interval_type">days</field>
+            <field eval="-1" name="numbercall"/>
+            <field eval="5" name="priority"/>
+            <field eval="0" name="doall"/>
+            <field eval="1" name="active"/>
+            <field eval="1" name="interval_number"/>
+            <field name="model">backup.config</field>
+        </record>
+
         <record forcecreate="True" id="ir_cron_hq_monitor_not_run" model="ir.cron">
             <field name="name">Monitor Not Run</field>
             <field eval="True" name="active"/>
