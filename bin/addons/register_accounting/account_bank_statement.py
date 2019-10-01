@@ -1413,7 +1413,7 @@ class account_bank_statement_line(osv.osv):
         account_move_line_obj = self.pool.get('account.move.line')
         st = st_line.statement_id
 
-        # TODO: TEST JN
+        # [DONE] TEST JN
         curr_date = currency_date.get_date(self, cr, st_line.document_date, st_line.date)
         context.update({'currency_date': curr_date})
 
