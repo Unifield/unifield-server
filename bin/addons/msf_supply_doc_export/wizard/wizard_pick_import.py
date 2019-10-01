@@ -108,12 +108,6 @@ class wizard_pick_import(osv.osv_memory):
                         _('Error'), _('Line %s: Column "Expiry Date" must be a date') % data['item']
                     )
 
-        if data['qty_to_process'] > data['qty']:
-            raise osv.except_osv(
-                _('Error'),
-                _('Line %s: Column "Qty to Process" cannot be greater than "Qty"') % data['item']
-            )
-
         return data
 
     def cancel(self, cr, uid, ids, context=None):
@@ -294,6 +288,11 @@ class wizard_pick_import(osv.osv_memory):
                 if not to_write.get('move_id'):
                     continue
                 else:
+                    if line_data['qty_to_process'] > line_data['qty']:
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('Line %s: Column "Qty to Process" cannot be greater than "Qty"') % line_data['item']
+                        )
                     treated_lines.append(to_write['move_id'])
 
                 move = self.pool.get('stock.move').browse(cr, uid, to_write['move_id'], context=context)
