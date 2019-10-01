@@ -1725,6 +1725,7 @@ class account_invoice_line(osv.osv):
             return res_final
 
         company = self.pool.get('res.company').browse(cr, uid, company_id, context=context)
+        # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
         currency = self.pool.get('res.currency').browse(cr, uid, currency_id, context=context)
 
         if company.currency_id.id != currency.id:

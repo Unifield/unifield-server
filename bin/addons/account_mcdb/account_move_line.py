@@ -79,6 +79,7 @@ class account_move_line(osv.osv):
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         currency_id = context.get('output_currency_id')
         currency_obj = self.pool.get('res.currency')
+        # TODO: TEST JN => can there be a "date" in context here? (If so replace the key by "currency_date")
         rate = currency_obj.read(cr, uid, currency_id, ['rate'], context=context).get('rate', False)
         # Do calculation
         if not rate:

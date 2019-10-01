@@ -46,11 +46,7 @@ class res_currency_functional(osv.osv):
             context = {}
         res = {}
         # TODO: TEST JN
-        if 'currency_date' in context:
-            date = context['currency_date']
-        else:
-            date = time.strftime('%Y-%m-%d')
-        date = date or time.strftime('%Y-%m-%d')
+        date = context.get('currency_date') or time.strftime('%Y-%m-%d')
         for id in ids:
             cr.execute("SELECT currency_id, name, rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(id, date))
             if cr.rowcount:
