@@ -197,7 +197,7 @@ class account_move_line(osv.osv):
 
                     dl_total_amount_rounded = 0.
                     for distrib_line in distrib_lines:
-                        # TODO: TEST JN
+                        # [DONE] TEST JN
                         curr_date = currency_date.get_date(self, cr, obj_line.get('document_date', False),
                                                            obj_line.get('date', False), source_date=obj_line.get('source_date', False))
                         context.update({'currency_date': curr_date})

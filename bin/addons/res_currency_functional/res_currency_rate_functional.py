@@ -40,7 +40,7 @@ class res_currency_rate_functional(osv.osv):
         move_line_search_params = [('currency_id', '=', currency), ('is_revaluated_ok', '=', False)]
         if date is not None:
             # TODO: TEST JN
-            date_type = currency_date.get_date_type == 'document' and 'document_date' or 'date'
+            date_type = currency_date.get_date_type(self, cr) == 'document' and 'document_date' or 'date'
             move_line_search_params.append((date_type, '>=', date))
 
         move_line_ids = move_line_obj.search(cr, uid, move_line_search_params)
@@ -74,7 +74,7 @@ class res_currency_rate_functional(osv.osv):
             search_params.append(('currency_id', '=', currency))
         if date:
             # TODO: TEST JN
-            date_type = currency_date.get_date_type == 'document' and 'document_date' or 'date'
+            date_type = currency_date.get_date_type(self, cr) == 'document' and 'document_date' or 'date'
             search_params.append('|')
             search_params.append(('source_date', '>=', date))
             search_params.append('&')  # UFTP-361 in case source_date no set

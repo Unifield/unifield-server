@@ -535,11 +535,11 @@ class account_move_line_compute_currency(osv.osv):
         cur_obj = self.pool.get('res.currency')
 
         # WARNING: source_date field have priority to date field. This is because of SP2 Specifications
-        # TODO: TEST JN
+        # [DONE] TEST JN
         curr_date = currency_date.get_date(self, cr, vals.get('document_date', document_date), vals.get('date', posting_date),
                                            source_date=vals.get('source_date', source_date))
         ctxcurr['currency_date'] = curr_date
-        if currency_date.get_date_type == 'document':
+        if currency_date.get_date_type(self, cr) == 'document':
             date_in_vals = vals.get('document_date')
         else:
             date_in_vals = vals.get('date')
@@ -662,7 +662,7 @@ class account_move_line_compute_currency(osv.osv):
         # Browse lines
         for line in self.browse(cr, uid, ids):
             newvals = vals.copy()
-            # TODO: TEST JN
+            # [DONE] TEST JN
             doc_date = vals.get('document_date', line.document_date)
             date = vals.get('date', line.date)
             source_date = vals.get('source_date', line.source_date)
