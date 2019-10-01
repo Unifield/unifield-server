@@ -261,6 +261,7 @@
             <field name="view_type">form</field>
             <field name="view_id" ref="msf_view_partner_tree"/>
             <field name="search_view_id" ref="msf_view_res_partner_filter"/>
+            <field name="context">{'default_customer':1, 'default_supplier':1, "search_default_customer":1}</field>
         </record>
 
     </data>
