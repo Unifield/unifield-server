@@ -460,5 +460,10 @@
         <record id="us_6354_trigger_donation_account_sync" model="patch.scripts">
             <field name="method">us_6354_trigger_donation_account_sync</field>
         </record>
+
+        <record id="us_6457_update_uf_create_date_product" model="patch.scripts">
+            <field name="method">us_6457_update_uf_create_date_product</field>
+        </record>
+
     </data>
 </openerp>

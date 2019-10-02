@@ -72,6 +72,14 @@ class patch_scripts(osv.osv):
             self._logger.warn('Sync. triggered on %s Intersection Partner(s).' % (cr.rowcount,))
         return True
 
+    def us_6457_update_uf_create_date_product(self, cr, uid, *a, **b):
+        """
+        Fill the uf_create_date for existing products
+        """
+        cr.execute("""UPDATE product_product SET uf_create_date = create_date WHERE uf_create_date IS NULL""")
+        self._logger.warn('Set uf_create_date on %d products' % cr.rowcount)
+        return True
+
     # UF14.1
     def us_6433_remove_sale_override_sourcing(self, cr, uid, *a, **b):
         cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where name='sale_order_sourcing_progress_action' and module='sale_override' and model='ir.actions.act_window')")
