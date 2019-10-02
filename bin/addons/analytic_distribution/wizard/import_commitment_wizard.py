@@ -20,6 +20,7 @@
 ##############################################################################
 from osv import osv, fields
 from tools.translate import _
+from base import currency_date
 
 import base64
 import StringIO
@@ -288,8 +289,9 @@ class import_commitment_wizard(osv.osv_memory):
                             else:
                                 # lookup id for code
                                 line_currency_id = self.pool.get('res.currency').search(cr,uid,[('name','=',booking_currency)])[0]
-                                # TODO: TEST JN
-                                date_context = {'currency_date': line_date}
+                                # [DONE] TEST JN
+                                curr_date = currency_date.get_date(self, cr, line_document_date, line_date)
+                                date_context = {'currency_date': curr_date}
                                 converted_amount = self.pool.get('res.currency').compute(
                                     cr,
                                     uid,
