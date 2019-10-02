@@ -1065,6 +1065,12 @@
             <field name="company_ids" eval="[(4, ref('main_company'))]"/>
         </record>
 
+        <record model="res.users" id="base.user_sync">
+            <field name="signature">Synch</field>
+            <field name="name">Synch</field>
+            <field name="login">synch</field>
+        </record>
+
         <record id="main_partner" model="res.partner">
             <field name="company_id" ref="main_company"/>
         </record>
