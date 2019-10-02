@@ -29,7 +29,8 @@ class stock_reception_report(report_sxw.rml_parse):
             pick = move.picking_id
             pol = move.purchase_line_id
             po = pol.order_id
-            sol = move.purchase_line_id.sale_order_line_id
+            sol = move.purchase_line_id.linked_sol_id
+            int_name = move.move_dest_id and move.move_dest_id.picking_id.name or ''
             res.append({
                 'ref': pick.name,
                 'reason_type': move.reason_type_id and move.reason_type_id.name or '',
@@ -55,6 +56,7 @@ class stock_reception_report(report_sxw.rml_parse):
                 'exp_receipt_date': move.date_expected,
                 'actual_receipt_date': move.date,
                 'phys_recep_date': pick.physical_reception_date,
+                'int_name': int_name,
             })
 
         return res
