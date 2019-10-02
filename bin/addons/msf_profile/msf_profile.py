@@ -52,6 +52,26 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF15.0
+    def us_6354_trigger_donation_account_sync(self, cr, uid, *a, **b):
+        """
+        Triggers a synch. on the Intersection Partners at HQ, so that their Donation Payable Account is retrieved in the lower instances
+        """
+        if _get_instance_level(self, cr, uid) == 'hq':
+            cr.execute("""
+                UPDATE ir_model_data 
+                SET touched ='[''donation_payable_account'']', last_modification = NOW()
+                WHERE module='sd' 
+                AND model='res.partner' 
+                AND res_id IN (
+                    SELECT id
+                    FROM res_partner
+                    WHERE partner_type = 'section'
+                );
+            """)
+            self._logger.warn('Sync. triggered on %s Intersection Partner(s).' % (cr.rowcount,))
+        return True
+
     # UF14.1
     def us_6433_remove_sale_override_sourcing(self, cr, uid, *a, **b):
         cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where name='sale_order_sourcing_progress_action' and module='sale_override' and model='ir.actions.act_window')")
@@ -115,7 +135,6 @@ class patch_scripts(osv.osv):
         cr.execute("update ir_cron set function='send_backup_bg' where function='send_backup' and model='msf.instance.cloud'")
         return True
 
-    # UF14.0
     def us_6075_set_paid_invoices_as_closed(self, cr, uid, *a, **b):
         cr.execute('''SELECT i.id, i.number
             FROM account_invoice i
