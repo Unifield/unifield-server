@@ -107531,3 +107531,9 @@ msgstr "Dé-zipper vos clés dans C:\\Program Files (x86)\\msf\\"
 #, python-format
 msgid "Line %s: Column \"Qty to Process\" should be greater than 0"
 msgstr "Ligne %s: La colonne \"Qté à Traiter\" doit être supérieure à 0"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/import_invoice_on_registers.py:175
+#, python-format
+msgid "You can't group these lines together as they aren't all linked to the same employee."
+msgstr "Vous ne pouvez pas regrouper ces lignes car elles ne sont pas toutes liées au même employé."
