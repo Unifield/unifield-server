@@ -1887,7 +1887,7 @@ class account_bank_statement_line(osv.osv):
             amount = abs(st_line.amount)
             # update values if we have a different currency that company currency
             if st_line.statement_id.currency.id != st_line.statement_id.company_id.currency_id.id:
-                # TODO: TEST JN => the doc. date was previously used as a priority here
+                # [DONE] TEST JN
                 curr_date = currency_date.get_date(self, cr, st_line.document_date, st_line.date)
                 context['currency_date'] = curr_date or current_date
                 amount = self.pool.get('res.currency').compute(cr, uid, st_line.statement_id.currency.id,
