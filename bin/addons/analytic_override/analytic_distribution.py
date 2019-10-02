@@ -184,7 +184,7 @@ class analytic_distribution1(osv.osv):
             document_date = date
         # Prepare some values
         res = []
-        # TODO: TEST JN
+        # [DONE] TEST JN
         curr_date = currency_date.get_date(self, cr, document_date, date, source_date=source_date)
         vals = {
             'name': name,
