@@ -2601,7 +2601,6 @@ class purchase_order(osv.osv):
                 if not sup_ids and not pol.product_id.soq_quantity:
                     continue
 
-                line_qty = pol.product_qty
                 soq_rounding = 0
 
                 if sup_ids:
@@ -2613,10 +2612,6 @@ class purchase_order(osv.osv):
 
                     cat = supcat_obj.browse(cr, uid, cat_ids[0], context=context)
 
-                    curr_change = False
-                    if cat.currency_id != po.currency_id:
-                        curr_change = True
-
                     for sup in sup_obj.browse(cr, uid, sup_ids, context=context):
 
                         t_min_qty_price = {}
@@ -2624,17 +2619,10 @@ class purchase_order(osv.osv):
                         # fill the dictionary with prices according to min quantity
                         for pcl in sup.pricelist_ids:
                             if pol.product_uom.id == pcl.uom_id.id:
-                                if curr_change:
-                                    price_conv = rescur_obj.compute(cr, uid, cat.currency_id.id, po.currency_id.id, pcl.price, True, context=context)
-                                    t_min_qty_price[pcl.min_quantity] = (price_conv, pcl.rounding)
-                                else:
-                                    t_min_qty_price[pcl.min_quantity] = (pcl.price, pcl.rounding)
+                                t_min_qty_price[pcl.min_quantity] = (pcl.price, pcl.rounding)
                             else:
                                 pcl_minqty = uom_obj._compute_qty_obj(cr, uid, pcl.uom_id, pcl.min_quantity, pol.product_uom, context=context)
                                 price_conv = uom_obj._compute_price(cr, uid, pcl.uom_id.id, pcl.price, pol.product_uom.id)
-                                if curr_change:
-                                    price_conv = rescur_obj.compute(cr, uid, cat.currency_id.id, po.currency_id.id, price_conv, True, context=context)
-
                                 rounding_conv = uom_obj._compute_qty_obj(cr, uid, pcl.uom_id, pcl.rounding, pol.product_uom, context=context)
                                 t_min_qty_price[pcl_minqty] = (price_conv, rounding_conv)
 
@@ -2644,7 +2632,7 @@ class purchase_order(osv.osv):
 
                         for min_qty in l_key:
 
-                            if line_qty < min_qty:
+                            if pol.product_qty < min_qty:
                                 if first:
                                     good_price = t_min_qty_price[min_qty][0]
                                     soq_rounding = t_min_qty_price[min_qty][1]
@@ -2654,30 +2642,24 @@ class purchase_order(osv.osv):
                                 good_price = t_min_qty_price[min_qty][0]
                                 soq_rounding = t_min_qty_price[min_qty][1]
 
-                # Get SoQ value (from product not supplier catalogue)
-                if soq_rounding == 0:
+                good_quantity = pol.product_qty
+
+                if soq_rounding == 0: # Get SoQ value (from product not supplier catalogue)
                     soq_rounding = pol.product_id.soq_quantity
-                    if line_qty % soq_rounding:
-                        good_quantity = (line_qty - (line_qty % soq_rounding)) + soq_rounding
-                    else:
-                        good_quantity = line_qty
+                    if pol.product_qty % soq_rounding:
+                        good_quantity = (pol.product_qty - (pol.product_qty % soq_rounding)) + soq_rounding
                     good_price = 0
-                    l_key = []
                 else:
-                    good_quantity = line_qty
-
-                if not soq_rounding:
-                    continue
-
-                if line_qty % soq_rounding and (len(l_key) and line_qty > l_key[0]):
-                    good_quantity = (line_qty - (line_qty % soq_rounding)) + soq_rounding
-
-                if len(l_key):
-                    if line_qty <= l_key[0]: #min qty
+                    if pol.product_qty <= l_key[0]: #min qty
                         good_quantity = l_key[0]
+                    elif pol.product_qty % soq_rounding:
+                        good_quantity = (pol.product_qty - (pol.product_qty % soq_rounding)) + soq_rounding
 
                     if t_min_qty_price.has_key(good_quantity):
                         good_price = t_min_qty_price[good_quantity][0]
+
+                    if cat.currency_id != po.currency_id:
+                        good_price = rescur_obj.compute(cr, uid, cat.currency_id.id, po.currency_id.id, good_price, True, context=context)
 
                 data_to_write = {}
 
