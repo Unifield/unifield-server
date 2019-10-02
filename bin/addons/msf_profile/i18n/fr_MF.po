@@ -107537,3 +107537,9 @@ msgstr "Ligne %s: La colonne \"Qté à Traiter\" doit être supérieure à 0"
 #, python-format
 msgid "You can't group these lines together as they aren't all linked to the same employee."
 msgstr "Vous ne pouvez pas regrouper ces lignes car elles ne sont pas toutes liées au même employé."
+
+#. module: msf_instance
+#: code:addons/msf_instance/add_instance.py:119
+#, python-format
+msgid "No Analytic Journal %s found for the Proprietary Instance %s."
+msgstr "Aucun Journal Analytique %s trouvé pour l'Instance Propriétaire %s."
