@@ -24,8 +24,6 @@ from osv import fields
 
 from tools.translate import _
 
-import time
-
 
 class product_supplierinfo(osv.osv):
     _name = 'product.supplierinfo'
@@ -105,29 +103,6 @@ class product_supplierinfo(osv.osv):
             v.update({'delay': supplier.supplier_lt})
 
         return {'value': v}
-
-
-    # Override the original method
-    def price_get(self, cr, uid, supplier_ids, product_id, product_qty=1, context=None):
-        """
-        Calculate price from supplier pricelist.
-        @param supplier_ids: Ids of res.partner object.
-        @param product_id: Id of product.
-        @param product_qty: specify quantity to purchase.
-        """
-        if type(supplier_ids) in (int,long,):
-            supplier_ids = [supplier_ids]
-        res = {}
-        product_pool = self.pool.get('product.product')
-        partner_pool = self.pool.get('res.partner')
-        currency_id = context.get('currency_id', False) or self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        # TODO: TEST JN => should we keep getting the 'date' in context here (and not the currency_date)?
-        date = context.get('date', False) or time.strftime('%Y-%m-%d')
-        uom_id = context.get('uom', False) or product_pool.browse(cr, uid, product_id, context=context).uom_id.id
-        for supplier in partner_pool.browse(cr, uid, supplier_ids, context=context):
-            res[supplier.id] = product_pool._get_partner_price(cr, uid, product_id, supplier.id, product_qty,
-                                                               currency_id, date, uom_id, context=context)
-        return res
 
 product_supplierinfo()
 
@@ -322,11 +297,9 @@ class product_product(osv.osv):
         for product in prod_obj.browse(cr, uid, product_ids, context=context):
             info_prices = self._get_partner_info_price(cr, uid, product, partner_id, product_qty, currency_id,
                                                        order_date, product_uom_id, context=context)
-
             if info_prices:
-                #            info = partner_price.browse(cr, uid, info_price, context=context)[0]
                 info = partner_price.browse(cr, uid, info_prices[0], context=context)
-                # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
+                # DONE JFB: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                 price = cur_obj.compute(cr, uid, info.currency_id.id, currency_id, info.price, round=False, context=context)
                 res[product.id] = (price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00)
             else:
@@ -479,28 +452,6 @@ class product_pricelist(osv.osv):
         'currency_name': fields.function(_get_currency_name, fnct_search=_search_currency_name, type='char', method=True, string='Currency name'),
     }
 
-    def _hook_product_partner_price(self, cr, uid, *args, **kwargs):
-        '''
-        Rework the computation of price from partner section in product form
-        '''
-        product_id = kwargs['product_id']
-        partner = kwargs['partner']
-        qty = kwargs['qty']
-        currency_id = kwargs['currency_id']
-        date = kwargs['date']
-        uom = kwargs['uom']
-        context = kwargs['context']
-        if not uom and product_id:
-            uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id.id
-        if not partner and 'partner_id' in context:
-            partner = context.get('partner_id', False)
-        uom_price_already_computed = kwargs['uom_price_already_computed']
-
-        price, rounding, min_qty = self.pool.get('product.product')._get_partner_price(cr, uid, product_id, partner, qty, currency_id,
-                                                                                       date, uom, context=context)
-        uom_price_already_computed = 1
-
-        return price, uom_price_already_computed
 
     def name_get(self, cr, user, ids, context=None):
         '''
