@@ -475,7 +475,7 @@ class wizard_cash_return(osv.osv_memory):
         current_date = time.strftime('%Y-%m-%d')
         if not document_date:
             document_date = date
-        # [DONE] TEST JN
+        # DONE: TEST JN
         curr_date = currency_date.get_date(self, cr, document_date, date)
         currency_id = register.currency.id
         register_id = register.id
@@ -511,7 +511,7 @@ class wizard_cash_return(osv.osv_memory):
         # Create an account move line
         move_line_vals = {
             'name': description,
-            'date': date or current_date,  # [DONE] TEST JN
+            'date': date or current_date,  # DONE: TEST JN
             'document_date': document_date,
             'move_id': move_id,
             'partner_id': partner_id or False,
