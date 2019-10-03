@@ -47,7 +47,7 @@ class sale_order_change_currency(osv.osv_memory):
         from_currency = pricelist_obj.browse(cr, uid, from_pricelist).currency_id.id
         to_currency = pricelist_obj.browse(cr, uid, to_pricelist).currency_id.id
 
-        # TODO: TEST JN => check whether it is fine to use the date of day here (not sure if it's possible to change the FO date)?
+        # TODO: TEST JN => check whether it is fine to use the date of the day here (not sure if it's possible to change the FO date)?
         rate = self.pool.get('res.currency').compute(cr, uid, from_currency, to_currency, 1.00)
 
         return rate
@@ -82,7 +82,7 @@ class sale_order_change_currency(osv.osv_memory):
 
         for wiz in self.browse(cr, uid, ids, context=context):            
             for line in wiz.order_id.order_line:
-                # TODO: TEST JN => check whether it is fine to use the date of day here (not sure if it's possible to change the FO date)?
+                # TODO: TEST JN => check whether it is fine to use the date of the day here (not sure if it's possible to change the FO date)?
                 new_price = currency_obj.compute(cr, uid, wiz.old_pricelist_id.currency_id.id, wiz.new_pricelist_id.currency_id.id, line.price_unit, round=False, context=context)
                 line_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=c)
 
