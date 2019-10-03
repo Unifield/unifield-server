@@ -396,7 +396,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # Compute unrealized gain loss
         ctx_rate = context.copy()
-        # TODO: TEST JN
+        # DONE: TEST JN
         ctx_rate['currency_date'] = revaluation_date
         user_obj = self.pool.get('res.users')
         cp_currency_id = user_obj.browse(cr, uid, uid,
@@ -974,7 +974,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             # Copy the line
             rev_line_id = line_obj.copy(cr, uid, line.id, vals, context=context)
             # Do the reverse
-            # TODO: TEST JN
+            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, line.document_date, line.date)
             vals.update({
                 'debit': line.credit,
