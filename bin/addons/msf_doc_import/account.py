@@ -108,7 +108,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     # Create analytic distribution
                     if l.account_id.is_analytic_addicted:
                         distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
-                        # [DONE] TEST JN
+                        # DONE: TEST JN
                         curr_date = currency_date.get_date(self, cr, l.document_date, l.date)
                         common_vals = {
                             'distribution_id': distrib_id,
@@ -252,7 +252,6 @@ class msf_doc_import_accounting(osv.osv_memory):
                         raise osv.except_osv(_('Error'), _("'%s' column not found in file.") % (el or '',))
                 # All lines
                 money = {}
-                doc_date_periods = set()
                 # Update wizard
                 self.write(cr, uid, [wiz.id], {'message': _('Reading lines…'), 'progression': 6.00})
                 # Check file's content
@@ -291,9 +290,6 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_('Line %s, the column \'Document Date\' have to be of type DateTime. Check the spreadsheet format (or export a document to have an example).') % (current_line_num,))
                         continue
                     r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
-                    doc_date_period_ids = period_obj.get_period_from_date(cr, uid, r_document_date, context=context)
-                    if doc_date_period_ids:
-                        doc_date_periods.add(doc_date_period_ids[0])
                     # Check on booking amounts: ensure that one (and only one) value exists and that its amount isn't negative
                     book_debit = 0
                     book_credit = 0
@@ -620,8 +616,6 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     created += 1
                 # Check if all is ok for the file
-                if len(doc_date_periods) > 1:
-                    errors.append(_('All Document Dates should be in the same period.'))
                 ## The lines should be balanced for each currency
                 if not errors:
                     # to compare the right amounts do the check only if no line has been ignored because of an error

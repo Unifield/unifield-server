@@ -1725,7 +1725,7 @@ class account_invoice_line(osv.osv):
             return res_final
 
         company = self.pool.get('res.company').browse(cr, uid, company_id, context=context)
-        # [DONE] TEST JN: no date in context
+        # DONE: TEST JN => no date in context
         currency = self.pool.get('res.currency').browse(cr, uid, currency_id, context=context)
 
         if company.currency_id.id != currency.id:

@@ -99,6 +99,7 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        context['from_back_sync'] = True
         for pol in self.browse(cr, uid, ids, context=context):
             to_trigger = False
             # linked FO line already exists ?
@@ -257,6 +258,7 @@ class purchase_order_line(osv.osv):
                     rule_obj._manual_create_sync_message(cr, uid, 'sale.order.line', pol.linked_sol_id.id, {},
                                                          'purchase.order.line.sol_update_original_pol', rule_obj._logger, check_identifier=False, context=context)
 
+        context['from_back_sync'] = False
 
         return True
 
@@ -277,6 +279,7 @@ class purchase_order_line(osv.osv):
         if isinstance(fo_id, list):
             fo_id = fo_id[0]
 
+        context['from_back_sync'] = True
         sale_order = self.pool.get('sale.order').browse(cr, uid, fo_id, context=context)
         new_sol_id = False
         for pol in self.browse(cr, uid, ids, context=context):
@@ -354,6 +357,7 @@ class purchase_order_line(osv.osv):
             # update current PO line:
             self.write(cr, uid, pol.id, {'link_so_id': fo_id, 'linked_sol_id': new_sol_id}, context=context)
 
+        context['from_back_sync'] = False
         return new_sol_id
 
 

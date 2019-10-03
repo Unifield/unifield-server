@@ -1413,7 +1413,7 @@ class account_bank_statement_line(osv.osv):
         account_move_line_obj = self.pool.get('account.move.line')
         st = st_line.statement_id
 
-        # [DONE] TEST JN
+        # DONE: TEST JN
         curr_date = currency_date.get_date(self, cr, st_line.document_date, st_line.date)
         context.update({'currency_date': curr_date})
 
@@ -1738,7 +1738,7 @@ class account_bank_statement_line(osv.osv):
                     # Prepare value
                     res_currency_obj = self.pool.get('res.currency')
                     # Get date for having a good change rate
-                    # [DONE] TEST JN
+                    # DONE: TEST JN
                     curr_date = currency_date.get_date(self, cr, move_line_values.get('document_date', st_line.document_date),
                                                        move_line_values.get('date', st_line.date))
                     context.update({'currency_date': curr_date})
@@ -1887,7 +1887,7 @@ class account_bank_statement_line(osv.osv):
             amount = abs(st_line.amount)
             # update values if we have a different currency that company currency
             if st_line.statement_id.currency.id != st_line.statement_id.company_id.currency_id.id:
-                # [DONE] TEST JN
+                # DONE: TEST JN
                 curr_date = currency_date.get_date(self, cr, st_line.document_date, st_line.date)
                 context['currency_date'] = curr_date or current_date
                 amount = self.pool.get('res.currency').compute(cr, uid, st_line.statement_id.currency.id,
