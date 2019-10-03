@@ -2565,7 +2565,6 @@ class purchase_order(osv.osv):
         pol_obj = self.pool.get('purchase.order.line')
         uom_obj = self.pool.get('product.uom')
         sup_obj = self.pool.get('product.supplierinfo')
-
         supcat_obj = self.pool.get('supplier.catalogue')
         rescur_obj = self.pool.get('res.currency')
 
@@ -2585,11 +2584,12 @@ class purchase_order(osv.osv):
             if use_new_cursor:
                 cr.commit()
 
-            po = self.browse(cr, uid, ids[0], context=context)
+            po = self.browse(cr, uid, ids[0], fields_to_fetch=['currency_id'], context=context)
 
             pol_ids = pol_obj.search(cr, uid, [
                 ('order_id', 'in', ids),
                 ('product_id', '!=', False),
+                ('state', '=', 'draft'),
             ], context=context)
 
             for pol in pol_obj.browse(cr, uid, pol_ids, context=context):
@@ -2601,8 +2601,6 @@ class purchase_order(osv.osv):
                 if not sup_ids and not pol.product_id.soq_quantity:
                     continue
 
-                soq_rounding = 0
-
                 if sup_ids:
 
                     cat_ids = supcat_obj.search(cr, uid, [
@@ -2610,7 +2608,7 @@ class purchase_order(osv.osv):
                         ('active', '=', True),
                         ], context=context)
 
-                    cat = supcat_obj.browse(cr, uid, cat_ids[0], context=context)
+                    cat = supcat_obj.browse(cr, uid, cat_ids[0], fields_to_fetch=['currency_id'], context=context)
 
                     for sup in sup_obj.browse(cr, uid, sup_ids, context=context):
 
@@ -2642,24 +2640,26 @@ class purchase_order(osv.osv):
                                 good_price = t_min_qty_price[min_qty][0]
                                 soq_rounding = t_min_qty_price[min_qty][1]
 
-                good_quantity = pol.product_qty
-
-                if soq_rounding == 0: # Get SoQ value (from product not supplier catalogue)
-                    soq_rounding = pol.product_id.soq_quantity
-                    if pol.product_qty % soq_rounding:
-                        good_quantity = (pol.product_qty - (pol.product_qty % soq_rounding)) + soq_rounding
-                    good_price = 0
-                else:
-                    if pol.product_qty <= l_key[0]: #min qty
+                    if pol.product_qty <= l_key[0]:
                         good_quantity = l_key[0]
                     elif pol.product_qty % soq_rounding:
                         good_quantity = (pol.product_qty - (pol.product_qty % soq_rounding)) + soq_rounding
+                    else:
+                        good_quantity = pol.product_qty
 
                     if t_min_qty_price.has_key(good_quantity):
                         good_price = t_min_qty_price[good_quantity][0]
 
                     if cat.currency_id != po.currency_id:
-                        good_price = rescur_obj.compute(cr, uid, cat.currency_id.id, po.currency_id.id, good_price, True, context=context)
+                        good_price = rescur_obj.compute(cr, uid, cat.currency_id.id, po.currency_id.id, good_price, False, context=context)
+
+                else:
+                    soq_rounding = pol.product_id.soq_quantity # Get SoQ value from product not supplier catalogue
+                    if pol.product_qty % soq_rounding:
+                        good_quantity = (pol.product_qty - (pol.product_qty % soq_rounding)) + soq_rounding
+                    else:
+                        good_quantity = pol.product_qty
+                    good_price = 0  # reset to 0 due to previous records from catalogue...
 
                 data_to_write = {}
 
