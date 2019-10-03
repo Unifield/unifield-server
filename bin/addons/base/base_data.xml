@@ -1032,7 +1032,6 @@
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="currency_name">EURO</field>
-            <field name="active" eval="True"/>
             <!-- Company ID will be set later -->
             <field name="company_id" eval="None"/>
         </record>
@@ -1040,7 +1039,11 @@
             <field name="rate">1.0</field>
             <field name="currency_id" ref="EUR"/>
             <field name="name">2014-01-01</field>
-        </record>
+		</record>
+	
+		<record id="EUR" model="res.currency" forcecreate="0">
+            <field name="active" eval="True"/>
+		</record>
 
         <!-- Basic Company  -->
         <record id="main_company" model="res.company">
@@ -1118,7 +1121,6 @@
             <field name="symbol">CHF</field>
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
-            <field name="active" eval="True"/>
             <field name="currency_name">SWISS FRANC</field>
             <field name="company_id" ref="main_company"/>
         </record>
@@ -1126,7 +1128,10 @@
             <field name="rate">1.3086</field>
             <field name="currency_id" ref="CHF"/>
             <field name="name">2014-01-01</field>
-        </record>
+		</record>
+		<record id="CHF" model="res.currency" forcecreate="0">
+            <field name="active" eval="True"/>
+		</record>
 
         <record id="BRL" model="res.currency" forcecreate="0">
             <field name="name">BRL</field>

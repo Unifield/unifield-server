@@ -24,6 +24,51 @@ import csv
 from osv import fields, osv
 from tools.translate import _
 
+class res_currency_table(osv.osv):
+    _name = 'res.currency.table'
+
+    _columns = {
+        'name': fields.char('Currency table name', size=64, required=True),
+        'code': fields.char('Currency table code', size=16, required=True),
+        'currency_ids': fields.one2many('res.currency', 'currency_table_id', 'Currencies', domain=[('active','in',['t','f'])]),
+        'state': fields.selection([('draft','Draft'),
+                                   ('valid','Valid'),
+                                   ('closed', 'Closed')], 'State', required=True),
+    }
+
+    _defaults = {
+        'state': 'draft',
+    }
+
+    def validate(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        # just get one table
+        if not isinstance(ids, (int, long)):
+            ids = ids[0]
+        # TODO: TEST JN => ensure that there is no "date" set in context at this step
+        table = self.browse(cr, uid, ids, context=context)
+        for currency in table.currency_ids:
+            if currency.rate == 0.0:
+                raise osv.except_osv(_('Error'), _('A currency has an invalid rate! Please set a rate before validation.'))
+
+        return self.write(cr, uid, ids, {'state': 'valid'}, context=context)
+
+    def _check_unicity(self, cr, uid, ids, context=None):
+        if not context:
+            context={}
+        for table in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('|'),('name', '=ilike', table.name),('code', '=ilike', table.code)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    _constraints = [
+        (_check_unicity, 'You cannot have the same code or name between currency tables!', ['code', 'name']),
+    ]
+
+res_currency_table()
+
 class res_currency(osv.osv):
     _name = "res.currency"
     _description = "Currency"
@@ -220,7 +265,7 @@ class res_currency(osv.osv):
         '''
         res = super(res_currency, self).create(cr, uid, values, context=context)
         # Create the corresponding pricelists (only for non currency that have a currency_table)
-        if not values.get('currency_table_id', False):
+        if not values.get('currency_table_id', False) and self.pool.get('product.pricelist'):
             self.create_associated_pricelist(cr, uid, res, context=context)
 
             # Check if currencies has no associated pricelists
@@ -288,7 +333,7 @@ class res_currency(osv.osv):
                                      _('You cannot uncheck the ESC checkbox because this currency is used on these \'ESC\' partners : \
                                       %s' % partner_list))
 
-        if 'active' in values and not values.get('currency_table_id', False):
+        if 'active' in values and not values.get('currency_table_id', False) and pricelist_obj:
             if values['active'] == False:
                 self.check_in_use(cr, uid, ids, 'de-activate', context=context)
             # Get all pricelists and versions for the given currency
