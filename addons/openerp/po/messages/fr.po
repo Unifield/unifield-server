@@ -1802,8 +1802,8 @@ msgstr "Génération du rapport en cours"
 
 #: controllers/templates/downloadbg.mako:85
 #, python-format
-msgid "All the data have been collected. The report is now under rendering (this can take some time one big reports). A button to download it will be displayed soon..."
-msgstr "Toutes les données ont été traitées. Le rapport va être mise en forme, un bouton pour le télécharger va bientôt être disponible."
+msgid "All the data have been collected. The report is now under rendering (this can take some time depending on the report size). A button to download it will be displayed soon..."
+msgstr "Toutes les données ont été traitées. Le rapport va être mis en forme, un bouton pour le télécharger va bientôt être disponible."
 
 #: controllers/templates/downloadbg.mako:88
 #, python-format
