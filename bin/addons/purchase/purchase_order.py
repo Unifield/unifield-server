@@ -2597,20 +2597,16 @@ class purchase_order(osv.osv):
                 sup_ids = sup_obj.search(cr, uid, [
                     ('name', '=', pol.order_id.partner_id.id),
                     ('product_id', '=', pol.product_id.id),
+                    ('active', '=', True),
                 ], context=context)
                 if not sup_ids and not pol.product_id.soq_quantity:
                     continue
 
                 if sup_ids:
 
-                    cat_ids = supcat_obj.search(cr, uid, [
-                        ('partner_id', '=', pol.order_id.partner_id.id),
-                        ('active', '=', True),
-                        ], context=context)
-
-                    cat = supcat_obj.browse(cr, uid, cat_ids[0], fields_to_fetch=['currency_id'], context=context)
-
                     for sup in sup_obj.browse(cr, uid, sup_ids, context=context):
+
+                        cat = supcat_obj.browse(cr, uid, sup.catalogue_id.id, fields_to_fetch=['currency_id'], context=context)
 
                         t_min_qty_price = {}
 
@@ -2654,12 +2650,12 @@ class purchase_order(osv.osv):
                         good_price = rescur_obj.compute(cr, uid, cat.currency_id.id, po.currency_id.id, good_price, False, context=context)
 
                 else:
-                    soq_rounding = pol.product_id.soq_quantity # Get SoQ value from product not supplier catalogue
+                    soq_rounding = pol.product_id.soq_quantity  # Get SoQ value from product not supplier catalogue
                     if pol.product_qty % soq_rounding:
                         good_quantity = (pol.product_qty - (pol.product_qty % soq_rounding)) + soq_rounding
                     else:
                         good_quantity = pol.product_qty
-                    good_price = 0  # reset to 0 due to previous records from catalogue...
+                    good_price = 0  # reset to 0 due to potential previous records from catalogue...
 
                 data_to_write = {}
 
