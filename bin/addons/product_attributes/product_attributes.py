@@ -1469,15 +1469,6 @@ class product_attributes(osv.osv):
         vals['uf_write_date'] = vals.get('uf_write_date', datetime.now())
 
         self.convert_price(cr, uid, vals, context)
-        res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
-
-        if product_uom_categ:
-            uom_categ = 'uom_id' in vals and vals['uom_id'] and self.pool.get('product.uom').browse(cr, uid, vals['uom_id'], context=context).category_id.id or False
-            uos_categ = 'uom_po_id' in vals and vals['uom_po_id'] and self.pool.get('product.uom').browse(cr, uid, vals['uom_po_id'], context=context).category_id.id or False
-
-            if (uom_categ and uom_categ not in product_uom_categ) or (uos_categ and uos_categ not in product_uom_categ):
-                raise osv.except_osv(_('Error'), _('You cannot choose an UoM which is not in the same UoM category of default UoM'))
-
         if context.get('sync_update_execution') and 'batch_management' in vals and 'perishable' in vals:
             init_sync = not bool(self.pool.get('res.users').get_browse_user_instance(cr, uid))
             if not init_sync:
@@ -1487,6 +1478,15 @@ class product_attributes(osv.osv):
                     self.set_as_edonly(cr, uid, ids, context=context)
                 else:
                     self.set_as_nobn_noed(cr, uid, ids, context=context)
+        res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
+
+        if product_uom_categ:
+            uom_categ = 'uom_id' in vals and vals['uom_id'] and self.pool.get('product.uom').browse(cr, uid, vals['uom_id'], context=context).category_id.id or False
+            uos_categ = 'uom_po_id' in vals and vals['uom_po_id'] and self.pool.get('product.uom').browse(cr, uid, vals['uom_po_id'], context=context).category_id.id or False
+
+            if (uom_categ and uom_categ not in product_uom_categ) or (uos_categ and uos_categ not in product_uom_categ):
+                raise osv.except_osv(_('Error'), _('You cannot choose an UoM which is not in the same UoM category of default UoM'))
+
         return res
 
 
