@@ -7334,6 +7334,7 @@ msgstr "Vous aide à gérer et à suivre vos relations avec vos clients, comme l
 #: code:addons/register_accounting/account_direct_invoice_wizard.py:707
 #: code:addons/register_accounting/wizard/direct_invoice.py:418
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:276
+#: code:addons/analytic_distribution/account_bank_statement.py:122
 #, python-format
 msgid "Analytic distribution"
 msgstr "Distribution analytique"
