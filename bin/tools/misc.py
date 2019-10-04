@@ -71,6 +71,7 @@ _logger = logging.getLogger('tools')
 # We include the *Base ones just in case, currently they seem to be subclasses of the _* ones.
 SKIPPED_ELEMENT_TYPES = (etree._Comment, etree._ProcessingInstruction, etree.CommentBase, etree.PIBase)
 
+
 # initialize a database with base/base.sql
 def init_db(cr):
     import addons
@@ -153,6 +154,91 @@ def _set_env_pg(remove=False):
             os.environ['PGPASSWORD'] = config['db_password']
         if remove and os.environ.get('PGPASSWORD'):
             os.environ['PGPASSWORD'] = ''
+
+def path_to_cygwin(path):
+    new_path = re.sub(r'^(.):', '/cygdrive/\\1', path).replace('\\', '/')
+    if not new_path.endswith('/'):
+        new_path = '%s/' % new_path
+    return new_path
+
+def sent_to_remote(local_path, config_dir=False, remote_user=False, remote_host=False, remote_dir=False):
+
+    exe_dir = os.path.join(os.path.normcase(os.path.abspath(config['root_path'])), 'rsync')
+    sync = os.path.join(exe_dir, 'rsync.exe')
+    ssh = os.path.join(exe_dir, 'ssh.exe')
+
+    if not remote_user:
+        remote_user = 'backup'
+
+    if not remote_host:
+        remote_host = '51.91.31.142'
+
+    if not config_dir:
+        config_dir = os.path.join(os.path.normcase(os.path.abspath(config['root_path'])), '..', '..', 'SSH_CONFIG')
+    sshconfig = os.path.join(config_dir, 'config')
+
+    for to_check in [sshconfig, sync, ssh]:
+        if not os.path.exists(to_check):
+            raise Exception("%s not found" % (to_check,))
+
+    if not os.path.isdir(local_path):
+        raise Exception("Local path %s not found" % (local_path,))
+
+
+    remote_path = '%s/' % remote_dir
+    try:
+        command = [sync, '--remove-source-files', '--partial-dir=.rsync-partial', '-a', '-e', '"%s" -F "%s"'%(ssh, sshconfig), '--include=*/', '--include=*7z', '--exclude=*', path_to_cygwin(local_path), "%s@%s:%s" % (remote_user, remote_host, remote_path)]
+        _logger.info(' '.join(command))
+        subprocess.check_output(command, stderr=subprocess.STDOUT)
+        _logger.info('Rsync ends')
+        return True
+    except subprocess.CalledProcessError, e:
+        _logger.error('rsync %s' % e.output)
+        raise Exception(e.output)
+    except Exception, e:
+        raise e
+
+def pg_basebackup(db_name, wal_dir):
+    if not os.path.isdir(wal_dir):
+        raise Exception("Destination directory %s not found" % (wal_dir,))
+    dest_dir = os.path.join(wal_dir, 'base')
+    if not os.path.isdir(dest_dir):
+        os.makedirs(dest_dir)
+    try:
+        _logger.info('pg_basebackup %s to %s' % (db_name, dest_dir))
+        _set_env_pg()
+        pg_basebackup = find_pg_tool('pg_basebackup')
+        if not pg_basebackup:
+            raise Exception("Couldn't find %s" % pg_basebackup)
+        cmd = [pg_basebackup, '--format=t', '-D', dest_dir]
+        if config['db_user']:
+            cmd.append('--username=' + config['db_user'])
+        if config['db_host']:
+            cmd.append('--host=' + config['db_host'])
+        if config['db_port']:
+            cmd.append('--port=' + str(config['db_port']))
+
+        szexe = os.path.join(os.path.normcase(os.path.abspath(config['root_path'])), 'rsync' , '7za.exe')
+        if not os.path.exists(szexe):
+            raise Exception('7za.exe not found')
+
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        _logger.info('pg_basebackup done')
+        base_path = os.path.join(dest_dir, 'base.tar')
+        if not os.path.exists(base_path):
+            raise Exception('%s not found' % base_path)
+        command_7z = [szexe, '-sdel', '-bd', '-bso0', '-w', 'a', '%s.7z' % base_path, base_path]
+        _logger.info(' '.join(command_7z))
+        subprocess.check_output(command_7z, stderr=subprocess.STDOUT)
+        _logger.info('7z done')
+        return True
+    except subprocess.CalledProcessError, e:
+        _logger.error('pg_base %s' % e.output)
+        raise Exception(e.output)
+    except Exception, e:
+        raise e
+    finally:
+        _set_env_pg(remove=True)
 
 def pg_dump(db_name, outfile=False):
     try:
@@ -1821,3 +1907,8 @@ class crypt():
         return self.Fernet.decrypt(bytes(string))
 
 
+def get_fake(self, cr, uid, ids, *a, **b):
+    ret = {}
+    for x in ids:
+        ret[x] = False
+    return ret

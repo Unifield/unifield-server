@@ -1269,10 +1269,15 @@ class Entity(osv.osv):
         self.pull_message(cr, uid, context=context)
         self.push_update(cr, uid, context=context)
         self.push_message(cr, uid, context=context)
-        self._logger.info("Synchronization successfully done")
+        nb_msg_not_run = self.pool.get('sync.client.message_received').search(cr, uid, [('run', '=', False)], count=True)
+        nb_data_not_run = self.pool.get('sync.client.update_received').search(cr, uid, [('run', '=', False)], count=True)
         if logger:
-            logger.info['nb_msg_not_run'] = self.pool.get('sync.client.message_received').search(cr, uid, [('run', '=', False)], count=True)
-            logger.info['nb_data_not_run'] = self.pool.get('sync.client.update_received').search(cr, uid, [('run', '=', False)], count=True)
+            logger.info['nb_msg_not_run'] = nb_msg_not_run
+            logger.info['nb_data_not_run'] = nb_data_not_run
+
+        self._logger.info('Not run updates : %d' % (nb_msg_not_run, ))
+        self._logger.info('Not run messages : %d' % (nb_data_not_run, ))
+        self._logger.info("Synchronization successfully done")
         return True
 
     @sync_process()
