@@ -2643,7 +2643,7 @@ class purchase_order(osv.osv):
                     else:
                         good_quantity = pol.product_qty
 
-                    if t_min_qty_price.has_key(good_quantity):
+                    if good_quantity in t_min_qty_price.keys():
                         good_price = t_min_qty_price[good_quantity][0]
 
                     if cat.currency_id != po.currency_id:
