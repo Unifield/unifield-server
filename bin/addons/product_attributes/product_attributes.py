@@ -1289,11 +1289,10 @@ class product_attributes(osv.osv):
             if f in vals and not vals.get(f):
                 vals[f] = 'no'
 
-        vals['uf_create_date'] = vals.get('uf_create_date', datetime.now())
+        vals['uf_create_date'] = vals.get('uf_create_date') or datetime.now()
 
         self.convert_price(cr, uid, vals, context)
-        res = super(product_attributes, self).create(cr, uid, vals,
-                                                     context=context)
+        res = super(product_attributes, self).create(cr, uid, vals, context=context)
 
         if context.get('sync_update_execution'):
             # Update existing translations for product.product and product.template
@@ -1925,6 +1924,8 @@ class product_attributes(osv.osv):
                        prodlot_ids=False,
                        attribute_ids=False,
                        packaging=False,
+                       uf_create_date=False,
+                       uf_write_date=False
                        )
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)

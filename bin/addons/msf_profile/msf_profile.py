@@ -52,6 +52,54 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF15.0
+    def us_6354_trigger_donation_account_sync(self, cr, uid, *a, **b):
+        """
+        Triggers a synch. on the Intersection Partners at HQ, so that their Donation Payable Account is retrieved in the lower instances
+        """
+        if _get_instance_level(self, cr, uid) == 'hq':
+            cr.execute("""
+                UPDATE ir_model_data 
+                SET touched ='[''donation_payable_account'']', last_modification = NOW()
+                WHERE module='sd' 
+                AND model='res.partner' 
+                AND res_id IN (
+                    SELECT id
+                    FROM res_partner
+                    WHERE partner_type = 'section'
+                );
+            """)
+            self._logger.warn('Sync. triggered on %s Intersection Partner(s).' % (cr.rowcount,))
+        return True
+
+    def us_6457_update_uf_create_date_product(self, cr, uid, *a, **b):
+        """
+        Fill the uf_create_date for existing products
+        """
+        cr.execute("""UPDATE product_product SET uf_create_date = create_date WHERE uf_create_date IS NULL""")
+        self._logger.warn('Set uf_create_date on %d products' % cr.rowcount)
+        return True
+
+    # UF14.1
+    def us_6433_remove_sale_override_sourcing(self, cr, uid, *a, **b):
+        cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where name='sale_order_sourcing_progress_action' and module='sale_override' and model='ir.actions.act_window')")
+        l1 = cr.rowcount
+        cr.execute("delete from ir_model_data where name='sale_order_sourcing_progress_action' and module='sale_override' and model='ir.actions.act_window'")
+        l2 = cr.rowcount
+        self._logger.warn("Deleted %d+%d old sourcing progress entry" % (l1, l2))
+        return True
+
+    def us_6498_set_qty_to_process(self, cr, uid, *a, **b):
+        cr.execute('''
+            update stock_move
+                set selected_number=to_pack-from_pack+1
+            where id =ANY(
+                select unnest(move_lines) from pack_family_memory where shipment_id in (select id from shipment where state='shipped') and state!='done'
+                )
+        ''')
+        self._logger.warn('Set qty to process on %d stock.move' % cr.rowcount)
+        return True
+
     # UF14.0
     def us_6342_cancel_ir(self, cr, uid, *a, **b):
         """
@@ -95,7 +143,6 @@ class patch_scripts(osv.osv):
         cr.execute("update ir_cron set function='send_backup_bg' where function='send_backup' and model='msf.instance.cloud'")
         return True
 
-    # UF14.0
     def us_6075_set_paid_invoices_as_closed(self, cr, uid, *a, **b):
         cr.execute('''SELECT i.id, i.number
             FROM account_invoice i

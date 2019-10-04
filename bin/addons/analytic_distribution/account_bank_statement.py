@@ -20,6 +20,7 @@
 #
 ##############################################################################
 from osv import fields, osv
+from tools.translate import _
 
 class account_bank_statement_line(osv.osv):
     _inherit = "account.bank.statement.line"
@@ -69,10 +70,10 @@ class account_bank_statement_line(osv.osv):
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True,
-            help="This informs system that we can display or not an analytic button", store=False),
+                                                   help="This informs system that we can display or not an analytic button", store=False),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
-            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
     }
 
     _defaults = {
@@ -118,14 +119,14 @@ class account_bank_statement_line(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Analytic distribution',
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
 account_bank_statement_line()
