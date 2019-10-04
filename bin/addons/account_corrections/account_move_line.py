@@ -769,8 +769,6 @@ receivable, item have not been corrected, item have not been reversed and accoun
             self.write(cr, uid, [rev_line_id], vals, context=context, check=False, update_check=False)
             # Do the correction line
             name = self.join_without_redundancy(ml.name, 'COR')
-            # TODO: TEST JN
-            curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
             cor_vals = {
                 'name': name,
                 'journal_id': journal_id,

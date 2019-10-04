@@ -107,8 +107,8 @@ class hq_entries_validation(osv.osv_memory):
                          (account.default_destination_id and account.default_destination_id.id) or False
         distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
         if distrib_id:
-            # TODO: TEST JN
-            curr_date = currency_date.get_date(self, cr, line.document_date, line.date)
+            # DONE: TEST JN
+            curr_date = currency_date.get_date(self, cr, line.document_date or line.date, line.date)
             common_vals = {'distribution_id':distrib_id,
                            'currency_id':currency_id,
                            'percentage':100.0,
@@ -192,7 +192,7 @@ class hq_entries_validation(osv.osv_memory):
                     'journal_id': journal_id,
                     'date': line.date,
                     'date_maturity': line.date,
-                    'document_date': line.document_date,
+                    'document_date': line.document_date or line.date,
                     'move_id': move_id,
                     'analytic_distribution_id': distrib_id,
                     'name': line.name or '',
@@ -333,7 +333,7 @@ class hq_entries_validation(osv.osv_memory):
                 'reversal_line_id': original_move.id,
                 'partner_txt': original_move.partner_txt or '',
                 'reference': ji_entry_seq or ' ', # UFTP-342: if HQ entry reference is empty, do not display anything. As a field function exists for account_move_line object, so we add a blank char to avoid this problem
-                'document_date': line.document_date,  # US-1361
+                'document_date': line.document_date or line.date,
             }, context=context, check=False, update_check=False)
 
             # create the analytic lines as a reversed copy of the original
@@ -457,7 +457,9 @@ class hq_entries_validation(osv.osv_memory):
                     split_change.append(line)
                     continue
                 if not line.user_validated:
-                    to_write.setdefault(line.currency_id.id, {}).setdefault(line.period_id.id, {}).setdefault(line.date, []).append(line.id)
+                    document_date = line.document_date or line.date  # posting date is used by default if there is no doc date on the line
+                    to_write.setdefault(line.currency_id.id, {}).setdefault(line.period_id.id, {}).\
+                        setdefault(line.date, {}).setdefault(document_date, []).append(line.id)
 
                     if line.account_id.id != line.account_id_first_value.id:
                         if line.cost_center_id.id != line.cost_center_id_first_value.id or line.destination_id.id != line.destination_id_first_value.id:
@@ -487,15 +489,16 @@ class hq_entries_validation(osv.osv_memory):
             for currency in to_write:
                 for period in to_write[currency]:
                     for date in to_write[currency][period]:
-                        lines = to_write[currency][period][date]
-                        write = self.create_move(cr, uid, lines, period, currency, date)
-                        all_lines.update(write)
-                        if write:
-                            self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
+                        for doc_date in to_write[currency][period][date]:
+                            lines = to_write[currency][period][date][doc_date]
+                            write = self.create_move(cr, uid, lines, period_id=period, currency_id=currency, date=date, doc_date=doc_date)
+                            all_lines.update(write)
+                            if write:
+                                self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
 
             for line in account_change:
-                # TODO: TEST JN
-                curr_date = currency_date.get_date(self, cr, line.document_date, line.date)
+                # DONE: TEST JN
+                curr_date = currency_date.get_date(self, cr, line.document_date or line.date, line.date)
                 corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
                     'funding_pool_lines': [(0, 0, {
                         'percentage': 100,
@@ -512,8 +515,8 @@ class hq_entries_validation(osv.osv_memory):
                 # actual distrib_id
                 distrib_id = self.pool.get('account.move.line').read(cr, uid, all_lines[line.id], ['analytic_distribution_id'])['analytic_distribution_id'][0]
                 # update the distribution
-                # TODO: TEST JN
-                curr_date = currency_date.get_date(self, cr, line.document_date, line.date)
+                # DONE: TEST JN
+                curr_date = currency_date.get_date(self, cr, line.document_date or line.date, line.date)
                 distrib_fp_lines = distrib_fp_line_obj.search(cr, uid, [('cost_center_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
                 distrib_fp_line_obj.write(cr, uid, distrib_fp_lines, {'cost_center_id': line.cost_center_id.id,
                                                                       'source_date': curr_date, 'destination_id': line.destination_id.id})
@@ -539,7 +542,7 @@ class hq_entries_validation(osv.osv_memory):
                     continue
 
                 # UTP-1118: posting date should be those from initial HQ entry line
-                # TODO: TEST JN
+                # DONE: TEST JN
                 vals_cor = {'date': line.date, 'source_date': curr_date, 'cost_center_id': line.cost_center_id.id,
                             'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id,
                             'journal_id': acor_journal_id, 'last_correction_id':fp_old_lines[0]}
@@ -590,8 +593,8 @@ class hq_entries_validation(osv.osv_memory):
                 pure_ad_cor_ji_ids.append(all_lines[line.id])
 
             for line in cc_account_change:
-                # TODO: TEST JN
-                curr_date = currency_date.get_date(self, cr, line.document_date, line.date)
+                # DONE: TEST JN
+                curr_date = currency_date.get_date(self, cr, line.document_date or line.date, line.date)
                 # call correct_account with a new arg: new_distrib
                 corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
                     'cost_center_lines': [(0, 0, {
