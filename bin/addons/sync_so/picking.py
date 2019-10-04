@@ -136,10 +136,16 @@ class stock_picking(osv.osv):
                 batch_id = prodlot_obj._get_prodlot_from_expiry_date(cr, uid, batch_values['life_date'], product_id, context=context)
                 expired_date = data['expired_date']
             elif prod.perishable and prod.batch_management and batch_values.get('name') and batch_values.get('life_date'):
-                # TODO: if ED on sender batch values contains an internal name MSFBN ? create a real name ?
-                # US-838: for BN, retrieve it or create it, in the follwing method
-                batch_id, msg = self.retrieve_batch_number(cr, uid, product_id, batch_values, context) # return False if the batch object is not found, or cannot be created
-                expired_date = data['expired_date']
+                is_internal = False
+                if 'type' not in batch_values:
+                    # old msg: type was not sent
+                    is_internal = batch_values['name'].startswith('MSFBN')
+                else:
+                    is_internal = batch_values['type'] == 'internal'
+                if not is_internal:
+                    # US-838: for BN, retrieve it or create it, in the follwing method
+                    batch_id, msg = self.retrieve_batch_number(cr, uid, product_id, batch_values, context)
+                    expired_date = data['expired_date']
 
         # UTP-872: Add also the state into the move line, but if it is done, then change it to assigned (available)
         state = data['state']
@@ -797,7 +803,7 @@ class stock_picking(osv.osv):
         #self._logger.info("+++ Retrieve batch number for the SHIP/OUT from %s")
         batch_obj = self.pool.get('stock.production.lot')
 
-        if not ('name' in batch_dict and 'life_date' in batch_dict):
+        if 'name' not in batch_dict or 'life_date' not in batch_dict:
             # Search for the batch object with the given data
             return False, "Batch Number: Missing batch name or expiry date!"
 
