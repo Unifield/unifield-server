@@ -750,7 +750,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Do the reverse
             name = self.join_without_redundancy(ml.name, 'REV')
             amt = -1 * ml.amount_currency
-            # TODO: TEST JN
+            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
             vals.update({
                 'debit': ml.credit,
