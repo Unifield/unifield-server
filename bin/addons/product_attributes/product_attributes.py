@@ -2011,7 +2011,7 @@ class product_attributes(osv.osv):
             context = {}
         prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', True), ('perishable', '=', True)], context=context)
         if prod_to_change:
-            self._remove_all_bned(cr, uid,  prod_to_change, context=None)
+            self._remove_all_bned(cr, uid,  prod_to_change, context=context)
         return True
 
     def switch_no_to_bn(self, cr, uid, ids, context=None):
@@ -2070,7 +2070,7 @@ class product_attributes(osv.osv):
             context = {}
         prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', True)], context=context)
         if prod_to_change:
-            self._remove_all_bned(cr, uid, prod_to_change, context=None)
+            self._remove_all_bned(cr, uid, prod_to_change, context=context)
         return len(prod_to_change)
 
     def switch_bn_to_ed(self, cr, uid, ids, context=None):
