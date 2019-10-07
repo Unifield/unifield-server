@@ -1976,7 +1976,11 @@ class product_attributes(osv.osv):
             Rest ED
         '''
         if not context.get('sync_update_execution'):
-            self.write(cr, uid, product_ids, {'perishable': False, 'batch_management': False}, context=context)
+            prod_obj = self
+        else:
+            prod_obj = super(product_attributes, self)
+        prod_obj.write(cr, uid, product_ids, {'perishable': False, 'batch_management': False}, context=context)
+
         cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(product_ids), ))
         cr.execute("delete from stock_production_lot where product_id in %s", (tuple(product_ids), ))
 
@@ -2020,8 +2024,12 @@ class product_attributes(osv.osv):
             context = {}
         lot_obj = self.pool.get('stock.production.lot')
         prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', False)], context=context)
-        if prod_to_change and not context.get('sync_update_execution'):
-            self.write(cr, uid, prod_to_change, {'perishable': True, 'batch_management': True}, context=context)
+        if prod_to_change:
+            if not context.get('sync_update_execution'):
+                prod_obj = self
+            else:
+                prod_obj = super(product_attributes, self)
+            prod_obj.write(cr, uid, prod_to_change, {'perishable': True, 'batch_management': True}, context=context)
         for prod_id in prod_to_change:
             batch_id = lot_obj._get_or_create_lot(cr, uid, name=self.fake_bn, expiry_date=self.fake_ed, product_id=prod_id, context=context)
             cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel', 'assigned')", (batch_id, self.fake_ed, prod_id))
@@ -2081,7 +2089,11 @@ class product_attributes(osv.osv):
         prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', True), ('perishable', '=', True)], context=context)
         if prod_to_change:
             if not context.get('sync_update_execution'):
-                self.write(cr, uid, prod_to_change, {'batch_management': False}, context=context)
+                prod_obj = self
+            else:
+                prod_obj = super(product_attributes, self)
+            prod_obj.write(cr, uid, prod_to_change, {'batch_management': False}, context=context)
+
             # check if we should merge lot: i.e P1 BN1 EDA / P1 BN2 EDA : same EDA BN1+BN2 must be merged
             cr.execute("select min(id), array_agg(id) from stock_production_lot where product_id in %s group by product_id, life_date having count(*)>1", (tuple(prod_to_change),))
             for to_merge in cr.fetchall():
@@ -2137,8 +2149,13 @@ class product_attributes(osv.osv):
             context = {}
         lot_obj = self.pool.get('stock.production.lot')
         prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', False)], context=context)
-        if prod_to_change and not context.get('sync_update_execution'):
-            self.write(cr, uid, prod_to_change, {'perishable': True}, context=context)
+        if prod_to_change:
+            if not context.get('sync_update_execution'):
+                prod_obj = self
+            else:
+                prod_obj = super(product_attributes, self)
+            prod_obj.write(cr, uid, prod_to_change, {'perishable': True}, context=context)
+
         for prod_id in prod_to_change:
             batch_id = lot_obj._get_or_create_lot(cr, uid, name=False, expiry_date=self.fake_ed, product_id=prod_id, context=context)
             cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel', 'assigned')", (batch_id, self.fake_ed, prod_id))
@@ -2182,7 +2199,10 @@ class product_attributes(osv.osv):
         prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', True)], context=context)
         if prod_to_change:
             if not context.get('sync_update_execution'):
-                self.write(cr, uid, prod_to_change, {'batch_management': True}, context=context)
+                prod_obj = self
+            else:
+                prod_obj = super(product_attributes, self)
+            prod_obj.write(cr, uid, prod_to_change, {'batch_management': True}, context=context)
             cr.execute("update stock_move set old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id is not null and product_id in %s",  (tuple(prod_to_change), ))
             cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f' where product_id in %s",  (tuple(prod_to_change), ))
             cr.execute("update stock_production_lot set name=%s, type='standard' where product_id in %s", (self.fake_bn, tuple(prod_to_change)))
