@@ -599,7 +599,7 @@ class account_move_line_compute_currency(osv.osv):
 
         if not 'date' in vals:
             if vals.get('move_id'):
-                # TODO: TEST JN
+                # DONE: TEST JN
                 move = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['document_date', 'date'])
                 doc_date = move['document_date']
                 posting_date = move['date']
