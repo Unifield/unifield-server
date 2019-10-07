@@ -378,12 +378,12 @@ class product_mass_update(osv.osv):
         if len(prod_ids) > 500:
             raise osv.except_osv(_('Warning'), _('Please limit your query to a maximum of 500 products.'))
 
+        self.pool.get('product.mass.update.progressbar').create(cr, uid,  {'p_mass_upd_id': ids[0]}, context=context)
         thread = threading.Thread(target=self.change_bn_ed_thread, args=(cr, uid, ids[0], prod_ids, context))
         thread.start()
 
         thread.join(5)
         if thread.isAlive():
-            self.pool.get('product.mass.update.progressbar').create(cr, uid,  {'p_mass_upd_id': ids[0]}, context=context)
             msg_to_return = _("Update in progress, please leave this window open and press the button 'Update' when you think that the update is done. Otherwise, you can continue to use Unifield.")
             self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
         return True
