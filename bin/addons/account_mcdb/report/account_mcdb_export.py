@@ -242,13 +242,13 @@ class account_line_csv_export(osv.osv_memory):
                     csv_line.append(company_currency.encode('utf-8') or '')
                 else:
                     #output debit/credit
-                    # TODO: TEST JN
+                    # DONE: TEST JN
                     curr_date = currency_date.get_date(self, cr, al.document_date, al.date, source_date=al.source_date)
                     context['currency_date'] = curr_date  # reversal line: source_date or doc_date/posting_date depending on the OC
                     if al.is_reversal == True:
-                        context.update({'currency_date': al.document_date})  # TODO: TEST JN => check if doc date should always be kept
+                        context.update({'currency_date': al.document_date})  # DONE: TEST JN => see US-5848: doc. date kept for now
                     if al.last_corrected_id:
-                        context.update({'currency_date': al.document_date})  # TODO: TEST JN => check if doc date should always be kept
+                        context.update({'currency_date': al.document_date})  # DONE: TEST JN => see US-5848: doc. date kept for now
                     amount = currency_obj.compute(cr, uid, al.currency_id.id, currency_id, al.amount_currency, round=True, context=context)
                     csv_line.append(amount or 0.0)
                     #output currency
