@@ -130,7 +130,7 @@ class hq_entries_validation(osv.osv_memory):
         return distrib_id
 
     def create_move(self, cr, uid, ids, period_id=False, currency_id=False,
-                    date=None, journal=None, orig_acct=None, doc_date=None, split=False, context=None):
+                    date=None, journal=None, orig_acct=None, doc_date=None, source_date=None, split=False, context=None):
         """
         Create a move with given hq entries lines
         Return created lines (except counterpart lines)
@@ -200,6 +200,9 @@ class hq_entries_validation(osv.osv_memory):
                     'partner_txt': line.partner_txt or '',
                     'reference': line.ref or ''
                 }
+                # DONE: TEST JN
+                if source_date is not None:
+                    vals.update({'source_date': source_date, })
                 # Fetch debit/credit
                 debit = 0.0
                 credit = 0.0
@@ -298,8 +301,10 @@ class hq_entries_validation(osv.osv_memory):
             aml_obj.write(cr, uid, original_move.id, {'corrected': True, 'have_an_historic': True} , context=context)
             original_account_id = original_move.account_id.id
 
+            # DONE: TEST JN
+            curr_date = currency_date.get_date(self, cr, line.document_date or line.date, line.date)
             new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id,
-                                            line.currency_id.id, date=line.date, doc_date=line.document_date,
+                                            line.currency_id.id, date=line.date, doc_date=line.document_date, source_date=curr_date,
                                             journal=od_journal_id, orig_acct=original_account_id, split=True, context=context)
             # original move line
             original_ml_result = res_move[line.id]
