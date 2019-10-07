@@ -518,6 +518,7 @@ class product_mass_update_errors(osv.osv):
 
 product_mass_update_errors()
 
+
 class product_ed_bn_mass_update_history(osv.osv):
     _name = 'product.ed_bn.mass.update.history'
     _description = 'List of change'
@@ -528,5 +529,6 @@ class product_ed_bn_mass_update_history(osv.osv):
         'old_bn': fields.boolean('Old BN'),
         'old_ed': fields.boolean('Old ED'),
     }
+
 
 product_ed_bn_mass_update_history()
