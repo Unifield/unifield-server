@@ -402,6 +402,7 @@ class res_currency(osv.osv):
         if context is None:
             context = {}
 
+        # TODO: TEST JN => remove this debug code for Testfield?
         if context.get('date') and not context.get('currency_date'):
             import traceback
             import logging
@@ -453,6 +454,7 @@ class res_currency(osv.osv):
         if context is None:
             context={}
 
+        # TODO: TEST JN => remove this debug code for Testfield?
         if context.get('date') and not context.get('currency_date'):
             import traceback
             import logging
@@ -469,7 +471,6 @@ class res_currency(osv.osv):
             new_to_currency_id = self._get_table_currency(cr, uid, to_currency_id, context['currency_table_id'], context=context)
             if new_to_currency_id:
                 to_currency_id = new_to_currency_id
-            # DONE: TEST JN => there is a currency_date in context
 
         if not from_currency_id:
             from_currency_id = to_currency_id
