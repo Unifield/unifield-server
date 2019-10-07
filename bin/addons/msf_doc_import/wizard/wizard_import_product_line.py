@@ -205,6 +205,12 @@ class wizard_import_product_line(osv.osv_memory):
                             cr.commit()
 
                 # Update products
+                if wiz_browse.product_mass_upd_id.type_of_ed_bn and len(product_ids) > 500:
+                    nb_in_file = len(product_ids)
+                    ignore_lines += nb_in_file - 500
+                    product_ids = product_ids[0:500]
+                    error_list.append(_('Import is limited to 500 products, %d lines ignored') % (nb_in_file - 500))
+
                 p_mass_upd_obj.write(cr, uid, p_mass_upd_id, {'product_ids': [(6, 0, product_ids)]}, context=context)
 
                 error_log += '\n'.join(error_list)
@@ -291,16 +297,16 @@ Otherwise, you can continue to use Unifield.""")
         '''
         if isinstance(ids, (int, long)):
             ids=[ids]
-        for wiz_obj in self.read(cr, uid, ids, ['product_mass_upd_id']):
-            p_mass_upd_id = wiz_obj['product_mass_upd_id']
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'product.mass.update',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'target': 'crush',
-                'res_id': p_mass_upd_id,
-                'context': context,
-                }
+        wiz_obj = self.browse(cr, uid, ids[0], fields_to_fetch=['product_mass_upd_id'])
+        p_mass_upd_id = wiz_obj.product_mass_upd_id.id
+        if wiz_obj.product_mass_upd_id.type_of_ed_bn:
+            xmlid = 'product.products_bn_ed_mass_update_action'
+        else:
+            xmlid = 'product.previous_mass_update_action'
+
+        act = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmlid, ['form', 'tree'], context=context)
+        act['res_id'] = p_mass_upd_id
+        return act
 
     def close_import(self, cr, uid, ids, context=None):
         '''
