@@ -660,7 +660,8 @@ class stock_picking(osv.osv):
         product_availability.setdefault(line.product_id.id, line.product_id.qty_available)
 
         if qty > 0.00:
-            # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
+            # DONE JFB: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
+            # JFB: avg price is computed today's rate
             new_price = line.cost
             # Recompute unit price if the currency used is not the functional currency
             if line.currency.id != move_currency_id:
@@ -676,7 +677,7 @@ class stock_picking(osv.osv):
             if line.product_id.qty_available <= 0.00:
                 new_std_price = new_price
             else:
-                # Get the current price
+                # Get the current price in today's rate
                 current_price = product_obj.price_get(cr, uid, [line.product_id.id], 'standard_price', context=context)[line.product_id.id]
                 # Check no division by zero
                 if product_availability[line.product_id.id]:
@@ -1050,7 +1051,7 @@ class stock_picking(osv.osv):
                                 continue
 
                         if values.get('price_unit', False) and out_move.price_currency_id.id != move.price_currency_id.id:
-                            # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
+                            # DONE JFB: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                             price_unit = cur_obj.compute(
                                 cr,
                                 uid,

@@ -1074,6 +1074,7 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
 
+        # TODO JFB: multiple inherit
         if type in ('in_invoice', 'in_refund'):
             # Take the user company and pricetype
             context['currency_id'] = move_line.company_id.currency_id.id
@@ -1593,153 +1594,6 @@ class stock_picking(osv.osv):
                 move_obj.unlink(cr, uid, pick['move_lines'], ctx)
 
         return super(stock_picking, self).unlink(cr, uid, ids, context=context)
-
-    # FIXME: needs refactoring, this code is partially duplicated in stock_move.do_partial()!
-    def do_partial(self, cr, uid, ids, partial_datas, context=None):
-        """ Makes partial picking and moves done.
-        @param partial_datas : Dictionary containing details of partial picking
-                          like partner_id, address_id, delivery_date,
-                          delivery moves with product_id, product_qty, uom
-        @return: Dictionary of values
-        """
-        if context is None:
-            context = {}
-        else:
-            context = dict(context)
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = {}
-        move_obj = self.pool.get('stock.move')
-        product_obj = self.pool.get('product.product')
-        currency_obj = self.pool.get('res.currency')
-        uom_obj = self.pool.get('product.uom')
-        sequence_obj = self.pool.get('ir.sequence')
-        wf_service = netsvc.LocalService("workflow")
-        for pick in self.browse(cr, uid, ids, context=context):
-            new_picking = None
-            complete, too_many, too_few = [], [], []
-            move_product_qty = {}
-            prodlot_ids = {}
-            product_avail = {}
-            for move in pick.move_lines:
-                if move.state in ('done', 'cancel'):
-                    continue
-                partial_data = partial_datas.get('move%s'%(move.id), {})
-                #Commented in order to process the less number of stock moves from partial picking wizard
-                #assert partial_data, _('Missing partial picking data for move #%s') % (move.id)
-                product_qty = partial_data.get('product_qty') or 0.0
-                move_product_qty[move.id] = product_qty
-                product_uom = partial_data.get('product_uom') or False
-                product_price = partial_data.get('product_price') or 0.0
-                product_currency = partial_data.get('product_currency') or False
-                prodlot_id = partial_data.get('prodlot_id') or False
-                prodlot_ids[move.id] = prodlot_id
-                if move.product_qty == product_qty:
-                    complete.append(move)
-                elif move.product_qty > product_qty:
-                    too_few.append(move)
-                else:
-                    too_many.append(move)
-
-                # Average price computation
-                if (pick.type == 'in') and (move.product_id.cost_method == 'average'):
-                    product = product_obj.read(cr, uid, move.product_id.id, ['uom_id', 'qty_available'])
-                    move_currency_id = move.company_id.currency_id.id
-                    context['currency_id'] = move_currency_id
-                    qty = uom_obj._compute_qty(cr, uid, product_uom, product_qty, product['uom_id'][0])
-
-                    if product['id'] in product_avail:
-                        product_avail[product['id']] += qty
-                    else:
-                        product_avail[product['id']] = product['qty_available']
-
-                    if qty > 0:
-                        new_price = currency_obj.compute(cr, uid, product_currency,
-                                                         move_currency_id, product_price)
-                        new_price = uom_obj._compute_price(cr, uid, product_uom, new_price,
-                                                           product['uom_id'][0])
-                        if product['qty_available'] <= 0:
-                            new_std_price = new_price
-                        else:
-                            # Get the standard price
-                            amount_unit = product_obj.price_get(cr, uid, [product['id']], 'standard_price', context)[product['id']]
-                            new_std_price = ((amount_unit * product_avail[product['id']])\
-                                             + (new_price * qty))/(product_avail[product['id']] + qty)
-                        # Write the field according to price type field
-                        product_obj.write(cr, uid, [product['id']], {'standard_price': new_std_price})
-
-                        # Record the values that were chosen in the wizard, so they can be
-                        # used for inventory valuation if real-time valuation is enabled.
-                        move_obj.write(cr, uid, [move.id],
-                                       {'price_unit': product_price,
-                                        'price_currency_id': product_currency})
-
-
-            for move in too_few:
-                product_qty = move_product_qty[move.id]
-
-                if not new_picking:
-                    new_picking = self.copy(cr, uid, pick.id,
-                                            {
-                                                'name': sequence_obj.get(cr, uid, 'stock.picking.%s'%(pick.type)),
-                                                'move_lines' : [],
-                                                'state':'draft',
-                                            })
-                if product_qty != 0:
-                    defaults = {
-                        'product_qty' : product_qty,
-                        'product_uos_qty': product_qty, #TODO: put correct uos_qty
-                        'picking_id' : new_picking,
-                        'state': 'assigned',
-                        'move_dest_id': False,
-                        'price_unit': move.price_unit,
-                    }
-                    prodlot_id = prodlot_ids[move.id]
-                    if prodlot_id:
-                        defaults.update(prodlot_id=prodlot_id)
-                    move_obj.copy(cr, uid, move.id, defaults)
-
-                move_obj.write(cr, uid, [move.id],
-                               {
-                    'product_qty' : move.product_qty - product_qty,
-                    'product_uos_qty':move.product_qty - product_qty, #TODO: put correct uos_qty
-                })
-
-            if new_picking:
-                move_obj.write(cr, uid, [c.id for c in complete], {'picking_id': new_picking})
-            for move in complete:
-                if prodlot_ids.get(move.id):
-                    move_obj.write(cr, uid, [move.id], {'prodlot_id': prodlot_ids[move.id]})
-            for move in too_many:
-                product_qty = move_product_qty[move.id]
-                defaults = {
-                    'product_qty' : product_qty,
-                    'product_uos_qty': product_qty, #TODO: put correct uos_qty
-                }
-                prodlot_id = prodlot_ids.get(move.id)
-                if prodlot_ids.get(move.id):
-                    defaults.update(prodlot_id=prodlot_id)
-                if new_picking:
-                    defaults.update(picking_id=new_picking)
-                move_obj.write(cr, uid, [move.id], defaults)
-
-            # At first we confirm the new picking (if necessary)
-            if new_picking:
-                wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_confirm', cr)
-                # Then we finish the good picking
-                self.write(cr, uid, [pick.id], {'backorder_id': new_picking})
-                self.action_move(cr, uid, [new_picking])
-                wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_done', cr)
-                wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
-                delivered_pack_id = new_picking
-            else:
-                self.action_move(cr, uid, [pick.id])
-                wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
-                delivered_pack_id = pick.id
-
-            res[pick.id] = {'delivered_picking': delivered_pack_id or False}
-
-        return res
 
     def _hook_picking_get_view(self, cr, uid, ids, context=None, *args, **kwargs):
 
@@ -3012,42 +2866,6 @@ class stock_move(osv.osv):
         return reference_amount, reference_currency_id
 
 
-    def _create_product_valuation_moves(self, cr, uid, move, context=None):
-        """
-        Generate the appropriate accounting moves if the product being moves is subject
-        to real_time valuation tracking, and the source or destination location is
-        a transit location or is outside of the company.
-        """
-        if move.product_id.valuation == 'real_time': # FIXME: product valuation should perhaps be a property?
-            if context is None:
-                context = {}
-            src_company_ctx = dict(context,force_company=move.location_id.company_id.id)
-            dest_company_ctx = dict(context,force_company=move.location_dest_id.company_id.id)
-            account_moves = []
-            # Outgoing moves (or cross-company output part)
-            if move.location_id.company_id \
-                and (move.location_id.usage == 'internal' and move.location_dest_id.usage != 'internal'\
-                     or move.location_id.company_id != move.location_dest_id.company_id):
-                journal_id, acc_src, acc_dest, acc_variation = self._get_accounting_data_for_valuation(cr, uid, move, src_company_ctx)
-                reference_amount, reference_currency_id = self._get_reference_accounting_values_for_valuation(cr, uid, move, src_company_ctx)
-                account_moves += [(journal_id, self._create_account_move_line(cr, uid, move, acc_variation, acc_dest, reference_amount, reference_currency_id, context))]
-
-            # Incoming moves (or cross-company input part)
-            if move.location_dest_id.company_id \
-                and (move.location_id.usage != 'internal' and move.location_dest_id.usage == 'internal'\
-                     or move.location_id.company_id != move.location_dest_id.company_id):
-                journal_id, acc_src, acc_dest, acc_variation = self._get_accounting_data_for_valuation(cr, uid, move, dest_company_ctx)
-                reference_amount, reference_currency_id = self._get_reference_accounting_values_for_valuation(cr, uid, move, src_company_ctx)
-                account_moves += [(journal_id, self._create_account_move_line(cr, uid, move, acc_src, acc_variation, reference_amount, reference_currency_id, context))]
-
-            move_obj = self.pool.get('account.move')
-            for j_id, move_lines in account_moves:
-                move_obj.create(cr, uid,
-                                {'name': move.name,
-                                 'journal_id': j_id,
-                                 'line_id': move_lines,
-                                 'ref': move.picking_id and move.picking_id.name})
-
     def _hook_action_done_update_out_move_check(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         choose if the corresponding out stock move must be updated
@@ -3102,7 +2920,6 @@ class stock_move(osv.osv):
                     if move.move_dest_id.auto_validate:
                         self.action_done(cr, uid, [move.move_dest_id.id], context=context)
 
-            self._create_product_valuation_moves(cr, uid, move, context=context)
             prodlot_id = partial_datas and partial_datas.get('move%s_prodlot_id' % (move.id), False)
             if prodlot_id:
                 vals.update({'prodlot_id': prodlot_id})

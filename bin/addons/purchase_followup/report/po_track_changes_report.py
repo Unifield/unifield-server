@@ -68,10 +68,9 @@ class po_track_changes_report_parser(report_sxw.rml_parse):
             if pol.original_price:
                 price = pol.original_price
 
-        # TODO: TEST JN
+        # DONE JFB: TEST JN
         context = {'currency_date': pol.date_planned}
         to_currency_id = self.user_company['currency_id'].id
-
         if from_currency_id == to_currency_id:
             return round(pol.price_unit, 2)
 

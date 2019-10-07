@@ -790,7 +790,7 @@ class product_product(osv.osv):
             if 'currency_id' in context:
                 # Take the price_type currency from the product field
                 # This is right cause a field cannot be in more than one currency
-                # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
+                # DONE JFB: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                 res[product.id] = self.pool.get('res.currency').compute(cr, uid, price_type_currency_id,
                                                                         context['currency_id'], res[product.id],context=context)
 
@@ -1000,48 +1000,6 @@ class product_supplierinfo(osv.osv):
     _constraints = [
         (_check_uom, 'Error: The default UOM and the Supplier Product UOM must be in the same category.', ['product_uom']),
     ]
-    def price_get(self, cr, uid, supplier_ids, product_id, product_qty=1, context=None):
-        """
-        Calculate price from supplier pricelist.
-        @param supplier_ids: Ids of res.partner object.
-        @param product_id: Id of product.
-        @param product_qty: specify quantity to purchase.
-        """
-        if type(supplier_ids) in (int,long,):
-            supplier_ids = [supplier_ids]
-        res = {}
-        product_pool = self.pool.get('product.product')
-        partner_pool = self.pool.get('res.partner')
-        pricelist_pool = self.pool.get('product.pricelist')
-        currency_pool = self.pool.get('res.currency')
-        currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        for supplier in partner_pool.browse(cr, uid, supplier_ids,
-                                            context=context,
-                                            fields_to_fetch=['property_product_pricelist_purchase', 'id']):
-            # Compute price from standard price of product
-            price = product_pool.price_get(cr, uid, [product_id], 'standard_price', context=context)[product_id]
-
-            # Compute price from Purchase pricelist of supplier
-            pricelist_id = supplier.property_product_pricelist_purchase.id
-            if pricelist_id:
-                price = pricelist_pool.price_get(cr, uid, [pricelist_id], product_id, product_qty, context=context).setdefault(pricelist_id, 0)
-                price = currency_pool.compute(cr, uid, pricelist_pool.browse(cr, uid, pricelist_id).currency_id.id, currency_id, price)
-
-            # Compute price from supplier pricelist which are in Supplier Information
-            supplier_info_ids = self.search(cr, uid,
-                                            [('name','=',supplier.id),('product_id','=',product_id)],
-                                            order='NO_ORDER')
-            if supplier_info_ids:
-                cr.execute('SELECT * ' \
-                           'FROM pricelist_partnerinfo ' \
-                           'WHERE suppinfo_id IN %s' \
-                           'AND min_quantity <= %s ' \
-                           'ORDER BY min_quantity DESC LIMIT 1', (tuple(supplier_info_ids),product_qty,))
-                res2 = cr.dictfetchone()
-                if res2:
-                    price = res2['price']
-            res[supplier.id] = price
-        return res
     _order = 'sequence'
 product_supplierinfo()
 
