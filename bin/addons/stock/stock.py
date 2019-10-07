@@ -2866,42 +2866,6 @@ class stock_move(osv.osv):
         return reference_amount, reference_currency_id
 
 
-    def _create_product_valuation_moves(self, cr, uid, move, context=None):
-        """
-        Generate the appropriate accounting moves if the product being moves is subject
-        to real_time valuation tracking, and the source or destination location is
-        a transit location or is outside of the company.
-        """
-        if move.product_id.valuation == 'real_time': # FIXME: product valuation should perhaps be a property?
-            if context is None:
-                context = {}
-            src_company_ctx = dict(context,force_company=move.location_id.company_id.id)
-            dest_company_ctx = dict(context,force_company=move.location_dest_id.company_id.id)
-            account_moves = []
-            # Outgoing moves (or cross-company output part)
-            if move.location_id.company_id \
-                and (move.location_id.usage == 'internal' and move.location_dest_id.usage != 'internal'\
-                     or move.location_id.company_id != move.location_dest_id.company_id):
-                journal_id, acc_src, acc_dest, acc_variation = self._get_accounting_data_for_valuation(cr, uid, move, src_company_ctx)
-                reference_amount, reference_currency_id = self._get_reference_accounting_values_for_valuation(cr, uid, move, src_company_ctx)
-                account_moves += [(journal_id, self._create_account_move_line(cr, uid, move, acc_variation, acc_dest, reference_amount, reference_currency_id, context))]
-
-            # Incoming moves (or cross-company input part)
-            if move.location_dest_id.company_id \
-                and (move.location_id.usage != 'internal' and move.location_dest_id.usage == 'internal'\
-                     or move.location_id.company_id != move.location_dest_id.company_id):
-                journal_id, acc_src, acc_dest, acc_variation = self._get_accounting_data_for_valuation(cr, uid, move, dest_company_ctx)
-                reference_amount, reference_currency_id = self._get_reference_accounting_values_for_valuation(cr, uid, move, src_company_ctx)
-                account_moves += [(journal_id, self._create_account_move_line(cr, uid, move, acc_src, acc_variation, reference_amount, reference_currency_id, context))]
-
-            move_obj = self.pool.get('account.move')
-            for j_id, move_lines in account_moves:
-                move_obj.create(cr, uid,
-                                {'name': move.name,
-                                 'journal_id': j_id,
-                                 'line_id': move_lines,
-                                 'ref': move.picking_id and move.picking_id.name})
-
     def _hook_action_done_update_out_move_check(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         choose if the corresponding out stock move must be updated
@@ -2956,7 +2920,6 @@ class stock_move(osv.osv):
                     if move.move_dest_id.auto_validate:
                         self.action_done(cr, uid, [move.move_dest_id.id], context=context)
 
-            self._create_product_valuation_moves(cr, uid, move, context=context)
             prodlot_id = partial_datas and partial_datas.get('move%s_prodlot_id' % (move.id), False)
             if prodlot_id:
                 vals.update({'prodlot_id': prodlot_id})
