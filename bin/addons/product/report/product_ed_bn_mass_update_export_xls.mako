@@ -149,7 +149,7 @@
 
         <Row>
         % for h in headers_list:
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${h|x}</Data></Cell>
+            <Cell ss:StyleID="line_header"><Data ss:Type="String">${h|x}</Data><NamedCell ss:Name="_FilterDatabase"/></Cell>
         % endfor
         </Row>
 
@@ -180,7 +180,8 @@
         <ProtectObjects>False</ProtectObjects>
         <ProtectScenarios>False</ProtectScenarios>
     </WorksheetOptions>
-
+<AutoFilter x:Range="R7C1:R7C4" xmlns="urn:schemas-microsoft-com:office:excel">
+</AutoFilter>
 </ss:Worksheet>
 % endfor
 </Workbook>
