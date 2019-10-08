@@ -46,7 +46,7 @@ class res_currency_table(osv.osv):
         # just get one table
         if not isinstance(ids, (int, long)):
             ids = ids[0]
-        # TODO: TEST JN => ensure that there is no "date" set in context at this step
+        # DONE: TEST JN => there is no "date" set in context at this step
         table = self.browse(cr, uid, ids, context=context)
         for currency in table.currency_ids:
             if currency.rate == 0.0:
