@@ -162,6 +162,26 @@ class account_mcdb(osv.osv):
 
     _order = 'user, description, id'
 
+    def search(self, cr, uid, dom, *a, **b):
+        """
+        Ignores the filter on "Active Users" once a specific user has been selected
+        """
+        new_dom = []
+        active_user_dom = []
+        user_filter = False
+        for x in dom:
+            if x[0] == 'user.active':
+                active_user_dom = x
+            elif x[0] == 'user':
+                user_filter = True
+                new_dom.append(x)
+            else:
+                new_dom.append(x)
+        if not user_filter and active_user_dom:
+            new_dom.append(active_user_dom)
+
+        return super(account_mcdb, self).search(cr, uid, new_dom, *a, **b)
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if  context is None:
             context = {}
@@ -1230,7 +1250,7 @@ class account_mcdb(osv.osv):
                     operator = " %s" % _("to:")
                 if '.' not in dom[0]:
                     field = obj_data[dom[0]]
-                    title = field['string']
+                    title = _(field['string'])
                     value, operator = self._get_data_from_field(cr, uid, field, dom[2], operator, context)
                 # composed filters
                 elif dom[0] in composed_filters:
@@ -1491,4 +1511,27 @@ class account_mcdb(osv.osv):
         return {'type': 'ir.actions.act_window_close', 'context': context}
 
 account_mcdb()
+
+
+class res_users(osv.osv):
+    _inherit = 'res.users'
+    _name = 'res.users'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
+        """
+        For Search Views: in case "user_with_active_filter" is set in context, displays a Search View with a filter to
+        select/de-select active users
+        """
+        if context is None:
+            context = {}
+        model_data_obj = self.pool.get('ir.model.data')
+        if view_type == 'search' and context.get('user_with_active_filter'):
+            view_id = model_data_obj.get_object_reference(cr, uid, 'account_mcdb', 'user_search_with_active_filter')
+            view_id = view_id and view_id[1] or False
+        res = super(res_users, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context,
+                                                     toolbar=toolbar, submenu=submenu)
+        return res
+
+
+res_users()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

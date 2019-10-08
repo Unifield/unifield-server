@@ -163,6 +163,8 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             order_id = order_id.id
 
         sort_state = {'cancel': 1}
+        line_state_display_dict = dict(self.pool.get('sale.order.line').fields_get(self.cr, self.uid, ['state_to_display'], context=self.localcontext).get('state_to_display', {}).get('selection', []))
+
         for line in self._get_order_line(order_id):
             lines = []
             first_line = True
@@ -202,7 +204,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                 for move in sorted(line.move_ids, cmp=lambda x, y: cmp(sort_state.get(x.state, 0), sort_state.get(y.state, 0)) or cmp(x.id, y.id)):
                     data = {
                         'state': line.state,
-                        'state_display': line.state_to_display,
+                        'state_display': line_state_display_dict.get(line.state_to_display),
                     }
                     m_type = move.state in ('cancel', 'cancel_r') or move.product_qty != 0.00 and move.picking_id.type == 'out'
                     ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
@@ -221,7 +223,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 line.product_uom.id,
                             )
                         delivery_order = move.picking_id.name
-                        if move.picking_id.state != 'done':
+                        if move.picking_id.state not in ('done', 'delivered'):
                             delivery_order = '-'
                         data.update({
                             'po_name': po_name,
@@ -280,11 +282,11 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             elif from_stock:
                                 packing = move.picking_id.name or '-'
                                 shipment = '-'
-                                is_shipment_done = move.picking_id.state == 'done' and move.state != 'cancel'
+                                is_shipment_done = move.picking_id.state in ('done', 'delivered') and move.state != 'cancel'
                                 state = move.picking_id.state
                             else:
                                 shipment = move.picking_id.name or '-'
-                                is_shipment_done = move.picking_id.state == 'done'
+                                is_shipment_done = move.picking_id.state in ('done', 'delivered')
                                 packing = '-'
                             key = (packing, shipment, move.product_uom.name, line.line_number, state)
                             data.update({
@@ -303,7 +305,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 is_shipment_done = move.picking_id.shipment_id.state == 'done'
                             else:
                                 shipment = move.picking_id.name or '-'
-                                is_shipment_done = move.picking_id.state == 'done'
+                                is_shipment_done = move.picking_id.state in ('done', 'delivered')
                                 packing = '-'
                             key = (packing, False, move.product_uom.name, line.line_number)
                             data.update({
@@ -335,7 +337,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                 for line_move in line_moves:
                     data = {
                         'state': line.state,
-                        'state_display': line.state_to_display,
+                        'state_display': line_state_display_dict.get(line.state_to_display),
                     }
                     m_type = line_move.product_qty != 0.00
 
@@ -397,7 +399,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                 if first_line:
                     data = {
                         'state': line.state,
-                        'state_display': line.state_to_display,
+                        'state_display': line_state_display_dict.get(line.state_to_display),
                         'line_number': line.line_number,
                         'line_comment': line.comment or '-',
                         'po_name': po_name,

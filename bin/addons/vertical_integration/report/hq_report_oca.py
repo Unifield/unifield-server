@@ -81,7 +81,7 @@ class hq_report_oca(report_sxw.report_sxw):
         rate_obj = pool.get('res.currency.rate')
         # method to create subtotal + counterpart line
         period_code = period.code or ""
-        if len(line_key) > 1 and line_debit != 0.0:
+        if len(line_key) > 1 and abs(line_debit) > 10**-3:
             currency = curr_obj.browse(cr, uid, line_key[1], context=context)
             # rate at the first day of the selected period
             rate = 0
@@ -259,8 +259,9 @@ class hq_report_oca(report_sxw.report_sxw):
             first_result_lines.append(formatted_data)
 
             # For the second report:
-            # exclude In-kind Donations and OD-Extra Accounting entries from the "formatted data" file
-            if move_line.journal_id.type not in ['inkind', 'extra']:
+            # exclude In-kind Donations, OD-Extra Accounting entries, and lines with zero amount from the "formatted data" file
+            zero_move_line = not move_line.debit_currency and not move_line.credit_currency and not move_line.debit and not move_line.credit
+            if move_line.journal_id.type not in ['inkind', 'extra'] and not zero_move_line:
                 if not account.shrink_entries_for_hq:
                     # data for the "Employee Id" column
                     employee_id = ''
@@ -378,8 +379,9 @@ class hq_report_oca(report_sxw.report_sxw):
                               analytic_line.functional_currency_id and analytic_line.functional_currency_id.name or ""]
             first_result_lines.append(formatted_data)
 
-            # exclude In-kind Donations and OD-Extra Accounting entries from the "formatted data" file
-            if analytic_line.journal_id.type not in ['inkind', 'extra']:
+            # exclude In-kind Donations, OD-Extra Accounting entries, and lines with zero amount from the "formatted data" file
+            zero_analytic_line = not analytic_line.amount and not analytic_line.amount_currency
+            if analytic_line.journal_id.type not in ['inkind', 'extra'] and not zero_analytic_line:
                 # format CC as: P + the 4 digits from the right
                 cost_center = formatted_data[11] and "P%s" % formatted_data[11][-4:] or ""
                 # data for the "Employee Id" column

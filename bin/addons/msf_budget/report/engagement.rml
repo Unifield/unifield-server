@@ -301,7 +301,7 @@
                         <tr>
                             <para style="P20">[[ repeatIn(get_report_lines(o),'line', 'blockTable') ]]</para>
                             <td>
-                                <para style="P3">[[ line[0] ]]</para>
+                                <para style="P3">[[ line[0] == 'TOTALS' and translate('TOTALS') or line[0] ]]</para>
                             </td>
                             <td>
                                 <para style="P3a">[[ line[1] ]]</para>
@@ -311,7 +311,7 @@
                             </td>
                             <td>
                                 <para style="P3">
-                                    <font color="red">[[ (line[2] == 'Budget missing' and line[2]) or '' ]]</font>[[ (line[2] != 'Budget missing' and formatLang(line[2], digits=0, grouping=True )) or '' ]]</para>
+                                    <font color="red">[[ (line[2] == 'Budget missing' and translate('Budget missing')) or '' ]]</font>[[ (line[2] != 'Budget missing' and formatLang(line[2], digits=0, grouping=True )) or '' ]]</para>
                             </td>
                             <td>
                                 <para style="P3">[[ formatLang(line[3], digits=0, grouping=True ) or '' ]]</para>

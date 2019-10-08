@@ -6,6 +6,7 @@
             <field name="name">res.currency.tree</field>
             <field name="model">res.currency</field>
             <field name="type">tree</field>
+            <field name="priority">15</field>
             <field name="arch" type="xml">
                 <tree string="Currencies">
                     <field name="name"/>

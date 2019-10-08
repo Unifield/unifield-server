@@ -97,7 +97,7 @@ class wizard_down_payment(osv.osv_memory):
             raise osv.except_osv(_('Error'), _("Amounts IN can't be higher than Amounts OUT for the selected PO."))
 
         # Cut away open and paid invoice linked to this PO
-        invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('purchase_ids', 'in', [po_id]), ('state', 'in', ['paid', 'open'])])
+        invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('purchase_ids', 'in', [po_id]), ('state', 'in', ['paid', 'open', 'inv_close'])])
         included_dp_amls = []
         for inv in self.pool.get('account.invoice').read(cr, uid, invoice_ids, ['amount_total', 'down_payment_ids']):
             lines_amount -= inv.get('amount_total', 0.0)

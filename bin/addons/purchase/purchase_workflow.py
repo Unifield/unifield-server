@@ -90,7 +90,7 @@ class purchase_order_line(osv.osv):
 
         return True
 
-    def update_fo_lines(self, cr, uid, ids, context=None, qty_updated=False):
+    def update_fo_lines(self, cr, uid, ids, context=None, qty_updated=False, for_claim=False):
         '''
         update corresponding FO lines in the same instance
         '''
@@ -99,6 +99,7 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        context['from_back_sync'] = True
         for pol in self.browse(cr, uid, ids, context=context):
             to_trigger = False
             # linked FO line already exists ?
@@ -237,6 +238,18 @@ class purchase_order_line(osv.osv):
                     ], context=context)
                     if linked_out_moves:
                         self.pool.get('stock.move').write(cr, uid, [linked_out_moves[0]], {'product_qty': sol_values['product_uom_qty'], 'product_uos_qty': sol_values['product_uom_qty']}, context=context)
+                    elif for_claim:
+                        # if claim created but IR already confirmed, if qty can't be decreased on OUT because OUT was split, cancel the qty related to the claim
+                        linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
+                            ('sale_line_id', '=', pol.linked_sol_id.id),
+                            ('type', '=', 'out'),
+                            ('state', 'in', ['assigned', 'confirmed']),
+                            ('product_qty', '=',  for_claim)
+                        ], context=context)
+                        if linked_out_moves:
+                            self.pool.get('stock.move').write(cr, uid, [linked_out_moves[0]], {'sale_line_id': False}, context=context)
+                            self.pool.get('stock.move').action_cancel(cr, uid, [linked_out_moves[0]], context=context)
+
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
                 if qty_updated:
                     # if FO line qty reduced by a Cancel(/R) on IN, trigger update to PO proj line
@@ -244,6 +257,7 @@ class purchase_order_line(osv.osv):
                     rule_obj._manual_create_sync_message(cr, uid, 'sale.order.line', pol.linked_sol_id.id, {},
                                                          'purchase.order.line.sol_update_original_pol', rule_obj._logger, check_identifier=False, context=context)
 
+        context['from_back_sync'] = False
 
         return True
 
@@ -264,6 +278,7 @@ class purchase_order_line(osv.osv):
         if isinstance(fo_id, list):
             fo_id = fo_id[0]
 
+        context['from_back_sync'] = True
         sale_order = self.pool.get('sale.order').browse(cr, uid, fo_id, context=context)
         new_sol_id = False
         for pol in self.browse(cr, uid, ids, context=context):
@@ -340,6 +355,7 @@ class purchase_order_line(osv.osv):
             # update current PO line:
             self.write(cr, uid, pol.id, {'link_so_id': fo_id, 'linked_sol_id': new_sol_id}, context=context)
 
+        context['from_back_sync'] = False
         return new_sol_id
 
 
@@ -502,15 +518,15 @@ class purchase_order_line(osv.osv):
 
     def check_po_tax(self, cr, uid, ids, context=None):
         """
-        Prevents from validating a PO with taxes when using an Intermission partner
+        Prevents from validating a PO with taxes when using an Intermission or Intersection partner
         """
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         for po_line in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'taxes_id'], context=context):
-            if po_line.taxes_id and po_line.order_id.partner_type == 'intermission':
-                raise osv.except_osv(_('Error'), _("You can't use taxes with an intermission partner."))
+            if po_line.taxes_id and po_line.order_id.partner_type in ('intermission', 'section'):
+                raise osv.except_osv(_('Error'), _("Taxes are forbidden with Intermission and Intersection partners."))
 
     def check_origin_for_validation(self, cr, uid, ids, context=None):
         if not context:

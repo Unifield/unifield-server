@@ -128,11 +128,6 @@
             <field name="method">us_1273_patch</field>
         </record>
 
-        <record id="us_838_patch" model="patch.scripts">
-            <field name="method">us_838_migrate_dup_batch</field>
-            <field name="model">stock.production.lot</field>
-        </record>
-
         <record id="us_1024_send_bar_patch" model="patch.scripts">
             <field name="method">us_1024_send_bar_patch</field>
         </record>
@@ -147,11 +142,6 @@
 
         <record id="us_1452_patch_bis" model="patch.scripts">
             <field name="method">us_1452_patch_bis</field>
-        </record>
-
-        <record id="us_1469_patch" model="patch.scripts">
-            <field name="method">us_1469_restore_deleted_batch</field>
-            <field name="model">stock.production.lot</field>
         </record>
 
         <record id="us_1430_patch" model="patch.scripts">
@@ -438,6 +428,42 @@
             <field name="method">us_6108_onedrive_bg</field>
         </record>
 
+        <record id="us_6075_set_paid_invoices_as_closed" model="patch.scripts">
+            <field name="method">us_6075_set_paid_invoices_as_closed</field>
+        </record>
+
+        <record id="us_6076_set_inv_as_from_supply" model="patch.scripts">
+            <field name="method">us_6076_set_inv_as_from_supply</field>
+        </record>
+
+        <record id="us_5859_set_flag_on_sub_pick" model="patch.scripts">
+            <field name="method">us_5859_set_flag_on_sub_pick</field>
+        </record>
+
+        <record id="us_5859_remove_deprecated_objects" model="patch.scripts">
+            <field name="method">us_5859_remove_deprecated_objects</field>
+        </record>
+        <record id="us_6342_cancel_ir" model="patch.scripts">
+            <field name="method">us_6342_cancel_ir</field>
+        </record>
+
+        <!-- UF14.1 -->
+        <record id="us_6433_remove_sale_override_sourcing" model="patch.scripts">
+            <field name="method">us_6433_remove_sale_override_sourcing</field>
+        </record>
+
+        <record id="us_6498_set_qty_to_process" model="patch.scripts">
+            <field name="method">us_6498_set_qty_to_process</field>
+        </record>
+
+        <!-- UF15.0 -->
+        <record id="us_6354_trigger_donation_account_sync" model="patch.scripts">
+            <field name="method">us_6354_trigger_donation_account_sync</field>
+        </record>
+
+        <record id="us_6457_update_uf_create_date_product" model="patch.scripts">
+            <field name="method">us_6457_update_uf_create_date_product</field>
+        </record>
 
     </data>
 </openerp>

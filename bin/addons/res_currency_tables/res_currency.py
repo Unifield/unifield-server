@@ -244,7 +244,7 @@ class res_currency(osv.osv):
                                                                           'in at least one active partner form.') % keyword)
 
         # Check on account.invoice
-        if acc_inv_obj.search_exist(cr, uid, [('currency_id', 'in', ids), ('state', 'not in', ['paid', 'cancel'])], context=context):
+        if acc_inv_obj.search_exist(cr, uid, [('currency_id', 'in', ids), ('state', 'not in', ['paid', 'inv_close', 'cancel'])], context=context):
             raise osv.except_osv(_('Currency currently used!'), _('The currency you want to %s is used in at least '
                                                                   'one document in Draft or Open state.') % keyword)
 

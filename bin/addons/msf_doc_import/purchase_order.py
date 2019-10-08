@@ -30,6 +30,8 @@ import base64
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_doc_import.wizard import PO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_po_line_import
 from msf_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
+from msf_doc_import.wizard import RFQ_COLUMNS_HEADER_FOR_IMPORT
+from msf_doc_import.wizard import RFQ_LINE_COLUMNS_FOR_IMPORT
 from msf_doc_import import GENERIC_MESSAGE
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import xml.etree.ElementTree as ET
@@ -291,6 +293,8 @@ class purchase_order(osv.osv):
             context = {}
 
         import_success = False
+        # Reset part of the context updated in the PO import
+        context.update({'line_number_to_confirm': [], 'ext_ref_to_confirm': [], 'job_comment': []})
         try:
             # get filetype
             filetype = self.pool.get('stock.picking').get_import_filetype(cr, uid, file_path, context=context)
@@ -331,6 +335,8 @@ class purchase_order(osv.osv):
             context = {}
 
         context.update({'auto_import_confirm_pol': True})
+        # Reset part of the context updated in the PO import
+        context.update({'line_number_to_confirm': [], 'ext_ref_to_confirm': [], 'job_comment': []})
         res = self.auto_import_purchase_order(cr, uid, file_path, context=context)
         context['rejected_confirmation'] = 0
         if context.get('po_id'):
@@ -427,19 +433,18 @@ class purchase_order(osv.osv):
                 # create tmp file
                 tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
                 tmp_file.write(base64.decodestring(file_res['result']))
+                tmpname = tmp_file.name
                 tmp_file.close()
-                new_tmp_file_name = os.path.join(os.path.dirname(tmp_file.name), filename)
-                os.rename(tmp_file.name, new_tmp_file_name)
 
                 # transfer tmp file on SFTP server
                 try:
                     with sftp.cd(export_wiz.dest_path):
-                        sftp.put(new_tmp_file_name, preserve_mtime=True)
+                        sftp.put(tmpname, filename, preserve_mtime=True)
                 except:
                     raise osv.except_osv(_('Error'), _('Unable to write on SFTP server at location %s') % export_wiz.dest_path)
 
                 # now we can remove tmp file
-                os.remove(new_tmp_file_name)
+                os.remove(tmpname)
             else:
                 # write export in local file
                 with open(path_to_file, 'w') as fich:
@@ -617,8 +622,16 @@ class purchase_order(osv.osv):
         po = self.browse(cr, uid, [ids[0]], context=context)[0]
         columns = columns_for_po_line_import
         columns_header = [(_(f[0]), f[1]) for f in columns_header_for_po_line_import]
+
+        if po.rfq_ok:
+            columns = RFQ_LINE_COLUMNS_FOR_IMPORT
+            columns_header = [(_(f[0]), f[1]) for f in RFQ_COLUMNS_HEADER_FOR_IMPORT]
+            if po.state != 'rfq_sent':
+                columns = columns[1:]
+                columns_header = columns_header[1:]
+
         # if PO is not a RfQ, then we doesn't take in account the first column (Line Number):
-        if not po.rfq_ok or po.state != 'rfq_sent':
+        if not po.rfq_ok:
             columns = columns_for_po_line_import[1:]
             columns_header = columns_header[1:]
 

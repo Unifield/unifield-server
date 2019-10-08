@@ -331,9 +331,10 @@ class product_template(osv.osv):
                                       store = {
             'product.template': (lambda self, cr, uid, ids, c=None: ids, ['standard_price'], 10),
         }),
-        'volume': fields.float('Volume', help="The volume in m3."),
-        'weight': fields.float('Gross weight', help="The gross weight in Kg."),
-        'weight_net': fields.float('Net weight', help="The net weight in Kg."),
+        'volume': fields.float('Volume', help="The volume in dm3.", digits=(16, 5)),
+        'volume_updated': fields.boolean(string='Volume updated (deprecated)', readonly=True),
+        'weight': fields.float('Gross weight', help="The gross weight in Kg.", digits=(16,5)),
+        'weight_net': fields.float('Net weight', help="The net weight in Kg.", digits=(16,5)),
         'cost_method': fields.selection([('standard','Standard Price'), ('average','Average Price')], 'Costing Method', required=True,
                                         help="Standard Price: the cost price is fixed and recomputed periodically (usually at the end of the year), Average Price: the cost price is recomputed at each reception of products."),
         'warranty': fields.float('Warranty (months)'),
@@ -400,6 +401,7 @@ class product_template(osv.osv):
         'mes_type' : lambda *a: 'fixed',
         'categ_id' : _default_category,
         'type' : lambda *a: 'consu',
+        'volume_updated': False,
     }
 
     def _check_uom(self, cursor, user, ids, context=None):
@@ -436,12 +438,16 @@ class product_product(osv.osv):
         new_dom = []
         location_id = False
         filter_qty = False
+        filter_in_any_product_list = False
         for x in domain:
             if x[0] == 'location_id':
                 location_id = x[2]
 
             elif x[0] == 'postive_qty':
                 filter_qty = True
+
+            elif x[0] == 'in_any_product_list':
+                filter_in_any_product_list = True
             else:
                 new_dom.append(x)
 
@@ -465,6 +471,9 @@ class product_product(osv.osv):
             ret.where_clause.append(' "stock_mission_report_line_location"."remote_instance_id" is NULL AND "stock_mission_report_line_location"."location_id" in %s ')
             ret.where_clause_params.append(tuple(location_ids))
             ret.having = ' GROUP BY "product_product"."id" HAVING sum("stock_mission_report_line_location"."quantity") >0 '
+        if filter_in_any_product_list:
+            ret.tables.append('"product_list_line"')
+            ret.joins['"product_product"'] = [('"product_list_line"', 'id', 'name', 'INNER JOIN')]
         return ret
 
     def view_header_get(self, cr, uid, view_id, view_type, context=None):

@@ -41,7 +41,7 @@ class product_status(osv.osv):
     _name = "product.status"
     _columns = {
         'code': fields.char('Code', size=256),
-        'name': fields.char('Name', size=256, required=True),
+        'name': fields.char('Name', size=256, required=True, translate=1),
         'no_external': fields.boolean(string='External partners orders'),
         'no_esc': fields.boolean(string='ESC partners orders'),
         'no_internal': fields.boolean(string='Internal partners orders'),
@@ -66,7 +66,7 @@ class product_international_status(osv.osv):
     _name = "product.international.status"
     _columns = {
         'code': fields.char('Code', size=256),
-        'name': fields.char('Name', size=256, required=True),
+        'name': fields.char('Name', size=256, required=True, translate=1),
         'no_external': fields.boolean(string='External partners orders'),
         'no_esc': fields.boolean(string='ESC partners orders'),
         'no_internal': fields.boolean(string='Internal partners orders'),
@@ -112,6 +112,7 @@ class product_heat_sensitive(osv.osv):
             string='Name',
             size=256,
             required=True,
+            translate=1,
         ),
         'active': fields.boolean(
             string='Active',
@@ -172,7 +173,7 @@ class product_cold_chain(osv.osv):
     _name = "product.cold_chain"
     _columns = {
         'code': fields.char('Code', size=256),
-        'name': fields.char('Name', size=256, required=True),
+        'name': fields.char('Name', size=256, required=True, translate=1),
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -1280,11 +1281,10 @@ class product_attributes(osv.osv):
             if f in vals and not vals.get(f):
                 vals[f] = 'no'
 
-        vals['uf_create_date'] = vals.get('uf_create_date', datetime.now())
+        vals['uf_create_date'] = vals.get('uf_create_date') or datetime.now()
 
         self.convert_price(cr, uid, vals, context)
-        res = super(product_attributes, self).create(cr, uid, vals,
-                                                     context=context)
+        res = super(product_attributes, self).create(cr, uid, vals, context=context)
 
         if context.get('sync_update_execution'):
             # Update existing translations for product.product and product.template
@@ -1583,7 +1583,7 @@ class product_attributes(osv.osv):
             # Check if the product is in an invoice
             has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
                                                             ('invoice_id', '!=', False),
-                                                            ('invoice_id.state', 'not in', ['paid', 'proforma', 'proforma2', 'cancel'])], context=context)
+                                                            ('invoice_id.state', 'not in', ['paid', 'inv_close', 'proforma', 'proforma2', 'cancel'])], context=context)
 
             # Check if the product has stock in internal locations
             for loc_id in internal_loc:
@@ -1905,6 +1905,8 @@ class product_attributes(osv.osv):
                        prodlot_ids=False,
                        attribute_ids=False,
                        packaging=False,
+                       uf_create_date=False,
+                       uf_write_date=False
                        )
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
@@ -1926,31 +1928,6 @@ class product_attributes(osv.osv):
     ]
 
 product_attributes()
-
-
-class product_template(osv.osv):
-    _inherit = 'product.template'
-
-    _columns = {
-        'volume': fields.float(
-            string='Volume',
-            digits=(16, 5),
-            help="The volume in dm3.",
-        ),
-        'volume_updated': fields.boolean(
-            string='Volume updated (deprecated)',
-            readonly=True,
-        ),
-        'weight': fields.float('Gross weight', digits=(16,5), help="The gross weight in Kg."),
-        'weight_net': fields.float('Net weight', digits=(16,5), help="The net weight in Kg."),
-    }
-
-    _defaults = {
-        'volume_updated': False,
-    }
-
-
-product_template()
 
 
 class product_deactivation_error(osv.osv_memory):

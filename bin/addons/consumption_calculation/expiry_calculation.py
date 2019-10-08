@@ -590,7 +590,7 @@ class product_likely_expire_report(osv.osv):
         dates = context.get('dates', [])
         for month in dates:
             line_view += '<field name="%s" />' % month
-            line_view += '<button name="go_to_item_%s" type="object" string="Go to item" icon="gtk-info" context="{item_date: %s}" />' % (month, month)
+            line_view += '<button name="go_to_item_%s" type="object" string="%s" icon="gtk-info" context="{item_date: %s}" />' % (month, _('Go to item'), month)
 
         line_view += """<field name="in_stock"/>
                         <field name="total_expired" />

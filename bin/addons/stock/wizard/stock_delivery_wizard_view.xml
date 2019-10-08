@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+
+    <data>
+
+        <record id="stock_delivery_wizard_form_view" model="ir.ui.view">
+            <field name="name">stock.delivery.wizard.form.view</field>
+            <field name="model">stock.delivery.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Deliveries Report">
+                    <separator colspan="4" string="Request parameters" />
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <field name="partner_id" />
+                    <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection" />
+                    <field name="location_id" domain="[('usage', '=', 'internal')]" />
+                    <field name="location_dest_id" domain="[('usage', '!=', 'view')]"/>
+                    <separator colspan="4" string="Actions" />
+                    <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="4" />
+                </form>
+            </field>
+        </record>
+
+        <record id="action_stock_delivery_wizard" model="ir.actions.act_window">
+            <field name="name">Deliveries Report</field>
+            <field name="res_model">stock.delivery.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem
+            id="menu_stock_delivery_wizard"
+            action="action_stock_delivery_wizard"
+            parent="stock.next_id_61"
+            sequence="10"
+            />
+
+    </data>
+
+</openerp>

@@ -124,11 +124,11 @@
 
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Transport Mode')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'in_transport_mode') or ''|x}</Data></Cell>
-        % if o.imp_transport_mode != o.in_transport_mode:
-        <Cell ss:StyleID="line_change" ss:MergeAcross="1" ><Data ss:Type="String">${getSel(o, 'imp_transport_mode') or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getSel(o, 'in_transport_type') or ''|x}</Data></Cell>
+        % if o.imp_transport_type != o.in_transport_type:
+        <Cell ss:StyleID="line_change" ss:MergeAcross="1" ><Data ss:Type="String">${getSel(o, 'imp_transport_type') or ''|x}</Data></Cell>
         % else:
-        <Cell ss:StyleID="line" ss:MergeAcross="1" ><Data ss:Type="String">${getSel(o, 'imp_transport_mode')or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ss:MergeAcross="1" ><Data ss:Type="String">${getSel(o, 'imp_transport_type')or ''|x}</Data></Cell>
         % endif
     </Row>
 
@@ -323,7 +323,7 @@
 
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Information (Line numbers refer to the line numbers of the PO confirmation import file)')}</Data></Cell>
-        <Cell ss:StyleID="line" MergeAcross="3" ><Data ss:Type="String">${(o.message or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ss:MergeAcross="4"><Data ss:Type="String">${(o.message or '')|x}</Data></Cell>
     </Row>
 
 </Table>
