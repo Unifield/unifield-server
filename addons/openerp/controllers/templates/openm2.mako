@@ -53,6 +53,11 @@
                             </td>
                             <td width="100%">
                             </td>
+                            % if form.screen and form.screen.id and rpc.session and rpc.session.uid == 1:
+                            <td class="save_close">
+                                <a href="${py.url('/openerp/viewlog', id=form.screen.id, model=form.screen.model)}" id="wizard_view_log"><img src="/openerp/static/images/iconset-a-help.gif" title="${_('View Log')}" /></a>
+                            </td>
+                            % endif
                         </tr>
                     </table>
                 </div>
@@ -64,4 +69,9 @@
             </td>
         </tr>
     </table>
+    <script type="text/javascript">
+        jQuery(document).ready(function() {
+            jQuery('#wizard_view_log').fancybox();
+        });
+    </script>
 </%def>
