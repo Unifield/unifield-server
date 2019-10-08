@@ -82,7 +82,7 @@
         </div>
     </div>
     %if data_collected == 'True' and total != 'True':
-        <div id="explanations">${_('All the data have been collected. The report is now under rendering (this can take some time one big reports). A button to download it will be displayed soon...')}</div>
+        <div id="explanations">${_('All the data have been collected. The report is now under rendering (this can take some time depending on the report size). A button to download it will be displayed soon...')}</div>
     %endif
     %if data_collected != 'True' and total != 'True':
         <div id="explanations">${_('A button to download the report will be displayed when finished.')}</div>
