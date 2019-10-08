@@ -998,7 +998,7 @@ class account_move(osv.osv):
             if 'document_date' in vals:
                 context['document_date'] = vals.get('document_date')
             if 'date' in vals:
-                # TODO: TEST JN => check that this date in context is never used for amount computation
+                # DONE: TEST JN => this date isn't used for amount computation
                 context['date'] = vals.get('date')
             # UTFTP-262: Make manual_name mandatory
             if 'manual_name' not in vals or not vals.get('manual_name', False) or vals.get('manual_name') == '':

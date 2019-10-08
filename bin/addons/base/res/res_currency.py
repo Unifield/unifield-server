@@ -434,7 +434,7 @@ class res_currency(osv.osv):
                 return float(tot2)/float(tot1)
 
         if from_currency['rate'] == 0 or to_currency['rate'] == 0:
-            # TODO: TEST JN
+            # DONE: TEST JN
             date = context.get('currency_date', time.strftime('%Y-%m-%d'))
             if from_currency['rate'] == 0:
                 currency_name = from_currency['name']

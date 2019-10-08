@@ -546,7 +546,7 @@ class account_move_line(osv.osv):
                 context.update({'document_date': m.document_date})
             if m and m.date:
                 vals.update({'date': m.date})
-                # TODO: TEST JN => check that this date in context is never used for amount computation
+                # DONE: TEST JN => this date isn't used for amount computation
                 context.update({'date': m.date})
             # UFTP-262: Add description from the move_id (US-2027) if there is not descr. on the line
             if m and m.manual_name and not vals.get('name'):
