@@ -44,7 +44,7 @@ class wizard_csv_report(osv.osv_memory):
                 out_currency_name = currency_id.name
 
                 # get amount in selected currency
-                # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
+                # DONE: TEST JN => no "date" in context
                 out_currency_amount = self.pool.get('res.currency').compute(cr,
                                                            uid,
                                                            contract.reporting_currency.id,
