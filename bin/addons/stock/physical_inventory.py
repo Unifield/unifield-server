@@ -341,13 +341,14 @@ class PhysicalInventory(osv.osv):
                                         line["expiry_date"])
 
             qty = float(line["quantity"]) if line["quantity"] else False
-            if not qty and product_batch_expirydate in duplicates:
+            if line["quantity"] is False and product_batch_expirydate in duplicates:
                 # ignore duplicates if qty is not set
                 continue
 
             if qty is False:
                 available_line_no.setdefault(line["product_id"][0], []).append(line["line_no"])
-            else:
+
+            if line["quantity"] is not False:
                 duplicates.setdefault(product_batch_expirydate, []).append(line["line_no"])
 
             counted_quantities[product_batch_expirydate] = qty
@@ -365,7 +366,7 @@ class PhysicalInventory(osv.osv):
                 if len(duplicates[k]) > 1:
                     msg.append( '- %s' % ', '.join(['%s' % line_n for  line_n in duplicates[k]]))
             if msg:
-                raise osv.except_osv(_('Warning'), _('You have duplicates ! Please set Quantiy only on one of these lines:\n %s') % ("\n".join(msg)))
+                raise osv.except_osv(_('Warning'), _('You have duplicates ! Please set Quantity only on one of these lines:\n %s') % ("\n".join(msg)))
 
         ###################################################
         # Now, compare theoretical and counted quantities #
@@ -1335,8 +1336,15 @@ class PhysicalInventoryCounting(osv.osv):
     }
 
     _sql_constraints = [
-        ('line_uniq', 'UNIQUE(inventory_id, product_id, batch_number, expiry_date)', _('The line product, batch number and expiry date must be unique!')),
     ]
+
+    def _auto_init(self, cr, context=None):
+        res = super(PhysicalInventoryCounting, self)._auto_init(cr, context)
+        # constraint already checked on file import and on generate disc.
+        # deactivated because of BN/ED switch
+        # inital constraint was incorrect bc not applied on ED prod (i.e when batch_name is null)
+        cr.drop_constraint_if_exists('physical_inventory_counting', 'physical_inventory_counting_line_uniq')
+        return res
 
     def create(self, cr, user, vals, context=None):
         # Compute line number

@@ -1981,7 +1981,7 @@ class product_attributes(osv.osv):
             prod_obj = super(product_attributes, self)
         prod_obj.write(cr, uid, product_ids, {'perishable': False, 'batch_management': False}, context=context)
 
-        cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(product_ids), ))
+        cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=stock_move.prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(product_ids), ))
         cr.execute("delete from stock_production_lot where product_id in %s", (tuple(product_ids), ))
 
         # save as draft
@@ -2054,14 +2054,14 @@ class product_attributes(osv.osv):
             cr.execute("""update initial_stock_inventory_line set
                 hidden_batch_management_mandatory='t',  hidden_perishable_mandatory='t', prodlot_name=%s, expiry_date=%s
                 where product_id in %s and inventory_id in
-                    (select id from  initial_stock_inventory where state = 'done')
+                    (select id from initial_stock_inventory where state = 'done')
             """, (self.fake_bn, self.fake_ed, tuple(prod_to_change) ))
 
             # ISI confirm /drart
             cr.execute("""update initial_stock_inventory_line set
                 hidden_batch_management_mandatory='t',  hidden_perishable_mandatory='t'
                 where product_id in %s and inventory_id in
-                    (select id from  initial_stock_inventory where state in ('confirm', 'draft'))
+                    (select id from initial_stock_inventory where state in ('confirm', 'draft'))
             """, (tuple(prod_to_change), ))
 
             #PI CS
@@ -2100,7 +2100,7 @@ class product_attributes(osv.osv):
                 to_keep = to_merge[0]
                 merged = to_merge[1]
                 merged.remove(to_keep)
-                cr.execute("update stock_move set prodlot_id=%s, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id in %s",  (to_keep, tuple(merged)))
+                cr.execute("update stock_move set prodlot_id=%s, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=stock_move.prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id in %s",  (to_keep, tuple(merged)))
                 self._update_bn_id_on_fk(cr, to_keep, merged)
                 cr.execute("delete from stock_production_lot where id in %s", (tuple(merged), ))
 
@@ -2203,12 +2203,12 @@ class product_attributes(osv.osv):
             else:
                 prod_obj = super(product_attributes, self)
             prod_obj.write(cr, uid, prod_to_change, {'batch_management': True}, context=context)
-            cr.execute("update stock_move set old_lot_info=(select name||'#'||life_date from stock_production_lot where id=prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id is not null and product_id in %s",  (tuple(prod_to_change), ))
+            cr.execute("update stock_move set old_lot_info=(select name||'#'||life_date from stock_production_lot where id=stock_move.prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id is not null and product_id in %s",  (tuple(prod_to_change), ))
             cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f' where product_id in %s",  (tuple(prod_to_change), ))
             cr.execute("update stock_production_lot set name=%s, type='standard' where product_id in %s", (self.fake_bn, tuple(prod_to_change)))
             # save as draft
             for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
-                cr.execute("update "+ table + " set prodlot_id=(select id from stock_production_lot where life_date=expiry_date and product_id=product_id), lot_check='t', exp_check='t' where product_id in %s and expiry_date is not null", (tuple(prod_to_change),)) # not_a_user_entry
+                cr.execute("update "+ table + " set prodlot_id=(select id from stock_production_lot where life_date="+table+".expiry_date and product_id="+table+".product_id), lot_check='t', exp_check='t' where product_id in %s and expiry_date is not null", (tuple(prod_to_change),)) # not_a_user_entry
                 cr.execute("update "+ table + " set integrity_status='missing_lot' where product_id in %s and prodlot_id is null and expiry_date is not null", (tuple(prod_to_change),)) # not_a_user_entry
                 cr.execute("update "+ table + " set lot_check='t', exp_check='t' where product_id in %s and prodlot_id is null and expiry_date is null", (tuple(prod_to_change),)) # not_a_user_entry
 
