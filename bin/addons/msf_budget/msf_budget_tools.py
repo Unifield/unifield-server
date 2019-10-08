@@ -303,7 +303,7 @@ class msf_budget_tools(osv.osv):
         # parse each line and add it to the right array
         analytic_line_count = 0
         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-            # TODO: TEST JN
+            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, analytic_line.document_date, analytic_line.date, source_date=analytic_line.source_date)
             date_context = {'currency_date': curr_date,
                             'currency_table_id': currency_table}
