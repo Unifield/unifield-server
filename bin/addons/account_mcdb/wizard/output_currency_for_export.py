@@ -25,7 +25,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from lxml import etree
-
+import netsvc
+import logging
 import time
 
 class output_currency_for_export(osv.osv_memory):
@@ -261,6 +262,7 @@ class background_report(osv.osv_memory):
         'report_id': fields.integer('Report id'),
         'percent': fields.float('Percent'),
         'finished': fields.boolean('Finished'),
+        'real_uid': fields.integer('User Id', readonly=1),
     }
 
     _defaults = {
@@ -270,6 +272,34 @@ class background_report(osv.osv_memory):
         'percent': lambda *a: 0,
         'finished': lambda *a: False,
     }
+
+    def kill_report(self, cr, uid, id, context=None):
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        bg_info = self.browse(cr, uid, id, fields_to_fetch=['report_id', 'real_uid'], context=context)
+        if bg_info.real_uid != real_uid or not bg_info['report_id']:
+            return False
+
+        report_service = netsvc.ExportService.getService('report')
+        report = report_service._reports.get(bg_info.report_id)
+        if not report:
+            return False
+        if report['exception']:
+            return False
+        if  report['state']:
+            return False
+        if not report['psql_pid']:
+            return False
+        report['killed'] = True
+        cr.execute('select pg_terminate_backend(%s)', (report['psql_pid'],))
+        logging.getLogger('background.report').info('Report killed (psqlid: %s)' % report['psql_pid'])
+        return True
+
+
+    def create(self, cr, uid, vals, context=None):
+        if not vals:
+            vals = {}
+        vals['real_uid'] = hasattr(uid, 'realUid') and uid.realUid or uid
+        return super(background_report, self).create(cr, uid, vals, context=context)
 
     def update_percent(self, cr, uid, ids, percent, context=None):
         if isinstance(ids, (int, long)):
