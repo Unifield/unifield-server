@@ -31,7 +31,7 @@ import sys
 import os
 import math
 import hashlib
-
+import time
 from random import random
 
 from psycopg2 import OperationalError
@@ -1248,21 +1248,55 @@ class Entity(osv.osv):
         self._logger.info("Start synchronization")
 
         version_instance_module = self.pool.get('sync.version.instance.monitor')
+        version_data = {}
         try:
             version = self.pool.get('backup.config').get_server_version(cr, uid, context=context)
             postgres_disk_space = version_instance_module._get_default_postgresql_disk_space(cr, uid)
             unifield_disk_space = version_instance_module._get_default_unifield_disk_space(cr, uid)
-            version_instance_module.create(cr, uid, {
+            version_data = {
                 'version': version,
                 'postgresql_disk_space': postgres_disk_space,
                 'unifield_disk_space': unifield_disk_space,
-            }, context=context)
+            }
+
 
         except Exception:
             cr.rollback()
             logging.getLogger('version.instance.monitor').exception('Cannot generate instance monitor data')
             # do not block sync
             pass
+
+        try:
+            # list VI jobs
+            job_details = []
+            nb_late = 0
+            now = time.strftime('%Y-%m-%d %H:%M:%S')
+
+            for auto_job in ['automated.export', 'automated.import']:
+                job_obj = self.pool.get(auto_job)
+                job_ids = job_obj.search(cr, uid, [('active', '=', True), ('cron_id', '!=', False)], context=context)
+                if job_ids:
+                    end_time_by_job = {}
+                    job_field = "%s_id" % auto_job.split('.')[-1]
+                    cr.execute("select "+job_field+", max(end_time) from "+auto_job.replace('.', '_')+"_job where "+job_field+" in %s and state in ('done', 'error') group by "+job_field, (tuple(job_ids), )) # not_a_user_entry
+                    for end in cr.fetchall():
+                        end_time_by_job[end[0]] = end[1]
+
+                    for job in job_obj.browse(cr, uid, job_ids, fields_to_fetch=['name', 'cron_id', 'last_exec'], context=context):
+                        if job.cron_id.nextcall < now:
+                            nb_late += 1
+                            job_name = '%s*' % job.name
+                        else:
+                            job_name = job.name
+
+                        job_details.append('%s: %s' % (job_name, end_time_by_job.get(job.id, 'never')))
+
+            version_data['nb_late_vi'] = nb_late
+            version_data['vi_details'] = "\n".join(job_details)
+            version_instance_module.create(cr, uid, version_data, context=context)
+        except Exception:
+            cr.rollback()
+            logging.getLogger('version.instance.monitor').exception('Cannot generate instance monitor data')
         self.check_user_rights(cr, uid, context=context)
         self.set_rules(cr, uid, context=context)
         self.pull_update(cr, uid, context=context)

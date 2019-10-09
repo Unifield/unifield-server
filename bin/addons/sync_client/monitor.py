@@ -379,6 +379,8 @@ class sync_version_instance_monitor(osv.osv):
         'cloud_backup': fields.char('Cloud Dump', size=256, readonly=True),
         'cloud_error': fields.text('Cloud last error', readonly=True),
         'cloud_size': fields.integer('Cloud Size Zipped', readonly=True),
+        'nb_late_vi': fields.integer('# late jobs'),
+        'vi_details': fields.text('Last exec job'),
     }
 
     _defaults = {
