@@ -277,22 +277,23 @@ class background_report(osv.osv_memory):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         bg_info = self.browse(cr, uid, id, fields_to_fetch=['report_id', 'real_uid'], context=context)
         if bg_info.real_uid != real_uid or not bg_info['report_id']:
-            return False
+            return {'res': False, 'msg': _('User does not match')}
 
         report_service = netsvc.ExportService.getService('report')
         report = report_service._reports.get(bg_info.report_id)
         if not report:
-            return False
+            return {'res': False, 'msg': _('Report not found')}
         if report['exception']:
-            return False
+            return {'res': False, 'msg': _('Report in exception')}
+
         if  report['state']:
-            return False
+            return {'res': False, 'msg': _('Report done')}
         if not report['psql_pid']:
-            return False
+            return {'res': False, 'msg': _('No psql id found')}
         report['killed'] = True
         cr.execute('select pg_terminate_backend(%s)', (report['psql_pid'],))
         logging.getLogger('background.report').info('Report killed (psqlid: %s)' % report['psql_pid'])
-        return True
+        return {'res': True}
 
 
     def create(self, cr, uid, vals, context=None):
