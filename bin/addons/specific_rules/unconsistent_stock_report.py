@@ -423,9 +423,9 @@ class unconsistent_stock_report(osv.osv):
               ON spl.id = cpl.lot_id_claim_product_line
             WHERE
                 (
-                    (pp.perishable AND cpl.expiry_date_claim_product_line IS NULL)
+                    (pp.perishable AND NOT pp.batch_management AND (cpl.expiry_date_claim_product_line IS NULL OR spl.type != 'internal'))
                     OR
-                    (pp.batch_management AND cpl.lot_id_claim_product_line IS NULL)
+                    (pp.batch_management AND (cpl.lot_id_claim_product_line IS NULL OR spl.type = 'internal'))
                     OR
                     (pp.batch_management IS NULL AND cpl.lot_id_claim_product_line IS NOT NULL)
                     OR
