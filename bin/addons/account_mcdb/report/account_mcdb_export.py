@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from time import strftime
 from base import currency_date
 
 
@@ -317,7 +318,9 @@ class account_line_csv_export(osv.osv_memory):
                 csv_line.append(absl.functional_currency_id and absl.functional_currency_id.name and absl.functional_currency_id.name.encode('utf-8') or '')
             else:
                 #output amount (debit/credit) regarding booking currency
-                # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
+                # DONE: TEST JN
+                curr_date = currency_date.get_date(self, cr, absl.document_date, absl.date)
+                context.update({'currency_date': curr_date or strftime('%Y-%m-%d')})
                 amount = currency_obj.compute(cr, uid, absl.currency_id.id, currency_id, absl.amount, round=True, context=context)
                 if amount < 0.0:
                     csv_line.append(0.0)
