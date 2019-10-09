@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -56,5 +56,6 @@ class DownLoadBg(SecuredController):
 
         return dict(finish=finish, percent=data_bg['percent'], total=finished,
                     data_collected=data_collected, report_name=data_bg['report_name'], res_id=res_id)
-
-
+    @expose('json')
+    def kill(self, res_id):
+        return {'result': rpc.RPCProxy('memory.background.report').kill_report(int(res_id), rpc.session.context)}

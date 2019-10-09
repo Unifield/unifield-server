@@ -6,6 +6,26 @@
         if ('${total}' != 'True' && '${finish}' == '') {
             setTimeout(function () {window.location.reload();}, 3000);
         }
+
+        function kill_report() {
+            jQuery.ajax({
+                url:'/openerp/downloadbg/kill',
+                dataType: 'json',
+                type: 'POST',
+                data: {
+                    'res_id': ${res_id}
+                },
+                success: function(obj) {
+                    if (obj.result && obj.result['res']) {
+                        window.close();
+                    } else {
+                        msg = obj.result['msg'];
+                        alert(_("Report can not be stopped :") + msg);
+                    }
+                }
+            });
+        }
+
     </script>
     <style>
         #downloadbg-form {
@@ -86,6 +106,7 @@
     %endif
     %if data_collected != 'True' and total != 'True':
         <div id="explanations">${_('A button to download the report will be displayed when finished.')}</div>
+        <div id="explanations"><button onclick="kill_report()" class="oe_form_button_object"><img src="/openerp/static/images/stock/gtk-cancel.png" alt="" height="16" width="16"/><span> ${_('Stop report')} </span></button></div>
     %endif
     <div id="report_name">${_('Name of the requested report: ')}${report_name}
     %if total == 'True':

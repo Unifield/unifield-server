@@ -130,3 +130,7 @@ msgstr "Fini"
 #: addons/openerp/controllers/templates/progress.mako
 msgid "View "
 msgstr "Voir "
+
+#: addons/openerp/controllers/templates/downloadbg.mako
+msgid "Report can not be stopped :"
+msgstr "Impossible d'arrêter le rapport :"
