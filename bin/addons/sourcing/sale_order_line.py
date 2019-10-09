@@ -983,11 +983,11 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         _('Warning'),
                         _("You can't Source 'from stock' if you don't have product."),
                     )
-                #if line.supplier and line.supplier.partner_type in ('external'):
-                    #raise osv.except_osv(
-                    #    _('Warning'),
-                    #    _("You can't Source to an 'External' partner if you don't have product."),
-                    #)
+              #  if line.supplier and line.supplier.partner_type in ('external'):   <==== US-2994
+              #      raise osv.except_osv(
+              #          _('Warning'),
+              #          _("You can't Source to an 'External' partner if you don't have product."),
+              #      )
 
             if line.state not in ('draft', 'cancel') and line.product_id and line.supplier and not context.get('bypass_product_constraints'):
                 # Check product constraints (no external supply, no storage...)
@@ -1185,17 +1185,18 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             ids = [ids]
 
         context['procurement_request'] = True
+
         no_prod = self.search(cr, uid, [
             ('id', 'in', ids),
             ('product_id', '=', False),
             ('order_id.procurement_request', '=', False),
-            ('supplier.partner_type', '!=', 'esc'),
+            ('supplier.partner_type', 'not in', ['esc', 'external']),
         ], count=True, context=context)
 
-        #if no_prod:
-        #    raise osv.except_osv(_('Warning'), _("""The product must be chosen before sourcing the line.
-        #        Please select it within the lines of the associated Field Order (through the "Field Orders" menu).
-        #        """))
+        if no_prod:
+            raise osv.except_osv(_('Warning'), _("""The product must be chosen before sourcing the line.
+                Please select it within the lines of the associated Field Order (through the "Field Orders" menu).
+                """))
 
         temp_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]
         temp_products = product_obj.search(cr, uid, [('international_status', '=', temp_status)], context=context)
@@ -1295,7 +1296,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         return True
 
-
     def get_existing_po(self, cr, uid, ids, context=None):
         """
         Do we have to create new PO/DPO or use an existing one ?
@@ -1340,7 +1340,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         return res_id or False
 
-
     def get_existing_rfq(self, cr, uid, ids, context=None):
         """
         Do we have to create new RfQ or use an existing one ?
@@ -1369,7 +1368,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         return res_id or False
 
-
     def get_existing_po_loan_for_goods_return(self, cr, uid, ids, context=None):
         """
         Do we have to create new PO or use an existing one ?
@@ -1397,7 +1395,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             res_id = res_id[0]
 
         return res_id or False
-
 
     def create_po_from_sourcing_line(self, cr, uid, ids, context=None):
         '''
@@ -1691,6 +1688,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
                         if not price:
                             price = sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0
+                            if not price and sourcing_line.price_unit:  #US-5995
+                                price = sourcing_line.price_unit
                             if price and company_currency_id != target_currency_id:
                                 price = self.pool.get('res.currency').compute(cr, uid, company_currency_id, target_currency_id, price, round=False, context=context)
 
