@@ -107550,3 +107550,20 @@ msgstr "Vous ne pouvez pas regrouper ces lignes car elles ne sont pas toutes li�
 #, python-format
 msgid "No Analytic Journal %s found for the Proprietary Instance %s."
 msgstr "Aucun Journal Analytique %s trouvé pour l'Instance Propriétaire %s."
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,nb_late_vi:0
+msgid "# late VI jobs"
+msgstr "# tâches VI en retard"
+
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,vi_details:0
+msgid "Last exec VI job"
+msgstr "Tâche VI dernière exec"
+
+#. module: sync_client
+#: view:sync.version.instance.monitor:0
+msgid "Late jobs"
+msgstr "Tâches en retard"
+
