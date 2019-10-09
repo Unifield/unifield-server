@@ -1272,6 +1272,7 @@ class Entity(osv.osv):
             nb_late = 0
             now = time.strftime('%Y-%m-%d %H:%M:%S')
 
+            dt_format = '%d/%b/%Y %H:%M'
             for auto_job in ['automated.export', 'automated.import']:
                 job_obj = self.pool.get(auto_job)
                 job_ids = job_obj.search(cr, uid, [('active', '=', True), ('cron_id', '!=', False)], context=context)
@@ -1280,7 +1281,7 @@ class Entity(osv.osv):
                     job_field = "%s_id" % auto_job.split('.')[-1]
                     cr.execute("select "+job_field+", max(end_time) from "+auto_job.replace('.', '_')+"_job where "+job_field+" in %s and state in ('done', 'error') group by "+job_field, (tuple(job_ids), )) # not_a_user_entry
                     for end in cr.fetchall():
-                        end_time_by_job[end[0]] = end[1]
+                        end_time_by_job[end[0]] = end[1] and time.strftime(dt_format, time.strptime(end[1], '%Y-%m-%d %H:%M:%S'))
 
                     for job in job_obj.browse(cr, uid, job_ids, fields_to_fetch=['name', 'cron_id', 'last_exec'], context=context):
                         if job.cron_id.nextcall < now:
