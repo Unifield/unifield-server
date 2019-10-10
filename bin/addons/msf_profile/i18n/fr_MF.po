@@ -59644,7 +59644,6 @@ msgstr "Avancement"
 #: code:addons/delete_button/delete_button.py:168
 #: code:addons/delivery_mechanism/wizard/stock_partial_picking.py:55
 #: code:addons/delivery_mechanism/wizard/stock_partial_picking.py:198
-#: code:addons/financing_contract/wizard/wizard_expense_report.py:40
 #: code:addons/import_data/import_data.py:62
 #: code:addons/import_data/import_data.py:77
 #: code:addons/import_data/import_data.py:83
@@ -77178,11 +77177,6 @@ msgstr "My requests"
 msgid "Import Budget"
 msgstr "Importer le Budget"
 
-#. module: financing_contract
-#: model:ir.model,name:financing_contract.model_wizard_expense_report
-msgid "wizard.expense.report"
-msgstr "wizard.expense.report"
-
 #. module: procurement_report
 #: model:ir.model,name:procurement_report.model_procurement_batch_cron
 msgid "procurement.batch.cron"
@@ -94081,12 +94075,6 @@ msgstr "Ce code ISO est le nom des fichiers po utilisés pour les traductions"
 #: field:products.situation.report,heat_sensitive_item:
 msgid "Temperature sensitive item"
 msgstr "Article sensible à la température"
-
-#. module: financing_contract
-#: code:addons/financing_contract/wizard/wizard_expense_report.py:40
-#, python-format
-msgid "This report does not apply to the reporting type selected."
-msgstr "Ce rapport ne s'applique pas au type de rapport sélectionné."
 
 #. module: msf_config_locations
 #: code:addons/msf_config_locations/stock_configuration.py:480

@@ -20,7 +20,6 @@
 ##############################################################################
 
 import wizard_csv_report
-import wizard_expense_report
 import wizard_interactive_report
 import wizard_financing_currency_export
 import wizard_financing_contract_warning
