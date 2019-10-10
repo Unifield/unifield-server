@@ -8,17 +8,17 @@
 
         <!-- we move the parent menu 'receive products from the menu purchase to the menu warehouse' -->
         <menuitem id="purchase.menu_procurement_management_inventory" 
-        parent="stock.menu_stock_root" 
+        parent="stock.menu_stock_root" sequence="4"
         />
         
         <!-- we move 'receptions analysis' from purchase to warehouse (reporting) -->
         <menuitem id="purchase.menu_action_stock_move_report_po" 
-        parent="stock.next_id_61" 
+        parent="stock.next_id_61" sequence="8"
         />
     
         <!-- we move the menu 'deliver products' from the menu sale to the menu warehouse' -->
         <menuitem id="sale.menu_sale_action_picking_tree_out_move" 
-        parent="stock.menu_stock_root" 
+        parent="stock.menu_stock_root" sequence="10"
         />
         
         

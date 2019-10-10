@@ -100,7 +100,7 @@
 			<field name="search_view_id" ref="stock.view_picking_out_search"/>
 			<field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
 		</record>
-		<menuitem id="stock.menu_action_picking_tree" parent="menu_warehouse_deliveries" />
+		<menuitem id="stock.menu_action_picking_tree" parent="menu_warehouse_deliveries" sequence="3"/>
 		<record id="view_warehouse" model="ir.ui.view">
 			<field name="name">stock.warehouse</field>
 			<field name="model">stock.warehouse</field>
