@@ -62,7 +62,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                 value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)] = {}
                 value_list2[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)] = {}
             # convert amount to today's rate
-            # TODO: TEST JN
+            # DONE: TEST JN
             date_context = {'currency_date': datetime.datetime.today()}
             functional_amount = pool.get('res.currency').compute(self.cr,
                                                                  self.uid,

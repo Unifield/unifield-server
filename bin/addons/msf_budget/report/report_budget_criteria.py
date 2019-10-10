@@ -154,7 +154,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
         # Prepare some values
         line_type = line.get('line_type', '')
         res = []
-        # TODO: TEST JN
+        # DONE: TEST JN
         date_context = {'currency_date': date_stop, 'currency_table_id': currency_table}
         cur_obj = self.pool.get('res.currency')
         # Construct conditions to fetch right analytic lines
