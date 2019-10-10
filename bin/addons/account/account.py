@@ -2287,7 +2287,7 @@ class account_model(osv.osv):
             context = {}
 
         if datas.get('date', False):
-            # TODO: TEST JN => check that this date in context is never used for amount computation
+            # TODO: TEST JN => check whether this is still in use + whether this date in context is used for amount computation
             context.update({'date': datas['date']})
 
         period_id = self.pool.get('account.period').find(cr, uid, dt=context.get('date', False))

@@ -59,7 +59,7 @@ class account_statement_from_invoice_lines(osv.osv_memory):
             voucher_res = {}
             ctx = context.copy()
             #  take the date for computation of currency => use payment date
-            # TODO: TEST JN
+            # TODO: TEST JN => check whether this is still in use (what's "Entries by Statement from Invoices"?)
             ctx['currency_date'] = line_date
             amount = 0.0
 

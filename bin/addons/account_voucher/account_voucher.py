@@ -409,7 +409,7 @@ class account_voucher(osv.osv):
             return {}
         context_multi_currency = context.copy()
         if date:
-            # TODO: TEST JN
+            # TODO: TEST JN => check whether this is still in use (what's an Accounting Voucher?)
             context_multi_currency.update({'currency_date': date})
 
         line_pool = self.pool.get('account.voucher.line')
@@ -647,7 +647,7 @@ class account_voucher(osv.osv):
             if inv.move_id:
                 continue
             context_multi_currency = context.copy()
-            # TODO: TEST JN
+            # TODO: TEST JN => check whether this is still in use (what's an Accounting Voucher?)
             context_multi_currency.update({'currency_date': inv.date})
 
             if inv.number:
@@ -823,7 +823,7 @@ class account_voucher_line(osv.osv):
         rs_data = {}
         for line in self.browse(cr, uid, ids, context=context):
             ctx = context.copy()
-            # TODO: TEST JN
+            # TODO: TEST JN => check whether this is still in use
             ctx.update({'currency_date': line.voucher_id.date})
             res = {}
             company_currency = line.voucher_id.journal_id.company_id.currency_id.id

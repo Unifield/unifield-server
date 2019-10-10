@@ -284,7 +284,7 @@ class purchase_order_line(osv.osv):
         new_sol_id = False
         for pol in self.browse(cr, uid, ids, context=context):
             # convert from currency of pol to currency of sol
-            # TODO: TEST JN
+            # TODO: TEST JN Supply
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
                                                                          round=False, context={'currency_date': pol.order_id.date_order})
 
