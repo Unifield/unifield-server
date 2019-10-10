@@ -625,7 +625,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         # Do not prevent modification during synchro
-        if not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+        if not context.get('from_vi_import') and not context.get('sync_update_execution') and not context.get('sync_message_execution'):
             error_lines = []
             linked_orders = []
             for pol in self.browse(cr, uid, ids, context=context):
@@ -711,8 +711,8 @@ class purchase_order_line(osv.osv):
                         'cost_center_lines': [(0, 0, {'destination_id': destination_id, 'analytic_id': intermission_cc , 'percentage':'100', 'currency_id': po.currency_id.id})]
                     })
                 else:
-                    raise osv.except_osv(_('Warning'),
-                                         _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
+                                         % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
 
             elif pol.analytic_distribution_state != 'valid':
                 id_ad = ad_obj.create(cr, uid, {})
@@ -1836,7 +1836,8 @@ class purchase_order_line(osv.osv):
                 cc_lines = pol.order_id.analytic_distribution_id.cost_center_lines
 
             if not cc_lines:
-                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
+                                     % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
 
 
             commit_line_id = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', commitment_voucher_id), ('account_id', '=', expense_account)], context=context)

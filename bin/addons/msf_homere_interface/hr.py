@@ -256,6 +256,8 @@ class hr_employee(osv.osv):
         """
         if not ids:
             return True
+        elif isinstance(ids, (int, long)):
+            ids = [ids]
         # Some verifications
         if not context:
             context = {}

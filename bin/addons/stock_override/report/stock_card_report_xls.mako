@@ -156,6 +156,7 @@ def parse_origin(origin):
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Date')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Doc. Reference')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Origin')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Partner/Location')|x}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty IN')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty OUT')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Balance')}</Data></Cell>
@@ -167,6 +168,7 @@ def parse_origin(origin):
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.date_done or ''|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.doc_ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${parse_origin(line.origin)|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.partner_or_loc or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.qty_in or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.qty_out or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.balance or '')|x}</Data></Cell>
