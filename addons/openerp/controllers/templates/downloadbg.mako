@@ -5,6 +5,8 @@
     <script type="text/javascript">
         if ('${total}' != 'True' && '${finish}' == '') {
             setTimeout(function () {window.location.reload();}, 3000);
+            //$(window).bind("beforeunload", kill_report);
+            //setTimeout(function () {$(window).unbind("beforeunload"); window.location.reload();}, 3000);
         }
 
         function kill_report() {
