@@ -241,7 +241,7 @@ class wizard_import_invoice_line(osv.osv_memory):
 
                         if r_destination and r_cc:
                             distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
-                            # TODO: TEST JN
+                            # DONE: TEST JN
                             curr_date = currency_date.get_date(self, cr, invoice.document_date, invoice.date_invoice)
                             common_vals = {
                                 'distribution_id': distrib_id,
