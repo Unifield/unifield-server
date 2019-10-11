@@ -1521,12 +1521,13 @@ class purchase_order_line(osv.osv):
         Fill the origin field if a FO is selected
         '''
         if fo_id:
-            fo_domain = ['name', 'sourced_references', 'state', 'order_type']
+            fo_domain = ['name', 'sourced_references', 'state', 'order_type', 'procurement_request']
             fo = self.pool.get('sale.order').read(cr, uid, fo_id, fo_domain, context=context)
             if fo['state'] not in ['done', 'cancel'] and fo['order_type'] == 'regular':
                 return {
                     'value': {
                         'origin': fo['name'],
+                        'ir_name_for_sync': fo['procurement_request'] and fo['name'] or False,
                         'display_sync_ref': len(fo['sourced_references']) and True or False,
                     },
                     'warning': {
