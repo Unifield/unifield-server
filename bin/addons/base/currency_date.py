@@ -33,9 +33,9 @@ def get_date_type(self, cr):
         cr.execute(oc_sql)
         oc = cr.fetchone()[0]
         if oc in ('ocb', 'ocg'):
-            date_type = "document"
+            date_type = 'document'
         else:
-            date_type = "posting"
+            date_type = 'posting'
         param_obj.set_param(cr, 1, 'currency_date.type', date_type)
     return date_type
 

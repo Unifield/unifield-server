@@ -38,7 +38,7 @@ class account_analytic_line_compute_currency(osv.osv):
         for analytic_line in self.browse(cr, uid, ids):
             amount = None
             if analytic_line.amount_currency and analytic_line.currency_id:
-                # TODO: TEST JN
+                # DONE: TEST JN
                 curr_date = currency_date.get_date(self, cr, analytic_line.document_date, analytic_line.date,
                                                    source_date=analytic_line.source_date)
                 context.update({'currency_date': curr_date})
