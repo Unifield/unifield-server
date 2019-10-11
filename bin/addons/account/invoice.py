@@ -1983,7 +1983,7 @@ class account_invoice_tax(osv.osv):
                 if inv.type in ('out_invoice','in_invoice'):
                     val['base_code_id'] = tax['base_code_id']
                     val['tax_code_id'] = tax['tax_code_id']
-                    # TODO: TEST JN
+                    # DONE: TEST JN
                     curr_date = currency_date.get_date(self, cr, inv.document_date, inv.date_invoice)
                     val['base_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['base'] * tax['base_sign'],
                                                          context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
@@ -1993,7 +1993,7 @@ class account_invoice_tax(osv.osv):
                 else:
                     val['base_code_id'] = tax['ref_base_code_id']
                     val['tax_code_id'] = tax['ref_tax_code_id']
-                    # TODO: TEST JN
+                    # DONE: TEST JN
                     curr_date = currency_date.get_date(self, cr, inv.document_date, inv.date_invoice)
                     val['base_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['base'] * tax['ref_base_sign'],
                                                          context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
