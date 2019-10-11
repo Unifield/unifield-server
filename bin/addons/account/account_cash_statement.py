@@ -120,7 +120,7 @@ class account_cash_statement(osv.osv):
         return res2
 
     def _end_balance(self, cursor, user, ids, name, attr, context=None):
-        # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
+        # TODO: TEST JN => this is never called - replace it by the method in register_accounting/account_cash_statement.py
         res_currency_obj = self.pool.get('res.currency')
         res_users_obj = self.pool.get('res.users')
         res = {}
