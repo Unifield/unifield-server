@@ -54,7 +54,6 @@ module named account_voucher.
         'report/account_analytic_entries_report_view.xml',
         'wizard/account_move_bank_reconcile_view.xml',
         'wizard/account_use_model_view.xml',
-        'account_installer.xml',
         'wizard/account_period_close_view.xml',
         'account_view.xml',
         'account_report.xml',
