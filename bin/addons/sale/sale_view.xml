@@ -278,6 +278,7 @@
                                     <field name="to_correct_ok" readonly="1" invisible="1"/>
                                     <field name="show_msg_ok" readonly="1" invisible="1"/>
                                     <field name="inactive_product" invisible="1"/>
+                                    <field name="ir_name_from_sync" invisible="1"/>
                                     <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
                                         <html>
                                             <style>

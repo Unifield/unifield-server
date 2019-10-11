@@ -2118,6 +2118,7 @@ class sale_order_line(osv.osv):
         'from_cancel_out': fields.boolean('OUT cancel'),
         'created_by_sync': fields.boolean(string='Created by Synchronisation'),
         'cancelled_by_sync': fields.boolean(string='Cancelled by Synchronisation'),
+        'ir_name_from_sync': fields.char(size=64, string='IR name to put on PO line after sync', invisible=True),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2139,6 +2140,7 @@ class sale_order_line(osv.osv):
         'stock_take_date': _get_stock_take_date,
         'created_by_sync': False,
         'cancelled_by_sync': False,
+        'ir_name_from_sync': '',
     }
 
     def _check_stock_take_date(self, cr, uid, ids, context=None):
@@ -2266,6 +2268,7 @@ class sale_order_line(osv.osv):
             'from_cancel_out': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
+            'ir_name_from_sync': '',
         })
 
         if 'in_name_goods_return' not in default:
@@ -2306,6 +2309,7 @@ class sale_order_line(osv.osv):
             'created_by_sync': False,
             'cancelled_by_sync': False,
             'stock_take_date': False,
+            'ir_name_from_sync': '',
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False

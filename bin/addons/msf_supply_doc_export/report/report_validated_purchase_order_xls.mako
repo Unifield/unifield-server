@@ -273,7 +273,11 @@
             <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
             <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or 0.00)|x}</Data></Cell>
             <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.pricelist_id.currency_id.name or '')|x}</Data></Cell>
-            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.origin and (line.instance_sync_order_ref and line.origin + ':' + line.instance_sync_order_ref.name or line.origin) or '')|x}</Data></Cell>
+            % if line.instance_sync_order_ref and line.origin:
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${line.origin + ':' + line.instance_sync_order_ref.name|x}</Data></Cell>
+            % else:
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.origin and (line.linked_sol_id and line.linked_sol_id.ir_name_from_sync and line.origin + ':' + line.linked_sol_id.ir_name_from_sync or line.origin) or '')|x}</Data></Cell>
+            % endif
             % if isDate(line.stock_take_date):
             <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.stock_take_date|n}T00:00:00.000</Data></Cell>
             % else:

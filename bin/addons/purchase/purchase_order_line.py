@@ -563,6 +563,7 @@ class purchase_order_line(osv.osv):
         'validation_date': fields.date('Validation Date', readonly=True),
         'confirmation_date': fields.date('Confirmation Date', readonly=True),
         'closed_date': fields.date('Closed Date', readonly=True),
+        'ir_name_for_sync': fields.char(size=64, string='IR name to put on PO line after sync', invisible=True),
     }
 
     _defaults = {
@@ -1194,8 +1195,11 @@ class purchase_order_line(osv.osv):
 
         # utp-518:we write the comment from the sale.order.line on the PO line:
         if vals.get('linked_sol_id'):
-            sol_comment = self.pool.get('sale.order.line').read(cr, uid, vals.get('linked_sol_id'), ['comment'], context=context)['comment']
-            vals.update({'comment': sol_comment})
+            sol = self.pool.get('sale.order.line').browse(cr, uid, vals.get('linked_sol_id'), fields_to_fetch=['comment', 'order_id'], context=context)
+            vals.update({
+                'comment': sol.comment,
+                'ir_name_for_sync': sol.order_id.procurement_request and sol.order_id.name or False,
+            })
             #if not product_id and not vals.get('name'):  # US-3530
             #    vals.update({'name': 'None'})
 
@@ -1237,6 +1241,7 @@ class purchase_order_line(osv.osv):
             'esc_confirmed': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
+            'ir_name_for_sync': False,
         })
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
@@ -1261,7 +1266,7 @@ class purchase_order_line(osv.osv):
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False, 'stock_take_date': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False, 'stock_take_date': False, 'ir_name_for_sync': False})
 
         # from RfQ line to PO line: grab the linked sol if has:
         if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):
