@@ -1374,7 +1374,7 @@ class account_bank_statement_line(osv.osv):
 
         # DONE: TEST JN
         curr_date = currency_date.get_date(self, cr, st_line.document_date, st_line.date)
-        context.update({'currency_date': curr_date})
+        context.update({'date': curr_date})
 
 #        # Prepare partner_type
 #        partner_type = False
@@ -1700,7 +1700,7 @@ class account_bank_statement_line(osv.osv):
                     # DONE: TEST JN
                     curr_date = currency_date.get_date(self, cr, move_line_values.get('document_date', st_line.document_date),
                                                        move_line_values.get('date', st_line.date))
-                    context.update({'currency_date': curr_date})
+                    context.update({'date': curr_date})
                     # Change amount
                     new_amount = res_currency_obj.compute(cr, uid, \
                                                           st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, abs(amount), round=False, context=context)
@@ -1848,7 +1848,7 @@ class account_bank_statement_line(osv.osv):
             if st_line.statement_id.currency.id != st_line.statement_id.company_id.currency_id.id:
                 # DONE: TEST JN
                 curr_date = currency_date.get_date(self, cr, st_line.document_date, st_line.date)
-                context['currency_date'] = curr_date or current_date
+                context['date'] = curr_date or current_date
                 amount = self.pool.get('res.currency').compute(cr, uid, st_line.statement_id.currency.id,
                                                                st_line.statement_id.company_id.currency_id.id, amount, round=False, context=context)
             val.update({'debit': amount, 'credit': 0.0, 'amount_currency': abs(st_line.amount)})
