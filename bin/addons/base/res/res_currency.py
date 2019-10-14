@@ -402,14 +402,6 @@ class res_currency(osv.osv):
         if context is None:
             context = {}
 
-        # TODO: TEST JN => remove this debug code for Testfield?
-        if context.get('date') and not context.get('currency_date'):
-            import traceback
-            import logging
-            import tools
-            tb_s = reduce(lambda x, y: x+y, traceback.extract_stack())
-            logging.getLogger('currency_date compute').warn(tools.ustr(tb_s))
-
         if 'revaluation' in context:
             if from_currency['rate'] == 0.0:
                 # DONE: TEST JN
@@ -452,15 +444,7 @@ class res_currency(osv.osv):
 
     def compute(self, cr, uid, from_currency_id, to_currency_id, from_amount, round=True, context=None):
         if context is None:
-            context={}
-
-        # TODO: TEST JN => remove this debug code for Testfield?
-        if context.get('date') and not context.get('currency_date'):
-            import traceback
-            import logging
-            import tools
-            tb_s = reduce(lambda x, y: x+y, traceback.extract_stack())
-            logging.getLogger('currency_date compute').warn(tools.ustr(tb_s))
+            context = {}
 
         if context.get('currency_table_id', False):
             # A currency table is set, retrieve the correct currency ids
