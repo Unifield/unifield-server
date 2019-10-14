@@ -2565,8 +2565,8 @@ class purchase_order(osv.osv):
         pol_obj = self.pool.get('purchase.order.line')
         uom_obj = self.pool.get('product.uom')
         sup_obj = self.pool.get('product.supplierinfo')
-        supcat_obj = self.pool.get('supplier.catalogue')
         rescur_obj = self.pool.get('res.currency')
+        partnerprice_obj = self.pool.get('pricelist.partnerinfo')
 
         if context is None:
             context = {}
@@ -2593,39 +2593,47 @@ class purchase_order(osv.osv):
             ], context=context)
 
             for pol in pol_obj.browse(cr, uid, pol_ids, context=context):
+
                 # Check only products with defined SoQ quantity
-                sup_ids = sup_obj.search(cr, uid, [
-                    ('name', '=', pol.order_id.partner_id.id),
-                    ('product_id', '=', pol.product_id.id),
-                    ('active', '=', True),
-                ], context=context)
+                domain = [('name', '=', pol.order_id.partner_id.id),
+                          ('product_id', '=', pol.product_id.id),
+                          ('active', '=', True)]
+
+                sup_ids = sup_obj.search(cr, uid, domain, context=context)
                 if not sup_ids and not pol.product_id.soq_quantity:
                     continue
 
+                good_quantity = None
+                good_price = None
+                data_to_write = {}
+
                 if sup_ids:
+                    domain = [('suppinfo_id', 'in', sup_ids),
+                              '|', ('valid_from', '<=', po.date_order),
+                              ('valid_from', '=', False),
+                              '|', ('valid_till', '>=', po.date_order),
+                              ('valid_till', '=', False)]
 
-                    for sup in sup_obj.browse(cr, uid, sup_ids, context=context):
+                    pl_ids = partnerprice_obj.search(cr, uid, domain, context=context)
 
-                        cat = supcat_obj.browse(cr, uid, sup.catalogue_id.id, fields_to_fetch=['currency_id'], context=context)
+                    if pl_ids:
 
                         t_min_qty_price = {}
 
-                        # fill the dictionary with prices according to min quantity
-                        for pcl in sup.pricelist_ids:
-                            if pol.product_uom.id == pcl.uom_id.id:
-                                t_min_qty_price[pcl.min_quantity] = (pcl.price, pcl.rounding)
+                        for pl in partnerprice_obj.browse(cr, uid, pl_ids, context=context):
+                            if pol.product_uom == pl.uom_id:
+                                t_min_qty_price[pl.min_quantity] = (pl.price, pl.rounding)
                             else:
-                                pcl_minqty = uom_obj._compute_qty_obj(cr, uid, pcl.uom_id, pcl.min_quantity, pol.product_uom, context=context)
-                                price_conv = uom_obj._compute_price(cr, uid, pcl.uom_id.id, pcl.price, pol.product_uom.id)
-                                rounding_conv = uom_obj._compute_qty_obj(cr, uid, pcl.uom_id, pcl.rounding, pol.product_uom, context=context)
-                                t_min_qty_price[pcl_minqty] = (price_conv, rounding_conv)
+                                pl_minqty = uom_obj._compute_qty_obj(cr, uid, pl.uom_id, pl.min_quantity, pol.product_uom, context=context)
+                                price_conv = uom_obj._compute_price(cr, uid, pl.uom_id.id, pl.price, pol.product_uom.id)
+                                rounding_conv = uom_obj._compute_qty_obj(cr, uid, pl.uom_id, pl.rounding, pol.product_uom, context=context)
+                                t_min_qty_price[pl_minqty] = (price_conv, rounding_conv)
 
                         l_key = list(t_min_qty_price.keys())
                         l_key.sort()
                         first = True
 
                         for min_qty in l_key:
-
                             if pol.product_qty < min_qty:
                                 if first:
                                     good_price = t_min_qty_price[min_qty][0]
@@ -2636,28 +2644,22 @@ class purchase_order(osv.osv):
                                 good_price = t_min_qty_price[min_qty][0]
                                 soq_rounding = t_min_qty_price[min_qty][1]
 
-                    if pol.product_qty <= l_key[0]:
-                        good_quantity = l_key[0]
-                    elif pol.product_qty % soq_rounding:
-                        good_quantity = (pol.product_qty - (pol.product_qty % soq_rounding)) + soq_rounding
-                    else:
-                        good_quantity = pol.product_qty
+                        if pol.product_qty <= l_key[0]:
+                            good_quantity = l_key[0]
+                        elif pol.product_qty % soq_rounding:
+                            good_quantity = (pol.product_qty - (pol.product_qty % soq_rounding)) + soq_rounding
+                        else:
+                            good_quantity = pol.product_qty
 
-                    if good_quantity in t_min_qty_price.keys():
-                        good_price = t_min_qty_price[good_quantity][0]
+                        if good_quantity in t_min_qty_price.keys():
+                            good_price = t_min_qty_price[good_quantity][0]
 
-                    if cat.currency_id != po.currency_id:
-                        good_price = rescur_obj.compute(cr, uid, cat.currency_id.id, po.currency_id.id, good_price, False, context=context)
+                        if pl.currency_id != po.currency_id:
+                            good_price = rescur_obj.compute(cr, uid, pl.currency_id.id, po.currency_id.id, good_price, False, context=context)
 
-                else:
-                    soq_rounding = pol.product_id.soq_quantity  # Get SoQ value from product not supplier catalogue
-                    if pol.product_qty % soq_rounding:
-                        good_quantity = (pol.product_qty - (pol.product_qty % soq_rounding)) + soq_rounding
-                    else:
-                        good_quantity = pol.product_qty
-                    good_price = 0  # reset to 0 due to potential previous records from catalogue...
-
-                data_to_write = {}
+                else:  # Get SoQ value from product not supplier catalogue
+                    if pol.product_qty % pol.product_id.soq_quantity:
+                        good_quantity = (pol.product_qty - (pol.product_qty % pol.product_id.soq_quantity)) + pol.product_id.soq_quantity
 
                 if good_quantity:
                     data_to_write['product_qty'] = good_quantity
@@ -2665,7 +2667,8 @@ class purchase_order(osv.osv):
                 if good_price:
                     data_to_write['price_unit'] = good_price
 
-                pol_obj.write(cr, uid, pol.id, data_to_write, context=context)
+                if data_to_write:
+                    pol_obj.write(cr, uid, pol.id, data_to_write, context=context)
 
         except Exception as e:
             logger = logging.getLogger('purchase.order.round_to_soq')
