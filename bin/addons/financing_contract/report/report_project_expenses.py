@@ -74,7 +74,8 @@ class report_project_expenses2(report_sxw.rml_parse):
         return res
 
     def getBookAm(self,contract,analytic_line):
-        # DONE: TEST JN => doc date should always be kept for this report
+        # DONE: TEST JN
+        # this report is based on doc. date
         date_context = {'currency_date': analytic_line.document_date,
                         'currency_table_id': contract.currency_table_id and contract.currency_table_id.id or None}
         amount = self.pool.get('res.currency').compute(self.cr, self.uid, analytic_line.currency_id.id, contract.reporting_currency.id, analytic_line.amount_currency or 0.0, round=True, context=date_context)

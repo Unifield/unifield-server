@@ -1580,7 +1580,7 @@ class account_bank_statement_line(osv.osv):
                 st = self.pool.get('account.bank.statement').browse(cr, uid, statement_id)
                 currency_id = st.journal_id and st.journal_id.currency and st.journal_id.currency.id or False
                 if distrib_id:
-                    # TODO: TEST JN
+                    # DONE: TEST JN
                     curr_date = currency_date.get_date(self, cr, values.get('document_date', False), values.get('date', False))
                     common_vals = {
                         'distribution_id': distrib_id,

@@ -468,7 +468,7 @@ class account_move_line_compute_currency(osv.osv):
             # amount currency is not set; it is computed from the 2 other fields
             ctx = {}
             # WARNING: since SP2, source_date have priority to date if exists. That's why it should be used for computing amounts
-            # TODO: TEST JN
+            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, move_line.document_date, move_line.date, source_date=move_line.source_date)
             ctx['currency_date'] = curr_date
 

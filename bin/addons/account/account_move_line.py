@@ -190,7 +190,7 @@ class account_move_line(osv.osv):
                         move_line_total += payment_line.amount_currency
                     else:
                         if move_line.currency_id:
-                            # TODO: TEST JN
+                            # TODO: TEST JN => this method is unused: to be removed
                             curr_date = currency_date.get_date(self, cr, payment_line.document_date, payment_line.date)
                             context_unreconciled.update({'currency_date': curr_date})
                             amount_in_foreign_currency = cur_obj.compute(cr, uid, move_line.company_id.currency_id.id, move_line.currency_id.id, (payment_line.debit - payment_line.credit), round=False, context=context_unreconciled)

@@ -96,7 +96,6 @@ class account_bank_statement(osv.osv):
             res[statement.id] -= statement.unrecorded_expenses_amount or 0.0
         return res
 
-
     def _get_period(self, cr, uid, context=None):
         periods = self.pool.get('account.period').find(cr, uid)
         if periods:
@@ -190,7 +189,6 @@ class account_bank_statement(osv.osv):
 
     def button_dummy(self, cr, uid, ids, context=None):
         return self.write(cr, uid, ids, {}, context=context)
-
 
     def statement_close(self, cr, uid, ids, journal_type='bank', context=None):
         return self.write(cr, uid, ids, {'state':'confirm'}, context=context)
