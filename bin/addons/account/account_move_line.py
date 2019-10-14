@@ -391,19 +391,6 @@ class account_move_line(osv.osv):
         data['debit'] = s > 0  and s or 0.0
         data['credit'] = s < 0  and -s or 0.0
 
-        if account and account.currency_id:
-            data['currency_id'] = account.currency_id.id
-            acc = account
-            if s>0:
-                acc = acc1
-            # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
-            compute_ctx = context.copy()
-            compute_ctx.update({
-                'res.currency.compute.account': acc,
-                'res.currency.compute.account_invert': True,
-            })
-            v = currency_obj.compute(cr, uid, account.company_id.currency_id.id, data['currency_id'], s, context=compute_ctx)
-            data['amount_currency'] = v
         return data
 
     def on_create_write(self, cr, uid, id, context=None):
@@ -1336,17 +1323,6 @@ class account_move_line(osv.osv):
                     if a.id == vals['account_id']:
                         ok = True
                         break
-            # Automatically convert in the account's secondary currency if there is one and
-            # the provided values were not already multi-currency
-            if account.currency_id and 'amount_currency' not in vals and account.currency_id.id != account.company_id.currency_id.id:
-                vals['currency_id'] = account.currency_id.id
-                ctx = {}
-                # TODO: TEST JN
-                curr_date = currency_date.get_date(self, cr, vals.get('document_date'), vals.get('date'))
-                if curr_date:
-                    ctx['currency_date'] = curr_date
-                vals['amount_currency'] = cur_obj.compute(cr, uid, account.company_id.currency_id.id,
-                                                          account.currency_id.id, vals.get('debit', 0.0)-vals.get('credit', 0.0), context=ctx)
         if not ok:
             raise osv.except_osv(_('Bad account !'), _('You can not use this general account in this journal !'))
 
