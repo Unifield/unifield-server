@@ -250,7 +250,7 @@ class account_invoice(osv.osv):
                                     if cmp_vals == vals:
                                         # Update analytic line with new amount
                                         anal_amount = (distrib_line.percentage * amount_left) / 100
-                                        # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
+                                        # TODO: TEST JN => the date of the day is used, which seems wrong
                                         amount = -1 * self.pool.get('res.currency').compute(cr, uid, cv_line[8], company_currency,
                                                                                             anal_amount, round=False, context=context)
 
