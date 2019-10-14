@@ -81,10 +81,10 @@ class analytic_account(osv.osv):
             context = {}
         res = super(analytic_account, self)._compute_level_tree(cr, uid, ids, child_ids, res, field_names, context=context)
         company_currency = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+        # DONE: TEST JN => there is no "date" in context
         if context.get('output_currency_id', False):
             for res_id in res:
                 if res[res_id].get('balance', False):
-                    # TODO: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                     new_balance = self.pool.get('res.currency').compute(cr, uid, context.get('output_currency_id'), company_currency, res[res_id].get('balance'), context=context)
                     res[res_id].update({'balance': new_balance,})
         return res
