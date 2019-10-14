@@ -19,14 +19,13 @@
 #
 ##############################################################################
 
-from osv import fields, osv
+from osv import osv
 from base import currency_date
-import decimal_precision as dp
 
 
 class account_analytic_line_compute_currency(osv.osv):
     _inherit = "account.analytic.line"
-    
+
     def update_amounts(self, cr, uid, ids, context=None):
         """
         Update analytic line amount with debit and credit if move_id exists, otherwise use amount_currency to do change
@@ -48,6 +47,6 @@ class account_analytic_line_compute_currency(osv.osv):
             if amount:
                 cr.execute('update account_analytic_line set amount=%s where id=%s', (amount, analytic_line.id))
         return True
-    
+
 account_analytic_line_compute_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
