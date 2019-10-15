@@ -152,7 +152,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         ana_line_obj = self.pool.get('account.analytic.line')
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         ml = wizard.move_line_id
-        orig_date = ml.source_date or ml.date
+        orig_date = ml.source_date or ml.date  # TODO: TEST JN
         orig_document_date = ml.document_date
         posting_date = wizard.date
         # TODO: TEST JN
@@ -521,9 +521,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             if fix_aji_currency_id:
                 new_context = context.copy()
                 # TODO: TEST JN
-                curr_date = currency_date.get_date(self, cr, max_line['aji_bro'].document_date, max_line['aji_bro'].date,
-                                                   source_date=max_line['aji_bro'].source_date)
-                new_context['currency_date'] = curr_date
+                max_line_curr_date = currency_date.get_date(self, cr, max_line['aji_bro'].document_date, max_line['aji_bro'].date,
+                                                            source_date=max_line['aji_bro'].source_date)
+                new_context['currency_date'] = max_line_curr_date
                 aji_fix_vals['amount'] = \
                     self.pool.get('res.currency').compute(cr, uid,
                                                           fix_aji_currency_id, company_currency_id,
