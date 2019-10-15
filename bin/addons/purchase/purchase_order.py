@@ -2584,7 +2584,7 @@ class purchase_order(osv.osv):
             if use_new_cursor:
                 cr.commit()
 
-            po = self.browse(cr, uid, ids[0], fields_to_fetch=['currency_id'], context=context)
+            po = self.browse(cr, uid, ids[0], fields_to_fetch=['currency_id', 'date_order'], context=context)
 
             pol_ids = pol_obj.search(cr, uid, [
                 ('order_id', 'in', ids),
@@ -2658,8 +2658,12 @@ class purchase_order(osv.osv):
                             good_price = rescur_obj.compute(cr, uid, pl.currency_id.id, po.currency_id.id, good_price, False, context=context)
 
                 else:  # Get SoQ value from product not supplier catalogue
-                    if pol.product_qty % pol.product_id.soq_quantity:
-                        good_quantity = (pol.product_qty - (pol.product_qty % pol.product_id.soq_quantity)) + pol.product_id.soq_quantity
+                    soq_rounding = pol.product_id.soq_quantity
+                    if pol.product_uom != pol.product_id.uom_id:
+                        soq_rounding = uom_obj._compute_qty_obj(cr, uid, pol.product_id.uom_id, soq_rounding, pol.product_uom, context=context)
+
+                    if pol.product_qty % soq_rounding:
+                        good_quantity = (pol.product_qty - (pol.product_qty % soq_rounding)) + soq_rounding
 
                 if good_quantity:
                     data_to_write['product_qty'] = good_quantity
