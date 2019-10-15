@@ -369,7 +369,7 @@ class analytic_distribution_wizard(osv.osv_memory):
 
             # TODO: TEST JN
             created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').\
-                create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date,
+                create_analytic_lines(cr, uid, [new_distrib_line], ml.id, create_date, orig_document_date,
                                       source_date=curr_date, name=name, context=context)
             new_line_ids.extend(created_analytic_line_ids.values())
             working_period_id = working_period_id or \
@@ -433,8 +433,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
             # TODO: TEST JN
-            ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=posting_date,
-                                                       document_date=orig_document_date, source_date=curr_date, name=name, context=context)
+            ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, posting_date,
+                                                       orig_document_date, source_date=curr_date, name=name, context=context)
             new_line_ids.extend(ret.values())
             working_period_id = working_period_id or period_ids
             # Add link to first analytic lines
@@ -607,8 +607,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 })
                 # create the ana line
                 # TODO: TEST JN
-                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=orig_date,
-                                                              document_date=orig_document_date, source_date=curr_date, ref=ml.ref)
+                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, orig_date,
+                                                              orig_document_date, source_date=curr_date, ref=ml.ref)
         # Set move line as corrected upstream if needed
         if to_reverse or to_override or to_create:
             self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)

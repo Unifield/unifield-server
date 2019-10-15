@@ -156,8 +156,9 @@ class analytic_distribution1(osv.osv):
             res[distrib.id] = True
         return res
 
-    def create_analytic_lines(self, cr, uid, ids, name, date, amount, journal_id, currency_id, document_date=False, ref=False, source_date=False, general_account_id=False, \
-                              move_id=False, invoice_line_id=False, commitment_line_id=False, context=None):
+    def create_account_analytic_lines(self, cr, uid, ids, name, date, amount, journal_id, currency_id, document_date=False, ref=False,
+                                      source_date=False, general_account_id=False, move_id=False, invoice_line_id=False,
+                                      commitment_line_id=False, context=None):
         """
         Create analytic lines from given elements:
          - date
@@ -188,7 +189,7 @@ class analytic_distribution1(osv.osv):
         curr_date = currency_date.get_date(self, cr, document_date, date, source_date=source_date)
         vals = {
             'name': name,
-            'date': source_date or date,  # TODO: TEST JN => change the value here?
+            'date': date,  # DONE: TEST JN
             'document_date': document_date,
             'ref': ref or False,
             'journal_id': journal_id,
