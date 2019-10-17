@@ -1815,6 +1815,11 @@ msgstr "Un bouton pour télécharger le rapport sera affiché à la fin de la g�
 msgid "Name of the requested report: "
 msgstr "Nom du rapport demandé: "
 
+#: controllers/templates/downloadbg.mako:87
+#, python-format
+msgid "Stop report"
+msgstr "Arrêter le rapport"
+
 #: controllers/templates/downloadbg.mako:99
 #, python-format
 msgid "Download report"
