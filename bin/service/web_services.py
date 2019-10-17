@@ -1081,6 +1081,8 @@ class report_spool(netsvc.ExportService):
             try:
                 obj = netsvc.LocalService('report.'+object)
                 bg_obj = pooler.get_pool(cr.dbname).get('memory.background.report')
+                if context.get('background_id'):
+                    context['pathit'] = True
                 (result, format) = obj.create(cr, uid, ids, datas, context)
                 if not result:
                     tb = sys.exc_info()

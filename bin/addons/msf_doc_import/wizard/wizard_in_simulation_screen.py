@@ -66,7 +66,7 @@ PACK_HEADER = [
     (_('Qty of parcels*'), 'parcel_qty', '', ''),
     (_('From parcel*'), 'parcel_from', 'mandatory', 'int'),
     (_('To parcel*'), 'parcel_to', 'mandatory', 'int'),
-    (_('Weight*'), 'total_weight', 'mandatory', 'float'),
+    (_('Weight*'), 'total_weight', '', 'float'),
     (_('Volume'), 'total_volume', '', 'float'),
     (_('Height'), 'total_height', '', 'float', 10),
     (_('Length'), 'total_length', '', 'float', 10),
