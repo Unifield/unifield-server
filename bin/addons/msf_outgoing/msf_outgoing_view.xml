@@ -100,7 +100,7 @@
 			<field name="search_view_id" ref="stock.view_picking_out_search"/>
 			<field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
 		</record>
-		<menuitem id="stock.menu_action_picking_tree" parent="menu_warehouse_deliveries" />
+		<menuitem id="stock.menu_action_picking_tree" parent="menu_warehouse_deliveries" sequence="3"/>
 		<record id="view_warehouse" model="ir.ui.view">
 			<field name="name">stock.warehouse</field>
 			<field name="model">stock.warehouse</field>
@@ -266,7 +266,7 @@
 
                                     <field name="prodlot_id"
                                             string="Batch Number"
-                                            context="{'location_id':location_id, 'product_id':product_id, 'search_default_real': True, 'hidden_perishable_mandatory': exp_check}"
+                                            context="{'location_id':location_id, 'product_id':product_id, 'search_default_real': True, 'hidden_perishable_mandatory': not lot_check}"
                                             domain="[('product_id','=?',product_id), ('check_type','=', True)]"
                                             on_change="onchange_lot_processor(prodlot_id, product_qty, location_id, product_uom, context)"
                                             attrs="{'readonly': ['|', '&amp;', ('lot_check','=',False), ('exp_check','=',False), ('fake_state', '=', 'assigned')]}"

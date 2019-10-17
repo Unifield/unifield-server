@@ -81,7 +81,7 @@ class hq_report_oca(report_sxw.report_sxw):
         rate_obj = pool.get('res.currency.rate')
         # method to create subtotal + counterpart line
         period_code = period.code or ""
-        if len(line_key) > 1 and line_debit != 0.0:
+        if len(line_key) > 1 and abs(line_debit) > 10**-3:
             currency = curr_obj.browse(cr, uid, line_key[1], context=context)
             # rate at the first day of the selected period
             rate = 0
