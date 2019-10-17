@@ -2061,6 +2061,7 @@ class stock_production_lot(osv.osv):
     _sql_constraints = [
         ('name_ref_uniq', 'unique (name, ref)', 'The combination of serial number and internal reference must be unique !'),
     ]
+
     def action_traceability(self, cr, uid, ids, context=None):
         """ It traces the information of a product
         @param self: The object pointer.
@@ -2072,7 +2073,32 @@ class stock_production_lot(osv.osv):
         """
         value = self.pool.get('action.traceability').action_traceability(cr,uid,ids,context)
         return value
+
+    def get_or_create_prodlot(self, cr, uid, name, expiry_date, product_id, context=None):
+        """
+        Search corresponding Batch using name, product and expiry date, or create it
+        """
+        if context is None:
+            context = {}
+
+        # Double check to find the corresponding batch
+        lot_ids = self.search(cr, uid, [
+            ('name', '=', name),
+            ('life_date', '=', expiry_date),
+            ('product_id', '=', product_id),
+        ], context=context)
+
+        # No batch found, create a new one
+        if not lot_ids:
+            lot_id = self.create(cr, uid, {'name': name, 'product_id': product_id, 'life_date': expiry_date}, context)
+        else:
+            lot_id = lot_ids[0]
+
+        return lot_id
+
+
 stock_production_lot()
+
 
 class stock_production_lot_revision(osv.osv):
     _name = 'stock.production.lot.revision'
@@ -2435,14 +2461,16 @@ class stock_move(osv.osv):
             'product_uos': uos_id,
             'subtype': product.product_tmpl_id.subtype,
             'asset_id': False,
-            'hidden_batch_management_mandatory': product.batch_management,
-            'hidden_perishable_mandatory': product.perishable,
             'lot_check': product.batch_management,
             'exp_check': product.perishable,
             'product_qty': 0,
             'product_uos_qty': 0,
             'product_type': product.type,
         }
+        if product.batch_management:
+            result['value']['hidden_batch_management_mandatory'] = True
+        elif product.perishable:
+            result['value']['hidden_perishable_mandatory'] = True
         if not ids:
             result['value']['name'] = product.partner_ref
         if loc_id:
@@ -3275,6 +3303,9 @@ class stock_move(osv.osv):
         keepLineNumber = context.get('keepLineNumber')
         context['keepLineNumber'] = True
         init_data = self.browse(cr, uid, id, fields_to_fetch=['product_qty', 'state', 'qty_to_process', 'pt_created'], context=context)
+        if quantity <= 0:
+            raise osv.except_osv(_('Warning'), _('Selected quantity must be greater than 0 !'))
+
         if quantity >= init_data.product_qty:
             raise osv.except_osv(_('Warning'), _('Qty to split %s is more or equal to original qty %s') % (quantity, init_data.product_qty))
 

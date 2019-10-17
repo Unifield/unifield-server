@@ -443,6 +443,27 @@
         <record id="us_5859_remove_deprecated_objects" model="patch.scripts">
             <field name="method">us_5859_remove_deprecated_objects</field>
         </record>
+        <record id="us_6342_cancel_ir" model="patch.scripts">
+            <field name="method">us_6342_cancel_ir</field>
+        </record>
+
+        <!-- UF14.1 -->
+        <record id="us_6433_remove_sale_override_sourcing" model="patch.scripts">
+            <field name="method">us_6433_remove_sale_override_sourcing</field>
+        </record>
+
+        <record id="us_6498_set_qty_to_process" model="patch.scripts">
+            <field name="method">us_6498_set_qty_to_process</field>
+        </record>
+
+        <!-- UF15.0 -->
+        <record id="us_6354_trigger_donation_account_sync" model="patch.scripts">
+            <field name="method">us_6354_trigger_donation_account_sync</field>
+        </record>
+
+        <record id="us_6457_update_uf_create_date_product" model="patch.scripts">
+            <field name="method">us_6457_update_uf_create_date_product</field>
+        </record>
 
     </data>
 </openerp>

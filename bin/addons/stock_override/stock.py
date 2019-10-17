@@ -985,7 +985,7 @@ You cannot choose this supplier because some destination locations are not avail
                     for stock_move in sp.move_lines:
                         if stock_move.purchase_line_id:
                             # get done qty for this PO line:
-                            domain = [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('state', 'in', ['done', 'cancel', 'cancel_r'])]
+                            domain = [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('state', 'in', ['done', 'cancel', 'cancel_r']), ('type', '=', 'in')]
                             done_moves = move_obj.search(cr, uid, domain, context=context)
                             done_qty = 0
                             for done_move in move_obj.browse(cr, uid, done_moves, context=context):
@@ -1490,8 +1490,10 @@ class stock_move(osv.osv):
 
             if product['batch_management']:
                 vals['hidden_batch_management_mandatory'] = True
+                vals['hidden_perishable_mandatory'] = False
             elif product['perishable']:
                 vals['hidden_perishable_mandatory'] = True
+                vals['hidden_batch_management_mandatory'] = False
             else:
                 vals.update({'hidden_batch_management_mandatory': False,
                              'hidden_perishable_mandatory': False})
@@ -1581,10 +1583,15 @@ class stock_move(osv.osv):
             # complete hidden flags - needed if not created from GUI
             product = prod_obj.read(cr, uid, vals['product_id'],
                                     ['batch_management', 'perishable', 'type'], context=context)
+
             vals.update({
-                'hidden_batch_management_mandatory': product['batch_management'],
-                'hidden_perishable_mandatory': product['perishable'],
+                'hidden_batch_management_mandatory': False,
+                'hidden_perishable_mandatory': False,
             })
+            if product['batch_management']:
+                vals['hidden_batch_management_mandatory'] = True
+            elif product['perishable']:
+                vals['hidden_perishable_mandatory'] = True
 
             if vals.get('picking_id'):
                 pick_dict = pick_obj.read(cr, uid, vals['picking_id'], ['type'], context=context)

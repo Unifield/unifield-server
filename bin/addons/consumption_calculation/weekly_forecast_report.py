@@ -421,6 +421,25 @@ class weekly_forecast_report(osv.osv):
                 in_pipe_vals = {}
                 exp_vals = {}
 
+                line_values = """<Row></Row><Row>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
+                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>""" % (
+                    _('Product Code'),
+                    _('Description'),
+                    _('Unit Price'),
+                    _('Stock value'),
+                    _('AMC/FMC'),
+                    _('Current Stock Qty'),
+                    _('Pipeline Qty'),
+                    _('Expiry Qty'),
+                )
+
                 ##### First, get the list of product_id
                 product_ids = product_obj.search(new_cr, uid, product_domain, context=context)
                 product_ids = list(set(product_ids))
@@ -467,24 +486,6 @@ class weekly_forecast_report(osv.osv):
                     new_cr.commit()
                     t = t + jump
 
-                line_values = """<Row></Row><Row>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>
-                      <Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%s</Data></Cell>""" % (
-                    _('Product Code'),
-                    _('Description'),
-                    _('Unit Price'),
-                    _('Stock value'),
-                    _('AMC/FMC'),
-                    _('Current Stock Qty'),
-                    _('Pipeline Qty'),
-                    _('Expiry Qty'),
-                )
 
                 for interval in intervals:
                     line_values += """<Cell ss:StyleID=\"header\"><Data ss:Type=\"String\">%(interval_name)s</Data></Cell>""" % {

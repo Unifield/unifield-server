@@ -206,9 +206,9 @@ class shipment(osv.osv):
 
             pack_fam_ids = shipment['pack_family_memory_ids']
             for pack_fam_id in pack_fam_ids:
-                memory_family = pack_family_dict[pack_fam_id]
+                memory_family = pack_family_dict.get(pack_fam_id)
                 # taken only into account if not done (done means returned packs)
-                if not memory_family['not_shipped'] and (shipment['state'] in ('delivered', 'done') or memory_family['state'] not in ('done',)):
+                if memory_family and not memory_family['not_shipped'] and (shipment['state'] in ('delivered', 'done') or memory_family['state'] not in ('done',)):
                     # num of packs
                     num_of_packs = memory_family['num_of_packs']
                     current_result['num_of_packs'] += int(num_of_packs)
@@ -646,10 +646,12 @@ class shipment(osv.osv):
             # if all packs have been selected, from/to have been set to 0
             # update the original move object - the corresponding original shipment (draft)
             # is automatically updated generically in the write method
+            new_max_selected = initial_to_pack - initial_from_pack + 1
             move_obj.write(cr, uid, [move.id], {
                 'product_qty': initial_qty,
                 'from_pack': initial_from_pack,
                 'to_pack': initial_to_pack,
+                'selected_number': min(new_max_selected, move.selected_number),
             }, context=context)
 
             nb_processed += 1
@@ -928,8 +930,8 @@ class shipment(osv.osv):
                     # Increase the draft move with the move quantity
 
                     draft_initial_qty = draft_move.product_qty + return_qty
-                    qty_processed = draft_move.qty_processed - return_qty
-                    move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty, 'qty_to_process': draft_initial_qty, 'qty_processed': qty_processed}, context=context)
+                    qty_processed = max(draft_move.qty_processed - return_qty, 0)
+                    move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty, 'qty_to_process': draft_initial_qty, 'qty_processed': qty_processed, 'pack_info_id': False}, context=context)
 
 
             # log the increase action - display the picking ticket view form - log message for each draft packing because each corresponds to a different draft picking
@@ -956,7 +958,7 @@ class shipment(osv.osv):
     def add_packs(self, cr, uid, ids, context=None):
         ship = self.browse(cr, uid, ids[0], fields_to_fetch=['partner_id'], context=context)
         other_ship_ids = self.search(cr, uid, [('state', '=', 'draft'), ('partner_id', '=', ship.partner_id.id)], context=context)
-        pack_ids = self.pool.get('pack.family.memory').search(cr, uid, [('pack_state', '=', 'draft'), ('shipment_id', 'in', other_ship_ids)], context=context)
+        pack_ids = self.pool.get('pack.family.memory').search(cr, uid, [('pack_state', '=', 'draft'), ('state', '!=', 'done'), ('shipment_id', 'in', other_ship_ids)], context=context)
         if not pack_ids:
             raise osv.except_osv(_('Warning !'), _('No Pack Available'))
         proc_id = self.pool.get('shipment.add.pack.processor').create(cr, uid, {'shipment_id': ids[0]}, context=context)
@@ -1242,7 +1244,6 @@ class shipment(osv.osv):
                             treat_draft = False
                         elif move.from_pack or move.to_pack:
                             # qty = 0, from/to pack should have been set to zero
-                            print move.id
                             raise osv.except_osv(
                                 _('Error'),
                                 _('There are stock moves with 0 quantity on the pack family sequence: %s %s') % (draft_packing.name, move.line_number)
@@ -3546,9 +3547,7 @@ class stock_picking(osv.osv):
                             diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, diff_qty, line.backmove_id.product_uom.id)
                         backorder_qty = max(line.backmove_id.product_qty + diff_qty, 0)
                         if backorder_qty != 0.00:
-                            new_val = {'product_qty': backorder_qty, 'qty_processed': (line.backmove_id.qty_processed or 0)+diff_qty}
-                            if line.backmove_id.product_qty == 0:
-                                new_val['qty_to_process'] = diff_qty
+                            new_val = {'product_qty': backorder_qty, 'qty_processed': line.backmove_id.qty_processed and line.backmove_id.qty_processed - diff_qty or 0, 'qty_to_process': backorder_qty}
                             move_obj.write(cr, uid, [line.backmove_id.id], new_val, context=context)
 
                 if line.qty_to_process:
@@ -4152,9 +4151,10 @@ class stock_picking(osv.osv):
                     draft_move = move.backmove_id
                     if draft_move:
                         # increase the draft move with the move quantity
-                        initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
+                        mainpick_move = move_obj.read(cr, uid, [draft_move.id], ['product_qty', 'qty_processed'], context=context)[0]
+                        initial_qty = mainpick_move['product_qty']
                         initial_qty += move.product_qty
-                        move_obj.write(cr, uid, [draft_move.id], {'product_qty': initial_qty}, context=context)
+                        move_obj.write(cr, uid, [draft_move.id], {'product_qty': initial_qty, 'qty_processed': mainpick_move['qty_processed'] and mainpick_move['qty_processed'] - move.product_qty or 0, 'qty_to_process': initial_qty}, context=context)
 
                         # log the increase action
                         # TODO refactoring needed
@@ -4820,6 +4820,13 @@ class pack_family_memory(osv.osv):
         '''
         result = {}
         compute_moves = not fields or 'move_lines' in fields
+        for _id in ids:
+            result[_id] = {
+                'amount': 0.0,
+                'total_weight': 0.0,
+                'total_volume': 0.0,
+                'move_lines': []
+            }
         for pf_memory in self.read(cr, uid, ids, ['num_of_packs',
                                                   'total_amount', 'weight', 'length', 'width', 'height', 'state'],
                                    context=context):
