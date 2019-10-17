@@ -21,11 +21,9 @@
 
 import time
 from datetime import datetime
-from operator import itemgetter
 
 from osv import fields, osv
 from tools.translate import _
-from base import currency_date
 import decimal_precision as dp
 import tools
 import netsvc
