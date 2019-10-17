@@ -53,6 +53,16 @@ class patch_scripts(osv.osv):
     }
 
     # UF15.0
+    def us_6513_rename_dispatch_to_shipment(self, cr, uid, *a, **b):
+        """
+        Rename the locations named 'Dispatch' to 'Shipment' for normal Location and Stock Mission report
+        """
+        cr.execute("""UPDATE stock_location SET name = 'Shipment' WHERE name = 'Dispatch'""")
+        cr.execute("""
+            UPDATE stock_mission_report_line_location SET remote_location_name = 'Shipment' 
+            WHERE remote_location_name = 'Dispatch' 
+        """)
+
     def us_6354_trigger_donation_account_sync(self, cr, uid, *a, **b):
         """
         Triggers a synch. on the Intersection Partners at HQ, so that their Donation Payable Account is retrieved in the lower instances
