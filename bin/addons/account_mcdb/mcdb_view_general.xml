@@ -4,7 +4,9 @@
                         <field name="display_mcdb_load_button" invisible="1" />
                         <field name="template" on_change="onchange_template()" string="Select an existing template"
                                domain="[('description', '!=', False), ('description', '!=', ''),
-                                        ('model', '=', context.get('from', 'account.move.line'))]"/>
+                                        ('model', '=', context.get('from', 'account.move.line'))]"
+                               context="{'search_default_user_active': 1}"
+                        />
                         <button icon="gtk-save" name="load_mcdb_template" string="Load" type="object"
                                 attrs="{'invisible': [('display_mcdb_load_button', '=', False)]}" />
                         <button icon="gtk-edit" name="edit_mcdb_template" string="Replace" type="object"

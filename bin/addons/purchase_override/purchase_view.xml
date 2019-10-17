@@ -47,48 +47,6 @@
             <field name="help">Suppliers (also called Partners in other areas of the system) helps you manage your address book of companies whether they are prospects, customers and/or suppliers. The partner form allows you to track and record all the necessary information to interact with your partners from the company address to their contacts as well as pricelists, and much more. If you installed the CRM, with the history tab, you can track all the interactions with a partner such as opportunities, emails, or sales orders issued.</field>
         </record>
 
-        <!-- Modify the view of the merge PO wizard -->
-        <record id="inherit_view_purchase_order_group" model="ir.ui.view">
-            <field name="name">Merger Purchase Orders</field>
-            <field name="model">purchase.order.group</field>
-            <field name="inherit_id" ref="purchase.view_purchase_order_group" />
-            <field name="arch" type="xml">
-                <xpath expr="/form//label" position="replace">
-                    <group colspan="4">
-                        <html>
-                            <p><translate>Please note that Orders will only be merged if: </translate></p>
-                            <ul>
-                                <li><translate>Purchase Orders are in draft</translate></li>
-                                <li><translate>Purchase Orders belong to the same supplier and the same currency</translate></li>
-                            </ul>
-                        </html>
-                    </group>
-                    <separator colspan="4" />
-                    <group colspan="4">
-                        <field name="po_value_id" readonly="1" colspan="2" />
-                        <newline />
-                        <field name="unmatched_categ" invisible="1" />
-                        <html colspan="4">
-                            <p>
-                                <translate>
-                                    All information of the PO template will be written in the new PO, <br />except the Delivery Requested date which will be the earliest date of all POs.<br />Any sourcing group will be lost.
-                                </translate>
-                            </p>
-                        </html>
-                        <newline />
-                        <group colspan="4" col="4" attrs="{'invisible': [('unmatched_categ', '=', False)]}">
-                            <html colspan="4">
-                                <p style="margin-top:10px;padding-left:5px;border-style:solid;border-width:1px;background-color:#F0EBA4;border-radius:5px;">
-                                    <span style="font-weight:bold"><translate>WARNING: </translate></span>
-                                    <span><translate>The category of the new PO is not consistent with the category of the other POs being merged</translate></span>
-                                </p>
-                            </html>
-                        </group>
-                    </group>
-                 </xpath>
-            </field>
-        </record>
-
         <record id="purchase_order_confirm_wizard" model="ir.ui.view">
             <field name="name">purchase.order.confirm.wizard</field>
             <field name="model">purchase.order.confirm.wizard</field>
@@ -107,7 +65,7 @@
         </record>
         
 	<!-- Invoice control -->
-        <menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" />
+        <menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" sequence="8"/>
 
         <record id="purchase_order_cancel_wizard_form_view" model="ir.ui.view">
             <field name="name">purchase.order.cancel.wizard.form.view</field>

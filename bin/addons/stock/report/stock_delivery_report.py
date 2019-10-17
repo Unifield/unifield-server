@@ -66,7 +66,7 @@ class stock_delivery_report(report_sxw.rml_parse):
                 'destination': ppl and pick.partner_id.name or fo and not fo.procurement_request and fo.partner_id.name
                 or move.location_dest_id.name or '',
                 'create_date': pick.date,
-                'shipped_date': ppl and ship and ship.shipment_expected_date or pick.date_done,
+                'shipped_date': ppl and ship and ship.shipment_actual_date or pick.date_done,
             })
 
             self._order_iterator += 1
