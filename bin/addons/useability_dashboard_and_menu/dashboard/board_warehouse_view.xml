@@ -161,9 +161,10 @@
             <field name="view_id" ref="board_warehouse_form_default"/>
         </record>
 
-        <menuitem id="stock.menu_stock_root" 
-        name="Warehouse"  
-        action="open_board_warehouse_unifield"/>
+        <menuitem id="stock.menu_stock_root"
+        name="Warehouse"
+        action="open_board_warehouse_unifield"
+        sequence="5"/>
         
     </data>
 </openerp>

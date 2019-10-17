@@ -204,6 +204,7 @@ class rml_parse(object):
             'isDateTime': self.isDateTime,
             'isTime': self.isTime,
             'getSelValue': self.getSelValue,
+            'sheet_name': self.sheet_name,
             # more context members are setup in setCompany() below:
             #  - company_id
             #  - logo
@@ -220,6 +221,30 @@ class rml_parse(object):
         self.lang_dict_called = False
         self._transl_regex = re.compile('(\[\[.+?\]\])')
         self.log_export = False
+        self.sheet_name_used = []
+        self.total_sheet_number = 0
+
+    def sheet_name(self, default_name=False, context=None):
+        sheet_max_size = 31
+        if not default_name:
+            default_name = 'Sheet %s' % (self.total_sheet_number, )
+
+        default_name = default_name[0:sheet_max_size].replace('/','_')
+
+        if default_name in self.sheet_name_used:
+            default_name = '%s %s'% (default_name[0:sheet_max_size - len('%s' % self.total_sheet_number) - 1], self.total_sheet_number)
+
+        self.sheet_name_used.append(default_name)
+        self.total_sheet_number += 1
+        return default_name
+
+    def translate_call(self, src):
+        """Translate String."""
+        ir_translation = self.pool.get('ir.translation')
+        res = ir_translation._get_source(self.cr, self.uid, self.orig_file, 'report', self.localcontext.get('lang', 'en_US'), src)
+        if not res:
+            return src
+        return res
 
     def isDate(self, date, date_format=DT_FORMAT):
         '''
@@ -334,6 +359,38 @@ class rml_parse(object):
                 obj._field.digits):
             d = obj._field.digits[1] or DEFAULT_DIGITS
         return d
+
+    def format_xls_lang(self, value, digits=None, date=False, date_time=False, grouping=True, monetary=False):
+        """format using the know cursor, language from localcontext"""
+        if digits is None:
+            digits = self.get_digits(value)
+        if isinstance(value, (str, unicode)) and not value:
+            return ''
+        pool_lang = self.pool.get('res.lang')
+        lang = self.localcontext['lang']
+
+        lang_ids = pool_lang.search(self.cr, self.uid, [('code','=',lang)])[0]
+        lang_obj = pool_lang.browse(self.cr, self.uid, lang_ids)
+
+        if date or date_time:
+            if not str(value):
+                return ''
+
+            date_format = lang_obj.date_format
+            parse_format = '%Y-%m-%d'
+            if date_time:
+                value=value.split('.')[0]
+                date_format = date_format + " " + lang_obj.time_format
+                parse_format = '%Y-%m-%d %H:%M:%S'
+            if not isinstance(value, time.struct_time):
+                return time.strftime(date_format, time.strptime(value, parse_format))
+
+            else:
+                date = datetime(*value.timetuple()[:6])
+            return date.strftime(date_format)
+
+        return lang_obj.format('%.' + str(digits) + 'f', value, grouping=grouping, monetary=monetary)
+
 
     def formatLang(self, value, digits=None, date=False, date_time=False, grouping=True, monetary=False, dp=False):
         """

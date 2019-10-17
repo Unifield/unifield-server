@@ -4122,7 +4122,7 @@ class orm(orm_template):
                     and vals[field]:
                 self._check_selection_field_value(cr, user, field, vals[field], context=context)
 
-        if self._log_access:
+        if self._log_access and not context.get('no_write_access'):
             upd0_append('write_uid=%s')
             upd0_append('write_date=now()')
 
