@@ -226,7 +226,7 @@
                     <field name="length"/>
                     <field name="width"/>
                     <field name="height"/>
-                    <field name="weight" default_focus="1" required="1"/>
+                    <field name="weight" default_focus="1" />
                     <field name="integrity_status" string=""/>
                 </tree>
             </field>

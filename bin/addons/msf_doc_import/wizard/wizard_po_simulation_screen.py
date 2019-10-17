@@ -1322,6 +1322,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
 
         cr = pooler.get_db(dbname).cursor()
 
+        context['from_vi_import'] = True
         try:
             for wiz in self.browse(cr, uid, ids, context=context):
                 w_vals = {'state': 'import_progress',}
@@ -1354,7 +1355,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
             res = True
             cr.commit()
             cr.close(True)
-
+        context['from_vi_import'] = False
         return res
 
 wizard_import_po_simulation_screen()
@@ -1780,11 +1781,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 err_msg = _('Incorrect date value for field \'Stock Take Date\'')
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
-            if write_vals.get('imp_stock_take_date') and write_vals['imp_stock_take_date'] > line.simu_id.order_id.date_order:
-                err_msg = _('The Date of Stock Take is not consistent! It should not be later than %s\'s creation date')\
-                    % (line.simu_id.order_id.name,)
-                errors.append(err_msg)
-                write_vals['type_change'] = 'error'
 
             # Delivery Requested Date
             drd_value = values[10]
@@ -1864,7 +1860,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
-
         nb_lines = float(len(ids))
         line_treated = 0.00
         percent_completed = 0.00
