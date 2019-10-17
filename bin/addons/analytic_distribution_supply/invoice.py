@@ -25,6 +25,8 @@ from osv import osv
 from osv import orm
 from osv import fields
 from tools.translate import _
+from base import currency_date
+
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
@@ -178,6 +180,8 @@ class account_invoice(osv.osv):
         if not po_ids or not account_amount_dic:
             return True
 
+        if context is None:
+            context = {}
 
         # po is state=cancel on last IN cancel
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
@@ -250,8 +254,10 @@ class account_invoice(osv.osv):
                                     if cmp_vals == vals:
                                         # Update analytic line with new amount
                                         anal_amount = (distrib_line.percentage * amount_left) / 100
-                                        # DONE: TEST JN => the date of the day is used, which seems wrong: told in point 8) of US-5848
-                                        # US-5848: the date of the day is used FOR NOW
+                                        # DONE: TEST JN
+                                        curr_date = currency_date.get_date(self, cr, eng_line.document_date, eng_line.date,
+                                                                           source_date=eng_line.source_date)
+                                        context.update({'currency_date': curr_date})
                                         amount = -1 * self.pool.get('res.currency').compute(cr, uid, cv_line[8], company_currency,
                                                                                             anal_amount, round=False, context=context)
 
