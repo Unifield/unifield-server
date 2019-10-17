@@ -727,50 +727,6 @@ class stock_move(osv.osv):
         '''
         return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, ['product_qty', 'product_uos_qty'])
 
-    def onchange_quantity(self, cr, uid, ids, product_id, product_qty,
-                          product_uom, product_uos):
-        '''
-        Check the rounding of the qty according to the UoM
-        '''
-        res = super(stock_move, self).onchange_quantity(cr, uid, ids, product_id, product_qty, product_uom, product_uos)
-
-        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, ['product_qty', 'product_uos_qty'], res)
-
-    def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False, parent_type=False, purchase_line_id=False, out=False,):
-        '''
-        the product changes, set the hidden flag if necessary
-        '''
-        result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
-                                                             loc_dest_id, address_id)
-
-        if prod_id and parent_type in ('in', 'out'):
-            prod_obj = self.pool.get('product.product')
-            # Test the compatibility of the product with a stock move
-            result, test = prod_obj._on_change_restriction_error(cr, uid, prod_id, field_name='product_id', values=result, vals={'constraints': ['picking']})
-
-        # product changes, prodlot is always cleared
-        result.setdefault('value', {})['prodlot_id'] = False
-        # reset the hidden flag
-        result.setdefault('value', {})['hidden_batch_management_mandatory'] = False
-        result.setdefault('value', {})['hidden_perishable_mandatory'] = False
-        if prod_id:
-            product = self.pool.get('product.product').browse(cr, uid, prod_id)
-
-            if product.batch_management:
-                result.setdefault('value', {})['hidden_batch_management_mandatory'] = True
-                result['warning'] = {'title': _('Info'),
-                                     'message': _('The selected product is Batch Management.')}
-
-            elif product.perishable:
-                result.setdefault('value', {})['hidden_perishable_mandatory'] = True
-                result['warning'] = {'title': _('Info'),
-                                     'message': _('The selected product is Perishable.')}
-        # quantities are set to False
-        result.setdefault('value', {}).update({'product_qty': 0.00,
-                                               'product_uos_qty': 0.00,
-                                               })
-
-        return result
 
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         '''
@@ -878,7 +834,7 @@ class stock_move(osv.osv):
         'lot_check': fields.function(
             _get_checks_all,
             method=True,
-            string='B.Num',
+            string='BN',
             type='boolean',
             readonly=True,
             multi="m",
@@ -886,7 +842,7 @@ class stock_move(osv.osv):
         'exp_check': fields.function(
             _get_checks_all,
             method=True,
-            string='Exp',
+            string='ED',
             type='boolean',
             readonly=True,
             multi="m",
@@ -1342,7 +1298,7 @@ class stock_production_lot(osv.osv):
         'lot_check': fields.function(
             _get_checks_all,
             method=True,
-            string='B.Num',
+            string='BN',
             type='boolean',
             readonly=True,
             multi="m",
@@ -1350,7 +1306,7 @@ class stock_production_lot(osv.osv):
         'exp_check': fields.function(
             _get_checks_all,
             method=True,
-            string='Exp',
+            string='ED',
             type='boolean',
             readonly=True,
             multi="m",
@@ -2163,7 +2119,7 @@ class stock_inventory_line(osv.osv):
         'lot_check': fields.function(
             _get_checks_all,
             method=True,
-            string='B.Num',
+            string='BN',
             type='boolean',
             readonly=True,
             multi="m",
@@ -2171,7 +2127,7 @@ class stock_inventory_line(osv.osv):
         'exp_check': fields.function(
             _get_checks_all,
             method=True,
-            string='Exp',
+            string='ED',
             type='boolean',
             readonly=True,
             multi="m",

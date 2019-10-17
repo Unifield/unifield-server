@@ -204,18 +204,14 @@ class stock_picking(osv.osv):
         root = ET.fromstring(file_content)
         parcel_from = root.findall('.//field[@name="parcel_from"]')
         parcel_to = root.findall('.//field[@name="parcel_to"]')
-        total_weight = root.findall('.//field[@name="total_weight"]')
         if parcel_from:
             parcel_from = parcel_from[0].text or ''
             parcel_from = parcel_from.strip()
         if parcel_to:
             parcel_to = parcel_to[0].text or ''
             parcel_to = parcel_to.strip()
-        if total_weight:
-            total_weight = total_weight[0].text or ''
-            total_weight = total_weight.strip()
 
-        return parcel_from and parcel_to and total_weight and True or False
+        return parcel_from and parcel_to and True or False
 
 
     def auto_import_incoming_shipment(self, cr, uid, file_path, context=None):
@@ -310,7 +306,7 @@ class stock_picking(osv.osv):
 
         pick = self.browse(cr, uid, ids[0], context=context)
         if not pick.filetype:
-            raise osv.except_osv(_('Error'), _('You must select a file type before print the template'))
+            raise osv.except_osv(_('Error'), _('You must select a file type'))
 
         report_name = pick.filetype == 'excel' and 'incoming.shipment.xls' or 'incoming.shipment.xml'
 

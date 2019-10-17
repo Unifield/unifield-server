@@ -1186,8 +1186,8 @@ class account_move(osv.osv):
                 raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
-                if m.status == 'sys':
-                    raise osv.except_osv(_('Warning'), _('You are not able to approve a Journal Entry that comes from the system!'))
+                if m.status == 'sys' and not context.get('from_recurring_entries'):
+                    raise osv.except_osv(_('Warning'), _("You can't approve a Journal Entry that comes from the system!"))
                 # UFTP-105: Do not permit to validate a journal entry on a period that is not open
                 if m.period_id and m.period_id.state != 'draft':
                     raise osv.except_osv(_('Warning'), _('You cannot post entries in a non-opened period: %s') % (m.period_id.name))
@@ -1238,6 +1238,7 @@ class account_move(osv.osv):
         for m in self.browse(cr, uid, ids, fields_to_fetch=['manual_name', 'line_id'], context=context):
             if m.manual_name and m.line_id:
                 aml_obj.write(cr, uid, [ml.id for ml in m.line_id], {'name': m.manual_name}, context=context)
+        return True
 
     def copy(self, cr, uid, a_id, default=None, context=None):
         """
@@ -1247,6 +1248,8 @@ class account_move(osv.osv):
             context = {}
         if default is None:
             default = {}
+
+        setup_obj = self.pool.get('unifield.setup.configuration')
 
         context.update({'omit_analytic_distribution': False})
         je = self.browse(cr, uid, [a_id], context=context)[0]
@@ -1263,12 +1266,18 @@ class account_move(osv.osv):
             period_id = new_period[0]
             date_start = period_obj.read(cr, uid, period_id, ['date_start'], context=context)['date_start']
             date_start_dt = datetime.datetime.strptime(date_start, '%Y-%m-%d')
-            doc_date = (datetime.datetime.strptime(je.document_date, '%Y-%m-%d') + relativedelta(month=date_start_dt.month, year=date_start_dt.year)).strftime('%Y-%m-%d')
             post_date = (datetime.datetime.strptime(je.date, '%Y-%m-%d') + relativedelta(month=date_start_dt.month,year=date_start_dt.year)).strftime('%Y-%m-%d')
+            # doc. date is the original one except if doc and posting dates would be in different FY:
+            # if this is forbidden in the configuration, the doc. date will be 'FY-01-01'
+            if datetime.datetime.strptime(je.document_date, '%Y-%m-%d').year != date_start_dt.year and \
+                    not setup_obj.get_config(cr, uid).previous_fy_dates_allowed:
+                doc_date = '%s-01-01' % date_start_dt.year
+            else:
+                doc_date = je.document_date
         else:
-            doc_date = je.document_date
             period_id = je.period_id and je.period_id.id or False
             post_date = je.date
+            doc_date = je.document_date
 
         vals = {
             'line_id': [],
@@ -1281,6 +1290,7 @@ class account_move(osv.osv):
         res = super(account_move, self).copy(cr, uid, a_id, vals, context=context)
         for line in je.line_id:
             line_default = {
+                'analytic_lines': [],
                 'move_id': res,
                 'document_date': doc_date,
                 'date': post_date,

@@ -3,6 +3,6 @@
     <data>
         <menuitem 
                 id="stock.menu_product_category_config_stock" 
-                parent="account.menu_configuration_misc" />
+                parent="account.menu_configuration_misc" sequence="0"/>
     </data>
 </openerp>

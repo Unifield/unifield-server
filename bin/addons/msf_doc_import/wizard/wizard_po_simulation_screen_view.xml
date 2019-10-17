@@ -95,9 +95,10 @@
                                     <field name="str_in_line_number" />
                                     <field name="in_ext_ref" />
                                     <field name="type_change" invisible="1"/>
+                                    <field name="ad_error" invisible="1"/>
                                     <field name="chg_text" />
                                     <field name="error_msg" invisible="1" />
-                                    <button name="get_error_msg" type="object" icon="gtk-dialog-warning" string="See error" attrs="{'invisible': [('type_change', '!=', 'error')]}" />
+                                    <button name="get_error_msg" type="object" icon="gtk-dialog-warning" string="See error" attrs="{'invisible': [('ad_error', '=', ''), ('type_change', '!=', 'error')]}" />
                                     <field name="imp_product_id" />
                                     <field name="imp_qty" />
                                     <field name="imp_uom" />

@@ -108,31 +108,5 @@
             </field>
         </record>
 
-        <record id="view_picking_ticket_import_form_view" model="ir.ui.view">
-            <field name="name">view.picking.ticket.import.form.view</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="priority">45</field>
-            <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/notebook//field[@name='move_lines']" position="before">
-                        <group name="import" string="Import Lines" colspan="4" attrs="{'invisible': ['|', ('state', 'not in', ('draft', 'confirmed', 'assigned')), ('from_wkf', '=', True)]}">
-                            <button name="wizard_import_pick_line" string="Import lines" icon="gtk-dnd" col="1" type="object" />
-                            <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0" />
-                            <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
-                            <newline />
-                            <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
-                        </group>
-                    </xpath>
-
-                    <xpath expr="/form//field[@name='move_lines']//form/field[@name='state']" position="after">
-                        <newline />
-                        <field name="text_error" colspan="4" nolabel="1" readonly="1" />
-                    </xpath>
-                </data>
-            </field>
-        </record>
-        
     </data>
 </openerp>

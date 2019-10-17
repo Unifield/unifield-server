@@ -106,9 +106,9 @@ class account_analytic_line(osv.osv):
 
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
-        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]", m2o_order='code'),
+        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]", m2o_order='code', ondelete='restrict'),
         'from_write_off': fields.boolean(string='Write-off?', readonly=True, help="Indicates that this line come from a write-off account line."),
-        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]"),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]", ondelete='restrict'),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
         'free_account': fields.function(_get_is_free, fnct_search=_search_is_free, method=True, type='boolean', string='Free account?', help="Does that line come from a Free 1 or Free 2 account?"),
         'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
@@ -236,6 +236,17 @@ class account_analytic_line(osv.osv):
             view['arch'] = etree.tostring(tree)
         return view
 
+    def _round_amounts(self, vals):
+        """
+        Updates vals with the booking and fctal amounts rounded to 2 digits
+        This avoids the rounding to be done in the SQL query as it would be different from the one done in Python
+        Cf: round(1.125, 2) ==> 1.13 / '%.2lf' % 1.125 ==> 1.12
+        """
+        if vals.get('amount_currency'):
+            vals['amount_currency'] = round(vals['amount_currency'], 2)
+        if vals.get('amount'):
+            vals['amount'] = round(vals['amount'], 2)
+
     def create(self, cr, uid, vals, context=None):
         entry_sequence_sync = None
         if vals.get('entry_sequence',False):
@@ -251,6 +262,7 @@ class account_analytic_line(osv.osv):
         invoice_line_obj = self.pool.get('account.invoice.line')
         aal_obj = self.pool.get('account.analytic.line')
         aal_account_obj = self.pool.get('account.analytic.account')
+        self._round_amounts(vals)
         # SP-50: If data is synchronized from another instance, just create it with the given document_date
         if context.get('update_mode') in ['init', 'update']:
             if not context.get('sync_update_execution', False) or not vals.get('document_date', False):
@@ -299,6 +311,7 @@ class account_analytic_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        self._round_amounts(vals)
         for l in self.browse(cr, uid, ids):
             vals2 = vals.copy()
             for el in ['account_id', 'cost_center_id', 'destination_id']:

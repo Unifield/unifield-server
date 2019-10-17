@@ -52,7 +52,83 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF15.0
+    def us_6354_trigger_donation_account_sync(self, cr, uid, *a, **b):
+        """
+        Triggers a synch. on the Intersection Partners at HQ, so that their Donation Payable Account is retrieved in the lower instances
+        """
+        if _get_instance_level(self, cr, uid) == 'hq':
+            cr.execute("""
+                UPDATE ir_model_data 
+                SET touched ='[''donation_payable_account'']', last_modification = NOW()
+                WHERE module='sd' 
+                AND model='res.partner' 
+                AND res_id IN (
+                    SELECT id
+                    FROM res_partner
+                    WHERE partner_type = 'section'
+                );
+            """)
+            self._logger.warn('Sync. triggered on %s Intersection Partner(s).' % (cr.rowcount,))
+        return True
+
+    def us_6457_update_uf_create_date_product(self, cr, uid, *a, **b):
+        """
+        Fill the uf_create_date for existing products
+        """
+        cr.execute("""UPDATE product_product SET uf_create_date = create_date WHERE uf_create_date IS NULL""")
+        self._logger.warn('Set uf_create_date on %d products' % cr.rowcount)
+        return True
+
+    # UF14.1
+    def us_6433_remove_sale_override_sourcing(self, cr, uid, *a, **b):
+        cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where name='sale_order_sourcing_progress_action' and module='sale_override' and model='ir.actions.act_window')")
+        l1 = cr.rowcount
+        cr.execute("delete from ir_model_data where name='sale_order_sourcing_progress_action' and module='sale_override' and model='ir.actions.act_window'")
+        l2 = cr.rowcount
+        self._logger.warn("Deleted %d+%d old sourcing progress entry" % (l1, l2))
+        return True
+
+    def us_6498_set_qty_to_process(self, cr, uid, *a, **b):
+        cr.execute('''
+            update stock_move
+                set selected_number=to_pack-from_pack+1
+            where id =ANY(
+                select unnest(move_lines) from pack_family_memory where shipment_id in (select id from shipment where state='shipped') and state!='done'
+                )
+        ''')
+        self._logger.warn('Set qty to process on %d stock.move' % cr.rowcount)
+        return True
+
     # UF14.0
+    def us_6342_cancel_ir(self, cr, uid, *a, **b):
+        """
+         bug at IR import: IRs stuck in draft state, edition not allowed => set to Cancel
+        """
+
+        ir_name = []
+        ir_ids = []
+        cr.execute("""select ir.name, ir.id from sale_order ir left join sale_order_line irl on irl.order_id=ir.id  where ir.state='draft' and ir.import_in_progress='t' and ir.procurement_request='t'  group by ir.name,ir.id order by ir.name""")
+        for x in cr.fetchall():
+            ir_name.append(x[0])
+            ir_ids.append(x[1])
+
+        if ir_name:
+            self._logger.warn('%d IRs to Cancel: %s' % (len(ir_name), ', '.join(ir_name)))
+            # SOL
+            cr.execute('''update sale_order_line set state='cancel' where order_id in %s ''', (tuple(ir_ids),))
+
+            # wkf
+            cr.execute('''update wkf_workitem set act_id=(select id from wkf_activity where name='cancel' and wkf_id = (select id from wkf where osv='sale.order.line'))
+                 where inst_id in (select id from wkf_instance where res_type='sale.order.line' and res_id in (select id from sale_order_line where order_id in %s))
+            ''', (tuple(ir_ids),))
+            cr.execute('''update wkf_instance set state='complete' where res_type='sale.order.line' and res_id in (select id from sale_order_line where order_id in %s)''', (tuple(ir_ids),))
+
+            # SO
+            cr.execute('''update sale_order set state='cancel', import_in_progress='f' where id in %s ''', (tuple(ir_ids),))
+
+        return True
+
     def us_5952_delivered_closed_outs_to_delivered_state(self, cr, uid, *a, **b):
         """
         Set the OUT pickings in 'Done' state with delivered = True to the 'Delivered' state
@@ -67,7 +143,6 @@ class patch_scripts(osv.osv):
         cr.execute("update ir_cron set function='send_backup_bg' where function='send_backup' and model='msf.instance.cloud'")
         return True
 
-    # UF14.0
     def us_6075_set_paid_invoices_as_closed(self, cr, uid, *a, **b):
         cr.execute('''SELECT i.id, i.number
             FROM account_invoice i
@@ -158,6 +233,32 @@ class patch_scripts(osv.osv):
             cr.execute('delete from res_users where login in %s', (tuple(login_to_del),))
             self._logger.warn('%d users deleted' % (cr.rowcount, ))
 
+        return True
+
+    # UF13.1
+    def us_5859_remove_deprecated_objects(self, cr, uid, *a, **b):
+        to_del = [
+            'stock.move.track',
+            'stock.move.consume',
+            'stock.move.scrap',
+            'create.picking.processor',
+            'create.picking.move.processor',
+            'create.picking',
+            'validate.picking.processor',
+            'validate.move.processor',
+            'ppl.move.processor',
+            'shipment.processor',
+            'shipment.family.processor',
+            'shipment.additional.line.processor',
+            'shipment.wizard',
+            'memory.additionalitems',
+            'stock.move.memory.shipment.additionalitems',
+        ]
+        cr.execute('delete from ir_model where model in %s', (tuple(to_del),))
+        return True
+
+    def us_5859_set_flag_on_sub_pick(self, cr, uid, *a, **b):
+        cr.execute("update stock_picking set is_subpick = 't' where subtype='picking' and name like '%-%'")
         return True
 
     # UF13.0
