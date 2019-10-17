@@ -7334,6 +7334,7 @@ msgstr "Vous aide à gérer et à suivre vos relations avec vos clients, comme l
 #: code:addons/register_accounting/account_direct_invoice_wizard.py:707
 #: code:addons/register_accounting/wizard/direct_invoice.py:418
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:276
+#: code:addons/analytic_distribution/account_bank_statement.py:122
 #, python-format
 msgid "Analytic distribution"
 msgstr "Distribution analytique"
@@ -11323,11 +11324,11 @@ msgstr "Sourced references"
 msgid "This informs system if this item is corrigible. Criteria: the entry state should be posted, account should not be payable or receivable, item have not been corrected, item have not been reversed and account is not the default one of the linked register (statement)."
 msgstr "Ce système informe si cette écriture est corrigible. Critères:  le statut de l'écriture doit être comptabilisé, ce ne doit pas être un compte de crédit ou de débit, l'écriture n'a pas été contrepassée et le compte n'est pas le compte par défaut du registre connexe (relevé)."
 
-#. module: res_currency_functional
-#: code:addons/res_currency_functional/account_move_line_compute_currency.py:684
+#. module: account
+#: code:addons/account/account_move_line.py:582
 #, python-format
 msgid "Operator not supported!"
-msgstr "Operator not supported!"
+msgstr "Opérateur non pris en charge !"
 
 #. module: msf_outgoing
 #: report:invoice:0
@@ -50674,7 +50675,6 @@ msgid "Processing quantity %d for %s is larger than the available quantity %d!"
 msgstr "Traitement quantité %d pour %s est plus grande que la quantité disponible %d !"
 
 #. modules: account_corrections, sync_client
-#: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:415
 #: code:addons/account_corrections/wizard/journal_items_corrections.py:397
 #: code:addons/sync_client/special_handling.py:56
 #, python-format
@@ -62841,7 +62841,7 @@ msgstr "Asie/Irkutsk"
 msgid "Functional Amount"
 msgstr "Montant Fonctionnel"
 
-#. modules: delivery_mechanism, msf_doc_import, msf_tools, return_claim
+#. modules: delivery_mechanism, msf_doc_import, msf_tools, return_claim, sync_client
 #: code:addons/delivery_mechanism/delivery_mechanism.py:1228
 #: code:addons/delivery_mechanism/delivery_mechanism.py:1315
 #: code:addons/delivery_mechanism/delivery_mechanism.py:1379
@@ -62855,6 +62855,8 @@ msgstr "Montant Fonctionnel"
 #: selection:automated.export.job,state:0
 #: selection:claim.event,hidden_state:0
 #: selection:claim.event,state:0
+#: code:addons/sync_client/backup.py:105
+#: code:addons/sync_client/backup.py:177
 #, python-format
 msgid "In progress"
 msgstr "En cours"
@@ -72250,7 +72252,7 @@ msgstr "Ligne num."
 msgid "Navajo"
 msgstr "Navajo"
 
-#. modules: product_nomenclature, process, financing_contract, mission_stock, procurement_cycle, sync_client, supplier_catalogue, analytic_distribution, product, finance, hr, msf_instance, kit, base, msf_tools, res_currency_functional, procurement_report, threshold_value, purchase, account, resource, msf_partner, procurement_auto, msf_field_access_rights, sale, procurement, msf_button_access_rights, stock, product_attributes, account_period_closing_level
+#. modules: product_nomenclature, process, financing_contract, mission_stock, procurement_cycle, sync_client, supplier_catalogue, analytic_distribution, product, finance, hr, msf_instance, kit, base, msf_tools, res_currency_functional, procurement_report, threshold_value, purchase, account, resource, msf_partner, procurement_auto, msf_field_access_rights, sale, procurement, msf_button_access_rights, stock, product_attributes, account_period_closing_level, account_mcdb
 #: field:account.account,active:0
 #: field:account.analytic.journal,active:0
 #: field:account.journal.period,active:0
@@ -72315,6 +72317,7 @@ msgstr "Navajo"
 #: field:account.period,active:0
 #: report:addons/kit/report/kit_mass_import_export_xls.mako:114
 #: view:msf.instance:0
+#: view:res.users:0
 #: field:automated.export,active:0
 #: field:product.heat_sensitive,active:0
 #: field:sync.client.message_rule,active:0
@@ -96309,8 +96312,9 @@ msgstr "Réallocation"
 msgid "Product available"
 msgstr "Produit disponible"
 
-#. module: msf_instance
+#. module: msf_instance, sync_client
 #: code:addons/msf_instance/msf_instance.py:754
+#: code:addons/sync_client/backup.py:197
 #, python-format
 msgid "Only production instances are allowed !"
 msgstr "Seules les instances de production sont autorisées !"
@@ -104292,6 +104296,7 @@ msgid "Line %s: Column \"Qty to Process\" should contains the quantity to proces
 msgstr "Ligne %s: La colonne \"Qté à Traiter\" devrait contenir la quantité à traiter et ne peut pas être vide, merci de la remplir avec un \"0\""
 
 #. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:191
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:336
 #, python-format
 msgid "The total quantity of line #%s in the import file doesn't match with the total qty on screen"
@@ -105521,12 +105526,6 @@ msgid "Line %s : The new source location is not compatible with the product type
 ""
 msgstr "Ligne %s: La nouvelle zone source n'est pas compatible avec le type du produit. Zone non modifiée."
 
-#. module: msf_supply_doc_export
-#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:191
-#, python-format
-msgid "Line %s: Matching move not found"
-msgstr "Ligne %s: aucun mouvement correspondant trouvé"
-
 #. module: stock
 #: field:stock.picking,is_subpick:0
 msgid "Main or Sub PT"
@@ -105711,6 +105710,12 @@ msgstr "Qté à Prélever"
 #, python-format
 msgid "Qty to process must be positive, line(s): %s"
 msgstr "La qté à traiter doit être positive, ligne(s): %s"
+
+#. module: stock
+#: code:addons/stock/stock.py:3172
+#, python-format
+msgid "Selected quantity must be greater than 0 !"
+msgstr "La quantité doit être supérieure à 0 !"
 
 #. module: stock
 #: code:addons/stock/stock.py:3174
@@ -106536,12 +106541,6 @@ msgstr "Veuillez vous assurer que vous avez selectionné la bonne valeur pour le
 #, python-format
 msgid "Line %s. Period is missing."
 msgstr "Ligne %s. Il manque la Période."
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:615
-#, python-format
-msgid "All Document Dates should be in the same period."
-msgstr "Toutes les Dates de Document doivent être dans la même période."
 
 #. module: order_types
 #: report:order.type.donation.certificate:0
@@ -107377,3 +107376,181 @@ msgstr "Date d'Expédition"
 #: report:purchase.order.merged:0
 msgid "Functional total cost :"
 msgstr "Total Coût Fonctionnel :"
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+msgid "Active Users"
+msgstr "Utilisateurs Actifs"
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_period.py:203
+#, python-format
+msgid "Impossible to check the revaluation entries of the period: Revaluation Journal not found."
+msgstr "Impossible de vérifier les écritures de réévaluation de la période : Journal de Réévaluation non trouvé."
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_period.py:207
+#, python-format
+msgid "You should run the month-end revaluation before closing the period."
+msgstr "Veuillez lancer la réévaluation de fin de mois avant de fermer la période."
+
+#. module: sync_client
+#: code:addons/sync_client/backup.py:127
+#, python-format
+msgid "\"Path to WAL Dir\" is empty"
+msgstr "Le chemin vers le \"dossier WAL\" est vide"
+
+#. module: sync_client
+#: code:addons/sync_client/backup.py:129
+#, python-format
+msgid "%s not found"
+msgstr "%s non trouvé"
+
+#. module: sync_client
+#: field:backup.config,continuous_backup_enabled:0
+msgid "Activate continuous backup"
+msgstr "Activer la sauvegarde continue"
+
+#. module: sync_client
+#: field:backup.config,basebackup_error:0
+msgid "Base backup error"
+msgstr "Erreur Sauvegarde Base"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Continuous Backup"
+msgstr "Sauvegarde Continue"
+
+#. module: sync_client
+#: code:addons/sync_client/backup.py:125
+#, python-format
+msgid "Continuous Backup is disabled"
+msgstr "Sauvegarde Continue désactivée"
+
+#. module: sync_client
+#: code:addons/sync_client/backup.py:162
+#, python-format
+msgid "Continuous backup disabled"
+msgstr "Sauvegarde Continue désactivée"
+
+#. module: sync_client
+#: field:backup.config,basebackup_date:0
+msgid "Date of base backup"
+msgstr "Date de la sauvegarde Base"
+
+#. module: sync_client
+#: field:backup.config,rsync_date:0
+msgid "Date of last rsync"
+msgstr "Date du dernier rsync"
+
+#. module: sync_client
+#: field:backup.config,help_wal:0
+msgid "Display steps to set Continuous Backup"
+msgstr "Afficher les étapes pour configurer la Sauvegarde Continue"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Generate Base Backup"
+msgstr "Générer la sauvegarde Base"
+
+#. module: sync_client
+#: help:backup.config,remote_host:0
+#: help:backup.config,remote_user:0
+msgid "Keep empty to use default value"
+msgstr "Laisser vide pour utiliser les valeurs par défaut"
+
+#. module: sync_client
+#: field:backup.config,wal_directory:0
+msgid "Local Path to WAL Archive Dir"
+msgstr "Dossier Local des archives WAL"
+
+#. module: sync_client
+#: field:backup.config,ssh_config_dir:0
+msgid "Local Path to ssh config dir"
+msgstr "Dossier Local de la configuration ssh"
+
+#. module: sync_client
+#: help:backup.config,wal_directory:0
+msgid "Must be set in postgresql.conf"
+msgstr "Doit être mis dans postgresql.conf"
+
+#. module: sync_client
+#: field:backup.config,remote_host:0
+msgid "Remote Host"
+msgstr "Serveur Distant"
+
+#. module: sync_client
+#: field:backup.config,remote_user:0
+msgid "Remote User"
+msgstr "Utilisateur Distant"
+
+#. module: sync_client
+#: field:backup.config,rsync_error:0
+msgid "Rsync error"
+msgstr "Erreur Rsync"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Send WAL/Base backup to remote"
+msgstr "Envoyer WAL/Base vers le serveur"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Edit pg_hba.conf and add:"
+msgstr "Éditer pg_hba.conf et ajouter:"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Edit postgresql.conf and set:"
+msgstr "Éditer postgresql.conf et indiquer:"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid ""
+"Replace the 3 occurences of \"C:\\\\WAL\\\\\" with the path to the local WAL"
+" Archive directory."
+msgstr "Remplacer les 3 occurrences de  \"C:\\\\WAL\\\\\" par votre répertoire local"
+" des archives WAL"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Restart PostgreSQL"
+msgstr "Redémarrer PostgreSQL"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Start OpenERP server"
+msgstr "Démarrer le serveur OpenERP"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Steps to activate Continuous backup"
+msgstr "Étapes pour activer la Sauvegarde Continue"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Stop OpenERP server"
+msgstr "Arrêter le serveur OpenEPR"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Unzip your keys in in C:\\Program Files (x86)\\msf\\"
+msgstr "Dé-zipper vos clés dans C:\\Program Files (x86)\\msf\\"
+
+#. module: msf_supply_doc_export
+#: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:271
+#, python-format
+msgid "Line %s: Column \"Qty to Process\" should be greater than 0"
+msgstr "Ligne %s: La colonne \"Qté à Traiter\" doit être supérieure à 0"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/import_invoice_on_registers.py:175
+#, python-format
+msgid "You can't group these lines together as they aren't all linked to the same employee."
+msgstr "Vous ne pouvez pas regrouper ces lignes car elles ne sont pas toutes liées au même employé."
+
+#. module: msf_instance
+#: code:addons/msf_instance/add_instance.py:119
+#, python-format
+msgid "No Analytic Journal %s found for the Proprietary Instance %s."
+msgstr "Aucun Journal Analytique %s trouvé pour l'Instance Propriétaire %s."
