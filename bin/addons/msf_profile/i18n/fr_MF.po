@@ -107549,3 +107549,33 @@ msgstr "Vous ne pouvez pas regrouper ces lignes car elles ne sont pas toutes li�
 #, python-format
 msgid "No Analytic Journal %s found for the Proprietary Instance %s."
 msgstr "Aucun Journal Analytique %s trouvé pour l'Instance Propriétaire %s."
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/wizard/output_currency_for_export.py:292
+#, python-format
+msgid "No psql id found"
+msgstr "Aucun id psql trouvé"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/wizard/output_currency_for_export.py:290
+#, python-format
+msgid "Report done"
+msgstr "Rapport généré"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/wizard/output_currency_for_export.py:287
+#, python-format
+msgid "Report in exception"
+msgstr "Rapport en erreur"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/wizard/output_currency_for_export.py:285
+#, python-format
+msgid "Report not found"
+msgstr "Rapport non trouvé"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/wizard/output_currency_for_export.py:280
+#, python-format
+msgid "User does not match"
+msgstr "L'utilisateur ne correspond pas"
