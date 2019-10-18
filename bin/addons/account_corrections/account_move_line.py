@@ -545,7 +545,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     # update amount on new distribution
                     ana_obj.update_distribution_line_amount(cr, uid, new_distrib_id, (-1 * (ml.debit - ml.credit)), context=context)
                 new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id, 'date': date, 'document_date': ml.document_date, 'period_id': period_ids[0]}, context=context)
-                # TODO: TEST JN
+                # DONE: TEST JN
                 curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
                 vals.update({
                     'name': name,
