@@ -1553,10 +1553,10 @@ class product_attributes(osv.osv):
                                                        ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
 
             # Check if the product is in stock picking
-            # All stock moves in a stock.picking not draft/cancel/done or all stock moves in a shipment not delivered/done/cancel
+            # All stock moves in a stock.picking not draft/cancel/done/delivered or all stock moves in a shipment not delivered/done/cancel
             has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
                                                       ('picking_id', '!=', False),
-                                                      '|', ('picking_id.state', 'not in', ['draft', 'done', 'cancel']),
+                                                      '|', ('picking_id.state', 'not in', ['draft', 'done', 'delivered', 'cancel']),
                                                       '&', ('picking_id.shipment_id', '!=', False),
                                                       ('picking_id.shipment_id.state', 'not in', ['delivered', 'done', 'cancel']),
                                                       ], context=context)
