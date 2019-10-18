@@ -50,7 +50,8 @@ class composition_kit(osv.osv):
                                         The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : 
                                         Module*, Product Code*, Product Description*, Quantity* and Product UoM*"""),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
-    }
+        'composition_version_import': fields.many2one('composition.kit', string="Version to import"),
+        }
 
     def mark_as_completed(self, cr, uid, ids, context=None):
         """
@@ -61,7 +62,41 @@ class composition_kit(osv.osv):
             if any([item for item in obj.composition_item_ids if item.to_correct_ok]):
                 raise osv.except_osv(_('Warning !'), _('Please fix the line with errors (red lines)'))
         return res
-    
+
+    def import_from_version(self, cr, uid, ids, context=None):
+        """
+        Import items from previous theoretical kits
+        """
+        obj = self.browse(cr, uid, ids[0], context=context)
+
+        if not obj.composition_version_import:
+            raise osv.except_osv(_('Warning !'), _('The composition list is not linked to any version'))
+
+        item_obj = self.pool.get('composition.item')
+
+        for item in obj.composition_version_import.composition_item_ids:
+            values = {'item_module': item.item_module,
+                      'item_product_id': item.item_product_id.id,
+                      'item_qty': item.item_qty,
+                      'item_uom_id': item.item_uom_id.id,
+                      'item_lot': item.item_lot,
+                      'item_exp': item.item_exp,
+                      'item_kit_id': obj.id,
+                      'item_description': item.item_description,
+                      }
+            item_obj.create(cr, uid, values, context=context)
+
+        return {'name': 'Kit Composition List',
+                'view_mode': 'form, tree',
+                'view_type': 'form',
+                'res_model': 'composition.kit',
+                'res_id': obj.id,
+                'type': 'ir.actions.act_window',
+                'target': 'dummy',
+                'domain': [('composition_type', '=', 'theoretical')],
+                'context': {'composition_type': 'theoretical'},
+                }
+
     def import_file(self, cr, uid, ids, context=None):
         '''
         Import lines form file
