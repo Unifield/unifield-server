@@ -127,7 +127,7 @@ Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Un
 
             # Cell 0: Product Code
             p_value = {}
-            p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+            p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, line_num=line_num, context=context)
             if p_value['default_code']:
                 product_id = p_value['default_code']
             else:
