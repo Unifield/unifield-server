@@ -284,7 +284,6 @@ def product_value(cr, uid, **kwargs):
     product_code = kwargs['to_write'].get('product_code', False)
     error_list = kwargs['to_write']['error_list']
     default_code = kwargs['to_write']['default_code']
-    line_num = kwargs['line_num'] - 1
     # The tender line may have a default product if it is not found
     obj_data = kwargs['obj_data']
     cell_nb = kwargs.get('cell_nb', 0)
@@ -296,7 +295,7 @@ def product_value(cr, uid, **kwargs):
                 p_ids = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
                 if not p_ids:
                     comment += _(' Code: %s') % (product_code)
-                    msg = _('Line %s: Product code %s doesn\'t exist in the DB.') % (line_num, product_code)
+                    msg = _('Product code %s doesn\'t exist in the DB.') % product_code
                 else:
                     default_code = p_ids[0]
                     product = product_obj.browse(cr, uid, default_code)
