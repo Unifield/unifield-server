@@ -284,7 +284,7 @@ def product_value(cr, uid, **kwargs):
     product_code = kwargs['to_write'].get('product_code', False)
     error_list = kwargs['to_write']['error_list']
     default_code = kwargs['to_write']['default_code']
-    line_num = kwargs['line_num']
+    line_num = kwargs['line_num'] - 1
     # The tender line may have a default product if it is not found
     obj_data = kwargs['obj_data']
     cell_nb = kwargs.get('cell_nb', 0)
