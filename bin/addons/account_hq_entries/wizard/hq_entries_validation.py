@@ -339,6 +339,7 @@ class hq_entries_validation(osv.osv_memory):
                 'partner_txt': original_move.partner_txt or '',
                 'reference': ji_entry_seq or ' ', # UFTP-342: if HQ entry reference is empty, do not display anything. As a field function exists for account_move_line object, so we add a blank char to avoid this problem
                 'document_date': line.document_date or line.date,
+                'source_date': curr_date,  # DONE: TEST JN
             }, context=context, check=False, update_check=False)
 
             # create the analytic lines as a reversed copy of the original
