@@ -22,9 +22,11 @@
 
 from osv import osv
 from tools.translate import _
+from base import currency_date
 import netsvc
 import traceback
 import time
+
 
 class account_move_line_compute_currency(osv.osv):
     _inherit = "account.move.line"
@@ -466,11 +468,9 @@ class account_move_line_compute_currency(osv.osv):
             # amount currency is not set; it is computed from the 2 other fields
             ctx = {}
             # WARNING: since SP2, source_date have priority to date if exists. That's why it should be used for computing amounts
-            if move_line.date:
-                ctx['date'] = move_line.date
-            # source_date is more important than date
-            if move_line.source_date:
-                ctx['date'] = move_line.source_date
+            # DONE: TEST JN
+            curr_date = currency_date.get_date(self, cr, move_line.document_date, move_line.date, source_date=move_line.source_date)
+            ctx['currency_date'] = curr_date
 
             if move_line.period_id.state != 'done' and not move_line.period_id.is_system:
                 if move_line.debit_currency != 0.0 or move_line.credit_currency != 0.0:
@@ -526,8 +526,8 @@ class account_move_line_compute_currency(osv.osv):
             if vals['date'] < period.get('date_start') or vals['date'] > period.get('date_stop'):
                 raise osv.except_osv(_('Warning !'), _('Posting date (%s) is outside of defined period: %s!') % (vals.get('date'), period.get('name') or '',))
 
-    def _compute_currency_on_create_write(self, cr, uid, vals, currency_id, curr_fun, date=False, source_date=False,
-                                          debit_currency=False, credit_currency=False, context=None):
+    def _compute_currency_on_create_write(self, cr, uid, vals, currency_id, curr_fun, document_date=False, posting_date=False,
+                                          source_date=False, debit_currency=False, credit_currency=False, context=None):
         if context is None:
             context = {}
         newvals = {}
@@ -535,10 +535,14 @@ class account_move_line_compute_currency(osv.osv):
         cur_obj = self.pool.get('res.currency')
 
         # WARNING: source_date field have priority to date field. This is because of SP2 Specifications
-        if vals.get('date', date):
-            ctxcurr['date'] = vals.get('date', date)
-        if vals.get('source_date', source_date):
-            ctxcurr['date'] = vals.get('source_date', source_date)
+        # DONE: TEST JN
+        curr_date = currency_date.get_date(self, cr, vals.get('document_date', document_date), vals.get('date', posting_date),
+                                           source_date=vals.get('source_date', source_date))
+        ctxcurr['currency_date'] = curr_date
+        if currency_date.get_date_type(self, cr) == 'document':
+            date_in_vals = vals.get('document_date')
+        else:
+            date_in_vals = vals.get('date')
 
         if 'currency_table_id' in context:
             ctxcurr['currency_table_id'] = context['currency_table_id']
@@ -565,7 +569,8 @@ class account_move_line_compute_currency(osv.osv):
                 newvals['credit_currency'] = 0
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
-        elif (vals.get('date') or vals.get('source_date')) and (credit_currency or debit_currency):
+        # DONE: TEST JN
+        elif (date_in_vals or vals.get('source_date')) and (credit_currency or debit_currency):
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, debit_currency or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, credit_currency or 0.0, round=True, context=ctxcurr)
             newvals['amount_currency'] = debit_currency - credit_currency
@@ -582,7 +587,8 @@ class account_move_line_compute_currency(osv.osv):
         """
         # Some verifications
         self.check_date(cr, uid, vals)
-        date_to_compute = False
+        doc_date = False
+        posting_date = False
         is_system_period = False
 
         if 'period_id' in vals:
@@ -593,7 +599,10 @@ class account_move_line_compute_currency(osv.osv):
 
         if not 'date' in vals:
             if vals.get('move_id'):
-                date_to_compute = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['date'])['date']
+                # DONE: TEST JN
+                move = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['document_date', 'date'])
+                doc_date = move['document_date']
+                posting_date = move['date']
             else:
                 logger = netsvc.Logger()
                 logger.notifyChannel("warning", netsvc.LOG_WARNING, "No date for new account_move_line!")
@@ -631,7 +640,8 @@ class account_move_line_compute_currency(osv.osv):
         # and for revaluation lines (US-1682)
         if not is_system_period and not newvals.get('is_addendum_line', False) and not \
                 (context.get('sync_update_execution', False) and 'is_revaluated_ok' in newvals and newvals['is_revaluated_ok']):
-            newvals.update(self._compute_currency_on_create_write(cr, uid, vals, newvals['currency_id'], curr_fun, date=date_to_compute, context=context))
+            newvals.update(self._compute_currency_on_create_write(cr, uid, vals, newvals['currency_id'], curr_fun,
+                                                                  document_date=doc_date, posting_date=posting_date, context=context))
         return super(account_move_line_compute_currency, self).create(cr, uid, newvals, context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
@@ -652,6 +662,8 @@ class account_move_line_compute_currency(osv.osv):
         # Browse lines
         for line in self.browse(cr, uid, ids):
             newvals = vals.copy()
+            # DONE: TEST JN
+            doc_date = vals.get('document_date', line.document_date)
             date = vals.get('date', line.date)
             source_date = vals.get('source_date', line.source_date)
             # Add currency on line
@@ -660,7 +672,10 @@ class account_move_line_compute_currency(osv.osv):
             currency_id = vals.get('currency_id') or line.currency_id.id
             func_currency = line.account_id.company_id.currency_id.id
             if line.period_id and not line.period_id.is_system and not (context.get('sync_update_execution', False) and line.is_revaluated_ok):
-                newvals.update(self._compute_currency_on_create_write(cr, uid, newvals, currency_id, func_currency, date, source_date, line.debit_currency, line.credit_currency, context=context))
+                newvals.update(self._compute_currency_on_create_write(cr, uid, newvals, currency_id, func_currency, document_date=doc_date,
+                                                                      posting_date=date, source_date=source_date,
+                                                                      debit_currency=line.debit_currency, credit_currency=line.credit_currency,
+                                                                      context=context))
             res = res and super(account_move_line_compute_currency, self).write(cr, uid, [line.id], newvals, context, check=check, update_check=update_check)
             # Update addendum line for reconciliation entries if this line is reconciled
             if vals.get('reconcile_id'):

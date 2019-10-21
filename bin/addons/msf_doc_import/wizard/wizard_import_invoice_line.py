@@ -25,6 +25,7 @@ from osv import osv, fields
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from base import currency_date
 from account_override import ACCOUNT_RESTRICTED_AREA
 import time
 from msf_doc_import.wizard import ACCOUNT_INVOICE_COLUMNS_FOR_IMPORT as columns_for_account_line_import
@@ -240,12 +241,14 @@ class wizard_import_invoice_line(osv.osv_memory):
 
                         if r_destination and r_cc:
                             distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
+                            # DONE: TEST JN
+                            curr_date = currency_date.get_date(self, cr, invoice.document_date, invoice.date_invoice)
                             common_vals = {
                                 'distribution_id': distrib_id,
                                 'currency_id': invoice.currency_id.id,
                                 'percentage': 100.0,
                                 'date': invoice.date_invoice,
-                                'source_date': invoice.date_invoice,
+                                'source_date': curr_date,
                                 'destination_id': r_destination,
                             }
                             common_vals.update({'analytic_id': r_cc})

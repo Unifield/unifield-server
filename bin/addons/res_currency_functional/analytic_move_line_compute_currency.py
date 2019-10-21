@@ -19,12 +19,13 @@
 #
 ##############################################################################
 
-from osv import fields, osv
-import decimal_precision as dp
+from osv import osv
+from base import currency_date
+
 
 class account_analytic_line_compute_currency(osv.osv):
     _inherit = "account.analytic.line"
-    
+
     def update_amounts(self, cr, uid, ids, context=None):
         """
         Update analytic line amount with debit and credit if move_id exists, otherwise use amount_currency to do change
@@ -36,13 +37,16 @@ class account_analytic_line_compute_currency(osv.osv):
         for analytic_line in self.browse(cr, uid, ids):
             amount = None
             if analytic_line.amount_currency and analytic_line.currency_id:
-                context.update({'date': analytic_line.source_date or analytic_line.date})
+                # DONE: TEST JN
+                curr_date = currency_date.get_date(self, cr, analytic_line.document_date, analytic_line.date,
+                                                   source_date=analytic_line.source_date)
+                context.update({'currency_date': curr_date})
                 company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                 amount = self.pool.get('res.currency').compute(cr, uid, analytic_line.currency_id.id, company_currency, 
                     analytic_line.amount_currency,round=False, context=context)
             if amount:
                 cr.execute('update account_analytic_line set amount=%s where id=%s', (amount, analytic_line.id))
         return True
-    
+
 account_analytic_line_compute_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
