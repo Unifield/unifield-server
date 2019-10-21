@@ -78618,8 +78618,8 @@ msgstr "Pas d'email de destination donné!"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/check_line.py:277
 #, python-format
-msgid "Product code doesn't exist in the DB."
-msgstr "Product code doesn't exist in the DB."
+msgid "Product code %s doesn't exist in the DB."
+msgstr "Product code %s doesn't exist in the DB."
 
 #. module: sales_followup
 #: code:addons/sales_followup/sale_followup.py:460
