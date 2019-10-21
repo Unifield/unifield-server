@@ -2646,10 +2646,10 @@ class purchase_order(osv.osv):
 
                         if pol.product_qty <= l_key[0]:
                             good_quantity = l_key[0]
+                        elif not soq_rounding:
+                            continue
                         elif pol.product_qty % soq_rounding:
                             good_quantity = (pol.product_qty - (pol.product_qty % soq_rounding)) + soq_rounding
-                        else:
-                            good_quantity = pol.product_qty
 
                         if good_quantity in t_min_qty_price.keys():
                             good_price = t_min_qty_price[good_quantity][0]
@@ -2665,10 +2665,10 @@ class purchase_order(osv.osv):
                     if pol.product_qty % soq_rounding:
                         good_quantity = (pol.product_qty - (pol.product_qty % soq_rounding)) + soq_rounding
 
-                if good_quantity:
+                if good_quantity and good_quantity != pol.product_qty:
                     data_to_write['product_qty'] = good_quantity
 
-                if good_price:
+                if good_price and good_price != pol.price_unit:
                     data_to_write['price_unit'] = good_price
 
                 if data_to_write:
