@@ -107581,3 +107581,19 @@ msgstr "Rapport non trouvé"
 #, python-format
 msgid "User does not match"
 msgstr "L'utilisateur ne correspond pas"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,nb_late_vi:0
+msgid "# late VI jobs"
+msgstr "# tâches VI en retard"
+
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,vi_details:0
+msgid "Last exec VI job"
+msgstr "Tâche VI dernière exec"
+
+#. module: sync_client
+#: view:sync.version.instance.monitor:0
+msgid "Late jobs"
+msgstr "Tâches en retard"
