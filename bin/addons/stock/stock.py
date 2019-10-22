@@ -166,6 +166,7 @@ class stock_location(osv.osv):
             'msf_outgoing_stock_location_packing',
             'msf_outgoing_stock_location_dispatch',
             'msf_outgoing_stock_location_distribution',
+            'stock_location_quarantine_view',
         ]
 
         data_domain = [('model', '=', 'stock.location'), ('name', 'in', loc_to_hide)]

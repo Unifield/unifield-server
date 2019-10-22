@@ -753,8 +753,9 @@ Product Code, Product Description, Initial Average Cost, Location, Batch, Expiry
                         location_not_found = True
                     else:
                         location_id = loc_ids[0]
-                        if not location_obj.browse(cr, uid, location_id, fields_to_fetch=['initial_stock_inv_display'],
-                                                   context=context).initial_stock_inv_display:
+                        loc = location_obj.browse(cr, uid, location_id, fields_to_fetch=['initial_stock_inv_display', 'usage'],
+                                                  context=context)
+                        if not loc.initial_stock_inv_display or loc.usage != 'internal':
                             wrong_location.append(_('Line #%s: The location "%s" is not allowed') % (line_num, location_name))
                 except Exception:
                     location_id = False
