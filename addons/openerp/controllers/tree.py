@@ -145,12 +145,27 @@ class Tree(SecuredController):
 
         return cmp(a, b)
 
+    def return_item(self, element, fields):
+        r = []
+        for f in fields:
+            r.append(element.get(f))
+        return r
+
     @expose('json')
     def data(self, ids, model, fields, field_parent=None, icon_name=None,
-             domain=[], context={}, sort_by=None, sort_order="asc", fields_info=None, colors={}, nolink=False):
+             domain=None, context=None, sort_by=None, sort_order="asc", fields_info=None, colors=None, nolink=False):
         
         if ids == 'None' or ids == '':
             ids = []
+
+        if domain is None:
+            domain = []
+
+        if context is None:
+            context = {}
+
+        if colors is None:
+            colors = {}
 
         if isinstance(ids, basestring):
             ids = map(int, ids.split(','))
@@ -186,11 +201,19 @@ class Tree(SecuredController):
         if model == 'ir.ui.menu' and 'action' not in fields:
             fields.append('action')
 
+        if not sort_by and context.get('default_tree_sort'):
+            sort_fields = context['default_tree_sort'].split(',')
+            for f in sort_fields:
+                if f not in fields:
+                    fields.append(f)
+
         result = proxy.read(ids, fields, ctx)
 
         if sort_by:
             fields_info_type = simplejson.loads(fields_info[sort_by])
             result.sort(lambda a,b: self.sort_callback(a, b, sort_by, sort_order, type=fields_info_type['type']))
+        elif context.get('default_tree_sort'):
+            result = sorted(result, key=lambda item: self.return_item(item, sort_fields))
 
         for item in result:
             if colors:
