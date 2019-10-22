@@ -1626,5 +1626,27 @@
             groups="base.group_extended"
             parent="menu_warehouse_config" />
 
+
+        <record id="stock_location_instance_tree" model="ir.ui.view">
+            <field name="name">stock.location.instance.tree</field>
+            <field name="model">stock.location.instance</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Remote Locations">
+                    <field name="full_name"/>
+                </tree>
+            </field>
+        </record>
+        <record id="stock_location_instance_search" model="ir.ui.view">
+            <field name="name">stock.location.instance.search</field>
+            <field name="model">stock.location.instance</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Remote Locations">
+                    <field name="name"/>
+                    <field name="instance_id"/>
+                </search>
+            </field>
+        </record>
     </data>
 </openerp>

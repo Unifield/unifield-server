@@ -33,6 +33,54 @@ import decimal_precision as dp
 import logging
 from osv.orm import browse_record
 
+
+# Common method used on stock.location.instance and stock.location
+def _get_used_in_config(self, cr, uid, ids, field_names, arg, context=None):
+    ret = {}
+
+    for _id in ids:
+        ret[_id] =  False
+
+    instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+    if ids and instance_id:
+        if self._name == 'stock.location':
+            rel_table = 'local_location_configuration_rel'
+        else:
+            rel_table = 'remote_location_configuration_rel'
+        cr.execute('''select rel.location_id from
+                ''' + rel_table + ''' rel, replenishment_location_config config
+                where
+                    config.id = rel.config_id and
+                    config.active and
+                    config.main_instance = %s and
+                    config.location_id in %s
+        ''', (instance_id, tuple(ids))) # not_a_user_entry
+        for x in cr.fetchall():
+            ret[x[0]] = True
+
+    return ret
+
+def _search_used_in_config(self, cr, uid, obj, name, args, context):
+    for arg in args:
+        if arg[1] != '=' or arg[2] is not False:
+            raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
+
+    instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+    if instance_id:
+        if self._name == 'stock.location':
+            rel_table = 'local_location_configuration_rel'
+        else:
+            rel_table = 'remote_location_configuration_rel'
+        cr.execute('''select rel.location_id from
+                ''' + rel_table + ''' rel, replenishment_location_config config
+                where
+                    config.id = rel.config_id and
+                    config.active and
+                    config.main_instance = %s
+        ''', (instance_id, )) # not_a_user_entry
+        return [('id', 'not in', [x[0] for x in cr.fetchall()])]
+    return []
+
 #----------------------------------------------------------
 # Incoterms
 #----------------------------------------------------------
@@ -155,6 +203,29 @@ class stock_location(osv.osv):
                         result[loc_id][f] += amount
         return result
 
+    def _get_coordo_db_id(self, cr, uid, ids, field_names, arg, context=None):
+        ret = {}
+        coordo_id = False
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        if company and company.instance_id and company.instance_id.level == 'project':
+            coordo_id = company.instance_id.parent_id.id
+
+        for _id in ids:
+            ret[_id] =  {'coordo_id': coordo_id, 'db_id': _id}
+        return ret
+
+    def _search_coordo_id(self, cr, uid, obj, name, args, context):
+        for arg in args:
+            if arg[1] != '=' or arg[2] is not True:
+                raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
+
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        if not company or not company.instance_id or company.instance_id.level != 'project':
+            return [('id', '=', 0)]
+
+        return [('active', 'in', ['t', 'f']), ('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])]
+
+
     _columns = {
         'name': fields.char('Location Name', size=64, required=True, translate=True),
         'active': fields.boolean('Active', help="By unchecking the active field, you may hide a location without deleting it."),
@@ -214,6 +285,9 @@ class stock_location(osv.osv):
         'scrap_location': fields.boolean('Scrap Location', help='Check this box to allow using this location to put scrapped/damaged goods.'),
         'valuation_in_account_id': fields.many2one('account.account', 'Stock Input Account',domain = [('type','=','other')], help='This account will be used to value stock moves that have this location as destination, instead of the stock output account from the product.'),
         'valuation_out_account_id': fields.many2one('account.account', 'Stock Output Account',domain = [('type','=','other')], help='This account will be used to value stock moves that have this location as source, instead of the stock input account from the product.'),
+        'coordo_id': fields.function(_get_coordo_db_id, type='many2one', relation='msf.instance', method=True, fnct_search=_search_coordo_id, string='Destination of sync', internal=True, multi='coordo_db_id'),
+        'db_id': fields.function(_get_coordo_db_id, type='integer', method=True, string='DB id for sync', internal=True, multi='coordo_db_id'),
+        'used_in_config': fields.function(_get_used_in_config, method=True, fnct_search=_search_used_in_config, string="Used in Loc.Config"),
     }
     _defaults = {
         'active': True,
@@ -3515,4 +3589,48 @@ class stock_warehouse(osv.osv):
 
 stock_warehouse()
 
+class stock_location_instance(osv.osv):
+    _name = 'stock.location.instance'
+    _description = 'Instance Location'
+
+
+    _columns = {
+        'name': fields.char('Name', size=64, required=True, translate=True),
+        'active': fields.boolean('Active'),
+        'parent_id': fields.many2one('stock.location.instance', 'Parent'),
+        'usage': fields.selection([('supplier', 'Supplier Location'), ('view', 'View'), ('internal', 'Internal Location'), ('customer', 'Customer Location'), ('inventory', 'Inventory'), ('procurement', 'Procurement'), ('production', 'Production'), ('transit', 'Transit Location for Inter-Companies Transfers')], string='Usage'),
+        'location_category': fields.selection( [('stock', 'Stock'), ('consumption_unit', 'Consumption Unit'), ('transition', 'Transition'), ('eprep', 'EPrep'), ('other', 'Other')], string='Location Category', required=True),
+        'instance_id': fields.many2one('msf.instance', 'Instance', select=1),
+        'instance_db_id': fields.integer('DB Id in the instance'),
+        'full_name': fields.char('Name', size=256, readonly=1),
+        'used_in_config': fields.function(_get_used_in_config, method=True, fnct_search=_search_used_in_config, string="Used in Loc.Config"),
+    }
+    def create_record(self, cr, uid, source, data_obj, context=None):
+        data = data_obj.to_dict()
+        instance_obj = self.pool.get('msf.instance')
+        instance_id = instance_obj.search(cr, uid, [('instance', '=', source)], context=context)[0]
+        to_update = self.search(cr, uid, [('instance_db_id', '=', int(data['db_id'])), ('instance_id', '=', instance_id), ('active', 'in', ['t', 'f'])], context=context)
+        values = {
+            'name': data['name'],
+            'active': data['active'],
+            'usage': data['usage'],
+            'location_category': data['location_category'],
+            'instance_id': instance_id,
+            'instance_db_id': data['db_id'],
+            'full_name': '',
+        }
+        if data.get('location_id'):
+            values['parent_id'] = self.create_record(cr, uid, source, data_obj.location_id, context=context)
+            values['full_name'] = '%s/' % (data['location_id']['name'])
+
+        values['full_name'] = '%s-%s%s' % (source, values['full_name'], values['name'])
+
+        if to_update:
+            self.write(cr, uid, to_update, values, context=context)
+            return to_update[0]
+
+        return self.create(cr, uid, values, context)
+
+    _sql_constraints = [('unique_instance_id_db_id', 'unique(instance_id,instance_db_id)', 'Instance / Db id not unique')]
+stock_location_instance()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

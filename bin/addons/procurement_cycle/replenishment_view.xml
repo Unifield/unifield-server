@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="replenishment_location_config_form" model="ir.ui.view">
+            <field name="name">replenishment.location.config.form</field>
+            <field name="model">replenishment.location.config</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Location Configuration">
+                    <field name="name" />
+                    <field name="description" />
+                    <field name="main_instance" />
+                    <group colspan="2" col="4">
+                        <field name="synched" />
+                        <field name="active" />
+                    </group>
+                    <group colspan="2" col="2">
+                        <separator string="Local Locations" colspan="2" />
+                        <field name="local_location_ids" nolabel="1">
+                        <tree hide_new_button="0">
+                                <field name="complete_name" />
+                                <field name="usage" />
+                                <field name="location_category" />
+                            </tree>
+                        </field>
+                    </group>
+                    <group colspan="2" col="2" attrs="{'invisible': [('synched', '=', False)]}">
+                        <separator string="Project Locations" colspan="2" />
+                        <field name="remote_location_ids" nolabel="1">
+                            <tree>
+                                <field name="name" />
+                            </tree>
+                        </field>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="replenishment_location_config_tree" model="ir.ui.view">
+            <field name="name">replenishment.location.config.tree</field>
+            <field name="model">replenishment.location.config</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Location Configuration">
+                    <field name="name" />
+                    <field name="description" />
+                    <field name="synched" />
+                    <field name="main_instance" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_location_config_search" model="ir.ui.view">
+            <field name="name">replenishment.location.config.search</field>
+            <field name="model">replenishment.location.config</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Location Configuration">
+                    <field name="name" />
+                    <field name="description" />
+                    <field name="synched" />
+                    <field name="main_instance" />
+                </search>
+            </field>
+        </record>
+
+        <record id="replenishment_location_config_action" model="ir.actions.act_window">
+            <field name="name">Location Configuration</field>
+            <field name="res_model">replenishment.location.config</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="replenishment_location_config_menu"
+            action="replenishment_location_config_action"
+            sequence="10"
+            parent="stock_schedule.stock_automatic_procurements_menu" />
+
+
+        <record id="replenishment_review_config_form" model="ir.ui.view">
+            <field name="name">replenishment.review.config.form</field>
+            <field name="model">replenishment.location.config</field>
+            <field name="type">form</field>
+            <field name="priority" eval="50" />
+            <field name="arch" type="xml">
+                <form string="Inventory Review Configuration" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                    <field name="name" readonly="1" />
+                    <field name="description" readonly="1" />
+                    <field name="frequence_name" />
+                    <newline />
+                    <button name="choose_change_frequence" type="object" string="Change/Choose Frequency" icon="terp-go-today" colspan="2" />
+                    <field name="review_active"  required="1" />
+                    <field name="projected_view" required="1" />
+                    <field name="rr_amc" required="1" />
+                    <field name="sleeping" required="1" />
+                    <field name="time_unit" required="1" />
+                </form>
+            </field>
+        </record>
+
+        <record id="replenishment_review_config_tree" model="ir.ui.view">
+            <field name="name">replenishment.review.config.tree</field>
+            <field name="model">replenishment.location.config</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="50" />
+            <field name="arch" type="xml">
+                <tree string="Inventory Review Configuration" hide_new_button="1" hide_delete_button="1">
+                    <field name="name" />
+                    <field name="description" />
+                    <field name="review_active" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_review_config_search" model="ir.ui.view">
+            <field name="name">replenishment.review.config.search</field>
+            <field name="model">replenishment.location.config</field>
+            <field name="type">search</field>
+            <field name="priority" eval="50" />
+            <field name="arch" type="xml">
+                <search string="Inventory Review Configuration">
+                    <field name="name" />
+                    <field name="description" />
+                    <field name="review_active" />
+                    <field name="active"  />
+                </search>
+            </field>
+        </record>
+
+        <record id="replenishment_review_config_action" model="ir.actions.act_window">
+            <field name="name">Inventory Review Configuration</field>
+            <field name="res_model">replenishment.location.config</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="replenishment_review_config_search" />
+        </record>
+        <record id="replenishment_review_config_action_tree" model="ir.actions.act_window.view">
+            <field eval="1" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="replenishment_review_config_tree"/>
+            <field name="act_window_id" ref="replenishment_review_config_action"/>
+        </record>
+        <record id="replenishment_review_config_action_form" model="ir.actions.act_window.view">
+            <field eval="2" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="replenishment_review_config_form"/>
+            <field name="act_window_id" ref="replenishment_review_config_action"/>
+        </record>
+
+        <menuitem id="replenishment_review_config_menu"
+            action="replenishment_review_config_action"
+            sequence="20"
+            parent="stock_schedule.stock_automatic_procurements_menu" />
+    </data>
+</openerp>
