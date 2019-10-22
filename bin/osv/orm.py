@@ -2998,7 +2998,12 @@ class orm(orm_template):
         pass
 
     def _create_fk(self, cr, col_name, field_def, update=False):
-        ref = self.pool.get(field_def._obj)._table
+        try:
+            ref = self.pool.get(field_def._obj)._table
+        except:
+            #TODO
+            print col_name, field_def, field_def._obj
+            raise
         # ir_actions is inherited so foreign key doesn't work on it
         if ref != 'ir_actions':
             to_create = True

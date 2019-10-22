@@ -147,3 +147,132 @@ class replenishment_location_config(osv.osv):
 replenishment_location_config()
 
 
+class replenishment_segment(osv.osv):
+    _name = 'replenishment.segment'
+    _description = 'Segment'
+
+    def _get_date(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        for x in ids:
+            ret[x] = {
+                'previous_order_rrd': False,
+                'date_preparing': False,
+                'date_next_order_validated': False,
+                'date_next_order_received': False,
+            }
+        return ret
+
+    def _get_lt(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        for x in ids:
+            ret[x] = {
+                'internal_lt': False,
+                'external_lt': False,
+                'total_lt': False,
+            }
+        return ret
+
+    _columns = {
+        'name': fields.char('Reference', size=64, readonly=1, select=1),
+        'description': fields.char('Desription', required=1, size=28, select=1),
+        'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1),
+        'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Replenishment Rule (Order quantity)', required=1),
+        'ir_requesting_location': fields.many2one('stock.location', string='IR Requesting Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])"),
+        'product_list_id': fields.many2one('product.list', 'Primary product list'),
+        'status': fields.selection([('draft', 'Draft'), ('complete', 'Complete'), ('cancel', 'Cancelled'), ('archived', 'Archived')], 'Status', readonly=1),
+        'order_creation_lt': fields.integer('Order Creation Lead Time (days)'),
+        'order_validation_lt': fields.integer('Order Validation Lead Time (days)'),
+        'internal_lt': fields.function(_get_lt, type='integer', method=1, string='Internal Lead Time', multi='get_lt'),
+        'supplier_lt': fields.integer('Supplier Lead Time (days)'),
+        'handling_lt': fields.integer('Handling Lead Time (days)'),
+        'external_lt': fields.function(_get_lt, type='integer', method=1, string='External Lead Time', multi='get_lt'),
+        'total_lt': fields.function(_get_lt, type='integer', method=1, string='Total Lead Time', multi='get_lt'),
+        'order_coverage': fields.integer('Order Coverage (months)'),
+        'safety_stock': fields.integer('Safety Stock (months)'),
+        'previous_order_rrd': fields.function(_get_date, type='date', method=True, string='Previous order RDD Date', multi='get_date'),
+        'date_preparing': fields.function(_get_date, type='date', method=True, string='Date to start preparing the order', multi='get_date'),
+        'date_next_order_validated':  fields.function(_get_date, type='date', method=True, string='Date next order to be validated by', multi='get_date'),
+        'date_next_order_received': fields.function(_get_date, type='date', method=True, string='Next order to be received by', multi='get_date'),
+        'line_ids': fields.one2many('replenishment.segment.line', 'segment_id', 'Products', context={'default_code_only': 1}),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if 'name' not in vals:
+            vals['name'] = self.pool.get('ir.sequence').get(cr, uid, 'replenishment.segment')
+
+        return super(replenishment_segment, self).create(cr, uid, vals, context)
+
+replenishment_segment()
+
+class replenishment_segment_line(osv.osv):
+    _name = 'replenishment.segment.line'
+    _description = 'Product'
+
+    def _get_main_list(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        for x in ids:
+            ret[x] = False
+
+        return ret
+
+    def _get_real_stock(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        for x in ids:
+            ret[x] = {
+                'real_stock': False,
+                'rr_amc': False,
+            }
+        return ret
+
+    _columns = {
+        'segment_id': fields.many2one('replenishment.segment', 'Segment', select=1, required=1),
+        'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1),
+        'product_description': fields.related('product_id', 'name',  string='Desciption', type='char', size=64, readonly=True, select=True, write_relate=False),
+        'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
+        'in_main_list': fields.function(_get_main_list, type='boolean', method=True, string='In prod. list'),
+        'status': fields.selection([('active', 'Active'), ('new', 'New')], string='Life cycle status'),
+        'min_qty': fields.float('Min Qty', related_uom='uom_id'),
+        'max_qty': fields.float('Max Qty', related_uom='uom_id'),
+        'auto_qty': fields.float('Auto. Supply Qty', related_uom='uom_id'),
+        'buffer_qty': fields.float('Buffer Qty', related_uom='uom_id'),
+        'real_stock': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='Real Stock', multi='get_stock_amc'),
+        'rr_amc': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='RR-AMC', multi='get_stock_amc'),
+        'rr_fmc_1': fields.float('RR FMC', related_uom='uom_id'),
+        'rr_fmc_from_1': fields.datetime('From'),
+        'rr_fmc_to_1': fields.datetime('To'),
+        'rr_fmc_2': fields.float('RR FMC', related_uom='uom_id'),
+        'rr_fmc_from_2': fields.datetime('From'),
+        'rr_fmc_to_2': fields.datetime('To'),
+        'rr_fmc_3': fields.float('RR FMC', related_uom='uom_id'),
+        'rr_fmc_from_3': fields.datetime('From'),
+        'rr_fmc_to_3': fields.datetime('To'),
+        'rr_fmc_4': fields.float('RR FMC', related_uom='uom_id'),
+        'rr_fmc_from_4': fields.datetime('From'),
+        'rr_fmc_to_4': fields.datetime('To'),
+        'rr_fmc_5': fields.float('RR FMC', related_uom='uom_id'),
+        'rr_fmc_from_5': fields.datetime('From'),
+        'rr_fmc_to_5': fields.datetime('To'),
+        'rr_fmc_6': fields.float('RR FMC', related_uom='uom_id'),
+        'rr_fmc_from_6': fields.datetime('From'),
+        'rr_fmc_to_6': fields.datetime('To'),
+        'rr_fmc_7': fields.float('RR FMC', related_uom='uom_id'),
+        'rr_fmc_from_7': fields.datetime('From'),
+        'rr_fmc_to_7': fields.datetime('To'),
+        'rr_fmc_8': fields.float('RR FMC', related_uom='uom_id'),
+        'rr_fmc_from_8': fields.datetime('From'),
+        'rr_fmc_to_8': fields.datetime('To'),
+        'rr_fmc_9': fields.float('RR FMC', related_uom='uom_id'),
+        'rr_fmc_from_9': fields.datetime('From'),
+        'rr_fmc_to_9': fields.datetime('To'),
+        'rr_fmc_10': fields.float('RR FMC', related_uom='uom_id'),
+        'rr_fmc_from_10': fields.datetime('From'),
+        'rr_fmc_to_10': fields.datetime('To'),
+        'rr_fmc_11': fields.float('RR FMC', related_uom='uom_id'),
+        'rr_fmc_from_11': fields.datetime('From'),
+        'rr_fmc_to_11': fields.datetime('To'),
+        'rr_fmc_12': fields.float('RR FMC', related_uom='uom_id'),
+        'rr_fmc_from_12': fields.datetime('From'),
+        'rr_fmc_to_12': fields.datetime('To'),
+    }
+
+replenishment_segment_line()

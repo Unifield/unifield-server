@@ -152,5 +152,135 @@
             action="replenishment_review_config_action"
             sequence="20"
             parent="stock_schedule.stock_automatic_procurements_menu" />
+
+
+        <record id="replenishment_segment_form" model="ir.ui.view">
+            <field name="name">replenishment.segment.form</field>
+            <field name="model">replenishment.segment</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Segment">
+                    <field name="name" />
+                    <field name="description" />
+                    <field name="location_config_id" />
+                    <field name="rule" />
+                    <field name="ir_requesting_location" />
+                    <field name="product_list_id" />
+                    <field name="status" />
+                    <field name="order_creation_lt" />
+                    <field name="order_validation_lt" />
+                    <field name="internal_lt" />
+                    <field name="supplier_lt" />
+                    <field name="handling_lt" />
+                    <field name="external_lt" />
+                    <field name="total_lt" />
+                    <field name="order_coverage" />
+                    <field name="safety_stock" />
+                    <field name="previous_order_rrd" />
+                    <field name="date_preparing" />
+                    <field name="date_next_order_validated" />
+                    <field name="date_next_order_received" />
+                    <field name="line_ids" colspan="4" nolabel="1" default_get="rule=rule">
+                        <tree editable="top">
+                            <field name="product_id" />
+                            <field name="product_description" displayon="noteditable"/>
+                            <field name="uom_id" invisible="1" />
+                            <field name="in_main_list" />
+                            <field name="status" />
+                            <field name="min_qty" />
+                            <field name="max_qty" />
+                            <field name="auto_qty" invisible="context.get('rule')!='auto'"/>
+                            <field name="buffer_qty" invisible="context.get('rule')!='cycle'"/>
+                            <field name="real_stock" />
+                            <field name="rr_amc" />
+                            <field name="rr_fmc_1" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_1" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_to_1" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_2" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_2" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_to_2" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_3" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_3" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_4" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_4" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_to_4" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_5" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_5" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_to_5" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_6" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_6" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_to_6" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_7" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_7" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_to_7" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_8" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_8" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_to_8" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_9" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_9" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_to_9" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_10" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_10" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_to_10" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_11" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_11" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_to_11" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_12" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_12" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_to_12" invisible="context.get('rule')!='cycle'"/>
+                        </tree>
+                    </field>
+                </form>
+            </field>
+        </record>
+
+        <record id="replenishment_segment_tree" model="ir.ui.view">
+            <field name="name">replenishment.segment.tree</field>
+            <field name="model">replenishment.segment</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Segment">
+                    <field name="name" />
+                    <field name="description" />
+                    <field name="line_ids" />
+                    <field name="location_config_id" />
+                    <field name="rule" />
+                    <field name="product_list_id" />
+                    <field name="date_preparing" />
+                    <field name="date_next_order_validated" />
+                    <field name="status" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_segment_search" model="ir.ui.view">
+            <field name="name">replenishment.segment.search</field>
+            <field name="model">replenishment.segment</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Segment">
+                    <field name="name" />
+                    <field name="description" />
+                    <field name="line_ids" />
+                    <field name="location_config_id" />
+                    <field name="rule" />
+                    <field name="product_list_id" />
+                    <field name="status" />
+                </search>
+            </field>
+        </record>
+
+        <record id="replenishment_segment_action" model="ir.actions.act_window">
+            <field name="name">Segment</field>
+            <field name="res_model">replenishment.segment</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="replenishment_segment_menu"
+            action="replenishment_segment_action"
+            sequence="40"
+            parent="stock_schedule.stock_automatic_procurements_menu" />
     </data>
 </openerp>
