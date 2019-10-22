@@ -768,6 +768,20 @@ class wizard_cash_return(osv.osv_memory):
             'target': 'new',
         }
 
+    def _create_move(self, cr, uid, vals, move_ids, context=None):
+        """
+        Creates a new JE using the vals in parameter, adds it to the move_ids list, and returns its id.
+        """
+        if context is None:
+            context = {}
+        move_obj = self.pool.get('account.move')
+        # make sure to reset the Entry Sequence so a new one is generated each time this method is called
+        if 'name' in vals:
+            del vals['name']
+        move_id = move_obj.create(cr, uid, vals, context=context)
+        move_ids.append(move_id)
+        return move_id
+
     def action_confirm_cash_return(self, cr, uid, ids, context=None):
         """
         Make a cash return either the given invoices or given statement lines.
@@ -778,6 +792,7 @@ class wizard_cash_return(osv.osv_memory):
         absl_obj = self.pool.get('account.bank.statement.line')
         wizard = self.browse(cr, uid, ids[0], context=context)
         wiz_date = wizard.date
+        move_ids = []
 
         # US-672/2
         self.pool.get('account.invoice').check_accounts_for_partner(cr, uid,
@@ -841,12 +856,8 @@ class wizard_cash_return(osv.osv_memory):
             'period_id': period_id,
             'date': wizard.date,
             'ref': adv_return_ref,
-            # name have been deleted by UTP-330
-            #'name': move_name,
         }
 
-        # create the move
-        move_id = move_obj.create(cr, uid, move_vals, context=context)
         # Prepare the closing advance name
         adv_closing_name = "closing" + "-" + wizard.advance_st_line_id.name
 
@@ -855,23 +866,31 @@ class wizard_cash_return(osv.osv_memory):
         if wizard.additional_amount > 0:
             # credit journal credit account
             journal_acc_id = register.journal_id.default_credit_account_id.id
+            additional_amount_move = self._create_move(cr, uid, move_vals, move_ids, context=context)
+            # TODO: remove this. Check whether this move should be added to the move_ids list?
+            del move_ids[-1]
             self.create_move_line(cr, uid, ids, wizard.date, wizard.date, adv_closing_name, journal, register, False, wizard.advance_st_line_id.employee_id.id, journal_acc_id, \
-                                  0.0, wizard.additional_amount, adv_return_ref, move_id, False, context=context)
+                                  0.0, wizard.additional_amount, adv_return_ref, additional_amount_move, False, context=context)
             # debit account 13000 adv returns
             adv_acc_id = wizard.advance_st_line_id.account_id.id
-            addl_dr_move_line_id = self.create_move_line(cr, uid, ids, wizard.date, wizard.date, adv_closing_name, journal, register, False, wizard.advance_st_line_id.employee_id.id, adv_acc_id, \
-                                                         wizard.additional_amount, 0.0, adv_return_ref, move_id, False, context=context)
-            self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, addl_dr_move_line_id, context=context)
+            # TODO: check that the right move is used in the following lines
+            addl_dr_move_line_id = self.create_move_line(cr, uid, ids, wizard.date, wizard.date, adv_closing_name, journal,
+                                                         register, False, wizard.advance_st_line_id.employee_id.id, adv_acc_id,
+                                                         wizard.additional_amount, 0.0, adv_return_ref, additional_amount_move,
+                                                         False, context=context)
+            self.create_st_line_from_move_line(cr, uid, ids, register.id, additional_amount_move, addl_dr_move_line_id, context=context)
 
         # create a cash return move line ONLY IF this return is superior to 0
         if wizard.returned_amount > 0:
             return_acc_id = register.journal_id.default_credit_account_id.id
-            self.create_move_line(cr, uid, ids, wizard.date, wizard.date, adv_closing_name, journal, register, False, wizard.advance_st_line_id.employee_id.id, return_acc_id, \
-                                  wizard.returned_amount, 0.0, adv_return_ref, move_id, False, context=context)
+            cash_return_move = self._create_move(cr, uid, move_vals, move_ids, context=context)
+            self.create_move_line(cr, uid, ids, wizard.date, wizard.date, adv_closing_name, journal, register, False,
+                                  wizard.advance_st_line_id.employee_id.id, return_acc_id, wizard.returned_amount, 0.0, adv_return_ref,
+                                  cash_return_move, False, context=context)
 
         # make treatment for invoice lines
         # create invoice lines
-        inv_move_line_ids = []
+        inv_ml_data = []
         for invoice in wizard.invoice_line_ids:
             inv_name = "Invoice" + " " + invoice.invoice_id.internal_number
             inv_doc_date = invoice.invoice_id.document_date
@@ -879,9 +898,11 @@ class wizard_cash_return(osv.osv_memory):
             debit = invoice.amount
             credit = 0.0
             account_id = invoice.account_id.id
-            inv_id = self.create_move_line(cr, uid, ids, wizard.date, inv_doc_date, inv_name, journal, register, partner_id, False, account_id, \
-                                           debit, credit, adv_return_ref, move_id, False, context=context)
-            inv_move_line_ids.append((inv_id, invoice.invoice_id.id))
+            move_vals.update({'document_date': inv_doc_date})
+            inv_move = self._create_move(cr, uid, move_vals, move_ids, context=context)
+            inv_ml_id = self.create_move_line(cr, uid, ids, wizard.date, inv_doc_date, inv_name, journal, register, partner_id, False,
+                                              account_id, debit, credit, adv_return_ref, inv_move, False, context=context)
+            inv_ml_data.append((inv_move, inv_ml_id, invoice.invoice_id.id))
         # make treatment for advance lines
         # Prepare a list of advances that have a supplier and then demand generating some moves
         advances_with_supplier = {}
@@ -918,21 +939,11 @@ class wizard_cash_return(osv.osv_memory):
                 (advance.wizard_id.analytic_distribution_id and advance.wizard_id.analytic_distribution_id.id) or False
             # other infos
             line_ref = advance.reference or adv_return_ref
-            adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, line_employee_id, account_id, \
-                                           debit, credit, line_ref, move_id, distrib_id, context=context)
-            adv_move_line_ids.append(adv_id)
-
-        # create the advance closing line
-        adv_closing_acc_id = wizard.advance_st_line_id.account_id.id
-        adv_closing_date = wizard.date
-        employee_id = wizard.advance_st_line_id.employee_id.id
-        adv_closing_id = self.create_move_line(cr, uid, ids, adv_closing_date, wizard.date, adv_closing_name, journal, register, False, employee_id, adv_closing_acc_id, \
-                                               0.0, (wizard.initial_amount + wizard.additional_amount), adv_return_ref, move_id, False, partner_mandatory=True, context=context)
-        # Verify that the balance of the move is null
-        st_currency = wizard.advance_st_line_id.statement_id.journal_id.currency.id
-        if st_currency and st_currency != wizard.advance_st_line_id.statement_id.company_id.currency_id.id:
-            # change the amount_currency of the advance closing line in order to be negative (not done in create_move_line function)
-            move_line_obj.write(cr, uid, [adv_closing_id], {'amount_currency': -(wizard.initial_amount + wizard.additional_amount)}, context=context)
+            move_vals.update({'document_date': adv_date})
+            adv_move = self._create_move(cr, uid, move_vals, move_ids, context=context)
+            adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, line_employee_id,
+                                           account_id, debit, credit, line_ref, adv_move, distrib_id, context=context)
+            adv_move_line_ids.append((adv_move, adv_id))
 
         # if advance lines have a Partner Third Party: create Payable Entries and add them to the advance closing JE
         to_reconcile = {}  # per partner
@@ -960,18 +971,45 @@ class wizard_cash_return(osv.osv_memory):
                         raise osv.except_osv(_('Warning'), _('One supplier seems not to have a payable account. \
                         Please contact an accountant administrator to resolve this problem.'))
                     # Create move_lines
-                    supp_move_line_debit_id = self.create_move_line(cr, uid, ids, wizard.date, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
-                                                                    account_id, total, 0.0, adv_return_ref, move_id, False, context=context)
-                    supp_move_line_credit_id = self.create_move_line(cr, uid, ids, wizard.date, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
-                                                                     account_id, 0.0, total, adv_return_ref, move_id, False, context=context)
+                    move_vals.update({'document_date': supp_move_date})
+                    payable_entry_move = self._create_move(cr, uid, move_vals, move_ids, context=context)
+                    supp_move_line_debit_id = self.create_move_line(cr, uid, ids, wizard.date, supp_move_date, supp_move_name, journal,
+                                                                    register, supplier_id, False, account_id, total, 0.0, adv_return_ref,
+                                                                    payable_entry_move, False, context=context)
+                    supp_move_line_credit_id = self.create_move_line(cr, uid, ids, wizard.date, supp_move_date, supp_move_name, journal,
+                                                                     register, supplier_id, False, account_id, 0.0, total, adv_return_ref,
+                                                                     payable_entry_move, False, context=context)
                     # mark the lines as to be reconciled, for each supplier
                     to_reconcile[supplier_id] = [supp_move_line_debit_id, supp_move_line_credit_id]
                     # store all payable lines created
                     payable_lines.append(supp_move_line_debit_id)
                     payable_lines.append(supp_move_line_credit_id)
 
-        # post the move
-        res_move_id = move_obj.post(cr, uid, [move_id], context=context)
+        # add the counterpart "closing advance line" in each moves and post them
+        adv_closing_data = []
+        adv_closing_acc_id = wizard.advance_st_line_id.account_id.id
+        employee_id = wizard.advance_st_line_id.employee_id.id
+        for move_id in move_ids:
+            create_move = move_obj.browse(cr, uid, move_id, fields_to_fetch=['line_id', 'document_date'], context=context)
+            ml_amount = 0.0
+            for ml in create_move.line_id:
+                ml_amount += (ml.debit_currency or 0.0) + (ml.credit_currency or 0.0)
+            adv_closing_ml_id = self.create_move_line(cr, uid, ids, create_move.date, create_move.document_date, adv_closing_name,
+                                                   journal, register, False, employee_id, adv_closing_acc_id, \
+                                                   0.0, ml_amount,
+                                                   adv_return_ref, move_id, False, partner_mandatory=True,
+                                                   context=context)
+            adv_closing_data.append((move_id, adv_closing_ml_id))
+
+            # Verify that the balance of the move is null
+            st_currency = wizard.advance_st_line_id.statement_id.journal_id.currency.id
+            if st_currency != wizard.advance_st_line_id.statement_id.company_id.currency_id.id:
+                # reverse the booking of the advance closing line (not done in create_move_line function)
+                move_line_obj.write(cr, uid, [adv_closing_ml_id], {'amount_currency': -ml_amount}, context=context)
+
+            # don't go further if one of the moves couldn't be posted
+            if not move_obj.post(cr, uid, [move_id], context=context):
+                raise osv.except_osv(_('Error'), _('An error has occurred: The journal entries cannot be posted.'))
 
         # reconcile partner Payable Entries together if any
         for supp_id in to_reconcile:
@@ -982,25 +1020,24 @@ class wizard_cash_return(osv.osv_memory):
             absl_obj.write(cr, uid, context['statement_line_id'], {'partner_move_line_ids': [(6, 0, payable_lines)]},
                            context=context)
 
-        # Create statement lines for invoices and advance closing ONLY IF the move is posted
-        # Check that the posting has succeeded
-        if res_move_id == False:
-            raise osv.except_osv(_('Error'), _('An error has occurred: The journal entries cannot be posted.'))
+        # Create statement lines for invoices and advance closing
         # handle invoice lines
-        for inv_move_line_data in inv_move_line_ids:
-            self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, inv_move_line_data[0], invoice_id=inv_move_line_data[1], context=context)
+        for inv_move_line_data in inv_ml_data:
+            inv_move_id, inv_move_line_id, inv_id = inv_move_line_data
+            self.create_st_line_from_move_line(cr, uid, ids, register.id, inv_move_id, inv_move_line_id, inv_id, context=context)
+
             # search the invoice move line that comes from the invoice
-            invoice_move_id = self.pool.get('account.invoice').read(cr, uid, inv_move_line_data[1], ['move_id'], context=context).get('move_id', None)
-            inv_move_line_account_id = move_line_obj.read(cr, uid, inv_move_line_data[0], ['account_id'], context=context).get('account_id', None)
+            invoice_move_id = self.pool.get('account.invoice').read(cr, uid, inv_id, ['move_id'], context=context).get('move_id', None)
+            inv_move_line_account_id = move_line_obj.read(cr, uid, inv_move_line_id, ['account_id'], context=context).get('account_id', None)
             if invoice_move_id and inv_move_line_account_id:
                 ml_ids = move_line_obj.search(cr, uid, [('move_id', '=', invoice_move_id[0]), ('account_id', '=', inv_move_line_account_id[0])], context=context)
             if not ml_ids or len(ml_ids) > 1:
                 raise osv.except_osv(_('Error'), _('An error occurred on invoice reconciliation: Invoice line not found.'))
             # reconcile invoice line (from cash return) with specified invoice line (from invoice)
-            move_line_obj.reconcile_partial(cr, uid, [ml_ids[0], inv_move_line_data[0]])
+            move_line_obj.reconcile_partial(cr, uid, [ml_ids[0], inv_move_line_id])
         # handle advance lines
-        for adv_move_line_id in adv_move_line_ids:
-            self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_move_line_id, context=context)
+        for adv_move_id, adv_move_line_id in adv_move_line_ids:
+            self.create_st_line_from_move_line(cr, uid, ids, register.id, adv_move_id, adv_move_line_id, context=context)
 
         # reconcile advance and advance return lines
         original_move_id = wizard.advance_st_line_id.move_ids[0]
@@ -1009,13 +1046,15 @@ class wizard_cash_return(osv.osv_memory):
         if not ml_ids or len(ml_ids) > 1:
             raise osv.except_osv(_('Error'), _('An error occurred on the automatic reconciliation in advance return.'))
 
-        rec_targets = [ml_ids[0], adv_closing_id]
+        rec_targets = [ml_ids[0]] + [adv_closing[1] for adv_closing in adv_closing_data]
         if addl_dr_move_line_id:
             rec_targets.append(addl_dr_move_line_id)
 
         move_line_obj.reconcile_partial(cr, uid, rec_targets)
-        # create the statement line for the advance closing
-        self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id, adv_closing_id, do_move_line_id_link=False, context=context)
+        # create the statement lines for the advance closing
+        for adv_closing in adv_closing_data:
+            self.create_st_line_from_move_line(cr, uid, ids, register.id, move_id=adv_closing[0], move_line_id=adv_closing[1],
+                                               do_move_line_id_link=False, context=context)
 
         # Disable the return function on the statement line origin (on which we launch the wizard)
         absl_obj.write(cr, uid, [wizard.advance_st_line_id.id], {'from_cash_return': True}, context=context)
