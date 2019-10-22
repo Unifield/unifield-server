@@ -8931,12 +8931,14 @@ msgstr "Quantité de Produits"
 msgid "! - Requires national export license"
 msgstr "! - Nécessite une licence d'exportation nationale"
 
-#. modules: purchase, purchase_override, sale
+#. modules: purchase, purchase_override, sale, tender_flow
 #: selection:purchase.order.line,state:0
 #: selection:purchase.order.merged.line,state:0
 #: selection:sale.order.line,state:0
 #: selection:purchase.order.line,state_to_display:0
 #: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order.line,rfq_line_state_to_display:0
+#: selection:purchase.order.merged.line,rfq_line_state_to_display:0
 msgid "Cancelled-r"
 msgstr "Annulée-r"
 
@@ -29965,7 +29967,7 @@ msgstr "Date de Début"
 msgid "Certificate attached ?"
 msgstr "Certificat attaché ?"
 
-#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, msf_supply_doc_export, purchase, account_override, account, register_accounting, stock_override
+#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, msf_supply_doc_export, purchase, account_override, account, register_accounting, stock_override, purchase_override, tender_flow
 #: field:po.follow.up,closed_ok:0
 #: selection:real.average.consumption,state:0
 #: selection:po.follow.up,state:0
@@ -46590,7 +46592,7 @@ msgstr "Scinder la qté de stock en entrepôt en stock et stock non affecté."
 msgid "Europe/Ulyanovsk"
 msgstr "Europe/Ulyanovsk"
 
-#. modules: purchase, sync_client, sales_followup, msf_homere_interface, tender_flow, stock_forecast, mission_stock, msf_profile
+#. modules: purchase, sync_client, sales_followup, msf_homere_interface, tender_flow, stock_forecast, mission_stock, msf_profile, purchase_override
 #: field:stock.mission.report.line,updated:0
 #: field:hr.payroll.import.confirmation,updated:0
 #: selection:purchase.report,state:0
@@ -47153,7 +47155,7 @@ msgstr "UdM échangeable "
 msgid "Illinois"
 msgstr "Illinois"
 
-#. modules: stock_forecast, purchase, tender_flow, sales_followup
+#. modules: stock_forecast, purchase, tender_flow, sales_followup, purchase_override
 #: selection:purchase.report,state:0
 #: selection:purchase.order.line,po_state:0
 #: selection:purchase.order.line,order_state:0
@@ -82470,6 +82472,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:65
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:83
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:82
+#: field:purchase.order.line,rfq_line_state_to_display:0
 #, python-format
 msgid "State"
 msgstr "Statut"

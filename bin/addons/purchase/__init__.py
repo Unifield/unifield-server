@@ -56,7 +56,6 @@ PURCHASE_ORDER_LINE_DISPLAY_STATE_SELECTION = PURCHASE_ORDER_LINE_STATE_SELECTIO
     ('resourced_d', 'Resourced-d'),
 ]
 
-
 PURCHASE_ORDER_STATE_SELECTION = [
     ('draft', 'Draft'),
     ('draft_p', 'Draft-p'),
