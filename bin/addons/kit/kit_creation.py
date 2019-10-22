@@ -875,8 +875,6 @@ class kit_creation_to_consume(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.state != 'in_production':
                 raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
-            # Check if stock is available
-            kit_creation_obj.check_lines_availability(cr, uid, obj.kit_creation_id_to_consume, context=context)
             # we only want one line in it
             context.update({'to_consume_line_id': obj.id})
             # call the kit order method
