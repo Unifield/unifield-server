@@ -621,11 +621,11 @@ class kit_creation(osv.osv):
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context))
         return res
 
-    def check_lines_availability(self, cr, uid, kit, context=None):
+    def check_lines_availability(self, cr, uid, to_consume_list, context=None):
         if context is None:
             context = {}
 
-        for line in kit.to_consume_ids_kit_creation:
+        for line in to_consume_list:
             if line.qty_available_to_consume < line.total_qty_to_consume:
                 raise osv.except_osv(_('Warning !'),
                                      _('The Kitting Order cannot be processed unless all product lines are available.'))
@@ -658,9 +658,9 @@ class kit_creation(osv.osv):
                 # all lines are processed not consumed
                 to_consume_list = obj.to_consume_ids_kit_creation
 
+            # Check if stock is available
+            self.check_lines_availability(cr, uid, to_consume_list, context=context)
             for to_consume in to_consume_list:
-                # Check if stock is available
-                self.check_lines_availability(cr, uid, to_consume.kit_creation_id_to_consume, context=context)
                 if not to_consume.consumed_to_consume:
                     # create a corresponding stock move
                     move_values = {'kit_creation_id_stock_move': obj.id,
