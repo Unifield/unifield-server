@@ -41257,7 +41257,7 @@ msgstr "Effacer"
 msgid "Icon"
 msgstr "Icône"
 
-#. modules: sales_followup, msf_outgoing, sale, stock_override, kit
+#. modules: sales_followup, msf_outgoing, sale, stock_override, kit, purchase_override, procurement_request
 #: report:kit.report:0
 #: report:empty.picking.ticket:0
 #: report:picking.ticket:0
@@ -41266,6 +41266,11 @@ msgstr "Icône"
 #: report:sales.follow.up.multi.report_pdf:0
 #: report:internal.move:0
 #: report:delivery.order:0
+#: report:procurement.request.report:0
+#: report:msf.purchase.order:0
+#: report:msf.purchase.quotation:0
+#: report:purchase.order.merged:0
+#: report:msf.sale.order:0
 msgid "Notes :"
 msgstr "Notes :"
 
@@ -70250,15 +70255,6 @@ msgstr "Vous ne pouvez pas modifier le journal de liquidité %s"
 #, python-format
 msgid "Threshold value"
 msgstr "Valeur Seuil"
-
-#. modules: purchase_override, sale, procurement_request
-#: report:procurement.request.report:0
-#: report:msf.purchase.order:0
-#: report:msf.purchase.quotation:0
-#: report:purchase.order.merged:0
-#: report:msf.sale.order:0
-msgid "REMARKS :"
-msgstr "REMARQUES :"
 
 #. module: procurement
 #: help:res.company,schedule_range:0
