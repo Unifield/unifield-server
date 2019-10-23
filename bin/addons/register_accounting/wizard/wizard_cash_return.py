@@ -989,7 +989,7 @@ class wizard_cash_return(osv.osv_memory):
                     if not move_obj.post(cr, uid, [payable_entry_move], context=context):
                         raise error_post_impossible
 
-        # add the counterpart "closing advance line" in each moves and post them
+        # add the counterpart "closing advance line" in each move and post them
         adv_closing_data = []
         adv_closing_acc_id = wizard.advance_st_line_id.account_id.id
         employee_id = wizard.advance_st_line_id.employee_id.id
