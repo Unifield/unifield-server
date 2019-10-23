@@ -23,6 +23,8 @@ from osv import osv
 from osv import fields
 from time import strftime
 import decimal_precision as dp
+from base import currency_date
+
 
 class analytic_distribution1(osv.osv):
     _name = "analytic.distribution"
@@ -154,8 +156,9 @@ class analytic_distribution1(osv.osv):
             res[distrib.id] = True
         return res
 
-    def create_analytic_lines(self, cr, uid, ids, name, date, amount, journal_id, currency_id, document_date=False, ref=False, source_date=False, general_account_id=False, \
-                              move_id=False, invoice_line_id=False, commitment_line_id=False, context=None):
+    def create_account_analytic_lines(self, cr, uid, ids, name, date, amount, journal_id, currency_id, document_date=False, ref=False,
+                                      source_date=False, general_account_id=False, move_id=False, invoice_line_id=False,
+                                      commitment_line_id=False, context=None):
         """
         Create analytic lines from given elements:
          - date
@@ -182,9 +185,11 @@ class analytic_distribution1(osv.osv):
             document_date = date
         # Prepare some values
         res = []
+        # DONE: TEST JN
+        curr_date = currency_date.get_date(self, cr, document_date, date, source_date=source_date)
         vals = {
             'name': name,
-            'date': source_date or date,
+            'date': date,  # DONE: TEST JN
             'document_date': document_date,
             'ref': ref or False,
             'journal_id': journal_id,
@@ -203,7 +208,7 @@ class analytic_distribution1(osv.osv):
             # create lines
             for distrib_lines in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
                 for distrib_line in distrib_lines:
-                    context.update({'date': source_date or date}) # for amount computing
+                    context.update({'currency_date': curr_date})  # for the computation of the fctal amount
                     anal_amount = (distrib_line.percentage * amount) / 100
                     vals.update({
                         'amount': -1 * self.pool.get('res.currency').compute(cr, uid, currency_id, company_currency,
@@ -274,7 +279,8 @@ class distribution_line(osv.osv):
 
         for line in self.browse(cr, uid, ids):
             amount_cur = round((move_line.credit_currency - move_line.debit_currency) * line.percentage / 100, 2)
-            ctx = {'date': source_date or date}
+            # DONE: TEST JN
+            ctx = {'currency_date': currency_date.get_date(self, cr, document_date, date, source_date=source_date)}
             amount = self.pool.get('res.currency').compute(cr, uid, move_line.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
 
             # US-945: deduce real period id from date
@@ -283,6 +289,8 @@ class distribution_line(osv.osv):
             period_ids = self.pool.get('account.period').get_period_from_date(
                 cr, uid, date=date, context=context)
 
+            curr_date = currency_date.get_date(self, cr, move_line.document_date, move_line.date,
+                                               source_date=source_date or move_line.source_date)
             vals = {
                 'instance_id': instance_id,
                 'account_id': line.analytic_id.id,
@@ -293,7 +301,7 @@ class distribution_line(osv.osv):
                 'date': date,
                 # UFTP-361: source_date or source date from line or from line posting date if any
                 # for rev line must be the source date of the move line: posting date of reversed line
-                'source_date': source_date or move_line.source_date or move_line.date,
+                'source_date': curr_date,  # DONE: TEST JN
                 'document_date': document_date,
                 'journal_id': move_line.journal_id and move_line.journal_id.analytic_journal_id and move_line.journal_id.analytic_journal_id.id or False,
                 'move_id': move_line.id,

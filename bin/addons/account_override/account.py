@@ -90,6 +90,7 @@ class account_account(osv.osv):
                         (__compute will handle their escaping) as a
                         tuple
         """
+        # DONE: TEST JN => there is no "date" in context
         mapping = {
             'balance': "COALESCE(SUM(l.debit),0) " \
                        "- COALESCE(SUM(l.credit), 0) as balance",
@@ -997,6 +998,7 @@ class account_move(osv.osv):
             if 'document_date' in vals:
                 context['document_date'] = vals.get('document_date')
             if 'date' in vals:
+                # DONE: TEST JN => this date isn't used for amount computation
                 context['date'] = vals.get('date')
             # UTFTP-262: Make manual_name mandatory
             if 'manual_name' not in vals or not vals.get('manual_name', False) or vals.get('manual_name') == '':

@@ -102,6 +102,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
 
         - allow to modify the data for purchase order line creation
         '''
+        # DONE JFB: pre sll. TEST JN => is there a "date" in context? If so replace the key by "currency_date" (cf. 3 calls to the compute method)
         if not context:
             context = {}
         line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)

@@ -24,8 +24,6 @@ from osv import fields
 
 from tools.translate import _
 
-import time
-
 
 class product_supplierinfo(osv.osv):
     _name = 'product.supplierinfo'
@@ -105,28 +103,6 @@ class product_supplierinfo(osv.osv):
             v.update({'delay': supplier.supplier_lt})
 
         return {'value': v}
-
-
-    # Override the original method
-    def price_get(self, cr, uid, supplier_ids, product_id, product_qty=1, context=None):
-        """
-        Calculate price from supplier pricelist.
-        @param supplier_ids: Ids of res.partner object.
-        @param product_id: Id of product.
-        @param product_qty: specify quantity to purchase.
-        """
-        if type(supplier_ids) in (int,long,):
-            supplier_ids = [supplier_ids]
-        res = {}
-        product_pool = self.pool.get('product.product')
-        partner_pool = self.pool.get('res.partner')
-        currency_id = context.get('currency_id', False) or self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        date = context.get('date', False) or time.strftime('%Y-%m-%d')
-        uom_id = context.get('uom', False) or product_pool.browse(cr, uid, product_id, context=context).uom_id.id
-        for supplier in partner_pool.browse(cr, uid, supplier_ids, context=context):
-            res[supplier.id] = product_pool._get_partner_price(cr, uid, product_id, supplier.id, product_qty,
-                                                               currency_id, date, uom_id, context=context)
-        return res
 
 product_supplierinfo()
 
@@ -321,10 +297,9 @@ class product_product(osv.osv):
         for product in prod_obj.browse(cr, uid, product_ids, context=context):
             info_prices = self._get_partner_info_price(cr, uid, product, partner_id, product_qty, currency_id,
                                                        order_date, product_uom_id, context=context)
-
             if info_prices:
-                #            info = partner_price.browse(cr, uid, info_price, context=context)[0]
                 info = partner_price.browse(cr, uid, info_prices[0], context=context)
+                # DONE JFB: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                 price = cur_obj.compute(cr, uid, info.currency_id.id, currency_id, info.price, round=False, context=context)
                 res[product.id] = (price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00)
             else:
@@ -477,28 +452,6 @@ class product_pricelist(osv.osv):
         'currency_name': fields.function(_get_currency_name, fnct_search=_search_currency_name, type='char', method=True, string='Currency name'),
     }
 
-    def _hook_product_partner_price(self, cr, uid, *args, **kwargs):
-        '''
-        Rework the computation of price from partner section in product form
-        '''
-        product_id = kwargs['product_id']
-        partner = kwargs['partner']
-        qty = kwargs['qty']
-        currency_id = kwargs['currency_id']
-        date = kwargs['date']
-        uom = kwargs['uom']
-        context = kwargs['context']
-        if not uom and product_id:
-            uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id.id
-        if not partner and 'partner_id' in context:
-            partner = context.get('partner_id', False)
-        uom_price_already_computed = kwargs['uom_price_already_computed']
-
-        price, rounding, min_qty = self.pool.get('product.product')._get_partner_price(cr, uid, product_id, partner, qty, currency_id,
-                                                                                       date, uom, context=context)
-        uom_price_already_computed = 1
-
-        return price, uom_price_already_computed
 
     def name_get(self, cr, user, ids, context=None):
         '''
@@ -525,130 +478,5 @@ class product_pricelist(osv.osv):
 
 
 product_pricelist()
-
-class res_currency(osv.osv):
-    _name = 'res.currency'
-    _inherit = 'res.currency'
-
-    def _get_in_search(self, cr, uid, ids, field_name, args, context=None):
-        res = {}
-        for id in ids:
-            res[id] = True
-        return res
-
-    def _search_in_search(self, cr, uid, obj, name, args, context=None):
-        '''
-        Returns currency according to partner type
-        '''
-        user_obj = self.pool.get('res.users')
-        price_obj = self.pool.get('product.pricelist')
-        dom = []
-
-        for arg in args:
-            if arg[0] == 'is_po_functional':
-                if arg[1] != '=':
-                    raise osv.except_osv(_('Error !'), _('Bad operator !'))
-                else:
-                    func_currency_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
-                    po_currency_id = price_obj.browse(cr, uid, arg[2]).currency_id.id
-                    dom.append(('id', 'in', [func_currency_id, po_currency_id]))
-        return dom
-
-    def _get_partner_currency(self, cr, uid, ids, field_name, args, context=None):
-        res = {}
-        for id in ids:
-            res[id] = True
-
-        return res
-
-    def _src_partner_currency(self, cr, uid, obj, name, args, context=None):
-        '''
-        Returns currencies according to partner type
-        '''
-        user_obj = self.pool.get('res.users')
-        dom = []
-
-        for arg in args:
-            if arg[0] == 'partner_currency':
-                if arg[1] != '=':
-                    raise osv.except_osv(_('Error !'), _('Bad operator !'))
-                elif arg[2]:
-                    partner = self.pool.get('res.partner').browse(cr, uid, arg[2], context=context)
-                    if partner.partner_type in ('internal', 'intermission'):
-                        func_currency_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
-                        dom.append(('id', '=', func_currency_id))
-                    elif partner.partner_type == 'section':
-                        dom.append(('is_section_currency', '=', True))
-                    elif partner.partner_type == 'esc':
-                        dom.append(('is_esc_currency', '=', True))
-
-        return dom
-
-    _columns = {
-        'is_section_currency': fields.boolean(string='Functional currency',
-                                              help='If this box is checked, this currency is used as a functional currency for at least one section in MSF.'),
-        'is_esc_currency': fields.boolean(string='ESC currency',
-                                          help='If this box is checked, this currency is used as a currency for at least one ESC.'),
-        'is_po_functional': fields.function(_get_in_search, fnct_search=_search_in_search, method=True,
-                                            type='boolean', string='transport PO currencies'),
-        'partner_currency': fields.function(_get_partner_currency, fnct_search=_src_partner_currency, type='boolean', method=True,
-                                            string='Partner currency', store=False, help='Only technically to filter currencies according to partner type'),
-    }
-
-    def write(self, cr, uid, ids, values, context=None):
-        '''
-        Disallow the uncheck of section/esc checkbox if a section/esc partner use this currency
-        '''
-        if not ids:
-            return True
-        property_obj = self.pool.get('ir.property')
-        partner_obj = self.pool.get('res.partner')
-        pricelist_obj = self.pool.get('product.pricelist')
-
-        # Check if Inter-section partners used one of these currencies
-        if 'is_section_currency' in values and not values['is_section_currency']:
-            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id',
-                                                            'in', ids)], order='NO_ORDER', context=context)
-            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=',
-                                                        'section')], order='NO_ORDER', context=context)
-            value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
-            res_reference = ['res.partner,%s' % x for x in partner_ids]
-            property_ids = []
-            if value_reference and res_reference:
-                property_ids = property_obj.search(cr, uid, [('res_id', 'in', res_reference),
-                                                             ('value_reference', 'in', value_reference),
-                                                             '|', ('name', '=', 'property_product_pricelist'),
-                                                             ('name', '=', 'property_product_pricelist_purchase'),], context=context)
-            if property_ids:
-                properties = property_obj.browse(cr, uid, property_ids, context=context)
-                partner_list = ' / '.join(x.res_id.name for x in properties)
-                raise osv.except_osv(_('Error !'),
-                                     _('You cannot uncheck the Section checkbox because this currency is used on these \'Inter-section\' partners : \
-                                      %s') % (partner_list,))
-
-        # Check if ESC partners used one of these currencies
-        if 'is_esc_currency' in values and not values['is_esc_currency']:
-            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id',
-                                                            'in', ids)], order='NO_ORDER', context=context)
-            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=',
-                                                        'esc')], order='NO_ORDER', context=context)
-            value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
-            res_reference = ['res.partner,%s' % x for x in partner_ids]
-            property_ids = []
-            if value_reference and res_reference:
-                property_ids = property_obj.search(cr, uid, [('res_id', 'in', res_reference),
-                                                             ('value_reference', 'in', value_reference),
-                                                             '|', ('name', '=', 'property_product_pricelist'),
-                                                             ('name', '=', 'property_product_pricelist_purchase'),], context=context)
-            if property_ids:
-                properties = property_obj.browse(cr, uid, property_ids, context=context)
-                partner_list = ' / '.join(x.res_id.name for x in properties)
-                raise osv.except_osv(_('Error !'),
-                                     _('You cannot uncheck the ESC checkbox because this currency is used on these \'ESC\' partners : \
-                                      %s' % partner_list))
-
-        return super(res_currency, self).write(cr, uid, ids, values, context=context)
-
-res_currency()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

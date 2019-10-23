@@ -20,6 +20,8 @@
 ##############################################################################
 
 from osv import fields, osv
+from base import currency_date
+
 
 class account_bank_statement_line_compute_currency(osv.osv):
     _inherit = "account.bank.statement.line"
@@ -30,8 +32,10 @@ class account_bank_statement_line_compute_currency(osv.osv):
         res = {}
         for statement_line in self.browse(cr, uid, ids):
             ctx = {}
-            if statement_line.date:
-                ctx['date'] = statement_line.date
+            # DONE: TEST JN
+            curr_date = currency_date.get_date(self, cr, statement_line.document_date, statement_line.date)
+            if curr_date:
+                ctx['currency_date'] = curr_date
             try:
                 res[statement_line.id] = {
                     'functional_in': cur_obj.compute(cr, uid, statement_line.currency_id.id,

@@ -40,6 +40,7 @@ class donation_certificate(report_sxw.rml_parse):
         curr_obj = self.pool.get('res.currency')
         tot_value = 0
         for move in pick.move_lines:
+            # DONE JFB: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
             tot_value += move.product_qty * round(curr_obj.compute(self.cr, self.uid, move.price_currency_id.id,
                                                                    pick.company_id.currency_id.id, move.price_unit,
                                                                    round=False, context=self.localcontext), 2)

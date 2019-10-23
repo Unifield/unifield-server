@@ -379,7 +379,9 @@ class financing_contract_format_line(osv.osv):
                         if 'currency_table_id' in context:
                             currency_table = context['currency_table_id']
                         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-                            date_context = {'date': analytic_line.document_date,
+                            # DONE: TEST JN
+                            # this Financing Contract report is based on doc. date
+                            date_context = {'currency_date': analytic_line.document_date,
                                             'currency_table_id': currency_table}
                             real_sum += self.pool.get('res.currency').compute(cr,
                                                                               uid,
