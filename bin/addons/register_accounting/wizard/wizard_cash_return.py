@@ -995,7 +995,7 @@ class wizard_cash_return(osv.osv_memory):
         employee_id = wizard.advance_st_line_id.employee_id.id
         st_currency = wizard.advance_st_line_id.statement_id.journal_id.currency.id
         for move_id in move_ids:
-            created_move = move_obj.browse(cr, uid, move_id, fields_to_fetch=['line_id', 'document_date'], context=context)
+            created_move = move_obj.browse(cr, uid, move_id, fields_to_fetch=['line_id', 'date', 'document_date'], context=context)
             ml_amount = 0.0
             for ml in created_move.line_id:
                 ml_amount += (ml.debit_currency or 0.0) + (ml.credit_currency or 0.0)
