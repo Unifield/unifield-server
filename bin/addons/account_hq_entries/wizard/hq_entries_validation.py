@@ -442,6 +442,7 @@ class hq_entries_validation(osv.osv_memory):
                 raise osv.except_osv(_('Error'),
                                      "\n".join(account_partner_not_compat_log))
 
+            all_lines = {}
             for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
                 # for December HQ Entries: use the period selected in the wizard
                 if line.period_id.number == 12 and wiz.period_id:
@@ -463,10 +464,6 @@ class hq_entries_validation(osv.osv_memory):
                     split_change.append(line)
                     continue
                 if not line.user_validated:
-                    document_date = line.document_date or line.date  # posting date is used by default if there is no doc date on the line
-                    to_write.setdefault(line.currency_id.id, {}).setdefault(line.period_id.id, {}).\
-                        setdefault(line.date, {}).setdefault(document_date, []).append(line.id)
-
                     if line.account_id.id != line.account_id_first_value.id:
                         if line.cost_center_id.id != line.cost_center_id_first_value.id or line.destination_id.id != line.destination_id_first_value.id:
                             cc_account_change.append(line)
@@ -491,16 +488,13 @@ class hq_entries_validation(osv.osv_memory):
                             raise osv.except_osv(_('Warning'), _('The account %s - %s should not be used in '
                                                                  'AD corrections.') % (ad_non_correctable_account.code,
                                                                                        ad_non_correctable_account.name))
-            all_lines = {}
-            for currency in to_write:
-                for period in to_write[currency]:
-                    for date in to_write[currency][period]:
-                        for doc_date in to_write[currency][period][date]:
-                            lines = to_write[currency][period][date][doc_date]
-                            write = self.create_move(cr, uid, lines, period_id=period, currency_id=currency, date=date, doc_date=doc_date)
-                            all_lines.update(write)
-                            if write:
-                                self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
+
+                    document_date = line.document_date or line.date  # posting date is used by default if there is no doc date on the line
+                    write = self.create_move(cr, uid, line.id, period_id=line.period_id.id, currency_id=line.currency_id.id,
+                                             date=line.date, doc_date=document_date)
+                    if write:
+                        all_lines.update(write)
+                        self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
 
             for line in account_change:
                 # DONE: TEST JN
