@@ -244,8 +244,11 @@ class replenishment_segment_line(osv.osv):
                         'to_date': now.strftime('%Y-%m-%d'),
                         'location_ids': [loc.id for loc in x.segment_id.location_config_id.local_location_ids],
                     },
-                    'prod_seg_line': {}
+                    'prod_seg_line': {},
+                    'remote_location_q': []
                 }
+                for remote_loc in x.segment_id.location_config_id.remote_location_ids:
+                    segment[x.segment_id.id]['remote_location_q'].append('remote_instance_id=%s AND remote_location_id=%s' % (remote_loc.instance_id.id, remote_loc.instance_db_id))
             segment[x.segment_id.id]['prod_seg_line'][x.product_id.id] = x.id
 
         for seg_id in segment:
@@ -253,9 +256,19 @@ class replenishment_segment_line(osv.osv):
             for prod_id in amc:
                 ret[segment[seg_id]['prod_seg_line'][prod_id]]['rr_amc'] = amc[prod_id]
 
+
             for prod in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['qty_available'], context={'location_ids': segment[seg_id]['context']['location_ids']}):
                 ret[segment[seg_id]['prod_seg_line'][prod.id]]['real_stock_instance'] = prod.qty_available
                 ret[segment[seg_id]['prod_seg_line'][prod.id]]['real_stock'] = prod.qty_available
+
+            if segment[seg_id]['remote_location_q']:
+                remote_q = "select product_id, sum(quantity) from stock_mission_report_line_location where product_id in %s "
+                remote_q += " AND ( %s ) " % ( ' OR '.join(segment[seg_id]['remote_location_q']))
+                remote_q += 'group by product_id'
+                cr.execute(remote_q, (tuple(segment[seg_id]['prod_seg_line'].keys()),))
+                for x in cr.fetchall():
+                    ret[segment[seg_id]['prod_seg_line'][x[0]]]['real_stock'] += x[1]
+
 
         return ret
 

@@ -1830,7 +1830,18 @@ class product_product(osv.osv):
         if context.get('amc_location_ids'):
             locations = context['amc_location_ids']
             out_locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'customer')], context=context, order='NO_ORDER')
-            domain += [('type', '=', 'out'), ('location_dest_id', 'in' ,out_locations), '|', ('location_id', 'in', locations), ('initial_location', 'in', locations)]
+            # initial_location: to match Ship with src loc on Pick
+            domain += [ '&', '&', ('type', '=', 'out'), ('location_dest_id', 'in', out_locations), '|', ('location_id', 'in', locations), ('initial_location', 'in', locations)]
+
+            # TODO JFB RR
+            # get IN / INT
+            # move_dest_id
+            # return_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+            # return_good_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
+            # replacement_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+            # ('type', '=', 'in'), ('reason_type_id', 'in', [return_id, return_good_id, replacement_id), ('location_id', 'in', out_locations), ('location_dest_id', 'in', locations)
+            # select p2.name from stock_move m1, stock_move m2, stock_picking p2 where m1.type='in' and m2.id = m1.move_dest_id and m2.picking_id=p2.id;
+
         else:
             locations = self.pool.get('stock.location').search(cr, uid,
                                                                [('usage', 'in', ('internal', 'customer'))], context=context,
