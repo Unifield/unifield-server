@@ -2,6 +2,8 @@
 
 from osv import osv, fields
 from tools.translate import _
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import time
 
 class replenishment_location_config(osv.osv):
@@ -164,11 +166,11 @@ class replenishment_segment(osv.osv):
 
     def _get_lt(self, cr, uid, ids, field_name, arg, context=None):
         ret = {}
-        for x in ids:
-            ret[x] = {
-                'internal_lt': False,
-                'external_lt': False,
-                'total_lt': False,
+        for seg in self.read(cr, uid, ids, ['order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt'], context=context):
+            ret[seg['id']] = {
+                'internal_lt': seg['order_creation_lt'] + seg['order_validation_lt'],
+                'external_lt': seg['supplier_lt'] + seg['handling_lt'],
+                'total_lt': seg['order_creation_lt'] + seg['order_validation_lt'] + seg['supplier_lt'] + seg['handling_lt'],
             }
         return ret
 
@@ -180,11 +182,11 @@ class replenishment_segment(osv.osv):
         'ir_requesting_location': fields.many2one('stock.location', string='IR Requesting Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])"),
         'product_list_id': fields.many2one('product.list', 'Primary product list'),
         'status': fields.selection([('draft', 'Draft'), ('complete', 'Complete'), ('cancel', 'Cancelled'), ('archived', 'Archived')], 'Status', readonly=1),
-        'order_creation_lt': fields.integer('Order Creation Lead Time (days)'),
-        'order_validation_lt': fields.integer('Order Validation Lead Time (days)'),
+        'order_creation_lt': fields.integer('Order Creation Lead Time (days)', required=1),
+        'order_validation_lt': fields.integer('Order Validation Lead Time (days)', required=1),
         'internal_lt': fields.function(_get_lt, type='integer', method=1, string='Internal Lead Time', multi='get_lt'),
-        'supplier_lt': fields.integer('Supplier Lead Time (days)'),
-        'handling_lt': fields.integer('Handling Lead Time (days)'),
+        'supplier_lt': fields.integer('Supplier Lead Time (days)', required=1),
+        'handling_lt': fields.integer('Handling Lead Time (days)', required=1),
         'external_lt': fields.function(_get_lt, type='integer', method=1, string='External Lead Time', multi='get_lt'),
         'total_lt': fields.function(_get_lt, type='integer', method=1, string='Total Lead Time', multi='get_lt'),
         'order_coverage': fields.integer('Order Coverage (months)'),
@@ -202,10 +204,18 @@ class replenishment_segment(osv.osv):
 
         return super(replenishment_segment, self).create(cr, uid, vals, context)
 
+    def on_change_lt(self, cr, uid, ids, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, context=None):
+        ret = {}
+        ret['internal_lt'] = (order_creation_lt or 0) + (order_validation_lt or 0)
+        ret['external_lt'] = (supplier_lt or 0) + (handling_lt or 0)
+        ret['total_lt'] = ret['internal_lt'] + ret['external_lt']
+        return {'value': ret}
+
 replenishment_segment()
 
 class replenishment_segment_line(osv.osv):
     _name = 'replenishment.segment.line'
+    _inherits = {'replenishment.segment': 'segment_id'}
     _description = 'Product'
 
     def _get_main_list(self, cr, uid, ids, field_name, arg, context=None):
@@ -216,12 +226,37 @@ class replenishment_segment_line(osv.osv):
         return ret
 
     def _get_real_stock(self, cr, uid, ids, field_name, arg, context=None):
+        prod_obj = self.pool.get('product.product')
         ret = {}
-        for x in ids:
-            ret[x] = {
-                'real_stock': False,
-                'rr_amc': False,
+        segment = {}
+        now = datetime.now()
+        #now = datetime.strptime('2019-09-30', '%Y-%m-%d')
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['product_id', 'segment_id'], context=context):
+            ret[x.id] = {
+                'real_stock': 0,
+                'real_stock_instance': 0,
+                'rr_amc': 0,
             }
+            if x.segment_id.id not in segment:
+                segment[x.segment_id.id] = {
+                    'context': {
+                        'from_date': (now -  relativedelta(months=x.segment_id.location_config_id.rr_amc)).strftime('%Y-%m-%d'),
+                        'to_date': now.strftime('%Y-%m-%d'),
+                        'location_ids': [loc.id for loc in x.segment_id.location_config_id.local_location_ids],
+                    },
+                    'prod_seg_line': {}
+                }
+            segment[x.segment_id.id]['prod_seg_line'][x.product_id.id] = x.id
+
+        for seg_id in segment:
+            amc = prod_obj.compute_amc(cr, uid, segment[seg_id]['prod_seg_line'].keys(), segment[seg_id]['context'])
+            for prod_id in amc:
+                ret[segment[seg_id]['prod_seg_line'][prod_id]]['rr_amc'] = amc[prod_id]
+
+            for prod in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['qty_available'], context={'location_ids': segment[seg_id]['context']['location_ids']}):
+                ret[segment[seg_id]['prod_seg_line'][prod.id]]['real_stock_instance'] = prod.qty_available
+                ret[segment[seg_id]['prod_seg_line'][prod.id]]['real_stock'] = prod.qty_available
+
         return ret
 
     _columns = {
@@ -236,6 +271,7 @@ class replenishment_segment_line(osv.osv):
         'auto_qty': fields.float('Auto. Supply Qty', related_uom='uom_id'),
         'buffer_qty': fields.float('Buffer Qty', related_uom='uom_id'),
         'real_stock': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='Real Stock', multi='get_stock_amc'),
+        'real_stock_instance': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='Real Stock', multi='get_stock_amc'),
         'rr_amc': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='RR-AMC', multi='get_stock_amc'),
         'rr_fmc_1': fields.float('RR FMC', related_uom='uom_id'),
         'rr_fmc_from_1': fields.datetime('From'),
@@ -275,4 +311,7 @@ class replenishment_segment_line(osv.osv):
         'rr_fmc_to_12': fields.datetime('To'),
     }
 
+    _sql_constraints = [
+        ('uniq_segment_id_product_id', 'unique(segment_id, product_id)', 'Product already set in this segment')
+    ]
 replenishment_segment_line()

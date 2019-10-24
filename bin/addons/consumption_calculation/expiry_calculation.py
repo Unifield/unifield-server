@@ -312,7 +312,8 @@ class product_likely_expire_report(osv.osv):
         if consumption_type == 'fmc':
             res = product_obj.browse(cr, uid, product_id, context=new_context).reviewed_consumption
         elif consumption_type == 'amc':
-            res = product_obj.compute_amc(cr, uid, product_id, context=new_context)
+            # TODO TEST JFB
+            res = product_obj.compute_amc(cr, uid, product_id, context=new_context)[product_id]
         else:
             res = product_obj.browse(cr, uid, product_id, context=new_context).monthly_consumption
 

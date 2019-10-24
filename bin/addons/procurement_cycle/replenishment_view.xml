@@ -167,11 +167,11 @@
                     <field name="ir_requesting_location" />
                     <field name="product_list_id" />
                     <field name="status" />
-                    <field name="order_creation_lt" />
-                    <field name="order_validation_lt" />
+                    <field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" />
+                    <field name="order_validation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" />
                     <field name="internal_lt" />
-                    <field name="supplier_lt" />
-                    <field name="handling_lt" />
+                    <field name="supplier_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" />
+                    <field name="handling_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" />
                     <field name="external_lt" />
                     <field name="total_lt" />
                     <field name="order_coverage" />
@@ -181,7 +181,7 @@
                     <field name="date_next_order_validated" />
                     <field name="date_next_order_received" />
                     <field name="line_ids" colspan="4" nolabel="1" default_get="rule=rule">
-                        <tree editable="top">
+                        <tree editable="top" editable_style="new">
                             <field name="product_id" />
                             <field name="product_description" displayon="noteditable"/>
                             <field name="uom_id" invisible="1" />
@@ -196,36 +196,47 @@
                             <field name="rr_fmc_1" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_from_1" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_to_1" invisible="context.get('rule')!='cycle'"/>
+                            <separator />
                             <field name="rr_fmc_2" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_from_2" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_to_2" invisible="context.get('rule')!='cycle'"/>
+                            <separator />
                             <field name="rr_fmc_3" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_from_3" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'"/>
+                            <separator />
                             <field name="rr_fmc_4" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_from_4" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_to_4" invisible="context.get('rule')!='cycle'"/>
+                            <separator />
                             <field name="rr_fmc_5" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_from_5" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_to_5" invisible="context.get('rule')!='cycle'"/>
+                            <separator />
                             <field name="rr_fmc_6" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_from_6" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_to_6" invisible="context.get('rule')!='cycle'"/>
+                            <separator />
                             <field name="rr_fmc_7" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_from_7" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_to_7" invisible="context.get('rule')!='cycle'"/>
+                            <separator />
                             <field name="rr_fmc_8" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_from_8" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_to_8" invisible="context.get('rule')!='cycle'"/>
+                            <separator />
                             <field name="rr_fmc_9" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_from_9" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_to_9" invisible="context.get('rule')!='cycle'"/>
+                            <separator />
                             <field name="rr_fmc_10" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_from_10" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_to_10" invisible="context.get('rule')!='cycle'"/>
+                            <separator />
                             <field name="rr_fmc_11" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_from_11" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_to_11" invisible="context.get('rule')!='cycle'"/>
+                            <separator />
                             <field name="rr_fmc_12" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_from_12" invisible="context.get('rule')!='cycle'"/>
                             <field name="rr_fmc_to_12" invisible="context.get('rule')!='cycle'"/>
