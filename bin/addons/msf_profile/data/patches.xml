@@ -465,5 +465,9 @@
             <field name="method">us_6457_update_uf_create_date_product</field>
         </record>
 
+        <record id="us_6618_create_shadow_pack" model="patch.scripts">
+            <field name="method">us_6618_create_shadow_pack</field>
+        </record>
+
     </data>
 </openerp>

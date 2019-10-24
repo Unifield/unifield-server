@@ -53,6 +53,67 @@ class patch_scripts(osv.osv):
     }
 
     # UF15.0
+    def us_6618_create_shadow_pack(self, cr, uid, *a, **b):
+        wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
+        if not wh_ids:
+            return True
+
+        wh = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0])
+        loc_ship = wh.lot_dispatch_id.id
+        loc_distrib = wh.lot_distribution_id.id
+        if not loc_ship or not loc_distrib:
+            return True
+
+        if cr.column_exists('stock_picking', 'first_shipment_packing_id'):
+            cr.execute('''
+                select * from stock_picking
+                where
+                    subtype='packing' and
+                    name ~ 'PACK/[0-9]+-(surplus|return-)?[0-9]+-[0-9]+' and
+                    first_shipment_packing_id is null and
+                    id not in (
+                        select first_shipment_packing_id from stock_picking where first_shipment_packing_id is not null
+                    )
+            ''')
+        else:
+            cr.execute('''
+                select * from stock_picking
+                where
+                    subtype='packing' and
+                    name ~ 'PACK/[0-9]+-(surplus|return-)?[0-9]+-[0-9]+'
+            ''')
+        create_ship = []
+        for ship in cr.dictfetchall():
+            ship_id = ship['id']
+            del(ship['id'])
+            del(ship['shipment_id'])
+            ship['state'] = 'done'
+            ship['name'] = '%s-s' % ship['name']
+            columns = []
+            values = []
+            columns = ship.keys()
+            values = ['%%(%s)s' % x for x in columns]
+            cr.execute('''insert into stock_picking (''' +','.join(columns)+ ''') VALUES (''' + ','.join(values) + ''') RETURNING ID''', ship) # not_a_user_entry
+            new_ship_id = cr.fetchone()[0]
+            create_ship.append(ship['name'])
+
+            cr.execute("select * from stock_move where picking_id = %s", (ship_id,))
+            for move in cr.dictfetchall():
+                del(move['id'])
+                move['picking_id'] = new_ship_id
+                move['location_id'] = loc_ship
+                move['location_dest_id'] = loc_distrib
+                move['state'] = 'done'
+                move['date'] = move['create_date']
+                columns = []
+                values = []
+                columns = move.keys()
+                values = ['%%(%s)s' % x for x in columns]
+                cr.execute('''insert into stock_move (''' +','.join(columns)+ ''') VALUES (''' + ','.join(values) + ''') ''', move) # not_a_user_entry
+
+        self._logger.warn('%d shadow pack created from %s' % (len(create_ship), ','.join(create_ship)))
+        return True
+
     def us_6354_trigger_donation_account_sync(self, cr, uid, *a, **b):
         """
         Triggers a synch. on the Intersection Partners at HQ, so that their Donation Payable Account is retrieved in the lower instances

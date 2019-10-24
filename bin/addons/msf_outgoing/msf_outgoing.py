@@ -606,6 +606,24 @@ class shipment(osv.osv):
 
             new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
 
+        # create picking to move from Shipment to Distrib
+        shadow_pack_data = {
+            'name': '%s-s' % picking.name,
+            'move_lines': [],
+            'description_ppl': description_ppl or picking.description_ppl,
+            'shipment_id': False,
+            'backorder_id': picking.id,
+        }
+        new_ctx = context.copy()
+        new_ctx.update({
+            'keep_prodlot': True,
+            'keepLineNumber': True,
+            'allow_copy': True,
+            'non_stock_noupdate': True,
+        })
+        shadow_pack_id = picking_obj.copy(cr, uid, picking.id, shadow_pack_data, context=new_ctx)
+        ###
+
         selected_from_pack = family.to_pack - family.selected_number + 1
 
         if family.selected_number == int(family.num_of_packs):
@@ -638,8 +656,21 @@ class shipment(osv.osv):
                 'location_dest_id': picking.warehouse_id.lot_output_id.id,
                 'selected_number': family.selected_number,
             }
+            shadow_move_vals = move_vals.copy()
+
             new_move = move_obj.copy(cr, uid, move.id, move_vals, context=context)
             move_obj.action_confirm(cr, uid, new_move, context=context)
+
+            # to move stock fro Shipment to Distrib
+            shadow_move_vals = {
+                'picking_id': shadow_pack_id,
+                'backmove_packing_id': False,
+                'location_id': picking.warehouse_id.lot_dispatch_id.id,
+                'location_dest_id': picking.warehouse_id.lot_distribution_id.id,
+                'state': 'done',
+            }
+            shadow_move_id = move_obj.copy(cr, uid, move.id, shadow_move_vals, context=context)
+
             # Update corresponding initial move
             initial_qty = max(move.product_qty - selected_qty, 0)
 
@@ -666,7 +697,7 @@ class shipment(osv.osv):
             'non_stock_noupdate': False,
             'draft_packing_id': False,
         })
-
+        picking_obj.write(cr, uid, [shadow_move_id], {'state': 'done'}, context=context)
         # confirm the new packing
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(uid, 'stock.picking', new_packing_id, 'button_confirm', cr)
