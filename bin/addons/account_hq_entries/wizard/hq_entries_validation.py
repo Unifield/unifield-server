@@ -419,7 +419,6 @@ class hq_entries_validation(osv.osv_memory):
             if acor_journal_ids:
                 acor_journal_id = acor_journal_ids[0]
             # Tag active_ids as user validated
-            to_write = {}
             account_change = []
             cc_change = []
             cc_account_change = []
