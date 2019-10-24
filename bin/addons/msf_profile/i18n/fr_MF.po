@@ -107394,6 +107394,12 @@ msgstr "Impossible de vérifier les écritures de réévaluation de la période 
 msgid "You should run the month-end revaluation before closing the period."
 msgstr "Veuillez lancer la réévaluation de fin de mois avant de fermer la période."
 
+#. module: kit
+#: code:addons/kit/kit_creation.py:631
+#, python-format
+msgid "The Kitting Order cannot be processed unless all product lines are available."
+msgstr "La Commande d'Assemblage ne pourra pas être traitée avant que tous les produits ne soient disponibles."
+
 #. module: sync_client
 #: code:addons/sync_client/backup.py:127
 #, python-format
