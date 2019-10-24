@@ -913,15 +913,17 @@ class wizard_cash_return(osv.osv_memory):
             # Case where line equals 0
             if advance.amount == 0.0:
                 continue
-            # create a move that will be used for the advance line AND for the related trade payable automatic entries
-            adv_move = self._create_move(cr, uid, move_vals, move_ids, context=context)
             adv_date = advance.document_date
             adv_name = advance.description
+            # create a move that will be used for the advance line AND for the related trade payable automatic entries
+            move_vals.update({'document_date': adv_date})
+            adv_move = self._create_move(cr, uid, move_vals, move_ids, context=context)
             partner_id = False
             line_employee_id = False
             partner = advance.partner_type
             if partner:
                 if partner._name == 'res.partner':
+                    partner_id = partner.id
                     advances_with_supplier.setdefault(adv_move, []).append(advance)
                 elif partner._name == 'hr.employee':
                     line_employee_id = partner.id
@@ -938,7 +940,6 @@ class wizard_cash_return(osv.osv_memory):
                 (advance.wizard_id.analytic_distribution_id and advance.wizard_id.analytic_distribution_id.id) or False
             # other infos
             line_ref = advance.reference or adv_return_ref
-            move_vals.update({'document_date': adv_date})
             adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, line_employee_id,
                                            account_id, debit, credit, line_ref, adv_move, distrib_id, context=context)
             adv_move_data.append((adv_move, adv_id))
