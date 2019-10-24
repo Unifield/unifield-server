@@ -906,13 +906,15 @@ class wizard_cash_return(osv.osv_memory):
             inv_ml_data.append((inv_move, inv_ml_id, invoice.invoice_id.id))
         # make treatment for advance lines
         # Prepare a list of advances that have a supplier and then demand generating some moves
-        advances_with_supplier = {}
+        advances_with_supplier = []
         # create move line from advance line
         adv_move_data = []
         for advance in wizard.advance_line_ids:
             # Case where line equals 0
             if advance.amount == 0.0:
                 continue
+            # create a move that will be used for the advance line AND for the related trade payable automatic entries
+            adv_move = self._create_move(cr, uid, move_vals, move_ids, context=context)
             adv_date = advance.document_date
             adv_name = advance.description
             partner_id = False
@@ -920,11 +922,7 @@ class wizard_cash_return(osv.osv_memory):
             partner = advance.partner_type
             if partner:
                 if partner._name == 'res.partner':
-                    partner_id = partner.id
-                    if partner_id in advances_with_supplier:
-                        advances_with_supplier[partner_id].append(advance.id)
-                    else:
-                        advances_with_supplier[partner_id] = [advance.id]
+                    advances_with_supplier.append((advance, adv_move))
                 elif partner._name == 'hr.employee':
                     line_employee_id = partner.id
             debit = abs(advance.amount)
@@ -941,53 +939,40 @@ class wizard_cash_return(osv.osv_memory):
             # other infos
             line_ref = advance.reference or adv_return_ref
             move_vals.update({'document_date': adv_date})
-            adv_move = self._create_move(cr, uid, move_vals, move_ids, context=context)
             adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, line_employee_id,
                                            account_id, debit, credit, line_ref, adv_move, distrib_id, context=context)
             adv_move_data.append((adv_move, adv_id))
 
         # if advance lines have a Partner Third Party: create Payable Entries and add them to the advance closing JE
-        to_reconcile = {}  # per partner
+        to_reconcile = {}  # per advance line
         payable_lines = []
-        if advances_with_supplier:
-            wiz_adv_line_obj = self.pool.get('wizard.advance.line')
-            # Browse suppliers
-            for supplier_id in advances_with_supplier:
-                total = 0.0
-                # Calculate the total amount for the selected supplier
-                for s_id in advances_with_supplier[supplier_id]:
-                    data = wiz_adv_line_obj.read(cr, uid, s_id, ['amount'], context=context)
-                    if 'amount' in data:
-                        total += data.get('amount')
-                # create both move lines for the supplier
-                if total > 0:
-                    supp_move_info = wiz_adv_line_obj.read(cr, uid, advances_with_supplier[supplier_id][0], ['description', 'document_date'], context=context)
-                    supp_move_name = supp_move_info.get('description', "/")
-                    supp_move_date = supp_move_info.get('document_date', wiz_date)
-                    # search account_id of the supplier
-                    account_id = self.pool.get('res.partner').read(cr, uid, supplier_id, ['property_account_payable'], context=context)
-                    if 'property_account_payable' in account_id and account_id.get('property_account_payable', False):
-                        account_id = account_id.get('property_account_payable')[0]
-                    else:
-                        raise osv.except_osv(_('Warning'), _('One supplier seems not to have a payable account. \
-                        Please contact an accountant administrator to resolve this problem.'))
-                    # Create move_lines
-                    move_vals.update({'document_date': supp_move_date})
-                    payable_entry_move = self._create_move(cr, uid, move_vals, context=context)
-                    supp_move_line_debit_id = self.create_move_line(cr, uid, ids, wizard.date, supp_move_date, supp_move_name, journal,
-                                                                    register, supplier_id, False, account_id, total, 0.0, adv_return_ref,
-                                                                    payable_entry_move, False, context=context)
-                    supp_move_line_credit_id = self.create_move_line(cr, uid, ids, wizard.date, supp_move_date, supp_move_name, journal,
-                                                                     register, supplier_id, False, account_id, 0.0, total, adv_return_ref,
-                                                                     payable_entry_move, False, context=context)
-                    # mark the lines as to be reconciled, for each supplier
-                    to_reconcile[supplier_id] = [supp_move_line_debit_id, supp_move_line_credit_id]
-                    # store all payable lines created
-                    payable_lines.append(supp_move_line_debit_id)
-                    payable_lines.append(supp_move_line_credit_id)
-                    # post the move
-                    if not move_obj.post(cr, uid, [payable_entry_move], context=context):
-                        raise error_post_impossible
+        for adv_supp_line, adv_move in advances_with_supplier:
+            adv_supp_line_amount = adv_supp_line.amount or 0.0
+            # create both move lines related to the advance line
+            if adv_supp_line_amount > 0:
+                supp_move_name = adv_supp_line.description or "/"
+                supp_move_date = adv_supp_line.document_date or wiz_date
+                supplier_id = adv_supp_line.partner_type.id  # don't use partner_id which is a browse_null in that case
+                # search account_id of the supplier
+                account_id = self.pool.get('res.partner').read(cr, uid, supplier_id, ['property_account_payable'], context=context)
+                if 'property_account_payable' in account_id and account_id.get('property_account_payable', False):
+                    account_id = account_id.get('property_account_payable')[0]
+                else:
+                    raise osv.except_osv(_('Warning'), _('One supplier seems not to have a payable account. \
+                                                         Please contact an accountant administrator to resolve this problem.'))
+                # create move_lines and add them to the advance move
+                move_vals.update({'document_date': supp_move_date})
+                supp_move_line_debit_id = self.create_move_line(cr, uid, ids, wizard.date, supp_move_date, supp_move_name, journal,
+                                                                register, supplier_id, False, account_id, adv_supp_line_amount, 0.0,
+                                                                adv_return_ref, adv_move, False, context=context)
+                supp_move_line_credit_id = self.create_move_line(cr, uid, ids, wizard.date, supp_move_date, supp_move_name, journal,
+                                                                 register, supplier_id, False, account_id, 0.0, adv_supp_line_amount,
+                                                                 adv_return_ref, adv_move, False, context=context)
+                # mark the lines as to be reconciled, for each advance line
+                to_reconcile[adv_supp_line.id] = [supp_move_line_debit_id, supp_move_line_credit_id]
+                # store all payable lines created
+                payable_lines.append(supp_move_line_debit_id)
+                payable_lines.append(supp_move_line_credit_id)
 
         # add the counterpart "closing advance line" in each move and post them
         adv_closing_data = []
@@ -998,7 +983,8 @@ class wizard_cash_return(osv.osv_memory):
             created_move = move_obj.browse(cr, uid, move_id, fields_to_fetch=['line_id', 'date', 'document_date'], context=context)
             ml_amount = 0.0
             for ml in created_move.line_id:
-                ml_amount += (ml.debit_currency or 0.0) + (ml.credit_currency or 0.0)
+                if ml.id not in payable_lines:  # exclude amounts of the Trade payable automatic entries
+                    ml_amount += (ml.debit_currency or 0.0) + (ml.credit_currency or 0.0)
             adv_closing_ml_id = self.create_move_line(cr, uid, ids, created_move.date, created_move.document_date, adv_closing_name,
                                                       journal, register, False, employee_id, adv_closing_acc_id, 0.0, ml_amount,
                                                       adv_return_ref, move_id, False, partner_mandatory=True, context=context)
@@ -1014,8 +1000,8 @@ class wizard_cash_return(osv.osv_memory):
                 raise error_post_impossible
 
         # reconcile partner Payable Entries together if any
-        for supp_id in to_reconcile:
-            move_line_obj.reconcile_partial(cr, uid, to_reconcile[supp_id], context=context)
+        for adv_line_id in to_reconcile:
+            move_line_obj.reconcile_partial(cr, uid, to_reconcile[adv_line_id], context=context)
 
         # Update the statement line with the partner_move_line_ids ("Automated entries")
         if payable_lines and 'statement_line_id' in context:
