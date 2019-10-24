@@ -669,7 +669,7 @@ class shipment(osv.osv):
                 'location_dest_id': picking.warehouse_id.lot_distribution_id.id,
                 'state': 'done',
             }
-            shadow_move_id = move_obj.copy(cr, uid, move.id, shadow_move_vals, context=context)
+            move_obj.copy(cr, uid, move.id, shadow_move_vals, context=context)
 
             # Update corresponding initial move
             initial_qty = max(move.product_qty - selected_qty, 0)
@@ -697,7 +697,7 @@ class shipment(osv.osv):
             'non_stock_noupdate': False,
             'draft_packing_id': False,
         })
-        picking_obj.write(cr, uid, [shadow_move_id], {'state': 'done'}, context=context)
+        picking_obj.write(cr, uid, [shadow_pack_id], {'state': 'done'}, context=context)
         # confirm the new packing
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(uid, 'stock.picking', new_packing_id, 'button_confirm', cr)
