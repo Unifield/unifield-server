@@ -212,6 +212,13 @@ class ir_model(osv.osv):
         else:
             x_name = a._columns.keys()[0]
         x_custom_model._rec_name = x_name
+
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        model = self.browse(cr, uid, res_id, fields_to_fetch=['model'])
+        a = 'ir_model_%s' % model.model.replace('.', '')
+        print a
+        return a
+
 ir_model()
 
 class ir_model_fields(osv.osv):

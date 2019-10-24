@@ -973,6 +973,8 @@ class account_invoice(osv.osv):
         Reverse move if this object is a In-kind Donation. Otherwise do normal job: cancellation.
         Don't delete an invoice that is linked to a PO. This is only for supplier invoices.
         """
+        # Oct. 2019: log if this method is used at least once (cf it may be dead code?)
+        self.pool.get('ir.config_parameter').set_param(cr, 1, 'action_cancel.in_use', True)
         to_cancel = []
         for i in self.browse(cr, uid, ids):
             if i.is_inkind_donation:
@@ -1934,6 +1936,7 @@ class account_invoice_line(osv.osv):
                 std_price = p_info['standard_price']
                 company_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
                 if company_curr_id and company_curr_id != currency_id:
+                    # DONE: TEST JN => no date in context
                     std_price = self.pool.get('res.currency').compute(cr, uid, company_curr_id, currency_id, std_price, context=context)
                 res['value']['price_unit'] = std_price
                 res['value']['price_subtotal'] = (qty or 0) * std_price

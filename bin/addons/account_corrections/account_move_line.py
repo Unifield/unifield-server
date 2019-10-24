@@ -26,6 +26,8 @@ from osv import fields
 from tools.translate import _
 from time import strftime
 from tools.misc import flatten
+from base import currency_date
+
 
 class account_move_line(osv.osv):
     _name = 'account.move.line'
@@ -543,13 +545,15 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     # update amount on new distribution
                     ana_obj.update_distribution_line_amount(cr, uid, new_distrib_id, (-1 * (ml.debit - ml.credit)), context=context)
                 new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id, 'date': date, 'document_date': ml.document_date, 'period_id': period_ids[0]}, context=context)
+                # DONE: TEST JN
+                curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
                 vals.update({
                     'name': name,
                     'debit': ml.credit,
                     'credit': ml.debit,
                     'amount_currency': amt,
                     'reversal_line_id': ml.id,
-                    'source_date': ml.source_date or ml.date,
+                    'source_date': curr_date,
                     'reversal': True,
                     'reference': ml.move_id and ml.move_id.name or '',
                     'ref': ml.move_id and ml.move_id.name or '',
@@ -746,6 +750,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Do the reverse
             name = self.join_without_redundancy(ml.name, 'REV')
             amt = -1 * ml.amount_currency
+            # DONE: TEST JN
+            curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
             vals.update({
                 'debit': ml.credit,
                 'credit': ml.debit,
@@ -754,7 +760,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'name': name,
                 'reversal_line_id': ml.id,
                 'account_id': ml.account_id.id,
-                'source_date': ml.source_date or ml.date,
+                'source_date': curr_date,
                 'reversal': True,
                 'document_date': ml.document_date,
                 'reference': ml.move_id and ml.move_id.name or '',
@@ -768,7 +774,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'journal_id': journal_id,
                 'corrected_line_id': ml.id,
                 'account_id': new_account_id,
-                'source_date': ml.source_date or ml.date,
+                'source_date': curr_date,
                 'have_an_historic': True,
                 'document_date': ml.document_date,
                 'reference': ml.move_id and ml.move_id.name or '',

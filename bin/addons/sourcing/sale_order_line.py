@@ -1692,6 +1692,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         if not price:
                             price = sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0
                             if price and company_currency_id != target_currency_id:
+                                # DONE JFB: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                                 price = self.pool.get('res.currency').compute(cr, uid, company_currency_id, target_currency_id, price, round=False, context=context)
 
                         pol_values = {
@@ -1756,6 +1757,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             src_currency = company_currency_id
 
                         if price_unit and src_currency != target_currency_id:
+                            # DONE JFB: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                             price_unit = self.pool.get('res.currency').compute(cr, uid, src_currency, target_currency_id, price_unit, round=False, context=context)
 
                         rfq_line_values = {

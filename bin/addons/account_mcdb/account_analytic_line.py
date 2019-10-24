@@ -26,6 +26,8 @@ from osv import fields
 from time import strftime
 from lxml import etree
 from tools.translate import _
+from base import currency_date
+
 
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
@@ -35,6 +37,8 @@ class account_analytic_line(osv.osv):
         """
         Get an amount regarding currency in context (from 'output' and 'output_currency_id' values)
         """
+        if context is None:
+            context = {}
         # Prepare some value
         res = {}
         # Some verifications
@@ -48,27 +52,32 @@ class account_analytic_line(osv.osv):
         # Retrieve currency
         currency_id = context.get('output_currency_id')
         currency_obj = self.pool.get('res.currency')
+        # DONE: TEST JN => the context is not important here
         rate = currency_obj.read(cr, uid, currency_id, ['rate'], context=context).get('rate', False)
         # Do calculation
         if not rate:
             for out_id in ids:
                 res[out_id] = {'output_currency': currency_id, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             return res
-        for ml in self.browse(cr, uid, ids, context=context):
-            res[ml.id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
+        aal_fields = ['document_date', 'date', 'source_date', 'currency_id', 'amount_currency']
+        for aal in self.browse(cr, uid, ids, fields_to_fetch=aal_fields, context=context):
+            res[aal.id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             # output_amount field
             # Update with date
-            context.update({'date': ml.source_date or ml.date or strftime('%Y-%m-%d')})
-            mnt = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, currency_id, ml.amount_currency, round=True, context=context)
-            res[ml.id]['output_amount'] = mnt or 0.0
+            # DONE: TEST JN
+            curr_date = currency_date.get_date(self, cr, aal.document_date, aal.date, source_date=aal.source_date)
+            context.update({'currency_date': curr_date or strftime('%Y-%m-%d')})
+            mnt = self.pool.get('res.currency').compute(cr, uid, aal.currency_id.id, currency_id, aal.amount_currency,
+                                                        round=True, context=context)
+            res[aal.id]['output_amount'] = mnt or 0.0
             if mnt < 0.0:
-                res[ml.id]['output_amount_debit'] = 0.0
-                res[ml.id]['output_amount_credit'] = abs(mnt) or 0.0
+                res[aal.id]['output_amount_debit'] = 0.0
+                res[aal.id]['output_amount_credit'] = abs(mnt) or 0.0
             else:
-                res[ml.id]['output_amount_debit'] = abs(mnt) or 0.0
-                res[ml.id]['output_amount_credit'] = 0.0
+                res[aal.id]['output_amount_debit'] = abs(mnt) or 0.0
+                res[aal.id]['output_amount_credit'] = 0.0
             # or output_currency field
-            res[ml.id]['output_currency'] = currency_id
+            res[aal.id]['output_currency'] = currency_id
         return res
 
     def _get_cheque_number(self, cr, uid, ids, name, args, context=None):

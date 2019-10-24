@@ -38,6 +38,7 @@ class account_analytic_account(osv.osv):
                 result = recursive_computation(son)
                 for field in field_names:
                     if (account.currency_id.id != son.currency_id.id) and (field!='quantity'):
+                        # DONE: TEST JN => there is no "date" in context
                         result[field] = currency_obj.compute(cr, uid, son.currency_id.id, account.currency_id.id, result[field], context=context)
                     result2[field] += result[field]
             return result2
