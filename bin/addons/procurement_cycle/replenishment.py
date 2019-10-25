@@ -173,7 +173,8 @@ replenishment_location_config()
 class replenishment_segment(osv.osv):
     _name = 'replenishment.segment'
     _description = 'Segment'
-
+    _inherits = {'replenishment.location.config': 'location_config_id'}
+    _rec_name = 'name_seg'
     def _get_date(self, cr, uid, ids, field_name, arg, context=None):
         ret = {}
         for x in ids:
@@ -195,14 +196,26 @@ class replenishment_segment(osv.osv):
             }
         return ret
 
+    def _get_rule_alert(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        dict_d = {
+            'cycle': _('PAS with FMC'),
+            'minmax': _('Min'),
+            'auto': _('None'),
+        }
+        for seg in self.read(cr, uid, ids, ['rule'], context=context):
+            ret[seg['id']] = dict_d.get(seg['rule'],'')
+        return ret
+
     _columns = {
-        'name': fields.char('Reference', size=64, readonly=1, select=1),
-        'description': fields.char('Desription', required=1, size=28, select=1),
-        'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1),
+        'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
+        'description_seg': fields.char('Desription', required=1, size=28, select=1),
+        'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, ondelete="cascade"),
         'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Replenishment Rule (Order quantity)', required=1),
+        'rule_alert': fields.function(_get_rule_alert, method=1, string='Replenishment Rule (Alert Theshold', type='char'),
         'ir_requesting_location': fields.many2one('stock.location', string='IR Requesting Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])"),
         'product_list_id': fields.many2one('product.list', 'Primary product list'),
-        'status': fields.selection([('draft', 'Draft'), ('complete', 'Complete'), ('cancel', 'Cancelled'), ('archived', 'Archived')], 'Status', readonly=1),
+        'state': fields.selection([('draft', 'Draft'), ('complete', 'Complete'), ('cancel', 'Cancelled'), ('archived', 'Archived')], 'Status', readonly=1),
         'order_creation_lt': fields.integer('Order Creation Lead Time (days)', required=1),
         'order_validation_lt': fields.integer('Order Validation Lead Time (days)', required=1),
         'internal_lt': fields.function(_get_lt, type='integer', method=1, string='Internal Lead Time', multi='get_lt'),
@@ -220,8 +233,8 @@ class replenishment_segment(osv.osv):
     }
 
     def create(self, cr, uid, vals, context=None):
-        if 'name' not in vals:
-            vals['name'] = self.pool.get('ir.sequence').get(cr, uid, 'replenishment.segment')
+        if 'name_seg' not in vals:
+            vals['name_seg'] = self.pool.get('ir.sequence').get(cr, uid, 'replenishment.segment')
 
         return super(replenishment_segment, self).create(cr, uid, vals, context)
 
@@ -236,7 +249,6 @@ replenishment_segment()
 
 class replenishment_segment_line(osv.osv):
     _name = 'replenishment.segment.line'
-    _inherits = {'replenishment.segment': 'segment_id'}
     _description = 'Product'
 
     def _get_main_list(self, cr, uid, ids, field_name, arg, context=None):
@@ -250,8 +262,6 @@ class replenishment_segment_line(osv.osv):
         prod_obj = self.pool.get('product.product')
         ret = {}
         segment = {}
-        now = datetime.now()
-        #now = datetime.strptime('2019-09-30', '%Y-%m-%d')
         for x in self.browse(cr, uid, ids, fields_to_fetch=['product_id', 'segment_id'], context=context):
             ret[x.id] = {
                 'real_stock': 0,
@@ -259,26 +269,46 @@ class replenishment_segment_line(osv.osv):
                 'rr_amc': 0,
             }
             if x.segment_id.id not in segment:
+                to_date = datetime.now() + relativedelta(day=1, days=-1)
                 segment[x.segment_id.id] = {
                     'context': {
-                        'from_date': (now -  relativedelta(months=x.segment_id.location_config_id.rr_amc)).strftime('%Y-%m-%d'),
-                        'to_date': now.strftime('%Y-%m-%d'),
-                        'location_ids': [loc.id for loc in x.segment_id.location_config_id.local_location_ids],
+                        'to_date': to_date.strftime('%Y-%m-%d'),
+                        'from_date': (to_date -  relativedelta(months=x.segment_id.location_config_id.rr_amc)).strftime('%Y-%m-%d'),
+                        'amc_location_ids': [loc.id for loc in x.segment_id.location_config_id.local_location_ids],
                     },
                     'prod_seg_line': {},
-                    'remote_location_q': []
+                    'remote_location_q': [],
+                    'remote_instance_ids': [],
                 }
                 for remote_loc in x.segment_id.location_config_id.remote_location_ids:
+                    if remote_loc.instance_id.id not in segment[x.segment_id.id]['remote_instance_ids']:
+                        segment[x.segment_id.id]['remote_instance_ids'].append(remote_loc.instance_id.id)
+
                     segment[x.segment_id.id]['remote_location_q'].append('remote_instance_id=%s AND remote_location_id=%s' % (remote_loc.instance_id.id, remote_loc.instance_db_id))
+
             segment[x.segment_id.id]['prod_seg_line'][x.product_id.id] = x.id
 
         for seg_id in segment:
-            amc = prod_obj.compute_amc(cr, uid, segment[seg_id]['prod_seg_line'].keys(), segment[seg_id]['context'])
-            for prod_id in amc:
-                ret[segment[seg_id]['prod_seg_line'][prod_id]]['rr_amc'] = amc[prod_id]
+            if segment[seg_id]['remote_location_q']:
+                # compute AMC for remote instances
+                # TODO JFB RR : genereate_all_amc for local
+                cr.execute("""
+                    select segment_line_id, sum(amc)
+                    from replenishment_segment_line_amc
+                    where
+                        instance_id in %s and
+                        segment_line_id in %s
+                    group by segment_line_id
+                """, (tuple(segment[seg_id]['remote_instance_ids']), tuple(segment[seg_id]['prod_seg_line'].values())))
+                for x in cr.fetchall():
+                    ret[x[0]]['rr_amc'] = x[1]
+            else:
+                # AMC is fully local
+                amc = prod_obj.compute_amc(cr, uid, segment[seg_id]['prod_seg_line'].keys(), segment[seg_id]['context'])
+                for prod_id in amc:
+                    ret[segment[seg_id]['prod_seg_line'][prod_id]]['rr_amc'] = amc[prod_id]
 
-
-            for prod in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['qty_available'], context={'location_ids': segment[seg_id]['context']['location_ids']}):
+            for prod in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['qty_available'], context={'location_ids': segment[seg_id]['context']['amc_location_ids']}):
                 ret[segment[seg_id]['prod_seg_line'][prod.id]]['real_stock_instance'] = prod.qty_available
                 ret[segment[seg_id]['prod_seg_line'][prod.id]]['real_stock'] = prod.qty_available
 
@@ -349,3 +379,54 @@ class replenishment_segment_line(osv.osv):
         ('uniq_segment_id_product_id', 'unique(segment_id, product_id)', 'Product already set in this segment')
     ]
 replenishment_segment_line()
+
+class replenishment_segment_line_amc(osv.osv):
+    _name = 'replenishment.segment.line.amc'
+    _description = 'Segment Product AMC'
+
+    _columns = {
+        'name': fields.datetime('Date of last Generation'),
+        'segment_line_id': fields.many2one('replenishment.segment.line', 'Segment Line', select=1, ondelete='cascade'),
+        'amc': fields.float('AMC'),
+        'instance_id': fields.many2one('msf.instance', string='Instance', select=1),
+    }
+
+    def generate_all_amc(self, cr, uid, context=None):
+        # TODO JFB RR
+        # check last config mod date / conso mod date / current date and generates new AMC only if something has changed
+        segment_obj = self.pool.get('replenishment.segment')
+        prod_obj = self.pool.get('product.product')
+
+        instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+        to_date = datetime.now() + relativedelta(day=1, days=-1)
+        seg_ids = segment_obj.search(cr, uid, [('state', 'in', ['draft', 'complete']), ('remote_location_ids', '=', False)], context=context)
+
+        for segment in segment_obj.browse(cr, uid, seg_ids, context=context):
+            seg_context = {
+                'to_date': to_date.strftime('%Y-%m-%d'),
+                'from_date': (to_date - relativedelta(months=segment.rr_amc)).strftime('%Y-%m-%d'),
+                'amc_location_ids': [x.id for x in segment.local_location_ids],
+            }
+            lines = {}
+            for line in segment.line_ids:
+                lines[line.product_id.id] = line.id
+
+            cache_line_amc = {}
+            line_amc_ids = self.search(cr, uid, [('instance_id', '=', instance_id), ('segment_line_id', 'in', lines.values())], context=context)
+            for line_amc in self.browse(cr, uid, line_amc_ids, fields_to_fetch=['segment_line_id'], context=context):
+                cache_line_amc[line_amc.segment_line_id.id] = line_amc.id
+
+            amc = prod_obj.compute_amc(cr, uid, lines.keys(), context=seg_context)
+            for prod_id in amc:
+                if lines[prod_id] in cache_line_amc:
+                    self.write(cr, uid, cache_line_amc[lines[prod_id]], {'amc': amc[prod_id], 'name': to_date}, context=context)
+                else:
+                    self.create(cr, uid, {'segment_line_id': lines[prod_id], 'amc': amc[prod_id], 'name': to_date, 'instance_id': instance_id}, context=context)
+
+        return True
+
+    _sql_constraints = [
+        ('uniq_segment_line_id_instance_id', 'unique(segment_line_id, instance_id)', 'Line is duplicated')
+    ]
+
+replenishment_segment_line_amc()

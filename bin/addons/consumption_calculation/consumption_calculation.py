@@ -1902,8 +1902,8 @@ class product_product(osv.osv):
                           # All lines with a report started before the period  and finished after the period
                           '&', ('rac_id.period_from', '<=', from_date), ('rac_id.period_to', '>=', to_date)]
 
-            if context.get('location_ids'):
-                rcr_domain = ['&', ('rac_id.cons_location_id', 'in', context.get('location_ids'))] + rcr_domain
+            if context.get('amc_location_ids'):
+                rcr_domain = ['&', ('rac_id.cons_location_id', 'in', context.get('amc_location_ids'))] + rcr_domain
 
 
             racl_obj = self.pool.get('real.average.consumption.line')
@@ -1976,8 +1976,11 @@ class product_product(osv.osv):
             nb_months = 1
 
         for p_id in res:
-            prod_uom = product_dict[p_id]['uom_id'][0]
-            res[p_id] = uom_obj._compute_qty(cr, uid, prod_uom, res[p_id]/nb_months, prod_uom)
+            if p_id in product_dict:
+                prod_uom = product_dict[p_id]['uom_id'][0]
+                res[p_id] = uom_obj._compute_qty(cr, uid, prod_uom, res[p_id]/nb_months, prod_uom)
+            else:
+                res[p_id] = res[p_id]/nb_months
 
         return res
 
