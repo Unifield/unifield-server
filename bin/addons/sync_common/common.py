@@ -103,6 +103,7 @@ WHITE_LIST_MODEL = [
     'purchase.order.line',
     'real.average.consumption',
     'real.average.consumption.line',
+    'replenishment.location.config',
     'res.company',
     'res.country',
     'res.country.restriction',

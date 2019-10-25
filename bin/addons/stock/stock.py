@@ -53,7 +53,7 @@ def _get_used_in_config(self, cr, uid, ids, field_names, arg, context=None):
                     config.id = rel.config_id and
                     config.active and
                     config.main_instance = %s and
-                    config.location_id in %s
+                    rel.location_id in %s
         ''', (instance_id, tuple(ids))) # not_a_user_entry
         for x in cr.fetchall():
             ret[x[0]] = True

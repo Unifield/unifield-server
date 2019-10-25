@@ -18,7 +18,7 @@
                     <group colspan="2" col="2">
                         <separator string="Local Locations" colspan="2" />
                         <field name="local_location_ids" nolabel="1">
-                        <tree hide_new_button="0">
+                        <tree hide_new_button="0" hide_edit_button="1">
                                 <field name="complete_name" />
                                 <field name="usage" />
                                 <field name="location_category" />
@@ -28,8 +28,8 @@
                     <group colspan="2" col="2" attrs="{'invisible': [('synched', '=', False)]}">
                         <separator string="Project Locations" colspan="2" />
                         <field name="remote_location_ids" nolabel="1">
-                            <tree>
-                                <field name="name" />
+                            <tree hide_edit_button="1">
+                                <field name="full_name" />
                             </tree>
                         </field>
                     </group>

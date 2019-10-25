@@ -5,6 +5,7 @@ from tools.translate import _
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import time
+import json
 
 class replenishment_location_config(osv.osv):
     _name = 'replenishment.location.config'
@@ -23,6 +24,25 @@ class replenishment_location_config(osv.osv):
         return res
 
 
+    def _get_sync_remote_location_txt(self, cr, uid, ids, field_name, args, context=None):
+        ret = {}
+        for conf in self.browse(cr, uid, ids, fields_to_fetch=['remote_location_ids'], context=context):
+            ret[conf.id] = json.dumps([(x.instance_id.instance, x.instance_db_id) for x in conf.remote_location_ids])
+        return ret
+
+    def _set_sync_remote_location_txt(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
+        instance_obj = self.pool.get('res.company')._get_instance_record(cr, uid)
+        if not instance_obj:
+            return True
+        instance = instance_obj.instance
+
+        data =json.loads(value)
+        cr.execute('delete from local_location_configuration_rel where config_id=%s', (id, ))
+        for d in data:
+            if d[0] == instance:
+                cr.execute('insert into local_location_configuration_rel (config_id, location_id) values (%s, %s)', (id, d[1]))
+        return True
+
     _columns = {
         'name': fields.char('Reference', size=64, readonly=1, select=1),
         'description': fields.char('Desription', required=1, size=28, select=1),
@@ -40,6 +60,7 @@ class replenishment_location_config(osv.osv):
         'time_unit': fields.selection([('d', 'days'), ('w', 'weeks'), ('m', 'months')], string='Time units displayed (Inventory Review)'),
         'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequency', type='char'),
         'frequence_id': fields.many2one('stock.frequence', string='Frequency'),
+        'sync_remote_location_txt': fields.function(_get_sync_remote_location_txt, method=True, type='text', fnct_inv=_set_sync_remote_location_txt, internal=1, string='Sync remote', help='Used to sync remote_location_ids'),
     }
 
     _defaults = {
