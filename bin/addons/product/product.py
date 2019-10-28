@@ -597,14 +597,36 @@ class product_product(osv.osv):
                 (data['name'] or '') + (data['variants'] and (' - '+data['variants']) or '')
         return res
 
+    def _get_authorized_creator(self, cr, uid, check_edbn, context=None):
+        obj_data = self.pool.get('ir.model.data')
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
+        prod_creator = []
+        if instance_level == 'section':
+            if check_edbn:
+                # ITC, ESC, HQ, Local, ED
+                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_1')[1])
+                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_2')[1])
+                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1])
+                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1])
+                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1])
+            else:
+                prod_creator = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]]
+        elif instance_level == 'coordo':
+            prod_creator = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]]
+        return prod_creator
+
     def _get_expected_prod_creator(self, cr, uid, ids, field_names, arg, context=None):
         if context is None:
             context = {}
 
         res = {}
-        for id in ids:
-            res[id] = False
+        prod_creator = self._get_authorized_creator(cr, uid, check_edbn=True, context=context)
+        for _id in ids:
+            res[_id] = False
 
+        if prod_creator:
+            for _id in self.search(cr, uid, [('id', 'in', ids), ('international_status', 'in', prod_creator)], context=context):
+                res[_id] = True
         return res
 
     def _expected_prod_creator_search(self, cr, uid, obj, name, args, context=None):
@@ -614,17 +636,12 @@ class product_product(osv.osv):
         if context is None:
             context = {}
 
-        obj_data = self.pool.get('ir.model.data')
-        instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
-        prod_creator_id = False
+        prod_creator_ids = []
         for arg in args:
             if arg[0] == 'expected_prod_creator':
-                if instance_level == 'section':
-                    prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
-                elif instance_level == 'coordo':
-                    prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+                prod_creator_ids = self._get_authorized_creator(cr, uid, arg[2]=='bned', context)
 
-        return [('international_status', '=', prod_creator_id)]
+        return [('international_status', 'in', prod_creator_ids)]
 
     _defaults = {
         'active': lambda *a: 1,
@@ -656,7 +673,7 @@ class product_product(osv.osv):
         'price_margin': fields.float('Variant Price Margin', digits_compute=dp.get_precision('Sale Price')),
         'pricelist_id': fields.dummy(string='Pricelist', relation='product.pricelist', type='many2one'),
         'name_template': fields.related('product_tmpl_id', 'name', string="Name", type='char', size=128, store=True, write_relate=False),
-        'expected_prod_creator': fields.function(_get_expected_prod_creator, method=True, type='many2one', relation='product.international.status', fnct_search=_expected_prod_creator_search, readonly=True, string='Expected Product Creator for Product Mass Update'),
+        'expected_prod_creator': fields.function(_get_expected_prod_creator, method=True, type='boolean', fnct_search=_expected_prod_creator_search, readonly=True, string='Expected Product Creator for Product Mass Update'),
     }
 
     def unlink(self, cr, uid, ids, context=None):
