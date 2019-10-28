@@ -70,6 +70,14 @@ class product_template(osv.osv):
 product_template()
 
 
+class product_category(osv.osv):
+    _name = 'product.category'
+    _inherit = 'product.category'
+    _trace = True
+
+product_category()
+
+
 class res_partner(osv.osv):
     _name = 'res.partner'
     _inherit = 'res.partner'
