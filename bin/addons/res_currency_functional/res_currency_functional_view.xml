@@ -57,7 +57,8 @@
             <field name="arch" type="xml">
                 <search string="Currencies">
                     <group>
-                        <filter name="active" icon="terp-check" string="Active" domain="[('active','=', True)]" />
+						<filter name="active" icon="terp-check" string="Active" domain="[('active','=', True)]" />
+						 <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('active','=', False)]" />
 	                    <separator orientation="vertical"/>
 	                    <field name="name"/>
                     </group>

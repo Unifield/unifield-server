@@ -59,6 +59,7 @@ class analytic_account(osv.osv):
             cmp_date = context.get('date')
         for x in args:
             if x[0] == 'filter_active' and x[2] == True:
+                arg.append('&')
                 arg.append(('date_start', '<=', cmp_date))
                 arg.append('|')
                 arg.append(('date', '>', cmp_date))

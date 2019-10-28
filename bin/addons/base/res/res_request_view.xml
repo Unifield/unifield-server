@@ -79,10 +79,10 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Requests">
-                    <filter string="Current" icon="terp-camera_test" domain="['|',('state','=','draft'),('state','=','active')]"
-                    help="Draft and Active"/>
-                    <separator orientation="vertical"/>
+                    <filter string="Draft" icon="terp-document-new" name="draft" domain="[('state', '=', 'draft')]" />
+                    <filter string="Current" icon="terp-camera_test" domain="[('state','=','active')]" />
                     <filter string="Waiting" icon="terp-gtk-media-pause" domain="[('state','=','waiting')]"/>
+                    <filter string="Closed" icon="gtk-close" domain="[('state','=','closed')]"/>
                     <separator orientation="vertical"/>
                     <field name="act_from"/>
                     <field name="act_to" select="1"/>

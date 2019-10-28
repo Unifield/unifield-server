@@ -182,18 +182,6 @@
             </field>
         </record>
 
-        <record id="view_account_period_closing_level_search" model="ir.ui.view">
-            <field name="name">account.period_closing_level.search</field>
-            <field name="model">account.period</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_period_search"/>
-            <field name="arch" type="xml">
-                <filter name="draft" position="replace">
-                    <filter string="To Close" name="draft" domain="[('state','!=','done')]" icon="terp-dialog-close"/>
-                </filter>
-            </field>
-        </record>
-
         <record id="view_account_period_closing_level_tree" model="ir.ui.view">
             <field name="name">account.period_closing_level.tree</field>
             <field name="model">account.period</field>
