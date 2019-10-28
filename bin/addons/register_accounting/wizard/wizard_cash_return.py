@@ -336,7 +336,7 @@ class wizard_cash_return(osv.osv_memory):
         'advance_st_line_id': fields.many2one('account.bank.statement.line', string='Advance Statement Line', required=True),
         'currency_id': fields.many2one('res.currency', string='Currency'),
         'date': fields.date(string='Date for advance return', required=True),
-        'reference': fields.char(string='Advance Return Reference', size=64),
+        'reference': fields.char(string='Advance Return Reference', size=50),
         'advance_linked_po_auto_invoice': fields.boolean(string="Operational advance linked po invoices"),
         'comment': fields.text(string='Note'),
         'analytic_distribution_id': fields.many2one(

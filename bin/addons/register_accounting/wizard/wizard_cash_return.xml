@@ -14,7 +14,7 @@
                         on_change="onchange_returned_amount(returned_amount, invoice_line_ids, advance_line_ids, initial_amount, advance_linked_po_auto_invoice, additional_amount)"/>
                     <newline />
                     <field name='date'/>
-                    <field name='reference' />
+                    <field name='reference' readonly="1"/>
                     <newline/>
                     <group colspan="6" col="3">
                         <button name="button_analytic_distribution" type="object"
