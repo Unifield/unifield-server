@@ -8852,12 +8852,14 @@ msgstr "Quantité de Produits"
 msgid "! - Requires national export license"
 msgstr "! - Nécessite une licence d'exportation nationale"
 
-#. modules: purchase, purchase_override, sale
+#. modules: purchase, purchase_override, sale, tender_flow
 #: selection:purchase.order.line,state:0
 #: selection:purchase.order.merged.line,state:0
 #: selection:sale.order.line,state:0
 #: selection:purchase.order.line,state_to_display:0
 #: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order.line,rfq_line_state_to_display:0
+#: selection:purchase.order.merged.line,rfq_line_state_to_display:0
 msgid "Cancelled-r"
 msgstr "Annulée-r"
 
@@ -23406,7 +23408,6 @@ msgstr "Lier un utilisateur à un employé"
 
 #. modules: procurement_cycle, threshold_value, stock_override
 #: field:stock.warehouse.order.cycle.line,available_stock:0
-#: field:stock.card.wizard,available_stock:0
 #: field:threshold.value.line,available_stock:0
 msgid "Available stock"
 msgstr "Stock Disponible"
@@ -29636,7 +29637,7 @@ msgstr "Date de Début"
 msgid "Certificate attached ?"
 msgstr "Certificat attaché ?"
 
-#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, msf_supply_doc_export, purchase, account_override, account, register_accounting, stock_override
+#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, msf_supply_doc_export, purchase, account_override, account, register_accounting, stock_override, purchase_override, tender_flow
 #: field:po.follow.up,closed_ok:0
 #: selection:real.average.consumption,state:0
 #: selection:po.follow.up,state:0
@@ -34102,6 +34103,7 @@ msgstr "Inclure dans le Montant de Base"
 #: field:expiry.quantity.report.line,real_stock:0
 #: field:stock.warehouse.order.cycle.line,real_stock:0
 #: field:threshold.value.line,real_stock:0
+#: field:stock.card.wizard,real_stock:0
 msgid "Real stock"
 msgstr "Stock réel"
 
@@ -40767,7 +40769,7 @@ msgstr "Effacer"
 msgid "Icon"
 msgstr "Icône"
 
-#. modules: sales_followup, msf_outgoing, sale, stock_override, kit
+#. modules: sales_followup, msf_outgoing, sale, stock_override, kit, purchase_override, procurement_request
 #: report:kit.report:0
 #: report:empty.picking.ticket:0
 #: report:picking.ticket:0
@@ -40776,6 +40778,11 @@ msgstr "Icône"
 #: report:sales.follow.up.multi.report_pdf:0
 #: report:internal.move:0
 #: report:delivery.order:0
+#: report:procurement.request.report:0
+#: report:msf.purchase.order:0
+#: report:msf.purchase.quotation:0
+#: report:purchase.order.merged:0
+#: report:msf.sale.order:0
 msgid "Notes :"
 msgstr "Notes :"
 
@@ -46050,7 +46057,7 @@ msgstr "Scinder la qté de stock en entrepôt en stock et stock non affecté."
 msgid "Europe/Ulyanovsk"
 msgstr "Europe/Ulyanovsk"
 
-#. modules: purchase, sync_client, sales_followup, msf_homere_interface, tender_flow, stock_forecast, mission_stock, msf_profile
+#. modules: purchase, sync_client, sales_followup, msf_homere_interface, tender_flow, stock_forecast, mission_stock, msf_profile, purchase_override
 #: field:stock.mission.report.line,updated:0
 #: field:hr.payroll.import.confirmation,updated:0
 #: selection:purchase.report,state:0
@@ -46612,7 +46619,7 @@ msgstr "UdM échangeable "
 msgid "Illinois"
 msgstr "Illinois"
 
-#. modules: stock_forecast, purchase, tender_flow, sales_followup
+#. modules: stock_forecast, purchase, tender_flow, sales_followup, purchase_override
 #: selection:purchase.report,state:0
 #: selection:purchase.order.line,po_state:0
 #: selection:purchase.order.line,order_state:0
@@ -69451,15 +69458,6 @@ msgstr "Vous ne pouvez pas modifier le journal de liquidité %s"
 msgid "Threshold value"
 msgstr "Valeur Seuil"
 
-#. modules: purchase_override, sale, procurement_request
-#: report:procurement.request.report:0
-#: report:msf.purchase.order:0
-#: report:msf.purchase.quotation:0
-#: report:purchase.order.merged:0
-#: report:msf.sale.order:0
-msgid "REMARKS :"
-msgstr "REMARQUES :"
-
 #. module: procurement
 #: help:res.company,schedule_range:0
 msgid "This is the time frame analysed by the scheduler when computing procurements. All procurements that are not between today and today+range are skipped for future computation."
@@ -81523,6 +81521,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:65
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:83
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:82
+#: field:purchase.order.line,rfq_line_state_to_display:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -105718,6 +105717,12 @@ msgstr "Requête annulée par l'utilisateur"
 msgid "Stop report"
 msgstr "Arrêter le rapport"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:648
+#, python-format
+msgid "Line #%s: The location \"%s\" is not allowed"
+msgstr "Ligne #%s: La Zone \"%s\" n'est pas autorisée"
+
 #. module: stock
 #: code:addons/stock/stock.py:1780
 #, python-format
@@ -106407,3 +106412,19 @@ msgstr "L'utilisateur ne correspond pas"
 #, python-format
 msgid "Line \"%s\": Reference is mandatory for operational advance accounts."
 msgstr "Ligne \"%s\" : la Référence est obligatoire pour les comptes d'avance opérationnelle."
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,nb_late_vi:0
+msgid "# late VI jobs"
+msgstr "# tâches VI en retard"
+
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,vi_details:0
+msgid "Last exec VI job"
+msgstr "Tâche VI dernière exec"
+
+#. module: sync_client
+#: view:sync.version.instance.monitor:0
+msgid "Late jobs"
+msgstr "Tâches en retard"

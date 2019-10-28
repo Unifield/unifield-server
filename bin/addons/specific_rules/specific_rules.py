@@ -2338,6 +2338,7 @@ class product_product(osv.osv):
         ctx = {'product_id': context.get('active_id') , 'compute_child': False}
         if context.get('lang'):
             ctx['lang'] = context['lang']
+        ctx['default_tree_sort'] = 'posz,name'
 
         name = _('Stock by Location')
         if ids:

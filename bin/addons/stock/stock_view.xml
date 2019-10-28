@@ -632,6 +632,7 @@
             <field name="res_model">stock.location</field>
             <field name="type">ir.actions.act_window</field>
             <field name="domain">[('location_id','=',False)]</field>
+            <field name="context">{'default_tree_sort': 'posz,name'}</field>
             <field name="view_type">tree</field>
             <field name="view_id" ref="view_location_tree"/>
             <field name="help">This is the structure of your company's warehouses and locations. You can click on a location to get the list of the products and their stock level in this particular location and all its children.</field>
