@@ -1131,7 +1131,7 @@ class stock_picking(osv.osv):
                             move_obj.write(cr, uid, [out_move.id], out_values, context=context)
                             processed_out_moves.append(out_move.id)
                             processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
-                        elif uom_partial_qty > out_move.product_qty and out_moves[out_moves.index(out_move)] != out_moves[-1] and out_move.id not in processed_out_moves:
+                        elif uom_partial_qty > out_move.product_qty and out_move.id not in processed_out_moves:
                             # Just update the out move with the value of the out move with UoM of IN
                             out_qty = out_move.product_qty
                             if line.uom_id.id != out_move.product_uom.id:
