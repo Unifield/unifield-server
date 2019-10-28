@@ -106401,3 +106401,9 @@ msgstr "Rapport non trouvé"
 #, python-format
 msgid "User does not match"
 msgstr "L'utilisateur ne correspond pas"
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2319
+#, python-format
+msgid "Line \"%s\": Reference is mandatory for operational advance accounts."
+msgstr "Ligne \"%s\" : la Référence est obligatoire pour les comptes d'avance opérationnelle."

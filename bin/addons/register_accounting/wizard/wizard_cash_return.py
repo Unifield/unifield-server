@@ -834,12 +834,7 @@ class wizard_cash_return(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('Advance amount (%s) does not match the amount you justified (%s). First correct. Then press Compute button.') % (adv_amount, wizard.total_amount or 0.0))
 
         # determine the advance return reference (for the advance closing entry and advance expense lines/SI lines)
-        if wizard.reference:
-            # if the field "Advance Return Reference" is filled
-            adv_return_ref = wizard.reference
-        else:
-            # reference from the original advance entry
-            adv_return_ref = wizard.advance_st_line_id and wizard.advance_st_line_id.ref or False
+        adv_return_ref = wizard.reference
 
         # prepare some values
         move_obj = self.pool.get('account.move')
