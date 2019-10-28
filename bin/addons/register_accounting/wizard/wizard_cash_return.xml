@@ -103,7 +103,6 @@
                     colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')">
                     <field name="document_date" />
                     <field name="description" />
-                    <field name="reference" />
                     <field name="account_id" domain="[('restricted_area', '=', 'cash_return')]"/> 
                     <field name="partner_type" domain="[('filter_for_third_party_in_advance_return', '=', 'anything')]"/>
                     <field name="analytic_distribution_id" invisible="1"/>
@@ -130,7 +129,6 @@
                 <form string="Advance Lines">
                     <field name="document_date" />
                     <field name="description" />
-                    <field name="reference" />
                     <field name="account_id" />
                     <field name="partner_type"/>
                     <field name="amount" />

@@ -142,7 +142,6 @@ class wizard_advance_line(osv.osv_memory):
     _columns = {
         'document_date': fields.date(string='Document Date', required=True),
         'description': fields.char(string='Description', size=64, required=True),
-        'reference': fields.char(string='Reference', size=64, required=False),
         'account_id': fields.many2one('account.account', string='Account', required=True, domain=[('type', '!=', 'view')]),
         'partner_id': fields.many2one('res.partner', string='Partner', required=False),
         'employee_id': fields.many2one('hr.employee', string="Employee", required=False),
@@ -934,9 +933,8 @@ class wizard_cash_return(osv.osv_memory):
             distrib_id = (advance.analytic_distribution_id and advance.analytic_distribution_id.id) or \
                 (advance.wizard_id.analytic_distribution_id and advance.wizard_id.analytic_distribution_id.id) or False
             # other infos
-            line_ref = advance.reference or adv_return_ref
             adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, line_employee_id,
-                                           account_id, debit, credit, line_ref, adv_move, distrib_id, context=context)
+                                           account_id, debit, credit, adv_return_ref, adv_move, distrib_id, context=context)
             adv_move_data.append((adv_move, adv_id))
 
         # if advance lines have a Partner Third Party: create Payable Entries and add them to the advance closing JE
