@@ -1002,7 +1002,7 @@ class product_attributes(osv.osv):
             context.update({'search_default_not_restricted': 1})
             root = etree.fromstring(res['arch'])
             # xpath of fields to be modified
-            xpath = '//filter[@string="Service with Reception"]'
+            xpath = '//filter[@name="service_with_reception"]'
             fields = root.xpath(xpath)
 
             if not fields:
@@ -1023,7 +1023,7 @@ class product_attributes(osv.osv):
                                                                     context=context)
             else:
                 filter_domain = "[('available_for_restriction','=',%s)]" % arg
-            new_filter = """<filter string="Only not forbidden" name="not_restricted" icon="terp-accessories-archiver-minus" domain="%s" />""" % filter_domain
+            new_filter = """<filter string="%s" name="not_restricted" icon="terp-accessories-archiver-minus" domain="%s" />""" % (_('Only not forbidden'), filter_domain)
             #generate new xml form$
             new_form = etree.fromstring(new_filter)
             # instert new form just after state index position
