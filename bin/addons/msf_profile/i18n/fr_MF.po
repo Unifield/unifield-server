@@ -31379,6 +31379,7 @@ msgstr "stock.move.memory.ppl"
 
 #. module: register_accounting
 #: field:wizard.cash.return,returned_amount:0
+#: code:addons/register_accounting/wizard/wizard_cash_return.py:883
 msgid "Advance return amount"
 msgstr "Montant Retour d'Avance"
 
@@ -63088,6 +63089,7 @@ msgstr "Devise d'impression"
 
 #. module: register_accounting
 #: field:wizard.cash.return,additional_amount:0
+#: code:addons/register_accounting/wizard/wizard_cash_return.py:863
 msgid "Additional Advance amount"
 msgstr "Montant supplémentaire avancé"
 
