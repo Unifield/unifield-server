@@ -4079,11 +4079,12 @@ msgstr "Australie/Yancowinna"
 msgid "From Order"
 msgstr "De la Commande"
 
-#. modules: return_claim, msf_partner, kit, msf_homere_interface
+#. modules: return_claim, msf_partner, kit, msf_homere_interface, supplier_catalogue
 #: view:composition.kit:0
 #: view:res.partner:0
 #: view:return.claim:0
 #: view:hr.employee:0
+#: view:supplier.catalogue:0
 msgid "Show Inactive"
 msgstr "Montrer les Inactifs"
 
@@ -51587,13 +51588,15 @@ msgstr "\n"
 "        Creates automatically Purchase Orders after choosing.\n"
 "    "
 
-#. modules: financing_contract, msf_homere_interface, analytic_distribution, msf_partner
+#. modules: financing_contract, msf_homere_interface, analytic_distribution, msf_partner, supplier_catalogue, kit
 #: view:account.destination.link:0
 #: view:financing.contract.account.quadruplet:0
 #: view:hr.employee:0
 #: view:res.partner:0
+#: view:composition.kit:0
+#: view:supplier.catalogue:0
 msgid "Show Active"
-msgstr "Montrer Actif"
+msgstr "Montrer les Actifs"
 
 #. module: account
 #: field:account.installer.modules,account_payment:0
