@@ -130,10 +130,9 @@ class stock_picking(osv.osv):
         if batch_values and product_id:
             prodlot_obj = self.pool.get('stock.production.lot')
             prod = prod_obj.browse(cr, uid, product_id, context=context)
-
             if prod.perishable and not prod.batch_management and batch_values.get('life_date'):
                 # In case it's a ED only product, then search for date and product, no need to search for batch name
-                batch_id = prodlot_obj._get_prodlot_from_expiry_date(cr, uid, batch_values['life_date'], product_id, context=context)
+                batch_id = prodlot_obj._get_prodlot_from_expiry_date(cr, uid, batch_values['life_date'], product_id, comment=batch_values.get('comment'), context=context)
                 expired_date = data['expired_date']
             elif prod.perishable and prod.batch_management and batch_values.get('name') and batch_values.get('life_date'):
                 is_internal = False
@@ -810,12 +809,20 @@ class stock_picking(osv.osv):
         existing_bn = batch_obj.search(cr, uid, [('name', '=', batch_dict['name']), ('product_id', '=', product_id),
                                                  ('life_date', '=', batch_dict['life_date'])], context=context)
         if existing_bn:  # existed already, then don't need to create a new one
+            # Add comment through synchro
+            if batch_dict.get('comment'):
+                batch_obj.write(cr, uid, existing_bn[0], {'comment': batch_dict['comment']}, context=context)
             message = "Batch object exists in the current system. No new batch created."
             self._logger.info(message)
             return existing_bn[0], message
 
         # If not exists, then create this new batch object
-        new_bn_vals = {'name': batch_dict['name'], 'product_id': product_id, 'life_date': batch_dict['life_date']}
+        new_bn_vals = {
+            'name': batch_dict['name'],
+            'product_id': product_id,
+            'life_date': batch_dict['life_date'],
+            'comment': batch_dict.get('comment', False),  # Add comment through synchro
+        }
         message = "The new BN " + batch_dict['name'] + " has been created"
         self._logger.info(message)
         bn_id = batch_obj.create(cr, uid, new_bn_vals, context=context)
