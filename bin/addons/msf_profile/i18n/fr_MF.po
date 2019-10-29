@@ -11517,6 +11517,8 @@ msgstr "Creation Month"
 #: view:hr.employee:0
 #: view:res.users:0
 #: view:res.currency:0
+#: view:product.product:0
+#: view:res.request:0
 msgid "Inactive"
 msgstr "Inactif"
 
@@ -72340,6 +72342,8 @@ msgstr "Navajo"
 #: field:product.mass.update,active_product:0
 #: view:composition.kit:0
 #: view:res.users:0
+#: view:product.product:0
+#: view:res.request:0
 #, python-format
 msgid "Active"
 msgstr "Actif"
