@@ -37,9 +37,10 @@ from openobject.widgets import JSLink, locations
 from openobject.i18n.format import convert_date_format_in_domain
 
 
-def get_search_default(attrs, screen_context=None, default_domain=[]):
+def get_search_default(attrs, screen_context=None, default_domain=None, add_active=False):
     screen_context = screen_context or {}
-
+    if default_domain is None:
+        default_domain = []
     if 'context' in attrs:
         ctx = expr_eval(attrs.get('context', "{}"), {'self':attrs.get('name', False)})
         group_by = ctx.get('group_by')
@@ -63,6 +64,8 @@ def get_search_default(attrs, screen_context=None, default_domain=[]):
             # resolution of those, so either we have a truthy value and we
             # return it, or we don't and we don't do anything
             return search_default
+        elif add_active and attrs['name'] == 'active' and 'active' not in '%s'%default_domain:
+            return True
 
     return False
 
@@ -129,13 +132,14 @@ class Filter(TinyInputWidget):
         self.filter_id = 'filter_%s' % (random.randint(0,10000))
         self.filter_name = attrs.get('name', attrs.get('string', '')).replace('/', '-')
         self.filter_status = attrs.get('filter_status', {}).get(self.filter_name)
+        self.expand_grp_id = False
         filter_context = attrs.get('context')
         screen_context = attrs.get('screen_context', {})
 
         self.def_checked = False
         self.groupcontext = []
 
-        default_search = get_search_default(attrs, screen_context, default_domain)
+        default_search = get_search_default(attrs, screen_context, default_domain, add_active=True)
 
         # context implemented only for group_by.
         self.group_context = None
@@ -147,9 +151,10 @@ class Filter(TinyInputWidget):
                     self.group_context = map(lambda x: 'group_' + x, self.group_context)
                 else:
                     self.group_context = 'group_' + self.group_context
-
         if default_search:
             self.def_checked = True
+            if attrs.get('expand_grp_id'):
+                self.expand_grp_id = attrs['expand_grp_id']
             self.global_domain += (expr_eval(self.filter_domain, {'context':screen_context}))
             if self.group_context:
                 self.groupcontext = self.group_context
@@ -202,6 +207,7 @@ class Search(TinyInputWidget):
 
         self.domain = copy.deepcopy(domain) or []
         self.listof_domain = domain or []
+        self.listof_ored_domain = {}
         self.filter_domain = filter_domain or []
         self.filter_status = {}
         self.custom_filter_domain = []
@@ -267,6 +273,11 @@ class Search(TinyInputWidget):
             self.fields_list.sort(lambda x, y: cmp(x[1], y[1]))
 
         self.frame = self.parse(model, dom, self.fields, values)
+        for oreddom in self.listof_ored_domain:
+            for el in range(1, len(self.listof_ored_domain[oreddom])):
+                self.listof_ored_domain[oreddom].insert(0, '|')
+            for oredfilter in self.listof_ored_domain[oreddom]:
+                self.listof_domain += oredfilter
         if self.frame:
             self.frame = self.frame[0]
 
@@ -296,7 +307,7 @@ class Search(TinyInputWidget):
         self.flt_domain = str(self.filter_domain).replace("(", "[").replace(')', ']')
         self.custom_filter_domain = self.filter_domain
 
-    def parse(self, model=None, root=None, fields=None, values={}):
+    def parse(self, model=None, root=None, fields=None, values={}, parent_group=False):
 
         views = []
         search_model = model
@@ -317,17 +328,19 @@ class Search(TinyInputWidget):
             if 'nolabel' in attrs:
                 attrs['nolabel'] = False
 
+            expand_grp_id = False
             if node.localName in ('form', 'tree', 'search', 'group'):
                 if node.localName == 'group':
                     attrs['group_by_ctx'] = values.get('group_by_ctx')
                     attrs['expand'] = expr_eval(attrs.get('expand',False),{'context':self.context})
+                    expand_grp_id = 'expand_grp_%s' % (random.randint(0,10000))
                     Element = Group
                 else:
                     Element = Frame
 
                 views.append(Element(children=
                                      self.parse(model=search_model, root=node,
-                                                fields=fields, values=values),
+                                                fields=fields, values=values, parent_group=expand_grp_id),
                                      **attrs))
 
             elif node.localName=='newline':
@@ -346,12 +359,19 @@ class Search(TinyInputWidget):
                 if values and values.get('filter_status'):
                     attrs['filter_status'] = values['filter_status']
 
+                if parent_group:
+                    attrs['expand_grp_id'] = parent_group
                 v = Filter(**attrs)
                 if v.groupcontext and v.groupcontext not in self.groupby:
                     self.groupby.append(v.groupcontext)
-                self.listof_domain.extend(i for i in v.global_domain if not i in self.listof_domain)
+                if v.global_domain and v.expand_grp_id:
+                    self.listof_ored_domain.setdefault(v.expand_grp_id, []).append([i for i in v.global_domain])
+                else:
+                    self.listof_domain.extend(i for i in v.global_domain if not i in self.listof_domain)
                 filters_run.append(v)
 
+            elif node.localName == 'separator':
+                parent_group = 'expand_grp_%s' % (random.randint(0,10000))
             elif node.localName == 'field':
                 val  = attrs.get('select', False) or fields[str(attrs['name'])].get('select', False) or self.view_type == 'search'
                 if val:
