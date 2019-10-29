@@ -343,6 +343,8 @@ class Search(TinyInputWidget):
                                                 fields=fields, values=values, parent_group=expand_grp_id),
                                      **attrs))
 
+            elif node.localName=='label':
+                views.append(Label(**attrs))
             elif node.localName=='newline':
                 views.append(NewLine(**attrs))
 
@@ -514,6 +516,14 @@ class FiltersGroup(form.Group):
         attrs['is_search'] = True
         super(FiltersGroup, self).__init__(**attrs)
 
+class Label(form.Char):
+    template = "/openerp/widgets/templates/search/label.mako"
+    width = False
+    name = 'label'
+    def __init__(self, **attrs):
+        super(Label, self).__init__(**attrs)
+
+
 class Char(form.Char): pass
 class DateTime(form.DateTime): pass
 class Float(form.Float): pass
@@ -558,5 +568,6 @@ WIDGETS = {
     'many2one': M2O_search,
     'email' : Char,
     'url' : Char,
-    'separator': Separator
+    'separator': Separator,
+    'label': Label,
 }
