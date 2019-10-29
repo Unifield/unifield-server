@@ -134,6 +134,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="0"/>
   </Style>
   <Style ss:ID="s31">
    <Borders>
@@ -249,6 +250,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="0"/>
   </Style>
   <Style ss:ID="s44">
    <Borders>
@@ -651,11 +653,11 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:Index="16" ss:MergeAcross="1" ss:StyleID="s78"><Data ss:Type="String">${_('Total at the end')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s58"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="String">${objects[0].inventory_lines_number}</Data><NamedCell
+    <Cell ss:StyleID="s58"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="Number">${objects[0].inventory_lines_number}</Data><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s57"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="String">${objects[0].inventory_lines_value}</Data><NamedCell
+    <Cell ss:StyleID="s57"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="Number">${objects[0].inventory_lines_value}</Data><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s65"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="String">${objects[0].inventory_lines_absvalue}</Data><NamedCell
+    <Cell ss:StyleID="s65"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="Number">${objects[0].inventory_lines_absvalue}</Data><NamedCell
       ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:Height="15.75">
@@ -681,11 +683,11 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:MergeAcross="1" ss:StyleID="s78"><Data ss:Type="String">${_('With discrepencies')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s58"><Data ss:Type="String">${objects[0].discrepancy_lines_number}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s58"><Data ss:Type="Number">${objects[0].discrepancy_lines_number}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s58"><Data ss:Type="String">${objects[0].discrepancy_lines_value}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s58"><Data ss:Type="Number">${objects[0].discrepancy_lines_value}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s66"><Data ss:Type="String">${objects[0].discrepancy_lines_absvalue}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s66"><Data ss:Type="Number">${objects[0].discrepancy_lines_absvalue}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:Height="15.75">
@@ -719,11 +721,11 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:MergeAcross="1" ss:StyleID="s80"><Data ss:Type="String">${_('%')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="String">${objects[0].discrepancy_lines_percent}</Data><NamedCell
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">${objects[0].discrepancy_lines_percent}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="String">${objects[0].discrepancy_lines_percent_value}</Data><NamedCell
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">${objects[0].discrepancy_lines_percent_value}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s68"><Data ss:Type="String">${objects[0].discrepancy_lines_percent_absvalue}</Data><NamedCell
+    <Cell ss:StyleID="s68"><Data ss:Type="Number">${objects[0].discrepancy_lines_percent_absvalue}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:Height="15.75">
@@ -820,24 +822,24 @@
    </Row>
    % for index,item in enumerate([x for x in objects[0].discrepancy_line_ids if not x.ignored]):
    <Row>
-    <Cell ss:StyleID="s30"><Data ss:Type="String">${item.line_no}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s30"><Data ss:Type="Number">${item.line_no}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s30"><Data ss:Type="String">${item.nomen_manda_2 and item.nomen_manda_2.name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s31"><Data ss:Type="String">${item.product_id and item.product_id.code or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s31"><Data ss:Type="String">${item.product_id and item.product_id.name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s38"><Data ss:Type="String">${item.product_uom_id and item.product_uom_id.name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s43"><Data ss:Type="String">${item.standard_price}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s43"><Data ss:Type="Number">${item.standard_price}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s43"><Data ss:Type="String">${item.currency_id and item.currency_id.name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s30"><Data ss:Type="String">${item.theoretical_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s31"><Data ss:Type="String">${item.counted_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s30"><Data ss:Type="Number">${item.theoretical_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s31"><Data ss:Type="Number">${item.counted_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s38"><Data ss:Type="String">${item.batch_number or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s32"><Data ss:Type="String">${item.expiry_date or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s43"><Data ss:Type="String">${item.discrepancy_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s43"><Data ss:Type="String">${item.discrepancy_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s42"><Data ss:Type="String">${item.total_product_theoretical_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s36"><Data ss:Type="String">${item.total_product_counted_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s36"><Data ss:Type="String">${item.total_product_counted_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s36"><Data ss:Type="String">${item.total_product_discrepancy_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s46"><Data ss:Type="String">${item.total_product_discrepancy_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s31"><Data ss:Type="Number">${item.discrepancy_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s43"><Data ss:Type="Number">${item.discrepancy_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s42"><Data ss:Type="Number">${item.total_product_theoretical_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s36"><Data ss:Type="Number">${item.total_product_counted_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s36"><Data ss:Type="Number">${item.total_product_counted_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s36"><Data ss:Type="Number">${item.total_product_discrepancy_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s46"><Data ss:Type="Number">${item.total_product_discrepancy_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s50"><Data ss:Type="String">${item.reason_type_id and item.reason_type_id.complete_name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s48"><Data ss:Type="String">${item.comment or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
