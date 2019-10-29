@@ -1038,7 +1038,7 @@ class wizard_cash_return(osv.osv_memory):
         if not ml_ids or len(ml_ids) > 1:
             raise osv.except_osv(_('Error'), _('An error occurred on the automatic reconciliation in advance return.'))
 
-        rec_targets = [ml_ids[0]] + [adv_closing[1] for adv_closing in adv_closing_data]
+        rec_targets = [ml_ids[0]] + [adv_cl[1] for adv_cl in adv_closing_data]
         if addl_dr_move_line_id:
             rec_targets.append(addl_dr_move_line_id)
 
