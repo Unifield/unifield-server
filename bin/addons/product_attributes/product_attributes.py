@@ -992,6 +992,12 @@ class product_attributes(osv.osv):
 
         res = super(product_attributes, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
+        if view_type == 'search' and context.get('display_active_filter'):
+            root = etree.fromstring(res['arch'])
+            for field in root.xpath('//group[@name="display_active_filter"]'):
+                field.set('invisible', '0')
+            res['arch'] = etree.tostring(root)
+
         if view_type == 'search' and context.get('available_for_restriction'):
             context.update({'search_default_not_restricted': 1})
             root = etree.fromstring(res['arch'])
@@ -1002,7 +1008,7 @@ class product_attributes(osv.osv):
             if not fields:
                 return res
 
-            state_index = root.index(fields[0])
+            parent_node = fields[0].getparent()
             new_separator = """<separator orientation="vertical" />"""
             sep_form = etree.fromstring(new_separator)
             arg = context.get('available_for_restriction')
@@ -1021,8 +1027,9 @@ class product_attributes(osv.osv):
             #generate new xml form$
             new_form = etree.fromstring(new_filter)
             # instert new form just after state index position
-            root.insert(state_index+1, new_form)
-            root.insert(state_index+1, sep_form)
+            state_index = parent_node.index(fields[0])
+            parent_node.insert(state_index+1, new_form)
+            parent_node.insert(state_index+1, sep_form)
             # generate xml back to string
             res['arch'] = etree.tostring(root)
 

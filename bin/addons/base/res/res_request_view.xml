@@ -84,14 +84,17 @@
                     <filter string="Waiting" icon="terp-gtk-media-pause" domain="[('state','=','waiting')]"/>
                     <filter string="Closed" icon="gtk-close" domain="[('state','=','closed')]"/>
                     <separator orientation="vertical"/>
+                    <filter name="active" string="Active" domain="[('active', '=', True)]" icon="terp-check" />
+                    <filter name="inactive" string="Inactive" domain="[('active', '=', False)]" icon="gtk-dialog-error"/>
+                    <separator orientation="vertical"/>
                     <field name="act_from"/>
                     <field name="act_to" select="1"/>
                     <field name="name"/>
                     <field name="state"/>
-	                <newline/>
-	                <group expand="0" string="Group By" colspan="4">
+                    <newline/>
+                    <group expand="0" string="Group By" colspan="4">
                         <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
-	                </group>
+                    </group>
                 </search>
             </field>
         </record>
