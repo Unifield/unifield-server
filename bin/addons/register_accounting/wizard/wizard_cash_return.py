@@ -794,7 +794,8 @@ class wizard_cash_return(osv.osv_memory):
         wizard = self.browse(cr, uid, ids[0], context=context)
         wiz_date = wizard.date
         move_ids = []
-        error_post_impossible = osv.except_osv(_('Error'), _('An error has occurred: The journal entries cannot be posted.'))
+        error_post_impossible = _('An error has occurred: The journal entries cannot be posted.')
+        error_negative_amount = _('%s: negative amounts are forbidden.')
 
         # US-672/2
         inv_obj.check_accounts_for_partner(cr, uid, ids, context=context, header_obj=self,
@@ -858,7 +859,9 @@ class wizard_cash_return(osv.osv_memory):
 
         addl_dr_move_line_id = False
         # create new balanced entries if an additional amount has been added
-        if wizard.additional_amount > 0:
+        if wizard.additional_amount < 0.0:
+            raise osv.except_osv(_('Error'), error_negative_amount % _('Additional Advance amount'))
+        elif wizard.additional_amount > 0.0:  # if equal to zero, this amount is simply ignored
             # credit journal credit account
             journal_acc_id = register.journal_id.default_credit_account_id.id
             additional_amount_move = self._create_move(cr, uid, move_vals, context=context)
@@ -872,11 +875,13 @@ class wizard_cash_return(osv.osv_memory):
                                                          False, context=context)
             # post the move
             if not move_obj.post(cr, uid, [additional_amount_move], context=context):
-                raise error_post_impossible
+                raise osv.except_osv(_('Error'), error_post_impossible)
             self.create_st_line_from_move_line(cr, uid, ids, register.id, additional_amount_move, addl_dr_move_line_id, context=context)
 
         # create a cash return move line ONLY IF this return is superior to 0
-        if wizard.returned_amount > 0:
+        if wizard.returned_amount < 0.0:
+            raise osv.except_osv(_('Error'), error_negative_amount % _('Advance return amount'))
+        elif wizard.returned_amount > 0.0:  # if equal to zero, this amount is simply ignored
             return_acc_id = register.journal_id.default_credit_account_id.id
             cash_return_move = self._create_move(cr, uid, move_vals, move_ids, context=context)
             self.create_move_line(cr, uid, ids, wizard.date, wizard.date, adv_closing_name, journal, register, False,
@@ -890,6 +895,8 @@ class wizard_cash_return(osv.osv_memory):
             inv_name = "Invoice" + " " + invoice.invoice_id.internal_number
             inv_doc_date = invoice.invoice_id.document_date
             partner_id = invoice.partner_id.id
+            if invoice.amount < 0.0:
+                raise osv.except_osv(_('Error'), error_negative_amount % invoice.reference or '')
             debit = invoice.amount
             credit = 0.0
             account_id = invoice.account_id.id
@@ -907,6 +914,8 @@ class wizard_cash_return(osv.osv_memory):
             # Case where line equals 0
             if advance.amount == 0.0:
                 continue
+            elif advance.amount < 0.0:
+                raise osv.except_osv(_('Error'), error_negative_amount % advance.description)
             adv_date = advance.document_date
             adv_name = advance.description
             # create a move that will be used for the advance line AND for the related trade payable automatic entries
@@ -992,7 +1001,7 @@ class wizard_cash_return(osv.osv_memory):
 
             # don't go further if one of the moves couldn't be posted
             if not move_obj.post(cr, uid, [move_id], context=context):
-                raise error_post_impossible
+                raise osv.except_osv(_('Error'), error_post_impossible)
 
         # reconcile partner Payable Entries together if any
         for adv_line_id in to_reconcile:

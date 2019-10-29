@@ -106413,11 +106413,16 @@ msgstr "L'utilisateur ne correspond pas"
 msgid "Line \"%s\": Reference is mandatory for operational advance accounts."
 msgstr "Ligne \"%s\" : la Référence est obligatoire pour les comptes d'avance opérationnelle."
 
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_cash_return.py:798
+#, python-format
+msgid "%s: negative amounts are forbidden."
+msgstr "%s : les montants négatifs sont interdits."
+
 #. module: sync_client
 #: field:sync.version.instance.monitor,nb_late_vi:0
 msgid "# late VI jobs"
 msgstr "# tâches VI en retard"
-
 
 #. module: sync_client
 #: field:sync.version.instance.monitor,vi_details:0
