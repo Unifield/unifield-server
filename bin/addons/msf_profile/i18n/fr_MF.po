@@ -8931,12 +8931,14 @@ msgstr "Quantité de Produits"
 msgid "! - Requires national export license"
 msgstr "! - Nécessite une licence d'exportation nationale"
 
-#. modules: purchase, purchase_override, sale
+#. modules: purchase, purchase_override, sale, tender_flow
 #: selection:purchase.order.line,state:0
 #: selection:purchase.order.merged.line,state:0
 #: selection:sale.order.line,state:0
 #: selection:purchase.order.line,state_to_display:0
 #: selection:sale.order.line,state_to_display:0
+#: selection:purchase.order.line,rfq_line_state_to_display:0
+#: selection:purchase.order.merged.line,rfq_line_state_to_display:0
 msgid "Cancelled-r"
 msgstr "Annulée-r"
 
@@ -16740,6 +16742,8 @@ msgstr "%s update%s"
 #: selection:products.situation.report,perishable:0
 #: selection:products.situation.report,batch_management:0
 #: code:addons/stock_override/report/report_stock_move.py:747
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:160
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:161
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -23658,7 +23662,6 @@ msgstr "Lier un utilisateur à un employé"
 
 #. modules: procurement_cycle, threshold_value, stock_override
 #: field:stock.warehouse.order.cycle.line,available_stock:0
-#: field:stock.card.wizard,available_stock:0
 #: field:threshold.value.line,available_stock:0
 msgid "Available stock"
 msgstr "Stock Disponible"
@@ -25052,6 +25055,8 @@ msgstr "Europe/Bucharest"
 #: selection:products.situation.report,perishable:0
 #: selection:products.situation.report,batch_management:0
 #: code:addons/stock_override/report/report_stock_move.py:747
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:160
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:161
 #, python-format
 msgid "Yes"
 msgstr "Oui"
@@ -29966,7 +29971,7 @@ msgstr "Date de Début"
 msgid "Certificate attached ?"
 msgstr "Certificat attaché ?"
 
-#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, msf_supply_doc_export, purchase, account_override, account, register_accounting, stock_override
+#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, msf_supply_doc_export, purchase, account_override, account, register_accounting, stock_override, purchase_override, tender_flow
 #: field:po.follow.up,closed_ok:0
 #: selection:real.average.consumption,state:0
 #: selection:po.follow.up,state:0
@@ -34513,6 +34518,7 @@ msgstr "Inclure dans le Montant de Base"
 #: field:expiry.quantity.report.line,real_stock:0
 #: field:stock.warehouse.order.cycle.line,real_stock:0
 #: field:threshold.value.line,real_stock:0
+#: field:stock.card.wizard,real_stock:0
 msgid "Real stock"
 msgstr "Stock réel"
 
@@ -41257,7 +41263,7 @@ msgstr "Effacer"
 msgid "Icon"
 msgstr "Icône"
 
-#. modules: sales_followup, msf_outgoing, sale, stock_override, kit
+#. modules: sales_followup, msf_outgoing, sale, stock_override, kit, purchase_override, procurement_request
 #: report:kit.report:0
 #: report:empty.picking.ticket:0
 #: report:picking.ticket:0
@@ -41266,6 +41272,11 @@ msgstr "Icône"
 #: report:sales.follow.up.multi.report_pdf:0
 #: report:internal.move:0
 #: report:delivery.order:0
+#: report:procurement.request.report:0
+#: report:msf.purchase.order:0
+#: report:msf.purchase.quotation:0
+#: report:purchase.order.merged:0
+#: report:msf.sale.order:0
 msgid "Notes :"
 msgstr "Notes :"
 
@@ -43809,6 +43820,7 @@ msgstr "Contient des Produits Dangereux"
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:233
 #: code:addons/stock_override/report/report_stock_move.py:759
 #: report:addons/stock/report/stock_delivery_report_xls.mako:216
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:143
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -46585,7 +46597,7 @@ msgstr "Scinder la qté de stock en entrepôt en stock et stock non affecté."
 msgid "Europe/Ulyanovsk"
 msgstr "Europe/Ulyanovsk"
 
-#. modules: purchase, sync_client, sales_followup, msf_homere_interface, tender_flow, stock_forecast, mission_stock, msf_profile
+#. modules: purchase, sync_client, sales_followup, msf_homere_interface, tender_flow, stock_forecast, mission_stock, msf_profile, purchase_override
 #: field:stock.mission.report.line,updated:0
 #: field:hr.payroll.import.confirmation,updated:0
 #: selection:purchase.report,state:0
@@ -47148,7 +47160,7 @@ msgstr "UdM échangeable "
 msgid "Illinois"
 msgstr "Illinois"
 
-#. modules: stock_forecast, purchase, tender_flow, sales_followup
+#. modules: stock_forecast, purchase, tender_flow, sales_followup, purchase_override
 #: selection:purchase.report,state:0
 #: selection:purchase.order.line,po_state:0
 #: selection:purchase.order.line,order_state:0
@@ -70251,15 +70263,6 @@ msgstr "Vous ne pouvez pas modifier le journal de liquidité %s"
 msgid "Threshold value"
 msgstr "Valeur Seuil"
 
-#. modules: purchase_override, sale, procurement_request
-#: report:procurement.request.report:0
-#: report:msf.purchase.order:0
-#: report:msf.purchase.quotation:0
-#: report:purchase.order.merged:0
-#: report:msf.sale.order:0
-msgid "REMARKS :"
-msgstr "REMARQUES :"
-
 #. module: procurement
 #: help:res.company,schedule_range:0
 msgid "This is the time frame analysed by the scheduler when computing procurements. All procurements that are not between today and today+range are skipped for future computation."
@@ -76355,6 +76358,7 @@ msgstr "Sorte de Node"
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:234
 #: code:addons/stock_override/report/report_stock_move.py:759
 #: report:addons/stock/report/stock_delivery_report_xls.mako:217
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:144
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -82474,6 +82478,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:65
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:83
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:82
+#: field:purchase.order.line,rfq_line_state_to_display:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -103618,6 +103623,7 @@ msgstr "MàJ de Produits en Masse"
 
 #. module: product
 #: field:product.mass.update,date_done:0
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:125
 msgid "Date of the update"
 msgstr "Date de la mise à jour"
 
@@ -104437,9 +104443,14 @@ msgid "Qty Received"
 msgstr "Qté Reçue"
 
 #. module: stock
-#: report:addons/stock/report/stock_reception_report_xls.mako:244
-msgid "Total Cost"
-msgstr "Prix Total"
+#: report:addons/stock/report/stock_reception_report_xls.mako:246
+msgid "Total Cost (PO currency)"
+msgstr "Coût Total (Devise du PO)"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:247
+msgid "Total Cost (Functional currency)"
+msgstr "Coût Total (Devise fonctionelle)"
 
 #. module: stock
 #: report:addons/stock/report/stock_reception_report_xls.mako:246
@@ -106005,15 +106016,13 @@ msgstr "La tâche d'export du PO n'est pas active."
 #. module: product_attributes
 #: view:change.bn.ed.mandatory.wizard:0
 msgid "\n"
-"                                This product is still in use, changing the Batch Number / Expiry Date flags will have an impact on the quantity in stock or in pending transactions, making them unavailable for any transaction.<br/><br/>\n"
-"                                Please ensure the product is no longer in use in this mission before changing the attributes.<br/><br/>\n"
-"                                If you continue, products or transactions may be blocked.<br/><br/>\n"
+"                                This product is still in use, changing the Batch Number / Expiry Date flags will have an impact on the quantity in stock or in pending transactions.<br/><br/>\n"
+"                                Once this action is done, any previous Batch / Expiry date information will no longer be available according to the attributes chosen...<br/><br/>\n"
 "                                Do you still want to continue ?\n"
 "                            "
 msgstr "\n"
-"                                Ce produit est toujours en cours d'utilisation, changer le flag de Numéro de Lot / Date d'Expiration aura un impact sur les quantités en stock ou sur les transactions en cours, les rendant indisponibles pour toute transaction.<br/><br/>\n"
-"                                Veuillez vous assurez que le produit n'est plus en cours d'utilisation avant de modifier ces valeurs.<br/><br/>\n"
-"                                Si vous continuez, les produits ou les transactions pourraient être bloqué(e)s.<br/><br/>\n"
+"                                Ce produit est toujours en cours d'utilisation, changer l'attribut de Numéro de Lot / Date d'Expiration aura un impact sur les quantités en stock ou sur les transactions en cours, les rendant indisponibles pour toute transaction.<br/><br/>\n"
+"                                Une fois l'action effectuée, en fonction du changement demandé, les anciens Numéros de Lot / Dates d'Expiration ne seront plus disponibles...<br/><br/>\n"
 "                                Voulez-vous quand même continuer ?\n"
 "                            "
 
@@ -106327,6 +106336,7 @@ msgstr "Certains produits n'ont pas pu être désactivés. Aucun produit ne sera
 
 #. module: product
 #: field:product.mass.update,name:0
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:117
 msgid "Update Reference"
 msgstr "Référence de la MàJ"
 
@@ -106352,6 +106362,7 @@ msgstr "Une erreur est survenue lors de la mise à jour:\n"
 
 #. module: product
 #: field:product.mass.update,user_id:0
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:133
 msgid "User who Updated"
 msgstr "Utilisateur qui a Mis à Jour"
 
@@ -106911,6 +106922,12 @@ msgstr "Requête annulée par l'utilisateur"
 msgid "Stop report"
 msgstr "Arrêter le rapport"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:648
+#, python-format
+msgid "Line #%s: The location \"%s\" is not allowed"
+msgstr "Ligne #%s: La Zone \"%s\" n'est pas autorisée"
+
 #. module: stock
 #: code:addons/stock/stock.py:1780
 #, python-format
@@ -107274,6 +107291,12 @@ msgstr "Impossible d'Annuler / Modifier si le compte n'est pas lettrable."
 msgid "This invoice will sync to its counterpart instance."
 msgstr "Cette facture sera synchronisée à l'instance de Contrepartie."
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1763
+#, python-format
+msgid "No Order in sync. instance with an open FO was found with the data in 'Origin'"
+msgstr "Aucune commande en instance sync. avec une CdT ouverte n'a été trouvée avec les données dans 'Origine'"
+
 #. module: msf_homere_interface
 #: view:hr.employee.activation:0
 #: model:ir.actions.act_window,name:msf_homere_interface.employee_activation_action
@@ -107388,6 +107411,12 @@ msgstr "Impossible de vérifier les écritures de réévaluation de la période 
 #, python-format
 msgid "You should run the month-end revaluation before closing the period."
 msgstr "Veuillez lancer la réévaluation de fin de mois avant de fermer la période."
+
+#. module: kit
+#: code:addons/kit/kit_creation.py:631
+#, python-format
+msgid "The Kitting Order cannot be processed unless all product lines are available."
+msgstr "La Commande d'Assemblage ne pourra pas être traitée avant que tous les produits ne soient disponibles."
 
 #. module: sync_client
 #: code:addons/sync_client/backup.py:127
@@ -107579,3 +107608,51 @@ msgstr "Rapport non trouvé"
 #, python-format
 msgid "User does not match"
 msgstr "L'utilisateur ne correspond pas"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,nb_late_vi:0
+msgid "# late VI jobs"
+msgstr "# tâches VI en retard"
+
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,vi_details:0
+msgid "Last exec VI job"
+msgstr "Tâche VI dernière exec"
+
+#. module: sync_client
+#: view:sync.version.instance.monitor:0
+msgid "Late jobs"
+msgstr "Tâches en retard"
+
+#. module: product
+#: model:ir.actions.report.xml,name:product.product_ed_bn_mass_update_export_xls
+msgid "Product BN/ED Mass Update Excel Export"
+msgstr "Export Excel de la MàJ en Masse de Produits NL/EXP"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:114
+msgid "PRODUCT BN/ED MASS UPDATE REPORT"
+msgstr "RAPPORT DE LA MÀJ EN MASSE DE PRODUITS NL/EXP"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:102
+msgid "Product BN/ED Mass Update Report"
+msgstr "Rapport de la MàJ en Masse de Produits NL/EXP"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:121
+msgid "Type of change"
+msgstr "Type du changement"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:145
+#: field:product.ed_bn.mass.update.history,old_bn:0
+msgid "Old BN"
+msgstr "Ancien NL"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:146
+#: field:product.ed_bn.mass.update.history,old_ed:0
+msgid "Old ED"
+msgstr "Ancien EXP"

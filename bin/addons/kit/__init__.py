@@ -20,6 +20,20 @@
 ##############################################################################
 SELECTION_AVAILABLE = [('available', 'Available'), ('not_available', 'Not Available')]
 
+KIT_CREATION_STATE = [
+    ('draft', 'Draft'),
+    ('in_production', 'In Production'),
+    ('done', 'Closed'),
+    ('cancel', 'Cancelled'),
+]
+
+KIT_TO_CONSUME_AVAILABILITY = [
+    ('empty', ''),
+    ('not_available', 'Not Available'),
+    ('partially_available', 'Partially Available'),
+    ('available', 'Available'),
+]
+
 import kit
 import wizard
 import kit_creation

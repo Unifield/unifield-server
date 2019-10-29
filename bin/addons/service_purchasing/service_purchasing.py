@@ -97,60 +97,6 @@ class stock_location(osv.osv):
 stock_location()
 
 
-class stock_move(osv.osv):
-    '''
-    add constraints:
-        - source location cannot be a Service location
-        - if picking_id is not type 'in', cannot select a product service
-        - if product is service, the destination location must be Service location
-        - if destination location is Service, the product must be service
-
-    on_change on product id
-    '''
-    _inherit = 'stock.move'
-
-
-    def _check_constaints_service(self, cr, uid, ids, context=None):
-        """
-        You cannot select Service Location as Source Location.
-        """
-        if context is None:
-            context = {}
-        if ids:
-            cr.execute("""select
-                count(pick.type = 'in' and t.type in ('service_recep', 'service') and not dest.service_location and not dest.cross_docking_location_ok or NULL),
-                count(pick.type = 'internal' and not src.cross_docking_location_ok and t.type in ('service_recep', 'service') or NULL),
-                count(pick.type = 'internal' and not dest.service_location and t.type in ('service_recep', 'service') or NULL),
-                count(t.type in ('service_recep', 'service') and pick.type = 'out' and pick.subtype in ('standard', 'picking') and not src.cross_docking_location_ok and not pick.dpo_out or NULL),
-                count(t.type not in ('service_recep', 'service') and (dest.service_location or src.service_location ) or NULL)
-                from stock_move m
-                left join stock_picking pick on m.picking_id = pick.id
-                left join product_product p on m.product_id = p.id
-                left join product_template t on p.product_tmpl_id = t.id
-                left join stock_location src on m.location_id = src.id
-                left join stock_location dest on m.location_dest_id = dest.id
-            where m.id in %s""", (tuple(ids),))
-            for res in cr.fetchall():
-                if res[0]:
-                    raise osv.except_osv(_('Error'), _('Service Products must have Service or Cross Docking Location as Destination Location.'))
-                if res[1]:
-                    raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
-                if res[2]:
-                    raise osv.except_osv(_('Error'), _('Service Products must have Service Location as Destination Location.'))
-                if res[3]:
-                    raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
-                if res[4]:
-                    raise osv.except_osv(_('Error'), _('Service Location cannot be used for non Service Products.'))
-        return True
-
-
-    _constraints = [
-        (_check_constaints_service, 'You cannot select Service Location as Source Location.', []),
-    ]
-
-stock_move()
-
-
 class sale_order_line(osv.osv):
     '''
     add a constraint as service with reception products are only available with on order procurement method

@@ -390,7 +390,9 @@ class purchase_order(osv.osv):
             context.update({'po_not_found': True})
 
         processed, rejected = [], []
-        for index, po_id in enumerate(po_ids):
+        cr.execute('select id from purchase_order where id in %s for update skip locked', (tuple(po_ids),))
+        index = 0
+        for po_id, in cr.fetchall():
             # generate report:
             report_name = 'validated.purchase.order_xls' if export_wiz.export_format == 'excel' else 'validated.purchase.order_xml'
             datas = {'ids': [po_id]}
@@ -453,6 +455,7 @@ class purchase_order(osv.osv):
             self.write(cr, uid, [po_id], {'auto_exported_ok': True}, context=context)
             processed.append((index, [po_id, po_name]))
             self.infolog(cr, uid, _('%s successfully exported') % po_name)
+            index += 1
 
         return processed, rejected, ['PO id', 'PO name']
 
