@@ -157,9 +157,11 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         res = {}
-        for pol in self.browse(cr, uid, ids, context=context):
-            res[
-                pol.id] = pol.linked_sol_id and pol.linked_sol_id.order_id.client_order_ref or False
+        for pol in self.browse(cr, uid, ids, fields_to_fetch=['linked_sol_id'], context=context):
+            res[pol.id] = {
+                'customer_ref': pol.linked_sol_id and pol.linked_sol_id.order_id.client_order_ref or False,
+                'ir_name_for_sync': pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.name or '',
+            }
 
         return res
 
@@ -482,7 +484,7 @@ class purchase_order_line(osv.osv):
         'soq_updated': fields.boolean(string='SoQ updated', readonly=True),
         'red_color': fields.boolean(string='Red color'),
         'customer_ref': fields.function(_get_customer_ref, method=True, type="text", store=False,
-                                        string="Customer ref."),
+                                        string="Customer ref.", multi='custo_ref_ir_name'),
         'name': fields.char('Description', size=256, required=True),
         'product_qty': fields.float('Quantity', required=True, digits=(16, 2), related_uom='product_uom'),
         'taxes_id': fields.many2many('account.tax', 'purchase_order_taxe', 'ord_id', 'tax_id', 'Taxes'),
@@ -563,6 +565,7 @@ class purchase_order_line(osv.osv):
         'validation_date': fields.date('Validation Date', readonly=True),
         'confirmation_date': fields.date('Confirmation Date', readonly=True),
         'closed_date': fields.date('Closed Date', readonly=True),
+        'ir_name_for_sync': fields.function(_get_customer_ref, type='char', size=64, string='IR name to put on PO line after sync', multi='custo_ref_ir_name', method=1),
     }
 
     _defaults = {

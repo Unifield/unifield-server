@@ -251,11 +251,6 @@ class stock_move(osv.osv):
     _inherit = 'stock.move'
     _trace = True
 
-    # [utp-360]: I rename the 'date' to 'Actual Receipt Date' because before it was 'Date'
-    _columns = {
-        'date': fields.datetime('Actual Receipt Date', required=True, select=True, help="Move date: scheduled date until move is done, then date of actual move processing", readonly=True),
-    }
-
 stock_move()
 
 

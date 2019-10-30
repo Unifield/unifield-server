@@ -541,7 +541,7 @@ class res_partner(osv.osv):
             'contact_display': 'partner_address', 'subtype': 'in', 'picking_type': 'incoming_shipment', 'search_default_available':1
         }))
         out_ids = pick_obj.search(cr, uid, [
-            ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'standard'),
+            ('state', 'not in', ['done', 'delivered', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'standard'),
             '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
         ], context = context.update({
             'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'
