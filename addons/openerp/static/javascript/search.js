@@ -440,7 +440,7 @@ function parse_filters(src, id) {
     var check_domain = '[]';
     var domains = {};
     var search_context = {};
-    var all_boxes = [];
+    var all_boxes = {};
     var $filter_list = jQuery('#filter_list');
     var domain = '[]';
     if (jQuery('div.group-data').length) {
@@ -571,17 +571,28 @@ function parse_filters(src, id) {
 
     forEach(selected_boxes, function(box){
         if (box.id && box.checked && box.value != '[]') {
-            all_boxes = all_boxes.concat(box.value);
+
+            pdiv = box.closest('div[class^="filters-group"]');
+            if (!(pdiv.id in all_boxes)) {
+                all_boxes[pdiv.id] = []
+            }
+            all_boxes[pdiv.id].push(box.value.replace(/^\s*\[/, '').replace(/]\s*$/, ''));
         }
     });
 
-    var checked_button = all_boxes.toString();
+    var new_boxes = [];
+    for (var key in all_boxes) {
+        length = all_boxes[key].length
+        for (var i=1; i<length; i+=1) {
+            all_boxes[key].unshift("'|'");
+        }
+        new_boxes = new_boxes.concat(all_boxes[key]);
+    }
+    var checked_button = new_boxes.toString();
 
     if(checked_button.length) {
-        check_domain = checked_button.length > 0? checked_button.replace(/(],\[)/g, ', ') : '[]';
-        all_domains['check_domain'] = check_domain;
+        all_domains['check_domain'] = checked_button.length > 0 ? '['+checked_button+']' : '[]';
     }
-
     // compute filter_status based on current filter states
     var fl_status = {};
     jQuery('[filter_status]').each(function() {
