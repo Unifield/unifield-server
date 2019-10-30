@@ -1265,7 +1265,7 @@ class purchase_order_line(osv.osv):
 
         # from RfQ line to PO line: grab the linked sol if has:
         if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):
-            default.update({'linked_sol_id': pol.linked_sol_id.id})
+            default.update({'linked_sol_id': pol.linked_sol_id and pol.linked_sol_id.id or False})
 
         if not context.get('keepDateAndDistrib'):
             if 'confirmed_delivery_date' not in default:

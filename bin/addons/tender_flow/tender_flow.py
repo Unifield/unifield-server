@@ -30,6 +30,8 @@ import time
 import tools
 
 from purchase import PURCHASE_ORDER_STATE_SELECTION
+from . import RFQ_STATE_SELECTION
+from . import RFQ_LINE_STATE_DISPLAY_SELECTION
 
 class tender(osv.osv):
     '''
@@ -722,7 +724,7 @@ class tender(osv.osv):
             # search for the rfqs
             rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id), ('rfq_ok', '=', True)], context=context)
             # trigger all related rfqs
-            po_obj.cancel_rfq(cr, uid, rfq_ids, context=context)
+            po_obj.cancel_rfq(cr, uid, rfq_ids, context=context, resource=False)
 
             for line in tender.tender_line_ids:
                 t_line_obj.cancel_sourcing(cr, uid, [line.id], context=context)
@@ -1624,7 +1626,7 @@ class purchase_order(osv.osv):
                 'valid_till': fields.date(string='Valid Till', internal="purchase_order"),
                 # add readonly when state is Done
                 'sale_order_id': fields.many2one('sale.order', string='Link between RfQ and FO', readonly=True, internal="purchase_order"),
-                'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'Order state', required=True, readonly=True, internal="purchase_order"),
+                'rfq_state': fields.selection(RFQ_STATE_SELECTION, 'Order state', required=True, readonly=True, internal="purchase_order"),
                 }
 
     _defaults = {
@@ -1670,8 +1672,7 @@ class purchase_order(osv.osv):
 
         return super(purchase_order, self).create(cr, uid, vals, context=context)
 
-
-    def cancel_rfq(self, cr, uid, ids, context=None):
+    def cancel_rfq(self, cr, uid, ids, context=None, resource=False):
         '''
         method to cancel a RfQ and its lines
         '''
@@ -1687,7 +1688,10 @@ class purchase_order(osv.osv):
             for rfq_line in rfq.order_line:
                 if (rfq_line.order_id.partner_type in ('external', 'esc') and rfq_line.state in ('draft', 'validated', 'validated_n'))\
                         or (rfq_line.order_id.partner_type not in ('external', 'esc') and rfq_line.state == 'draft'):
-                    wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, 'cancel', cr)
+                    signal = 'cancel'
+                    if resource and rfq_line.linked_sol_id:
+                        signal = 'cancel_r'
+                    wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, signal, cr)
 
             self.write(cr, uid, [rfq.id], {'rfq_state': 'cancel'}, context=context)
 
@@ -1915,10 +1919,32 @@ class purchase_order_line(osv.osv):
     add a tender_id related field
     '''
     _inherit = 'purchase.order.line'
+
+    def _get_rfq_line_state_to_display(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        return the state to display for RfQ lines
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.order_id.rfq_ok and pol.state not in ['cancel', 'cancel_r']:
+                res[pol.id] = pol.order_id.rfq_state
+            else:
+                res[pol.id] = pol.state_to_display
+
+        return res
+
     _columns = {'tender_id': fields.related('order_id', 'tender_id', type='many2one', relation='tender', string='Tender',),
                 'tender_line_id': fields.many2one('tender.line', string='Tender Line'),
                 'rfq_ok': fields.related('order_id', 'rfq_ok', type='boolean', string='RfQ ?'),
                 'sale_order_line_id': fields.many2one('sale.order.line', string='FO line', readonly=True),
+                'rfq_line_state_to_display': fields.function(_get_rfq_line_state_to_display, string='State',
+                                                             type='selection', selection=RFQ_LINE_STATE_DISPLAY_SELECTION,
+                                                             method=True, readonly=True)
                 }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -2119,7 +2145,7 @@ class tender_cancel_wizard(osv.osv_memory):
 
         line_obj.fake_unlink(cr, uid, line_ids, context=context)
 
-        self.pool.get('purchase.order').cancel_rfq(cr, uid, rfq_ids, context=context)
+        self.pool.get('purchase.order').cancel_rfq(cr, uid, rfq_ids, context=context, resource=False)
 
         for tender in tender_ids:
             wf_service.trg_validate(uid, 'tender', tender, 'tender_cancel', cr)
