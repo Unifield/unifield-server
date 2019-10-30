@@ -1199,11 +1199,11 @@ class product_product(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for obj in self.read(cr, uid, ids, ['type', 'subtype', 'perishable', 'batch_management'], context=context):
+        for obj in self.read(cr, uid, ids, ['type', 'subtype', 'perishable', 'batch_management', 'default_code'], context=context):
             # kit
             if obj['type'] == 'product' and obj['subtype'] == 'kit':
                 if obj['perishable'] and not obj['batch_management']:
-                    raise osv.except_osv(_('Warning !'), _('The Kit product cannot be Expiry Date Mandatory only.'))
+                    raise osv.except_osv(_('Warning !'), _('The Kit product %s cannot be Expiry Date Mandatory only.') % (obj['default_code']))
 
         return True
 
@@ -1397,6 +1397,7 @@ class stock_location(osv.osv):
         # do we want the child location
         stock_context = dict(context, compute_child=consider_child_locations)
         stock_context['uom'] = uom_id
+        stock_context['location'] = ids
         # we check for the available qty (in:done, out: assigned, done)
         return {'total': self.pool.get('product.product').read(cr, uid, product_id, ['qty_allocable'], context=stock_context).get('qty_allocable', 0)}
 

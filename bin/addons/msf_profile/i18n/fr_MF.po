@@ -16742,6 +16742,8 @@ msgstr "%s update%s"
 #: selection:products.situation.report,perishable:0
 #: selection:products.situation.report,batch_management:0
 #: code:addons/stock_override/report/report_stock_move.py:747
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:160
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:161
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -24857,6 +24859,7 @@ msgstr "Produits Stoppés"
 #: field:shipment.add.pack.processor.line,comment:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:431
 #: field:check.products.supplier.updated.wizard,comment:0
+#: field:stock.production.lot,comment:0
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -25053,6 +25056,8 @@ msgstr "Europe/Bucharest"
 #: selection:products.situation.report,perishable:0
 #: selection:products.situation.report,batch_management:0
 #: code:addons/stock_override/report/report_stock_move.py:747
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:160
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:161
 #, python-format
 msgid "Yes"
 msgstr "Oui"
@@ -43816,6 +43821,7 @@ msgstr "Contient des Produits Dangereux"
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:233
 #: code:addons/stock_override/report/report_stock_move.py:759
 #: report:addons/stock/report/stock_delivery_report_xls.mako:216
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:143
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -76353,6 +76359,7 @@ msgstr "Sorte de Node"
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:234
 #: code:addons/stock_override/report/report_stock_move.py:759
 #: report:addons/stock/report/stock_delivery_report_xls.mako:217
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:144
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -103617,6 +103624,7 @@ msgstr "MàJ de Produits en Masse"
 
 #. module: product
 #: field:product.mass.update,date_done:0
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:125
 msgid "Date of the update"
 msgstr "Date de la mise à jour"
 
@@ -104436,9 +104444,14 @@ msgid "Qty Received"
 msgstr "Qté Reçue"
 
 #. module: stock
-#: report:addons/stock/report/stock_reception_report_xls.mako:244
-msgid "Total Cost"
-msgstr "Prix Total"
+#: report:addons/stock/report/stock_reception_report_xls.mako:246
+msgid "Total Cost (PO currency)"
+msgstr "Coût Total (Devise du PO)"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:247
+msgid "Total Cost (Functional currency)"
+msgstr "Coût Total (Devise fonctionelle)"
 
 #. module: stock
 #: report:addons/stock/report/stock_reception_report_xls.mako:246
@@ -106004,15 +106017,13 @@ msgstr "La tâche d'export du PO n'est pas active."
 #. module: product_attributes
 #: view:change.bn.ed.mandatory.wizard:0
 msgid "\n"
-"                                This product is still in use, changing the Batch Number / Expiry Date flags will have an impact on the quantity in stock or in pending transactions, making them unavailable for any transaction.<br/><br/>\n"
-"                                Please ensure the product is no longer in use in this mission before changing the attributes.<br/><br/>\n"
-"                                If you continue, products or transactions may be blocked.<br/><br/>\n"
+"                                This product is still in use, changing the Batch Number / Expiry Date flags will have an impact on the quantity in stock or in pending transactions.<br/><br/>\n"
+"                                Once this action is done, any previous Batch / Expiry date information will no longer be available according to the attributes chosen...<br/><br/>\n"
 "                                Do you still want to continue ?\n"
 "                            "
 msgstr "\n"
-"                                Ce produit est toujours en cours d'utilisation, changer le flag de Numéro de Lot / Date d'Expiration aura un impact sur les quantités en stock ou sur les transactions en cours, les rendant indisponibles pour toute transaction.<br/><br/>\n"
-"                                Veuillez vous assurez que le produit n'est plus en cours d'utilisation avant de modifier ces valeurs.<br/><br/>\n"
-"                                Si vous continuez, les produits ou les transactions pourraient être bloqué(e)s.<br/><br/>\n"
+"                                Ce produit est toujours en cours d'utilisation, changer l'attribut de Numéro de Lot / Date d'Expiration aura un impact sur les quantités en stock ou sur les transactions en cours, les rendant indisponibles pour toute transaction.<br/><br/>\n"
+"                                Une fois l'action effectuée, en fonction du changement demandé, les anciens Numéros de Lot / Dates d'Expiration ne seront plus disponibles...<br/><br/>\n"
 "                                Voulez-vous quand même continuer ?\n"
 "                            "
 
@@ -106326,6 +106337,7 @@ msgstr "Certains produits n'ont pas pu être désactivés. Aucun produit ne sera
 
 #. module: product
 #: field:product.mass.update,name:0
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:117
 msgid "Update Reference"
 msgstr "Référence de la MàJ"
 
@@ -106351,6 +106363,7 @@ msgstr "Une erreur est survenue lors de la mise à jour:\n"
 
 #. module: product
 #: field:product.mass.update,user_id:0
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:133
 msgid "User who Updated"
 msgstr "Utilisateur qui a Mis à Jour"
 
@@ -107279,6 +107292,12 @@ msgstr "Impossible d'Annuler / Modifier si le compte n'est pas lettrable."
 msgid "This invoice will sync to its counterpart instance."
 msgstr "Cette facture sera synchronisée à l'instance de Contrepartie."
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1763
+#, python-format
+msgid "No Order in sync. instance with an open FO was found with the data in 'Origin'"
+msgstr "Aucune commande en instance sync. avec une CdT ouverte n'a été trouvée avec les données dans 'Origine'"
+
 #. module: msf_homere_interface
 #: view:hr.employee.activation:0
 #: model:ir.actions.act_window,name:msf_homere_interface.employee_activation_action
@@ -107393,6 +107412,12 @@ msgstr "Impossible de vérifier les écritures de réévaluation de la période 
 #, python-format
 msgid "You should run the month-end revaluation before closing the period."
 msgstr "Veuillez lancer la réévaluation de fin de mois avant de fermer la période."
+
+#. module: kit
+#: code:addons/kit/kit_creation.py:631
+#, python-format
+msgid "The Kitting Order cannot be processed unless all product lines are available."
+msgstr "La Commande d'Assemblage ne pourra pas être traitée avant que tous les produits ne soient disponibles."
 
 #. module: sync_client
 #: code:addons/sync_client/backup.py:127
@@ -107610,3 +107635,35 @@ msgid "\n"
 msgstr "\n"
 "<p>Lignes non-Brouillon ignorées: Numéro %s</p>\n"
 "                    "
+
+#. module: product
+#: model:ir.actions.report.xml,name:product.product_ed_bn_mass_update_export_xls
+msgid "Product BN/ED Mass Update Excel Export"
+msgstr "Export Excel de la MàJ en Masse de Produits NL/EXP"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:114
+msgid "PRODUCT BN/ED MASS UPDATE REPORT"
+msgstr "RAPPORT DE LA MÀJ EN MASSE DE PRODUITS NL/EXP"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:102
+msgid "Product BN/ED Mass Update Report"
+msgstr "Rapport de la MàJ en Masse de Produits NL/EXP"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:121
+msgid "Type of change"
+msgstr "Type du changement"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:145
+#: field:product.ed_bn.mass.update.history,old_bn:0
+msgid "Old BN"
+msgstr "Ancien NL"
+
+#. module: product
+#: report:addons/product/report/product_ed_bn_mass_update_export_xls.mako:146
+#: field:product.ed_bn.mass.update.history,old_ed:0
+msgid "Old ED"
+msgstr "Ancien EXP"

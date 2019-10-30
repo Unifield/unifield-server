@@ -980,14 +980,6 @@ class stock_move(osv.osv):
     '''
     _inherit = 'stock.move'
 
-    def default_get(self, cr, uid, fields, context=None):
-        if not context:
-            context = {}
-
-        res = super(stock_move, self).default_get(cr, uid, fields, context=context)
-        res['date'] = res['date_expected'] = context.get('date_expected', time.strftime('%Y-%m-%d %H:%M:%S'))
-
-        return res
 
     def do_partial(self, cr, uid, ids, partial_datas, context=None):
         '''

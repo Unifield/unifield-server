@@ -879,25 +879,6 @@ class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
 
-    def _get_parent_doc(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        Returns the shipment id if exist or the picking id
-        '''
-        res = {}
-
-        for move in self.browse(cr, uid, ids, context=context):
-            res[move.id] = False
-            if move.picking_id:
-                res[move.id] = move.picking_id.name
-                if move.picking_id.shipment_id:
-                    res[move.id] = move.picking_id.shipment_id.name
-
-        return res
-
-    _columns = {
-        'parent_doc_id': fields.function(_get_parent_doc, method=True, type='char', string='Picking', readonly=True),
-    }
-
     def _get_view_id(self, cr, uid, ids, context=None):
         '''
         Returns the good view id

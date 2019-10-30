@@ -121,24 +121,23 @@
                                    <button name="reactivate_product" icon="gtk-execute" string="Re-activate product" type="object" attrs="{'invisible': [('active', '=', True)]}" />
                                 </group>
                             </group>
-
                             <group colspan="2" col="3" name="quality">
+                                <field name="expected_prod_creator" invisible="1"/>
                                 <field name="uf_create_date" invisible="1"/>
                                 <separator string="Quality" colspan="3"/>
-                                <field name="perishable" attrs="{'readonly': [('uf_create_date', '!=', False)]}"/>
-                                <group colspan="1" col="1">
-                                   <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Make mandatory" type="object" attrs="{'invisible': ['|', ('uf_create_date', '=', False), ('perishable', '=', True)]}" context="{'needed_perishable': True}" />
-                                   <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Remove mandatory" type="object" attrs="{'invisible': ['|', ('uf_create_date', '=', False), ('perishable', '=', False)]}" context="{'needed_perishable': False}" />
+                                <group colspan="1" col="2">
+                                    <field name="perishable" attrs="{'readonly': [('uf_create_date', '!=', False)]}"/>
+                                    <field name="batch_management" attrs="{'readonly': [('uf_create_date', '!=', False)]}"/>
                                 </group>
-                                <field name="batch_management" attrs="{'readonly': [('uf_create_date', '!=', False)]}"/>
-                                <group colspan="1" col="1">
-                                   <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Make mandatory" type="object" attrs="{'invisible': ['|', ('uf_create_date', '=', False), ('batch_management', '=', True)]}" context="{'needed_batch_mngmt': True}" />
-                                   <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Remove mandatory" type="object" attrs="{'invisible': ['|', ('uf_create_date', '=', False), ('batch_management', '=', False)]}" context="{'needed_batch_mngmt': False}" />
+                                <group colspan="2" col="1" attrs="{'invisible': [('expected_prod_creator', '=', False)]}">
+                                    <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Change to ED only" type="object" attrs="{'invisible': [('batch_management', '=', False), ('perishable', '=', True)]}" context="{'change_target': 'edonly'}"/>
+                                    <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Remove ED/BN" type="object" attrs="{'invisible': [('batch_management', '=', False), ('perishable', '=', False)]}" context="{'change_target': 'nobn_noed'}"/>
+                                    <button name="change_bn_ed_mandatory" icon="gtk-execute" string="Change to BN+ED" type="object" attrs="{'invisible': [('batch_management', '=', True), ('perishable', '=', True)]}" context="{'change_target': 'bn'}"/>
                                 </group>
                                 <separator string="UOM" colspan="3"/>
-                                <field name="soq_quantity" on_change="change_soq_quantity(soq_quantity, uom_id)" colspan="3" />
-                                <field name="uom_id" on_change="onchange_uom(uom_id,uom_po_id)" domain="[('compatible_product_id', '=', active_id)]" colspan="3" />
-                                <field name="uom_po_id" string="Exchangeable Unit of Measure" domain="[('compatible_product_id', '=', active_id)]" colspan="3" />
+                                <field name="soq_quantity" on_change="change_soq_quantity(soq_quantity, uom_id)" colspan="3"/>
+                                <field name="uom_id" on_change="onchange_uom(uom_id,uom_po_id)" domain="[('compatible_product_id', '=', active_id)]" colspan="3"/>
+                                <field name="uom_po_id" string="Exchangeable Unit of Measure" domain="[('compatible_product_id', '=', active_id)]" colspan="3"/>
                             </group>
                         </page>
                         <page string="Specific info">
@@ -477,6 +476,9 @@
                    <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
                    <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
                    <filter string="Asset" icon="terp-accessories-archiver" domain="[('subtype','=','asset')]"/>
+                   <group name="batch_attr" invisible="1">
+                       <field name="batch_attributes" />
+                   </group>
                    <newline/>
                    <group expand="0" string="Extended Filters..." />
                    <newline/>
@@ -840,9 +842,8 @@
                     <group colspan="4" col="1">
                         <html>
                             <h3 style="text-align: center; margin: 10px; font-weight: normal"><translate>
-                                This product is still in use, changing the Batch Number / Expiry Date flags will have an impact on the quantity in stock or in pending transactions, making them unavailable for any transaction.<br/><br/>
-                                Please ensure the product is no longer in use in this mission before changing the attributes.<br/><br/>
-                                If you continue, products or transactions may be blocked.<br/><br/>
+                                This product is still in use, changing the Batch Number / Expiry Date flags will have an impact on the quantity in stock or in pending transactions.<br /><br />
+                                Once this action is done, any previous Batch / Expiry date information will no longer be available according to the attributes chosen...<br /><br />
                                 Do you still want to continue ?
                             </translate></h3>
                         </html>
@@ -857,6 +858,7 @@
         <!-- Product Mass Update Menu -->
         <menuitem id="product.parent_product_mass_update" parent="product_attributes.menu_main_product" name="Products Update" />
         <menuitem action="product.previous_mass_update_action" id="menu_import_request" sequence="1" parent="product.parent_product_mass_update" />
+        <menuitem action="product.products_bn_ed_mass_update_action" id="products_bn_ed_mass_update_menu" sequence="20" parent="product.parent_product_mass_update" />
 
     </data>
 </openerp>
