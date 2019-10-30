@@ -25,6 +25,8 @@ from dateutil.relativedelta import relativedelta
 
 from osv import osv, fields
 from tools.translate import _
+from base import currency_date
+
 
 class WizardCurrencyrevaluation(osv.osv_memory):
     _name = 'wizard.currency.revaluation'
@@ -394,7 +396,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # Compute unrealized gain loss
         ctx_rate = context.copy()
-        ctx_rate['date'] = revaluation_date
+        # DONE: TEST JN
+        ctx_rate['currency_date'] = revaluation_date
         user_obj = self.pool.get('res.users')
         cp_currency_id = user_obj.browse(cr, uid, uid,
                                          context=context).company_id.currency_id.id
@@ -536,7 +539,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                  'destination_id': destination_id,
                  'currency_id': currency_id,
                  'percentage': 100.0,
-                 'source_date': form.posting_date,
+                 'source_date': form.posting_date,  # revaluation entry doc & posting date
                  },
                 context=context)
             fp_distrib_obj.create(
@@ -547,7 +550,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                  'cost_center_id': cost_center_id,
                  'currency_id': currency_id,
                  'percentage': 100.0,
-                 'source_date': form.posting_date,
+                 'source_date': form.posting_date,  # revaluation entry doc & posting date
                  },
                 context=context)
 
@@ -971,6 +974,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             # Copy the line
             rev_line_id = line_obj.copy(cr, uid, line.id, vals, context=context)
             # Do the reverse
+            # DONE: TEST JN
+            curr_date = currency_date.get_date(self, cr, line.document_date, line.date)
             vals.update({
                 'debit': line.credit,
                 'credit': line.debit,
@@ -983,7 +988,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 'name': line_obj.join_without_redundancy(line.name, 'REV'),
                 'reversal_line_id': line.id,
                 'account_id': line.account_id.id,
-                'source_date': line.date,
+                'source_date': curr_date,
                 'reversal': True,
                 'reference': line.move_id and line.move_id.name or '',
                 'ref': line.move_id and line.move_id.name or '',

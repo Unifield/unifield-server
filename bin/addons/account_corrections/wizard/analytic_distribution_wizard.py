@@ -26,6 +26,8 @@ from osv import fields
 from tools.translate import _
 import time
 from collections import defaultdict
+from base import currency_date
+
 
 class analytic_distribution_wizard(osv.osv_memory):
     _inherit = 'analytic.distribution.wizard'
@@ -150,9 +152,13 @@ class analytic_distribution_wizard(osv.osv_memory):
         ana_line_obj = self.pool.get('account.analytic.line')
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         ml = wizard.move_line_id
-        orig_date = ml.source_date or ml.date
+        # US-5848: orig_date left unchanged not to break historical behavior,
+        # but the value set here seems overwritten later in the process if there is a source_date
+        orig_date = ml.source_date or ml.date  # DONE: TEST JN
         orig_document_date = ml.document_date
         posting_date = wizard.date
+        # DONE: TEST JN
+        curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
         working_period_id = []
         new_line_ids = []
         entry_seq_data = {}
@@ -363,7 +369,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                     if keep_seq_and_corrected[4]:
                         name = ana_line_obj.join_without_redundancy(keep_seq_and_corrected[4], 'COR')
 
-            created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date, name=name, context=context)
+            # DONE: TEST JN
+            created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').\
+                create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date,
+                                      source_date=curr_date, name=name, context=context)
             new_line_ids.extend(created_analytic_line_ids.values())
             working_period_id = working_period_id or \
                 self.pool.get('account.period').get_period_from_date(cr, uid, date=create_date, context=context)
@@ -425,8 +434,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if cp.state != 'draft':
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
+            # DONE: TEST JN
             ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=posting_date,
-                                                       document_date=orig_document_date, source_date=orig_date, name=name, context=context)
+                                                       document_date=orig_document_date, source_date=curr_date, name=name, context=context)
             new_line_ids.extend(ret.values())
             working_period_id = working_period_id or period_ids
             # Add link to first analytic lines
@@ -443,7 +453,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         for line in to_override:
             # update the ana line
             to_override_ids = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
-            ctx = {'date': orig_date}
+            # DONE: TEST JN
+            ctx = {'currency_date': curr_date}
             amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
             amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
 
@@ -479,12 +490,13 @@ class analytic_distribution_wizard(osv.osv_memory):
             has_generated_cor = True
         # compute the adjustment amount
         all_aji_ids = ana_line_obj.search(cr, uid, [
-            ('move_id', '=', ml.id),
-            ('is_reversal', '=', False),
-            ('is_reallocated', '=', False),
-        ], order='NO_ORDER', context=context)
+                        ('move_id', '=', ml.id),
+                        ('is_reversal', '=', False),
+                        ('is_reallocated', '=', False),
+                        ('account_id.category', '=', 'FUNDING'),  # exclude free lines
+                      ], order='NO_ORDER', context=context)
         max_line = {'amount': 0, 'aji_bro': False}
-        aji_fields = ['amount_currency', 'period_id', 'currency_id', 'source_date', 'date']
+        aji_fields = ['amount_currency', 'period_id', 'currency_id', 'source_date', 'document_date', 'date']
         for aji in ana_line_obj.browse(cr, uid, all_aji_ids, fields_to_fetch=aji_fields, context=context):
             total_rounded_amount += round(abs(aji.amount_currency or 0.0), 2)
             if has_generated_cor and aji.id in new_line_ids and abs(aji.amount_currency or 0.0) > max_line['amount']:
@@ -511,10 +523,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             # then recompute functional amount
             if fix_aji_currency_id:
                 new_context = context.copy()
-                if max_line['aji_bro'].source_date:
-                    new_context['date'] = max_line['aji_bro'].source_date
-                else:
-                    new_context['date'] = max_line['aji_bro'].date
+                # DONE: TEST JN
+                max_line_curr_date = currency_date.get_date(self, cr, max_line['aji_bro'].document_date, max_line['aji_bro'].date,
+                                                            source_date=max_line['aji_bro'].source_date)
+                new_context['currency_date'] = max_line_curr_date
                 aji_fix_vals['amount'] = \
                     self.pool.get('res.currency').compute(cr, uid,
                                                           fix_aji_currency_id, company_currency_id,
@@ -570,15 +582,17 @@ class analytic_distribution_wizard(osv.osv_memory):
             for line in to_override:
                 # update the ana line
                 to_override_ids = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', '%s,%d' % (obj_name, line.distribution_line_id.id)), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
-                ctx = {'date': orig_date}
+                # DONE: TEST JN
+                ctx = {'currency_date': curr_date}
                 amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
                 amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
+                # the posting date is the one of the entry corrected
                 ana_line_obj.write(cr, uid, to_override_ids, {
                     'account_id': line.analytic_id.id,
                     'amount_currency': amount_cur,
                     'amount': amount,
-                    'date': orig_date,
-                    'source_date': orig_date,
+                    'date': ml.date,  # DONE: TEST JN
+                    'source_date': curr_date,  # DONE: TEST JN
                     'document_date': orig_document_date,
                 })
                 # update the distib line
@@ -596,7 +610,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
                 })
                 # create the ana line
-                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=orig_date, document_date=orig_document_date, source_date=orig_date, ref=ml.ref)
+                # DONE: TEST JN
+                # the posting date is the one of the entry corrected
+                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=ml.date,
+                                                              document_date=orig_document_date, source_date=curr_date, ref=ml.ref)
         # Set move line as corrected upstream if needed
         if to_reverse or to_override or to_create:
             self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)

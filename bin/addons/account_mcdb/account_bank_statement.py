@@ -25,6 +25,8 @@ from osv import osv
 from osv import fields
 from time import strftime
 from lxml import etree
+from base import currency_date
+
 
 class account_bank_statement_line(osv.osv):
     _name = 'account.bank.statement.line'
@@ -34,6 +36,8 @@ class account_bank_statement_line(osv.osv):
         """
         Get an amount regarding currency in context (from 'output' and 'output_currency_id' values)
         """
+        if context is None:
+            context = {}
         # Prepare some value
         res = {}
         # Some verifications
@@ -47,6 +51,7 @@ class account_bank_statement_line(osv.osv):
         # Retrieve currency
         currency_id = context.get('output_currency_id')
         currency_obj = self.pool.get('res.currency')
+        # DONE: TEST JN => the context is not important here
         rate = currency_obj.read(cr, uid, currency_id, ['rate'], context=context).get('rate', False)
         # Do calculation
         if not rate:
@@ -57,7 +62,9 @@ class account_bank_statement_line(osv.osv):
             res[absl.id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             # output_amount field
             # Update with date
-            context.update({'date': absl.date or strftime('%Y-%m-%d')})
+            # DONE: TEST JN
+            curr_date = currency_date.get_date(self, cr, absl.document_date, absl.date)
+            context.update({'currency_date': curr_date or strftime('%Y-%m-%d')})
             mnt = self.pool.get('res.currency').compute(cr, uid, absl.currency_id.id, currency_id, absl.amount, round=True, context=context)
             res[absl.id]['output_amount'] = mnt or 0.0
             if mnt < 0.0:

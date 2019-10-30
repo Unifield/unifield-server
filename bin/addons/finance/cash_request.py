@@ -518,7 +518,8 @@ class cash_request(osv.osv):
             percentage = curr.percentage or 100  # if no percentage is given consider 100%
             total_curr = total * percentage / 100  # total in fctal currency
             # convert the amount in booking curr.
-            context.update({'date': cash_req.request_date})
+            # DONE: TEST JN
+            context.update({'currency_date': cash_req.request_date})
             total_curr_booking = cur_obj.compute(cr, uid, cash_req.consolidation_currency_id.id, curr.currency_id.id,
                                                  total_curr or 0.0, round=True, context=context)
             transfer_line_vals = {'currency_id': curr.currency_id.id,
@@ -820,7 +821,8 @@ class cash_request_expense(osv.osv):
         for expense in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
             cash_req = expense.cash_request_id
             if cash_req:
-                context.update({'date': cash_req.request_date})
+                # DONE: TEST JN
+                context.update({'currency_date': cash_req.request_date})
                 total_fctal = cur_obj.compute(cr, uid, expense.currency_id.id, cash_req.consolidation_currency_id.id,
                                               expense.total_booking or 0.0, round=True, context=context)
                 result[expense.id] = total_fctal

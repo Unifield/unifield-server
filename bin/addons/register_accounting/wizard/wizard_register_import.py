@@ -29,6 +29,7 @@ from time import strftime
 from tempfile import NamedTemporaryFile
 from base64 import decodestring
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from base import currency_date
 import threading
 import pooler
 from ..register_tools import open_register_view
@@ -147,6 +148,7 @@ class wizard_register_import(osv.osv_memory):
                 funding_pool_id = l.get('funding_pool_id', False) and l.get('funding_pool_id')[0] or False
                 cost_center_id = l.get('cost_center_id', False) and l.get('cost_center_id')[0] or False
                 date = l.get('date', False)
+                document_date = l.get('document_date', False)
                 currency_id = l.get('currency_id', False) and l.get('currency_id')[0] or False
                 account = account_obj.read(cr, uid, account_id, ['is_analytic_addicted'])
                 cheque_number = l.get('cheque_number')
@@ -156,7 +158,7 @@ class wizard_register_import(osv.osv_memory):
                 vals = {
                     'name': l.get('description', ''),
                     'ref': l.get('ref', ''),
-                    'document_date': l.get('document_date', False),
+                    'document_date': document_date,
                     'date': date,
                     'account_id': account_id,
                     'amount': l.get('debit', 0.0) - l.get('credit', 0.0),
@@ -176,12 +178,14 @@ class wizard_register_import(osv.osv_memory):
                 # Create analytic distribution
                 if account and account.get('is_analytic_addicted', False) and destination_id and cost_center_id and funding_pool_id:
                     distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
+                    # DONE: TEST JN
+                    curr_date = currency_date.get_date(self, cr, document_date, date)
                     common_vals = {
                         'distribution_id': distrib_id,
                         'currency_id': currency_id,
                         'percentage': 100.0,
                         'date': date,
-                        'source_date': date,
+                        'source_date': curr_date,
                         'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cost_center_id, })

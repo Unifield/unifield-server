@@ -23,6 +23,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from time import strftime
+from base import currency_date
+
 
 class analytic_line(osv.osv):
     _name = "account.analytic.line"
@@ -300,6 +302,8 @@ class analytic_line(osv.osv):
         gl_correction_odx_journal_rec = False
         # Process lines
         for aline in self.browse(cr, uid, ids, context=context):
+            # DONE: TEST JN
+            curr_date = currency_date.get_date(self, cr, aline.document_date, aline.date, source_date=aline.source_date)
             if account.category in ['OC', 'DEST']:
                 # Period verification
                 period = aline.period_id
@@ -320,7 +324,7 @@ class analytic_line(osv.osv):
                     vals = {
                         fieldname: account_id,
                         'date': aline.date,
-                        'source_date': aline.source_date or aline.date,
+                        'source_date': curr_date,
                     }
                     self.write(cr, uid, [aline.id], vals, context=context)
                 # else reverse line before recreating them with right values
@@ -370,7 +374,7 @@ class analytic_line(osv.osv):
                     # then create new lines
                     cor_name = self.pool.get('account.analytic.line').join_without_redundancy(aline.name, 'COR')
                     cor_ids = self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
-                                                                                              'source_date': aline.source_date or aline.date, 'journal_id': corr_j,
+                                                                                              'source_date': curr_date, 'journal_id': corr_j,
                                                                                               'name': cor_name, 'ref': aline.entry_sequence, 'real_period_id': correction_period_ids[0]}, context=context)
                     self.pool.get('account.analytic.line').write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
                     # finally flag analytic line as reallocated
