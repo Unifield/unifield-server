@@ -148,6 +148,9 @@ class account_commitment(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        aal_obj = self.pool.get('account.analytic.line')
+        curr_obj = self.pool.get('res.currency')
+        user_obj = self.pool.get('res.users')
         # Browse elements if 'date' in vals
         if vals.get('date', False):
             date = vals.get('date')
@@ -155,6 +158,8 @@ class account_commitment(osv.osv):
             vals.update({'period_id': period_ids and period_ids[0]})
             for c in self.browse(cr, uid, ids, context=context):
                 if c.state == 'open':
+                    cv_currency = vals.get('currency_id') or c.currency_id.id
+                    fctal_currency = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.currency_id.id
                     for cl in c.line_ids:
                         # Verify that date is compatible with all analytic account from distribution
                         if cl.analytic_distribution_id:
@@ -167,9 +172,17 @@ class account_commitment(osv.osv):
                             for distrib_line in distrib_lines:
                                 if (distrib_line.analytic_id.date_start and date < distrib_line.analytic_id.date_start) or (distrib_line.analytic_id.date and date > distrib_line.analytic_id.date):
                                     raise osv.except_osv(_('Error'), _('The analytic account %s is not active for given date.') % (distrib_line.analytic_id.name,))
-                        self.pool.get('account.analytic.line').write(cr, uid, [x.id for x in cl.analytic_lines],
-                                                                     {'date': date, 'source_date': date, 'document_date': date, },
-                                                                     context=context)
+                        # update the dates and fctal amounts of the related analytic lines
+                        context.update({'currency_date': date})  # same date used for doc, posting and source date of all lines
+                        for aal in cl.analytic_lines:
+                            new_aal_amount = curr_obj.compute(cr, uid, cv_currency, fctal_currency, aal.amount_currency or 0.0,
+                                                              round=False, context=context)
+                            aal_vals = {'date': date,
+                                        'source_date': date,
+                                        'document_date': date,
+                                        'amount': new_aal_amount,
+                            }
+                            aal_obj.write(cr, uid, aal.id, aal_vals, context=context)
         # Default behaviour
         res = super(account_commitment, self).write(cr, uid, ids, vals, context=context)
         return res
