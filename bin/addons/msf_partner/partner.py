@@ -123,7 +123,6 @@ class res_partner(osv.osv):
                 pricelist = partner.property_product_pricelist_purchase
                 context.update({'uom': uom})
                 price_list = self.pool.get('product.product')._get_partner_info_price(cr, uid, product, partner.id, context.get('product_qty', 1.00), pricelist.currency_id.id, time.strftime('%Y-%m-%d'), uom, context=context)
-                # DONE JFB: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                 # now is used, OST partner view
                 if not price_list:
                     func_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id

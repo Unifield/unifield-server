@@ -48,7 +48,6 @@ class res_currency_rate_functional(osv.osv):
             currency = currency_obj['currency_id'][0]
         move_line_search_params = [('currency_id', '=', currency), ('is_revaluated_ok', '=', False)]
         if date is not None:
-            # DONE: TEST JN
             date_type = self._get_date_type(cr, date)
             move_line_search_params.append((date_type, '>=', date))
 
@@ -82,7 +81,6 @@ class res_currency_rate_functional(osv.osv):
         if currency:
             search_params.append(('currency_id', '=', currency))
         if date:
-            # DONE: TEST JN
             date_type = self._get_date_type(cr, date)
             search_params.append('|')
             search_params.append(('source_date', '>=', date))

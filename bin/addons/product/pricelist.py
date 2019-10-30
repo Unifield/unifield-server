@@ -172,7 +172,6 @@ class product_pricelist(osv.osv):
             context = {}
 
         date = time.strftime('%Y-%m-%d')
-        # DONE JFB: TEST JN => should we keep getting the 'date' in context here (and not the currency_date)?
         # order_date on PO line on change product
         if 'date' in context:
             date = context['date']

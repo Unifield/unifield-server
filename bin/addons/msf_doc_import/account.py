@@ -108,7 +108,6 @@ class msf_doc_import_accounting(osv.osv_memory):
                     # Create analytic distribution
                     if l.account_id.is_analytic_addicted:
                         distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
-                        # DONE: TEST JN
                         curr_date = currency_date.get_date(self, cr, l.document_date, l.date)
                         common_vals = {
                             'distribution_id': distrib_id,

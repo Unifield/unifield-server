@@ -178,7 +178,6 @@ class wizard_register_import(osv.osv_memory):
                 # Create analytic distribution
                 if account and account.get('is_analytic_addicted', False) and destination_id and cost_center_id and funding_pool_id:
                     distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
-                    # DONE: TEST JN
                     curr_date = currency_date.get_date(self, cr, document_date, date)
                     common_vals = {
                         'distribution_id': distrib_id,

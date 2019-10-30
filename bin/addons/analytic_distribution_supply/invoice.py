@@ -254,7 +254,6 @@ class account_invoice(osv.osv):
                                     if cmp_vals == vals:
                                         # Update analytic line with new amount
                                         anal_amount = (distrib_line.percentage * amount_left) / 100
-                                        # DONE: TEST JN
                                         curr_date = currency_date.get_date(self, cr, eng_line.document_date, eng_line.date,
                                                                            source_date=eng_line.source_date)
                                         context.update({'currency_date': curr_date})

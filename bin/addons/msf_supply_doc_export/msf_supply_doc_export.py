@@ -661,7 +661,6 @@ class po_follow_up_mixin(object):
         pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, pol_id)
         context = {}
         exchange_rate = 0.0
-        # DONE JFB: TEST JN
         if pol.closed_date:
             context.update({'currency_date': pol.closed_date})
         elif pol.confirmation_date:
@@ -1133,7 +1132,6 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
         return (date2 - date1).days
 
     def get_lines(self, wizard):
-        # DONE JFB: TEST JN => can there be a "date" in self.localcontext? (If so replace the key by "currency_date")
         supl_info_obj = self.pool.get('product.supplierinfo')
         catl_obj = self.pool.get('supplier.catalogue.line')
         curr_obj = self.pool.get('res.currency')
@@ -1163,7 +1161,6 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             else:
                 ex_curr = invoices[key]['curr_id']
                 if inv['curr_id'] != ex_curr:
-                    # DONE JFB: TEST JN
                     curr_date = currency_date.get_date(self, self.cr, inv['document_date'], inv['date'])
                     price = curr_obj.compute(self.cr, self.uid, inv['curr_id'], ex_curr, inv['price_total'], round=False,
                                              context={'currency_date': curr_date or time.strftime('%Y-%m-%d')})
@@ -1231,7 +1228,6 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 si_unit_price = invoices[key]['price_total'] / invoices[key]['qty']
                 print invoices[key]['curr_id'], line[24]
                 if invoices[key]['curr_id'] != line[24]:
-                    # DONE JFB: TEST JN
                     curr_date = currency_date.get_date(self, self.cr, invoices[key]['document_date'], invoices[key]['date'])
                     si_unit_price = curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], line[24], si_unit_price, round=False,
                                                      context={'currency_date': curr_date or time.strftime('%Y-%m-%d')})

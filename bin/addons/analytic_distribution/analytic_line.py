@@ -302,7 +302,6 @@ class analytic_line(osv.osv):
         gl_correction_odx_journal_rec = False
         # Process lines
         for aline in self.browse(cr, uid, ids, context=context):
-            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, aline.document_date, aline.date, source_date=aline.source_date)
             if account.category in ['OC', 'DEST']:
                 # Period verification

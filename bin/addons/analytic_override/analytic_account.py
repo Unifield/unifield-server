@@ -81,7 +81,6 @@ class analytic_account(osv.osv):
             context = {}
         res = super(analytic_account, self)._compute_level_tree(cr, uid, ids, child_ids, res, field_names, context=context)
         company_currency = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
-        # DONE: TEST JN => there is no "date" in context
         if context.get('output_currency_id', False):
             for res_id in res:
                 if res[res_id].get('balance', False):

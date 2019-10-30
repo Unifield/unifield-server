@@ -1568,7 +1568,6 @@ class purchase_order_line(osv.osv):
                              partner_id, date_order=False, fiscal_position=False, date_planned=False,
                              name=False, price_unit=False, notes=False, state=False, old_price_unit=False,
                              nomen_manda_0=False, comment=False, context=None, categ=False, from_product=False):
-        # DONE JFB: TEST JN Supply => is there a "date" in context? (If so replace the key by "currency_date")
         all_qty = qty
         partner_price = self.pool.get('pricelist.partnerinfo')
         product_obj = self.pool.get('product.product')

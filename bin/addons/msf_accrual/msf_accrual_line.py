@@ -40,7 +40,6 @@ class msf_accrual_line(osv.osv):
     def _get_functional_amount(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         for accrual_line in self.browse(cr, uid, ids, context=context):
-            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, accrual_line.document_date, accrual_line.date)
             date_context = {'currency_date': curr_date}
             res[accrual_line.id] =  self.pool.get('res.currency').compute(cr,
@@ -210,7 +209,6 @@ class msf_accrual_line(osv.osv):
                 raise osv.except_osv(_('Warning !'), _("The period '%s' is not open!" % accrual_line.period_id.name))
 
             move_date = accrual_line.period_id.date_stop
-            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, accrual_line.document_date, move_date)
             if accrual_line.accrual_type == 'reversing_accrual':
                 reversal_move_posting_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
@@ -497,7 +495,6 @@ class msf_accrual_line(osv.osv):
         if ids:
             for accrual_line in self.browse(cr, uid, ids, context=context):
                 move_date = accrual_line.period_id.date_stop
-                # DONE: TEST JN
                 curr_date = currency_date.get_date(self, cr, accrual_line.document_date, move_date)
 
                 reversal_period_ids = period_obj.find(cr, uid, posting_date, context=context)

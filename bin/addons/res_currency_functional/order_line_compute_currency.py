@@ -75,7 +75,6 @@ class sale_order_compute_currency(osv.osv):
             # for the currency rate
             ctx = {}
             if order.date_confirm:
-                # DONE JFB: TEST JN Supply
                 ctx['currency_date'] = order.date_confirm
             try:
                 res[order.id] = {
@@ -152,7 +151,6 @@ class purchase_order_compute_currency(osv.osv):
             # for the currency rate
             ctx = {}
             if order.date_approve:
-                # DONE JFB: TEST JN Supply
                 ctx['currency_date'] = order.date_approve
             try:
                 res[order.id] = {

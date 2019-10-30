@@ -52,7 +52,6 @@ class account_analytic_line(osv.osv):
         # Retrieve currency
         currency_id = context.get('output_currency_id')
         currency_obj = self.pool.get('res.currency')
-        # DONE: TEST JN => the context is not important here
         rate = currency_obj.read(cr, uid, currency_id, ['rate'], context=context).get('rate', False)
         # Do calculation
         if not rate:
@@ -64,7 +63,6 @@ class account_analytic_line(osv.osv):
             res[aal.id] = {'output_currency': False, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             # output_amount field
             # Update with date
-            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, aal.document_date, aal.date, source_date=aal.source_date)
             context.update({'currency_date': curr_date or strftime('%Y-%m-%d')})
             mnt = self.pool.get('res.currency').compute(cr, uid, aal.currency_id.id, currency_id, aal.amount_currency,

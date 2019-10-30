@@ -1771,7 +1771,6 @@ class stock_move(osv.osv):
                 context['currency_id'] = move_currency_id
                 qty = uom_obj._compute_qty(cr, uid, product_uom, product_qty, product.uom_id.id)
                 if qty > 0:
-                    # DONE JFB: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                     new_price = currency_obj.compute(cr, uid, product_currency,
                                                      move_currency_id, product_price, round=False, context=context)
                     new_price = uom_obj._compute_price(cr, uid, product_uom, new_price,

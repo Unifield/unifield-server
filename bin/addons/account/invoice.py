@@ -1725,7 +1725,6 @@ class account_invoice_line(osv.osv):
             return res_final
 
         company = self.pool.get('res.company').browse(cr, uid, company_id, context=context)
-        # DONE: TEST JN => no date in context
         currency = self.pool.get('res.currency').browse(cr, uid, currency_id, context=context)
 
         if company.currency_id.id != currency.id:
@@ -1930,7 +1929,6 @@ class account_invoice_tax(osv.osv):
         if company_id:
             company_currency = company_obj.read(cr, uid, [company_id], ['currency_id'])[0]['currency_id'][0]
         if currency_id and company_currency:
-            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, document_date, date_invoice)
             base = cur_obj.compute(cr, uid, currency_id, company_currency, base*factor,
                                    context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
@@ -1946,7 +1944,6 @@ class account_invoice_tax(osv.osv):
         if company_id:
             company_currency = company_obj.read(cr, uid, [company_id], ['currency_id'])[0]['currency_id'][0]
         if currency_id and company_currency:
-            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, document_date, date_invoice)
             amount = cur_obj.compute(cr, uid, currency_id, company_currency, amount*factor,
                                      context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
@@ -1983,7 +1980,6 @@ class account_invoice_tax(osv.osv):
                 if inv.type in ('out_invoice','in_invoice'):
                     val['base_code_id'] = tax['base_code_id']
                     val['tax_code_id'] = tax['tax_code_id']
-                    # DONE: TEST JN
                     curr_date = currency_date.get_date(self, cr, inv.document_date, inv.date_invoice)
                     val['base_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['base'] * tax['base_sign'],
                                                          context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
@@ -1993,7 +1989,6 @@ class account_invoice_tax(osv.osv):
                 else:
                     val['base_code_id'] = tax['ref_base_code_id']
                     val['tax_code_id'] = tax['ref_tax_code_id']
-                    # DONE: TEST JN
                     curr_date = currency_date.get_date(self, cr, inv.document_date, inv.date_invoice)
                     val['base_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['base'] * tax['ref_base_sign'],
                                                          context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)

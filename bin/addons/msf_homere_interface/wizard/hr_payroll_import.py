@@ -378,7 +378,6 @@ class hr_payroll_import(osv.osv_memory):
             # booking <> EUR
             new_ctx = context is not None and context.copy() or {}
 
-            # DONE: TEST JN
             new_ctx['currency_date'] = curr_date
             eur_amount = self.pool.get('res.currency').compute(cr, uid,
                                                                currency_id, eur_ids[0], gap_amount, round=True,
@@ -596,7 +595,6 @@ class hr_payroll_import(osv.osv_memory):
                     # Check balance
                     res_amount_rounded = round(res_amount, 2)
                     if res_amount_rounded != 0.0:
-                        # DONE: TEST JN
                         curr_date = currency_date.get_date(self, cr, header_vals['document_date'], header_vals['date'])
                         self._uf_side_rounding_line_check_gap(cr, uid,
                                                               header_vals['currency_id'],

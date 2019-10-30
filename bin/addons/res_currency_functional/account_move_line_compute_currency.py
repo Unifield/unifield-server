@@ -468,7 +468,6 @@ class account_move_line_compute_currency(osv.osv):
             # amount currency is not set; it is computed from the 2 other fields
             ctx = {}
             # WARNING: since SP2, source_date have priority to date if exists. That's why it should be used for computing amounts
-            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, move_line.document_date, move_line.date, source_date=move_line.source_date)
             ctx['currency_date'] = curr_date
 
@@ -535,7 +534,6 @@ class account_move_line_compute_currency(osv.osv):
         cur_obj = self.pool.get('res.currency')
 
         # WARNING: source_date field have priority to date field. This is because of SP2 Specifications
-        # DONE: TEST JN
         curr_date = currency_date.get_date(self, cr, vals.get('document_date', document_date), vals.get('date', posting_date),
                                            source_date=vals.get('source_date', source_date))
         ctxcurr['currency_date'] = curr_date
@@ -569,7 +567,6 @@ class account_move_line_compute_currency(osv.osv):
                 newvals['credit_currency'] = 0
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
-        # DONE: TEST JN
         elif (date_in_vals or vals.get('source_date')) and (credit_currency or debit_currency):
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, debit_currency or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, credit_currency or 0.0, round=True, context=ctxcurr)
@@ -599,7 +596,6 @@ class account_move_line_compute_currency(osv.osv):
 
         if not 'date' in vals:
             if vals.get('move_id'):
-                # DONE: TEST JN
                 move = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['document_date', 'date'])
                 doc_date = move['document_date']
                 posting_date = move['date']
@@ -662,7 +658,6 @@ class account_move_line_compute_currency(osv.osv):
         # Browse lines
         for line in self.browse(cr, uid, ids):
             newvals = vals.copy()
-            # DONE: TEST JN
             doc_date = vals.get('document_date', line.document_date)
             date = vals.get('date', line.date)
             source_date = vals.get('source_date', line.source_date)

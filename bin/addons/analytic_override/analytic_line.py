@@ -349,7 +349,6 @@ class account_analytic_line(osv.osv):
             period_id_dec_hq_entry = context['period_id_for_dec_hq_entries']
         res = []
         for al in self.browse(cr, uid, ids, context=context):
-            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, al.document_date, al.date, source_date=al.source_date)
             vals = {
                 'name': self.join_without_redundancy(al.name, 'REV'),

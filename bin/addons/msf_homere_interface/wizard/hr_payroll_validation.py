@@ -263,7 +263,6 @@ class hr_payroll_validation(osv.osv_memory):
                     dest_id = line.get('destination_id', False) and line.get('destination_id')[0] or (
                         account.default_destination_id and account.default_destination_id.id) or False
                     if distrib_id:
-                        # DONE: TEST JN
                         curr_date = currency_date.get_date(self, cr, line.get('document_date', False), line.get('date', False))
                         common_vals = {
                             'distribution_id': distrib_id,

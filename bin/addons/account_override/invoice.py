@@ -1936,7 +1936,6 @@ class account_invoice_line(osv.osv):
                 std_price = p_info['standard_price']
                 company_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
                 if company_curr_id and company_curr_id != currency_id:
-                    # DONE: TEST JN => no date in context
                     std_price = self.pool.get('res.currency').compute(cr, uid, company_curr_id, currency_id, std_price, context=context)
                 res['value']['price_unit'] = std_price
                 res['value']['price_subtotal'] = (qty or 0) * std_price

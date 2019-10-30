@@ -55,7 +55,6 @@ class account_move_line(osv.osv):
                 return func_amount
             original_currency = ml.functional_currency_id.id
         # Perform the conversion from original currency to selected currency
-        # DONE: TEST JN => there is only a "currency_date" in context (no "date")
         return currency_obj.compute(cr, uid, original_currency, currency_id, func_amount, round=round, context=context)
 
     def _get_output(self, cr, uid, ids, field_name, arg, context=None):
@@ -79,7 +78,6 @@ class account_move_line(osv.osv):
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         currency_id = context.get('output_currency_id')
         currency_obj = self.pool.get('res.currency')
-        # DONE: TEST JN => the context is not important here
         rate = currency_obj.read(cr, uid, currency_id, ['rate'], context=context).get('rate', False)
         # Do calculation
         if not rate:
@@ -90,7 +88,6 @@ class account_move_line(osv.osv):
             res[ml.id] = {'output_currency': currency_id, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             # output_amount field
             # Update with date
-            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
             context.update({'currency_date': curr_date or strftime('%Y-%m-%d')})
             # Now call the common method to calculate the output values

@@ -807,7 +807,6 @@ class product_product(osv.osv):
             if 'currency_id' in context:
                 # Take the price_type currency from the product field
                 # This is right cause a field cannot be in more than one currency
-                # DONE JFB: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                 res[product.id] = self.pool.get('res.currency').compute(cr, uid, price_type_currency_id,
                                                                         context['currency_id'], res[product.id],context=context)
 

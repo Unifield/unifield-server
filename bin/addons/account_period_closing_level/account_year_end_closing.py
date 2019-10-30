@@ -335,7 +335,6 @@ class account_year_end_closing(osv.osv):
             """
             name = 'Balance move to 0'
 
-            # DONE: TEST JN => behavior unchanged (use of clearer date name for the source date)
             vals = {
                 'account_id': account_id,
                 'company_id': cpy_rec.id,
@@ -612,7 +611,6 @@ class account_year_end_closing(osv.osv):
             """
             default_name = 'Balance report / Previous Fiscal Year'
 
-            # DONE: TEST JN => behavior unchanged (use of clearer date name for the source date)
             vals = {
                 'account_id': account_id,
                 'company_id': cpy_rec.id,

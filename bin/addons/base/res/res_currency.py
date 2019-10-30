@@ -46,7 +46,6 @@ class res_currency_table(osv.osv):
         # just get one table
         if not isinstance(ids, (int, long)):
             ids = ids[0]
-        # DONE: TEST JN => there is no "date" set in context at this step
         table = self.browse(cr, uid, ids, context=context)
         for currency in table.currency_ids:
             if currency.rate == 0.0:
@@ -135,7 +134,6 @@ class res_currency(osv.osv):
         if context is None:
             context = {}
         res = {}
-        # DONE: TEST JN
         date = context.get('currency_date') or time.strftime('%Y-%m-%d')
         for id in ids:
             cr.execute("SELECT currency_id, name, rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(id, date))
@@ -404,7 +402,6 @@ class res_currency(osv.osv):
 
         if 'revaluation' in context:
             if from_currency['rate'] == 0.0:
-                # DONE: TEST JN
                 date = context.get('currency_date', time.strftime('%Y-%m-%d'))
                 raise osv.except_osv(_('Error'),
                                      _('No rate found \n'
@@ -426,7 +423,6 @@ class res_currency(osv.osv):
                 return float(tot2)/float(tot1)
 
         if from_currency['rate'] == 0 or to_currency['rate'] == 0:
-            # DONE: TEST JN
             date = context.get('currency_date', time.strftime('%Y-%m-%d'))
             if from_currency['rate'] == 0:
                 currency_name = from_currency['name']

@@ -127,7 +127,6 @@ class purchase_order_line(osv.osv):
                 continue
 
             # convert from currency of pol to currency of sol
-            # DONE JFB: TEST JN
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
                                                                          round=False, context={'currency_date': pol.order_id.date_order})
 
@@ -284,7 +283,6 @@ class purchase_order_line(osv.osv):
         new_sol_id = False
         for pol in self.browse(cr, uid, ids, context=context):
             # convert from currency of pol to currency of sol
-            # DONE JFB: TEST JN Supply
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
                                                                          round=False, context={'currency_date': pol.order_id.date_order})
 
@@ -429,7 +427,6 @@ class purchase_order_line(osv.osv):
             'pricelist_id': pricelist_id,
             'order_line': [(0, 0, {
                 'product_id': x.product_id.id,
-                # DONE JFB: TEST JN => is there a "date" in context? (If so replace the key by "currency_date")
                 'price_unit': curr_obj.compute(cr, uid, p_order.pricelist_id.currency_id.id, company_currency_id,
                                                x.price_unit, round=False, context=context),
                 'product_uom': x.product_uom.id,

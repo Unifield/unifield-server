@@ -243,7 +243,6 @@ class account_line_csv_export(osv.osv_memory):
                     csv_line.append(company_currency.encode('utf-8') or '')
                 else:
                     #output debit/credit
-                    # DONE: TEST JN
                     curr_date = currency_date.get_date(self, cr, al.document_date, al.date, source_date=al.source_date)
                     context['currency_date'] = curr_date
                     amount = currency_obj.compute(cr, uid, al.currency_id.id, currency_id, al.amount_currency, round=True, context=context)
@@ -314,7 +313,6 @@ class account_line_csv_export(osv.osv_memory):
                 csv_line.append(absl.functional_currency_id and absl.functional_currency_id.name and absl.functional_currency_id.name.encode('utf-8') or '')
             else:
                 #output amount (debit/credit) regarding booking currency
-                # DONE: TEST JN
                 curr_date = currency_date.get_date(self, cr, absl.document_date, absl.date)
                 context.update({'currency_date': curr_date or strftime('%Y-%m-%d')})
                 amount = currency_obj.compute(cr, uid, absl.currency_id.id, currency_id, absl.amount, round=True, context=context)

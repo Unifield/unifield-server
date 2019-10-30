@@ -32,7 +32,6 @@ class account_bank_statement_line_compute_currency(osv.osv):
         res = {}
         for statement_line in self.browse(cr, uid, ids):
             ctx = {}
-            # DONE: TEST JN
             curr_date = currency_date.get_date(self, cr, statement_line.document_date, statement_line.date)
             if curr_date:
                 ctx['currency_date'] = curr_date
