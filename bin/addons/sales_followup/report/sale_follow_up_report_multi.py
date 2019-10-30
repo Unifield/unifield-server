@@ -208,10 +208,10 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
                             packing = move.picking_id.previous_step_id.name
                             shipment = move.picking_id.shipment_id.name or '-'
-                            is_shipment_done = move.picking_id.shipment_id.state == 'done'
+                            is_shipment_done = move.picking_id.shipment_id.state in ('done', 'delivered')
                         else:
                             shipment = move.picking_id.name or '-'
-                            is_shipment_done = move.picking_id.state == 'done'
+                            is_shipment_done = move.picking_id.state in ('done', 'delivered')
                             packing = '-'
                         if not grouped:
                             key = (packing, s_out and shipment or False, move.product_uom.name)
@@ -220,6 +220,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         if not only_bo:
                             data.update({
                                 'packing': packing,
+                                'is_delivered': is_shipment_done,
                                 'delivered_qty': is_shipment_done and move.product_qty or 0.00,
                                 'delivered_uom': is_shipment_done and move.product_uom.name or '-',
                                 'rts': line.order_id.ready_to_ship_date,

@@ -635,6 +635,7 @@ class initial_stock_inventory(osv.osv):
         location_obj = self.pool.get('stock.location')
         obj_data = self.pool.get('ir.model.data')
 
+
         vals = {}
         vals['inventory_line_id'] = []
         msg_to_return = _("All lines successfully imported")
@@ -647,6 +648,7 @@ class initial_stock_inventory(osv.osv):
         product_non_stockable_cache = {}
         product_error = []
         no_product_error = []
+        wrong_location = []
 
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
 
@@ -751,6 +753,10 @@ Product Code, Product Description, Initial Average Cost, Location, Batch, Expiry
                         location_not_found = True
                     else:
                         location_id = loc_ids[0]
+                        loc = location_obj.browse(cr, uid, location_id, fields_to_fetch=['initial_stock_inv_display', 'usage'],
+                                                  context=context)
+                        if not loc.initial_stock_inv_display or loc.usage != 'internal':
+                            wrong_location.append(_('Line #%s: The location "%s" is not allowed') % (line_num, location_name))
                 except Exception:
                     location_id = False
 
@@ -902,6 +908,11 @@ Product Code, Product Description, Initial Average Cost, Location, Batch, Expiry
                     len(no_product_error) > 1 and 'these' or 'this',
                     len(no_product_error) > 1 and 's' or '',
                     ' / '.join(tools.ustr(x) for x in no_product_error)),
+            )
+        if wrong_location:
+            raise osv.except_osv(
+                _('Error'),
+                '\n'.join(wrong_location)
             )
 
         # write order line on Inventory

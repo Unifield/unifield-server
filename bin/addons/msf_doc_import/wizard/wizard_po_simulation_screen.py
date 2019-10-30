@@ -1322,6 +1322,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
 
         cr = pooler.get_db(dbname).cursor()
 
+        context['from_vi_import'] = True
         try:
             for wiz in self.browse(cr, uid, ids, context=context):
                 w_vals = {'state': 'import_progress',}
@@ -1354,7 +1355,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
             res = True
             cr.commit()
             cr.close(True)
-
+        context['from_vi_import'] = False
         return res
 
 wizard_import_po_simulation_screen()
@@ -1544,6 +1545,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'imp_external_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'imp_project_ref': fields.char(size=256, string='Project Ref.', readonly=True),
         'imp_origin': fields.char(size=256, string='Origin Ref.', readonly=True),
+        'imp_sync_order_ref': fields.many2one('sync.order.label', string='Order in sync. instance', readonly=True),
         'change_ok': fields.function(_get_line_info, method=True, multi='line',
                                      type='boolean', string='Change', store=False),
         'error_msg': fields.text(string='Error message', readonly=True),
@@ -1580,6 +1582,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         sale_obj = self.pool.get('sale.order')
+        sync_order_obj = self.pool.get('sync.order.label')
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -1732,8 +1735,14 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['type_change'] = 'error'
 
             # Origin
-            origin = values[8]
-            if origin:
+            full_origin = values[8]
+            if full_origin:
+                instance_sync_order_ref = False
+                if ':' in full_origin:
+                    origin = full_origin.split(':')[0]
+                    instance_sync_order_ref = full_origin.split(':')[-1]
+                else:
+                    origin = full_origin
                 if line.simu_id.order_id.order_type not in ['loan', 'donation_exp', 'donation_st', 'in_kind']:
                     so_ids = sale_obj.search(cr, uid, [('name', '=', origin), ('procurement_request', 'in', ['t', 'f'])],
                                              limit=1, context=context)
@@ -1750,6 +1759,18 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             err_msg = _('\'Origin\' Document can\'t be Closed or Cancelled')
                             errors.append(err_msg)
                             write_vals['type_change'] = 'error'
+                        # To link the other instance's IR to the PO line
+                        if line.type_change in ['new', 'split'] and instance_sync_order_ref:
+                            sync_order_label_ids = sync_order_obj.\
+                                search(cr, uid, [('name', '=', instance_sync_order_ref),
+                                                 ('order_id.state', 'not in', ['done', 'cancel']),
+                                                 ('order_id', '=', so.id)], context=context)
+                            if sync_order_label_ids:
+                                write_vals['imp_sync_order_ref'] = sync_order_label_ids[0]
+                            else:
+                                err_msg = _('No Order in sync. instance with an open FO was found with the data in \'Origin\'')
+                                errors.append(err_msg)
+                                write_vals['type_change'] = 'error'
                     else:
                         err_msg = _('The FO reference in \'Origin\' is not consistent with this PO')
                         errors.append(err_msg)
@@ -1778,11 +1799,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     write_vals['type_change'] = 'error'
             elif stock_take_date:
                 err_msg = _('Incorrect date value for field \'Stock Take Date\'')
-                errors.append(err_msg)
-                write_vals['type_change'] = 'error'
-            if write_vals.get('imp_stock_take_date') and write_vals['imp_stock_take_date'] > line.simu_id.order_id.date_order:
-                err_msg = _('The Date of Stock Take is not consistent! It should not be later than %s\'s creation date')\
-                    % (line.simu_id.order_id.name,)
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
 
@@ -1864,7 +1880,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
-
         nb_lines = float(len(ids))
         line_treated = 0.00
         percent_completed = 0.00
@@ -1904,6 +1919,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 line_vals['project_ref'] = line.imp_project_ref
             if line.imp_origin:
                 line_vals['origin'] = line.imp_origin
+            if line.imp_sync_order_ref:
+                line_vals.update({'instance_sync_order_ref': line.imp_sync_order_ref.id, 'display_sync_ref': True})
             if line.imp_external_ref:
                 line_vals['external_ref'] = line.imp_external_ref
             if line.imp_dcd:

@@ -653,8 +653,7 @@ form: module.record_id""" % (xml_id,)
                 resw = cr.fetchone()
                 if (not values.get('name', False)) and resw:
                     values['name'] = resw[0]
-        if rec.get('sequence'):
-            values['sequence'] = int(rec.get('sequence'))
+        values['sequence'] = int(rec.get('sequence', 10))
         if rec.get('icon'):
             values['icon'] = str(rec.get('icon'))
         if rec.get('web_icon'):

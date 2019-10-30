@@ -25,7 +25,6 @@ from osv import osv, fields
 from tools.translate import _
 from order_types.stock import check_rw_warning
 import logging
-import decimal_precision as dp
 
 
 class stock_picking_processing_info(osv.osv_memory):
@@ -152,75 +151,6 @@ class stock_move(osv.osv):
     new function to get mirror move
     '''
     _inherit = 'stock.move'
-    _columns = {
-        'line_number': fields.integer(string='Line', required=True),
-        'change_reason': fields.char(string='Change Reason', size=1024, readonly=True),
-        'in_out_updated': fields.boolean(string='IN update OUT'),
-        'original_qty_partial': fields.float(string='Original Qty for Partial process - only for sync and partial processed line', required=False, digits_compute=dp.get_precision('Product UoM')),
-        'pack_info_id': fields.many2one('wizard.import.in.pack.simulation.screen', 'Pack Info'),
-    }
-    _defaults = {
-        'line_number': 0,
-        'in_out_updated': False,
-        'original_qty_partial': -1,
-    }
-    _order = 'line_number, date_expected desc, id'
-
-    def copy_data(self, cr, uid, id, defaults=None, context=None):
-        '''
-        If the line_number is not in the defaults, we set it to False.
-        If we are on an Incoming Shipment: we reset purchase_line_id field
-        and we set the location_dest_id to INPUT.
-        '''
-        if defaults is None:
-            defaults = {}
-        if context is None:
-            context = {}
-
-        # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
-        if 'line_number' not in defaults and not context.get('keepLineNumber', False):
-            defaults.update({'line_number': False})
-
-        if 'pack_info_id' not in defaults:
-            defaults['pack_info_id'] = False
-
-        # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
-        if context.get('from_button'):
-            # UF-1797: when we duplicate a doc we delete the link with the poline
-            if 'purchase_line_id' not in defaults and not context.get('keepPoLine', False):
-                defaults.update(purchase_line_id=False)
-            if context.get('subtype', False) == 'incoming':
-                # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
-                input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-                defaults.update(location_dest_id=input_loc)
-        return super(stock_move, self).copy_data(cr, uid, id, defaults, context=context)
-
-    def allow_resequencing(self, cr, uid, ids, context=None):
-        '''
-        define if a resequencing has to be performed or not
-
-        return the list of ids for which resequencing will can be performed
-
-        linked to Picking + Picking draft + not linked to Po/Fo
-        '''
-        # objects
-        pick_obj = self.pool.get('stock.picking')
-
-        resequencing_ids = [x.id for x in self.browse(cr, uid, ids, context=context)
-                            if x.picking_id and pick_obj.allow_resequencing(cr, uid, x.picking_id, context=context)]
-        return resequencing_ids
-
-    def _get_location_for_internal_request(self, cr, uid, context=None, **kwargs):
-        '''
-        Get the requestor_location_id in case of IR to update the location_dest_id of each move
-        '''
-        location_dest_id = super(stock_move, self)._get_location_for_internal_request(cr, uid, context=context, **kwargs)
-        move = kwargs['move']
-        linked_sol = move.purchase_line_id.linked_sol_id or False
-        if linked_sol and linked_sol.order_id.procurement_request and linked_sol.order_id.location_requestor_id.usage != 'customer':
-            location_dest_id = linked_sol.order_id.location_requestor_id.id
-
-        return location_dest_id
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''
@@ -240,103 +170,6 @@ class stock_move(osv.osv):
         defaults.update({'line_number': move.line_number})
 
         return defaults
-
-    def get_mirror_move(self, cr, uid, ids, data_back, context=None):
-        '''
-        return a dictionary with IN for OUT and OUT for IN, if exists, False otherwise
-
-        only one mirror object should exist for each object (to check)
-        return objects which are not done
-
-        same sale_line_id/purchase_line_id - same product - same quantity
-
-        IN: move -> po line -> procurement -> so line -> move
-        OUT: move -> so line -> procurement -> po line -> move
-
-        I dont use move.move_dest_id because of back orders both on OUT and IN sides
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        # objects
-        res = {}
-        for obj in self.browse(cr, uid, ids, context=context,
-                               fields_to_fetch=['picking_id', 'purchase_line_id', 'id', 'sale_line_id']):
-            res[obj.id] = {'move_id': False, 'picking_id': False, 'picking_version': 0, 'quantity': 0, 'moves': []}
-            if obj.picking_id and obj.picking_id.type == 'in':
-                move_ids = False
-                # we are looking for corresponding OUT move from sale order line
-                if obj.purchase_line_id and obj.purchase_line_id.linked_sol_id:
-                    # find the corresponding OUT move
-                    move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']),
-                                                     ('state', 'in', ('assigned', 'confirmed')),
-                                                     ('sale_line_id', '=', obj.purchase_line_id.linked_sol_id.id),
-                                                     ('in_out_updated', '=', False),
-                                                     ('picking_id.type', '=', 'out'),
-                                                     ('processed_stock_move', '=', False),
-                                                     ], order="state desc", context=context)
-                elif obj.sale_line_id and ('replacement' in obj.picking_id.name or 'missing' in obj.picking_id.name):
-                    # find the corresponding OUT move if SO line id
-                    move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']),
-                                                     ('state', 'in', ('assigned', 'confirmed')),
-                                                     ('sale_line_id', '=', obj.sale_line_id.id),
-                                                     ('in_out_updated', '=', False),
-                                                     ('picking_id.type', '=', 'out'),
-                                                     ('processed_stock_move', '=', False),
-                                                     ], order="state desc", context=context)
-
-                if move_ids:
-                    # list of matching out moves
-                    integrity_check = []
-                    for move in self.browse(cr, uid, move_ids, context=context):
-                        pick = move.picking_id
-                        cond1 = move.picking_id.subtype == 'standard'
-                        cond2 = move.product_qty != 0.00 and pick.subtype == 'picking' and (not pick.backorder_id or pick.backorder_id.subtype == 'standard') and pick.state == 'draft'
-                        # move from draft picking or standard picking
-                        if cond2 or cond1:
-                            integrity_check.append(move)
-                    # return the first one matching
-                    if integrity_check:
-                        if all([not move.processed_stock_move for move in integrity_check]):
-                            # the out stock moves (draft picking or std out) have not yet been processed, we can therefore update them
-                            res[obj.id].update({
-                                'move_id': integrity_check[0].id,
-                                'moves': integrity_check,
-                                'picking_id': integrity_check[0].picking_id.id,
-                                'picking_version': integrity_check[0].picking_id.update_version_from_in_stock_picking,
-                                'quantity': integrity_check[0].product_qty,
-                            })
-                        else:
-                            # the corresponding OUT move have been processed completely or partially,, we do not update the OUT
-                            msg_log = _('The Stock Move %s from %s has already been processed and is '
-                                        'therefore not updated.') % (integrity_check[0].name, integrity_check[0].picking_id.name)
-                            self.log(cr, uid, integrity_check[0].id, msg_log)
-
-            else:
-                # we are looking for corresponding IN from on_order purchase order
-                assert False, 'This method is not implemented for OUT or Internal moves'
-
-        return res
-
-    def create_data_back(self, move):
-        '''
-        build data_back dictionary
-        '''
-        res = {'id': move.id,
-               'name': move.product_id.partner_ref,
-               'product_id': move.product_id.id,
-               'product_uom': move.product_uom.id,
-               'product_qty': move.product_qty,
-               'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
-               'asset_id': move.asset_id and move.asset_id.id or False,
-               'expired_date': move.expired_date or False,
-               'location_dest_id': move.location_dest_id.id,
-               'move_cross_docking_ok': move.move_cross_docking_ok,
-               }
-        return res
-
 
 stock_move()
 
