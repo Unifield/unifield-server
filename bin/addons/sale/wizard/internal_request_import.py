@@ -545,6 +545,7 @@ class internal_request_import(osv.osv):
                 '''
                 ir_line_numbers = []  # existing line numbers
                 imp_line_numbers = []  # imported line numbers
+                ignored = []
                 if ir_order:  # get the lines numbers
                     ir_line_numbers = [line.line_number for line in ir_order.order_line]
 
@@ -734,7 +735,11 @@ class internal_request_import(osv.osv):
                         l_ids = ir_imp_l_obj.search(cr, uid, [('ir_import_id', '=', ir_imp.id),
                                                               ('ir_line_number', '=', line_data['imp_line_number'])],
                                                     context=context)
-                        ir_imp_l_obj.write(cr, uid, l_ids, line_data, context=context)
+                        for ir_imp_l in ir_imp_l_obj.browse(cr, uid, l_ids, fields_to_fetch=['ir_line_id'], context=context):
+                            if ir_imp_l.ir_line_id.state != 'draft':
+                                ignored.append(str(line_data['imp_line_number']))
+                            else:
+                                ir_imp_l_obj.write(cr, uid, [ir_imp_l.id], line_data, context=context)
                     else:
                         ir_imp_l_obj.create(cr, uid, line_data, context=context)
                     nb_treated_lines += 1
@@ -755,8 +760,13 @@ class internal_request_import(osv.osv):
 <p># of lines imported : %s</p>
 <p># of lines not imported : %s</p>
 <p># of lines imported as line by nomenclature : %s</p>
-                ''') % (str(round(time.time() - start_time, 1)), nb_treated_lines, nb_imp_lines, nb_error_lines,
-                        nb_treated_lines_by_nomen)
+                ''') % (str(round(time.time() - start_time, 1)), nb_treated_lines, nb_imp_lines - len(ignored),
+                        nb_error_lines, nb_treated_lines_by_nomen)
+                if ignored:
+                    message += _('''
+<p>Non-Draft lines ignored: Number %s</p>
+                    ''') % (', '.join(ignored),)
+
                 header_values.update({
                     'order_id': ir_order and ir_order.id,
                     'message': message,
@@ -858,7 +868,8 @@ class internal_request_import(osv.osv):
                             if line.imp_uom_id:
                                 line_vals.update({'product_uom': line.imp_uom_id.id})
                             if line.ir_line_id:  # update IR line
-                                sol_obj.write(cr, uid, line.ir_line_id.id, line_vals, context=context)
+                                if line.ir_line_id.state == 'draft':
+                                    sol_obj.write(cr, uid, line.ir_line_id.id, line_vals, context=context)
                             else:  # create IR line
                                 line_vals.update({
                                     'order_id': wiz.order_id.id,
