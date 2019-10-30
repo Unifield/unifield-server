@@ -2315,6 +2315,8 @@ class account_bank_statement_line(osv.osv):
             if not context.get('from_wizard_di'):
                 if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
                     raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
+            if absl.account_id.type_for_register == 'advance' and not absl.ref:
+                raise osv.except_osv(_('Warning'), _('Line "%s": Reference is mandatory for operational advance accounts.') % absl.name)
             previous_state = ''.join(absl.state)
             if absl.state == 'draft':
                 # US-673: temp posted line generates 2 creation updates
@@ -2697,7 +2699,7 @@ class account_bank_statement_line(osv.osv):
         if stl.cash_register_op_advance_po_id:
             context['cash_register_op_advance_po_id'] = stl.cash_register_op_advance_po_id.id
         wiz_id = wiz_obj.create(cr, uid, {'returned_amount': 0.0, 'initial_amount': abs(amount), 'advance_st_line_id': ids[0], \
-                                          'currency_id': st_line.statement_id.currency.id}, context=context)
+                                          'currency_id': stl.statement_id.currency.id, 'reference': stl.ref or ''}, context=context)
         if statement_id:
             return {
                 'name' : "Advance Return",

@@ -31384,6 +31384,7 @@ msgstr "stock.move.memory.ppl"
 
 #. module: register_accounting
 #: field:wizard.cash.return,returned_amount:0
+#: code:addons/register_accounting/wizard/wizard_cash_return.py:883
 msgid "Advance return amount"
 msgstr "Montant Retour d'Avance"
 
@@ -63094,6 +63095,7 @@ msgstr "Devise d'impression"
 
 #. module: register_accounting
 #: field:wizard.cash.return,additional_amount:0
+#: code:addons/register_accounting/wizard/wizard_cash_return.py:863
 msgid "Additional Advance amount"
 msgstr "Montant supplémentaire avancé"
 
@@ -106432,11 +106434,22 @@ msgstr "Rapport non trouvé"
 msgid "User does not match"
 msgstr "L'utilisateur ne correspond pas"
 
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2319
+#, python-format
+msgid "Line \"%s\": Reference is mandatory for operational advance accounts."
+msgstr "Ligne \"%s\" : la Référence est obligatoire pour les comptes d'avance opérationnelle."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_cash_return.py:798
+#, python-format
+msgid "%s: negative amounts are forbidden."
+msgstr "%s : les montants négatifs sont interdits."
+
 #. module: sync_client
 #: field:sync.version.instance.monitor,nb_late_vi:0
 msgid "# late VI jobs"
 msgstr "# tâches VI en retard"
-
 
 #. module: sync_client
 #: field:sync.version.instance.monitor,vi_details:0
