@@ -53,6 +53,23 @@ class patch_scripts(osv.osv):
     }
 
     # UF15.0
+    def uf15_fields_moved(self, cr, uid, *a, **b):
+        if _get_instance_level(self, cr, uid) == 'hq':
+            # touch BAR and ACL for fields moved from one module to another (i.e sdref renamed)
+            cr.execute("""
+                update ir_model_data set last_modification=now(), touched='[''name'']' 
+                where name in ('ir_model_access_res_currency_tables_model_res_currency_table_user read', 'ir_model_access_res_currency_tables_model_res_currency_table_admin', '_msf_profile_res_currency_tables_model_res_currency_table_Fin_Config_Full', '_msf_profile_res_currency_tables_model_res_currency_table_Fin_Config_HQ', 'BAR_res_currency_tablesview_currency_table_form_valid', 'BAR_res_currency_tablesview_currency_table_form_closed')
+            """)
+            self._logger.warn('%d BAR/ACL sync touched' % (cr.rowcount,))
+        elif self.pool.get('sync.server.update'):
+            # prevent NR on init sync for FARL/BAR on renamed or deleted fields
+            cr.execute('''
+                update sync_server_update set rule_id = NULL
+                where sdref in ('_msf_profile_account_payment_model_payment_mode_common','_msf_profile_account_voucher_model_account_voucher_line_common','_msf_profile_account_payment_model_payment_line_common','_msf_profile_account_voucher_model_sale_receipt_report_common','_msf_profile_account_payment_model_payment_order_common','_msf_profile_account_voucher_model_account_voucher_common','BAR_account_voucherview_purchase_receipt_form_action_cancel_draft','BAR_account_voucherview_account_voucher_unreconcile_trans_unrec','BAR_account_voucherview_vendor_receipt_form_proforma_voucher','BAR_account_paymentview_payment_order_form_set_done','BAR_account_voucherview_purchase_receipt_form_compute_tax','BAR_account_voucherview_sale_receipt_form_account_voucheract_pay_voucher','BAR_account_voucherview_voucher_form_proforma_voucher','BAR_account_voucherview_vendor_payment_form_cancel_voucher','BAR_account_paymentaccount_payment_populate_statement_view_populate_statement','BAR_account_voucherview_voucher_form_compute_tax','BAR_account_paymentview_payment_order_form_open','BAR_account_voucherview_account_statement_from_invoice_search_invoices','BAR_account_voucherview_sale_receipt_form_action_cancel_draft','BAR_account_voucherview_vendor_receipt_form_action_cancel_draft','BAR_account_voucherview_sale_receipt_form_compute_tax','BAR_account_voucherview_sale_receipt_form_cancel_voucher','BAR_account_voucherview_account_statement_from_invoice_lines_populate_statement','BAR_account_voucherview_sale_receipt_form_proforma_voucher','BAR_account_voucherview_voucher_tree_proforma_voucher','BAR_account_voucherview_purchase_receipt_form_cancel_voucher','BAR_account_voucherview_purchase_receipt_form_account_voucheract_pay_bills','BAR_account_voucherview_vendor_payment_form_proforma_voucher','BAR_account_voucherview_voucher_form_cancel_voucher','BAR_account_paymentview_create_payment_order_search_entries','BAR_account_paymentview_payment_order_form_set_to_draft','BAR_account_voucherview_voucher_form_action_cancel_draft','BAR_account_voucherview_vendor_payment_form_action_cancel_draft','BAR_account_paymentview_create_payment_order_lines_create_payment','BAR_account_paymentaccount_payment_make_payment_view_launch_wizard','BAR_account_voucherview_vendor_receipt_form_cancel_voucher','BAR_account_paymentview_payment_order_tree_cancel','BAR_account_voucherview_purchase_receipt_form_proforma_voucher','BAR_account_paymentview_payment_order_form_cancel','BAR_account_paymentview_payment_order_tree_set_done','BAR_account_paymentview_payment_order_form_account_paymentaction_create_payment_order','BAR_account_paymentview_payment_order_tree_open','ir_model_access_res_currency_tables_model_res_currency_table_user read','ir_model_access_res_currency_tables_model_res_currency_table_admin','_msf_profile_res_currency_tables_model_res_currency_table_Fin_Config_Full','_msf_profile_res_currency_tables_model_res_currency_table_Fin_Config_HQ','BAR_res_currency_tablesview_currency_table_form_valid','BAR_res_currency_tablesview_currency_table_form_closed')
+                ''')
+            self._logger.warn('%d sync updates deactivated for init sync' % (cr.rowcount,))
+        return True
+
     def us_6618_create_shadow_pack(self, cr, uid, *a, **b):
         wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
         if not wh_ids:

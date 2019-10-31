@@ -469,5 +469,9 @@
             <field name="method">us_6618_create_shadow_pack</field>
         </record>
 
+        <record id="uf15_fields_moved" model="patch.scripts">
+            <field name="method">uf15_fields_moved</field>
+        </record>
+
     </data>
 </openerp>
