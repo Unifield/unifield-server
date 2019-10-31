@@ -358,7 +358,7 @@
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">res.partner</field>
             <field name="view_type">form</field>
-            <field name="context">{"search_default_customer":1}</field>
+            <field name="context">{'search_default_customer':1, 'show_button_show_inactive': 1, 'search_default_active': 1, 'active_test': 0}</field>
             <field name="search_view_id" ref="view_res_partner_filter"/>
             <field name="help">A customer is an entity you do business with, like a company or an organization. A customer can have several contacts or addresses which are the people working for this company. You can use the history tab, to follow all transactions related to a customer: sales order, emails, opportunities, claims, etc. If you use the email gateway, the Outlook or the Thunderbird plugin, don't forget to register emails to each contact so that the gateway will automatically attach incoming emails to the right partner.</field>
         </record>
@@ -386,7 +386,7 @@
             <field name="res_model">res.partner</field>
             <field name="view_type">form</field>
             <field name="domain">[('customer','=',1)]</field>
-            <field name="context">{'default_customer':1, 'search_default_customer':1}</field>
+            <field name="context">{'default_customer':1, 'search_default_customer':1, 'search_default_active': 1, 'active_test': 0, 'show_button_show_inactive': 1}</field>
             <field name="filter" eval="True"/>
         </record>
 
@@ -396,7 +396,7 @@
             <field name="res_model">res.partner</field>
             <field name="view_type">form</field>
             <field name="domain">[]</field>
-            <field name="context">{'default_customer':0, 'search_default_supplier': 1, 'default_supplier':1}</field>
+            <field name="context">{'default_customer':0, 'search_default_supplier': 1, 'default_supplier':1, 'search_default_active': 1, 'active_test': 0, 'show_button_show_inactive':1}</field>
             <field name="filter" eval="True"/>
             <field name="help">You can access all information regarding your suppliers from the supplier form: accounting data, history of emails, meetings, purchases, etc. You can uncheck the 'Suppliers' filter button in order to search in all your partners, including customers and prospects.</field>
         </record>

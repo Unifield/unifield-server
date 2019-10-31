@@ -352,25 +352,7 @@ class res_partner(osv.osv):
         """
         Check if the deleted partner is not a system one
         """
-        data_obj = self.pool.get('ir.model.data')
         property_obj = self.pool.get('ir.property')
-
-        partner_data_id = [
-            'supplier_tbd',
-        ]
-
-        for data_id in partner_data_id:
-            try:
-                part_id = data_obj.get_object_reference(
-                    cr, uid, 'msf_doc_import', data_id)[1]
-                if part_id in ids:
-                    part_name = self.read(cr, uid, part_id, ['name'])['name']
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('''The partner '%s' is an Unifield internal partner, so you can't remove it''') % part_name,
-                    )
-            except ValueError:
-                pass
 
 
         #US-1344: treat deletion of partner
@@ -968,7 +950,7 @@ class res_partner(osv.osv):
         if view_type == 'search':
             if not context or not context.get('show_button_show_inactive', False):
                 tree = etree.fromstring(view['arch'])
-                fields = tree.xpath('//filter[@name="inactive"]')
+                fields = tree.xpath('//filter[@name="inactive"]|//filter[@name="active"]')
                 for field in fields:
                     field.set('invisible', "1")
                 view['arch'] = etree.tostring(tree)
@@ -991,24 +973,7 @@ class res_partner_address(osv.osv):
         """
         Check if the deleted address is not a system one
         """
-        data_obj = self.pool.get('ir.model.data')
 
-        addr_data_id = [
-            'address_tbd',
-        ]
-
-        for data_id in addr_data_id:
-            try:
-                addr_id = data_obj.get_object_reference(
-                    cr, uid, 'msf_doc_import', data_id)[1]
-                if addr_id in ids:
-                    addr_name = self.read(cr, uid, addr_id, ['name'])['name']
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('''The Address '%s' is an Unifield internal address, so you can't remove it''') % addr_name,
-                    )
-            except ValueError:
-                pass
         res = super(res_partner_address, self).unlink(cr, uid, ids, context=context)
 
         #US-1344: treat deletion of partner
