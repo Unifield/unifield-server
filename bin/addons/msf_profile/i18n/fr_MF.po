@@ -49286,6 +49286,8 @@ msgstr "Montant total"
 #: report:addons/stock/report/stock_delivery_report_xls.mako:186
 #: report:addons/stock/report/stock_delivery_report_xls.mako:211
 #: field:stock.delivery.wizard,partner_id:0
+#: field:account.invoice.tax,partner_id:0
+#: field:account.tax,partner_id:0
 #, python-format
 msgid "Partner"
 msgstr "Partenaire"
@@ -106492,3 +106494,21 @@ msgstr "Ancien NL"
 #: field:product.ed_bn.mass.update.history,old_ed:0
 msgid "Old ED"
 msgstr "Ancien EXP"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:680
+#, python-format
+msgid "Impossible to deactivate a partner used for a tax."
+msgstr "Impossible de désactiver un partenaire utilisé pour une taxe."
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:687
+#, python-format
+msgid "Impossible to deactivate a partner used in the tax line of an invoice."
+msgstr "Impossible de désactiver un partenaire utilisé dans la ligne de taxe d'une facture."
+
+#. module: account
+#: code:addons/account/account.py:1980
+#, python-format
+msgid "You can't link the tax to the Partner %s: only active external partners are allowed."
+msgstr "Vous ne pouvez pas lier la taxe au partenaire %s : seuls les partenaires externes actifs sont autorisés."

@@ -667,6 +667,26 @@ class res_partner(osv.osv):
 
         return True
 
+    def _check_existing_tax_partner(self, cr, uid, ids, context=None):
+        """
+        Raises an error in case the partner has been used in a tax (to be used when trying to de-activate partners)
+        """
+        if context is None:
+            context = {}
+        tax_obj = self.pool.get('account.tax')
+        inv_obj = self.pool.get('account.invoice')
+        inv_tax_obj = self.pool.get('account.invoice.tax')
+        if tax_obj.search_exist(cr, uid, [('partner_id', 'in', ids)], context=context):
+            raise osv.except_osv(_('Warning'),
+                                 _("Impossible to deactivate a partner used for a tax."))
+        # use case: partner linked to a tax, related tax lines generated and partner removed from the tax
+        # Note that only draft account.invoices need to be checked as other ones have generated JIs (so are already checked)
+        draft_invoice_ids = inv_obj.search(cr, uid, [('state', '=', 'draft')], order='NO_ORDER', context=context)
+        if draft_invoice_ids:
+            if inv_tax_obj.search_exist(cr, uid, [('partner_id', 'in', ids), ('invoice_id', 'in', draft_invoice_ids)], context=context):
+                raise osv.except_osv(_('Warning'),
+                                     _("Impossible to deactivate a partner used in the tax line of an invoice."))
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -702,6 +722,7 @@ class res_partner(osv.osv):
                     raise osv.except_osv(_('Warning'),
                                          _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
                                            ) % (objects_linked_to_partner))
+                self._check_existing_tax_partner(cr, uid, ids, context=context)
 
         if vals.get('name'):
             vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()

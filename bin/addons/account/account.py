@@ -1909,6 +1909,9 @@ class account_tax(osv.osv):
         'parent_id':fields.many2one('account.tax', 'Parent Tax Account', select=True),
         'child_ids':fields.one2many('account.tax', 'parent_id', 'Child Tax Accounts'),
         'child_depend':fields.boolean('Tax on Children', help="Set if the tax computation is based on the computation of child taxes rather than on the total amount."),
+        'partner_id': fields.many2one('res.partner', 'Partner',
+                                      domain=[('partner_type', '=', 'external'), ('active', '=', True)],
+                                      ondelete='restrict'),
         'python_compute':fields.text('Python Code'),
         'python_compute_inv':fields.text('Python Code (reverse)'),
         'python_applicable':fields.text('Python Code'),
@@ -1963,11 +1966,31 @@ class account_tax(osv.osv):
             ids = self.search(cr, user, args, limit=limit, context=context or {})
         return self.name_get(cr, user, ids, context=context)
 
+    def _check_tax_partner(self, cr, uid, vals, context=None):
+        """
+        Raises an error in case the partner selected for the tax isn't allowed
+        """
+        if context is None:
+            context = {}
+        partner_obj = self.pool.get('res.partner')
+        if vals.get('partner_id'):
+            partner = partner_obj.browse(cr, uid, vals['partner_id'], fields_to_fetch=['active', 'partner_type', 'name'], context=context)
+            if not partner.active or partner.partner_type != 'external':
+                raise osv.except_osv(_('Error'),
+                                     _("You can't link the tax to the Partner %s: only active external partners are allowed.") % partner.name)
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        self._check_tax_partner(cr, uid, vals, context=context)
+        return super(account_tax, self).create(cr, uid, vals, context=context)
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
         if vals.get('type', False) and vals['type'] in ('none', 'code'):
             vals.update({'amount': 0.0})
+        self._check_tax_partner(cr, uid, vals, context=context)
         return super(account_tax, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -2041,9 +2064,9 @@ class account_tax(osv.osv):
         obj_partener_address = self.pool.get('res.partner.address')
         for tax in taxes:
             # we compute the amount for the current tax object and append it to the result
-
+            description = "%s%s%s" % (tax.name, partner and ' - ' or '', partner and partner.name or '')  # tax name and INVOICE partner name
             data = {'id':tax.id,
-                    'name':tax.description and tax.description + " - " + tax.name or tax.name,
+                    'name': description,
                     'account_collected_id':tax.account_collected_id.id,
                     'account_paid_id':tax.account_paid_id.id,
                     'base_code_id': tax.base_code_id.id,
@@ -2200,10 +2223,11 @@ class account_tax(osv.osv):
                 todo = 0
             else:
                 todo = 1
+            description = "%s%s%s" % (tax.name, partner and ' - ' or '', partner and partner.name or '')  # tax name and INVOICE partner name
             res.append({
                 'id': tax.id,
                 'todo': todo,
-                'name': tax.name,
+                'name': description,
                 'amount': amount,
                 'account_collected_id': tax.account_collected_id.id,
                 'account_paid_id': tax.account_paid_id.id,
@@ -2245,7 +2269,7 @@ class account_tax(osv.osv):
             tax = {'name':'', 'amount':0.0, 'account_collected_id':1, 'account_paid_id':2}
             one tax for each tax id in IDS and their children
         """
-        res = self._unit_compute_inv(cr, uid, taxes, price_unit, address_id, product, partner=None)
+        res = self._unit_compute_inv(cr, uid, taxes, price_unit, address_id, product, partner=partner)
         total = 0.0
         obj_precision = self.pool.get('decimal.precision')
         for r in res:
