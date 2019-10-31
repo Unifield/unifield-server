@@ -381,8 +381,12 @@ class TinyPoFile(object):
 
             if tmp_tnrs and not fuzzy:
                 type, name, res_id = tmp_tnrs.pop(0)
+                code_found = type == 'code'
                 for t, n, r in tmp_tnrs:
-                    self.tnrs.append((t, n, r, source, trad))
+                    if not code_found or t != 'code':
+                        self.tnrs.append((t, n, r, source, trad))
+                        if t == 'code':
+                            code_found = True
 
         self.first = False
 
@@ -911,7 +915,11 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
     _to_translate.sort()
     # translate strings marked as to be translated
     for module, source, name, id, type in _to_translate:
-        trans = trans_obj._get_source(cr, uid, name, type, lang, source, only_translated_terms)
+        if type in ('code','sql_constraint'):
+            p_name = None
+        else:
+            p_name = name
+        trans = trans_obj._get_source(cr, uid, p_name, type, lang, source, only_translated_terms)
         if (only_translated_terms == 'y' and trans and trans != source) \
                 or (only_translated_terms == 'n' and (not trans or trans == source)) \
                 or not only_translated_terms:

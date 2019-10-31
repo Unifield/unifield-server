@@ -508,7 +508,7 @@ class stock_picking(osv.osv):
             if line.product_id.qty_available <= 0.00:
                 new_std_price = new_price
             else:
-                # Get the current price
+                # Get the current price in today's rate
                 current_price = product_obj.price_get(cr, uid, [line.product_id.id], 'standard_price', context=context)[line.product_id.id]
                 # Check no division by zero
                 if product_availability[line.product_id.id]:

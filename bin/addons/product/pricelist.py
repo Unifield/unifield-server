@@ -126,44 +126,25 @@ class product_pricelist(osv.osv):
 
     def _hook_product_partner_price(self, cr, uid, *args, **kwargs):
         '''
-        Call this hook method to rework the price computation from the partner
-        section in product form
+        Rework the computation of price from partner section in product form
         '''
+        product_id = kwargs['product_id']
         partner = kwargs['partner']
-        tmpl_id = kwargs['tmpl_id']
         qty = kwargs['qty']
+        currency_id = kwargs['currency_id']
+        date = kwargs['date']
+        uom = kwargs['uom']
         context = kwargs['context']
+        if not uom and product_id:
+            uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id.id
+        if not partner and 'partner_id' in context:
+            partner = context.get('partner_id', False)
         uom_price_already_computed = kwargs['uom_price_already_computed']
 
-        supplierinfo_obj = self.pool.get('product.supplierinfo')
-        product_template_obj = self.pool.get('product.template')
-        product_uom_obj = self.pool.get('product.uom')
+        price, rounding, min_qty = self.pool.get('product.product')._get_partner_price(cr, uid, product_id, partner, qty, currency_id,
+                                                                                       date, uom, context=context)
+        uom_price_already_computed = 1
 
-        #this section could be improved by moving the queries outside the loop:
-        where = []
-        if partner:
-            where = [('name', '=', partner) ]
-        sinfo = supplierinfo_obj.search(cr, uid,
-                                        [('product_id', '=', tmpl_id)] + where)
-        price = 0.0
-        if sinfo:
-            qty_in_product_uom = qty
-            product_default_uom = product_template_obj.read(cr, uid, [tmpl_id], ['uom_id'])[0]['uom_id'][0]
-            supplier = supplierinfo_obj.browse(cr, uid, sinfo, context=context)[0]
-            seller_uom = supplier.product_uom and supplier.product_uom.id or False
-            supplier_currency = supplier.company_id and supplier.company_id.currency_id.id or False
-            if seller_uom and product_default_uom and product_default_uom != seller_uom:
-                uom_price_already_computed = True
-                qty_in_product_uom = product_uom_obj._compute_qty(cr, uid, product_default_uom, qty, to_uom_id=seller_uom)
-            cr.execute('SELECT * ' \
-                       'FROM pricelist_partnerinfo ' \
-                       'WHERE suppinfo_id IN %s' \
-                       'AND min_quantity <= %s ' \
-                       'ORDER BY min_quantity DESC LIMIT 1', (tuple(sinfo),qty_in_product_uom,))
-            res2 = cr.dictfetchone()
-            if res2:
-                price = self.pool.get('res.currency').compute(cr, uid, supplier_currency,\
-                                                              res2['currency_id'], res2['price'], round=False, context=context)
         return price, uom_price_already_computed
 
     def price_get_multi(self, cr, uid, pricelist_ids, products_by_qty_by_partner, context=None):
@@ -191,9 +172,10 @@ class product_pricelist(osv.osv):
             context = {}
 
         date = time.strftime('%Y-%m-%d')
+        # order_date on PO line on change product
         if 'date' in context:
             date = context['date']
-
+        context['currency_date'] = date
         currency_obj = self.pool.get('res.currency')
         product_obj = self.pool.get('product.product')
         product_category_obj = self.pool.get('product.category')
@@ -328,148 +310,6 @@ class product_pricelist(osv.osv):
         res.update({'item_id': {ids[-1]: ids[-1]}})
         return res
 
-    def price_get_old(self, cr, uid, ids, prod_id, qty, partner=None, context=None):
-        '''
-        context = {
-            'uom': Unit of Measure (int),
-            'partner': Partner ID (int),
-            'date': Date of the pricelist (%Y-%m-%d),
-        }
-        '''
-        price = False
-        item_id = 0
-        if context is None:
-            context = {}
-        currency_obj = self.pool.get('res.currency')
-        product_obj = self.pool.get('product.product')
-        supplierinfo_obj = self.pool.get('product.supplierinfo')
-        price_type_obj = self.pool.get('product.price.type')
-
-        if context and ('partner_id' in context):
-            partner = context['partner_id']
-        context['partner_id'] = partner
-        date = time.strftime('%Y-%m-%d')
-        if context and ('date' in context):
-            date = context['date']
-        result = {}
-        result['item_id'] = {}
-        for id in ids:
-            cr.execute('SELECT * ' \
-                       'FROM product_pricelist_version ' \
-                       'WHERE pricelist_id = %s AND active=True ' \
-                       'AND (date_start IS NULL OR date_start <= %s) ' \
-                       'AND (date_end IS NULL OR date_end >= %s) ' \
-                       'ORDER BY id LIMIT 1', (id, date, date))
-            plversion = cr.dictfetchone()
-
-            if not plversion:
-                raise osv.except_osv(_('Warning !'),
-                                     _('No active version for the selected pricelist !\n' \
-                                       'Please create or activate one.'))
-
-            cr.execute('SELECT id, categ_id ' \
-                       'FROM product_template ' \
-                       'WHERE id = (SELECT product_tmpl_id ' \
-                       'FROM product_product ' \
-                       'WHERE id = %s)', (prod_id,))
-            tmpl_id, categ = cr.fetchone()
-            categ_ids = []
-            while categ:
-                categ_ids.append(str(categ))
-                cr.execute('SELECT parent_id ' \
-                           'FROM product_category ' \
-                           'WHERE id = %s', (categ,))
-                categ = cr.fetchone()[0]
-                if str(categ) in categ_ids:
-                    raise osv.except_osv(_('Warning !'),
-                                         _('Could not resolve product category, ' \
-                                           'you have defined cyclic categories ' \
-                                           'of products!'))
-            if categ_ids:
-                categ_where = '(categ_id IN (' + ','.join(categ_ids) + '))'
-            else:
-                categ_where = '(categ_id IS NULL)'
-
-            cr.execute(
-                'SELECT i.*, pl.currency_id '
-                'FROM product_pricelist_item AS i, '
-                'product_pricelist_version AS v, product_pricelist AS pl '
-                'WHERE (product_tmpl_id IS NULL OR product_tmpl_id = %s) '
-                'AND (product_id IS NULL OR product_id = %s) '
-                'AND (' + categ_where + ' OR (categ_id IS NULL)) '
-                'AND price_version_id = %s '
-                'AND (min_quantity IS NULL OR min_quantity <= %s) '
-                'AND i.price_version_id = v.id AND v.pricelist_id = pl.id '
-                'ORDER BY sequence',
-                (tmpl_id, prod_id, plversion['id'], qty)) # not_a_user_entry
-            res1 = cr.dictfetchall()
-
-            for res in res1:
-                item_id = 0
-                if res:
-                    if res['base'] == -1:
-                        if not res['base_pricelist_id']:
-                            price = 0.0
-                        else:
-                            price_tmp = self.price_get(cr, uid,
-                                                       [res['base_pricelist_id']], prod_id,
-                                                       qty,context=context)[res['base_pricelist_id']]
-                            ptype_src = self.browse(cr, uid,
-                                                    res['base_pricelist_id']).currency_id.id
-                            price = currency_obj.compute(cr, uid, ptype_src,
-                                                         res['currency_id'], price_tmp, round=False)
-                            break
-                    elif res['base'] == -2:
-                        where = []
-                        if partner:
-                            where = [('name', '=', partner) ]
-                        sinfo = supplierinfo_obj.search(cr, uid,
-                                                        [('product_id', '=', tmpl_id)] + where,
-                                                        order='NO_ORDER')
-                        price = 0.0
-                        if sinfo:
-                            cr.execute('SELECT * ' \
-                                       'FROM pricelist_partnerinfo ' \
-                                       'WHERE suppinfo_id IN %s' \
-                                       'AND min_quantity <= %s ' \
-                                       'ORDER BY min_quantity DESC LIMIT 1', (tuple(sinfo),qty,))
-                            res2 = cr.dictfetchone()
-                            if res2:
-                                price = res2['price']
-                                break
-                    else:
-                        price_type = price_type_obj.browse(cr, uid, int(res['base']))
-                        price = currency_obj.compute(cr, uid,
-                                                     price_type.currency_id.id, res['currency_id'],
-                                                     product_obj.price_get(cr, uid, [prod_id],
-                                                                           price_type.field,context=context)[prod_id], round=False, context=context)
-
-                    if price:
-                        price_limit = price
-
-                        price = price * (1.0+(res['price_discount'] or 0.0))
-                        price = rounding(price, res['price_round'])
-                        price += (res['price_surcharge'] or 0.0)
-                        if res['price_min_margin']:
-                            price = max(price, price_limit+res['price_min_margin'])
-                        if res['price_max_margin']:
-                            price = min(price, price_limit+res['price_max_margin'])
-                        item_id = res['id']
-                        break
-
-                else:
-                    # False means no valid line found ! But we may not raise an
-                    # exception here because it breaks the search
-                    price = False
-            result[id] = price
-            result['item_id'] = {id: item_id}
-            if context and ('uom' in context):
-                product = product_obj.browse(cr, uid, prod_id)
-                uom = product.uos_id or product.uom_id
-                result[id] = self.pool.get('product.uom')._compute_price(cr,
-                                                                         uid, uom.id, result[id], context['uom'])
-
-        return result
 
 product_pricelist()
 
