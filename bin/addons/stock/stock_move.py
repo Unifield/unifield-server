@@ -1855,7 +1855,6 @@ class stock_move(osv.osv):
                     if move.move_dest_id.auto_validate:
                         self.action_done(cr, uid, [move.move_dest_id.id], context=context)
 
-            self._create_product_valuation_moves(cr, uid, move, context=context)
             prodlot_id = partial_datas and partial_datas.get('move%s_prodlot_id' % (move.id), False)
             if prodlot_id:
                 vals.update({'prodlot_id': prodlot_id})
