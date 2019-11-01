@@ -140,4 +140,4 @@ update ir_model_data set module='account_mcdb' where module='msf_supply_doc_expo
 update ir_model_data set name='base_model_res_currency_table' where module='sd' and name='res_currency_tables_model_res_currency_table' and model='ir.model';
 update ir_model_data set module='base' where module='res_currency_tables' and name='model_res_currency_table' and model='ir.model';
 update ir_model_data set name='account_mcdb_model_memory_background_report' where module='sd' and name='msf_supply_doc_export_model_memory_background_report' and model='ir.model';
-update ir_model_data set module='account_mcdb' where module='msf_supply_doc_export' and name='model_memory_background_report' and model='ir.model';
+delete from ir_model_data where module='msf_supply_doc_export' and name='model_memory_background_report' and model='ir.model';
