@@ -945,9 +945,9 @@ class update_received(osv.osv,fv_formatter):
                                 result['error_message'] = 'Cannot execute due to missing the %s' % field
                                 return result
                         if '/analytic_distribution/' in xmlid:
-                            result['res'] = False
-                            result['error_message'] = 'Cannot execute due to missing the %s' % field
-                            return result
+                            self.pool.get('analytic.distribution').import_data(cr, uid, ['name', 'id'], [['Auto created', xmlid]], mode='update', current_module='sd', noupdate=True, context=context)
+                            res_val.append(xmlid)
+                            continue
 
                         #US-2147: property_product_pricelist/id and
                         # property_product_pricelist_purchase/id are required
