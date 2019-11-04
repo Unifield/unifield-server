@@ -1,0 +1,47 @@
+-
+  For Product Category, rule for the CREATE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'Create Product Category'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.category')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['property_stock_account_input_categ', 'property_stock_account_output_categ', 'property_account_income_categ', 'property_account_expense_categ', 'property_stock_variation', 'property_stock_journal', 'donation_expense_account']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.category'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': True,
+                'log_write': False,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+
+-
+  For Product Category, rule for the WRITE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'Modify Product Category'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'product.category')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['property_stock_account_input_categ', 'property_stock_account_output_categ', 'property_account_income_categ', 'property_account_expense_categ', 'property_stock_variation', 'property_stock_journal', 'donation_expense_account']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'product.category'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': False,
+                'log_write': True,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
