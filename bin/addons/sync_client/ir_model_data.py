@@ -83,14 +83,13 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
                                        fnct=_get_is_deleted, fnct_search=_get_is_deleted, method=True),
         'touched' : fields.text("Which records has been touched"),
         'force_recreation' : fields.boolean("Force record re-creation"),
-        'resend': fields.boolean('Received but pushed', help='Update received but must be pushed in the same sync: if true do not reset touch on update execution'),
+        'resend': fields.boolean('Received but pushed', help='Update received but must be pushed in the same sync: if true do not reset touch on update execution', select=1),
     }
 
     _defaults={
         'version' : 1,
         'force_recreation' : False,
         'touched' : '[]',
-        'resend': False,
     }
 
     def mark_resend(self, cr, uid, model, res_id, context=None):
