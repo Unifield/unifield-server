@@ -106493,6 +106493,16 @@ msgstr "Tâche VI dernière exec"
 msgid "Late jobs"
 msgstr "Tâches en retard"
 
+#. module: sale
+#: code:addons/sale/wizard/internal_request_import.py:766
+#, python-format
+msgid "\n"
+"<p>Non-Draft lines ignored: Number %s</p>\n"
+"                    "
+msgstr "\n"
+"<p>Lignes non-Brouillon ignorées: Numéro %s</p>\n"
+"                    "
+
 #. module: product
 #: model:ir.actions.report.xml,name:product.product_ed_bn_mass_update_export_xls
 msgid "Product BN/ED Mass Update Excel Export"
