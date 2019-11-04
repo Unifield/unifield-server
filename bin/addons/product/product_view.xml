@@ -10,6 +10,7 @@
             <field name="arch" type="xml">
                 <search string="Product">
                    <filter string="Stock>0"  icon="terp-accessories-archiver" domain="[('postive_qty','=',True)]"/>
+                   <separator orientation="vertical"/>
                    <filter string="Services" icon="terp-accessories-archiver" domain="[('type','=','service')]"/>
                    <filter string="Stockable" icon="terp-accessories-archiver" domain="['|',('type','=','product'),('type','=','consu')]"/>
                    <separator orientation="vertical"/>
@@ -194,6 +195,8 @@
             <field name="view_type">form</field>
             <field name="view_id" ref="product_product_tree_view"/>
             <field name="search_view_id" ref="product_search_form_view"/>
+            <field name="context">{'display_active_filter':1}</field>
+            <field name="domain">[('default_code', '!=', 'TBD')]</field>
             <field name="help">You must define a Product for everything you buy or sell. Products can be raw materials, stockable products, consumables or services. The Product form contains detailed information about your products related to procurement logistics, sales price, product category, suppliers and so on.</field>
         </record>
 

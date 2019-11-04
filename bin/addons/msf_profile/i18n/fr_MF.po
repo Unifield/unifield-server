@@ -4040,11 +4040,12 @@ msgstr "Australie/Yancowinna"
 msgid "From Order"
 msgstr "De la Commande"
 
-#. modules: return_claim, msf_partner, kit, msf_homere_interface
+#. modules: return_claim, msf_partner, kit, msf_homere_interface, supplier_catalogue
 #: view:composition.kit:0
 #: view:res.partner:0
 #: view:return.claim:0
 #: view:hr.employee:0
+#: view:supplier.catalogue:0
 msgid "Show Inactive"
 msgstr "Montrer les Inactifs"
 
@@ -8582,6 +8583,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:account.invoice,counterpart_inv_status:0
 #: selection:wizard.account.invoice,counterpart_inv_status:0
 #: code:addons/stock_override/report/delivery_order.py:59
+#: view:res.request:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -11378,7 +11380,7 @@ msgstr "Budget - Importation"
 msgid "Creation Month"
 msgstr "Creation Month"
 
-#. modules: resource, finance, supplier_catalogue, msf_field_access_rights, msf_instance, msf_button_access_rights, msf_tools, analytic_distribution, financing_contract, sync_client
+#. modules: resource, finance, supplier_catalogue, msf_field_access_rights, msf_instance, msf_button_access_rights, msf_tools, analytic_distribution, financing_contract, sync_client, hr,res_currency_functional,msf_profile
 #: view:financing.contract.donor:0
 #: view:msf.instance:0
 #: selection:msf.instance.cloud,state:0
@@ -11394,6 +11396,11 @@ msgstr "Creation Month"
 #: report:addons/msf_tools/report/report_inconsistencies_xls.mako:106
 #: view:resource.resource:0
 #: view:supplier.catalogue:0
+#: view:hr.employee:0
+#: view:res.users:0
+#: view:res.currency:0
+#: view:product.product:0
+#: view:res.request:0
 msgid "Inactive"
 msgstr "Inactif"
 
@@ -17395,6 +17402,7 @@ msgstr "Only added lines"
 
 #. module: base
 #: field:ir.model.access,perm_create:0
+#: field:ir.model.access.empty,perm_create:0
 msgid "Create Access"
 msgstr "Créer l'Accès "
 
@@ -20728,9 +20736,10 @@ msgstr "Is child of CoA"
 msgid "Etc/GMT-11"
 msgstr "Etc/GMT-11"
 
-#. module: sales_followup, msf_tools
+#. modules: sales_followup, msf_tools, account
 #: selection:ir.followup.location.wizard,state:0
 #: selection:job.in_progress,state:0
+#: view:account.subscription:0
 msgid "Done"
 msgstr "Cloturé"
 
@@ -29642,7 +29651,7 @@ msgstr "Date de Début"
 msgid "Certificate attached ?"
 msgstr "Certificat attaché ?"
 
-#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, msf_supply_doc_export, purchase, account_override, account, register_accounting, stock_override, purchase_override, tender_flow
+#. modules: msf_supply_doc_export, sourcing, consumption_calculation, sale, sales_followup, msf_supply_doc_export, purchase, account_override, account, register_accounting, stock_override, purchase_override, tender_flow, base
 #: field:po.follow.up,closed_ok:0
 #: selection:real.average.consumption,state:0
 #: selection:po.follow.up,state:0
@@ -29658,6 +29667,8 @@ msgstr "Certificat attaché ?"
 #: selection:wizard.account.invoice,state:0
 #: selection:account.invoice,counterpart_inv_status:0
 #: code:addons/stock_override/report/delivery_order.py:64
+#: view:res.request:0
+#: view:account.period:0
 msgid "Closed"
 msgstr "Fermé"
 
@@ -31229,6 +31240,7 @@ msgstr "Financial and accounting module that covers:\n"
 #: selection:account.account.template,type:0
 #: selection:account.entries.report,type:0
 #: selection:account.partner.balance.tree,account_type:0
+#: view:account.account:0
 msgid "Payable"
 msgstr "Fournisseur"
 
@@ -36463,14 +36475,12 @@ msgid "The record id this is attached to"
 msgstr "L'Identité de l'enregistrement est attachée à ce(t)"
 
 #. modules: account, finance
-#: view:account.account:0
 #: selection:account.aged.trial.balance,result_selection:0
 #: selection:account.common.partner.report,result_selection:0
 #: selection:account.partner.balance,result_selection:0
 #: selection:account.partner.ledger,result_selection:0
 #: code:addons/account/report/account_partner_ledger.py:294
 #: model:ir.actions.act_window,name:account.action_aged_receivable
-#: view:account.account:0
 #: selection:wizard.account.partner.balance.tree,result_selection:0
 #: code:addons/finance/report/account_partner_balance_tree.py:90
 #, python-format
@@ -38511,6 +38521,7 @@ msgstr "Is inactive for destination given in context"
 #: field:purchase.order.merged.line,create_date:0
 #: field:internal.request.import,in_creation_date:0
 #: field:purchase.order.line,create_date:0
+#: field:internal.request.import,in_creation_date:0
 #, python-format
 msgid "Creation date"
 msgstr "Date de création"
@@ -47568,6 +47579,7 @@ msgstr "ID Enfants"
 #: view:account.bank.statement:0
 #: view:account.bank.statement.line:0
 #: view:sale.order.line:0
+#: view:free.allocation.wizard:0
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -51000,12 +51012,15 @@ msgstr "\n"
 "        Creates automatically Purchase Orders after choosing.\n"
 "    "
 
-#. modules: financing_contract, msf_homere_interface, analytic_distribution
+#. modules: financing_contract, msf_homere_interface, analytic_distribution, msf_partner, supplier_catalogue, kit
 #: view:account.destination.link:0
 #: view:financing.contract.account.quadruplet:0
 #: view:hr.employee:0
+#: view:res.partner:0
+#: view:composition.kit:0
+#: view:supplier.catalogue:0
 msgid "Show Active"
-msgstr "Montrer Actif"
+msgstr "Montrer les Actifs"
 
 #. modules: order_nomenclature, account
 #: code:addons/account/wizard/account_change_currency.py:38
@@ -52490,6 +52505,7 @@ msgstr "Dashboard main module"
 #: selection:cash.request.liquidity.cheque,type:0
 #: selection:account.journal.fake,type:0
 #: selection:wizard.register.opening.confirmation,register_type:0
+#: view:account.account:0
 msgid "Accrual"
 msgstr "Accrual"
 
@@ -56738,10 +56754,12 @@ msgstr "Origine"
 msgid "Parent shipment"
 msgstr "Expédition Parent "
 
-#. modules: sourcing, analytic_distribution, account_mcdb
+#. modules: sourcing, analytic_distribution, account_mcdb, account
 #: view:analytic.distribution.wizard:0
 #: view:multiple.sourcing.wizard:0
 #: view:account.mcdb:0
+#: view:account.common.report:0
+#: view:free.allocation.wizard:0
 msgid "Save"
 msgstr "Sauver"
 
@@ -65491,6 +65509,7 @@ msgstr "Rapport de consommation"
 
 #. module: account
 #: selection:report.account.receivable,type:0
+#: view:account.account:0
 msgid "Income"
 msgstr "Income"
 
@@ -71435,7 +71454,7 @@ msgstr "Ligne num."
 msgid "Navajo"
 msgstr "Navajo"
 
-#. modules: product_nomenclature, process, financing_contract, mission_stock, procurement_cycle, sync_client, supplier_catalogue, analytic_distribution, product, finance, hr, msf_instance, kit, base, msf_tools, res_currency_functional, procurement_report, threshold_value, purchase, account, resource, msf_partner, procurement_auto, msf_field_access_rights, sale, procurement, msf_button_access_rights, stock, product_attributes, account_period_closing_level, account_mcdb
+#. modules: product_nomenclature, process, financing_contract, mission_stock, procurement_cycle, sync_client, supplier_catalogue, analytic_distribution, product, finance, hr, msf_instance, kit, base, msf_tools, res_currency_functional, procurement_report, threshold_value, purchase, account, resource, msf_partner, procurement_auto, msf_field_access_rights, sale, procurement, msf_button_access_rights, stock, product_attributes, account_period_closing_level, account_mcdb, msf_profile
 #: field:account.account,active:0
 #: field:account.analytic.journal,active:0
 #: field:account.journal.period,active:0
@@ -71506,6 +71525,10 @@ msgstr "Navajo"
 #: field:sync.client.message_rule,active:0
 #: selection:sync.version.instance.monitor,instance_state:0
 #: field:product.mass.update,active_product:0
+#: view:composition.kit:0
+#: view:res.users:0
+#: view:product.product:0
+#: view:res.request:0
 #, python-format
 msgid "Active"
 msgstr "Actif"
@@ -75255,6 +75278,7 @@ msgstr "Ligne CdT/DI originale"
 
 #. module: account
 #: selection:report.account.receivable,type:0
+#: view:account.account:0
 msgid "Expense"
 msgstr "Expense"
 
@@ -76924,6 +76948,10 @@ msgstr "Valeur totale"
 #: selection:wizard.account.invoice,counterpart_inv_status:0
 #: field:po.follow.up,cancel_ok:0
 #: code:addons/stock_override/report/delivery_order.py:65
+#: view:real.average.consumption:0
+#: view:shipment:0
+#: view:stock.picking:0
+#: view:sale.order:0
 #, python-format
 msgid "Cancelled"
 msgstr "Annulé"
@@ -78306,6 +78334,7 @@ msgstr "Africa/Ndjamena"
 
 #. module: base
 #: field:ir.model.access,perm_unlink:0
+#: field:ir.model.access.empty,perm_unlink:0
 msgid "Delete Access"
 msgstr "Supprimer Accès"
 
@@ -84066,14 +84095,12 @@ msgid "Add RML header"
 msgstr "Ajouter un en-tête RML"
 
 #. modules: account, finance
-#: view:account.account:0
 #: view:account.account.template:0
 #: selection:account.aged.trial.balance,result_selection:0
 #: selection:account.common.partner.report,result_selection:0
 #: selection:account.partner.balance,result_selection:0
 #: selection:account.partner.ledger,result_selection:0
 #: code:addons/account/report/account_partner_ledger.py:296
-#: view:account.account:0
 #: code:addons/finance/report/account_partner_balance_tree.py:92
 #: selection:wizard.account.partner.balance.tree,result_selection:0
 #, python-format
@@ -87636,6 +87663,7 @@ msgstr "Sociétés Filiales"
 
 #. modules: sales_followup, msf_outgoing
 #: code:addons/sales_followup/sale_followup.py:525
+#: view:shipment:0
 #, python-format
 msgid "Packed"
 msgstr "Emballé"
@@ -88072,6 +88100,7 @@ msgstr "Import invoice that come from the default account given in Company confi
 #: selection:account.account.template,type:0
 #: selection:account.entries.report,type:0
 #: selection:account.partner.balance.tree,account_type:0
+#: view:account.account:0
 msgid "Receivable"
 msgstr "Créditeurs"
 
@@ -92152,6 +92181,7 @@ msgstr "Statuts Exercice Comptable"
 #: field:internal.request.import,imp_creation_date:0
 #: report:addons/stock/report/products_situation_report_xls.mako:221
 #: report:addons/stock/report/stock_delivery_report_xls.mako:225
+#: field:internal.request.import,imp_creation_date:0
 msgid "Creation Date"
 msgstr "Date de Création"
 
@@ -106512,3 +106542,9 @@ msgstr "Impossible de désactiver un partenaire utilisé dans la ligne de taxe d
 #, python-format
 msgid "You can't link the tax to the Partner %s: only active external partners are allowed."
 msgstr "Vous ne pouvez pas lier la taxe au partenaire %s : seuls les partenaires externes actifs sont autorisés."
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1026
+#, python-format
+msgid "Only not forbidden"
+msgstr "Produits autorisés"

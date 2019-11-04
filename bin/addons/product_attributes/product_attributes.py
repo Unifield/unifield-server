@@ -1005,17 +1005,24 @@ class product_attributes(osv.osv):
             for field in root.xpath('//group[@name="batch_attr"]'):
                 field.set('invisible', '0')
             res['arch'] = etree.tostring(root)
+
+        if view_type == 'search' and context.get('display_active_filter'):
+            root = etree.fromstring(res['arch'])
+            for field in root.xpath('//group[@name="display_active_filter"]'):
+                field.set('invisible', '0')
+            res['arch'] = etree.tostring(root)
+
         if view_type == 'search' and context.get('available_for_restriction'):
             context.update({'search_default_not_restricted': 1})
             root = etree.fromstring(res['arch'])
             # xpath of fields to be modified
-            xpath = '//filter[@string="Service with Reception"]'
+            xpath = '//filter[@name="service_with_reception"]'
             fields = root.xpath(xpath)
 
             if not fields:
                 return res
 
-            state_index = root.index(fields[0])
+            parent_node = fields[0].getparent()
             new_separator = """<separator orientation="vertical" />"""
             sep_form = etree.fromstring(new_separator)
             arg = context.get('available_for_restriction')
@@ -1030,12 +1037,13 @@ class product_attributes(osv.osv):
                                                                     context=context)
             else:
                 filter_domain = "[('available_for_restriction','=',%s)]" % arg
-            new_filter = """<filter string="Only not forbidden" name="not_restricted" icon="terp-accessories-archiver-minus" domain="%s" />""" % filter_domain
+            new_filter = """<filter string="%s" name="not_restricted" icon="terp-accessories-archiver-minus" domain="%s" />""" % (_('Only not forbidden'), filter_domain)
             #generate new xml form$
             new_form = etree.fromstring(new_filter)
             # instert new form just after state index position
-            root.insert(state_index+1, new_form)
-            root.insert(state_index+1, sep_form)
+            state_index = parent_node.index(fields[0])
+            parent_node.insert(state_index+1, new_form)
+            parent_node.insert(state_index+1, sep_form)
             # generate xml back to string
             res['arch'] = etree.tostring(root)
 
