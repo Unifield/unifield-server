@@ -954,8 +954,8 @@ class shipment(osv.osv):
 
                     context['non_stock_noupdate'] = False
 
-                    # Find the corresponding move in draft in the draft picking ticket
-                    draft_move = move.backmove_id
+                    # Find the corresponding move in draft in the draft picking ticket: use browse to invalidate cache
+                    draft_move = move_obj.browse(cr, uid, move.backmove_id.id, fields_to_fetch=['product_qty', 'qty_processed'], context=context)
                     # Increase the draft move with the move quantity
 
                     draft_initial_qty = draft_move.product_qty + return_qty
@@ -4068,8 +4068,8 @@ class stock_picking(osv.osv):
                 context['keepLineNumber'] = True
                 move_obj.copy(cr, uid, line.move_id.id, return_values, context=context)
                 context['keepLineNumber'] = False
-                # Increase the draft move with the returned quantity
-                draft_move = line.move_id.backmove_id
+                # Increase the draft move with the returned quantity : must broswe the record again to invalidate cache
+                draft_move = move_obj.browse(cr, uid, line.move_id.backmove_id.id, fields_to_fetch=['product_qty', 'qty_processed'], context=context)
                 draft_move_qty = draft_move.product_qty + return_qty
                 qty_processed = max(draft_move.qty_processed - return_qty, 0)
                 move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_move_qty, 'qty_to_process': draft_move_qty, 'qty_processed': qty_processed}, context=context)
