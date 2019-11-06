@@ -213,12 +213,21 @@ class purchase_order_line(osv.osv):
                     netsvc.LocalService('workflow').trg_validate(uid, 'sale.order.line', new_sol, 'sourced', cr)
                     linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
                         ('sale_line_id', '=', sol_values['original_line_id']),
-                        ('type', '=', 'out')],
+                        ('type', '=', 'out'),
+                        ('state', 'in', ['assigned', 'confirmed'])],
                         context=context)
                     if len(linked_out_moves) > 1:
+                        # try first confirmed OUT, if not found link assigned OUT
                         for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
-                            if out_move.state in ('assigned', 'confirmed') and out_move.product_qty == sol_values['product_uom_qty']:
-                                self.pool.get('stock.move').write(cr, uid, [out_move.id], {'sale_line_id': new_sol}, context=context)
+                            out_to_update = False
+                            if out_move.product_qty == sol_values['product_uom_qty']:
+                                if out_move.state == 'confirmed':
+                                    out_to_update = out_move.id
+                                    break
+                                elif out_move.state == 'assigned':
+                                    out_to_update = out_move.id
+                        if out_to_update:
+                            self.pool.get('stock.move').write(cr, uid, [out_to_update], {'sale_line_id': new_sol}, context=context)
 
             else:  # update FO line
                 if pol.linked_sol_id and not pol.linked_sol_id.analytic_distribution_id and not pol.linked_sol_id.order_id.analytic_distribution_id and ad_id and not sale_order.procurement_request:
