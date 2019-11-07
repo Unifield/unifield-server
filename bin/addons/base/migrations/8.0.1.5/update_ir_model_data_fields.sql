@@ -141,3 +141,5 @@ update ir_model_data set name='base_model_res_currency_table' where module='sd' 
 update ir_model_data set module='base' where module='res_currency_tables' and name='model_res_currency_table' and model='ir.model';
 update ir_model_data set name='account_mcdb_model_memory_background_report' where module='sd' and name='msf_supply_doc_export_model_memory_background_report' and model='ir.model';
 delete from ir_model_data where module='msf_supply_doc_export' and name='model_memory_background_report' and model='ir.model';
+delete from ir_ui_menu where id in ( select res_id from ir_model_data where module = 'account_voucher' and model='ir.ui.menu');
+delete from ir_act_window where id in (select res_id from ir_model_data where module = 'account_voucher' and model='ir.actions.act_window');
