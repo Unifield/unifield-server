@@ -94160,10 +94160,18 @@ msgstr "Qté par Kit"
 msgid "Mobile"
 msgstr "Tél. portable"
 
-#. module: hr
+#. modules: hr, msf_homere_interface
 #: field:hr.employee,contract_end_date:0
+#: code:addons/msf_homere_interface/wizard/hr_expat_import.py:152
+#, python-format
 msgid "Contract End Date"
 msgstr "Date de Fin de Contrat"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_expat_import.py:99
+#, python-format
+msgid "The Contract End Date format is invalid on line %d"
+msgstr "Le format de la Date de Fin de Contrat est invalide à la ligne %d"
 
 #. modules: product_attributes, product, base
 #: field:ir.cron,function:0
