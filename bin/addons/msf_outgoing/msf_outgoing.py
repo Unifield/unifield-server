@@ -3572,11 +3572,12 @@ class stock_picking(osv.osv):
 
                     diff_qty = line.product_qty - line.qty_to_process
                     if line.backmove_id:
+                        backmove_line = move_obj.browse(cr, uid, line.backmove_id.id, fields_to_fetch=['qty_processed', 'product_qty'], context=context)
                         if line.backmove_id.product_uom.id != line.product_uom.id:
                             diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, diff_qty, line.backmove_id.product_uom.id)
-                        backorder_qty = max(line.backmove_id.product_qty + diff_qty, 0)
+                        backorder_qty = max(backmove_line.product_qty + diff_qty, 0)
                         if backorder_qty != 0.00:
-                            new_val = {'product_qty': backorder_qty, 'qty_processed': line.backmove_id.qty_processed and line.backmove_id.qty_processed - diff_qty or 0, 'qty_to_process': backorder_qty}
+                            new_val = {'product_qty': backorder_qty, 'qty_processed': backmove_line.qty_processed and backmove_line.qty_processed - diff_qty or 0, 'qty_to_process': backorder_qty}
                             move_obj.write(cr, uid, [line.backmove_id.id], new_val, context=context)
 
                 if line.qty_to_process:
