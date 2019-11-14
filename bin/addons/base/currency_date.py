@@ -19,13 +19,14 @@
 #
 ##############################################################################
 
-BEGINNING = '2020-01-01'
+BEGINNING = '2010-01-01'
 
 
 def get_date_type(self, cr):
     """
     Returns "document" or "posting" corresponding to the date type used for functional amount computation (depending on the OC)
     """
+    return 'document'
     param_obj = self.pool.get('ir.config_parameter')
     date_type = param_obj.get_param(cr, 1, 'currency_date.type')
     if not date_type:
