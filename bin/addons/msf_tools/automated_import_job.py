@@ -30,6 +30,7 @@ import tempfile
 import logging
 import posixpath
 import traceback
+import threading
 
 from osv import osv
 from osv import fields
@@ -312,7 +313,11 @@ class automated_import_job(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wiz = self.read(cr, uid, ids[0], ['import_id'], context)
-        return self.process_import(cr, uid, wiz['import_id'][0], started_job_id=ids[0], context=None)
+
+        # Background import
+        thread = threading.Thread(target=self.process_import, args=(cr, uid, wiz['import_id'][0], ids[0], {'manual_import': True}))
+        thread.start()
+        return {'type': 'ir.actions.act_window_close'}
 
     def process_import(self, cr, uid, import_id, started_job_id=False, context=None):
         """
@@ -555,6 +560,10 @@ class automated_import_job(osv.osv):
             finally:
                 if orig_file_name:
                     self.end_processing_filename(orig_file_name)
+
+        # if 'manual_import' in context:
+        #     context.pop('manual_import')
+        #     cr.close(True)
 
         if 'row' in context:
             # causing LmF when running job manually
