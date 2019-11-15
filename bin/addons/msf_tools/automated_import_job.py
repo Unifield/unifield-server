@@ -31,6 +31,7 @@ import logging
 import posixpath
 import traceback
 import threading
+import pooler
 
 from osv import osv
 from osv import fields
@@ -315,16 +316,17 @@ class automated_import_job(osv.osv):
         wiz = self.read(cr, uid, ids[0], ['import_id'], context)
 
         # Background import
-        thread = threading.Thread(target=self.process_import, args=(cr, uid, wiz['import_id'][0], ids[0], {'manual_import': True}))
+        # TODO: Fix the error display as it not shown from background
+        thread = threading.Thread(target=self.process_import, args=(cr.dbname, uid, wiz['import_id'][0], ids[0], None))
         thread.start()
         return {'type': 'ir.actions.act_window_close'}
 
-    def process_import(self, cr, uid, import_id, started_job_id=False, context=None):
+    def process_import(self, dbname, uid, import_id, started_job_id=False, context=None):
         """
         First, browse the source path, then select the oldest file and run import on this file.
         After the processing of import, generate a report and move the processed file to the
         processed folder.
-        :param cr: Cursor to the database
+        :param dbname: Name of the database
         :param uid: ID of the res.users that calls this method
         :param ids: List of ID of automated.import.job to process
         :param context: Context of the call
@@ -339,7 +341,9 @@ class automated_import_job(osv.osv):
         if isinstance(import_id, (int, long)):
             import_id = [import_id]
 
-        import_data = import_obj.browse(cr, uid, import_id[0], context=context)
+        new_cr = pooler.get_db(dbname).cursor()
+
+        import_data = import_obj.browse(new_cr, uid, import_id[0], context=context)
         no_file = False
         already_done = []
         job_id = False
@@ -352,9 +356,9 @@ class automated_import_job(osv.osv):
                 prev_job_id = False
             else:
                 prev_job_id = job_id
-                job_id = self.create(cr, uid, {'import_id': import_data.id, 'state': 'in_progress'}, context=context)
-                cr.commit() # keep trace of the job in case of error
-            job = self.browse(cr, uid, job_id, context=context)
+                job_id = self.create(new_cr, uid, {'import_id': import_data.id, 'state': 'in_progress'}, context=context)
+                new_cr.commit() # keep trace of the job in case of error
+            job = self.browse(new_cr, uid, job_id, context=context)
             started_job_id = False
             md5 = False
             error = None
@@ -366,17 +370,17 @@ class automated_import_job(osv.osv):
             context.update({'no_raise_if_ok': True, 'auto_import_ok': True})
             try:
                 if import_data.ftp_ok and import_data.ftp_protocol == 'ftp':
-                    ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, import_data.id, context=context)
+                    ftp_connec = self.pool.get('automated.import').ftp_test_connection(new_cr, uid, import_data.id, context=context)
                 elif import_data.ftp_ok and import_data.ftp_protocol == 'sftp':
-                    sftp = self.pool.get('automated.import').sftp_test_connection(cr, uid, import_data.id, context=context)
+                    sftp = self.pool.get('automated.import').sftp_test_connection(new_cr, uid, import_data.id, context=context)
             except Exception, e:
                 if job.id:
                     if isinstance(e, osv.except_osv):
                         msg = e.value
                     else:
                         msg = e
-                    self.write(cr, uid, job_id, {'state': 'error', 'end_time': time.strftime('%Y-%m-%d %H:%M:%S'), 'start_time': start_time, 'comment': tools.ustr(msg)}, context=context)
-                    cr.commit()
+                    self.write(new_cr, uid, job_id, {'state': 'error', 'end_time': time.strftime('%Y-%m-%d %H:%M:%S'), 'start_time': start_time, 'comment': tools.ustr(msg)}, context=context)
+                    new_cr.commit()
                 raise
 
             try:
@@ -416,18 +420,18 @@ class automated_import_job(osv.osv):
                                 error = _('No file to import in %s !') % import_data.src_path
                             else:
                                 # files already processed in previous loop: delete the in_progress job
-                                self.unlink(cr, 1, [job_id], context=context)
+                                self.unlink(new_cr, 1, [job_id], context=context)
                                 job_id = prev_job_id
                                 break
 
-                        elif md5 and self.search_exist(cr, uid, [('import_id', '=', import_data.id), ('file_sum', '=', md5)], context=context):
+                        elif md5 and self.search_exist(new_cr, uid, [('import_id', '=', import_data.id), ('file_sum', '=', md5)], context=context):
                             error = _('A file with same checksum has been already imported !')
                             move_to_process_path(import_data, ftp_connec, sftp, filename, success=False)
-                            self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
+                            self.infolog(new_cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
 
                     if error:
-                        self.infolog(cr, uid, '%s :: %s' % (import_data.name , error))
-                        self.write(cr, uid, [job.id], {
+                        self.infolog(new_cr, uid, '%s :: %s' % (import_data.name , error))
+                        self.write(new_cr, uid, [job.id], {
                             'filename': filename,
                             'file_to_import': data64,
                             'start_time': start_time,
@@ -449,8 +453,8 @@ class automated_import_job(osv.osv):
                     md5 = hashlib.md5(job.file_to_import).hexdigest()
 
                     if job.file_sum != md5:
-                        if self.search_exist(cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], context=context):
-                            self.write(cr, uid, [job.id], {'file_sum': md5}, context=context)
+                        if self.search_exist(new_cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], context=context):
+                            self.write(new_cr, uid, [job.id], {'file_sum': md5}, context=context)
                             return {
                                 'type': 'ir.actions.act_window',
                                 'res_model': self._name,
@@ -458,7 +462,7 @@ class automated_import_job(osv.osv):
                                 'view_type': 'form',
                                 'view_mode': 'form,tree',
                                 'target': 'new',
-                                'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'automated_import_job_file_view')[1]],
+                                'view_id': [data_obj.get_object_reference(new_cr, uid, 'msf_tools', 'automated_import_job_file_view')[1]],
                                 'context': context,
                             }
 
@@ -472,7 +476,7 @@ class automated_import_job(osv.osv):
                 try:
                     if import_data.ftp_source_ok and import_data.ftp_protocol == 'ftp':
                         prefix = '%s_' % filename.split('.')[0]
-                        suffix = '.xls' if self.pool.get('stock.picking').get_import_filetype(cr, uid, filename) == 'excel' else '.xml'
+                        suffix = '.xls' if self.pool.get('stock.picking').get_import_filetype(new_cr, uid, filename) == 'excel' else '.xml'
                         temp_file = tempfile.NamedTemporaryFile(delete=False, prefix=prefix, suffix=suffix)
                         ftp_connec.retrbinary('RETR %s' % oldest_file, temp_file.write)
                         temp_file.close()
@@ -485,12 +489,12 @@ class automated_import_job(osv.osv):
                     processed, rejected, headers = getattr(
                         self.pool.get(import_data.function_id.model_id.model),
                         import_data.function_id.method_to_call
-                    )(cr, uid, oldest_file, context=context)
+                    )(new_cr, uid, oldest_file, context=context)
                     if processed:
-                        nb_processed += self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp)
+                        nb_processed += self.generate_file_report(new_cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp)
 
                     if rejected:
-                        nb_rejected += self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp)
+                        nb_rejected += self.generate_file_report(new_cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp)
                         state = 'error'
                         for resjected_line in rejected:
                             line_message = ''
@@ -503,13 +507,13 @@ class automated_import_job(osv.osv):
                         nb_rejected += context.get('rejected_confirmation')
                         state = 'error'
 
-                    self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (import_data.name, len(processed), nb_rejected))
+                    self.infolog(new_cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (import_data.name, len(processed), nb_rejected))
 
                     if import_data.function_id.model_id.model == 'purchase.order':
-                        po_id = self.pool.get('purchase.order').get_po_id_from_file(cr, uid, oldest_file, context=context)
+                        po_id = self.pool.get('purchase.order').get_po_id_from_file(new_cr, uid, oldest_file, context=context)
                         if po_id and (nb_processed or nb_rejected):
-                            po_name = self.pool.get('purchase.order').read(cr, uid, po_id, ['name'], context=context)['name']
-                            nb_total_pol = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', po_id)], count=True, context=context)
+                            po_name = self.pool.get('purchase.order').read(new_cr, uid, po_id, ['name'], context=context)['name']
+                            nb_total_pol = self.pool.get('purchase.order.line').search(new_cr, uid, [('order_id', '=', po_id)], count=True, context=context)
                             msg = _('%s: ') % po_name
                             if nb_processed:
                                 msg += _('%s out of %s lines have been updated') % (nb_processed, nb_total_pol)
@@ -518,14 +522,14 @@ class automated_import_job(osv.osv):
                             if nb_rejected:
                                 msg += _('%s out of %s lines have been rejected') % (nb_rejected, nb_total_pol)
                             if nb_processed or nb_rejected:
-                                self.pool.get('purchase.order').log(cr, uid, po_id, msg)
+                                self.pool.get('purchase.order').log(new_cr, uid, po_id, msg)
 
                     if context.get('job_comment'):
                         for msg_dict in context['job_comment']:
-                            self.pool.get(msg_dict['res_model']).log(cr, uid, msg_dict['res_id'], msg_dict['msg'])
+                            self.pool.get(msg_dict['res_model']).log(new_cr, uid, msg_dict['res_id'], msg_dict['msg'])
                             error_message.append(msg_dict['msg'])
 
-                    self.write(cr, uid, [job.id], {
+                    self.write(new_cr, uid, [job.id], {
                         'filename': filename,
                         'start_time': start_time,
                         'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -538,13 +542,13 @@ class automated_import_job(osv.osv):
                     }, context=context)
                     is_success = True if not rejected else False
                     move_to_process_path(import_data, ftp_connec, sftp, filename, success=is_success)
-                    self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
-                    cr.commit()
+                    self.infolog(new_cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
+                    new_cr.commit()
                 except Exception as e:
-                    cr.rollback()
+                    new_cr.rollback()
                     trace_b = tools.ustr(traceback.format_exc())
-                    self.infolog(cr, uid, '%s :: %s' % (import_data.name, trace_b))
-                    self.write(cr, uid, [job.id], {
+                    self.infolog(new_cr, uid, '%s :: %s' % (import_data.name, trace_b))
+                    self.write(new_cr, uid, [job.id], {
                         'filename': False,
                         'start_time': start_time,
                         'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -556,14 +560,10 @@ class automated_import_job(osv.osv):
                         'state': 'error',
                     }, context=context)
                     move_to_process_path(import_data, ftp_connec, sftp, filename, success=False)
-                    self.infolog(cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
+                    self.infolog(new_cr, uid, _('%s :: Import file (%s) moved to destination path') % (import_data.name, filename))
             finally:
                 if orig_file_name:
                     self.end_processing_filename(orig_file_name)
-
-        # if 'manual_import' in context:
-        #     context.pop('manual_import')
-        #     cr.close(True)
 
         if 'row' in context:
             # causing LmF when running job manually
