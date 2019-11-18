@@ -266,6 +266,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
             	<tree string="Kit Item" editable="top" hide_new_button="True" hide_delete_button="True">
+            		<field name="item_kit_name" />
             		<field name="item_kit_id" />
             		<field name="item_module" readonly="True" />
             		<field name="item_product_id" on_change="on_product_change(item_product_id)" readonly="True" />
@@ -288,6 +289,7 @@
             <field name="priority">2</field><!-- because of links from product.product -->
             <field name="arch" type="xml">
                 <search string="Search Theoretical Kit Composition Item">
+                    <field name="item_kit_name" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />
                     <field name="item_kit_id" domain="[('composition_type', '=', 'theoretical')]" select="1" />
                     <field name="item_module" select="1" />
                     <field name="item_product_id" select="1" />
