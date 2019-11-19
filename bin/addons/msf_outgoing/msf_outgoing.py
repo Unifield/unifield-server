@@ -604,6 +604,24 @@ class shipment(osv.osv):
 
             new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
 
+        # create picking to move from Shipment to Distrib
+        shadow_pack_data = {
+            'name': '%s-s' % picking.name,
+            'move_lines': [],
+            'description_ppl': description_ppl or picking.description_ppl,
+            'shipment_id': False,
+            'backorder_id': picking.id,
+        }
+        new_ctx = context.copy()
+        new_ctx.update({
+            'keep_prodlot': True,
+            'keepLineNumber': True,
+            'allow_copy': True,
+            'non_stock_noupdate': True,
+        })
+        shadow_pack_id = picking_obj.copy(cr, uid, picking.id, shadow_pack_data, context=new_ctx)
+        ###
+
         selected_from_pack = family.to_pack - family.selected_number + 1
 
         if family.selected_number == int(family.num_of_packs):
@@ -636,8 +654,21 @@ class shipment(osv.osv):
                 'location_dest_id': picking.warehouse_id.lot_output_id.id,
                 'selected_number': family.selected_number,
             }
+            shadow_move_vals = move_vals.copy()
+
             new_move = move_obj.copy(cr, uid, move.id, move_vals, context=context)
             move_obj.action_confirm(cr, uid, new_move, context=context)
+
+            # to move stock fro Shipment to Distrib
+            shadow_move_vals = {
+                'picking_id': shadow_pack_id,
+                'backmove_packing_id': False,
+                'location_id': picking.warehouse_id.lot_dispatch_id.id,
+                'location_dest_id': picking.warehouse_id.lot_distribution_id.id,
+                'state': 'done',
+            }
+            move_obj.copy(cr, uid, move.id, shadow_move_vals, context=context)
+
             # Update corresponding initial move
             initial_qty = max(move.product_qty - selected_qty, 0)
 
@@ -664,7 +695,7 @@ class shipment(osv.osv):
             'non_stock_noupdate': False,
             'draft_packing_id': False,
         })
-
+        picking_obj.write(cr, uid, [shadow_pack_id], {'state': 'done'}, context=context)
         # confirm the new packing
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(uid, 'stock.picking', new_packing_id, 'button_confirm', cr)
@@ -923,8 +954,8 @@ class shipment(osv.osv):
 
                     context['non_stock_noupdate'] = False
 
-                    # Find the corresponding move in draft in the draft picking ticket
-                    draft_move = move.backmove_id
+                    # Find the corresponding move in draft in the draft picking ticket: use browse to invalidate cache
+                    draft_move = move_obj.browse(cr, uid, move.backmove_id.id, fields_to_fetch=['product_qty', 'qty_processed'], context=context)
                     # Increase the draft move with the move quantity
 
                     draft_initial_qty = draft_move.product_qty + return_qty
@@ -3544,11 +3575,12 @@ class stock_picking(osv.osv):
 
                     diff_qty = line.product_qty - line.qty_to_process
                     if line.backmove_id:
+                        backmove_line = move_obj.browse(cr, uid, line.backmove_id.id, fields_to_fetch=['qty_processed', 'product_qty'], context=context)
                         if line.backmove_id.product_uom.id != line.product_uom.id:
                             diff_qty = uom_obj._compute_qty(cr, uid, line.product_uom.id, diff_qty, line.backmove_id.product_uom.id)
-                        backorder_qty = max(line.backmove_id.product_qty + diff_qty, 0)
+                        backorder_qty = max(backmove_line.product_qty + diff_qty, 0)
                         if backorder_qty != 0.00:
-                            new_val = {'product_qty': backorder_qty, 'qty_processed': line.backmove_id.qty_processed and line.backmove_id.qty_processed - diff_qty or 0, 'qty_to_process': backorder_qty}
+                            new_val = {'product_qty': backorder_qty, 'qty_processed': backmove_line.qty_processed and backmove_line.qty_processed - diff_qty or 0, 'qty_to_process': backorder_qty}
                             move_obj.write(cr, uid, [line.backmove_id.id], new_val, context=context)
 
                 if line.qty_to_process:
@@ -4040,8 +4072,8 @@ class stock_picking(osv.osv):
                 context['keepLineNumber'] = True
                 move_obj.copy(cr, uid, line.move_id.id, return_values, context=context)
                 context['keepLineNumber'] = False
-                # Increase the draft move with the returned quantity
-                draft_move = line.move_id.backmove_id
+                # Increase the draft move with the returned quantity : must broswe the record again to invalidate cache
+                draft_move = move_obj.browse(cr, uid, line.move_id.backmove_id.id, fields_to_fetch=['product_qty', 'qty_processed'], context=context)
                 draft_move_qty = draft_move.product_qty + return_qty
                 qty_processed = max(draft_move.qty_processed - return_qty, 0)
                 move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_move_qty, 'qty_to_process': draft_move_qty, 'qty_processed': qty_processed}, context=context)

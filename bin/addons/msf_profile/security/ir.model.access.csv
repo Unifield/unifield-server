@@ -29,7 +29,7 @@
 "access_account_analytic_account","admin access Analytic Account","analytic.model_account_analytic_account","base.group_erp_manager",1,1,1,1
 "access_account_analytic_journal","admin access Analytic Journal","account.model_account_analytic_journal","base.group_erp_manager",1,1,1,1
 "access_account_analytic_line","admin access Analytic Line","account_corrections.model_account_analytic_line","base.group_erp_manager",1,1,1,1
-"access_res_currency","admin access Currency","base_setup.model_res_currency","base.group_erp_manager",1,1,1,1
+"access_res_currency","admin access Currency","base.model_res_currency","base.group_erp_manager",1,1,1,1
 "access_res_currency_rate","admin access Currency Rate","base.model_res_currency_rate","base.group_erp_manager",1,1,1,1
 "access_account_destination_link","admin access Destination link between G/L and Analytic accounts","analytic_distribution.model_account_destination_link","base.group_erp_manager",1,1,1,1
 "access_account_destination_summary","admin access Destinations by accounts","analytic_distribution.model_account_destination_summary","base.group_erp_manager",1,1,1,1
@@ -43,7 +43,7 @@
 "access_msf_budget_decision_moment","admin access msf.budget.decision.moment","msf_budget.model_msf_budget_decision_moment","base.group_erp_manager",1,1,1,1
 "access_msf_doc_import_accounting_lines","admin access msf.doc.import.accounting.lines","msf_doc_import.model_msf_doc_import_accounting_lines","base.group_erp_manager",1,1,1,1
 "access_msf_instance","admin access msf.instance","msf_instance.model_msf_instance","base.group_erp_manager",1,1,1,1
-"access_res_currency_table","admin access res.currency.table","res_currency_tables.model_res_currency_table","base.group_erp_manager",1,1,1,1
+"access_res_currency_table","admin access res.currency.table","base.model_res_currency_table","base.group_erp_manager",1,1,1,1
 "access_account_tax_code","admin access Tax Code","account.model_account_tax_code","base.group_erp_manager",1,1,1,1
 "access_account_tax_code_template","admin access Tax Code Template","account.model_account_tax_code_template","base.group_erp_manager",1,1,1,1
 "access_account_fiscal_position_tax","admin access Taxes Fiscal Position","account.model_account_fiscal_position_tax","base.group_erp_manager",1,1,1,1

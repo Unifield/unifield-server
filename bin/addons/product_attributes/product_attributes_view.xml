@@ -462,23 +462,33 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Product">
-                   <filter string="Stock>0"  icon="terp-accessories-archiver" domain="[('postive_qty','=',True)]"/>
-                   <filter string="Stockable" icon="terp-accessories-archiver" domain="[('type','=','product')]"/>
-                   <filter string="Non-Stockable" icon="terp-accessories-archiver" domain="[('type','=','consu')]"/>
-                   <filter string="Service with Reception" icon="terp-accessories-archiver" domain="[('type','=','service_recep')]" />
-                   <separator orientation="vertical"/>
+                   <group>
+                       <filter string="Stock>0"  icon="terp-accessories-archiver" domain="[('postive_qty','=',True)]"/>
+                       <separator orientation="vertical"/>
+                       <filter string="Stockable" icon="terp-accessories-archiver" domain="[('type','=','product')]"/>
+                       <filter string="Non-Stockable" icon="terp-accessories-archiver" domain="[('type','=','consu')]"/>
+                       <filter string="Service with Reception" name="service_with_reception" icon="terp-accessories-archiver" domain="[('type','=','service_recep')]" />
+                       <separator orientation="vertical"/>
+                   </group>
                    <field name="default_code" string="Code"/>
                    <field name="name" string="Description"/>
                    <field name="list_ids" widget="many2one" context="{'list': self}" />
                    <field name="uf_create_date" string="Creation" widget="date" />
                    <field name="uf_write_date" string="Modification" widget="date" />
                    <newline/>
-                   <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
-                   <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
-                   <filter string="Asset" icon="terp-accessories-archiver" domain="[('subtype','=','asset')]"/>
+                   <group>
+                       <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
+                       <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
+                       <filter string="Asset" icon="terp-accessories-archiver" domain="[('subtype','=','asset')]"/>
+                       <group name="display_active_filter" invisible="1">
+                             <label />
+                            <filter name="active" string="Active" domain="[('active', '=', True)]" icon="terp-check" />
+                            <filter name="inactive" string="Inactive" domain="[('active', '=', False)]" icon="gtk-dialog-error"/>
+                       </group>
+                   </group>
                    <group name="batch_attr" invisible="1">
                        <field name="batch_attributes" />
-                   </group>
+                    </group>
                    <newline/>
                    <group expand="0" string="Extended Filters..." />
                    <newline/>
@@ -493,7 +503,7 @@
                 </search>
             </field>
         </record>
-        
+
         <record id="stock.product_search_form_view_stock" model="ir.ui.view">
             <field name="name">product.search.stock.form</field>
             <field name="model">product.product</field>

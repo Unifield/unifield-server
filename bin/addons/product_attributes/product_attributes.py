@@ -1005,17 +1005,24 @@ class product_attributes(osv.osv):
             for field in root.xpath('//group[@name="batch_attr"]'):
                 field.set('invisible', '0')
             res['arch'] = etree.tostring(root)
+
+        if view_type == 'search' and context.get('display_active_filter'):
+            root = etree.fromstring(res['arch'])
+            for field in root.xpath('//group[@name="display_active_filter"]'):
+                field.set('invisible', '0')
+            res['arch'] = etree.tostring(root)
+
         if view_type == 'search' and context.get('available_for_restriction'):
             context.update({'search_default_not_restricted': 1})
             root = etree.fromstring(res['arch'])
             # xpath of fields to be modified
-            xpath = '//filter[@string="Service with Reception"]'
+            xpath = '//filter[@name="service_with_reception"]'
             fields = root.xpath(xpath)
 
             if not fields:
                 return res
 
-            state_index = root.index(fields[0])
+            parent_node = fields[0].getparent()
             new_separator = """<separator orientation="vertical" />"""
             sep_form = etree.fromstring(new_separator)
             arg = context.get('available_for_restriction')
@@ -1030,12 +1037,13 @@ class product_attributes(osv.osv):
                                                                     context=context)
             else:
                 filter_domain = "[('available_for_restriction','=',%s)]" % arg
-            new_filter = """<filter string="Only not forbidden" name="not_restricted" icon="terp-accessories-archiver-minus" domain="%s" />""" % filter_domain
+            new_filter = """<filter string="%s" name="not_restricted" icon="terp-accessories-archiver-minus" domain="%s" />""" % (_('Only not forbidden'), filter_domain)
             #generate new xml form$
             new_form = etree.fromstring(new_filter)
             # instert new form just after state index position
-            root.insert(state_index+1, new_form)
-            root.insert(state_index+1, sep_form)
+            state_index = parent_node.index(fields[0])
+            parent_node.insert(state_index+1, new_form)
+            parent_node.insert(state_index+1, sep_form)
             # generate xml back to string
             res['arch'] = etree.tostring(root)
 
@@ -2037,19 +2045,37 @@ class product_attributes(osv.osv):
             prod_obj.write(cr, uid, prod_to_change, {'perishable': True, 'batch_management': True}, context=context)
         for prod_id in prod_to_change:
             batch_id = lot_obj._get_or_create_lot(cr, uid, name=self.fake_bn, expiry_date=self.fake_ed, product_id=prod_id, context=context)
-            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel', 'assigned')", (batch_id, self.fake_ed, prod_id))
+            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel')", (batch_id, self.fake_ed, prod_id))
+            count = cr.rowcount
+
+            # all available move except IN
+            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s where product_id=%s and state = 'assigned' and type!='in'", (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
+
+            # Available Shipped or Available Updated IN
+            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f' where product_id=%s and state = 'assigned' and type='in'", (prod_id, ))
+            cr.execute("""update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s where product_id=%s and state = 'assigned' and type='in'
+                and picking_id in (select id from stock_picking where state in ('updated', 'shipped') and type='in') """, (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
 
             # save as draft
             for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
                 cr.execute("update "+ table + " set prodlot_id=%s, expiry_date=%s, lot_check='t', exp_check='t' where product_id = %s and quantity>0", (batch_id, self.fake_ed, prod_id,)) # not_a_user_entry
+                count += cr.rowcount
 
             # Previous Inventory
             cr.execute("""update stock_inventory_line set
                 hidden_batch_management_mandatory='t', hidden_perishable_mandatory='t', prod_lot_id=%s, expiry_date=%s
                 where product_id = %s""", (batch_id, self.fake_ed, prod_id ))
+            count += cr.rowcount
 
             # Consump.
             cr.execute("update real_average_consumption_line set date_mandatory='t', batch_mandatory='t', prodlot_id=%s, expiry_date=%s where product_id = %s", (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
+
+            if not count:
+                if lot_obj.browse(cr, 1, batch_id, fields_to_fetch=['delete_ok'], context=context).delete_ok:
+                    lot_obj.unlink(cr, 1, [batch_id], context=context)
 
         if prod_to_change:
             # save as draft
@@ -2163,17 +2189,36 @@ class product_attributes(osv.osv):
 
         for prod_id in prod_to_change:
             batch_id = lot_obj._get_or_create_lot(cr, uid, name=False, expiry_date=self.fake_ed, product_id=prod_id, context=context)
-            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel', 'assigned')", (batch_id, self.fake_ed, prod_id))
+            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel')", (batch_id, self.fake_ed, prod_id))
+            count = cr.rowcount
+
+            # Assigned except IN
+            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s where product_id=%s and state = 'assigned' and type!='in'", (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
+
+            # Available Shipped or Available Updated IN
+            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t' where product_id=%s and state='assigned' and type='in'", (prod_id,))
+            cr.execute("""update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s where product_id=%s and state = 'assigned' and type='in'
+                    and picking_id in (select id from stock_picking where state in ('updated', 'shipped') and type='in')""", (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
+
             # save as draft
             for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
                 cr.execute("update "+ table + " set prodlot_id=%s, expiry_date=%s, lot_check='f', exp_check='t' where product_id in %s", (batch_id, self.fake_ed, tuple(prod_to_change),)) # not_a_user_entry
+                count += cr.rowcount
             # Consump.
             cr.execute("update real_average_consumption_line set date_mandatory='t', batch_mandatory='f', prodlot_id=%s, expiry_date=%s where product_id = %s", (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
+
             # Previous Inventory
             cr.execute("""update stock_inventory_line set
                 hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prod_lot_id=%s, expiry_date=%s
                 where product_id = %s""", (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
 
+            if not count:
+                if lot_obj.browse(cr, 1, batch_id, fields_to_fetch=['delete_ok'], context=context).delete_ok:
+                    lot_obj.unlink(cr, 1, [batch_id], context=context)
 
         if prod_to_change:
             # ISI done

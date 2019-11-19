@@ -713,7 +713,7 @@ class orm_template(object):
                                 break
                         done.append(fields2)
 
-                        if sync_context and cols and cols._type=='many2many' and len(fields[fpos])>(i+1) and (fields[fpos][i+1]=='id'):
+                        if sync_context and cols and cols._type in ('many2many', 'one2many') and len(fields[fpos])>(i+1) and (fields[fpos][i+1]=='id'):
                             data[fpos] = ','.join([_get_xml_id(self, cr, uid, x) for x in r])
                             break
 
@@ -982,22 +982,35 @@ class orm_template(object):
                     if field[len(prefix)] in done:
                         continue
                     done[field[len(prefix)]] = True
-                    relation_obj = self.pool.get(fields_def[field[len(prefix)]]['relation'])
+                    relation = fields_def[field[len(prefix)]]['relation']
+                    relation_obj = self.pool.get(relation)
                     newfd = relation_obj.fields_get( cr, uid, context=context )
                     pos = position
                     res = []
                     first = 0
-                    while pos < len(datas):
-                        res2 = process_liness(self, datas, prefix + [field[len(prefix)]], current_module, relation_obj._name, newfd, pos, first)
-                        if not res2:
-                            break
-                        (newrow, pos, w2, data_res_id2, xml_id2) = res2
-                        nbrmax = max(nbrmax, pos)
-                        warning += w2
-                        first += 1
-                        if (not newrow) or not reduce(lambda x, y: x or y, newrow.values(), 0):
-                            break
-                        res.append( (data_res_id2 and 1 or 0, data_res_id2 or 0, newrow) )
+                    if context.get('sync_update_execution'):
+                        res2 = []
+                        if len(field) == len(prefix)+1:
+                            mode = False
+                        else:
+                            mode = field[len(prefix)+1]
+                        if value:
+                            for db_id in value.split(config.get('csv_internal_sep')) or []:
+                                res2.append( _get_id(relation, db_id, current_module, mode, context=context))
+                        res = [(6, 0, res2)]
+                    else:
+                        while pos < len(datas):
+                            res2 = process_liness(self, datas, prefix + [field[len(prefix)]], current_module, relation_obj._name, newfd, pos, first)
+                            print res2
+                            if not res2:
+                                break
+                            (newrow, pos, w2, data_res_id2, xml_id2) = res2
+                            nbrmax = max(nbrmax, pos)
+                            warning += w2
+                            first += 1
+                            if (not newrow) or not reduce(lambda x, y: x or y, newrow.values(), 0):
+                                break
+                            res.append( (data_res_id2 and 1 or 0, data_res_id2 or 0, newrow) )
 
                 elif field_type=='many2one':
                     relation = fields_def[field[len(prefix)]]['relation']

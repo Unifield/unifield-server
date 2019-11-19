@@ -1310,8 +1310,8 @@ class Entity(osv.osv):
             logger.info['nb_msg_not_run'] = nb_msg_not_run
             logger.info['nb_data_not_run'] = nb_data_not_run
 
-        self._logger.info('Not run updates : %d' % (nb_msg_not_run, ))
-        self._logger.info('Not run messages : %d' % (nb_data_not_run, ))
+        self._logger.info('Not run updates : %d' % (nb_data_not_run, ))
+        self._logger.info('Not run messages : %d' % (nb_msg_not_run, ))
         self._logger.info("Synchronization successfully done")
         return True
 
