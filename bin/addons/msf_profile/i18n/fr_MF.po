@@ -51973,8 +51973,8 @@ msgstr "# de Commandes"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:716
 #, python-format
-msgid "The new Shipment id:%s (%s) has been created and is \"Ready to Ship\"."
-msgstr "La nouvelle Expédition id:%s (%s) a été créée et est \"Prête à être Expédiée\"."
+msgid "The new Shipment (%s) has been created and is \"Ready to Ship\"."
+msgstr "La nouvelle Expédition (%s) a été créée et est \"Prête à être Expédiée\"."
 
 #. modules: base, msf_button_access_rights
 #: sql_constraint:ir.ui.view:0
@@ -106242,8 +106242,8 @@ msgstr "Total Coût Fonctionnel :"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:2629
 #, python-format
-msgid "The new Shipment List id:%s (%s) has been created."
-msgstr "La nouvelle Liste d'Expédition id:%s (%s) a été créée."
+msgid "The new Shipment List (%s) has been created."
+msgstr "La nouvelle Liste d'Expédition (%s) a été créée."
 
 #. module: account_override
 #: field:res.company,currency_date_type:0
