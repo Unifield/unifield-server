@@ -987,6 +987,7 @@ class wizard_cash_return(osv.osv_memory):
             ml_amount = 0.0
             for ml in created_move.line_id:
                 if ml.id not in payable_lines:  # exclude amounts of the Trade payable automatic entries
+                    # /!\ NOTE: ml.credit_currency should always be zero as negative amounts are forbidden
                     ml_amount += (ml.debit_currency or 0.0) + (ml.credit_currency or 0.0)
             adv_closing_ml_id = self.create_move_line(cr, uid, ids, created_move.date, created_move.document_date, adv_closing_name,
                                                       journal, register, False, employee_id, adv_closing_acc_id, 0.0, ml_amount,
