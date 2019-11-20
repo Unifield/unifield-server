@@ -106566,3 +106566,9 @@ msgstr "Vous ne pouvez pas lier la taxe au partenaire %s : seuls les partenaires
 #, python-format
 msgid "Only not forbidden"
 msgstr "Produits autorisés"
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_distribution.py:353
+#, python-format
+msgid "Funding Pool not found."
+msgstr "Funding Pool non trouvé."
