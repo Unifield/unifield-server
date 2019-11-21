@@ -106568,7 +106568,8 @@ msgid "Only not forbidden"
 msgstr "Produits autorisés"
 
 #. module: product
-#: code:addons/product/wizard/product_mass_update.py:379
+#: code:addons/product/wizard/product_mass_update.py:104
+#: code:addons/product/wizard/product_mass_update.py:392
 #, python-format
 msgid "Please add at least 1 product before proceeding."
 msgstr "Veuillez ajouter au moins 1 produit avant de continuer."

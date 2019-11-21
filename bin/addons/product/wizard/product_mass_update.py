@@ -93,6 +93,20 @@ class product_mass_update(osv.osv):
         'type_of_ed_bn': False,
     }
 
+    def create(self, cr, uid, vals, context=None):
+        '''
+        override create method
+        '''
+        if context is None:
+            context = {}
+
+        # Prevent creation of BN/ED mass update when trying to update with 0 products while editing newly created doc
+        if context.get('button', False) == 'change_bn_ed' and vals.get('type_of_ed_bn') and \
+                vals.get('product_ids', False) == [(6, 0, [])]:
+            raise osv.except_osv(_('Warning'), _('Please add at least 1 product before proceeding.'))
+
+        return super(product_mass_update, self).create(cr, uid, vals, context)
+
     def write(self, cr, user, ids, vals, context=None):
         '''
         override write method
