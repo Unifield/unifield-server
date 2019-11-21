@@ -473,5 +473,9 @@
             <field name="method">uf15_fields_moved</field>
         </record>
 
+        <record id="us_6768_trigger_FP_sync" model="patch.scripts">
+            <field name="method">us_6768_trigger_FP_sync</field>
+        </record>
+
     </data>
 </openerp>
