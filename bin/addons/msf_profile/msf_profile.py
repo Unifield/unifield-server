@@ -53,6 +53,22 @@ class patch_scripts(osv.osv):
     }
 
     # UF15.0
+    def us_6768_trigger_FP_sync(self, cr, uid, *a, **b):
+        """
+        Triggers a synch. on the FP CD1-KNDAK_ in OCBCD100, to trigger its re-recreation in the projects
+        """
+        user_obj = self.pool.get('res.users')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance and current_instance.code == 'OCBCD100':
+            cr.execute("""
+                UPDATE ir_model_data 
+                SET touched ='[''code'']', last_modification = NOW()
+                WHERE module='sd' 
+                AND model='account.analytic.account' 
+                AND name = '3beb0a5e-5a6b-11e8-a0e4-1c4d70b8cca6/account_analytic_account/444';                
+            """)
+        return True
+
     def uf15_fields_moved(self, cr, uid, *a, **b):
         if _get_instance_level(self, cr, uid) == 'hq':
             # touch BAR and ACL for fields moved from one module to another (i.e sdref renamed)
