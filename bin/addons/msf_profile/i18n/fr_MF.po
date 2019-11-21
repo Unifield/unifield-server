@@ -106579,3 +106579,10 @@ msgstr "Veuillez ajouter au moins 1 produit avant de continuer."
 #: model:ir.ui.menu,name:product_attributes.products_bn_ed_mass_update_menu
 msgid "Product BN/ED Mass Update"
 msgstr "MàJ en Masse de Produits NL/EXP"
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_distribution.py:353
+#, python-format
+msgid "Funding Pool not found."
+msgstr "Funding Pool non trouvé."
+
