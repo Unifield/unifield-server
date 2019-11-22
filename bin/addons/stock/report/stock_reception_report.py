@@ -37,6 +37,27 @@ class stock_reception_report(report_sxw.rml_parse):
                 func_price_unit = round(curr_obj.compute(self.cr, self.uid, po.pricelist_id.currency_id.id,
                                                          move.company_id.currency_id.id, move.price_unit,
                                                          round=False, context=self.localcontext), 2)
+            if sol:
+                if sol.procurement_request:
+                    int_move_dest_loc = False
+                    if sol.order_id.location_requestor_id.usage == 'internal':
+                        int_domain = [('type', '=', 'internal'), ('line_number', '=', move.line_number),
+                                      ('picking_id.previous_chained_pick_id', '=', pick.id)]
+                        linked_int_move_ids = move_obj.search(self.cr, self.uid, int_domain, context=self.localcontext)
+                        if linked_int_move_ids:
+                            int_move_dest_loc = move_obj.browse(self.cr, self.uid, linked_int_move_ids[0],
+                                                                fields_to_fetch=['location_dest_id'],
+                                                                context=self.localcontext).location_dest_id.name
+                    if int_move_dest_loc:
+                        final_dest_loc = int_move_dest_loc
+                    else:
+                        final_dest_loc = sol.order_id.location_requestor_id.name
+                else:
+                    final_dest_loc = sol.order_id.partner_id.name
+            elif move.location_dest_id:
+                final_dest_loc = move.location_dest_id.name
+            else:
+                final_dest_loc = ''
             res.append({
                 'ref': pick.name,
                 'reason_type': move.reason_type_id and move.reason_type_id.name or '',
@@ -58,8 +79,7 @@ class stock_reception_report(report_sxw.rml_parse):
                 'total_cost': move.product_qty * move.price_unit,
                 'total_cost_func': move.product_qty * func_price_unit,
                 'dest_loc': move.location_dest_id and move.location_dest_id.name or '',
-                'final_dest_loc': sol and (sol.procurement_request and sol.order_id.location_requestor_id.name or sol.order_id.partner_id.name)
-                or move.location_dest_id and move.location_dest_id.name or '',
+                'final_dest_loc': final_dest_loc,
                 'exp_receipt_date': move.date_expected,
                 'actual_receipt_date': move.date,
                 'phys_recep_date': pick.physical_reception_date,
