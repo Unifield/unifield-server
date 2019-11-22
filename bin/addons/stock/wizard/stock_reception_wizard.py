@@ -78,6 +78,7 @@ class stock_reception_wizard(osv.osv_memory):
                 ('type', '=', 'in'),
                 ('purchase_line_id', '!=', False),
                 ('picking_id.state', '=', 'done'),
+                ('state', '=', 'done'),
             ]
             if wizard.start_date:
                 move_domain.append(('picking_id.date', '>=', wizard.start_date))
