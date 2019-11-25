@@ -57,6 +57,7 @@ OBJ_TO_RECREATE = [
     'account.journal',
     'account.mcdb',
     'wizard.template',
+    'account.analytic.account',
 ]
 
 
