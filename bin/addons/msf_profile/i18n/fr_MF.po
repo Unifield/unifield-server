@@ -102228,13 +102228,13 @@ msgstr "Oui - Toutes les lignes"
 
 #. module: msf_outgoing
 #: view:stock.picking:0
-msgid " Update Packing with import "
-msgstr " Mettre à jour le Colisage avec un import "
+msgid "Import Packing"
+msgstr "Importer le Colisage"
 
 #. module: msf_outgoing
 #: view:stock.picking:0
-msgid "Update Packing with import"
-msgstr "Mettre à jour le Colisage avec un import"
+msgid "Export Packing"
+msgstr "Exporter le Colisage"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/__init__.py:42
