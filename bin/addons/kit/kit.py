@@ -1124,6 +1124,7 @@ class composition_item(osv.osv):
                 'item_description': fields.text(string='Item Description'),
                 'item_stock_move_id': fields.many2one('stock.move', string='Kitting Order Stock Move', readonly=True, help='This field represents the stock move corresponding to this item for Kit production.'),
                 'item_kit_name': fields.related('item_kit_id', 'composition_product_id', type='many2one', relation='product.product', string="Kit Product Code", store=True, readonly=True),
+                'item_kit_batch': fields.related('item_kit_id', 'composition_lot_id', type='many2one', relation='stock.production.lot', string="Kit/BN", store=True, readonly=True),
                 # functions
                 'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_product_id'], 10),}),
