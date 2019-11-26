@@ -192,8 +192,8 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         """
         Returns the list of accounts as a String (cut if > 300 characters)
         """
-        accounts_str = ', '.join([acc or '' for acc in self._get_accounts(data)])
-        return (len(accounts_str) <= 300) and accounts_str or ("%s%s" % (accounts_str[:297], '...'))
+        data_tools_obj = self.pool.get('data.tools')
+        return data_tools_obj.truncate_list(self._get_accounts(data))
 
     def _get_filter(self, data):
         if data.get('form', False) and data['form'].get('filter', False):
@@ -229,8 +229,8 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         """
         Returns the list of journals as a String (cut if > 300 characters)
         """
-        journals_str = ', '.join([journal or '' for journal in self._get_journal(data)])
-        return (len(journals_str) <= 300) and journals_str or ("%s%s" % (journals_str[:297], '...'))
+        data_tools_obj = self.pool.get('data.tools')
+        return data_tools_obj.truncate_list(self._get_journal(data))
 
     def _get_prop_instances(self, data):
         """
