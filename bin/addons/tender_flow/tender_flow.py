@@ -635,7 +635,7 @@ class tender(osv.osv):
                 raise osv.except_osv(_('Error !'), _('All tender lines must have been compared!'))
 
             for tender_line in tender.tender_line_ids:
-                if line.line_state == 'cancel':
+                if tender_line.line_state == 'cancel':
                     continue
 
                 # search or create PO to use:
