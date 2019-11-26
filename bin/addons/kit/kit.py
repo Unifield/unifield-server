@@ -554,7 +554,8 @@ class composition_kit(osv.osv):
                 version = obj.composition_version or 'no_version'
                 name = version + ' - ' + date.strftime(date_format)
             else:
-                name = obj.composition_combined_ref_lot
+                name = obj.composition_product_id and obj.composition_product_id.default_code + ' - ' + obj.composition_combined_ref_lot \
+                       or obj.composition_combined_ref_lot
 
             res += [(obj.id, name)]
         return res
