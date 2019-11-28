@@ -1861,14 +1861,28 @@ class Path():
         self.path = path
         self.delete = delete
 
-def use_prod_sync(cr):
+def use_prod_sync(cr, uid=False, pool=False):
     cr.execute('''SELECT host, database
             FROM sync_client_sync_server_connection''')
     host, database = cr.fetchone()
 
     if host and database and database.strip() == 'SYNC_SERVER' and \
             ('sync.unifield.net' in host.lower() or '212.95.73.129' in host):
-        return True
+        if uid and pool:
+            connection = pool.get('sync.client.sync_server_connection')
+            entity_obj = pool.get('sync.client.entity')
+            if not connection or not entity_obj:
+                return False
+            entity = entity_obj.get_entity(cr, uid)
+            if connection.is_connected:
+                # check HW on the sync server
+                proxy = pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
+                res = proxy.get_entity(entity.identifier, entity._hardware_id)
+                if res and res[0]:
+                    return True
+            return entity._hardware_id == entity.previous_hw
+        else:
+            return True
 
     return False
 

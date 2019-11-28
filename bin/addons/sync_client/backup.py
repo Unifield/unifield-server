@@ -193,7 +193,7 @@ class BackupConfig(osv.osv):
             else:
                 cr = old_cr
 
-            if not tools.config.get('send_to_onedrive') and not tools.misc.use_prod_sync(cr):
+            if not tools.config.get('send_to_onedrive') and not tools.misc.use_prod_sync(cr, uid, self.pool):
                 raise Exception(_('Only production instances are allowed !'))
 
             dbname = cr.dbname

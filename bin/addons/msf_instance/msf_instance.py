@@ -739,7 +739,7 @@ class msf_instance_cloud(osv.osv):
         progress_obj = False
 
         try:
-            if not config.get('send_to_onedrive') and not misc.use_prod_sync(cr):
+            if not config.get('send_to_onedrive') and not misc.use_prod_sync(cr, uid, self.pool):
                 raise osv.except_osv(_('Warning'), _('Only production instances are allowed !'))
 
             if not local_instance:
