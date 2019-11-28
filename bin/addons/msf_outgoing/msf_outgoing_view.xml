@@ -443,7 +443,7 @@
 			<field name="type">search</field>
             <field name="priority">18</field>
 			<field name="arch" type="xml">
-				<search string="Picking Tickets">
+				<search string="Picking Lists &amp; Picking Tickets">
 					<group col="8" colspan="4">
 						<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" />
 						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" />
@@ -580,7 +580,7 @@
 
 		<!-- Added 'subtype' in domain -->
 		<record id="action_picking_ticket" model="ir.actions.act_window">
-			<field name="name">Picking Tickets</field>
+			<field name="name">Picking Lists &amp; Picking Tickets</field>
 			<field name="res_model">stock.picking</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field>
@@ -1499,7 +1499,7 @@
 		</record>
 		<!-- Added 'subtype' in domain -->
 		<record id="action_shipment" model="ir.actions.act_window">
-			<field name="name">Shipment Lists</field>
+			<field name="name">Shipment Lists &amp; Shipments</field>
 			<field name="res_model">shipment</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field>
