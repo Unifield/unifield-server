@@ -52,6 +52,20 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF16.0
+    def us_6684_push_backup(self, cr, uid, *a, **b):
+        backup_obj = self.pool.get('backup.config')
+        if backup_obj:
+            cr.execute("update ir_cron set manual_activation='f' where function='send_backup_bg' and model='msf.instance.cloud'")
+            cr.execute("update ir_cron set name='Send Continuous Backup', manual_activation='f' where function='sent_continuous_backup_bg' and model='backup.config'")
+            if cr.column_exists('backup_config', 'continuous_backup_enabled'):
+                cr.execute("update backup_config set backup_type='cont_back' where continuous_backup_enabled='t'")
+
+            # update active field on cron
+            bck_ids = backup_obj.search(cr, uid, [])
+            backup_obj.write(cr, uid, bck_ids, {})
+        return True
+
     # UF15.0
     def us_6768_trigger_FP_sync(self, cr, uid, *a, **b):
         """

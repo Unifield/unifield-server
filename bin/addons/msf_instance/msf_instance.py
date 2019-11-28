@@ -680,7 +680,8 @@ class msf_instance_cloud(osv.osv):
                 to_write['active'] = False
             elif to_activate:
                 if not cron_data.active:
-                    to_write['active'] = True
+                    if self.pool.get('backup.config').search(cr, uid, [('backup_type', '=', 'sharepoint')]):
+                        to_write['active'] = True
 
                 next_cron = DateTime.strptime(cron_data.nextcall, '%Y-%m-%d %H:%M:%S')
                 if not cron_data.active or abs(round(next_cron.hour + next_cron.minute/60.,2) - round(myself['cloud_schedule_time'],2)) > 0.001:
@@ -707,6 +708,9 @@ class msf_instance_cloud(osv.osv):
         return now_dt >= start_dt or now_dt <= end_dt
 
     def send_backup_bg(self, cr, uid, progress=False, context=None):
+        if not self.pool.get('backup.config').search(cr, uid, [('backup_type', '=', 'sharepoint')]):
+            self._logger.warn('SharePoint push: the cron task is active but the backup configuration is set to Cont. Backup')
+            return True
         thread = threading.Thread(target=self.send_backup_run, args=(cr.dbname, uid, progress, context))
         thread.start()
         return True

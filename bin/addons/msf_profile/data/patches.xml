@@ -477,5 +477,9 @@
             <field name="method">us_6768_trigger_FP_sync</field>
         </record>
 
+        <record id="us_6684_push_backup" model="patch.scripts">
+            <field name="method">us_6684_push_backup</field>
+        </record>
+
     </data>
 </openerp>
