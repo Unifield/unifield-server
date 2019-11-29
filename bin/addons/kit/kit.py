@@ -231,6 +231,7 @@ class composition_kit(osv.osv):
                           'item_exp': item_v.item_exp, # is set to False
                           'item_kit_id': obj.id,
                           'item_description': item_v.item_description,
+                          'comment': item_v.comment,
                           }
                 item_obj.create(cr, uid, values, context=context)
             # we display the composition list view form
@@ -1139,7 +1140,8 @@ class composition_item(osv.osv):
                 'hidden_batch_management_mandatory': fields.function(_vals_get, method=True, type='boolean', string='B.Num', multi='get_vals', store=False, readonly=True),
                 'hidden_asset_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Asset', multi='get_vals', store=False, readonly=True),
                 'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
-                'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
+                'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
+                'comment': fields.char(size=256, string='Comment'),
                 }
 
     _defaults = {'hidden_batch_management_mandatory': False,

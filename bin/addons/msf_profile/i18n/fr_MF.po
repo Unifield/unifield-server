@@ -24510,7 +24510,7 @@ msgstr "Produits Stoppés"
 #: field:account.commitment,notes:0
 #: field:account.invoice.line,inactive_error:0
 #: field:res.groups,comment:0
-#: field:composition.item,inactive_error:0
+#: field:composition.item,comment:0
 #: report:kit.report:0
 #: field:msf_button_access_rights.button_access_rule,comment:0
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:232
@@ -27764,8 +27764,9 @@ msgstr "PMF"
 msgid "Your system will be updated."
 msgstr "Votre système sera mis à jour."
 
-#. module: consumption_calculation
+#. module: consumption_calculation, kit
 #: field:real.average.consumption.line,inactive_error:0
+#: field:composition.item,inactive_error:0
 msgid "System message"
 msgstr "Message système"
 
