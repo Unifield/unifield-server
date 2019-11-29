@@ -711,6 +711,14 @@ class msf_instance_cloud(osv.osv):
         if not self.pool.get('backup.config').search(cr, uid, [('backup_type', '=', 'sharepoint')]):
             self._logger.warn('SharePoint push: the cron task is active but the backup configuration is set to Cont. Backup')
             return True
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        if not local_instance:
+            return True
+        info = self._get_cloud_info(cr, uid, local_instance.id)
+        for data in ['url', 'login', 'password']:
+            if not info[data]:
+                self.pool.get('sync.version.instance.monitor').create(cr, uid, {'cloud_error': 'SharePoint indentifiers not set.'}, context=context)
+                return True
         thread = threading.Thread(target=self.send_backup_run, args=(cr.dbname, uid, progress, context))
         thread.start()
         return True

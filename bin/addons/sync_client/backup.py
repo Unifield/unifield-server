@@ -141,7 +141,7 @@ class BackupConfig(osv.osv):
             else:
                 cr = old_cr
             bk = self.browse(cr, uid, ids[0], context)
-            if not bk.backup_type != 'cont_back':
+            if bk.backup_type != 'cont_back':
                 raise Exception(_('Continuous Backup is disabled'))
             if not bk.wal_directory:
                 raise Exception(_('"Path to WAL Dir" is empty'))
@@ -175,20 +175,25 @@ class BackupConfig(osv.osv):
 
     def sent_continuous_backup(self, old_cr, uid, context=None):
         try:
+            if context is None:
+                context = {}
             cr = pooler.get_db(old_cr.dbname).cursor()
-            ids = self.search(cr, uid, [], context)
+            ids = self.search(cr, uid, [], context=context)
             bk = self.read(cr, uid, ids[0], ['backup_type', 'basebackup_date'], context=context)
-            if not bk['backup_type'] != 'cont_back':
+            if bk['backup_type'] != 'cont_back':
                 self._logger.info(_('Continuous backup disabled'))
                 return True
             if not bk['basebackup_date']:
+                if context.get('sync_type'):
+                    self._logger.info('Base Backup disabled after sync')
+                    return True
                 self.generate_basebackup_bg(cr, uid, ids, context=context, new_cr=False)
             self.sent_to_remote_bg(cr, uid, ids, context=context, new_cr=False)
             return True
 
-        except Exception, e:
+        except Exception:
             cr.rollback()
-            raise e
+            raise
         finally:
             cr.commit()
             cr.close(True)
@@ -218,10 +223,11 @@ class BackupConfig(osv.osv):
 
             dbname = cr.dbname
             bk = self.browse(cr, uid, ids[0], context)
-            if not bk.backup_type != 'cont_back':
+            if bk.backup_type != 'cont_back':
                 raise Exception('Continuous Backup is disabled')
             if not bk.wal_directory:
                 raise Exception('"Path to WAL Dir" is empty')
+            tools.misc.force_wal_generation(cr, bk.wal_directory)
             tools.misc.sent_to_remote(bk.wal_directory, config_dir=bk.ssh_config_dir, remote_user=bk.remote_user, remote_host=bk.remote_host, remote_dir=dbname)
             self.write(cr, uid, [bk.id], {'rsync_date': time.strftime('%Y-%m-%d %H:%M:%S'), 'rsync_error': False}, context=ctx_no_write)
             return True
@@ -325,6 +331,8 @@ class BackupConfig(osv.osv):
         elif state.startswith('after'):
             suffix = '-A'
 
+        if state.startswith('after'):
+            self.sent_continuous_backup_bg(cr, uid, context)
         if bkp_ids:
             if logger:
                 logger.append("Database %s backup started.." % state)
