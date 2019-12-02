@@ -121,7 +121,7 @@ class replenishment_location_config(osv.osv):
     _constraints = [(check_no_duplicates, 'Location already used on an active Configuration', [])]
     _sql_constraints = [
         ('unique_description_instance', 'unique(description, main_instance)', 'Desription must be unique'),
-        ('review_active_with_freq', 'CHECK(review_active or frequence_id is not null)', "You can't activate a review w/o any frequency"),
+        ('review_active_with_freq', 'CHECK(not review_active or frequence_id is not null)', "You can't activate a review w/o any frequency"),
     ]
 
 
@@ -338,46 +338,47 @@ class replenishment_segment_line(osv.osv):
         'real_stock_instance': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='Real Stock', multi='get_stock_amc'),
         'rr_amc': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='RR-AMC', multi='get_stock_amc'),
         'rr_fmc_1': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_1': fields.datetime('From'),
-        'rr_fmc_to_1': fields.datetime('To'),
+        'rr_fmc_from_1': fields.date('From'),
+        'rr_fmc_to_1': fields.date('To'),
         'rr_fmc_2': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_2': fields.datetime('From'),
-        'rr_fmc_to_2': fields.datetime('To'),
+        'rr_fmc_from_2': fields.date('From'),
+        'rr_fmc_to_2': fields.date('To'),
         'rr_fmc_3': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_3': fields.datetime('From'),
-        'rr_fmc_to_3': fields.datetime('To'),
+        'rr_fmc_from_3': fields.date('From'),
+        'rr_fmc_to_3': fields.date('To'),
         'rr_fmc_4': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_4': fields.datetime('From'),
-        'rr_fmc_to_4': fields.datetime('To'),
+        'rr_fmc_from_4': fields.date('From'),
+        'rr_fmc_to_4': fields.date('To'),
         'rr_fmc_5': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_5': fields.datetime('From'),
-        'rr_fmc_to_5': fields.datetime('To'),
+        'rr_fmc_from_5': fields.date('From'),
+        'rr_fmc_to_5': fields.date('To'),
         'rr_fmc_6': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_6': fields.datetime('From'),
-        'rr_fmc_to_6': fields.datetime('To'),
+        'rr_fmc_from_6': fields.date('From'),
+        'rr_fmc_to_6': fields.date('To'),
         'rr_fmc_7': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_7': fields.datetime('From'),
-        'rr_fmc_to_7': fields.datetime('To'),
+        'rr_fmc_from_7': fields.date('From'),
+        'rr_fmc_to_7': fields.date('To'),
         'rr_fmc_8': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_8': fields.datetime('From'),
-        'rr_fmc_to_8': fields.datetime('To'),
+        'rr_fmc_from_8': fields.date('From'),
+        'rr_fmc_to_8': fields.date('To'),
         'rr_fmc_9': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_9': fields.datetime('From'),
-        'rr_fmc_to_9': fields.datetime('To'),
+        'rr_fmc_from_9': fields.date('From'),
+        'rr_fmc_to_9': fields.date('To'),
         'rr_fmc_10': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_10': fields.datetime('From'),
-        'rr_fmc_to_10': fields.datetime('To'),
+        'rr_fmc_from_10': fields.date('From'),
+        'rr_fmc_to_10': fields.date('To'),
         'rr_fmc_11': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_11': fields.datetime('From'),
-        'rr_fmc_to_11': fields.datetime('To'),
+        'rr_fmc_from_11': fields.date('From'),
+        'rr_fmc_to_11': fields.date('To'),
         'rr_fmc_12': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_12': fields.datetime('From'),
-        'rr_fmc_to_12': fields.datetime('To'),
+        'rr_fmc_from_12': fields.date('From'),
+        'rr_fmc_to_12': fields.date('To'),
     }
 
     _sql_constraints = [
         ('uniq_segment_id_product_id', 'unique(segment_id, product_id)', 'Product already set in this segment')
     ]
+
 replenishment_segment_line()
 
 class replenishment_segment_line_amc(osv.osv):
