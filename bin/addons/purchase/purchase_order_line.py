@@ -2042,6 +2042,19 @@ class purchase_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'invoiced': True}, context=context)
         self.pool.get('account.invoice').button_compute(cr, uid, inv_ids.values(), {'type':'in_invoice'}, set_total=True)
+
+
+    def update_date_expected(self, cr, uid, source, data, context=None):
+        line_info = data.to_dict()
+        stock_move = self.pool.get('stock.move')
+        if line_info.get('sync_local_id') and line_info.get('date_expected'):
+            pol_id = self.search(cr, uid, [('sync_linked_sol', '=', line_info['sync_local_id'])], limit=1, context=context)
+            if pol_id:
+                move_id = stock_move.search(cr, uid, [('purchase_line_id', '=', pol_id), ('type', '=', 'in'), ('state', '=', 'assigned')])
+                if move_id:
+                    stock_move.write(cr, uid, move_id[0], {'date_expected': line_info.get('date_expected')}, context=context)
+        return True
+
 purchase_order_line()
 
 

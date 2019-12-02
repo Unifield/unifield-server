@@ -2328,8 +2328,41 @@ class stock_move(osv.osv):
             return True
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context= {}
         if vals.get('from_pack') or vals.get('to_pack'):
             vals['integrity_error'] = 'empty'
+        if 'date_expected' in vals and not context.get('chained'):
+            # TODO JFB RR: check method executed 2X
+            sys_int_ids = self.search(cr, uid, [('linked_incoming_move', 'in', ids)], context=context)
+            if sys_int_ids:
+                chained_ctx = context.copy()
+                chained_ctx['chained'] = True
+                self.write(cr, uid, sys_int_ids, {'date_expected': vals['date_expected']}, context=chained_ctx)
+            else:
+                # get all pol ids linked to internal, intersection, mission partners
+                cr.execute('''
+                    select sol.id
+                        from purchase_order_line pol
+                            cross join sale_order_line sol
+                            cross join sale_order so
+                            cross join stock_move m
+                        where
+                            sol.id = pol.sale_order_line_id and
+                            so.id = sol.order_id and
+                            m.purchase_line_id = pol.id and
+                            so.partner_type in ('internal', 'section', 'intermission') and
+                            m.type = 'in' and
+                            m.date_expected != %s and
+                            m.id in %s and
+                            sol.state = 'confirmed'
+                ''', (vals['date_expected'], tuple(ids)))
+                for x in cr.fetchall():
+                    self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', x[0], {},
+                                                                                          'purchase.order.line.update_date_expected', False, check_identifier=False, context=context, extra_arg={'date_expected': vals['date_expected']}, force_domain=True)
+
+
+
         return  super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):
