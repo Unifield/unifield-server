@@ -106586,3 +106586,50 @@ msgstr "MàJ en Masse de Produits NL/EXP"
 msgid "Funding Pool not found."
 msgstr "Funding Pool non trouvé."
 
+#. modules: account_override, account, register_accounting, msf_instance, finance
+#: selection:account.analytic.journal,type:0
+#: selection:account.journal,type:0
+#: selection:account.analytic.line,journal_type:0
+#: selection:account.move,journal_type:0
+#: selection:account.move.line,journal_type:0
+#: selection:cash.request.liquidity,type:0
+#: selection:cash.request.liquidity.bank,type:0
+#: selection:cash.request.liquidity.cash,type:0
+#: selection:cash.request.liquidity.cheque,type:0
+#: selection:account.analytic.journal.fake,type:0
+#: selection:account.journal.fake,type:0
+#: selection:wizard.register.opening.confirmation,register_type:0
+msgid "Correction Auto"
+msgstr "Correction Auto"
+
+#. modules: account_override, account, register_accounting, msf_instance, finance
+#: selection:account.analytic.journal,type:0
+#: selection:account.journal,type:0
+#: selection:account.analytic.line,journal_type:0
+#: selection:account.move,journal_type:0
+#: selection:account.move.line,journal_type:0
+#: selection:cash.request.liquidity,type:0
+#: selection:cash.request.liquidity.bank,type:0
+#: selection:cash.request.liquidity.cash,type:0
+#: selection:cash.request.liquidity.cheque,type:0
+#: selection:account.analytic.journal.fake,type:0
+#: selection:account.journal.fake,type:0
+#: selection:wizard.register.opening.confirmation,register_type:0
+msgid "Correction Manual"
+msgstr "Correction Manuelle"
+
+#. modules: account_override, account, register_accounting, msf_instance, finance
+#: selection:account.analytic.journal,type:0
+#: selection:account.journal,type:0
+#: selection:account.analytic.line,journal_type:0
+#: selection:account.move,journal_type:0
+#: selection:account.move.line,journal_type:0
+#: selection:cash.request.liquidity,type:0
+#: selection:cash.request.liquidity.bank,type:0
+#: selection:cash.request.liquidity.cash,type:0
+#: selection:cash.request.liquidity.cheque,type:0
+#: selection:account.analytic.journal.fake,type:0
+#: selection:account.journal.fake,type:0
+#: selection:wizard.register.opening.confirmation,register_type:0
+msgid "Correction HQ"
+msgstr "Correction HQ"
