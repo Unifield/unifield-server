@@ -662,7 +662,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
                                                               new_account_id, context=context)
 
         # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
+        if context.get('from_hq_entry'):
+            journal_type = 'correction_hq'
+        else:
+            journal_type = 'correction'
+        j_corr_ids = j_obj.search(cr, uid, [('type', '=', journal_type),
                                             ('is_current_instance', '=', True)], order='id', limit=1, context=context)
         j_corr_id = j_corr_ids and j_corr_ids[0] or False
 
