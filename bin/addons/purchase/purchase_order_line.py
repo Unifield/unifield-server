@@ -2053,6 +2053,10 @@ class purchase_order_line(osv.osv):
                 move_id = stock_move.search(cr, uid, [('purchase_line_id', '=', pol_id), ('type', '=', 'in'), ('state', '=', 'assigned')])
                 if move_id:
                     stock_move.write(cr, uid, move_id[0], {'date_expected': line_info.get('date_expected')}, context=context)
+                    # to update Expected Receipt Date on picking
+                    picking_id = stock_move.browse(cr, uid, move_id[0], fields_to_fetch=['picking_id']).picking_id
+                    if picking_id:
+                        picking_id.write({}, context=context)
         return True
 
 purchase_order_line()
