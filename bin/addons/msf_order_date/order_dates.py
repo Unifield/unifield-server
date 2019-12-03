@@ -911,7 +911,7 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'manual_min_date_stock_picking': value}, context=context)
+        cr.execute("update stock_picking set manual_min_date_stock_picking=%s where id in %s", (value, tuple(ids)))
         return True
 
     _columns = {'date': fields.datetime('Creation Date', help="Date of Order", select=True),
