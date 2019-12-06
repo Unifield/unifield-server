@@ -245,11 +245,15 @@ class replenishment_segment(osv.osv):
         ret['total_lt'] = ret['internal_lt'] + ret['external_lt']
         return {'value': ret}
 
+    def trigger_compute(self, cr, uid, ids, context):
+        return self.pool.get('replenishment.segment.line.amc').generate_all_amc(cr, uid, context=context, seg_ids=ids)
+
 replenishment_segment()
 
 class replenishment_segment_line(osv.osv):
     _name = 'replenishment.segment.line'
     _description = 'Product'
+    _rec_name = 'product_id'
 
     def _get_main_list(self, cr, uid, ids, field_name, arg, context=None):
         ret = {}
@@ -290,16 +294,15 @@ class replenishment_segment_line(osv.osv):
 
         for seg_id in segment:
             if segment[seg_id]['remote_location_q']:
-                # compute AMC for remote instances
+                # compute AMC for remote + local instances
                 # TODO JFB RR : genereate_all_amc for local
                 cr.execute("""
                     select segment_line_id, sum(amc)
                     from replenishment_segment_line_amc
                     where
-                        instance_id in %s and
                         segment_line_id in %s
                     group by segment_line_id
-                """, (tuple(segment[seg_id]['remote_instance_ids']), tuple(segment[seg_id]['prod_seg_line'].values())))
+                """, (tuple(segment[seg_id]['prod_seg_line'].values()), ))
                 for x in cr.fetchall():
                     ret[x[0]]['rr_amc'] = x[1]
             else:
@@ -390,9 +393,12 @@ class replenishment_segment_line_amc(osv.osv):
         'segment_line_id': fields.many2one('replenishment.segment.line', 'Segment Line', select=1, ondelete='cascade'),
         'amc': fields.float('AMC'),
         'instance_id': fields.many2one('msf.instance', string='Instance', select=1),
+        'reserved_stock': fields.float('Reserved Stock'),
+        'real_stock': fields.float('Reserved Stock'),
+        'expired_before_rrd': fields.float('Expired Qty before RRD'),
     }
 
-    def generate_all_amc(self, cr, uid, context=None):
+    def generate_all_amc(self, cr, uid, context=None, seg_ids=False):
         # TODO JFB RR
         # check last config mod date / conso mod date / current date and generates new AMC only if something has changed
         segment_obj = self.pool.get('replenishment.segment')
@@ -400,7 +406,11 @@ class replenishment_segment_line_amc(osv.osv):
 
         instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
         to_date = datetime.now() + relativedelta(day=1, days=-1)
-        seg_ids = segment_obj.search(cr, uid, [('state', 'in', ['draft', 'complete']), ('remote_location_ids', '=', False)], context=context)
+
+        if not seg_ids:
+            seg_ids = segment_obj.search(cr, uid, [('state', 'in', ['draft', 'complete'])], context=context)
+        elif isinstance(seg_ids, (int, long)):
+            seg_ids = [seg_ids]
 
         for segment in segment_obj.browse(cr, uid, seg_ids, context=context):
             seg_context = {
@@ -412,17 +422,36 @@ class replenishment_segment_line_amc(osv.osv):
             for line in segment.line_ids:
                 lines[line.product_id.id] = line.id
 
+            # update vs create line
             cache_line_amc = {}
             line_amc_ids = self.search(cr, uid, [('instance_id', '=', instance_id), ('segment_line_id', 'in', lines.values())], context=context)
             for line_amc in self.browse(cr, uid, line_amc_ids, fields_to_fetch=['segment_line_id'], context=context):
                 cache_line_amc[line_amc.segment_line_id.id] = line_amc.id
 
+            # real stock - reserved stock
+            stock_qties = {}
+            for prod_alloc in prod_obj.browse(cr, uid, lines.keys(), fields_to_fetch=['qty_reserved', 'qty_available'], context={'location': seg_context['amc_location_ids']}):
+                stock_qties[prod_alloc['id']] = {'qty_reserved': prod_alloc.qty_reserved, 'qty_available': prod_alloc.qty_available}
+
+            # AMC
             amc = prod_obj.compute_amc(cr, uid, lines.keys(), context=seg_context)
             for prod_id in amc:
+                data = {'amc': amc[prod_id], 'name': to_date, 'reserved_stock': stock_qties.get(prod_id, {}).get('qty_reserved'), 'real_stock': stock_qties.get(prod_id, {}).get('qty_available')}
                 if lines[prod_id] in cache_line_amc:
-                    self.write(cr, uid, cache_line_amc[lines[prod_id]], {'amc': amc[prod_id], 'name': to_date}, context=context)
+                    self.write(cr, uid, cache_line_amc[lines[prod_id]], data, context=context)
                 else:
-                    self.create(cr, uid, {'segment_line_id': lines[prod_id], 'amc': amc[prod_id], 'name': to_date, 'instance_id': instance_id}, context=context)
+                    data['segment_line_id'] = lines[prod_id]
+                    data['instance_id'] = instance_id
+                    cache_line_amc[lines[prod_id]] = self.create(cr, uid, data, context=context)
+
+            # expired_before_rrd
+            if segment.state == 'complete':
+                expired_obj = self.pool.get('product.likely.expire.report')
+                expired_id = expired_obj.create(cr, uid, {'segment_id': segment.id, 'date_to': (datetime.now() + relativedelta(days=int(segment.total_lt))).strftime('%Y-%m-%d')})
+                expired_obj._process_lines(cr, uid, expired_id, context=context, create_cr=False)
+                cr.execute("select product_id, sum(total_expired) from product_likely_expire_report_line where report_id=%s group by product_id", (expired_id, ))
+                for x in cr.fetchall():
+                    self.write(cr, uid, cache_line_amc[lines[x[0]]], {'expired_before_rrd': x[1]}, context=context)
 
         return True
 

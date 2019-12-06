@@ -338,6 +338,8 @@ class product_product(osv.osv):
                 c.update({ 'states': ('confirmed','waiting','assigned'), 'what': ('out',) })
             elif f == 'qty_allocable':
                 c.update({'what': ('in', 'out'), 'in_states': ('done',), 'out_states': ('done', 'assigned'), 'states': []})
+            elif f == 'qty_reserved':
+                c.update({'states': ('assigned', ), 'what': ('out')})
 
             stock = self.get_product_available(cr, uid, ids, context=c)
             if any(stock.values()):
@@ -346,6 +348,7 @@ class product_product(osv.osv):
         return res
 
     _columns = {
+        'qty_reserved': fields.function(_product_available, method=True, type='float', string='Reserved Qty', multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'qty_allocable': fields.function(_product_available, method=True, type='float', string='Available Qty', help="Real stock - reserved stock", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'qty_available': fields.function(_product_available, method=True, type='float', string='Real Stock', help="Current quantities of products in selected locations or all internal if none have been selected.", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),

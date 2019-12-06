@@ -365,7 +365,7 @@ class product_likely_expire_report(osv.osv):
 
         return self.open_report(cr, uid, ids, context=context)
 
-    def _process_lines(self, cr, uid, ids, context=None):
+    def _process_lines(self, cr, uid, ids, context=None, create_cr=True):
         '''
         Creates all moves with expiry quantities for all
         lot life date
@@ -376,8 +376,11 @@ class product_likely_expire_report(osv.osv):
             ids = [ids]
 
         # background cursor
-        import pooler
-        new_cr = pooler.get_db(cr.dbname).cursor()
+        if create_cr:
+            import pooler
+            new_cr = pooler.get_db(cr.dbname).cursor()
+        else:
+            new_cr = cr
 
         move_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
@@ -396,10 +399,17 @@ class product_likely_expire_report(osv.osv):
         only_product_ids = []
         if report.segment_id:
             from_segment = True
+            if report.segment_id.rule != 'cycle':
+                instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+                cr.execute('select id, rr_amc from replenishment_segment_line_amc where segment_line_id=%s and instance_id=%s', (tuple([line_id.id for line_id in report.segment_id.line_ids]) , instance_id))
+                local_amc = {}
+                for x in cr.fetchall():
+                    local_amc[x[0]] = x[1]
+
             for segment_line in report.segment_id.line_ids:
                 # TODO JFB RR: check rr_mac can be sum of proj + coo, set report date
                 if report.segment_id.rule != 'cycle':
-                    segment_product_amc[segment_line.product_id.id] = segment_line.rr_amc
+                    segment_product_amc[segment_line.product_id.id] = local_amc.get(segment_line.id)
                 else:
                     for x in xrange(1, 13):
                         fmc_from = getattr(segment_line, 'rr_fmc_from_%d'%x)
@@ -467,7 +477,6 @@ class product_likely_expire_report(osv.osv):
             dates.append(from_date)
             from_date = from_date + RelativeDateTime(months=1, day=1)
 
-        print 'dates', dates
         # Create a report line for each product
         products = {}
         for lot in lot_obj.browse(new_cr, uid, lot_ids, context=context):
@@ -611,8 +620,9 @@ class product_likely_expire_report(osv.osv):
         context.update({'dates': new_date})
         self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
 
-        new_cr.commit()
-        new_cr.close(True)
+        if create_cr:
+           new_cr.commit()
+           new_cr.close(True)
 
         return {
             'type': 'ir.actions.act_window',
