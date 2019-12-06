@@ -95,6 +95,8 @@ class analytic_distribution(osv.osv):
                 return 'invalid'
             if not self.check_dest_cc_compatibility(cr, uid, fp_line.destination_id.id, fp_line.cost_center_id.id, context=context):
                 return 'invalid'
+            if not fp_line.analytic_id:
+                return 'invalid'
             # If fp_line is MSF Private Fund, all is ok
             if fp_line.analytic_id.id == fp_id:
                 continue

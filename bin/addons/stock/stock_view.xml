@@ -321,6 +321,7 @@
                     <group col="2" colspan="2">
                         <separator string="Traceability" colspan="4"/>
                         <field name="stock_available" colspan="4"/>
+                        <field name="comment" colspan="4"/>
                         <button name="action_traceability" string="Upstream Traceability" type="object" context="{'type': '', 'field': 'prodlot_id'}" icon="gtk-go-up" colspan="2"/>
                         <button name="action_traceability" string="Downstream Traceability" type="object" context="{'type': 'move_history_ids', 'field': 'prodlot_id'}" icon="gtk-go-down" colspan="2"/>
                     </group>
@@ -632,6 +633,7 @@
             <field name="res_model">stock.location</field>
             <field name="type">ir.actions.act_window</field>
             <field name="domain">[('location_id','=',False)]</field>
+            <field name="context">{'default_tree_sort': 'posz,name'}</field>
             <field name="view_type">tree</field>
             <field name="view_id" ref="view_location_tree"/>
             <field name="help">This is the structure of your company's warehouses and locations. You can click on a location to get the list of the products and their stock level in this particular location and all its children.</field>
@@ -986,9 +988,11 @@
             <field name="arch" type="xml">
                 <search string="Internal Picking List">
                     <group col="8" colspan="4">
-                        <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Internal Moves"/>
+                        <filter icon="terp-document-new" name="draft" string="Draft"  domain="[('state', '=', 'draft')]" />
                         <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Internal Moves" />
+                        <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Internal Moves"/>
                         <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Internal Moves already processed"/>
+                        <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
                         <separator orientation="vertical"/>
                         <filter icon="gtk-execute" name="sysint" string="System INT" domain="[('subtype', '!=', 'sysint')]" help="System internal moves"/>
                         <separator orientation="vertical"/>
@@ -1164,7 +1168,7 @@
             <field name="arch" type="xml">
                 <search string="Stock Moves">
                     <group col="14" colspan="4">
-                        <filter icon="terp-go-today" string="Today" domain="[('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders processed Today or planned for Today"/>
+                        <filter icon="terp-go-today" string="Today" domain="['&amp;', ('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders processed Today or planned for Today"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state','=','done')]" help="Stock moves that have been processed"/>
                         <filter icon="terp-stock" string="Future" name="future" domain="[('state','in',('assigned','confirmed','waiting'))]" help="Stock moves that are Confirmed, Available or Waiting"/>
@@ -1357,7 +1361,7 @@
             <field name="arch" type="xml">
                 <search string="Stock Moves">
                     <group col="8" colspan="4">
-                        <filter icon="terp-go-today" string="Today" domain="[('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders planned for today"/>
+                        <filter icon="terp-go-today" string="Today" domain="['&amp;', ('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders planned for today"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-gtk-go-back-rtl" name="receive" string="To Do" domain="[('state','in',('confirmed','assigned'))]" help="Stock to be received"/>
                         <filter icon="terp-dialog-close" name="received" string="Done" domain="[('state','=','done')]"/>
@@ -1393,7 +1397,7 @@
             <field name="arch" type="xml">
                 <search string="Stock Moves">
                     <group col="8" colspan="4">
-                        <filter icon="terp-go-today" string="Today" domain="[('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders planned for today"/>
+                        <filter icon="terp-go-today" string="Today" domain="['&amp;', ('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders planned for today"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-gtk-go-back-rtl" name="receive" string="To Do" domain="[('state','in',('confirmed','assigned'))]" help="Stock to be delivered (available or not)"/>
                         <filter icon="terp-check" name="available" string="Available" domain="[('state','in',('assigned',))]" help="Stock available to be delivered"/>

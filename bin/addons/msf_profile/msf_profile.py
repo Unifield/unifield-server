@@ -53,6 +53,100 @@ class patch_scripts(osv.osv):
     }
 
     # UF15.0
+    def us_6768_trigger_FP_sync(self, cr, uid, *a, **b):
+        """
+        Triggers a synch. on the FP CD1-KNDAK_ in OCBCD100, to trigger its re-recreation in the projects
+        """
+        user_obj = self.pool.get('res.users')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance and current_instance.code == 'OCBCD100':
+            cr.execute("""
+                UPDATE ir_model_data 
+                SET touched ='[''code'']', last_modification = NOW()
+                WHERE module='sd' 
+                AND model='account.analytic.account' 
+                AND name = '3beb0a5e-5a6b-11e8-a0e4-1c4d70b8cca6/account_analytic_account/444';                
+            """)
+        return True
+
+    def uf15_fields_moved(self, cr, uid, *a, **b):
+        if _get_instance_level(self, cr, uid) == 'hq':
+            # touch BAR and ACL for fields moved from one module to another (i.e sdref renamed)
+            cr.execute("""
+                update ir_model_data set last_modification=now(), touched='[''name'']' 
+                where name in ('ir_model_access_res_currency_tables_model_res_currency_table_user read', 'ir_model_access_res_currency_tables_model_res_currency_table_admin', '_msf_profile_res_currency_tables_model_res_currency_table_Fin_Config_Full', '_msf_profile_res_currency_tables_model_res_currency_table_Fin_Config_HQ', 'BAR_res_currency_tablesview_currency_table_form_valid', 'BAR_res_currency_tablesview_currency_table_form_closed')
+            """)
+            self._logger.warn('%d BAR/ACL sync touched' % (cr.rowcount,))
+        elif self.pool.get('sync.server.update'):
+            # prevent NR on init sync for FARL/BAR on renamed or deleted fields
+            cr.execute('''
+                update sync_server_update set rule_id = NULL
+                where sdref in ('_msf_profile_account_payment_model_payment_mode_common','_msf_profile_account_voucher_model_account_voucher_line_common','_msf_profile_account_payment_model_payment_line_common','_msf_profile_account_voucher_model_sale_receipt_report_common','_msf_profile_account_payment_model_payment_order_common','_msf_profile_account_voucher_model_account_voucher_common','BAR_account_voucherview_purchase_receipt_form_action_cancel_draft','BAR_account_voucherview_account_voucher_unreconcile_trans_unrec','BAR_account_voucherview_vendor_receipt_form_proforma_voucher','BAR_account_paymentview_payment_order_form_set_done','BAR_account_voucherview_purchase_receipt_form_compute_tax','BAR_account_voucherview_sale_receipt_form_account_voucheract_pay_voucher','BAR_account_voucherview_voucher_form_proforma_voucher','BAR_account_voucherview_vendor_payment_form_cancel_voucher','BAR_account_paymentaccount_payment_populate_statement_view_populate_statement','BAR_account_voucherview_voucher_form_compute_tax','BAR_account_paymentview_payment_order_form_open','BAR_account_voucherview_account_statement_from_invoice_search_invoices','BAR_account_voucherview_sale_receipt_form_action_cancel_draft','BAR_account_voucherview_vendor_receipt_form_action_cancel_draft','BAR_account_voucherview_sale_receipt_form_compute_tax','BAR_account_voucherview_sale_receipt_form_cancel_voucher','BAR_account_voucherview_account_statement_from_invoice_lines_populate_statement','BAR_account_voucherview_sale_receipt_form_proforma_voucher','BAR_account_voucherview_voucher_tree_proforma_voucher','BAR_account_voucherview_purchase_receipt_form_cancel_voucher','BAR_account_voucherview_purchase_receipt_form_account_voucheract_pay_bills','BAR_account_voucherview_vendor_payment_form_proforma_voucher','BAR_account_voucherview_voucher_form_cancel_voucher','BAR_account_paymentview_create_payment_order_search_entries','BAR_account_paymentview_payment_order_form_set_to_draft','BAR_account_voucherview_voucher_form_action_cancel_draft','BAR_account_voucherview_vendor_payment_form_action_cancel_draft','BAR_account_paymentview_create_payment_order_lines_create_payment','BAR_account_paymentaccount_payment_make_payment_view_launch_wizard','BAR_account_voucherview_vendor_receipt_form_cancel_voucher','BAR_account_paymentview_payment_order_tree_cancel','BAR_account_voucherview_purchase_receipt_form_proforma_voucher','BAR_account_paymentview_payment_order_form_cancel','BAR_account_paymentview_payment_order_tree_set_done','BAR_account_paymentview_payment_order_form_account_paymentaction_create_payment_order','BAR_account_paymentview_payment_order_tree_open','ir_model_access_res_currency_tables_model_res_currency_table_user read','ir_model_access_res_currency_tables_model_res_currency_table_admin','_msf_profile_res_currency_tables_model_res_currency_table_Fin_Config_Full','_msf_profile_res_currency_tables_model_res_currency_table_Fin_Config_HQ','BAR_res_currency_tablesview_currency_table_form_valid','BAR_res_currency_tablesview_currency_table_form_closed', 'base_group_extended')
+                ''')
+            self._logger.warn('%d sync updates deactivated for init sync' % (cr.rowcount,))
+        return True
+
+    def us_6618_create_shadow_pack(self, cr, uid, *a, **b):
+        wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
+        if not wh_ids:
+            return True
+
+        wh = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0])
+        loc_ship = wh.lot_dispatch_id.id
+        loc_distrib = wh.lot_distribution_id.id
+        if not loc_ship or not loc_distrib:
+            return True
+
+        if cr.column_exists('stock_picking', 'first_shipment_packing_id'):
+            cr.execute('''
+                select * from stock_picking
+                where
+                    subtype='packing' and
+                    name ~ 'PACK/[0-9]+-(surplus|return-)?[0-9]+-[0-9]+' and
+                    first_shipment_packing_id is null and
+                    id not in (
+                        select first_shipment_packing_id from stock_picking where first_shipment_packing_id is not null
+                    )
+            ''')
+        else:
+            cr.execute('''
+                select * from stock_picking
+                where
+                    subtype='packing' and
+                    name ~ 'PACK/[0-9]+-(surplus|return-)?[0-9]+-[0-9]+'
+            ''')
+        create_ship = []
+        for ship in cr.dictfetchall():
+            ship_id = ship['id']
+            del(ship['id'])
+            del(ship['shipment_id'])
+            ship['state'] = 'done'
+            ship['name'] = '%s-s' % ship['name']
+            columns = []
+            values = []
+            columns = ship.keys()
+            values = ['%%(%s)s' % x for x in columns]
+            cr.execute('''insert into stock_picking (''' +','.join(columns)+ ''') VALUES (''' + ','.join(values) + ''') RETURNING ID''', ship) # not_a_user_entry
+            new_ship_id = cr.fetchone()[0]
+            create_ship.append(ship['name'])
+
+            cr.execute("select * from stock_move where picking_id = %s", (ship_id,))
+            for move in cr.dictfetchall():
+                del(move['id'])
+                move['picking_id'] = new_ship_id
+                move['location_id'] = loc_ship
+                move['location_dest_id'] = loc_distrib
+                move['state'] = 'done'
+                move['date'] = move['create_date']
+                columns = []
+                values = []
+                columns = move.keys()
+                values = ['%%(%s)s' % x for x in columns]
+                cr.execute('''insert into stock_move (''' +','.join(columns)+ ''') VALUES (''' + ','.join(values) + ''') ''', move) # not_a_user_entry
+
+        self._logger.warn('%d shadow pack created from %s' % (len(create_ship), ','.join(create_ship)))
+        return True
+
     def us_6354_trigger_donation_account_sync(self, cr, uid, *a, **b):
         """
         Triggers a synch. on the Intersection Partners at HQ, so that their Donation Payable Account is retrieved in the lower instances
@@ -1922,7 +2016,7 @@ class patch_scripts(osv.osv):
                     select res_id from ir_model_data d
                     where d.module='sd'
                         and d.model='res.partner'
-                        and name not in ('msf_doc_import_supplier_tbd', 'order_types_res_partner_local_market')
+                        and name != 'order_types_res_partner_local_market'
                         and name not like '%s%%'
                     ) """ % (identifier, ))  # not_a_user_entry
                 self._logger.warn('%s non local partners updated' % (cr.rowcount,))

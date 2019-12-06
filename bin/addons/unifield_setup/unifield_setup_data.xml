@@ -32,12 +32,6 @@
 	    	<field name="state">done</field>
 	    </record>
 	    
-	    <record id="account.account_configuration_installer_todo" model="ir.actions.todo">
-	    	<field name="sequence" eval="6" />
-	    	<field name="restart">never</field>
-	    	<field name="state">done</field>
-	    </record>
-	    
 	    <record id="purchase_double_validation.config_wizard_step_purchase_limit_amount" model="ir.actions.todo">
 	    	<field name="sequence" eval="7" />
 	    	<field name="restart">never</field>
@@ -46,12 +40,6 @@
 	    
 	    <record id="sale.sale_installer_todo" model="ir.actions.todo">
 	    	<field name="sequence" eval="8" />
-	    	<field name="restart">never</field>
-	    	<field name="state">done</field>
-	    </record>
-	    
-	    <record id="account.account_installer_todo" model="ir.actions.todo">
-	    	<field name="sequence" eval="12" />
 	    	<field name="restart">never</field>
 	    	<field name="state">done</field>
 	    </record>

@@ -616,6 +616,9 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        """
+            deprecated method: kept only to manage in-pipe updates during UF14.0 -> UF15.0
+        """
         if not ids:
             return True
         if context is None:

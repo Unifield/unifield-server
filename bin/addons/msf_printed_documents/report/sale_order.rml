@@ -569,7 +569,7 @@
         <blockTable colWidths="772.0" style="RemarkTable" keepWithNext="1">
             <tr>
                 <td>
-                    <para style="TextInformation">REMARKS :  [[ objects[0].note ]]</para>
+                    <para style="TextInformation">Notes :  [[ objects[0].note ]]</para>
                 </td>
             </tr>
             <tr>
