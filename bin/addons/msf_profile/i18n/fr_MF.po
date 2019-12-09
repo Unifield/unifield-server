@@ -106633,3 +106633,9 @@ msgstr "Correction Manuelle"
 #: selection:wizard.register.opening.confirmation,register_type:0
 msgid "Correction HQ"
 msgstr "Correction HQ"
+
+#. module: account_override
+#: code:addons/account_override/account.py:1198
+#, python-format
+msgid "The journal %s is forbidden in manual entries."
+msgstr "Le journal %s est interdit dans les écritures manuelles."
