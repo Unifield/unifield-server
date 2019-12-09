@@ -39,7 +39,28 @@ class account_analytic_journal(osv.osv):
         'company_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.id,
     }
 
+    def _check_corr_type(self, cr, uid, ids, context=None):
+        """
+        Check that only one "Correction" and one "Correction HQ" analytic journals exist per instance
+        """
+        if context is None:
+            context = {}
+        for analytic_journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'instance_id'], context=context):
+            if analytic_journal.type in ('correction', 'correction_hq'):
+                analytic_journal_dom = [('type', '=', analytic_journal.type),
+                                        ('instance_id', '=', analytic_journal.instance_id.id),
+                                        ('id', '!=', analytic_journal.id)]
+                if self.search_exist(cr, uid, analytic_journal_dom, context=context):
+                    return False
+        return True
+
+    _constraints = [
+        (_check_corr_type, 'An analytic journal with this type already exists for this instance.', ['type', 'instance_id']),
+    ]
+
+
 account_analytic_journal()
+
 
 class account_journal(osv.osv):
     _inherit="account.journal"

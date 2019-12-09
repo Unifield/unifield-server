@@ -106634,6 +106634,21 @@ msgstr "Correction Manuelle"
 msgid "Correction HQ"
 msgstr "Correction HQ"
 
+#. module: account_journal
+#: constraint:account.journal:0
+msgid "The analytic journal selected must have the same type and prop. instance as this journal."
+msgstr "Le journal analytique sélectionné doit avoir le même type et la même Instance Prop. que le journal."
+
+#. module: account_journal
+#: constraint:account.journal:0
+msgid "A journal with this type already exists for this instance."
+msgstr "Un journal de ce type existe déjà pour cette instance."
+
+#. module: account_journal
+#: constraint:account.analytic.journal:0
+msgid "An analytic journal with this type already exists for this instance."
+msgstr "Un journal analytique de ce type existe déjà pour cette instance."
+
 #. module: account_override
 #: code:addons/account_override/account.py:1198
 #, python-format
