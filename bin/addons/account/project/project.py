@@ -54,8 +54,20 @@ class account_analytic_journal(osv.osv):
                     return False
         return True
 
+    def _check_hq_corr(self, cr, uid, ids, context=None):
+        """
+        Check that the prop. instance of the "Correction HQ" analytic journal is a coordo
+        """
+        if context is None:
+            context = {}
+        for analytic_journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'instance_id'], context=context):
+            if analytic_journal.type == 'correction_hq' and analytic_journal.instance_id.level != 'coordo':
+                return False
+        return True
+
     _constraints = [
         (_check_corr_type, 'An analytic journal with this type already exists for this instance.', ['type', 'instance_id']),
+        (_check_hq_corr, 'The prop. instance of the "Correction HQ" analytic journal must be a coordination.', ['type', 'instance_id']),
     ]
 
 

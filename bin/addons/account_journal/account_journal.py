@@ -140,10 +140,22 @@ class account_journal(osv.osv):
                     return False
         return True
 
+    def _check_hq_correction(self, cr, uid, ids, context=None):
+        """
+        Check that the prop. instance of the "Correction HQ" journal is a coordo
+        """
+        if context is None:
+            context = {}
+        for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'instance_id'], context=context):
+            if journal.type == 'correction_hq' and (not journal.instance_id or journal.instance_id.level != 'coordo'):
+                return False
+        return True
+
     _constraints = [
         (_check_correction_type, 'A journal with this type already exists for this instance.', ['type', 'instance_id']),
         (_check_correction_analytic_journal, 'The analytic journal selected must have the same type and prop. instance as this journal.',
                                              ['type', 'analytic_journal_id', 'instance_id']),
+        (_check_hq_correction, 'The prop. instance of the "Correction HQ" journal must be a coordination.', ['type', 'instance_id']),
     ]
 
     def get_current_period(self, cr, uid, context=None):
