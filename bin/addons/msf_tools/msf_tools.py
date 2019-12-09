@@ -1094,6 +1094,9 @@ class job_in_progress(osv.osv_memory):
         if not nb_lines:
             raise osv.except_osv(_('Warning'), _('No line to process'))
 
+        if self.search(cr, 1, [('state', '=', 'in-progress')]):
+            return True
+
         object_id = src_ids[0]
         if main_object_id:
             object_id = main_object_id
