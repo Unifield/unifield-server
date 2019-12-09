@@ -106637,7 +106637,7 @@ msgstr "Correction HQ"
 #. module: account_journal
 #: constraint:account.journal:0
 msgid "The analytic journal selected must have the same type and prop. instance as this journal."
-msgstr "Le journal analytique sélectionné doit avoir le même type et la même Instance Prop. que le journal."
+msgstr "Le journal analytique sélectionné doit avoir le même type et la même instance prop. que ce journal."
 
 #. module: account_journal
 #: constraint:account.journal:0
