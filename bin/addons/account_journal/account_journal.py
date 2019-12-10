@@ -136,7 +136,7 @@ class account_journal(osv.osv):
             if journal.type in ('correction', 'correction_hq'):
                 if not journal.analytic_journal_id:
                     return False
-                elif journal.type != journal.analytic_journal_id.type or journal.instance_id != journal.analytic_journal_id.instance_id:
+                elif journal.type != journal.analytic_journal_id.type or journal.instance_id.id != journal.analytic_journal_id.instance_id.id:
                     return False
         return True
 

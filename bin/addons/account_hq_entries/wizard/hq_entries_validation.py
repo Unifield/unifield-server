@@ -366,7 +366,7 @@ class hq_entries_validation(osv.osv_memory):
             for aal in browse_aals:
                 cor_name = 'COR1 - ' + aal.name
                 ana_line_obj.write(cr, uid, aal.id, {'last_corrected_id': original_aal_ids[0],'name': cor_name, 'ref': cor_ref})
-            # also write the OD entry_sequence to the REV aal
+            # also write the ODHQ entry_sequence to the REV aal
             # ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'entry_sequence': aal.entry_sequence})
             cr.execute('''UPDATE account_analytic_line SET entry_sequence=%s WHERE id=%s''', (aal.entry_sequence, res_reverse[0]))
 
