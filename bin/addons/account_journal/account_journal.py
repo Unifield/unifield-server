@@ -120,7 +120,7 @@ class account_journal(osv.osv):
         if context is None:
             context = {}
         for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'instance_id'], context=context):
-            if journal.type in ('correction', 'correction_hq') and journal.instance_id:
+            if journal.type in ('correction', 'correction_hq'):
                 journal_dom = [('type', '=', journal.type), ('instance_id', '=', journal.instance_id.id), ('id', '!=', journal.id)]
                 if self.search_exist(cr, uid, journal_dom, context=context):
                     return False
@@ -147,7 +147,7 @@ class account_journal(osv.osv):
         if context is None:
             context = {}
         for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'instance_id'], context=context):
-            if journal.type == 'correction_hq' and (not journal.instance_id or journal.instance_id.level != 'coordo'):
+            if journal.type == 'correction_hq' and journal.instance_id.level != 'coordo':
                 return False
         return True
 
