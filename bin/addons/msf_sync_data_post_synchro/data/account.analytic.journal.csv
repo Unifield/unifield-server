@@ -4,6 +4,8 @@ TRUE,PUF,Purchase Refund,purchase
 TRUE,SAL,Sales,sale
 TRUE,SAR,Sales Refund,sale
 TRUE,OD,Corrections,correction
+TRUE,ODHQ,Correction automatic HQ,correction_hq
+TRUE,ODM,Correction manual,correction_manual
 TRUE,HQ,Headquarters,hq
 TRUE,HR,Human Resources,hr
 TRUE,ENG,Engagement,engagement
