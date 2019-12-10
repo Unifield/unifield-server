@@ -4,7 +4,6 @@ HQ,,,,Headquarters,hq,Headquarters
 HR,,,,Human Resources,hr,Human Resources
 FXA,,67040,67040,FX adjustment,cur_adj,FX adjustment
 OD,,,,Corrections,correction,Corrections
-ODHQ,,,,Correction automatic HQ,correction_hq,Correction automatic HQ
 ODM,,,,Correction manual,correction_manual,Correction manual
 PUR,,,,Purchase,purchase,Purchase
 PUF,,,,Purchase Refund,purchase_refund,Purchase Refund
