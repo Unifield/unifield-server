@@ -63,14 +63,27 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        move_obj = self.pool.get('stock.move')
+
         for pol in self.browse(cr, uid, ids, context=context):
-            related_in_moves = self.pool.get('stock.move').search(cr, uid, [
+            related_in_moves = move_obj.search(cr, uid, [
                 ('purchase_line_id', '=', pol.id),
                 ('type', '=', 'in'),
                 ('state', 'not in', ['done', 'cancel']),
+                ('picking_id.claim', '=', False),
             ], context=context)
             if related_in_moves:
-                self.pool.get('stock.move').action_cancel(cr, uid, related_in_moves, context=context)
+                # In the case of a Claim return/surplus with replacement, prevents the cancellation of INs
+                not_claim_related_in_moves = []
+                for related_in_move_id in related_in_moves:
+                    in_id = move_obj.browse(cr, uid, related_in_move_id, fields_to_fetch=['picking_id'], context=context).picking_id.id
+                    claim_ids = self.pool.get('return.claim').search(cr, uid, [
+                        ('picking_id_return_claim', '=', in_id), ('goods_expected', '=', True)
+                    ], context=context)
+                    if not claim_ids:
+                        not_claim_related_in_moves.append(related_in_move_id)
+                if not_claim_related_in_moves:
+                    self.pool.get('stock.move').action_cancel(cr, uid, not_claim_related_in_moves, context=context)
 
         return True
 
