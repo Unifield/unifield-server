@@ -347,7 +347,7 @@ class hq_entries_validation(osv.osv_memory):
                                                                                 [('type', '=', 'correction_hq'), ('is_current_instance', '=', True)],
                                                                                 order='id', limit=1)
             if not acor_journal_ids:
-                raise osv.except_osv(_('Error'), _('No analytic "correction HQ" journal found!'))
+                raise osv.except_osv(_('Error'), _('No "correction HQ" analytic journal found!'))
             acor_journal_id = acor_journal_ids[0]
             ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'move_id': counterpart_id[0]}) # UTP-1106: change move_id link as it's wrong one
 
@@ -528,7 +528,7 @@ class hq_entries_validation(osv.osv_memory):
                 # Give them analytic correction journal (UF-1385 in comments)
                 if not acor_journal_id:
                     self.write(cr, uid, [wiz.id], {'running': False})
-                    raise osv.except_osv(_('Warning'), _('No analytic "correction HQ" journal found!'))
+                    raise osv.except_osv(_('Warning'), _('No "correction HQ" analytic journal found!'))
                 ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
                 # create new lines
                 if not fp_old_lines: # UTP-546 - this have been added because of sync that break analytic lines generation
