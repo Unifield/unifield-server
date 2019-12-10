@@ -106649,6 +106649,16 @@ msgstr "Un journal de ce type existe déjà pour cette instance."
 msgid "An analytic journal with this type already exists for this instance."
 msgstr "Un journal analytique de ce type existe déjà pour cette instance."
 
+#. module: account_journal
+#: constraint:account.journal:0
+msgid "The prop. instance of the \"Correction HQ\" journal must be a coordination."
+msgstr "L'instance prop. du journal de type \"Correction HQ\" doit être une coordination."
+
+#. module: account
+#: constraint:account.analytic.journal:0
+msgid "The prop. instance of the \"Correction HQ\" analytic journal must be a coordination."
+msgstr "L'instance prop. du journal analytique de type \"Correction HQ\" doit être une coordination."
+
 #. module: account_override
 #: code:addons/account_override/account.py:1198
 #, python-format
