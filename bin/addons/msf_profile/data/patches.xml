@@ -478,8 +478,8 @@
         </record>
 
         <!-- UF16.0 -->
-        <record id="us_6692_create_new_od_journals" model="patch.scripts">
-            <field name="method">us_6692_create_new_od_journals</field>
+        <record id="us_6692_new_od_journals" model="patch.scripts">
+            <field name="method">us_6692_new_od_journals</field>
         </record>
 
     </data>

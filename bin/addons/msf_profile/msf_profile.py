@@ -53,9 +53,11 @@ class patch_scripts(osv.osv):
     }
 
     # UF16.0
-    def us_6692_create_new_od_journals(self, cr, uid, *a, **b):
+    def us_6692_new_od_journals(self, cr, uid, *a, **b):
         """
-        Creation of:
+        1. Change the type of the existing correction journals (except OD) to "Correction Manual" so they remain usable
+
+        2. Create:
         - ODM journals in all existing instances
         - ODHQ journals in existing coordo instances
 
@@ -68,6 +70,21 @@ class patch_scripts(osv.osv):
         journal_obj = self.pool.get('account.journal')
         current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
         if current_instance:  # existing instances only
+            # existing correction journals
+            cr.execute("""
+                       UPDATE account_analytic_journal
+                       SET type = 'correction_manual'
+                       WHERE type = 'correction'
+                       AND code != 'OD';              
+                       """)
+            self._logger.warn('%s analytic correction journals updated.' % (cr.rowcount,))
+            cr.execute("""
+                       UPDATE account_journal
+                       SET type = 'correction_manual'
+                       WHERE type = 'correction'
+                       AND code != 'OD';              
+                       """)
+            self._logger.warn('%s correction journals updated.' % (cr.rowcount,))
             # ODM analytic journal
             odm_analytic_vals = {
                 # Prop. Instance: by default the current one is used
