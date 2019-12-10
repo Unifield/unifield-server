@@ -27766,9 +27766,14 @@ msgstr "Votre système sera mis à jour."
 
 #. module: consumption_calculation, kit
 #: field:real.average.consumption.line,inactive_error:0
-#: field:composition.item,inactive_error:0
+#: report:kit.report:0
 msgid "System message"
 msgstr "Message système"
+
+#. module: kit
+#: report:kit.report:0
+msgid "System Message"
+msgstr "Message Système"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
