@@ -180,7 +180,9 @@
                         <field string="Supplier" name="partner_id" domain="[('supplier', '=', True)]"
                                on_change="onchange_partner_id(type, partner_id, date_invoice, payment_term, partner_bank_id, company_id)"
                                context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}"
-                               attrs="{'readonly': ['|', ('state', '!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"
+                               attrs="{'readonly': ['|',
+                                                    ('state', '!=', 'draft'),
+                                                    '&amp;', ('type', '=', 'in_invoice'), '|', ('synced', '=', True), ('from_supply', '=', True)]}"
                         />
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id"/>
                         <field name="fiscal_position" groups="base.group_extended" widget="selection"/>
