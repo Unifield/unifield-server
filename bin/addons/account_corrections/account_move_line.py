@@ -448,19 +448,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
         ana_j_obj = self.pool.get('account.analytic.journal')
         aal_obj = self.pool.get('account.analytic.line')
         # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                            ('is_current_instance', '=', True)], order='id', limit=1, context=context)
-        j_corr_id = j_corr_ids and j_corr_ids[0] or False
-        j_ana_corr_ids = ana_j_obj.search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)],
-                                          order='id', limit=1, context=context)
-        j_ana_corr_id = j_ana_corr_ids and j_ana_corr_ids[0] or False
+        j_corr_id = j_obj.get_correction_journal(cr, uid, context=context)
+        j_ana_corr_id = ana_j_obj.get_correction_analytic_journal(cr, uid, context=context)
         # Search extra-accounting journal
-        j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
-                                             ('is_current_instance', '=', True)], order='id', limit=1)
-        j_extra_id = j_extra_ids and j_extra_ids[0] or False
-        j_ana_extra_ids = ana_j_obj.search(cr, uid, [('type', '=', 'extra'), ('is_current_instance', '=', True)],
-                                           order='id', limit=1, context=context)
-        j_ana_extra_id = j_ana_extra_ids and j_ana_extra_ids[0] or False
+        j_extra_id = j_obj.get_correction_journal(cr, uid, type='extra', context=context)
+        j_ana_extra_id = ana_j_obj.get_correction_analytic_journal(cr, uid, type='extra', context=context)
 
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context,

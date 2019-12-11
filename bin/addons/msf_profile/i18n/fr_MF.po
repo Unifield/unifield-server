@@ -106655,17 +106655,19 @@ msgstr "L'instance prop. du journal analytique de type \"Correction HQ\" doit ê
 msgid "The journal %s is forbidden in manual entries."
 msgstr "Le journal %s est interdit dans les écritures manuelles."
 
-#. modules: account_hq_entries, account_corrections
+#. modules: account_hq_entries, account_corrections, analytic_distribution
 #: code:addons/account_hq_entries/wizard/hq_entries_validation.py:269
 #: code:addons/account_hq_entries/wizard/hq_entries_validation.py:568
 #: code:addons/account_corrections/account_move_line.py:731
+#: code:addons/analytic_distribution/analytic_line.py:354
 #, python-format
 msgid "No \"correction HQ\" journal found!"
 msgstr "Aucun journal de type \"correction HQ\" n'a été trouvé !"
 
-#. module: account_hq_entries
+#. modules: account_hq_entries, analytic_distribution
 #: code:addons/account_hq_entries/wizard/hq_entries_validation.py:350
 #: code:addons/account_hq_entries/wizard/hq_entries_validation.py:531
+#: code:addons/analytic_distribution/analytic_line.py:359
 #, python-format
 msgid "No \"correction HQ\" analytic journal found!"
 msgstr "Aucun journal analytique de type \"correction HQ\" n'a été trouvé !"
