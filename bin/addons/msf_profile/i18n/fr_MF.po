@@ -42164,13 +42164,10 @@ msgstr "Prix Unitaire doit être supérieur à 0.0"
 msgid "Field Information"
 msgstr "Information Champ "
 
-#. modules: account_corrections, account_hq_entries
+#. module: account_corrections
 #: code:addons/account_corrections/account_move_line.py:499
 #: code:addons/account_corrections/account_move_line.py:707
 #: code:addons/account_corrections/account_move_line.py:855
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:261
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:340
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:542
 #, python-format
 msgid "No correction journal found!"
 msgstr "Le système n'a pas trouvé de Journal des corrections !"
@@ -100290,13 +100287,6 @@ msgid "No HQ journal found!"
 msgstr "Aucun journal HQ trouvé!"
 
 #. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:343
-#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:506
-#, python-format
-msgid "No analytic correction journal found!"
-msgstr "Aucun Journal Analytique de correction n'a été trouvé!"
-
-#. module: account_hq_entries
 #: code:addons/account_hq_entries/hq_entries.py:311
 #, python-format
 msgid "No line found!"
@@ -106664,3 +106654,17 @@ msgstr "L'instance prop. du journal analytique de type \"Correction HQ\" doit ê
 #, python-format
 msgid "The journal %s is forbidden in manual entries."
 msgstr "Le journal %s est interdit dans les écritures manuelles."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:269
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:568
+#, python-format
+msgid "No \"correction HQ\" journal found!"
+msgstr "Aucun journal de type \"correction HQ\" n'a été trouvé !"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:350
+#: code:addons/account_hq_entries/wizard/hq_entries_validation.py:531
+#, python-format
+msgid "No \"correction HQ\" analytic journal found!"
+msgstr "Aucun journal analytique de type \"correction HQ\" n'a été trouvé !"
