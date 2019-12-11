@@ -662,11 +662,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                                                               new_account_id, context=context)
 
         # Search correction journal
-        if context.get('from_hq_entry'):
-            journal_type = 'correction_hq'
-        else:
-            journal_type = 'correction'
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', journal_type),
+        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
                                             ('is_current_instance', '=', True)], order='id', limit=1, context=context)
         j_corr_id = j_corr_ids and j_corr_ids[0] or False
 
@@ -674,6 +670,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
                                              ('is_current_instance', '=', True)], order='id', limit=1)
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
+
+        # Search for the "Correction HQ" journal
+        hq_corr_journal_ids = j_obj.search(cr, uid, [('type', '=', 'correction_hq'),
+                                                     ('is_current_instance', '=', True)], order='id', limit=1)
+        hq_corr_journal_id = hq_corr_journal_ids and hq_corr_journal_ids[0] or False
 
         # Search attached period
         period_obj = self.pool.get('account.period')
@@ -722,6 +723,13 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
                 if new_account.type_for_register != 'donation':
                     raise osv.except_osv(_('Error'), _('You come from a donation account. And new one is not a Donation account. You should give a Donation account!'))
+
+            # Correction: of an HQ entry, or of a correction of an HQ entry
+            if ml.journal_id.type in ('hq', 'correction_hq'):
+                journal_id = hq_corr_journal_id
+                if not journal_id:
+                    raise osv.except_osv(_('Error'), _('No "correction HQ" journal found!'))
+
             if not journal_id:
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
 

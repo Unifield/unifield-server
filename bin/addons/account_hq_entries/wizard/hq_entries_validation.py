@@ -395,7 +395,6 @@ class hq_entries_validation(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        context.update({'from_hq_entry': True})
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.running:
                 return {}

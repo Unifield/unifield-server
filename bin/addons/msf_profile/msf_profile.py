@@ -77,14 +77,14 @@ class patch_scripts(osv.osv):
                        WHERE type = 'correction'
                        AND code != 'OD';              
                        """)
-            self._logger.warn('%s analytic correction journals updated.' % (cr.rowcount,))
+            self._logger.warn('%s analytic correction journal(s) updated.' % (cr.rowcount,))
             cr.execute("""
                        UPDATE account_journal
                        SET type = 'correction_manual'
                        WHERE type = 'correction'
                        AND code != 'OD';              
                        """)
-            self._logger.warn('%s correction journals updated.' % (cr.rowcount,))
+            self._logger.warn('%s correction journal(s) updated.' % (cr.rowcount,))
             # ODM analytic journal
             odm_analytic_vals = {
                 # Prop. Instance: by default the current one is used
