@@ -662,19 +662,13 @@ receivable, item have not been corrected, item have not been reversed and accoun
                                                               new_account_id, context=context)
 
         # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                            ('is_current_instance', '=', True)], order='id', limit=1, context=context)
-        j_corr_id = j_corr_ids and j_corr_ids[0] or False
+        j_corr_id = j_obj.get_correction_journal(cr, uid, context=context)
 
         # Search extra-accounting journal
-        j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
-                                             ('is_current_instance', '=', True)], order='id', limit=1)
-        j_extra_id = j_extra_ids and j_extra_ids[0] or False
+        j_extra_id = j_obj.get_correction_journal(cr, uid, type='extra', context=context)
 
         # Search for the "Correction HQ" journal
-        hq_corr_journal_ids = j_obj.search(cr, uid, [('type', '=', 'correction_hq'),
-                                                     ('is_current_instance', '=', True)], order='id', limit=1)
-        hq_corr_journal_id = hq_corr_journal_ids and hq_corr_journal_ids[0] or False
+        hq_corr_journal_id = j_obj.get_correction_journal(cr, uid, type='hq', context=context)
 
         # Search attached period
         period_obj = self.pool.get('account.period')

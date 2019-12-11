@@ -444,5 +444,25 @@ class account_journal(osv.osv):
             'target': 'crush',
         }
 
+    def get_correction_journal(self, cr, uid, type=False, context=None):
+        """
+        Returns the correction journal of the current instance (or False if not found):
+        - by default => standard Correction journal
+        - type 'hq' => Correction HQ journal
+        - type 'extra' => OD-Extra Accounting journal
+        """
+        if context is None:
+            context = {}
+        if type == 'hq':
+            journal_type = 'correction_hq'
+        elif type == 'extra':
+            journal_type = 'extra'
+        else:
+            journal_type = 'correction'
+        journal_ids = self.search(cr, uid, [('type', '=', journal_type), ('is_current_instance', '=', True)],
+                                  order='id', limit=1, context=context)
+        return journal_ids and journal_ids[0] or False
+
+
 account_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

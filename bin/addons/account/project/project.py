@@ -70,6 +70,25 @@ class account_analytic_journal(osv.osv):
         (_check_hq_corr, 'The prop. instance of the "Correction HQ" analytic journal must be a coordination.', ['type', 'instance_id']),
     ]
 
+    def get_correction_analytic_journal(self, cr, uid, type=False, context=None):
+        """
+        Returns the correction analytic journal of the current instance (or False if not found):
+        - by default => standard Correction journal
+        - type 'hq' => Correction HQ journal
+        - type 'extra' => OD-Extra Accounting journal
+        """
+        if context is None:
+            context = {}
+        if type == 'hq':
+            analytic_journal_type = 'correction_hq'
+        elif type == 'extra':
+            analytic_journal_type = 'extra'
+        else:
+            analytic_journal_type = 'correction'
+        analytic_journal_ids = self.search(cr, uid, [('type', '=', analytic_journal_type), ('is_current_instance', '=', True)],
+                                           order='id', limit=1, context=context)
+        return analytic_journal_ids and analytic_journal_ids[0] or False
+
 
 account_analytic_journal()
 
