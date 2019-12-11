@@ -52,10 +52,6 @@ DOCUMENT_DATA = {
     'sale.order': ('sale.order.line', 'order_id', 'order_line', 'product_uom_qty', ''),
     'supplier.catalogue': ('supplier.catalogue.line', 'catalogue_id', 'line_ids', 'min_qty', ''),
     'stock.picking': ('stock.move', 'picking_id', 'move_lines', 'product_qty', '(\'state\', \'=\', \'draft\')'),
-    'stock.warehouse.orderpoint': ('stock.warehouse.orderpoint.line', 'supply_id', 'line_ids', '', ''),
-    'stock.warehouse.automatic.supply': ('stock.warehouse.automatic.supply.line', 'supply_id', 'line_ids', 'product_qty', ''),
-    'stock.warehouse.order.cycle': ('stock.warehouse.order.cycle.line', 'order_cycle_id', 'product_ids', 'safety_stock', ''),
-    'threshold.value': ('threshold.value.line', 'threshold_value_id', 'line_ids', '', ''),
     'stock.inventory': ('stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty', ''),
     'initial.stock.inventory': ('initial.stock.inventory.line', 'inventory_id', 'inventory_line_id', 'product_qty', ''),
     'real.average.consumption': ('real.average.consumption.line', 'rac_id', 'line_ids', 'consumed_qty', ''),
@@ -186,43 +182,6 @@ class stock_picking(osv.osv):
         return brl(self, cr, uid, ids, context=context)
 
 
-class stock_warehouse_orderpoint(osv.osv):
-    _name = 'stock.warehouse.orderpoint'
-    _inherit = 'stock.warehouse.orderpoint'
-
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        return brl(self, cr, uid, ids, context=context)
-
-
-class stock_warehouse_automatic_supply(osv.osv):
-    _name = 'stock.warehouse.automatic.supply'
-    _inherit = 'stock.warehouse.automatic.supply'
-
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        return brl(self, cr, uid, ids, context=context)
-
-
-class stock_warehouse_order_cycle(osv.osv):
-    _name = 'stock.warehouse.order.cycle'
-    _inherit = 'stock.warehouse.order.cycle'
-
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        return brl(self, cr, uid, ids, context=context)
-
-
-class threshold_value(osv.osv):
-    _name = 'threshold.value'
-    _inherit = 'threshold.value'
-
-    def button_remove_lines(self, cr, uid, ids, context=None):
-        ids = isinstance(ids, (int, long)) and [ids] or ids
-        context = context is None and {} or context
-
-        context.update({'compute_method': self.read(cr, uid, ids[0], ['compute_method'], context=context)['compute_method']})
-
-        return brl(self, cr, uid, ids, context=context)
-
-
 class stock_inventory(osv.osv):
     _name = 'stock.inventory'
     _inherit = 'stock.inventory'
@@ -266,10 +225,6 @@ tender()
 sale_order()
 supplier_catalogue()
 stock_picking()
-stock_warehouse_orderpoint()
-stock_warehouse_automatic_supply()
-stock_warehouse_order_cycle()
-threshold_value()
 stock_inventory()
 initial_stock_inventory()
 real_average_consumption()
@@ -436,33 +391,6 @@ class stock_move(osv.osv):
         return noteditable_fields_view_get(res, view_type, context)
 
 
-class stock_warehouse_automatic_supply_line(osv.osv):
-    _inherit = 'stock.warehouse.automatic.supply.line'
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        res = super(stock_warehouse_automatic_supply_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        return noteditable_fields_view_get(res, view_type, context)
-
-
-class stock_warehouse_order_cycle_line(osv.osv):
-    _inherit = 'stock.warehouse.order.cycle.line'
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        res = super(stock_warehouse_order_cycle_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        return noteditable_fields_view_get(res, view_type, context)
-
-
-class threshold_value_line(osv.osv):
-    _inherit = 'threshold.value.line'
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        view_id = delete_fields_view_get(self, cr, uid, view_id, view_type, context=context)
-        res = super(threshold_value_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        return noteditable_fields_view_get(res, view_type, context)
-
-
 class stock_inventory_line(osv.osv):
     _inherit = 'stock.inventory.line'
 
@@ -507,9 +435,6 @@ tender_line()
 sale_order_line()
 supplier_catalogue_line()
 stock_move()
-stock_warehouse_automatic_supply_line()
-stock_warehouse_order_cycle_line()
-threshold_value_line()
 stock_inventory_line()
 initial_stock_inventory_line()
 real_average_consumption_line()

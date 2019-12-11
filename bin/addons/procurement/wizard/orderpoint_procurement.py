@@ -39,19 +39,6 @@ class procurement_compute(osv.osv_memory):
             'automatic': False,
     }
 
-    def _procure_calculation_orderpoint(self, cr, uid, ids, context=None):
-        """
-        @param self: The object pointer.
-        @param cr: A database cursor
-        @param uid: ID of the user currently logged in
-        @param ids: List of IDs selected
-        @param context: A standard dictionary
-        """
-        proc_obj = self.pool.get('procurement.order')
-        for proc in self.browse(cr, uid, ids, context=context):
-            proc_obj._procure_orderpoint_confirm(cr, uid, automatic=proc.automatic, use_new_cursor=cr.dbname, context=context)
-
-        return {}
 
     def procure_calculation(self, cr, uid, ids, context=None):
         """

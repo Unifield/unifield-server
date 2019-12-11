@@ -1514,35 +1514,25 @@ class monthly_review_consumption_line(osv.osv):
         return result
 
     def _get_security_stock(self, cr, uid, ids, field_name, args, context=None):
+        # TODO JFB RR
         """
         Get the security stock of the last created order cycle line with the same product
         """
         res = {}
-        ocl_obj = self.pool.get('stock.warehouse.order.cycle.line')
 
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        for line in self.browse(cr, uid, ids, context=context):
-            ocl_ids = ocl_obj.search(cr, uid, [
-                ('product_id', '=', line.name.id),
-            ], order='id desc', context=context)
-            if not ocl_ids:
-                res[line.id] = 0.00
-            else:
-                res[line.id] = ocl_obj.browse(cr, uid, ocl_ids[0], context=context).safety_stock
-
+        for _id in ids:
+            res[id] = 0
         return res
 
     def _get_order_cycle_line(self, cr, uid, ids, context=None):
         """
-        ids represents the ids of stock.warehouse.order.cycle.line objects
         for which values have changed.
 
         Return the list of ids of monthly.review.consumption.line which need
         to get their fields updated.
 
-        self is stock.warehouse.order.cycle.line object
         """
         line_obj = self.pool.get('monthly.review.consumption.line')
 
@@ -1579,7 +1569,6 @@ class monthly_review_consumption_line(osv.osv):
             readonly=True,
             store={
                 'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['name'], 10),
-                'stock.warehouse.order.cycle.line': (_get_order_cycle_line, ['safety_stock'], 10),
             },
         ),
         #'last_reviewed': fields.function(_get_last_fmc, method=True, type='date', string='Last reviewed on', readonly=True, store=True),

@@ -43,12 +43,10 @@
     "init_xml": [
     ],
     'update_xml': [
-        'procurement_view.xml',
         'procurement_data.xml',
         'replenishment_data.xml',
         'replenishment_view.xml',
         'wizard/schedulers_all_view.xml',
-        'security/ir.model.access.csv',
     ],
     'demo_xml': [
     ],

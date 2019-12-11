@@ -45,7 +45,7 @@
         "company_view.xml",
         'board_mrp_procurement_view.xml',
     ],
-    'demo_xml': ['stock_orderpoint.xml'],
+    'demo_xml': [],
     'installable': True,
     'active': False,
     'certificate': '00954248826881074509',

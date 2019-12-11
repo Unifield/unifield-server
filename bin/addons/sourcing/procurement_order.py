@@ -696,18 +696,6 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         return res
     # @@@END override
 
-    def _do_create_proc_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        """
-        Puth the unique rule type on the procurement order
-        """
-        res = super(procurement_order, self)._do_create_proc_hook(cr, uid, ids, context=context, *args, **kwargs)
-
-        if res is None:
-            res = {}
-
-        res['unique_rule_type'] = 'stock.warehouse.orderpoint'
-
-        return res
     def set_manually_done(self, cr, uid, ids, all_doc=False, context=None):
         """
         Detach the workflow of the procurement.order object and set state

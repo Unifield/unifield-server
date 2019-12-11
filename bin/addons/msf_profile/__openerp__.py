@@ -59,7 +59,6 @@
         "procurement_auto",
         "product_list",
         "product_attributes",
-        "procurement_report",
         "msf_printed_documents",
         "procurement_request",
         "import_data",
@@ -75,7 +74,6 @@
         "msf_outgoing", # doit être installé après specific_rules
         "tender_flow",
         "consumption_calculation",
-        "threshold_value",
         "account_hq_entries",
         "msf_config_locations",
         "service_purchasing",

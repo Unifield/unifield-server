@@ -391,13 +391,7 @@ class procurement_order(osv.osv):
             id = procurement.move_id.id
             if not (procurement.move_id.state in ('done','assigned','cancel')):
                 ok = ok and self.pool.get('stock.move').action_assign(cr, uid, [id])
-                cr.execute('select count(id) from stock_warehouse_orderpoint where product_id=%s', (procurement.product_id.id,))
-                res = cr.fetchone()[0]
-                if not res and not ok:
-                    message = _("Not enough stock and no minimum orderpoint rule defined.")
-                elif not res:
-                    message = _("No minimum orderpoint rule defined.")
-                elif not ok:
+                if not ok:
                     message = _("Not enough stock.")
                 # hook on message value
                 message = self._hook_check_mts_on_message(cr, uid, context=context, message=message, procurement=procurement)
@@ -493,8 +487,6 @@ class procurement_order(osv.osv):
         @param use_new_cursor: False or the dbname
         '''
         self._procure_confirm(cr, uid, use_new_cursor=use_new_cursor, context=context)
-        self._procure_orderpoint_confirm(cr, uid, automatic=automatic,\
-                                         use_new_cursor=use_new_cursor, context=context)
 
         return True
 
@@ -516,106 +508,4 @@ class StockPicking(osv.osv):
 
 StockPicking()
 
-class stock_warehouse_orderpoint(osv.osv):
-    """
-    Defines Minimum stock rules.
-    """
-    _name = "stock.warehouse.orderpoint"
-    _description = "Minimum Inventory Rule"
-
-    def _get_draft_procurements(self, cr, uid, ids, field_name, arg, context=None):
-        if context is None:
-            context = {}
-        result = {}
-        procurement_obj = self.pool.get('procurement.order')
-        for orderpoint in self.browse(cr, uid, ids, context=context):
-            procurement_ids = procurement_obj.search(cr, uid , [('state', '=', 'draft'), ('product_id', '=', orderpoint.product_id.id), ('location_id', '=', orderpoint.location_id.id)])
-            result[orderpoint.id] = procurement_ids
-        return result
-
-    _columns = {
-        'name': fields.char('Name', size=32, required=True),
-        'active': fields.boolean('Active', help="If the active field is set to False, it will allow you to hide the orderpoint without removing it."),
-        'logic': fields.selection([('max','Order to Max'),('price','Best price (not yet active!)')], 'Reordering Mode', required=True),
-        'warehouse_id': fields.many2one('stock.warehouse', 'Warehouse', required=True, ondelete="cascade"),
-        'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade"),
-        'product_id': fields.many2one('product.product', 'Product', required=True, ondelete='cascade', domain=[('type','=','product')]),
-        'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
-        'product_min_qty': fields.float('Min Quantity', required=True, related_uom='product_uom',
-                                        help="When the virtual stock goes belong the Min Quantity, OpenERP generates "\
-                                        "a procurement to bring the virtual stock to the Max Quantity."),
-        'product_max_qty': fields.float('Max Quantity', required=True, related_uom='product_uom',
-                                        help="When the virtual stock goes belong the Max Quantity, OpenERP generates "\
-                                        "a procurement to bring the virtual stock to the Max Quantity."),
-        'qty_multiple': fields.integer('Qty Multiple', required=True,
-                                       help="The procurement quantity will by rounded up to this multiple."),
-        'procurement_id': fields.many2one('procurement.order', 'Latest procurement', ondelete="set null"),
-        'company_id': fields.many2one('res.company','Company',required=True),
-        'procurement_draft_ids': fields.function(_get_draft_procurements, method=True, type='many2many', relation="procurement.order", \
-                                                 string="Related Procurement Orders",help="Draft procurement of the product and location of that orderpoint"),
-        'line_ids': fields.one2many('stock.warehouse.orderpoint.line',
-                                    'supply_id', string="Products",
-                                    help='Define the min/max quantity to order for each products'),
-    }
-    _defaults = {
-        'active': lambda *a: 1,
-        'logic': lambda *a: 'max',
-        'qty_multiple': lambda *a: 1,
-        'name': lambda x,y,z,c: x.pool.get('ir.sequence').get(y,z,'stock.orderpoint') or '',
-        'product_uom': lambda sel, cr, uid, context: context.get('product_uom', False),
-        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.warehouse.orderpoint', context=c)
-    }
-    _sql_constraints = [
-        ('qty_multiple_check', 'CHECK( qty_multiple > 0 )', 'Qty Multiple must be greater than zero.'),
-    ]
-
-    def onchange_warehouse_id(self, cr, uid, ids, warehouse_id, context=None):
-        """ Finds location id for changed warehouse.
-        @param warehouse_id: Changed id of warehouse.
-        @return: Dictionary of values.
-        """
-        if warehouse_id:
-            w = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context)
-            v = {'location_id': w.lot_stock_id.id}
-            return {'value': v}
-        return {}
-
-    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
-        """ Finds UoM for changed product.
-        @param product_id: Changed id of product.
-        @return: Dictionary of values.
-        """
-        if product_id:
-            prod = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-            v = {'product_uom': prod.uom_id.id}
-            return {'value': v}
-        return {}
-
-    def copy(self, cr, uid, id, default=None, context=None):
-        if not default:
-            default = {}
-        default.update({
-            'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.orderpoint') or '',
-        })
-        return super(stock_warehouse_orderpoint, self).copy(cr, uid, id, default, context=context)
-
-stock_warehouse_orderpoint()
-
-
-class stock_warehouse_orderpoint_line(osv.osv):
-    _name = 'stock.warehouse.orderpoint.line'
-    _description = 'Minimum Stock Rule Line'
-    _rec_name = 'product_id'
-
-    _columns = {
-        'product_id': fields.many2one('product.product', string='Product', required=True, domain=[('type','=','product'), ]),
-        'product_uom_id': fields.many2one('product.uom', string='Product UoM', required=True),
-        'product_min_qty': fields.float('Min Quantity', required=True, related_uom='product_uom_id'),
-        'product_max_qty': fields.float('Max Quantity', required=True, related_uom='product_uom_id'),
-        'qty_multiple': fields.integer('Qty Multiple', required=True),
-        'procurement_id': fields.many2one('procurement.order', 'Procurement', ondelete="set null"),
-        'supply_id': fields.many2one('stock.warehouse.orderpoint', string='Supply', ondelete='cascade', required=True)
-    }
-
-stock_warehouse_orderpoint_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -38,10 +38,8 @@
     "init_xml": [
     ],
     'update_xml': [
-        'procurement_view.xml',
         'procurement_data.xml',
         'security/ir.model.access.csv',
-        'wizard/schedulers_all_view.xml',
     ],
     'demo_xml': [
     ],
