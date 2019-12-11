@@ -577,18 +577,6 @@ class replenishment_segment_line_amc(osv.osv):
         'real_stock': fields.float('Reserved Stock'),
         'expired_before_rrd': fields.float('Expired Qty before RRD'),
         'expired_between_rrd_oc': fields.float('Expired Qty between RRD and OC'),
-        'expired_fmc_1': fields.float('Expired Qty FMC1'),
-        'expired_fmc_2': fields.float('Expired Qty FMC2'),
-        'expired_fmc_3': fields.float('Expired Qty FMC3'),
-        'expired_fmc_4': fields.float('Expired Qty FMC4'),
-        'expired_fmc_5': fields.float('Expired Qty FMC5'),
-        'expired_fmc_6': fields.float('Expired Qty FMC6'),
-        'expired_fmc_7': fields.float('Expired Qty FMC7'),
-        'expired_fmc_8': fields.float('Expired Qty FMC8'),
-        'expired_fmc_9': fields.float('Expired Qty FMC9'),
-        'expired_fmc_10': fields.float('Expired Qty FMC10'),
-        'expired_fmc_11': fields.float('Expired Qty FMC11'),
-        'expired_fmc_12': fields.float('Expired Qty FMC12'),
     }
 
     def generate_all_amc(self, cr, uid, context=None, seg_ids=False):
@@ -670,24 +658,6 @@ class replenishment_segment_line_amc(osv.osv):
                 for x in cr.fetchall():
                     self.write(cr, uid, cache_line_amc[lines[x[0]]], {'expired_between_rrd_oc': x[1]}, context=context)
 
-                for amc_line_id in seg_line:
-                    expired_before_fmc = {}
-                    seg_line_record = seg_line[amc_line_id]
-                    for x in range(1, 13):
-                        expired_before_fmc['expired_fmc_%d'%x] = 0
-                        if getattr(seg_line_record, 'rr_fmc_%d'%x) and getattr(seg_line_record, 'rr_fmc_from_%d'%x) and getattr(seg_line_record, 'rr_fmc_to_%d'%x):
-                            cr.execute("""
-                                select sum(item.expired_qty)
-                                from product_likely_expire_report_line line, product_likely_expire_report_item item
-                                where
-                                    item.line_id = line.id and
-                                    report_id=%s and
-                                    item.period_start >= %s and
-                                    item.period_start < %s and
-                                    line.product_id = %s """, (expired_id, getattr(seg_line_record, 'rr_fmc_from_%d'%x), getattr(seg_line_record, 'rr_fmc_to_%d'%x), seg_line_record.product_id.id)
-                            )
-                            expired_before_fmc['expired_fmc_%d'%x] = cr.fetchone()[0] or False
-                    self.write(cr, uid,  amc_line_id, expired_before_fmc, context=context)
         return True
 
     _sql_constraints = [
