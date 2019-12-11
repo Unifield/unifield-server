@@ -39,7 +39,6 @@
     ],
     'update_xml': [
         'procurement_data.xml',
-        'security/ir.model.access.csv',
     ],
     'demo_xml': [
     ],
