@@ -125,7 +125,7 @@
         <section>
 
             <!-- Composition items for Kit Composition List -->
-            <blockTable colWidths="90.0,130.0,105.0,40.0,30.0,65.0,60.0,40.0,40.0,40.0,150.0" style="LineHeader" repeatRows="1">
+            <blockTable colWidths="90.0,130.0,95.0,40.0,30.0,65.0,60.0,60.0,40.0,40.0,140.0" style="LineHeader" repeatRows="1">
                 [[ o.composition_type == 'real' or removeParentNode('blockTable') ]]
                 <tr>
                     <td>
