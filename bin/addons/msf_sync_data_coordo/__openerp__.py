@@ -31,8 +31,8 @@
     'init_xml': [],
     'data': [
         'data/res.partner.csv',
-        'data/coordo.account.analytic.journal.csv',
-        'data/coordo.account.journal.csv',
+        'data/account.analytic.journal.csv',
+        'data/account.journal.csv',
     ],
     'demo_xml': [],
     'test':[],
