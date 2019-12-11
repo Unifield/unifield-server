@@ -30,5 +30,19 @@
             <field name="number_increment">1</field>
         </record>
 
+        <record id="sequence_order_calc_type" model="ir.sequence.type">
+            <field name="name">Order Calc</field>
+            <field name="code">replenishment.order_calc</field>
+        </record>
+
+        <record id="sequence_order_calc" model="ir.sequence">
+            <field name="name">Order Calc</field>
+            <field name="code">replenishment.order_calc</field>
+            <field name="prefix">OC/%(y)s/%(hqcode)s/%(instance)s/</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
     </data>
 </openerp>

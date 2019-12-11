@@ -160,6 +160,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Segment">
+                <group colspan="4" col="6">
                     <group colspan="2" col="2">
                     <field name="name_seg" />
                     <field name="description_seg" />
@@ -188,23 +189,27 @@
                     <field name="state" />
                     </group>
                     <group colspan="2" col="2">
-                    <field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" />
-                    <field name="order_validation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" />
-                    <field name="internal_lt" />
-                    <field name="supplier_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" />
-                    <field name="handling_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" />
-                    <field name="external_lt" />
-                    <field name="total_lt" />
-                    <group colspan="2" col="4" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
-                        <field name="order_coverage" />
-                        <field name="safety_stock" />
-                        <field name="previous_order_rrd" />
-                        <field name="date_preparing" />
-                        <field name="date_next_order_validated" />
-                        <field name="date_next_order_received" />
+                        <field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" />
+                        <field name="order_validation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" />
+                        <field name="internal_lt" />
+                        <field name="supplier_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" />
+                        <field name="handling_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" />
+                        <field name="external_lt" />
+                        <field name="total_lt" />
+                            <group colspan="2" col="4" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
+                                <field name="order_coverage" />
+                                <field name="safety_stock" />
+                                <field name="previous_order_rrd" />
+                                <field name="date_preparing" />
+                                <field name="date_next_order_validated" />
+                                <field name="date_next_order_received" />
+                            </group>
                     </group>
-                    </group>
+                    <group colspan="2" />
                     <button name="trigger_compute" string="Trigger Compute" type="object" />
+                    <button name="generate_order_calc" string="Generate Order Calc" type="object" />
+                    </group>
+                    <group colspan="4">
                     <field name="line_ids" colspan="4" nolabel="1" default_get="rule=rule">
                         <tree editable="top" editable_style="new">
                             <field name="product_id" />
@@ -212,61 +217,51 @@
                             <field name="uom_id" invisible="1" />
                             <field name="in_main_list" />
                             <field name="status" />
-                            <field name="min_qty" />
-                            <field name="max_qty" />
+                            <field name="min_qty" invisible="context.get('rule')!='minmax'"/>
+                            <field name="max_qty" invisible="context.get('rule')!='minmax'"/>
                             <field name="auto_qty" invisible="context.get('rule')!='auto'"/>
                             <field name="buffer_qty" invisible="context.get('rule')!='cycle'"/>
                             <field name="real_stock" />
                             <field name="rr_amc" />
                             <field name="rr_fmc_1" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_from_1" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_to_1" invisible="context.get('rule')!='cycle'"/>
-                            <separator invisible="context.get('rule')!='cycle'" />
+                            <field name="rr_fmc_from_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" />
+                            <field name="rr_fmc_to_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" />
                             <field name="rr_fmc_2" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_from_2" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_to_2" invisible="context.get('rule')!='cycle'"/>
-                            <separator invisible="context.get('rule')!='cycle'" />
+                            <field name="rr_fmc_from_2" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_2', '!=', False)]}"/>
+                            <field name="rr_fmc_to_2" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_2', '!=', False)]}"/>
                             <field name="rr_fmc_3" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_from_3" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'"/>
-                            <separator invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}"/>
+                            <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}"/>
                             <field name="rr_fmc_4" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_from_4" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_to_4" invisible="context.get('rule')!='cycle'"/>
-                            <separator invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_4" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_4', '!=', False)]}"/>
+                            <field name="rr_fmc_to_4" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_4', '!=', False)]}"/>
                             <field name="rr_fmc_5" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_from_5" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_to_5" invisible="context.get('rule')!='cycle'"/>
-                            <separator invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_5" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_5', '!=', False)]}"/>
+                            <field name="rr_fmc_to_5" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_5', '!=', False)]}"/>
                             <field name="rr_fmc_6" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_from_6" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_to_6" invisible="context.get('rule')!='cycle'"/>
-                            <separator invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_6" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_6', '!=', False)]}"/>
+                            <field name="rr_fmc_to_6" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_6', '!=', False)]}"/>
                             <field name="rr_fmc_7" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_from_7" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_to_7" invisible="context.get('rule')!='cycle'"/>
-                            <separator invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_7" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_7', '!=', False)]}"/>
+                            <field name="rr_fmc_to_7" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_7', '!=', False)]}"/>
                             <field name="rr_fmc_8" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_from_8" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_to_8" invisible="context.get('rule')!='cycle'"/>
-                            <separator invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_8" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_8', '!=', False)]}"/>
+                            <field name="rr_fmc_to_8" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_8', '!=', False)]}"/>
                             <field name="rr_fmc_9" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_from_9" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_to_9" invisible="context.get('rule')!='cycle'"/>
-                            <separator invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_9" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_9', '!=', False)]}"/>
+                            <field name="rr_fmc_to_9" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_9', '!=', False)]}"/>
                             <field name="rr_fmc_10" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_from_10" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_to_10" invisible="context.get('rule')!='cycle'"/>
-                            <separator invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_10" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_10', '!=', False)]}"/>
+                            <field name="rr_fmc_to_10" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_10', '!=', False)]}"/>
                             <field name="rr_fmc_11" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_from_11" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_to_11" invisible="context.get('rule')!='cycle'"/>
-                            <separator invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_11" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_11', '!=', False)]}"/>
+                            <field name="rr_fmc_to_11" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_11', '!=', False)]}"/>
                             <field name="rr_fmc_12" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_from_12" invisible="context.get('rule')!='cycle'"/>
-                            <field name="rr_fmc_to_12" invisible="context.get('rule')!='cycle'"/>
+                            <field name="rr_fmc_from_12" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_12', '!=', False)]}"/>
+                            <field name="rr_fmc_to_12" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_12', '!=', False)]}"/>
                         </tree>
                     </field>
+                    </group>
                 </form>
             </field>
         </record>
@@ -317,6 +312,95 @@
         <menuitem id="replenishment_segment_menu"
             action="replenishment_segment_action"
             sequence="40"
+            parent="stock_schedule.stock_automatic_procurements_menu" />
+
+
+        <record id="replenishment_order_calc_form" model="ir.ui.view">
+            <field name="name">replenishment.order_calc.form</field>
+            <field name="model">replenishment.order_calc</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Order Calculation">
+                    <field name="name" />
+                    <field name="segment_id" />
+                    <field name="description_seg" />
+                    <separator string="Location Config"/>
+                    <field name="rule" />
+                    <field name="generation_date" />
+                    <field name="next_generation_date" />
+                    <field name="state" />
+                    <button name="trigger_compute" string="Trigger Compute" type="object" />
+                    <field name="order_calc_line_ids" colspan="4" nolabel="1">
+                        <tree editable="top" editable_style="new">
+                            <field name="product_id" />
+                            <field name="product_description" displayon="noteditable"/>
+                            <field name="uom_id" invisible="1" />
+                            <field name="in_main_list" />
+                            <field name="valid_rr_fmc" />
+                            <field name="real_stock" />
+                            <field name="pipeline_qty" />
+                            <field name="eta_for_next_pipeline" />
+                            <field name="reserved_stock_qty" />
+                            <field name="projected_stock_qty" />
+                            <field name="qty_lacking" />
+                            <field name="qty_lacking_needed_by" />
+                            <field name="open_loan" />
+                            <field name="expired_qty_before_cons" />
+                            <field name="expired_qty_before_eta" />
+                            <field name="proposed_order_qty" />
+                            <field name="agreed_order_qty" />
+                            <field name="order_qty_comment" />
+                            <field name="warning" />
+                        </tree>
+                    </field>
+                </form>
+            </field>
+        </record>
+
+        <record id="replenishment_order_calc_tree" model="ir.ui.view">
+            <field name="name">replenishment.order_calc.tree</field>
+            <field name="model">replenishment.order_calc</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Order Calculation">
+                    <field name="name" />
+                    <field name="segment_id" />
+                    <field name="description_seg" />
+                    <field name="location_config_id" />
+                    <field name="rule" />
+                    <field name="order_calc_line_ids" />
+                    <field name="generation_date" />
+                    <field name="next_generation_date" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_order_calc_search" model="ir.ui.view">
+            <field name="name">replenishment.order_calc.search</field>
+            <field name="model">replenishment.order_calc</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Order Calculation">
+                    <field name="name" />
+                    <field name="segment_id" />
+                    <field name="description_seg" />
+                    <field name="rule" />
+                    <field name="state" />
+                </search>
+            </field>
+        </record>
+
+        <record id="replenishment_order_calc_action" model="ir.actions.act_window">
+            <field name="name">Order Calculation</field>
+            <field name="res_model">replenishment.order_calc</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="replenishment_order_calc_menu"
+            action="replenishment_order_calc_action"
+            sequence="45"
             parent="stock_schedule.stock_automatic_procurements_menu" />
     </data>
 </openerp>
