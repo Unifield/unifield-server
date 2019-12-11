@@ -309,7 +309,7 @@ class replenishment_segment(osv.osv):
                 total_fmc_oc = 0
                 total_month_oc = 0
 
-                laking = False
+                lacking = False
                 for fmc_d in range(1, 13):
                     from_fmc = getattr(line, 'rr_fmc_from_%d'%fmc_d)
                     to_fmc = getattr(line, 'rr_fmc_to_%d'%fmc_d)
@@ -323,23 +323,29 @@ class replenishment_segment(osv.osv):
                             month = (end-begin).days/30.44
                             total_month += month
                             total_fmc += month*num_fmc
-                            if not laking:
+                            if not lacking:
                                 if total_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
                                     month_of_supply += month
                                 else:
                                     month_of_supply += ( sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc + month*num_fmc ) / num_fmc
-                                    laking = True
+                                    lacking = True
                         else:
                             end_oc = min(oc, to_fmc)
                             if end_oc >= begin:
                                 month = (end_oc-begin).days/30.44
                                 total_month_oc += month
                                 total_fmc_oc += month*num_fmc
-
                 pas = max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rrd - total_fmc)
                 ss_stock = 0
-                if total_month_oc+total_month:
-                    ss_stock = seg.safety_stock * ((total_fmc_oc+total_month)/(total_month_oc+total_month))
+                warning = False
+                if line.status == 'new':
+                    if total_month_oc:
+                        ss_stock = seg.safety_stock * total_fmc_oc / total_month_oc
+                else:
+                    if total_month_oc+total_month:
+                        ss_stock = seg.safety_stock * ((total_fmc_oc+total_month)/(total_month_oc+total_month))
+                    if total_month and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
+                        warning = _('Missing Qties')
                 line_data = {
                     'order_calc_id': calc_id,
                     'product_id': line.product_id.id,
@@ -350,11 +356,12 @@ class replenishment_segment(osv.osv):
                     'eta_for_next_pipeline': prod_eta.get(line.product_id.id, False),
                     'reserved_stock_qty': sum_line.get(line.id, {}).get('reserved_stock_qty'),
                     'projected_stock_qty': pas,
-                    'qty_lacking': max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) - total_fmc),
-                    'qty_lacking_needed_by': laking and (today + relativedelta(days=month_of_supply*30.44)).strftime('%Y-%m-%d'),
+                    'qty_lacking': max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) - total_fmc), # TODO JFB RR: 'New prod.'
+                    'qty_lacking_needed_by': lacking and (today + relativedelta(days=month_of_supply*30.44)).strftime('%Y-%m-%d'), # TODO JFB RR: 'New prod.'
                     'expired_qty_before_cons': sum_line.get(line.id, {}).get('expired_before_rrd'),
                     'expired_qty_before_eta': False, #TODO JFB=  RR
-                    'proposed_order_qty': max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rrd_oc)   # TODO JFB NEW PROD
+                    'proposed_order_qty': max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rrd_oc),   # TODO JFB NEW PROD
+                    'warning': warning,
                 }
                 orcer_calc_line.create(cr, uid, line_data, context=context)
 
@@ -433,7 +440,7 @@ class replenishment_segment_line(osv.osv):
                 for prod_id in amc:
                     ret[segment[seg_id]['prod_seg_line'][prod_id]]['rr_amc'] = amc[prod_id]
 
-            for prod in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['qty_available'], context={'location_ids': segment[seg_id]['context']['amc_location_ids']}):
+            for prod in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['qty_available'], context={'location': segment[seg_id]['context']['amc_location_ids']}):
                 ret[segment[seg_id]['prod_seg_line'][prod.id]]['real_stock_instance'] = prod.qty_available
                 ret[segment[seg_id]['prod_seg_line'][prod.id]]['real_stock'] = prod.qty_available
 
@@ -687,7 +694,7 @@ class replenishment_order_calc(osv.osv):
         'generation_date': fields.date('Order Calc generation date', readonly=1),
         'next_generation_date': fields.date('Date next order to be generated by', readonly=1),
         'state': fields.selection([('draft', 'Draft'), ('validated', 'Validated'), ('cancel', 'Cancel')], 'State', readonly=1),
-        'order_calc_line_ids': fields.one2many('replenishment.order_calc.line', 'order_calc_id', 'Products'),
+        'order_calc_line_ids': fields.one2many('replenishment.order_calc.line', 'order_calc_id', 'Products',  context={'default_code_only': 1}),
     }
 
     _defaults = {

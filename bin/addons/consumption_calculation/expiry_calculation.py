@@ -401,15 +401,15 @@ class product_likely_expire_report(osv.osv):
             from_segment = True
             if report.segment_id.rule != 'cycle':
                 instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
-                cr.execute('select id, rr_amc from replenishment_segment_line_amc where segment_line_id=%s and instance_id=%s', (tuple([line_id.id for line_id in report.segment_id.line_ids]) , instance_id))
+                cr.execute('select id, amc from replenishment_segment_line_amc where segment_line_id=%s and instance_id=%s', (tuple([line_id.id for line_id in report.segment_id.line_ids]) , instance_id))
                 local_amc = {}
                 for x in cr.fetchall():
-                    local_amc[x[0]] = x[1]
+                    local_amc[x[0]] = x[1] or 0
 
             for segment_line in report.segment_id.line_ids:
                 # TODO JFB RR: check rr_mac can be sum of proj + coo, set report date
                 if report.segment_id.rule != 'cycle':
-                    segment_product_amc[segment_line.product_id.id] = local_amc.get(segment_line.id)
+                    segment_product_amc[segment_line.product_id.id] = local_amc.get(segment_line.id, 0)
                 else:
                     for x in xrange(1, 13):
                         fmc_from = getattr(segment_line, 'rr_fmc_from_%d'%x)
@@ -511,7 +511,6 @@ class product_likely_expire_report(osv.osv):
                     if not last_expiry_date:
                         last_expiry_date = month - RelativeDateTime(days=1)
 
-                    print 'lot_id', lot.id, 'last_expiry_date', last_expiry_date, 'month', month
                     item_id = item_obj.create(new_cr, uid, {
                         'name': start_month_flag and 'expired_qty_col' or month.strftime('%m/%y'),
                         'line_id': products[lot.product_id.id]['line_id'],
@@ -546,7 +545,7 @@ class product_likely_expire_report(osv.osv):
                                     if life_date >= fmc['from'] and tmp_last_expiry_date <= fmc['to']:
                                         end_fmc = min(life_date, fmc['to'])
                                         lot_days = Age(DateFrom(end_fmc), last_expiry_date)
-                                        consum += fmc['fmc'] * (lot_days.years*364.8 + lot_days.months*30.4 + lot_days.days)/30.4
+                                        consum += fmc['fmc'] * (lot_days.years*364.8 + lot_days.months*30.44 + lot_days.days)/30.44
                                     if life_date <= fmc['to']:
                                         break
                                     else:
