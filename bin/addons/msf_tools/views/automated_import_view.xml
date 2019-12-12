@@ -8,7 +8,7 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Automated imports">
-                    <filter name="active" domain="[('active', '=', False)]" string="Inactive" icon="gtk-undo" />
+                    <filter name="inactive" domain="[('active', '=', False)]" string="Inactive" icon="gtk-undo" />
                     <field name="name" />
                     <field name="function_id" />
                 </search>

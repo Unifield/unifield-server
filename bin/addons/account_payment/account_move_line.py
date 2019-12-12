@@ -19,9 +19,7 @@
 #
 ##############################################################################
 
-from operator import itemgetter
 from osv import fields, osv
-from tools.translate import _
 
 class account_move_line(osv.osv):
     _inherit = "account.move.line"
@@ -35,84 +33,16 @@ class account_move_line(osv.osv):
                     CASE WHEN ml.amount_currency < 0
                         THEN - ml.amount_currency
                         ELSE ml.credit
-                    END -
-                    (SELECT coalesce(sum(amount_currency),0)
-                        FROM payment_line pl
-                            INNER JOIN payment_order po
-                                ON (pl.order_id = po.id)
-                        WHERE move_line_id = ml.id
-                        AND po.state != 'cancel') AS amount
+                    END
                     FROM account_move_line ml
                     WHERE id IN %s""", (tuple(ids),))
         r = dict(cr.fetchall())
         return r
 
-    def _to_pay_search(self, cr, uid, obj, name, args, context=None):
-        if not args:
-            return []
-        line_obj = self.pool.get('account.move.line')
-        query = line_obj._query_get(cr, uid, context={})
-        where = ' and '.join(map(lambda x: '''(SELECT
-        CASE WHEN l.amount_currency < 0
-            THEN - l.amount_currency
-            ELSE l.credit
-        END - coalesce(sum(pl.amount_currency), 0)
-        FROM payment_line pl
-        INNER JOIN payment_order po ON (pl.order_id = po.id)
-        WHERE move_line_id = l.id
-        AND po.state != 'cancel'
-        ) %(operator)s %%s ''' % {'operator': x[1]}, args))
-        sql_args = tuple(map(itemgetter(2), args))
-
-        cr.execute(('''SELECT id
-            FROM account_move_line l
-            WHERE account_id IN (select id
-                FROM account_account
-                WHERE type=%s AND active)
-            AND reconcile_id IS null
-            AND credit > 0
-            AND ''' + where + ' and ' + query), ('payable',)+sql_args )  # not_a_user_entry
-
-        res = cr.fetchall()
-        if not res:
-            return [('id', '=', '0')]
-        return [('id', 'in', map(lambda x:x[0], res))]
-
-    def line2bank(self, cr, uid, ids, payment_type=None, context=None):
-        """
-        Try to return for each Ledger Posting line a corresponding bank
-        account according to the payment type.  This work using one of
-        the bank of the partner defined on the invoice eventually
-        associated to the line.
-        Return the first suitable bank for the corresponding partner.
-        """
-        payment_mode_obj = self.pool.get('payment.mode')
-        line2bank = {}
-        if not ids:
-            return {}
-        bank_type = payment_mode_obj.suitable_bank_types(cr, uid, payment_type,
-                                                         context=context)
-        for line in self.browse(cr, uid, ids, context=context):
-            line2bank[line.id] = False
-            if line.invoice and line.invoice.partner_bank_id:
-                line2bank[line.id] = line.invoice.partner_bank_id.id
-            elif line.partner_id:
-                if not line.partner_id.bank_ids:
-                    line2bank[line.id] = False
-                else:
-                    for bank in line.partner_id.bank_ids:
-                        if bank.state in bank_type:
-                            line2bank[line.id] = bank.id
-                            break
-                if not line2bank[line.id] and line.partner_id.bank_ids:
-                    line2bank[line.id] = line.partner_id.bank_ids[0].id
-            else:
-                raise osv.except_osv(_('Error !'), _('No partner defined on entry line'))
-        return line2bank
 
     _columns = {
         'amount_to_pay': fields.function(amount_to_pay, method=True,
-                                         type='float', string='Amount to pay', fnct_search=_to_pay_search),
+                                         type='float', string='Amount to pay'),
     }
 
 account_move_line()
