@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+      <report
+            id="report_replenishment_segment_xls"
+            string="Segment"
+            model="replenishment.segment"
+            name="report_replenishment_segment_xls"
+            file="procurement_cycle/report/replenishment_segment.mako"
+            report_type="webkit"
+            menu="True"
+            />
+    </data>
+</openerp>
+

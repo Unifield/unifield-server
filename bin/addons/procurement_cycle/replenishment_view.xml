@@ -209,6 +209,9 @@
                     <button name="trigger_compute" string="Trigger Compute" type="object" />
                     <button name="generate_order_calc" string="Generate Order Calc" type="object" />
                     </group>
+                    <group colspan="4" name="import" string="Import Lines">
+                        <button name="add_multiple_lines" type="object" icon="gtk-add" string="Add multiple products" colspan="4" />
+                    </group>
                     <group colspan="4">
                     <field name="line_ids" colspan="4" nolabel="1" default_get="rule=rule">
                         <tree editable="top" editable_style="new">

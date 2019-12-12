@@ -45,6 +45,7 @@
     'update_xml': [
         'replenishment_data.xml',
         'replenishment_view.xml',
+        'replenishment_report.xml',
     ],
     'demo_xml': [
     ],

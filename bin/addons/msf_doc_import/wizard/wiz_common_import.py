@@ -31,6 +31,7 @@ from tools.translate import _
 
 NO_QTY_MODELS = [
     'monthly.review.consumption',
+    'replenishment.segment',
 ]
 
 

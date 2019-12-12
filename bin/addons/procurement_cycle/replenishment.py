@@ -372,6 +372,32 @@ class replenishment_segment(osv.osv):
                 }
                 orcer_calc_line.create(cr, uid, line_data, context=context)
 
+    def add_multiple_lines(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to open multiple lines
+        '''
+        context = context is None and {} or context
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+
+        """
+        context.update({'partner_id': order_id.partner_id.id,
+                        'quantity': 0.00,
+                        'rfq_ok': order_id.rfq_ok,
+                        'purchase_id': order_id.id,
+                        'purchase_order': True,
+                        'uom': False,
+                        # UFTP-15: we active 'only not forbidden' filter as default
+                        'available_for_restriction': order_id.partner_type,
+                        'search_default_not_restricted': 1,
+                        'add_multiple_lines': True,
+                        'partner_type': order_id.partner_type,
+                        'pricelist_id': order_id.pricelist_id.id,
+                        'pricelist': order_id.pricelist_id.id,
+                        'warehouse': order_id.warehouse_id.id,
+                        'categ': order_id.categ})
+        """
+        return self.pool.get('wizard.common.import.line').\
+            open_wizard(cr, uid, ids[0], 'replenishment.segment', 'replenishment.segment.line', context=context)
 
 
 replenishment_segment()
@@ -575,6 +601,12 @@ class replenishment_segment_line(osv.osv):
     _defaults = {
         'status': 'active',
     }
+
+    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        for prod_id in product_ids:
+            self.create(cr, uid, {'segment_id': parent_id, 'product_id': prod_id}, context=context)
+        return True
+
 replenishment_segment_line()
 
 class replenishment_segment_line_amc(osv.osv):
