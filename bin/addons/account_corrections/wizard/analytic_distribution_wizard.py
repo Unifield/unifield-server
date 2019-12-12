@@ -150,6 +150,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         wizard = self.browse(cr, uid, wizard_id)
         ad_obj = self.pool.get('analytic.distribution')
         ana_line_obj = self.pool.get('account.analytic.line')
+        journal_obj = self.pool.get('account.journal')
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         ml = wizard.move_line_id
         # US-5848: orig_date left unchanged not to break historical behavior,
@@ -176,12 +178,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                 entry_seq_data['sequence'] = biggest_reversal_aji.entry_sequence
 
         jtype = 'correction'
-        if wizard.move_line_id.account_id and wizard.move_line_id.account_id.type_for_register == 'donation':
+        if ml.account_id.type_for_register == 'donation':
             jtype = 'extra'
-        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid,
-                                                                                  [('type', '=', jtype), ('is_current_instance', '=', True)],
-                                                                                  order='id', limit=1)
-        correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
+        # Correction: of an HQ entry, or of a correction of an HQ entry
+        elif ml.journal_id.type in ('hq', 'correction_hq'):
+            jtype = 'hq'
+        correction_journal_id = analytic_journal_obj.get_correction_analytic_journal(cr, uid, type=jtype, context=context)
         if not correction_journal_id:
             raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
         to_create = []
@@ -191,19 +193,9 @@ class analytic_distribution_wizard(osv.osv_memory):
         old_line_ok = []
         any_reverse = False
         # Prepare journal and period information for entry sequences
-        journal_sql = """
-            SELECT id, code
-            FROM account_journal
-            WHERE type = %s 
-            AND is_current_instance = true
-            ORDER BY id
-            LIMIT 1;
-            """
-        cr.execute(journal_sql, (jtype,))
-        journal_sql_res = cr.fetchone()
-        journal_id = journal_sql_res[0]
-        code = journal_sql_res[1]
-        journal = self.pool.get('account.journal').browse(cr, uid, journal_id, context=context)
+        journal_id = journal_obj.get_correction_journal(cr, uid, type=jtype, context=context)
+        journal = journal_obj.browse(cr, uid, journal_id, context=context)
+        code = journal.code
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date=posting_date, context=context)
         if not period_ids:
             raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (posting_date or ''))
