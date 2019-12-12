@@ -553,7 +553,8 @@ class Entity(osv.osv):
         else:
             rule_module = self.pool.get('sync.client.rule')
             model_field_name = 'model'
-        obj_ids = rule_module.search(cr, uid, [('active', '=', True)])
+        # TODO JFB RR: remove USB rules from sync / instances
+        obj_ids = rule_module.search(cr, uid, [('active', '=', True), ('type', '!=', 'USB')])
         for obj in rule_module.read(cr, uid, obj_ids, [model_field_name, 'included_fields']):
             if obj[model_field_name] not in model_field_dict:
                 model_field_dict[obj[model_field_name]] = set()
