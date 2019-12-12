@@ -335,11 +335,11 @@ class analytic_line(osv.osv):
 
                     if is_donation[aline.move_id.account_id.id]:
                         if not gl_correction_odx_journal_rec:
-                            gl_correction_odx_journal_id = aj_obj.get_correction_journal(cr, uid, type='extra', context=context)
+                            gl_correction_odx_journal_id = aj_obj.get_correction_journal(cr, uid, corr_type='extra', context=context)
                             if not gl_correction_odx_journal_id:
                                 raise osv.except_osv(_('Error'), _('No GL journal found for ODX'))
                             gl_correction_odx_journal_rec = aj_obj.browse(cr, uid, gl_correction_odx_journal_id, context=context)
-                            odx_analytic_journal_id = aaj_obj.get_correction_analytic_journal(cr, uid, type='extra', context=context)
+                            odx_analytic_journal_id = aaj_obj.get_correction_analytic_journal(cr, uid, corr_type='extra', context=context)
                             if not odx_analytic_journal_id:
                                 raise osv.except_osv(_('Error'), _('No analytic journal found for ODX!'))
 
@@ -349,12 +349,12 @@ class analytic_line(osv.osv):
                     # Correction: of an HQ entry, or of a correction of an HQ entry
                     elif aline.journal_id.type in ('hq', 'correction_hq'):
                         if not gl_correction_odhq_journal_rec:
-                            gl_correction_odhq_journal_id = aj_obj.get_correction_journal(cr, uid, type='hq', context=context)
+                            gl_correction_odhq_journal_id = aj_obj.get_correction_journal(cr, uid, corr_type='hq', context=context)
                             if not gl_correction_odhq_journal_id:
                                 raise osv.except_osv(_('Error'), _('No "correction HQ" journal found!'))
                             gl_correction_odhq_journal_rec = aj_obj.browse(cr, uid, gl_correction_odhq_journal_id,
                                                                            fields_to_fetch=['sequence_id', 'code'], context=context)
-                            odhq_analytic_journal_id = aaj_obj.get_correction_analytic_journal(cr, uid, type='hq', context=context)
+                            odhq_analytic_journal_id = aaj_obj.get_correction_analytic_journal(cr, uid, corr_type='hq', context=context)
                             if not odhq_analytic_journal_id:
                                 raise osv.except_osv(_('Error'), _('No "correction HQ" analytic journal found!'))
                         seqnum = ir_seq_obj.get_id(cr, uid, gl_correction_odhq_journal_rec.sequence_id.id, context=seq_num_ctx)

@@ -444,18 +444,18 @@ class account_journal(osv.osv):
             'target': 'crush',
         }
 
-    def get_correction_journal(self, cr, uid, type=False, context=None):
+    def get_correction_journal(self, cr, uid, corr_type=False, context=None):
         """
         Returns the correction journal of the current instance (or False if not found):
         - by default => standard Correction journal
-        - type 'hq' => Correction HQ journal
-        - type 'extra' => OD-Extra Accounting journal
+        - corr_type 'hq' => Correction HQ journal
+        - corr_type 'extra' => OD-Extra Accounting journal
         """
         if context is None:
             context = {}
-        if type == 'hq':
+        if corr_type == 'hq':
             journal_type = 'correction_hq'
-        elif type == 'extra':
+        elif corr_type == 'extra':
             journal_type = 'extra'
         else:
             journal_type = 'correction'

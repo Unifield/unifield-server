@@ -183,7 +183,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Correction: of an HQ entry, or of a correction of an HQ entry
         elif ml.journal_id.type in ('hq', 'correction_hq'):
             jtype = 'hq'
-        correction_journal_id = analytic_journal_obj.get_correction_analytic_journal(cr, uid, type=jtype, context=context)
+        correction_journal_id = analytic_journal_obj.get_correction_analytic_journal(cr, uid, corr_type=jtype, context=context)
         if not correction_journal_id:
             raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
         to_create = []
@@ -193,7 +193,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         old_line_ok = []
         any_reverse = False
         # Prepare journal and period information for entry sequences
-        journal_id = journal_obj.get_correction_journal(cr, uid, type=jtype, context=context)
+        journal_id = journal_obj.get_correction_journal(cr, uid, corr_type=jtype, context=context)
         if not journal_id:
             raise osv.except_osv(_('Error'), _('No journal found for corrections!'))
         journal = journal_obj.browse(cr, uid, journal_id, context=context)

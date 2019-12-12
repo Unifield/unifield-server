@@ -451,8 +451,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_corr_id = j_obj.get_correction_journal(cr, uid, context=context)
         j_ana_corr_id = ana_j_obj.get_correction_analytic_journal(cr, uid, context=context)
         # Search extra-accounting journal
-        j_extra_id = j_obj.get_correction_journal(cr, uid, type='extra', context=context)
-        j_ana_extra_id = ana_j_obj.get_correction_analytic_journal(cr, uid, type='extra', context=context)
+        j_extra_id = j_obj.get_correction_journal(cr, uid, corr_type='extra', context=context)
+        j_ana_extra_id = ana_j_obj.get_correction_analytic_journal(cr, uid, corr_type='extra', context=context)
 
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context,
@@ -657,10 +657,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_corr_id = j_obj.get_correction_journal(cr, uid, context=context)
 
         # Search extra-accounting journal
-        j_extra_id = j_obj.get_correction_journal(cr, uid, type='extra', context=context)
+        j_extra_id = j_obj.get_correction_journal(cr, uid, corr_type='extra', context=context)
 
         # Search for the "Correction HQ" journal
-        hq_corr_journal_id = j_obj.get_correction_journal(cr, uid, type='hq', context=context)
+        hq_corr_journal_id = j_obj.get_correction_journal(cr, uid, corr_type='hq', context=context)
 
         # Search attached period
         period_obj = self.pool.get('account.period')
