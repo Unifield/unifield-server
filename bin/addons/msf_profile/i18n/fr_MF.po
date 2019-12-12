@@ -55443,8 +55443,8 @@ msgstr "Amériques/Coral_Harbour"
 #. module: kit
 #: code:addons/kit/kit.py:1579
 #, python-format
-msgid "Purchase order line kit replacement with components function is only available for Validated state."
-msgstr "La Fonction Ligne de Bon de Commande pour remplacement de kit par des composants n'est disponible que sous statut \"Validé\"."
+msgid "Purchase order line kit replacement with components function is only available for Draft and Validated state."
+msgstr "La Fonction Ligne de Bon de Commande pour remplacement de kit par des composants n'est disponible que sous statut \"Brouillon\" et \"Validé\"."
 
 #. module: resource
 #: help:wizard.template,values:0
