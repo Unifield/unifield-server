@@ -6,6 +6,9 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import time
 import json
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+import base64
+
 
 class replenishment_location_config(osv.osv):
     _name = 'replenishment.location.config'
@@ -232,6 +235,7 @@ class replenishment_segment(osv.osv):
         'date_next_order_validated':  fields.function(_get_date, type='date', method=True, string='Date next order to be validated by', multi='get_date'),
         'date_next_order_received': fields.function(_get_date, type='date', method=True, string='Next order to be received by', multi='get_date'),
         'line_ids': fields.one2many('replenishment.segment.line', 'segment_id', 'Products', context={'default_code_only': 1}),
+        'file_to_import': fields.binary(string='File to import'),
     }
 
     _defaults = {
@@ -259,16 +263,16 @@ class replenishment_segment(osv.osv):
         orcer_calc_line = self.pool.get('replenishment.order_calc.line')
         for seg in self.browse(cr, uid, ids, context):
             calc_id = self.pool.get('replenishment.order_calc').create(cr, uid, {
-                    'segment_id': seg.id,
-                    'description_seg': seg.description_seg,
-                    'location_config_id': seg.location_config_id.id,
-                    'location_config_description': seg.location_config_id.name,
-                    'rule': seg.rule,
-                    'rule_alert': seg.rule_alert,
-                    'total_lt': seg.total_lt,
-                    'local_location_ids': [(6, 0, [x.id for x in seg.local_location_ids])],
-                    'remote_location_ids': [(6, 0, [x.id for x in seg.remote_location_ids])],
-                    'instance_id': seg.main_instance.id,
+                'segment_id': seg.id,
+                'description_seg': seg.description_seg,
+                'location_config_id': seg.location_config_id.id,
+                'location_config_description': seg.location_config_id.name,
+                'rule': seg.rule,
+                'rule_alert': seg.rule_alert,
+                'total_lt': seg.total_lt,
+                'local_location_ids': [(6, 0, [x.id for x in seg.local_location_ids])],
+                'remote_location_ids': [(6, 0, [x.id for x in seg.remote_location_ids])],
+                'instance_id': seg.main_instance.id,
 
             }, context=context)
 
@@ -283,7 +287,7 @@ class replenishment_segment(osv.osv):
                         l.segment_id = %s
                     group by l.product_id
                     ''', (tuple(loc_ids), seg.id)
-            )
+                       )
             prod_eta = {}
             for x in cr.fetchall():
                 prod_eta[x[0]] = x[1]
@@ -378,27 +382,104 @@ class replenishment_segment(osv.osv):
         '''
         context = context is None and {} or context
         ids = isinstance(ids, (int, long)) and [ids] or ids
-
-        """
-        context.update({'partner_id': order_id.partner_id.id,
-                        'quantity': 0.00,
-                        'rfq_ok': order_id.rfq_ok,
-                        'purchase_id': order_id.id,
-                        'purchase_order': True,
-                        'uom': False,
-                        # UFTP-15: we active 'only not forbidden' filter as default
-                        'available_for_restriction': order_id.partner_type,
-                        'search_default_not_restricted': 1,
-                        'add_multiple_lines': True,
-                        'partner_type': order_id.partner_type,
-                        'pricelist_id': order_id.pricelist_id.id,
-                        'pricelist': order_id.pricelist_id.id,
-                        'warehouse': order_id.warehouse_id.id,
-                        'categ': order_id.categ})
-        """
         return self.pool.get('wizard.common.import.line').\
             open_wizard(cr, uid, ids[0], 'replenishment.segment', 'replenishment.segment.line', context=context)
 
+    def import_lines(self, cr, uid, ids, context=None):
+        product_obj = self.pool.get('product.product')
+        seg_line_obj = self.pool.get('replenishment.segment.line')
+
+        seg = self.browse(cr, uid, ids[0],  context=context)
+        if not seg.file_to_import:
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        file_data = SpreadsheetXML(xmlstring=base64.decodestring(seg.file_to_import))
+
+        existing_line = {}
+        for line in seg.line_ids:
+            existing_line[line.product_id.default_code] =line.id
+
+        idx = -1
+
+        status = {
+            _('Active'): 'active',
+            _('New'): 'new',
+        }
+        error = []
+        created = 0
+        updated = 0
+        ignored = 0
+        for row in file_data.getRows():
+            idx += 1
+            if idx < 8:
+                # header
+                continue
+            line_error = []
+            prod_code = row.cells[0].data
+            if not prod_code:
+                continue
+            prod_code = prod_code.strip()
+
+            if not isinstance(row.cells[4].data, (int, long, float)):
+                line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[4].data))
+            data_towrite = {
+                'status': status.get(row.cells[3].data.strip()),
+                'buffer_qty': row.cells[4].data,
+            }
+
+
+            first_fmc_col = 7 - 3
+            for fmc in range(1, 13):
+                first_fmc_col += 3
+                data_towrite.update({
+                    'rr_fmc_%d' % fmc: False,
+                    'rr_fmc_from_%d' % fmc: False,
+                    'rr_fmc_to_%d' % fmc: False,
+                })
+                if row.cells[first_fmc_col+1].data:
+                    # TODO JFB RR: check date consist. FROM < TO, begin / end mohtn, no gap
+                    if not row.cells[first_fmc_col+1].type == 'datetime':
+                        line_error.append(_('Line %d: FMC FROM %d, date expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col+1].data))
+                        continue
+                    if not row.cells[first_fmc_col+2].data or row.cells[first_fmc_col+2].type != 'datetime':
+                        line_error.append(_('Line %d: FMC TO %d, date expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col+2].data))
+                        continue
+                    if not isinstance(row.cells[first_fmc_col].data, (int, long, float)):
+                        line_error.append(_('Line %d: FMC %d, number expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col].data))
+                        continue
+                    data_towrite.update({
+                        'rr_fmc_%d' % fmc: row.cells[first_fmc_col].data,
+                        'rr_fmc_from_%d' % fmc: row.cells[first_fmc_col+1].data.strftime('%Y-%m-%d'),
+                        'rr_fmc_to_%d' % fmc: row.cells[first_fmc_col+2].data.strftime('%Y-%m-%d'),
+                    })
+
+            if prod_code not in existing_line:
+                prod_id = product_obj.search(cr, uid, [('default_code', '=ilike', prod_code)], context=context)
+                if not prod_id:
+                    line_error.append(_('Line %d: product code %s not found') % (idx+1, prod_code))
+                else:
+                    data_towrite['product_id'] = prod_id
+                    data_towrite['segment_id'] = seg.id
+            else:
+                line_id = existing_line[prod_code]
+
+            if line_error:
+                error += line_error
+                ignored += 1
+                continue
+            if 'product_id' in data_towrite:
+                seg_line_obj.create(cr, uid, data_towrite, context=context)
+                created += 1
+            else:
+                seg_line_obj.write(cr, uid, line_id, data_towrite, context=context)
+                updated += 1
+
+        self.write(cr, uid, seg.id, {'file_to_import': False}, context=context)
+        wizard_obj = self.pool.get('physical.inventory.import.wizard')
+        if error:
+            error.insert(0, _('%d line(s) created, %d line(s) updated, %d line(s) in error') % (created, updated, ignored))
+            return wizard_obj.message_box(cr, uid, title=_('Importation errors'), message='\n'.join(error))
+
+        return wizard_obj.message_box(cr, uid, title=_('Importation Done'), message=_('%d line(s) created, %d line(s) updated') % (created, updated))
 
 replenishment_segment()
 
@@ -419,7 +500,7 @@ class replenishment_segment_line(osv.osv):
                 prod_line.list_id = seg.product_list_id and
                 prod_line.name = seg_line.product_id and
                 seg_line.id in %s''', (tuple(ids), )
-        )
+                   )
         for x in cr.fetchall():
             ret[x[0]] = True
         return ret
@@ -585,7 +666,7 @@ class replenishment_segment_line(osv.osv):
                 prod.id = seg_line.product_id
             group by prod.default_code, seg.location_config_id
             having( count(*) > 1)''', (tuple(ids),)
-        )
+                   )
         error = []
         for x in cr.fetchall():
             error.append('%s : %s' % (x[0], " - ".join(x[1])))
