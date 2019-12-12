@@ -242,8 +242,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         # US-1343/2: flag that the chain origin is an HQ
                         # entry: in other terms OD AJI from a HQ JI
                     is_HQ_origin = {
-                        'from_od': \
-                        original_al.journal_id.type == 'correction',
+                        'from_od': original_al.journal_id.type in ('correction', 'correction_hq'),
                     }
                     break
 
