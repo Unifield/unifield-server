@@ -83,7 +83,6 @@ WHITE_LIST_MODEL = [
     'msf_field_access_rights.field_access_rule',
     'msf_field_access_rights.field_access_rule_line',
     'pack.type',
-    'procurement.order',
     'product.asset',
     'product.asset.type',
     'product.category',

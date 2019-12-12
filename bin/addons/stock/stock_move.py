@@ -527,7 +527,6 @@ class stock_move(osv.osv):
                                             selection=[('allocated', 'Allocated'),
                                                        ('unallocated', 'Unallocated'),
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
-        'procurements': fields.one2many('procurement.order', 'move_id', 'Procurements'),
         'purchase_line_id': fields.many2one('purchase.order.line', 'Purchase Order Line', ondelete='set null', select=True, readonly=True),
         'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='selection', selection=[('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')],),
         'parent_doc_id': fields.function(_get_parent_doc, method=True, type='char', string='Picking', readonly=True),
@@ -1444,12 +1443,6 @@ class stock_move(osv.osv):
 
                 self.write(cr, uid, [move['id']], qty_data[move['id']].copy(), context=context)
 
-                # Update all link objects
-                proc_ids = self.pool.get('procurement.order').search(cr, uid,
-                                                                     [('move_id', '=', move_data['id'])], order='NO_ORDER',context=context)
-                if proc_ids:
-                    self.pool.get('procurement.order').write(cr, uid, proc_ids, {'move_id': move['id']}, context=context)
-
                 pol_ids = self.pool.get('purchase.order.line').search(cr, uid,
                                                                       [('move_dest_id', '=', move_data['id'])],
                                                                       order='NO_ORDER', context=context)
@@ -1587,7 +1580,6 @@ class stock_move(osv.osv):
     #
     def action_cancel(self, cr, uid, ids, context=None):
         '''
-            Confirm or check the procurement order associated to the stock move
         '''
         pol_obj = self.pool.get('purchase.order.line')
         pick_obj = self.pool.get('stock.picking')
@@ -2390,10 +2382,6 @@ class stock_move(osv.osv):
         ids = isinstance(ids, (int, long)) and [ids] or ids
 
         for move_id in ids:
-            proc_ids = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', move_id)], context=context)
-            if proc_ids:
-                self.pool.get('procurement.order').write(cr, uid, proc_ids, {'move_id': new_id}, context=context)
-
             pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('move_dest_id', '=', move_id)], context=context)
             if pol_ids:
                 self.pool.get('purchase.order.line').write(cr, uid, pol_ids, {'move_dest_id': new_id}, context=context)

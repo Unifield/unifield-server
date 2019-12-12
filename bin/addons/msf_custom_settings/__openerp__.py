@@ -48,7 +48,6 @@
         'view/consumption_calculation_view.xml',
         'view/physical_inventories_view.xml',
         'view/last_product_invetories_view.xml',
-        'view/procurement_exception_view.xml',
         'view/warehouse_view.xml',
         'view/uom_categories_view.xml',
         'view/units_of_measure_view.xml',

@@ -331,24 +331,6 @@ class stock_move(osv.osv):
     _columns = {'location_requestor_rw': fields.many2one('stock.location', 'Location Requestor For RW-IR', required=False, ondelete="cascade"),
                 }
 
-    def create(self, cr, uid, vals, context=None):
-        if not context:
-            context = {}
-        if not vals:
-            vals = {}
-
-        # Save the location requestor from IR into the field location_requestor_rw if exists
-        res = super(stock_move, self).create(cr, uid, vals, context=context)
-        move = self.browse(cr, uid, [res], context=context)[0]
-        if move.purchase_line_id:
-            proc = move.purchase_line_id.procurement_id
-            if proc and proc.sale_order_line_ids and proc.sale_order_line_ids[0].order_id and proc.sale_order_line_ids[0].order_id.procurement_request:
-                location_dest_id = proc.sale_order_line_ids[0].order_id.location_requestor_id.id
-                if location_dest_id:
-                    cr.execute('update stock_move set location_requestor_rw=%s where id=%s', (location_dest_id, move.id))
-        
-        return res
-
     def _get_location_for_internal_request(self, cr, uid, context=None, **kwargs):
         '''
             If it is a remote warehouse instance, then take the location requestor from IR
@@ -392,7 +374,6 @@ class stock_picking(osv.osv):
             usb_entity = self._get_usb_entity_type(cr, uid)
             if pick and pick.shipment_id and usb_entity == self.REMOTE_WAREHOUSE: # only special handle when it's in RW
                 # Now, check if there is any sync message UNSENT for this shipment
-                rule_obj = self.pool.get("sync.client.message_rule")
                 msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
                 remote_call = "shipment.usb_create_shipment"
                 # Get only the unsent ships, normal there should be a minimum numbers of msg unsent
@@ -575,7 +556,7 @@ class stock_picking(osv.osv):
 
         # US-803: point 20. Added the price currency for IN line
         if data['price_currency_id'] and data['price_currency_id']['id']:
-            price_currency_id = self.pool.get('res.currency').find_sd_ref(cr, uid, xmlid_to_sdref(data['price_currency_id']['id']), context=context)
+            self.pool.get('res.currency').find_sd_ref(cr, uid, xmlid_to_sdref(data['price_currency_id']['id']), context=context)
          
         if data['reason_type_id'] and data['reason_type_id']['id']:
             reason_type_id = self.pool.get('stock.reason.type').find_sd_ref(cr, uid, xmlid_to_sdref(data['reason_type_id']['id']), context=context)
@@ -743,17 +724,6 @@ class stock_picking(osv.osv):
     
 #                    if state == 'assigned' and self.browse(cr, uid, pick_id, context=context).state == 'confirmed':
 #                        self.force_assign(cr, uid, [pick_id])
-                
-                # Check if this PICK/OUT comes from a procurement, if yes, then update the move id to the procurement if exists
-                if pick_id:
-                    proc_obj = self.pool.get('procurement.order')
-                    pick = self.browse(cr, uid, pick_id, context=context)
-                    for move in pick.move_lines:
-                        if move.sale_line_id and move.sale_line_id.procurement_id and move.sale_line_id.procurement_id.id:
-                            # check this procurement has already move_id, if not then update
-                            proc = proc_obj.read(cr, uid, move.sale_line_id.procurement_id.id, ['move_id'])['move_id']
-                            if not proc:
-                                proc_obj.write(cr, uid, move.sale_line_id.procurement_id.id, {'move_id': move.id}, context=context)
                 
                 message = "The document: " + pick_name + " has been well replicated in " + cr.dbname
             else:
@@ -1316,7 +1286,6 @@ class stock_picking(osv.osv):
         
         # Make the full quantity process for this PICK to PPL
         for move in wizard.move_ids:
-            ori_qty = move.ordered_quantity 
             
             for pick in picking_dict:
                 pick_line = picking_dict[pick]
@@ -1431,7 +1400,7 @@ class stock_picking(osv.osv):
                 if sline['line_number'] == move.line_number and (move.original_qty_partial == -1 or (move.original_qty_partial == sline['original_qty_partial'])):
                     line_data['product_qty'] = sline['product_qty']
                     line_data['quantity'] = sline['product_qty']
-                    ret = line_obj.create(cr, uid, line_data, context=context)
+                    line_obj.create(cr, uid, line_data, context=context)
 
         self.do_validate_picking(cr, uid, [proc_id], context=context)
         return True

@@ -43,10 +43,8 @@
     "init_xml": [
     ],
     'update_xml': [
-        'procurement_data.xml',
         'replenishment_data.xml',
         'replenishment_view.xml',
-        'wizard/schedulers_all_view.xml',
     ],
     'demo_xml': [
     ],

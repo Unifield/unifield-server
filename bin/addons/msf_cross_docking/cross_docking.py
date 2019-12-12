@@ -253,44 +253,6 @@ you cannot have an other location than \"Cross docking\""""))
 purchase_order()
 
 
-class procurement_order(osv.osv):
-
-    _inherit = 'procurement.order'
-
-    def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        When you run the scheduler and you have a sale order line with type = make_to_order,
-        we modify the location_id to set 'cross docking' of the purchase order created in mirror
-        But if the sale_order is an Internal Request we don't want "Cross docking" but "Input" as location_id (i.e. the location of the warehouse_id)
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-        stock_loc_obj = self.pool.get('stock.location')
-        sol_obj = self.pool.get('sale.order.line')
-        procurement = kwargs['procurement']
-        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        sol_ids = sol_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-        if (procurement.tender_line_id or procurement.rfq_line_id or len(sol_ids)) and setup.allocation_setup != 'unallocated':
-            if sol_ids:
-                browse_so = sol_obj.browse(cr, uid, sol_ids, context=context)[0].order_id
-            elif procurement.tender_line_id and procurement.tender_line_id.tender_id and procurement.tender_line_id.tender_id.sale_order_id:
-                browse_so = procurement.tender_line_id.tender_id.sale_order_id
-            elif procurement.rfq_line_id and procurement.rfq_line_id.order_id and procurement.rfq_line_id.order_id.sale_order_id:
-                browse_so = procurement.rfq_line_id.order_id.sale_order_id
-
-            if browse_so:
-                req_loc = browse_so.location_requestor_id
-                if not (browse_so.procurement_request and req_loc and req_loc.usage != 'customer'):
-                    values.update({'cross_docking_ok': True, 'location_id': stock_loc_obj.get_cross_docking_location(cr, uid)})
-                values.update({'priority': browse_so.priority, 'categ': browse_so.categ})
-        return values
-
-procurement_order()
-
-
 class stock_picking(osv.osv):
     '''
     do_partial(=function which is originally called from delivery_mechanism) modification
