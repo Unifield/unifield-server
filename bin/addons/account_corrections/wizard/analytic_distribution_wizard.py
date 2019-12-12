@@ -194,6 +194,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         any_reverse = False
         # Prepare journal and period information for entry sequences
         journal_id = journal_obj.get_correction_journal(cr, uid, type=jtype, context=context)
+        if not journal_id:
+            raise osv.except_osv(_('Error'), _('No journal found for corrections!'))
         journal = journal_obj.browse(cr, uid, journal_id, context=context)
         code = journal.code
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date=posting_date, context=context)

@@ -91139,7 +91139,13 @@ msgstr "Catégories d'Employés"
 #: code:addons/analytic_distribution/analytic_line.py:288
 #, python-format
 msgid "No analytic journal found for corrections!"
-msgstr "No analytic journal found for corrections!"
+msgstr "Pas de journal analytique trouvé pour les corrections !"
+
+#. module: account_corrections
+#: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:198
+#, python-format
+msgid "No journal found for corrections!"
+msgstr "Pas de journal trouvé pour les corrections !"
 
 #. module: stock
 #: selection:physical.inventory.select.products,second_filter:0
