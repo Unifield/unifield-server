@@ -532,7 +532,7 @@ class graph(object):
                 for node in self.levels[level]:
                     self.result[node]['y'] += min_order
 
-            if roots:
+            if roots and self.tree_list[self.start]:
                 roots.append(self.start)
                 one_level_el = self.tree_list[self.start][0][1]
                 base = self.result[one_level_el]['y']# * 2 / (index + 2)
@@ -568,7 +568,6 @@ class graph(object):
         for node in self.nodes:
             if not self.partial_order.get(node):
                 rem_nodes.append(node)
-        cnt = 0
         while True:
             if len(rem_nodes)==1:
                 self.start_nodes.append(rem_nodes[0])
@@ -679,7 +678,7 @@ class graph(object):
         if self.nodes:
             if self.start_nodes:
                 #add dummy edges to the nodes which does not have any incoming edges
-                tree = self.make_acyclic(None, self.start_nodes[0], 0, [])
+                self.make_acyclic(None, self.start_nodes[0], 0, [])
 
                 for node in self.no_ancester:
                     for sec_node in self.transitions.get(node, []):
@@ -688,7 +687,7 @@ class graph(object):
                             break
 
                 self.partial_order = {}
-                tree = self.make_acyclic(None, self.start_nodes[0], 0, [])
+                self.make_acyclic(None, self.start_nodes[0], 0, [])
 
 
             # if graph is disconnected or no start-node is given
