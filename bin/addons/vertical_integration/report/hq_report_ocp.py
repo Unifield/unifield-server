@@ -341,7 +341,7 @@ class hq_report_ocp(report_sxw.report_sxw):
             # Pay attention to take analytic lines that are not on HQ, MIGRATION, IN-KIND and ODX journals.
             'rawdata': """
                 SELECT al.id, SUBSTR(i.code, 1, 3),
-                       CASE WHEN j.code = 'OD' THEN j.code ELSE aj.code END AS journal,
+                       CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.code ELSE aj.code END AS journal,
                        al.entry_sequence, al.name, al.ref, al.document_date, al.date,
                        a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, 
                        CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, 
@@ -350,7 +350,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                        CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit, 
                        CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS credit,
                        cc.name AS "functional_currency", hr.identification_id as "emplid", aml.partner_id, hr.name_resource as hr_name,
-                       CASE WHEN j.code = 'OD' THEN j.type ELSE aj.type END AS journal_type
+                       CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.type ELSE aj.type END AS journal_type
                 FROM account_analytic_line AS al, 
                      account_account AS a, 
                      account_analytic_account AS aa, 
