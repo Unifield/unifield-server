@@ -468,6 +468,7 @@
             <rng:optional><rng:attribute name="nolabel"/></rng:optional>
             <rng:optional><rng:attribute name="default"/></rng:optional>
             <rng:optional><rng:attribute name="default_get"/></rng:optional>
+            <rng:optional><rng:attribute name="scroll"/></rng:optional>
             <rng:optional><rng:attribute name="required"/></rng:optional>
             <rng:optional><rng:attribute name="readonly"/></rng:optional>
             <rng:optional><rng:attribute name="view_mode"/></rng:optional>

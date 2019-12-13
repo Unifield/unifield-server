@@ -203,6 +203,16 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
   </Style>
+  <Style ss:ID="s97d">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="Short Date"/>
+  </Style>
   <Style ss:ID="s143">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -267,7 +277,7 @@
    <Interior ss:Color="#DDEBF7" ss:Pattern="Solid"/>
   </Style>
  </Styles>
- <Worksheet ss:Name="Segment">
+ <Worksheet ss:Name="Order Calculation">
   <Names>
    <NamedRange ss:Name="_FilterDatabase" ss:RefersTo="=Segment!R8C1:R14C4"
     ss:Hidden="1"/>
@@ -284,8 +294,7 @@
    <Column ss:AutoFitWidth="0" ss:Width="82.5" ss:Span="1"/>
    <Column ss:Index="8" ss:AutoFitWidth="0" ss:Width="75.75" ss:Span="1"/>
    <Row ss:AutoFitHeight="0" ss:Height="31.5">
-    <Cell ss:MergeAcross="6" ss:StyleID="s64"><Data ss:Type="String">${_('Product segment')|x}</Data><NamedCell
-      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:MergeAcross="9" ss:StyleID="s64"><Data ss:Type="String">${_('Order Calculation')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="18.75" ss:StyleID="s65">
     <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/><NamedCell
@@ -303,15 +312,19 @@
    <Row ss:AutoFitHeight="0">
     <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Reference')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="m2348480924348"><Data ss:Type="String">${objects[0].name_seg|x}</Data><NamedCell
+    <Cell ss:StyleID="m2348480924308"><Data ss:Type="String">${objects[0].name|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Location Config')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:MergeAcross="1" ss:StyleID="m2348480924308"><Data ss:Type="String">${objects[0].name|x}</Data><NamedCell
+    <Cell ss:MergeAcross="1" ss:StyleID="m2348480924308"><Data ss:Type="String">${objects[0].location_config_id.name|x}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s67"><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Segment')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="m2348480924308"><Data ss:Type="String">${objects[0].segment_id.name|x}</Data><NamedCell
+      ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="8.25">
     <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/><NamedCell
@@ -328,15 +341,19 @@
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="15.75">
     <Cell ss:StyleID="s76"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
-    <Cell ss:StyleID="m2348480924348"><Data ss:Type="String">${objects[0].description_seg|x}</Data><NamedCell
+    <Cell ss:StyleID="m2348480924308"><Data ss:Type="String">${objects[0].description_seg|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s67"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Location Description')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:MergeAcross="1" ss:StyleID="m2348480924348"><Data ss:Type="String">${objects[0].description|x}</Data><NamedCell
+    <Cell ss:MergeAcross="1" ss:StyleID="m2348480924348"><Data ss:Type="String">${objects[0].location_config_id.description|x}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Rule')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="m2348480924348"><Data ss:Type="String">${objects[0].rule|x}</Data><NamedCell
+      ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="9">
     <Cell ss:StyleID="s78"><NamedCell ss:Name="Print_Titles"/><NamedCell
@@ -365,75 +382,57 @@
     <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="32.0625" ss:StyleID="s87">
-    <Cell ss:StyleID="s89"><Data ss:Type="String">${_('Product code')|x}</Data><NamedCell
-      ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s89"><Data ss:Type="String">${_('Description')|x}</Data><NamedCell
-      ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s90"><Data ss:Type="String">${_('In prod. list')|x}</Data><NamedCell
-      ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s91"><Data ss:Type="String">${_('Life cycle status')|x}</Data><NamedCell
-      ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s92"><Data ss:Type="String">${_('Buffer Qty')|x}</Data><NamedCell
-      ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Real Stock')|x}</Data><NamedCell
-      ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('RR-AMC')|x}</Data><NamedCell
-      ss:Name="Print_Titles"/></Cell>
-    <% i = 0 %>
-    <% styles = ['s143', 's149'] %>
-    % for fmc in range(1, 13):
-    <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('RR FMC %d')%fmc|x}</Data><NamedCell
-      ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('From %d')%fmc|x}</Data><NamedCell
-      ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('To %d')%fmc|x}</Data><NamedCell
-      ss:Name="Print_Titles"/></Cell>
-    <% i = 1 - i %>
-    % endfor
+    <Cell ss:StyleID="s89"><Data ss:Type="String">${_('Product code')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s89"><Data ss:Type="String">${_('Description')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s90"><Data ss:Type="String">${_('In prod. list')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Real Stock')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Pipeline Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Eta For next Pipeline')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Reserved Stock Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Projected Stock Level')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Qty Lacking Before Next Eta')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Qty Lacking Needed By')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Open Loan')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Expired Qty Before Cons')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Expired Qty Before ETA')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Proposed Order Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Agreed Order Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Order Qty Comment')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Warning')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
 
-   % for prod in objects[0].line_ids:
+   % for prod in objects[0].order_calc_line_ids:
    <Row ss:AutoFitHeight="0" ss:Height="15.75">
-    <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.default_code|x}</Data><NamedCell
-      ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.name|x}</Data><NamedCell
-      ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.in_main_list and _('Y') or _('N')}</Data><NamedCell
-      ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="String">${getSel(prod, 'status')|x}</Data><NamedCell
-      ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.buffer_qty}</Data></Cell>
+    <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.default_code|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.name|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.in_main_list and _('Y') or _('N')}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.real_stock}</Data></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.rr_amc}</Data></Cell>
-    <!-- s144+s145 / s165/s151 -->
-    <% i = 0 %>
-    <% styles = [('s144', 's145'), ('s165', 's151')] %>
-     % for fmc in range(1, 13):
-    <Cell ss:StyleID="${styles[i][0]}"><Data ss:Type="Number">${getattr(prod, 'rr_fmc_%d'%fmc) or ''}</Data></Cell>
-
-    <% from_date = getattr(prod, 'rr_fmc_from_%d'%fmc) %>
-    <Cell ss:StyleID="${styles[i][1]}">
-     % if isDate(from_date):
-        <Data ss:Type="DateTime">${from_date|n}T00:00:00.000</Data>
-    % else:
+    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.pipeline_qty}</Data></Cell>
+    <Cell ss:StyleID="s97d">
+        % if isDate(prod.eta_for_next_pipeline):
+        <Data ss:Type="DateTime">${prod.eta_for_next_pipeline|n}T00:00:00.000</Data>
+        % else:
         <Data ss:Type="String"></Data>
-    % endif
+        % endif
     </Cell>
-
-    <% to_date = getattr(prod, 'rr_fmc_to_%d'%fmc) %>
-    <Cell ss:StyleID="${styles[i][1]}">
-     % if isDate(to_date):
-        <Data ss:Type="DateTime">${to_date|n}T00:00:00.000</Data>
-    % else:
+    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.reserved_stock_qty}</Data></Cell>
+    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.projected_stock_qty}</Data></Cell>
+    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.qty_lacking}</Data></Cell>
+    <Cell ss:StyleID="s97d">
+        % if isDate(prod.qty_lacking_needed_by):
+            <Data ss:Type="DateTime">${prod.qty_lacking_needed_by|n}T00:00:00.000</Data>
+        % else:
         <Data ss:Type="String"></Data>
-    % endif
+        % endif
     </Cell>
-    <% i = 1 - i %>
-    % endfor
+    <Cell ss:StyleID="s97"><Data ss:Type="String">${prod.open_loan and _('Y') or _('N')}</Data></Cell>
+    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.expired_qty_before_cons}</Data></Cell>
+    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.expired_qty_before_eta}</Data></Cell>
+    <Cell ss:StyleID="s97"><Data ss:Type="Number">${int(prod.proposed_order_qty)}</Data></Cell>
+    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.agreed_order_qty}</Data></Cell>
+    <Cell ss:StyleID="s97"><Data ss:Type="String">${(prod.order_qty_comment or '')|x}</Data></Cell>
+    <Cell ss:StyleID="s97"><Data ss:Type="String">${(prod.warning or '')|x}</Data></Cell>
+
    </Row>
    % endfor
   </Table>
@@ -476,12 +475,5 @@
    <ProtectObjects>False</ProtectObjects>
    <ProtectScenarios>False</ProtectScenarios>
   </WorksheetOptions>
-    <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
-    <Range>R9C4:R${len(objects[0].line_ids)+9}C4</Range>
-    <Type>List</Type>
-    <CellRangeList/>
-    <Value>&quot;${_('Active')|x},${_('New')|x}&quot;</Value>
-  </DataValidation>
-
  </Worksheet>
 </Workbook>
