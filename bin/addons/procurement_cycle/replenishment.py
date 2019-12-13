@@ -218,7 +218,7 @@ class replenishment_segment(osv.osv):
         'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1),
         'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Replenishment Rule (Order quantity)', required=1),
         'rule_alert': fields.function(_get_rule_alert, method=1, string='Replenishment Rule (Alert Theshold)', type='char'),
-        'ir_requesting_location': fields.many2one('stock.location', string='IR Requesting Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])"),
+        'ir_requesting_location': fields.many2one('stock.location', string='IR Requesting Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])]", required=1),
         'product_list_id': fields.many2one('product.list', 'Primary product list'),
         'state': fields.selection([('draft', 'Draft'), ('complete', 'Complete'), ('cancel', 'Cancelled'), ('archived', 'Archived')], 'Status', readonly=1),
         'order_creation_lt': fields.integer('Order Creation Lead Time (days)', required=1),
@@ -266,7 +266,7 @@ class replenishment_segment(osv.osv):
                 'segment_id': seg.id,
                 'description_seg': seg.description_seg,
                 'location_config_id': seg.location_config_id.id,
-                'location_config_description': seg.location_config_id.name,
+                'location_config_description': seg.location_config_id.description,
                 'rule': seg.rule,
                 'rule_alert': seg.rule_alert,
                 'total_lt': seg.total_lt,
@@ -821,7 +821,7 @@ class replenishment_order_calc(osv.osv):
         'comments': fields.text('Comments'),
         'local_location_ids': fields.many2many('stock.location', 'local_location_order_calc_rel', 'order_calc_id', 'location_id', 'Local Locations', readonly=1),
         'remote_location_ids': fields.many2many('stock.location.instance', 'remote_location_order_calc_rel', 'order_calc_id', 'location_id', 'Project Locations', readonly=1),
-        'state': fields.selection([('draft', 'Draft'), ('validated', 'Validated'), ('cancel', 'Cancel')], 'State', readonly=1),
+        'state': fields.selection([('draft', 'Draft'), ('validated', 'Validated'), ('cancel', 'Cancel'), ('closed', 'Closed')], 'State', readonly=1),
         'order_calc_line_ids': fields.one2many('replenishment.order_calc.line', 'order_calc_id', 'Products',  context={'default_code_only': 1}),
         'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1),
         'file_to_import': fields.binary(string='File to import'),
@@ -879,6 +879,37 @@ class replenishment_order_calc(osv.osv):
             return wizard_obj.message_box(cr, uid, title=_('Importation errors'), message='\n'.join(error))
 
         return wizard_obj.message_box(cr, uid, title=_('Importation Done'), message=_('%d line(s) updated') % (updated, ))
+
+
+    def generate_ir(self, cr, uid, ids, context=None):
+        sale_obj = self.pool.get('sale.order')
+        sale_line_obj = self.pool.get('sale.order.line')
+        for calc in self.browse(cr, uid, ids, context=context):
+            ir_id = sale_obj.create(cr, uid, {
+                'location_requestor_id': calc.segment_id.ir_requesting_location.id,
+                'procurement_request': True,
+                'delivery_requested_date': calc.new_order_reception_date,
+                'categ': 'other',
+                'origin': calc.name,
+            })
+            for line in calc.order_calc_line_ids:
+                if line.agreed_order_qty:
+                    sale_line_obj.create(cr, uid, {
+                        'order_id': ir_id,
+                        'procurement_request': True,
+                        'product_id': line.product_id.id,
+                        'product_uom': line.product_id.uom_id.id,
+                        'product_uom_qty': line.agreed_order_qty,
+                        'cost_price': line.product_id.standard_price,
+                        'price_unit': line.product_id.list_price,
+                        'type': 'make_to_order',
+                    }, context=context)
+
+            self.write(cr, uid, calc.id, {'state': 'closed', 'ir_generation_date': time.strftime('%Y-%m-%d')}, context=context)
+            self.pool.get('replenishment.segment').write(cr, uid, calc.segment_id.id, {'previous_order_rrd': calc.new_order_reception_date}, context=context)
+            ir_d = sale_obj.read(cr, uid, ir_id, ['name'], context=context)
+            sale_obj.log(cr, uid, ir_id, _('%s created from %s') % (ir_d['name'], calc.name), action_xmlid='procurement_request.action_procurement_request')
+        return True
 replenishment_order_calc()
 
 class replenishment_order_calc_line(osv.osv):

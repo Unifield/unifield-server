@@ -267,6 +267,18 @@ class stock_location(osv.osv):
 
         return [('id', 'not in', self._get_loc_ids_to_hide(cr, uid, [], context=context))]
 
+    def _search_from_config(self, cr, uid, obj, name, args, context=None):
+        for arg in args:
+            if arg[1] != '=' or not isinstance(arg[2], (int, long)):
+                raise osv.except_osv(_('Error'), _('Filter on %s not implemented') % (name,))
+
+            retrict = []
+            loc_config = self.pool.get('replenishment.location.config').browse(cr, uid, arg[2], fields_to_fetch=['local_location_ids'], context=context)
+            for loc in loc_config.local_location_ids:
+                retrict.append(loc.id)
+
+            return [('id', 'in', retrict)]
+
     _columns = {
         'name': fields.char('Location Name', size=64, required=True, translate=True),
         'active': fields.boolean('Active', help="By unchecking the active field, you may hide a location without deleting it."),
@@ -329,6 +341,7 @@ class stock_location(osv.osv):
         'coordo_id': fields.function(_get_coordo_db_id, type='many2one', relation='msf.instance', method=True, fnct_search=_search_coordo_id, string='Destination of sync', internal=True, multi='coordo_db_id'),
         'db_id': fields.function(_get_coordo_db_id, type='integer', method=True, string='DB id for sync', internal=True, multi='coordo_db_id'),
         'used_in_config': fields.function(_get_used_in_config, method=True, fnct_search=_search_used_in_config, string="Used in Loc.Config"),
+        'from_config': fields.function(tools.misc.get_fake, method=True, fnct_search=_search_from_config, string='Set in Loc. Config', internal=1),
         'initial_stock_inv_display': fields.function(_get_initial_stock_inv_display, method=True, type='boolean', store=False, fnct_search=_search_initial_stock_inv_display, string='Display in Initial stock inventory', readonly=True),
     }
     _defaults = {
