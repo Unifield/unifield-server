@@ -87,8 +87,10 @@
                     $('#_o2m_${name} .pager').css('margin-right', ($('#_o2m_${name}_mainscreen').get()[0].scrollWidth - $('#_o2m_${name}').width() + 30)+'px');
                 });
                 jQuery(document).ready(function() {
-                    $('#_o2m_${name}_mainscreen').width($('#_o2m_${name}').width()+'px');
-                    $('#_o2m_${name} .pager').css('margin-right', ($('#_o2m_${name}_mainscreen').get()[0].scrollWidth - $('#_o2m_${name}').width() + 30)+'px');
+                     setTimeout(function () {
+                        $('#_o2m_${name}_mainscreen').width($('#_o2m_${name}').width()+'px');
+                        $('#_o2m_${name} .pager').css('margin-right', ($('#_o2m_${name}_mainscreen').get()[0].scrollWidth - $('#_o2m_${name}').width() + 30)+'px');
+                     }, 30)
                 })
             </script>
     % endif
