@@ -236,6 +236,7 @@ class replenishment_segment(osv.osv):
         'date_next_order_received': fields.function(_get_date, type='date', method=True, string='Next order to be received by', multi='get_date'),
         'line_ids': fields.one2many('replenishment.segment.line', 'segment_id', 'Products', context={'default_code_only': 1}),
         'file_to_import': fields.binary(string='File to import'),
+        'last_generation': fields.one2many('replenishment.segment.date.generation', 'segment_id', 'Generation Date', readonly=1),
     }
 
     _defaults = {
@@ -481,6 +482,10 @@ class replenishment_segment(osv.osv):
 
         return wizard_obj.message_box(cr, uid, title=_('Importation Done'), message=_('%d line(s) created, %d line(s) updated') % (created, updated))
 
+    def completed(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state': 'complete'}, context=context)
+        return True
+
 replenishment_segment()
 
 class replenishment_segment_line(osv.osv):
@@ -613,47 +618,89 @@ class replenishment_segment_line(osv.osv):
         'pipeline_before_rrd': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline Before RRD', multi='get_pipeline_before'),
         'pipeline_between_rrd_oc': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline between RDD and OC', multi='get_pipeline_before'),
         'rr_amc': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='RR-AMC', multi='get_stock_amc'),
-        'rr_fmc_1': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_1': fields.date('From'),
-        'rr_fmc_to_1': fields.date('To'),
-        'rr_fmc_2': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_2': fields.date('From'),
-        'rr_fmc_to_2': fields.date('To'),
-        'rr_fmc_3': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_3': fields.date('From'),
-        'rr_fmc_to_3': fields.date('To'),
-        'rr_fmc_4': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_4': fields.date('From'),
-        'rr_fmc_to_4': fields.date('To'),
-        'rr_fmc_5': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_5': fields.date('From'),
-        'rr_fmc_to_5': fields.date('To'),
-        'rr_fmc_6': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_6': fields.date('From'),
-        'rr_fmc_to_6': fields.date('To'),
-        'rr_fmc_7': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_7': fields.date('From'),
-        'rr_fmc_to_7': fields.date('To'),
-        'rr_fmc_8': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_8': fields.date('From'),
-        'rr_fmc_to_8': fields.date('To'),
-        'rr_fmc_9': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_9': fields.date('From'),
-        'rr_fmc_to_9': fields.date('To'),
-        'rr_fmc_10': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_10': fields.date('From'),
-        'rr_fmc_to_10': fields.date('To'),
-        'rr_fmc_11': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_11': fields.date('From'),
-        'rr_fmc_to_11': fields.date('To'),
-        'rr_fmc_12': fields.float('RR FMC', related_uom='uom_id'),
-        'rr_fmc_from_12': fields.date('From'),
-        'rr_fmc_to_12': fields.date('To'),
+        'rr_fmc_1': fields.float('RR FMC 1', related_uom='uom_id'),
+        'rr_fmc_from_1': fields.date('From 1'),
+        'rr_fmc_to_1': fields.date('To 1'),
+        'rr_fmc_2': fields.float('RR FMC 2', related_uom='uom_id'),
+        'rr_fmc_from_2': fields.date('From 2'),
+        'rr_fmc_to_2': fields.date('To 2'),
+        'rr_fmc_3': fields.float('RR FMC 3', related_uom='uom_id'),
+        'rr_fmc_from_3': fields.date('From 3'),
+        'rr_fmc_to_3': fields.date('To 3'),
+        'rr_fmc_4': fields.float('RR FMC 4', related_uom='uom_id'),
+        'rr_fmc_from_4': fields.date('From 4'),
+        'rr_fmc_to_4': fields.date('To 4'),
+        'rr_fmc_5': fields.float('RR FMC 5', related_uom='uom_id'),
+        'rr_fmc_from_5': fields.date('From 5'),
+        'rr_fmc_to_5': fields.date('To 5'),
+        'rr_fmc_6': fields.float('RR FMC 6', related_uom='uom_id'),
+        'rr_fmc_from_6': fields.date('From 6'),
+        'rr_fmc_to_6': fields.date('To 6'),
+        'rr_fmc_7': fields.float('RR FMC 7', related_uom='uom_id'),
+        'rr_fmc_from_7': fields.date('From 7'),
+        'rr_fmc_to_7': fields.date('To 7'),
+        'rr_fmc_8': fields.float('RR FMC 8', related_uom='uom_id'),
+        'rr_fmc_from_8': fields.date('From 8'),
+        'rr_fmc_to_8': fields.date('To 8'),
+        'rr_fmc_9': fields.float('RR FMC 9', related_uom='uom_id'),
+        'rr_fmc_from_9': fields.date('From 9'),
+        'rr_fmc_to_9': fields.date('To 9'),
+        'rr_fmc_10': fields.float('RR FMC 10', related_uom='uom_id'),
+        'rr_fmc_from_10': fields.date('From 10'),
+        'rr_fmc_to_10': fields.date('To 10'),
+        'rr_fmc_11': fields.float('RR FMC 11', related_uom='uom_id'),
+        'rr_fmc_from_11': fields.date('From 11'),
+        'rr_fmc_to_11': fields.date('To 11'),
+        'rr_fmc_12': fields.float('RR FMC 12', related_uom='uom_id'),
+        'rr_fmc_from_12': fields.date('From 12'),
+        'rr_fmc_to_12': fields.date('To 12'),
     }
 
     _sql_constraints = [
         ('uniq_segment_id_product_id', 'unique(segment_id, product_id)', 'Product already set in this segment')
     ]
+
+
+    def _valid_fmc(self, cr, uid, ids, context=None):
+        error = []
+        for line in self.browse(cr, uid, ids, context=context):
+            prev_to = False
+            empty = 0
+            for x in range(1, 13):
+                rr_fmc = getattr(line, 'rr_fmc_%d'%x)
+                rr_from = getattr(line, 'rr_fmc_from_%d'%x)
+                rr_to = getattr(line, 'rr_fmc_to_%d'%x)
+                if rr_from:
+                    if empty:
+                        error.append(_('%s, FMC FROM %d is not set, you can\'t have gap in FMC (%s is set)') % (line.product_id.default_code, empty, x))
+                        continue
+                    rr_from = datetime.strptime(rr_from, '%Y-%m-%d')
+                    if rr_from.day != 1:
+                        error.append(_('%s, FMC FROM %d must start the 1st day of the month') % (line.product_id.default_code, x))
+                    if not rr_to:
+                        if not rr_fmc:
+                            empty = x
+                            continue
+                        error.append(_("%s, FMC TO %d can't be empty if FMC from is set") % (line.product_id.default_code, x))
+                    else:
+                        rr_to = datetime.strptime(rr_to, '%Y-%m-%d')
+                        if rr_to + relativedelta(months=1, day=1, days=-1) != rr_to:
+                            error.append(_("%s, FMC TO %d must be the last day of the month") % (line.product_id.default_code, x))
+                        if rr_from > rr_to:
+                            error.append(_("%s, FMC TO %d must be later than FMC FROM") % (line.product_id.default_code, x))
+
+                        if prev_to:
+                            if prev_to + relativedelta(days=1) != rr_from:
+                                error.append(_("%s, FMC FROM %d must be a day after FMC TO %d") % (line.product_id.default_code, x, x-1))
+                            if prev_to > rr_from:
+                                error.append(_("%s, FMC FROM %d must be later than FMC TO %d") % (line.product_id.default_code, x, x-1))
+                    prev_to = rr_to
+                elif not empty:
+                    empty = x
+            if error:
+                raise osv.except_osv(_('Error'), _('Please correct the following FMC values:\n%s') % ("\n".join(error)))
+
+            return True
 
     def _uniq_prod_location(self, cr, uid, ids, context=None):
         cr.execute('''select prod.default_code, array_agg(seg.name_seg)
@@ -676,6 +723,7 @@ class replenishment_segment_line(osv.osv):
         return True
 
     _constraints = [
+        (_valid_fmc, 'FMC is invalid', []),
         (_uniq_prod_location, 'A product in a location may only belong to one segment.', []),
     ]
 
@@ -688,7 +736,41 @@ class replenishment_segment_line(osv.osv):
             self.create(cr, uid, {'segment_id': parent_id, 'product_id': prod_id}, context=context)
         return True
 
+    def change_fmc(selc, cr, uid, ids, ch_type, nb, value, context=None):
+        if not value:
+            return {}
+
+        msg = False
+        try:
+            fmc_date = datetime.strptime(value, '%Y-%m-%d')
+        except:
+            return {}
+        if ch_type == 'from' and fmc_date.day != 1:
+            msg =  _('FMC FROM %s must be the first day of the month') % (nb,)
+        elif ch_type == 'to':
+            if fmc_date + relativedelta(months=1, day=1, days=-1) != fmc_date:
+                msg = _('FMC TO %s must be the last day of the month') % (nb, )
+
+        if msg:
+            return {'warning': {'message': msg}}
+
+        return {}
+
 replenishment_segment_line()
+
+class replenishment_segment_date_generation(osv.osv):
+    _name = 'replenishment.segment.date.generation'
+    _description = 'Last Generation'
+    _rec_name = 'date'
+
+    _columns = {
+        'segment_id': fields.many2one('replenishment.segment', 'Segment', select=1, required=1),
+        'instance_id': fields.many2one('msf.instance', string='Instance', select=1, required=1),
+        'amc_date': fields.datetime('Date AMC/Stock Data', required=1),
+        'full_date': fields.datetime('Date Full Data (exp.)', required=1),
+    }
+
+replenishment_segment_date_generation()
 
 class replenishment_segment_line_amc(osv.osv):
     _name = 'replenishment.segment.line.amc'
@@ -711,6 +793,7 @@ class replenishment_segment_line_amc(osv.osv):
         # check last config mod date / conso mod date / current date and generates new AMC only if something has changed
         segment_obj = self.pool.get('replenishment.segment')
         prod_obj = self.pool.get('product.product')
+        last_gen_obj = self.pool.get('replenishment.segment.date.generation')
 
         instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
         to_date = datetime.now() + relativedelta(day=1, days=-1)
@@ -721,6 +804,14 @@ class replenishment_segment_line_amc(osv.osv):
             seg_ids = [seg_ids]
 
         for segment in segment_obj.browse(cr, uid, seg_ids, context=context):
+            last_gen_id = last_gen_obj.search(cr, uid, [('segment_id', '=', segment.id), ('instance_id', '=', instance_id)], context=context)
+            last_gen_data = {
+                'segment_id': segment.id,
+                'instance_id': instance_id,
+                'amc_date': datetime.now(),
+                'full_date': False,
+            }
+
             seg_context = {
                 'to_date': to_date.strftime('%Y-%m-%d'),
                 'from_date': (to_date - relativedelta(months=segment.rr_amc)).strftime('%Y-%m-%d'),
@@ -755,6 +846,7 @@ class replenishment_segment_line_amc(osv.osv):
 
             # expired_before_rrd + expired_before_oc
             if segment.state == 'complete':
+                last_gen_data['full_date'] = datetime.now()
                 expired_obj = self.pool.get('product.likely.expire.report')
                 rrd_date = datetime.now() + relativedelta(days=int(segment.total_lt))
                 oc_date = rrd_date + relativedelta(months=segment.order_coverage)
@@ -784,6 +876,12 @@ class replenishment_segment_line_amc(osv.osv):
                     group by line.product_id""", (expired_id, rrd_date.strftime('%Y-%m-%d')))
                 for x in cr.fetchall():
                     self.write(cr, uid, cache_line_amc[lines[x[0]]], {'expired_between_rrd_oc': x[1]}, context=context)
+
+            if last_gen_id:
+                last_gen_obj.write(cr, uid, last_gen_id, last_gen_data, context=context)
+            else:
+                last_gen_obj.create(cr, uid, last_gen_data, context=context)
+
 
         return True
 
@@ -909,6 +1007,14 @@ class replenishment_order_calc(osv.osv):
             self.pool.get('replenishment.segment').write(cr, uid, calc.segment_id.id, {'previous_order_rrd': calc.new_order_reception_date}, context=context)
             ir_d = sale_obj.read(cr, uid, ir_id, ['name'], context=context)
             sale_obj.log(cr, uid, ir_id, _('%s created from %s') % (ir_d['name'], calc.name), action_xmlid='procurement_request.action_procurement_request')
+        return True
+
+    def validated(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        return True
+
+    def cancel(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         return True
 replenishment_order_calc()
 
