@@ -76,6 +76,7 @@ class account_analytic_journal(osv.osv):
         - by default => standard Correction journal
         - corr_type 'hq' => Correction HQ journal
         - corr_type 'extra' => OD-Extra Accounting journal
+        - corr_type 'manual' => Correction Manual journal
         """
         if context is None:
             context = {}
@@ -83,6 +84,8 @@ class account_analytic_journal(osv.osv):
             analytic_journal_type = 'correction_hq'
         elif corr_type == 'extra':
             analytic_journal_type = 'extra'
+        elif corr_type == 'manual':
+            analytic_journal_type = 'correction_manual'
         else:
             analytic_journal_type = 'correction'
         analytic_journal_ids = self.search(cr, uid, [('type', '=', analytic_journal_type), ('is_current_instance', '=', True)],

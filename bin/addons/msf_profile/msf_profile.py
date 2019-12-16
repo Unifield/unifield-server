@@ -77,7 +77,7 @@ class patch_scripts(osv.osv):
                        WHERE type = 'correction'
                        AND code != 'OD';              
                        """)
-            self._logger.warn('%s analytic correction journal(s) updated.' % (cr.rowcount,))
+            self._logger.warn('%s correction analytic journal(s) updated.' % (cr.rowcount,))
             cr.execute("""
                        UPDATE account_journal
                        SET type = 'correction_manual'
@@ -112,14 +112,14 @@ class patch_scripts(osv.osv):
                 }
                 odhq_analytic_journal_id = analytic_journal_obj.create(cr, uid, odhq_analytic_vals)
                 # ODHQ G/L journal
-                odm_vals = {
+                odhq_vals = {
                     # Prop. Instance: by default the current one is used
                     'code': 'ODHQ',
                     'name': 'Correction automatic HQ',
                     'type': 'correction_hq',
                     'analytic_journal_id': odhq_analytic_journal_id,
                 }
-                journal_obj.create(cr, uid, odm_vals)
+                journal_obj.create(cr, uid, odhq_vals)
         return True
 
     # UF15.0
