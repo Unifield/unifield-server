@@ -120,7 +120,7 @@ class account_journal(osv.osv):
         if context is None:
             context = {}
         for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'instance_id'], context=context):
-            if journal.type in ('correction', 'correction_hq'):
+            if journal.type in ('correction', 'correction_hq') and journal.instance_id:
                 journal_dom = [('type', '=', journal.type), ('instance_id', '=', journal.instance_id.id), ('id', '!=', journal.id)]
                 if self.search_exist(cr, uid, journal_dom, context=context):
                     return False
@@ -128,7 +128,7 @@ class account_journal(osv.osv):
 
     def _check_correction_analytic_journal(self, cr, uid, ids, context=None):
         """
-        In case of Correction journal or HQ Correction journal, check that the analytic journal selected is the right one
+        In case of Correction journal or Correction HQ journal, check that the analytic journal selected is the right one
         """
         if context is None:
             context = {}
@@ -136,7 +136,7 @@ class account_journal(osv.osv):
             if journal.type in ('correction', 'correction_hq'):
                 if not journal.analytic_journal_id:
                     return False
-                elif journal.type != journal.analytic_journal_id.type or journal.instance_id.id != journal.analytic_journal_id.instance_id.id:
+                elif journal.type != journal.analytic_journal_id.type or journal.instance_id != journal.analytic_journal_id.instance_id:
                     return False
         return True
 
@@ -147,7 +147,7 @@ class account_journal(osv.osv):
         if context is None:
             context = {}
         for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'instance_id'], context=context):
-            if journal.type == 'correction_hq' and journal.instance_id.level != 'coordo':
+            if journal.type == 'correction_hq' and (not journal.instance_id or journal.instance_id.level != 'coordo'):
                 return False
         return True
 
@@ -450,6 +450,7 @@ class account_journal(osv.osv):
         - by default => standard Correction journal
         - corr_type 'hq' => Correction HQ journal
         - corr_type 'extra' => OD-Extra Accounting journal
+        - corr_type 'manual' => Correction Manual journal
         """
         if context is None:
             context = {}
@@ -457,6 +458,8 @@ class account_journal(osv.osv):
             journal_type = 'correction_hq'
         elif corr_type == 'extra':
             journal_type = 'extra'
+        elif corr_type == 'manual':
+            journal_type = 'correction_manual'
         else:
             journal_type = 'correction'
         journal_ids = self.search(cr, uid, [('type', '=', journal_type), ('is_current_instance', '=', True)],
