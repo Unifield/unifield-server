@@ -261,7 +261,7 @@ class replenishment_segment(osv.osv):
     def generate_order_calc(self, cr, uid, ids, context):
         # TODO JFB RR: check state, date pulled from projects ...
 
-        orcer_calc_line = self.pool.get('replenishment.order_calc.line')
+        order_calc_line = self.pool.get('replenishment.order_calc.line')
         for seg in self.browse(cr, uid, ids, context):
             calc_id = self.pool.get('replenishment.order_calc').create(cr, uid, {
                 'segment_id': seg.id,
@@ -294,7 +294,7 @@ class replenishment_segment(osv.osv):
                 prod_eta[x[0]] = x[1]
 
             cr.execute('''
-                select segment_line_id, sum(reserved_stock), sum(real_stock - reserved_stock - expired_before_rrd), sum(expired_before_rrd), sum(expired_between_rrd_oc)
+                select segment_line_id, sum(reserved_stock), sum(real_stock - reserved_stock - expired_before_rrd), sum(expired_before_rrd), sum(expired_between_rrd_oc), bool_or(open_loan)
                     from replenishment_segment_line_amc amc, replenishment_segment_line line
                     where
                         line.id = amc.segment_line_id
@@ -307,6 +307,7 @@ class replenishment_segment(osv.osv):
                     'pas_no_pipe_no_fmc': x[2] or 0,
                     'expired_before_rrd': x[3] or 0,
                     'expired_rdd_oc': x[4] or 0,
+                    'open_loan': x[5] or False
                 }
 
 
@@ -350,14 +351,26 @@ class replenishment_segment(osv.osv):
                 pas = max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rrd - total_fmc)
                 ss_stock = 0
                 warning = False
-                if line.status == 'new':
-                    if total_month_oc:
-                        ss_stock = seg.safety_stock * total_fmc_oc / total_month_oc
-                else:
-                    if total_month_oc+total_month:
-                        ss_stock = seg.safety_stock * ((total_fmc_oc+total_month)/(total_month_oc+total_month))
-                    if total_month and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
+
+                proposed_order_qty = 0
+                if seg.rule == 'cycle':
+                    if line.status == 'new':
+                        if total_month_oc:
+                            ss_stock = seg.safety_stock * total_fmc_oc / total_month_oc
+                    else:
+                        if total_month_oc+total_month:
+                            ss_stock = seg.safety_stock * ((total_fmc_oc+total_month)/(total_month_oc+total_month))
+                        if total_month and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
+                            warning = _('Missing Qties')
+                    proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rrd_oc)
+
+                elif seg.rule == 'minmax':
+                    proposed_order_qty = max(0, line.max_qty - line.real_stock + sum_line.get(line.id, {}).get('reserved_stock_qty') + prod_eta.get(line.product_id.id, 0) - line.pipeline_before_rrd)
+                    if line.real_stock - sum_line.get(line.id, {}).get('expired_before_rrd') <= line.min_qty:
                         warning = _('Missing Qties')
+                else:
+                    proposed_order_qty = line.auto_qty
+
                 line_data = {
                     'order_calc_id': calc_id,
                     'product_id': line.product_id.id,
@@ -372,10 +385,14 @@ class replenishment_segment(osv.osv):
                     'qty_lacking_needed_by': lacking and (today + relativedelta(days=month_of_supply*30.44)).strftime('%Y-%m-%d'), # TODO JFB RR: 'New prod.'
                     'expired_qty_before_cons': sum_line.get(line.id, {}).get('expired_before_rrd'),
                     'expired_qty_before_eta': False, #TODO JFB=  RR
-                    'proposed_order_qty': max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rrd_oc),   # TODO JFB NEW PROD
+                    'proposed_order_qty': proposed_order_qty,
+                    'agreed_order_qty': proposed_order_qty,
+                    'open_loan': sum_line.get(line.id, {}).get('open_loan', False),
                     'warning': warning,
                 }
-                orcer_calc_line.create(cr, uid, line_data, context=context)
+                order_calc_line.create(cr, uid, line_data, context=context)
+            # TODO JFB RR: open order calc form
+        return True
 
     def add_multiple_lines(self, cr, uid, ids, context=None):
         '''
@@ -425,33 +442,55 @@ class replenishment_segment(osv.osv):
             data_towrite = {
                 'status': status.get(row.cells[3].data.strip()),
                 'buffer_qty': row.cells[4].data,
+                'min_qty': 0,
+                'max_qty': 0,
+                'auto_qty': 0
             }
-
-
-            first_fmc_col = 7 - 3
             for fmc in range(1, 13):
-                first_fmc_col += 3
                 data_towrite.update({
                     'rr_fmc_%d' % fmc: False,
                     'rr_fmc_from_%d' % fmc: False,
                     'rr_fmc_to_%d' % fmc: False,
                 })
-                if row.cells[first_fmc_col+1].data:
-                    # TODO JFB RR: check date consist. FROM < TO, begin / end mohtn, no gap
-                    if not row.cells[first_fmc_col+1].type == 'datetime':
-                        line_error.append(_('Line %d: FMC FROM %d, date expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col+1].data))
-                        continue
-                    if not row.cells[first_fmc_col+2].data or row.cells[first_fmc_col+2].type != 'datetime':
-                        line_error.append(_('Line %d: FMC TO %d, date expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col+2].data))
-                        continue
-                    if not isinstance(row.cells[first_fmc_col].data, (int, long, float)):
-                        line_error.append(_('Line %d: FMC %d, number expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col].data))
-                        continue
+
+
+            if seg.rule == 'cycle':
+                first_fmc_col = 7 - 3
+                for fmc in range(1, 13):
+                    first_fmc_col += 3
+                    if row.cells[first_fmc_col+1].data:
+                        # TODO JFB RR: check date consist. FROM < TO, begin / end mohtn, no gap
+                        if not row.cells[first_fmc_col+1].type == 'datetime':
+                            line_error.append(_('Line %d: FMC FROM %d, date expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col+1].data))
+                            continue
+                        if not row.cells[first_fmc_col+2].data or row.cells[first_fmc_col+2].type != 'datetime':
+                            line_error.append(_('Line %d: FMC TO %d, date expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col+2].data))
+                            continue
+                        if not isinstance(row.cells[first_fmc_col].data, (int, long, float)):
+                            line_error.append(_('Line %d: FMC %d, number expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col].data))
+                            continue
+                        data_towrite.update({
+                            'rr_fmc_%d' % fmc: row.cells[first_fmc_col].data,
+                            'rr_fmc_from_%d' % fmc: row.cells[first_fmc_col+1].data.strftime('%Y-%m-%d'),
+                            'rr_fmc_to_%d' % fmc: row.cells[first_fmc_col+2].data.strftime('%Y-%m-%d'),
+                        })
+            elif seg.rule == 'minmax':
+                if not row.cells[4] or not not isinstance(row.cells[4].data, (int, long, float)):
+                    line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[4].data))
+                elif not row.cells[5] or not not isinstance(row.cells[5].data, (int, long, float)):
+                    line_error.append(_('Line %d: Max Qty, number expected, found %s') % (idx+1, row.cells[5].data))
+                elif row.cells[5] < row.cells[4]:
+                    line_error.append(_('Line %d: Max Qty (%s) must be large than Min Qty (%s)') % (idx+1, row.cells[5].data, row.cells[4].data))
+                else:
                     data_towrite.update({
-                        'rr_fmc_%d' % fmc: row.cells[first_fmc_col].data,
-                        'rr_fmc_from_%d' % fmc: row.cells[first_fmc_col+1].data.strftime('%Y-%m-%d'),
-                        'rr_fmc_to_%d' % fmc: row.cells[first_fmc_col+2].data.strftime('%Y-%m-%d'),
+                        'min_qty': row.cells[4].data,
+                        'max_qty': row.cells[5].data,
                     })
+            else:
+                if not row.cells[4] or not not isinstance(row.cells[4].data, (int, long, float)):
+                    line_error.append(_('Line %d: Auto Supply Qty, number expected, found %s') % (idx+1, row.cells[4].data))
+                else:
+                    data_towrite['auto_qty'] = row.cells[4].data
 
             if prod_code not in existing_line:
                 prod_id = product_obj.search(cr, uid, [('default_code', '=ilike', prod_code)], context=context)
@@ -663,7 +702,10 @@ class replenishment_segment_line(osv.osv):
 
     def _valid_fmc(self, cr, uid, ids, context=None):
         error = []
-        for line in self.browse(cr, uid, ids, context=context):
+        line_ids = self.search(cr, uid, [('id', 'in', ids), ('segment_id.rule', '=', 'cycle')], context=context)
+        if not line_ids:
+            return True
+        for line in self.browse(cr, uid, line_ids, context=context):
             prev_to = False
             empty = 0
             for x in range(1, 13):
@@ -766,8 +808,8 @@ class replenishment_segment_date_generation(osv.osv):
     _columns = {
         'segment_id': fields.many2one('replenishment.segment', 'Segment', select=1, required=1),
         'instance_id': fields.many2one('msf.instance', string='Instance', select=1, required=1),
-        'amc_date': fields.datetime('Date AMC/Stock Data', required=1),
-        'full_date': fields.datetime('Date Full Data (exp.)', required=1),
+        'amc_date': fields.datetime('Date AMC/Stock Data'),
+        'full_date': fields.datetime('Date Full Data (exp.)'),
     }
 
 replenishment_segment_date_generation()
@@ -786,8 +828,12 @@ class replenishment_segment_line_amc(osv.osv):
         'real_stock': fields.float('Reserved Stock'),
         'expired_before_rrd': fields.float('Expired Qty before RRD'),
         'expired_between_rrd_oc': fields.float('Expired Qty between RRD and OC'),
+        'open_loan': fields.boolean('Open Loan'),
     }
 
+    _defaults = {
+        'open_loan': False
+    }
     def generate_all_amc(self, cr, uid, context=None, seg_ids=False):
         # TODO JFB RR
         # check last config mod date / conso mod date / current date and generates new AMC only if something has changed
@@ -833,10 +879,38 @@ class replenishment_segment_line_amc(osv.osv):
             for prod_alloc in prod_obj.browse(cr, uid, lines.keys(), fields_to_fetch=['qty_reserved', 'qty_available'], context={'location': seg_context['amc_location_ids']}):
                 stock_qties[prod_alloc['id']] = {'qty_reserved': -1 * prod_alloc.qty_reserved, 'qty_available': prod_alloc.qty_available}
 
+            open_loan = {}
+            cr.execute('''
+                select product_id from purchase_order_line pol, purchase_order po
+                where
+                    po.id = pol.order_id and
+                    pol.product_id in %s and
+                    pol.state not in ('done', 'cancel_r', 'cancel') and
+                    po.partner_type != 'internal' and
+                    po.order_type = 'loan'
+                group by product_id
+                ''', (tuple(lines.keys()), )
+            )
+            for loan in cr.fetchall():
+                open_loan[loan[0]] = True
+            cr.execute('''
+                select product_id from sale_order_line sol, sale_order so
+                where
+                    so.id = sol.order_id and
+                    sol.product_id in %s and
+                    sol.state not in ('done', 'cancel_r', 'cancel') and
+                    so.partner_type != 'internal' and
+                    so.order_type = 'loan'
+                group by product_id
+                ''', (tuple(lines.keys()), )
+            )
+            for loan in cr.fetchall():
+                open_loan[loan[0]] = True
+
             # AMC
             amc = prod_obj.compute_amc(cr, uid, lines.keys(), context=seg_context)
             for prod_id in amc:
-                data = {'amc': amc[prod_id], 'name': to_date, 'reserved_stock': stock_qties.get(prod_id, {}).get('qty_reserved'), 'real_stock': stock_qties.get(prod_id, {}).get('qty_available')}
+                data = {'amc': amc[prod_id], 'name': to_date, 'reserved_stock': stock_qties.get(prod_id, {}).get('qty_reserved'), 'real_stock': stock_qties.get(prod_id, {}).get('qty_available'), 'open_loan': open_loan.get(prod_id, False)}
                 if lines[prod_id] in cache_line_amc:
                     self.write(cr, uid, cache_line_amc[lines[prod_id]], data, context=context)
                 else:

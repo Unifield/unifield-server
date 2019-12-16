@@ -423,7 +423,7 @@
                         <field name="file_to_import" colspan="2" />
                         <button name="import_lines" string="Import Lines" type="object" colspan="2" icon="gtk-save" />
                     </group>
-                    <field name="order_calc_line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}">
+                    <field name="order_calc_line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" default_get="rule=rule">
                         <tree editable="top" editable_style="new">
                             <field name="product_id" />
                             <field name="product_description" displayon="noteditable"/>
@@ -435,15 +435,15 @@
                             <field name="eta_for_next_pipeline" />
                             <field name="reserved_stock_qty" />
                             <field name="projected_stock_qty" />
-                            <field name="qty_lacking" />
-                            <field name="qty_lacking_needed_by" />
+                            <field name="qty_lacking" invisible="context.get('rule')!='cycle'"/>
+                            <field name="qty_lacking_needed_by" invisible="context.get('rule')!='cycle'"/>
                             <field name="open_loan" />
-                            <field name="expired_qty_before_cons" />
+                            <field name="expired_qty_before_cons" invisible="context.get('rule')!='cycle'"/>
                             <field name="expired_qty_before_eta" />
                             <field name="proposed_order_qty" />
                             <field name="agreed_order_qty" />
                             <field name="order_qty_comment" />
-                            <field name="warning" />
+                            <field name="warning" invisible="context.get('rule')=='auto'"/>
                         </tree>
                     </field>
                     <field name="state" />
