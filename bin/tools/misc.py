@@ -1912,3 +1912,8 @@ def get_fake(self, cr, uid, ids, *a, **b):
     for x in ids:
         ret[x] = False
     return ret
+
+def get_traceback(error):
+    import sys, traceback
+    tb_s = reduce(lambda x, y: x+y, traceback.format_exception(*sys.exc_info()))
+    return ustr(tb_s)

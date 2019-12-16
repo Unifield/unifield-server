@@ -8,7 +8,10 @@ import time
 import json
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import base64
-
+from tools import misc
+import threading
+import logging
+import pooler
 
 class replenishment_location_config(osv.osv):
     _name = 'replenishment.location.config'
@@ -254,6 +257,25 @@ class replenishment_segment(osv.osv):
         ret['external_lt'] = (supplier_lt or 0) + (handling_lt or 0)
         ret['total_lt'] = ret['internal_lt'] + ret['external_lt']
         return {'value': ret}
+
+    def replenishment_compute_all_bg(self, cr, uid, ids=False, context=None):
+        threaded_calculation = threading.Thread(target=self.replenishment_compute_thread, args=(cr.dbname, uid, ids, context))
+        threaded_calculation.start()
+        return {'type': 'ir.actions.act_window_close'}
+
+    def replenishment_compute_thread(self, dbname, uid, ids=False, context=None):
+        logger = logging.getLogger('RR')
+        cr = pooler.get_db(dbname).cursor()
+        logger.info("Start RR computation")
+        try:
+            self.pool.get('replenishment.segment.line.amc').generate_all_amc(cr, uid, context=context)
+            logger.info("RR computation done")
+            cr.commit()
+        except Exception as e:
+            cr.rollback()
+            logger.error('Error RR: %s' % misc.get_traceback(e))
+        finally:
+            cr.close(True)
 
     def trigger_compute(self, cr, uid, ids, context):
         return self.pool.get('replenishment.segment.line.amc').generate_all_amc(cr, uid, context=context, seg_ids=ids)
