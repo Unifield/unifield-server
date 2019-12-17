@@ -316,6 +316,7 @@ class replenishment_segment(osv.osv):
         # TODO JFB RR: check state, date pulled from projects ...
 
         order_calc_line = self.pool.get('replenishment.order_calc.line')
+        calc_id = False
         for seg in self.browse(cr, uid, ids, context):
             calc_id = self.pool.get('replenishment.order_calc').create(cr, uid, {
                 'segment_id': seg.id,
@@ -404,24 +405,32 @@ class replenishment_segment(osv.osv):
                                 total_fmc_oc += month*num_fmc
                 pas = max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rrd - total_fmc)
                 ss_stock = 0
-                warning = False
-
+                warning = ""
+                qty_lacking = 0
+                qty_lacking_needed_by = False
                 proposed_order_qty = 0
                 if seg.rule == 'cycle':
                     if line.status == 'new':
                         if total_month_oc:
                             ss_stock = seg.safety_stock * total_fmc_oc / total_month_oc
                     else:
+                        qty_lacking =  max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) - total_fmc)
                         if total_month_oc+total_month:
                             ss_stock = seg.safety_stock * ((total_fmc_oc+total_month)/(total_month_oc+total_month))
                         if total_month and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
-                            warning = _('Missing Qties')
+                            warning = '%s '% _('Missing Qties')
+                        if qty_lacking:
+                            warning += _('Stock-out before next ETA')
+
+                        if lacking:
+                            qty_lacking_needed_by = (today + relativedelta(days=month_of_supply*30.44)).strftime('%Y-%m-%d')
+
                     proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rrd_oc)
 
                 elif seg.rule == 'minmax':
                     proposed_order_qty = max(0, line.max_qty - line.real_stock + sum_line.get(line.id, {}).get('reserved_stock_qty') + prod_eta.get(line.product_id.id, 0) - line.pipeline_before_rrd)
                     if line.real_stock - sum_line.get(line.id, {}).get('expired_before_rrd') <= line.min_qty:
-                        warning = _('Missing Qties')
+                        warning = _('Alert: "inventory – batches expiring before ETA <= Min"')
                 else:
                     proposed_order_qty = line.auto_qty
 
@@ -435,8 +444,8 @@ class replenishment_segment(osv.osv):
                     'eta_for_next_pipeline': prod_eta.get(line.product_id.id, False),
                     'reserved_stock_qty': sum_line.get(line.id, {}).get('reserved_stock_qty'),
                     'projected_stock_qty': pas,
-                    'qty_lacking': max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) - total_fmc), # TODO JFB RR: 'New prod.'
-                    'qty_lacking_needed_by': lacking and (today + relativedelta(days=month_of_supply*30.44)).strftime('%Y-%m-%d'), # TODO JFB RR: 'New prod.'
+                    'qty_lacking': qty_lacking,
+                    'qty_lacking_needed_by': qty_lacking_needed_by,
                     'expired_qty_before_cons': sum_line.get(line.id, {}).get('expired_before_rrd'),
                     'expired_qty_before_eta': False, #TODO JFB=  RR
                     'proposed_order_qty': proposed_order_qty,
@@ -445,7 +454,11 @@ class replenishment_segment(osv.osv):
                     'warning': warning,
                 }
                 order_calc_line.create(cr, uid, line_data, context=context)
-            # TODO JFB RR: open order calc form
+            if calc_id:
+                res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'procurement_cycle.replenishment_order_calc_action', ['form', 'tree'], context=context)
+                res['res_id'] = calc_id
+                return res
+
         return True
 
     def add_multiple_lines(self, cr, uid, ids, context=None):

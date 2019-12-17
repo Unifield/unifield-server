@@ -44,5 +44,19 @@
             <field name="number_increment">1</field>
         </record>
 
+       <record id="ir_cron_replenishment_segment" model="ir.cron">
+            <field name="function">replenishment_compute_all_bg</field>
+            <field name="user_id">1</field>
+            <field name="name">Replenishment Rules</field>
+            <field name="interval_type">days</field>
+            <field eval="-1" name="numbercall"/>
+            <field eval="5" name="priority"/>
+            <field eval="0" name="doall"/>
+            <field eval="1" name="active"/>
+            <field eval="1" name="interval_number"/>
+            <field name="model">replenishment.segment</field>
+        </record>
+
+
     </data>
 </openerp>

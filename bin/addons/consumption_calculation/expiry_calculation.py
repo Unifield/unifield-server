@@ -407,7 +407,6 @@ class product_likely_expire_report(osv.osv):
                     local_amc[x[0]] = x[1] or 0
 
             for segment_line in report.segment_id.line_ids:
-                # TODO JFB RR: check rr_mac can be sum of proj + coo, set report date
                 if report.segment_id.rule != 'cycle':
                     segment_product_amc[segment_line.product_id.id] = local_amc.get(segment_line.id, 0)
                 else:
@@ -485,10 +484,10 @@ class product_likely_expire_report(osv.osv):
 
                 if not from_segment:
                     consumption = self._get_average_consumption(new_cr, uid, lot.product_id.id,
-                                                            report.consumption_type,
-                                                            context.get('from', report.date_from),
-                                                            context.get('to', report.date_to),
-                                                            context=context)
+                                                                report.consumption_type,
+                                                                context.get('from', report.date_from),
+                                                                context.get('to', report.date_to),
+                                                                context=context)
                 else:
                     consumption = segment_product_amc.get(lot.product_id.id, 0)
 
@@ -620,8 +619,8 @@ class product_likely_expire_report(osv.osv):
         self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
 
         if create_cr:
-           new_cr.commit()
-           new_cr.close(True)
+            new_cr.commit()
+            new_cr.close(True)
 
         return {
             'type': 'ir.actions.act_window',
