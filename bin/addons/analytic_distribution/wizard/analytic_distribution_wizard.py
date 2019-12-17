@@ -991,7 +991,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     if not cline.analytic_id.filter_active:
                         raise osv.except_osv(_('Error'), _('Cost center account %s is not active at this date: %s') % (cline.analytic_id.code or '', w.posting_date))
                     if not cline.destination_id.filter_active:
-                        raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') % (cline.destination_id.code or '', w.posting_date))
+                        raise osv.except_osv(_('Error'), _('Destination %s is either inactive at the date %s, or it allows no Cost Center.')
+                                             % (cline.destination_id.code or '', w.posting_date))
                 # Then we check funding pool distribution line with CC (cost_center_id) and destination (destination_id)
                 for fpline in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.funding_pool_lines], {'date': w.posting_date}):
                     if not fpline.cost_center_id.filter_active:

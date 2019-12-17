@@ -89524,8 +89524,8 @@ msgstr "Traiter Événement"
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:968
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:974
 #, python-format
-msgid "Destination %s is not active at this date: %s"
-msgstr "La Destination %s n'est pas active à cette date: %s"
+msgid "Destination %s is either inactive at the date %s, or it allows no Cost Center."
+msgstr "La Destination %s est soit inactive à la date %s, soit elle n'autorise aucun Centre de Coût."
 
 #. modules: purchase, tender_flow, purchase_allocation_report, sale, procurement, msf_supply_doc_export, msf_doc_import, purchase_compare_rfq, stock, consumption_calculation
 #: view:wizard.import.in.simulation.screen:0
