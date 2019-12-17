@@ -10,7 +10,7 @@
         <record id="sequence_replenishment_location_config" model="ir.sequence">
             <field name="name">Location Configuration</field>
             <field name="code">replenishment.location.config</field>
-            <field name="prefix">LC/%(y)s/</field>
+            <field name="prefix">LC/%(y)s/%(instance)s/</field>
             <field name="padding">5</field>
             <field name="number_next">1</field>
             <field name="number_increment">1</field>
@@ -24,7 +24,7 @@
         <record id="sequence_replenishment_segment" model="ir.sequence">
             <field name="name">Segment</field>
             <field name="code">replenishment.segment</field>
-            <field name="prefix">SEG/%(y)s/</field>
+            <field name="prefix">SEG/%(y)s/%(instance)s/</field>
             <field name="padding">5</field>
             <field name="number_next">1</field>
             <field name="number_increment">1</field>
@@ -38,7 +38,7 @@
         <record id="sequence_order_calc" model="ir.sequence">
             <field name="name">Order Calc</field>
             <field name="code">replenishment.order_calc</field>
-            <field name="prefix">OC/%(y)s/%(hqcode)s/%(instance)s/</field>
+            <field name="prefix">OC/%(y)s/%(instance)s/</field>
             <field name="padding">5</field>
             <field name="number_next">1</field>
             <field name="number_increment">1</field>

@@ -49,6 +49,33 @@ class replenishment_location_config(osv.osv):
                 cr.execute('insert into local_location_configuration_rel (config_id, location_id) values (%s, %s)', (id, d[1]))
         return True
 
+    def _get_instance(self, cr, uid, ids, field_name, args, context=None):
+        instance = self.pool.get('res.company')._get_instance_record(cr, uid)
+
+        is_project = not instance or instance.level != 'coordo'
+        ret = {}
+        for _id in ids:
+            ret[_id] = {'is_current_instance': True, 'is_project': is_project}
+        for _id in self.search(cr, uid, [('main_instance', '!=', instance.id), ('id', 'in', ids)], context=context):
+            ret[_id]['is_current_instance'] = False
+
+        return ret
+
+    def _search_is_current_instance(self, cr, uid, obj, name, args, context):
+        instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+
+        for arg in args:
+            if arg[1] not in ('=', '!='):
+                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % name)
+
+            cond = bool(arg[2])
+            if arg[1] == '!=':
+                cond = not cond
+
+            return [('main_instance', cond and '=' or '!=', instance_id)]
+
+        return []
+
     _columns = {
         'name': fields.char('Reference', size=64, readonly=1, select=1),
         'description': fields.char('Desription', required=1, size=28, select=1),
@@ -67,11 +94,16 @@ class replenishment_location_config(osv.osv):
         'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequency', type='char'),
         'frequence_id': fields.many2one('stock.frequence', string='Frequency'),
         'sync_remote_location_txt': fields.function(_get_sync_remote_location_txt, method=True, type='text', fnct_inv=_set_sync_remote_location_txt, internal=1, string='Sync remote', help='Used to sync remote_location_ids'),
+        'is_current_instance': fields.function(_get_instance,  method=True, type='boolean', fnct_search=_search_is_current_instance, string='Defined in the instance', multi='_get_instance'),
+        'is_project': fields.function(_get_instance,  method=True, type='boolean', string='Is project instance', multi='_get_instance'),
     }
+
+    def _get_default_synced(self, cr, uid, context=None):
+        return self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo'
 
     _defaults = {
         'active': True,
-        'synched': True,
+        'synched': _get_default_synced,
         'main_instance': lambda s, cr, uid, c: s.pool.get('res.company')._get_instance_id(cr, uid),
         'projected_view': 8,
         'sleeping': 12,

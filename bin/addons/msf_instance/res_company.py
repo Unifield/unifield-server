@@ -137,6 +137,10 @@ class res_company(osv.osv):
                     self._refresh_objects(cr, uid, object, old_instance_id, vals['instance_id'], context=context)
         return super(res_company, self).write(cr, uid, ids, vals, context=context)
 
+    def _get_instance_level(self, cr, uid):
+        instance = self._get_instance_record(cr, uid)
+        return instance and instance.level
+
     def _get_instance_id(self, cr, uid):
         instance = self._get_instance_record(cr, uid)
         return instance and instance.id
