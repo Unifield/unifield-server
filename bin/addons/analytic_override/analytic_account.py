@@ -33,10 +33,11 @@ class analytic_account(osv.osv):
     _inherit = "account.analytic.account"
 
     def _get_active(self, cr, uid, ids, field_name, args, context=None):
-        '''
+        """
         If date out of date_start/date of given analytic account, then account is inactive.
         The comparison could be done via a date given in context.
-        '''
+        A normal-type destination allowing no CC is also seen as inactive whatever its activation dates.
+        """
         res = {}
         cmp_date = date.today().strftime('%Y-%m-%d')
         if context.get('date', False):
@@ -45,29 +46,50 @@ class analytic_account(osv.osv):
             res[a.id] = True
             if a.date_start > cmp_date:
                 res[a.id] = False
-            if a.date and a.date <= cmp_date:
+            elif a.date and a.date <= cmp_date:
+                res[a.id] = False
+            elif a.category == 'DEST' and a.type == 'normal' and not a.allow_all_cc and not a.dest_cc_ids:
                 res[a.id] = False
         return res
 
     def _search_filter_active(self, cr, uid, ids, name, args, context=None):
         """
-        UTP-410: Add the search on active/inactive CC
+        Analytic accounts are seen as active if the date in context (or today's date) is included within the active date range.
+        In case of Destination with normal Type: it must additionally allows at least one Cost Center.
         """
         arg = []
         cmp_date = date.today().strftime('%Y-%m-%d')
         if context.get('date', False):
             cmp_date = context.get('date')
         for x in args:
-            if x[0] == 'filter_active' and x[2] == True:
+            # filter: active
+            if x[0] == 'filter_active' and x[2] is True:
+                arg.append('&')
                 arg.append('&')
                 arg.append(('date_start', '<=', cmp_date))
                 arg.append('|')
                 arg.append(('date', '>', cmp_date))
                 arg.append(('date', '=', False))
-            elif x[0] == 'filter_active' and x[2] == False:
+                arg.append('|')
+                arg.append('|')
+                arg.append('|')
+                arg.append(('category', '!=', 'DEST'))
+                arg.append(('type', '=', 'view'))
+                arg.append(('allow_all_cc', '=', True))
+                arg.append(('dest_cc_ids', '!=', False))
+            # filter: inactive
+            elif x[0] == 'filter_active' and x[2] is False:
+                arg.append('|')
                 arg.append('|')
                 arg.append(('date_start', '>', cmp_date))
                 arg.append(('date', '<=', cmp_date))
+                arg.append('&')
+                arg.append('&')
+                arg.append('&')
+                arg.append(('category', '=', 'DEST'))
+                arg.append(('type', '=', 'normal'))
+                arg.append(('allow_all_cc', '=', False))
+                arg.append(('dest_cc_ids', '=', False))
         return arg
 
     def _get_fake(self, cr, uid, ids, *a, **b):
