@@ -373,12 +373,12 @@
         <Cell ss:StyleID="s92"><Data ss:Type="String">${_('Buffer Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % elif objects[0].rule == 'minmax':
         <Cell ss:StyleID="s92"><Data ss:Type="String">${_('Min Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-        <Cell ss:StyleID="s92"><Data ss:Type="String">${_('Max Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+        <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Max Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % else:
         <Cell ss:StyleID="s92"><Data ss:Type="String">${_('Auto Supply Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % endif
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Real Stock')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('RR-AMC')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s91"><Data ss:Type="String">${_('RR-AMC')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
 
     % if objects[0].rule == 'cycle':
         <% i = 0 %>
