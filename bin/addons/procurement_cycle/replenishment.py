@@ -377,32 +377,45 @@ class replenishment_segment(osv.osv):
                 total_fmc_oc = 0
                 total_month_oc = 0
 
+                valid_rr_fmc = True
+                before_today = False
+                after_oc = False
+
                 lacking = False
-                for fmc_d in range(1, 13):
-                    from_fmc = getattr(line, 'rr_fmc_from_%d'%fmc_d)
-                    to_fmc = getattr(line, 'rr_fmc_to_%d'%fmc_d)
-                    num_fmc = getattr(line, 'rr_fmc_%d'%fmc_d)
-                    if from_fmc and to_fmc and num_fmc:
-                        from_fmc = datetime.strptime(from_fmc, '%Y-%m-%d')
-                        to_fmc = datetime.strptime(to_fmc, '%Y-%m-%d')
-                        begin = max(today, from_fmc)
-                        end = min(rdd, to_fmc)
-                        if end >= begin:
-                            month = (end-begin).days/30.44
-                            total_month += month
-                            total_fmc += month*num_fmc
-                            if not lacking:
-                                if total_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
-                                    month_of_supply += month
-                                else:
-                                    month_of_supply += ( sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc + month*num_fmc ) / num_fmc
-                                    lacking = True
-                        else:
-                            end_oc = min(oc, to_fmc)
-                            if end_oc >= begin:
-                                month = (end_oc-begin).days/30.44
-                                total_month_oc += month
-                                total_fmc_oc += month*num_fmc
+                if seg.rule == 'cycle':
+                    for fmc_d in range(1, 13):
+                        from_fmc = getattr(line, 'rr_fmc_from_%d'%fmc_d)
+                        to_fmc = getattr(line, 'rr_fmc_to_%d'%fmc_d)
+                        num_fmc = getattr(line, 'rr_fmc_%d'%fmc_d)
+                        if from_fmc and to_fmc and num_fmc:
+
+                            from_fmc = datetime.strptime(from_fmc, '%Y-%m-%d')
+                            to_fmc = datetime.strptime(to_fmc, '%Y-%m-%d')
+
+                            if rdd <= from_fmc:
+                                before_today = True
+
+                            begin = max(today, from_fmc)
+                            end = min(rdd, to_fmc)
+                            if end >= begin:
+                                month = (end-begin).days/30.44
+                                total_month += month
+                                total_fmc += month*num_fmc
+                                if not lacking:
+                                    if total_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
+                                        month_of_supply += month
+                                    else:
+                                        month_of_supply += ( sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc + month*num_fmc ) / num_fmc
+                                        lacking = True
+                            else:
+                                if oc <= to_fmc:
+                                    after_oc = True
+                                end_oc = min(oc, to_fmc)
+                                if end_oc >= begin:
+                                    month = (end_oc-begin).days/30.44
+                                    total_month_oc += month
+                                    total_fmc_oc += month*num_fmc
+                    valid_rr_fmc = before_today and after_oc
                 pas = max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rrd - total_fmc)
                 ss_stock = 0
                 warning = ""
@@ -452,6 +465,7 @@ class replenishment_segment(osv.osv):
                     'agreed_order_qty': proposed_order_qty,
                     'open_loan': sum_line.get(line.id, {}).get('open_loan', False),
                     'warning': warning,
+                    'valid_rr_fmc': valid_rr_fmc,
                 }
                 order_calc_line.create(cr, uid, line_data, context=context)
             if calc_id:

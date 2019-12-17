@@ -437,7 +437,7 @@
                             <field name="product_description" displayon="noteditable"/>
                             <field name="uom_id" invisible="1" />
                             <field name="in_main_list" />
-                            <field name="valid_rr_fmc" />
+                            <field name="valid_rr_fmc" invisible="context.get('rule')!='cycle'"/>
                             <field name="real_stock" />
                             <field name="pipeline_qty" />
                             <field name="eta_for_next_pipeline" />
