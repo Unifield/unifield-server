@@ -8,7 +8,9 @@
             <field name="type">tree</field>
             <field eval="8" name="priority"/>
             <field name="arch" type="xml">
-                <tree toolbar="1" colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts">
+                <tree toolbar="1" colors="red:(date and date&lt;current_date or dest_without_cc==True)"
+                      string="Analytic Accounts">
+                    <field name="dest_without_cc" invisible="1"/>
                     <field name="code"/>
                     <field name="complete_name"/>
                     <field name="quantity"/>
