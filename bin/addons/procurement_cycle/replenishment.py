@@ -248,6 +248,15 @@ class replenishment_segment(osv.osv):
             ret[seg['id']] = dict_d.get(seg['rule'],'')
         return ret
 
+    def _get_has_inprogress_cal(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+        cr.execute('''select segment_id from replenishment_order_calc where state not in ('cancel', 'closed') and segment_id in %s group by segment_id''', (tuple(ids),))
+        for x in cr.fetchall():
+            ret[x[0]] = True
+        return ret
+
     _columns = {
         'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
         'description_seg': fields.char('Desription', required=1, size=28, select=1),
@@ -274,6 +283,7 @@ class replenishment_segment(osv.osv):
         'line_ids': fields.one2many('replenishment.segment.line', 'segment_id', 'Products', context={'default_code_only': 1}),
         'file_to_import': fields.binary(string='File to import'),
         'last_generation': fields.one2many('replenishment.segment.date.generation', 'segment_id', 'Generation Date', readonly=1),
+        'has_inprogress_cal': fields.function(_get_has_inprogress_cal, type='boolean', method=1, internal=1, string='Has in-progess Order Calc.'),
     }
 
     _defaults = {
@@ -666,6 +676,19 @@ class replenishment_segment(osv.osv):
         if last_gen_ids:
             last_gen_obj.write(cr, uid, last_gen_ids, {'full_date': False}, context=context)
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+        return True
+
+    def set_as_cancel(self, cr, uid, ids, context=None):
+        self.check_inprogress_order_calc(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        return True
+
+    def set_as_cancel_and_cancel_order(self, cr, uid, ids, context=None):
+        calc_obj = self.pool.get('replenishment.order_calc')
+        calc_ids = calc_obj.search(cr, uid, [('segment_id', 'in', ids), ('state', 'not in', ['cancel', 'closed'])], context=context)
+        if calc_ids:
+            calc_obj.write(cr, uid, calc_ids, {'state': 'cancel'}, context=context)
+        self.set_as_cancel(cr, uid, ids, context=context)
         return True
 
     def change_location_config_id(self, cr, uid, ids, loc_config_id, ir_loc_id, context=None):

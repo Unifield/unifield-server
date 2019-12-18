@@ -333,12 +333,15 @@
                         </page>
                     </notebook>
                     <field name="state" />
+                    <field name="has_inprogress_cal" invisible="1" />
                     <group colspan="2">
                         <button name="trigger_compute" string="Force Computation" type="object" icon="gtk-remove" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"/>
                         <button name="completed" string="Completed" type="object" icon="terp-check" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                         <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', 'not in', ['complete', 'archived', 'cancel'])]}" icon="gtk-go-back" />
                         <button name="generate_order_calc" string="Generate Order Calc" type="object" icon="gtk-convert" attrs="{'invisible': [('state', '!=', 'complete')]}"/>
                         <button name="set_as_archived" string="Archive" type="object" attrs="{'invisible':[('state', 'in', ['cancel', 'archived'])]}" icon="terp-locked" />
+                        <button name="set_as_cancel" string="Cancel" type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', True)]}" icon="gtk-cancel" />
+                        <button name="set_as_cancel_and_cancel_order" string="Cancel Segment and Order Calc." type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', False)]}" icon="gtk-cancel" confirm="This will cancel the Segment and the in-progess Order Calc. Do you confirm ?"/>
                     </group>
                 </form>
             </field>
@@ -370,13 +373,19 @@
             <field name="arch" type="xml">
                 <search string="Segment">
                     <filter string="Current Instance" name="current_instance" icon="terp-stage" domain="[('is_current_instance', '=', True)]"/>
+                    <separator orientation="vertical"/>
+                    <filter string="Draft" domain="[('state', '=', 'draft')]" icon="terp-document-new"/>
+                    <filter string="Complete" domain="[('state', '=', 'complete')]" icon="terp-check"/>
+                    <filter string="Archived" domain="[('state', '=', 'archived')]" icon="terp-locked"/>
+                    <filter string="Cancel" domain="[('state', '=', 'cancel')]" icon="gtk-cancel"/>
+                    <separator orientation="vertical" />
+
                     <field name="name_seg" />
                     <field name="description_seg" />
                     <field name="line_ids" />
                     <field name="location_config_id" />
                     <field name="rule" />
                     <field name="product_list_id" />
-                    <field name="state" />
                 </search>
             </field>
         </record>
@@ -395,6 +404,29 @@
             sequence="40"
             parent="stock_schedule.stock_automatic_procurements_menu" />
 
+
+        <act_window id="action_from_segment_to_order_calc"
+            name="Order Calc."
+            src_model="replenishment.segment"
+            res_model="replenishment.order_calc"
+            domain="[('segment_id', '=', active_id)]"
+            />
+
+        <act_window id="action_from_location_config_to_order_calc"
+            name="Order Calc."
+            src_model="replenishment.location.config"
+            res_model="replenishment.order_calc"
+            domain="[('location_config_id', '=', active_id)]"
+            context="{'search_view': False}"
+            />
+
+        <act_window id="action_from_location_config_to_segment"
+            name="Segments"
+            src_model="replenishment.location.config"
+            res_model="replenishment.segment"
+            domain="[('location_config_id', '=', active_id)]"
+            context="{'search_view': False}"
+            />
 
         <record id="replenishment_order_calc_form" model="ir.ui.view">
             <field name="name">replenishment.order_calc.form</field>
@@ -497,11 +529,15 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Order Calculation">
+                    <filter string="Draft" domain="[('state', '=', 'draft')]" icon="terp-document-new"/>
+                    <filter string="Validated" domain="[('state', '=', 'validated')]" icon="gtk-ok"/>
+                    <filter string="Closed" domain="[('state', '=', 'closed')]" icon="gtk-close"/>
+                    <filter string="Cancel" domain="[('state', '=', 'cancel')]" icon="gtk-cancel"/>
+                    <separator orientation="vertical"/>
                     <field name="name" />
                     <field name="segment_id" />
                     <field name="description_seg" />
                     <field name="rule" />
-                    <field name="state" />
                 </search>
             </field>
         </record>
@@ -517,5 +553,6 @@
             action="replenishment_order_calc_action"
             sequence="45"
             parent="stock_schedule.stock_automatic_procurements_menu" />
+
     </data>
 </openerp>
