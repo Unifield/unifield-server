@@ -32,6 +32,21 @@ class analytic_account(osv.osv):
     _name = "account.analytic.account"
     _inherit = "account.analytic.account"
 
+    def _get_dest_without_cc(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns a dict with key = id of the analytic account,
+        and value = True if the analytic account is a Destination of normal type allowing no Cost Center, False otherwise
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for a in self.browse(cr, uid, ids, fields_to_fetch=['category', 'type', 'allow_all_cc', 'dest_cc_ids'], context=context):
+            if a.category == 'DEST' and a.type == 'normal' and not a.allow_all_cc and not a.dest_cc_ids:
+                res[a.id] = True
+            else:
+                res[a.id] = False
+        return res
+
     def _get_active(self, cr, uid, ids, field_name, args, context=None):
         """
         If date out of date_start/date of given analytic account, then account is inactive.
@@ -48,7 +63,7 @@ class analytic_account(osv.osv):
                 res[a.id] = False
             elif a.date and a.date <= cmp_date:
                 res[a.id] = False
-            elif a.category == 'DEST' and a.type == 'normal' and not a.allow_all_cc and not a.dest_cc_ids:
+            elif a.dest_without_cc:
                 res[a.id] = False
         return res
 
@@ -297,6 +312,8 @@ class analytic_account(osv.osv):
                                                        string='Destinations compatible with the Cost Center',
                                                        type='many2many', relation='account.analytic.account',
                                                        fnct_search=_search_dest_compatible_with_cc_ids),
+        'dest_without_cc': fields.function(_get_dest_without_cc, type='boolean', method=True, store=False,
+                                           string="Destination allowing no Cost Center",),
     }
 
     _defaults ={

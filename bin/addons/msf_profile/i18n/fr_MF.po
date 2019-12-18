@@ -106586,3 +106586,7 @@ msgstr "MàJ en Masse de Produits NL/EXP"
 msgid "Funding Pool not found."
 msgstr "Funding Pool non trouvé."
 
+#. module: analytic_override
+#: field:account.analytic.account,dest_without_cc:0
+msgid "Destination allowing no Cost Center"
+msgstr "Destination n'autorisant aucun Centre de Coût"
