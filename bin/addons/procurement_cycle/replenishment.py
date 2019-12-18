@@ -606,9 +606,9 @@ class replenishment_segment(osv.osv):
                             'rr_fmc_to_%d' % fmc: row.cells[first_fmc_col+2].data.strftime('%Y-%m-%d'),
                         })
             elif seg.rule == 'minmax':
-                if not row.cells[4] or not not isinstance(row.cells[4].data, (int, long, float)):
+                if not row.cells[4] or not isinstance(row.cells[4].data, (int, long, float)):
                     line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[4].data))
-                elif not row.cells[5] or not not isinstance(row.cells[5].data, (int, long, float)):
+                elif not row.cells[5] or not isinstance(row.cells[5].data, (int, long, float)):
                     line_error.append(_('Line %d: Max Qty, number expected, found %s') % (idx+1, row.cells[5].data))
                 elif row.cells[5] < row.cells[4]:
                     line_error.append(_('Line %d: Max Qty (%s) must be large than Min Qty (%s)') % (idx+1, row.cells[5].data, row.cells[4].data))
@@ -618,7 +618,7 @@ class replenishment_segment(osv.osv):
                         'max_qty': row.cells[5].data,
                     })
             else:
-                if not row.cells[4] or not not isinstance(row.cells[4].data, (int, long, float)):
+                if not row.cells[4] or not isinstance(row.cells[4].data, (int, long, float)):
                     line_error.append(_('Line %d: Auto Supply Qty, number expected, found %s') % (idx+1, row.cells[4].data))
                 else:
                     data_towrite['auto_qty'] = row.cells[4].data
@@ -1202,6 +1202,12 @@ class replenishment_order_calc(osv.osv):
         for line in calc.order_calc_line_ids:
             existing_line[line.product_id.default_code] = line.id
 
+        if calc.rule == 'cycle':
+            qty_col = 14
+            comment_col = 15
+        elif calc.rule in ('auto', 'minmax'):
+            qty_col = 11
+            comment_col = 12
         idx = -1
 
         error = []
@@ -1221,12 +1227,12 @@ class replenishment_order_calc(osv.osv):
                 error.append(_('Line %d: product %s not found.') % (idx+1, prod_code))
                 continue
 
-            if not isinstance(row.cells[14].data, (int, long, float)):
-                error.append(_('Line %d: Agreed Order Qty  must be a number, found %s') % (idx+1, row.cells[14].data))
+            if not isinstance(row.cells[qty_col].data, (int, long, float)):
+                error.append(_('Line %d: Agreed Order Qty  must be a number, found %s') % (idx+1, row.cells[qty_col].data))
 
             calc_line_obj.write(cr, uid, existing_line[prod_code], {
-                'agreed_order_qty': row.cells[14].data,
-                'order_qty_comment': row.cells[15].data or '',
+                'agreed_order_qty': row.cells[qty_col].data,
+                'order_qty_comment': row.cells[comment_col].data or '',
             }, context=context)
             updated += 1
 
