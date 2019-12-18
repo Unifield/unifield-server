@@ -260,7 +260,7 @@ class replenishment_segment(osv.osv):
     _columns = {
         'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
         'description_seg': fields.char('Desription', required=1, size=28, select=1),
-        'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1),
+        'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, ondelete='cascade'),
         'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Replenishment Rule (Order quantity)', required=1),
         'rule_alert': fields.function(_get_rule_alert, method=1, string='Replenishment Rule (Alert Theshold)', type='char'),
         'ir_requesting_location': fields.many2one('stock.location', string='IR Requesting Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])]", required=1),
