@@ -217,13 +217,14 @@ class replenishment_segment(osv.osv):
 
     def _get_date(self, cr, uid, ids, field_name, arg, context=None):
         ret = {}
-        for x in ids:
-            ret[x] = {
-                'previous_order_rrd': False,
+        for seg in self.read(cr, uid, ids, ['previous_order_rrd', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'order_coverage', 'date_next_order_received_modified'], context=context):
+            ret[seg['id']] = {
                 'date_preparing': False,
                 'date_next_order_validated': False,
                 'date_next_order_received': False,
             }
+            ret[seg['id']].update(self.compute_next_order_received(cr, uid, ids,
+                                                                   seg['order_creation_lt'], seg['order_validation_lt'], seg['supplier_lt'], seg['handling_lt'], seg['order_coverage'], seg['previous_order_rrd'], seg['date_next_order_received_modified'], context=context).get('value', {}))
         return ret
 
     def _get_lt(self, cr, uid, ids, field_name, arg, context=None):
@@ -265,10 +266,11 @@ class replenishment_segment(osv.osv):
         'total_lt': fields.function(_get_lt, type='integer', method=1, string='Total Lead Time', multi='get_lt'),
         'order_coverage': fields.integer('Order Coverage (months)'),
         'safety_stock': fields.integer('Safety Stock (months)'),
-        'previous_order_rrd': fields.function(_get_date, type='date', method=True, string='Previous order RDD Date', multi='get_date'),
-        'date_preparing': fields.function(_get_date, type='date', method=True, string='Date to start preparing the order', multi='get_date'),
-        'date_next_order_validated':  fields.function(_get_date, type='date', method=True, string='Date next order to be validated by', multi='get_date'),
-        'date_next_order_received': fields.function(_get_date, type='date', method=True, string='Next order to be received by', multi='get_date'),
+        'previous_order_rrd': fields.date(string='Previous order RDD Date', readonly=1, help="Generated according to latest IR's RDD (from most recent Order calc which is now closed)."),
+        'date_preparing': fields.function(_get_date, type='date', method=True, string='Date to start preparing the order', multi='get_date', help='This does not take account of any stockouts not related to order coverage. Calculation: "Next order RDD date" - Total Lead time.'),
+        'date_next_order_validated':  fields.function(_get_date, type='date', method=True, string='Date next order to be validated by', multi='get_date', help='This does not take account of any stockouts not related to order coverage. Calculation: "Next order RDD date" - Total Lead time + Internal LT. This isupdated according to value in "Next order to be received by'),
+        'date_next_order_received': fields.function(_get_date, type='date', method=True, string='Next order to be received by (calculated)', multi='get_date', help='Calculated according to last order RDDate + OC.'),
+        'date_next_order_received_modified': fields.date(string='Next order to be received by (modified)'),
         'line_ids': fields.one2many('replenishment.segment.line', 'segment_id', 'Products', context={'default_code_only': 1}),
         'file_to_import': fields.binary(string='File to import'),
         'last_generation': fields.one2many('replenishment.segment.date.generation', 'segment_id', 'Generation Date', readonly=1),
@@ -283,11 +285,32 @@ class replenishment_segment(osv.osv):
 
         return super(replenishment_segment, self).create(cr, uid, vals, context)
 
-    def on_change_lt(self, cr, uid, ids, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, context=None):
+    def compute_next_order_received(self, cr, uid, ids, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified, context=None):
+        ret = {}
+        if  previous_order_rrd or date_next_order_received_modified:
+            previous_rrd = False
+            date_next_order_received = False
+            if previous_order_rrd:
+                previous_rrd = datetime.strptime(previous_order_rrd, '%Y-%m-%d')
+                date_next_order_received = previous_rrd + relativedelta(months=order_coverage or 0)
+            if date_next_order_received_modified:
+                date_next_order_received_modified = datetime.strptime(date_next_order_received_modified, '%Y-%m-%d')
+                previous_rrd = date_next_order_received_modified - relativedelta(months=order_coverage or 0)
+
+            ret = {
+                'date_preparing': previous_rrd + relativedelta(months=order_coverage or 0) - relativedelta(days=(order_creation_lt or 0) + (order_validation_lt or 0) + (supplier_lt or 0) + (handling_lt or 0)),
+                'date_next_order_validated': previous_rrd + relativedelta(months=order_coverage or 0) - relativedelta(days=(supplier_lt or 0) + (handling_lt or 0)),
+                'date_next_order_received': date_next_order_received,
+            }
+
+        return {'value': ret}
+
+    def on_change_lt(self, cr, uid, ids, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified, context=None):
         ret = {}
         ret['internal_lt'] = (order_creation_lt or 0) + (order_validation_lt or 0)
         ret['external_lt'] = (supplier_lt or 0) + (handling_lt or 0)
         ret['total_lt'] = ret['internal_lt'] + ret['external_lt']
+        ret.update(self.compute_next_order_received(cr, uid, ids, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified, context).get('value', {}))
         return {'value': ret}
 
     def replenishment_compute_all_bg(self, cr, uid, ids=False, context=None):
@@ -345,6 +368,7 @@ class replenishment_segment(osv.osv):
                 'local_location_ids': [(6, 0, [x.id for x in seg.local_location_ids])],
                 'remote_location_ids': [(6, 0, [x.id for x in seg.remote_location_ids])],
                 'instance_id': seg.main_instance.id,
+                'new_order_reception_date': seg.date_next_order_received_modified or seg.date_next_order_received,
 
             }, context=context)
 
@@ -622,13 +646,25 @@ class replenishment_segment(osv.osv):
         self.write(cr, uid, ids, {'state': 'complete'}, context=context)
         return True
 
-    def set_as_draft(self, cr, uid, ids, context=None):
+    def check_inprogress_order_calc(self, cr, uid, ids, context=None):
         calc_obj = self.pool.get('replenishment.order_calc')
         calc_ids = calc_obj.search(cr, uid, [('segment_id', 'in', ids), ('state', 'not in', ['cancel', 'closed'])], context=context)
         if calc_ids:
             calc_name = calc_obj.read(cr, uid, calc_ids, ['name'], context=context)
             raise osv.except_osv(_('Warning'), _('Please cancel or close the following Order Cacl:\n%s') % (', '.join([x['name'] for x in calc_name])))
 
+    def set_as_archived(self, cr, uid, ids, context=None):
+        self.check_inprogress_order_calc(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'state': 'archived'}, context=context)
+        return True
+
+    def set_as_draft(self, cr, uid, ids, context=None):
+        self.check_inprogress_order_calc(cr, uid, ids, context=context)
+        # reset last gen
+        last_gen_obj = self.pool.get('replenishment.segment.date.generation')
+        last_gen_ids = last_gen_obj.search(cr, uid, [('segment_id', 'in', ids)], context=context)
+        if last_gen_ids:
+            last_gen_obj.write(cr, uid, last_gen_ids, {'full_date': False}, context=context)
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
         return True
 

@@ -192,20 +192,22 @@
                         <field name="product_list_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     </group>
                     <group colspan="2" col="2">
-                        <field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="order_validation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="order_validation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="internal_lt" />
-                        <field name="supplier_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="handling_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="supplier_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="handling_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="external_lt" />
                         <field name="total_lt" />
                         <group colspan="2" col="4" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
-                            <field name="order_coverage" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="order_coverage" attrs="{'readonly': [('state', '!=', 'draft')]}" on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified)"/>
                             <field name="safety_stock" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="previous_order_rrd" />
                             <field name="date_preparing" />
                             <field name="date_next_order_validated" />
                             <field name="date_next_order_received" />
+                            <label colspan="2" />
+                            <field name="date_next_order_received_modified" attrs="{'readonly': [('state', 'not in', ['draft', 'complete'])]}"  on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified)"/>
                         </group>
                         <field name="last_generation" nolabel="1" colspan="2">
                             <tree string="Generation Date">
@@ -334,8 +336,9 @@
                     <group colspan="2">
                         <button name="trigger_compute" string="Force Computation" type="object" icon="gtk-remove" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"/>
                         <button name="completed" string="Completed" type="object" icon="terp-check" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                        <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', '!=', 'complete')]}" icon="gtk-go-back" />
+                        <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', 'not in', ['complete', 'archived', 'cancel'])]}" icon="gtk-go-back" />
                         <button name="generate_order_calc" string="Generate Order Calc" type="object" icon="gtk-convert" attrs="{'invisible': [('state', '!=', 'complete')]}"/>
+                        <button name="set_as_archived" string="Archive" type="object" attrs="{'invisible':[('state', 'in', ['cancel', 'archived'])]}" icon="terp-locked" />
                     </group>
                 </form>
             </field>
@@ -405,8 +408,10 @@
                     <field name="rule" />
                     <field name="rule_alert" />
                     <field name="total_lt" />
+                    <field name="new_order_reception_date" />
                     <field name="generation_date" />
                     <field name="next_generation_date" />
+                    <newline />
                     <group colspan="2" col="4">
                         <separator string="Location Config"/>
                         <field name="local_location_ids" nolabel="1">
