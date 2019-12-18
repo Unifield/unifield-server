@@ -335,7 +335,7 @@
                     <field name="state" />
                     <field name="has_inprogress_cal" invisible="1" />
                     <group colspan="2">
-                        <button name="trigger_compute" string="Force Computation" type="object" icon="gtk-remove" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"/>
+                        <button name="trigger_compute" string="Compute Data" type="object" icon="gtk-remove" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"/>
                         <button name="completed" string="Completed" type="object" icon="terp-check" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                         <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', 'not in', ['complete', 'archived', 'cancel'])]}" icon="gtk-go-back" />
                         <button name="generate_order_calc" string="Generate Order Calc" type="object" icon="gtk-convert" attrs="{'invisible': [('state', '!=', 'complete')]}"/>
