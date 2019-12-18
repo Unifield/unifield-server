@@ -167,7 +167,7 @@
                     <group colspan="2" col="2">
                         <field name="name_seg" />
                         <field name="description_seg" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                        <field name="location_config_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('is_current_instance', '=', True)]"/>
+                        <field name="location_config_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('is_current_instance', '=', True)]" on_change="change_location_config_id(location_config_id, ir_requesting_location)"/>
                         <separator string="Location Config"/>
                         <group colspan="2" col="4">
                             <field name="is_current_instance" invisible="1" />
@@ -334,6 +334,7 @@
                     <group colspan="2">
                         <button name="trigger_compute" string="Force Computation" type="object" icon="gtk-remove" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"/>
                         <button name="completed" string="Completed" type="object" icon="terp-check" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                        <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', '!=', 'complete')]}" icon="gtk-go-back" />
                         <button name="generate_order_calc" string="Generate Order Calc" type="object" icon="gtk-convert" attrs="{'invisible': [('state', '!=', 'complete')]}"/>
                     </group>
                 </form>
@@ -457,6 +458,7 @@
                     <field name="state" />
                     <group colspan="2">
                     <button name="validated" string="Validated" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" icon="gtk-ok" />
+                    <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', '!=', 'validated')]}" icon="gtk-go-back" />
                     <button name="generate_ir" string="Generate Requisition &amp; Close" type="object" attrs="{'invisible':[('state', '!=', 'validated')]}" icon="gtk-convert"/>
                     <button name="cancel" string="Cancel" type="object"  attrs="{'invisible':[('state', 'not in', ['draft', 'validated'])]}" icon="gtk-cancel" />
                     </group>

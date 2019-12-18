@@ -85,7 +85,7 @@ class replenishment_location_config(osv.osv):
         'local_location_ids': fields.many2many('stock.location', 'local_location_configuration_rel', 'config_id', 'location_id', 'Local Locations', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('used_in_config', '=', False)]"),
         'remote_location_ids': fields.many2many('stock.location.instance', 'remote_location_configuration_rel', 'config_id', 'location_id', 'Project Locations', domain="[('usage', '!=', 'view'), ('used_in_config', '=', False)]"),
 
-        # iventory review
+        # inventory review
         'review_active': fields.boolean('Review Active'),
         'projected_view': fields.integer('Standard Projected view (months)'),
         'rr_amc': fields.integer('RR-AMC period (months)'),
@@ -313,11 +313,27 @@ class replenishment_segment(osv.osv):
         return self.pool.get('replenishment.segment.line.amc').generate_all_amc(cr, uid, context=context, seg_ids=ids)
 
     def generate_order_calc(self, cr, uid, ids, context):
-        # TODO JFB RR: check state, date pulled from projects ...
+        # TODO JFB RR: check state, ...
 
         order_calc_line = self.pool.get('replenishment.order_calc.line')
         calc_id = False
         for seg in self.browse(cr, uid, ids, context):
+            instances_name_by_id = {seg.main_instance.id: seg.main_instance.code}
+            all_instances = set([seg.main_instance.id])
+            for remote_loc in seg.remote_location_ids:
+                all_instances.add(remote_loc.instance_id.id)
+                instances_name_by_id[remote_loc.instance_id.id] = remote_loc.instance_id.code
+
+            for data_done in seg.last_generation:
+                if data_done.full_date:
+                    try:
+                        all_instances.remove(data_done.instance_id.id)
+                    except KeyError:
+                        pass
+
+            if all_instances:
+                raise osv.except_osv(_('Warning'), _('Data from the following instances are missing, please wait the next scheduled task or the next sync:\n%s') % (', '.join([instances_name_by_id.get(x, '') for x in all_instances])))
+
             calc_id = self.pool.get('replenishment.order_calc').create(cr, uid, {
                 'segment_id': seg.id,
                 'description_seg': seg.description_seg,
@@ -606,12 +622,42 @@ class replenishment_segment(osv.osv):
         self.write(cr, uid, ids, {'state': 'complete'}, context=context)
         return True
 
+    def set_as_draft(self, cr, uid, ids, context=None):
+        calc_obj = self.pool.get('replenishment.order_calc')
+        calc_ids = calc_obj.search(cr, uid, [('segment_id', 'in', ids), ('state', 'not in', ['cancel', 'closed'])], context=context)
+        if calc_ids:
+            calc_name = calc_obj.read(cr, uid, calc_ids, ['name'], context=context)
+            raise osv.except_osv(_('Warning'), _('Please cancel or close the following Order Cacl:\n%s') % (', '.join([x['name'] for x in calc_name])))
+
+        self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+        return True
+
+    def change_location_config_id(self, cr, uid, ids, loc_config_id, ir_loc_id, context=None):
+        if not loc_config_id:
+            return {}
+
+        loc_config = self.pool.get('replenishment.location.config').browse(cr, uid, loc_config_id)
+        data = {
+            'local_location_ids': [x.id for x in loc_config.local_location_ids],
+            'remote_location_ids': [x.id for x in loc_config.remote_location_ids],
+            'description': loc_config.description,
+            'rr_amc': loc_config.rr_amc,
+        }
+        if ir_loc_id not in data['local_location_ids']:
+            if len(data['local_location_ids']) == 1:
+                data['ir_requesting_location'] = data['local_location_ids'][0]
+            else:
+                data['ir_requesting_location'] = False
+
+        return {'value': data}
+
 replenishment_segment()
 
 class replenishment_segment_line(osv.osv):
     _name = 'replenishment.segment.line'
     _description = 'Product'
     _rec_name = 'product_id'
+    _order = 'product_id, segment_id'
 
     def _get_main_list(self, cr, uid, ids, field_name, arg, context=None):
         ret = {}
@@ -1171,11 +1217,17 @@ class replenishment_order_calc(osv.osv):
     def cancel(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         return True
+
+    def set_as_draft(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+        return True
+
 replenishment_order_calc()
 
 class replenishment_order_calc_line(osv.osv):
     _name ='replenishment.order_calc.line'
     _description = 'Order Calculation Lines'
+    _order = 'product_id, order_calc_id'
 
     _columns = {
         'order_calc_id': fields.many2one('replenishment.order_calc', 'Order Calc', required=1, select=1),
