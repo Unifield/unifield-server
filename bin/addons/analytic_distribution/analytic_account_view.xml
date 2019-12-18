@@ -214,7 +214,9 @@
             <field name="priority" eval="4"/>
             <field name="arch" type="xml">
                 <tree string="Analytic account" position="replace">
-                    <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic account" toolbar="1" expand_button="1" nolink="1">
+                    <tree colors="red:(date and date&lt;current_date or dest_without_cc==True)"
+                          string="Analytic account" toolbar="1" expand_button="1" nolink="1">
+                        <field name="dest_without_cc" invisible="1"/>
                         <field name="name"/>
                         <field name="code"/>
                         <field name="parent_id"/>
