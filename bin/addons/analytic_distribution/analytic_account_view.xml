@@ -204,32 +204,6 @@
             </field>
         </record>
 
-    <!-- Tree view for Default analytic account tree view -->
-        <record id="view_account_analytic_account_tree_inherit" model="ir.ui.view">
-            <field name="name">account.analytic.account.tree.inherit</field>
-            <field name="model">account.analytic.account</field>
-            <field name="type">tree</field>
-            <field name="field_parent">child_complete_ids</field>
-            <field name="inherit_id" ref="account.view_account_analytic_account_tree"/>
-            <field name="priority" eval="4"/>
-            <field name="arch" type="xml">
-                <tree string="Analytic account" position="replace">
-                    <tree colors="red:(date and date&lt;current_date or dest_without_cc==True)"
-                          string="Analytic account" toolbar="1" expand_button="1" nolink="1">
-                        <field name="dest_without_cc" invisible="1"/>
-                        <field name="name"/>
-                        <field name="code"/>
-                        <field name="parent_id"/>
-                        <field name="category"/>
-                        <field name="type"/>
-                        <field name="date_start"/>
-                        <field name="date"/>
-                    </tree>
-                </tree>
-            </field>
-        </record>
-
-
     <!-- Tree view for Analytical chart of accounts -->
         <record id="view_account_analytic_account_tree_coa" model="ir.ui.view">
             <field name="name">account.analytic.account.tree.coa</field>
@@ -282,7 +256,7 @@
             <field name="res_model">account.analytic.account</field>
             <field name="inherit_id" ref="account.action_account_analytic_account_form"/>
             <field name="search_view_id" ref="view_analytic_account_search"/>
-            <field name="view_id" ref="view_account_analytic_account_tree_inherit"/>
+            <field name="view_id" ref="account.view_account_analytic_account_tree"/>
             <field name="domain">[]</field>
             <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1, 'from_web': True, 'display_disabled': 1}</field>
         </record>
