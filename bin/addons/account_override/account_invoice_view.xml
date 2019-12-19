@@ -40,7 +40,7 @@
                         <attribute name="on_change">onchange_partner_id(type,partner_id,date_invoice,payment_term,partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice,False)</attribute>
                     </xpath>
                     <xpath expr="//tree[@string='Invoice lines']/field[@name='product_id']" position="before">
-                        <field name="line_number"/>
+                        <field name="line_number" displayon="noteditable"/>
                     </xpath>
                     <xpath expr="//field[@name='date_invoice']" position="before">
                         <field name="document_date" />
