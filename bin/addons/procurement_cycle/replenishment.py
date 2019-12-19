@@ -346,8 +346,6 @@ class replenishment_segment(osv.osv):
         return self.pool.get('replenishment.segment.line.amc').generate_all_amc(cr, uid, context=context, seg_ids=ids)
 
     def generate_order_calc(self, cr, uid, ids, context):
-        # TODO JFB RR: check state, ...
-
         order_calc_line = self.pool.get('replenishment.order_calc.line')
         calc_id = False
         for seg in self.browse(cr, uid, ids, context):
@@ -457,18 +455,18 @@ class replenishment_segment(osv.osv):
                                     else:
                                         month_of_supply += ( sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc + month*num_fmc ) / num_fmc
                                         lacking = True
-                            else:
-                                if oc <= to_fmc:
-                                    after_oc = True
-                                end_oc = min(oc, to_fmc)
-                                if end_oc >= begin:
-                                    month = (end_oc-begin).days/30.44
-                                    total_month_oc += month
-                                    total_fmc_oc += month*num_fmc
+                            if oc <= to_fmc:
+                                after_oc = True
+                            begin_oc = max(rdd, from_fmc)
+                            end_oc = min(oc, to_fmc)
+                            if end_oc >= begin_oc:
+                                month = (end_oc-begin_oc).days/30.44
+                                total_month_oc += month
+                                total_fmc_oc += month*num_fmc
                     valid_rr_fmc = before_today and after_oc
                 pas = max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rrd - total_fmc)
                 ss_stock = 0
-                warning = ""
+                warnings = []
                 qty_lacking = 0
                 qty_lacking_needed_by = False
                 proposed_order_qty = 0
@@ -477,23 +475,24 @@ class replenishment_segment(osv.osv):
                         if total_month_oc:
                             ss_stock = seg.safety_stock * total_fmc_oc / total_month_oc
                     else:
-                        qty_lacking =  max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) - total_fmc)
+                        # sum fmc from today to ETC - qty in stock
+                        qty_lacking =  max(0, total_fmc - sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0))
                         if total_month_oc+total_month:
                             ss_stock = seg.safety_stock * ((total_fmc_oc+total_month)/(total_month_oc+total_month))
                         if total_month and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
-                            warning = '%s '% _('Missing Qties')
+                            warnings.append(_('Missing Qties'))
                         if qty_lacking:
-                            warning += _('Stock-out before next ETA')
+                            warnings.append(('Stock-out before next ETA'))
 
                         if lacking:
                             qty_lacking_needed_by = (today + relativedelta(days=month_of_supply*30.44)).strftime('%Y-%m-%d')
-
                     proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rrd_oc)
 
                 elif seg.rule == 'minmax':
                     proposed_order_qty = max(0, line.max_qty - line.real_stock + sum_line.get(line.id, {}).get('reserved_stock_qty') + prod_eta.get(line.product_id.id, 0) - line.pipeline_before_rrd)
-                    if line.real_stock - sum_line.get(line.id, {}).get('expired_before_rrd') <= line.min_qty:
-                        warning = _('Alert: "inventory – batches expiring before ETA <= Min"')
+
+                    if line.status != 'new' and line.real_stock - sum_line.get(line.id, {}).get('expired_before_rrd') <= line.min_qty:
+                        warnings.append(_('Alert: "inventory – batches expiring before ETA <= Min"'))
                 else:
                     proposed_order_qty = line.auto_qty
 
@@ -503,19 +502,20 @@ class replenishment_segment(osv.osv):
                     'uom_id': line.uom_id.id,
                     'in_main_list': line.in_main_list,
                     'real_stock': line.real_stock,
-                    'pipeline_qty': line.pipeline_before_rrd,
+                    'pipeline_qty': int(line.pipeline_before_rrd or 0),
                     'eta_for_next_pipeline': prod_eta.get(line.product_id.id, False),
                     'reserved_stock_qty': sum_line.get(line.id, {}).get('reserved_stock_qty'),
-                    'projected_stock_qty': pas,
-                    'qty_lacking': qty_lacking,
+                    'projected_stock_qty': int(pas),
+                    'qty_lacking': int(qty_lacking),
                     'qty_lacking_needed_by': qty_lacking_needed_by,
-                    'expired_qty_before_cons': sum_line.get(line.id, {}).get('expired_before_rrd'),
+                    'expired_qty_before_cons': int(sum_line.get(line.id, {}).get('expired_before_rrd',0)),
                     'expired_qty_before_eta': False, #TODO JFB=  RR
-                    'proposed_order_qty': proposed_order_qty,
-                    'agreed_order_qty': proposed_order_qty,
+                    'proposed_order_qty': int(proposed_order_qty),
+                    'agreed_order_qty': int(proposed_order_qty),
                     'open_loan': sum_line.get(line.id, {}).get('open_loan', False),
-                    'warning': warning,
+                    'warning': "\n".join(warnings),
                     'valid_rr_fmc': valid_rr_fmc,
+                    'status': line.status,
                 }
                 order_calc_line.create(cr, uid, line_data, context=context)
             if calc_id:
@@ -590,7 +590,6 @@ class replenishment_segment(osv.osv):
                 for fmc in range(1, 13):
                     first_fmc_col += 3
                     if row.cells[first_fmc_col+1].data:
-                        # TODO JFB RR: check date consist. FROM < TO, begin / end mohtn, no gap
                         if not row.cells[first_fmc_col+1].type == 'datetime':
                             line_error.append(_('Line %d: FMC FROM %d, date expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col+1].data))
                             continue
@@ -768,7 +767,6 @@ class replenishment_segment_line(osv.osv):
         for seg_id in segment:
             if segment[seg_id]['remote_location_q']:
                 # compute AMC for remote + local instances
-                # TODO JFB RR : genereate_all_amc for local
                 cr.execute("""
                     select segment_line_id, sum(amc)
                     from replenishment_segment_line_amc
@@ -837,46 +835,46 @@ class replenishment_segment_line(osv.osv):
         'min_qty': fields.float('Min Qty', related_uom='uom_id'),
         'max_qty': fields.float('Max Qty', related_uom='uom_id'),
         'auto_qty': fields.float('Auto. Supply Qty', related_uom='uom_id'),
-        'buffer_qty': fields.float('Buffer Qty', related_uom='uom_id'),
+        'buffer_qty': fields.float_null('Buffer Qty', related_uom='uom_id'),
         'real_stock': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='Real Stock', multi='get_stock_amc'),
         'real_stock_instance': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='Real Stock', multi='get_stock_amc'),
         'pipeline_before_rrd': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline Before RRD', multi='get_pipeline_before'),
         'pipeline_between_rrd_oc': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline between RDD and OC', multi='get_pipeline_before'),
         'rr_amc': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='RR-AMC', multi='get_stock_amc'),
-        'rr_fmc_1': fields.float('RR FMC 1', related_uom='uom_id'),
+        'rr_fmc_1': fields.float_null('RR FMC 1', related_uom='uom_id'),
         'rr_fmc_from_1': fields.date('From 1'),
         'rr_fmc_to_1': fields.date('To 1'),
-        'rr_fmc_2': fields.float('RR FMC 2', related_uom='uom_id'),
+        'rr_fmc_2': fields.float_null('RR FMC 2', related_uom='uom_id'),
         'rr_fmc_from_2': fields.date('From 2'),
         'rr_fmc_to_2': fields.date('To 2'),
-        'rr_fmc_3': fields.float('RR FMC 3', related_uom='uom_id'),
+        'rr_fmc_3': fields.float_null('RR FMC 3', related_uom='uom_id'),
         'rr_fmc_from_3': fields.date('From 3'),
         'rr_fmc_to_3': fields.date('To 3'),
-        'rr_fmc_4': fields.float('RR FMC 4', related_uom='uom_id'),
+        'rr_fmc_4': fields.float_null('RR FMC 4', related_uom='uom_id'),
         'rr_fmc_from_4': fields.date('From 4'),
         'rr_fmc_to_4': fields.date('To 4'),
-        'rr_fmc_5': fields.float('RR FMC 5', related_uom='uom_id'),
+        'rr_fmc_5': fields.float_null('RR FMC 5', related_uom='uom_id'),
         'rr_fmc_from_5': fields.date('From 5'),
         'rr_fmc_to_5': fields.date('To 5'),
-        'rr_fmc_6': fields.float('RR FMC 6', related_uom='uom_id'),
+        'rr_fmc_6': fields.float_null('RR FMC 6', related_uom='uom_id'),
         'rr_fmc_from_6': fields.date('From 6'),
         'rr_fmc_to_6': fields.date('To 6'),
-        'rr_fmc_7': fields.float('RR FMC 7', related_uom='uom_id'),
+        'rr_fmc_7': fields.float_null('RR FMC 7', related_uom='uom_id'),
         'rr_fmc_from_7': fields.date('From 7'),
         'rr_fmc_to_7': fields.date('To 7'),
-        'rr_fmc_8': fields.float('RR FMC 8', related_uom='uom_id'),
+        'rr_fmc_8': fields.float_null('RR FMC 8', related_uom='uom_id'),
         'rr_fmc_from_8': fields.date('From 8'),
         'rr_fmc_to_8': fields.date('To 8'),
-        'rr_fmc_9': fields.float('RR FMC 9', related_uom='uom_id'),
+        'rr_fmc_9': fields.float_null('RR FMC 9', related_uom='uom_id'),
         'rr_fmc_from_9': fields.date('From 9'),
         'rr_fmc_to_9': fields.date('To 9'),
-        'rr_fmc_10': fields.float('RR FMC 10', related_uom='uom_id'),
+        'rr_fmc_10': fields.float_null('RR FMC 10', related_uom='uom_id'),
         'rr_fmc_from_10': fields.date('From 10'),
         'rr_fmc_to_10': fields.date('To 10'),
-        'rr_fmc_11': fields.float('RR FMC 11', related_uom='uom_id'),
+        'rr_fmc_11': fields.float_null('RR FMC 11', related_uom='uom_id'),
         'rr_fmc_from_11': fields.date('From 11'),
         'rr_fmc_to_11': fields.date('To 11'),
-        'rr_fmc_12': fields.float('RR FMC 12', related_uom='uom_id'),
+        'rr_fmc_12': fields.float_null('RR FMC 12', related_uom='uom_id'),
         'rr_fmc_from_12': fields.date('From 12'),
         'rr_fmc_to_12': fields.date('To 12'),
     }
@@ -1021,8 +1019,6 @@ class replenishment_segment_line_amc(osv.osv):
         'open_loan': False
     }
     def generate_all_amc(self, cr, uid, context=None, seg_ids=False):
-        # TODO JFB RR
-        # check last config mod date / conso mod date / current date and generates new AMC only if something has changed
         segment_obj = self.pool.get('replenishment.segment')
         prod_obj = self.pool.get('product.product')
         last_gen_obj = self.pool.get('replenishment.segment.date.generation')
@@ -1052,7 +1048,8 @@ class replenishment_segment_line_amc(osv.osv):
             lines = {}
             for line in segment.line_ids:
                 lines[line.product_id.id] = line.id
-
+            if not lines:
+                continue
             # update vs create line
             cache_line_amc = {}
             seg_line = {}
@@ -1183,6 +1180,7 @@ class replenishment_order_calc(osv.osv):
         'order_calc_line_ids': fields.one2many('replenishment.order_calc.line', 'order_calc_id', 'Products',  context={'default_code_only': 1}),
         'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1),
         'file_to_import': fields.binary(string='File to import'),
+        'ir_id': fields.many2one('sale.order', 'Generated IR', readonly=1),
     }
 
     _defaults = {
@@ -1203,8 +1201,8 @@ class replenishment_order_calc(osv.osv):
             existing_line[line.product_id.default_code] = line.id
 
         if calc.rule == 'cycle':
-            qty_col = 14
-            comment_col = 15
+            qty_col = 13
+            comment_col = 14
         elif calc.rule in ('auto', 'minmax'):
             qty_col = 11
             comment_col = 12
@@ -1227,7 +1225,7 @@ class replenishment_order_calc(osv.osv):
                 error.append(_('Line %d: product %s not found.') % (idx+1, prod_code))
                 continue
 
-            if not isinstance(row.cells[qty_col].data, (int, long, float)):
+            if row.cells[qty_col].data and not isinstance(row.cells[qty_col].data, (int, long, float)):
                 error.append(_('Line %d: Agreed Order Qty  must be a number, found %s') % (idx+1, row.cells[qty_col].data))
 
             calc_line_obj.write(cr, uid, existing_line[prod_code], {
@@ -1269,13 +1267,19 @@ class replenishment_order_calc(osv.osv):
                         'type': 'make_to_order',
                     }, context=context)
 
-            self.write(cr, uid, calc.id, {'state': 'closed', 'ir_generation_date': time.strftime('%Y-%m-%d')}, context=context)
+            self.write(cr, uid, calc.id, {'state': 'closed', 'ir_generation_date': time.strftime('%Y-%m-%d'), 'ir_id': ir_id}, context=context)
             self.pool.get('replenishment.segment').write(cr, uid, calc.segment_id.id, {'previous_order_rrd': calc.new_order_reception_date}, context=context)
             ir_d = sale_obj.read(cr, uid, ir_id, ['name'], context=context)
             sale_obj.log(cr, uid, ir_id, _('%s created from %s') % (ir_d['name'], calc.name), action_xmlid='procurement_request.action_procurement_request')
         return True
 
     def validated(self, cr, uid, ids, context=None):
+        line_obj = self.pool.get('replenishment.order_calc.line')
+        line_ids = line_obj.search(cr, uid, [('order_calc_id', 'in', ids), ('agreed_order_qty', '=', False)], context=context)
+        if line_ids:
+            line_data = line_obj.browse(cr, uid, line_ids, fields_to_fetch=['product_id'], context=context)
+            raise osv.except_osv(_('Warning'), _('Agreed Order Qty can\'t be blank, fix the following:\n%s') % ('\n'.join([x.product_id.default_code for x in line_data])))
+
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         return True
 
@@ -1298,6 +1302,7 @@ class replenishment_order_calc_line(osv.osv):
         'order_calc_id': fields.many2one('replenishment.order_calc', 'Order Calc', required=1, select=1),
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1, readonly=1),
         'product_description': fields.related('product_id', 'name',  string='Desciption', type='char', size=64, readonly=True, select=True, write_relate=False),
+        'status': fields.selection([('active', 'Active'), ('new', 'New')], string='Life cycle status', readony=1),
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
         'in_main_list': fields.boolean('In prod. list', readonly=1),
         'valid_rr_fmc': fields.boolean('Valid FMC', readonly=1),
@@ -1310,9 +1315,9 @@ class replenishment_order_calc_line(osv.osv):
         'qty_lacking_needed_by': fields.date('Qty lacking needed by', readonly=1),
         'open_loan': fields.boolean('Open Loan', readonly=1),
         'expired_qty_before_cons': fields.float('Expired Qty before cons.', readonly=1, related_uom='uom_id'),
-        'expired_qty_before_eta': fields.float('Expired Qty before ETA', readonly=1, related_uom='uom_id'),
+        'expired_qty_before_eta': fields.float('Expired Qty before ETA', readonly=1, related_uom='uom_id'), # TODO JFB RR needed ?
         'proposed_order_qty': fields.float('Proposed Order Qty', readonly=1, related_uom='uom_id'),
-        'agreed_order_qty': fields.float('Agreed Order Qty', related_uom='uom_id'),
+        'agreed_order_qty': fields.float_null('Agreed Order Qty', related_uom='uom_id'),
         'order_qty_comment': fields.char('Order Qty Comment', size=512),
         'warning': fields.char('Warning', size=512, readonly='1'),
     }

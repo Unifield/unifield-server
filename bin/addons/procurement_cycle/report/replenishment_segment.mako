@@ -414,8 +414,13 @@
         <% i = 0 %>
         <% styles = [('s144', 's145'), ('s165', 's151')] %>
          % for fmc in range(1, 13):
-        <Cell ss:StyleID="${styles[i][0]}"><Data ss:Type="Number">${getattr(prod, 'rr_fmc_%d'%fmc) or ''}</Data></Cell>
-
+            <Cell ss:StyleID="${styles[i][0]}">
+            % if getattr(prod, 'rr_fmc_%d'%fmc) is False:
+                <Data ss:Type="String" />
+            % else:
+                <Data ss:Type="Number">${getattr(prod, 'rr_fmc_%d'%fmc) or ''}</Data>
+            % endif
+            </Cell>
         <% from_date = getattr(prod, 'rr_fmc_from_%d'%fmc) %>
         <Cell ss:StyleID="${styles[i][1]}">
          % if isDate(from_date):

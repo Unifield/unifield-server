@@ -156,6 +156,7 @@
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"
@@ -196,6 +197,15 @@
   </Style>
   <Style ss:ID="s97">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+  </Style>
+  <Style ss:ID="sw97">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -284,15 +294,28 @@
    <NamedRange ss:Name="Print_Titles" ss:RefersTo="=Segment!R1:R8"/>
    <NamedRange ss:Name="Print_Area" ss:RefersTo="=Segment!C1:C4"/>
   </Names>
-   <Table x:FullColumns="1"
-   x:FullRows="1" ss:DefaultColumnWidth="60.75" ss:DefaultRowHeight="15">
-   <Column ss:AutoFitWidth="0" ss:Width="87.75"/>
-   <Column ss:AutoFitWidth="0" ss:Width="210.75"/>
-   <Column ss:AutoFitWidth="0" ss:Width="63"/>
-   <Column ss:AutoFitWidth="0" ss:Width="127.5"/>
-   <Column ss:AutoFitWidth="0" ss:Width="66"/>
-   <Column ss:AutoFitWidth="0" ss:Width="82.5" ss:Span="1"/>
-   <Column ss:Index="8" ss:AutoFitWidth="0" ss:Width="75.75" ss:Span="1"/>
+   <Table x:FullColumns="1" x:FullRows="1" ss:DefaultColumnWidth="60.75" ss:DefaultRowHeight="15">
+   <Column ss:AutoFitWidth="0" ss:Width="87.75"/> <!--prod code -->
+   <Column ss:AutoFitWidth="0" ss:Width="210.75"/> <!--prod desc -->
+   <Column ss:AutoFitWidth="0" ss:Width="63"/> <!-- in list -->
+   <Column ss:AutoFitWidth="0" ss:Width="63"/> <!-- real stock -->
+   <Column ss:AutoFitWidth="0" ss:Width="66"/> <!--pipeline -->
+   <Column ss:AutoFitWidth="0" ss:Width="82.5" /> <!-- eta -->
+   <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- reserved -->
+   <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- pas -->
+    % if objects[0].rule == 'cycle':
+   <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- qty lacking -->
+   <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- qty lacking date -->
+   % endif
+   <Column ss:AutoFitWidth="0" ss:Width="50" /> <!-- loan -->
+    % if objects[0].rule == 'cycle':
+   <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- expirty cons -->
+    % endif
+   <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- expirty eta -->
+   <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- propo qty -->
+   <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- agreed qty -->
+   <Column ss:AutoFitWidth="0" ss:Width="100" /> <!-- qty comment -->
+   <Column ss:AutoFitWidth="0" ss:Width="100" /> <!-- warning -->
    <Row ss:AutoFitHeight="0" ss:Height="31.5">
     <Cell ss:MergeAcross="9" ss:StyleID="s64"><Data ss:Type="String">${_('Order Calculation')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
@@ -395,10 +418,7 @@
         <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Qty Lacking Needed By')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % endif
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Open Loan')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-    % if objects[0].rule == 'cycle':
-        <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Expired Qty Before Cons')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-    % endif
-    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Expired Qty Before ETA')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Expired Qty Before Cons')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Proposed Order Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Agreed Order Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Order Qty Comment')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
@@ -432,14 +452,17 @@
         </Cell>
     % endif
     <Cell ss:StyleID="s97"><Data ss:Type="String">${prod.open_loan and _('Y') or _('N')}</Data></Cell>
-    % if objects[0].rule == 'cycle':
-        <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.expired_qty_before_cons}</Data></Cell>
-    % endif
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.expired_qty_before_eta}</Data></Cell>
+    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.expired_qty_before_cons}</Data></Cell>
     <Cell ss:StyleID="s97"><Data ss:Type="Number">${int(prod.proposed_order_qty)}</Data></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.agreed_order_qty}</Data></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="String">${(prod.order_qty_comment or '')|x}</Data></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="String">${(prod.warning or '')|x}</Data></Cell>
+    <Cell ss:StyleID="s97">
+    % if prod.agreed_order_qty is False:
+        <Data ss:Type="String" />
+    % else:
+        <Data ss:Type="Number">${prod.agreed_order_qty}</Data>
+    % endif
+    </Cell>
+    <Cell ss:StyleID="sw97"><Data ss:Type="String">${(prod.order_qty_comment or '')|x}</Data></Cell>
+    <Cell ss:StyleID="sw97"><Data ss:Type="String">${(prod.warning or '')|x}</Data></Cell>
 
    </Row>
    % endfor

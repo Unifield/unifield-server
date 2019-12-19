@@ -1360,6 +1360,8 @@ class orm_template(object):
                 if allfields and f not in allfields:
                     continue
                 res[f] = {'type': field_col._type}
+                if hasattr(field_col, '_with_null') and field_col._with_null:
+                    res[f]['with_null'] = True
                 # This additional attributes for M2M and function field is added
                 # because we need to display tooltip with this additional information
                 # when client is started in debug mode.

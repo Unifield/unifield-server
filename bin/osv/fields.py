@@ -211,6 +211,14 @@ class float(_column):
             computation = self.digits_compute(cr, computation=True)
             self.computation = computation
 
+class float_null(float):
+    _type = 'float'
+    _with_null = True
+    _symbol_c = '%s'
+    _symbol_f = lambda x: None if x is False or x is None else __builtin__.float(x or  0.0)
+    _symbol_set = (_symbol_c, _symbol_f)
+    _symbol_get = lambda self,x: None if x is False or x is None else x or 0.0
+
 
 class date(_column):
     _type = 'date'
