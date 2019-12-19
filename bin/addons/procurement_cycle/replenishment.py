@@ -427,7 +427,8 @@ class replenishment_segment(osv.osv):
 
                 valid_rr_fmc = True
                 before_today = False
-                after_oc = False
+                before_oc = False
+                before_rdd = False
 
                 lacking = False
                 if seg.rule == 'cycle':
@@ -440,9 +441,11 @@ class replenishment_segment(osv.osv):
                             from_fmc = datetime.strptime(from_fmc, '%Y-%m-%d')
                             to_fmc = datetime.strptime(to_fmc, '%Y-%m-%d')
 
-                            if rdd <= from_fmc:
+                            if today <= to_fmc:
                                 before_today = True
 
+                            if rdd <= to_fmc:
+                                before_rdd = True
                             begin = max(today, from_fmc)
                             end = min(rdd, to_fmc)
                             if end >= begin:
@@ -456,14 +459,14 @@ class replenishment_segment(osv.osv):
                                         month_of_supply += ( sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc + month*num_fmc ) / num_fmc
                                         lacking = True
                             if oc <= to_fmc:
-                                after_oc = True
+                                before_oc = True
                             begin_oc = max(rdd, from_fmc)
                             end_oc = min(oc, to_fmc)
                             if end_oc >= begin_oc:
                                 month = (end_oc-begin_oc).days/30.44
                                 total_month_oc += month
                                 total_fmc_oc += month*num_fmc
-                    valid_rr_fmc = before_today and after_oc
+                    valid_rr_fmc = before_today and before_rdd and before_oc
                 pas = max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rrd - total_fmc)
                 ss_stock = 0
                 warnings = []
