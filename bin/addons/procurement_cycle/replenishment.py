@@ -441,7 +441,7 @@ class replenishment_segment(osv.osv):
                             from_fmc = datetime.strptime(from_fmc, '%Y-%m-%d')
                             to_fmc = datetime.strptime(to_fmc, '%Y-%m-%d')
 
-                            if today <= to_fmc:
+                            if from_fmc <= today <= to_fmc:
                                 before_today = True
 
                             if rdd <= to_fmc:
