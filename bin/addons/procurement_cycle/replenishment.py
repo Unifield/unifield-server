@@ -511,7 +511,7 @@ class replenishment_segment(osv.osv):
                     'expired_qty_before_cons': int(sum_line.get(line.id, {}).get('expired_before_rrd',0)),
                     'expired_qty_before_eta': False, #TODO JFB=  RR
                     'proposed_order_qty': int(proposed_order_qty),
-                    'agreed_order_qty': int(proposed_order_qty),
+                    'agreed_order_qty': int(proposed_order_qty) or False,
                     'open_loan': sum_line.get(line.id, {}).get('open_loan', False),
                     'warning': "\n".join(warnings),
                     'valid_rr_fmc': valid_rr_fmc,
