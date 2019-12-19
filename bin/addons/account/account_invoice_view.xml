@@ -337,7 +337,29 @@
                                                                     ('from_supply', '=', True),
                                                                     ('partner_type', 'in', ('intermission', 'section'))]}"/>
                             <field name="payment_term" widget="selection"/>
-                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'fake': 1, 'from_inv_form': True}"/>
+                            <field colspan="4" name="invoice_line" nolabel="1" context="{'fake': 1, 'from_inv_form': True}">
+                                <tree string="Invoice Line"
+                                      colors="red:inactive_product == True or analytic_distribution_state in ('invalid');blue:inactive_product == False and analytic_distribution_state in ('valid');black:inactive_product == False and analytic_distribution_state in ('none')"
+                                      editable="both">
+                                    <field name="line_number"/>
+                                    <field name="is_corrected" invisible="1"/>
+                                    <button name="button_open_analytic_lines" string="Have been corrected" type="object"
+                                            icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
+                                    <field name="name"/>
+                                    <field name="inactive_product" invisible="1"/>
+                                    <field name="account_id" domain="[('restricted_area', '=', 'invoice_lines')]"/>
+                                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object"
+                                            icon="terp-stock_symbol-selection" context="context"
+                                            attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                                    <field name="analytic_distribution_state_recap" readonly="1"/>
+                                    <field name="analytic_distribution_state" invisible="1"/>
+                                    <field name="is_allocatable" invisible="1"/>
+                                    <field name="quantity"/>
+                                    <field name="uos_id" string="UoM"/>
+                                    <field name="price_unit"/>
+                                    <field name="price_subtotal"/>
+                                </tree>
+                            </field>
                             <group col="1" colspan="2">
                                 <field name="tax_line" nolabel="1">
                                     <tree editable="bottom" string="Taxes">
