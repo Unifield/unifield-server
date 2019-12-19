@@ -659,7 +659,14 @@ class Selection(Char):
 
 class Float(Char):
 
+    def __init__(self, **attrs):
+        self.with_null = attrs.get('with_null')
+        super(Float, self).__init__( **attrs)
+
     def get_text(self):
+        if self.with_null and self.value is False:
+            return ''
+
         digits = self.attrs.get('digits', (16,2))
         if isinstance(digits, basestring):
             digits = eval(digits)

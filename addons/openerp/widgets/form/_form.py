@@ -461,7 +461,7 @@ class Float(TinyInputWidget):
     def __init__(self, **attrs):
         super(Float, self).__init__(**attrs)
 
-
+        self.with_null = attrs.get('with_null')
         rounding = False
         if attrs.get('rounding_value') and attrs.get('uom_rounding'):
             if isinstance(attrs.get('rounding_value'), (list, tuple)):
@@ -487,7 +487,10 @@ class Float(TinyInputWidget):
 #            self.default = 0.0
 
     def set_value(self, value):
-        self.default = value or 0.0
+        if self.with_null and value is False:
+            self.default = ''
+        else:
+            self.default = value or 0.0
 
 register_widget(Float, ["float"])
 
