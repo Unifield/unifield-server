@@ -70399,6 +70399,7 @@ msgstr "Lorsque l'opération de transition est provoquée en pressant sur un bou
 #: field:account.analytic.line,journal_type:0
 #: field:account.move,journal_type:0
 #: field:account.move.line,journal_type:0
+#: field:account.invoice,journal_type:0
 #: selection:account.journal.column,field:0
 msgid "Journal Type"
 msgstr "Type de Journal"
