@@ -1876,8 +1876,10 @@ class account_invoice_line(osv.osv):
             if invl.invoice_id and invl.invoice_id.id not in invoice_ids:
                 invoice = invl.invoice_id
                 invoice_ids.append(invoice.id)  # check each invoice only once
-                is_ivi_or_si = invoice.type == 'in_invoice' and not invoice.is_inkind_donation
-                if (is_ivi_or_si and invoice.synced) or (invoice.from_supply and invoice.partner_type in ('intermission', 'section')):
+                in_invoice = invoice.type == 'in_invoice' and not invoice.is_inkind_donation
+                supp_inv = in_invoice and not invoice.is_intermission
+                intermission_or_section = invoice.partner_type in ('intermission', 'section')
+                if (in_invoice and invoice.synced) or (invoice.from_supply and (supp_inv or intermission_or_section)):
                     # will be displayed when trying to delete lines manually / merge lines / or split invoices
                     raise osv.except_osv(_('Error'), _("This document has been generated via a Supply workflow or via synchronization. "
                                                        "Existing lines can't be deleted."))
