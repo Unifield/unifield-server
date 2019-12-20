@@ -272,7 +272,7 @@
                             <field name="origin" groups="base.group_extended"
                                    attrs="{'readonly': ['|',
                                                         ('state', '!=', 'draft'),
-                                                        '&amp;', '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True), ('from_supply', '=', True)]}"/>
+                                                        '&amp;', ('type', '=', 'in_invoice'), ('from_supply', '=', True)]}"/>
                             <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" groups="base.group_extended"/>
                             <field name="user_id"
                                    attrs="{'readonly': ['|', ('state', '!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
