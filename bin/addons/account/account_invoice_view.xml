@@ -342,7 +342,7 @@
                                 <tree string="Invoice Line"
                                       colors="red:inactive_product == True or analytic_distribution_state in ('invalid');blue:inactive_product == False and analytic_distribution_state in ('valid');black:inactive_product == False and analytic_distribution_state in ('none')"
                                       editable="both">
-                                    <field name="line_number"/>
+                                    <field name="line_number" displayon="noteditable"/>
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object"
                                             icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
