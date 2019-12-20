@@ -1509,6 +1509,8 @@ class account_invoice(osv.osv):
             }, context=context)
 
         res = {}
+        if context is None:
+            context = {}
         if not ids:
             return False
         if isinstance(ids, (int, long, )):
@@ -1518,6 +1520,7 @@ class account_invoice(osv.osv):
         ad_obj = self.pool.get('analytic.distribution')
 
         # merging
+        context.update({'from_merge': True})
         for inv_br in self.browse(cr, uid, ids, context=context):
             merge_invoice(inv_br)
 
@@ -1878,8 +1881,9 @@ class account_invoice_line(osv.osv):
                 invoice_ids.append(invoice.id)  # check each invoice only once
                 in_invoice = invoice.type == 'in_invoice' and not invoice.is_inkind_donation
                 supp_inv = in_invoice and not invoice.is_intermission
+                from_merge = context.get('from_merge')
                 intermission_or_section = invoice.partner_type in ('intermission', 'section')
-                if (in_invoice and invoice.synced) or (invoice.from_supply and (supp_inv or intermission_or_section)):
+                if (in_invoice and invoice.synced) or (invoice.from_supply and (intermission_or_section or (supp_inv and not from_merge))):
                     # will be displayed when trying to delete lines manually / merge lines / or split invoices
                     raise osv.except_osv(_('Error'), _("This document has been generated via a Supply workflow or via synchronization. "
                                                        "Existing lines can't be deleted."))
