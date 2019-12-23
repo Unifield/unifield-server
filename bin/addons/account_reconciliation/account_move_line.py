@@ -643,7 +643,7 @@ class account_move_reconcile(osv.osv):
             for x in cr.fetchall():
                 prev[x[0]] = x[1]
 
-                if context.get('sync_update_execution') and (x[2] or x[3]):
+                if context.get('sync_update_execution') and x[2]:
                     already_reconciled.append('%s %s already reconciled on the instance, id:%s, rec_txt:%s' % (x[4], x[5], x[0], x[1]))
 
         if already_reconciled:
