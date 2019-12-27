@@ -756,8 +756,13 @@ class account_move_unreconcile(osv.osv):
                 netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', invoice_reopen, 'open_test', cr)
         elif context.get('sync_update_execution') and vals.get('reconcile_sdref'):
             rec_id = self.pool.get('account.move.reconcile').find_sd_ref(cr, uid, vals.get('reconcile_sdref'), context=context)
-            if rec_id and self.pool.get('account.move.reconcile').exists(cr, uid, rec_id, context=context):
-                self.pool.get('account.move.reconcile').unlink(cr, uid, rec_id, context=context)
+            if rec_id:
+                if self.pool.get('account.move.reconcile').exists(cr, uid, rec_id, context=context):
+                    self.pool.get('account.move.reconcile').unlink(cr, uid, rec_id, context=context)
+            else:
+                update_ids = self.pool.get('sync.client.update_received').search(cr, uid, [('run', '=', False), ('sdref', '=', vals.get('reconcile_sdref'))], context=context)
+                if update_ids:
+                    self.pool.get('sync.client.update_received').write(cr, uid, update_ids, {'run': 't', 'log': 'Set as run by patch US-6930'}, context=context)
         return super(account_move_unreconcile, self).create(cr, uid, vals, context)
 
 account_move_unreconcile()
