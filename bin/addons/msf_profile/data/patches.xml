@@ -477,5 +477,10 @@
             <field name="method">us_6768_trigger_FP_sync</field>
         </record>
 
+        <!-- UF15.1 -->
+        <record id="us_6930_gen_unreconcile" model="patch.scripts">
+            <field name="method">us_6930_gen_unreconcile</field>
+        </record>
+
     </data>
 </openerp>
