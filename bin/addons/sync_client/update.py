@@ -249,6 +249,12 @@ class update_to_send(osv.osv,fv_formatter):
             ids_to_delete = self.need_to_push(cr, uid,
                                               self.search_deleted(cr, uid, module='sd', context=context),
                                               context=context)
+            orig_len = len(ids_to_delete)
+            ids_to_delete = self.search_deleted(cr, uid, module='sd', context=context, for_sync=True)
+            if len(ids_to_delete) != orig_len:
+                logging.getLogger('sync.client').warn('ORIGN %s %s %s' % (self._name, orig_len, len(ids_to_delete)))
+                raise Exception('Diff len ids to delete %s %s %s' % (self._name, orig_len, len(ids_to_delete)))
+
             if not ids_to_delete:
                 return 0
 
