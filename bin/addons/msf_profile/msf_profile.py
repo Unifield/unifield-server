@@ -52,6 +52,48 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_6905_manage_bned_switch(self, cr, uid, *a, **b):
+        fake_ed = '2999-12-31'
+        fake_bn = 'TO-BE-REPLACED'
+
+        lot_obj = self.pool.get('stock.production.lot')
+
+        # old move with BN or ED if product is no_bn no_ed
+        # set no on bn or en moves
+        cr.execute('''
+            update stock_move set prodlot_id=NULL, expired_date=NULL, hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', old_lot_info=(select name||'#'||life_date from stock_production_lot where id=stock_move.prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where id in
+                (select m.id from stock_move m, product_product p where p.id = m.product_id and p.perishable='f' and p.batch_management='f' and m.prodlot_id is not null and m.state in ('done', 'cancel'))
+        ''')
+        self._logger.warn('%d done/cancel moves set from ED or BN to no' % (cr.rowcount, ))
+
+
+        # set bn on no moves
+        cr.execute('''select distinct(product_id) from stock_move m, product_product p where p.id = m.product_id and p.perishable='t' and p.batch_management='t' and m.prodlot_id is null and m.state in ('done', 'cancel')''')
+        self._logger.warn('%d done/cancel moves set from NO to BN' % (cr.rowcount, ))
+        for prod_id in cr.fetchall():
+            batch_id = lot_obj._get_or_create_lot(cr, uid, name=fake_bn, expiry_date=fake_ed, product_id=prod_id)
+            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s, old_lot_info='US-6905 BN set'||E'\n'||COALESCE(old_lot_info, '') where product_id=%s and prodlot_id is null and state in ('done', 'cancel')", (batch_id, fake_ed, prod_id))
+
+        # set ed on no moves
+        cr.execute('''select distinct(product_id) from stock_move m, product_product p where p.id = m.product_id and p.perishable='t' and p.batch_management='f' and m.prodlot_id is null and m.state in ('done', 'cancel')''')
+        self._logger.warn('%d done/cancel moves set from NO to ED' % (cr.rowcount, ))
+        for prod_id in cr.fetchall():
+            batch_id = lot_obj._get_or_create_lot(cr, uid, name=False, expiry_date=fake_ed, product_id=prod_id)
+            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s, old_lot_info='US-6905 EN set'||E'\n'||COALESCE(old_lot_info, '') where product_id=%s and prodlot_id is null and state in ('done', 'cancel')", (batch_id, fake_ed, prod_id))
+
+        # set ed on bn moves
+        cr.execute("update stock_production_lot set name='MSFBN/'||name, type='internal' where id in (select lot.id from stock_production_lot lot, product_product p where p.id = lot.product_id and type='standard' and p.perishable='t' and p.batch_management='f') returning name")
+        for lot in cr.fetchall():
+            self._logger.warn('BN %s from standard to internal' % (lot[0], ))
+
+        # set bn on ed moves
+        cr.execute("update stock_production_lot set type='standard', name='S'||name where id in (select lot.id from stock_production_lot lot, product_product p where p.id = lot.product_id and type='internal' and p.perishable='t' and p.batch_management='t') returning name")
+        for lot in cr.fetchall():
+            self._logger.warn('BN %s from internal to standard' % (lot[0], ))
+
+        return True
+
+
     # UF15.0
     def us_6768_trigger_FP_sync(self, cr, uid, *a, **b):
         """
