@@ -665,7 +665,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
             sql_add = ' AND d.module=%(module)s '
             sql_params['module'] = module
         if for_sync:
-            sql_add += ' AND (sync_date < last_modification OR sync_date IS NULL) '
+            sql_add += ' AND (d.sync_date < d.last_modification OR d.sync_date IS NULL) '
         if res_ids:
             sql_add += ' AND d.res_id in %(res_ids)s '
             sql_params['res_ids'] = tuple(res_ids)
