@@ -72,14 +72,14 @@ class patch_scripts(osv.osv):
         self._logger.warn('%d done/cancel moves set from NO to BN' % (cr.rowcount, ))
         for prod_id in cr.fetchall():
             batch_id = lot_obj._get_or_create_lot(cr, uid, name=fake_bn, expiry_date=fake_ed, product_id=prod_id)
-            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s, old_lot_info='US-6905 BN set'||E'\n'||COALESCE(old_lot_info, '') where product_id=%s and prodlot_id is null and state = 'done' and m.product_qty!=0", (batch_id, fake_ed, prod_id))
+            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s, old_lot_info='US-6905 BN set'||E'\n'||COALESCE(old_lot_info, '') where product_id=%s and prodlot_id is null and state = 'done' and product_qty!=0", (batch_id, fake_ed, prod_id))
 
         # set ed on no moves
         cr.execute('''select distinct(product_id) from stock_move m, product_product p where p.id = m.product_id and p.perishable='t' and p.batch_management='f' and m.prodlot_id is null and m.state = 'done' and m.product_qty!=0 ''')
         self._logger.warn('%d done/cancel moves set from NO to ED' % (cr.rowcount, ))
         for prod_id in cr.fetchall():
             batch_id = lot_obj._get_or_create_lot(cr, uid, name=False, expiry_date=fake_ed, product_id=prod_id)
-            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s, old_lot_info='US-6905 EN set'||E'\n'||COALESCE(old_lot_info, '') where product_id=%s and prodlot_id is null and state = 'done' and m.product_qty!=0 ", (batch_id, fake_ed, prod_id))
+            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s, old_lot_info='US-6905 EN set'||E'\n'||COALESCE(old_lot_info, '') where product_id=%s and prodlot_id is null and state = 'done' and product_qty!=0 ", (batch_id, fake_ed, prod_id))
 
         # set ed on bn moves
         cr.execute("update stock_production_lot set name='MSFBN/'||name, type='internal' where id in (select lot.id from stock_production_lot lot, product_product p where p.id = lot.product_id and type='standard' and p.perishable='t' and p.batch_management='f') returning name")
