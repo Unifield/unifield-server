@@ -571,12 +571,14 @@ function parse_filters(src, id) {
 
     forEach(selected_boxes, function(box){
         if (box.id && box.checked && box.value != '[]') {
-
-            pdiv = box.closest('div[class^="filters-group"]');
-            if (!(pdiv.id in all_boxes)) {
-                all_boxes[pdiv.id] = []
+            pdiv = jQuery(box).closest('div[class^="filters-group"]');
+            if (!pdiv) {
+                return;
             }
-            all_boxes[pdiv.id].push(box.value.replace(/^\s*\[/, '').replace(/]\s*$/, ''));
+            if (!(pdiv[0].id in all_boxes)) {
+                all_boxes[pdiv[0].id] = []
+            }
+            all_boxes[pdiv[0].id].push(box.value.replace(/^\s*\[/, '').replace(/]\s*$/, ''));
         }
     });
 
