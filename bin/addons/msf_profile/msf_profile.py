@@ -52,6 +52,21 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_6930_gen_unreconcile(self, cr, uid, *a, **b):
+        # generate updates to delete reconcile done after UF15.0
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:
+            unrec_obj = self.pool.get('account.move.unreconcile')
+            cr.execute('''
+                select d.name from ir_model_data d
+                left join
+                    account_move_reconcile rec on d.model='account.move.reconcile' and d.res_id = rec.id
+                where d.model='account.move.reconcile' and rec.id is null and touched like '%action_date%'
+            ''')
+            for sdref_rec in cr.fetchall():
+                unrec_obj.create(cr, uid, {'reconcile_sdref': sdref_rec[0]})
+        return True
+
     # UF15.0
     def us_6768_trigger_FP_sync(self, cr, uid, *a, **b):
         """
