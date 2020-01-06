@@ -363,8 +363,14 @@
                                     <field name="analytic_distribution_state_recap" readonly="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
                                     <field name="is_allocatable" invisible="1"/>
-                                    <field name="quantity"/>
-                                    <field name="uos_id" string="UoM"/>
+                                    <field name="quantity"
+                                           attrs="{'readonly': ['|',
+                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('synced', '=', True), ('from_supply', '=', True),
+                                                                '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"/>
+                                    <field name="uos_id" string="UoM"
+                                           attrs="{'readonly': ['|',
+                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('synced', '=', True), ('from_supply', '=', True),
+                                                                '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"/>
                                     <field name="price_unit"/>
                                     <field name="price_subtotal"/>
                                 </tree>
