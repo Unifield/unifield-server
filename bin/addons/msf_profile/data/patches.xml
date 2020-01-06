@@ -482,5 +482,9 @@
             <field name="method">us_6930_gen_unreconcile</field>
         </record>
 
+        <record id="us_6905_manage_bned_switch" model="patch.scripts">
+            <field name="method">us_6905_manage_bned_switch</field>
+        </record>
+
     </data>
 </openerp>
