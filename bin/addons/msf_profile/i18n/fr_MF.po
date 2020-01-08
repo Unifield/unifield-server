@@ -106026,8 +106026,14 @@ msgstr "Etat de la Facture de Contrepartie"
 #: field:account.invoice,synced:0
 #: field:wizard.account.invoice,synced:0
 #: field:account.invoice.line,synced:0
+#: field:account.invoice.line,line_synced:0
 msgid "Synchronized"
 msgstr "Synchronisé"
+
+#. module: account_override
+#: help:account.invoice.line,line_synced:0
+msgid "Technical field, similar to \"synced\""
+msgstr "Champ technique, similaire au champ \"synced\""
 
 #. modules: account_override, register_accounting
 #: field:account.invoice,from_supply:0

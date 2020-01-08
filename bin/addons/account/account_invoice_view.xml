@@ -55,22 +55,23 @@
                         <page string="Line">
                             <field name="invoice_type" invisible="1"/>
                             <field name="from_supply" invisible="1"/>
+                            <field name="line_synced" invisible="1"/>
                             <field name="partner_type" invisible="1"/>
                             <field name="product_id"
                                    on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
                                    default_focus="1"
                                    attrs="{'readonly': ['|',
-                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('synced', '=', True), ('from_supply', '=', True),
+                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                         '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
                             />
                             <field name="uos_id"
                                    on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
                                    attrs="{'readonly': ['|',
-                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('synced', '=', True), ('from_supply', '=', True),
+                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                         '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
                             />
                             <field name="quantity" attrs="{'readonly': ['|',
-                                                           '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('synced', '=', True), ('from_supply', '=', True),
+                                                           '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                            '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
                             />
                             <field name="price_unit" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
@@ -203,12 +204,12 @@
                             <field colspan="4" default_get="{'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" name="invoice_line" nolabel="1">
                                 <tree string="Invoice lines" editable="both">
                                     <field name="from_supply" invisible="1"/>
-                                    <field name="synced" invisible="1"/>
+                                    <field name="line_synced" invisible="1"/>
                                     <field name="invoice_type" invisible="1"/>
                                     <field name="partner_type" invisible="1"/>
                                     <field name="product_id"
                                            attrs="{'readonly': ['|',
-                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('synced', '=', True), ('from_supply', '=', True),
+                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                                 '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
                                            on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
                                     />
@@ -219,11 +220,11 @@
                                     <field domain="[('type','&lt;&gt;','view'), ('company_id', '=', parent.company_id), ('parent_id', '!=', False)]" name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
                                     <field name="quantity"
                                            attrs="{'readonly': ['|',
-                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('synced', '=', True),('from_supply', '=', True),
+                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True),('from_supply', '=', True),
                                                                 '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
                                     />
                                     <field name="price_unit"
-                                           attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('synced', '=', True)]}"
+                                           attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"
                                     />
                                      <!-- Removed if subtotal is set -->
                                     <field name="price_subtotal"/>
@@ -362,7 +363,7 @@
                                       colors="red:inactive_product == True or analytic_distribution_state in ('invalid');blue:inactive_product == False and analytic_distribution_state in ('valid');black:inactive_product == False and analytic_distribution_state in ('none')"
                                       editable="both">
                                     <field name="invoice_type" invisible="1"/>
-                                    <field name="synced" invisible="1"/>
+                                    <field name="line_synced" invisible="1"/>
                                     <field name="from_supply" invisible="1"/>
                                     <field name="partner_type" invisible="1"/>
                                     <field name="line_number" displayon="noteditable"/>
@@ -383,16 +384,16 @@
                                     <field name="is_allocatable" invisible="1"/>
                                     <field name="quantity"
                                            attrs="{'readonly': ['|',
-                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('synced', '=', True), ('from_supply', '=', True),
+                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                                 '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"/>
                                     <field name="product_id" invisible="1"/>
                                     <field name="uos_id" string="UoM"
                                            on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
                                            attrs="{'readonly': ['|',
-                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('synced', '=', True), ('from_supply', '=', True),
+                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                                 '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"/>
                                     <field name="price_unit"
-                                           attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
+                                           attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                                     <field name="price_subtotal"/>
                                 </tree>
                             </field>

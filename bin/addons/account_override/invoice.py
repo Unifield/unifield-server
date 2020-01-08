@@ -1698,6 +1698,10 @@ class account_invoice_line(osv.osv):
                                            help="Field used for import only"),
         'from_supply': fields.related('invoice_id', 'from_supply', type='boolean', string='From Supply', readonly=True, store=False),
         'synced': fields.related('invoice_id', 'synced', type='boolean', string='Synchronized', readonly=True, store=False),
+        # field "line_synced" created to be used in the views where the "synced" field at doc level is displayed
+        # (avoids having 2 fields with the same name within the same view)
+        'line_synced': fields.related('invoice_id', 'synced', type='boolean', string='Synchronized', readonly=True, store=False,
+                                      help='Technical field, similar to "synced"'),
         'invoice_type': fields.related('invoice_id', 'type', string='Invoice Type', type='selection', readonly=True, store=False,
                                        selection=[('out_invoice', 'Customer Invoice'),
                                                   ('in_invoice', 'Supplier Invoice'),
