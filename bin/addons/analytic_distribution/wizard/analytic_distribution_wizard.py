@@ -982,16 +982,13 @@ class analytic_distribution_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        distrib_obj = self.pool.get('analytic.distribution')
         for w in self.browse(cr, uid, ids):
             # UF-1678
             # For Cost center and destination analytic accounts, check is done on POSTING date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
             if w.distribution_id and w.posting_date:
                 # First we check cost center distribution line with CC (analytic_id) and destination (destination_id)
-                for cline in self.pool.get('cost.center.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.cost_center_lines], {'date': w.posting_date}):
-                    if not cline.analytic_id.filter_active:
-                        raise osv.except_osv(_('Error'), _('Cost center account %s is not active at this date: %s') % (cline.analytic_id.code or '', w.posting_date))
-                    if not cline.destination_id.filter_active:
-                        raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') % (cline.destination_id.code or '', w.posting_date))
+                distrib_obj.check_cc_distrib_active(cr, uid, w.distribution_id, w.posting_date)
                 # Then we check funding pool distribution line with CC (cost_center_id) and destination (destination_id)
                 for fpline in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.funding_pool_lines], {'date': w.posting_date}):
                     if not fpline.cost_center_id.filter_active:

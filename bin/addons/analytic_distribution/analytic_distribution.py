@@ -19,8 +19,10 @@
 #
 ##############################################################################
 
+import time
 from osv import osv
 from tools.translate import _
+
 
 class analytic_distribution(osv.osv):
     _name = 'analytic.distribution'
@@ -150,6 +152,25 @@ class analytic_distribution(osv.osv):
             if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp.tuple_destination_account_ids if not x.disabled]:
                 return 'invalid', _('account/destination tuple not compatible with given FP analytic account')
         return res, info
+
+    def check_cc_distrib_active(self, cr, uid, distrib_br, posting_date=False):
+        """
+        Checks the Cost Center Distribution Lines of the distribution in param.:
+        raises an error if the CC or the Dest. used is not active at the posting date selected (or today's date)
+        """
+        cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
+        if distrib_br:
+            if not posting_date:
+                posting_date = time.strftime('%Y-%m-%d')
+            for cline in cc_distrib_line_obj.browse(cr, uid, [ccl.id for ccl in distrib_br.cost_center_lines],
+                                                    fields_to_fetch=['analytic_id', 'destination_id'], context={'date': posting_date}):
+                if not cline.analytic_id.filter_active:
+                    raise osv.except_osv(_('Error'), _('Cost center account %s is not active at this date: %s') %
+                                         (cline.analytic_id and cline.analytic_id.code or '', posting_date))
+                if not cline.destination_id.filter_active:
+                    raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') %
+                                         (cline.destination_id.code or '', posting_date))
+
 
 analytic_distribution()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
