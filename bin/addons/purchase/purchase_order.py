@@ -1686,7 +1686,13 @@ class purchase_order(osv.osv):
                 return True
 
             for pol in po.order_line:
-                wiz_id = wiz_obj.create(cr, uid, {'order_id': po.id}, context=context)
+                vals = {'order_id': po.id}
+                if context.get('rfq_ok', False) and po.tender_id:
+                    pending_rfqs_same_tender = self.search(cr, uid, [('id', '!=', po.id), ('state', '!=', 'cancel'),
+                                                                     ('tender_id', '=', po.tender_id.id)], context=context)
+                    if not pending_rfqs_same_tender:
+                        vals.update({'cancel_linked_tender': True})
+                wiz_id = wiz_obj.create(cr, uid, vals, context=context)
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': 'purchase.order.cancel.wizard',
