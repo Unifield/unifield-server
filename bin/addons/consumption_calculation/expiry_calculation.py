@@ -401,7 +401,7 @@ class product_likely_expire_report(osv.osv):
             from_segment = True
             if report.segment_id.rule != 'cycle':
                 instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
-                cr.execute('select id, amc from replenishment_segment_line_amc where segment_line_id=%s and instance_id=%s', (tuple([line_id.id for line_id in report.segment_id.line_ids]) , instance_id))
+                cr.execute('select id, amc from replenishment_segment_line_amc where segment_line_id in %s and instance_id=%s', (tuple([line_id.id for line_id in report.segment_id.line_ids]) , instance_id))
                 local_amc = {}
                 for x in cr.fetchall():
                     local_amc[x[0]] = x[1] or 0
@@ -557,7 +557,7 @@ class product_likely_expire_report(osv.osv):
                             if lot_coeff >= 0.00:
                                 consum = round(lot_coeff*consumption,2)
 
-                        if consum >= 0:
+                        if consum > 0:
                             last_expiry_date = DateFrom(product_lot.life_date)
                         lot_cons = self.pool.get('product.uom')._compute_qty(new_cr, uid, lot.product_id.uom_id.id, consum, lot.product_id.uom_id.id) + rest
 

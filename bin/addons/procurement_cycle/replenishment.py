@@ -78,7 +78,7 @@ class replenishment_location_config(osv.osv):
 
     _columns = {
         'name': fields.char('Reference', size=64, readonly=1, select=1),
-        'description': fields.char('Desription', required=1, size=28, select=1),
+        'description': fields.char('Description', required=1, size=28, select=1),
         'synched': fields.boolean('Synched Locations'),
         'main_instance': fields.many2one('msf.instance', readonly=1, string="Main Instance"),
         'active': fields.boolean('Active'),
@@ -88,7 +88,7 @@ class replenishment_location_config(osv.osv):
         # inventory review
         'review_active': fields.boolean('Review Active'),
         'projected_view': fields.integer('Standard Projected view (months)'),
-        'rr_amc': fields.integer('RR-AMC period (months)'),
+        'rr_amc': fields.integer('RR-AMC period (months)', required=1),
         'sleeping': fields.integer('Sleeping stock periodicity (months)'),
         'time_unit': fields.selection([('d', 'days'), ('w', 'weeks'), ('m', 'months')], string='Time units displayed (Inventory Review)'),
         'frequence_name': fields.function(_get_frequence_name, method=True, string='Frequency', type='char'),
@@ -107,6 +107,8 @@ class replenishment_location_config(osv.osv):
         'main_instance': lambda s, cr, uid, c: s.pool.get('res.company')._get_instance_id(cr, uid),
         'projected_view': 8,
         'sleeping': 12,
+        'rr_amc': 3,
+        'time_unit': 'm',
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -158,8 +160,10 @@ class replenishment_location_config(osv.osv):
 
     _constraints = [(check_no_duplicates, 'Location already used on an active Configuration', [])]
     _sql_constraints = [
-        ('unique_description_instance', 'unique(description, main_instance)', 'Desription must be unique'),
+        ('unique_description_instance', 'unique(description, main_instance)', 'Description must be unique'),
+        # TODO JFB: create NR on sync down
         ('review_active_with_freq', 'CHECK(not review_active or frequence_id is not null)', "You can't activate a review w/o any frequency"),
+        ('rr_amc_positive', 'CHECK(rr_amc>0)', 'RR_AMC must be not null and positive'),
     ]
 
 
@@ -205,6 +209,27 @@ class replenishment_location_config(osv.osv):
             'res_id': frequence_id
         }
 
+    def generate_inventory_review(self, cr, uid, ids, context=None):
+        segment_obj = self.pool.get('replenishment.segment')
+        now = datetime.now()
+        for config in self.browse(cr, uid, ids, context=context):
+            segment_ids = segment_obj.search(cr, uid, [('location_config_id', '=', config.id), ('state', '=', 'complete')], context=context)
+            if not segment_ids:
+                raise osv.except_osv(_('Warning ! '), _('No Segment found'))
+
+            review_id = self.pool.get('replenishment.inventory.review').create(cr, uid, {
+                'location_config_id': config.id,
+                'amc_first_date': now + relativedelta(day=1, days=-1) - relativedelta(months=config.rr_amc),
+                'amc_last_date': now + relativedelta(day=1, days=-1),
+                'projected_view': config.projected_view,
+                'final_date_projection': now + relativedelta(months=int(config.projected_view), day=1, days=-1),
+                'sleeping': config.sleeping,
+                'time_unit': config.time_unit,
+            }, context=context)
+
+            segment_obj.generate_data(cr, uid, segment_ids, review_id=review_id, context=context)
+        return True
+
 replenishment_location_config()
 
 
@@ -217,14 +242,14 @@ class replenishment_segment(osv.osv):
 
     def _get_date(self, cr, uid, ids, field_name, arg, context=None):
         ret = {}
-        for seg in self.read(cr, uid, ids, ['previous_order_rrd', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'order_coverage', 'date_next_order_received_modified'], context=context):
+        for seg in self.read(cr, uid, ids, ['previous_order_rdd', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'order_coverage', 'date_next_order_received_modified'], context=context):
             ret[seg['id']] = {
                 'date_preparing': False,
                 'date_next_order_validated': False,
                 'date_next_order_received': False,
             }
             ret[seg['id']].update(self.compute_next_order_received(cr, uid, ids,
-                                                                   seg['order_creation_lt'], seg['order_validation_lt'], seg['supplier_lt'], seg['handling_lt'], seg['order_coverage'], seg['previous_order_rrd'], seg['date_next_order_received_modified'], context=context).get('value', {}))
+                                                                   seg['order_creation_lt'], seg['order_validation_lt'], seg['supplier_lt'], seg['handling_lt'], seg['order_coverage'], seg['previous_order_rdd'], seg['date_next_order_received_modified'], context=context).get('value', {}))
         return ret
 
     def _get_lt(self, cr, uid, ids, field_name, arg, context=None):
@@ -259,13 +284,13 @@ class replenishment_segment(osv.osv):
 
     _columns = {
         'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
-        'description_seg': fields.char('Desription', required=1, size=28, select=1),
+        'description_seg': fields.char('Description', required=1, size=28, select=1),
         'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, ondelete='cascade'),
         'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Replenishment Rule (Order quantity)', required=1),
         'rule_alert': fields.function(_get_rule_alert, method=1, string='Replenishment Rule (Alert Theshold)', type='char'),
-        'ir_requesting_location': fields.many2one('stock.location', string='IR Requesting Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])]", required=1),
+        'ir_requesting_location': fields.many2one('stock.location', string='IR Requesting Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])]", required=0),
         'product_list_id': fields.many2one('product.list', 'Primary product list'),
-        'state': fields.selection([('draft', 'Draft'), ('complete', 'Complete'), ('cancel', 'Cancelled'), ('archived', 'Archived')], 'Status', readonly=1),
+        'state': fields.selection([('draft', 'Draft'), ('complete', 'Complete'), ('cancel', 'Cancelled'), ('archived', 'Archived')], 'State', readonly=1),
         'order_creation_lt': fields.integer('Order Creation Lead Time (days)', required=1),
         'order_validation_lt': fields.integer('Order Validation Lead Time (days)', required=1),
         'internal_lt': fields.function(_get_lt, type='integer', method=1, string='Internal Lead Time', multi='get_lt'),
@@ -275,7 +300,7 @@ class replenishment_segment(osv.osv):
         'total_lt': fields.function(_get_lt, type='integer', method=1, string='Total Lead Time', multi='get_lt'),
         'order_coverage': fields.integer('Order Coverage (months)'),
         'safety_stock': fields.integer('Safety Stock (months)'),
-        'previous_order_rrd': fields.date(string='Previous order RDD Date', readonly=1, help="Generated according to latest IR's RDD (from most recent Order calc which is now closed)."),
+        'previous_order_rdd': fields.date(string='Previous order RDD Date', readonly=1, help="Generated according to latest IR's RDD (from most recent Order calc which is now closed)."),
         'date_preparing': fields.function(_get_date, type='date', method=True, string='Date to start preparing the order', multi='get_date', help='This does not take account of any stockouts not related to order coverage. Calculation: "Next order RDD date" - Total Lead time.'),
         'date_next_order_validated':  fields.function(_get_date, type='date', method=True, string='Date next order to be validated by', multi='get_date', help='This does not take account of any stockouts not related to order coverage. Calculation: "Next order RDD date" - Total Lead time + Internal LT. This isupdated according to value in "Next order to be received by'),
         'date_next_order_received': fields.function(_get_date, type='date', method=True, string='Next order to be received by (calculated)', multi='get_date', help='Calculated according to last order RDDate + OC.'),
@@ -295,32 +320,32 @@ class replenishment_segment(osv.osv):
 
         return super(replenishment_segment, self).create(cr, uid, vals, context)
 
-    def compute_next_order_received(self, cr, uid, ids, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified, context=None):
+    def compute_next_order_received(self, cr, uid, ids, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified, context=None):
         ret = {}
-        if  previous_order_rrd or date_next_order_received_modified:
-            previous_rrd = False
+        if  previous_order_rdd or date_next_order_received_modified:
+            previous_rdd = False
             date_next_order_received = False
-            if previous_order_rrd:
-                previous_rrd = datetime.strptime(previous_order_rrd, '%Y-%m-%d')
-                date_next_order_received = previous_rrd + relativedelta(months=order_coverage or 0)
+            if previous_order_rdd:
+                previous_rdd = datetime.strptime(previous_order_rdd, '%Y-%m-%d')
+                date_next_order_received = previous_rdd + relativedelta(months=order_coverage or 0)
             if date_next_order_received_modified:
                 date_next_order_received_modified = datetime.strptime(date_next_order_received_modified, '%Y-%m-%d')
-                previous_rrd = date_next_order_received_modified - relativedelta(months=order_coverage or 0)
+                previous_rdd = date_next_order_received_modified - relativedelta(months=order_coverage or 0)
 
             ret = {
-                'date_preparing': previous_rrd + relativedelta(months=order_coverage or 0) - relativedelta(days=(order_creation_lt or 0) + (order_validation_lt or 0) + (supplier_lt or 0) + (handling_lt or 0)),
-                'date_next_order_validated': previous_rrd + relativedelta(months=order_coverage or 0) - relativedelta(days=(supplier_lt or 0) + (handling_lt or 0)),
-                'date_next_order_received': date_next_order_received,
+                'date_preparing': (previous_rdd + relativedelta(months=order_coverage or 0) - relativedelta(days=(order_creation_lt or 0) + (order_validation_lt or 0) + (supplier_lt or 0) + (handling_lt or 0))).strftime('%Y-%m-%d'),
+                'date_next_order_validated': (previous_rdd + relativedelta(months=order_coverage or 0) - relativedelta(days=(supplier_lt or 0) + (handling_lt or 0))).strftime('%Y-%m-%d'),
+                'date_next_order_received': date_next_order_received and date_next_order_received.strftime('%Y-%m-%d'),
             }
 
         return {'value': ret}
 
-    def on_change_lt(self, cr, uid, ids, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified, context=None):
+    def on_change_lt(self, cr, uid, ids, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified, context=None):
         ret = {}
         ret['internal_lt'] = (order_creation_lt or 0) + (order_validation_lt or 0)
         ret['external_lt'] = (supplier_lt or 0) + (handling_lt or 0)
         ret['total_lt'] = ret['internal_lt'] + ret['external_lt']
-        ret.update(self.compute_next_order_received(cr, uid, ids, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified, context).get('value', {}))
+        ret.update(self.compute_next_order_received(cr, uid, ids, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified, context).get('value', {}))
         return {'value': ret}
 
     def replenishment_compute_all_bg(self, cr, uid, ids=False, context=None):
@@ -345,8 +370,19 @@ class replenishment_segment(osv.osv):
     def trigger_compute(self, cr, uid, ids, context):
         return self.pool.get('replenishment.segment.line.amc').generate_all_amc(cr, uid, context=context, seg_ids=ids)
 
-    def generate_order_calc(self, cr, uid, ids, context):
+    def generate_order_calc(self, cr, uid, ids, context=None):
+        return self.generate_data(cr, uid, ids, context=context)
+
+    def generate_data(self, cr, uid, ids, review_id=False, context=None):
+        if context is None:
+            context = {}
+
+        if review_id:
+            context['inv_review'] = True
         order_calc_line = self.pool.get('replenishment.order_calc.line')
+        review_line = self.pool.get('replenishment.inventory.review.line')
+        prod_obj = self.pool.get('product.product')
+
         calc_id = False
         for seg in self.browse(cr, uid, ids, context):
             instances_name_by_id = {seg.main_instance.id: seg.main_instance.code}
@@ -365,20 +401,24 @@ class replenishment_segment(osv.osv):
             if all_instances:
                 raise osv.except_osv(_('Warning'), _('Data from the following instances are missing, please wait the next scheduled task or the next sync:\n%s') % (', '.join([instances_name_by_id.get(x, '') for x in all_instances])))
 
-            calc_id = self.pool.get('replenishment.order_calc').create(cr, uid, {
-                'segment_id': seg.id,
-                'description_seg': seg.description_seg,
-                'location_config_id': seg.location_config_id.id,
-                'location_config_description': seg.location_config_id.description,
-                'rule': seg.rule,
-                'rule_alert': seg.rule_alert,
-                'total_lt': seg.total_lt,
-                'local_location_ids': [(6, 0, [x.id for x in seg.local_location_ids])],
-                'remote_location_ids': [(6, 0, [x.id for x in seg.remote_location_ids])],
-                'instance_id': seg.main_instance.id,
-                'new_order_reception_date': seg.date_next_order_received_modified or seg.date_next_order_received,
+            if seg.rule == 'cycle' and not seg.previous_order_rdd and not seg.date_next_order_received_modified:
+                raise osv.except_osv(_('Warning'), _('For the 1st OC, please set a date in the field "Next order to be received by (modified)"'))
 
-            }, context=context)
+            if not review_id:
+                calc_id = self.pool.get('replenishment.order_calc').create(cr, uid, {
+                    'segment_id': seg.id,
+                    'description_seg': seg.description_seg,
+                    'location_config_id': seg.location_config_id.id,
+                    'location_config_description': seg.location_config_id.description,
+                    'rule': seg.rule,
+                    'rule_alert': seg.rule_alert,
+                    'total_lt': seg.total_lt,
+                    'local_location_ids': [(6, 0, [x.id for x in seg.local_location_ids])],
+                    'remote_location_ids': [(6, 0, [x.id for x in seg.remote_location_ids])],
+                    'instance_id': seg.main_instance.id,
+                    'new_order_reception_date': seg.date_next_order_received_modified or seg.date_next_order_received,
+
+                }, context=context)
 
             loc_ids = [x.id for x in seg.local_location_ids]
             cr.execute('''
@@ -397,25 +437,62 @@ class replenishment_segment(osv.osv):
                 prod_eta[x[0]] = x[1]
 
             cr.execute('''
-                select segment_line_id, sum(reserved_stock), sum(real_stock - reserved_stock - expired_before_rrd), sum(expired_before_rrd), sum(expired_between_rrd_oc), bool_or(open_loan)
+                select segment_line_id, sum(reserved_stock), sum(real_stock - reserved_stock - expired_before_rdd), sum(expired_before_rdd), sum(expired_between_rdd_oc), bool_or(open_loan), sum(total_expiry_nocons_qty), sum(real_stock)
                     from replenishment_segment_line_amc amc, replenishment_segment_line line
                     where
-                        line.id = amc.segment_line_id
+                        line.id = amc.segment_line_id and
+                        line.segment_id = %s
                     group by segment_line_id
-            ''')
+            ''', (seg.id,))
             sum_line = {}
             for x in cr.fetchall():
                 sum_line[x[0]] = {
                     'reserved_stock_qty': x[1] or 0,
                     'pas_no_pipe_no_fmc': x[2] or 0,
-                    'expired_before_rrd': x[3] or 0,
+                    'expired_before_rdd': x[3] or 0,
                     'expired_rdd_oc': x[4] or 0,
-                    'open_loan': x[5] or False
+                    'open_loan': x[5] or False,
+                    'total_expiry_nocons_qty': x[6] or 0,
+                    'real_stock': x[7] or 0,
                 }
 
 
-            today = datetime.now()
-            rdd = datetime.now() + relativedelta(days=int(seg.total_lt))
+            today = datetime.now() + relativedelta(hour=0, minute=0, second=0)
+
+            if review_id:
+                rdd = today + relativedelta(months=seg.projected_view, day=1, days=-1)
+
+                # sum expired by month
+                cr.execute('''
+                    select line.product_id, exp.month, sum(exp.quantity)
+                        from replenishment_segment_line line
+                        inner join replenishment_segment_line_amc amc on amc.segment_line_id = line.id
+                        left join replenishment_segment_line_amc_month_exp exp on exp.line_amc_id = amc.id
+                        where
+                            line.segment_id = %s and
+                            exp.month >= %s and
+                            exp.month <= %s
+                        group by line.product_id, exp.month
+                ''', (seg.id, today.strftime('%Y-%m-%d'), rdd.strftime('%Y-%m-%d')))
+                exp_by_month = {}
+                for x in cr.fetchall():
+                    exp_by_month.setdefault(x[0], {}).update({x[1]: x[2]})
+
+                # pipeline by month
+                all_prod_ids = [x.product_id.id for x in seg.line_ids]
+                pipe_by_prod_by_month_minus_expired = {}
+                if review_id and loc_ids and seg.rule == 'cycle':
+                    for nb_month in range(1, seg.projected_view+1):
+                        end_date = today + relativedelta(months=nb_month, day=1, days=-1)
+                        for prod in prod_obj.browse(cr, uid, all_prod_ids, fields_to_fetch=['incoming_qty', 'default_code'], context={'to_date': end_date, 'location': loc_ids}):
+                            expired = 0
+                            for date in exp_by_month.get(prod.id, {}).keys():
+                                if date <= end_date.strftime('%Y-%m-%d'):
+                                    expired += exp_by_month[prod.id][date]
+                            pipe_by_prod_by_month_minus_expired.setdefault(prod.id, {}).update({end_date.strftime('%Y-%m-%d'): prod.incoming_qty - expired})
+
+            else:
+                rdd = today + relativedelta(days=int(seg.total_lt))
             oc = rdd + relativedelta(months=seg.order_coverage)
             for line in seg.line_ids:
                 total_fmc = 0
@@ -431,6 +508,9 @@ class replenishment_segment(osv.osv):
                 before_rdd = False
 
                 lacking = False
+
+                fmc_by_month = {}
+                detailed_pas = []
                 if seg.rule == 'cycle':
                     for fmc_d in range(1, 13):
                         from_fmc = getattr(line, 'rr_fmc_from_%d'%fmc_d)
@@ -451,6 +531,23 @@ class replenishment_segment(osv.osv):
                             if end >= begin:
                                 month = (end-begin).days/30.44
                                 total_month += month
+
+                                if review_id:
+                                    if end.month == begin.month and end.year == begin.year:
+                                        fmc_by_month[end.strftime('%Y-%m-%d')] = {'value': num_fmc, 'accumulated': total_fmc+month*num_fmc}
+                                    else:
+                                        tmp_begin = begin
+                                        accumulated = total_fmc
+                                        while tmp_begin <= end:
+                                            tmp_end = tmp_begin + relativedelta(months=1, day=1, days=-1)
+                                            if tmp_begin.day !=1:
+                                                nb_month = (tmp_end - tmp_begin).days/30.44
+                                                accumulated += nb_month*num_fmc
+                                            else:
+                                                accumulated += num_fmc
+                                            fmc_by_month[tmp_end.strftime('%Y-%m-%d')] = {'value': num_fmc, 'accumulated': accumulated}
+                                            tmp_begin += relativedelta(months=1, day=1)
+
                                 total_fmc += month*num_fmc
                                 if not lacking:
                                     if total_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
@@ -458,16 +555,38 @@ class replenishment_segment(osv.osv):
                                     else:
                                         month_of_supply += ( sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc + month*num_fmc ) / num_fmc
                                         lacking = True
-                            if oc <= to_fmc:
-                                before_oc = True
-                            begin_oc = max(rdd, from_fmc)
-                            end_oc = min(oc, to_fmc)
-                            if end_oc >= begin_oc:
-                                month = (end_oc-begin_oc).days/30.44
-                                total_month_oc += month
-                                total_fmc_oc += month*num_fmc
-                    valid_rr_fmc = before_today and before_rdd and before_oc
-                pas = max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rrd - total_fmc)
+
+                            if not review_id:
+                                if oc <= to_fmc:
+                                    before_oc = True
+                                begin_oc = max(rdd, from_fmc)
+                                end_oc = min(oc, to_fmc)
+                                if end_oc >= begin_oc:
+                                    month = (end_oc-begin_oc).days/30.44
+                                    total_month_oc += month
+                                    total_fmc_oc += month*num_fmc
+                    if not review_id:
+                        valid_rr_fmc = before_today and before_rdd and before_oc
+                    else:
+                        valid_rr_fmc = before_today and before_rdd
+
+                    if review_id and loc_ids and seg.rule == 'cycle':
+                        for nb_month in range(1, line.segment_id.projected_view+1):
+                            end_date = today + relativedelta(months=nb_month, day=1, days=-1)
+                            detailed_pas.append((0, 0, {
+                                'date': end_date.strftime('%Y-%m-%d'),
+                                'rr_fmc': fmc_by_month.get(end_date.strftime('%Y-%m-%d'), {}).get('value', False),
+                                'projected': max(0,
+                                                 sum_line.get(line.id, {}).get('real_stock', 0) -
+                                                 sum_line.get(line.id, {}).get('reserved_stock_qty', 0) +
+                                                 pipe_by_prod_by_month_minus_expired.get(line.product_id.id, {}).get(end_date.strftime('%Y-%m-%d'), 0) -
+                                                 fmc_by_month.get(end_date.strftime('%Y-%m-%d'), {}).get('accumulated', 0)
+                                                 ),
+                            }))
+
+
+
+                pas = max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rdd - total_fmc)
                 ss_stock = 0
                 warnings = []
                 qty_lacking = 0
@@ -485,42 +604,80 @@ class replenishment_segment(osv.osv):
                         if total_month and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
                             warnings.append(_('Missing Qties'))
                         if qty_lacking:
-                            warnings.append(('Stock-out before next ETA'))
+                            warnings.append(_('Stock-out before next ETA'))
 
                         if lacking:
                             qty_lacking_needed_by = (today + relativedelta(days=month_of_supply*30.44)).strftime('%Y-%m-%d')
-                    proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rrd_oc)
+                    proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rdd_oc)
 
                 elif seg.rule == 'minmax':
-                    proposed_order_qty = max(0, line.max_qty - line.real_stock + sum_line.get(line.id, {}).get('reserved_stock_qty') + prod_eta.get(line.product_id.id, 0) - line.pipeline_before_rrd)
+                    proposed_order_qty = max(0, line.max_qty - sum_line.get(line.id, {}).get('real_stock') + sum_line.get(line.id, {}).get('reserved_stock_qty') + prod_eta.get(line.product_id.id, 0) - line.pipeline_before_rdd)
 
-                    if line.status != 'new' and line.real_stock - sum_line.get(line.id, {}).get('expired_before_rrd') <= line.min_qty:
+                    if line.status != 'new' and sum_line.get(line.id, {}).get('expired_before_rdd') and sum_line.get(line.id, {}).get('real_stock') - sum_line.get(line.id, {}).get('expired_before_rdd') <= line.min_qty:
                         warnings.append(_('Alert: "inventory – batches expiring before ETA <= Min"'))
                 else:
                     proposed_order_qty = line.auto_qty
 
+                if not valid_rr_fmc:
+                    warnings.append(_('Invalid FMC'))
+
                 line_data = {
-                    'order_calc_id': calc_id,
                     'product_id': line.product_id.id,
                     'uom_id': line.uom_id.id,
-                    'in_main_list': line.in_main_list,
-                    'real_stock': line.real_stock,
-                    'pipeline_qty': int(line.pipeline_before_rrd or 0),
+                    'real_stock': int(sum_line.get(line.id, {}).get('real_stock',0)),
+                    'pipeline_qty': int(line.pipeline_before_rdd or 0),
                     'eta_for_next_pipeline': prod_eta.get(line.product_id.id, False),
                     'reserved_stock_qty': sum_line.get(line.id, {}).get('reserved_stock_qty'),
-                    'projected_stock_qty': int(pas),
                     'qty_lacking': int(qty_lacking),
                     'qty_lacking_needed_by': qty_lacking_needed_by,
-                    'expired_qty_before_cons': int(sum_line.get(line.id, {}).get('expired_before_rrd',0)),
-                    'expired_qty_before_eta': False, #TODO JFB=  RR
-                    'proposed_order_qty': int(proposed_order_qty),
-                    'agreed_order_qty': int(proposed_order_qty) or False,
-                    'open_loan': sum_line.get(line.id, {}).get('open_loan', False),
+                    'expired_qty_before_cons': int(sum_line.get(line.id, {}).get('expired_before_rdd',0)),
                     'warning': "\n".join(warnings),
                     'valid_rr_fmc': valid_rr_fmc,
                     'status': line.status,
+                    'projected_stock_qty': int(pas),
+                    'open_loan': sum_line.get(line.id, {}).get('open_loan', False),
                 }
-                order_calc_line.create(cr, uid, line_data, context=context)
+
+                # order_cacl
+                if not review_id:
+                    line_data.update({
+                        'order_calc_id': calc_id,
+                        'expired_qty_before_eta': False, #TODO JFB=  RR
+                        'proposed_order_qty': int(proposed_order_qty),
+                        'agreed_order_qty': int(proposed_order_qty) or False,
+                        'in_main_list': line.in_main_list,
+                    })
+                    order_calc_line.create(cr, uid, line_data, context=context)
+
+                else: # review
+                    line_data.update({
+                        'review_id': review_id,
+                        'pas_amc': max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rdd - line.rr_amc*seg.projected_view),
+                        'pas_fmc': int(pas),
+                        'segment_ref_name': "%s / %s" % (seg.name_seg, seg.description_seg),
+                        'rr_fmc_avg': total_month and total_fmc/total_month,
+                        'rr_amc': line.rr_amc,
+                        'total_expired_qty': sum_line.get(line.id, {}).get('total_expiry_nocons_qty', 0),
+                        'unit_of_supply_amc': line.rr_amc and (int(sum_line.get(line.id, {}).get('real_stock',0)) - int(sum_line.get(line.id, {}).get('expired_before_rdd',0))) / line.rr_amc,
+                        'unit_of_supply_fmc': month_of_supply,
+                        'date_preparing': seg.date_preparing,
+                        'date_next_order_validated': seg.date_next_order_validated,
+                        'date_next_order_rdd': seg.date_preparing and (datetime.strptime(seg.date_preparing, '%Y-%m-%d') + relativedelta(days=int(seg.external_lt))).strftime('%Y-%m-%d'),
+                        'internal_lt': seg.internal_lt,
+                        'external_lt': seg.external_lt,
+                        'total_lt': seg.total_lt,
+                        'order_coverage': seg.order_coverage,
+                        'primay_product_list': line.in_main_list and seg.product_list_id.name,
+                        'rule': seg.rule,
+                        'min_qty': line.min_qty,
+                        'max_qty': line.max_qty,
+                        'auto_qty': line.auto_qty,
+                        'buffer_qty': line.buffer_qty,
+                        'safety_stock': seg.safety_stock,
+                        'pas_ids': detailed_pas,
+                    })
+                    review_line.create(cr, uid, line_data, context=context)
+
             if calc_id:
                 res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'procurement_cycle.replenishment_order_calc_action', ['form', 'tree'], context=context)
                 res['res_id'] = calc_id
@@ -744,7 +901,6 @@ class replenishment_segment_line(osv.osv):
         for x in self.browse(cr, uid, ids, fields_to_fetch=['product_id', 'segment_id'], context=context):
             ret[x.id] = {
                 'real_stock': 0,
-                'real_stock_instance': 0,
                 'rr_amc': 0,
             }
             if x.segment_id.id not in segment:
@@ -771,7 +927,7 @@ class replenishment_segment_line(osv.osv):
             if segment[seg_id]['remote_location_q']:
                 # compute AMC for remote + local instances
                 cr.execute("""
-                    select segment_line_id, sum(amc)
+                    select segment_line_id, sum(amc), sum(real_stock)
                     from replenishment_segment_line_amc
                     where
                         segment_line_id in %s
@@ -779,40 +935,41 @@ class replenishment_segment_line(osv.osv):
                 """, (tuple(segment[seg_id]['prod_seg_line'].values()), ))
                 for x in cr.fetchall():
                     ret[x[0]]['rr_amc'] = x[1]
+                    ret[x[0]]['real_stock'] = x[2]
             else:
                 # AMC is fully local
                 amc = prod_obj.compute_amc(cr, uid, segment[seg_id]['prod_seg_line'].keys(), segment[seg_id]['context'])
                 for prod_id in amc:
                     ret[segment[seg_id]['prod_seg_line'][prod_id]]['rr_amc'] = amc[prod_id]
 
-            for prod in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['qty_available'], context={'location': segment[seg_id]['context']['amc_location_ids']}):
-                ret[segment[seg_id]['prod_seg_line'][prod.id]]['real_stock_instance'] = prod.qty_available
-                ret[segment[seg_id]['prod_seg_line'][prod.id]]['real_stock'] = prod.qty_available
-
-            if segment[seg_id]['remote_location_q']:
-                remote_q = "select product_id, sum(quantity) from stock_mission_report_line_location where product_id in %s "
-                remote_q += " AND ( %s ) " % ( ' OR '.join(segment[seg_id]['remote_location_q']))
-                remote_q += 'group by product_id'
-                cr.execute(remote_q, (tuple(segment[seg_id]['prod_seg_line'].keys()),))
-                for x in cr.fetchall():
-                    ret[segment[seg_id]['prod_seg_line'][x[0]]]['real_stock'] += x[1]
-
+                for prod in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['qty_available'], context={'location': segment[seg_id]['context']['amc_location_ids']}):
+                    ret[segment[seg_id]['prod_seg_line'][prod.id]]['real_stock'] = prod.qty_available
 
         return ret
 
     def _get_pipeline_before(self, cr, uid, ids, field_name, arg, context=None):
+        if context is None:
+            context = {}
+
         segment = {}
         ret = {}
+        inv_review = context.get('inv_review')
+        now = datetime.now()
+
         for x in self.browse(cr, uid, ids, fields_to_fetch=['product_id', 'segment_id'], context=context):
 
             ret[x.id] = {
-                'pipeline_before_rrd': 0,
-                'pipeline_between_rrd_oc': 0
+                'pipeline_before_rdd': 0,
+                'pipeline_between_rdd_oc': 0
             }
             if x.segment_id.id not in segment:
+                if inv_review:
+                    delay = relativedelta(months=int(x.segment_id.projected_view), day=1, days=-1)
+                else:
+                    delay = relativedelta(days=int(x.segment_id.total_lt))
                 segment[x.segment_id.id] = {
-                    'to_date_rrd': (datetime.now() + relativedelta(days=int(x.segment_id.total_lt))).strftime('%Y-%m-%d'),
-                    'to_date_oc': (datetime.now() + relativedelta(days=int(x.segment_id.total_lt)) + relativedelta(months=x.segment_id.order_coverage)).strftime('%Y-%m-%d'),
+                    'to_date_rdd': (now + delay).strftime('%Y-%m-%d'),
+                    'to_date_oc': (now + relativedelta(days=int(x.segment_id.total_lt)) + relativedelta(months=x.segment_id.order_coverage)).strftime('%Y-%m-%d'),
                     'prod_seg_line': {},
                     'location_ids': [l.id for l in x.segment_id.location_config_id.local_location_ids],
                 }
@@ -821,10 +978,12 @@ class replenishment_segment_line(osv.osv):
         prod_obj = self.pool.get('product.product')
         for seg_id in segment:
             # TODO JFB RR: compute_child ?
-            for prod_id in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch='incoming_qty', context={'to_date': segment[seg_id]['to_date_rrd'], 'location': segment[seg_id]['location_ids']}):
-                ret[segment[seg_id]['prod_seg_line'][prod_id.id]]['pipeline_before_rrd'] =  prod_id['incoming_qty']
-            for prod_id in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch='incoming_qty', context={'from_strict_date': segment[seg_id]['to_date_rrd'], 'to_date': segment[seg_id]['to_date_oc'], 'location': segment[seg_id]['location_ids']}):
-                ret[segment[seg_id]['prod_seg_line'][prod_id.id]]['pipeline_between_rrd_oc'] = prod_id['incoming_qty']
+            for prod_id in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['incoming_qty'], context={'to_date': segment[seg_id]['to_date_rdd'], 'location': segment[seg_id]['location_ids']}):
+                ret[segment[seg_id]['prod_seg_line'][prod_id.id]]['pipeline_before_rdd'] =  prod_id.incoming_qty
+
+            if not inv_review:
+                for prod_id in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['incoming_qty'], context={'from_strict_date': segment[seg_id]['to_date_rdd'], 'to_date': segment[seg_id]['to_date_oc'], 'location': segment[seg_id]['location_ids']}):
+                    ret[segment[seg_id]['prod_seg_line'][prod_id.id]]['pipeline_between_rdd_oc'] = prod_id.incoming_qty
 
         return ret
 
@@ -833,16 +992,15 @@ class replenishment_segment_line(osv.osv):
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1),
         'product_description': fields.related('product_id', 'name',  string='Desciption', type='char', size=64, readonly=True, select=True, write_relate=False),
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
-        'in_main_list': fields.function(_get_main_list, type='boolean', method=True, string='In prod. list'),
+        'in_main_list': fields.function(_get_main_list, type='boolean', method=True, string='Prim. prod. list'),
         'status': fields.selection([('active', 'Active'), ('new', 'New')], string='Life cycle status'),
         'min_qty': fields.float('Min Qty', related_uom='uom_id'),
         'max_qty': fields.float('Max Qty', related_uom='uom_id'),
         'auto_qty': fields.float('Auto. Supply Qty', related_uom='uom_id'),
         'buffer_qty': fields.float_null('Buffer Qty', related_uom='uom_id'),
         'real_stock': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='Real Stock', multi='get_stock_amc'),
-        'real_stock_instance': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='Real Stock', multi='get_stock_amc'),
-        'pipeline_before_rrd': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline Before RRD', multi='get_pipeline_before'),
-        'pipeline_between_rrd_oc': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline between RDD and OC', multi='get_pipeline_before'),
+        'pipeline_before_rdd': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline Before RDD', multi='get_pipeline_before'),
+        'pipeline_between_rdd_oc': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline between RDD and OC', multi='get_pipeline_before'),
         'rr_amc': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='RR-AMC', multi='get_stock_amc'),
         'rr_fmc_1': fields.float_null('RR FMC 1', related_uom='uom_id'),
         'rr_fmc_from_1': fields.date('From 1'),
@@ -997,6 +1155,7 @@ class replenishment_segment_date_generation(osv.osv):
         'instance_id': fields.many2one('msf.instance', string='Instance', select=1, required=1),
         'amc_date': fields.datetime('Date AMC/Stock Data'),
         'full_date': fields.datetime('Date Full Data (exp.)'),
+        'review_data': fields.datetime('Date InvReview Data'),
     }
 
 replenishment_segment_date_generation()
@@ -1013,9 +1172,11 @@ class replenishment_segment_line_amc(osv.osv):
         'instance_id': fields.many2one('msf.instance', string='Instance', select=1),
         'reserved_stock': fields.float('Reserved Stock'),
         'real_stock': fields.float('Reserved Stock'),
-        'expired_before_rrd': fields.float('Expired Qty before RRD'),
-        'expired_between_rrd_oc': fields.float('Expired Qty between RRD and OC'),
+        'expired_before_rdd': fields.float('Expired Qty before RDD'),
+        'expired_between_rdd_oc': fields.float('Expired Qty between RDD and OC'),
         'open_loan': fields.boolean('Open Loan'),
+        'sleeping_qty': fields.float('Sleeping Qty'),
+        'total_expiry_nocons_qty': fields.float('Qty expiring no cons.'),
     }
 
     _defaults = {
@@ -1025,9 +1186,11 @@ class replenishment_segment_line_amc(osv.osv):
         segment_obj = self.pool.get('replenishment.segment')
         prod_obj = self.pool.get('product.product')
         last_gen_obj = self.pool.get('replenishment.segment.date.generation')
+        month_exp_obj = self.pool.get('replenishment.segment.line.amc.month_exp')
 
+        datetime_now = datetime.now()
         instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
-        to_date = datetime.now() + relativedelta(day=1, days=-1)
+        to_date = datetime_now + relativedelta(day=1, days=-1)
 
         if not seg_ids:
             seg_ids = segment_obj.search(cr, uid, [('state', 'in', ['draft', 'complete'])], context=context)
@@ -1039,9 +1202,13 @@ class replenishment_segment_line_amc(osv.osv):
             last_gen_data = {
                 'segment_id': segment.id,
                 'instance_id': instance_id,
-                'amc_date': datetime.now(),
+                'amc_date': datetime_now,
                 'full_date': False,
             }
+
+            # TODO JFB RR
+            gen_inv_review = True
+            full_data = gen_inv_review or segment.state == 'complete'
 
             seg_context = {
                 'to_date': to_date.strftime('%Y-%m-%d'),
@@ -1056,47 +1223,71 @@ class replenishment_segment_line_amc(osv.osv):
             # update vs create line
             cache_line_amc = {}
             seg_line = {}
+
+            prod_with_stock = []
+
             line_amc_ids = self.search(cr, uid, [('instance_id', '=', instance_id), ('segment_line_id', 'in', lines.values())], context=context)
             for line_amc in self.browse(cr, uid, line_amc_ids, fields_to_fetch=['segment_line_id'], context=context):
                 cache_line_amc[line_amc.segment_line_id.id] = line_amc.id
                 seg_line[line_amc.id] = line_amc.segment_line_id
             # real stock - reserved stock
             stock_qties = {}
-            for prod_alloc in prod_obj.browse(cr, uid, lines.keys(), fields_to_fetch=['qty_reserved', 'qty_available'], context={'location': seg_context['amc_location_ids']}):
-                stock_qties[prod_alloc['id']] = {'qty_reserved': -1 * prod_alloc.qty_reserved, 'qty_available': prod_alloc.qty_available}
+            qty_fields = ['qty_available']
+            if full_data:
+                qty_fields += ['qty_reserved']
+            for prod_alloc in prod_obj.browse(cr, uid, lines.keys(), fields_to_fetch=qty_fields, context={'location': seg_context['amc_location_ids']}):
+                stock_qties[prod_alloc['id']] = {'qty_available': prod_alloc.qty_available}
+                if full_data:
+                    stock_qties[prod_alloc['id']]['qty_reserved'] = -1 * prod_alloc.qty_reserved
+                if gen_inv_review and prod_alloc.qty_available:
+                    prod_with_stock.append(prod_alloc['id'])
 
-            open_loan = {}
-            cr.execute('''
-                select product_id from purchase_order_line pol, purchase_order po
-                where
-                    po.id = pol.order_id and
-                    pol.product_id in %s and
-                    pol.state not in ('done', 'cancel_r', 'cancel') and
-                    po.partner_type != 'internal' and
-                    po.order_type = 'loan'
-                group by product_id
-                ''', (tuple(lines.keys()), )
-            )
-            for loan in cr.fetchall():
-                open_loan[loan[0]] = True
-            cr.execute('''
-                select product_id from sale_order_line sol, sale_order so
-                where
-                    so.id = sol.order_id and
-                    sol.product_id in %s and
-                    sol.state not in ('done', 'cancel_r', 'cancel') and
-                    so.partner_type != 'internal' and
-                    so.order_type = 'loan'
-                group by product_id
-                ''', (tuple(lines.keys()), )
-            )
-            for loan in cr.fetchall():
-                open_loan[loan[0]] = True
+            if full_data:
+                open_loan = {}
+                cr.execute('''
+                    select product_id from purchase_order_line pol, purchase_order po
+                    where
+                        po.id = pol.order_id and
+                        pol.product_id in %s and
+                        pol.state not in ('done', 'cancel_r', 'cancel') and
+                        po.partner_type != 'internal' and
+                        po.order_type = 'loan'
+                    group by product_id
+                    ''', (tuple(lines.keys()), )
+                )
+                for loan in cr.fetchall():
+                    open_loan[loan[0]] = True
+                cr.execute('''
+                    select product_id from sale_order_line sol, sale_order so
+                    where
+                        so.id = sol.order_id and
+                        sol.product_id in %s and
+                        sol.state not in ('done', 'cancel_r', 'cancel') and
+                        so.partner_type != 'internal' and
+                        so.order_type = 'loan'
+                    group by product_id
+                    ''', (tuple(lines.keys()), )
+                )
+                for loan in cr.fetchall():
+                    open_loan[loan[0]] = True
 
             # AMC
-            amc = prod_obj.compute_amc(cr, uid, lines.keys(), context=seg_context)
-            for prod_id in amc:
-                data = {'amc': amc[prod_id], 'name': to_date, 'reserved_stock': stock_qties.get(prod_id, {}).get('qty_reserved'), 'real_stock': stock_qties.get(prod_id, {}).get('qty_available'), 'open_loan': open_loan.get(prod_id, False)}
+            if not segment.remote_location_ids:
+                amc = prod_obj.compute_amc(cr, uid, lines.keys(), context=seg_context)
+            else:
+                amc = {}
+            for prod_id in lines.keys():
+                data = {'amc': amc.get(prod_id, 0), 'name': to_date, 'real_stock': stock_qties.get(prod_id, {}).get('qty_available')}
+                if segment.state == 'complete' or gen_inv_review:
+                    data.update({
+                        'sleeping_qty': 0,
+                        'expired_before_rdd': 0,
+                        'expired_between_rdd_oc': 0,
+                        'total_expiry_nocons_qty': 0,
+                        'open_loan': open_loan.get(prod_id, False),
+                        'reserved_stock': stock_qties.get(prod_id, {}).get('qty_reserved'),
+
+                    })
                 if lines[prod_id] in cache_line_amc:
                     self.write(cr, uid, cache_line_amc[lines[prod_id]], data, context=context)
                 else:
@@ -1104,16 +1295,40 @@ class replenishment_segment_line_amc(osv.osv):
                     data['instance_id'] = instance_id
                     cache_line_amc[lines[prod_id]] = self.create(cr, uid, data, context=context)
 
-            # expired_before_rrd + expired_before_oc
-            if segment.state == 'complete':
-                last_gen_data['full_date'] = datetime.now()
+            # expired_before_rdd + expired_before_oc
+            if full_data:
+                last_gen_data['full_date'] = datetime_now
                 expired_obj = self.pool.get('product.likely.expire.report')
-                rrd_date = datetime.now() + relativedelta(days=int(segment.total_lt))
-                oc_date = rrd_date + relativedelta(months=segment.order_coverage)
+                rdd_date = datetime_now + relativedelta(days=int(segment.total_lt))
+                oc_date = rdd_date + relativedelta(months=segment.order_coverage)
                 expired_id = expired_obj.create(cr, uid, {'segment_id': segment.id, 'date_to': oc_date.strftime('%Y-%m-%d')})
                 expired_obj._process_lines(cr, uid, expired_id, context=context, create_cr=False)
 
-                # before rrd
+                amc_data_to_update = {}
+                if gen_inv_review:
+                    last_gen_data['review_data'] = datetime_now
+                    cr.execute('''
+                        delete from replenishment_segment_line_amc_month_exp where line_amc_id in
+                            (select amc.id from replenishment_segment_line_amc amc, replenishment_segment_line seg_line where seg_line.id = amc.segment_line_id and  seg_line.segment_id = %s) ''', (segment.id, )
+                               )
+
+                    projected_view = (datetime_now + relativedelta(months=segment.projected_view, day=1, days=-1)).strftime('%Y-%m-%d')
+                    # sleeping qty
+                    sleeping_context = {
+                        'to_date': datetime_now.strftime('%Y-%m-%d'),
+                        'from_date': (datetime_now - relativedelta(months=segment.sleeping)).strftime('%Y-%m-%d'),
+                        'amc_location_ids': seg_context['amc_location_ids'],
+                    }
+                    if prod_with_stock:
+                        sleeping_amc = prod_obj.compute_amc(cr, uid, prod_with_stock, context=sleeping_context)
+                        for prod_id in sleeping_amc:
+                            if not sleeping_amc[prod_id]:
+                                amc_data_to_update.setdefault(cache_line_amc[lines[prod_id]],{}).update({'sleeping_qty': stock_qties.get(prod_id, {}).get('qty_available')})
+                        for prod_expired in prod_obj.browse(cr, uid, prod_with_stock, fields_to_fetch=['qty_available'], context={'location': seg_context['amc_location_ids'], 'stock_expired_before_date': projected_view}):
+                            amc_data_to_update.setdefault(cache_line_amc[lines[prod_expired.id]],{}).update({'total_expiry_nocons_qty': prod_expired.qty_available})
+
+
+                            # before rdd
                 cr.execute("""
                     select line.product_id, sum(item.expired_qty)
                     from product_likely_expire_report_line line, product_likely_expire_report_item item
@@ -1121,11 +1336,12 @@ class replenishment_segment_line_amc(osv.osv):
                         item.line_id = line.id and
                         report_id=%s and
                         item.period_start <= %s
-                    group by line.product_id""", (expired_id, rrd_date.strftime('%Y-%m-%d')))
+                    group by line.product_id
+                    having sum(item.expired_qty) > 0 """, (expired_id, rdd_date.strftime('%Y-%m-%d')))
                 for x in cr.fetchall():
-                    self.write(cr, uid, cache_line_amc[lines[x[0]]], {'expired_before_rrd': x[1]}, context=context)
+                    amc_data_to_update.setdefault(cache_line_amc[lines[x[0]]], {}).update({'expired_before_rdd': x[1]})
 
-                # between rrd and oc
+                # between rdd and oc
                 cr.execute("""
                     select line.product_id, sum(item.expired_qty)
                     from product_likely_expire_report_line line, product_likely_expire_report_item item
@@ -1133,9 +1349,26 @@ class replenishment_segment_line_amc(osv.osv):
                         item.line_id = line.id and
                         report_id=%s and
                         item.period_start > %s
-                    group by line.product_id""", (expired_id, rrd_date.strftime('%Y-%m-%d')))
+                    group by line.product_id
+                    having sum(item.expired_qty) > 0""", (expired_id, rdd_date.strftime('%Y-%m-%d')))
                 for x in cr.fetchall():
-                    self.write(cr, uid, cache_line_amc[lines[x[0]]], {'expired_between_rrd_oc': x[1]}, context=context)
+                    amc_data_to_update.setdefault(cache_line_amc[lines[x[0]]], {}).update({'expired_between_rdd_oc': x[1]})
+
+                for to_update in amc_data_to_update:
+                    self.write(cr, uid, to_update, amc_data_to_update[to_update], context=context)
+
+                if gen_inv_review:
+                    cr.execute("""
+                        select line.product_id, item.period_start, sum(item.expired_qty)
+                        from product_likely_expire_report_line line, product_likely_expire_report_item item
+                        where
+                            item.line_id = line.id and
+                            report_id=%s and
+                            item.period_start <= %s
+                        group by line.product_id, item.period_start
+                        having sum(item.expired_qty) > 0 """, (expired_id, projected_view))
+                    for x in cr.fetchall():
+                        month_exp_obj.create(cr, uid, {'line_amc_id': cache_line_amc[lines[x[0]]], 'month': x[1], 'quantity': x[2]}, context=context)
 
             if last_gen_id:
                 last_gen_obj.write(cr, uid, last_gen_id, last_gen_data, context=context)
@@ -1151,6 +1384,16 @@ class replenishment_segment_line_amc(osv.osv):
 
 replenishment_segment_line_amc()
 
+class replenishment_segment_line_amc_month_exp(osv.osv):
+    _name = 'replenishment.segment.line.amc.month_exp'
+    _rec_name = 'line_amc_id'
+    _columns = {
+        'line_amc_id': fields.many2one('replenishment.segment.line.amc', 'Line AMC', required=1, select=1),
+        'month': fields.date('Month', required=1, select=1),
+        'quantity': fields.float('Qty'),
+    }
+
+replenishment_segment_line_amc_month_exp()
 
 class replenishment_order_calc(osv.osv):
     _name = 'replenishment.order_calc'
@@ -1166,9 +1409,9 @@ class replenishment_order_calc(osv.osv):
     _columns = {
         'name': fields.char('Reference', size=64, readonly=1, select=1),
         'segment_id': fields.many2one('replenishment.segment', 'Segment', readonly=1),
-        'description_seg': fields.char('Desription', required=1, size=28, readonly=1),
+        'description_seg': fields.char('Description', required=1, size=28, readonly=1),
         'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, readonly=1),
-        'location_config_description': fields.char('Desription', size=28, readonly=1),
+        'location_config_description': fields.char('Description', size=28, readonly=1),
         'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Replenishment Rule (Order quantity)', readonly=1),
         'rule_alert': fields.char('Replenishment Rule (Alert Theshold)', size=64, readonly=1),
         'total_lt': fields.integer('Total Lead Time (days)', readonly=1),
@@ -1271,7 +1514,7 @@ class replenishment_order_calc(osv.osv):
                     }, context=context)
 
             self.write(cr, uid, calc.id, {'state': 'closed', 'ir_generation_date': time.strftime('%Y-%m-%d'), 'ir_id': ir_id}, context=context)
-            self.pool.get('replenishment.segment').write(cr, uid, calc.segment_id.id, {'previous_order_rrd': calc.new_order_reception_date}, context=context)
+            self.pool.get('replenishment.segment').write(cr, uid, calc.segment_id.id, {'previous_order_rdd': calc.new_order_reception_date, 'date_next_order_received_modified': False}, context=context)
             ir_d = sale_obj.read(cr, uid, ir_id, ['name'], context=context)
             sale_obj.log(cr, uid, ir_id, _('%s created from %s') % (ir_d['name'], calc.name), action_xmlid='procurement_request.action_procurement_request')
         return True
@@ -1307,7 +1550,7 @@ class replenishment_order_calc_line(osv.osv):
         'product_description': fields.related('product_id', 'name',  string='Desciption', type='char', size=64, readonly=True, select=True, write_relate=False),
         'status': fields.selection([('active', 'Active'), ('new', 'New')], string='Life cycle status', readony=1),
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
-        'in_main_list': fields.boolean('In prod. list', readonly=1),
+        'in_main_list': fields.boolean('Prim. prod. list', readonly=1),
         'valid_rr_fmc': fields.boolean('Valid FMC', readonly=1),
         'real_stock': fields.float('Real Stock', readonly=1, related_uom='uom_id'),
         'pipeline_qty': fields.float('Pipeline Qty', readonly=1, related_uom='uom_id'),
@@ -1326,3 +1569,88 @@ class replenishment_order_calc_line(osv.osv):
     }
 
 replenishment_order_calc_line()
+
+class replenishment_inventory_review(osv.osv):
+    _name = 'replenishment.inventory.review'
+    _description = 'Inventory Review'
+    _order = 'id desc'
+    _rec_name = 'generation_date'
+    _columns = {
+        'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, select=1, readonly=1),
+        'generation_date': fields.date('Generated', readonly=1),
+        'amc_first_date': fields.date('RR AMC first date', readonly=1),
+        'amc_last_date': fields.date('RR AMC last date', readonly=1),
+        'projected_view': fields.integer('Projected view (months from generation date)', readonly=1),
+        'final_date_projection': fields.date('Final day of projection', readonly=1),
+        'sleeping': fields.integer('Sleeping stock alert parameter (month)', readonly=1),
+        'time_unit': fields.selection([('d', 'days'), ('w', 'weeks'), ('m', 'months')], string='Display variable durations in', readonly=1),
+        'line_ids': fields.one2many('replenishment.inventory.review.line', 'review_id', 'Products', readonly=1),
+    }
+
+    _defaults = {
+        'generation_date': lambda *a: time.strftime('%Y-%m-%d'),
+    }
+replenishment_inventory_review()
+
+
+class replenishment_inventory_review_line(osv.osv):
+    _name = 'replenishment.inventory.review.line'
+    _description = 'Inventory Review Line'
+    _rec_name = 'product_id'
+    _columns = {
+        'review_id': fields.many2one('replenishment.inventory.review', 'Review', required=1, select=1), # OC
+        'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1), # OC
+        'product_description': fields.related('product_id', 'name',  string='Desciption', type='char', size=64, readonly=True, select=True, write_relate=False), # OC
+        'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False), # OC
+        'status': fields.selection([('active', 'Active'), ('new', 'New')], string='Life cycle status'), # OC
+        'primay_product_list': fields.char('Primary Product List', size=512), # OC
+        'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Replenishment Rule (Order quantity)', required=1), #Seg
+        'min_qty': fields.float('Min Qty', related_uom='uom_id'), # Seg line
+        'max_qty': fields.float('Max Qty', related_uom='uom_id'), # Seg line
+        'auto_qty': fields.float('Auto. Supply Qty', related_uom='uom_id'), # Seg line
+        'buffer_qty': fields.float_null('Buffer Qty', related_uom='uom_id'), # Seg line
+        'safety_stock': fields.integer('Safety Stock (months)'), # Seg
+        'segment_ref_name': fields.char('Segment Ref/Name', size=512), # Seg
+        'rr_fmc_avg': fields.float_null('RR-FMC (average for period)'),
+        'rr_amc': fields.float('RR-AMC'),
+        'valid_rr_fmc': fields.boolean('Valid FMC', readonly=1), # OC
+        'real_stock': fields.float('Real Stock', readonly=1, related_uom='uom_id'), # OC
+        'pipeline_qty': fields.float('Pipeline Qty', readonly=1, related_uom='uom_id'), # OC
+        'reserved_stock_qty': fields.float('Reserved Stock Qty', readonly=1, related_uom='uom_id'),# OC
+        'expired_qty_before_cons': fields.float('Expired Qty before cons.', readonly=1, related_uom='uom_id'), # OC
+        'total_expired_qty': fields.float('Qty expiring within period', readonly=1, related_uom='uom_id'),
+        'projected_stock_qty': fields.float('Projected Stock Level', readonly=1, related_uom='uom_id'), # OC
+        'unit_of_supply_amc': fields.float('Days/weeks/months of supply (RR-AMC)'),
+        'unit_of_supply_fmc': fields.float('Days/weeks/months of supply (RR-FMC)'),
+        'warning': fields.char('Warning', size=512, readonly='1'), # OC
+        'open_loan': fields.boolean('Open Loan', readonly=1), # OC
+        'qty_lacking': fields.float('Qty lacking before next ETA', readonly=1, related_uom='uom_id'), # OC
+        'qty_lacking_needed_by': fields.date('Qty lacking needed by', readonly=1), # OC
+        'eta_for_next_pipeline': fields.date('ETA for Next Pipeline', readonly=1), # Seg
+
+        'date_preparing': fields.date('Start preparing the next order'), # Seg
+        'date_next_order_validated': fields.date('Next order to be validated by'), # Seg
+        'date_next_order_rdd': fields.date('RDD for next order'), # Seg
+        'internal_lt': fields.integer('Internal LT (days)'),
+        'external_lt': fields.integer('External LT (days)'),
+        'total_lt': fields.integer('Total LT (days)'),
+        'order_coverage': fields.integer('Order Coverage (months)'),
+        'pas_ids': fields.one2many('replenishment.inventory.review.line.pas', 'review_line_id', 'PAS by month'),
+    }
+
+replenishment_inventory_review_line()
+
+class replenishment_inventory_review_line_pas(osv.osv):
+    _name = 'replenishment.inventory.review.line.pas'
+    _description = 'Pas by month'
+    _rec_name = 'date'
+    _order = 'date'
+
+    _columns = {
+        'review_line_id': fields.many2one('replenishment.inventory.review.line', 'Review Line', required=1, select=1),
+        'date': fields.date('Date'),
+        'rr_fmc': fields.float('RR-FMC'),
+        'projected': fields.float('Projected'),
+    }
+
+replenishment_inventory_review_line_pas()

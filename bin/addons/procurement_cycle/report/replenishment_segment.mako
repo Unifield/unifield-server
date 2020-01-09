@@ -469,7 +469,7 @@
    <TopRowBottomPane>8</TopRowBottomPane>
    <SplitVertical>2</SplitVertical>
    <LeftColumnRightPane>2</LeftColumnRightPane>
-   <ActivePane>2</ActivePane>
+   <ActivePane>0</ActivePane>
    <Panes>
     <Pane>
      <Number>3</Number>
@@ -479,6 +479,10 @@
      <ActiveRow>14</ActiveRow>
      <ActiveCol>1</ActiveCol>
     </Pane>
+    <Pane>
+     <Number>0</Number>
+    </Pane>
+
    </Panes>
    <ProtectObjects>False</ProtectObjects>
    <ProtectScenarios>False</ProtectScenarios>

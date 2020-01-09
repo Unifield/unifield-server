@@ -266,6 +266,15 @@ class product_product(osv.osv):
             where.append(tuple(date_values))
         prodlot_id = context.get('prodlot_id', False)
         prodlot_id_str = (prodlot_id and (' AND prodlot_id = %s ' % str(prodlot_id)) or '')
+
+        expired_before = context.get('stock_expired_before_date')
+        join_batch = ""
+        where_batch = ""
+        if expired_before:
+            join_batch = ' inner join stock_production_lot lot on lot.id=m.prodlot_id'
+            where_batch = ' and lot.life_date < %s'
+            where.append(expired_before)
+
         date_str = date_str and ' AND %s '% date_str or ''
         if 'in' in what:
             if not states and context.get('in_states'):
@@ -275,13 +284,15 @@ class product_product(osv.osv):
             cr.execute("""
                 select sum(m.product_qty), m.product_id, m.product_uom, t.uom_id
                 from stock_move m
+                %s
                 left join product_product p on p.id = m.product_id
                 left join product_template t on t.id = p.product_tmpl_id
                 where m.location_id NOT IN %%s
                 and m.location_dest_id IN %%s
                 and m.product_id IN %%s %s
                 and m.state in %%s %s
-                group by m.product_id, m.product_uom, t.uom_id""" % (prodlot_id_str, date_str),tuple(where))  # not_a_user_entry
+                %s
+                group by m.product_id, m.product_uom, t.uom_id""" % (join_batch, prodlot_id_str, date_str, where_batch),tuple(where))  # not_a_user_entry
             results = cr.fetchall()
         if 'out' in what:
             if not states and context.get('out_states'):
@@ -290,13 +301,15 @@ class product_product(osv.osv):
             cr.execute("""
                 select sum(m.product_qty), m.product_id, m.product_uom, t.uom_id
                 from stock_move m
+                %s
                 left join product_product p on p.id = m.product_id
                 left join product_template t on t.id = p.product_tmpl_id
                 where m.location_id IN %%s
                 and m.location_dest_id NOT IN %%s
                 and m.product_id IN %%s %s
                 and m.state in %%s %s
-                group by m.product_id, m.product_uom, t.uom_id""" % (prodlot_id_str, date_str),tuple(where))  # not_a_user_entry
+                %s
+                group by m.product_id, m.product_uom, t.uom_id""" % (join_batch, prodlot_id_str, date_str, where_batch),tuple(where))  # not_a_user_entry
             results2 = cr.fetchall()
         if results or results2:
             uoms_o = {}

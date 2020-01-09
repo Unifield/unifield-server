@@ -49,6 +49,7 @@
                     <field name="description" />
                     <field name="synched" />
                     <field name="main_instance" />
+                    <field name="active" />
                 </tree>
             </field>
         </record>
@@ -98,6 +99,7 @@
                     <field name="rr_amc" required="1" />
                     <field name="sleeping" required="1" />
                     <field name="time_unit" required="1" />
+                    <button name="generate_inventory_review" string="Generate Inventory Review" type="object" icon="gtk-remove" />
                 </form>
             </field>
         </record>
@@ -182,32 +184,32 @@
                             </field>
                             <field name="remote_location_ids" colspan="2" nolabel="1" readonly="1">
                                 <tree>
-                                    <field name="full_name" string="Other project Locations"/>
+                                    <field name="full_name" string="Project Locations"/>
                                 </tree>
                             </field>
                         </group>
                         <field name="rule" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="rule_alert" />
-                        <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1"/>
                         <field name="product_list_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     </group>
                     <group colspan="2" col="2">
-                        <field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="order_validation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="order_validation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="internal_lt" />
-                        <field name="supplier_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="handling_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="supplier_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="handling_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="external_lt" />
                         <field name="total_lt" />
                         <group colspan="2" col="4" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
-                            <field name="order_coverage" attrs="{'readonly': [('state', '!=', 'draft')]}" on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified)"/>
+                            <field name="order_coverage" attrs="{'readonly': [('state', '!=', 'draft')]}" on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
                             <field name="safety_stock" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="previous_order_rrd" />
+                            <field name="previous_order_rdd" />
                             <field name="date_preparing" />
                             <field name="date_next_order_validated" />
                             <field name="date_next_order_received" />
                             <label colspan="2" />
-                            <field name="date_next_order_received_modified" attrs="{'readonly': [('state', 'not in', ['draft', 'complete'])]}"  on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rrd, date_next_order_received_modified)"/>
+                            <field name="date_next_order_received_modified" attrs="{'readonly': [('state', 'not in', ['draft', 'complete'])]}"  on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
                         </group>
                         <field name="last_generation" nolabel="1" colspan="2">
                             <tree string="Generation Date">
@@ -357,6 +359,7 @@
                     <field name="description_seg" />
                     <field name="line_ids" />
                     <field name="location_config_id" />
+                    <field name="description" />
                     <field name="rule" />
                     <field name="product_list_id" />
                     <field name="date_preparing" />
@@ -457,7 +460,7 @@
                         </field>
                         <field name="remote_location_ids" nolabel="1">
                             <tree>
-                                <field name="full_name" string="Other project Locations"/>
+                                <field name="full_name" string="Project Locations"/>
                             </tree>
                         </field>
                     </group>
@@ -556,5 +559,137 @@
             sequence="45"
             parent="stock_schedule.stock_automatic_procurements_menu" />
 
+    <!-- inventory review -->
+        <record id="replenishment_inventory_review_form" model="ir.ui.view">
+            <field name="name">replenishment.inventory.review.form</field>
+            <field name="model">replenishment.inventory.review</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Inventory Review" hide_duplicate_button="1" hide_new_button="1" hide_delete_button="1">
+                    <field name="location_config_id" />
+                    <field name="generation_date" />
+                    <field name="amc_first_date" />
+                    <field name="amc_last_date" />
+                    <field name="projected_view" />
+                    <field name="final_date_projection" />
+                    <field name="sleeping" />
+                    <field name="time_unit" />
+                    <newline />
+                    <field name="line_ids" colspan="4" nolabel="1">
+                        <tree colors="orange:status=='new';red:expired_qty_before_cons or (status!='new' and qty_lacking)">
+                            <field name="product_id"/>
+                            <field name="product_description"/>
+                            <field name="uom_id" invisible="1" />
+                            <field name="status" invisible="1" />
+                            <field name="primay_product_list" />
+                            <field name="segment_ref_name" />
+                            <field name="rr_fmc_avg" />
+                            <field name="rr_amc" />
+                            <field name="valid_rr_fmc" />
+                            <field name="real_stock" />
+                            <field name="pipeline_qty" />
+                            <field name="reserved_stock_qty" />
+                            <field name="expired_qty_before_cons" />
+                            <field name="total_expired_qty" />
+                            <field name="projected_stock_qty" />
+                            <field name="unit_of_supply_amc" />
+                            <field name="unit_of_supply_fmc" />
+                            <field name="warning" />
+                            <field name="open_loan" />
+                            <field name="qty_lacking" />
+                            <field name="qty_lacking_needed_by" />
+                            <field name="eta_for_next_pipeline" />
+                            <field name="date_preparing" />
+                            <field name="date_next_order_validated" />
+                            <field name="date_next_order_rdd" />
+                        </tree>
+                        <form>
+                            <field name="product_id"/>
+                            <field name="product_description"/>
+                            <field name="uom_id" invisible="1" />
+                            <field name="status" invisible="1" />
+                            <field name="primay_product_list" />
+                            <field name="segment_ref_name" />
+                            <field name="rr_fmc_avg" />
+                            <field name="rr_amc" />
+                            <field name="valid_rr_fmc" />
+                            <field name="real_stock" />
+                            <field name="pipeline_qty" />
+                            <field name="reserved_stock_qty" />
+                            <field name="expired_qty_before_cons" />
+                            <field name="total_expired_qty" />
+                            <field name="projected_stock_qty" />
+                            <field name="unit_of_supply_amc" />
+                            <field name="unit_of_supply_fmc" />
+                            <field name="warning" />
+                            <field name="open_loan" />
+                            <field name="qty_lacking" />
+                            <field name="qty_lacking_needed_by" />
+                            <field name="eta_for_next_pipeline" />
+                            <field name="date_preparing" />
+                            <field name="date_next_order_validated" />
+                            <field name="date_next_order_rdd" />
+                            <field name="min_qty" />
+                            <field name="max_qty" />
+                            <field name="auto_qty" />
+                            <field name="buffer_qty" />
+                            <field name="safety_stock" />
+                            <field name="internal_lt" />
+                            <field name="external_lt" />
+                            <field name="total_lt" />
+                            <field name="order_coverage" />
+                            <field name="pas_ids">
+                                <tree>
+                                    <field name="date" />
+                                    <field name="rr_fmc" />
+                                    <field name="projected" />
+                                </tree>
+                            </field>
+                        </form>
+                    </field>
+                </form>
+            </field>
+        </record>
+
+        <record id="replenishment_inventory_review_tree" model="ir.ui.view">
+            <field name="name">replenishment.inventory.review.tree</field>
+            <field name="model">replenishment.inventory.review</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Inventory Review" hide_new_button="1" hide_delete_button="1">
+                    <field name="location_config_id" />
+                    <field name="generation_date" />
+                    <field name="amc_first_date" />
+                    <field name="amc_last_date" />
+                    <field name="projected_view" />
+                    <field name="final_date_projection" />
+                    <field name="line_ids" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_inventory_review_search" model="ir.ui.view">
+            <field name="name">replenishment.inventory.review.search</field>
+            <field name="model">replenishment.inventory.review</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Inventory Review">
+                    <field name="location_config_id" />
+                    <field name="generation_date" />
+                </search>
+            </field>
+        </record>
+
+        <record id="replenishment_inventory_review_action" model="ir.actions.act_window">
+            <field name="name">Inventory Review</field>
+            <field name="res_model">replenishment.inventory.review</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="replenishment_inventory_review_menu"
+            action="replenishment_inventory_review_action"
+            sequence="55"
+            parent="stock_schedule.stock_automatic_procurements_menu" />
     </data>
 </openerp>

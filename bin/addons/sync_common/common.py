@@ -108,6 +108,7 @@ WHITE_LIST_MODEL = [
     'replenishment.segment.line',
     'replenishment.segment.line.amc',
     'replenishment.segment.date.generation',
+    'replenishment.segment.line.amc.month_exp',
     'res.company',
     'res.country',
     'res.country.restriction',

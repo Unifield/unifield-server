@@ -1523,7 +1523,7 @@ class monthly_review_consumption_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for _id in ids:
-            res[id] = 0
+            res[_id] = 0
         return res
 
     def _get_order_cycle_line(self, cr, uid, ids, context=None):
