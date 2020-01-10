@@ -428,6 +428,8 @@ function buttonClicked(name, btype, model, id, sure, target, context){
         s_ids = ListView('order_line').getSelectedRecords();
     } else if (jQuery('[id="move_lines"]').length > 0){
         s_ids = ListView('move_lines').getSelectedRecords();
+    }  else if (model =='replenishment.inventory.review' && jQuery('[id="line_ids"]').length > 0){
+        s_ids = ListView('line_ids').getSelectedRecords();
     }
 
     var params = {
@@ -873,6 +875,7 @@ function onChangePop(caller){
                         if(value){
                         	fld_val = '['+ value.join(',') + ']';
                         }
+                        //fld.value = fld_val;
                         var fld_name = jQuery(fld).attr('name');
                         var old_m2m = jQuery(idSelector(fld_name)).closest('.list-a');
                         $(idSelector(fld_name+'/_terp_id')).val('');
