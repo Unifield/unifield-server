@@ -106586,3 +106586,27 @@ msgstr "MàJ en Masse de Produits NL/EXP"
 msgid "Funding Pool not found."
 msgstr "Funding Pool non trouvé."
 
+#. module: kit
+#: field:composition.item,item_kit_id:0
+msgid "Kit/Version"
+msgstr "Kit/Version"
+
+#. module: kit
+#: field:composition.item,item_kit_batch:0
+msgid "Kit/BN"
+msgstr "Kit/NL"
+
+#. module: kit
+#: view:composition.item:0
+msgid "Component/BN"
+msgstr "Composant/NL"
+
+#. module: kit
+#: view:composition.item:0
+msgid "Component/Product"
+msgstr "Composant/Produit"
+
+#. module: kit
+#: field:composition.item,item_kit_name:0
+msgid "Kit Product Code"
+msgstr "Code Produit du Kit"
