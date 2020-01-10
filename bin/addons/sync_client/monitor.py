@@ -366,7 +366,7 @@ class sync_version_instance_monitor(osv.osv):
         'backup_path': fields.char('Backup Location', size=128),
         'backup_date': fields.datetime("Backup Date", readonly=True,
                                        required=True),
-        'backup_size': fields.integer('Backup Size', readonly=True),
+        'backup_size': fields.integer_big('Backup Size', readonly=True),
         'instance_state': fields.related('instance_id', 'state', type='selection',
                                          selection=[('draft', 'Draft'),
                                                     ('active', 'Active'),
@@ -378,7 +378,7 @@ class sync_version_instance_monitor(osv.osv):
         'cloud_date': fields.datetime('Cloud Date', readonly=True),
         'cloud_backup': fields.char('Cloud Dump', size=256, readonly=True),
         'cloud_error': fields.text('Cloud last error', readonly=True),
-        'cloud_size': fields.integer('Cloud Size Zipped', readonly=True),
+        'cloud_size': fields.integer_big('Cloud Size Zipped', readonly=True),
         'nb_late_vi': fields.integer('# late VI jobs'),
         'vi_details': fields.text('Last exec VI job'),
     }

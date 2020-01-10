@@ -156,7 +156,8 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                   ('location_dest_id', 'in', [location_id]),
                   ('state', '=', 'done'),
                   ('product_id', 'in', prod_info.keys()),
-                  ('prodlot_id', '!=', False)
+                  ('prodlot_id', '!=', False),
+                  ('product_qty', '!=', 0),
                   ]
 
         move_ids = move_obj.search(cr, uid, domain, context=context)
