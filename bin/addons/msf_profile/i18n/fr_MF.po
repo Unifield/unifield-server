@@ -8060,7 +8060,7 @@ msgstr "Le champ osv_memory ne peut seulement être comparé qu'avec les opérat
 #. module: kit
 #: view:composition.kit:0
 msgid "Load items from Version"
-msgstr "Charger écritures de Version"
+msgstr "Charger les articles de la Version"
 
 #. modules: msf_outgoing, stock
 #: view:shipment:0
