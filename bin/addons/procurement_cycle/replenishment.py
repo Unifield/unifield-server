@@ -225,6 +225,7 @@ class replenishment_location_config(osv.osv):
                 'final_date_projection': now + relativedelta(months=int(config.projected_view), day=1, days=-1),
                 'sleeping': config.sleeping,
                 'time_unit': config.time_unit,
+                'frequence_name': config.frequence_name,
             }, context=context)
 
             segment_obj.generate_data(cr, uid, segment_ids, review_id=review_id, context=context)
@@ -573,15 +574,16 @@ class replenishment_segment(osv.osv):
                     if review_id and loc_ids and seg.rule == 'cycle':
                         for nb_month in range(1, line.segment_id.projected_view+1):
                             end_date = today + relativedelta(months=nb_month, day=1, days=-1)
+                            rr_fmc_month = fmc_by_month.get(end_date.strftime('%Y-%m-%d'), {}).get('value', False)
                             detailed_pas.append((0, 0, {
                                 'date': end_date.strftime('%Y-%m-%d'),
-                                'rr_fmc': fmc_by_month.get(end_date.strftime('%Y-%m-%d'), {}).get('value', False),
-                                'projected': max(0,
-                                                 sum_line.get(line.id, {}).get('real_stock', 0) -
-                                                 sum_line.get(line.id, {}).get('reserved_stock_qty', 0) +
-                                                 pipe_by_prod_by_month_minus_expired.get(line.product_id.id, {}).get(end_date.strftime('%Y-%m-%d'), 0) -
-                                                 fmc_by_month.get(end_date.strftime('%Y-%m-%d'), {}).get('accumulated', 0)
-                                                 ),
+                                'rr_fmc': rr_fmc_month,
+                                'projected': rr_fmc_month and max(0,
+                                                                  sum_line.get(line.id, {}).get('real_stock', 0) -
+                                                                  sum_line.get(line.id, {}).get('reserved_stock_qty', 0) +
+                                                                  pipe_by_prod_by_month_minus_expired.get(line.product_id.id, {}).get(end_date.strftime('%Y-%m-%d'), 0) -
+                                                                  fmc_by_month.get(end_date.strftime('%Y-%m-%d'), {}).get('accumulated', 0)
+                                                                  ),
                             }))
 
 
@@ -675,8 +677,31 @@ class replenishment_segment(osv.osv):
                         'buffer_qty': line.buffer_qty,
                         'safety_stock': seg.safety_stock,
                         'pas_ids': detailed_pas,
+                        'segment_line_id': line.id,
                     })
                     review_line.create(cr, uid, line_data, context=context)
+
+            if review_id:
+                cr.execute('''insert into replenishment_inventory_review_line_stock (review_line_id, qty, instance_id)
+                    select review_line.id, amc.real_stock, amc.instance_id from
+                        replenishment_inventory_review_line review_line
+                        left join replenishment_segment_line_amc amc on amc.segment_line_id = review_line.segment_line_id
+                        left join replenishment_segment_line seg_line on seg_line.id = review_line.segment_line_id
+                    where
+                        seg_line.segment_id = %s and
+                        review_line.review_id = %s
+                ''', (seg.id, review_id))
+
+                cr.execute('''insert into replenishment_inventory_review_line_exp (review_line_id, date, instance_id, exp_qty, expiry_line_id)
+                    select review_line.id, exp.month, amc.instance_id, exp.quantity, exp.expiry_line_id from
+                        replenishment_inventory_review_line review_line
+                        left join replenishment_segment_line_amc amc on amc.segment_line_id = review_line.segment_line_id
+                        left join replenishment_segment_line_amc_month_exp exp on exp.line_amc_id = amc.id
+                        left join replenishment_segment_line seg_line on seg_line.id = review_line.segment_line_id
+                    where
+                        seg_line.segment_id = %s and
+                        review_line.review_id = %s
+                ''', (seg.id, review_id))
 
             if calc_id:
                 res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'procurement_cycle.replenishment_order_calc_action', ['form', 'tree'], context=context)
@@ -1359,16 +1384,16 @@ class replenishment_segment_line_amc(osv.osv):
 
                 if gen_inv_review:
                     cr.execute("""
-                        select line.product_id, item.period_start, sum(item.expired_qty)
+                        select line.product_id, item.period_start, sum(item.expired_qty), line.id
                         from product_likely_expire_report_line line, product_likely_expire_report_item item
                         where
                             item.line_id = line.id and
                             report_id=%s and
                             item.period_start <= %s
-                        group by line.product_id, item.period_start
+                        group by line.product_id, item.period_start, line.id
                         having sum(item.expired_qty) > 0 """, (expired_id, projected_view))
                     for x in cr.fetchall():
-                        month_exp_obj.create(cr, uid, {'line_amc_id': cache_line_amc[lines[x[0]]], 'month': x[1], 'quantity': x[2]}, context=context)
+                        month_exp_obj.create(cr, uid, {'line_amc_id': cache_line_amc[lines[x[0]]], 'month': x[1], 'quantity': x[2], 'expiry_line_id': x[3]}, context=context)
 
             if last_gen_id:
                 last_gen_obj.write(cr, uid, last_gen_id, last_gen_data, context=context)
@@ -1391,6 +1416,7 @@ class replenishment_segment_line_amc_month_exp(osv.osv):
         'line_amc_id': fields.many2one('replenishment.segment.line.amc', 'Line AMC', required=1, select=1),
         'month': fields.date('Month', required=1, select=1),
         'quantity': fields.float('Qty'),
+        'expiry_line_id': fields.many2one('product.likely.expire.report.line', 'Expiry Line'),
     }
 
 replenishment_segment_line_amc_month_exp()
@@ -1585,6 +1611,7 @@ class replenishment_inventory_review(osv.osv):
         'sleeping': fields.integer('Sleeping stock alert parameter (month)', readonly=1),
         'time_unit': fields.selection([('d', 'days'), ('w', 'weeks'), ('m', 'months')], string='Display variable durations in', readonly=1),
         'line_ids': fields.one2many('replenishment.inventory.review.line', 'review_id', 'Products', readonly=1),
+        'frequence_name': fields.char('Scheduled reviews periodicity', size=512, readonly=1),
     }
 
     _defaults = {
@@ -1598,7 +1625,7 @@ class replenishment_inventory_review_line(osv.osv):
     _description = 'Inventory Review Line'
     _rec_name = 'product_id'
     _columns = {
-        'review_id': fields.many2one('replenishment.inventory.review', 'Review', required=1, select=1), # OC
+        'review_id': fields.many2one('replenishment.inventory.review', 'Review', required=1, select=1, ondelete='cascade'), # OC
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1), # OC
         'product_description': fields.related('product_id', 'name',  string='Desciption', type='char', size=64, readonly=True, select=True, write_relate=False), # OC
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False), # OC
@@ -1636,6 +1663,8 @@ class replenishment_inventory_review_line(osv.osv):
         'total_lt': fields.integer('Total LT (days)'),
         'order_coverage': fields.integer('Order Coverage (months)'),
         'pas_ids': fields.one2many('replenishment.inventory.review.line.pas', 'review_line_id', 'PAS by month'),
+        'detail_ids': fields.one2many('replenishment.inventory.review.line.stock', 'review_line_id', 'Exp by month'),
+        'segment_line_id': fields.integer('Segment line id', 'Seg line id', internal=1, select=1),
     }
 
 replenishment_inventory_review_line()
@@ -1647,10 +1676,125 @@ class replenishment_inventory_review_line_pas(osv.osv):
     _order = 'date'
 
     _columns = {
-        'review_line_id': fields.many2one('replenishment.inventory.review.line', 'Review Line', required=1, select=1),
+        'review_line_id': fields.many2one('replenishment.inventory.review.line', 'Review Line', required=1, select=1, ondelete='cascade'),
         'date': fields.date('Date'),
-        'rr_fmc': fields.float('RR-FMC'),
-        'projected': fields.float('Projected'),
+        'rr_fmc': fields.float_null('RR-FMC'),
+        'projected': fields.float_null('Projected'),
     }
 
 replenishment_inventory_review_line_pas()
+
+class replenishment_inventory_review_line_exp(osv.osv):
+    _name = 'replenishment.inventory.review.line.exp'
+    _description = 'Exp by month / instance'
+    _rec_name = 'date'
+    _order = 'date'
+
+    _columns = {
+        'review_line_id': fields.many2one('replenishment.inventory.review.line', 'Review Line', required=1, select=1, ondelete='cascade'),
+        'date': fields.date('Date'),
+        'instance_id': fields.many2one('msf.instance', 'Instance'),
+        'exp_qty': fields.float('Exp'),
+        'expiry_line_id': fields.many2one('product.likely.expire.report.line', 'Expiry Line'),
+    }
+replenishment_inventory_review_line_exp()
+
+class replenishment_inventory_review_line_stock(osv.osv):
+    _name = 'replenishment.inventory.review.line.stock'
+    _description = 'Stock by instance'
+
+    _columns = {
+        'review_line_id': fields.many2one('replenishment.inventory.review.line', 'Review Line', required=1, select=1, ondelete='cascade'),
+        'qty': fields.float('Stock Level'),
+        'instance_id': fields.many2one('msf.instance', 'Instance'),
+        'local_instance': fields.boolean('Local instance'),
+        'total_exp': fields.float('Total Exp.'),
+    }
+
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
+        if context is None:
+            context = {}
+
+        fg = super(replenishment_inventory_review_line_stock, self).fields_get(cr, uid, fields=fields, context=context, with_uom_rounding=with_uom_rounding)
+        if context.get('review_line_id'):
+            cr.execute('''select distinct(date) from replenishment_inventory_review_line_exp where review_line_id=%s and date is not null''', (context.get('review_line_id'),))
+            for date in cr.fetchall():
+                if date and date[0]:
+                    dd = date[0].split('-')
+                    fg[date[0]] =  {'type': 'float', 'string': '%s/%s' % (dd[2], dd[1])}
+        return fg
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+
+        fvg = super(replenishment_inventory_review_line_stock, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree' and context.get('review_line_id'):
+            arch = '''<tree string="Exp by month">
+                <field name="instance_id" />
+                <field name="qty" sum="Total"/>
+                <field name="local_instance" invisible="1" />
+            '''
+
+            cr.execute('''select distinct(date) from replenishment_inventory_review_line_exp where review_line_id=%s and date is not null''', (context.get('review_line_id'),))
+            for date in cr.fetchall():
+                arch += '''<field name="%s" sum="Total"/>''' % date[0]
+                arch += '''<button name="go_to_item" type="object" string="%s" icon="gtk-info" context="{'item_date': '%s', 'review_line_id': %s}" attrs="{'invisible': [('local_instance', '=', False)]}"/>''' % (_('Go to item'), date[0], context.get('review_line_id'))
+            arch += '''
+            <field name="total_exp" sum="Total"/>
+            </tree>'''
+
+            fvg['arch'] = arch
+        return fvg
+
+    def read(self, cr, uid, ids, vals, context=None, load='_classic_read'):
+        if context is None:
+            context = {}
+
+        if context.get('review_line_id'):
+            instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+            res = {}
+            cr.execute('''select stock.id, exp.date, exp.exp_qty, stock.review_line_id, stock.qty, stock.instance_id
+                from replenishment_inventory_review_line_stock stock
+                left join replenishment_inventory_review_line_exp exp on exp.review_line_id=stock.review_line_id and exp.date is not null
+                where stock.id in %s''', (tuple(ids), ))
+            for x in cr.fetchall():
+                if x[0] not in res:
+                    res[x[0]] = {
+                        'id': x[0],
+                        'review_line_id': x[3],
+                        'qty': x[4],
+                        'instance_id': x[5],
+                        'local_instance': x[5] == instance_id,
+                        'total_exp': 0
+                    }
+                if x[1]:
+                    res[x[0]][x[1]] = x[2]
+                    res[x[0]]['total_exp'] += x[2]
+            return res.values()
+
+        return super(replenishment_inventory_review_line_stock, self).read(cr, uid, ids, vals, context=context, load=load)
+
+    def go_to_item(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if context.get('review_line_id') and context.get('item_date'):
+            exp_obj = self.pool.get('replenishment.inventory.review.line.exp')
+            exp_ids = exp_obj.search(cr, uid, [('review_line_id', '=', context.get('review_line_id')), ('date', '=', context.get('item_date'))], context=context)
+            if exp_ids:
+                exp = exp_obj.read(cr, uid, exp_ids, ['expiry_line_id'], context=context)[0]
+                if exp and exp['expiry_line_id']:
+                    item_ids = self.pool.get('product.likely.expire.report.item').search(cr, uid, [('period_start', '=', context.get('item_date')), ('line_id', '=', exp['expiry_line_id'][0])], context=context)
+                    return {
+                        'type': 'ir.actions.act_window',
+                        'res_model': 'product.likely.expire.report.item',
+                        'res_id': item_ids[0],
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'context': context,
+                        'target': 'new'
+                    }
+
+        return False
+
+replenishment_inventory_review_line_stock()

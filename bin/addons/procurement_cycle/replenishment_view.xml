@@ -567,6 +567,7 @@
             <field name="arch" type="xml">
                 <form string="Inventory Review" hide_duplicate_button="1" hide_new_button="1" hide_delete_button="1">
                     <field name="location_config_id" />
+                    <field name="frequence_name" />
                     <field name="generation_date" />
                     <field name="amc_first_date" />
                     <field name="amc_last_date" />
@@ -645,6 +646,7 @@
                                     <field name="projected" />
                                 </tree>
                             </field>
+                            <field name="detail_ids" context="{'review_line_id': active_id}" nolabel="1" colspan="4"/>
                         </form>
                     </field>
                 </form>
@@ -664,6 +666,7 @@
                     <field name="projected_view" />
                     <field name="final_date_projection" />
                     <field name="line_ids" />
+                    <field name="frequence_name" />
                 </tree>
             </field>
         </record>
@@ -691,5 +694,21 @@
             action="replenishment_inventory_review_action"
             sequence="55"
             parent="stock_schedule.stock_automatic_procurements_menu" />
+
+        <record id="replenishment_inventory_review_line_stock_tree" model="ir.ui.view">
+            <field name="name">replenishment.inventory.review.line.stock.tree</field>
+            <field name="model">replenishment.inventory.review.line.stock</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Inventory Review Line Details">
+                    <field name="instance_id" />
+                    <field name="qty" />
+                    <field name="local_instance" invisible="1" />
+                    <field name="total_exp"  />
+                </tree>
+            </field>
+        </record>
+
+
     </data>
 </openerp>
