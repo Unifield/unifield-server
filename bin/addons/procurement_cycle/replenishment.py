@@ -919,6 +919,28 @@ class replenishment_segment_line(osv.osv):
             ret[x[0]] = True
         return ret
 
+
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        new_dom = []
+        in_main = None
+        for x in domain:
+            if x[0] == 'in_main_list':
+                in_main = bool(x[2])
+            else:
+                new_dom.append(x)
+
+        ret = super(replenishment_segment_line, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+
+        if in_main is not None:
+            ret.tables.append('"replenishment_segment"')
+            ret.joins['"replenishment_segment_line"'] = [('"replenishment_segment"', 'segment_id', 'id', 'LEFT JOIN')]
+
+            ret.tables.append('"product_list_line"')
+            ret.joins['"replenishment_segment"'] = [('"product_list_line"', 'product_list_id', 'list_id\" AND "product_list_line"."name" = "replenishment_segment_line"."product_id', 'LEFT JOIN')]
+            cond = in_main and "NOT" or ""
+            ret.where_clause.append(' "product_list_line"."id" IS '+ cond +' NULL ')
+        return ret
+
     def _get_real_stock(self, cr, uid, ids, field_name, arg, context=None):
         prod_obj = self.pool.get('product.product')
         ret = {}
