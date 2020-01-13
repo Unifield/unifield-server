@@ -600,27 +600,19 @@ class PhysicalInventory(osv.osv):
                                          ('state', '=', 'done')]
 
         moves_at_location_ids = move_obj.search(cr, uid, move_for_products_at_location, context=context)
-        moves_at_location = move_obj.read(cr, uid, moves_at_location_ids,
-                                          ["product_id",
-                                           "product_qty",
-                                           "prodlot_id",
-                                           "expired_date",
-                                           "location_id",
-                                           "product_uom",
-                                           "location_dest_id"],
-                                          context=context)
+        ftf = ["product_id", "product_qty", "prodlot_id", "expired_date", "location_id", "product_uom", "location_dest_id"]
+        moves_at_location = move_obj.browse(cr, uid, moves_at_location_ids, fields_to_fetch=ftf, context=context)
 
         # Sum all lines to get a set of (product, batchnumber) -> qty
         stocks = {}
         for move in moves_at_location:
 
-            product_id = move["product_id"][0]
-            product_qty = move["product_qty"]
-            batch_number = move["prodlot_id"][1] if move["prodlot_id"] else False
-            expiry_date = move["expired_date"]
+            product_id = move.product_id.id
+            product_qty = move.product_qty
+            batch_number = move.prodlot_id and move.prodlot_id.name or False
+            expiry_date = move.expired_date
 
-            # Dirty hack to ignore/hide internal batch numbers ("MSFBN")
-            if batch_number and batch_number.startswith("MSFBN"):
+            if batch_number and move.prodlot_id.type == 'internal':
                 batch_number = False
 
             product_batch_expirydate = (product_id, batch_number, expiry_date)
@@ -630,14 +622,14 @@ class PhysicalInventory(osv.osv):
             if not product_batch_expirydate in stocks.keys():
                 stocks[product_batch_expirydate] = 0.0
 
-            move_out = (move["location_id"][0] == location_id)
-            move_in = (move["location_dest_id"][0] == location_id)
+            move_out = (move.location_id.id == location_id)
+            move_in = (move.location_dest_id.id == location_id)
 
             if move_in and move_out:
                 continue
 
-            if move['product_uom'] and default_uom.get(product_id) and move['product_uom'][0] != default_uom[product_id]:
-                product_qty = uom_obj._compute_qty(cr, uid, move['product_uom'][0], product_qty, default_uom[product_id])
+            if move.product_uom and default_uom.get(product_id) and move.product_uom.id != default_uom[product_id]:
+                product_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, product_qty, default_uom[product_id])
 
             if move_in:
                 stocks[product_batch_expirydate] += product_qty
