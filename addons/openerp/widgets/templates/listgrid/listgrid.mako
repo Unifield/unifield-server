@@ -199,8 +199,8 @@ if (auto_field && auto_field.val()){
                                 <td class="pager-cell">
                                     <h2>${string}</h2>
                                 </td>
-                                <td class="loading-list" style="display: none;">
-                                    <img src="/openerp/static/images/load.gif" width="16" height="16" title="loading..."/>
+                                <td style="min-width: 16px">
+                                    <img src="/openerp/static/images/load.gif" width="16" height="16" title="loading..." class="loading-list" style="display: none;"/>
                                 </td>
                                 % if editable:
                                     <td class="pager-cell-button">
