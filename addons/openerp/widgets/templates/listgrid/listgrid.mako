@@ -296,7 +296,24 @@ if (auto_field && auto_field.val()){
                                         % for (field, field_attrs) in headers:
                                             % if field != 'button' and field_attrs.get('filter_selector'):
                                                <% has_filter = True %>
-                                                <td> ${field_attrs['string']|br}:  <input id="${name}_${field}" type="text" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" onkeydown="if (event.keyCode == 13) new ListView('${name}').update_filter();"/></td>
+                                                <td> ${field_attrs['string']|br}:
+                                                    % if field_attrs['type'] == 'selection':
+                                                        <select id="${name}_${field}" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" kind="selection">
+                                                            <option value=""></option>
+                                                            % for key, val in field_attrs['selection']:
+                                                                <option value="${key}">${val}</option>
+                                                            % endfor
+                                                        </select>
+                                                    % elif field_attrs['type'] == 'boolean':
+                                                        <select id="${name}_${field}" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" kind="boolean">
+                                                            <option value=""></option>
+                                                            <option value="t">${_('Yes')}</option>
+                                                            <option value="f">${_('No')}</option>
+                                                        </select>
+                                                    % else:
+                                                        <input id="${name}_${field}" type="text" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" onkeydown="if (event.keyCode == 13) new ListView('${name}').update_filter();"/>
+                                                    % endif
+                                                </td>
                                             % endif
                                         % endfor
                                         % if has_filter:
