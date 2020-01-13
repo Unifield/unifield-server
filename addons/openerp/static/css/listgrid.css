@@ -203,6 +203,13 @@ strong#total_sum_label {
     color: #7D7979;
     font-size: 0.9em;
 }
+
+.o2m_header_filter td {
+    padding-right: 10px;
+}
+.o2m_header_filter img {
+    cursor: pointer;
+}
 /**
  * vim: sts=4 st=4 et
  *

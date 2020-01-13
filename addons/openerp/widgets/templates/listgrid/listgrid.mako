@@ -289,6 +289,22 @@ if (auto_field && auto_field.val()){
                                         <% i += 1 %>
                                     % endfor
                                 </td>
+                                % else:
+                                <td class="pager-cell" style="width: 90%">
+                                    <% has_filter = False %>
+                                    <table id="${name}_o2m_filter" class="o2m_header_filter"><tr>
+                                        % for (field, field_attrs) in headers:
+                                            % if field != 'button' and field_attrs.get('filter_selector'):
+                                               <% has_filter = True %>
+                                                <td> ${field_attrs['string']|br}:  <input id="${name}_${field}" type="text" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" onkeydown="if (event.keyCode == 13) new ListView('${name}').update_filter();"/></td>
+                                            % endif
+                                        % endfor
+                                        % if has_filter:
+                                            <td><img src="/openerp/static/images/icons/stock_zoom.png" title="${_('Search')}" onclick="new ListView('${name}').update_filter()"/></td>
+                                            <td><img src="/openerp/static/images/stock/gtk-clear.png" title="${_('Clear')}" onclick="new ListView('${name}').clear_filter()"/></a></td>
+                                        % endif
+                                    </table>
+                                </td>
                                 % endif 
                                 <td class="pager-cell" style="width: 90%">
                                     ${pager.display()}

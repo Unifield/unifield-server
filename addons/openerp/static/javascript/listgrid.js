@@ -298,26 +298,32 @@ MochiKit.Base.update(ListView.prototype, {
 
 // pagination & reordering
 MochiKit.Base.update(ListView.prototype, {
-    
+
+    clear_filter: function() {
+        updated = false;
+        jQuery('#'+this.name + '_o2m_filter input').each(function() {
+            if (this.value) {
+                this.value = '';
+                updated = true;
+            }
+        });
+        if (updated) {
+            this.update_filter();
+        }
+    },
     update_filter: function() {
 
-        var filter = $(openobject.dom.get(this.name + '_filter'))[0];
-        var selected_filter_index = filter.selectedIndex;
-        var selected_filter_domain = filter[selected_filter_index].getAttribute("domain");
         var terp_domains = openobject.dom.get(this.name + '/_terp_domain');
+        var filter = $(openobject.dom.get(this.name + '_o2m_filter>input'));
+        dom = new Array()
+        jQuery('#'+this.name + '_o2m_filter input').each(function() {
+            if (this.value) {
+                dom.push("('"+jQuery(this).attr('field')+"', 'ilike', '"+this.value+"')")
+            }
+        });
+        dom_txt = '['+ dom.join(',')+']';
 
-        // TODO : in the future, if needed, properly add the domain to the
-        // existing domain list to be able to support multiple filters ?
-        var new_domains = selected_filter_domain;
-
-        // If we don't need to update anything, return immediately...
-        if (new_domains == terp_domains.value)
-        {
-            return;
-        }
-
-        terp_domains.value = selected_filter_domain;
-
+        terp_domains.value = dom_txt;
         if(this.ids.length) {
             this.reload();
         }
@@ -937,6 +943,16 @@ MochiKit.Base.update(ListView.prototype, {
 
         var current_id = edit_inline ? (parseInt(edit_inline) || 0) : edit_inline;
 
+
+        var filter = $(openobject.dom.get(this.name + '_o2m_filter>input'));
+        o2m_filter = {}
+        jQuery('#'+this.name + '_o2m_filter input').each(function() {
+            if (this.value) {
+                o2m_filter[this.id] = this.value;
+            }
+        });
+
+
         var args = jQuery.extend(this.makeArgs(), {
             _terp_source: this.name,
             _terp_edit_inline: edit_inline,
@@ -1148,7 +1164,9 @@ MochiKit.Base.update(ListView.prototype, {
                     })
                 }
 
-
+                for(var o2m_filed_filter in o2m_filter) {
+                    $('#'+o2m_filed_filter).val(o2m_filter[o2m_filed_filter]);
+                }
                 updateConcurrencyInfo(obj.concurrency_info || {});
             }
         });
