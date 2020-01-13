@@ -1015,7 +1015,7 @@ class replenishment_segment_line(osv.osv):
     _columns = {
         'segment_id': fields.many2one('replenishment.segment', 'Segment', select=1, required=1),
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1),
-        'product_description': fields.related('product_id', 'name',  string='Desciption', type='char', size=64, readonly=True, select=True, write_relate=False),
+        'product_description': fields.related('product_id', 'name',  string='Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
         'in_main_list': fields.function(_get_main_list, type='boolean', method=True, string='Prim. prod. list'),
         'status': fields.selection([('active', 'Active'), ('new', 'New')], string='Life cycle status'),
@@ -1573,7 +1573,7 @@ class replenishment_order_calc_line(osv.osv):
     _columns = {
         'order_calc_id': fields.many2one('replenishment.order_calc', 'Order Calc', required=1, select=1),
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1, readonly=1),
-        'product_description': fields.related('product_id', 'name',  string='Desciption', type='char', size=64, readonly=True, select=True, write_relate=False),
+        'product_description': fields.related('product_id', 'name',  string='Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'status': fields.selection([('active', 'Active'), ('new', 'New')], string='Life cycle status', readony=1),
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
         'in_main_list': fields.boolean('Prim. prod. list', readonly=1),
@@ -1610,13 +1610,50 @@ class replenishment_inventory_review(osv.osv):
         'final_date_projection': fields.date('Final day of projection', readonly=1),
         'sleeping': fields.integer('Sleeping stock alert parameter (month)', readonly=1),
         'time_unit': fields.selection([('d', 'days'), ('w', 'weeks'), ('m', 'months')], string='Display variable durations in', readonly=1),
-        'line_ids': fields.one2many('replenishment.inventory.review.line', 'review_id', 'Products', readonly=1),
+        'line_ids': fields.one2many('replenishment.inventory.review.line', 'review_id', 'Products', readonly=1, context={'default_code_only': 1}),
         'frequence_name': fields.char('Scheduled reviews periodicity', size=512, readonly=1),
     }
 
     _defaults = {
         'generation_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
+
+    def _selected_data(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Warning!'), _('Please select at least one line'))
+
+        inv_review = self.browse(cr, uid, ids[0], context=context)
+        loc_ids = [x.id for x in inv_review.location_config_id.local_location_ids]
+
+        inv_review_line = self.pool.get('replenishment.inventory.review.line').browse(cr, uid, context.get('button_selected_ids'), context=context)
+
+        return {
+            'location_ids': loc_ids,
+            'products': [x.product_id for x in inv_review_line],
+            'inv_review': inv_review,
+        }
+
+    def pipeline(self, cr, uid, ids, context=None):
+        data = self._selected_data(cr, uid, ids, context=context)
+
+        product_ids = [x.id for x in data['products']]
+        product_code = [x.default_code for x in data['products']]
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_move_form2', ['tree', 'form'], new_tab=True, context=context)
+        res['domain'] = ['&', '&', '|', ('location_id', 'in', data['location_ids']), ('location_dest_id', 'in', data['location_ids']), ('state', '=', 'assigned'), ('product_id', 'in', product_ids)]
+        res['name'] = _('Pipeline %s: %s') % (data['inv_review'].location_config_id.name, ', '.join(product_code))
+        return res
+
+    def stock_by_location(self, cr, uid, ids, context=None):
+        data = self._selected_data(cr, uid, ids, context=context)
+        prod_id = data['products'][0].id
+        context['active_id'] = prod_id
+        return self.pool.get('product.product').open_stock_by_location(cr, uid, [prod_id], context=context)
+
+
 replenishment_inventory_review()
 
 
@@ -1627,7 +1664,7 @@ class replenishment_inventory_review_line(osv.osv):
     _columns = {
         'review_id': fields.many2one('replenishment.inventory.review', 'Review', required=1, select=1, ondelete='cascade'), # OC
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1), # OC
-        'product_description': fields.related('product_id', 'name',  string='Desciption', type='char', size=64, readonly=True, select=True, write_relate=False), # OC
+        'product_description': fields.related('product_id', 'name',  string='Description', type='char', size=64, readonly=True, select=True, write_relate=False), # OC
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False), # OC
         'status': fields.selection([('active', 'Active'), ('new', 'New')], string='Life cycle status'), # OC
         'primay_product_list': fields.char('Primary Product List', size=512), # OC

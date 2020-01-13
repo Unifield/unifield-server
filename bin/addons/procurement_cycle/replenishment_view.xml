@@ -576,13 +576,17 @@
                     <field name="sleeping" />
                     <field name="time_unit" />
                     <newline />
-                    <field name="line_ids" colspan="4" nolabel="1">
+                    <group colspan="4">
+                        <button colspan="1" name="pipeline" string="Pipeline" type="object" icon="icons/pipe.png"/>
+                        <button colspan="1" name="stock_by_location" string="Stock By Location" type="object" icon="gtk-indent"/>
+                    </group>
+                    <field name="line_ids" colspan="4" nolabel="1" o2m_selectable="2">
                         <tree colors="orange:status=='new';red:expired_qty_before_cons or (status!='new' and qty_lacking)">
-                            <field name="product_id"/>
-                            <field name="product_description"/>
+                            <field name="product_id" filter_selector="1" />
+                            <field name="product_description" filter_selector="1" />
                             <field name="uom_id" invisible="1" />
                             <field name="status" invisible="1" />
-                            <field name="primay_product_list" />
+                            <field name="primay_product_list" filter_selector="1" />
                             <field name="segment_ref_name" />
                             <field name="rr_fmc_avg" />
                             <field name="rr_amc" />
