@@ -299,6 +299,30 @@ MochiKit.Base.update(ListView.prototype, {
 // pagination & reordering
 MochiKit.Base.update(ListView.prototype, {
 
+    update_filter: function() {
+
+        var filter = $(openobject.dom.get(this.name + '_filter'))[0];
+        var selected_filter_index = filter.selectedIndex;
+        var selected_filter_domain = filter[selected_filter_index].getAttribute("domain");
+        var terp_domains = openobject.dom.get(this.name + '/_terp_domain');
+
+        // TODO : in the future, if needed, properly add the domain to the
+        // existing domain list to be able to support multiple filters ?
+        var new_domains = selected_filter_domain;
+
+        // If we don't need to update anything, return immediately...
+        if (new_domains == terp_domains.value)
+        {
+            return;
+        }
+
+        terp_domains.value = selected_filter_domain;
+
+        if(this.ids.length) {
+            this.reload();
+        }
+    },
+
     clear_filter: function() {
         updated = false;
         jQuery('#'+this.name + '_o2m_filter input').each(function() {
@@ -315,10 +339,10 @@ MochiKit.Base.update(ListView.prototype, {
             }
         });
         if (updated) {
-            this.update_filter();
+            this.update_o2m_filter();
         }
     },
-    update_filter: function() {
+    update_o2m_filter: function() {
 
         var terp_domains = openobject.dom.get(this.name + '/_terp_domain');
         dom = new Array()
