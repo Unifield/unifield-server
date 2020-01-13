@@ -794,8 +794,8 @@ class replenishment_segment(osv.osv):
                     line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[4].data))
                 elif not row.cells[5] or not isinstance(row.cells[5].data, (int, long, float)):
                     line_error.append(_('Line %d: Max Qty, number expected, found %s') % (idx+1, row.cells[5].data))
-                elif row.cells[5] < row.cells[4]:
-                    line_error.append(_('Line %d: Max Qty (%s) must be large than Min Qty (%s)') % (idx+1, row.cells[5].data, row.cells[4].data))
+                elif row.cells[5].data < row.cells[4].data:
+                    line_error.append(_('Line %d: Max Qty (%s) must be larger than Min Qty (%s)') % (idx+1, row.cells[5].data, row.cells[4].data))
                 else:
                     data_towrite.update({
                         'min_qty': row.cells[4].data,
