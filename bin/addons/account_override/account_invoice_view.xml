@@ -579,7 +579,7 @@
                                                    default_focus="1"
                                                    attrs="{'readonly': ['|',
                                                                         ('from_supply', '=', True),
-                                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('synced', '=', True)]}" />
+                                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}" />
                                             <field name="uos_id"
                                                    on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
                                                    attrs="{'readonly': ['|',
@@ -590,7 +590,7 @@
                                                                                         ('from_supply', '=', True),
                                                                                         '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                                             <field name="price_unit" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
-                                            <field name="discount" groups="base.group_extended" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
+                                            <field name="discount" groups="base.group_extended" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                                             <field name="name" colspan="4"/>
                                             <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]"/>
                                             <group colspan="6">

@@ -74,9 +74,9 @@
                                                            '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                            '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
                             />
-                            <field name="price_unit" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
+                            <field name="price_unit" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                             <field name="discount" groups="base.group_extended"
-                                   attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
+                                   attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                             <field colspan="4" name="name"/>
                             <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
                             <field domain="[('type','&lt;&gt;','view'), ('company_id', '=', parent.company_id), ('parent_id', '!=', False)]" name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
