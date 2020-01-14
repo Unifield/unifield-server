@@ -92,6 +92,7 @@
                     <field name="name" readonly="1" />
                     <field name="description" readonly="1" />
                     <field name="frequence_name" />
+                    <field name="next_scheduler" />
                     <newline />
                     <button name="choose_change_frequence" type="object" string="Change/Choose Frequency" icon="terp-go-today" colspan="2" />
                     <field name="review_active"  required="1" />
@@ -100,6 +101,8 @@
                     <field name="sleeping" required="1" />
                     <field name="time_unit" required="1" />
                     <button name="generate_inventory_review" string="Generate Inventory Review" type="object" icon="gtk-remove" />
+
+                    <field name="last_review_error" colspan="4" />
                 </form>
             </field>
         </record>
@@ -166,16 +169,28 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Segment" hide_duplicate_button="1" noteditable="not is_current_instance">
+                    <field name="safety_and_buffer_warn" invisible="1" />
+                    <html colspan="4">
+                        <p id="safety_and_buffer" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                            <translate>Product line has Safety Stock AND Buffer value: Warning could be duplicate!</translate>
+                        </p>
+                        <script language="javascript">
+                            var safety_and_buffer = $('#safety_and_buffer_warn').val();
+                            if (safety_and_buffer == "1") {
+                                msg_dom = $('#safety_and_buffer');
+                                msg_dom.show();
+                            }
+                        </script>
+                    </html>
                     <group colspan="2" col="2">
-                        <field name="name_seg" />
-                        <field name="description_seg" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                        <field name="location_config_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('is_current_instance', '=', True)]" on_change="change_location_config_id(location_config_id, ir_requesting_location)"/>
-                        <separator string="Location Config"/>
                         <group colspan="2" col="4">
+                            <field name="name_seg" />
+                            <field name="description_seg" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="location_config_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('is_current_instance', '=', True)]" on_change="change_location_config_id(location_config_id, ir_requesting_location)"/>
+                            <separator string="Location Config"/>
                             <field name="is_current_instance" invisible="1" />
                             <field name="description" readonly="1" />
                             <field name="main_instance" readonly="1" />
-                            <field name="rr_amc" readonly="1" />
                             <newline />
                             <field name="local_location_ids" colspan="2" nolabel="1" readonly="1">
                                 <tree>
@@ -188,10 +203,17 @@
                                 </tree>
                             </field>
                         </group>
-                        <field name="rule" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="rule_alert" />
-                        <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1"/>
-                        <field name="product_list_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <group colspan="1" col="2">
+                            <field name="rule" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="rule_alert" />
+                            <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1"/>
+                            <field name="product_list_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        </group>
+                        <group colspan="1" col="2">
+                            <field name="rr_amc" readonly="1" />
+                            <separator string="AMC Locations" colspan="2" />
+                            <field name="amc_location_txt" nolabel="1" colspan="2" />
+                        </group>
                     </group>
                     <group colspan="2" col="2">
                         <field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
@@ -216,6 +238,7 @@
                                 <field name="instance_id" />
                                 <field name="amc_date" />
                                 <field name="full_date" />
+                                <field name="review_date" />
                             </tree>
 
                         </field>
@@ -490,7 +513,8 @@
                             <field name="qty_lacking" invisible="context.get('rule')!='cycle'"/>
                             <field name="qty_lacking_needed_by" invisible="context.get('rule')!='cycle'"/>
                             <field name="open_loan" />
-                            <field name="expired_qty_before_cons" />
+                            <field name="expired_qty_before_cons" invisible="context.get('rule')!='cycle'"/>
+                            <field name="expired_qty_before_eta" invisible="context.get('rule')=='cycle'"/>
                             <field name="proposed_order_qty" />
                             <field name="agreed_order_qty" />
                             <field name="order_qty_comment" />
@@ -653,6 +677,7 @@
                             <field name="detail_ids" context="{'review_line_id': active_id}" nolabel="1" colspan="4"/>
                         </form>
                     </field>
+                    <field name="state" />
                 </form>
             </field>
         </record>
@@ -671,6 +696,7 @@
                     <field name="final_date_projection" />
                     <field name="line_ids" />
                     <field name="frequence_name" />
+                    <field name="state" />
                 </tree>
             </field>
         </record>

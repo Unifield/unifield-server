@@ -1586,9 +1586,8 @@ class orm_template(object):
                     node.set('string', trans)
             if node.get('filter_selector'):
                 try:
-                    # TODO JFB RR translation of o2m filter
                     filter_eval = eval(node.get('filter_selector'))
-                    if filter_eval:
+                    if filter_eval and isinstance(filter_eval, list):
                         trans_filter_eval = []
                         for x in filter_eval:
                             trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])

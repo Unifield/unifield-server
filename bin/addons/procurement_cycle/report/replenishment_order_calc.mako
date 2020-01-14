@@ -375,7 +375,7 @@
     <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Rule')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:MergeAcross="1" ss:StyleID="m2348480924348"><Data ss:Type="String">${objects[0].rule|x}</Data><NamedCell
+    <Cell ss:MergeAcross="1" ss:StyleID="m2348480924348"><Data ss:Type="String">${getSel(objects[0], 'rule')|x}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="9">
@@ -418,7 +418,11 @@
         <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Qty Lacking Needed By')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % endif
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Open Loan')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Expired Qty Before Cons')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    % if objects[0].rule == 'cycle':
+        <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Expired Qty Before Cons')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    % else:
+        <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Expired Qty Before ETA')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    % endif
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Proposed Order Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Agreed Order Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Order Qty Comment')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
@@ -426,6 +430,9 @@
    </Row>
 
    % for prod in objects[0].order_calc_line_ids:
+       % if only_warning() and not prod.warning:
+                 <% continue %>
+       % endif
    <Row ss:AutoFitHeight="0" ss:Height="15.75">
     <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.default_code|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.name|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
@@ -452,7 +459,11 @@
         </Cell>
     % endif
     <Cell ss:StyleID="s97"><Data ss:Type="String">${prod.open_loan and _('Y') or _('N')}</Data></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.expired_qty_before_cons}</Data></Cell>
+    % if objects[0].rule == 'cycle':
+        <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.expired_qty_before_cons}</Data></Cell>
+    % else:
+        <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.expired_qty_before_eta}</Data></Cell>
+    % endif
     <Cell ss:StyleID="s97"><Data ss:Type="Number">${int(prod.proposed_order_qty)}</Data></Cell>
     <Cell ss:StyleID="s97">
     % if prod.agreed_order_qty is False:

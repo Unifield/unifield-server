@@ -19,6 +19,15 @@
             report_type="webkit"
             menu="True"
             />
+      <report
+            id="report_replenishment_order_calc_warning_xls"
+            string="Order Calc (only lines with warning)"
+            model="replenishment.order_calc"
+            name="report_replenishment_order_calc_warning_xls"
+            file="procurement_cycle/report/replenishment_order_calc.mako"
+            report_type="webkit"
+            menu="True"
+            />
     </data>
 </openerp>
 
