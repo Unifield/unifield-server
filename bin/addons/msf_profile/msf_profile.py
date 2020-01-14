@@ -52,6 +52,27 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF15.2
+    def rec_entries_uf14_1_uf15(self, cr, uid, *a, **b):
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:
+            trigger_obj = self.pool.get('sync.trigger.something.target')
+            cr.execute('''
+                select sdref, values, source from sync_client_update_received where model='account.move.reconcile' and execution_date > ( select applied from sync_client_version where name='UF15.0') and fields not like '%action_date%' and values like '%''0''%'
+            ''')
+
+            for update in cr.fetchall():
+                rec_number = False
+                try:
+                    rec_number = eval(update[1])
+                except:
+                    # TODO log something
+                    pass
+                if rec_number:
+                    trigger_obj.create(cr, uid, {'name': 'trigger_rec', 'destination': update[2] , 'args': rec_number})
+
+        return True
+
     # UF15.1
     def us_6930_gen_unreconcile(self, cr, uid, *a, **b):
         # generate updates to delete reconcile done after UF15.0
@@ -3543,6 +3564,28 @@ class communication_config(osv.osv):
     ]
 
 communication_config()
+
+class sync_tigger_something_target(osv.osv):
+    _name = 'sync.trigger.something.target'
+
+    _columns = {
+        'name': fields.char('Name', size=256, select=1),
+        'destination': fields.char('Destination', size=256, select=1),
+        'args': fields.text('Args', select=1),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context.get('sync_update_execution') and vals.get('name') == 'trigger_rec':
+            rec_obj = self.pool.get('account.move.reconcile')
+            if not self.search(cr, uid, [('name', '=', 'trigger_rec'), ('args', '=', vals['args'])], context=context):
+                rec_ids = rec_obj.search(cr, uid, [('name', '=', vals['args'])], context=context)
+                if rec_ids:
+                    cr.execute('''update account_move_reconcile set action_date=create_date where id in %s''', (tuple(rec_ids),))
+                    cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''name'']' where model='account.move.reconcile' and res_id in %s ''', (tuple(rec_ids),))
+
+        return super(sync_tigger_something_target, self).create(cr, uid, vals, context)
+
+sync_tigger_something_target()
 
 class sync_tigger_something(osv.osv):
     _name = 'sync.trigger.something'
