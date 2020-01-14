@@ -3575,6 +3575,8 @@ class sync_tigger_something_target(osv.osv):
     }
 
     def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
         if context.get('sync_update_execution') and vals.get('name') == 'trigger_rec':
             rec_obj = self.pool.get('account.move.reconcile')
             if not self.search(cr, uid, [('name', '=', 'trigger_rec'), ('args', '=', vals['args'])], context=context):
