@@ -199,7 +199,8 @@
                                 msg_dom.show();
                             }
                             var review_active_warn = $('#review_active').val();
-                            if (review_active_warn != "1") {
+                            var config_id = $('#location_config_id').attr('value');
+                            if (review_active_warn != "1" &amp;&amp; config_id) {
                                 msg_dom = $('#review_active_warn');
                                 msg_dom.show();
                             }
