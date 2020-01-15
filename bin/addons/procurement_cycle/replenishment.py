@@ -225,6 +225,7 @@ class replenishment_location_config(osv.osv):
 
             segments = segment_obj.browse(cr, uid, segment_ids, fields_to_fetch=['name_seg'], context=context)
 
+            review_id = False
             review_ids = review_obj.search(cr, uid, [('location_config_id', '=', config.id)], context=context)
             if review_ids:
                 review = review_obj.browse(cr, uid, review_ids[0], context=context)
