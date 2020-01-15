@@ -175,14 +175,32 @@
             <field name="arch" type="xml">
                 <form string="Segment" hide_duplicate_button="1" noteditable="not is_current_instance">
                     <field name="safety_and_buffer_warn" invisible="1" />
+                    <field name="active" invisible="1" readonly="1" />
+                    <field name="review_active" invisible="1" readonly="1" />
                     <html colspan="4">
                         <p id="safety_and_buffer" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
                             <translate>Product line has Safety Stock AND Buffer value: Warning could be duplicate!</translate>
+                        </p>
+                        <p id="active_warn" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                            <translate>Warning: location config is inactive</translate>
+                        </p>
+                        <p id="review_active_warn" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                            <translate>Warning: Inventory Review Configuration is inactive</translate>
                         </p>
                         <script language="javascript">
                             var safety_and_buffer = $('#safety_and_buffer_warn').val();
                             if (safety_and_buffer == "1") {
                                 msg_dom = $('#safety_and_buffer');
+                                msg_dom.show();
+                            }
+                            var active_warn = $('#active').val();
+                            if (active_warn != "1") {
+                                msg_dom = $('#active_warn');
+                                msg_dom.show();
+                            }
+                            var review_active_warn = $('#review_active').val();
+                            if (review_active_warn != "1") {
+                                msg_dom = $('#review_active_warn');
                                 msg_dom.show();
                             }
                         </script>
