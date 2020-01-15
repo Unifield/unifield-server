@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
+
+<!DOCTYPE TESTS [
+    <!ENTITY chrono SYSTEM "replenishment_view_chrono_svg.xml">
+]>
+
 <openerp>
     <data>
 
@@ -181,6 +186,7 @@
                                 msg_dom.show();
                             }
                         </script>
+
                     </html>
                     <group colspan="2" col="2">
                         <group colspan="2" col="4">
@@ -304,63 +310,14 @@
                         </page>
                         <page string="Chronogram">
                             <html>
-                             <table id="rr-chrono">
-                                    <tr>
-                                        <td> </td>
-                                        <td colspan="8" class="tlt">Total Lead Time (73)</td>
-                                        <td> </td>
-                                    </tr>
-                                    <tr>
-                                        <td> </td>
-                                        <td colspan="4" class="ilt">Internal Lead Time (8)</td>
-                                        <td colspan="4" class="elt">External Lead Time (65)</td>
-                                        <td> </td>
-                                    </tr>
-                                    <tr>
-                                        <td> </td>
-                                        <td class="oclt" colspan="2">Order Creation Lead Time (4)</td>
-                                        <td class="ovlt" colspan="2">Order Validation Lead Time (4)</td>
-                                        <td class="slt" colspan="2">Supplier Lead Time (60)</td>
-                                        <td class="hlt" colspan="2">Handling Lead Time (5)</td>
-                                        <td> </td>
-                                    </tr>
-                                    <tr>
-                                        <td> </td>
-                                        <td> </td>
-                                        <td> </td>
-                                        <td> </td>
-                                        <td> </td>
-                                        <td> </td>
-                                        <td> </td>
-                                        <td> </td>
-                                        <td> </td>
-                                        <td> </td>
-                                    </tr>
-                                    <tr class="rr-text">
-                                        <td> </td>
-                                        <td colspan="2">Analysis + update or Order Proposal</td>
-                                        <td>Create IR</td>
-                                        <td>Create PO</td>
-                                        <td colspan="2">Confirm PO</td>
-                                        <td> </td>
-                                        <td> </td>
-                                        <td> </td>
-                                    </tr>
-                                    <tr class="rr-text">
-                                        <td colspan="2">Stock Take Date Generation of Order Calculation</td>
-                                        <td colspan="2">Validate Order Proposal</td>
-                                        <td colspan="2">Validate PO (Coordo/Proj)</td>
-                                        <td colspan="2">Goods arrival</td>
-                                        <td colspan="2">Goods Available at Warehouse</td>
-                                    </tr>
-                                </table>
+                            &chrono;
                             </html>
                         </page>
                     </notebook>
                     <field name="state" />
                     <field name="has_inprogress_cal" invisible="1" />
                     <group colspan="2">
-                        <button name="trigger_compute" string="Compute Data" type="object" icon="gtk-remove" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"/>
+                        <button name="trigger_compute" string="Compute Data" type="object" icon="gtk-remove" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}" force_editable="1"/>
                         <button name="completed" string="Completed" type="object" icon="terp-check" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                         <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', 'not in', ['complete', 'archived', 'cancel'])]}" icon="gtk-go-back" />
                         <button name="generate_order_calc" string="Generate Order Calc" type="object" icon="gtk-convert" attrs="{'invisible': [('state', '!=', 'complete')]}"/>
@@ -368,6 +325,14 @@
                         <button name="set_as_cancel" string="Cancel" type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', True)]}" icon="gtk-cancel" />
                         <button name="set_as_cancel_and_cancel_order" string="Cancel Segment and Order Calc." type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', False)]}" icon="gtk-cancel" confirm="This will cancel the Segment and the in-progess Order Calc. Do you confirm ?"/>
                     </group>
+                    <html>
+                        <script language="javascript">
+                            for (var field of ['order_creation_lt', 'order_validation_lt', 'internal_lt', 'supplier_lt', 'handling_lt', 'external_lt', 'total_lt']) {
+                                var curr_text = $('#'+field+'_svg').text();
+                                $('#'+field+'_svg').text(curr_text+ '('+$('#'+field).attr('value')+ ')');
+                            }
+                        </script>
+                    </html>
                 </form>
             </field>
         </record>
