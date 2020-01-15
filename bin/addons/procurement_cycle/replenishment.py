@@ -439,9 +439,10 @@ class replenishment_segment(osv.osv):
 
             # compute inv. review
             config_obj = self.pool.get('replenishment.location.config')
-            config_ids = config_obj.search(cr, uid, [('next_scheduler', '<', datetime.now()), ('is_current_instance', '=', True), ('review_active', '=', True)], context=context)
+            config_ids = config_obj.search(cr, uid, [('next_scheduler', '<', datetime.now().strftime('%Y-%m-%d %H:%M:%S')), ('is_current_instance', '=', True), ('review_active', '=', True)], context=context)
             if config_ids:
                 config_obj.generate_inventory_review(cr, uid, config_ids, context=context)
+            cr.commit()
         except Exception as e:
             cr.rollback()
             logger.error('Error RR: %s' % misc.get_traceback(e))
@@ -544,37 +545,40 @@ class replenishment_segment(osv.osv):
             if review_id:
                 rdd = today + relativedelta(months=seg.projected_view, day=1, days=-1)
 
-                # sum expired by month
-                cr.execute('''
-                    select line.product_id, exp.month, sum(exp.quantity)
-                        from replenishment_segment_line line
-                        inner join replenishment_segment_line_amc amc on amc.segment_line_id = line.id
-                        left join replenishment_segment_line_amc_month_exp exp on exp.line_amc_id = amc.id
-                        where
-                            line.segment_id = %s and
-                            exp.month >= %s and
-                            exp.month <= %s
-                        group by line.product_id, exp.month
-                ''', (seg.id, today.strftime('%Y-%m-%d'), rdd.strftime('%Y-%m-%d')))
                 exp_by_month = {}
-                for x in cr.fetchall():
-                    exp_by_month.setdefault(x[0], {}).update({x[1]: x[2]})
-
-                # pipeline by month
-                all_prod_ids = [x.product_id.id for x in seg.line_ids]
                 pipe_by_prod_by_month_minus_expired = {}
-                if review_id and loc_ids and seg.rule == 'cycle':
-                    for nb_month in range(1, seg.projected_view+1):
-                        end_date = today + relativedelta(months=nb_month, day=1, days=-1)
-                        for prod in prod_obj.browse(cr, uid, all_prod_ids, fields_to_fetch=['incoming_qty', 'default_code'], context={'to_date': end_date, 'location': loc_ids}):
-                            expired = 0
-                            for date in exp_by_month.get(prod.id, {}).keys():
-                                if date <= end_date.strftime('%Y-%m-%d'):
-                                    expired += exp_by_month[prod.id][date]
-                            pipe_by_prod_by_month_minus_expired.setdefault(prod.id, {}).update({end_date.strftime('%Y-%m-%d'): prod.incoming_qty - expired})
+                all_prod_ids = [x.product_id.id for x in seg.line_ids]
+
+                if seg.rule == 'cycle':
+                    # sum expired by month
+                    cr.execute('''
+                        select line.product_id, exp.month, sum(exp.quantity)
+                            from replenishment_segment_line line
+                            inner join replenishment_segment_line_amc amc on amc.segment_line_id = line.id
+                            left join replenishment_segment_line_amc_month_exp exp on exp.line_amc_id = amc.id
+                            where
+                                line.segment_id = %s and
+                                exp.month >= %s and
+                                exp.month <= %s
+                            group by line.product_id, exp.month
+                    ''', (seg.id, today.strftime('%Y-%m-%d'), rdd.strftime('%Y-%m-%d')))
+                    for x in cr.fetchall():
+                        exp_by_month.setdefault(x[0], {}).update({x[1]: x[2]})
+
+                    # pipeline by month
+                    if loc_ids:
+                        for nb_month in range(1, seg.projected_view+1):
+                            end_date = today + relativedelta(months=nb_month, day=1, days=-1)
+                            for prod in prod_obj.browse(cr, uid, all_prod_ids, fields_to_fetch=['incoming_qty', 'default_code'], context={'to_date': end_date, 'location': loc_ids}):
+                                expired = 0
+                                for date in exp_by_month.get(prod.id, {}).keys():
+                                    if date <= end_date.strftime('%Y-%m-%d'):
+                                        expired += exp_by_month[prod.id][date]
+                                pipe_by_prod_by_month_minus_expired.setdefault(prod.id, {}).update({end_date.strftime('%Y-%m-%d'): prod.incoming_qty - expired})
 
             else:
                 rdd = today + relativedelta(days=int(seg.total_lt))
+
             oc = rdd + relativedelta(months=seg.order_coverage)
             for line in seg.line_ids:
                 total_fmc = 0
@@ -763,26 +767,55 @@ class replenishment_segment(osv.osv):
                     review_line.create(cr, uid, line_data, context=context)
 
             if review_id:
-                cr.execute('''insert into replenishment_inventory_review_line_stock (review_line_id, qty, instance_id)
-                    select review_line.id, amc.real_stock, amc.instance_id from
-                        replenishment_inventory_review_line review_line
-                        left join replenishment_segment_line_amc amc on amc.segment_line_id = review_line.segment_line_id
-                        left join replenishment_segment_line seg_line on seg_line.id = review_line.segment_line_id
-                    where
-                        seg_line.segment_id = %s and
-                        review_line.review_id = %s
-                ''', (seg.id, review_id))
 
-                cr.execute('''insert into replenishment_inventory_review_line_exp (review_line_id, date, instance_id, exp_qty, expiry_line_id)
-                    select review_line.id, exp.month, amc.instance_id, exp.quantity, exp.expiry_line_id from
-                        replenishment_inventory_review_line review_line
-                        left join replenishment_segment_line_amc amc on amc.segment_line_id = review_line.segment_line_id
-                        left join replenishment_segment_line_amc_month_exp exp on exp.line_amc_id = amc.id
-                        left join replenishment_segment_line seg_line on seg_line.id = review_line.segment_line_id
-                    where
-                        seg_line.segment_id = %s and
-                        review_line.review_id = %s
-                ''', (seg.id, review_id))
+                if seg.rule == 'cycle':
+                    cr.execute('''insert into replenishment_inventory_review_line_stock (review_line_id, qty, instance_id)
+                        select review_line.id, amc.real_stock, amc.instance_id from
+                            replenishment_inventory_review_line review_line
+                            left join replenishment_segment_line_amc amc on amc.segment_line_id = review_line.segment_line_id
+                            left join replenishment_segment_line seg_line on seg_line.id = review_line.segment_line_id
+                        where
+                            seg_line.segment_id = %s and
+                            review_line.review_id = %s
+                    ''', (seg.id, review_id))
+                    cr.execute('''insert into replenishment_inventory_review_line_exp (review_line_id, date, instance_id, exp_qty, expiry_line_id)
+                        select review_line.id, exp.month, amc.instance_id, exp.quantity, exp.expiry_line_id from
+                            replenishment_inventory_review_line review_line
+                            left join replenishment_segment_line_amc amc on amc.segment_line_id = review_line.segment_line_id
+                            left join replenishment_segment_line_amc_month_exp exp on exp.line_amc_id = amc.id
+                            left join replenishment_segment_line seg_line on seg_line.id = review_line.segment_line_id
+                        where
+                            seg_line.segment_id = %s and
+                            review_line.review_id = %s
+                    ''', (seg.id, review_id))
+
+                elif loc_ids:
+                    # get details expiry before eta
+                    cr.execute(''' insert into replenishment_inventory_review_line_exp_nocons (instance_id, review_line_id, batch_number, life_date, exp_qty)
+                        select %s, line.id, lot.name, lot.life_date, sum(qty) from
+                        stock_report_prodlots report, stock_production_lot lot, replenishment_inventory_review_line line
+                        where
+                            line.product_id = report.product_id and
+                            lot.id = report.prodlot_id and
+                            report.location_id in %s and
+                            lot.life_date < %s and
+                            line.review_id = %s
+                        group by line.id, lot.name, lot.life_date
+                        order by lot.life_date
+                    ''', (seg.main_instance.id, tuple(loc_ids), rdd, review_id))
+
+                    cr.execute('''insert into replenishment_inventory_review_line_exp_nocons (instance_id, review_line_id, stock_qty, exp_qty)
+                        select amc.instance_id, review_line.id, amc.real_stock, expired_qty_before_eta from
+                            replenishment_inventory_review_line review_line
+                            left join replenishment_segment_line_amc amc on amc.segment_line_id = review_line.segment_line_id
+                            left join replenishment_segment_line seg_line on seg_line.id = review_line.segment_line_id
+                        where
+                            seg_line.segment_id = %s and
+                            review_line.review_id = %s
+                        order by amc.instance_id
+                    ''', (seg.id, review_id))
+
+
 
                 self.write(cr, uid, seg.id, {'last_review_date': review_date}, context=context)
 
@@ -1826,6 +1859,7 @@ class replenishment_inventory_review_line(osv.osv):
         'order_coverage': fields.integer('Order Coverage (months)'),
         'pas_ids': fields.one2many('replenishment.inventory.review.line.pas', 'review_line_id', 'PAS by month'),
         'detail_ids': fields.one2many('replenishment.inventory.review.line.stock', 'review_line_id', 'Exp by month'),
+        'detail_exp_nocons':  fields.one2many('replenishment.inventory.review.line.exp.nocons', 'review_line_id', 'Exp.'),
         'segment_line_id': fields.integer('Segment line id', 'Seg line id', internal=1, select=1),
     }
 
@@ -1845,6 +1879,22 @@ class replenishment_inventory_review_line_pas(osv.osv):
     }
 
 replenishment_inventory_review_line_pas()
+
+class replenishment_inventory_review_line_exp_nocons(osv.osv):
+    _name = 'replenishment.inventory.review.line.exp.nocons'
+    _description = 'Exp by month / instance'
+    _rec_name = 'instance_id'
+    _order = 'id'
+
+    _columns = {
+        'review_line_id': fields.many2one('replenishment.inventory.review.line', 'Review Line', required=1, select=1, ondelete='cascade'),
+        'instance_id': fields.many2one('msf.instance', 'Instance'),
+        'exp_qty': fields.float_null('Exp'),
+        'batch_number': fields.char('BN', size=256),
+        'life_date': fields.date('ED'),
+        'stock_qty': fields.float_null('Stock Qty'),
+    }
+replenishment_inventory_review_line_exp_nocons()
 
 class replenishment_inventory_review_line_exp(osv.osv):
     _name = 'replenishment.inventory.review.line.exp'

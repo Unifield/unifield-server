@@ -650,14 +650,24 @@
                             <field name="external_lt" />
                             <field name="total_lt" />
                             <field name="order_coverage" />
-                            <field name="pas_ids">
+                            <field name="rule"  invisible="1"/>
+                            <field name="pas_ids" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
                                 <tree>
                                     <field name="date" />
                                     <field name="rr_fmc" />
                                     <field name="projected" />
                                 </tree>
                             </field>
-                            <field name="detail_ids" context="{'review_line_id': active_id}" nolabel="1" colspan="4"/>
+                            <field name="detail_ids" context="{'review_line_id': active_id}" nolabel="1" colspan="4" attrs="{'invisible': [('rule', '!=', 'cycle')]}"/>
+                            <field name="detail_exp_nocons" nolabel="1" colspan="4" attrs="{'invisible': [('rule', '=', 'cycle')]}">
+                                <tree string="Exp before ETA">
+                                    <field name="instance_id" />
+                                    <field name="stock_qty" />
+                                    <field name="batch_number" />
+                                    <field name="life_date" />
+                                    <field name="exp_qty" />
+                                </tree>
+                            </field>
                         </form>
                     </field>
                     <field name="state" />
