@@ -232,6 +232,7 @@ class replenishment_location_config(osv.osv):
                 if review.state == 'complete' or review.scheduler_date != config.next_scheduler:
                     review_obj.unlink(cr, uid, review_ids, context=context)
                     review_id = False
+                    segment_ids = segment_obj.search(cr, uid, [('location_config_id', '=', config.id), ('state', '=', 'complete')], context=context)
                 else:
                     review_id = review_ids[0]
 
