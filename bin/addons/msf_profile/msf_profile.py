@@ -66,10 +66,10 @@ class patch_scripts(osv.osv):
                 try:
                     rec_number = eval(update[1])
                 except:
-                    # TODO log something
-                    pass
+                    self._logger.warn('Unable to parse values, sdref: %s' % update[0])
+
                 if rec_number:
-                    trigger_obj.create(cr, uid, {'name': 'trigger_rec', 'destination': update[2] , 'args': rec_number})
+                    trigger_obj.create(cr, uid, {'name': 'trigger_rec', 'destination': update[2] , 'args': rec_number[0]})
 
         return True
 
