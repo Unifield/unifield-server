@@ -507,7 +507,7 @@ class one2many(_column):
             res[id] = []
 
 
-        if self._obj in ['replenishment.segment.line', 'replenishment.order_calc.line']:
+        if self._obj in ['replenishment.segment.line', 'replenishment.order_calc.line', 'replenishment.inventory.review.line']:
             for _id in ids:
                 res[_id] = obj.pool.get(self._obj).search(cr, user, self._domain + [(self._fields_id, '=', _id)], limit=self._limit, context=context)
         else:

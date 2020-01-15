@@ -1784,6 +1784,8 @@ class replenishment_inventory_review_line(osv.osv):
     _name = 'replenishment.inventory.review.line'
     _description = 'Inventory Review Line'
     _rec_name = 'product_id'
+    _order = 'product_id, review_id'
+
     _columns = {
         'review_id': fields.many2one('replenishment.inventory.review', 'Review', required=1, select=1, ondelete='cascade'), # OC
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1), # OC

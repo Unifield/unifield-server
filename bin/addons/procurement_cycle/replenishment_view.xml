@@ -481,7 +481,7 @@
                         <button name="import_lines" string="Import Lines" type="object" colspan="2" icon="gtk-save" />
                     </group>
                     <field name="order_calc_line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" default_get="rule=rule">
-                        <tree editable="top" editable_style="new" colors="orange:status=='new';red:expired_qty_before_cons or (status!='new' and qty_lacking)">
+                        <tree editable="top" editable_style="new" colors="orange:status=='new';red:expired_qty_before_cons or (status!='new' and qty_lacking)" hide_new_button="1">
                             <field name="product_id" />
                             <field name="product_description" displayon="noteditable"/>
                             <field name="uom_id" invisible="1" />
