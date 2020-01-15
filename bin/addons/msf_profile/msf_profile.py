@@ -69,7 +69,7 @@ class patch_scripts(osv.osv):
                     self._logger.warn('Unable to parse values, sdref: %s' % update[0])
 
                 if rec_number:
-                    trigger_obj.create(cr, uid, {'name': 'trigger_rec', 'destination': update[2] , 'args': rec_number[0]})
+                    trigger_obj.create(cr, uid, {'name': 'trigger_rec', 'destination': update[2] , 'args': rec_number[0], 'local': True})
 
         return True
 
@@ -3572,18 +3572,26 @@ class sync_tigger_something_target(osv.osv):
         'name': fields.char('Name', size=256, select=1),
         'destination': fields.char('Destination', size=256, select=1),
         'args': fields.text('Args', select=1),
+        'local': fields.boolean('Generated on the instance'),
     }
 
+    _defaults = {
+        'local': False,
+    }
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
         if context.get('sync_update_execution') and vals.get('name') == 'trigger_rec':
-            rec_obj = self.pool.get('account.move.reconcile')
-            if not self.search(cr, uid, [('name', '=', 'trigger_rec'), ('args', '=', vals['args'])], context=context):
-                rec_ids = rec_obj.search(cr, uid, [('name', '=', vals['args'])], context=context)
-                if rec_ids:
-                    cr.execute('''update account_move_reconcile set action_date=create_date where id in %s''', (tuple(rec_ids),))
-                    cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''name'']' where model='account.move.reconcile' and res_id in %s ''', (tuple(rec_ids),))
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+            if current_instance.instance == vals.get('destination'):
+                # coordo retrieves updates targeted to project
+                rec_obj = self.pool.get('account.move.reconcile')
+                # check if this rec num was already requested by an instance
+                if not self.search(cr, uid, [('name', '=', 'trigger_rec'), ('args', '=', vals['args']), ('local', '=', False)], context=context):
+                    rec_ids = rec_obj.search(cr, uid, [('name', '=', vals['args'])], context=context)
+                    if rec_ids:
+                        cr.execute('''update account_move_reconcile set action_date=create_date where id in %s''', (tuple(rec_ids),))
+                        cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''name'']' where model='account.move.reconcile' and res_id in %s ''', (tuple(rec_ids),))
 
         return super(sync_tigger_something_target, self).create(cr, uid, vals, context)
 
