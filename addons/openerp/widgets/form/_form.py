@@ -411,10 +411,14 @@ class Integer(TinyInputWidget):
 
     def __init__(self, **attrs):
         super(Integer, self).__init__(**attrs)
+        self.with_null = attrs.get('with_null')
         self.validator = validators.Int()
 
     def set_value(self, value):
-        self.default = value or 0
+        if self.with_null and (value is False or value is None):
+            self.default = ''
+        else:
+            self.default = value or 0
 
 register_widget(Integer, ["integer"])
 

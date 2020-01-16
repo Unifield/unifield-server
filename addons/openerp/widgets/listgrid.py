@@ -701,12 +701,18 @@ class FloatTime(Char):
 
 class Int(Char):
 
+    def __init__(self, **attrs):
+        self.with_null = attrs.get('with_null')
+        super(Char, self).__init__( **attrs)
+
     def get_text(self):
         if self.value:
             if isinstance(self.value, (unicode, str)):
                 return ast.literal_eval(self.value)
             return int(self.value)
 
+        elif self.with_null and (self.value is False or self.value is None):
+            return ''
         return 0
 
 class ProgressBar(Char):
