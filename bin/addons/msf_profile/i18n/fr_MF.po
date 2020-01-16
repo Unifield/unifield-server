@@ -104588,7 +104588,7 @@ msgstr "Code - Raison"
 #: view:shipment:0
 #: code:addons/msf_outgoing/msf_outgoing.py:308
 msgid "Shipment List"
-msgstr "Expédition"
+msgstr "Liste d'Expédition"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/ppl_processor.py:229
