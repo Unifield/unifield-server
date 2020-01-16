@@ -24454,6 +24454,8 @@ msgstr "Champ Enfant"
 #: code:addons/msf_outgoing/wizard/shipment.py:229
 #: view:return.shipment.processor:0
 #: selection:shipment.add.pack.processor,step:0
+#: code:addons/msf_outgoing/wizard/return_shipment_processor.py:152
+#: code:addons/msf_outgoing/wizard/return_shipment_processor.py:183
 #, python-format
 msgid "Return Packs"
 msgstr "Renvoyer les colis"
@@ -45278,8 +45280,6 @@ msgstr "Traiter les substitutions"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:677
 #: code:addons/msf_outgoing/msf_outgoing.py:1477
-#: code:addons/msf_outgoing/wizard/return_shipment_processor.py:152
-#: code:addons/msf_outgoing/wizard/return_shipment_processor.py:183
 #: view:shipment:0
 #, python-format
 msgid "Create Shipment"
