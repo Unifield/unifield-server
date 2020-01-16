@@ -339,7 +339,7 @@
                     <field name="state" />
                     <field name="has_inprogress_cal" invisible="1" />
                     <group colspan="2">
-                        <button name="trigger_compute" string="Compute Data" type="object" icon="gtk-remove" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}" force_editable="1"/>
+                        <button name="trigger_compute_segment_data" string="Compute Data" type="object" icon="gtk-remove" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}" force_editable="1"/>
                         <button name="completed" string="Completed" type="object" icon="terp-check" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                         <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', 'not in', ['complete', 'archived', 'cancel'])]}" icon="gtk-go-back" />
                         <button name="generate_order_calc" string="Generate Order Calc" type="object" icon="gtk-convert" attrs="{'invisible': [('state', '!=', 'complete')]}"/>
@@ -486,11 +486,11 @@
                     </group>
                     <field name="order_calc_line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" default_get="rule=rule">
                         <tree editable="top" editable_style="new" colors="orange:status=='new';red:expired_qty_before_cons or (status!='new' and qty_lacking)" hide_new_button="1">
-                            <field name="product_id" />
-                            <field name="product_description" displayon="noteditable"/>
+                            <field name="product_id" filter_selector="1" />
+                            <field name="product_description" displayon="noteditable" filter_selector="1" />
                             <field name="uom_id" invisible="1" />
                             <field name="status" invisible="1" />
-                            <field name="in_main_list" />
+                            <field name="in_main_list" filter_selector="1" />
                             <field name="valid_rr_fmc" invisible="context.get('rule')!='cycle'"/>
                             <field name="real_stock" />
                             <field name="pipeline_qty" />

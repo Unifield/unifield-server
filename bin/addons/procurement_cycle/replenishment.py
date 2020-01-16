@@ -277,7 +277,7 @@ class replenishment_location_config(osv.osv):
             error = []
             for segment in segments:
                 try:
-                    segment_obj.generate_data(cr, uid, [segment.id], review_id=review_id, context=context, review_date=config.next_scheduler, coeff=dwm_coeff.get(config.time_unit,1))
+                    segment_obj.generate_order_cacl_inv_data(cr, uid, [segment.id], review_id=review_id, context=context, review_date=config.next_scheduler, coeff=dwm_coeff.get(config.time_unit,1))
                     logger.info('Inventory Review for config %s, segment %s ok' % (config.name, segment.name_seg))
                     cr.commit()
                 except osv.except_osv, o:
@@ -458,7 +458,7 @@ class replenishment_segment(osv.osv):
         cr = pooler.get_db(dbname).cursor()
         logger.info("Start RR computation")
         try:
-            self.pool.get('replenishment.segment.line.amc').generate_all_amc(cr, uid, context=context)
+            self.pool.get('replenishment.segment.line.amc').generate_segment_data(cr, uid, context=context)
             logger.info("RR computation done")
             cr.commit()
 
@@ -474,13 +474,13 @@ class replenishment_segment(osv.osv):
         finally:
             cr.close(True)
 
-    def trigger_compute(self, cr, uid, ids, context):
-        return self.pool.get('replenishment.segment.line.amc').generate_all_amc(cr, uid, context=context, seg_ids=ids)
+    def trigger_compute_segment_data(self, cr, uid, ids, context):
+        return self.pool.get('replenishment.segment.line.amc').generate_segment_data(cr, uid, context=context, seg_ids=ids)
 
     def generate_order_calc(self, cr, uid, ids, context=None):
-        return self.generate_data(cr, uid, ids, context=context)
+        return self.generate_order_cacl_inv_data(cr, uid, ids, context=context)
 
-    def generate_data(self, cr, uid, ids, review_id=False, context=None, review_date=False, coeff=1):
+    def generate_order_cacl_inv_data(self, cr, uid, ids, review_id=False, context=None, review_date=False, coeff=1):
         if context is None:
             context = {}
 
@@ -1376,7 +1376,7 @@ class replenishment_segment_line_amc(osv.osv):
     _defaults = {
         'open_loan': False
     }
-    def generate_all_amc(self, cr, uid, context=None, seg_ids=False):
+    def generate_segment_data(self, cr, uid, context=None, seg_ids=False):
         segment_obj = self.pool.get('replenishment.segment')
         prod_obj = self.pool.get('product.product')
         last_gen_obj = self.pool.get('replenishment.segment.date.generation')
