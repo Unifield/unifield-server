@@ -21,6 +21,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 from time import strftime
 import decimal_precision as dp
 from base import currency_date
@@ -330,6 +331,7 @@ class cost_center_distribution_line(osv.osv):
 
 cost_center_distribution_line()
 
+
 class funding_pool_distribution_line(osv.osv):
     _name = "funding.pool.distribution.line"
     _inherit = "distribution.line"
@@ -338,7 +340,30 @@ class funding_pool_distribution_line(osv.osv):
         "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True, ondelete='restrict'),
     }
 
+    def _check_fp(self, cr, uid, ids, context=None):
+        """
+        Raises an error if no Funding Pool is linked to the FP distrib line(s)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for distrib_line in self.browse(cr, uid, ids, fields_to_fetch=['analytic_id'], context=context):
+            if not distrib_line.analytic_id:
+                raise osv.except_osv(_('Error'), _('Funding Pool not found.'))
+
+    def create(self, cr, uid, vals, context=None):
+        distrib_line_id = super(funding_pool_distribution_line, self).create(cr, uid, vals, context=context)
+        self._check_fp(cr, uid, distrib_line_id, context=context)
+        return distrib_line_id
+
+    def write(self, cr, uid, ids, vals, context=None):
+        res = super(funding_pool_distribution_line, self).write(cr, uid, ids, vals, context=context)
+        self._check_fp(cr, uid, ids, context=context)
+        return res
+
 funding_pool_distribution_line()
+
 
 class free_1_distribution_line(osv.osv):
     _name = "free.1.distribution.line"

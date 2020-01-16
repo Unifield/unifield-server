@@ -52,7 +52,80 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF15.1
+    def us_6930_gen_unreconcile(self, cr, uid, *a, **b):
+        # generate updates to delete reconcile done after UF15.0
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:
+            unrec_obj = self.pool.get('account.move.unreconcile')
+            cr.execute('''
+                select d.name from ir_model_data d
+                left join
+                    account_move_reconcile rec on d.model='account.move.reconcile' and d.res_id = rec.id
+                where d.model='account.move.reconcile' and rec.id is null and touched like '%action_date%'
+            ''')
+            for sdref_rec in cr.fetchall():
+                unrec_obj.create(cr, uid, {'reconcile_sdref': sdref_rec[0]})
+        return True
+
+    def us_6905_manage_bned_switch(self, cr, uid, *a, **b):
+        fake_ed = '2999-12-31'
+        fake_bn = 'TO-BE-REPLACED'
+
+        lot_obj = self.pool.get('stock.production.lot')
+
+        # old move with BN or ED if product is no_bn no_ed
+        # set no on bn or en moves
+        cr.execute('''
+            update stock_move set prodlot_id=NULL, expired_date=NULL, hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', old_lot_info=(select name||'#'||life_date from stock_production_lot where id=stock_move.prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where id in
+                (select m.id from stock_move m, product_product p where p.id = m.product_id and p.perishable='f' and p.batch_management='f' and m.prodlot_id is not null and m.state in ('done', 'cancel'))
+        ''')
+        self._logger.warn('%d done/cancel moves set from ED or BN to no' % (cr.rowcount, ))
+
+
+        # set bn on no moves
+        cr.execute('''select distinct(product_id) from stock_move m, product_product p where p.id = m.product_id and p.perishable='t' and p.batch_management='t' and m.prodlot_id is null and m.state = 'done' and m.product_qty!=0 and m.location_dest_id != m.location_id''')
+        self._logger.warn('%d done/cancel moves set from NO to BN' % (cr.rowcount, ))
+        for prod_id in cr.fetchall():
+            batch_id = lot_obj._get_or_create_lot(cr, uid, name=fake_bn, expiry_date=fake_ed, product_id=prod_id)
+            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s, old_lot_info='US-6905 BN set'||E'\n'||COALESCE(old_lot_info, '') where product_id=%s and prodlot_id is null and state = 'done' and product_qty!=0 and location_dest_id != location_id", (batch_id, fake_ed, prod_id))
+
+        # set ed on no moves
+        cr.execute('''select distinct(product_id) from stock_move m, product_product p where p.id = m.product_id and p.perishable='t' and p.batch_management='f' and m.prodlot_id is null and m.state = 'done' and m.product_qty!=0 and m.location_dest_id != m.location_id''')
+        self._logger.warn('%d done/cancel moves set from NO to ED' % (cr.rowcount, ))
+        for prod_id in cr.fetchall():
+            batch_id = lot_obj._get_or_create_lot(cr, uid, name=False, expiry_date=fake_ed, product_id=prod_id)
+            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s, old_lot_info='US-6905 EN set'||E'\n'||COALESCE(old_lot_info, '') where product_id=%s and prodlot_id is null and state = 'done' and product_qty!=0 and location_dest_id != location_id", (batch_id, fake_ed, prod_id))
+
+        # set ed on bn moves
+        cr.execute("update stock_production_lot set name='MSFBN/'||name, type='internal' where id in (select lot.id from stock_production_lot lot, product_product p where p.id = lot.product_id and type='standard' and p.perishable='t' and p.batch_management='f') returning name")
+        for lot in cr.fetchall():
+            self._logger.warn('BN %s from standard to internal' % (lot[0], ))
+
+        # set bn on ed moves
+        cr.execute("update stock_production_lot set type='standard', name='S'||name where id in (select lot.id from stock_production_lot lot, product_product p where p.id = lot.product_id and type='internal' and p.perishable='t' and p.batch_management='t') returning name")
+        for lot in cr.fetchall():
+            self._logger.warn('BN %s from internal to standard' % (lot[0], ))
+
+        return True
+
     # UF15.0
+    def us_6768_trigger_FP_sync(self, cr, uid, *a, **b):
+        """
+        Triggers a synch. on the FP CD1-KNDAK_ in OCBCD100, to trigger its re-recreation in the projects
+        """
+        user_obj = self.pool.get('res.users')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance and current_instance.code == 'OCBCD100':
+            cr.execute("""
+                UPDATE ir_model_data 
+                SET touched ='[''code'']', last_modification = NOW()
+                WHERE module='sd' 
+                AND model='account.analytic.account' 
+                AND name = '3beb0a5e-5a6b-11e8-a0e4-1c4d70b8cca6/account_analytic_account/444';                
+            """)
+        return True
+
     def uf15_fields_moved(self, cr, uid, *a, **b):
         if _get_instance_level(self, cr, uid) == 'hq':
             # touch BAR and ACL for fields moved from one module to another (i.e sdref renamed)
