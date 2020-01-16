@@ -16194,7 +16194,7 @@ msgstr "Link between INT and IN"
 #. module: msf_doc_import
 #: field:wizard.import.in.pack.simulation.screen,parcel_qty:0
 msgid "Parcel Qty"
-msgstr "Qté Parcelle"
+msgstr "Qté Du Colis"
 
 #. modules: procurement_auto, procurement_cycle
 #: help:stock.warehouse.automatic.supply,frequence_name:0
@@ -26604,7 +26604,7 @@ msgstr "No available IN found for the given PO %s"
 #: report:labels:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:419
 msgid "Parcel No:"
-msgstr "No. Parcelle:"
+msgstr "No. du Colis:"
 
 #. module: object_query
 #: view:object.query:0
@@ -30311,7 +30311,7 @@ msgstr "Il n'y a pas de compte de charge définit pour ce produit : \"%s\" (id. 
 #: report:packing.list:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:420
 msgid "Parcel"
-msgstr "Parcelle"
+msgstr "Colis"
 
 #. modules: return_claim, stock, kit
 #: view:substitute:0
@@ -39427,7 +39427,7 @@ msgstr "claim.product.line"
 #. module: msf_doc_import
 #: field:wizard.import.in.pack.simulation.screen,parcel_from:0
 msgid "Parcel From"
-msgstr "De Parcelle"
+msgstr "Du Colis"
 
 #. module: account
 #: code:addons/account/account.py:672
@@ -58330,7 +58330,7 @@ msgstr "Asie/Séoul"
 #. module: msf_doc_import
 #: field:wizard.import.in.pack.simulation.screen,parcel_to:0
 msgid "Parcel To"
-msgstr "À Parcelle"
+msgstr "À Colis"
 
 #. module: export_import_lang
 #: code:addons/export_import_lang/data_import.py:123
@@ -85430,7 +85430,7 @@ msgstr "America/Ojinaga"
 #. module: msf_outgoing
 #: field:ppl.customize.label,packing_parcel_number:0
 msgid "Packing Parcel Number"
-msgstr "Colisage - Numéro de Parcelle"
+msgstr "Colisage - Numéro du Colis"
 
 #. module: account
 #: selection:account.journal.column,field:0
@@ -104740,7 +104740,7 @@ msgstr "Assistant pour vérifier la cohérence de la LPC "
 #. module: msf_outgoing
 #: model:ir.model,name:msf_outgoing.model_ppl_set_pack_on_lines
 msgid "Wizard to set from/to pack on lines"
-msgstr "Assistant pour définir de parcel à parcel sur les lignes"
+msgstr "Assistant pour définir de colis à colis sur les lignes"
 
 #. module: kit
 #: code:addons/kit/kit_creation.py:1238
@@ -106581,3 +106581,13 @@ msgstr "MàJ en Masse de Produits NL/EXP"
 msgid "Funding Pool not found."
 msgstr "Funding Pool non trouvé."
 
+#. module: msf_outgoing
+#: model:ir.actions.act_window,name:msf_outgoing.action_picking_ticket
+#: view:stock.picking:0
+msgid "Picking Lists & Picking Tickets"
+msgstr "Listes de Picking & Bons de Picking"
+
+#. module: msf_outgoing
+#: model:ir.actions.act_window,name:msf_outgoing.action_shipment
+msgid "Shipment Lists & Shipments"
+msgstr "Listes d'Expédition & Expéditions"
