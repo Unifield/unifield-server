@@ -3218,7 +3218,9 @@ class orm(orm_template):
                                 ('timestamp', 'date', 'date', '::date'),
                                 ('numeric', 'float', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                                 ('float8', 'float', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
+                                ('int4', 'integer_big', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                             ]
+
                             if f_pg_type == 'varchar' and f._type == 'char' and f_pg_size < f.size:
                                 cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO temp_change_size' % (self._table, k))  # not_a_user_entry
                                 cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" VARCHAR(%d)' % (self._table, k, f.size))  # not_a_user_entry
