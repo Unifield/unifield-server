@@ -49,12 +49,13 @@
             <field name="model">replenishment.location.config</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Location Configuration">
+                <tree string="Location Configuration" colors="red:not review_active">
                     <field name="name" />
                     <field name="description" />
                     <field name="synched" />
                     <field name="main_instance" />
                     <field name="active" />
+                    <field name="review_active" />
                 </tree>
             </field>
         </record>
@@ -65,10 +66,14 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Location Configuration">
+                    <filter name="active" string="Active" domain="[('active', '=', True)]" icon="terp-check" />
+                    <filter name="inactive" string="Inactive" domain="[('active', '=', False)]" icon="gtk-dialog-error"/>
+                    <separator orientation="vertical"/>
                     <field name="name" />
                     <field name="description" />
                     <field name="synched" />
                     <field name="main_instance" />
+                    <field name="review_active" />
                 </search>
             </field>
         </record>
@@ -485,7 +490,7 @@
                         <button name="import_lines" string="Import Lines" type="object" colspan="2" icon="gtk-save" />
                     </group>
                     <field name="order_calc_line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" default_get="rule=rule">
-                        <tree editable="top" editable_style="new" colors="orange:status=='new';red:expired_qty_before_cons or (status!='new' and qty_lacking)" hide_new_button="1">
+                        <tree editable="top" editable_style="new" colors="orange:status=='new';red:expired_qty_before_cons or (status!='new' and qty_lacking)" hide_new_button="0">
                             <field name="product_id" filter_selector="1" />
                             <field name="product_description" displayon="noteditable" filter_selector="1" />
                             <field name="uom_id" invisible="1" />
@@ -525,7 +530,7 @@
             <field name="model">replenishment.order_calc</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Order Calculation" hide_new_button="1" hide_delete_button="1">
+                <tree string="Order Calculation" hide_new_button="1" hide_delete_button="1" colors="red: state in ('draft', 'validated') and next_generation_date &lt; current_date;grey: stat in ('closed', 'cancel')">
                     <field name="name" />
                     <field name="segment_id" />
                     <field name="description_seg" />
