@@ -162,11 +162,12 @@ class analytic_distribution(osv.osv):
         if distrib_br:
             if not posting_date:
                 posting_date = time.strftime('%Y-%m-%d')
+            # note: the browse is used to specify the date in context
             for cline in cc_distrib_line_obj.browse(cr, uid, [ccl.id for ccl in distrib_br.cost_center_lines],
                                                     fields_to_fetch=['analytic_id', 'destination_id'], context={'date': posting_date}):
-                if not cline.analytic_id.filter_active:
+                if cline.analytic_id and not cline.analytic_id.filter_active:
                     raise osv.except_osv(_('Error'), _('Cost center account %s is not active at this date: %s') %
-                                         (cline.analytic_id and cline.analytic_id.code or '', posting_date))
+                                         (cline.analytic_id.code or '', posting_date))
                 if not cline.destination_id.filter_active:
                     raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') %
                                          (cline.destination_id.code or '', posting_date))
