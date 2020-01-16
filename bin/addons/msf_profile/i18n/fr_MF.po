@@ -8785,7 +8785,7 @@ msgstr "Finlande"
 #. module: sale
 #: report:msf.freight_manifest:0
 msgid "Parcels Missing :"
-msgstr "Parcelles manquantes :"
+msgstr "Colis manquants :"
 
 #. modules: procurement, base, sale
 #: view:res.request:0
@@ -14424,7 +14424,7 @@ msgstr "America/Martinique"
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:67
 #, python-format
 msgid "Qty of parcels*"
-msgstr "Qté de cartons*"
+msgstr "Qté de colis*"
 
 #. module: product_manufacturer
 #: view:product.manufacturer.attribute:0
@@ -15445,7 +15445,7 @@ msgstr "Le prix du produit a changé"
 #. module: msf_outgoing
 #: report:packing.list:0
 msgid "Qty of parcels:"
-msgstr "Qté de cartons:"
+msgstr "Qté de colis:"
 
 #. module: stock
 #: model:ir.model,name:stock.model_physical_inventory_generate_counting_sheet
@@ -28605,7 +28605,7 @@ msgstr "Futur"
 #. module: sale
 #: report:msf.freight_manifest:0
 msgid "Parcels damaged :"
-msgstr "Parcelles endommagées :"
+msgstr "Colis endommagées :"
 
 #. module: base
 #: view:res.lang:0
@@ -55777,7 +55777,7 @@ msgstr "Instances du Flux d'Information"
 #. module: sale
 #: report:msf.freight_manifest:0
 msgid "Parcels"
-msgstr "Parcelles"
+msgstr "Colis"
 
 #. module: msf_doc_import
 #: help:composition.kit,file_to_import:0
@@ -98501,7 +98501,7 @@ msgstr "Société avec laquelle l'utilisateur sera connecté"
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
 msgid "Number of parcels:"
-msgstr "Nombre de cartons:"
+msgstr "Nombre de colis:"
 
 #. module: sale
 #: view:board.board:0
@@ -104395,30 +104395,30 @@ msgstr "Msg lu par l'utilisateur"
 #. module: msf_outgoing
 #: field:shipment.additionalitems,nb_parcels:0
 msgid "Nb Parcels"
-msgstr "Nb Parcelles"
+msgstr "Nb de Colis"
 
 #. module: msf_outgoing
 #: view:shipment:0
 msgid "Nb Parcels\\nTo Ship"
-msgstr "Nb Parcelles\\nÀ prélever"
+msgstr "Nb de\\nColis À prélever"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:554
 #, python-format
 msgid "Nb to Ship (%s) can't be larger than Nb Parcels (%s) %s - %s"
-msgstr "Nb à prélever (%s) ne peut être plus grand que le Nb. Parcelles (%s) %s - %s"
+msgstr "Nb à prélever (%s) ne peut être plus grand que le Nb. de Colis (%s) %s - %s"
 
 #. module: msf_outgoing
 #: field:pack.family.memory,num_of_packs:0
 #: field:shipment.add.pack.processor.line,num_of_packs:0
 msgid "Nb. Parcels"
-msgstr "Nb. Parcelles"
+msgstr "Nb. de Colis"
 
 #. module: msf_outgoing
 #: field:pack.family.memory,selected_number:0
 #: field:stock.move,selected_number:0
 msgid "Nb. Parcels to Ship"
-msgstr "Nb Parcelles à prélever"
+msgstr "Nb de Colis à prélever"
 
 #. module: stock_override
 #: view:change.dest.location:0
@@ -104530,7 +104530,7 @@ msgstr "Veuillez sélectionner au moins une ligne."
 #: code:addons/msf_outgoing/msf_outgoing.py:750
 #, python-format
 msgid "Please set \"Nb Parcels To Ship\" to create a Shipment."
-msgstr "Veuillez définir \"Nb parcelles\"  pour créer une Expédition."
+msgstr "Veuillez définir \"Nb de Colis\"  pour créer une Expédition."
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:3334
