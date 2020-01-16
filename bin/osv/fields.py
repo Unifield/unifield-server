@@ -219,6 +219,14 @@ class float_null(float):
     _symbol_set = (_symbol_c, _symbol_f)
     _symbol_get = lambda self,x: None if x is False or x is None else x or 0.0
 
+class integer_null(integer):
+    _type = 'integer'
+    _symbol_c = '%s'
+    _with_null = True
+    _symbol_f = lambda x: None if x is False or x is None else int(x or 0)
+    _symbol_set = (_symbol_c, _symbol_f)
+    _symbol_get = lambda self,x: None if x is False or x is None else x or 0
+
 
 class date(_column):
     _type = 'date'
