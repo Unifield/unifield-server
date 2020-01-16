@@ -207,7 +207,7 @@
                             <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
                             <field name="incoming_id" readonly="True" />
                         </group>
-                        <group colspan="6" col="6">
+                        <group colspan="6" col="2">
                             <button name="export_pick" type="object" string="Export PICK" icon="gtk-execute" colspan="2"/>
                             <button name="import_pick" type="object" string="Import PICK" icon="gtk-execute" colspan="2" attrs="{'invisible': [('state', 'not in', ['draft', 'assigned'])]}" />
                         </group>
@@ -673,8 +673,9 @@
                             <field name='ppl_customize_label' required="True" />
                             <field name="description_ppl"  />
                         </group>
-                        <group name="import" string=" Update Packing with import " colspan="6" attrs="{'invisible': [('state', '!=', 'assigned')]}">
-                            <button name="wizard_update_ppl_to_create_ship" string="Update Packing with import" icon="gtk-dnd" type="object"/>
+                        <group colspan="6" col="2">
+                            <button name="export_ppl" string="Export Packing" icon="gtk-execute" type="object"/>
+                            <button name="wizard_update_ppl_to_create_ship" string="Import Packing" icon="gtk-execute" type="object" attrs="{'invisible': [('state', '!=', 'assigned')]}"/>
                         </group>
 
                     </group>
