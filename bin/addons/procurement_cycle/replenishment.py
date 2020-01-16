@@ -2098,3 +2098,20 @@ class replenishment_product_list(osv.osv):
     }
 
 replenishment_product_list()
+
+class wizard_export_replenishment_product_list(osv.osv_memory):
+    _name ="wizard.export.replenishment.product.list"
+
+    _columns = {
+        'list_id': fields.many2one('product.list', 'Product List', required=1),
+    }
+
+    def create_report(self, cr, uid, ids, context=None):
+        rec = self.browse(cr, uid, ids, context=context)
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'report_replenishment_product_list',
+            'datas': {'context': context, 'list_id': rec[0].list_id.id}
+        }
+
+wizard_export_replenishment_product_list()

@@ -38,6 +38,16 @@
             report_type="webkit"
             menu="True"
             />
+
+      <report
+            id="report_replenishment_product_list"
+            string="Replenishment Product List"
+            model="replenishment.product.list"
+            name="report_replenishment_product_list"
+            file="procurement_cycle/report/replenishment_product_list.mako"
+            report_type="webkit"
+            menu="False"
+            />
     </data>
 </openerp>
 

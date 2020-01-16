@@ -46,6 +46,7 @@
         'replenishment_data.xml',
         'replenishment_view.xml',
         'replenishment_report.xml',
+        'replenishment_wizard.xml',
     ],
     'demo_xml': [
     ],
