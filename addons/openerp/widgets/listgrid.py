@@ -703,7 +703,7 @@ class Int(Char):
 
     def __init__(self, **attrs):
         self.with_null = attrs.get('with_null')
-        super(Char, self).__init__( **attrs)
+        super(Int, self).__init__( **attrs)
 
     def get_text(self):
         if self.value:
