@@ -176,7 +176,7 @@
             <field name="model">replenishment.segment</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Segment" hide_duplicate_button="1" noteditable="not is_current_instance">
+                <form string="Segment" hide_duplicate_button="1" hide_delete_button="1" noteditable="not is_current_instance">
                     <field name="safety_and_buffer_warn" invisible="1" />
                     <field name="active" invisible="1" readonly="1" />
                     <field name="review_active" invisible="1" readonly="1" />
@@ -364,7 +364,7 @@
             <field name="model">replenishment.segment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Segment">
+                <tree string="Segment" hide_delete_button="1">
                     <field name="name_seg" />
                     <field name="description_seg" />
                     <field name="line_ids" />
