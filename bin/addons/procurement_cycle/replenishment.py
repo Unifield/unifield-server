@@ -726,8 +726,11 @@ class replenishment_segment(osv.osv):
                 elif seg.rule == 'minmax':
                     proposed_order_qty = max(0, line.max_qty - sum_line.get(line.id, {}).get('real_stock') + sum_line.get(line.id, {}).get('reserved_stock_qty') + prod_eta.get(line.product_id.id, 0) - line.pipeline_before_rdd)
 
-                    if line.status != 'new' and sum_line.get(line.id, {}).get('expired_qty_before_eta') and sum_line.get(line.id, {}).get('real_stock') - sum_line.get(line.id, {}).get('expired_qty_before_eta') <= line.min_qty:
-                        warnings.append(_('Alert: "inventory – batches expiring before ETA <= Min"'))
+                    if line.status != 'new' and sum_line.get(line.id, {}).get('real_stock') - sum_line.get(line.id, {}).get('expired_qty_before_eta') <= line.min_qty:
+                        if sum_line.get(line.id, {}).get('expired_qty_before_eta'):
+                            warnings.append(_('Alert: "inventory – batches expiring before ETA <= Min"'))
+                        else:
+                            warnings.append(_('Alert: "inventory <= Min"'))
                 else:
                     proposed_order_qty = line.auto_qty
 
