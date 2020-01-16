@@ -106,7 +106,7 @@
                     <field name="sleeping" required="1" />
                     <field name="time_unit" required="1" />
                     <group colspan="2">
-                        <button name="generate_inventory_review" string="Generate Inventory Review" type="object" icon="gtk-remove" />
+                        <button name="force_generate_inventory_review" string="Generate Inventory Review" type="object" icon="gtk-remove" />
                         <button name="inventory_review" string="Display Inventory Review" type="object" icon="gtk-indent" />
                     </group>
 

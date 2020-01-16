@@ -222,15 +222,26 @@ class replenishment_location_config(osv.osv):
         return res
 
 
+    def force_generate_inventory_review(self, cr, uid, ids, context=None):
+        return self.generate_inventory_review(cr, uid, ids, context=context, forced=True)
 
-    def generate_inventory_review(self, cr, uid, ids, context=None):
+    def generate_inventory_review(self, cr, uid, ids, context=None, forced=False):
         logger = logging.getLogger('RR Inv. Review')
         segment_obj = self.pool.get('replenishment.segment')
         review_obj = self.pool.get('replenishment.inventory.review')
         now = datetime.now()
+
+        dwm_coeff = {
+            'd': 30.44,
+            'w': 4.35,
+            'm': 1,
+        }
         for config in self.browse(cr, uid, ids, context=context):
             logger.info('Try to gen inv. review on %s' % config.name)
-            segment_ids = segment_obj.search(cr, uid, [('location_config_id', '=', config.id), ('state', '=', 'complete'), '|', ('last_review_date', '!=', config.next_scheduler), ('last_review_date', '=', False)], context=context)
+            seg_dom = [('location_config_id', '=', config.id), ('state', '=', 'complete')]
+            if not forced:
+                seg_dom += ['|', ('last_review_date', '!=', config.next_scheduler), ('last_review_date', '=', False)]
+            segment_ids = segment_obj.search(cr, uid, seg_dom, context=context)
             if not segment_ids:
                 self.write(cr, uid, config.id, {'last_review_error': _('No Segment found')}, context=context)
                 continue
@@ -241,7 +252,7 @@ class replenishment_location_config(osv.osv):
             review_ids = review_obj.search(cr, uid, [('location_config_id', '=', config.id)], context=context)
             if review_ids:
                 review = review_obj.browse(cr, uid, review_ids[0], context=context)
-                if review.state == 'complete' or review.scheduler_date != config.next_scheduler:
+                if review.state == 'complete' or review.scheduler_date != config.next_scheduler or forced:
                     review_obj.unlink(cr, uid, review_ids, context=context)
                     review_id = False
                     segment_ids = segment_obj.search(cr, uid, [('location_config_id', '=', config.id), ('state', '=', 'complete')], context=context)
@@ -266,7 +277,7 @@ class replenishment_location_config(osv.osv):
             error = []
             for segment in segments:
                 try:
-                    segment_obj.generate_data(cr, uid, [segment.id], review_id=review_id, context=context, review_date=config.next_scheduler)
+                    segment_obj.generate_data(cr, uid, [segment.id], review_id=review_id, context=context, review_date=config.next_scheduler, coeff=dwm_coeff.get(config.time_unit,1))
                     logger.info('Inventory Review for config %s, segment %s ok' % (config.name, segment.name_seg))
                     cr.commit()
                 except osv.except_osv, o:
@@ -469,7 +480,7 @@ class replenishment_segment(osv.osv):
     def generate_order_calc(self, cr, uid, ids, context=None):
         return self.generate_data(cr, uid, ids, context=context)
 
-    def generate_data(self, cr, uid, ids, review_id=False, context=None, review_date=False):
+    def generate_data(self, cr, uid, ids, review_id=False, context=None, review_date=False, coeff=1):
         if context is None:
             context = {}
 
@@ -760,22 +771,22 @@ class replenishment_segment(osv.osv):
                         'rr_fmc_avg': total_month and total_fmc/total_month,
                         'rr_amc': line.rr_amc,
                         'total_expired_qty': sum_line.get(line.id, {}).get('total_expiry_nocons_qty', 0),
-                        'unit_of_supply_amc': line.rr_amc and (int(sum_line.get(line.id, {}).get('real_stock',0)) - int(sum_line.get(line.id, {}).get('expired_before_rdd',0))) / line.rr_amc,
-                        'unit_of_supply_fmc': month_of_supply,
+                        'unit_of_supply_amc': line.rr_amc and (int(sum_line.get(line.id, {}).get('real_stock',0)) - int(sum_line.get(line.id, {}).get('expired_before_rdd',0))) * coeff / line.rr_amc,
+                        'unit_of_supply_fmc': month_of_supply * coeff,
                         'date_preparing': seg.date_preparing,
                         'date_next_order_validated': seg.date_next_order_validated,
                         'date_next_order_rdd': seg.date_preparing and (datetime.strptime(seg.date_preparing, '%Y-%m-%d') + relativedelta(days=int(seg.external_lt))).strftime('%Y-%m-%d'),
                         'internal_lt': seg.internal_lt,
                         'external_lt': seg.external_lt,
                         'total_lt': seg.total_lt,
-                        'order_coverage': seg.order_coverage,
+                        'order_coverage': seg.order_coverage * coeff,
                         'primay_product_list': line.in_main_list and seg.product_list_id.name,
                         'rule': seg.rule,
                         'min_qty': line.min_qty,
                         'max_qty': line.max_qty,
                         'auto_qty': line.auto_qty,
                         'buffer_qty': line.buffer_qty,
-                        'safety_stock': seg.safety_stock,
+                        'safety_stock': seg.safety_stock * coeff,
                         'pas_ids': detailed_pas,
                         'segment_line_id': line.id,
                         'sleeping_qty': int(sum_line.get(line.id, {}).get('sleeping_qty',0)),
@@ -1847,7 +1858,7 @@ class replenishment_inventory_review_line(osv.osv):
         'max_qty': fields.float('Max Qty', related_uom='uom_id'), # Seg line
         'auto_qty': fields.float('Auto. Supply Qty', related_uom='uom_id'), # Seg line
         'buffer_qty': fields.float_null('Buffer Qty', related_uom='uom_id'), # Seg line
-        'safety_stock': fields.integer('Safety Stock (months)'), # Seg
+        'safety_stock': fields.integer('Safety Stock'), # Seg
         'segment_ref_name': fields.char('Segment Ref/Name', size=512), # Seg
         'rr_fmc_avg': fields.float_null('RR-FMC (average for period)'),
         'rr_amc': fields.float('RR-AMC'),
@@ -1870,10 +1881,10 @@ class replenishment_inventory_review_line(osv.osv):
         'date_preparing': fields.date('Start preparing the next order'), # Seg
         'date_next_order_validated': fields.date('Next order to be validated by'), # Seg
         'date_next_order_rdd': fields.date('RDD for next order'), # Seg
-        'internal_lt': fields.integer('Internal LT (days)'),
-        'external_lt': fields.integer('External LT (days)'),
-        'total_lt': fields.integer('Total LT (days)'),
-        'order_coverage': fields.integer('Order Coverage (months)'),
+        'internal_lt': fields.integer('Internal LT'),
+        'external_lt': fields.integer('External LT)'),
+        'total_lt': fields.integer('Total LT'),
+        'order_coverage': fields.integer('Order Coverage'),
         'pas_ids': fields.one2many('replenishment.inventory.review.line.pas', 'review_line_id', 'PAS by month'),
         'detail_ids': fields.one2many('replenishment.inventory.review.line.stock', 'review_line_id', 'Exp by month'),
         'detail_exp_nocons':  fields.one2many('replenishment.inventory.review.line.exp.nocons', 'review_line_id', 'Exp.'),

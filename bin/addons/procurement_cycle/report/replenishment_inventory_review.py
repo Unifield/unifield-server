@@ -9,7 +9,6 @@ from tools.translate import _
 
 class inventory_parser(report_sxw.rml_parse):
 
-    _
     def __init__(self, cr, uid, name, context):
         super(inventory_parser, self).__init__(cr, uid, name, context=context)
 

@@ -834,8 +834,8 @@
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Internal LT (days)')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('External LT (days)')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Total lead time')|x}</Data></Cell>
-    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Order coverage (days)')|x}</Data></Cell>
-    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('SS (days)')|x}</Data></Cell>
+    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Order coverage')|x} ${getSel(objects[0], 'time_unit')|x}</Data></Cell>
+    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('SS')|x} ${getSel(objects[0], 'time_unit')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Buffer (Qty)')|x}</Data></Cell>
     <Cell ss:StyleID="s129"><Data ss:Type="String">${_('Valid RR-FMC(s)')|x}</Data></Cell>
     <Cell ss:StyleID="s129"><Data ss:Type="String">${_('RR-FMC (average for period)')|x}</Data></Cell>
@@ -849,8 +849,8 @@
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Qty expiring within period')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Open Loan on product?')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Sleeping stock Qty')|x}</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Days/weeks/months of supply (RR-AMC)')|x}</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Days/weeks/months of supply (RR-FMC)')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${getSel(objects[0], 'time_unit')|x} ${_('of supply (RR-AMC)')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${getSel(objects[0], 'time_unit')|x} ${_('of supply (RR-FMC)')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Qty lacking before next ETA date')|x}</Data></Cell>
     <Cell ss:StyleID="s133"><Data ss:Type="String">${_('Qty lacking needed by')|x}</Data></Cell>
     <Cell ss:StyleID="s134"><Data ss:Type="String">${_('ETA date of next incoming delivery')|x}</Data></Cell>
