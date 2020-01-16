@@ -33071,6 +33071,8 @@ msgstr "La destination \"%s\" n'existe pas !"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:1017
 #: view:return.pack.shipment.processor:0
+#: code:addons/msf_outgoing/wizard/return_pack_shipment_processor.py:65
+#: code:addons/msf_outgoing/wizard/return_pack_shipment_processor.py:99
 #, python-format
 msgid "Return Packs from Shipment"
 msgstr "Renvoyer colis de la livraison"
@@ -86146,13 +86148,6 @@ msgstr "Affecter un assistant"
 #, python-format
 msgid "Too many import files in attachment for the same IN, only 1 import file prefixed with \"SHPM_\" is allowed"
 msgstr "Too many import files in attachment for the same IN, only 1 import file prefixed with \"SHPM_\" is allowed"
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/wizard/return_pack_shipment_processor.py:65
-#: code:addons/msf_outgoing/wizard/return_pack_shipment_processor.py:99
-#, python-format
-msgid "Returns Packs from Shipment"
-msgstr "Returns Packs from Shipment"
 
 #. module: msf_budget
 #: field:imported.msf.budget.line,month3:0
