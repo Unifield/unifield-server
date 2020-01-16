@@ -28,6 +28,16 @@
             report_type="webkit"
             menu="True"
             />
+
+      <report
+            id="report_replenishment_inventory_review_xls"
+            string="Inventory Review xls"
+            model="replenishment.inventory.review"
+            name="report_replenishment_inventory_review_xls"
+            file="procurement_cycle/report/replenishment_inventory_review.mako"
+            report_type="webkit"
+            menu="True"
+            />
     </data>
 </openerp>
 

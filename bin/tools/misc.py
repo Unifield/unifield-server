@@ -71,6 +71,10 @@ _logger = logging.getLogger('tools')
 # We include the *Base ones just in case, currently they seem to be subclasses of the _* ones.
 SKIPPED_ELEMENT_TYPES = (etree._Comment, etree._ProcessingInstruction, etree.CommentBase, etree.PIBase)
 
+def _(d):
+    # just here to export the month when trans. file is generated
+    return d
+month_abbr = ['', _('Jan'), _('Feb'), _('Mar'), _('Apr'), _('May'), _('Jun'), _('Jul'), _('Aug'), _('Sep'), _('Oct'), _('Nov'), _('Dec')]
 
 # initialize a database with base/base.sql
 def init_db(cr):

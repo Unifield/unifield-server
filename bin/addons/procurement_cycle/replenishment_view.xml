@@ -105,7 +105,10 @@
                     <field name="rr_amc" required="1" />
                     <field name="sleeping" required="1" />
                     <field name="time_unit" required="1" />
-                    <button name="generate_inventory_review" string="Generate Inventory Review" type="object" icon="gtk-remove" />
+                    <group colspan="2">
+                        <button name="generate_inventory_review" string="Generate Inventory Review" type="object" icon="gtk-remove" />
+                        <button name="inventory_review" string="Display Inventory Review" type="object" icon="gtk-indent" />
+                    </group>
 
                     <field name="last_review_error" colspan="4" />
                 </form>
@@ -732,6 +735,64 @@
                 </tree>
             </field>
         </record>
+
+        <record id="replenishment_product_list_tree" model="ir.ui.view">
+            <field name="name">replenishment.product.list.tree</field>
+            <field name="model">replenishment.product.list</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Product List Consistency Report" hide_new_button="1" hide_delete_button="1">
+                    <field name="default_code" />
+                    <field name="product_description" />
+                    <field name="name_seg" />
+                    <field name="description_seg" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_product_list_from" model="ir.ui.view">
+            <field name="name">replenishment.product.list.form</field>
+            <field name="model">replenishment.product.list</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Product List Consistency Report" hide_new_button="1" hide_duplicate_button="1">
+                    <field name="default_code" />
+                    <field name="product_description" />
+                    <field name="name_seg" />
+                    <field name="description_seg" />
+                </form>
+            </field>
+        </record>
+
+        <record id="replenishment_product_list_search" model="ir.ui.view">
+            <field name="name">replenishment.product.list.search</field>
+            <field name="model">replenishment.product.list</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Product List Consistency Report">
+                    <filter string="Segmented" name="segmented" icon="terp-check" domain="[('segment_id', '!=', False)]"/>
+                    <filter string="Not Segmented" name="not_segemented" icon="gtk-cancel" domain="[('segment_id', '=', False)]"/>
+                    <separator orientation="vertical"/>
+                    <field name="default_code" />
+                    <field name="product_id" />
+                    <field name="name_seg" />
+                    <field name="description_seg" />
+                    <field name="list_ids" />
+                </search>
+            </field>
+        </record>
+
+        <record id="replenishment_product_list_action" model="ir.actions.act_window">
+            <field name="name">Product List Consistency Report</field>
+            <field name="res_model">replenishment.product.list</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="replenishment_product_list_menu"
+            action="replenishment_product_list_action"
+            sequence="100"
+            parent="stock_schedule.stock_automatic_procurements_menu" />
 
 
     </data>

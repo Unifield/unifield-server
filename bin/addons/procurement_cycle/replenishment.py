@@ -8,7 +8,7 @@ import time
 import json
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import base64
-from tools import misc
+from tools import misc, drop_view_if_exists
 import threading
 import logging
 import pooler
@@ -210,6 +210,18 @@ class replenishment_location_config(osv.osv):
             'context': context,
             'res_id': frequence_id
         }
+
+    def inventory_review(self, cr, uid, ids, context=None):
+        review_obj = self.pool.get('replenishment.inventory.review')
+        rev_ids = review_obj.search(cr, uid, [('location_config_id', 'in', ids)], context=context)
+        if not rev_ids:
+            raise osv.except_osv(_('Info'), _('No review generated'))
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'procurement_cycle.replenishment_inventory_review_action', ['form', 'tree'], context=context)
+        res['res_id'] = rev_ids[0]
+        return res
+
+
 
     def generate_inventory_review(self, cr, uid, ids, context=None):
         logger = logging.getLogger('RR Inv. Review')
@@ -521,7 +533,7 @@ class replenishment_segment(osv.osv):
                 prod_eta[x[0]] = x[1]
 
             cr.execute('''
-                select segment_line_id, sum(reserved_stock), sum(real_stock - reserved_stock - expired_before_rdd), sum(expired_before_rdd), sum(expired_between_rdd_oc), bool_or(open_loan), sum(total_expiry_nocons_qty), sum(real_stock), sum(expired_qty_before_eta)
+                select segment_line_id, sum(reserved_stock), sum(real_stock - reserved_stock - expired_before_rdd), sum(expired_before_rdd), sum(expired_between_rdd_oc), bool_or(open_loan), sum(total_expiry_nocons_qty), sum(real_stock), sum(expired_qty_before_eta), sum(sleeping_qty)
                     from replenishment_segment_line_amc amc, replenishment_segment_line line
                     where
                         line.id = amc.segment_line_id and
@@ -539,6 +551,7 @@ class replenishment_segment(osv.osv):
                     'total_expiry_nocons_qty': x[6] or 0,
                     'real_stock': x[7] or 0,
                     'expired_qty_before_eta': x[8] or 0,
+                    'sleeping_qty': x[9] or 0,
                 }
 
 
@@ -765,6 +778,7 @@ class replenishment_segment(osv.osv):
                         'safety_stock': seg.safety_stock,
                         'pas_ids': detailed_pas,
                         'segment_line_id': line.id,
+                        'sleeping_qty': int(sum_line.get(line.id, {}).get('sleeping_qty',0)),
                     })
                     review_line.create(cr, uid, line_data, context=context)
 
@@ -1843,6 +1857,7 @@ class replenishment_inventory_review_line(osv.osv):
         'reserved_stock_qty': fields.float('Reserved Stock Qty', readonly=1, related_uom='uom_id'),# OC
         'expired_qty_before_cons': fields.float('Expired Qty before cons.', readonly=1, related_uom='uom_id'), # OC
         'total_expired_qty': fields.float('Qty expiring within period', readonly=1, related_uom='uom_id'),
+        'sleeping_qty': fields.float('Sleeping Qty'),
         'projected_stock_qty': fields.float('Projected Stock Level', readonly=1, related_uom='uom_id'), # OC
         'unit_of_supply_amc': fields.float('Days/weeks/months of supply (RR-AMC)'),
         'unit_of_supply_fmc': fields.float('Days/weeks/months of supply (RR-FMC)'),
@@ -2012,3 +2027,60 @@ class replenishment_inventory_review_line_stock(osv.osv):
         return False
 
 replenishment_inventory_review_line_stock()
+
+class replenishment_product_list(osv.osv):
+    _name = 'replenishment.product.list'
+    _description = 'RR Product List'
+    _rec_name = 'product_id'
+    _order = 'default_code'
+    _auto = False
+
+    def init(self, cr):
+        drop_view_if_exists(cr, 'replenishment_product_list')
+
+        cr.execute("""CREATE OR REPLACE VIEW replenishment_product_list AS (
+            select CASE WHEN seg_line.id IS NULL THEN -1*prod.id ELSE seg_line.id END as id, prod.id as product_id, prod.default_code as default_code, segment.name_seg as name_seg, segment.description_seg as description_seg, segment.id as segment_id
+            from
+                product_product prod
+                left join replenishment_segment_line seg_line on seg_line.product_id = prod.id
+                left join replenishment_segment segment on segment.id = seg_line.segment_id
+            where
+                segment.state != 'cancel'or segment.state is null
+        )""")
+
+    def _search_list_sublist(self, cr, uid, obj, name, args, context=None):
+        '''
+        Filter the search according to the args parameter
+        '''
+        pl_obj = self.pool.get('product.list')
+
+        if not context:
+            context = {}
+
+        ids = []
+
+        for arg in args:
+            if arg[0] == 'list_ids' and arg[1] == '=' and arg[2]:
+                list = pl_obj.browse(cr, uid, int(arg[2]), context=context)
+                for line in list.product_ids:
+                    ids.append(line.name.id)
+            elif arg[0] == 'list_ids' and arg[1] == 'in' and arg[2]:
+                for list in pl_obj.browse(cr, uid, arg[2], context=context):
+                    for line in list.product_ids:
+                        ids.append(line.name.id)
+            else:
+                return []
+
+        return [('product_id', 'in', ids)]
+
+    _columns = {
+        'product_id': fields.many2one('product.product', 'Product', select=1, required=1),
+        'segment_id': fields.many2one('replenishment.segment', 'Segment', select=1, required=1),
+        'default_code': fields.char('Product Code', size=256, select=1, required=1),
+        'product_description': fields.related('product_id', 'name',  string='Product Description', type='char', size=64, readonly=True, select=True, write_relate=False),
+        'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
+        'description_seg': fields.char('Segment Description', required=1, size=28, select=1),
+        'list_ids': fields.function(misc.get_fake, fnct_search=_search_list_sublist, type='many2one', relation='product.list', method=True, string='Lists'),
+    }
+
+replenishment_product_list()
