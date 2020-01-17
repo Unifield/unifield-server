@@ -89,7 +89,7 @@ class wizard_advance_line(osv.osv_memory):
             line_distrib_id = line.analytic_distribution_id and line.analytic_distribution_id.id or False
             account_id = line.account_id and line.account_id.id or False
             res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(
-                cr, uid, line_distrib_id, cash_return_distrib_id, account_id)
+                cr, uid, line_distrib_id, cash_return_distrib_id, account_id, amount=line.amount or 0.0)
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
