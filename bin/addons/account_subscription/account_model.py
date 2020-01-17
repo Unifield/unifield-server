@@ -44,7 +44,10 @@ class account_model_line(osv.osv):
         res = {}
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.model_id.analytic_distribution_id.id, line.account_id.id)
+            amount = (line.debit or 0.0) - (line.credit or 0.0)
+            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id,
+                                                                                          line.model_id.analytic_distribution_id.id,
+                                                                                          line.account_id.id, amount=amount)
         return res
 
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
