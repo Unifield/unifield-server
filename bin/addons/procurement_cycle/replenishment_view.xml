@@ -395,7 +395,7 @@
                     <filter string="Draft" domain="[('state', '=', 'draft')]" icon="terp-document-new"/>
                     <filter string="Complete" domain="[('state', '=', 'complete')]" icon="terp-check"/>
                     <filter string="Archived" domain="[('state', '=', 'archived')]" icon="terp-locked"/>
-                    <filter string="Cancel" domain="[('state', '=', 'cancel')]" icon="gtk-cancel"/>
+                    <filter string="Cancelled" domain="[('state', '=', 'cancel')]" icon="gtk-cancel"/>
                     <separator orientation="vertical" />
 
                     <field name="name_seg" />
@@ -553,7 +553,7 @@
                     <filter string="Draft" domain="[('state', '=', 'draft')]" icon="terp-document-new"/>
                     <filter string="Validated" domain="[('state', '=', 'validated')]" icon="gtk-ok"/>
                     <filter string="Closed" domain="[('state', '=', 'closed')]" icon="gtk-close"/>
-                    <filter string="Cancel" domain="[('state', '=', 'cancel')]" icon="gtk-cancel"/>
+                    <filter string="Cancelled" domain="[('state', '=', 'cancel')]" icon="gtk-cancel"/>
                     <separator orientation="vertical"/>
                     <field name="name" />
                     <field name="segment_id" />

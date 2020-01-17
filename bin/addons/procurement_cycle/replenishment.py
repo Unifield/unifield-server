@@ -713,7 +713,7 @@ class replenishment_segment(osv.osv):
                         # sum fmc from today to ETC - qty in stock
                         qty_lacking =  max(0, total_fmc - sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0))
                         if total_month_oc+total_month:
-                            ss_stock = seg.safety_stock * ((total_fmc_oc+total_month)/(total_month_oc+total_month))
+                            ss_stock = seg.safety_stock * ((total_fmc_oc+total_fmc)/(total_month_oc+total_month))
                         if total_month and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
                             warnings.append(_('Missing Qties'))
                         if qty_lacking:
@@ -1637,7 +1637,7 @@ class replenishment_order_calc(osv.osv):
         'comments': fields.text('Comments'),
         'local_location_ids': fields.many2many('stock.location', 'local_location_order_calc_rel', 'order_calc_id', 'location_id', 'Local Locations', readonly=1),
         'remote_location_ids': fields.many2many('stock.location.instance', 'remote_location_order_calc_rel', 'order_calc_id', 'location_id', 'Project Locations', readonly=1),
-        'state': fields.selection([('draft', 'Draft'), ('validated', 'Validated'), ('cancel', 'Cancel'), ('closed', 'Closed')], 'State', readonly=1),
+        'state': fields.selection([('draft', 'Draft'), ('validated', 'Validated'), ('cancel', 'Cancelled'), ('closed', 'Closed')], 'State', readonly=1),
         'order_calc_line_ids': fields.one2many('replenishment.order_calc.line', 'order_calc_id', 'Products',  context={'default_code_only': 1}),
         'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1),
         'file_to_import': fields.binary(string='File to import'),
