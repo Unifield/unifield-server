@@ -475,7 +475,7 @@ class replenishment_segment(osv.osv):
             cr.close(True)
 
     def trigger_compute_segment_data(self, cr, uid, ids, context):
-        return self.pool.get('replenishment.segment.line.amc').generate_segment_data(cr, uid, context=context, seg_ids=ids)
+        return self.pool.get('replenishment.segment.line.amc').generate_segment_data(cr, uid, context=context, seg_ids=ids, force_review=True)
 
     def generate_order_calc(self, cr, uid, ids, context=None):
         return self.generate_order_cacl_inv_data(cr, uid, ids, context=context)
@@ -508,7 +508,7 @@ class replenishment_segment(osv.osv):
             if all_instances:
                 raise osv.except_osv(_('Warning'), _('Data from the following instances are missing, please wait the next scheduled task or the next sync:\n%s') % (', '.join([instances_name_by_id.get(x, '') for x in all_instances])))
 
-            if seg.rule == 'cycle' and not seg.previous_order_rdd and not seg.date_next_order_received_modified:
+            if seg.rule == 'cycle' and not review_id and not seg.previous_order_rdd and not seg.date_next_order_received_modified:
                 raise osv.except_osv(_('Warning'), _('For the 1st OC, please set a date in the field "Next order to be received by (modified)"'))
 
             if not review_id:
@@ -529,10 +529,10 @@ class replenishment_segment(osv.osv):
 
             loc_ids = [x.id for x in seg.local_location_ids]
             cr.execute('''
-                select l.product_id, min(date_done) from stock_move m, stock_picking p, replenishment_segment_line l
+                select l.product_id, min(m.date) from stock_move m, stock_picking p, replenishment_segment_line l
                     where
-                        m.picking_id = m.id and
-                        m.state in ('available', 'confirm') and
+                        m.picking_id = p.id and
+                        p.state in ('available', 'confirmed') and
                         m.location_dest_id in %s and
                         l.product_id = m.product_id and
                         l.segment_id = %s
@@ -724,7 +724,7 @@ class replenishment_segment(osv.osv):
                     proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rdd_oc)
 
                 elif seg.rule == 'minmax':
-                    proposed_order_qty = max(0, line.max_qty - sum_line.get(line.id, {}).get('real_stock') + sum_line.get(line.id, {}).get('reserved_stock_qty') + prod_eta.get(line.product_id.id, 0) - line.pipeline_before_rdd)
+                    proposed_order_qty = max(0, line.max_qty - sum_line.get(line.id, {}).get('real_stock') + sum_line.get(line.id, {}).get('reserved_stock_qty') + sum_line.get(line.id, {}).get('expired_qty_before_eta', 0) - line.pipeline_before_rdd)
 
                     if line.status != 'new' and sum_line.get(line.id, {}).get('real_stock') - sum_line.get(line.id, {}).get('expired_qty_before_eta') <= line.min_qty:
                         if sum_line.get(line.id, {}).get('expired_qty_before_eta'):
@@ -1376,7 +1376,9 @@ class replenishment_segment_line_amc(osv.osv):
     _defaults = {
         'open_loan': False
     }
-    def generate_segment_data(self, cr, uid, context=None, seg_ids=False):
+
+    def generate_segment_data(self, cr, uid, context=None, seg_ids=False, force_review=False):
+
         segment_obj = self.pool.get('replenishment.segment')
         prod_obj = self.pool.get('product.product')
         last_gen_obj = self.pool.get('replenishment.segment.date.generation')
@@ -1408,6 +1410,7 @@ class replenishment_segment_line_amc(osv.osv):
             full_data = False
 
             if segment.state == 'complete':
+                gen_inv_review = force_review
                 full_data = True
                 if segment.next_scheduler < datetime_now.strftime('%Y-%m-%d %H:%M:%S') and (not review_date or review_date < datetime_now.strftime('%Y-%m-%d %H:%M:%S')):
                     gen_inv_review = True
@@ -1482,15 +1485,18 @@ class replenishment_segment_line_amc(osv.osv):
                 data = {'amc': amc.get(prod_id, 0), 'name': to_date, 'real_stock': stock_qties.get(prod_id, {}).get('qty_available')}
                 if segment.state == 'complete' or gen_inv_review:
                     data.update({
-                        'sleeping_qty': 0,
                         'expired_before_rdd': 0,
                         'expired_between_rdd_oc': 0,
                         'expired_qty_before_eta': 0,
-                        'total_expiry_nocons_qty': 0,
                         'open_loan': open_loan.get(prod_id, False),
                         'reserved_stock': stock_qties.get(prod_id, {}).get('qty_reserved'),
 
                     })
+                    if gen_inv_review:
+                        data.update({
+                            'total_expiry_nocons_qty': 0,
+                            'sleeping_qty': 0,
+                        })
                 if lines[prod_id] in cache_line_amc:
                     self.write(cr, uid, cache_line_amc[lines[prod_id]], data, context=context)
                 else:
