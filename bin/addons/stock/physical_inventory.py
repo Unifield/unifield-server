@@ -596,6 +596,7 @@ class PhysicalInventory(osv.osv):
                                          ('location_id', 'in', [location_id]),
                                          ('location_dest_id', 'in', [location_id]),
                                          ("product_id", 'in', product_ids),
+                                         ('product_qty', '!=', 0),
                                          ('state', '=', 'done')]
 
         moves_at_location_ids = move_obj.search(cr, uid, move_for_products_at_location, context=context)
