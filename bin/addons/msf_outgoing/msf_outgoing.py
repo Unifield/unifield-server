@@ -1655,6 +1655,7 @@ class shipment(osv.osv):
             )''', (tuple(ids),))
         return True
 
+
 shipment()
 
 
@@ -1669,11 +1670,24 @@ class shipment_additionalitems(osv.osv):
         'comment': fields.char(string='Comment', size=1024),
         'volume': fields.float(digits=(16, 2), string=u'Volume[dm³]'),
         'weight': fields.float(digits=(16, 2), string='Weight[kg]'),
-        'value': fields.float('Value', help='Total Value of the additional item. The value is to be defined in the currency selected for the partner.'),
+        'value': fields.float('Value', help='Total Value of the additional item. The value is to be defined in the currency selected for the partner.'),  # The string is modified in the fields_view_get
         'kc': fields.boolean('KC', help='Defines whether the additional item is to be kept cool.'),
         'dg': fields.boolean('DG', help='Defines whether the additional item is a dangerous good.'),
         'cs': fields.boolean('CS', help='Defines whether the additional item is a controlled substance.'),
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='tree', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+
+        res = super(shipment_additionalitems, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
+        company_currency_name = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.currency_id.name
+        for field in res['fields']:
+            if field == 'value':
+                res['fields'][field]['string'] = _('Value [') + company_currency_name + _(']')
+
+        return res
+
 
 shipment_additionalitems()
 

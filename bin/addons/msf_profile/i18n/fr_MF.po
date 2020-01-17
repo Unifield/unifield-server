@@ -106591,3 +106591,19 @@ msgstr "Listes de Picking & Bons de Picking"
 #: model:ir.actions.act_window,name:msf_outgoing.action_shipment
 msgid "Shipment Lists & Shipments"
 msgstr "Listes d'Expédition & Expéditions"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:1686
+#, python-format
+msgid "Value ["
+msgstr "Valeur ["
+
+#. module: msf_outgoing
+#: view:shipment:0
+msgid "Copy"
+msgstr "Copier"
+
+#. module: msf_outgoing
+#: view:shipment:0
+msgid "Clear"
+msgstr "Effacer"
