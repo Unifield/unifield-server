@@ -482,7 +482,9 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
                 invoice_distribution_id = line.invoice_wizard_id.analytic_distribution_id.id
             if line.account_id:
                 line_account_id = line.account_id.id
-            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distribution_id, invoice_distribution_id, line_account_id)
+            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distribution_id,
+                                                                                          invoice_distribution_id, line_account_id,
+                                                                                          amount=line.price_subtotal or 0.0)
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
