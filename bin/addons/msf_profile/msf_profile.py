@@ -58,7 +58,7 @@ class patch_scripts(osv.osv):
         if current_instance:
             trigger_obj = self.pool.get('sync.trigger.something.target')
             cr.execute('''
-                select sdref, values, source from sync_client_update_received where model='account.move.reconcile' and execution_date > ( select applied from sync_client_version where name='UF15.0') and fields not like '%action_date%' and values like '%''0''%'
+                select sdref, values, source from sync_client_update_received where model='account.move.reconcile' and execution_date > ( select applied from sync_client_version where name='UF15.0') and fields not like '%action_date%'
             ''')
 
             for update in cr.fetchall():
