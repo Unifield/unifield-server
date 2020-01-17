@@ -43,9 +43,11 @@ class analytic_distribution(osv.osv):
         return True
 
     def _get_distribution_state(self, cr, uid, distrib_id, parent_id, account_id, context=None,
-                                doc_date=False, posting_date=False, manual=False):
+                                doc_date=False, posting_date=False, manual=False, amount=False):
         """
         Return distribution state
+
+        Check that there is only one AD line for amounts <= 1 ONLY IF an amount is passed in param.
         """
         if context is None:
             context = {}
@@ -57,11 +59,15 @@ class analytic_distribution(osv.osv):
                 return 'valid'
         if not distrib_id:
             if parent_id:
-                return self._get_distribution_state(cr, uid, parent_id, False, account_id, context)
+                return self._get_distribution_state(cr, uid, parent_id, False, account_id, context, amount=amount)
             return 'none'
         distrib = self.browse(cr, uid, distrib_id)
         if not distrib.funding_pool_lines:
             return 'none'
+        # set AD as invalid when several distrib. lines are applied to booking amount <= 1
+        if amount is not None and amount is not False and amount <= 1:
+            if not all(len(d) <= 1 for d in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]):
+                return 'invalid'
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
