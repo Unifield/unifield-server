@@ -566,7 +566,7 @@ class replenishment_segment(osv.osv):
                 }
 
 
-            today = datetime.now() + relativedelta(hour=0, minute=0, second=0)
+            today = datetime.now() + relativedelta(hour=0, minute=0, second=0, microsecond=0)
 
             if review_id:
                 rdd = today + relativedelta(months=seg.projected_view, day=1, days=-1)
