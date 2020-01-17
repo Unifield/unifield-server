@@ -65,7 +65,7 @@ class analytic_distribution(osv.osv):
         if not distrib.funding_pool_lines:
             return 'none'
         # set AD as invalid when several distrib. lines are applied to booking amount <= 1
-        if amount is not None and amount is not False and amount <= 1:
+        if amount is not None and amount is not False and abs(amount) <= 1:
             if not all(len(d) <= 1 for d in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]):
                 return 'invalid'
         # Search MSF Private Fund element, because it's valid with all accounts
