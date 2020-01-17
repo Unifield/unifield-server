@@ -59,7 +59,7 @@ class account_move_line(osv.osv):
         distrib_obj = self.pool.get('analytic.distribution')
         sql = """
             SELECT aml.id, aml.analytic_distribution_id AS distrib_id, m.analytic_distribution_id AS move_distrib_id, aml.account_id, 
-            aml.document_date, aml.date, m.status
+            aml.document_date, aml.date, m.status, aml.amount_currency
             FROM account_move_line AS aml, account_move AS m
             WHERE aml.move_id = m.id
             AND aml.id IN %s
@@ -67,8 +67,11 @@ class account_move_line(osv.osv):
         cr.execute(sql, (tuple(ids),))
         for line in cr.fetchall():
             manual = line[6] == 'manu'
-            res[line[0]] = distrib_obj._get_distribution_state(cr, uid, line[1], line[2], line[3],
-                                                               doc_date=line[4], posting_date=line[5], manual=manual)
+            amount = False
+            if manual:  # check amount only for manual JIs
+                amount = line[7]
+            res[line[0]] = distrib_obj._get_distribution_state(cr, uid, line[1], line[2], line[3], doc_date=line[4],
+                                                               posting_date=line[5], manual=manual, amount=amount)
         return res
 
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
