@@ -209,8 +209,8 @@
                             <field name="incoming_id" readonly="True" />
                         </group>
                         <group colspan="6" col="2">
-                            <button name="export_pick" type="object" string="Export PICK" icon="gtk-execute" colspan="2"/>
-                            <button name="import_pick" type="object" string="Import PICK" icon="gtk-execute" colspan="2" attrs="{'invisible': [('state', 'not in', ['draft', 'assigned'])]}" />
+                            <button name="export_pick" type="object" string="Export PICK" icon="gtk-execute"/>
+                            <button name="import_pick" type="object" string="Import PICK" icon="gtk-execute" attrs="{'invisible': [('state', 'not in', ['draft', 'assigned'])]}" />
                         </group>
                     </group>
 
