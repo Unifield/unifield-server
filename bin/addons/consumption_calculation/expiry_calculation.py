@@ -540,7 +540,7 @@ class product_likely_expire_report(osv.osv):
                             consum = 0
                             if life_date > last_expiry_date:
                                 tmp_last_expiry_date = last_expiry_date
-                                for fmc in segment_product_fmc.setdefault(lot.product_id.id):
+                                for fmc in segment_product_fmc.setdefault(lot.product_id.id, []):
                                     if life_date >= fmc['from'] and tmp_last_expiry_date <= fmc['to']:
                                         end_fmc = min(life_date, fmc['to'])
                                         lot_days = Age(DateFrom(end_fmc), last_expiry_date)
