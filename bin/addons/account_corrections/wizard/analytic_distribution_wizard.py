@@ -228,6 +228,20 @@ class analytic_distribution_wizard(osv.osv_memory):
         old_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
         wiz_line_ids = self.pool.get('analytic.distribution.wizard.fp.lines').search(cr, uid, [('wizard_id', '=', wizard_id), ('type', '=', 'funding.pool')])
 
+        # block applying several AD lines to booking amount <= 1
+        if abs(ml.amount_currency) <= 1:
+            nb_fp_lines = len(wiz_line_ids)
+            nb_free1 = self.pool.get('analytic.distribution.wizard.f1.lines').search(cr, uid,
+                                                                                     [('wizard_id', '=', wizard_id), ('type', '=', 'free.1')],
+                                                                                     count=True, context=context)
+            nb_free2 = self.pool.get('analytic.distribution.wizard.f2.lines').search(cr, uid,
+                                                                                     [('wizard_id', '=', wizard_id), ('type', '=', 'free.2')],
+                                                                                     count=True, context=context)
+            if not all(n <= 1 for n in [nb_fp_lines, nb_free1, nb_free2]):
+                raise osv.except_osv(_('Error'),
+                                     _("Journal Items with a booking amount inferior or equal to 1 "
+                                       "can't have several analytic distribution lines."))
+
         # US-1398: determine if AD chain is from an HQ entry and from a pure AD
         # correction: analytic reallocation of HQ entry before validation
         # if yes this flag represents that we have to maintain OD sequence

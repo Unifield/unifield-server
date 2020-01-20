@@ -49,7 +49,9 @@ class journal_items_corrections_lines(osv.osv_memory):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = 'none'
             if line.analytic_distribution_id:
-                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, False, line.account_id.id)
+                amount = (line.debit_currency or 0.0) - (line.credit_currency or 0.0)
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id,
+                                                                                              False, line.account_id.id, amount=amount)
         return res
 
     def _get_is_analytic_target(self, cr, uid, ids, name, args,  context=None):
