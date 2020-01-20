@@ -751,7 +751,6 @@ class replenishment_segment(osv.osv):
                     'warning': "\n".join(warnings),
                     'valid_rr_fmc': valid_rr_fmc,
                     'status': line.status,
-                    'projected_stock_qty': int(pas),
                     'open_loan': sum_line.get(line.id, {}).get('open_loan', False),
                 }
 
@@ -762,6 +761,7 @@ class replenishment_segment(osv.osv):
                         'proposed_order_qty': int(proposed_order_qty),
                         'agreed_order_qty': int(proposed_order_qty) or False,
                         'in_main_list': line.in_main_list,
+                        'projected_stock_qty': int(pas),
                     })
                     order_calc_line.create(cr, uid, line_data, context=context)
 
@@ -794,6 +794,16 @@ class replenishment_segment(osv.osv):
                         'segment_line_id': line.id,
                         'sleeping_qty': int(sum_line.get(line.id, {}).get('sleeping_qty',0)),
                     })
+                    if seg.rule == 'cycle':
+                        line_data.update({
+                            'projected_stock_qty': int(pas),
+                            'projected_stock_qty_amc': False,
+                        })
+                    else:
+                        line_data.update({
+                            'projected_stock_qty': False,
+                            'projected_stock_qty_amc': int(pas),
+                        })
                     review_line.create(cr, uid, line_data, context=context)
 
             if review_id:
@@ -1878,7 +1888,8 @@ class replenishment_inventory_review_line(osv.osv):
         'expired_qty_before_cons': fields.float('Expired Qty before cons.', readonly=1, related_uom='uom_id'), # OC
         'total_expired_qty': fields.float('Qty expiring within period', readonly=1, related_uom='uom_id'),
         'sleeping_qty': fields.float('Sleeping Qty'),
-        'projected_stock_qty': fields.float('Projected Stock Level', readonly=1, related_uom='uom_id'), # OC
+        'projected_stock_qty': fields.float_null('RR-FMC Projected Stock Level', readonly=1, related_uom='uom_id'), # OC
+        'projected_stock_qty_amc': fields.float_null('RR-AMC Projected Stock Level', readonly=1, related_uom='uom_id'), # OC
         'unit_of_supply_amc': fields.float('Days/weeks/months of supply (RR-AMC)'),
         'unit_of_supply_fmc': fields.float('Days/weeks/months of supply (RR-FMC)'),
         'warning': fields.char('Warning', size=512, readonly='1'), # OC
