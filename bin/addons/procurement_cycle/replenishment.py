@@ -1849,7 +1849,7 @@ class replenishment_inventory_review(osv.osv):
         product_code = [x.default_code for x in data['products']]
 
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_move_form2', ['tree', 'form'], new_tab=True, context=context)
-        res['domain'] = ['&', '&', '|', ('location_id', 'in', data['location_ids']), ('location_dest_id', 'in', data['location_ids']), ('state', '=', 'assigned'), ('product_id', 'in', product_ids)]
+        res['domain'] = ['&', '&', '|', ('location_id', 'in', data['location_ids']), ('location_dest_id', 'in', data['location_ids']), ('state', 'in', ['confirmed', 'assigned']), ('product_id', 'in', product_ids)]
         res['name'] = _('Pipeline %s: %s') % (data['inv_review'].location_config_id.name, ', '.join(product_code))
         return res
 
