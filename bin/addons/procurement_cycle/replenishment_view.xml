@@ -264,7 +264,7 @@
                             <field name="date_next_order_validated" />
                             <field name="date_next_order_received" />
                             <label colspan="2" />
-                            <field name="date_next_order_received_modified" attrs="{'readonly': [('state', 'not in', ['draft', 'complete'])]}"  on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
+                            <field name="date_next_order_received_modified" attrs="{'readonly': [('state', '!=', 'draft')]}"  on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
                         </group>
                         <field name="last_generation" nolabel="1" colspan="2">
                             <tree string="Generation Date">

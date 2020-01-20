@@ -603,7 +603,7 @@ class replenishment_segment(osv.osv):
                                 pipe_by_prod_by_month_minus_expired.setdefault(prod.id, {}).update({end_date.strftime('%Y-%m-%d'): prod.incoming_qty - expired})
 
             else:
-                rdd = today + relativedelta(days=int(seg.total_lt))
+                rdd = datetime.strptime(seg.date_next_order_received_modified or seg.date_next_order_received, '%Y-%m-%d')
 
             oc = rdd + relativedelta(months=seg.order_coverage)
             for line in seg.line_ids:
@@ -993,6 +993,10 @@ class replenishment_segment(osv.osv):
         return wizard_obj.message_box(cr, uid, title=_('Importation Done'), message=_('%d line(s) created, %d line(s) updated') % (created, updated))
 
     def completed(self, cr, uid, ids, context=None):
+        for x in self.read(cr, uid, ids, ['name_seg', 'date_next_order_received_modified', 'date_next_order_received'], context=context):
+            if not x['date_next_order_received_modified'] and not x['date_next_order_received']:
+                raise osv.except_osv(_('Warning'), _('Segment %s "Next order to be received by" can\'t be empty OC, please set a date in the field "Next order to be received by (modified)"') % (x['name_seg'], ))
+
         self.write(cr, uid, ids, {'state': 'complete'}, context=context)
         return True
 
@@ -1167,12 +1171,12 @@ class replenishment_segment_line(osv.osv):
             }
             if x.segment_id.id not in segment:
                 if inv_review:
-                    delay = relativedelta(months=int(x.segment_id.projected_view), day=1, days=-1)
+                    rdd = now + relativedelta(months=int(x.segment_id.projected_view), day=1, days=-1)
                 else:
-                    delay = relativedelta(days=int(x.segment_id.total_lt))
+                    rdd = datetime.strptime(x.segment_id.date_next_order_received_modified or x.segment_id.date_next_order_received, '%Y-%m-%d')
                 segment[x.segment_id.id] = {
-                    'to_date_rdd': (now + delay).strftime('%Y-%m-%d'),
-                    'to_date_oc': (now + relativedelta(days=int(x.segment_id.total_lt)) + relativedelta(months=x.segment_id.order_coverage)).strftime('%Y-%m-%d'),
+                    'to_date_rdd': rdd.strftime('%Y-%m-%d'),
+                    'to_date_oc': (rdd  + relativedelta(months=x.segment_id.order_coverage)).strftime('%Y-%m-%d'),
                     'prod_seg_line': {},
                     'location_ids': [l.id for l in x.segment_id.location_config_id.local_location_ids],
                 }
@@ -1518,7 +1522,7 @@ class replenishment_segment_line_amc(osv.osv):
             if full_data:
                 last_gen_data['full_date'] = datetime_now
                 expired_obj = self.pool.get('product.likely.expire.report')
-                rdd_date = datetime_now + relativedelta(days=int(segment.total_lt))
+                rdd_date = datetime.strptime(segment.date_next_order_received_modified or segment.date_next_order_received, '%Y-%m-%d')
                 oc_date = rdd_date + relativedelta(months=segment.order_coverage)
 
                 amc_data_to_update = {}
