@@ -100,7 +100,7 @@
 			<field name="search_view_id" ref="stock.view_picking_out_search"/>
 			<field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
 		</record>
-		<menuitem id="stock.menu_action_picking_tree" parent="menu_warehouse_deliveries" />
+		<menuitem id="stock.menu_action_picking_tree" parent="menu_warehouse_deliveries" sequence="3"/>
 		<record id="view_warehouse" model="ir.ui.view">
 			<field name="name">stock.warehouse</field>
 			<field name="model">stock.warehouse</field>
@@ -266,7 +266,7 @@
 
                                     <field name="prodlot_id"
                                             string="Batch Number"
-                                            context="{'location_id':location_id, 'product_id':product_id, 'search_default_real': True, 'hidden_perishable_mandatory': exp_check}"
+                                            context="{'location_id':location_id, 'product_id':product_id, 'search_default_real': True, 'hidden_perishable_mandatory': not lot_check}"
                                             domain="[('product_id','=?',product_id), ('check_type','=', True)]"
                                             on_change="onchange_lot_processor(prodlot_id, product_qty, location_id, product_uom, context)"
                                             attrs="{'readonly': ['|', '&amp;', ('lot_check','=',False), ('exp_check','=',False), ('fake_state', '=', 'assigned')]}"
@@ -449,6 +449,7 @@
 						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" />
 						<filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
 						<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
+                        <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
 						<separator orientation="vertical"/>
 						<filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" />
 						<separator orientation="vertical"/>
@@ -505,6 +506,7 @@
 						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" />
 						<filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
 						<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
+                        <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
 						<separator orientation="vertical"/>
 						<filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" />
 						<separator orientation="vertical"/>
@@ -787,8 +789,11 @@
 			<field name="arch" type="xml">
 				<search string="Pre-Packing List">
 					<group col="8" colspan="4">
+                         <filter icon="terp-document-new" name="draft" string="Draft"  domain="[('state', '=', 'draft')]" />
+                         <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
 						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Delivery Orders"/>
 						<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Delivery orders already processed"/>
+                        <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
 						<separator orientation="vertical"/>
 						<field name="name"/>
 						<field name="partner_id2" />
@@ -1465,9 +1470,11 @@
 				<search string="Shipment">
 					<group col="8" colspan="4">
 						<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" />
+						<filter icon="terp-accessories-archiver" name="packed" string="Packed" domain="[('state','=','packed')]" />
 						<filter icon="terp-check" name="shipped" string="Ready to ship" domain="[('state','=','shipped')]" />
 						<filter icon="terp-dialog-close" name="closed" string="Dispatched" domain="[('state','=','done')]" />
 						<filter icon="gtk-yes" name="delivered" string="Received" domain="[('state','=','delivered')]" />
+                        <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
 						<separator orientation="vertical"/>
 						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('num_of_packs','=', 0)]" />
 						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('num_of_packs','!=', 0)]" />

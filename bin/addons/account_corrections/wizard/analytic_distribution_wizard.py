@@ -26,6 +26,8 @@ from osv import fields
 from tools.translate import _
 import time
 from collections import defaultdict
+from base import currency_date
+
 
 class analytic_distribution_wizard(osv.osv_memory):
     _inherit = 'analytic.distribution.wizard'
@@ -136,23 +138,42 @@ class analytic_distribution_wizard(osv.osv_memory):
         def get_entry_seq(entry_seq_data):
             res = entry_seq_data.get('sequence', False)
             if not res:
-                seqnum = self.pool.get('ir.sequence').get_id(
-                    cr, uid, journal.sequence_id.id,
-                    context={'fiscalyear_id': period.fiscalyear_id.id})
+                seqnum = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id,
+                                                             context={'fiscalyear_id': period.fiscalyear_id.id})
                 res = "%s-%s-%s" % (move_prefix, code, seqnum)
                 entry_seq_data['sequence'] = res
             return res
-
 
         if context is None:
             context = {}
         # Prepare some values
         wizard = self.browse(cr, uid, wizard_id)
         ad_obj = self.pool.get('analytic.distribution')
+        ana_line_obj = self.pool.get('account.analytic.line')
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         ml = wizard.move_line_id
+        # US-5848: orig_date left unchanged not to break historical behavior,
+        # but the value set here seems overwritten later in the process if there is a source_date
         orig_date = ml.source_date or ml.date
         orig_document_date = ml.document_date
+        posting_date = wizard.date
+        curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
+        working_period_id = []
+        new_line_ids = []
+        entry_seq_data = {}
+
+        # get the last reversal AJI created BEFORE this correction
+        biggest_reversal_aji_ids = ana_line_obj.search(cr, uid, [('move_id', '=', ml.id),
+                                                                 ('is_reversal', '=', True)],
+                                                       order='id DESC', limit=1, context=context)
+        if biggest_reversal_aji_ids:
+            biggest_reversal_aji = ana_line_obj.browse(cr, uid, biggest_reversal_aji_ids[0],
+                                                       fields_to_fetch=['period_id', 'entry_sequence', 'date'], context=context)
+            # use the period / date and Entry Sequence of the reversal AJI in case its period is still open
+            if biggest_reversal_aji.period_id and biggest_reversal_aji.period_id.state == 'draft':  # Open
+                working_period_id = [biggest_reversal_aji.period_id.id]
+                posting_date = biggest_reversal_aji.date
+                entry_seq_data['sequence'] = biggest_reversal_aji.entry_sequence
 
         jtype = 'correction'
         if wizard.move_line_id.account_id and wizard.move_line_id.account_id.type_for_register == 'donation':
@@ -169,7 +190,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         to_reverse = []
         old_line_ok = []
         any_reverse = False
-        ana_obj = self.pool.get('account.analytic.line')
         # Prepare journal and period information for entry sequences
         journal_sql = """
             SELECT id, code
@@ -184,12 +204,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         journal_id = journal_sql_res[0]
         code = journal_sql_res[1]
         journal = self.pool.get('account.journal').browse(cr, uid, journal_id, context=context)
-        period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)
+        period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date=posting_date, context=context)
         if not period_ids:
-            raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (wizard.date or ''))
+            raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (posting_date or ''))
         period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
         move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
-        entry_seq_data = {}
 
         # US-676: check wizard lines total matches JI amount
         # the wizard already check distri is 100% allocated
@@ -201,12 +220,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         # => apply these deduce only if: lines are created as some line are
         # created/resplit. do nothing if only cc/dest of lines changes.
         total_rounded_amount = 0.
-        greater_amount = {  # US-676
-            'wl': False,  # wizard line with greater amount
-            'aji_id': False,  # related aji: not touched wizard line one or created, overrided, reversed
-            'amount': 0.,  # greater amount
-            'gap_amount': 0,  # gap amount to fix from greater amount line
-        }
         #####
         ## FUNDING POOL
         ###
@@ -221,13 +234,13 @@ class analytic_distribution_wizard(osv.osv_memory):
         # consistency
         is_HQ_origin = False
         for old_line_id in old_line_ids:
-            original_al_id = ana_obj.search(cr, uid, [
+            original_al_id = ana_line_obj.search(cr, uid, [
                 ('distrib_line_id', '=', 'funding.pool.distribution.line,%d' % (old_line_id, )),
                 ('is_reversal', '=', False),
                 ('is_reallocated', '=', False),
             ])
             if original_al_id and len(original_al_id) == 1:
-                original_al = ana_obj.browse(cr, uid, original_al_id[0], context)
+                original_al = ana_line_obj.browse(cr, uid, original_al_id[0], context)
                 # AJI correction journal and HQ JI
                 if original_al \
                     and original_al.move_id and \
@@ -256,11 +269,11 @@ class analytic_distribution_wizard(osv.osv_memory):
 
                 if old_line:
                     #US-714: For HQ Entries, always create the COR and REV even the period is closed
-                    original_al_id = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%old_line.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+                    original_al_id = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%old_line.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
 
                     is_HQ_entries = False
                     if original_al_id and len(original_al_id) == 1:
-                        original_al = ana_obj.browse(cr, uid, original_al_id[0], context)
+                        original_al = ana_line_obj.browse(cr, uid, original_al_id[0], context)
                         if original_al.journal_id.type == 'hq':
                             is_HQ_entries = True
 
@@ -289,15 +302,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                             to_override.append(wiz_line)
 
                     old_line_ok.append(old_line.id)
-            total_rounded_amount += round(wiz_line.amount, 2)
-            if wiz_line.amount > greater_amount['amount']:
-                greater_amount.update({
-                    'amount': wiz_line.amount,
-                    'wl':wiz_line,
-                })
-        match_amount_diff = total_rounded_amount - abs(wizard.amount)
-        if abs(match_amount_diff) > 0.001:
-            greater_amount['gap_amount'] = match_amount_diff
+
         to_reverse_ids = []
         for wiz_line in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x for x in old_line_ids if x not in old_line_ok]):
             # distribution line deleted by user
@@ -309,11 +314,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                 #to_reverse_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
                 if period.state != 'draft':
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (period.name,))
-                reversed_ids = ana_obj.reverse(cr, uid, to_reverse_ids, posting_date=wizard.date)
+                reversed_ids = ana_line_obj.reverse(cr, uid, to_reverse_ids, posting_date=posting_date)
                 # Set initial lines as non correctible
-                ana_obj.write(cr, uid, to_reverse_ids, {'is_reallocated': True})
+                ana_line_obj.write(cr, uid, to_reverse_ids, {'is_reallocated': True})
                 # Set right journal and right entry sequence
-                ana_obj.write(cr, uid, reversed_ids, {'journal_id': correction_journal_id})
+                ana_line_obj.write(cr, uid, reversed_ids, {'journal_id': correction_journal_id})
                 for reversed_id in reversed_ids:
                     cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (get_entry_seq(entry_seq_data), reversed_id) )
                 # delete the distribution line
@@ -325,9 +330,9 @@ class analytic_distribution_wizard(osv.osv_memory):
         keep_seq_and_corrected = False
         period_closed =  ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or ml.have_an_historic or False
         if (period_closed or is_HQ_origin) and to_create and (to_override or to_delete or any_reverse):
-            already_corr_ids = ana_obj.search(cr, uid, [('distribution_id', '=', distrib_id), ('last_corrected_id', '!=', False)])
+            already_corr_ids = ana_line_obj.search(cr, uid, [('distribution_id', '=', distrib_id), ('last_corrected_id', '!=', False)])
             if already_corr_ids:
-                for ana in ana_obj.read(cr, uid, already_corr_ids, ['entry_sequence', 'last_corrected_id', 'date', 'ref', 'reversal_origin']):
+                for ana in ana_line_obj.read(cr, uid, already_corr_ids, ['entry_sequence', 'last_corrected_id', 'date', 'ref', 'reversal_origin']):
                     if ana['entry_sequence'] and ana['last_corrected_id']:
                         rev_name = ana['reversal_origin'] and ana['reversal_origin'][1] or ana['last_corrected_id'] and ana['last_corrected_id'][1] or False
                         keep_seq_and_corrected = (ana['entry_sequence'], ana['last_corrected_id'][0], ana['date'], ana['ref'], rev_name)
@@ -356,14 +361,19 @@ class analytic_distribution_wizard(osv.osv_memory):
             name = False
             if period_closed or is_HQ_origin:
                 if period_closed or is_HQ_origin:
-                    create_date = wizard.date
-                name = self.pool.get('account.analytic.line').join_without_redundancy(ml.name, 'COR')
+                    create_date = posting_date
+                name = ana_line_obj.join_without_redundancy(ml.name, 'COR')
                 if keep_seq_and_corrected:
                     create_date = keep_seq_and_corrected[2]  # is_HQ_origin keep date too
                     if keep_seq_and_corrected[4]:
-                        name = self.pool.get('account.analytic.line').join_without_redundancy(keep_seq_and_corrected[4], 'COR')
+                        name = ana_line_obj.join_without_redundancy(keep_seq_and_corrected[4], 'COR')
 
-            created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date, name=name, context=context)
+            created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').\
+                create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date,
+                                      source_date=curr_date, name=name, context=context)
+            new_line_ids.extend(created_analytic_line_ids.values())
+            working_period_id = working_period_id or \
+                self.pool.get('account.period').get_period_from_date(cr, uid, date=create_date, context=context)
             # Set right analytic correction journal to these lines
             if period_closed or is_HQ_origin:
                 sql_to_cor = ['journal_id=%s']
@@ -375,8 +385,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                 cr.execute('update account_analytic_line set '+','.join(sql_to_cor)+' where id = %s',  # not_a_user_entry
                            sql_data)
             have_been_created.append(created_analytic_line_ids[new_distrib_line])
-            if created_analytic_line_ids and greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
-                greater_amount['aji_id'] = created_analytic_line_ids[created_analytic_line_ids.keys()[0]]
 
         #####
         ## FP: TO DELETE
@@ -385,33 +393,32 @@ class analytic_distribution_wizard(osv.osv_memory):
             # delete distrib line
             self.pool.get('funding.pool.distribution.line').unlink(cr, uid, [line.id])
             # delete associated analytic line
-            to_delete_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
-            self.pool.get('account.analytic.line').unlink(cr, uid, to_delete_ids)
+            to_delete_ids = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+            ana_line_obj.unlink(cr, uid, to_delete_ids)
 
         #####
         ## FP: TO REVERSE
         ###
         for line in to_reverse:
             # reverse the line
-            to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+            to_reverse_ids = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
 
             # get the original sequence
-            orig_line = self.pool.get('account.analytic.line').browse(cr, uid, to_reverse_ids)[0]
+            orig_line = ana_line_obj.browse(cr, uid, to_reverse_ids)[0]
 
             # UTP-943: Set wizard date as date for REVERSAL AND CORRECTION lines
-            reversed_id = self.pool.get('account.analytic.line').reverse(cr, uid, to_reverse_ids[0], posting_date=wizard.date, context=context)[0]
+            reversed_id = ana_line_obj.reverse(cr, uid, to_reverse_ids[0], posting_date=posting_date, context=context)[0]
             # Add reversal origin link (to not loose it). last_corrected_id is to prevent case where you do a reverse a line that have been already corrected
 
-            self.pool.get('account.analytic.line').write(cr, uid, [reversed_id], {'reversal_origin': to_reverse_ids[0], 'last_corrected_id': False, 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence})
+            ana_line_obj.write(cr, uid, [reversed_id], {'reversal_origin': to_reverse_ids[0], 'last_corrected_id': False, 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence})
             # Mark old lines as non reallocatable (ana_ids): why reverse() don't set this flag ?
-            self.pool.get('account.analytic.line').write(cr, uid, [to_reverse_ids[0]], {'is_reallocated': True})
+            ana_line_obj.write(cr, uid, [to_reverse_ids[0]], {'is_reallocated': True})
             cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (get_entry_seq(entry_seq_data), reversed_id) )
 
             # update the distrib line
             name = False
             fp_distrib_obj = self.pool.get('funding.pool.distribution.line')
             if to_reverse_ids:
-                ana_line_obj = self.pool.get('account.analytic.line')
                 name = ana_line_obj.join_without_redundancy(ana_line_obj.read(cr, uid, to_reverse_ids[0], ['name'])['name'], 'COR')
             fp_distrib_obj.write(cr, uid, [line.distribution_line_id.id], {
                 'analytic_id': line.analytic_id.id,
@@ -420,20 +427,19 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'destination_id': line.destination_id.id,
             })
             # UTP-943: Check that new ana line is on an open period
-            correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)
-            if not correction_period_ids:
-                raise osv.except_osv(_('Error'), _('No period found for the given date: %s') % (wizard.date,))
+            correction_period_ids = period_ids
             for cp in self.pool.get('account.period').browse(cr, uid, correction_period_ids):
                 if cp.state != 'draft':
                     raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
             # Create the new ana line
-            ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name,context=context)
+            ret = fp_distrib_obj.create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=posting_date,
+                                                       document_date=orig_document_date, source_date=curr_date, name=name, context=context)
+            new_line_ids.extend(ret.values())
+            working_period_id = working_period_id or period_ids
             # Add link to first analytic lines
             for ret_id in ret:
-                self.pool.get('account.analytic.line').write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
+                ana_line_obj.write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
                 cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (get_entry_seq(entry_seq_data), ret[ret_id]) )
-            if ret and greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
-                greater_amount['aji_id'] = ret[ret.keys()[0]]
         # UFTP-194: Set missing entry sequence for created analytic lines
         if have_been_created and to_reverse_ids:
             cr.execute('update account_analytic_line set entry_sequence = %s, last_corrected_id = %s where id in %s', (get_entry_seq(entry_seq_data), to_reverse_ids[0], tuple(have_been_created)))
@@ -443,8 +449,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         ###
         for line in to_override:
             # update the ana line
-            to_override_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
-            ctx = {'date': orig_date}
+            to_override_ids = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+            ctx = {'currency_date': curr_date}
             amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
             amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
 
@@ -457,13 +463,14 @@ class analytic_distribution_wizard(osv.osv_memory):
             }
 
             # get the actual AJI date (can differ from the ML orig_date if an AD correction has already been made)
-            aal_date = ana_obj.browse(cr, uid, to_override_ids[0], fields_to_fetch=['date'], context=context).date
+            aal_date = ana_line_obj.browse(cr, uid, to_override_ids[0], fields_to_fetch=['date'], context=context).date
             # original dates are kept but we add them in vals to trigger the check on dates with the new AD
             vals.update({
                 'date': aal_date,
                 'document_date': orig_document_date,
             })
-            self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, vals)
+            working_period_id = working_period_id or self.pool.get('account.period').get_period_from_date(cr, uid, date=aal_date, context=context)
+            ana_line_obj.write(cr, uid, to_override_ids, vals)
             # update the distib line
             self.pool.get('funding.pool.distribution.line').write(cr, uid, [line.distribution_line_id.id], {
                 'analytic_id': line.analytic_id.id,
@@ -471,60 +478,58 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'percentage': line.percentage,
                 'destination_id': line.destination_id.id
             })
-            if greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
-                greater_amount['aji_id'] = to_override_ids[0]
 
-        #####
-        # US-676
-        if greater_amount['gap_amount']:
-            aal_obj = self.pool.get('account.analytic.line')
+        # US-6100 in case of a corr. the adjustment should be made on the biggest COR amount
+        # instead of the biggest amount of all AJIs (cf. don't modify the entry being corrected)
+        has_generated_cor = False
+        if new_line_ids and (to_reverse or any_reverse):  # check if COR lines have been generated
+            has_generated_cor = True
+        # compute the adjustment amount
+        all_aji_ids = ana_line_obj.search(cr, uid, [
+            ('move_id', '=', ml.id),
+            ('is_reversal', '=', False),
+            ('is_reallocated', '=', False),
+            ('account_id.category', '=', 'FUNDING'),  # exclude free lines
+        ], order='NO_ORDER', context=context)
+        max_line = {'amount': 0, 'aji_bro': False}
+        aji_fields = ['amount_currency', 'period_id', 'currency_id', 'source_date', 'document_date', 'date']
+        for aji in ana_line_obj.browse(cr, uid, all_aji_ids, fields_to_fetch=aji_fields, context=context):
+            total_rounded_amount += round(abs(aji.amount_currency or 0.0), 2)
+            if has_generated_cor and aji.id in new_line_ids and abs(aji.amount_currency or 0.0) > max_line['amount']:
+                max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}
+            elif not has_generated_cor and working_period_id and aji.period_id.id == working_period_id[0] and \
+                    abs(aji.amount_currency or 0.0) > max_line['amount']:
+                max_line = {'aji_bro': aji, 'amount': abs(aji.amount_currency or 0.0)}
 
-            if not greater_amount['aji_id'] and greater_amount['wl']:
-                # untouched greater amount, get analytic line id:
-                # (not in to_create, to_delete, to_override, to_reverse)
-                aji_ids = aal_obj.search(cr, uid, [
-                    ('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%greater_amount['wl'].distribution_line_id.id),
-                    ('is_reversal', '=', False),
-                    ('is_reallocated', '=', False),
-                ])
-                if aji_ids:
-                    greater_amount['aji_id'] = aji_ids[0]
+        amount_diff = total_rounded_amount - abs(wizard.amount)
+        if abs(amount_diff) > 10 ** -3 and max_line['aji_bro']:
 
-            if greater_amount['aji_id']:
-                # US-676 greater amount update to fix (deduce) rounding gap
-                # we read the aji created for distri then fix it
-                aji_rec = aal_obj.read(cr, uid, [greater_amount['aji_id']],
-                                       ['amount_currency', 'currency_id', 'source_date', 'date'], context=context)[0]
-                if aji_rec:
-                    fix_aji_old_amount = aji_rec['amount_currency']
-                    fix_aji_currency_id = aji_rec['currency_id'] \
-                        and aji_rec['currency_id'][0] or False
+            # get data from the biggest AJI, on which the adjustment will be applied
+            fix_aji_old_amount = max_line['aji_bro'].amount_currency or 0.0
+            fix_aji_currency_id = max_line['aji_bro'].currency_id and max_line['aji_bro'].currency_id.id or False
 
-                    # fix booking amount
-                    fix_aji_amount_currency = round(greater_amount['wl'].amount, 2) \
-                        - greater_amount['gap_amount']
-                    if fix_aji_old_amount < 0:
-                        fix_aji_amount_currency *= -1
-                    aji_fix_vals = {
-                        'amount_currency': fix_aji_amount_currency,
-                    }
+            # fix booking amount
+            fix_aji_amount_currency = round(abs(fix_aji_old_amount), 2) - amount_diff
+            if fix_aji_old_amount < 0:
+                fix_aji_amount_currency *= -1
+            aji_fix_vals = {
+                'amount_currency': fix_aji_amount_currency,
+            }
 
-                    # then recompute functional amount
-                    if fix_aji_currency_id:
-                        new_context = context.copy()
-                        if aji_rec['source_date']:
-                            new_context['date'] = aji_rec['source_date']
-                        else:
-                            new_context['date'] = aji_rec['date']
-                        aji_fix_vals['amount'] = \
-                            self.pool.get('res.currency').compute(cr, uid,
-                                                                  fix_aji_currency_id, company_currency_id,
-                                                                  fix_aji_amount_currency, round=False,
-                                                                  context=new_context)
+            # then recompute functional amount
+            if fix_aji_currency_id:
+                new_context = context.copy()
+                max_line_curr_date = currency_date.get_date(self, cr, max_line['aji_bro'].document_date, max_line['aji_bro'].date,
+                                                            source_date=max_line['aji_bro'].source_date)
+                new_context['currency_date'] = max_line_curr_date
+                aji_fix_vals['amount'] = \
+                    self.pool.get('res.currency').compute(cr, uid,
+                                                          fix_aji_currency_id, company_currency_id,
+                                                          fix_aji_amount_currency, round=False,
+                                                          context=new_context)
 
-                    # fix aji
-                    aal_obj.write(cr, uid, [greater_amount['aji_id']],
-                                  aji_fix_vals, context=context)
+                # fix aji
+                ana_line_obj.write(cr, uid, [max_line['aji_bro'].id], aji_fix_vals, context=context)
 
         #####
         ## Set move line as corrected upstream if needed
@@ -566,21 +571,22 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # delete distrib line
                 self.pool.get(obj_name).unlink(cr, uid, [line.id])
                 # delete associated analytic line
-                to_delete_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', '%s,%d' % (obj_name,line.id))])
-                self.pool.get('account.analytic.line').unlink(cr, uid, to_delete_ids)
+                to_delete_ids = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', '%s,%d' % (obj_name,line.id))])
+                ana_line_obj.unlink(cr, uid, to_delete_ids)
             # Override those that should be
             for line in to_override:
                 # update the ana line
-                to_override_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', '%s,%d' % (obj_name, line.distribution_line_id.id)), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
-                ctx = {'date': orig_date}
+                to_override_ids = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', '%s,%d' % (obj_name, line.distribution_line_id.id)), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+                ctx = {'currency_date': curr_date}
                 amount_cur = (ml.credit_currency - ml.debit_currency) * line.percentage / 100
                 amount = self.pool.get('res.currency').compute(cr, uid, ml.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
-                self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, {
+                # the posting date is the one of the entry corrected
+                ana_line_obj.write(cr, uid, to_override_ids, {
                     'account_id': line.analytic_id.id,
                     'amount_currency': amount_cur,
                     'amount': amount,
-                    'date': orig_date,
-                    'source_date': orig_date,
+                    'date': ml.date,
+                    'source_date': curr_date,
                     'document_date': orig_document_date,
                 })
                 # update the distib line
@@ -598,7 +604,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
                 })
                 # create the ana line
-                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=orig_date, document_date=orig_document_date, source_date=orig_date, ref=ml.ref)
+                # the posting date is the one of the entry corrected
+                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=ml.date,
+                                                              document_date=orig_document_date, source_date=curr_date, ref=ml.ref)
         # Set move line as corrected upstream if needed
         if to_reverse or to_override or to_create:
             self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)

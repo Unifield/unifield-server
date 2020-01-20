@@ -104,7 +104,7 @@
                     <para style="HeaderBold">Stock Balance</para>
                 </td>
                 <td>
-                    <para style="Header">[[ formatLang(o.available_stock or 0.00) ]]</para>
+                    <para style="Header">[[ formatLang(o.real_stock or 0.00) ]]</para>
                 </td>
                 <td>
                     <para style="HeaderBold">UoM</para>

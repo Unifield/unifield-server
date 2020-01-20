@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
-#    
+#
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 MSF, TeMPO Consulting
 #
@@ -15,9 +15,24 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+
+from tools.translate import _
+
+RFQ_STATE_SELECTION = [
+    ('draft', 'Draft'),
+    ('sent', 'Sent'),
+    ('updated', 'Updated'),
+    ('done', 'Closed'),
+    ('cancel', 'Cancelled'),
+]
+
+RFQ_LINE_STATE_DISPLAY_SELECTION = RFQ_STATE_SELECTION + [
+    ('cancel_r', 'Cancelled-r'),
+]
+
 import tender_flow
 import wizard
 import report

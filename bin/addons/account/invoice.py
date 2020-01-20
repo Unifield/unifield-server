@@ -27,6 +27,7 @@ import netsvc
 from osv import fields, osv, orm
 from tools.translate import _
 from msf_partner import PARTNER_TYPE
+from base import currency_date
 
 
 class account_invoice(osv.osv):
@@ -1111,7 +1112,7 @@ class account_invoice(osv.osv):
     def line_get_convert(self, cr, uid, x, part, date, context=None):
         return {
             'date_maturity': x.get('date_maturity', False),
-            'partner_id': part,
+            'partner_id': x.get('partner_id') or part,
             'name': x['name'][:64],
             'date': date,
             'debit_currency': x['price']>0 and x['price'],
@@ -1856,13 +1857,35 @@ class account_invoice_tax(osv.osv):
             raise osv.except_osv(_('Warning !'), _('The Untaxed Amount is zero. Please press the Save & Edit button before saving the %s tax.') % (vals['name']))
         return True
 
+    def _update_tax_partner(self, cr, uid, vals, context=None):
+        """
+        Updates vals with the partner of the related tax
+
+        Note that in case a partner_id is already in vals, it is used (e.g. in case of a SI refund the SR tax lines must be exactly
+        the same as the SI ones, even if the partner linked to the related account.tax has changed in the meantime)
+        """
+        if context is None:
+            context = {}
+        tax_obj = self.pool.get('account.tax')
+        if 'partner_id' not in vals and 'account_tax_id' in vals:
+            tax_partner_id = False
+            if vals['account_tax_id']:  # note that at doc level it's possible not to have any link to a tax from the system
+                tax = tax_obj.browse(cr, uid, vals['account_tax_id'], fields_to_fetch=['partner_id'], context=context)
+                tax_partner_id = tax.partner_id and tax.partner_id.id or False
+            vals.update({'partner_id': tax_partner_id})
 
     def create(self, cr, uid, vals, context=None):
-        if context == None:
+        if context is None:
             context = {}
         self._check_untaxed_amount(cr, uid, vals, context)
+        self._update_tax_partner(cr, uid, vals, context=context)
         return super(account_invoice_tax, self).create(cr, uid, vals, context=context)
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        self._update_tax_partner(cr, uid, vals, context=context)
+        return super(account_invoice_tax, self).write(cr, uid, ids, vals, context=context)
 
     def _count_factor(self, cr, uid, ids, name, args, context=None):
         res = {}
@@ -1896,16 +1919,31 @@ class account_invoice_tax(osv.osv):
         'company_id': fields.related('account_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
         'factor_base': fields.function(_count_factor, method=True, string='Multipication factor for Base code', type='float', multi="all"),
         'factor_tax': fields.function(_count_factor, method=True, string='Multipication factor Tax code', type='float', multi="all"),
-        'account_tax_id': fields.many2one('account.tax', 'Tax', domain=[('price_include', '=', False)])
+        'account_tax_id': fields.many2one('account.tax', 'Tax', domain=[('price_include', '=', False)]),
+        'partner_id': fields.many2one('res.partner', 'Partner', ondelete='restrict'),
     }
 
-
-    def tax_code_change(self, cr, uid, ids, account_tax_id, amount_untaxed, context=None):
+    def tax_code_change(self, cr, uid, ids, account_tax_id, amount_untaxed, inv_partner_id, context=None):
+        if context is None:
+            context = {}
         ret = {}
         if account_tax_id:
             atx_obj = self.pool.get('account.tax')
-            atx = atx_obj.browse(cr, uid, account_tax_id, context=context)
-            ret = {'value': {'account_id': atx.account_collected_id.id, 'name': "{0} - {1}".format(atx.name, atx.description or ''), 'base_amount': amount_untaxed, 'amount': self._calculate_tax(cr, uid, account_tax_id, amount_untaxed)}}
+            partner_obj = self.pool.get('res.partner')
+            inv_partner = inv_partner_id and partner_obj.browse(cr, uid, inv_partner_id,
+                                                                fields_to_fetch=['name', 'lang'], context=context) or None
+            inv_partner_name = inv_partner and inv_partner.name or ''
+            # use the language of the partner for the tax name (to be consistent with what's done when clicking on Compute Taxes)
+            inv_partner_lang = inv_partner and inv_partner.lang or ''
+            new_context = context.copy()
+            if inv_partner_lang:
+                new_context.update({'lang': inv_partner_lang})
+            tax = atx_obj.browse(cr, uid, account_tax_id, fields_to_fetch=['name', 'account_collected_id'], context=new_context)
+            description = "%s%s%s" % (tax.name, inv_partner_name and ' - ' or '', inv_partner_name or '')
+            ret = {'value': {'account_id': tax.account_collected_id and tax.account_collected_id.id or False,
+                             'name': description,
+                             'base_amount': amount_untaxed,
+                             'amount': self._calculate_tax(cr, uid, account_tax_id, amount_untaxed)}}
         return ret
 
     def _calculate_tax(self, cr, uid, account_tax_id, amount_untaxed):
@@ -1918,7 +1956,7 @@ class account_invoice_tax(osv.osv):
             tax_amount = round(atx.amount * amount_untaxed, 2)
         return tax_amount
 
-    def base_change(self, cr, uid, ids, base, currency_id=False, company_id=False, date_invoice=False):
+    def base_change(self, cr, uid, ids, base, currency_id=False, company_id=False, document_date=False, date_invoice=False):
         cur_obj = self.pool.get('res.currency')
         company_obj = self.pool.get('res.company')
         company_currency = False
@@ -1928,10 +1966,12 @@ class account_invoice_tax(osv.osv):
         if company_id:
             company_currency = company_obj.read(cr, uid, [company_id], ['currency_id'])[0]['currency_id'][0]
         if currency_id and company_currency:
-            base = cur_obj.compute(cr, uid, currency_id, company_currency, base*factor, context={'date': date_invoice or time.strftime('%Y-%m-%d')}, round=False)
+            curr_date = currency_date.get_date(self, cr, document_date, date_invoice)
+            base = cur_obj.compute(cr, uid, currency_id, company_currency, base*factor,
+                                   context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
         return {'value': {'base_amount':base}}
 
-    def amount_change(self, cr, uid, ids, amount, currency_id=False, company_id=False, date_invoice=False):
+    def amount_change(self, cr, uid, ids, amount, currency_id=False, company_id=False, document_date=False, date_invoice=False):
         cur_obj = self.pool.get('res.currency')
         company_obj = self.pool.get('res.company')
         company_currency = False
@@ -1941,7 +1981,9 @@ class account_invoice_tax(osv.osv):
         if company_id:
             company_currency = company_obj.read(cr, uid, [company_id], ['currency_id'])[0]['currency_id'][0]
         if currency_id and company_currency:
-            amount = cur_obj.compute(cr, uid, currency_id, company_currency, amount*factor, context={'date': date_invoice or time.strftime('%Y-%m-%d')}, round=False)
+            curr_date = currency_date.get_date(self, cr, document_date, date_invoice)
+            amount = cur_obj.compute(cr, uid, currency_id, company_currency, amount*factor,
+                                     context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
         return {'value': {'tax_amount': amount}}
 
     _order = 'sequence'
@@ -1952,6 +1994,8 @@ class account_invoice_tax(osv.osv):
         'sequence': 0,
     }
     def compute(self, cr, uid, invoice_id, context=None):
+        if context is None:
+            context = {}
         tax_grouped = {}
         tax_obj = self.pool.get('account.tax')
         cur_obj = self.pool.get('res.currency')
@@ -1973,14 +2017,20 @@ class account_invoice_tax(osv.osv):
                 if inv.type in ('out_invoice','in_invoice'):
                     val['base_code_id'] = tax['base_code_id']
                     val['tax_code_id'] = tax['tax_code_id']
-                    val['base_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['base'] * tax['base_sign'], context={'date': inv.date_invoice or time.strftime('%Y-%m-%d')}, round=False)
-                    val['tax_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['amount'] * tax['tax_sign'], context={'date': inv.date_invoice or time.strftime('%Y-%m-%d')}, round=False)
+                    curr_date = currency_date.get_date(self, cr, inv.document_date, inv.date_invoice)
+                    val['base_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['base'] * tax['base_sign'],
+                                                         context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
+                    val['tax_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['amount'] * tax['tax_sign'],
+                                                        context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
                     val['account_id'] = tax['account_collected_id'] or line.account_id.id
                 else:
                     val['base_code_id'] = tax['ref_base_code_id']
                     val['tax_code_id'] = tax['ref_tax_code_id']
-                    val['base_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['base'] * tax['ref_base_sign'], context={'date': inv.date_invoice or time.strftime('%Y-%m-%d')}, round=False)
-                    val['tax_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['amount'] * tax['ref_tax_sign'], context={'date': inv.date_invoice or time.strftime('%Y-%m-%d')}, round=False)
+                    curr_date = currency_date.get_date(self, cr, inv.document_date, inv.date_invoice)
+                    val['base_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['base'] * tax['ref_base_sign'],
+                                                         context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
+                    val['tax_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['amount'] * tax['ref_tax_sign'],
+                                                        context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
                     val['account_id'] = tax['account_paid_id'] or line.account_id.id
 
                 key = tax['id']  # taxes are grouped by id
@@ -2023,7 +2073,8 @@ class account_invoice_tax(osv.osv):
                 'price': t['amount'] or 0.0,
                 'account_id': t['account_id'],
                 'tax_code_id': t['tax_code_id'],
-                'tax_amount': t['tax_amount']
+                'tax_amount': t['tax_amount'],
+                'partner_id': t['partner_id'],
             })
         return res
 

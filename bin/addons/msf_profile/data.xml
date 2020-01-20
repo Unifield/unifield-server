@@ -44,10 +44,7 @@
     </record>
 
     <record model="res.users" id="base.user_sync">
-        <field name="signature">Synch</field>
-        <field name="name">Synch</field>
-        <field name="login">synch</field>
-    	<field name="context_lang">en_MF</field>
+        <field name="context_lang">en_MF</field>
     </record>
 
     <record id="sale.shop" model="sale.shop">
@@ -81,9 +78,6 @@
     </record>
 
     <record id="order_types.res_partner_local_market" model="res.partner">
-        <field name="lang">en_MF</field>
-    </record>
-    <record id="msf_doc_import.supplier_tbd" model="res.partner">
         <field name="lang">en_MF</field>
     </record>
 

@@ -301,7 +301,7 @@ class account_move_line(osv.osv):
                 view = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
                 if view:
                     view_id = view[1]
-        result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        result = super(account_move_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'search' and 'from' in context:
             if context.get('from') == 'wizard_import_invoice' or context.get('from') == 'wizard_import_cheque':
                 search = etree.fromstring(result['arch'])

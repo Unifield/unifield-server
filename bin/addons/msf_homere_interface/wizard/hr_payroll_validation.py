@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from time import strftime
 from tools.translate import _
+from base import currency_date
 import threading
 import logging
 import pooler
@@ -224,7 +225,7 @@ class hr_payroll_validation(osv.osv_memory):
                                                              ['amount', 'cost_center_id', 'funding_pool_id', 'free1_id',
                                                               'free2_id', 'currency_id', 'date', 'name', 'ref',
                                                               'partner_id', 'employee_id', 'account_id', 'period_id',
-                                                              'destination_id']):
+                                                              'destination_id', 'document_date']):
                 current_line_position += 1
                 # Update the percentage of import (from 10 to 70 ; assuming that this loop takes 60% of the process time)
                 percent_before = 10
@@ -262,12 +263,13 @@ class hr_payroll_validation(osv.osv_memory):
                     dest_id = line.get('destination_id', False) and line.get('destination_id')[0] or (
                         account.default_destination_id and account.default_destination_id.id) or False
                     if distrib_id:
+                        curr_date = currency_date.get_date(self, cr, line.get('document_date', False), line.get('date', False))
                         common_vals = {
                             'distribution_id': distrib_id,
                             'currency_id': line.get('currency_id', False) and line.get('currency_id')[0] or False,
                             'percentage': 100.0,
                             'date': line.get('date', False) or current_date,
-                            'source_date': line.get('date', False) or current_date,
+                            'source_date': curr_date or current_date,
                             'destination_id': dest_id,
                         }
                         common_vals.update({'analytic_id': cc_id, })

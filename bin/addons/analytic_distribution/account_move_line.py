@@ -21,6 +21,8 @@
 
 from osv import fields, osv
 from tools.translate import _
+from base import currency_date
+
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
@@ -195,7 +197,9 @@ class account_move_line(osv.osv):
 
                     dl_total_amount_rounded = 0.
                     for distrib_line in distrib_lines:
-                        context.update({'date': obj_line.get('source_date', False) or obj_line.get('date', False)})
+                        curr_date = currency_date.get_date(self, cr, obj_line.get('document_date', False),
+                                                           obj_line.get('date', False), source_date=obj_line.get('source_date', False))
+                        context.update({'currency_date': curr_date})
                         anal_amount = distrib_line.percentage*amount/100
                         anal_amount_rounded = round(anal_amount, 2)
                         dl_total_amount_rounded += anal_amount_rounded
@@ -240,7 +244,7 @@ class account_move_line(osv.osv):
                             'currency_id': analytic_currency_id,
                             'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
                             'document_date': obj_line.get('document_date', False),
-                            'source_date': obj_line.get('source_date', False) or obj_line.get('date', False),  # UFTP-361 source_date from date if not any (posting date)
+                            'source_date': curr_date,
                             'real_period_id': obj_line['period_id'] and obj_line['period_id'][0] or False,  # US-945/2
                         }
                         # Update values if we come from a funding pool

@@ -69,6 +69,8 @@
                     <field name="postgresql_disk_space" />
                     <field name="unifield_disk_space" />
                     <field name="instance_state" />
+                    <field name="nb_late_vi"/>
+                    <field name="vi_details" />
                 </tree>
             </field>
         </record>
@@ -91,7 +93,22 @@
                     <field name="postgresql_disk_space"/>
                     <field name="unifield_disk_space"/>
                     <field name="instance_state"/>
+                    <field name="nb_late_vi"/>
+                    <field name="vi_details" colspan="4" />
                 </form>
+            </field>
+        </record>
+
+        <record id="sync_hq_instance_version_search" model="ir.ui.view">
+            <field name="name">sync.vestion.monitor.search</field>
+            <field name="model">sync.version.instance.monitor</field>
+            <field name="type">search</field>
+            <field name="priority" eval="210" />
+            <field name="arch" type="xml">
+                <search>
+                    <filter string="Late jobs"  icon="terp-gnome-cpu-frequency-applet+" domain="[('nb_late_vi', '>', 0)]"/>
+                    <field name="instance_id"/>
+                </search>
             </field>
         </record>
 
@@ -102,6 +119,7 @@
             <field name="view_mode">tree,form</field>
             <field name="domain">[('instance_id', '!=', False)]</field>
             <field name="view_id" ref="sync_hq_instance_version_tree" />
+            <field name="search_view_id" ref="sync_hq_instance_version_search" />
         </record>
 
         <menuitem id="sync_hq_instance_version_menu" name="Version Instances Monitor"
