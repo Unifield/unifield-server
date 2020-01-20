@@ -993,8 +993,8 @@ class replenishment_segment(osv.osv):
         return wizard_obj.message_box(cr, uid, title=_('Importation Done'), message=_('%d line(s) created, %d line(s) updated') % (created, updated))
 
     def completed(self, cr, uid, ids, context=None):
-        for x in self.read(cr, uid, ids, ['name_seg', 'date_next_order_received_modified', 'date_next_order_received'], context=context):
-            if not x['date_next_order_received_modified'] and not x['date_next_order_received']:
+        for x in self.read(cr, uid, ids, ['name_seg', 'date_next_order_received_modified', 'date_next_order_received', 'rule'], context=context):
+            if x['rule'] == 'cycle' and not x['date_next_order_received_modified'] and not x['date_next_order_received']:
                 raise osv.except_osv(_('Warning'), _('Segment %s "Next order to be received by" can\'t be empty OC, please set a date in the field "Next order to be received by (modified)"') % (x['name_seg'], ))
 
         self.write(cr, uid, ids, {'state': 'complete'}, context=context)
@@ -1172,8 +1172,10 @@ class replenishment_segment_line(osv.osv):
             if x.segment_id.id not in segment:
                 if inv_review:
                     rdd = now + relativedelta(months=int(x.segment_id.projected_view), day=1, days=-1)
-                else:
+                elif x.segment_id.rule == 'cycle':
                     rdd = datetime.strptime(x.segment_id.date_next_order_received_modified or x.segment_id.date_next_order_received, '%Y-%m-%d')
+                else:
+                    rdd = now + relativedelta(days=int(x.segment_id.total_lt))
                 segment[x.segment_id.id] = {
                     'to_date_rdd': rdd.strftime('%Y-%m-%d'),
                     'to_date_oc': (rdd  + relativedelta(months=x.segment_id.order_coverage)).strftime('%Y-%m-%d'),
@@ -1522,7 +1524,11 @@ class replenishment_segment_line_amc(osv.osv):
             if full_data:
                 last_gen_data['full_date'] = datetime_now
                 expired_obj = self.pool.get('product.likely.expire.report')
-                rdd_date = datetime.strptime(segment.date_next_order_received_modified or segment.date_next_order_received, '%Y-%m-%d')
+
+                if segment.rule == 'cycle':
+                    rdd_date = datetime.strptime(segment.date_next_order_received_modified or segment.date_next_order_received, '%Y-%m-%d')
+                else:
+                    rdd_date = datetime_now + relativedelta(days=int(segment.total_lt))
                 oc_date = rdd_date + relativedelta(months=segment.order_coverage)
 
                 amc_data_to_update = {}
