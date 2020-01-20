@@ -628,7 +628,7 @@ class replenishment_segment(osv.osv):
                         from_fmc = getattr(line, 'rr_fmc_from_%d'%fmc_d)
                         to_fmc = getattr(line, 'rr_fmc_to_%d'%fmc_d)
                         num_fmc = getattr(line, 'rr_fmc_%d'%fmc_d)
-                        if from_fmc and to_fmc and num_fmc:
+                        if from_fmc and to_fmc and num_fmc is not False:
 
                             from_fmc = datetime.strptime(from_fmc, '%Y-%m-%d')
                             to_fmc = datetime.strptime(to_fmc, '%Y-%m-%d')
@@ -664,7 +664,7 @@ class replenishment_segment(osv.osv):
                                 if not lacking:
                                     if total_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
                                         month_of_supply += month
-                                    else:
+                                    elif num_fmc:
                                         month_of_supply += ( sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc + month*num_fmc ) / num_fmc
                                         lacking = True
 
@@ -714,7 +714,7 @@ class replenishment_segment(osv.osv):
                         qty_lacking =  max(0, total_fmc - sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0))
                         if total_month_oc+total_month:
                             ss_stock = seg.safety_stock * ((total_fmc_oc+total_fmc)/(total_month_oc+total_month))
-                        if total_month and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
+                        if total_month and pas and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
                             warnings.append(_('Missing Qties'))
                         if qty_lacking:
                             warnings.append(_('Stock-out before next ETA'))
