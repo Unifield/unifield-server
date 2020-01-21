@@ -76,7 +76,8 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree" position="replace">
-                        <tree string="Invoice Line" colors="red:inactive_product == True or analytic_distribution_state in ('invalid');blue:inactive_product == False and analytic_distribution_state in ('valid');black:inactive_product == False and analytic_distribution_state in ('none')">
+                        <tree string="Invoice Line"
+                              colors="red:inactive_product == True or analytic_distribution_state in ('invalid', 'invalid_small_amount');blue:inactive_product == False and analytic_distribution_state in ('valid');black:inactive_product == False and analytic_distribution_state in ('none')">
                             <field name="name"/>
                             <field name="inactive_product" invisible="1" />
                             <field name="account_id" domain="[('restricted_area', '=', 'invoice_lines')]"/>

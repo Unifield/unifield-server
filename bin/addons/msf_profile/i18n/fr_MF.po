@@ -106606,7 +106606,7 @@ msgstr "Petit montant invalide"
 
 #. module: account_corrections
 #: help:analytic.distribution.wizard,invalid_small_amount:0
-msgid "Display in the wizard a warning message regarding small amount analytic distribution"
+msgid "Displays in the wizard a warning message regarding small amount analytic distribution"
 msgstr "Affiche dans l'assistant un message d'avertissement concernant la distribution analytique des petits montants"
 
 #. module: analytic_distribution
