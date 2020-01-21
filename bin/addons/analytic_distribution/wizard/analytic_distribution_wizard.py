@@ -732,6 +732,38 @@ class analytic_distribution_wizard(osv.osv_memory):
                                 self.pool.get(wiz_line_obj).create(cr, uid, vals, context=context)
             return True
 
+    def _get_invalid_small_amount(self, cr, uid, vals, context=None):
+        """
+        Returns the value of "invalid_small_amount" for the Analytic Distrib. of which vals is in param.
+        (invalid_small_amount is True when several AD lines are linked to a booking amount <= 1).
+
+        Check all tuples listed in the object_list. For each one:
+        0) object name
+        1) many2one field of the analytic.distribution.wizard which is linked to this object
+        2) name of the field of this object corresponding to the lines
+           (e.g. "invalid_small_amount" is True on an invoice IF it is True on one of its invoice lines)
+
+        """
+        object_list = [('account.invoice', 'invoice_id', 'invoice_line'),
+                       ('account.invoice.line', 'invoice_line_id', False)]
+        invalid_small_amount = False
+        if context is None:
+            context = {}
+        for obj_data in object_list:
+            obj_type, field_name, line_field = obj_data
+            if vals.get(field_name):
+                obj = self.pool.get(obj_type).browse(cr, uid, vals[field_name], context=context)
+                if not line_field:
+                    invalid_small_amount = obj.analytic_distribution_state == 'invalid_small_amount' or False
+                else:
+                    lines = hasattr(obj, line_field) and getattr(obj, line_field) or []
+                    for line in lines:
+                        if line.analytic_distribution_state == 'invalid_small_amount':
+                            invalid_small_amount = True
+                            break
+                break  # AD wizard is linked to only one object, no need to check the other list items
+        return invalid_small_amount
+
     def create(self, cr, uid, vals, context=None):
         """
         Add distribution lines to the wizard
@@ -739,7 +771,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        # Prepare some values
+        vals.update({'invalid_small_amount': self._get_invalid_small_amount(cr, uid, vals, context=context)})
         res = super(analytic_distribution_wizard, self).create(cr, uid, vals, context=context)
         wiz = self.browse(cr, uid, [res], context=context)[0]
         if wiz.distribution_id:

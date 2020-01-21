@@ -327,9 +327,6 @@ class account_invoice_line(osv.osv):
             amount = -1 * amount
         # Get analytic distribution id from this line
         distrib_id = invoice_line and invoice_line.analytic_distribution_id and invoice_line.analytic_distribution_id.id or False
-        invalid_small_amount = False
-        if invoice_line.analytic_distribution_state == 'invalid_small_amount':
-            invalid_small_amount = True
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
@@ -339,7 +336,6 @@ class account_invoice_line(osv.osv):
             'account_id': invoice_line.account_id and invoice_line.account_id.id or False,
             'posting_date': invoice_line.invoice_id.date_invoice,
             'document_date': invoice_line.invoice_id.document_date,
-            'invalid_small_amount': invalid_small_amount,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
