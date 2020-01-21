@@ -1560,29 +1560,29 @@ class replenishment_segment_line_amc(osv.osv):
                     expired_obj._process_lines(cr, uid, expired_id, context=context, create_cr=False)
                     # before rdd
                     cr.execute("""
-                        select line.product_id, sum(item.expired_qty)
-                        from product_likely_expire_report_line line, product_likely_expire_report_item item, product_likely_expire_report_item_line line
+                        select line.product_id, sum(itemline.expired_qty)
+                        from product_likely_expire_report_line line, product_likely_expire_report_item item, product_likely_expire_report_item_line itemline
                         where
                             item.line_id = line.id and
                             report_id=%s and
-                            line.item_id = item.id and
-                            item.expired_date <= %s
+                            itemline.item_id = item.id and
+                            itemline.expired_date <= %s
                         group by line.product_id
-                        having sum(item.expired_qty) > 0 """, (expired_id, rdd_date.strftime('%Y-%m-%d')))
+                        having sum(itemline.expired_qty) > 0 """, (expired_id, rdd_date.strftime('%Y-%m-%d')))
                     for x in cr.fetchall():
                         amc_data_to_update.setdefault(cache_line_amc[lines[x[0]]], {}).update({'expired_before_rdd': x[1]})
 
                     # between rdd and oc
                     cr.execute("""
-                        select line.product_id, sum(item.expired_qty)
-                        from product_likely_expire_report_line line, product_likely_expire_report_item item, product_likely_expire_report_item_line line
+                        select line.product_id, sum(itemline.expired_qty)
+                        from product_likely_expire_report_line line, product_likely_expire_report_item item, product_likely_expire_report_item_line itemline
                         where
                             item.line_id = line.id and
                             report_id=%s and
-                            line.item_id = item.id and
-                            item.expired_date > %s
+                            itemline.item_id = item.id and
+                            itemline.expired_date > %s
                         group by line.product_id
-                        having sum(item.expired_qty) > 0""", (expired_id, rdd_date.strftime('%Y-%m-%d')))
+                        having sum(itemline.expired_qty) > 0""", (expired_id, rdd_date.strftime('%Y-%m-%d')))
                     for x in cr.fetchall():
                         amc_data_to_update.setdefault(cache_line_amc[lines[x[0]]], {}).update({'expired_between_rdd_oc': x[1]})
                 else:
