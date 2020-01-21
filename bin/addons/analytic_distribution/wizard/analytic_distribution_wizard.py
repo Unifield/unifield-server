@@ -740,7 +740,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         Check all tuples listed in the object_list. For each one:
         0) object name
         1) many2one field of the analytic.distribution.wizard which is linked to this object
-        2) name of the field of this object corresponding to the lines
+        2) name of the field of this object corresponding to its lines if any
            (e.g. "invalid_small_amount" is True on an invoice IF it is True on one of its invoice lines)
 
         """
@@ -753,6 +753,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             ('wizard.account.invoice.line', 'direct_invoice_line_id', False),
             ('wizard.cash.return', 'cash_return_id', 'advance_line_ids'),
             ('wizard.advance.line', 'cash_return_line_id', False),
+            ('account.move.line', 'move_line_id', False),
             ]
         invalid_small_amount = False
         if context is None:

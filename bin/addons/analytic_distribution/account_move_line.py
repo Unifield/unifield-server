@@ -68,7 +68,7 @@ class account_move_line(osv.osv):
         for line in cr.fetchall():
             manual = line[6] == 'manu'
             amount = False
-            if manual:  # check amount only for manual JIs
+            if manual or context.get('from_correction'):  # in the standard JE view check amount only for manual entries
                 amount = line[7]
             res[line[0]] = distrib_obj._get_distribution_state(cr, uid, line[1], line[2], line[3], doc_date=line[4],
                                                                posting_date=line[5], manual=manual, amount=amount)
