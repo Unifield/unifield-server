@@ -41,11 +41,14 @@ class analytic_distribution_wizard(osv.osv_memory):
         'old_employee_id': fields.many2one('hr.employee', "Original employee of the line to be corrected", readonly=True),
         'new_partner_id': fields.many2one('res.partner', "New partner selected in the correction wizard", readonly=True),
         'new_employee_id': fields.many2one('hr.employee', "New employee selected in the correction wizard", readonly=True),
+        'invalid_small_amount': fields.boolean(string='Invalid small amount', invisible=True,
+                                               help="Display in the wizard a warning message regarding small amount analytic distribution"),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
         'date': lambda *a: time.strftime('%Y-%m-%d'),
+        'invalid_small_amount': False,
     }
 
     def _check_lines(self, cr, uid, distribution_line_id, wiz_line_id, ltype):

@@ -254,7 +254,8 @@ class account_invoice_line(osv.osv):
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select="1"), # select is for optimisation purposes
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       selection=[('none', 'None'), ('valid', 'Valid'),
+                                                                  ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean',
                                                                   string='Header Distrib.?'),
@@ -326,6 +327,9 @@ class account_invoice_line(osv.osv):
             amount = -1 * amount
         # Get analytic distribution id from this line
         distrib_id = invoice_line and invoice_line.analytic_distribution_id and invoice_line.analytic_distribution_id.id or False
+        invalid_small_amount = False
+        if invoice_line.analytic_distribution_state == 'invalid_small_amount':
+            invalid_small_amount = True
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
@@ -335,6 +339,7 @@ class account_invoice_line(osv.osv):
             'account_id': invoice_line.account_id and invoice_line.account_id.id or False,
             'posting_date': invoice_line.invoice_id.date_invoice,
             'document_date': invoice_line.invoice_id.document_date,
+            'invalid_small_amount': invalid_small_amount,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

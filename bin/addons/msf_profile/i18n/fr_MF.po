@@ -106591,3 +106591,18 @@ msgstr "Funding Pool non trouvé."
 #, python-format
 msgid "Journal Items with a booking amount inferior or equal to 1 can't have several analytic distribution lines."
 msgstr "Les Lignes d'Ecritures Comptables avec un montant d'enregistrement inférieur ou égal à 1 ne peuvent pas avoir plusieurs lignes de distribution analytique."
+
+#. module: account_corrections
+#: field:analytic.distribution.wizard,invalid_small_amount:0
+msgid "Invalid small amount"
+msgstr "Petit montant invalide"
+
+#. module: account_corrections
+#: help:analytic.distribution.wizard,invalid_small_amount:0
+msgid "Display in the wizard a warning message regarding small amount analytic distribution"
+msgstr "Affiche dans l'assistant un message d'avertissement concernant la distribution analytique des petits montants"
+
+#. module: analytic_distribution
+#: view:analytic.distribution.wizard:0
+msgid "Make sure that there is only one Analytic Distribution line for the entries having a booking amount inferior or equal to 1."
+msgstr "Assurez-vous de n'avoir qu'une seule ligne de Distribution Analytique pour les écritures ayant un montant d'enregistrement inférieur ou égal à 1."

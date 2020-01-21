@@ -101,6 +101,15 @@
                             <label string="*: this action will copy the analytic distribution from the header to the line allowing then the user to make changes starting from the copied distribution." colspan="3" />
                         </group>
                     </group>
+                    <field name="invalid_small_amount"/>
+                    <group colspan="6" col="2" attrs="{'invisible': [('invalid_small_amount', '=', False)]}" >
+                        <html>
+                            <p id="label_invalid_small_amount"
+                               style="text-align:center; color: red; font-weight: bold; font-size: 1.1em;">
+                                <translate>Make sure that there is only one Analytic Distribution line for the entries having a booking amount inferior or equal to 1.</translate>
+                            </p>
+                        </html>
+                    </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'cc')]}">
                         <separator string="Cost Center"/>
                         <field colspan="4" name="line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'from_purchase': purchase_id, 'from_sale_order': sale_order_id, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>

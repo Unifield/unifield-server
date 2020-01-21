@@ -67,7 +67,7 @@ class analytic_distribution(osv.osv):
         # set AD as invalid when several distrib. lines are applied to booking amount <= 1
         if amount is not None and amount is not False and abs(amount) <= 1:
             if not all(len(d) <= 1 for d in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]):
-                return 'invalid'
+                return 'invalid_small_amount'
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
