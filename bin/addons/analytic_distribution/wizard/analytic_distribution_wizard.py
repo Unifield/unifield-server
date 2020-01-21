@@ -751,6 +751,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             ('account.direct.invoice.wizard.line', 'account_direct_invoice_wizard_line_id', False),
             ('wizard.account.invoice', 'direct_invoice_id', 'invoice_line'),
             ('wizard.account.invoice.line', 'direct_invoice_line_id', False),
+            ('wizard.cash.return', 'cash_return_id', 'advance_line_ids'),
+            ('wizard.advance.line', 'cash_return_line_id', False),
             ]
         invalid_small_amount = False
         if context is None:
