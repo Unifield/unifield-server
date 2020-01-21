@@ -1561,11 +1561,12 @@ class replenishment_segment_line_amc(osv.osv):
                     # before rdd
                     cr.execute("""
                         select line.product_id, sum(item.expired_qty)
-                        from product_likely_expire_report_line line, product_likely_expire_report_item item
+                        from product_likely_expire_report_line line, product_likely_expire_report_item item, product_likely_expire_report_item_line line
                         where
                             item.line_id = line.id and
                             report_id=%s and
-                            item.period_start <= %s
+                            line.item_id = item.id and
+                            item.expired_date <= %s
                         group by line.product_id
                         having sum(item.expired_qty) > 0 """, (expired_id, rdd_date.strftime('%Y-%m-%d')))
                     for x in cr.fetchall():
@@ -1574,11 +1575,12 @@ class replenishment_segment_line_amc(osv.osv):
                     # between rdd and oc
                     cr.execute("""
                         select line.product_id, sum(item.expired_qty)
-                        from product_likely_expire_report_line line, product_likely_expire_report_item item
+                        from product_likely_expire_report_line line, product_likely_expire_report_item item, product_likely_expire_report_item_line line
                         where
                             item.line_id = line.id and
                             report_id=%s and
-                            item.period_start > %s
+                            line.item_id = item.id and
+                            item.expired_date > %s
                         group by line.product_id
                         having sum(item.expired_qty) > 0""", (expired_id, rdd_date.strftime('%Y-%m-%d')))
                     for x in cr.fetchall():
