@@ -486,5 +486,9 @@
             <field name="method">us_6905_manage_bned_switch</field>
         </record>
 
+        <record id="rec_entries_uf14_1_uf15" model="patch.scripts">
+            <field name="method">rec_entries_uf14_1_uf15</field>
+        </record>
+
     </data>
 </openerp>
