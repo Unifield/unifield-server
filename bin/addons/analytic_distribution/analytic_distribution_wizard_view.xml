@@ -46,6 +46,7 @@
             <field name="type">tree</field>
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
+                    <field name="is_percentage_amount_touched"/>
                     <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1'), ('state', '=', 'open')]" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
                     <field name="amount" sum="Total Amount"/>
@@ -59,6 +60,7 @@
             <field name="type">tree</field>
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
+                    <field name="is_percentage_amount_touched"/>
                     <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE2'), ('state', '=', 'open')]" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
                     <field name="amount" sum="Total Amount"/>
