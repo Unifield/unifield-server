@@ -15,32 +15,6 @@ from xlwt import Workbook, easyxf, Borders
 import tempfile
 import base64
 
-PARTNER_TYPES = {
-    'internal': _('Internal'),
-    'section': _('Inter-section'),
-    'external': _('External'),
-    'esc': _('ESC'),
-    'intermission': _('Intermission'),
-}
-
-ORDER_TYPES = {
-    'regular': _('Regular'),
-    'donation_exp': _('Donation before expiry'),
-    'donation_st': _('Standard donation'),
-    'loan': _('Loan'),
-    'in_kind': _('In Kind Donation'),
-    'purchase_list': _('Purchase List'),
-    'direct': _('Direct Purchase Order'),
-}
-
-ORDER_CATEGORIES = {
-    'medical': 'Medical',
-    'log': 'Logistic',
-    'service': 'Service',
-    'transport': 'Transport',
-    'other': 'Other',
-}
-
 
 class report_stock_move(osv.osv):
     _name = "report.stock.move"
@@ -530,9 +504,34 @@ product will be shown.""",
         )
 
     def getLines(self, cr, uid, datas, currency_id, context=None):
-
         if context is None:
             context = {}
+
+        PARTNER_TYPES = {
+            'internal': _('Internal'),
+            'section': _('Inter-section'),
+            'external': _('External'),
+            'esc': _('ESC'),
+            'intermission': _('Intermission'),
+        }
+
+        ORDER_TYPES = {
+            'regular': _('Regular'),
+            'donation_exp': _('Donation before expiry'),
+            'donation_st': _('Standard donation'),
+            'loan': _('Loan'),
+            'in_kind': _('In Kind Donation'),
+            'purchase_list': _('Purchase List'),
+            'direct': _('Direct Purchase Order'),
+        }
+
+        ORDER_CATEGORIES = {
+            'medical': _('Medical'),
+            'log': _('Logistic'),
+            'service': _('Service'),
+            'transport': _('Transport'),
+            'other': _('Other'),
+        }
 
         _logger = logging.getLogger('in.out.report')
         prod_obj = self.pool.get('product.product')
@@ -843,7 +842,7 @@ product will be shown.""",
                     if value and headers[col_count][1]:
                         style = headers[col_count][1]
                     else:
-                        if headers[col_count][0] == 'Origin':
+                        if col_count == 18:  # Change style on Origin column
                             style = row_left_style
                         else:
                             style = row_style

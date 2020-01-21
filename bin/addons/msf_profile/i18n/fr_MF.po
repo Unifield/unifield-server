@@ -1477,7 +1477,7 @@ msgstr "Configuration d'Allocation de Stock"
 msgid "Partner Form"
 msgstr "Formulaire du Partenaire"
 
-#. modules: purchase, tender_flow, service_purchasing, sale, purchase_allocation_report, purchase_followup, return_claim, order_types, purchase_compare_rfq, sourcing, consumption_calculation, stock
+#. modules: purchase, tender_flow, service_purchasing, sale, purchase_allocation_report, purchase_followup, return_claim, order_types, purchase_compare_rfq, sourcing, consumption_calculation, stock, stock_override
 #: selection:stock.move,order_category:0
 #: view:purchase.order:0
 #: selection:purchase.order,categ:0
@@ -1499,6 +1499,7 @@ msgstr "Formulaire du Partenaire"
 #: selection:sale.order.line,categ:0
 #: selection:internal.request.import,imp_categ:0
 #: selection:stock.reception.wizard,order_category:0
+#: code:addons/stock_override/report/report_stock_move.py:529
 msgid "Medical"
 msgstr "Médical"
 
@@ -45898,7 +45899,7 @@ msgstr "Vous devriez sélectionner au moins deux lignes à traiter."
 msgid "Activate the payroll feature"
 msgstr "Activer l'attribut Paie"
 
-#. modules: purchase, product, purchase_allocation_report, service_purchasing, consumption_calculation, sale, sales_followup, purchase_compare_rfq, sourcing, order_types, tender_flow, return_claim, purchase_followup, stock
+#. modules: purchase, product, purchase_allocation_report, service_purchasing, consumption_calculation, sale, sales_followup, purchase_compare_rfq, sourcing, order_types, tender_flow, return_claim, purchase_followup, stock, stock_override
 #: selection:real.average.consumption,categ:0
 #: selection:stock.move,order_category:0
 #: view:product.product:0
@@ -45923,6 +45924,7 @@ msgstr "Activer l'attribut Paie"
 #: selection:purchase.report,categ:0
 #: selection:tender,categ:0
 #: selection:stock.reception.wizard,order_category:0
+#: code:addons/stock_override/report/report_stock_move.py:532
 msgid "Transport"
 msgstr "Transport"
 
@@ -56422,7 +56424,7 @@ msgstr "Donation en Nature"
 msgid "Other Types"
 msgstr "Autres Types"
 
-#. modules: purchase, tender_flow, service_purchasing, sale, purchase_allocation_report, purchase_followup, return_claim, order_types, purchase_compare_rfq, sourcing, consumption_calculation, stock
+#. modules: purchase, tender_flow, service_purchasing, sale, purchase_allocation_report, purchase_followup, return_claim, order_types, purchase_compare_rfq, sourcing, consumption_calculation, stock, stock_override
 #: selection:stock.move,order_category:0
 #: view:purchase.order:0
 #: selection:purchase.order,categ:0
@@ -56444,6 +56446,7 @@ msgstr "Autres Types"
 #: selection:sale.order.line,categ:0
 #: selection:internal.request.import,imp_categ:0
 #: selection:stock.reception.wizard,order_category:0
+#: code:addons/stock_override/report/report_stock_move.py:530
 msgid "Logistic"
 msgstr "Logistique"
 
@@ -90429,7 +90432,7 @@ msgstr "Le produit sélectionné est Gestion de Lot."
 msgid "Export search result"
 msgstr "Exporter le résultat de la recherche"
 
-#. modules: purchase, tender_flow, msf_outgoing, reason_types_moves, product_asset, sale, purchase_allocation_report, base, order_types, specific_locations, return_claim, service_purchasing, purchase_followup, purchase_compare_rfq, sourcing, consumption_calculation, stock
+#. modules: purchase, tender_flow, msf_outgoing, reason_types_moves, product_asset, sale, purchase_allocation_report, base, order_types, specific_locations, return_claim, service_purchasing, purchase_followup, purchase_compare_rfq, sourcing, consumption_calculation, stock, stock_override
 #: selection:res.partner.address,type:0
 #: field:shipment,carrier_other:0
 #: field:shipment,consignee_other:0
@@ -90458,6 +90461,7 @@ msgstr "Exporter le résultat de la recherche"
 #: selection:sale.order.line,categ:0
 #: selection:internal.request.import,imp_categ:0
 #: selection:stock.reception.wizard,order_category:0
+#: code:addons/stock_override/report/report_stock_move.py:533
 msgid "Other"
 msgstr "Autre"
 
@@ -96668,7 +96672,7 @@ msgstr "Validating journal entry…"
 msgid "America/Port-au-Prince"
 msgstr "Amériques/Port-au-Prince"
 
-#. modules: purchase, tender_flow, purchase_allocation_report, supplier_catalogue, service_purchasing, consumption_calculation, sale, msf_config_locations, procurement, sourcing, order_types, return_claim, purchase_compare_rfq, purchase_followup, stock
+#. modules: purchase, tender_flow, purchase_allocation_report, supplier_catalogue, service_purchasing, consumption_calculation, sale, msf_config_locations, procurement, sourcing, order_types, return_claim, purchase_compare_rfq, purchase_followup, stock, stock_override
 #: selection:real.average.consumption,categ:0
 #: model:stock.location,name:msf_config_locations.stock_location_service
 #: selection:stock.move,order_category:0
@@ -96693,6 +96697,7 @@ msgstr "Amériques/Port-au-Prince"
 #: view:tender:0
 #: selection:tender,categ:0
 #: selection:stock.reception.wizard,order_category:0
+#: code:addons/stock_override/report/report_stock_move.py:531
 msgid "Service"
 msgstr "Service"
 
