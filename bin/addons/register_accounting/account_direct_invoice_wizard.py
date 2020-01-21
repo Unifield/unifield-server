@@ -574,7 +574,8 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
                                                        method=True, type='selection',
                                                        selection=[('none', 'None'),
                                                                   ('valid', 'Valid'),
-                                                                  ('invalid', 'Invalid')],
+                                                                  ('invalid', 'Invalid'),
+                                                                  ('invalid_small_amount', 'Invalid')],
                                                        string="Distribution state",
                                                        help="Informs from distribution state among 'none',"
                                                        " 'valid', 'invalid."),

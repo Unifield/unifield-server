@@ -744,8 +744,14 @@ class analytic_distribution_wizard(osv.osv_memory):
            (e.g. "invalid_small_amount" is True on an invoice IF it is True on one of its invoice lines)
 
         """
-        object_list = [('account.invoice', 'invoice_id', 'invoice_line'),
-                       ('account.invoice.line', 'invoice_line_id', False)]
+        object_list = [
+            ('account.invoice', 'invoice_id', 'invoice_line'),
+            ('account.invoice.line', 'invoice_line_id', False),
+            ('account.direct.invoice.wizard', 'account_direct_invoice_wizard_id', 'invoice_wizard_line'),
+            ('account.direct.invoice.wizard.line', 'account_direct_invoice_wizard_line_id', False),
+            ('wizard.account.invoice', 'direct_invoice_id', 'invoice_line'),
+            ('wizard.account.invoice.line', 'direct_invoice_line_id', False),
+            ]
         invalid_small_amount = False
         if context is None:
             context = {}
