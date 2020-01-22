@@ -588,7 +588,7 @@ product will be shown.""",
                     lot.name as lot_name,
                     lot.life_date as life_date,
                     COALESCE(pick.origin, m.origin) as origin,
-                    case when m.sale_line_id is not null and not so.procurement_request then so.order_type when m.purchase_line_id is not null and (pol.linked_sol_id is null or (pol.linked_sol_id is not null and not sol2.procurement_request)) then po.order_type end as order_type,
+                    case when m.sale_line_id is not null and not so.procurement_request then so.order_type when m.purchase_line_id is not null then po.order_type end as order_type,
                     case when m.sale_line_id is not null then so.categ when m.purchase_line_id is not null then po.categ end as order_category,
                     case when pick.subtype not in ('ppl', 'packing') then null when so.procurement_request then %s else pl.currency_id end as bug_pl
                 from
