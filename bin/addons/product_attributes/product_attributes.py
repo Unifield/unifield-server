@@ -971,7 +971,7 @@ class product_attributes(osv.osv):
         'restricted_country': False,
         'sterilized': 'no',
         'single_use': 'no',
-        'standard_ok': 'False',
+        'standard_ok': 'non_standard',
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
