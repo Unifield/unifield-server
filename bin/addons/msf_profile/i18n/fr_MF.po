@@ -106586,3 +106586,7 @@ msgstr "MàJ en Masse de Produits NL/EXP"
 msgid "Funding Pool not found."
 msgstr "Funding Pool non trouvé."
 
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:255
+msgid "INT Reference"
+msgstr "Référence du INT"

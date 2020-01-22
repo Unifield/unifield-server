@@ -155,6 +155,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Physical Reception Date
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
+        ## INT Reference
+        <Column ss:AutoFitWidth="1" ss:Width="80.0" />
 
         ## WORKSHEET HEADER
         <Row>
@@ -250,6 +252,7 @@
             _('Expected Receipt Date'),
             _('Actual Receipt Date'),
             _('Physical Reception Date'),
+            _('INT Reference'),
         ]
         %>
         <Row>
@@ -306,6 +309,7 @@
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['int_name']|x}</Data></Cell>
             </Row>
         % endfor
 
