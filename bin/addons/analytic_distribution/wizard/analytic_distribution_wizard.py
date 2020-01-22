@@ -754,6 +754,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             ('wizard.cash.return', 'cash_return_id', 'advance_line_ids'),
             ('wizard.advance.line', 'cash_return_line_id', False),
             ('account.move.line', 'move_line_id', False),
+            ('account.move', 'move_id', 'line_id'),
             ]
         invalid_small_amount = False
         if context is None:
