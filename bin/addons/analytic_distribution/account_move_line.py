@@ -173,13 +173,16 @@ class account_move_line(osv.osv):
                 other_lines_are_ok = False
             # Check that line have analytic-a-holic account and have a distribution
             if line_distrib_id and account.get('is_analytic_addicted', False) and other_lines_are_ok:
-                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distrib_id, {}, account.get('id'))
+                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distrib_id, {}, account.get('id'),
+                                                                                           amount=amount  # booking amount
+                                                                                           )
                 # For manual journal entries, do not raise an error. But delete all analytic distribution linked to other_lines because if one line is invalid, all lines should not create analytic lines
-                if ana_state == 'invalid' and move.get('status', '') == 'manu':
+                invalid_state = ana_state in ('invalid', 'invalid_small_amount')
+                if invalid_state and move.get('status', '') == 'manu':
                     ana_line_ids = acc_ana_line_obj.search(cr, uid, [('move_id', 'in', move.get('line_id', []))])
                     acc_ana_line_obj.unlink(cr, uid, ana_line_ids)
                     continue
-                elif ana_state == 'invalid':
+                elif invalid_state:
                     raise osv.except_osv(_('Warning'), _('Invalid analytic distribution.'))
                 if not journal.get('analytic_journal_id', False):
                     raise osv.except_osv(_('Warning'),_("No Analytic Journal! You have to define an analytic journal on the '%s' journal!") % (journal.get('name', ''), ))
