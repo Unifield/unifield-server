@@ -118,7 +118,8 @@ class account_model_line(osv.osv):
 
     _columns = {
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       selection=[('none', 'None'), ('valid', 'Valid'),
+                                                                  ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean',
                                                                   string='Header Distrib.?'),
@@ -129,7 +130,8 @@ class account_model_line(osv.osv):
         'sequence': fields.integer('Sequence', readonly=True, help="The sequence field is used to order the resources from lower sequences to higher ones"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'exp_in_ad_state': fields.function(_get_exp_in_line_state, method=True, type='selection',
-                                           selection=[('no_exp_in', 'Not expense/income'), ('no_header', 'No header'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                           selection=[('no_exp_in', 'Not expense/income'), ('no_header', 'No header'),
+                                                      ('valid', 'Valid'), ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
                                            string='Expense/income line status'),  # UFTP-103
     }
 
@@ -246,7 +248,7 @@ class account_model(osv.osv):
         for model in self.browse(cr, uid, ids, context=context):
             res[model.id] = False
             for line in model.lines_id:
-                if line.exp_in_ad_state and line.exp_in_ad_state in ('no_header', 'invalid'):
+                if line.exp_in_ad_state and line.exp_in_ad_state in ('no_header', 'invalid', 'invalid_small_amount'):
                     res[model.id] = True
                     break
         return res
