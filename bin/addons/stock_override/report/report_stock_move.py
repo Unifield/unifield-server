@@ -588,6 +588,7 @@ product will be shown.""",
                     lot.name as lot_name,
                     lot.life_date as life_date,
                     COALESCE(pick.origin, m.origin) as origin,
+                    pi.ref as pi_name,
                     case when m.sale_line_id is not null and not so.procurement_request then so.order_type when m.purchase_line_id is not null then po.order_type end as order_type,
                     case when m.sale_line_id is not null then so.categ when m.purchase_line_id is not null then po.categ end as order_category,
                     case when pick.subtype not in ('ppl', 'packing') then null when so.procurement_request then %s else pl.currency_id end as bug_pl
@@ -603,10 +604,11 @@ product will be shown.""",
                     left join sale_order so on sol.order_id = so.id
                     left join purchase_order_line pol on m.purchase_line_id = pol.id
                     left join purchase_order po on pol.order_id = po.id
-                    left join sale_order_line sol2 on pol.linked_sol_id = sol2.id
                     left join product_pricelist pl on so.pricelist_id = pl.id
                     left join product_nomenclature nom on nom.id = t.nomen_manda_0
                     left join res_partner par on par.id = m.partner_id
+                    left join physical_inventory_discrepancy pi_discr on pi_discr.move_id = m.id
+                    left join physical_inventory pi on pi.id = pi_discr.inventory_id
                 where
                     m.id in %s
                 order by p.default_code, m.date asc, lot.name
@@ -695,8 +697,8 @@ product will be shown.""",
                         move['partner_name'],
                         PARTNER_TYPES.get(move['partner_type']) or '',
                         reason_info.get(move['reason_type_id']) or '',
-                        move['pick_name'] or move['move_name'] or '',
-                        move['origin'] or '',
+                        move['pi_name'] or move['pick_name'] or move['move_name'] or '',
+                        move['pi_name'] and move['move_name'] or move['origin'] or '',
                         ORDER_TYPES.get(move['order_type']) or '',
                         ORDER_CATEGORIES.get(move['order_category']) or '',
                     ]
