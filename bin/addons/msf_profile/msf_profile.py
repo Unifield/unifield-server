@@ -52,6 +52,10 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_7024_update_standard(self, cr, uid, *a, **b):
+        cr.execute("update product_product set standard_ok='standard' where standard_ok='True'")
+        cr.execute("update product_product set standard_ok='non_standard' where standard_ok='False'")
+        return True
     # UF15.2
     def rec_entries_uf14_1_uf15(self, cr, uid, *a, **b):
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id

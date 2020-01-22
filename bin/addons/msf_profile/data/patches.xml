@@ -490,5 +490,9 @@
             <field name="method">rec_entries_uf14_1_uf15</field>
         </record>
 
+        <!-- UF15.3 -->
+        <record id="us_7024_update_standard" model="patch.scripts">
+            <field name="method">us_7024_update_standard</field>
+        </record>
     </data>
 </openerp>
