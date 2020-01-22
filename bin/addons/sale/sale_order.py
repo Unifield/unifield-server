@@ -2118,6 +2118,7 @@ class sale_order_line(osv.osv):
         'from_cancel_out': fields.boolean('OUT cancel'),
         'created_by_sync': fields.boolean(string='Created by Synchronisation'),
         'cancelled_by_sync': fields.boolean(string='Cancelled by Synchronisation'),
+        'ir_name_from_sync': fields.char(size=64, string='IR name to put on PO line after sync', invisible=True),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2139,6 +2140,7 @@ class sale_order_line(osv.osv):
         'stock_take_date': _get_stock_take_date,
         'created_by_sync': False,
         'cancelled_by_sync': False,
+        'ir_name_from_sync': '',
     }
 
     def _check_stock_take_date(self, cr, uid, ids, context=None):
@@ -2268,6 +2270,8 @@ class sale_order_line(osv.osv):
             'cancelled_by_sync': False,
         })
 
+        if 'ir_name_from_sync' not in default:
+            default['ir_name_from_sync'] = False
         if 'in_name_goods_return' not in default:
             default['in_name_goods_return'] = False
 
@@ -2310,7 +2314,7 @@ class sale_order_line(osv.osv):
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
 
-        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line']:
+        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line', 'ir_name_from_sync']:
             if x not in default:
                 default[x] = False
 
@@ -2938,9 +2942,14 @@ class sale_order_line(osv.osv):
                     ('id', 'in', ids),
                     ('order_id.state', '!=', 'cancel'),
                     ('product_uom_qty', '<=', 0.00),
+                    ('state', '!=', 'cancel'),
                 ], limit=1, order='NO_ORDER', context=context)
             elif 'product_uom_qty' in vals:
-                empty_lines = True if vals.get('product_uom_qty', 0.) <= 0. else False
+                if ids and len(ids) == 1:
+                    line_state = self.browse(cr, uid, ids[0], fields_to_fetch=['state'], context=context).state
+                    empty_lines = True if vals.get('product_uom_qty', 0.) <= 0. and line_state != 'cancel' else False
+                else:
+                    empty_lines = True if vals.get('product_uom_qty', 0.) <= 0. else False
             if empty_lines:
                 raise osv.except_osv(
                     _('Error'),

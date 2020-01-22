@@ -663,12 +663,3 @@ class purchase_order_line(osv.osv):
 purchase_order_line()
 
 
-class stock_move(osv.osv):
-    '''
-    corresponding picking subtype
-    '''
-    _inherit = 'stock.move'
-    _columns = {'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='selection', selection=[('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')],),
-                }
-
-stock_move()

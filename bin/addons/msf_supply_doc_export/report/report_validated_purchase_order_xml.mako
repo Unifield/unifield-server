@@ -80,7 +80,11 @@
                     <field name="currency_id" key="name">
                         <field name="name">${l.currency_id and l.currency_id.name or ''|x}</field>
                     </field>
-                    <field name="origin">${l.origin or ''|x}</field>
+                    % if l.instance_sync_order_ref and l.origin:
+                    <field name="origin">${l.origin + ':' + l.instance_sync_order_ref.name|x}</field>
+                    % else:
+                    <field name="origin">${l.origin and (l.linked_sol_id and l.linked_sol_id.ir_name_from_sync and l.origin + ':' + l.linked_sol_id.ir_name_from_sync or l.origin) or ''|x}</field>
+                    % endif
                     % if l.stock_take_date and l.stock_take_date not in (False, 'False'):
                     <field name="stock_take_date">${l.stock_take_date|n}</field>
                     % else:

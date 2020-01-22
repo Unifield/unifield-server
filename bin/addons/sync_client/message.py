@@ -323,6 +323,7 @@ class message_to_send(osv.osv):
                 'call' : message.remote_call,
                 'dest' : message.destination_name,
                 'args' : message.arguments,
+                'client_db_id': message.id,
             })
             msg_ids.append(message.id)
 

@@ -638,7 +638,7 @@ product will be shown.""",
                             first_day = time.strftime('%Y-%m-01', time.strptime(move_date, '%Y-%m-%d %H:%M:%S'))
                             rate_key = '%s-%s' % (move_currency, first_day)
                             if rate_key not in rate_cache:
-                                rate_cache[rate_key] = curr_obj.read(cr, uid, move_currency, ['rate'], {'date': first_day})['rate'] or 1
+                                rate_cache[rate_key] = curr_obj.read(cr, uid, move_currency, ['rate'], {'currency_date': first_day})['rate'] or 1
                             prod_price = prod_price/rate_cache[rate_key]
 
                     yield [

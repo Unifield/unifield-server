@@ -76,7 +76,7 @@
         <paraStyle name="LFooterBig" fontName="Helvetica-Bold" fontSize="7.5" alignement="LEFT" />
         <paraStyle name="LFooterEnd" fontName="Helvetica" fontSize="7.0" alignement="LEFT" />
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="3.0" spaceBefore="1.0" spaceAfter="1.0" />
-        <paraStyle name="TextRemarks" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextNotes" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
     </stylesheet>
     <story>
 
@@ -305,7 +305,7 @@
         <blockTable colWidths="663.0" style="RemarkTable" keepWithNext="1">
             <tr>
                 <td>
-                    <para style="TextRemarks">REMARKS : [[ objects[0].notes ]]</para>
+                    <para style="TextNotes">Notes : [[ objects[0].notes ]]</para>
                 </td>
             </tr>
             <tr></tr>

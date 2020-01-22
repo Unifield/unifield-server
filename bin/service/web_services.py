@@ -961,6 +961,7 @@ class report_spool(netsvc.ExportService):
             'exception': None,
             'format': export_format,
             'filename': title,
+            'psql_pid': cr._cnx.get_backend_pid(),
         }
 
         bg_obj = pool.get('memory.background.report')
@@ -1076,6 +1077,7 @@ class report_spool(netsvc.ExportService):
 
         def go(id, uid, ids, datas, context):
             cr = pooler.get_db(db_name).cursor()
+            self._reports[id]['psql_pid'] = cr._cnx.get_backend_pid()
             import traceback
             import sys
             try:
@@ -1099,16 +1101,16 @@ class report_spool(netsvc.ExportService):
                 self._reports[id]['format'] = format
                 self._reports[id]['state'] = True
             except Exception, exception:
-
-                tb = sys.exc_info()
-                tb_s = "".join(traceback.format_exception(*tb))
-                logger = netsvc.Logger()
-                logger.notifyChannel('web-services', netsvc.LOG_ERROR,
-                                     'Exception: %s\n%s' % (tools.ustr(exception), tb_s))
-                if hasattr(exception, 'name') and hasattr(exception, 'value'):
-                    self._reports[id]['exception'] = ExceptionWithTraceback(tools.ustr(exception.name), tools.ustr(exception.value))
-                else:
-                    self._reports[id]['exception'] = ExceptionWithTraceback(tools.exception_to_unicode(exception), tb)
+                if not self._reports[id].get('killed'):
+                    tb = sys.exc_info()
+                    tb_s = "".join(traceback.format_exception(*tb))
+                    logger = netsvc.Logger()
+                    logger.notifyChannel('web-services', netsvc.LOG_ERROR,
+                                         'Exception: %s\n%s' % (tools.ustr(exception), tb_s))
+                    if hasattr(exception, 'name') and hasattr(exception, 'value'):
+                        self._reports[id]['exception'] = ExceptionWithTraceback(tools.ustr(exception.name), tools.ustr(exception.value))
+                    else:
+                        self._reports[id]['exception'] = ExceptionWithTraceback(tools.exception_to_unicode(exception), tb)
                 self._reports[id]['state'] = True
             finally:
                 cr.commit()
