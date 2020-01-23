@@ -768,11 +768,18 @@ class analytic_distribution_wizard(osv.osv_memory):
             if vals.get(field_name):
                 obj = self.pool.get(obj_type).browse(cr, uid, vals[field_name], context=context)
                 if not line_field:
+                    # AD at line level
                     invalid_small_amount = obj.analytic_distribution_state == 'invalid_small_amount' or False
                 else:
+                    # AD at header level
                     lines = hasattr(obj, line_field) and getattr(obj, line_field) or []
                     for line in lines:
-                        if line.analytic_distribution_state == 'invalid_small_amount':
+                        # display the warning msg for the header only if no AD is defined directly at line level
+                        distrib_at_line_level = hasattr(line, 'analytic_distribution_id') \
+                                                and getattr(line, 'analytic_distribution_id') or False
+                        line_distrib_state = hasattr(line, 'analytic_distribution_state') \
+                                             and getattr(line, 'analytic_distribution_state') or ''
+                        if not distrib_at_line_level and line_distrib_state == 'invalid_small_amount':
                             invalid_small_amount = True
                             break
                 break  # AD wizard is linked to only one object, no need to check the other list items
