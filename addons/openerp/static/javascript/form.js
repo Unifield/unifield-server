@@ -888,7 +888,8 @@ function onChangePop(caller){
                                 'model': jQuery(fld).attr('relation'),
                                 'view_id': jQuery(idSelector(fld_name + '/_terp_view_id')).val(),
                                 'view_type': jQuery(idSelector(fld_name + '/_terp_view_type')).val(),
-                                'ids': fld_val
+                                'ids': fld_val,
+                                'disabled': jQuery(fld).attr('disabled'),
                             },
                             dataType: 'json',
                             error: loadingError(),
