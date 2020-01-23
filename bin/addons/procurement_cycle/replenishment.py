@@ -714,7 +714,6 @@ class replenishment_segment(osv.osv):
                     else:
                         # sum fmc from today to ETC - qty in stock
                         qty_lacking =  max(0, total_fmc - sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0))
-                        print qty_lacking, '=', total_fmc, '-', sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0)
                         if total_month_oc+total_month:
                             ss_stock = seg.safety_stock * ((total_fmc_oc+total_fmc)/(total_month_oc+total_month))
                         if total_month and pas and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
