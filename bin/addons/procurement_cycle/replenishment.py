@@ -532,7 +532,7 @@ class replenishment_segment(osv.osv):
                 select l.product_id, min(m.date) from stock_move m, stock_picking p, replenishment_segment_line l
                     where
                         m.picking_id = p.id and
-                        p.state in ('available', 'confirmed') and
+                        m.state in ('assigned', 'confirmed') and
                         m.location_dest_id in %s and
                         l.product_id = m.product_id and
                         l.segment_id = %s
@@ -740,14 +740,14 @@ class replenishment_segment(osv.osv):
                 line_data = {
                     'product_id': line.product_id.id,
                     'uom_id': line.uom_id.id,
-                    'real_stock': int(sum_line.get(line.id, {}).get('real_stock',0)),
-                    'pipeline_qty': int(line.pipeline_before_rdd or 0),
+                    'real_stock': round(sum_line.get(line.id, {}).get('real_stock',0)),
+                    'pipeline_qty': round(line.pipeline_before_rdd or 0),
                     'eta_for_next_pipeline': prod_eta.get(line.product_id.id, False),
                     'reserved_stock_qty': sum_line.get(line.id, {}).get('reserved_stock_qty'),
-                    'qty_lacking': int(qty_lacking),
+                    'qty_lacking': round(qty_lacking),
                     'qty_lacking_needed_by': qty_lacking_needed_by,
-                    'expired_qty_before_cons': int(sum_line.get(line.id, {}).get('expired_before_rdd',0)),
-                    'expired_qty_before_eta': int(sum_line.get(line.id, {}).get('expired_qty_before_eta',0)),
+                    'expired_qty_before_cons': round(sum_line.get(line.id, {}).get('expired_before_rdd',0)),
+                    'expired_qty_before_eta': round(sum_line.get(line.id, {}).get('expired_qty_before_eta',0)),
                     'warning': "\n".join(warnings),
                     'valid_rr_fmc': valid_rr_fmc,
                     'status': line.status,
@@ -758,10 +758,10 @@ class replenishment_segment(osv.osv):
                 if not review_id:
                     line_data.update({
                         'order_calc_id': calc_id,
-                        'proposed_order_qty': int(proposed_order_qty),
-                        'agreed_order_qty': int(proposed_order_qty) or False,
+                        'proposed_order_qty': round(proposed_order_qty),
+                        'agreed_order_qty': round(proposed_order_qty) or False,
                         'in_main_list': line.in_main_list,
-                        'projected_stock_qty': int(pas),
+                        'projected_stock_qty': round(pas),
                     })
                     order_calc_line.create(cr, uid, line_data, context=context)
 
@@ -769,16 +769,16 @@ class replenishment_segment(osv.osv):
                     line_data.update({
                         'review_id': review_id,
                         'pas_amc': max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rdd - line.rr_amc*seg.projected_view),
-                        'pas_fmc': int(pas),
+                        'pas_fmc': round(pas),
                         'segment_ref_name': "%s / %s" % (seg.name_seg, seg.description_seg),
                         'rr_fmc_avg': total_month and total_fmc/total_month,
                         'rr_amc': line.rr_amc,
                         'total_expired_qty': sum_line.get(line.id, {}).get('total_expiry_nocons_qty', 0),
-                        'unit_of_supply_amc': line.rr_amc and (int(sum_line.get(line.id, {}).get('real_stock',0)) - int(sum_line.get(line.id, {}).get('expired_before_rdd',0))) * coeff / line.rr_amc,
+                        'unit_of_supply_amc': line.rr_amc and (round(sum_line.get(line.id, {}).get('real_stock',0)) - round(sum_line.get(line.id, {}).get('expired_before_rdd',0))) * coeff / line.rr_amc,
                         'unit_of_supply_fmc': month_of_supply * coeff,
                         'date_preparing': seg.date_preparing,
                         'date_next_order_validated': seg.date_next_order_validated,
-                        'date_next_order_rdd': seg.date_preparing and (datetime.strptime(seg.date_preparing, '%Y-%m-%d') + relativedelta(days=int(seg.external_lt))).strftime('%Y-%m-%d'),
+                        'date_next_order_rdd': seg.date_preparing and (datetime.strptime(seg.date_preparing, '%Y-%m-%d') + relativedelta(days=round(seg.external_lt))).strftime('%Y-%m-%d'),
                         'internal_lt': seg.internal_lt,
                         'external_lt': seg.external_lt,
                         'total_lt': seg.total_lt,
@@ -792,17 +792,17 @@ class replenishment_segment(osv.osv):
                         'safety_stock': seg.safety_stock * coeff,
                         'pas_ids': detailed_pas,
                         'segment_line_id': line.id,
-                        'sleeping_qty': int(sum_line.get(line.id, {}).get('sleeping_qty',0)),
+                        'sleeping_qty': round(sum_line.get(line.id, {}).get('sleeping_qty',0)),
                     })
                     if seg.rule == 'cycle':
                         line_data.update({
-                            'projected_stock_qty': int(pas),
+                            'projected_stock_qty': round(pas),
                             'projected_stock_qty_amc': False,
                         })
                     else:
                         line_data.update({
                             'projected_stock_qty': False,
-                            'projected_stock_qty_amc': int(pas),
+                            'projected_stock_qty_amc': round(pas),
                         })
                     review_line.create(cr, uid, line_data, context=context)
 
