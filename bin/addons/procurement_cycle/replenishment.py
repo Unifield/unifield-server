@@ -570,7 +570,6 @@ class replenishment_segment(osv.osv):
 
             if review_id:
                 rdd = today + relativedelta(months=seg.projected_view, day=1, days=-1)
-
                 exp_by_month = {}
                 pipe_by_prod_by_month_minus_expired = {}
                 all_prod_ids = [x.product_id.id for x in seg.line_ids]
@@ -601,9 +600,12 @@ class replenishment_segment(osv.osv):
                                     if date <= end_date.strftime('%Y-%m-%d'):
                                         expired += exp_by_month[prod.id][date]
                                 pipe_by_prod_by_month_minus_expired.setdefault(prod.id, {}).update({end_date.strftime('%Y-%m-%d'): prod.incoming_qty - expired})
+                rdd = seg.date_preparing and (datetime.strptime(seg.date_preparing, '%Y-%m-%d') + relativedelta(days=int(seg.external_lt))) or today
 
-            else:
+            elif seg.rule == 'cycle':
                 rdd = datetime.strptime(seg.date_next_order_received_modified or seg.date_next_order_received, '%Y-%m-%d')
+            else:
+                rdd = today + relativedelta(days=int(seg.total_lt))
 
             oc = rdd + relativedelta(months=seg.order_coverage)
             for line in seg.line_ids:
@@ -712,6 +714,7 @@ class replenishment_segment(osv.osv):
                     else:
                         # sum fmc from today to ETC - qty in stock
                         qty_lacking =  max(0, total_fmc - sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0))
+                        print qty_lacking, '=', total_fmc, '-', sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0)
                         if total_month_oc+total_month:
                             ss_stock = seg.safety_stock * ((total_fmc_oc+total_fmc)/(total_month_oc+total_month))
                         if total_month and pas and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
@@ -778,7 +781,7 @@ class replenishment_segment(osv.osv):
                         'unit_of_supply_fmc': month_of_supply * coeff,
                         'date_preparing': seg.date_preparing,
                         'date_next_order_validated': seg.date_next_order_validated,
-                        'date_next_order_rdd': seg.date_preparing and (datetime.strptime(seg.date_preparing, '%Y-%m-%d') + relativedelta(days=round(seg.external_lt))).strftime('%Y-%m-%d'),
+                        'date_next_order_rdd': seg.date_preparing and (datetime.strptime(seg.date_preparing, '%Y-%m-%d') + relativedelta(days=int(seg.external_lt))).strftime('%Y-%m-%d'),
                         'internal_lt': seg.internal_lt,
                         'external_lt': seg.external_lt,
                         'total_lt': seg.total_lt,
