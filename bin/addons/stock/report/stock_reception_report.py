@@ -31,7 +31,8 @@ class stock_reception_report(report_sxw.rml_parse):
             pol = move.purchase_line_id
             po = pol.order_id
             sol = move.purchase_line_id.linked_sol_id
-            int_name = move.move_dest_id and move.move_dest_id.picking_id.name or ''
+            int_name = move.move_dest_id and move.move_dest_id.picking_id.type == 'internal' and \
+                       move.move_dest_id.picking_id.subtype == 'standard' and move.move_dest_id.picking_id.name or ''
             func_price_unit = move.price_unit
             if move.company_id.currency_id.id != po.pricelist_id.currency_id.id:
                 self.localcontext['currency_date'] = move.date

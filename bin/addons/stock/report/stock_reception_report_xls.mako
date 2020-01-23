@@ -155,7 +155,7 @@
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Physical Reception Date
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
-        ## INT Reference
+        ## INT Ref.
         <Column ss:AutoFitWidth="1" ss:Width="80.0" />
 
         ## WORKSHEET HEADER
@@ -252,7 +252,7 @@
             _('Expected Receipt Date'),
             _('Actual Receipt Date'),
             _('Physical Reception Date'),
-            _('INT Reference'),
+            _('INT Ref.'),
         ]
         %>
         <Row>
