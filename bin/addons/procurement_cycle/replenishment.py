@@ -968,7 +968,7 @@ class replenishment_segment(osv.osv):
                 if not prod_id:
                     line_error.append(_('Line %d: product code %s not found') % (idx+1, prod_code))
                 else:
-                    data_towrite['product_id'] = prod_id
+                    data_towrite['product_id'] = prod_id[0]
                     data_towrite['segment_id'] = seg.id
             else:
                 line_id = existing_line[prod_code]
