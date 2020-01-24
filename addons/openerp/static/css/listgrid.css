@@ -136,6 +136,10 @@
     width: 100%;
 }
 
+.pager-table td {
+    border: 0px !important;
+}
+
 .gridview .pagerbar .pagerbar-cell .pager-table .pager-cell {
     padding: 0;
     white-space: nowrap;
@@ -206,6 +210,7 @@ strong#total_sum_label {
 
 .o2m_header_filter td {
     padding-right: 10px;
+    padding-left: 4px;
 }
 .o2m_header_filter img {
     cursor: pointer;
