@@ -153,10 +153,11 @@ class analytic_distribution(osv.osv):
                 return 'invalid', _('account/destination tuple not compatible with given FP analytic account')
         return res, info
 
-    def check_cc_distrib_active(self, cr, uid, distrib_br, posting_date=False):
+    def check_cc_distrib_active(self, cr, uid, distrib_br, posting_date=False, prefix=''):
         """
         Checks the Cost Center Distribution Lines of the distribution in param.:
         raises an error if the CC or the Dest. used is not active at the posting date selected (or today's date)
+        If needed a "prefix" can be added to the error message.
         """
         cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
         if distrib_br:
@@ -166,11 +167,11 @@ class analytic_distribution(osv.osv):
             for cline in cc_distrib_line_obj.browse(cr, uid, [ccl.id for ccl in distrib_br.cost_center_lines],
                                                     fields_to_fetch=['analytic_id', 'destination_id'], context={'date': posting_date}):
                 if cline.analytic_id and not cline.analytic_id.filter_active:
-                    raise osv.except_osv(_('Error'), _('Cost center account %s is not active at this date: %s') %
-                                         (cline.analytic_id.code or '', posting_date))
+                    raise osv.except_osv(_('Error'), _('%sCost center account %s is not active at this date: %s') %
+                                         (prefix, cline.analytic_id.code or '', posting_date))
                 if not cline.destination_id.filter_active:
-                    raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') %
-                                         (cline.destination_id.code or '', posting_date))
+                    raise osv.except_osv(_('Error'), _('%sDestination %s is not active at this date: %s') %
+                                         (prefix, cline.destination_id.code or '', posting_date))
 
 
 analytic_distribution()

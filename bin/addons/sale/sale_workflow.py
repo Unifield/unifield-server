@@ -95,10 +95,14 @@ class sale_order_line(osv.osv):
                 ana_obj.create_funding_pool_lines(cr, uid, [id_ad], context=context)
 
             # check that the analytic accounts are active. Done at the end to use the newest AD of the FO line (to re-browse)
-            ad = self.browse(cr, uid, line.id, fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id\
-                or so.analytic_distribution_id or False
+            fol_ad = self.browse(cr, uid, line.id, fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
+            ad = fol_ad or so.analytic_distribution_id or False
             if ad:
-                ana_obj.check_cc_distrib_active(cr, uid, ad)
+                if fol_ad:
+                    prefix = _("Analytic Distribution on line %s:\n") % line.line_number
+                else:
+                    prefix = _("Analytic Distribution at header level:\n")
+                ana_obj.check_cc_distrib_active(cr, uid, ad, prefix=prefix)
         return True
 
     def copy_analytic_distribution_on_lines(self, cr, uid, ids, context=None):

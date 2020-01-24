@@ -746,10 +746,14 @@ class purchase_order_line(osv.osv):
                 })
 
             # check that the analytic accounts are active. Done at the end to use the newest AD of the pol (to re-browse)
-            ad = self.browse(cr, uid, pol.id, fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id\
-                or po.analytic_distribution_id or False
+            pol_ad = self.browse(cr, uid, pol.id, fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
+            ad = pol_ad or po.analytic_distribution_id or False
             if ad:
-                ad_obj.check_cc_distrib_active(cr, uid, ad)
+                if pol_ad:
+                    prefix = _("Analytic Distribution on line %s:\n") % pol.line_number
+                else:
+                    prefix = _("Analytic Distribution at header level:\n")
+                ad_obj.check_cc_distrib_active(cr, uid, ad, prefix=prefix)
         return True
 
 
