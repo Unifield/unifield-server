@@ -397,6 +397,8 @@ class hq_report_ocb(report_sxw.report_sxw):
             context = {}
         # Prepare some values
         pool = pooler.get_pool(cr.dbname)
+        mi_obj = pool.get('msf.instance')
+        period_obj = pool.get('account.period')
         excluded_journal_types = ['hq', 'migration']  # journal types that should not be used to take lines
         # Fetch data from wizard
         if not data.get('form', False):
@@ -408,10 +410,11 @@ class hq_report_ocb(report_sxw.report_sxw):
         instance_id = form.get('instance_id', False)
         if not fy_id or not period_id or not instance_ids or not instance_id:
             raise osv.except_osv(_('Warning'), _('Some info are missing. Either fiscalyear or period or instance.'))
+        instance_lvl = mi_obj.browse(cr, uid, instance_id, fields_to_fetch=['level'], context=context).level
         fy = pool.get('account.fiscalyear').browse(cr, uid, fy_id)
         last_fy_year = strptime(fy.date_start, '%Y-%m-%d').tm_year - 1 # Take previous year regarding given fiscalyear
         first_day_of_last_fy = '%s-01-01' % (last_fy_year)
-        period = pool.get('account.period').browse(cr, uid, period_id)
+        period = period_obj.browse(cr, uid, period_id, fields_process=['date_stop', 'date_start', 'number'])
         last_day_of_period = period.date_stop
         first_day_of_period = period.date_start
         selection = form.get('selection', False)
@@ -436,7 +439,6 @@ class hq_report_ocb(report_sxw.report_sxw):
         plresult_ji_in_ids = []
         if period.number == 12:
             ayec_obj = pool.get("account.year.end.closing")
-            mi_obj = pool.get('msf.instance')
             m_obj = pool.get('account.move')
             ml_obj = pool.get('account.move.line')
 
@@ -472,6 +474,23 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE partner_type != 'internal'
                   and name != 'To be defined';
                 """ % (not context.get("old_vi") and ", comment" or "")
+        if instance_lvl != 'section':
+            # note: even balances with zero amount are displayed in the report
+            balance_previous_month_sql = """
+                SELECT acc.code, curr.name, SUM(COALESCE(debit_currency,0) - COALESCE(credit_currency,0))
+                FROM account_move_line aml
+                INNER JOIN account_journal j ON aml.journal_id = j.id
+                INNER JOIN account_account acc ON aml.account_id = acc.id
+                INNER JOIN res_currency curr ON aml.currency_id = curr.id
+                WHERE aml.period_id = %s
+                AND j.type NOT IN %s
+                AND aml.instance_id IN %s
+                GROUP BY acc.code, curr.name
+                ORDER BY acc.code, curr.name;
+            """
+        else:
+            # empty report in case an HQ instance is selected
+            balance_previous_month_sql = "SELECT '' AS no_line;"
         sqlrequests = {
             'partner': partner_sql,
             'employee': """
@@ -635,6 +654,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND m.state = 'posted'
                 ORDER BY aml.id;
                 """,
+            'balance_previous_month': balance_previous_month_sql,
         }
         if plresult_ji_in_ids:
             # NOTE: for these entries: booking and fonctional ccy are same
@@ -769,6 +789,18 @@ class hq_report_ocb(report_sxw.report_sxw):
                     'function': 'postprocess_liquidity_balances',
                     'fnct_params': context,
                 },
+            ])
+        if not context.get('old_vi'):
+            processrequests.extend([
+                {
+                    'headers': ['G/L Account', 'Booking currency', 'Balance'],
+                    'filename': instance_name + '_' + year + month + '_Balance_previous_month.csv',
+                    'key': 'balance_previous_month',
+                    'query_params': (period_obj.get_previous_period_id(cr, uid, period_id, context=context),
+                                     # note: engagements are also excluded since there are no ENG/ENGI "G/L" journals
+                                     tuple(excluded_journal_types + ['cur_adj']),
+                                     tuple(instance_ids)),
+                }
             ])
         if plresult_ji_in_ids:
             processrequests.append({

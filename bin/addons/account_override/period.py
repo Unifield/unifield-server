@@ -103,6 +103,22 @@ def get_next_period_id_at_index(self, cr, uid, period_id, index, context=None):
         period_id = period_id and get_next_period_id(self, cr, uid, period_id, context=context)
     return period_id or False
 
+
+def get_previous_period_id(self, cr, uid, period_id, context=None):
+    """
+    Returns the id of the previous regular period if it exists (no special period), else returns False.
+    For the special periods, its returns the related regular period (Period 13 to 16 N ==> Dec. N).
+    """
+    if context is None:
+        context = {}
+    period = self.browse(cr, uid, period_id, fields_to_fetch=['date_stop'], context=context)
+    previous_period_ids = self.search(cr, uid, [('date_stop', '<=', period.date_stop),
+                                                ('special', '=', False),
+                                                ('id', '!=', period_id)],
+                                      order='date_stop DESC', limit=1, context=context)
+    return previous_period_ids and previous_period_ids[0] or False
+
+
 def _get_middle_years(self, cr, uid, fy1, fy2, context=None):
     """
     Returns the list of the FY ids included between both Fiscal Years in parameter.
@@ -188,6 +204,9 @@ class account_period(osv.osv):
 
     def get_next_period_id_at_index(self, cr, uid, period_id, index, context=None):
         return get_next_period_id_at_index(self, cr, uid, period_id, index, context)
+
+    def get_previous_period_id(self, cr, uid, period_id, context=None):
+        return get_previous_period_id(self, cr, uid, period_id, context)
 
     def get_period_range(self, cr, uid, period_from_id, period_to_id, context=None):
         return get_period_range(self, cr, uid, period_from_id, period_to_id, context=context)
