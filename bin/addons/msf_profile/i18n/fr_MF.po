@@ -106677,3 +106677,9 @@ msgstr "Aucun journal de type \"correction HQ\" n'a été trouvé !"
 #, python-format
 msgid "No \"correction HQ\" analytic journal found!"
 msgstr "Aucun journal analytique de type \"correction HQ\" n'a été trouvé !"
+
+#. module: vertical_integration
+#: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocb_old
+#: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocb_old
+msgid "Export to HQ system (OCB) Access Interface"
+msgstr "Interface d'accès de l'Export vers le système HQ (OCB)"
