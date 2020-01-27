@@ -600,7 +600,6 @@ class replenishment_segment(osv.osv):
                                     if date <= end_date.strftime('%Y-%m-%d'):
                                         expired += exp_by_month[prod.id][date]
                                 pipe_by_prod_by_month_minus_expired.setdefault(prod.id, {}).update({end_date.strftime('%Y-%m-%d'): prod.incoming_qty - expired})
-                rdd = seg.date_preparing and (datetime.strptime(seg.date_preparing, '%Y-%m-%d') + relativedelta(days=int(seg.external_lt))) or today
 
             elif seg.rule == 'cycle':
                 rdd = datetime.strptime(seg.date_next_order_received_modified or seg.date_next_order_received, '%Y-%m-%d')
@@ -611,6 +610,7 @@ class replenishment_segment(osv.osv):
             for line in seg.line_ids:
                 total_fmc = 0
                 total_month = 0
+                month_of_supply_eta = 0
                 month_of_supply = 0
 
                 total_fmc_oc = 0
@@ -622,6 +622,12 @@ class replenishment_segment(osv.osv):
                 before_rdd = False
 
                 lacking = False
+                lacking_eta = False
+
+                total_fmc_eta = 0
+                eta = prod_eta.get(line.product_id.id, False) and datetime.strptime(prod_eta[line.product_id.id], '%Y-%m-%d %H:%M:%S') + relativedelta(hour=0, minute=0, second=0, microsecond=0) or today
+                if eta < today:
+                    eta = today
 
                 fmc_by_month = {}
                 detailed_pas = []
@@ -642,9 +648,28 @@ class replenishment_segment(osv.osv):
                                 before_rdd = True
                             begin = max(today, from_fmc)
                             end = min(rdd, to_fmc)
+
+                            end_eta = min(eta, to_fmc)
+                            if end_eta >= begin:
+                                month = (end_eta-begin).days/30.44
+                                total_fmc_eta = month*num_fmc
+                                if not lacking_eta:
+                                    if total_fmc_eta < sum_line[line.id]['pas_no_pipe_no_fmc']:
+                                        month_of_supply_eta += month
+                                    elif num_fmc:
+                                        month_of_supply_eta += ( sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc_eta + month*num_fmc ) / num_fmc
+                                        lacking_eta = True
+
                             if end >= begin:
                                 month = (end-begin).days/30.44
                                 total_month += month
+                                if not lacking:
+                                    if total_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
+                                        month_of_supply += month
+                                    elif num_fmc:
+                                        month_of_supply += ( sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc + month*num_fmc ) / num_fmc
+                                        lacking = True
+
 
                                 if review_id:
                                     if end.month == begin.month and end.year == begin.year:
@@ -663,12 +688,6 @@ class replenishment_segment(osv.osv):
                                             tmp_begin += relativedelta(months=1, day=1)
 
                                 total_fmc += month*num_fmc
-                                if not lacking:
-                                    if total_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
-                                        month_of_supply += month
-                                    elif num_fmc:
-                                        month_of_supply += ( sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc + month*num_fmc ) / num_fmc
-                                        lacking = True
 
                             if not review_id:
                                 if oc <= to_fmc:
@@ -713,7 +732,7 @@ class replenishment_segment(osv.osv):
                             ss_stock = seg.safety_stock * total_fmc_oc / total_month_oc
                     else:
                         # sum fmc from today to ETC - qty in stock
-                        qty_lacking =  max(0, total_fmc - sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0))
+                        qty_lacking =  max(0, total_fmc_eta - sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0))
                         if total_month_oc+total_month:
                             ss_stock = seg.safety_stock * ((total_fmc_oc+total_fmc)/(total_month_oc+total_month))
                         if total_month and pas and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
@@ -721,8 +740,8 @@ class replenishment_segment(osv.osv):
                         if qty_lacking:
                             warnings.append(_('Stock-out before next ETA'))
 
-                        if lacking:
-                            qty_lacking_needed_by = (today + relativedelta(days=month_of_supply*30.44)).strftime('%Y-%m-%d')
+                        if lacking_eta:
+                            qty_lacking_needed_by = (today + relativedelta(days=month_of_supply_eta*30.44)).strftime('%Y-%m-%d')
                     proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rdd_oc)
 
                 elif seg.rule == 'minmax':
