@@ -239,7 +239,8 @@
                         <group colspan="1" col="2">
                             <field name="rule" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                             <field name="rule_alert" />
-                            <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1"/>
+                            <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('ir_requesting_location_ro', '!=', False)]}" required="1"/>
+                            <field name="ir_requesting_location_ro" attrs="{'invisible': [('ir_requesting_location_ro', '=', False)]}" />
                             <field name="product_list_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         </group>
                         <group colspan="1" col="2">
@@ -257,8 +258,8 @@
                         <field name="external_lt" />
                         <field name="total_lt" />
                         <group colspan="2" col="4" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
-                            <field name="order_coverage" attrs="{'readonly': [('state', '!=', 'draft')]}" on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
-                            <field name="safety_stock" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="order_coverage" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft'), ('rule', '=', 'cycle')]}" on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
+                            <field name="safety_stock" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft'), ('rule', '=', 'cycle')]}"/>
                             <field name="previous_order_rdd" />
                             <field name="date_preparing" />
                             <field name="date_next_order_validated" />
@@ -585,9 +586,9 @@
                     <field name="location_config_id" />
                     <field name="frequence_name" />
                     <field name="generation_date" />
+                    <field name="projected_view" />
                     <field name="amc_first_date" />
                     <field name="amc_last_date" />
-                    <field name="projected_view" />
                     <field name="final_date_projection" />
                     <field name="sleeping" />
                     <field name="time_unit" />

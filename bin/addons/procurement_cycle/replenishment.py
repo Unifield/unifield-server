@@ -262,7 +262,7 @@ class replenishment_location_config(osv.osv):
             if not review_id:
                 review_id = review_obj.create(cr, uid, {
                     'location_config_id': config.id,
-                    'amc_first_date': now + relativedelta(day=1, days=-1) - relativedelta(months=config.rr_amc),
+                    'amc_first_date': now + relativedelta(day=1) - relativedelta(months=config.rr_amc),
                     'amc_last_date': now + relativedelta(day=1, days=-1),
                     'projected_view': config.projected_view,
                     'final_date_projection': now + relativedelta(months=int(config.projected_view), day=1, days=-1),
@@ -308,11 +308,12 @@ class replenishment_segment(osv.osv):
 
     def _get_date(self, cr, uid, ids, field_name, arg, context=None):
         ret = {}
-        for seg in self.read(cr, uid, ids, ['previous_order_rdd', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'order_coverage', 'date_next_order_received_modified'], context=context):
+        for seg in self.read(cr, uid, ids, ['previous_order_rdd', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'order_coverage', 'date_next_order_received_modified', 'ir_requesting_location'], context=context):
             ret[seg['id']] = {
                 'date_preparing': False,
                 'date_next_order_validated': False,
                 'date_next_order_received': False,
+                'ir_requesting_location_ro': seg['ir_requesting_location'] and seg['ir_requesting_location'][0],
             }
             ret[seg['id']].update(self.compute_next_order_received(cr, uid, ids,
                                                                    seg['order_creation_lt'], seg['order_validation_lt'], seg['supplier_lt'], seg['handling_lt'], seg['order_coverage'], seg['previous_order_rdd'], seg['date_next_order_received_modified'], context=context).get('value', {}))
@@ -387,17 +388,18 @@ class replenishment_segment(osv.osv):
         'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Replenishment Rule (Order quantity)', required=1),
         'rule_alert': fields.function(_get_rule_alert, method=1, string='Replenishment Rule (Alert Theshold)', type='char'),
         'ir_requesting_location': fields.many2one('stock.location', string='IR Requesting Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])]", required=0),
+        'ir_requesting_location_ro': fields.function(_get_date, type='many2one', method=1, relation='stock.location', string='IR Requesting Location', multi='get_date'),
         'product_list_id': fields.many2one('product.list', 'Primary product list'),
         'state': fields.selection([('draft', 'Draft'), ('complete', 'Complete'), ('cancel', 'Cancelled'), ('archived', 'Archived')], 'State', readonly=1),
         'order_creation_lt': fields.integer_null('Order Creation Lead Time (days)', required=1),
         'order_validation_lt': fields.integer_null('Order Validation Lead Time (days)', required=1),
-        'internal_lt': fields.function(_get_lt, type='integer', method=1, string='Internal Lead Time', multi='get_lt'),
+        'internal_lt': fields.function(_get_lt, type='integer', method=1, string='Internal Lead Time (days)', multi='get_lt'),
         'supplier_lt': fields.integer_null('Supplier Lead Time (days)', required=1),
         'handling_lt': fields.integer_null('Handling Lead Time (days)', required=1),
-        'external_lt': fields.function(_get_lt, type='integer', method=1, string='External Lead Time', multi='get_lt'),
-        'total_lt': fields.function(_get_lt, type='integer', method=1, string='Total Lead Time', multi='get_lt'),
-        'order_coverage': fields.integer('Order Coverage (months)'),
-        'safety_stock': fields.integer('Safety Stock (months)'),
+        'external_lt': fields.function(_get_lt, type='integer', method=1, string='External Lead Time (days)', multi='get_lt'),
+        'total_lt': fields.function(_get_lt, type='integer', method=1, string='Total Lead Time (days)', multi='get_lt'),
+        'order_coverage': fields.integer_null('Order Coverage (months)'),
+        'safety_stock': fields.integer_null('Safety Stock (months)',),
         'previous_order_rdd': fields.date(string='Previous order RDD Date', readonly=1, help="Generated according to latest IR's RDD (from most recent Order calc which is now closed)."),
         'date_preparing': fields.function(_get_date, type='date', method=True, string='Date to start preparing the order', multi='get_date', help='This does not take account of any stockouts not related to order coverage. Calculation: "Next order RDD date" - Total Lead time.'),
         'date_next_order_validated':  fields.function(_get_date, type='date', method=True, string='Date next order to be validated by', multi='get_date', help='This does not take account of any stockouts not related to order coverage. Calculation: "Next order RDD date" - Total Lead time + Internal LT. This isupdated according to value in "Next order to be received by'),
@@ -414,6 +416,10 @@ class replenishment_segment(osv.osv):
     _defaults = {
         'state': 'draft',
     }
+
+    _sql_constraints = [
+        ('oc_ss_positive', 'check(safety_stock>=0 and order_coverage>=0)', 'Safety Stock and Order Coverage must be positive or 0')
+    ]
     def create(self, cr, uid, vals, context=None):
         if 'name_seg' not in vals:
             vals['name_seg'] = self.pool.get('ir.sequence').get(cr, uid, 'replenishment.segment')
@@ -736,7 +742,7 @@ class replenishment_segment(osv.osv):
                         if total_month_oc+total_month:
                             ss_stock = seg.safety_stock * ((total_fmc_oc+total_fmc)/(total_month_oc+total_month))
                         if total_month and pas and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
-                            warnings.append(_('Missing Qties'))
+                            warnings.append(_('Projected use of safety stock/buffer'))
                         if qty_lacking:
                             warnings.append(_('Stock-out before next ETA'))
 
@@ -765,9 +771,9 @@ class replenishment_segment(osv.osv):
                     'pipeline_qty': round(line.pipeline_before_rdd or 0),
                     'eta_for_next_pipeline': prod_eta.get(line.product_id.id, False),
                     'reserved_stock_qty': sum_line.get(line.id, {}).get('reserved_stock_qty'),
-                    'qty_lacking': round(qty_lacking),
+                    'qty_lacking': False if seg.rule !='cycle' else round(qty_lacking),
                     'qty_lacking_needed_by': qty_lacking_needed_by,
-                    'expired_qty_before_cons': round(sum_line.get(line.id, {}).get('expired_before_rdd',0)),
+                    'expired_qty_before_cons': False if seg.rule !='cycle' else round(sum_line.get(line.id, {}).get('expired_before_rdd',0)),
                     'expired_qty_before_eta': round(sum_line.get(line.id, {}).get('expired_qty_before_eta',0)),
                     'warning': "\n".join(warnings),
                     'valid_rr_fmc': valid_rr_fmc,
@@ -789,14 +795,12 @@ class replenishment_segment(osv.osv):
                 else: # review
                     line_data.update({
                         'review_id': review_id,
-                        'pas_amc': max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rdd - line.rr_amc*seg.projected_view),
-                        'pas_fmc': round(pas),
                         'segment_ref_name': "%s / %s" % (seg.name_seg, seg.description_seg),
-                        'rr_fmc_avg': total_month and total_fmc/total_month,
+                        'rr_fmc_avg': False if seg.rule !='cycle' else total_month and total_fmc/total_month,
                         'rr_amc': line.rr_amc,
                         'total_expired_qty': sum_line.get(line.id, {}).get('total_expiry_nocons_qty', 0),
-                        'unit_of_supply_amc': line.rr_amc and (round(sum_line.get(line.id, {}).get('real_stock',0)) - round(sum_line.get(line.id, {}).get('expired_before_rdd',0))) * coeff / line.rr_amc,
-                        'unit_of_supply_fmc': month_of_supply * coeff,
+                        'unit_of_supply_amc': False if seg.rule !='cycle' else line.rr_amc and (round(sum_line.get(line.id, {}).get('real_stock',0)) - round(sum_line.get(line.id, {}).get('expired_before_rdd',0))) * coeff / line.rr_amc,
+                        'unit_of_supply_fmc': False if seg.rule !='cycle' else month_of_supply * coeff,
                         'date_preparing': seg.date_preparing,
                         'date_next_order_validated': seg.date_next_order_validated,
                         'date_next_order_rdd': seg.date_preparing and (datetime.strptime(seg.date_preparing, '%Y-%m-%d') + relativedelta(days=int(seg.external_lt))).strftime('%Y-%m-%d'),
@@ -818,12 +822,12 @@ class replenishment_segment(osv.osv):
                     if seg.rule == 'cycle':
                         line_data.update({
                             'projected_stock_qty': round(pas),
-                            'projected_stock_qty_amc': False,
+                            'projected_stock_qty_amc': max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rdd - line.rr_amc*seg.projected_view),
                         })
                     else:
                         line_data.update({
                             'projected_stock_qty': False,
-                            'projected_stock_qty_amc': round(pas),
+                            'projected_stock_qty_amc': False,
                         })
                     review_line.create(cr, uid, line_data, context=context)
 
@@ -1082,6 +1086,7 @@ class replenishment_segment(osv.osv):
         if ir_loc_id not in data['local_location_ids']:
             if len(data['local_location_ids']) == 1:
                 data['ir_requesting_location'] = data['local_location_ids'][0]
+                data['ir_requesting_location_ro'] = data['local_location_ids'][0]
             else:
                 data['ir_requesting_location'] = False
 
@@ -1924,22 +1929,22 @@ class replenishment_inventory_review_line(osv.osv):
         'buffer_qty': fields.float_null('Buffer Qty', related_uom='uom_id'), # Seg line
         'safety_stock': fields.integer('Safety Stock'), # Seg
         'segment_ref_name': fields.char('Segment Ref/Name', size=512), # Seg
-        'rr_fmc_avg': fields.float_null('RR-FMC (average for period)'),
+        'rr_fmc_avg': fields.float_null('RR-FMC (average for period)', null_value='N/A'),
         'rr_amc': fields.float('RR-AMC'),
         'valid_rr_fmc': fields.boolean('Valid FMC', readonly=1), # OC
         'real_stock': fields.float('Real Stock', readonly=1, related_uom='uom_id'), # OC
         'pipeline_qty': fields.float('Pipeline Qty', readonly=1, related_uom='uom_id'), # OC
         'reserved_stock_qty': fields.float('Reserved Stock Qty', readonly=1, related_uom='uom_id'),# OC
-        'expired_qty_before_cons': fields.float('Expired Qty before cons.', readonly=1, related_uom='uom_id'), # OC
+        'expired_qty_before_cons': fields.float_null('Expired Qty before cons.', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
         'total_expired_qty': fields.float('Qty expiring within period', readonly=1, related_uom='uom_id'),
         'sleeping_qty': fields.float('Sleeping Qty'),
         'projected_stock_qty': fields.float_null('RR-FMC Projected Stock Level', readonly=1, related_uom='uom_id'), # OC
-        'projected_stock_qty_amc': fields.float_null('RR-AMC Projected Stock Level', readonly=1, related_uom='uom_id'), # OC
-        'unit_of_supply_amc': fields.float('Days/weeks/months of supply (RR-AMC)'),
-        'unit_of_supply_fmc': fields.float('Days/weeks/months of supply (RR-FMC)'),
+        'projected_stock_qty_amc': fields.float_null('RR-AMC Projected Stock Level', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
+        'unit_of_supply_amc': fields.float_null('Days/weeks/months of supply (RR-AMC)', null_value='N/A'),
+        'unit_of_supply_fmc': fields.float_null('Days/weeks/months of supply (RR-FMC)', null_value='N/A'),
         'warning': fields.char('Warning', size=512, readonly='1'), # OC
         'open_loan': fields.boolean('Open Loan', readonly=1), # OC
-        'qty_lacking': fields.float('Qty lacking before next ETA', readonly=1, related_uom='uom_id'), # OC
+        'qty_lacking': fields.float_null('Qty lacking before next ETA', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
         'qty_lacking_needed_by': fields.date('Qty lacking needed by', readonly=1), # OC
         'eta_for_next_pipeline': fields.date('ETA for Next Pipeline', readonly=1), # Seg
 

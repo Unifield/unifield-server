@@ -84,6 +84,7 @@ class _column(object):
         self.priority = priority
         self.change_default = change_default
         self.ondelete = ondelete
+        self.null_value = args.get('null_value')
         self.translate = translate
         self._domain = domain
         self._context = context

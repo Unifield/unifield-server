@@ -1363,6 +1363,8 @@ class orm_template(object):
                 res[f] = {'type': field_col._type}
                 if hasattr(field_col, '_with_null') and field_col._with_null:
                     res[f]['with_null'] = True
+                if hasattr(field_col, 'null_value') and field_col.null_value:
+                    res[f]['null_value'] = field_col.null_value
                 # This additional attributes for M2M and function field is added
                 # because we need to display tooltip with this additional information
                 # when client is started in debug mode.
