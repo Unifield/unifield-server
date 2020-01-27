@@ -677,9 +677,12 @@ class hq_report_ocb(report_sxw.report_sxw):
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
         instance_name = 'OCB'  # since US-949
         reg_types = ('cash', 'bank', 'cheque')
+        partner_header = ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive']
+        if not context.get('old_vi'):
+            partner_header.append('Notes')
         processrequests = [
             {
-                'headers': ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive', 'Notes'],
+                'headers': partner_header,
                 'filename': instance_name + '_' + year + month + '_Partners.csv',
                 'key': 'partner',
                 'function': 'postprocess_partners',
