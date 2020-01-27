@@ -930,10 +930,16 @@ class replenishment_segment(osv.osv):
                 continue
             prod_code = prod_code.strip()
 
-            if not isinstance(row.cells[4].data, (int, long, float)):
+            cells_nb = len(row.cells)
+            if cells_nb < 8:
+                line_error.append(_('Line %d must have at least 7 cells') % (idx+1,))
+                continue
+
+            if row.cells[4].data and not isinstance(row.cells[4].data, (int, long, float)):
                 line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[4].data))
+
             data_towrite = {
-                'status': status.get(row.cells[3].data.strip()),
+                'status': status.get(row.cells[3].data and row.cells[3].data.strip()),
                 'buffer_qty': row.cells[4].data,
                 'min_qty': 0,
                 'max_qty': 0,
@@ -951,9 +957,15 @@ class replenishment_segment(osv.osv):
                 first_fmc_col = 7 - 3
                 for fmc in range(1, 13):
                     first_fmc_col += 3
-                    if row.cells[first_fmc_col+1].data:
+                    if cells_nb - 1 >= first_fmc_col and row.cells[first_fmc_col].data:
+                        if cells_nb - 1 < first_fmc_col+1:
+                            line_error.append(_('Line %d: FMC FROM %d, date expected') % (idx+1, fmc))
+                            continue
                         if not row.cells[first_fmc_col+1].type == 'datetime':
                             line_error.append(_('Line %d: FMC FROM %d, date expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col+1].data))
+                            continue
+                        if cells_nb - 1 < first_fmc_col+2:
+                            line_error.append(_('Line %d: FMC TO %d, date expected') % (idx+1, fmc))
                             continue
                         if not row.cells[first_fmc_col+2].data or row.cells[first_fmc_col+2].type != 'datetime':
                             line_error.append(_('Line %d: FMC TO %d, date expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col+2].data))
