@@ -2052,11 +2052,6 @@ class tender_line_cancel_wizard(osv.osv_memory):
         'only_exp': fields.boolean(string='Only added lines'),
         'last_line': fields.boolean(string='Last line of the FO to source'),
         'tender_line_has_rfq_lines': fields.function(_check_linked_rfq_lines, type='boolean', method=True, string='Linked to RfQ line(s)'),
-        'cancel_linked_rfq_lines': fields.boolean(string='Cancel the linked RfQ line(s)'),
-    }
-
-    _defaults = {
-        'cancel_linked_rfq': False,
     }
 
     def just_cancel(self, cr, uid, ids, context=None):
@@ -2085,8 +2080,8 @@ class tender_line_cancel_wizard(osv.osv_memory):
             line_ids.append(wiz.tender_line_id.id)
             if wiz.tender_line_id.tender_id.sale_order_id:
                 so_ids.add(wiz.tender_line_id.tender_id.sale_order_id.id)
-            # Check if the RfQ line(s) need to be cancelled
-            if wiz.cancel_linked_rfq_lines:
+            # Check if some RfQ line(s) need to be cancelled
+            if wiz.tender_line_has_rfq_lines:
                 rfq_lines_ids = pol_obj.search(cr, uid, [('tender_line_id', '=', wiz.tender_line_id.id)], context=context)
                 wf_service.trg_validate(uid, 'purchase.order.line', rfq_lines_ids, 'cancel', cr)
 

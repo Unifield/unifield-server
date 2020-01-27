@@ -517,13 +517,20 @@
             <field name="model">tender.line.cancel.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Tender line cancelation">
+                <form string="Tender line cancellation">
                     <field name="last_line" invisible="1" />
                     <field name="only_exp" invisible="1" />
                     <field name="tender_line_has_rfq_lines" invisible="1" />
                     <group colspan="4" col="1" attrs="{'invisible': [('only_exp', '=', True)]}">
                         <html>
-                            <h4 style="text-align: center; margin: 10px">Would you re-source the needs sourced by this tender line ?</h4>
+                            <h4 style="text-align: center; margin: 10px"><translate>Would you re-source the needs sourced by this tender line ?</translate></h4>
+                        </html>
+                    </group>
+                    <group colspan="6" attrs="{'invisible': [('tender_line_has_rfq_lines', '=', False)]}">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px"><translate>
+                                The tender line(s) you are about to cancel are linked to open RfQ line(s). They will be cancelled as well if you proceed.
+                            </translate></h4>
                         </html>
                     </group>
                     <group colspan="6" attrs="{'invisible': [('last_line', '=', False)]}">
@@ -535,9 +542,6 @@
                            </p>
                         </html>
                     </group>
-                    <newline />
-                    <separator string="The tender line(s) you are about to cancel are linked to open RfQ line(s), do you want to cancel them as well ?" attrs="{'invisible': [('tender_line_has_rfq_lines', '=', False)]}" />
-                    <field name="cancel_linked_rfq_lines" attrs="{'invisible': [('tender_line_has_rfq_lines', '=', False)]}" />
                     <newline />
                     <group colspan="4" col="4" attrs="{'invisible': [('only_exp', '=', True)]}">
                         <separator string="Actions" colspan="4" />
