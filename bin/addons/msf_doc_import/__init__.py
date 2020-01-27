@@ -28,10 +28,10 @@ GENERIC_MESSAGE = _("""
         The file should be in XML 2003 format.
 
 The columns should be in this values: """)
-# Authorized analytic journal in Accounting import
+# Authorized journals in Accounting import
 ACCOUNTING_IMPORT_JOURNALS = [
     'intermission',
-    'correction',
+    'correction_manual',
     'hr',
     'migration',
     'sale',  # US-70/3

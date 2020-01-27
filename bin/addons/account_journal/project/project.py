@@ -37,7 +37,9 @@ class account_analytic_journal(osv.osv):
         """
         return [
             ('cash','Cash'),
-            ('correction', 'Correction'),
+            ('correction', 'Correction Auto'),
+            ('correction_hq', 'Correction HQ'),
+            ('correction_manual', 'Correction Manual'),
             ('cur_adj', 'Currency Adjustment'),
             ('engagement', 'Engagement'),
             ('general','General'),
