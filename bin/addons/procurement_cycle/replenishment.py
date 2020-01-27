@@ -1774,6 +1774,7 @@ class replenishment_order_calc(osv.osv):
                 'delivery_requested_date': calc.new_order_reception_date,
                 'categ': 'other',
                 'origin': calc.name,
+                'stock_take_date': calc.generation_date,
             })
             for line in calc.order_calc_line_ids:
                 if line.agreed_order_qty:
@@ -1786,6 +1787,7 @@ class replenishment_order_calc(osv.osv):
                         'cost_price': line.product_id.standard_price,
                         'price_unit': line.product_id.list_price,
                         'type': 'make_to_order',
+                        'stock_take_date': calc.generation_date,
                     }, context=context)
 
             self.write(cr, uid, calc.id, {'state': 'closed', 'ir_generation_date': time.strftime('%Y-%m-%d'), 'ir_id': ir_id}, context=context)
