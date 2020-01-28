@@ -691,6 +691,12 @@ function onChange(caller){
 
 function onChangePop(caller){
 
+
+    // *************** WARNING ***********************
+    // TestField:  this method is monkey patched in TF
+    // ***********************************************
+
+
     if (openobject.http.AJAX_COUNT > 0) {
         // Delay the call
         callLater(1, onChangePop, caller);
@@ -872,6 +878,11 @@ function onChangePop(caller){
                     	var fld_val = '[]';
                         if(value){
                         	fld_val = '['+ value.join(',') + ']';
+                        }
+                        if (!jQuery(fld).attr('name')) {
+                            // guess we are in editable tree view
+                            jQuery(idSelector(prefix + k)).val(fld_val);
+                            break;
                         }
                         var fld_name = jQuery(fld).attr('name');
                         var old_m2m = jQuery(idSelector(fld_name)).closest('.list-a');
