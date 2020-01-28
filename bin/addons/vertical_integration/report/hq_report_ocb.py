@@ -414,7 +414,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         fy = pool.get('account.fiscalyear').browse(cr, uid, fy_id)
         last_fy_year = strptime(fy.date_start, '%Y-%m-%d').tm_year - 1 # Take previous year regarding given fiscalyear
         first_day_of_last_fy = '%s-01-01' % (last_fy_year)
-        period = period_obj.browse(cr, uid, period_id, fields_process=['date_stop', 'date_start', 'number'])
+        period = period_obj.browse(cr, uid, period_id, fields_to_fetch=['date_stop', 'date_start', 'number'])
         previous_period_id = period_obj.get_previous_period_id(cr, uid, period_id, context=context)
         last_day_of_period = period.date_stop
         first_day_of_period = period.date_start
@@ -481,7 +481,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         else:
             # note: even balances with zero amount are displayed in the report
             balance_previous_month_sql = """
-                            SELECT acc.code, curr.name, SUM(COALESCE(debit_currency,0) - COALESCE(credit_currency,0))
+                            SELECT acc.code, curr.name, SUM(COALESCE(aml.debit_currency,0) - COALESCE(aml.credit_currency,0))
                             FROM account_move_line aml
                             INNER JOIN account_journal j ON aml.journal_id = j.id
                             INNER JOIN account_account acc ON aml.account_id = acc.id
