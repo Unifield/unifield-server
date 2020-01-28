@@ -732,6 +732,59 @@ class analytic_distribution_wizard(osv.osv_memory):
                                 self.pool.get(wiz_line_obj).create(cr, uid, vals, context=context)
             return True
 
+    def _get_invalid_small_amount(self, cr, uid, vals, context=None):
+        """
+        Returns the value of "invalid_small_amount" for the Analytic Distrib. of which vals is in param.
+        (invalid_small_amount is True when several AD lines are linked to a booking amount <= 1).
+
+        Check all tuples listed in the object_list. For each one:
+        0) object name
+        1) many2one field of the analytic.distribution.wizard which is linked to this object
+        2) name of the field of this object corresponding to its lines if any
+           (e.g. "invalid_small_amount" is True on an invoice IF it is True on one of its invoice lines)
+
+        """
+        object_list = [
+            ('account.invoice', 'invoice_id', 'invoice_line'),
+            ('account.invoice.line', 'invoice_line_id', False),
+            ('account.direct.invoice.wizard', 'account_direct_invoice_wizard_id', 'invoice_wizard_line'),
+            ('account.direct.invoice.wizard.line', 'account_direct_invoice_wizard_line_id', False),
+            ('wizard.account.invoice', 'direct_invoice_id', 'invoice_line'),
+            ('wizard.account.invoice.line', 'direct_invoice_line_id', False),
+            ('wizard.cash.return', 'cash_return_id', 'advance_line_ids'),
+            ('wizard.advance.line', 'cash_return_line_id', False),
+            ('account.move.line', 'move_line_id', False),
+            ('account.move', 'move_id', 'line_id'),
+            ('account.bank.statement.line', 'register_line_id', False),
+            ('account.model', 'model_id', 'lines_id'),
+            ('account.model.line', 'model_line_id', False),
+            ('msf.accrual.line', 'accrual_line_id', False),
+        ]
+        invalid_small_amount = False
+        if context is None:
+            context = {}
+        for obj_data in object_list:
+            obj_type, field_name, line_field = obj_data
+            if vals.get(field_name):
+                obj = self.pool.get(obj_type).browse(cr, uid, vals[field_name], context=context)
+                if not line_field:
+                    # AD at line level
+                    invalid_small_amount = obj.analytic_distribution_state == 'invalid_small_amount' or False
+                else:
+                    # AD at header level
+                    lines = hasattr(obj, line_field) and getattr(obj, line_field) or []
+                    for line in lines:
+                        # display the warning msg for the header only if no AD is defined directly at line level
+                        distrib_at_line_level = hasattr(line, 'analytic_distribution_id') \
+                            and getattr(line, 'analytic_distribution_id') or False
+                        line_distrib_state = hasattr(line, 'analytic_distribution_state') \
+                            and getattr(line, 'analytic_distribution_state') or ''
+                        if not distrib_at_line_level and line_distrib_state == 'invalid_small_amount':
+                            invalid_small_amount = True
+                            break
+                break  # AD wizard is linked to only one object, no need to check the other list items
+        return invalid_small_amount
+
     def create(self, cr, uid, vals, context=None):
         """
         Add distribution lines to the wizard
@@ -739,7 +792,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        # Prepare some values
+        vals.update({'invalid_small_amount': self._get_invalid_small_amount(cr, uid, vals, context=context)})
         res = super(analytic_distribution_wizard, self).create(cr, uid, vals, context=context)
         wiz = self.browse(cr, uid, [res], context=context)[0]
         if wiz.distribution_id:
