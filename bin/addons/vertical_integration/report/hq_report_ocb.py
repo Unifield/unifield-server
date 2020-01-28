@@ -549,7 +549,7 @@ class hq_report_ocb(report_sxw.report_sxw):
             # Pay attention to take analytic line that are not on HQ and MIGRATION journals.
             'rawdata': """
                 SELECT al.id, i.code,
-                       CASE WHEN j.code = 'OD' THEN j.code ELSE aj.code END AS journal,
+                       CASE WHEN j.code IN ('OD', 'ODHQ', 'ODX') THEN j.code ELSE aj.code END AS journal,
                        al.entry_sequence, al.name, al.ref, al.document_date, al.date,
                        a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, 
                        CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, 

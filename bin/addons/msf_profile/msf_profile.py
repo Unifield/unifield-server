@@ -52,6 +52,76 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF16.0
+    def us_6692_new_od_journals(self, cr, uid, *a, **b):
+        """
+        1. Change the type of the existing correction journals (except OD) to "Correction Manual" so they remain usable
+
+        2. Create:
+        - ODM journals in all existing instances
+        - ODHQ journals in existing coordo instances
+
+        Notes:
+        - creations are done in Python as the objects created must sync normally
+        - none of these journals already exists in prod. DB.
+        """
+        user_obj = self.pool.get('res.users')
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
+        journal_obj = self.pool.get('account.journal')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:  # existing instances only
+            # existing correction journals
+            cr.execute("""
+                       UPDATE account_analytic_journal
+                       SET type = 'correction_manual'
+                       WHERE type = 'correction'
+                       AND code != 'OD';
+                       """)
+            self._logger.warn('%s correction analytic journal(s) updated.' % (cr.rowcount,))
+            cr.execute("""
+                       UPDATE account_journal
+                       SET type = 'correction_manual'
+                       WHERE type = 'correction'
+                       AND code != 'OD';
+                       """)
+            self._logger.warn('%s correction journal(s) updated.' % (cr.rowcount,))
+            # ODM analytic journal
+            odm_analytic_vals = {
+                # Prop. Instance: by default the current one is used
+                'code': 'ODM',
+                'name': 'Correction manual',
+                'type': 'correction_manual',
+            }
+            odm_analytic_journal_id = analytic_journal_obj.create(cr, uid, odm_analytic_vals)
+            # ODM G/L journal
+            odm_vals = {
+                # Prop. Instance: by default the current one is used
+                'code': 'ODM',
+                'name': 'Correction manual',
+                'type': 'correction_manual',
+                'analytic_journal_id': odm_analytic_journal_id,
+            }
+            journal_obj.create(cr, uid, odm_vals)
+            if current_instance.level == 'coordo':
+                # ODHQ analytic journal
+                odhq_analytic_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ODHQ',
+                    'name': 'Correction automatic HQ',
+                    'type': 'correction_hq',
+                }
+                odhq_analytic_journal_id = analytic_journal_obj.create(cr, uid, odhq_analytic_vals)
+                # ODHQ G/L journal
+                odhq_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ODHQ',
+                    'name': 'Correction automatic HQ',
+                    'type': 'correction_hq',
+                    'analytic_journal_id': odhq_analytic_journal_id,
+                }
+                journal_obj.create(cr, uid, odhq_vals)
+        return True
+
     # UF15.2
     def rec_entries_uf14_1_uf15(self, cr, uid, *a, **b):
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
