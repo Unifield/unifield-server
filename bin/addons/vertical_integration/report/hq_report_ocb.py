@@ -415,6 +415,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         last_fy_year = strptime(fy.date_start, '%Y-%m-%d').tm_year - 1 # Take previous year regarding given fiscalyear
         first_day_of_last_fy = '%s-01-01' % (last_fy_year)
         period = period_obj.browse(cr, uid, period_id, fields_process=['date_stop', 'date_start', 'number'])
+        previous_period_id = period_obj.get_previous_period_id(cr, uid, period_id, context=context)
         last_day_of_period = period.date_stop
         first_day_of_period = period.date_start
         selection = form.get('selection', False)
@@ -474,23 +475,25 @@ class hq_report_ocb(report_sxw.report_sxw):
                 WHERE partner_type != 'internal'
                   and name != 'To be defined';
                 """ % (not context.get("old_vi") and ", comment" or "")
-        if instance_lvl != 'section':
+        if not previous_period_id or instance_lvl == 'section':
+            # empty report in case there is no previous period or an HQ instance is selected
+            balance_previous_month_sql = "SELECT '' AS no_line;"
+        else:
             # note: even balances with zero amount are displayed in the report
             balance_previous_month_sql = """
-                SELECT acc.code, curr.name, SUM(COALESCE(debit_currency,0) - COALESCE(credit_currency,0))
-                FROM account_move_line aml
-                INNER JOIN account_journal j ON aml.journal_id = j.id
-                INNER JOIN account_account acc ON aml.account_id = acc.id
-                INNER JOIN res_currency curr ON aml.currency_id = curr.id
-                WHERE aml.period_id = %s
-                AND j.type NOT IN %s
-                AND aml.instance_id IN %s
-                GROUP BY acc.code, curr.name
-                ORDER BY acc.code, curr.name;
-            """
-        else:
-            # empty report in case an HQ instance is selected
-            balance_previous_month_sql = "SELECT '' AS no_line;"
+                            SELECT acc.code, curr.name, SUM(COALESCE(debit_currency,0) - COALESCE(credit_currency,0))
+                            FROM account_move_line aml
+                            INNER JOIN account_journal j ON aml.journal_id = j.id
+                            INNER JOIN account_account acc ON aml.account_id = acc.id
+                            INNER JOIN res_currency curr ON aml.currency_id = curr.id
+                            INNER JOIN account_move m ON aml.move_id = m.id
+                            WHERE aml.period_id = %s
+                            AND j.type NOT IN %s
+                            AND aml.instance_id IN %s
+                            AND m.state = 'posted'
+                            GROUP BY acc.code, curr.name
+                            ORDER BY acc.code, curr.name;
+                        """
         sqlrequests = {
             'partner': partner_sql,
             'employee': """
@@ -796,7 +799,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                     'headers': ['G/L Account', 'Booking currency', 'Balance'],
                     'filename': instance_name + '_' + year + month + '_Balance_previous_month.csv',
                     'key': 'balance_previous_month',
-                    'query_params': (period_obj.get_previous_period_id(cr, uid, period_id, context=context),
+                    'query_params': (previous_period_id,
                                      # note: engagements are also excluded since there are no ENG/ENGI "G/L" journals
                                      tuple(excluded_journal_types + ['cur_adj']),
                                      tuple(instance_ids)),

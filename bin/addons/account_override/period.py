@@ -111,11 +111,11 @@ def get_previous_period_id(self, cr, uid, period_id, context=None):
     """
     if context is None:
         context = {}
-    period = self.browse(cr, uid, period_id, fields_to_fetch=['date_stop'], context=context)
-    previous_period_ids = self.search(cr, uid, [('date_stop', '<=', period.date_stop),
+    period = self.browse(cr, uid, period_id, fields_to_fetch=['date_start'], context=context)
+    previous_period_ids = self.search(cr, uid, [('date_start', '<=', period.date_start),
                                                 ('special', '=', False),
                                                 ('id', '!=', period_id)],
-                                      order='date_stop DESC', limit=1, context=context)
+                                      order='date_start DESC', limit=1, context=context)
     return previous_period_ids and previous_period_ids[0] or False
 
 
