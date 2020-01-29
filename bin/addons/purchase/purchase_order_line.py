@@ -753,7 +753,7 @@ class purchase_order_line(osv.osv):
                     prefix = _("Analytic Distribution on line %s:\n") % pol.line_number
                 else:
                     prefix = _("Analytic Distribution at header level:\n")
-                ad_obj.check_cc_distrib_active(cr, uid, ad, prefix=prefix)
+                ad_obj.check_cc_distrib_active(cr, uid, ad, prefix=prefix, from_supply=True)
         return True
 
 

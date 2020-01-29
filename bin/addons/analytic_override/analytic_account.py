@@ -51,9 +51,13 @@ class analytic_account(osv.osv):
         """
         If date out of date_start/date of given analytic account, then account is inactive.
         The comparison could be done via a date given in context.
-        A normal-type destination allowing no CC is also seen as inactive whatever its activation dates.
+
+        A normal-type destination allowing no CC is also seen as inactive whatever its activation dates
+        (exception: supply workflows should not be blocked for that reason).
         """
         res = {}
+        if context is None:
+            context = {}
         cmp_date = date.today().strftime('%Y-%m-%d')
         if context.get('date', False):
             cmp_date = context.get('date')
@@ -63,7 +67,7 @@ class analytic_account(osv.osv):
                 res[a.id] = False
             elif a.date and a.date <= cmp_date:
                 res[a.id] = False
-            elif a.dest_without_cc:
+            elif not context.get('from_supply') and a.dest_without_cc:
                 res[a.id] = False
         return res
 
