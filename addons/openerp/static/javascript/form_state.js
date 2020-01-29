@@ -354,6 +354,8 @@ function form_onAttrChange(container, widgetName, attr, expr, elem, cache_values
             break;
         case 'invisible': form_setVisible(container, widget, !result);
             break;
+        case 'notselectable': form_setNotSelectable(container, widget, result);
+            break;
         default:
     }
 }
@@ -690,6 +692,17 @@ function form_setVisible(container, field, visible) {
                 $label.toggle(visible);
             }
         }catch(e){}
+    }
+}
+
+function form_setNotSelectable(container, field, notSelectable) {
+    var editable = getElement('_terp_editable').value;
+    if (editable == 'True' && notSelectable) {
+        // find the checkboxes used to select lines
+        var selectors = field.getElementsByClassName('grid-record-selector');
+        for (var i = 0; i < selectors.length; i++) {
+            selectors[i].style.visibility = 'hidden';
+        }
     }
 }
 
