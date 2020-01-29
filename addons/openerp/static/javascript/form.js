@@ -418,9 +418,6 @@ function pager_action(src){
 }
 
 function buttonClicked(name, btype, model, id, sure, target, context){
-    if (sure && !confirm(sure)) {
-        return;
-    }
 
     // to be able to get selected lines ids
     s_ids = [];
@@ -430,6 +427,12 @@ function buttonClicked(name, btype, model, id, sure, target, context){
         s_ids = ListView('move_lines').getSelectedRecords();
     }  else if (model =='replenishment.inventory.review' && jQuery('[id="line_ids"]').length > 0){
         s_ids = ListView('line_ids').getSelectedRecords();
+    } else if (model =='replenishment.segment' && jQuery('[id="line_ids"]').length > 0){
+        s_ids = ListView('line_ids').getSelectedRecords();
+    }
+
+    if (sure && !confirm(sure.replace('%(number_selected)s',s_ids.length))) {
+        return;
     }
 
     var params = {

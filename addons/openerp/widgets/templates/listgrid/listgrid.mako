@@ -317,8 +317,8 @@ if (auto_field && auto_field.val()){
                                             % endif
                                         % endfor
                                         % if has_filter:
-                                            <td><img src="/openerp/static/images/icons/stock_zoom.png" title="${_('Search')}" onclick="new ListView('${name}').update_o2m_filter()"/></td>
-                                            <td><img src="/openerp/static/images/stock/gtk-clear.png" title="${_('Clear')}" onclick="new ListView('${name}').clear_filter()"/></a></td>
+                                            <td><button type="button" onclick="new ListView('${name}').update_o2m_filter()">${_('Search')}</button></td>
+                                            <td><button type="button" onclick="new ListView('${name}').clear_filter()">${_('Clear')}</button></td>
                                         % endif
                                     </table>
                                 </td>
