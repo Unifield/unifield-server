@@ -52145,10 +52145,10 @@ msgid "Hebrew / עִבְרִי"
 msgstr "Hebrew / עִבְרִי"
 
 #. module: analytic_distribution
-#: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:966
+#: code:addons/analytic_distribution/analytic_distribution.py:169
 #, python-format
-msgid "Cost center account %s is not active at this date: %s"
-msgstr "Cost center account %s is not active at this date: %s"
+msgid "%sCost center account %s is not active at this date: %s"
+msgstr "%sLe Centre de coût %s n'est pas actif à cette date : %s"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,state_id:0
@@ -89522,11 +89522,16 @@ msgid "Process Event"
 msgstr "Traiter Événement"
 
 #. module: analytic_distribution
-#: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:968
-#: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:974
+#: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:997
 #, python-format
 msgid "Destination %s is either inactive at the date %s, or it allows no Cost Center."
 msgstr "La Destination %s est soit inactive à la date %s, soit elle n'autorise aucun Centre de Coût."
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_distribution.py:173
+#, python-format
+msgid "%sDestination %s is not active at this date: %s"
+msgstr "%sLa Destination %s n'est pas active à cette date: %s"
 
 #. modules: purchase, tender_flow, purchase_allocation_report, sale, procurement, msf_supply_doc_export, msf_doc_import, purchase_compare_rfq, stock, consumption_calculation
 #: view:wizard.import.in.simulation.screen:0
@@ -106597,3 +106602,21 @@ msgstr "Funding Pool non trouvé."
 #: field:account.analytic.account,dest_without_cc:0
 msgid "Destination allowing no Cost Center"
 msgstr "Destination n'autorisant aucun Centre de Coût"
+
+#. modules: purchase, sale
+#: code:addons/purchase/purchase_order_line.py:753
+#: code:addons/sale/sale_workflow.py:102
+#, python-format
+msgid "Analytic Distribution on line %s:\n"
+""
+msgstr "Distribution Analytique sur la ligne %s :\n"
+""
+
+#. modules: purchase, sale
+#: code:addons/purchase/purchase_order_line.py:755
+#: code:addons/sale/sale_workflow.py:104
+#, python-format
+msgid "Analytic Distribution at header level:\n"
+""
+msgstr "Distribution Analytique au niveau de l'en-tête :\n"
+""
