@@ -792,7 +792,7 @@ class replenishment_segment(osv.osv):
                     line_data.update({
                         'order_calc_id': calc_id,
                         'proposed_order_qty': round(proposed_order_qty),
-                        'agreed_order_qty': round(proposed_order_qty) or 0,
+                        'agreed_order_qty': round(proposed_order_qty) or False,
                         'in_main_list': line.in_main_list,
                         'projected_stock_qty': round(pas),
                     })
