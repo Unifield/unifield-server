@@ -84,6 +84,18 @@
     ss:Bold="1"/>
    <NumberFormat ss:Format="Short Date"/>
   </Style>
+  <Style ss:ID="s121DT">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
+    ss:Bold="1"/>
+  <NumberFormat ss:Format="General Date"/>
+  </Style>
   <Style ss:ID="s122">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
    <Borders>
@@ -468,9 +480,9 @@
    </Row>
    <Row>
     <Cell ss:StyleID="s124"><Data ss:Type="String">${_('Generated')|x}</Data></Cell>
-    <Cell ss:StyleID="s121">
-        % if isDate(objects[0].generation_date):
-        <Data ss:Type="DateTime">${objects[0].generation_date|n}T00:00:00.000</Data>
+    <Cell ss:StyleID="s121DT">
+        % if isDateTime(objects[0].generation_date):
+        <Data ss:Type="DateTime">${objects[0].generation_date[:10]|n}T${objects[0].generation_date[-8:]|n}.000</Data>
         % else:
         <Data />
         % endif
@@ -858,10 +870,10 @@
     <Cell ss:StyleID="s134"><Data ss:Type="String">${_('Next order to be generated/issued by date')|x}</Data></Cell>
     <Cell ss:StyleID="s134"><Data ss:Type="String">${_('RDD for next order')|x}</Data></Cell>
     % for nb_month in range(0, objects[0].projected_view):
-        <Cell ss:StyleID="s135"><Data ss:Type="String">${_('RR-FMC M%s' % nb_month)|x} ${get_month(objects[0].generation_date, nb_month)|x}</Data></Cell>
+        <Cell ss:StyleID="s135"><Data ss:Type="String">${_('RR-FMC M%s') % nb_month|x} ${get_month(objects[0].generation_date, nb_month)|x}</Data></Cell>
     % endfor
     % for nb_month in range(0, objects[0].projected_view):
-    <Cell ss:StyleID="s135"><Data ss:Type="String">${_('Projected M%s' % nb_month)|x} ${get_month(objects[0].generation_date, nb_month)|x}</Data></Cell>
+    <Cell ss:StyleID="s135"><Data ss:Type="String">${_('Projected M%s') % nb_month|x} ${get_month(objects[0].generation_date, nb_month)|x}</Data></Cell>
     % endfor
    </Row>
    % for line in objects[0].line_ids:

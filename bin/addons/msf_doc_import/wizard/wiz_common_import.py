@@ -175,10 +175,14 @@ class wizard_common_import_line(osv.osv_memory):
                                         'wiz_id', 'product_id', string='Products'),
         'search_default_not_restricted': fields.integer('Search default not restricted', invisible=True),  # UFTP-15 (for context reinject in product_ids m2m for 'add multiple lines' button)
         'current_id': fields.function(_get_current_id, method=True, type='integer', string='ID'),
+        'msg': fields.text('Msg'),
+        'display_error': fields.boolean('Error'),
     }
 
     _defaults = {
         'search_default_not_restricted': 0,
+        'msg': '',
+        'display_error': False,
     }
 
     def add_products(self, cr, uid, ids, product_ids, context=None):
@@ -245,8 +249,15 @@ class wizard_common_import_line(osv.osv_memory):
 
             context['wizard_id'] = wiz['id']
 
-            line_obj.create_multiple_lines(cr, uid, parent_id, product_ids, context=context)
+            ret = line_obj.create_multiple_lines(cr, uid, parent_id, product_ids, context=context)
 
+            if isinstance(ret, dict) and ret.get('msg'):
+                self.write(cr, uid, wiz['id'], {'msg': ret['msg'], 'product_ids': [(6, 0, [])], 'display_error': True}, context=context)
+                return True
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def button_close(self, cr, uid, ids, conext=None):
         return {'type': 'ir.actions.act_window_close'}
 
 wizard_common_import_line()

@@ -280,11 +280,12 @@
                     <group colspan="4" name="import" string="Import Lines" attrs="{'invisible': [('state', '!=', 'draft')]}">
                         <field name="file_to_import" colspan="2" />
                         <button name="import_lines" string="Import Lines" type="object" colspan="2" icon="gtk-save" />
-                        <button name="add_multiple_lines" type="object" icon="gtk-add" string="Add multiple products" colspan="4" />
+                        <button name="add_multiple_lines" type="object" icon="gtk-add" string="Add multiple products" colspan="2" />
+                        <button name="delete_multiple_lines" type="object" icon="gtk-cancel" string="Delete selected lines" colspan="2" confirm="Do you want to delete these %%(number_selected)s line(s) ?"/>
                     </group>
                     <notebook>
                         <page string="Products">
-                            <field name="line_ids" colspan="4" nolabel="1" default_get="rule=rule" scroll="1" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                            <field name="line_ids" colspan="4" nolabel="1" default_get="rule=rule" scroll="1" attrs="{'readonly': [('state', '!=', 'draft')]}" o2m_selectable="2">
                                 <tree editable="top" editable_style="new">
                                     <field name="product_id" filter_selector="1" />
                                     <field name="product_description" displayon="noteditable" filter_selector="1" />
@@ -491,7 +492,7 @@
                         <button name="import_lines" string="Import Lines" type="object" colspan="2" icon="gtk-save" />
                     </group>
                     <field name="order_calc_line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" default_get="rule=rule">
-                        <tree editable="top" editable_style="new" colors="orange:status=='new';red:expired_qty_before_cons or (status!='new' and qty_lacking)" hide_new_button="0">
+                        <tree editable="top" editable_style="new" colors="orange:status=='new';red:expired_qty_before_cons or (status!='new' and qty_lacking)" hide_new_button="0" hide_delete_button="1">
                             <field name="product_id" filter_selector="1" />
                             <field name="product_description" displayon="noteditable" filter_selector="1" />
                             <field name="uom_id" invisible="1" />

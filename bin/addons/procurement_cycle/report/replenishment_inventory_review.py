@@ -17,7 +17,7 @@ class inventory_parser(report_sxw.rml_parse):
         })
 
     def get_month(self, start, nb_month):
-        return _(misc.month_abbr[(datetime.strptime(start, '%Y-%m-%d') + relativedelta(hour=0, minute=0, second=0, months=nb_month)).month])
+        return _(misc.month_abbr[(datetime.strptime(start, '%Y-%m-%d %H:%M:%S') + relativedelta(hour=0, minute=0, second=0, months=nb_month)).month])
 
 SpreadsheetReport('report.report_replenishment_inventory_review_xls', 'replenishment.inventory.review', 'addons/procurement_cycle/report/replenishment_inventory_review.mako', parser=inventory_parser)
 

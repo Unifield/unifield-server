@@ -86,7 +86,7 @@ class replenishment_location_config(osv.osv):
         'remote_location_ids': fields.many2many('stock.location.instance', 'remote_location_configuration_rel', 'config_id', 'location_id', 'Project Locations', domain="[('usage', '!=', 'view'), ('used_in_config', '=', False)]"),
 
         # inventory review
-        'review_active': fields.boolean('Review Active'),
+        'review_active': fields.boolean('Scheduled Inventory Review active'),
         'projected_view': fields.integer('Standard Projected view (months)'),
         'rr_amc': fields.integer('RR-AMC period (months)', required=1),
         'sleeping': fields.integer('Sleeping stock periodicity (months)'),
@@ -515,9 +515,14 @@ class replenishment_segment(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Data from the following instances are missing, please wait the next scheduled task or the next sync:\n%s') % (', '.join([instances_name_by_id.get(x, '') for x in all_instances])))
 
             if seg.rule == 'cycle' and not review_id and not seg.previous_order_rdd and not seg.date_next_order_received_modified:
-                raise osv.except_osv(_('Warning'), _('For the 1st OC, please set a date in the field "Next order to be received by (modified)"'))
+                raise osv.except_osv(_('Warning'), _('Warning, to complete Segment, field "Next order to be received by (modified)" must have date filled'))
 
             if not review_id:
+                if seg.rule == 'cycle':
+                    new_order_reception_date = seg.date_next_order_received_modified or seg.date_next_order_received
+                else:
+                    new_order_reception_date = datetime.now() + relativedelta(days=int(seg.order_validation_lt)+int(seg.supplier_lt))
+
                 calc_id = self.pool.get('replenishment.order_calc').create(cr, uid, {
                     'segment_id': seg.id,
                     'description_seg': seg.description_seg,
@@ -529,9 +534,10 @@ class replenishment_segment(osv.osv):
                     'local_location_ids': [(6, 0, [x.id for x in seg.local_location_ids])],
                     'remote_location_ids': [(6, 0, [x.id for x in seg.remote_location_ids])],
                     'instance_id': seg.main_instance.id,
-                    'new_order_reception_date': seg.date_next_order_received_modified or seg.date_next_order_received,
-
+                    'new_order_reception_date': new_order_reception_date,
                 }, context=context)
+
+
 
             loc_ids = [x.id for x in seg.local_location_ids]
             cr.execute('''
@@ -786,7 +792,7 @@ class replenishment_segment(osv.osv):
                     line_data.update({
                         'order_calc_id': calc_id,
                         'proposed_order_qty': round(proposed_order_qty),
-                        'agreed_order_qty': round(proposed_order_qty) or False,
+                        'agreed_order_qty': round(proposed_order_qty) or 0,
                         'in_main_list': line.in_main_list,
                         'projected_stock_qty': round(pas),
                     })
@@ -900,6 +906,16 @@ class replenishment_segment(osv.osv):
         return self.pool.get('wizard.common.import.line').\
             open_wizard(cr, uid, ids[0], 'replenishment.segment', 'replenishment.segment.line', context=context)
 
+    def delete_multiple_lines(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Warning!'), _('Please select at least one line'))
+
+        self.pool.get('replenishment.segment.line').unlink(cr, uid, context['button_selected_ids'], context=context)
+        return True
+
     def import_lines(self, cr, uid, ids, context=None):
         product_obj = self.pool.get('product.product')
         seg_line_obj = self.pool.get('replenishment.segment.line')
@@ -966,13 +982,13 @@ class replenishment_segment(osv.osv):
                             line_error.append(_('Line %d: FMC FROM %d, date expected') % (idx+1, fmc))
                             continue
                         if not row.cells[first_fmc_col+1].type == 'datetime':
-                            line_error.append(_('Line %d: FMC FROM %d, date expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col+1].data))
+                            line_error.append(_('Line %d: FMC FROM %d, date is not valid, found %s') % (idx+1, fmc, row.cells[first_fmc_col+1].data))
                             continue
                         if cells_nb - 1 < first_fmc_col+2:
                             line_error.append(_('Line %d: FMC TO %d, date expected') % (idx+1, fmc))
                             continue
                         if not row.cells[first_fmc_col+2].data or row.cells[first_fmc_col+2].type != 'datetime':
-                            line_error.append(_('Line %d: FMC TO %d, date expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col+2].data))
+                            line_error.append(_('Line %d: FMC TO %d, date is not valid, found %s') % (idx+1, fmc, row.cells[first_fmc_col+2].data))
                             continue
                         if not isinstance(row.cells[first_fmc_col].data, (int, long, float)):
                             line_error.append(_('Line %d: FMC %d, number expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col].data))
@@ -1366,8 +1382,27 @@ class replenishment_segment_line(osv.osv):
     }
 
     def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
+        exist_ids = {}
+        exist_code = []
+        if product_ids:
+            cr.execute('''select
+                p.id, p.default_code
+                from replenishment_segment_line seg_line, product_product p
+                where
+                    seg_line.product_id = p.id and
+                    seg_line.segment_id = %s and
+                    p.id in %s
+            ''', (parent_id, tuple(product_ids)))
+            for x in cr.fetchall():
+                exist_ids[x[0]] = True
+                exist_code.append(x[1])
+
         for prod_id in product_ids:
-            self.create(cr, uid, {'segment_id': parent_id, 'product_id': prod_id}, context=context)
+            if prod_id not in exist_ids:
+                self.create(cr, uid, {'segment_id': parent_id, 'product_id': prod_id}, context=context)
+
+        if exist_code:
+            return {'msg': "Warning, duplicate products already in Segment have been ignored.\nProducts in duplicate:\n - %s" % '\n - '.join(exist_code)}
         return True
 
     def change_fmc(selc, cr, uid, ids, ch_type, nb, value, context=None):
@@ -1854,7 +1889,7 @@ class replenishment_inventory_review(osv.osv):
     _rec_name = 'generation_date'
     _columns = {
         'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, select=1, readonly=1),
-        'generation_date': fields.date('Generated', readonly=1),
+        'generation_date': fields.datetime('Generated', readonly=1),
         'amc_first_date': fields.date('RR AMC first date', readonly=1),
         'amc_last_date': fields.date('RR AMC last date', readonly=1),
         'projected_view': fields.integer('Projected view (months from generation date)', readonly=1),
@@ -1869,7 +1904,7 @@ class replenishment_inventory_review(osv.osv):
 
     _defaults = {
         'state': 'inprogress',
-        'generation_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'generation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
     }
 
     def _selected_data(self, cr, uid, ids, context=None):
@@ -1896,7 +1931,7 @@ class replenishment_inventory_review(osv.osv):
         product_ids = [x.id for x in data['products']]
         product_code = [x.default_code for x in data['products']]
 
-        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_move_form2', ['tree', 'form'], new_tab=True, context=context)
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_move_form3', ['tree', 'form'], new_tab=True, context=context)
         res['domain'] = ['&', '&', '|', ('location_id', 'in', data['location_ids']), ('location_dest_id', 'in', data['location_ids']), ('state', 'in', ['confirmed', 'assigned']), ('product_id', 'in', product_ids)]
         res['name'] = _('Pipeline %s: %s') % (data['inv_review'].location_config_id.name, ', '.join(product_code))
         return res

@@ -458,6 +458,15 @@ class stock_move(osv.osv):
         return result
 
 
+    def _get_picking_with_sysint_name(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['picking_id', 'linked_incoming_move'], context=context):
+            if x.linked_incoming_move:
+                res[x.id] = '%s [%s]' % (x.linked_incoming_move.picking_id.name, x.picking_id.name)
+            else:
+                res[x.id] = x.picking_id.name
+        return res
+
     _columns = {
         'name': fields.char('Name', size=64, required=True, select=True),
         'priority': fields.selection([('0', 'Not urgent'), ('1', 'Urgent')], 'Priority'),
@@ -625,6 +634,7 @@ class stock_move(osv.osv):
         'selected_number': fields.integer('Nb. Parcels to Ship'),
         'volume_set': fields.boolean('Volume set at PLL stage', readonly=1),
         'weight_set': fields.boolean('Weight set at PLL stage', readonly=1),
+        'picking_with_sysint_name': fields.function(_get_picking_with_sysint_name, method=1, string='Picking IN [SYS-INT] name', type='char'),
     }
 
     def _check_asset(self, cr, uid, ids, context=None):
