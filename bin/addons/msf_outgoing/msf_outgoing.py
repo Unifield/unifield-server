@@ -1634,25 +1634,35 @@ class shipment(osv.osv):
         return True
 
     def copy_all(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Error'), _('Please select at least one line.'))
+
         cr.execute('''
-            update stock_move set selected_number = (to_pack-from_pack)+1 where picking_id in (
-                select id
-                    from stock_picking
-                    where
-                        shipment_id in %s and
-                        state = 'draft'
-            )''', (tuple(ids),))
+            update stock_move set selected_number = (to_pack-from_pack)+1
+            where picking_id in (
+                select id from stock_picking where shipment_id in %s and state = 'draft'
+            ) and id =ANY(
+                select unnest(move_lines) from pack_family_memory where id in %s
+            )''', (tuple(ids), tuple(context.get('button_selected_ids'))))
         return True
 
     def uncopy_all(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Error'), _('Please select at least one line.'))
+
         cr.execute('''
-            update stock_move set selected_number = 0 where picking_id in (
-                select id
-                    from stock_picking
-                    where
-                        shipment_id in %s and
-                        state = 'draft'
-            )''', (tuple(ids),))
+            update stock_move set selected_number = 0 
+            where picking_id in (
+                select id from stock_picking where shipment_id in %s and state = 'draft'
+            ) and id =ANY(
+                select unnest(move_lines) from pack_family_memory where id in %s
+            )''', (tuple(ids), tuple(context.get('button_selected_ids'))))
         return True
 
 

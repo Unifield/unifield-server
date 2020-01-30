@@ -104521,6 +104521,8 @@ msgid "Packing details: Volumes and Weights"
 msgstr "Détails colisage: Volumes et Poids"
 
 #. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:1641
+#: code:addons/msf_outgoing/msf_outgoing.py:1657
 #: code:addons/msf_outgoing/msf_outgoing.py:4176
 #, python-format
 msgid "Please select at least one line."
