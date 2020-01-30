@@ -53,7 +53,7 @@ class analytic_account(osv.osv):
         The comparison could be done via a date given in context.
 
         A normal-type destination allowing no CC is also seen as inactive whatever its activation dates
-        (exception: supply workflows should not be blocked for that reason).
+        Exception when coming from a Supply workflow: PO/FO validation should not be blocked for that reason.
         """
         res = {}
         if context is None:
