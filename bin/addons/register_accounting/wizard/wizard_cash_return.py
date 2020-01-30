@@ -924,7 +924,7 @@ class wizard_cash_return(osv.osv_memory):
             line_employee_id = False
             partner = advance.partner_type
             if partner:
-                if partner._name == 'res.partner':
+                if partner._name == 'res.partner' and partner.partner_type not in ('intermission', 'section'):
                     partner_id = partner.id
                     advances_with_supplier.setdefault(adv_move, []).append(advance)
                 elif partner._name == 'hr.employee':
