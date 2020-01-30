@@ -212,7 +212,7 @@
             <field name="field_parent">child_complete_ids</field>
             <field name="priority" eval="10"/>
             <field name="arch" type="xml">
-                <tree string="Analytic account" colors="red:(date and date&lt;current_date or dest_without_cc==True)"
+                <tree string="Analytic account" colors="red:(date and date&lt;=current_date or dest_without_cc==True)"
                       toolbar="1" expand_button="1" nolink="1">
                     <field name="dest_without_cc" invisible="1"/>
                     <field name="name"/>
@@ -239,7 +239,7 @@
             <field name="inherit_id" ref="account.view_account_analytic_account_list"/>
             <field name="arch" type="xml">
                 <tree string="Analytic Accounts" position="replace">
-                    <tree toolbar="1" colors="red:(date and date&lt;current_date or dest_without_cc==True)"
+                    <tree toolbar="1" colors="red:(date and date&lt;=current_date or dest_without_cc==True)"
                           string="Analytic Accounts">
                         <field name="dest_without_cc" invisible="1"/>
                         <field name="name"/>
