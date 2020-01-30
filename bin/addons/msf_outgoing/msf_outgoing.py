@@ -778,9 +778,9 @@ class shipment(osv.osv):
             del context['create_shipment']
 
             # Log creation message
-            message = _('The new Shipment id:%s (%s) has been created.')
-            self.log(cr, uid, new_shipment_id, message % (new_shipment_id, shipment_name,))
-            self.infolog(cr, uid, message % (new_shipment_id, shipment_name))
+            message = _('The new Shipment (%s) has been created and is "Ready to Ship".')
+            self.log(cr, uid, new_shipment_id, message % (shipment_name,))
+            self.infolog(cr, uid, message % (shipment_name,))
 
             context['shipment_id'] = new_shipment_id
 
@@ -2654,7 +2654,10 @@ class stock_picking(osv.osv):
                                                                                 'padding': 2}, context=context)}
 
                         shipment_id = shipment_obj.create(cr, uid, values, context=context)
-                        shipment_obj.log(cr, uid, shipment_id, _('The new Draft Shipment %s has been created.') % (name,))
+                        # Log creation message
+                        message = _('The new Shipment List (%s) has been created.')
+                        shipment_obj.log(cr, uid, shipment_id, message % (name,))
+                        shipment_obj.infolog(cr, uid, message % (name,))
                     else:
                         shipment_id = vals['shipment_id']
                 else:

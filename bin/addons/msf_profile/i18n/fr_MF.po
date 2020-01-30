@@ -42998,12 +42998,6 @@ msgstr "Antilles Néerlandaises"
 msgid "Account domain"
 msgstr "Domaine des comptes"
 
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:3018
-#, python-format
-msgid "The new Draft Shipment %s has been created."
-msgstr "Les nouveaux %s d'expédition en mode brouillon ont été créés."
-
 #. modules: mission_stock, product_attributes, msf_tools, stock
 #: field:stock.mission.report.line,international_status_code:0
 #: report:addons/msf_tools/report/report_inconsistencies_xls.mako:82
@@ -51979,8 +51973,8 @@ msgstr "# de Commandes"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:716
 #, python-format
-msgid "The new Shipment id:%s (%s) has been created."
-msgstr "La nouvelle expédition id:%s (%s) a été créée."
+msgid "The new Shipment (%s) has been created and is \"Ready to Ship\"."
+msgstr "La nouvelle Expédition (%s) a été créée et est \"Prête à être Expédiée\"."
 
 #. modules: base, msf_button_access_rights
 #: sql_constraint:ir.ui.view:0
@@ -106256,6 +106250,12 @@ msgstr "Date d'Expédition"
 #: report:purchase.order.merged:0
 msgid "Functional total cost :"
 msgstr "Total Coût Fonctionnel :"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:2629
+#, python-format
+msgid "The new Shipment List (%s) has been created."
+msgstr "La nouvelle Liste d'Expédition (%s) a été créée."
 
 #. module: account_override
 #: field:res.company,currency_date_type:0
