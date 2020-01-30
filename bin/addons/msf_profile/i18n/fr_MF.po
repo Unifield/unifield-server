@@ -52150,12 +52150,6 @@ msgstr "Hebrew / עִבְרִי"
 msgid "%sCost center account %s is not active at this date: %s"
 msgstr "%sLe Centre de coût %s n'est pas actif à cette date : %s"
 
-#. module: analytic_distribution
-#: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:996
-#, python-format
-msgid "Cost center %s is not active at this date: %s"
-msgstr "Le Centre de coût %s n'est pas actif à cette date : %s"
-
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,state_id:0
 #: selection:base.setup.company,bill_state_id:0
@@ -59957,7 +59951,7 @@ msgstr "Need Restart"
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:972
 #, python-format
 msgid "Cost center %s is not active at this date: %s"
-msgstr "Cost center %s is not active at this date: %s"
+msgstr "Le Centre de coût %s n'est pas actif à cette date : %s"
 
 #. modules: product, consumption_calculation
 #: model:ir.actions.act_window,name:consumption_calculation.action_monthly_review_consumption
