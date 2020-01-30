@@ -283,7 +283,7 @@
                     <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />
                     <field name="composition_version_id"
                     	select="1"
-                    	context="{'wizard_composition_type': 'theoretical', 'composition_type': 'theoretical'}"
+                    	context="{'wizard_composition_type': 'theoretical'}"
                     	domain="[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" />
                     <field name="composition_combined_ref_lot" select="1" />
                     <field name="composition_exp" select="1" />
