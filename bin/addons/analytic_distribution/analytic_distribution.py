@@ -159,7 +159,7 @@ class analytic_distribution(osv.osv):
                 return 'invalid', _('account/destination tuple not compatible with given FP analytic account')
         return res, info
 
-    def check_cc_distrib_active(self, cr, uid, distrib_br, posting_date=False, prefix=''):
+    def check_cc_distrib_active(self, cr, uid, distrib_br, posting_date=False, prefix='', from_supply=False):
         """
         Checks the Cost Center Distribution Lines of the distribution in param.:
         raises an error if the CC or the Dest. used is not active at the posting date selected (or today's date)
@@ -169,15 +169,20 @@ class analytic_distribution(osv.osv):
         if distrib_br:
             if not posting_date:
                 posting_date = time.strftime('%Y-%m-%d')
-            # note: the browse is used to specify the date in context
+            # note: the browse is used to specify the date and the from_supply tag in context
             for cline in cc_distrib_line_obj.browse(cr, uid, [ccl.id for ccl in distrib_br.cost_center_lines],
-                                                    fields_to_fetch=['analytic_id', 'destination_id'], context={'date': posting_date}):
+                                                    fields_to_fetch=['analytic_id', 'destination_id'],
+                                                    context={'date': posting_date, 'from_supply_wkf': from_supply}):
                 if cline.analytic_id and not cline.analytic_id.filter_active:
                     raise osv.except_osv(_('Error'), _('%sCost center account %s is not active at this date: %s') %
                                          (prefix, cline.analytic_id.code or '', posting_date))
                 if not cline.destination_id.filter_active:
-                    raise osv.except_osv(_('Error'), _('%sDestination %s is not active at this date: %s') %
-                                         (prefix, cline.destination_id.code or '', posting_date))
+                    if from_supply:
+                        raise osv.except_osv(_('Error'), _('%sDestination %s is not active at this date: %s') %
+                                             (prefix, cline.destination_id.code or '', posting_date))
+                    else:
+                        raise osv.except_osv(_('Error'), _('%sDestination %s is either inactive at the date %s, or it allows no Cost Center.') %
+                                             (prefix, cline.destination_id.code or '', posting_date))
 
 
 analytic_distribution()

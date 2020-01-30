@@ -59945,7 +59945,7 @@ msgstr "Need Restart"
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:972
 #, python-format
 msgid "Cost center %s is not active at this date: %s"
-msgstr "Cost center %s is not active at this date: %s"
+msgstr "Le Centre de coût %s n'est pas actif à cette date : %s"
 
 #. modules: product, consumption_calculation
 #: model:ir.actions.act_window,name:consumption_calculation.action_monthly_review_consumption
@@ -89519,8 +89519,20 @@ msgstr "Traiter Événement"
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:997
 #, python-format
-msgid "Destination %s is not active at this date: %s"
-msgstr "La Destination %s n'est pas active à cette date: %s"
+msgid "Destination %s is either inactive at the date %s, or it allows no Cost Center."
+msgstr "La Destination %s est soit inactive à la date %s, soit elle n'autorise aucun Centre de Coût."
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_distribution.py:178
+#, python-format
+msgid "%sDestination %s is either inactive at the date %s, or it allows no Cost Center."
+msgstr "%sLa Destination %s est soit inactive à la date %s, soit elle n'autorise aucun Centre de Coût."
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/analytic_distribution.py:173
+#, python-format
+msgid "%sDestination %s is not active at this date: %s"
+msgstr "%sLa Destination %s n'est pas active à cette date: %s"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/analytic_distribution.py:173
@@ -106698,6 +106710,11 @@ msgstr "Aucun journal de type \"correction HQ\" n'a été trouvé !"
 #, python-format
 msgid "No \"correction HQ\" analytic journal found!"
 msgstr "Aucun journal analytique de type \"correction HQ\" n'a été trouvé !"
+
+#. module: analytic_override
+#: field:account.analytic.account,dest_without_cc:0
+msgid "Destination allowing no Cost Center"
+msgstr "Destination n'autorisant aucun Centre de Coût"
 
 #. modules: purchase, sale
 #: code:addons/purchase/purchase_order_line.py:753

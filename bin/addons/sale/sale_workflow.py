@@ -102,7 +102,7 @@ class sale_order_line(osv.osv):
                     prefix = _("Analytic Distribution on line %s:\n") % line.line_number
                 else:
                     prefix = _("Analytic Distribution at header level:\n")
-                ana_obj.check_cc_distrib_active(cr, uid, ad, prefix=prefix)
+                ana_obj.check_cc_distrib_active(cr, uid, ad, prefix=prefix, from_supply=True)
         return True
 
     def copy_analytic_distribution_on_lines(self, cr, uid, ids, context=None):
