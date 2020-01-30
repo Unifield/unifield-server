@@ -1356,7 +1356,9 @@ class product_attributes(osv.osv):
 
         fg = super(product_attributes, self).fields_get(cr, uid, fields=fields, context=context, with_uom_rounding=with_uom_rounding)
         if context and context.get('sync_update_execution') and  fg.get('standard_ok', {}).get('selection'):
-            fg['standard_ok']['selection'] += [('False', 'Non Standard (deprecated)'), ('True', 'Standard (deprecated)')]
+            current_field = fg['standard_ok'][:]
+            current_field['selection'] += [('False', 'Non Standard (deprecated)'), ('True', 'Standard (deprecated)')]
+            fg['standard_ok'] = current_field
         return fg
 
     def clean_standard(self, cr, uid, vals, context):
