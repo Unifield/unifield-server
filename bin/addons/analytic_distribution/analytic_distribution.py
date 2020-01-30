@@ -166,7 +166,7 @@ class analytic_distribution(osv.osv):
             # note: the browse is used to specify the date and the from_supply tag in context
             for cline in cc_distrib_line_obj.browse(cr, uid, [ccl.id for ccl in distrib_br.cost_center_lines],
                                                     fields_to_fetch=['analytic_id', 'destination_id'],
-                                                    context={'date': posting_date, 'from_supply': from_supply}):
+                                                    context={'date': posting_date, 'from_supply_wkf': from_supply}):
                 if cline.analytic_id and not cline.analytic_id.filter_active:
                     raise osv.except_osv(_('Error'), _('%sCost center account %s is not active at this date: %s') %
                                          (prefix, cline.analytic_id.code or '', posting_date))

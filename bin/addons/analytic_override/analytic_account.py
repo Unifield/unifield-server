@@ -67,7 +67,7 @@ class analytic_account(osv.osv):
                 res[a.id] = False
             elif a.date and a.date <= cmp_date:
                 res[a.id] = False
-            elif not context.get('from_supply') and a.dest_without_cc:
+            elif not context.get('from_supply_wkf') and a.dest_without_cc:
                 res[a.id] = False
         return res
 
