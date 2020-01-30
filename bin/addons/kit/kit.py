@@ -1562,10 +1562,10 @@ class purchase_order_line(osv.osv):
         model = 'kit.selection'
         step = 'default'
         wiz_obj = self.pool.get('wizard')
-        # this purchase order line replacement function can only be used when the po is in state ('confirmed', 'Validated'),
+        # this purchase order line replacement function can only be used when the po is in state ('draft', 'validated', 'validated_n'),
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.po_state_stored != 'confirmed':
-                raise osv.except_osv(_('Warning !'), _('Purchase order line kit replacement with components function is only available for Validated state.'))
+            if obj.state not in ('draft', 'validated', 'validated_n'):
+                raise osv.except_osv(_('Warning !'), _('Purchase order line kit replacement with components function is only available for Draft and Validated state.'))
         # open the selected wizard
         data = self.read(cr, uid, ids, ['product_id'], context=context)[0]
         product_id = data['product_id'][0]

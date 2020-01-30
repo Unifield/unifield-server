@@ -263,7 +263,7 @@
                                     <field name="account_4_distribution" string="Acc. for Ana. Distrib." invisible="1"/>
                                     <field name="kit_pol_check" invisible="True"/>
                                     <field name="po_state_stored" invisible="True"/>
-                                    <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check', '=', False), ('po_state_stored', '!=', 'confirmed')]}"/>
+                                    <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check', '=', False), ('fake_state', 'not in', ['draft', 'validated', 'validated_n'])]}"/>
                                     <field name="red_color" invisible="1"/>
                                     <field name="tender_line_id" invisible="1"/>
                                     <field name="to_correct_ok" invisible="1"/>
