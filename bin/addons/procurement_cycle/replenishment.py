@@ -1048,7 +1048,7 @@ class replenishment_segment(osv.osv):
     def completed(self, cr, uid, ids, context=None):
         for x in self.read(cr, uid, ids, ['name_seg', 'date_next_order_received_modified', 'date_next_order_received', 'rule'], context=context):
             if x['rule'] == 'cycle' and not x['date_next_order_received_modified'] and not x['date_next_order_received']:
-                raise osv.except_osv(_('Warning'), _('Segment %s "Next order to be received by" can\'t be empty OC, please set a date in the field "Next order to be received by (modified)"') % (x['name_seg'], ))
+                raise osv.except_osv(_('Warning'), _('Warning, to complete Segment %s, field "Next order to be received by (modified)" must have date filled') % (x['name_seg'], ))
 
         self.write(cr, uid, ids, {'state': 'complete'}, context=context)
         return True
