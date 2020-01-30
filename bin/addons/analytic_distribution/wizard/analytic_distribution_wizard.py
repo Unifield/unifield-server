@@ -143,7 +143,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if not percentage or not total_amount:
+        no_total_amount = not total_amount and total_amount not in (0, 0.0)
+        if not percentage or no_total_amount:
             return {}
         amount = abs((total_amount * percentage) / 100)
         return {'value': {'amount': amount, 'is_percentage_amount_touched': True}}
