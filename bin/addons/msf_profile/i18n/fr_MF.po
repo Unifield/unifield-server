@@ -14435,7 +14435,7 @@ msgstr "Attributs Produit"
 #: view:cash.request:0
 #: view:cash.request.liquidity.bank:0
 msgid "Total Bank Statement Balance Functional"
-msgstr "Solde Total Registre de Banque en Devise Fonc."
+msgstr "Solde Total du Relevé Bancaire en Devise Fonc."
 
 #. module: sync_client
 #: field:sync.client.rule,owner_field:0
@@ -15958,7 +15958,7 @@ msgstr "Solde de Caisse :"
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:508
 msgid "Bank Statement balance:"
-msgstr "Solde Registre de Banque :"
+msgstr "Solde du Relevé Bancaire :"
 
 #. modules: msf_outgoing, specific_rules
 #: code:addons/msf_outgoing/wizard/picking_processor.py:952
@@ -26495,7 +26495,7 @@ msgstr "Avertissement sur la confirmation"
 #. module: finance
 #: view:cash.request.liquidity.bank:0
 msgid "Total Bank Statement Balance Booking"
-msgstr "Solde Total Registre de Banque en Devise d'Enreg."
+msgstr "Solde Total du Relevé Bancaire en Devise d'Enreg."
 
 #. module: msf_partner
 #: view:res.partner:0
@@ -27822,7 +27822,7 @@ msgstr "Quantité QcS"
 #: field:cash.request.liquidity.bank,bank_statement_balance_functional:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:352
 msgid "Bank Statement Balance in functional currency"
-msgstr "Solde Registre de Banque en devise fonctionnelle"
+msgstr "Solde du Relevé Bancaire en devise fonctionnelle"
 
 #. module: msf_instance
 #: help:res.company,instance_id:0
@@ -39946,7 +39946,7 @@ msgstr "Le Délai de Paiement du Fournisseur ne contient pas de lignes de Délai
 #. module: register_accounting
 #: report:bank.reconciliation:0
 msgid "Bank statement balance:"
-msgstr "Solde Registre de Banque: "
+msgstr "Solde du Relevé Bancaire :"
 
 #. module: product_attributes
 #: field:product.where.used,default_code:0
@@ -54994,7 +54994,7 @@ msgstr "You cannot post entries in a non-opened period: %s"
 #. module: register_accounting
 #: view:account.bank.statement:0
 msgid "Bank statement balance"
-msgstr "Solde Registre de Banque"
+msgstr "Solde du Relevé Bancaire"
 
 #. module: financing_contract
 #: field:financing.contract.funding.pool.line,total_project:0
@@ -76374,7 +76374,7 @@ msgstr "Message(s) not run left: %d"
 #: code:addons/register_accounting/account_bank_statement.py:481
 #, python-format
 msgid "Bank statement balance is not equal to Calculated balance."
-msgstr "Le Solde du Registre de Banque n'est pas égal au Solde Calculé "
+msgstr "Le Solde du Relevé Bancaire n'est pas égal au Solde Calculé."
 
 #. module: procurement
 #: view:procurement.order:0
@@ -91754,7 +91754,7 @@ msgstr "Stock forecast by week"
 #: field:cash.request.liquidity.bank,bank_statement_balance_booking:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:339
 msgid "Bank Statement Balance in register currency"
-msgstr "Solde Registre de Banque dans la devise du registre"
+msgstr "Solde du Relevé Bancaire dans la devise du registre"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
