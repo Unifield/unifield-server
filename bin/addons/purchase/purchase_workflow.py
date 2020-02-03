@@ -177,6 +177,7 @@ class purchase_order_line(osv.osv):
                 'type': 'make_to_order',
                 'is_line_split': pol.is_line_split,
                 'original_line_id': pol.original_line_id.linked_sol_id.id if pol.original_line_id else False,
+                'procurement_request': sale_order.procurement_request,
             }
 
             # update modification comment if it is set

@@ -106816,3 +106816,8 @@ msgstr "Des Demandes de Devis ont été générées par cet Appel d'Offre. Toute
 #: view:tender.line.cancel.wizard:0
 msgid "Would you re-source the needs sourced by this tender line ?"
 msgstr "Voulez-vous re-sourcer les besoins de cette ligne d'Appel d'Offre ?"
+
+#. module: stock
+#: report:addons/stock/report/stock_reception_report_xls.mako:255
+msgid "INT Ref."
+msgstr "Réf. du INT"
