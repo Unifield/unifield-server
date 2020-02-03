@@ -560,7 +560,7 @@
                         <field name="name"/>
                         <newline/>
                         <field name="period_id"/>
-                        <field name="journal_id" widget='selection' domain="[('type', '=', 'cash')]" />
+                        <field name="journal_id" domain="[('type', '=', 'cash')]" />
                     </group>
                     <newline/>
                     <group expand="1" string="Group By...">
@@ -708,7 +708,7 @@
                         <field name="name"/>
                         <newline/>
                         <field name="period_id"/>
-                        <field name="journal_id" widget="selection" domain="[('type', '=', 'bank')]" />
+                        <field name="journal_id" domain="[('type', '=', 'bank')]" />
                     </group>
                     <newline/>
                     <group expand="1" string="Group By...">
@@ -977,7 +977,7 @@
                         <field name="name"/>
                         <newline/>
                         <field name="period_id"/>
-                        <field name="journal_id" widget="selection" domain="[('type', '=', 'cheque')]" />
+                        <field name="journal_id" domain="[('type', '=', 'cheque')]" />
                     </group>
                     <newline/>
                     <group expand="1" string="Group By...">
