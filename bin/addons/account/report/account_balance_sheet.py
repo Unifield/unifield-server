@@ -285,7 +285,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
         return self.result.get(group, [])
 
     def get_display_info(self, data):
-        # reminder: in case other items are added in the "Display" col.: truncate the text with the truncate_list tools
+        # reminder: in case other items are added in the "Display" col., truncate the text with the truncate_list method
         info_data = []
         all_str = _('All')
 

@@ -250,11 +250,13 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             # in the PDF version instances are listed one below the other and instance names are cut if > 20 characters
             instances_str = ',\n'.join([(len(inst) <= 20) and inst or ("%s%s" % (inst[:17], '...'))
                                         for inst in self._get_prop_instances(data)])
-            return (len(instances_str) <= display_limit) and instances_str or ("%s%s" % (instances_str[:display_limit-3], '...'))
+            if len(instances_str) > display_limit:
+                instances_str = "%s%s" % (instances_str[:display_limit-3], '...')
         else:
             # otherwise instances are simply separated by a comma
             data_tools_obj = self.pool.get('data.tools')
-            return data_tools_obj.truncate_list(self._get_prop_instances(data), limit=display_limit)
+            instances_str = data_tools_obj.truncate_list(self._get_prop_instances(data), limit=display_limit)
+        return instances_str
 
 
 class account_partner_balance_tree_xls(SpreadsheetReport):

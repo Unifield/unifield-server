@@ -334,8 +334,10 @@ class data_tools(osv.osv):
         Returns a string corresponding to the list of items in parameter, separated by the "separator".
         If the string > "limit", cut it and add "..." at the end
         """
-        list_str = separator.join([item for item in item_list if item])
-        return len(list_str) <= limit and list_str or "%s%s" % (list_str[:limit-3], '...')
+        list_str = separator.join([item for item in item_list if item]) or ''
+        if len(list_str) > limit:
+            list_str = "%s%s" % (list_str[:limit-3], '...')
+        return list_str
 
 
 data_tools()
