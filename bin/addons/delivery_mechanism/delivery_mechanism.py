@@ -727,6 +727,7 @@ class stock_picking(osv.osv):
         sptc_obj = self.pool.get('standard.price.track.changes')
         picking_obj = self.pool.get('stock.picking')
         chained_loc = self.pool.get('stock.location.chained.options')
+        pol_obj = self.pool.get('purchase.order.line')
         wf_service = netsvc.LocalService("workflow")
 
         chained_cache = {}
@@ -1219,8 +1220,8 @@ class stock_picking(osv.osv):
                                 for move in move_obj.browse(cr, uid, move_ids, context=context):
                                     if move.purchase_line_id:
                                         new_qty = move.purchase_line_id.product_qty - move.product_qty
-                                        if new_qty:
-                                            self.pool.get('purchase.order.line').write(cr, uid, [move.purchase_line_id.id], {'product_qty': new_qty}, context=context)
+                                        if new_qty and new_qty > 0:  # TODO: Fix the issue with FULL return-replacement (PO state)
+                                            pol_obj.write(cr, uid, [move.purchase_line_id.id], {'product_qty': new_qty}, context=context)
                                         else:
                                             wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'cancel', cr)
                             # To cancel the created INT
