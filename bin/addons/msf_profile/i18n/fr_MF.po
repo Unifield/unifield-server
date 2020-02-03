@@ -8862,6 +8862,8 @@ msgstr "! - Nécessite une licence d'exportation nationale"
 #: selection:sale.order.line,state_to_display:0
 #: selection:purchase.order.line,rfq_line_state_to_display:0
 #: selection:purchase.order.merged.line,rfq_line_state_to_display:0
+#: selection:purchase.order.merged.line,state_to_display:0
+#: selection:tender.line,line_state:0
 msgid "Cancelled-r"
 msgstr "Annulée-r"
 
@@ -11834,7 +11836,7 @@ msgstr "Mettre à zéro"
 
 #. module: tender_flow
 #: view:tender.cancel.wizard:0
-msgid "Tender cancelation"
+msgid "Tender cancellation"
 msgstr "Annulation d'Appel d'Offre"
 
 #. module: register_accounting
@@ -56555,11 +56557,6 @@ msgstr "Le nom du journal doit être unique par société et instance!"
 msgid "Security Envelopes:"
 msgstr "Enveloppes de Sécurité :"
 
-#. module: tender_flow
-#: view:tender.line.cancel.wizard:0
-msgid "Confirm cancelation"
-msgstr "Confirmer l'annulation"
-
 #. module: sale
 #: view:sale.config.picking_policy:0
 msgid "Configure Sales Order Logistics"
@@ -62141,7 +62138,7 @@ msgstr "Create New Filter"
 
 #. module: tender_flow
 #: view:tender.line.cancel.wizard:0
-msgid "Tender line cancelation"
+msgid "Tender line cancellation"
 msgstr "Annulation d'une ligne d'Appel d'Offre"
 
 #. module: stock
@@ -63883,6 +63880,7 @@ msgstr "États"
 #: view:purchase.order.cancel.wizard:0
 #: view:tender.cancel.wizard:0
 #: view:purchase.order.line.cancel.wizard:0
+#: view:tender.line.cancel.wizard:0
 msgid "Cancel only"
 msgstr "Annuler seulement"
 
@@ -71745,6 +71743,7 @@ msgstr "Massachusetts"
 #: view:purchase.order.cancel.wizard:0
 #: view:tender.cancel.wizard:0
 #: view:stock.picking:0
+#: view:tender.line.cancel.wizard:0
 msgid "Cancel & Resource"
 msgstr "Annuler & Ressourcer"
 
@@ -73526,7 +73525,6 @@ msgstr "Pacific/Kwajalein"
 #: view:purchase.order.cancel.wizard:0
 #: view:purchase.order.confirm.wizard:0
 #: view:purchase.order.cancel.wizard:0
-#: view:tender.line.cancel.wizard:0
 #: view:wizard.import.ppl.to.create.ship:0
 #: view:wizard.import.product.line:0
 msgid "Close window"
@@ -84419,7 +84417,7 @@ msgstr "Asia/Jakarta"
 
 #. module: purchase
 #: view:purchase.order.line.cancel.wizard:0
-msgid "Please confirm cancelation of selected line."
+msgid "Please confirm cancellation of selected line."
 msgstr "Merci de confirmer l'annulation de la ligne sélectionnée."
 
 #. module: sale
@@ -106754,3 +106752,67 @@ msgstr "Affiche dans l'assistant un message d'avertissement concernant la distri
 #: view:analytic.distribution.wizard:0
 msgid "Make sure that there is only one Analytic Distribution line for the entries having a booking amount inferior or equal to 1."
 msgstr "Assurez-vous de n'avoir qu'une seule ligne de Distribution Analytique pour les écritures ayant un montant d'enregistrement inférieur ou égal à 1."
+
+#. module: purchase_override
+#: field:purchase.order.cancel.wizard,cancel_linked_tender:0
+msgid "This is the last open RfQ linked to the Tender"
+msgstr "Ceci est la dernière DdD à être liée à son Appel d'Offre"
+
+#. module: tender_flow
+#: field:tender.line.cancel.wizard,tender_line_has_rfq_lines:0
+msgid "Linked to RfQ line(s)"
+msgstr "Lié à des lignes de DdDs"
+
+#. module: tender_flow
+#: field:tender.cancel.wizard,tender_source:0
+msgid "FO or IR linked to Tender"
+msgstr "CdT ou DI liée à l'Appel d'Offre"
+
+#. module: tender_flow
+#: view:tender.line.cancel.wizard:0
+msgid "\n"
+"                                The tender line(s) you are about to cancel are linked to open RfQ line(s). They will be cancelled as well if you proceed.\n"
+"                            "
+msgstr "\n"
+"                                Les lignes d'Appel d'Offre que vous êtes en train d'annuler sont liées à des lignes de DdD. Elles seront annulées en même temps si vous continuez.\n"
+"                            "
+
+#. module: tender_flow
+#: view:purchase.order.cancel.wizard:0
+msgid "Please confirm that you want to cancel all lines of this RfQ"
+msgstr "Veuillez confirmer l'annulation de toutes les lignes de cette DdD"
+
+#. module: tender_flow
+#: view:purchase.order.cancel.wizard:0
+msgid "This RfQ is the only non-cancelled one linked to a Tender. You can cancel it as well by clicking 'Cancel only both' or 'Cancel both & Resource the Tender'."
+msgstr "Cette DdD est la seule non-annulée liée à un Appel d'Offre. Vous pouvez l'annuler en même temps en cliquant sur 'Annuler seulement les deux' ou 'Annuler les deux & Ressourcer l'Appel d'Offre'."
+
+#. module: tender_flow
+#: view:purchase.order.cancel.wizard:0
+msgid "Cancel only both"
+msgstr "Annuler seulement les deux"
+
+#. module: tender_flow
+#: view:purchase.order.cancel.wizard:0
+msgid "Cancel both & Resource the Tender"
+msgstr "Annuler les deux & Ressourcer l'Appel d'Offre"
+
+#. module: tender_flow
+#: view:purchase.order.cancel.wizard:0
+msgid "If you click on 'Cancel & Resource' button, all Field Order lines or Internal Request lines sourced by this Request for Quotation will be re-sourced."
+msgstr "Si vous cliquez sur le bouton 'Annuler & Ressourcer', toutes les lignes liées à des Bons de Commande ou des Demandes Internes seront ressourcées."
+
+#. module: tender_flow
+#: view:tender.cancel.wizard:0
+msgid "If you click on 'Cancel & Resource' button, all Field Order lines or Internal Request lines attached to this tender will be re-sourced."
+msgstr "Si vous cliquez sur le bouton 'Annuler & Ressourcer', toutes les lignes liées à des Bons de Commande ou des Demandes Internes seront ressourcées."
+
+#. module: tender_flow
+#: view:tender.cancel.wizard:0
+msgid "Some Requests for Quotation have been generated by this tender. All these RfQs will be canceled if you cancel the tender."
+msgstr "Des Demandes de Devis ont été générées par cet Appel d'Offre. Toutes ces DdD seront annulées si vous annuler cet Appel d'Offre."
+
+#. module: tender_flow
+#: view:tender.line.cancel.wizard:0
+msgid "Would you re-source the needs sourced by this tender line ?"
+msgstr "Voulez-vous re-sourcer les besoins de cette ligne d'Appel d'Offre ?"

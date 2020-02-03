@@ -635,7 +635,7 @@ class tender(osv.osv):
                 raise osv.except_osv(_('Error !'), _('All tender lines must have been compared!'))
 
             for tender_line in tender.tender_line_ids:
-                if line.line_state == 'cancel':
+                if tender_line.line_state == 'cancel':
                     continue
 
                 # search or create PO to use:
@@ -957,7 +957,7 @@ class tender_line(osv.osv):
         'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
         'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="char", string="Related Line Number", readonly=True,),
         'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
-        'line_state': fields.selection([('draft', 'Draft'), ('cancel', 'Canceled'), ('done', 'Done')], string='State', readonly=True),
+        'line_state': fields.selection([('draft', 'Draft'), ('cancel', 'Cancelled'), ('cancel_r', 'Cancelled-r'), ('done', 'Done')], string='State', readonly=True),
         'comment': fields.char(size=128, string='Comment'),
         'has_to_be_resourced': fields.boolean(string='Has to be resourced'),
         'created_by_rfq': fields.boolean(string='Created by RfQ'),
@@ -1096,10 +1096,9 @@ class tender_line(osv.osv):
 
     def fake_unlink(self, cr, uid, ids, context=None):
         '''
-        Cancel the line if it is linked to a FO line
+        Cancel the lines
         '''
         to_remove = self.cancel_sourcing(cr, uid, ids, context=dict(context, fake_unlink=True))
-
         for tl in self.browse(cr, uid, ids, context=context):
             self.infolog(cr, uid, "The tender line id:%s of tender id:%s (%s) has been canceled" % (
                 tl.id,
@@ -1107,7 +1106,7 @@ class tender_line(osv.osv):
                 tl.tender_id.name,
             ))
 
-        return self.unlink(cr, uid, to_remove, context=context)
+        return self.write(cr, uid, to_remove, {'line_state': context.get('has_to_be_resourced') and 'cancel_r' or 'cancel'}, context=context)
 
     def ask_unlink(self, cr, uid, ids, context=None):
         '''
@@ -1164,6 +1163,8 @@ class tender_line(osv.osv):
                     'only_exp': True,
                     'last_line': last_line,
                 }, context=context)
+            else:
+                wiz_id = wiz_obj.create(cr, uid, {'tender_line_id': line.id, 'only_exp': True}, context=context)
 
             if wiz_id:
                 return {'type': 'ir.actions.act_window',
@@ -1174,13 +1175,8 @@ class tender_line(osv.osv):
                         'target': 'new',
                         'context': context}
 
-        for line_id in ids:
-            wiz_id = wiz_obj.create(cr, uid, {
-                'tender_line_id': line_id,
-            }, context=context)
-
-        if wiz_id:
-            return wiz_obj.just_cancel(cr, uid, wiz_id, context=context)
+        # if wiz_id:
+        #     return wiz_obj.just_cancel(cr, uid, wiz_id, context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'tender',
@@ -1671,7 +1667,7 @@ class purchase_order(osv.osv):
 
         return super(purchase_order, self).create(cr, uid, vals, context=context)
 
-    def cancel_rfq(self, cr, uid, ids, context=None, resource=False):
+    def cancel_rfq(self, cr, uid, ids, context=None, resource=False, cancel_tender=False, resource_tender=False):
         '''
         method to cancel a RfQ and its lines
         '''
@@ -1680,6 +1676,7 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
+        tend_l_obj = self.pool.get('tender.line')
 
         for rfq in self.browse(cr, uid, ids, context=context):
             if not rfq.rfq_ok:
@@ -1691,6 +1688,13 @@ class purchase_order(osv.osv):
                     if resource and rfq_line.linked_sol_id:
                         signal = 'cancel_r'
                     wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, signal, cr)
+
+            if cancel_tender and rfq.tender_id:
+                if resource_tender:
+                    tend_l_ids = tend_l_obj.search(cr, uid, [('tender_id', '=', rfq.tender_id.id)], context=context)
+                    tend_l_obj.write(cr, uid, tend_l_ids, {'has_to_be_resourced': True}, context=context)
+                    tend_l_obj.fake_unlink(cr, uid, tend_l_ids, context=context)
+                wf_service.trg_validate(uid, 'tender', rfq.tender_id.id, 'tender_cancel', cr)
 
             self.write(cr, uid, [rfq.id], {'rfq_state': 'cancel'}, context=context)
 
@@ -2024,16 +2028,31 @@ pricelist_partnerinfo()
 class tender_line_cancel_wizard(osv.osv_memory):
     _name = 'tender.line.cancel.wizard'
 
+    def _check_linked_rfq_lines(self, cr, uid, ids, name, args, context=None):
+        """
+        Check if the tender line is linked to some RfQ line(s)
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        pol_obj = self.pool.get('purchase.order.line')
+
+        res = {}
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['tender_line_id'], context=context):
+            rfq_lines_ids = pol_obj.search(cr, uid, [('tender_line_id', '=', line.tender_line_id.id)], context=context)
+            res[line.id] = rfq_lines_ids and True or False
+
+        return res
+
     _columns = {
         'tender_line_id': fields.many2one('tender.line', string='Tender line', required=True),
-        'only_exp': fields.boolean(
-            string='Only added lines',
-        ),
-        'last_line': fields.boolean(
-            string='Last line of the FO to source',
-        ),
+        'only_exp': fields.boolean(string='Only added lines'),
+        'last_line': fields.boolean(string='Last line of the FO to source'),
+        'tender_line_has_rfq_lines': fields.function(_check_linked_rfq_lines, type='boolean', method=True, string='Linked to RfQ line(s)'),
     }
-
 
     def just_cancel(self, cr, uid, ids, context=None):
         '''
@@ -2043,6 +2062,7 @@ class tender_line_cancel_wizard(osv.osv_memory):
         line_obj = self.pool.get('tender.line')
         tender_obj = self.pool.get('tender')
         so_obj = self.pool.get('sale.order')
+        pol_obj = self.pool.get('purchase.order.line')
         wf_service = netsvc.LocalService("workflow")
 
         # Variables
@@ -2060,6 +2080,10 @@ class tender_line_cancel_wizard(osv.osv_memory):
             line_ids.append(wiz.tender_line_id.id)
             if wiz.tender_line_id.tender_id.sale_order_id:
                 so_ids.add(wiz.tender_line_id.tender_id.sale_order_id.id)
+            # Check if some RfQ line(s) need to be cancelled
+            if wiz.tender_line_has_rfq_lines:
+                rfq_lines_ids = pol_obj.search(cr, uid, [('tender_line_id', '=', wiz.tender_line_id.id)], context=context)
+                wf_service.trg_validate(uid, 'purchase.order.line', rfq_lines_ids, 'cancel', cr)
 
         if context.get('has_to_be_resourced'):
             line_obj.write(cr, uid, line_ids, {'has_to_be_resourced': True}, context=context)
@@ -2104,10 +2128,27 @@ tender_line_cancel_wizard()
 class tender_cancel_wizard(osv.osv_memory):
     _name = 'tender.cancel.wizard'
 
+    def _get_tender_source(self, cr, uid, ids, name, args, context=None):
+        """
+        Get the FO/IR which is linked to the tender
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        # Browse all given docs
+        for wiz in self.browse(cr, uid, ids, fields_to_fetch=['tender_id'], context=context):
+            res[wiz.id] = wiz.tender_id.sale_order_id and wiz.tender_id.sale_order_id.id or False
+
+        return res
+
     _columns = {
         'tender_id': fields.many2one('tender', string='Tender', required=True),
         'not_draft': fields.boolean(string='Tender not draft'),
         'no_need': fields.boolean(string='No need'),
+        'tender_source': fields.function(_get_tender_source, type='many2one', relation='sale.order', method=True, string='FO or IR linked to the Tender'),
     }
 
     def just_cancel(self, cr, uid, ids, context=None):
