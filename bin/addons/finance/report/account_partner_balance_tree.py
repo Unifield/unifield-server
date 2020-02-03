@@ -192,8 +192,8 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         """
         Returns the list of accounts as a String (cut if > 300 characters)
         """
-        accounts_str = ', '.join([acc or '' for acc in self._get_accounts(data)])
-        return (len(accounts_str) <= 300) and accounts_str or ("%s%s" % (accounts_str[:297], '...'))
+        data_tools_obj = self.pool.get('data.tools')
+        return data_tools_obj.truncate_list(self._get_accounts(data))
 
     def _get_filter(self, data):
         if data.get('form', False) and data['form'].get('filter', False):
@@ -229,8 +229,8 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         """
         Returns the list of journals as a String (cut if > 300 characters)
         """
-        journals_str = ', '.join([journal or '' for journal in self._get_journal(data)])
-        return (len(journals_str) <= 300) and journals_str or ("%s%s" % (journals_str[:297], '...'))
+        data_tools_obj = self.pool.get('data.tools')
+        return data_tools_obj.truncate_list(self._get_journal(data))
 
     def _get_prop_instances(self, data):
         """
@@ -245,14 +245,16 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         """
         Returns the list of instances as a String (cut if > 300 characters)
         """
+        display_limit = 300
         if pdf:
             # in the PDF version instances are listed one below the other and instance names are cut if > 20 characters
             instances_str = ',\n'.join([(len(inst) <= 20) and inst or ("%s%s" % (inst[:17], '...'))
                                         for inst in self._get_prop_instances(data)])
+            return (len(instances_str) <= display_limit) and instances_str or ("%s%s" % (instances_str[:display_limit-3], '...'))
         else:
             # otherwise instances are simply separated by a comma
-            instances_str = ', '.join([inst or '' for inst in self._get_prop_instances(data)])
-        return (len(instances_str) <= 300) and instances_str or ("%s%s" % (instances_str[:297], '...'))
+            data_tools_obj = self.pool.get('data.tools')
+            return data_tools_obj.truncate_list(self._get_prop_instances(data), limit=display_limit)
 
 
 class account_partner_balance_tree_xls(SpreadsheetReport):
