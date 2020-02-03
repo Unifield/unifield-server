@@ -96,9 +96,10 @@ def parse_groups(group_by, grp_records, headers, ids, model,  offset, limit, con
     if isinstance(computation, basestring):
         computation = eval(computation)
 
-    if grp_records and total_fields and group_by:
+    if total_fields and group_by:
         for sum_key, sum_val in total_fields.items():
-            if grp_records[0].has_key(sum_key):
+            total_fields[sum_key][1] = 0
+            if grp_records and grp_records[0].has_key(sum_key):
                 uom_id = set()
                 if rounding_values and fields.get(sum_key, {}).get('related_uom'):
                     uom_id = set([x.get(fields[sum_key]['related_uom']) for x in grp_records])
