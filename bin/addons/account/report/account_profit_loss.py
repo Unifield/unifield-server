@@ -192,7 +192,7 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         return self.result.get(group, [])
 
     def get_display_info(self, data):
-        data_tools_obj = self.pool.get('data.tools')
+        # reminder: in case other items are added in the "Display" col.: truncate the text with the truncate_list tools
         info_data = []
         all_str = _('All')
 
@@ -207,7 +207,7 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         info_data.append((_('Accounts'), display_account, ))
 
         res = [ "%s: %s" % (label, val, ) for label, val in info_data ]
-        return data_tools_obj.truncate_list(res, separator=', \n')
+        return ', \n'.join(res)
 
     def get_filter_info(self, data):
         """ get filter info

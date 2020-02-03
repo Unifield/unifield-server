@@ -285,6 +285,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
         return self.result.get(group, [])
 
     def get_display_info(self, data):
+        # reminder: in case other items are added in the "Display" col.: truncate the text with the truncate_list tools
         info_data = []
         all_str = _('All')
 
@@ -325,6 +326,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
         return infos and ", \n".join(infos) or _('No Filter')
 
     def get_prop_instances(self, data):
+        data_tools_obj = self.pool.get('data.tools')
         instances = []
         if data.get('form', False):
             if data['form'].get('instance_ids', False):
@@ -335,7 +337,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                 # US-1166: mission only instances if none provided
                 instances = self._get_instances(get_code=True,
                                                 mission_filter=True)
-        return ', '.join(instances)
+        return data_tools_obj.truncate_list(instances)
 
 report_sxw.report_sxw('report.account.balancesheet.horizontal', 'account.account',
                       'addons/account/report/account_balance_sheet_horizontal.rml',parser=report_balancesheet_horizontal,
