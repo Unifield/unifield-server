@@ -67,7 +67,11 @@
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
 <Column ss:AutoFitWidth="1" ss:Width="300" />
-% for x in range(2,nb_of_columns - 1):
+% for x in range(2, 8):
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+% endfor
+<Column ss:AutoFitWidth="1" ss:Width="100" />
+% for x in range(10, nb_of_columns - 1):
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 % endfor
 <Column ss:AutoFitWidth="1" ss:Width="250" />
@@ -269,7 +273,11 @@
             <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
             <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or 0.00)|x}</Data></Cell>
             <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.pricelist_id.currency_id.name or '')|x}</Data></Cell>
-            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.origin or '')|x}</Data></Cell>
+            % if line.instance_sync_order_ref and line.origin:
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${line.origin + ':' + line.instance_sync_order_ref.name|x}</Data></Cell>
+            % else:
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.origin and (line.linked_sol_id and line.linked_sol_id.ir_name_from_sync and line.origin + ':' + line.linked_sol_id.ir_name_from_sync or line.origin) or '')|x}</Data></Cell>
+            % endif
             % if isDate(line.stock_take_date):
             <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.stock_take_date|n}T00:00:00.000</Data></Cell>
             % else:

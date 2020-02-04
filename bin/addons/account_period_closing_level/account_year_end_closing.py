@@ -318,8 +318,8 @@ class account_year_end_closing(osv.osv):
                 'block_manual_currency_id': True,
                 'company_id': cpy_rec.id,
                 'currency_id': ccy_id,
-                'date': posting_date,
-                'document_date': posting_date,
+                'date': last_day_fy,
+                'document_date': last_day_fy,
                 'instance_id': instance_rec.id,
                 'journal_id': journal_id,
                 'name': name,
@@ -339,13 +339,13 @@ class account_year_end_closing(osv.osv):
                 'account_id': account_id,
                 'company_id': cpy_rec.id,
                 'currency_id': ccy_id,
-                'date': posting_date,
-                'document_date': posting_date,
+                'date': last_day_fy,
+                'document_date': last_day_fy,
                 'instance_id': instance_rec.id,
                 'journal_id': journal_id,
                 'name': name,
                 'period_id': period_id,
-                'source_date': posting_date,
+                'source_date': last_day_fy,
 
                 'debit_currency': \
                 balance_currency if balance_currency > 0. else 0.,
@@ -378,7 +378,7 @@ class account_year_end_closing(osv.osv):
                                                          instance_rec.id, context=context)
 
         fy_year = self._get_fy_year(cr, uid, fy_rec, context=context)
-        posting_date = "%d-12-31" % (fy_year, )
+        last_day_fy = "%d-12-31" % (fy_year, )
 
         journal_code = 'EOY'
         journal_id = self._get_journal(cr, uid, journal_code, context=context)
@@ -593,8 +593,8 @@ class account_year_end_closing(osv.osv):
                 'block_manual_currency_id': True,
                 'company_id': cpy_rec.id,
                 'currency_id': ccy_id,
-                'date': posting_date,
-                'document_date': posting_date,
+                'date': first_day_next_fy,
+                'document_date': first_day_next_fy,
                 'instance_id': instance_rec.id,
                 'journal_id': journal_id,
                 'name': name,
@@ -615,13 +615,13 @@ class account_year_end_closing(osv.osv):
                 'account_id': account_id,
                 'company_id': cpy_rec.id,
                 'currency_id': ccy_id,
-                'date': posting_date,
-                'document_date': posting_date,
+                'date': first_day_next_fy,
+                'document_date': first_day_next_fy,
                 'instance_id': instance_rec.id,
                 'journal_id': journal_id,
                 'name': name or default_name,
                 'period_id': period_id,
-                'source_date': posting_date,
+                'source_date': first_day_next_fy,
 
                 'debit_currency': \
                 balance_currency if balance_currency > 0. else 0.,
@@ -664,7 +664,7 @@ class account_year_end_closing(osv.osv):
 
         fy_year = self._get_fy_year(cr, uid, fy_rec, context=context)
         next_fy_id = self._get_next_fy_id(cr, uid, fy_rec, context=context)
-        posting_date = "%d-01-01" % (fy_year + 1, )
+        first_day_next_fy = "%d-01-01" % (fy_year + 1, )
 
         journal_code = 'IB'
         journal_id = self._get_journal(cr, uid, journal_code, context=context)

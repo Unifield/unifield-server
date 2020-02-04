@@ -29,6 +29,7 @@ from purchase import PURCHASE_ORDER_STATE_SELECTION
 from datetime import datetime
 from osv import osv
 from tools.translate import _
+from base import currency_date
 
 import pooler
 import time
@@ -662,15 +663,15 @@ class po_follow_up_mixin(object):
         context = {}
         exchange_rate = 0.0
         if pol.closed_date:
-            context.update({'date': pol.closed_date})
+            context.update({'currency_date': pol.closed_date})
         elif pol.confirmation_date:
-            context.update({'date': pol.confirmation_date})
+            context.update({'currency_date': pol.confirmation_date})
         elif pol.validation_date:
-            context.update({'date': pol.validation_date})
+            context.update({'currency_date': pol.validation_date})
         elif pol.create_date: # could be null, because not mandatory in DB
-            context.update({'date': pol.create_date})
+            context.update({'currency_date': pol.create_date})
         else:
-            context.update({'date': datetime.now().strftime('%Y-%m-%d')})
+            context.update({'currency_date': datetime.now().strftime('%Y-%m-%d')})
 
         currency_from = pol.order_id.pricelist_id.currency_id
         currency_to = self.pool.get('res.users').browse(self.cr, self.uid, self.uid, context=context).company_id.currency_id
@@ -1154,7 +1155,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
         invoices = {}
 
         self.cr.execute('''
-            select i.picking_id as pick_id, l.order_line_id as pol_id, i.number as inv_number, i.currency_id as curr_id, sum(l.price_unit*l.quantity) as price_total, sum(l.quantity) as qty,  i.date_invoice as date
+            select i.picking_id as pick_id, l.order_line_id as pol_id, i.number as inv_number, i.currency_id as curr_id, sum(l.price_unit*l.quantity) as price_total, sum(l.quantity) as qty,  i.date_invoice as date, i.document_date as document_date
             from
                 account_invoice i, account_invoice_line l
             where
@@ -1162,7 +1163,7 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
                 l.invoice_id = i.id and
                 l.order_line_id in %s and
                 i.state != 'cancel'
-            group by i.currency_id, i.picking_id, l.order_line_id, i.number, i.date_invoice
+            group by i.currency_id, i.picking_id, l.order_line_id, i.number, i.date_invoice, i.document_date
         ''', (tuple(wizard.pol_ids),)
         )
         for inv in self.cr.dictfetchall():
@@ -1172,7 +1173,9 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             else:
                 ex_curr = invoices[key]['curr_id']
                 if inv['curr_id'] != ex_curr:
-                    price = curr_obj.compute(self.cr, self.uid, inv['curr_id'], ex_curr, inv['price_total'], round=False, context={'date': inv['date'] or time.strftime('%Y-%m-%d')})
+                    curr_date = currency_date.get_date(self, self.cr, inv['document_date'], inv['date'])
+                    price = curr_obj.compute(self.cr, self.uid, inv['curr_id'], ex_curr, inv['price_total'], round=False,
+                                             context={'currency_date': curr_date or time.strftime('%Y-%m-%d')})
                 else:
                     price = inv['price_total']
                 invoices[key]['price_total'] += price*inv['qty']
@@ -1235,8 +1238,11 @@ class supplier_performance_report_parser(report_sxw.rml_parse):
             if key in invoices and invoices[key]['qty']:
                 si_ref = invoices[key]['inv_number'] or ''
                 si_unit_price = invoices[key]['price_total'] / invoices[key]['qty']
+                print invoices[key]['curr_id'], line[24]
                 if invoices[key]['curr_id'] != line[24]:
-                    si_unit_price = curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], line[24], si_unit_price, round=False, context={'date': inv['date'] or time.strftime('%Y-%m-%d')})
+                    curr_date = currency_date.get_date(self, self.cr, invoices[key]['document_date'], invoices[key]['date'])
+                    si_unit_price = curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], line[24], si_unit_price, round=False,
+                                                     context={'currency_date': curr_date or time.strftime('%Y-%m-%d')})
                 func_si_unit_price = round(curr_obj.compute(self.cr, self.uid, invoices[key]['curr_id'], wizard.company_currency_id.id,
                                                             si_unit_price, round=False, context=self.localcontext), 2)
             func_pol_unit_price = round(curr_obj.compute(self.cr, self.uid, line[17], wizard.company_currency_id.id,

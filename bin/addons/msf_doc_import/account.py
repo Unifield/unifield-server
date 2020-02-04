@@ -31,9 +31,11 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import threading
 import pooler
 import mx
+from base import currency_date
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
 from spreadsheet_xml import SPECIAL_CHAR
 import re
+
 
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
@@ -106,12 +108,13 @@ class msf_doc_import_accounting(osv.osv_memory):
                     # Create analytic distribution
                     if l.account_id.is_analytic_addicted:
                         distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
+                        curr_date = currency_date.get_date(self, cr, l.document_date, l.date)
                         common_vals = {
                             'distribution_id': distrib_id,
                             'currency_id': currency_id,
                             'percentage': 100.0,
                             'date': l.date,
-                            'source_date': l.date,
+                            'source_date': curr_date,
                             'destination_id': l.destination_id.id,
                         }
                         common_vals.update({'analytic_id': l.cost_center_id.id,})
@@ -248,7 +251,6 @@ class msf_doc_import_accounting(osv.osv_memory):
                         raise osv.except_osv(_('Error'), _("'%s' column not found in file.") % (el or '',))
                 # All lines
                 money = {}
-                doc_date_periods = set()
                 # Update wizard
                 self.write(cr, uid, [wiz.id], {'message': _('Reading lines…'), 'progression': 6.00})
                 # Check file's content
@@ -287,9 +289,6 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_('Line %s, the column \'Document Date\' have to be of type DateTime. Check the spreadsheet format (or export a document to have an example).') % (current_line_num,))
                         continue
                     r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
-                    doc_date_period_ids = period_obj.get_period_from_date(cr, uid, r_document_date, context=context)
-                    if doc_date_period_ids:
-                        doc_date_periods.add(doc_date_period_ids[0])
                     # Check on booking amounts: ensure that one (and only one) value exists and that its amount isn't negative
                     book_debit = 0
                     book_credit = 0
@@ -359,7 +358,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         money[(booking_curr, period_name, r_document_date)]['credit'] += book_credit
                         r_credit = book_credit
 
-                    # Check which journal it is to be posted to: should be of type OD, MIG or INT
+                    # Check the journal code which must match with one of the journal types listed in ACCOUNTING_IMPORT_JOURNALS
                     if not line[cols['Journal Code']]:
                         errors.append(_('Line %s. No Journal Code specified') % (current_line_num,))
                         continue
@@ -616,8 +615,6 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     created += 1
                 # Check if all is ok for the file
-                if len(doc_date_periods) > 1:
-                    errors.append(_('All Document Dates should be in the same period.'))
                 ## The lines should be balanced for each currency
                 if not errors:
                     # to compare the right amounts do the check only if no line has been ignored because of an error

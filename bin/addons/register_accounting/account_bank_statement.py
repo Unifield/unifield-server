@@ -29,9 +29,9 @@ from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 from register_tools import create_cashbox_lines
 from register_tools import open_register_view
+from base import currency_date
 import time
 import datetime
-import decimal_precision as dp
 
 
 def _get_fake(cr, table, ids, *a, **kw):
@@ -161,23 +161,6 @@ class account_bank_statement(osv.osv):
             super(account_bank_statement, self)._columns['balance_end'].store = False
 
 
-    def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
-        """
-        Calculate register's balance
-        """
-        if context is None:
-            context = {}
-        res = {}
-
-        # Add this context in order to escape cheque register filter
-        ctx = context.copy()
-        ctx.update({'from_end_balance': True})
-        for statement in self.browse(cr, uid, ids, context=ctx):
-            res[statement.id] = statement.balance_start
-            for st_line in statement.line_ids:
-                res[statement.id] += st_line.amount or 0.0
-        return res
-
     def _get_register_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Get current register id
@@ -197,17 +180,10 @@ class account_bank_statement(osv.osv):
         return res
 
     _columns = {
-        'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance', \
-                                       help="Calculated balance"),
         'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
                                       help='Virtual Field that take back the id of the Register'),
-        'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]},
-                                         help="Please enter manually the end-of-month balance, as per the printed bank statement received. Before confirming closing balance & closing the register, you must make sure that the calculated balance of the bank statement is equal to that amount."),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'closing_balance_frozen_date': fields.date("Closing balance frozen date"),
-        'name': fields.char('Register Name', size=64, required=True, states={'confirm': [('readonly', True)]},
-                            help='If you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself'),
-        'journal_id': fields.many2one('account.journal', 'Journal', required=True, readonly=True),
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
         'balance_gap': fields.function(_balance_gap_compute, method=True, string='Gap', readonly=True),
         'notes': fields.text('Comments', states={'confirm': [('readonly', True)]}),
@@ -218,12 +194,6 @@ class account_bank_statement(osv.osv):
                                               string='Bank Account Number', store=False, readonly=True),
         'register_closed_by': fields.char('Register Closed by', size=128, states={'confirm': [('readonly', True)]},
                                           help='Name and position of the person who closes the register'),
-    }
-
-    _order = 'state, period_id, instance_id, journal_id'
-
-    _defaults = {
-        'balance_start': lambda *a: 0.0,
     }
 
     def balance_check(self, cr, uid, register_id, journal_type='bank', context=None):
@@ -245,14 +215,6 @@ class account_bank_statement(osv.osv):
                                  _('The statement balance is incorrect !\n') +
                                  _('The expected balance (%.2f) is different than the computed one. (%.2f)') % (st.balance_end_real, st.balance_end))
         return True
-
-    def write(self, cr, uid, ids, values, context=None):
-        """
-        Bypass disgusting default account_bank_statement write function.
-        """
-        if not ids:
-            return True
-        return osv.osv.write(self, cr, uid, ids, values, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         """
@@ -279,7 +241,6 @@ class account_bank_statement(osv.osv):
             for line in register.line_ids:
                 if line.state != 'hard':
                     raise osv.except_osv(_('Warning'), _('All entries must be hard posted before closing this Register!'))
-        # @@@override@account.account_bank_statement.button_confirm_bank()
         obj_seq = self.pool.get('ir.sequence')
         if context is None:
             context = {}
@@ -344,7 +305,6 @@ class account_bank_statement(osv.osv):
                 'statement_id': st.id,
             }
         }
-        # @@@end
 
     def button_create_invoice(self, cr, uid, ids, context=None):
         """
@@ -1412,7 +1372,8 @@ class account_bank_statement_line(osv.osv):
         account_move_line_obj = self.pool.get('account.move.line')
         st = st_line.statement_id
 
-        context.update({'date': st_line.date})
+        curr_date = currency_date.get_date(self, cr, st_line.document_date, st_line.date)
+        context.update({'currency_date': curr_date})
 
 #        # Prepare partner_type
 #        partner_type = False
@@ -1618,12 +1579,13 @@ class account_bank_statement_line(osv.osv):
                 st = self.pool.get('account.bank.statement').browse(cr, uid, statement_id)
                 currency_id = st.journal_id and st.journal_id.currency and st.journal_id.currency.id or False
                 if distrib_id:
+                    curr_date = currency_date.get_date(self, cr, values.get('document_date', False), values.get('date', False))
                     common_vals = {
                         'distribution_id': distrib_id,
                         'currency_id': currency_id,
                         'percentage': 100.0,
                         'date': values.get('date', False),
-                        'source_date': values.get('date', False),
+                        'source_date': curr_date,
                         'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cc_id,})
@@ -1733,7 +1695,9 @@ class account_bank_statement_line(osv.osv):
                     # Prepare value
                     res_currency_obj = self.pool.get('res.currency')
                     # Get date for having a good change rate
-                    context.update({'date': move_line_values.get('date', st_line.date)})
+                    curr_date = currency_date.get_date(self, cr, move_line_values.get('document_date', st_line.document_date),
+                                                       move_line_values.get('date', st_line.date))
+                    context.update({'currency_date': curr_date})
                     # Change amount
                     new_amount = res_currency_obj.compute(cr, uid, \
                                                           st_line.statement_id.journal_id.currency.id, st_line.company_id.currency_id.id, abs(amount), round=False, context=context)
@@ -1846,7 +1810,7 @@ class account_bank_statement_line(osv.osv):
                 st_line.direct_invoice is False:
             # Prepare some elements
             move_line_obj = self.pool.get('account.move.line')
-            curr_date = time.strftime('%Y-%m-%d')
+            current_date = time.strftime('%Y-%m-%d')
             # Create move lines
             account_id = False
             if st_line.account_id.user_type.code == 'expense':
@@ -1879,7 +1843,8 @@ class account_bank_statement_line(osv.osv):
             amount = abs(st_line.amount)
             # update values if we have a different currency that company currency
             if st_line.statement_id.currency.id != st_line.statement_id.company_id.currency_id.id:
-                context['date'] = st_line.document_date or st_line.date or curr_date
+                curr_date = currency_date.get_date(self, cr, st_line.document_date, st_line.date)
+                context['currency_date'] = curr_date or current_date
                 amount = self.pool.get('res.currency').compute(cr, uid, st_line.statement_id.currency.id,
                                                                st_line.statement_id.company_id.currency_id.id, amount, round=False, context=context)
             val.update({'debit': amount, 'credit': 0.0, 'amount_currency': abs(st_line.amount)})
@@ -2346,6 +2311,8 @@ class account_bank_statement_line(osv.osv):
             if not context.get('from_wizard_di'):
                 if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
                     raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
+            if absl.account_id.type_for_register == 'advance' and not absl.ref:
+                raise osv.except_osv(_('Warning'), _('Line "%s": Reference is mandatory for operational advance accounts.') % absl.name)
             previous_state = ''.join(absl.state)
             if absl.state == 'draft':
                 # US-673: temp posted line generates 2 creation updates
@@ -2728,7 +2695,7 @@ class account_bank_statement_line(osv.osv):
         if stl.cash_register_op_advance_po_id:
             context['cash_register_op_advance_po_id'] = stl.cash_register_op_advance_po_id.id
         wiz_id = wiz_obj.create(cr, uid, {'returned_amount': 0.0, 'initial_amount': abs(amount), 'advance_st_line_id': ids[0], \
-                                          'currency_id': st_line.statement_id.currency.id}, context=context)
+                                          'currency_id': stl.statement_id.currency.id, 'reference': stl.ref or ''}, context=context)
         if statement_id:
             return {
                 'name' : "Advance Return",

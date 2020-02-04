@@ -446,8 +446,54 @@
         <record id="us_6342_cancel_ir" model="patch.scripts">
             <field name="method">us_6342_cancel_ir</field>
         </record>
+
+        <!-- UF14.1 -->
         <record id="us_6433_remove_sale_override_sourcing" model="patch.scripts">
             <field name="method">us_6433_remove_sale_override_sourcing</field>
+        </record>
+
+        <record id="us_6498_set_qty_to_process" model="patch.scripts">
+            <field name="method">us_6498_set_qty_to_process</field>
+        </record>
+
+        <!-- UF15.0 -->
+        <record id="us_6354_trigger_donation_account_sync" model="patch.scripts">
+            <field name="method">us_6354_trigger_donation_account_sync</field>
+        </record>
+
+        <record id="us_6457_update_uf_create_date_product" model="patch.scripts">
+            <field name="method">us_6457_update_uf_create_date_product</field>
+        </record>
+
+        <record id="us_6618_create_shadow_pack" model="patch.scripts">
+            <field name="method">us_6618_create_shadow_pack</field>
+        </record>
+
+        <record id="uf15_fields_moved" model="patch.scripts">
+            <field name="method">uf15_fields_moved</field>
+        </record>
+
+        <record id="us_6768_trigger_FP_sync" model="patch.scripts">
+            <field name="method">us_6768_trigger_FP_sync</field>
+        </record>
+
+        <!-- UF15.1 -->
+        <record id="us_6930_gen_unreconcile" model="patch.scripts">
+            <field name="method">us_6930_gen_unreconcile</field>
+        </record>
+
+        <record id="us_6905_manage_bned_switch" model="patch.scripts">
+            <field name="method">us_6905_manage_bned_switch</field>
+        </record>
+
+        <!-- UF15.2 -->
+        <record id="rec_entries_uf14_1_uf15" model="patch.scripts">
+            <field name="method">rec_entries_uf14_1_uf15</field>
+        </record>
+
+        <!-- UF16.0 -->
+        <record id="us_6692_new_od_journals" model="patch.scripts">
+            <field name="method">us_6692_new_od_journals</field>
         </record>
 
     </data>

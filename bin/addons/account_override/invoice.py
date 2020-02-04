@@ -973,6 +973,8 @@ class account_invoice(osv.osv):
         Reverse move if this object is a In-kind Donation. Otherwise do normal job: cancellation.
         Don't delete an invoice that is linked to a PO. This is only for supplier invoices.
         """
+        # Oct. 2019: log if this method is used at least once (cf it may be dead code?)
+        self.pool.get('ir.config_parameter').set_param(cr, 1, 'action_cancel.in_use', True)
         to_cancel = []
         for i in self.browse(cr, uid, ids):
             if i.is_inkind_donation:
@@ -1507,6 +1509,8 @@ class account_invoice(osv.osv):
             }, context=context)
 
         res = {}
+        if context is None:
+            context = {}
         if not ids:
             return False
         if isinstance(ids, (int, long, )):
@@ -1694,6 +1698,10 @@ class account_invoice_line(osv.osv):
                                            help="Field used for import only"),
         'from_supply': fields.related('invoice_id', 'from_supply', type='boolean', string='From Supply', readonly=True, store=False),
         'synced': fields.related('invoice_id', 'synced', type='boolean', string='Synchronized', readonly=True, store=False),
+        # field "line_synced" created to be used in the views where the "synced" field at doc level is displayed
+        # (avoids having 2 fields with the same name within the same view)
+        'line_synced': fields.related('invoice_id', 'synced', type='boolean', string='Synchronized', readonly=True, store=False,
+                                      help='Technical field, similar to "synced"'),
         'invoice_type': fields.related('invoice_id', 'type', string='Invoice Type', type='selection', readonly=True, store=False,
                                        selection=[('out_invoice', 'Customer Invoice'),
                                                   ('in_invoice', 'Supplier Invoice'),
@@ -1874,8 +1882,9 @@ class account_invoice_line(osv.osv):
             if invl.invoice_id and invl.invoice_id.id not in invoice_ids:
                 invoice = invl.invoice_id
                 invoice_ids.append(invoice.id)  # check each invoice only once
-                is_ivi_or_si = invoice.type == 'in_invoice' and not invoice.is_inkind_donation
-                if (is_ivi_or_si and invoice.synced) or (invoice.from_supply and invoice.partner_type in ('intermission', 'section')):
+                in_invoice = invoice.type == 'in_invoice' and not invoice.is_inkind_donation
+                intermission_or_section = invoice.partner_type in ('intermission', 'section')
+                if (in_invoice and invoice.synced) or (invoice.from_supply and intermission_or_section):
                     # will be displayed when trying to delete lines manually / merge lines / or split invoices
                     raise osv.except_osv(_('Error'), _("This document has been generated via a Supply workflow or via synchronization. "
                                                        "Existing lines can't be deleted."))
