@@ -106821,3 +106821,10 @@ msgstr "Voulez-vous re-sourcer les besoins de cette ligne d'Appel d'Offre ?"
 #: report:addons/stock/report/stock_reception_report_xls.mako:255
 msgid "INT Ref."
 msgstr "Réf. du INT"
+
+#. module: vertical_integration
+#: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocb_old
+#: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocb_old
+msgid "Export to HQ system (OCB) Access Interface"
+msgstr "Interface d'accès de l'Export vers le système HQ (OCB)"
+
