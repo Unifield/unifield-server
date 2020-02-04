@@ -94,6 +94,15 @@ class sale_order_line(osv.osv):
                 # UFTP-277: Check funding pool lines if missing
                 ana_obj.create_funding_pool_lines(cr, uid, [id_ad], context=context)
 
+            # check that the analytic accounts are active. Done at the end to use the newest AD of the FO line (to re-browse)
+            fol_ad = self.browse(cr, uid, line.id, fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
+            ad = fol_ad or so.analytic_distribution_id or False
+            if ad:
+                if fol_ad:
+                    prefix = _("Analytic Distribution on line %s:\n") % line.line_number
+                else:
+                    prefix = _("Analytic Distribution at header level:\n")
+                ana_obj.check_cc_distrib_active(cr, uid, ad, prefix=prefix)
         return True
 
     def copy_analytic_distribution_on_lines(self, cr, uid, ids, context=None):
@@ -178,6 +187,7 @@ class sale_order_line(osv.osv):
                     'resourced_at_state': sol.state,
                     'is_line_split': False,
                     'analytic_distribution_id': sol.analytic_distribution_id.id or False,
+                    'ir_name_from_sync': sol.ir_name_from_sync or False,
                 }
                 new_sol_id = self.copy(cr, uid, sol.id, sol_vals, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)

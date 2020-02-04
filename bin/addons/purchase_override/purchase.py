@@ -382,7 +382,7 @@ class purchase_order_cancel_wizard(osv.osv_memory):
 
         # cancel all non-confirmed lines:
         if po.rfq_ok:
-            self.pool.get('purchase.order').cancel_rfq(cr, uid, [po.id], context=context)
+            self.pool.get('purchase.order').cancel_rfq(cr, uid, [po.id], context=context, resource=resource)
         else:
             for pol in po.order_line:
                 if (pol.order_id.partner_type in ('external', 'esc') and pol.state in ('draft', 'validated', 'validated_n'))\

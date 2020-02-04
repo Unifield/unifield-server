@@ -23,9 +23,6 @@ from osv import osv, fields
 
 class stock_move(osv.osv):
     _inherit = 'stock.move'
-    _columns = {
-        'sale_line_id': fields.many2one('sale.order.line', 'Sales Order Line', ondelete='set null', select=True, readonly=True),
-    }
 
     def _create_chained_picking(self, cr, uid, pick_name, picking, ptype, move, context=None):
         res = super(stock_move, self)._create_chained_picking(cr, uid, pick_name, picking, ptype, move, context=context)

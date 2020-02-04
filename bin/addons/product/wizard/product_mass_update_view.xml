@@ -70,7 +70,7 @@
                             <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                                 <button name="wizard_import_products" string="Import products" icon="gtk-dnd" colspan="2" type="object"/>
                             </group>
-                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('active', 'in', ['t', 'f']), ('mandatory_creator', '=', True)]">
+                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('active', 'in', ['t', 'f']), ('expected_prod_creator', '=', True)]">
                                 <tree string="Products" hide_edit_button="1" colors="grey:active == False">
                                     <field name="default_code" />
                                     <field name="name" />
@@ -134,6 +134,113 @@
             <field name="view_type">form</field>
             <field name="view_id" ref="view_product_mass_update_tree"/>
             <field name="context">{}</field>
+            <field name="domain">[('type_of_ed_bn', '=', False)]</field>
         </record>
+
+        <!-- BN/ED mass update -->
+        <record id="view_product_bn_ed_mass_update_form" model="ir.ui.view">
+            <field name="name">product.mass.update.form</field>
+            <field name="model">product.mass.update</field>
+            <field name="type">form</field>
+            <field name="priority" eval="50" />
+            <field name="arch" type="xml">
+                <form string="Product Mass Update" hide_delete_button="1" >
+                    <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}" required="True"/>
+                    <field name="type_of_ed_bn" required="True" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    <field name="has_not_deactivable" invisible="1" />
+                    <group colspan="4" attrs="{'invisible':[('has_not_deactivable', '=', False), ('state', 'not in', ['in_progress', 'error'])]}">
+                        <html>
+                            <style>
+                                #prod_mass_upd_error p, #prod_mass_upd_error span, #prod_mass_upd_error textarea {
+                                    text-align: center;
+                                    v-align: middle;
+                                    color: red;
+                                    font-weight: bold;
+                                    font-size: 1.2em;
+                                    resize: None;
+                                }
+                            </style>
+                            <div id="prod_mass_upd_error">
+                                <field name="message" colspan="4" nolabel="1" />
+                            </div>
+                        </html>
+                    </group>
+                    <group colspan="4">
+                        <field name="percent_completed" widget="progressbar" colspan="2" attrs="{'invisible':[('state', '!=', 'in_progress')]}"/>
+                        <button name="dummy" string="Update" icon="gtk-execute" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'in_progress')]}"/>
+                        <button name="reset_update" string="Reset Update" icon="gtk-undo" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'error')]}"/>
+                    </group>
+                    <group colspan="4" col="6">
+                        <field name="state" colspan="2" />
+                        <field name="date_done"  attrs="{'invisible': [('state', '!=', 'done')]}" />
+                        <field name="user_id"  attrs="{'invisible': [('state', '!=', 'done')]}" />
+                    </group>
+                    <button name="change_bn_ed" string="Apply Update" icon="gtk-go-forward" colspan="4" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <notebook colspan="4">
+                        <page string="Products" attrs="{'invisible': [('state', '=', 'done')]}">
+                            <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                                <button name="wizard_import_products" string="Import products" icon="gtk-dnd" colspan="2" type="object"/>
+                            </group>
+                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('expected_prod_creator', '=', 'bned')]" context="{'display_batch_attr': 1}">
+                                <tree string="Products" hide_edit_button="1" colors="grey:active == False">
+                                    <field name="default_code" />
+                                    <field name="name" />
+                                    <field name="perishable" />
+                                    <field name="batch_management" />
+                                    <field name="active" invisible="1" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="History" attrs="{'invisible': [('state', '!=', 'done')]}">
+                            <field name="product_history_ids" colspan="4" nolabel="1" readonly="1">
+                                <tree editable="top">
+                                    <field name="product_id" />
+                                    <field name="old_bn" />
+                                    <field name="old_ed" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </form>
+            </field>
+        </record>
+        <record id="view_product_bn_ed_mass_update_tree" model="ir.ui.view">
+            <field name="name">product.mass.update.tree</field>
+            <field name="model">product.mass.update</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="50" />
+            <field name="arch" type="xml">
+                <tree string="Product Mass Update" noteditable="state!='draft'" hide_delete_button="1" colors="blue:state in ('draft');red:state in ('error')">
+                    <field name="name"/>
+                    <field name="product_ids"/>
+                    <field name="type_of_ed_bn"/>
+                    <field name="date_done"/>
+                    <field name="user_id"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="products_bn_ed_mass_update_action" model="ir.actions.act_window">
+            <field name="name">Product BN/ED Mass Update</field>
+            <field name="res_model">product.mass.update</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_product_bn_ed_mass_update_tree"/>
+            <field name="context">{}</field>
+            <field name="domain">[('type_of_ed_bn', '!=', False)]</field>
+        </record>
+         <record id="products_bn_ed_mass_update_action_tree" model="ir.actions.act_window.view">
+            <field eval="10" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_product_bn_ed_mass_update_tree"/>
+            <field name="act_window_id" ref="products_bn_ed_mass_update_action"/>
+        </record>
+         <record id="products_bn_ed_mass_update_action_from" model="ir.actions.act_window.view">
+            <field eval="20" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_product_bn_ed_mass_update_form"/>
+            <field name="act_window_id" ref="products_bn_ed_mass_update_action"/>
+        </record>
+
     </data>
 </openerp>

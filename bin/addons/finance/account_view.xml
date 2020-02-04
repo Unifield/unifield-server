@@ -21,41 +21,6 @@
             </field>
         </record>
 
-        <record id="inherit_view_account_search_pma" model="ir.ui.view">
-            <field name="name">inherit.view.account.search.pma</field>
-            <field name="model">account.account</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_search"/>
-            <field name="priority">25</field>
-            <field name="arch" type="xml">
-                <xpath expr="/search/group[1]" position="replace">
-                    <group col="12" colspan="4">
-
-                        <filter name="active" icon="terp-check" string="Active" domain="[('filter_active', '=', True)]" />
-                        <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('filter_active', '=', False)]"/>
-                        <separator orientation="vertical"/>
-                        <filter icon="terp-sale" string="Receivable Accounts" domain="[('type','=','receivable')]"/>
-                        <filter icon="terp-purchase" string="Payable Accounts" domain="[('type','=','payable')]"/>
-                        <filter name="accrual_account" string="Accrual Account" domain="[('accrual_account','=',True)]"/>
-                        <separator orientation="vertical"/>
-                        <newline/>
-
-                        <group col="6" colspan="4">
-                            <field name="code"/>
-                            <field name="name"/>
-                            <field name="is_not_hq_correctible"/>
-                        </group>
-                        <newline/>
-
-                        <field name="user_type"/>
-                        <field name="type"/>
-                        <field name="type_for_register"/>
-
-                    </group>
-                </xpath>
-            </field>
-        </record>
-
     <!--
         Journal Entries
     -->

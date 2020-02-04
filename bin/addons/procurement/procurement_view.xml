@@ -107,8 +107,8 @@
                            help="Procurement started late" />
                        <separator orientation="vertical"/>
                        <filter icon="terp-emblem-important" string="Exceptions" name="exceptions" domain="[('state','=','exception')]" help="Procurement Exceptions"/>
-                       <filter icon="terp-emblem-important" string="To Fix" name="perm_exceptions" domain="[('state','=','exception'),('message', '!=', '')]" help="Permanent Procurement Exceptions"/>
-                       <filter icon="terp-emblem-important" string="Temporary" name="temp_exceptions" domain="[('state','=','exception'),('message', '=', '')]" help="Temporary Procurement Exceptions"/>
+                       <filter icon="terp-emblem-important" string="To Fix" name="perm_exceptions" domain="['&amp;', ('state','=','exception'),('message', '!=', '')]" help="Permanent Procurement Exceptions"/>
+                       <filter icon="terp-emblem-important" string="Temporary" name="temp_exceptions" domain="['&amp;', ('state','=','exception'),('message', '=', '')]" help="Temporary Procurement Exceptions"/>
                        <separator orientation="vertical"/>
                        <field name="origin"/>
                        <field name="product_id" />

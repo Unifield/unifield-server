@@ -23,10 +23,31 @@
 
 from osv import osv
 from osv import fields
+from base import currency_date
+from tools.translate import _
+
 
 class res_company(osv.osv):
     _name = 'res.company'
     _inherit = 'res.company'
+
+    def _get_currency_date_type(self, cr, uid, ids, name, args, context=None):
+        """
+        Returns the type of date used for functional amount computation in this instance
+        """
+        res = {}
+        for c_id in ids:
+            res[c_id] = currency_date.get_date_type(self, cr) == 'document' and _('Document Date') or _('Posting Date')
+        return res
+
+    def _get_currency_date_beginning(self, cr, uid, ids, name, args, context=None):
+        """
+        Returns the date from when the functional amount computation is based on the document date, if applicable
+        """
+        res = {}
+        for c_id in ids:
+            res[c_id] = currency_date.get_date_type(self, cr) == 'document' and currency_date.BEGINNING or False
+        return res
 
     _columns = {
         'import_invoice_default_account': fields.many2one('account.account', string="Re-billing Inter-section account",
@@ -36,6 +57,10 @@ class res_company(osv.osv):
         'additional_allocation': fields.boolean('Additional allocation condition?', help="If you check this attribute, analytic allocation will be required for income accounts with an account code starting with \"7\"; if unchecked, the analytic allocation will be required for all income accounts."),
         'revaluation_default_account': fields.many2one('account.account', string="Revaluation account",
                                                        help="Default account used for revaluation"),
+        'currency_date_type': fields.function(_get_currency_date_type, method=True, type='char',
+                                              string='Date Type Used', store=False, readonly=1),
+        'currency_date_beginning': fields.function(_get_currency_date_beginning, method=True, type='date',
+                                                   string='Since', store=False, readonly=1),
     }
 
 
