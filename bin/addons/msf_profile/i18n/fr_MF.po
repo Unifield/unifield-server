@@ -8785,7 +8785,7 @@ msgstr "Finlande"
 #. module: sale
 #: report:msf.freight_manifest:0
 msgid "Parcels Missing :"
-msgstr "Parcelles manquantes :"
+msgstr "Colis manquants :"
 
 #. modules: procurement, base, sale
 #: view:res.request:0
@@ -14426,7 +14426,7 @@ msgstr "America/Martinique"
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:67
 #, python-format
 msgid "Qty of parcels*"
-msgstr "Qté de cartons*"
+msgstr "Qté de colis*"
 
 #. module: product_manufacturer
 #: view:product.manufacturer.attribute:0
@@ -15447,7 +15447,7 @@ msgstr "Le prix du produit a changé"
 #. module: msf_outgoing
 #: report:packing.list:0
 msgid "Qty of parcels:"
-msgstr "Qté de cartons:"
+msgstr "Qté de colis:"
 
 #. module: stock
 #: model:ir.model,name:stock.model_physical_inventory_generate_counting_sheet
@@ -16196,7 +16196,7 @@ msgstr "Link between INT and IN"
 #. module: msf_doc_import
 #: field:wizard.import.in.pack.simulation.screen,parcel_qty:0
 msgid "Parcel Qty"
-msgstr "Qté Parcelle"
+msgstr "Qté Du Colis"
 
 #. modules: procurement_auto, procurement_cycle
 #: help:stock.warehouse.automatic.supply,frequence_name:0
@@ -24457,6 +24457,8 @@ msgstr "Champ Enfant"
 #: code:addons/msf_outgoing/wizard/shipment.py:229
 #: view:return.shipment.processor:0
 #: selection:shipment.add.pack.processor,step:0
+#: code:addons/msf_outgoing/wizard/return_shipment_processor.py:152
+#: code:addons/msf_outgoing/wizard/return_shipment_processor.py:183
 #, python-format
 msgid "Return Packs"
 msgstr "Renvoyer les colis"
@@ -26605,7 +26607,7 @@ msgstr "No available IN found for the given PO %s"
 #: report:labels:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:419
 msgid "Parcel No:"
-msgstr "No. Parcelle:"
+msgstr "No. du Colis:"
 
 #. module: object_query
 #: view:object.query:0
@@ -28606,7 +28608,7 @@ msgstr "Futur"
 #. module: sale
 #: report:msf.freight_manifest:0
 msgid "Parcels damaged :"
-msgstr "Parcelles endommagées :"
+msgstr "Colis endommagées :"
 
 #. module: base
 #: view:res.lang:0
@@ -30312,7 +30314,7 @@ msgstr "Il n'y a pas de compte de charge définit pour ce produit : \"%s\" (id. 
 #: report:packing.list:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:420
 msgid "Parcel"
-msgstr "Parcelle"
+msgstr "Colis"
 
 #. modules: return_claim, stock, kit
 #: view:substitute:0
@@ -33072,6 +33074,8 @@ msgstr "La destination \"%s\" n'existe pas !"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:1017
 #: view:return.pack.shipment.processor:0
+#: code:addons/msf_outgoing/wizard/return_pack_shipment_processor.py:65
+#: code:addons/msf_outgoing/wizard/return_pack_shipment_processor.py:99
 #, python-format
 msgid "Return Packs from Shipment"
 msgstr "Renvoyer colis de la livraison"
@@ -39428,7 +39432,7 @@ msgstr "claim.product.line"
 #. module: msf_doc_import
 #: field:wizard.import.in.pack.simulation.screen,parcel_from:0
 msgid "Parcel From"
-msgstr "De Parcelle"
+msgstr "Du Colis"
 
 #. module: account
 #: code:addons/account/account.py:672
@@ -45274,8 +45278,6 @@ msgstr "Traiter les substitutions"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:677
 #: code:addons/msf_outgoing/msf_outgoing.py:1477
-#: code:addons/msf_outgoing/wizard/return_shipment_processor.py:152
-#: code:addons/msf_outgoing/wizard/return_shipment_processor.py:183
 #: view:shipment:0
 #, python-format
 msgid "Create Shipment"
@@ -55771,7 +55773,7 @@ msgstr "Instances du Flux d'Information"
 #. module: sale
 #: report:msf.freight_manifest:0
 msgid "Parcels"
-msgstr "Parcelles"
+msgstr "Colis"
 
 #. module: msf_doc_import
 #: help:composition.kit,file_to_import:0
@@ -58319,7 +58321,7 @@ msgstr "Asie/Séoul"
 #. module: msf_doc_import
 #: field:wizard.import.in.pack.simulation.screen,parcel_to:0
 msgid "Parcel To"
-msgstr "À Parcelle"
+msgstr "À Colis"
 
 #. module: export_import_lang
 #: code:addons/export_import_lang/data_import.py:123
@@ -85422,7 +85424,7 @@ msgstr "America/Ojinaga"
 #. module: msf_outgoing
 #: field:ppl.customize.label,packing_parcel_number:0
 msgid "Packing Parcel Number"
-msgstr "Colisage - Numéro de Parcelle"
+msgstr "Colisage - Numéro du Colis"
 
 #. module: account
 #: selection:account.journal.column,field:0
@@ -86140,13 +86142,6 @@ msgstr "Affecter un assistant"
 #, python-format
 msgid "Too many import files in attachment for the same IN, only 1 import file prefixed with \"SHPM_\" is allowed"
 msgstr "Too many import files in attachment for the same IN, only 1 import file prefixed with \"SHPM_\" is allowed"
-
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/wizard/return_pack_shipment_processor.py:65
-#: code:addons/msf_outgoing/wizard/return_pack_shipment_processor.py:99
-#, python-format
-msgid "Returns Packs from Shipment"
-msgstr "Returns Packs from Shipment"
 
 #. module: msf_budget
 #: field:imported.msf.budget.line,month3:0
@@ -98523,7 +98518,7 @@ msgstr "Société avec laquelle l'utilisateur sera connecté"
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
 msgid "Number of parcels:"
-msgstr "Nombre de cartons:"
+msgstr "Nombre de colis:"
 
 #. module: sale
 #: view:board.board:0
@@ -102238,13 +102233,13 @@ msgstr "Oui - Toutes les lignes"
 
 #. module: msf_outgoing
 #: view:stock.picking:0
-msgid " Update Packing with import "
-msgstr " Mettre à jour le Colisage avec un import "
+msgid "Import Packing"
+msgstr "Importer le Colisage"
 
 #. module: msf_outgoing
 #: view:stock.picking:0
-msgid "Update Packing with import"
-msgstr "Mettre à jour le Colisage avec un import"
+msgid "Export Packing"
+msgstr "Exporter le Colisage"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/__init__.py:42
@@ -104415,30 +104410,30 @@ msgstr "Msg lu par l'utilisateur"
 #. module: msf_outgoing
 #: field:shipment.additionalitems,nb_parcels:0
 msgid "Nb Parcels"
-msgstr "Nb Parcelles"
+msgstr "Nb de Colis"
 
 #. module: msf_outgoing
 #: view:shipment:0
 msgid "Nb Parcels\\nTo Ship"
-msgstr "Nb Parcelles\\nÀ prélever"
+msgstr "Nb de\\nColis À prélever"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:554
 #, python-format
 msgid "Nb to Ship (%s) can't be larger than Nb Parcels (%s) %s - %s"
-msgstr "Nb à prélever (%s) ne peut être plus grand que le Nb. Parcelles (%s) %s - %s"
+msgstr "Nb à prélever (%s) ne peut être plus grand que le Nb. de Colis (%s) %s - %s"
 
 #. module: msf_outgoing
 #: field:pack.family.memory,num_of_packs:0
 #: field:shipment.add.pack.processor.line,num_of_packs:0
 msgid "Nb. Parcels"
-msgstr "Nb. Parcelles"
+msgstr "Nb. de Colis"
 
 #. module: msf_outgoing
 #: field:pack.family.memory,selected_number:0
 #: field:stock.move,selected_number:0
 msgid "Nb. Parcels to Ship"
-msgstr "Nb Parcelles à prélever"
+msgstr "Nb de Colis à prélever"
 
 #. module: stock_override
 #: view:change.dest.location:0
@@ -104541,6 +104536,8 @@ msgid "Packing details: Volumes and Weights"
 msgstr "Détails colisage: Volumes et Poids"
 
 #. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:1641
+#: code:addons/msf_outgoing/msf_outgoing.py:1657
 #: code:addons/msf_outgoing/msf_outgoing.py:4176
 #, python-format
 msgid "Please select at least one line."
@@ -104550,7 +104547,7 @@ msgstr "Veuillez sélectionner au moins une ligne."
 #: code:addons/msf_outgoing/msf_outgoing.py:750
 #, python-format
 msgid "Please set \"Nb Parcels To Ship\" to create a Shipment."
-msgstr "Veuillez définir \"Nb parcelles\"  pour créer une Expédition."
+msgstr "Veuillez définir \"Nb de Colis\"  pour créer une Expédition."
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:3334
@@ -104608,7 +104605,7 @@ msgstr "Code - Raison"
 #: view:shipment:0
 #: code:addons/msf_outgoing/msf_outgoing.py:308
 msgid "Shipment List"
-msgstr "Expédition"
+msgstr "Liste d'Expédition"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/ppl_processor.py:229
@@ -104760,7 +104757,7 @@ msgstr "Assistant pour vérifier la cohérence de la LPC "
 #. module: msf_outgoing
 #: model:ir.model,name:msf_outgoing.model_ppl_set_pack_on_lines
 msgid "Wizard to set from/to pack on lines"
-msgstr "Assistant pour définir de parcel à parcel sur les lignes"
+msgstr "Assistant pour définir de colis à colis sur les lignes"
 
 #. module: kit
 #: code:addons/kit/kit_creation.py:1238
@@ -106828,3 +106825,29 @@ msgstr "Réf. du INT"
 msgid "Export to HQ system (OCB) Access Interface"
 msgstr "Interface d'accès de l'Export vers le système HQ (OCB)"
 
+#. module: msf_outgoing
+#: model:ir.actions.act_window,name:msf_outgoing.action_picking_ticket
+#: view:stock.picking:0
+msgid "Picking Lists & Picking Tickets"
+msgstr "Listes de Picking & Bons de Picking"
+
+#. module: msf_outgoing
+#: model:ir.actions.act_window,name:msf_outgoing.action_shipment
+msgid "Shipment Lists & Shipments"
+msgstr "Listes d'Expédition & Expéditions"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/msf_outgoing.py:1686
+#, python-format
+msgid "Value ["
+msgstr "Valeur ["
+
+#. module: msf_outgoing
+#: view:shipment:0
+msgid "Copy"
+msgstr "Copier"
+
+#. module: msf_outgoing
+#: view:shipment:0
+msgid "Clear"
+msgstr "Effacer"
