@@ -926,7 +926,8 @@ class wizard_cash_return(osv.osv_memory):
             if partner:
                 if partner._name == 'res.partner':
                     partner_id = partner.id
-                    advances_with_supplier.setdefault(adv_move, []).append(advance)
+                    if partner.partner_type not in ('intermission', 'section'):
+                        advances_with_supplier.setdefault(adv_move, []).append(advance)
                 elif partner._name == 'hr.employee':
                     line_employee_id = partner.id
             debit = abs(advance.amount)
@@ -945,7 +946,8 @@ class wizard_cash_return(osv.osv_memory):
                                            account_id, debit, credit, adv_return_ref, adv_move, distrib_id, context=context)
             adv_move_data.append((adv_move, adv_id))
 
-        # if advance lines have a Partner Third Party: create Payable Entries and add them to the advance closing JE
+        # if advance lines have a Partner Third Party being neither Intermission nor Intersection:
+        # create Payable Entries and add them to the advance closing JE
         to_reconcile = {}  # per advance line
         payable_lines = []
         for adv_move in advances_with_supplier:
