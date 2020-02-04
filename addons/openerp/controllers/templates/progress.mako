@@ -61,6 +61,8 @@
                         } else {
                             $('#open_src').show();
                         }
+                        $('#close_box').click(function() {jQuery.fancybox.close(); document.location.reload();});
+                        $('#close_box').show();
                     }
                 }
                 });
@@ -132,6 +134,7 @@
             <td>
             <button id="open_src" style="display:none">View Object</button>
             <button id="open_target" style="display:none">View Target</button>
+            <button id="close_box" style="display:none">${_("Close")}</button>
             </td>
         </tr>
     </table>

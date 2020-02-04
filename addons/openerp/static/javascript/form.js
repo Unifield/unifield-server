@@ -428,6 +428,8 @@ function buttonClicked(name, btype, model, id, sure, target, context){
         s_ids = ListView('order_line').getSelectedRecords();
     } else if (jQuery('[id="move_lines"]').length > 0){
         s_ids = ListView('move_lines').getSelectedRecords();
+    } else if (model == 'shipment' && jQuery('[id="pack_family_memory_ids"]').length > 0){
+        s_ids = ListView('pack_family_memory_ids').getSelectedRecords();
     }
 
     var params = {
