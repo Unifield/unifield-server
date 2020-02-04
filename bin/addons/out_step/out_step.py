@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from tools.translate import _
 
 class stock_picking(osv.osv):
     '''
@@ -28,15 +29,17 @@ class stock_picking(osv.osv):
     _inherit = 'stock.picking'
 
     PICKING_STATE = [
-        ('draft', 'Draft'),
-        ('auto', 'Waiting'),
-        ('confirmed', 'Confirmed'),
-        ('assigned', 'Available'),
-        ('shipped', 'Available Shipped'),
-        ('done', 'Closed'),
-        ('cancel', 'Cancelled'),
-        ('import', 'Import in progress'),
-        ('delivered', 'Delivered'),
+        ('draft', _('Draft')),
+        ('auto', _('Waiting')),
+        ('confirmed', _('Confirmed')),
+        ('assigned', _('Available')),
+        ('shipped', _('Available Shipped')),
+        ('done', _('Closed')),
+        ('dispatched', _('Dispatched')),
+        ('cancel', _('Cancelled')),
+        ('import', _('Import in progress')),
+        ('delivered', _('Delivered')),
+        ('received', _('Received')),
     ]
 
     def _vals_get_out_step(self, cr, uid, ids, fields, arg, context=None):
@@ -53,8 +56,13 @@ class stock_picking(osv.osv):
             result[obj.id]['delivered_hidden'] = obj.delivered
             # state_hidden
             result[obj.id]['state_hidden'] = obj.state
-            if obj.state == 'done' and obj.delivered:
-                result[obj.id]['state_hidden'] = 'delivered'
+            if obj.state == 'done':
+                if obj.delivered:
+                    result[obj.id]['state_hidden'] = 'received'
+                else:
+                    result[obj.id]['state_hidden'] = 'dispatched'
+            elif obj.state == 'delivered':
+                result[obj.id]['state_hidden'] = 'received'
 
         return result
 

@@ -8065,8 +8065,8 @@ msgstr "Charger écritures de Version"
 #. modules: msf_outgoing, stock
 #: view:shipment:0
 #: view:stock.picking:0
-msgid "Synchronization engine should confirm the delivery at the project reception, are you sure?"
-msgstr "Le moteur de synchro devrait Valider la livraison lors de la réception au projet, voulez-vous continuer ?"
+msgid "Synchronization engine should confirm the reception once recorded on the receiving instance, do you want to continue?"
+msgstr "Le moteur de synchronisation devrait confirmer la réception une fois enregistrée sur l'instance recevante, voulez-vous continuer ?"
 
 #. module: account, base
 #: selection:res.partner.bank,state:0
@@ -9249,11 +9249,6 @@ msgstr "Certains produits ont"
 #: field:base.setup.installer,report_designer:0
 msgid "Advanced Reporting"
 msgstr "Rapports Avancés"
-
-#. module: msf_outgoing
-#: view:shipment:0
-msgid "Validate Delivery"
-msgstr "Valider Livraison"
 
 #. module: stock
 #: help:stock.picking,date_done:0
@@ -35084,13 +35079,15 @@ msgstr "Stock - Fréquence"
 msgid "Created by split PO"
 msgstr "Créé à partir du fractionnement du BC"
 
-#. modules: purchase, sales_followup, msf_outgoing
+#. modules: purchase, sales_followup, msf_outgoing, out_step
 #: view:shipment:0
 #: selection:shipment,state:0
 #: field:purchase.order,shipped:0
 #: field:purchase.order,shipped_rate:0
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:283
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:282
+#: code:addons/out_step/out_step.py:42
+#: selection:stock.picking,state_hidden:0
 msgid "Received"
 msgstr "Reçu"
 
@@ -42462,10 +42459,11 @@ msgstr "Exemple : REGLE_GLOBALE_1 ET REGLE_GLOBALE_2 ET ( (GROUPE_A_REGLE_1 ET G
 msgid "Scrap Products"
 msgstr "Produits Rebut"
 
-#. module: stock
+#. module: stock, msf_outgoing
 #: view:stock.picking:0
-msgid "Confirm Delivery"
-msgstr "Confirmer livraison"
+#: view:shipment:0
+msgid "Confirm Reception"
+msgstr "Confirmer la Réception"
 
 #. module: base
 #: model:ir.model,name:base.model_ir_actions_server
@@ -103385,9 +103383,11 @@ msgstr "\n"
 msgid "Ready to ship"
 msgstr "Prêt à être Expédié"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, out_step
 #: view:shipment:0
 #: selection:shipment,state:0
+#: code:addons/out_step/out_step.py:38
+#: selection:stock.picking,state_hidden:0
 msgid "Dispatched"
 msgstr "Expédié"
 
