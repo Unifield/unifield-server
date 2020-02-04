@@ -122,7 +122,7 @@
    </Row>
    <Row ss:Index="7">
     <Cell ss:StyleID="s84"><Data ss:Type="String">${_('Product code')|x}</Data></Cell>
-    <Cell ss:StyleID="s84"><Data ss:Type="String">${_('Product Decription')|x}</Data></Cell>
+    <Cell ss:StyleID="s84"><Data ss:Type="String">${_('Product Description')|x}</Data></Cell>
     <Cell ss:StyleID="s84"><Data ss:Type="String">${_('Segment Ref')|x}</Data></Cell>
     <Cell ss:StyleID="s84"><Data ss:Type="String">${_('Segment name')|x}</Data></Cell>
    </Row>
