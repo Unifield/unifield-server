@@ -428,7 +428,7 @@ class replenishment_segment(osv.osv):
 
     def compute_next_order_received(self, cr, uid, ids, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified, context=None):
         ret = {}
-        if  previous_order_rdd or date_next_order_received_modified:
+        if previous_order_rdd or date_next_order_received_modified:
             previous_rdd = False
             date_next_order_received = False
             if previous_order_rdd:
@@ -512,7 +512,7 @@ class replenishment_segment(osv.osv):
                         pass
 
             if all_instances:
-                raise osv.except_osv(_('Warning'), _('Data from the following instances are missing, please wait the next scheduled task or the next sync:\n%s') % (', '.join([instances_name_by_id.get(x, '') for x in all_instances])))
+                raise osv.except_osv(_('Warning'), _('Data from instance(s) is missing, please wait for the next scheduled task or the next sync, or if relates to this instance, please use button "Compute Data". Instances missing data are:\n%s') % (', '.join([instances_name_by_id.get(x, '') for x in all_instances])))
 
             if seg.rule == 'cycle' and not review_id and not seg.previous_order_rdd and not seg.date_next_order_received_modified:
                 raise osv.except_osv(_('Warning'), _('Warning, to complete Segment, field "Next order to be received by (modified)" must have date filled'))
@@ -664,22 +664,22 @@ class replenishment_segment(osv.osv):
                             end_eta = min(eta, to_fmc)
                             if end_eta >= begin:
                                 month = (end_eta-begin).days/30.44
-                                total_fmc_eta = month*num_fmc
+                                total_fmc_eta += month*num_fmc
                                 if not lacking_eta:
                                     if total_fmc_eta < sum_line[line.id]['pas_no_pipe_no_fmc']:
                                         month_of_supply_eta += month
                                     elif num_fmc:
-                                        month_of_supply_eta += ( sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc_eta + month*num_fmc ) / num_fmc
+                                        month_of_supply_eta += max(0, (sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc_eta + month*num_fmc ) / num_fmc)
                                         lacking_eta = True
 
                             if end >= begin:
                                 month = (end-begin).days/30.44
                                 total_month += month
                                 if not lacking:
-                                    if total_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
+                                    if total_fmc+month*num_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
                                         month_of_supply += month
                                     elif num_fmc:
-                                        month_of_supply += ( sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc + month*num_fmc ) / num_fmc
+                                        month_of_supply += max(0, (sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc) / num_fmc)
                                         lacking = True
 
 
@@ -951,16 +951,12 @@ class replenishment_segment(osv.osv):
             prod_code = prod_code.strip()
 
             cells_nb = len(row.cells)
-            if cells_nb < 8:
-                line_error.append(_('Line %d must have at least 7 cells') % (idx+1,))
-                continue
-
-            if row.cells[4].data and not isinstance(row.cells[4].data, (int, long, float)):
+            if cells_nb > 4 and row.cells[4].data and not isinstance(row.cells[4].data, (int, long, float)):
                 line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[4].data))
 
             data_towrite = {
-                'status': status.get(row.cells[3].data and row.cells[3].data.strip()),
-                'buffer_qty': row.cells[4].data,
+                'status': cells_nb > 3 and status.get(row.cells[3].data and row.cells[3].data.strip()),
+                'buffer_qty': cells_nb > 4 and row.cells[4].data,
                 'min_qty': 0,
                 'max_qty': 0,
                 'auto_qty': 0
@@ -973,7 +969,7 @@ class replenishment_segment(osv.osv):
                 })
 
 
-            if seg.rule == 'cycle':
+            if cells_nb > 4 and seg.rule == 'cycle':
                 first_fmc_col = 7 - 3
                 for fmc in range(1, 13):
                     first_fmc_col += 3
@@ -998,7 +994,7 @@ class replenishment_segment(osv.osv):
                             'rr_fmc_from_%d' % fmc: row.cells[first_fmc_col+1].data.strftime('%Y-%m-%d'),
                             'rr_fmc_to_%d' % fmc: row.cells[first_fmc_col+2].data.strftime('%Y-%m-%d'),
                         })
-            elif seg.rule == 'minmax':
+            elif cells_nb > 4 and seg.rule == 'minmax':
                 if not row.cells[4] or not isinstance(row.cells[4].data, (int, long, float)):
                     line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[4].data))
                 elif not row.cells[5] or not isinstance(row.cells[5].data, (int, long, float)):
@@ -1010,7 +1006,7 @@ class replenishment_segment(osv.osv):
                         'min_qty': row.cells[4].data,
                         'max_qty': row.cells[5].data,
                     })
-            else:
+            elif cells_nb > 4:
                 if not row.cells[4] or not isinstance(row.cells[4].data, (int, long, float)):
                     line_error.append(_('Line %d: Auto Supply Qty, number expected, found %s') % (idx+1, row.cells[4].data))
                 else:
@@ -1823,6 +1819,7 @@ class replenishment_order_calc(osv.osv):
                         'price_unit': line.product_id.list_price,
                         'type': 'make_to_order',
                         'stock_take_date': calc.generation_date,
+                        'date_planned': calc.new_order_reception_date,
                     }, context=context)
 
             self.write(cr, uid, calc.id, {'state': 'closed', 'ir_generation_date': time.strftime('%Y-%m-%d'), 'ir_id': ir_id}, context=context)
