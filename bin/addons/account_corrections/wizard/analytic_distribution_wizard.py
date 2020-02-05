@@ -370,8 +370,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
             name = False
             if period_closed or is_HQ_origin:
-                if period_closed or is_HQ_origin:
-                    create_date = posting_date
+                create_date = posting_date
                 name = ana_line_obj.join_without_redundancy(ml.name, 'COR')
                 if keep_seq_and_corrected:
                     create_date = keep_seq_and_corrected[2]  # is_HQ_origin keep date too
