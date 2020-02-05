@@ -106595,7 +106595,7 @@ msgid "Funding Pool not found."
 msgstr "Funding Pool non trouvé."
 
 #. module: kit
-#: field:composition.item,item_kit_id:0
+#: view:composition.item:0
 msgid "Kit/Product"
 msgstr "Kit/Produit"
 
