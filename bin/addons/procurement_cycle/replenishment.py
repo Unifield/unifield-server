@@ -313,7 +313,7 @@ class replenishment_segment(osv.osv):
                 'date_preparing': False,
                 'date_next_order_validated': False,
                 'date_next_order_received': False,
-                'ir_requesting_location_ro': seg['ir_requesting_location'] and seg['ir_requesting_location'][0],
+                'ir_requesting_location_rdo': seg['ir_requesting_location'] and seg['ir_requesting_location'][0],
             }
             ret[seg['id']].update(self.compute_next_order_received(cr, uid, ids,
                                                                    seg['order_creation_lt'], seg['order_validation_lt'], seg['supplier_lt'], seg['handling_lt'], seg['order_coverage'], seg['previous_order_rdd'], seg['date_next_order_received_modified'], context=context).get('value', {}))
@@ -385,10 +385,10 @@ class replenishment_segment(osv.osv):
         'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, ondelete='cascade'),
         'amc_location_txt': fields.function(_get_amc_location_ids, type='text', method=1, string='AMC locations'),
 
-        'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Replenishment Rule (Order quantity)', required=1),
+        'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Replenishment Rule (Order quantity)', required=1, add_empty=True),
         'rule_alert': fields.function(_get_rule_alert, method=1, string='Replenishment Rule (Alert Theshold)', type='char'),
         'ir_requesting_location': fields.many2one('stock.location', string='IR Requesting Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])]", required=0),
-        'ir_requesting_location_ro': fields.function(_get_date, type='many2one', method=1, relation='stock.location', string='IR Requesting Location', multi='get_date'),
+        'ir_requesting_location_rdo': fields.function(_get_date, type='many2one', method=1, relation='stock.location', string='IR Requesting Location', multi='get_date'),
         'product_list_id': fields.many2one('product.list', 'Primary product list'),
         'state': fields.selection([('draft', 'Draft'), ('complete', 'Complete'), ('cancel', 'Cancelled'), ('archived', 'Archived')], 'State', readonly=1),
         'order_creation_lt': fields.integer_null('Order Creation Lead Time (days)', required=1),
@@ -670,7 +670,8 @@ class replenishment_segment(osv.osv):
                                         month_of_supply_eta += month
                                     elif num_fmc:
                                         month_of_supply_eta += max(0, (sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc_eta + month*num_fmc ) / num_fmc)
-                                        lacking_eta = True
+                                        if prod_eta.get(line.product_id.id, False):
+                                            lacking_eta = True
 
                             if end >= begin:
                                 month = (end-begin).days/30.44
@@ -754,6 +755,9 @@ class replenishment_segment(osv.osv):
 
                         if lacking_eta:
                             qty_lacking_needed_by = (today + relativedelta(days=month_of_supply_eta*30.44)).strftime('%Y-%m-%d')
+                    if review_id and round(sum_line.get(line.id, {}).get('expired_before_rdd',0)):
+                        warnings.append(_('Forecasted expiries'))
+
                     proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rdd_oc)
 
                 elif seg.rule == 'minmax':
@@ -1046,6 +1050,9 @@ class replenishment_segment(osv.osv):
             if x['rule'] == 'cycle' and not x['date_next_order_received_modified'] and not x['date_next_order_received']:
                 raise osv.except_osv(_('Warning'), _('Warning, to complete Segment %s, field "Next order to be received by (modified)" must have date filled') % (x['name_seg'], ))
 
+        if self.pool.get('replenishment.segment.line').search_exist(cr, uid, [('segment_id', 'in', ids), ('status', '=', False)], context=context):
+            raise osv.except_osv(_('Warning'), _('Please complete Lifeycle status for products missing this, see red lines'))
+
         self.write(cr, uid, ids, {'state': 'complete'}, context=context)
         return True
 
@@ -1098,7 +1105,7 @@ class replenishment_segment(osv.osv):
         if ir_loc_id not in data['local_location_ids']:
             if len(data['local_location_ids']) == 1:
                 data['ir_requesting_location'] = data['local_location_ids'][0]
-                data['ir_requesting_location_ro'] = data['local_location_ids'][0]
+                data['ir_requesting_location_rdo'] = data['local_location_ids'][0]
             else:
                 data['ir_requesting_location'] = False
 
@@ -1972,7 +1979,7 @@ class replenishment_inventory_review_line(osv.osv):
         'expired_qty_before_cons': fields.float_null('Expired Qty before cons.', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
         'total_expired_qty': fields.float('Qty expiring within period', readonly=1, related_uom='uom_id'),
         'sleeping_qty': fields.float('Sleeping Qty'),
-        'projected_stock_qty': fields.float_null('RR-FMC Projected Stock Level', readonly=1, related_uom='uom_id'), # OC
+        'projected_stock_qty': fields.float_null('RR-FMC Projected Stock Level', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
         'projected_stock_qty_amc': fields.float_null('RR-AMC Projected Stock Level', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
         'unit_of_supply_amc': fields.float_null('Days/weeks/months of supply (RR-AMC)', null_value='N/A'),
         'unit_of_supply_fmc': fields.float_null('Days/weeks/months of supply (RR-FMC)', null_value='N/A'),
