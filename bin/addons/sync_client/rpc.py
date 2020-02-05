@@ -106,7 +106,7 @@ class XmlRPCConnector(Connector):
                 error = e
                 if i < self.retry:
                     retry = True
-                    self._logger.debug("retry to connect %s, error : %s" ,i, e)
+                    self._logger.warn("retry to connect %s, error : %s" ,i, e)
                 i += 1
         if error:
             raise osv.except_osv(_('Error!'), "Unable to proceed for the following reason:\n%s" % (e.faultCode if hasattr(e, 'faultCode') else tools.ustr(e)))
