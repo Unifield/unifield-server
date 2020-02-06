@@ -60,7 +60,8 @@
 				            		<field name="item_uom_id" on_change="onchange_uom_qty(item_uom_id, item_qty)" domain="[('uom_by_product', '=', item_product_id)]" />
 				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
 				            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
-				            		<field name="item_lot"
+				            		<field name="comment" />
+									<field name="item_lot"
 				            			on_change="on_lot_change(item_product_id, item_lot, context)" 
 				            			attrs="{'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
 				            		<field name="item_exp" attrs="{'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
