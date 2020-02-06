@@ -8060,7 +8060,7 @@ msgstr "Le champ osv_memory ne peut seulement être comparé qu'avec les opérat
 #. module: kit
 #: view:composition.kit:0
 msgid "Load items from Version"
-msgstr "Charger écritures de Version"
+msgstr "Charger les articles de la Version"
 
 #. modules: msf_outgoing, stock
 #: view:shipment:0
@@ -11306,7 +11306,6 @@ msgstr "Aucun produit trouvé pour le code '%s'"
 
 #. modules: reason_types_moves, stock_override, specific_rules, kit, msf_outgoing, msf_supply_doc_export, msf_doc_import, return_claim
 #: view:composition.item:0
-#: field:composition.item,item_kit_id:0
 #: model:ir.actions.report.xml,name:kit.kit_report
 #: model:ir.module.module,shortdesc:kit.module_meta_information
 #: field:stock.move,composition_list_id:0
@@ -55855,6 +55854,7 @@ msgstr "Taux de change"
 #: model:ir.actions.act_window,name:kit.kit_composition_real_action
 #: model:ir.actions.act_window,name:kit.kit_composition_real_action2
 #: model:ir.ui.menu,name:kit.kit_composition_real_menu
+#: view:composition.kit:0
 #, python-format
 msgid "Kit Composition List"
 msgstr "Liste de composition du Kit"
@@ -87320,6 +87320,7 @@ msgstr "Prix"
 #. module: kit
 #: model:ir.actions.act_window,name:kit.kit_composition_theoretical_action
 #: model:ir.ui.menu,name:kit.kit_composition_theoretical_menu
+#: view:composition.kit:0
 msgid "Theoretical Kit Composition"
 msgstr "Kit Théorique - Composition"
 
@@ -106851,3 +106852,33 @@ msgstr "Copier"
 #: view:shipment:0
 msgid "Clear"
 msgstr "Effacer"
+
+#. module: kit
+#: view:composition.item:0
+msgid "Kit/Product"
+msgstr "Kit/Produit"
+
+#. module: kit
+#: field:composition.item,item_kit_id:0
+msgid "Kit/Version"
+msgstr "Kit/Version"
+
+#. module: kit
+#: field:composition.item,item_kit_batch:0
+msgid "Kit/BN"
+msgstr "Kit/NL"
+
+#. module: kit
+#: view:composition.item:0
+msgid "Component/BN"
+msgstr "Composant/NL"
+
+#. module: kit
+#: view:composition.item:0
+msgid "Component/Product"
+msgstr "Composant/Produit"
+
+#. module: kit
+#: field:composition.item,item_kit_name:0
+msgid "Kit Product Code"
+msgstr "Code Produit du Kit"
