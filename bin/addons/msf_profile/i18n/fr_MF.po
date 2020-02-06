@@ -1477,7 +1477,7 @@ msgstr "Configuration d'Allocation de Stock"
 msgid "Partner Form"
 msgstr "Formulaire du Partenaire"
 
-#. modules: purchase, tender_flow, service_purchasing, sale, purchase_allocation_report, purchase_followup, return_claim, order_types, purchase_compare_rfq, sourcing, consumption_calculation, stock
+#. modules: purchase, tender_flow, service_purchasing, sale, purchase_allocation_report, purchase_followup, return_claim, order_types, purchase_compare_rfq, sourcing, consumption_calculation, stock, stock_override
 #: selection:stock.move,order_category:0
 #: view:purchase.order:0
 #: selection:purchase.order,categ:0
@@ -1499,6 +1499,7 @@ msgstr "Formulaire du Partenaire"
 #: selection:sale.order.line,categ:0
 #: selection:internal.request.import,imp_categ:0
 #: selection:stock.reception.wizard,order_category:0
+#: code:addons/stock_override/report/report_stock_move.py:529
 msgid "Medical"
 msgstr "Médical"
 
@@ -1858,6 +1859,7 @@ msgstr "Yougoslavie"
 #: selection:stock.reception.wizard,order_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:36
 #: field:supplier.performance.wizard,po_type_donation_exp:0
+#: code:addons/stock_override/report/report_stock_move.py:28
 #, python-format
 msgid "Donation before expiry"
 msgstr "Donation avant expiration"
@@ -3626,7 +3628,7 @@ msgstr "Calcul de l'Abonnement"
 msgid "You cannot add any new move while validating the picking, rather you can split the lines prior to validation!"
 msgstr "Vous ne pouvez ajouter aucun nouveau mouvement tout en validant le picking. Veuillez plutôt fractionner les lignes avant Validation!"
 
-#. modules: purchase_allocation_report, service_purchasing, stock, purchase_followup, sale, msf_supply_doc_export, procurement_request
+#. modules: purchase_allocation_report, service_purchasing, stock, purchase_followup, sale, msf_supply_doc_export, procurement_request, stock_override
 #: report:addons/purchase_allocation_report/report/po_allocation_report.mako:158
 #: report:po.line.allocation.report:0
 #: field:purchase.order.followup,categ:0
@@ -3644,6 +3646,7 @@ msgstr "Vous ne pouvez ajouter aucun nouveau mouvement tout en validant le picki
 #: report:addons/stock/report/stock_reception_report_xls.mako:230
 #: field:stock.reception.wizard,order_category:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:213
+#: code:addons/stock_override/report/report_stock_move.py:826
 msgid "Order Category"
 msgstr "Catégorie de Commande"
 
@@ -4054,16 +4057,19 @@ msgstr "Montrer les Inactifs"
 msgid "UoM Stock"
 msgstr "Stock UdM"
 
-#. modules: stock, sync_client, base, stock_override, stock_move_tracking
+#. modules: stock, sync_client, base, stock_move_tracking
 #: view:stock.move:0
 #: field:ir.translation,src:0
 #: view:sync.client.message_received:0
 #: view:sync.client.update_received:0
-#: report:addons/stock_override/report/report_stock_move_xls.mako:142
 #: report:tracking.move.report:0
-#: code:addons/stock_override/report/report_stock_move.py:759
 msgid "Source"
 msgstr "Origine"
+
+#. module: stock_override
+#: code:addons/stock_override/report/report_stock_move.py:759
+msgid "Source"
+msgstr "Source"
 
 #. module: base
 #: field:ir.actions.report.xml,auto:0
@@ -5533,6 +5539,7 @@ msgstr "Total Chèques en Attente en Devise Fonc."
 #: selection:stock.reception.wizard,order_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:37
 #: field:supplier.performance.wizard,po_type_donation_st:0
+#: code:addons/stock_override/report/report_stock_move.py:29
 #, python-format
 msgid "Standard donation"
 msgstr "Donation normale"
@@ -10181,6 +10188,7 @@ msgstr "Import template"
 #: selection:account.invoice.line,partner_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:32
 #: field:supplier.performance.wizard,partner_type_intermission:0
+#: code:addons/stock_override/report/report_stock_move.py:23
 msgid "Intermission"
 msgstr "Intermission"
 
@@ -13055,6 +13063,7 @@ msgstr "Ecriture Automatique"
 #: selection:account.invoice.line,partner_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:30
 #: field:supplier.performance.wizard,partner_type_external:0
+#: code:addons/stock_override/report/report_stock_move.py:21
 msgid "External"
 msgstr "Externe"
 
@@ -20713,6 +20722,7 @@ msgstr "Option 1 Lignes"
 #: selection:stock.picking,partner_type_stock_picking:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:29
 #: field:supplier.performance.wizard,partner_type_section:0
+#: code:addons/stock_override/report/report_stock_move.py:20
 msgid "Inter-section"
 msgstr "Inter-section"
 
@@ -24289,6 +24299,7 @@ msgstr "Is resourced ?"
 #: selection:stock.reception.wizard,order_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:38
 #: field:supplier.performance.wizard,po_type_loan:0
+#: code:addons/stock_override/report/report_stock_move.py:27
 #, python-format
 msgid "Loan"
 msgstr "Prêt"
@@ -30137,6 +30148,7 @@ msgstr "Close it"
 #: selection:stock.reception.wizard,order_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:35
 #: field:supplier.performance.wizard,po_type_regular:0
+#: code:addons/stock_override/report/report_stock_move.py:27
 #, python-format
 msgid "Regular"
 msgstr "Normal"
@@ -45884,7 +45896,7 @@ msgstr "Vous devriez sélectionner au moins deux lignes à traiter."
 msgid "Activate the payroll feature"
 msgstr "Activer l'attribut Paie"
 
-#. modules: purchase, product, purchase_allocation_report, service_purchasing, consumption_calculation, sale, sales_followup, purchase_compare_rfq, sourcing, order_types, tender_flow, return_claim, purchase_followup, stock
+#. modules: purchase, product, purchase_allocation_report, service_purchasing, consumption_calculation, sale, sales_followup, purchase_compare_rfq, sourcing, order_types, tender_flow, return_claim, purchase_followup, stock, stock_override
 #: selection:real.average.consumption,categ:0
 #: selection:stock.move,order_category:0
 #: view:product.product:0
@@ -45909,6 +45921,7 @@ msgstr "Activer l'attribut Paie"
 #: selection:purchase.report,categ:0
 #: selection:tender,categ:0
 #: selection:stock.reception.wizard,order_category:0
+#: code:addons/stock_override/report/report_stock_move.py:532
 msgid "Transport"
 msgstr "Transport"
 
@@ -46309,6 +46322,7 @@ msgstr "Métadonnées"
 #: selection:account.invoice.line,partner_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:31
 #: field:supplier.performance.wizard,partner_type_esc:0
+#: code:addons/stock_override/report/report_stock_move.py:22
 msgid "ESC"
 msgstr "ESC"
 
@@ -50988,11 +51002,12 @@ msgstr "Le produit est inactif"
 msgid "Search Donation"
 msgstr "Rechercher Donation"
 
-#. modules: sale, account_override, account
+#. modules: sale, account_override, account, stock_override
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:127
 #: field:sale.donation.stock.moves,partner_type:0
 #: field:account.invoice,partner_type:0
 #: field:account.invoice.line,partner_type:0
+#: code:addons/stock_override/report/report_stock_move.py:826
 msgid "Partner Type"
 msgstr "Type de Partenaire"
 
@@ -52550,6 +52565,7 @@ msgstr "A line must a have a quantity larger than 0.00"
 #: selection:stock.reception.wizard,order_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:40
 #: field:supplier.performance.wizard,po_type_purchase_list:0
+#: code:addons/stock_override/report/report_stock_move.py:32
 #, python-format
 msgid "Purchase List"
 msgstr "Liste d'Achats"
@@ -53305,6 +53321,7 @@ msgstr "Facture sous statut \"Terminé\""
 #: selection:stock.reception.wizard,order_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:41
 #: field:supplier.performance.wizard,po_type_direct:0
+#: code:addons/stock_override/report/report_stock_move.py:33
 #, python-format
 msgid "Direct Purchase Order"
 msgstr "Bon de Commande Direct"
@@ -56394,6 +56411,7 @@ msgstr "Display destinations?"
 #: selection:stock.reception.wizard,order_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:39
 #: field:supplier.performance.wizard,po_type_in_kind:0
+#: code:addons/stock_override/report/report_stock_move.py:27
 #, python-format
 msgid "In Kind Donation"
 msgstr "Donation en Nature"
@@ -56404,7 +56422,7 @@ msgstr "Donation en Nature"
 msgid "Other Types"
 msgstr "Autres Types"
 
-#. modules: purchase, tender_flow, service_purchasing, sale, purchase_allocation_report, purchase_followup, return_claim, order_types, purchase_compare_rfq, sourcing, consumption_calculation, stock
+#. modules: purchase, tender_flow, service_purchasing, sale, purchase_allocation_report, purchase_followup, return_claim, order_types, purchase_compare_rfq, sourcing, consumption_calculation, stock, stock_override
 #: selection:stock.move,order_category:0
 #: view:purchase.order:0
 #: selection:purchase.order,categ:0
@@ -56426,6 +56444,7 @@ msgstr "Autres Types"
 #: selection:sale.order.line,categ:0
 #: selection:internal.request.import,imp_categ:0
 #: selection:stock.reception.wizard,order_category:0
+#: code:addons/stock_override/report/report_stock_move.py:530
 msgid "Logistic"
 msgstr "Logistique"
 
@@ -61922,6 +61941,7 @@ msgstr "Tél. :"
 #: field:stock.reception.wizard,order_type:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:882
 #: report:addons/stock/report/stock_delivery_report_xls.mako:212
+#: code:addons/stock_override/report/report_stock_move.py:826
 msgid "Order Type"
 msgstr "Type de Commande"
 
@@ -74700,6 +74720,7 @@ msgstr "Vous ne pouvez pas décocher la case Section parce que cette devise est 
 #: report:addons/stock/report/stock_reception_report_xls.mako:234
 #: report:tracking.move.report:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:210
+#: code:addons/stock_override/report/report_stock_move.py:826
 #, python-format
 msgid "Origin"
 msgstr "Origine"
@@ -90418,7 +90439,7 @@ msgstr "Le produit sélectionné est Gestion de Lot."
 msgid "Export search result"
 msgstr "Exporter le résultat de la recherche"
 
-#. modules: purchase, tender_flow, msf_outgoing, reason_types_moves, product_asset, sale, purchase_allocation_report, base, order_types, specific_locations, return_claim, service_purchasing, purchase_followup, purchase_compare_rfq, sourcing, consumption_calculation, stock
+#. modules: purchase, tender_flow, msf_outgoing, reason_types_moves, product_asset, sale, purchase_allocation_report, base, order_types, specific_locations, return_claim, service_purchasing, purchase_followup, purchase_compare_rfq, sourcing, consumption_calculation, stock, stock_override
 #: selection:res.partner.address,type:0
 #: field:shipment,carrier_other:0
 #: field:shipment,consignee_other:0
@@ -90447,6 +90468,7 @@ msgstr "Exporter le résultat de la recherche"
 #: selection:sale.order.line,categ:0
 #: selection:internal.request.import,imp_categ:0
 #: selection:stock.reception.wizard,order_category:0
+#: code:addons/stock_override/report/report_stock_move.py:533
 msgid "Other"
 msgstr "Autre"
 
@@ -95664,6 +95686,7 @@ msgstr "Date du Document"
 #: selection:account.invoice.line,partner_type:0
 #: code:addons/msf_supply_doc_export/wizard/supplier_performance_wizard.py:28
 #: field:supplier.performance.wizard,partner_type_internal:0
+#: code:addons/stock_override/report/report_stock_move.py:19
 #, python-format
 msgid "Internal"
 msgstr "Interne"
@@ -96662,7 +96685,7 @@ msgstr "Validating journal entry…"
 msgid "America/Port-au-Prince"
 msgstr "Amériques/Port-au-Prince"
 
-#. modules: purchase, tender_flow, purchase_allocation_report, supplier_catalogue, service_purchasing, consumption_calculation, sale, msf_config_locations, procurement, sourcing, order_types, return_claim, purchase_compare_rfq, purchase_followup, stock
+#. modules: purchase, tender_flow, purchase_allocation_report, supplier_catalogue, service_purchasing, consumption_calculation, sale, msf_config_locations, procurement, sourcing, order_types, return_claim, purchase_compare_rfq, purchase_followup, stock, stock_override
 #: selection:real.average.consumption,categ:0
 #: model:stock.location,name:msf_config_locations.stock_location_service
 #: selection:stock.move,order_category:0
@@ -96687,6 +96710,7 @@ msgstr "Amériques/Port-au-Prince"
 #: view:tender:0
 #: selection:tender,categ:0
 #: selection:stock.reception.wizard,order_category:0
+#: code:addons/stock_override/report/report_stock_move.py:531
 msgid "Service"
 msgstr "Service"
 
@@ -103247,7 +103271,7 @@ msgstr "Zone Source Spécifique"
 msgid "Specific Destination Location"
 msgstr "Zone de Destination Spécifique"
 
-#. module: stock
+#. module: stock, stock_override
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:206
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:217
 #: field:stock.expired.damaged.report,nomen_manda_0:0
@@ -103255,6 +103279,7 @@ msgstr "Zone de Destination Spécifique"
 #: field:stock.reception.wizard,nomen_manda_0:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:190
 #: field:stock.delivery.wizard,nomen_manda_0:0
+#: code:addons/stock_override/report/report_stock_move.py:826
 msgid "Product Main Type"
 msgstr "Type Principal du Produit"
 
