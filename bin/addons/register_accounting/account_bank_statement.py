@@ -1396,7 +1396,7 @@ class account_bank_statement_line(osv.osv):
         self.write(cr, uid, [st_line.id], {'move_ids': [(4, move_id, False)]}, context=context)
 
         torec = []
-        if st_line.amount >= 0:
+        if st_line.amount < 0:
             account_id = st.journal_id.default_credit_account_id.id
         else:
             account_id = st.journal_id.default_debit_account_id.id
