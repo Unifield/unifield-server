@@ -1894,6 +1894,7 @@ class account_tax(osv.osv):
 
     _name = 'account.tax'
     _description = 'Tax'
+    _trace = True
     _columns = {
         'name': fields.char('Tax Name', size=64, required=True, translate=True, help="This name will be displayed on reports"),
         'sequence': fields.integer('Sequence', required=True, help="The sequence field is used to order the tax lines from the lowest sequences to the higher ones. The order is important if you have a tax with several tax children. In this case, the evaluation order is important."),
