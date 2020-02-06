@@ -35088,6 +35088,7 @@ msgstr "Créé à partir du fractionnement du BC"
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:282
 #: code:addons/out_step/out_step.py:42
 #: selection:stock.picking,state_hidden:0
+#: view:stock.picking:0
 msgid "Received"
 msgstr "Reçu"
 
@@ -103383,11 +103384,12 @@ msgstr "\n"
 msgid "Ready to ship"
 msgstr "Prêt à être Expédié"
 
-#. module: msf_outgoing, out_step
+#. module: msf_outgoing, out_step, reason_types_moves
 #: view:shipment:0
 #: selection:shipment,state:0
 #: code:addons/out_step/out_step.py:38
 #: selection:stock.picking,state_hidden:0
+#: view:stock.picking:0
 msgid "Dispatched"
 msgstr "Expédié"
 
