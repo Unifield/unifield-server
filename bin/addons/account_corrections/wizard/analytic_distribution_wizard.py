@@ -313,13 +313,14 @@ class analytic_distribution_wizard(osv.osv_memory):
 
                     old_line_ok.append(old_line.id)
 
-        to_reverse_ids = []
+        reversed_lines_ids = []  # to store the ids of all the lines which have been either edited or deleted
         for wiz_line in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x for x in old_line_ids if x not in old_line_ok]):
             # distribution line deleted by user
             if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [wiz_line.analytic_id.id]):
                 raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(wiz_line.analytic_id.code))
             to_reverse_ids = self._check_period_closed_on_fp_distrib_line(cr, uid, wiz_line.id, is_HQ_origin=is_HQ_origin)
             if to_reverse_ids:
+                reversed_lines_ids += to_reverse_ids
                 # reverse the line
                 #to_reverse_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
                 if period.state != 'draft':
@@ -411,6 +412,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         for line in to_reverse:
             # reverse the line
             to_reverse_ids = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+            reversed_lines_ids += to_reverse_ids
 
             # get the original sequence
             orig_line = ana_line_obj.browse(cr, uid, to_reverse_ids)[0]
@@ -450,12 +452,13 @@ class analytic_distribution_wizard(osv.osv_memory):
                 ana_line_obj.write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
                 cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (get_entry_seq(entry_seq_data), ret[ret_id]) )
         # UFTP-194: Set missing entry sequence for created analytic lines
-        if have_been_created and to_reverse_ids:
-            corrected_aji = ana_line_obj.read(cr, uid, to_reverse_ids[0], ['entry_sequence', 'name'], context=context)
+        if have_been_created and reversed_lines_ids:
+            reverse_line_id = max(reversed_lines_ids)  # always consider that the line corrected is the most recent one
+            corrected_aji = ana_line_obj.read(cr, uid, reverse_line_id, ['entry_sequence', 'name'], context=context)
             new_description = ana_line_obj.join_without_redundancy(corrected_aji['name'], 'COR')
             cr.execute('update account_analytic_line '
                        'set entry_sequence = %s, last_corrected_id = %s, ref = %s, name = %s '
-                       'where id in %s;', (get_entry_seq(entry_seq_data), to_reverse_ids[0],
+                       'where id in %s;', (get_entry_seq(entry_seq_data), reverse_line_id,
                                            corrected_aji['entry_sequence'] or '', new_description, tuple(have_been_created)))
 
         #####
