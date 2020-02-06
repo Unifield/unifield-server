@@ -313,7 +313,7 @@ class analytic_distribution_wizard(osv.osv_memory):
 
                     old_line_ok.append(old_line.id)
 
-        reversed_lines_ids = []  # to store the ids of all the lines which have been either edited or deleted
+        reversed_lines_ids = []  # to store the ids corresponding to all the lines of which the AD has been either edited or deleted
         for wiz_line in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x for x in old_line_ids if x not in old_line_ok]):
             # distribution line deleted by user
             if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [wiz_line.analytic_id.id]):
