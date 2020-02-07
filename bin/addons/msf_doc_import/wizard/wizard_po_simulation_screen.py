@@ -1772,7 +1772,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                 errors.append(err_msg)
                                 write_vals['type_change'] = 'error'
                     else:
-                        err_msg = _('The FO reference in \'Origin\' is not consistent with this PO')
+                        err_msg = _('The FO/IR reference in \'Origin\' is not consistent with this PO')
                         errors.append(err_msg)
                         write_vals['type_change'] = 'error'
                 else:
@@ -1780,8 +1780,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
             else:
-                if line.simu_id.order_id.po_from_fo:
-                    err_msg = _('The Origin is mandatory for a PO coming from a FO')
+                if line.simu_id.order_id.po_from_fo or line.simu_id.order_id.po_from_ir:
+                    err_msg = _('The Origin is mandatory for a PO coming from a FO or an IR')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
 
@@ -1884,157 +1884,162 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         line_treated = 0.00
         percent_completed = 0.00
         for line in self.browse(cr, uid, ids, context=context):
-            context['purchase_id'] = line.simu_id.order_id.id
-            line_treated += 1
-            percent_completed = int(float(line_treated) / float(nb_lines) * 100)
-            if line.po_line_id and line.type_change != 'ignore' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
-                continue
+            try:
+                context['purchase_id'] = line.simu_id.order_id.id
+                line_treated += 1
+                percent_completed = int(float(line_treated) / float(nb_lines) * 100)
+                if line.po_line_id and line.type_change != 'ignore' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
+                    continue
 
-            if line.type_change in ('ignore', 'error', 'warning'):
-                if line.type_change in  ['warning', 'error']:
+                if line.type_change in ('ignore', 'error', 'warning'):
+                    if line.type_change in  ['warning', 'error']:
+                        job_comment = context.get('job_comment', [])
+                        job_comment.append({
+                            'res_model': 'purchase.order',
+                            'res_id': line.simu_id.order_id.id,
+                            'msg': _('%s: %s on line %s %s') % (line.simu_id.order_id.name, line.type_change, line.in_line_number or line.imp_external_ref, line.error_msg),
+                        })
+                        context['job_comment'] = job_comment
+                    continue
+
+                if line.type_change == 'del' and line.po_line_id:
+                    wf_service.trg_validate(uid, 'purchase.order.line', line.po_line_id.id, 'cancel', cr)
+                    simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
+                    cr.commit()
+                    continue
+
+                line_vals = {
+                    'product_id': line.imp_product_id.id,
+                    'product_uom': line.imp_uom.id,
+                    'price_unit': line.imp_price,
+                    'product_qty': line.imp_qty,
+                }
+                if line.imp_drd:
+                    line_vals['date_planned'] = line.imp_drd
+                if line.imp_project_ref:
+                    line_vals['project_ref'] = line.imp_project_ref
+                if line.imp_origin:
+                    line_vals['origin'] = line.imp_origin
+                if line.imp_sync_order_ref:
+                    line_vals.update({'instance_sync_order_ref': line.imp_sync_order_ref.id, 'display_sync_ref': True})
+                if line.imp_external_ref:
+                    line_vals['external_ref'] = line.imp_external_ref
+                if line.imp_dcd:
+                    line_vals['confirmed_delivery_date'] = line.imp_dcd
+                if line.imp_stock_take_date:
+                    line_vals['stock_take_date'] = line.imp_stock_take_date,
+
+                if line.ad_info:
+                    line_vals['analytic_distribution_id'] = simu_obj.create_ad(cr, uid, line.ad_info, line.simu_id.order_id.partner_id.partner_type, line.simu_id.order_id.currency_id.id, context)
+
+                if line.type_change == 'split' and line.parent_line_id:
+                    # Call the split line wizard
+                    po_line_id = False
+                    if line.parent_line_id and line.parent_line_id.po_line_id:
+                        po_line_id = line.parent_line_id.po_line_id.id
+
+                        new_product_split = False
+                        if line.in_qty == 0 and \
+                                not line.in_product_id and line.imp_product_id and \
+                                line.imp_product_id.id != line.in_product_id.id:
+
+                            # UF-2337: we could enter a case where the import file
+                            # slit with a new product (like if we manually split
+                            # then after change product of the splited line)
+                            new_product_split = True
+                        else:
+                            # REF-97: Fixed the wrong quantity for the original line
+                            # which got split
+                            context['from_simu_screen'] = True
+                            split_id = split_obj.create(cr, uid, {
+                                'purchase_line_id': po_line_id,
+                                'original_qty': line.parent_line_id.in_qty,
+                                'new_line_qty': line.imp_qty
+                            }, context=context)
+
+                            new_po_line_id = split_obj.split_line(cr, uid, split_id,
+                                                                  context=context)
+                            context['from_simu_screen'] = False
+                        if not new_product_split and not new_po_line_id:
+                            continue  # split line has failed or case not to be done
+
+                        line_vals['is_line_split'] = True
+
+                        if new_product_split:
+                            line_vals.update({
+                                'order_id': line.simu_id.order_id.id,
+                                'line_number': line.in_line_number,
+                                'esc_confirmed': True if line.imp_dcd else False,
+                                'original_line_id': line.parent_line_id.po_line_id.id,
+                            })
+                            if 'confirmed_delivery_date' not in line_vals:
+                                line_vals['confirmed_delivery_date'] = False
+
+                            if not line_vals.get('analytic_distribution_id') and line.parent_line_id.po_line_id.analytic_distribution_id:
+                                line_vals.update({
+                                    'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, line.parent_line_id.po_line_id.analytic_distribution_id.id, {}, context=context),
+                                })
+                            if line.parent_line_id.po_line_id.stock_take_date:
+                                line_vals['stock_take_date'] = line.parent_line_id.po_line_id.stock_take_date
+                            split_line_id = line_obj.create(cr, uid, line_vals, context=context)
+                            wf_service.trg_validate(uid, 'purchase.order.line', split_line_id, 'validated', cr)
+                            if line.parent_line_id.po_line_id.linked_sol_id:
+                                line_obj.update_fo_lines(cr, uid, line.parent_line_id.po_line_id.id, context=context)
+                        else:
+                            if line.imp_dcd:
+                                line_vals['esc_confirmed'] = line.esc_conf
+                            line_obj.write(cr, uid, [new_po_line_id], line_vals,
+                                           context=context)
+
+                        # UF-2537 after split reinject ORIGINAL line import qty
+                        # computed in simu for import consistency versus simu
+                        # note: if total qty of splited lines is > to original qty
+                        # the original line qty was truncated in term of qty
+                        # (never be greater than line.parent_line_id.in_qty)
+                        line_obj.write(cr, uid, [line.parent_line_id.po_line_id.id],
+                                       {'product_qty': line.parent_line_id.imp_qty}, context=context)
+
+                        job_comment = context.get('job_comment', [])
+                        job_comment.append({
+                            'res_model': 'purchase.order',
+                            'res_id': line.simu_id.order_id.id,
+                            'msg': _('%s: Line #%s has been split.') % (line.simu_id.order_id.name, line.parent_line_id.po_line_id.line_number),
+                        })
+                        context['job_comment'] = job_comment
+                elif line.type_change == 'new':
+                    line_vals.update({
+                        'order_id': line.simu_id.order_id.id,
+                        'set_as_validated_n': True,
+                        'display_sync_ref': True,
+                        'created_by_vi_import': True,
+                    })
+                    if not line_vals.get('date_planned'):
+                        line_vals['date_planned'] = line.simu_id.order_id.delivery_requested_date
+
+                    if line.esc_conf:
+                        line_vals['esc_confirmed'] = line.esc_conf
+                    new_line_id = line_obj.create(cr, uid, line_vals, context=context)
+                    new_line_numb = line_obj.read(cr, uid, new_line_id, ['line_number'], context=context)['line_number']
                     job_comment = context.get('job_comment', [])
                     job_comment.append({
                         'res_model': 'purchase.order',
                         'res_id': line.simu_id.order_id.id,
-                        'msg': _('%s: %s on line %s %s') % (line.simu_id.order_id.name, line.type_change, line.in_line_number or line.imp_external_ref, line.error_msg),
+                        'msg': _('%s: New line #%s created.') % (line.simu_id.order_id.name, new_line_numb),
                     })
                     context['job_comment'] = job_comment
-                continue
+                elif line.po_line_id:
+                    if line.esc_conf:
+                        line_vals['esc_confirmed'] = line.esc_conf
+                    if context.get('auto_import_ok') and line.simu_id.order_id.stock_take_date:
+                        line_vals['stock_take_date'] = line.simu_id.order_id.stock_take_date
 
-            if line.type_change == 'del' and line.po_line_id:
-                wf_service.trg_validate(uid, 'purchase.order.line', line.po_line_id.id, 'cancel', cr)
+                    line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
                 simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
                 cr.commit()
-                continue
-
-            line_vals = {
-                'product_id': line.imp_product_id.id,
-                'product_uom': line.imp_uom.id,
-                'price_unit': line.imp_price,
-                'product_qty': line.imp_qty,
-            }
-            if line.imp_drd:
-                line_vals['date_planned'] = line.imp_drd
-            if line.imp_project_ref:
-                line_vals['project_ref'] = line.imp_project_ref
-            if line.imp_origin:
-                line_vals['origin'] = line.imp_origin
-            if line.imp_sync_order_ref:
-                line_vals.update({'instance_sync_order_ref': line.imp_sync_order_ref.id, 'display_sync_ref': True})
-            if line.imp_external_ref:
-                line_vals['external_ref'] = line.imp_external_ref
-            if line.imp_dcd:
-                line_vals['confirmed_delivery_date'] = line.imp_dcd
-            if line.imp_stock_take_date:
-                line_vals['stock_take_date'] = line.imp_stock_take_date,
-
-            if line.ad_info:
-                line_vals['analytic_distribution_id'] = simu_obj.create_ad(cr, uid, line.ad_info, line.simu_id.order_id.partner_id.partner_type, line.simu_id.order_id.currency_id.id, context)
-
-            if line.type_change == 'split' and line.parent_line_id:
-                # Call the split line wizard
-                po_line_id = False
-                if line.parent_line_id and line.parent_line_id.po_line_id:
-                    po_line_id = line.parent_line_id.po_line_id.id
-
-                    new_product_split = False
-                    if line.in_qty == 0 and \
-                            not line.in_product_id and line.imp_product_id and \
-                            line.imp_product_id.id != line.in_product_id.id:
-
-                        # UF-2337: we could enter a case where the import file
-                        # slit with a new product (like if we manually split
-                        # then after change product of the splited line)
-                        new_product_split = True
-                    else:
-                        # REF-97: Fixed the wrong quantity for the original line
-                        # which got split
-                        context['from_simu_screen'] = True
-                        split_id = split_obj.create(cr, uid, {
-                            'purchase_line_id': po_line_id,
-                            'original_qty': line.parent_line_id.in_qty,
-                            'new_line_qty': line.imp_qty
-                        }, context=context)
-
-                        new_po_line_id = split_obj.split_line(cr, uid, split_id,
-                                                              context=context)
-                        context['from_simu_screen'] = False
-                    if not new_product_split and not new_po_line_id:
-                        continue  # split line has failed or case not to be done
-
-                    line_vals['is_line_split'] = True
-
-                    if new_product_split:
-                        line_vals.update({
-                            'order_id': line.simu_id.order_id.id,
-                            'line_number': line.in_line_number,
-                            'esc_confirmed': True if line.imp_dcd else False,
-                            'original_line_id': line.parent_line_id.po_line_id.id,
-                        })
-                        if 'confirmed_delivery_date' not in line_vals:
-                            line_vals['confirmed_delivery_date'] = False
-
-                        if not line_vals.get('analytic_distribution_id') and line.parent_line_id.po_line_id.analytic_distribution_id:
-                            line_vals.update({
-                                'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, line.parent_line_id.po_line_id.analytic_distribution_id.id, {}, context=context),
-                            })
-                        if line.parent_line_id.po_line_id.stock_take_date:
-                            line_vals['stock_take_date'] = line.parent_line_id.po_line_id.stock_take_date
-                        split_line_id = line_obj.create(cr, uid, line_vals, context=context)
-                        wf_service.trg_validate(uid, 'purchase.order.line', split_line_id, 'validated', cr)
-                        if line.parent_line_id.po_line_id.linked_sol_id:
-                            line_obj.update_fo_lines(cr, uid, line.parent_line_id.po_line_id.id, context=context)
-                    else:
-                        if line.imp_dcd:
-                            line_vals['esc_confirmed'] = line.esc_conf
-                        line_obj.write(cr, uid, [new_po_line_id], line_vals,
-                                       context=context)
-
-                    # UF-2537 after split reinject ORIGINAL line import qty
-                    # computed in simu for import consistency versus simu
-                    # note: if total qty of splited lines is > to original qty
-                    # the original line qty was truncated in term of qty
-                    # (never be greater than line.parent_line_id.in_qty)
-                    line_obj.write(cr, uid, [line.parent_line_id.po_line_id.id],
-                                   {'product_qty': line.parent_line_id.imp_qty}, context=context)
-
-                    job_comment = context.get('job_comment', [])
-                    job_comment.append({
-                        'res_model': 'purchase.order',
-                        'res_id': line.simu_id.order_id.id,
-                        'msg': _('%s: Line #%s has been split.') % (line.simu_id.order_id.name, line.parent_line_id.po_line_id.line_number),
-                    })
-                    context['job_comment'] = job_comment
-            elif line.type_change == 'new':
-                line_vals.update({
-                    'order_id': line.simu_id.order_id.id,
-                    'set_as_validated_n': True,
-                    'display_sync_ref': True,
-                    'created_by_vi_import': True,
-                })
-                if not line_vals.get('date_planned'):
-                    line_vals['date_planned'] = line.simu_id.order_id.delivery_requested_date
-
-                if line.esc_conf:
-                    line_vals['esc_confirmed'] = line.esc_conf
-                new_line_id = line_obj.create(cr, uid, line_vals, context=context)
-                new_line_numb = line_obj.read(cr, uid, new_line_id, ['line_number'], context=context)['line_number']
-                job_comment = context.get('job_comment', [])
-                job_comment.append({
-                    'res_model': 'purchase.order',
-                    'res_id': line.simu_id.order_id.id,
-                    'msg': _('%s: New line #%s created.') % (line.simu_id.order_id.name, new_line_numb),
-                })
-                context['job_comment'] = job_comment
-            elif line.po_line_id:
-                if line.esc_conf:
-                    line_vals['esc_confirmed'] = line.esc_conf
-                if context.get('auto_import_ok') and line.simu_id.order_id.stock_take_date:
-                    line_vals['stock_take_date'] = line.simu_id.order_id.stock_take_date
-
-                line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
-            simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
-            cr.commit()
+            except Exception as e:  # TODO: Rollback the entire update, not only the line, display the error to the user
+                logging.getLogger('po.simulation.run').warn('Exception', exc_info=True)
+                cr.rollback()
+                raise e
 
         if ids:
             return simu_obj.go_to_simulation(cr, uid, line.simu_id.id, context=context)

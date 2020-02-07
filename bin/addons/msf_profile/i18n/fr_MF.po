@@ -33127,8 +33127,8 @@ msgstr "Vues"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1492
 #, python-format
-msgid "The Origin is mandatory for a PO coming from a FO"
-msgstr "The Origin is mandatory for a PO coming from a FO"
+msgid "The Origin is mandatory for a PO coming from a FO or an IR"
+msgstr "L'Origine est obligatoire pour un BC venant d'une CT ou d'une DI"
 
 #. module: kit
 #: code:addons/kit/kit.py:807
@@ -62490,8 +62490,8 @@ msgstr "Ligne %s du fichier Excel a été ajoutée au fichier des lignes en erre
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1503
 #, python-format
-msgid "The FO reference in 'Origin' is not consistent with this PO"
-msgstr "The FO reference in 'Origin' is not consistent with this PO"
+msgid "The FO/IR reference in 'Origin' is not consistent with this PO"
+msgstr "La référence de la CT/DI dans 'Origine' n'est pas cohérente avec ce BC"
 
 #. module: msf_partner
 #: code:addons/msf_partner/partner.py:588
