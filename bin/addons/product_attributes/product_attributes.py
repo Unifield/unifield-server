@@ -923,9 +923,13 @@ class product_attributes(osv.osv):
         'function_value': fields.text(string='Function', translate=True),
         'standard_ok': fields.selection(
             selection=[
-                ('True', 'Standard'),
-                ('False', 'Non-standard'),
+                #('True', 'Standard'),
+                #('False', 'Non-standard'),
+                ('standard', 'Standard'),
+                ('non_standard', 'Non-standard'),
+                ('non_standard_local', 'Non-standard Local'),
             ],
+            size=20,
             string='Standardization Level',
             required=True,
         ),
@@ -967,7 +971,7 @@ class product_attributes(osv.osv):
         'restricted_country': False,
         'sterilized': 'no',
         'single_use': 'no',
-        'standard_ok': 'False',
+        'standard_ok': 'non_standard',
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
@@ -1247,6 +1251,7 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
 
+        self.clean_standard(cr, uid, vals, context)
         def update_existing_translations(model, res_id, xmlid):
             # If we are in the creation of product by sync. engine, attach the already existing translations to this product
             if context.get('sync_update_execution'):
@@ -1346,6 +1351,22 @@ class product_attributes(osv.osv):
 
         return converted
 
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
+        # to allow True / False in standard_ok for old sync updates
+
+        fg = super(product_attributes, self).fields_get(cr, uid, fields=fields, context=context, with_uom_rounding=with_uom_rounding)
+        if context and context.get('sync_update_execution') and  fg.get('standard_ok', {}).get('selection'):
+            selection = fg['standard_ok']['selection'][:]
+            selection += [('False', 'Non Standard (deprecated)'), ('True', 'Standard (deprecated)')]
+            fg['standard_ok']['selection'] = selection
+        return fg
+
+    def clean_standard(self, cr, uid, vals, context):
+        if vals and 'standard_ok' in vals:
+            if vals['standard_ok'] == 'True':
+                vals['standard_ok'] = 'standard'
+            elif vals['standard_ok'] == 'False':
+                vals['standard_ok'] = 'non_standard'
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
@@ -1360,6 +1381,7 @@ class product_attributes(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        self.clean_standard(cr, uid, vals, context)
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']

@@ -500,5 +500,8 @@
             <field name="method">us_6684_push_backup</field>
         </record>
 
+        <record id="us_7024_update_standard" model="patch.scripts">
+            <field name="method">us_7024_update_standard</field>
+        </record>
     </data>
 </openerp>
