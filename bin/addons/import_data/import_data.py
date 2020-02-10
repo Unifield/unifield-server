@@ -480,7 +480,7 @@ class import_data(osv.osv_memory):
                         for to_remove in ['standard_price', 'perishable', 'batch_management']:
                             if to_remove in data:
                                 del data[to_remove]
-                        impobj.write(cr, uid, ids_to_update, data)
+                        impobj.write(cr, uid, ids_to_update, data, context=context)
                         nb_update_success += 1
                         cr.commit()
                     else:

@@ -278,6 +278,8 @@ class product_product(osv.osv):
     _inherit = 'product.product'
 
     def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         import_product_qty = 'import_product_qty'
         if len(vals) == 1 and import_product_qty in vals:
             self._write_imp_product_qty(cr, uid, ids, field_name=import_product_qty, values=vals[import_product_qty], args=None, context=context)
