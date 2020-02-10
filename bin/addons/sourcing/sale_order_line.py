@@ -1922,7 +1922,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         """
         if not context:
             context = {}
-        wiz_obj = self.pool.get('procurement.purchase.compute.all')
         wf_service = netsvc.LocalService("workflow")
 
         if new_cursor:
@@ -1967,11 +1966,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 self.pool.get('sale.order.sourcing.progress').write(cr, uid, prog_ids, {
                     'error': misc.ustr(e),
                 }, context=context)
-
-        if run_scheduler:
-            # Run Auto POs creation scheduler
-            wiz_id = wiz_obj.create(cr, uid, {}, context=context)
-            wiz_obj.procure_calculation_purchase(cr, uid, wiz_id, context=context)
 
         if new_cursor:
             cr.commit()

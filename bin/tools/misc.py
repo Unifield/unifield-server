@@ -74,6 +74,11 @@ SKIPPED_ELEMENT_TYPES = (etree._Comment, etree._ProcessingInstruction, etree.Com
 
 rsync_lock = threading.RLock()
 
+def _(d):
+    # just here to export the month when trans. file is generated
+    return d
+month_abbr = ['', _('Jan'), _('Feb'), _('Mar'), _('Apr'), _('May'), _('Jun'), _('Jul'), _('Aug'), _('Sep'), _('Oct'), _('Nov'), _('Dec')]
+
 # initialize a database with base/base.sql
 def init_db(cr):
     import addons
@@ -1946,3 +1951,8 @@ def get_fake(self, cr, uid, ids, *a, **b):
     for x in ids:
         ret[x] = False
     return ret
+
+def get_traceback(error):
+    import sys, traceback
+    tb_s = reduce(lambda x, y: x+y, traceback.format_exception(*sys.exc_info()))
+    return ustr(tb_s)

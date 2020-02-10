@@ -458,6 +458,15 @@ class stock_move(osv.osv):
         return result
 
 
+    def _get_picking_with_sysint_name(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        for x in self.browse(cr, uid, ids, fields_to_fetch=['picking_id', 'linked_incoming_move'], context=context):
+            if x.linked_incoming_move:
+                res[x.id] = '%s [%s]' % (x.linked_incoming_move.picking_id.name, x.picking_id.name)
+            else:
+                res[x.id] = x.picking_id.name
+        return res
+
     _columns = {
         'name': fields.char('Name', size=64, required=True, select=True),
         'priority': fields.selection([('0', 'Not urgent'), ('1', 'Urgent')], 'Priority'),
@@ -527,7 +536,6 @@ class stock_move(osv.osv):
                                             selection=[('allocated', 'Allocated'),
                                                        ('unallocated', 'Unallocated'),
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
-        'procurements': fields.one2many('procurement.order', 'move_id', 'Procurements'),
         'purchase_line_id': fields.many2one('purchase.order.line', 'Purchase Order Line', ondelete='set null', select=True, readonly=True),
         'picking_subtype': fields.related('picking_id', 'subtype', string='Picking Subtype', type='selection', selection=[('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')],),
         'parent_doc_id': fields.function(_get_parent_doc, method=True, type='char', string='Picking', readonly=True),
@@ -626,6 +634,7 @@ class stock_move(osv.osv):
         'selected_number': fields.integer('Nb. Parcels to Ship'),
         'volume_set': fields.boolean('Volume set at PLL stage', readonly=1),
         'weight_set': fields.boolean('Weight set at PLL stage', readonly=1),
+        'picking_with_sysint_name': fields.function(_get_picking_with_sysint_name, method=1, string='Picking IN [SYS-INT] name', type='char'),
     }
 
     def _check_asset(self, cr, uid, ids, context=None):
@@ -879,12 +888,43 @@ class stock_move(osv.osv):
             return True
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context= {}
         if vals.get('from_pack') or vals.get('to_pack'):
             vals['integrity_error'] = 'empty'
         vals.update({
             'to_correct_ok': False,
             'text_error': False,
         })
+        if 'date_expected' in vals and not context.get('chained'):
+            # TODO JFB RR: check method executed 2X
+            sys_int_ids = self.search(cr, uid, [('linked_incoming_move', 'in', ids)], context=context)
+            if sys_int_ids:
+                chained_ctx = context.copy()
+                chained_ctx['chained'] = True
+                self.write(cr, uid, sys_int_ids, {'date_expected': vals['date_expected']}, context=chained_ctx)
+            else:
+                # get all pol ids linked to internal, intersection, mission partners
+                cr.execute('''
+                    select sol.id
+                        from purchase_order_line pol
+                            cross join sale_order_line sol
+                            cross join sale_order so
+                            cross join stock_move m
+                        where
+                            sol.id = pol.sale_order_line_id and
+                            so.id = sol.order_id and
+                            m.purchase_line_id = pol.id and
+                            so.partner_type in ('internal', 'section', 'intermission') and
+                            m.type = 'in' and
+                            m.date_expected != %s and
+                            m.id in %s and
+                            sol.state = 'confirmed'
+                ''', (vals['date_expected'], tuple(ids)))
+                for x in cr.fetchall():
+                    self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', x[0], {},
+                                                                                          'purchase.order.line.update_date_expected', False, check_identifier=False, context=context, extra_arg={'date_expected': vals['date_expected']}, force_domain=True)
+
         return  super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):
@@ -1413,12 +1453,6 @@ class stock_move(osv.osv):
 
                 self.write(cr, uid, [move['id']], qty_data[move['id']].copy(), context=context)
 
-                # Update all link objects
-                proc_ids = self.pool.get('procurement.order').search(cr, uid,
-                                                                     [('move_id', '=', move_data['id'])], order='NO_ORDER',context=context)
-                if proc_ids:
-                    self.pool.get('procurement.order').write(cr, uid, proc_ids, {'move_id': move['id']}, context=context)
-
                 pol_ids = self.pool.get('purchase.order.line').search(cr, uid,
                                                                       [('move_dest_id', '=', move_data['id'])],
                                                                       order='NO_ORDER', context=context)
@@ -1556,7 +1590,6 @@ class stock_move(osv.osv):
     #
     def action_cancel(self, cr, uid, ids, context=None):
         '''
-            Confirm or check the procurement order associated to the stock move
         '''
         pol_obj = self.pool.get('purchase.order.line')
         pick_obj = self.pool.get('stock.picking')
@@ -2359,10 +2392,6 @@ class stock_move(osv.osv):
         ids = isinstance(ids, (int, long)) and [ids] or ids
 
         for move_id in ids:
-            proc_ids = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', move_id)], context=context)
-            if proc_ids:
-                self.pool.get('procurement.order').write(cr, uid, proc_ids, {'move_id': new_id}, context=context)
-
             pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('move_dest_id', '=', move_id)], context=context)
             if pol_ids:
                 self.pool.get('purchase.order.line').write(cr, uid, pol_ids, {'move_dest_id': new_id}, context=context)

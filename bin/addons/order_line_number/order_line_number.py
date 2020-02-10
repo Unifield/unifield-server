@@ -312,39 +312,6 @@ class purchase_order_line(osv.osv):
 purchase_order_line()
 
 
-class procurement_order(osv.osv):
-    '''
-    inherit po_line_values_hook
-    '''
-    _inherit = 'procurement.order'
-
-    def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
-
-        - allow to modify the data for purchase order line creation
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        # objects
-        po_obj = self.pool.get('purchase.order')
-        procurement = kwargs['procurement']
-
-        line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-        # if we are updating the sale order from the corresponding on order purchase order
-        # the purchase order to merge the new line to is locked and provided in the procurement
-        # we split a line or dekitting, we keep original line_number if the Po does *not* allow_resequencing: behavior 2
-        # if it allows, we use behavior 1
-        if procurement.so_back_update_dest_po_id_procurement_order:
-            if not po_obj.allow_resequencing(cr, uid, procurement.so_back_update_dest_po_id_procurement_order, context=context):
-                line.update({'line_number': procurement.so_back_update_dest_pol_id_procurement_order.line_number})
-        return line
-
-procurement_order()
-
-
 class supplier_catalogue(osv.osv):
 
     _inherit = 'supplier.catalogue'

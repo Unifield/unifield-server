@@ -159,6 +159,7 @@
                     <field name="consumption_to" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" on_change="period_change(consumption_from, consumption_to, consumption_type)" />
                     <separator colspan="4" string="Location" />
                     <field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
+                    <field name="segment_id" readonly="1" attrs="{'invisible': [('segment_id', '=', False)]}"/>
                 <newline />
                 <field name="input_output_ok" attrs="{'invisible': [('location_id', '!=', False)]}" />
                     <separator colspan="4" string="Actions" />
@@ -178,6 +179,7 @@
                     <separator colspan="4" string="Location" />
                 <group colspan="2" col="2">
                         <field name="location_id" readonly="1" attrs="{'invisible': [('location_id', '=', False)]}"/>
+                        <field name="segment_id" readonly="1" attrs="{'invisible': [('segment_id', '=', False)]}"/>
                         <field name="msf_instance" readonly="1" attrs="{'invisible': [('location_id', '!=', False)]}"/>
                 </group>
                 <field name="input_output_ok" readonly="1" />

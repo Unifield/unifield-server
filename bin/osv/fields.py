@@ -84,6 +84,7 @@ class _column(object):
         self.priority = priority
         self.change_default = change_default
         self.ondelete = ondelete
+        self.null_value = args.get('null_value')
         self.translate = translate
         self._domain = domain
         self._context = context
@@ -210,6 +211,22 @@ class float(_column):
             # new customized fields
             computation = self.digits_compute(cr, computation=True)
             self.computation = computation
+
+class float_null(float):
+    _type = 'float'
+    _with_null = True
+    _symbol_c = '%s'
+    _symbol_f = lambda x: None if x is False or x is None else __builtin__.float(x or  0.0)
+    _symbol_set = (_symbol_c, _symbol_f)
+    _symbol_get = lambda self,x: None if x is False or x is None else x or 0.0
+
+class integer_null(integer):
+    _type = 'integer'
+    _symbol_c = '%s'
+    _with_null = True
+    _symbol_f = lambda x: None if x is False or x is None else int(x or 0)
+    _symbol_set = (_symbol_c, _symbol_f)
+    _symbol_get = lambda self,x: None if x is False or x is None else x or 0
 
 
 class date(_column):
@@ -498,10 +515,15 @@ class one2many(_column):
         for id in ids:
             res[id] = []
 
-        ids2 = obj.pool.get(self._obj).search(cr, user, self._domain + [(self._fields_id, 'in', ids)], limit=self._limit, context=context)
-        for r in obj.pool.get(self._obj)._read_flat(cr, user, ids2, [self._fields_id], context=context, load='_classic_write'):
-            if r[self._fields_id] in res:
-                res[r[self._fields_id]].append(r['id'])
+
+        if self._obj in ['replenishment.segment.line', 'replenishment.order_calc.line', 'replenishment.inventory.review.line']:
+            for _id in ids:
+                res[_id] = obj.pool.get(self._obj).search(cr, user, self._domain + [(self._fields_id, '=', _id)], limit=self._limit, context=context)
+        else:
+            ids2 = obj.pool.get(self._obj).search(cr, user, self._domain + [(self._fields_id, 'in', ids)], limit=self._limit, context=context)
+            for r in obj.pool.get(self._obj)._read_flat(cr, user, ids2, [self._fields_id], context=context, load='_classic_write'):
+                if r[self._fields_id] in res:
+                    res[r[self._fields_id]].append(r['id'])
         return res
 
     def set(self, cr, obj, id, field, values, user=None, context=None):

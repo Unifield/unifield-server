@@ -1550,6 +1550,7 @@ class product_attributes(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # TODO JFB RR: constraint
         location_obj = self.pool.get('stock.location')
         po_line_obj = self.pool.get('purchase.order.line')
         tender_line_obj = self.pool.get('tender.line')
@@ -1558,14 +1559,6 @@ class product_attributes(osv.osv):
         kit_obj = self.pool.get('composition.item')
         inv_obj = self.pool.get('stock.inventory.line')
         in_inv_obj = self.pool.get('initial.stock.inventory.line')
-        auto_supply_obj = self.pool.get('stock.warehouse.automatic.supply')
-        auto_supply_line_obj = self.pool.get('stock.warehouse.automatic.supply.line')
-        cycle_obj = self.pool.get('stock.warehouse.order.cycle')
-        cycle_line_obj = self.pool.get('stock.warehouse.order.cycle.line')
-        threshold_obj = self.pool.get('threshold.value')
-        threshold_line_obj = self.pool.get('threshold.value.line')
-        orderpoint_obj = self.pool.get('stock.warehouse.orderpoint')
-        orderpoint_line_obj = self.pool.get('stock.warehouse.orderpoint.line')
         invoice_obj = self.pool.get('account.invoice.line')
 
         error_obj = self.pool.get('product.deactivation.error')
@@ -1815,43 +1808,6 @@ class product_attributes(osv.osv):
                         'res_id': wizard_id,
                         'target': 'new',
                         'context': context}
-
-        # Remove the replenishment rules associated to this product
-        # Automatic supply
-        auto_line_ids = auto_supply_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
-        for auto in auto_supply_line_obj.browse(cr, uid, auto_line_ids, context=context):
-            if len(auto.supply_id.line_ids) == 1:
-                auto_supply_obj.unlink(cr, uid, [auto.supply_id.id], context=context)
-            else:
-                auto_supply_line_obj.unlink(cr, uid, [auto.id], context=context)
-
-        # Order cycle
-        cycle_ids = cycle_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
-        for cycle in cycle_line_obj.browse(cr, uid, cycle_ids, context=context):
-            if len(cycle.order_cycle_id.product_line_ids) == 1:
-                cycle_obj.unlink(cr, uid, [cycle.order_cycle_id.id], context=context)
-            else:
-                cycle_line_obj.unlink(cr, uid, [cycle.id], context=context)
-
-        # Threshold value
-        threshold_ids = threshold_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
-        for threshold in threshold_line_obj.browse(cr, uid, threshold_ids, context=context):
-            if len(threshold.threshold_value_id.line_ids) == 1:
-                threshold_obj.unlink(cr, uid, [threshold.threshold_value_id.id], context=context)
-            else:
-                threshold_line_obj.unlink(cr, uid, [threshold.id], context=context)
-
-        # Minimum stock rules
-        orderpoint_line_ids = orderpoint_line_obj.search(cr, uid,
-                                                         [('product_id', 'in', ids)], context=context)
-        for orderpoint_line in orderpoint_line_obj.browse(cr, uid,
-                                                          orderpoint_line_ids, context=context):
-            if len(orderpoint_line.supply_id.line_ids) == 1:
-                orderpoint_obj.unlink(cr, uid, [orderpoint_line.supply_id.id],
-                                      context=context)
-            else:
-                orderpoint_line_obj.unlink(cr, uid, [orderpoint_line.id],
-                                           context=context)
 
         if context.get('sync_update_execution', False):
             context['bypass_sync_update'] = True

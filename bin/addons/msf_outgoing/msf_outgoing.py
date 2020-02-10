@@ -2741,8 +2741,6 @@ class stock_picking(osv.osv):
         moves_states = {}
         pick_to_check = set()
 
-        wf_service = netsvc.LocalService("workflow")
-
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.subtype == 'standard':
                 raise osv.except_osv(
@@ -2849,9 +2847,6 @@ class stock_picking(osv.osv):
                                 ], order='NO_ORDER', limit=1, context=context)
                             if other_linked_moves:
                                 move_obj.update_linked_documents(cr, uid, move.id, other_linked_moves[0], context=context)
-                                proc_ids = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', other_linked_moves[0])], context=context)
-                                for proc_id in proc_ids:
-                                    wf_service.trg_write(uid, 'procurement.order', proc_id, cr)
                         move.unlink(force=True)
 #                        move.action_done(context=context)
                 elif move.product_qty != 0.00:
@@ -4612,27 +4607,6 @@ class pack_family_memory(osv.osv):
 
 pack_family_memory()
 
-
-class procurement_order(osv.osv):
-    '''
-    procurement order workflow
-    '''
-    _inherit = 'procurement.order'
-
-    def _hook_check_mts_on_message(self, cr, uid, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the _check_make_to_stock_product method from procurement>procurement.py>procurement.order
-
-        - allow to modify the message written back to procurement order
-        '''
-        message = super(procurement_order, self)._hook_check_mts_on_message(cr, uid, context=context, *args, **kwargs)
-        procurement = kwargs['procurement']
-        if procurement.move_id.picking_id.state == 'draft' and procurement.move_id.picking_id.subtype == 'picking':
-            message = _("Shipment Process in Progress.")
-        return message
-
-procurement_order()
 
 class stock_reserved_products(osv.osv):
     _auto = False
