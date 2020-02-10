@@ -106914,3 +106914,13 @@ msgstr "Composant/Produit"
 #: field:composition.item,item_kit_name:0
 msgid "Kit Product Code"
 msgstr "Code Produit du Kit"
+
+#. module: account_override
+#: field:account.invoice,refunded_invoice_id:0
+msgid "Refunded Invoice"
+msgstr "Facture Remboursée"
+
+#. module: account_override
+#: help:account.invoice,refunded_invoice_id:0
+msgid "The refunded invoice which has generated this document"
+msgstr "La facture remboursée qui a généré ce document"

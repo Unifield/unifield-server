@@ -255,6 +255,8 @@ class account_invoice(osv.osv):
         'is_merged_by_account': fields.boolean("Is merged by account"),
         'partner_type': fields.related('partner_id', 'partner_type', string='Partner Type', type='selection',
                                        selection=PARTNER_TYPE, readonly=True, store=False),
+        'refunded_invoice_id': fields.many2one('account.invoice', string='Refunded Invoice', readonly=True,
+                                               help='The refunded invoice which has generated this document'),  # 2 inv types for Refund Modify
     }
 
     _defaults = {
