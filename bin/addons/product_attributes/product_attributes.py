@@ -832,6 +832,8 @@ class product_attributes(osv.osv):
         'state_ud': fields.selection(
             selection=[
                 ('valid', 'Valid'),
+                ('outdated', 'Outdated'),
+                ('discontinued', 'Discontinued'),
                 ('phase_out', 'Phase Out'),
                 ('stopped', 'Stopped'),
                 ('archived', 'Archived'),
