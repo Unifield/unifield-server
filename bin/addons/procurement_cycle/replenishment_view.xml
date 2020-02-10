@@ -277,11 +277,11 @@
 
                         </field>
                     </group>
-                    <group colspan="4" name="import" string="Import Lines" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                    <group colspan="4" col="8" name="import" string="Import Lines" attrs="{'invisible': [('state', '!=', 'draft')]}">
                         <field name="file_to_import" colspan="2" />
-                        <button name="import_lines" string="Import Lines" type="object" colspan="2" icon="gtk-save" />
-                        <button name="add_multiple_lines" type="object" icon="gtk-add" string="Add multiple products" colspan="2" />
-                        <button name="delete_multiple_lines" type="object" icon="gtk-cancel" string="Delete selected lines" colspan="2" confirm="Do you want to delete these %%(number_selected)s line(s) ?"/>
+                        <button name="import_lines" string="Import Lines" type="object" colspan="3" icon="gtk-dnd" />
+                        <button name="delete_multiple_lines" type="object" icon="gtk-remove" string="Delete selected lines" colspan="3" confirm="Do you want to delete these %%(number_selected)s line(s) ?"/>
+                        <button name="add_multiple_lines" type="object" icon="gtk-add" string="Add multiple products" colspan="8" />
                     </group>
                     <notebook>
                         <page string="Products">

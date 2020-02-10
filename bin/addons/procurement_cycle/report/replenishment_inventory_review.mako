@@ -300,6 +300,18 @@
    <Interior/>
    <NumberFormat ss:Format="Fixed"/>
   </Style>
+  <Style ss:ID="s147i">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+   <Interior/>
+  <NumberFormat ss:Format="0"/>
+  </Style>
   <Style ss:ID="s148">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
    <Borders>
@@ -859,7 +871,7 @@
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('(RR-AMC) Projected stock')|x}</Data></Cell>
     <Cell ss:StyleID="s132"><Data ss:Type="String">${_('Qty of Projected Expiries before consumption')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Qty expiring within period')|x}</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Open Loan on product?')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Open Loan on product (Yes/No)')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Sleeping stock Qty')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${getSel(objects[0], 'time_unit')|x} ${_('of supply (RR-AMC)')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${getSel(objects[0], 'time_unit')|x} ${_('of supply (RR-FMC)')|x}</Data></Cell>
@@ -881,7 +893,7 @@
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.product_id.default_code|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.product_id.name|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.primay_product_list or '')|x}</Data></Cell>
-    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.warning or ''|x}</Data></Cell>
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.warning or ''|xn}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.segment_ref_name|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.rule=='cycle' and 'PAS' or '')|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${getSel(line, 'rule')|x}</Data></Cell>
@@ -930,7 +942,7 @@
             <Data ss:Type="Number">${line.buffer_qty}</Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.valid_rr_fmc and _('Y') or _('N') }</Data></Cell>
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.valid_rr_fmc and _('Yes') or _('No') }</Data></Cell>
     <Cell ss:StyleID="s141">
         % if line.rr_fmc_avg:
             <Data ss:Type="Number">${line.rr_fmc_avg}</Data>
@@ -976,7 +988,7 @@
             <Data ss:Type="Number">${line.total_expired_qty}</Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.open_loan and _('Y') or _('N') }</Data></Cell>
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.open_loan and _('Yes') or _('No') }</Data></Cell>
     <Cell ss:StyleID="s141">
         % if line.sleeping_qty:
             <Data ss:Type="Number">${line.sleeping_qty}</Data>
@@ -992,7 +1004,7 @@
             <Data ss:Type="Number">${line.unit_of_supply_fmc}</Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s147">
+    <Cell ss:StyleID="s147i">
         % if line.qty_lacking:
             <Data ss:Type="Number">${line.qty_lacking}</Data>
         % endif

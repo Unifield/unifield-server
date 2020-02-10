@@ -436,7 +436,7 @@
    <Row ss:AutoFitHeight="0" ss:Height="15.75">
     <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.default_code|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.name|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.in_main_list and _('Y') or _('N')}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.in_main_list and _('Yes') or _('No')}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.real_stock}</Data></Cell>
     <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.pipeline_qty}</Data></Cell>
     <Cell ss:StyleID="s97d">
@@ -458,7 +458,7 @@
             % endif
         </Cell>
     % endif
-    <Cell ss:StyleID="s97"><Data ss:Type="String">${prod.open_loan and _('Y') or _('N')}</Data></Cell>
+    <Cell ss:StyleID="s97"><Data ss:Type="String">${prod.open_loan and _('Yes') or _('No')}</Data></Cell>
     % if objects[0].rule == 'cycle':
         <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.expired_qty_before_cons}</Data></Cell>
     % else:
@@ -473,7 +473,7 @@
     % endif
     </Cell>
     <Cell ss:StyleID="sw97"><Data ss:Type="String">${(prod.order_qty_comment or '')|x}</Data></Cell>
-    <Cell ss:StyleID="sw97"><Data ss:Type="String">${(prod.warning or '')|x}</Data></Cell>
+    <Cell ss:StyleID="sw97"><Data ss:Type="String">${(prod.warning or '')|xn}</Data></Cell>
 
    </Row>
    % endfor

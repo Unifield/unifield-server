@@ -813,7 +813,7 @@ class replenishment_segment(osv.osv):
                         'unit_of_supply_fmc': False if seg.rule !='cycle' else month_of_supply * coeff,
                         'date_preparing': seg.date_preparing,
                         'date_next_order_validated': seg.date_next_order_validated,
-                        'date_next_order_rdd': seg.date_next_order_received_modified or seg.date_next_order_received,
+                        'date_next_order_rdd': False if seg.rule !='cycle' else seg.date_next_order_received_modified or seg.date_next_order_received,
                         'internal_lt': seg.internal_lt,
                         'external_lt': seg.external_lt,
                         'total_lt': seg.total_lt,
@@ -1881,7 +1881,7 @@ class replenishment_order_calc_line(osv.osv):
         'proposed_order_qty': fields.float('Proposed Order Qty', readonly=1, related_uom='uom_id'),
         'agreed_order_qty': fields.float_null('Agreed Order Qty', related_uom='uom_id'),
         'order_qty_comment': fields.char('Order Qty Comment', size=512),
-        'warning': fields.char('Warning', size=512, readonly='1'),
+        'warning': fields.text('Warning', readonly='1'),
     }
 
 replenishment_order_calc_line()
@@ -1983,7 +1983,7 @@ class replenishment_inventory_review_line(osv.osv):
         'projected_stock_qty_amc': fields.float_null('RR-AMC Projected Stock Level', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
         'unit_of_supply_amc': fields.float_null('Days/weeks/months of supply (RR-AMC)', null_value='N/A'),
         'unit_of_supply_fmc': fields.float_null('Days/weeks/months of supply (RR-FMC)', null_value='N/A'),
-        'warning': fields.char('Warning', size=512, readonly='1'), # OC
+        'warning': fields.text('Warning', readonly='1'), # OC
         'open_loan': fields.boolean('Open Loan', readonly=1), # OC
         'qty_lacking': fields.float_null('Qty lacking before next ETA', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
         'qty_lacking_needed_by': fields.date('Qty lacking needed by', readonly=1), # OC
