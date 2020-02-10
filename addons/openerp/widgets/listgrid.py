@@ -455,6 +455,11 @@ class List(TinyWidget):
                     buttons += [Button(**attrs)]
                     headers.append(("button", len(buttons)))
             elif node.nodeName == 'separator':
+                attrs = node_attributes(node)
+                if attrs.get('invisible', False):
+                    invisible = eval(attrs['invisible'], {'context':self.context})
+                    if invisible:
+                        continue
                 headers += [("separator", {'type': 'separator', 'string': '|', 'not_sortable': 1})]
             elif node.nodeName == 'field':
                 attrs = node_attributes(node)
@@ -654,7 +659,15 @@ class Selection(Char):
 
 class Float(Char):
 
+    def __init__(self, **attrs):
+        self.with_null = attrs.get('with_null')
+        self.null_value = attrs.get('null_value', '')
+        super(Float, self).__init__( **attrs)
+
     def get_text(self):
+        if self.with_null and self.value is False:
+            return self.null_value
+
         digits = self.attrs.get('digits', (16,2))
         if isinstance(digits, basestring):
             digits = eval(digits)
@@ -689,12 +702,19 @@ class FloatTime(Char):
 
 class Int(Char):
 
+    def __init__(self, **attrs):
+        self.with_null = attrs.get('with_null')
+        self.null_value = attrs.get('null_value', '')
+        super(Int, self).__init__( **attrs)
+
     def get_text(self):
         if self.value:
             if isinstance(self.value, (unicode, str)):
                 return ast.literal_eval(self.value)
             return int(self.value)
 
+        elif self.with_null and (self.value is False or self.value is None):
+            return self.null_value
         return 0
 
 class ProgressBar(Char):

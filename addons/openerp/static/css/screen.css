@@ -2414,3 +2414,44 @@ img.no_image {
     background: rgba(184, 222, 130, .6);
     white-space: pre-line;
 }
+
+#rr-chrono table, #rr-chrono th, #rr-chrono td {
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  width: 400px;
+  padding: 20px;
+}
+
+#rr-chrono .rr-text td{
+  font-size: 11px !important;
+  font-weight: normal !important;
+  padding: 0 0 15px 0 !important;
+  vertical-align: top;
+}
+
+#rr-chrono .tlt {
+  background-color: #00B894;
+}
+#rr-chrono .ilt {
+  background-color: #74B9FF;
+}
+#rr-chrono .elt {
+  background-color: #E17055;
+}
+#rr-chrono .oclt {
+  width: 8%;
+  background-color: #00CEC9;
+}
+#rr-chrono .ovlt {
+  width: 8%;
+  background-color: #A29BF3;
+}
+#rr-chrono .slt {
+  width: 70%;
+  background-color: #E84393;
+}
+#rr-chrono .hlt {
+  width: 6%;
+  background-color: #55EFC4;
+}

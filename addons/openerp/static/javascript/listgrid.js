@@ -298,7 +298,7 @@ MochiKit.Base.update(ListView.prototype, {
 
 // pagination & reordering
 MochiKit.Base.update(ListView.prototype, {
-    
+
     update_filter: function() {
 
         var filter = $(openobject.dom.get(this.name + '_filter'))[0];
@@ -318,6 +318,54 @@ MochiKit.Base.update(ListView.prototype, {
 
         terp_domains.value = selected_filter_domain;
 
+        if(this.ids.length) {
+            this.reload();
+        }
+    },
+
+    clear_filter: function() {
+        updated = false;
+        jQuery('#'+this.name + '_o2m_filter input').each(function() {
+            if (this.value) {
+                this.value = '';
+                updated = true;
+            }
+        });
+        jQuery('#'+this.name + '_o2m_filter select').each(function() {
+            j_this = jQuery(this);
+            if (j_this.val()) {
+                j_this.val(0);
+                updated = true;
+            }
+        });
+        if (updated) {
+            this.update_o2m_filter();
+        }
+    },
+    update_o2m_filter: function() {
+
+        var terp_domains = openobject.dom.get(this.name + '/_terp_domain');
+        dom = new Array()
+
+        jQuery('#'+this.name + '_o2m_filter input').each(function() {
+            if (this.value) {
+                dom.push("('"+jQuery(this).attr('field')+"', 'ilike', '"+this.value+"')")
+            }
+        });
+        jQuery('#'+this.name + '_o2m_filter select').each(function() {
+            j_this = jQuery(this);
+            if (j_this.val()) {
+                var val = j_this.val();
+                if (j_this.attr('kind') == 'boolean' && val == 'f') {
+                    dom.push("('"+j_this.attr('field')+"', '=', False)")
+                }
+                else {
+                    dom.push("('"+j_this.attr('field')+"', '=', '"+val+"')")
+                }
+            }
+        });
+        dom_txt = '['+ dom.join(',')+']';
+        terp_domains.value = dom_txt;
         if(this.ids.length) {
             this.reload();
         }
@@ -937,6 +985,21 @@ MochiKit.Base.update(ListView.prototype, {
 
         var current_id = edit_inline ? (parseInt(edit_inline) || 0) : edit_inline;
 
+
+        o2m_filter = {}
+        jQuery('#'+this.name + '_o2m_filter input').each(function() {
+            if (this.value) {
+                o2m_filter[this.id] = this.value;
+            }
+        });
+        jQuery('#'+this.name + '_o2m_filter select').each(function() {
+            j_this = jQuery(this);
+            if (j_this.val()) {
+                o2m_filter[this.id] = j_this.val();
+            }
+        });
+
+
         var args = jQuery.extend(this.makeArgs(), {
             _terp_source: this.name,
             _terp_edit_inline: edit_inline,
@@ -1148,7 +1211,9 @@ MochiKit.Base.update(ListView.prototype, {
                     })
                 }
 
-
+                for(var o2m_filed_filter in o2m_filter) {
+                    $('#'+o2m_filed_filter).val(o2m_filter[o2m_filed_filter]);
+                }
                 updateConcurrencyInfo(obj.concurrency_info || {});
             }
         });

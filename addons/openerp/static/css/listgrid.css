@@ -136,6 +136,10 @@
     width: 100%;
 }
 
+.pager-table td {
+    border: 0px !important;
+}
+
 .gridview .pagerbar .pagerbar-cell .pager-table .pager-cell {
     padding: 0;
     white-space: nowrap;
@@ -202,6 +206,14 @@ strong#total_sum_label {
     padding: 0 1px;
     color: #7D7979;
     font-size: 0.9em;
+}
+
+.o2m_header_filter td {
+    padding-right: 10px;
+    padding-left: 4px;
+}
+.o2m_header_filter img {
+    cursor: pointer;
 }
 /**
  * vim: sts=4 st=4 et

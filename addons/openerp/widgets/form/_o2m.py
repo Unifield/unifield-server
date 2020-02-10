@@ -82,7 +82,7 @@ class O2M(TinyInputWidget):
     template = "/openerp/widgets/form/templates/one2many.mako"
     params = ['id', 'parent_id', 'new_attrs', 'pager_info', 'switch_to',
               'default_get_ctx', 'source', 'view_type', 'default_value',
-              'edition', 'readonly_before_state', 'editable_style']
+              'edition', 'readonly_before_state', 'editable_style', 'scroll']
     member_widgets = ['screen']
 
     form = None
@@ -123,6 +123,7 @@ class O2M(TinyInputWidget):
 
         view = attrs.get('views', {})
         mode = str(attrs.get('mode', 'tree,form')).split(',')
+        self.scroll = attrs.get('scroll')
         view['uom_rounding'] = attrs.get('uom_rounding', {})
         self.view = view
         view_mode = mode

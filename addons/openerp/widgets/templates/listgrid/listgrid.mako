@@ -133,7 +133,7 @@ if (auto_field && auto_field.val()){
                     <img alt="edit record" src="${edit_image}"
                         class="listImage" border="0" title="${_('Inline Edit')}"
                         onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']})"/>
-                    % if (not nopopup or not data['id'] or data['id'] not in nopopup) and not edit_inline or edit_inline == 'null':
+                    % if (not nopopup or not data['id'] or data['id'] not in nopopup) and (not edit_inline or edit_inline == 'null'):
                     <img alt="edit record" src="/openerp/static/images/icons/stock_align_left_24.png"
                         class="listImage" border="0" title="${_('Edit')}"
                         onclick="listgridValidation('${name}', ${o2m or 0}, ${data['id']}, false)" />
@@ -199,8 +199,8 @@ if (auto_field && auto_field.val()){
                                 <td class="pager-cell">
                                     <h2>${string}</h2>
                                 </td>
-                                <td class="loading-list" style="display: none;">
-                                    <img src="/openerp/static/images/load.gif" width="16" height="16" title="loading..."/>
+                                <td style="min-width: 16px">
+                                    <img src="/openerp/static/images/load.gif" width="16" height="16" title="loading..." class="loading-list" style="display: none;"/>
                                 </td>
                                 % if editable:
                                     <td class="pager-cell-button">
@@ -288,6 +288,39 @@ if (auto_field && auto_field.val()){
                                         <option domain="${domain}" ${i == default_selector and 'selected="selected"' or ""}>${filtername}</option>
                                         <% i += 1 %>
                                     % endfor
+                                </td>
+                                % else:
+                                <td class="pager-cell" style="width: 90%">
+                                    <% has_filter = False %>
+                                    <table id="${name}_o2m_filter" class="o2m_header_filter"><tr>
+                                        % for (field, field_attrs) in headers:
+                                            % if field != 'button' and field_attrs.get('filter_selector'):
+                                               <% has_filter = True %>
+                                                <td> ${field_attrs['string']|br}:
+                                                    % if field_attrs['type'] == 'selection':
+                                                        <select id="${name}_${field}" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" kind="selection">
+                                                            <option value=""></option>
+                                                            % for key, val in field_attrs['selection']:
+                                                                <option value="${key}">${val}</option>
+                                                            % endfor
+                                                        </select>
+                                                    % elif field_attrs['type'] == 'boolean':
+                                                        <select id="${name}_${field}" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" kind="boolean">
+                                                            <option value=""></option>
+                                                            <option value="t">${_('Yes')}</option>
+                                                            <option value="f">${_('No')}</option>
+                                                        </select>
+                                                    % else:
+                                                        <input id="${name}_${field}" type="text" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" onkeydown="if (event.keyCode == 13) new ListView('${name}').update_o2m_filter();"/>
+                                                    % endif
+                                                </td>
+                                            % endif
+                                        % endfor
+                                        % if has_filter:
+                                            <td><button type="button" onclick="new ListView('${name}').update_o2m_filter()">${_('Search')}</button></td>
+                                            <td><button type="button" onclick="new ListView('${name}').clear_filter()">${_('Clear')}</button></td>
+                                        % endif
+                                    </table>
                                 </td>
                                 % endif 
                                 <td class="pager-cell" style="width: 90%">
