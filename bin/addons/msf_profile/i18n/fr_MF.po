@@ -80724,8 +80724,8 @@ msgstr "Non disponible"
 
 #. module: msf_homere_interface
 #: view:hr.expat.employee.import:0
-msgid "This wizard will import an Expat employees file in XML Spreadsheet 2003 format. To generate this file, create a Speadsheet with 3 columns: 'Name' , 'Code' and 'Active'."
-msgstr "This wizard will import an Expat employees file in XML Spreadsheet 2003 format. To generate this file, create a Speadsheet with 3 columns: 'Name' , 'Code' and 'Active'."
+msgid "This wizard will import an Expat employees file in XML Spreadsheet 2003 format. To generate this file, create a Spreadsheet with 4 columns: 'Name' , 'Code', 'Status' and 'Contract End Date' (optional)."
+msgstr "Cet assistant importera un fichier d'employés expatriés au format Tableur XML 2003. Pour générer ce fichier, créez une feuille de calcul avec 4 colonnes : 'Nom' , 'Code', 'Statut' et 'Date de Fin de Contrat' (optionnel)."
 
 #. module: msf_outgoing
 #: model:ir.model,name:msf_outgoing.model_stock_move_memory_shipment_create
