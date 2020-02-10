@@ -511,7 +511,8 @@ class purchase_order(osv.osv):
                         # PO state must not go back:
                         if po.push_fo:
                             # fo push, 2 line added, L2 cancel , sync => resulting PO must be validated
-                            po_state_seq['sourced_p'] = 0
+                            po_state_seq['draft_p'] = 0
+                            po_state_seq['sourced_p'] = 5
                         if po_state_seq.get(res[po.id], 100) < po_state_seq.get(po.state, 0):
                             res[po.id] = po.state
                 else:
