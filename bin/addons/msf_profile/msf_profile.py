@@ -122,6 +122,19 @@ class patch_scripts(osv.osv):
                 journal_obj.create(cr, uid, odhq_vals)
         return True
 
+    def us_6684_push_backup(self, cr, uid, *a, **b):
+        backup_obj = self.pool.get('backup.config')
+        if backup_obj:
+            cr.execute("update ir_cron set manual_activation='f' where function='send_backup_bg' and model='msf.instance.cloud'")
+            cr.execute("update ir_cron set name='Send Continuous Backup', manual_activation='f' where function='sent_continuous_backup_bg' and model='backup.config'")
+            if cr.column_exists('backup_config', 'continuous_backup_enabled'):
+                cr.execute("update backup_config set backup_type='cont_back' where continuous_backup_enabled='t'")
+
+            # update active field on cron
+            bck_ids = backup_obj.search(cr, uid, [])
+            backup_obj.write(cr, uid, bck_ids, {})
+        return True
+
     # UF15.2
     def rec_entries_uf14_1_uf15(self, cr, uid, *a, **b):
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id

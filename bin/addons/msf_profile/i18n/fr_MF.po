@@ -106355,17 +106355,13 @@ msgid "%s not found"
 msgstr "%s non trouvé"
 
 #. module: sync_client
-#: field:backup.config,continuous_backup_enabled:0
-msgid "Activate continuous backup"
-msgstr "Activer la sauvegarde continue"
-
-#. module: sync_client
 #: field:backup.config,basebackup_error:0
 msgid "Base backup error"
 msgstr "Erreur Sauvegarde Base"
 
 #. module: sync_client
 #: view:backup.config:0
+#: selection:backup.config,backup_type:0
 msgid "Continuous Backup"
 msgstr "Sauvegarde Continue"
 
@@ -106454,11 +106450,8 @@ msgstr "Éditer postgresql.conf et indiquer:"
 
 #. module: sync_client
 #: view:backup.config:0
-msgid ""
-"Replace the 3 occurences of \"C:\\\\WAL\\\\\" with the path to the local WAL"
-" Archive directory."
-msgstr "Remplacer les 3 occurrences de  \"C:\\\\WAL\\\\\" par votre répertoire local"
-" des archives WAL"
+msgid "Replace the 3 occurences of \"C:\\\\WAL\\\\\" with the path to the local WAL Archive directory."
+msgstr "Remplacer les 3 occurrences de  \"C:\\\\WAL\\\\\" par votre répertoire local des archives WAL"
 
 #. module: sync_client
 #: view:backup.config:0
@@ -106916,3 +106909,33 @@ msgstr "Composant/Produit"
 #: field:composition.item,item_kit_name:0
 msgid "Kit Product Code"
 msgstr "Code Produit du Kit"
+
+#. module: sync_client
+#: field:backup.config,backup_type:0
+msgid "Backup Type"
+msgstr "Type de Sauvegarde"
+
+#. module: sync_client
+#: selection:backup.config,backup_type:0
+msgid "Direct push to Sharepoint"
+msgstr "Envoi direct sur Sharepoint"
+
+#. module: sync_client
+#: field:sync.client.entity,previous_hw:0
+msgid "Last HW successfully used"
+msgstr "Dernier HW validé"
+
+#. module: base
+#: field:ir.cron,manual_activation:0
+msgid "Manual Activation"
+msgstr "Activation Manuelle"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Type of Backup"
+msgstr "Type de Sauvegarde"
+
+#. module: base
+#: help:ir.cron,manual_activation:0
+msgid "Used to set active as RO"
+msgstr "Utilisé pour passer le champ Actif en lecture seule"
