@@ -1041,9 +1041,9 @@ class replenishment_segment(osv.osv):
         wizard_obj = self.pool.get('physical.inventory.import.wizard')
         if error:
             error.insert(0, _('%d line(s) created, %d line(s) updated, %d line(s) in error') % (created, updated, ignored))
-            return wizard_obj.message_box(cr, uid, title=_('Importation errors'), message='\n'.join(error))
+            return wizard_obj.message_box_noclose(cr, uid, title=_('Importation errors'), message='\n'.join(error))
 
-        return wizard_obj.message_box(cr, uid, title=_('Importation Done'), message=_('%d line(s) created, %d line(s) updated') % (created, updated))
+        return wizard_obj.message_box_noclose(cr, uid, title=_('Importation Done'), message=_('%d line(s) created, %d line(s) updated') % (created, updated))
 
     def completed(self, cr, uid, ids, context=None):
         for x in self.read(cr, uid, ids, ['name_seg', 'date_next_order_received_modified', 'date_next_order_received', 'rule'], context=context):
@@ -1797,9 +1797,9 @@ class replenishment_order_calc(osv.osv):
         wizard_obj = self.pool.get('physical.inventory.import.wizard')
         if error:
             error.insert(0, _('%d line(s) updated, %d line(s) in error') % (updated, len(error)))
-            return wizard_obj.message_box(cr, uid, title=_('Importation errors'), message='\n'.join(error))
+            return wizard_obj.message_box_noclose(cr, uid, title=_('Importation errors'), message='\n'.join(error))
 
-        return wizard_obj.message_box(cr, uid, title=_('Importation Done'), message=_('%d line(s) updated') % (updated, ))
+        return wizard_obj.message_box_noclose(cr, uid, title=_('Importation Done'), message=_('%d line(s) updated') % (updated, ))
 
 
     def generate_ir(self, cr, uid, ids, context=None):

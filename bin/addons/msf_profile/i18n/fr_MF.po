@@ -107582,7 +107582,7 @@ msgstr "A des Calculs en cours"
 
 #. module: procurement_cycle
 #: field:replenishment.segment,ir_requesting_location:0
-#: field:replenishment.segment,ir_requesting_location_ro:0
+#: field:replenishment.segment,ir_requesting_location_rdo:0
 msgid "IR Requesting Location"
 msgstr "Zone Requérente de la DI"
 
@@ -108780,5 +108780,17 @@ msgstr "Expirations prévues"
 msgid "Data from instance(s) is missing, please wait for the next scheduled task or the next sync, or if relates to this instance, please use button \"Compute Data\". Instances missing data are:\n"
 "%s"
 msgstr "Données manquantes pour les instances suivantes, veuillez attendre la prochaine tâche planifiée ou la prochaine sync, ou cliquer sur le bouton Calcul des données :\"%s"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:518
+#, python-format
+msgid "Warning, to complete Segment, field \"Next order to be received by (modified)\" must have date filled"
+msgstr "Attention le champ \"Prochaine commande à recevoir (modifié)\" doit être renseigné."
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1051
+#, python-format
+msgid "Warning, to complete Segment %s, field \"Next order to be received by (modified)\" must have date filled"
+msgstr "Attention, pour le Segment %s  le champ \"Prochaine commande à recevoir (modifié)\" doit être renseigné."
 
 
