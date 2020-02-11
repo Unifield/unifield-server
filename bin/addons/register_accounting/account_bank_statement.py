@@ -1223,13 +1223,13 @@ class account_bank_statement_line(osv.osv):
         'number_imported_invoice': fields.function(_get_number_imported_invoice, method=True, string='Number Invoices', type='integer'),
         # store only account.invoices and ignore other lines imported
         'imported_account_invoice_ids': fields.many2many('account.invoice', 'register_line_imported_account_invoice',
-                                                         'regline_id', 'invoice_id', string='Imported Invoices',
+                                                         'regline_id', 'invoice_id', string='Real invoices imported',
                                                          required=False, readonly=True,
                                                          help="The invoices imported, even partially, "
                                                               "either directly into this register "
                                                               "or indirectly via the import of the related cheque."),
         'number_imported_account_invoices': fields.function(_get_number_imported_account_invoices, method=True, type='integer',
-                                                            string='Number of imported invoices', store=False),
+                                                            string='Number of real invoices imported', store=False),
         'is_down_payment': fields.function(_get_down_payment_state, method=True, string="Is a down payment line?",
                                            type='boolean', store=False),
         'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line",

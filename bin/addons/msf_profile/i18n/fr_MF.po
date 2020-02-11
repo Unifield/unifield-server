@@ -11206,7 +11206,6 @@ msgstr "Clients"
 #: selection:account.journal.column,field:0
 #: field:account.bank.statement.line,imported_invoice_line_ids:0
 #: field:account.move.line,imported_invoice_line_ids:0
-#: field:account.bank.statement.line,imported_account_invoice_ids:0
 msgid "Imported Invoices"
 msgstr "Factures importées"
 
@@ -106927,11 +106926,16 @@ msgid "The refunded invoice which has generated this document"
 msgstr "La facture remboursée qui a généré ce document"
 
 #. module: register_accounting
-#: help:account.bank.statement.line,imported_account_invoice_ids:0
-msgid "The invoices imported, even partially, either directly into this register or indirectly via the import of the related cheque."
-msgstr "Les factures importées, même partiellement, soient directement dans ce registre soit indirectement via l'import du chèque associé."
+#: field:account.bank.statement.line,imported_account_invoice_ids:0
+msgid "Real invoices imported"
+msgstr "Vraies factures importées"
 
 #. module: register_accounting
 #: field:account.bank.statement.line,number_imported_account_invoices:0
-msgid "Number of imported invoices"
-msgstr "Nombre de factures importées"
+msgid "Number of real invoices imported"
+msgstr "Nombre de vraies factures importées"
+
+#. module: register_accounting
+#: help:account.bank.statement.line,imported_account_invoice_ids:0
+msgid "The invoices imported, even partially, either directly into this register or indirectly via the import of the related cheque."
+msgstr "Les factures importées, même partiellement, soient directement dans ce registre soit indirectement via l'import du chèque associé."
