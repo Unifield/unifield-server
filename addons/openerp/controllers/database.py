@@ -23,6 +23,7 @@ import re
 import time
 import os
 import sys
+import csv
 
 import cherrypy
 import formencode
@@ -560,7 +561,7 @@ class Database(BaseController):
                 for file_name in os.listdir(import_path):
                     if not file_name.endswith('.csv'):
                         self.msg = {
-                            'message': 'File to import %s: incorrect name (must end with .csv:' % file_name,
+                            'message': 'File to import %s: incorrect name (must end with .csv)' % file_name,
                             'title': 'File name error',
                         }
                         return
@@ -571,6 +572,35 @@ class Database(BaseController):
                             'title': 'File name error',
                         }
                         return
+                    if file_name == 'res.users.csv':
+                        with open(os.path.join(import_path, file_name), 'r') as fcsv:
+                            reader = csv.reader(fcsv, quotechar='"', delimiter=',')
+                            line_num = 0
+                            for row in reader:
+                                line_num += 1
+                                if line_num == 1:
+                                    if row != ['login', 'groups_id', 'new_password']:
+                                        self.msg = {
+                                            'message': 'File to import %s: 1st line must be login,groups_id,new_password' % (file_name),
+                                            'title': 'File name error',
+                                        }
+                                        return
+                                else:
+                                    if len(row) and len(row)!=3:
+                                        self.msg = {
+                                            'message': 'File to import %s: line %d must have 3 columns' % (file_name, line_num),
+                                            'title': 'File name error',
+                                        }
+                                        return
+                                    res = rpc.session.execute_db('check_password_validity', row[0], row[2])
+                                    if res is not True:
+                                        self.msg = {
+                                            'message': res,
+                                            'title': ustr(_('Bad password line %d, user %s') % (line_num, row[0]))
+                                        }
+                                        return
+
+
 
 
         except NoOptionError as e:
