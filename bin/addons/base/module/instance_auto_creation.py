@@ -361,6 +361,7 @@ class instance_auto_creation(osv.osv):
                 self.write(cr, 1, creation_id,
                            {'state': 'waiting_for_validation'}, context=context)
         except Exception as e:
+            logging.getLogger('autoinstall').error('Auto creation error: %s' % tools.misc.get_traceback(e))
             self.write(cr, 1, creation_id,
                        {'error': '%s' % e}, context=context)
 
@@ -406,18 +407,18 @@ class instance_auto_creation(osv.osv):
                 if sync_status == 'Syncing...':
                     # keep going
                     pass
-                elif sync_status == 'Connected' or sync_status.startswith('Last Sync: In Progress...'):
+                elif sync_status.startswith('Last Sync: Ok'):
+                    self.write(cr, 1, creation_id,
+                               {'state': 'end_init_sync'}, context=context)
+                elif sync_status == 'Connected' or sync_status.startswith('Last Sync:'):
                     # start/restart the init sync (very long)
                     self.write(cr, 1, creation_id,
                                {'state': 'start_init_sync'}, context=context)
                     entity_obj.sync(cr, uid)
                     self.write(cr, 1, creation_id,
                                {'state': 'end_init_sync'}, context=context)
-                elif sync_status.startswith('Last Sync: Ok'):
-                    self.write(cr, 1, creation_id,
-                               {'state': 'end_init_sync'}, context=context)
                 else:
-                    raise 'Impossible to perform the sync. Sync status is \'%s\'.' % sync_status
+                    raise osv.except_osv(_("Error!"), 'Impossible to perform the sync. Sync status is \'%s\'.' % sync_status)
 
             if not skip_backup_config:
                 self.write(cr, 1, creation_id,
@@ -723,6 +724,7 @@ class instance_auto_creation(osv.osv):
             shutil.move(config_file_path, "%s-%s" % (config_file_path, time.strftime('%Y%m%d-%H%M')))
 
         except Exception as e:
+            logging.getLogger('autoinstall').error('Auto creation error: %s' % tools.misc.get_traceback(e))
             self.write(cr, 1, creation_id,
                        {'error': '%s' % e}, context=context)
 
