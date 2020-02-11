@@ -52,6 +52,35 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF15.3
+    def us_7147_reset_duplicate_proj_fxa(self, cr, uid, *a, **b):
+        cr.execute("""
+            select am.name, am.id, aml.id, data.name
+                from account_move_line aml
+                inner join account_journal aj ON aml.journal_id = aj.id
+                inner join account_move am ON aml.move_id = am.id
+                inner join account_period ap ON aml.period_id = ap.id
+                inner join account_account aa ON aml.account_id = aa.id
+                inner join msf_instance i ON aml.instance_id = i.id
+                inner join ir_model_data data on data.res_id = aml.id and data.model = 'account.move.line'
+            where
+                aj.type = 'cur_adj' and
+                i.level = 'project' and
+                aml.reconcile_id is null and
+                aa.reconcile = 't' and
+                (aml.credit != 0 or aml.debit != 0)
+        """)
+        for x in cr.fetchall():
+            cr.execute("select id from sync_client_update_to_send where model='account.move.reconcile' and values ~* '.*sd.%s[,''].*'" % x[3]) # not_a_user_entry
+            if not cr.rowcount:
+                cr.execute("select id from sync_client_update_received where model='account.move.reconcile' and values ~* '.*sd.%s[,''].*'" % x[3]) # not_a_user_entry
+                if not cr.rowcount:
+                    cr.execute("update account_move_line set credit=0, debit=0 where move_id = %s", (x[1], ))
+                    cr.execute("update account_analytic_line set amount=0, amount_currency=0 where move_id in (select id from account_move_line where move_id = %s)", (x[1], ))
+                    self._logger.warn('Set 0 on FXA %s' % (x[0],))
+        return True
+
+
     # UF15.2
     def rec_entries_uf14_1_uf15(self, cr, uid, *a, **b):
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
