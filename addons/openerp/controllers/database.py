@@ -559,6 +559,8 @@ class Database(BaseController):
             import_path = os.path.join(os.path.dirname(file_path), 'import')
             if os.path.exists(import_path):
                 for file_name in os.listdir(import_path):
+                    if file_name.endswith('.imported'):
+                        continue
                     if not file_name.endswith('.csv'):
                         self.msg = {
                             'message': 'File to import %s: incorrect name (must end with .csv)' % file_name,
