@@ -63,7 +63,7 @@ class instance_auto_creation(osv.osv):
             ('end_init_sync', 'Init sync finished !'),
             ('reconfigure', 'Do reconfigure...'),
             ('reconfigure_done', 'Reconfigure done.'),
-            ('import_files', 'Start file imoprt...'),
+            ('import_files', 'Start file import...'),
             ('files_imported', 'Files import done.'),
             ('partner_configuration', 'Start configuration of internal partner...'),
             ('partner_configuration_done', 'Internal partner configuration done.'),
@@ -616,12 +616,15 @@ class instance_auto_creation(osv.osv):
                         cr.rollback()
                         logging.getLogger('autoinstall').warn('Unable to set Silent Upgrade, please check the silent upgrade and auto sync times')
 
+            cr.commit()
             if not skip_import_files:
                 self.write(cr, 1, creation_id,
                            {'state': 'import_files'}, context=context)
                 import_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall', 'import')
                 file_to_import = []
                 for file_name in os.listdir(import_path):
+                    if file_name.endswith('.imported'):
+                        continue
                     if not '.csv' in file_name:
                         raise osv.except_osv(_("Error!"), 'Only CSV file can be imported. \'%s\' is not a CSV extension.' % file_name)
                     if file_name == 'account.analytic.journal.csv':
@@ -631,7 +634,11 @@ class instance_auto_creation(osv.osv):
                 for file_name in file_to_import:
                     model_to_import = file_name.split('.csv')[0]
                     model_obj = self.pool.get(model_to_import)
-                    model_obj.import_data_from_csv(cr, uid, os.path.join(import_path, file_name))
+                    processed, rejected, headers = model_obj.import_data_from_csv(cr, uid, os.path.join(import_path, file_name), with_commit=False)
+                    if rejected:
+                        raise osv.except_osv(_("Error!"), "Import file %s\n %s" % (file_name, "\n".join(["Line: %s %s" % (x[0], x[2]) for x in rejected])))
+                    cr.commit()
+                    os.rename(os.path.join(import_path, file_name), os.path.join(import_path, '%s.imported' %file_name))
                 self.write(cr, 1, creation_id,
                            {'state': 'files_imported'}, context=context)
 
@@ -724,6 +731,7 @@ class instance_auto_creation(osv.osv):
             shutil.move(config_file_path, "%s-%s" % (config_file_path, time.strftime('%Y%m%d-%H%M')))
 
         except Exception as e:
+            cr.rollback()
             logging.getLogger('autoinstall').error('Auto creation error: %s' % tools.misc.get_traceback(e))
             self.write(cr, 1, creation_id,
                        {'error': '%s' % e}, context=context)
