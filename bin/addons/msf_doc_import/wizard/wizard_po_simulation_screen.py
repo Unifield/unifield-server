@@ -1366,6 +1366,19 @@ class wizard_import_po_simulation_screen_line(osv.osv):
     _order = 'is_new_line, in_line_number, in_ext_ref, in_product_id, id'
     _rec_name = 'in_line_number'
 
+    def copy(self, cr, uid, id, defaults=None, context=None):
+        '''
+        Remove the error_msg
+        '''
+        if context is None:
+            context = {}
+        if not defaults:
+            defaults = {}
+
+        defaults['error_msg'] = False
+
+        return super(wizard_import_po_simulation_screen_line, self).copy(cr, uid, id, defaults, context=context)
+
     def _get_line_info(self, cr, uid, ids, field_name, args, context=None):
         '''
         Get values for each lines
@@ -1744,46 +1757,58 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 else:
                     origin = full_origin
                 if line.simu_id.order_id.order_type not in ['loan', 'donation_exp', 'donation_st', 'in_kind']:
-                    so_ids = sale_obj.search(cr, uid, [('name', '=', origin), ('procurement_request', 'in', ['t', 'f'])],
-                                             limit=1, context=context)
-                    if so_ids:
-                        so = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state', 'order_type'], context=context)
-                        if so.state not in ('done', 'cancel'):
-                            if so.order_type == 'regular':
-                                write_vals['imp_origin'] = origin
+                    if line.type_change in ['new', 'split']:  # Only change origin for new/split line
+                        so_ids = sale_obj.search(cr, uid, [('name', '=', origin), ('procurement_request', 'in', ['t', 'f'])],
+                                                 limit=1, context=context)
+                        if so_ids:
+                            so = sale_obj.browse(cr, uid, so_ids[0], fields_to_fetch=['state', 'order_type'], context=context)
+                            if so.state not in ('done', 'cancel'):
+                                if so.order_type == 'regular':
+                                    if line.type_change == 'split' and line.parent_line_id.po_line_id.origin != origin:
+                                        err_msg = _('\'Origin\' Document of a split line must be the same as the one on the original line')
+                                        errors.append(err_msg)
+                                        write_vals['type_change'] = 'error'
+                                    else:
+                                        write_vals['imp_origin'] = origin
+                                else:
+                                    err_msg = _('\'Origin\' Document must have the Regular Order Type')
+                                    errors.append(err_msg)
+                                    write_vals['type_change'] = 'error'
                             else:
-                                err_msg = _('\'Origin\' Document must have the Regular Order Type')
+                                err_msg = _('\'Origin\' Document can\'t be Closed or Cancelled')
                                 errors.append(err_msg)
                                 write_vals['type_change'] = 'error'
+                            # To link the other instance's IR to the PO line
+                            if instance_sync_order_ref:
+                                sync_order_label_ids = sync_order_obj.\
+                                    search(cr, uid, [('name', '=', instance_sync_order_ref),
+                                                     ('order_id.state', 'not in', ['done', 'cancel']),
+                                                     ('order_id', '=', so.id)], context=context)
+                                if sync_order_label_ids:
+                                    write_vals['imp_sync_order_ref'] = sync_order_label_ids[0]
+                                else:
+                                    err_msg = _('No Order in sync. instance with an open FO was found with the data in \'Origin\'')
+                                    errors.append(err_msg)
+                                    write_vals['type_change'] = 'error'
                         else:
-                            err_msg = _('\'Origin\' Document can\'t be Closed or Cancelled')
+                            err_msg = _('The FO/IR reference in \'Origin\' is not consistent with this PO')
                             errors.append(err_msg)
                             write_vals['type_change'] = 'error'
-                        # To link the other instance's IR to the PO line
-                        if line.type_change in ['new', 'split'] and instance_sync_order_ref:
-                            sync_order_label_ids = sync_order_obj.\
-                                search(cr, uid, [('name', '=', instance_sync_order_ref),
-                                                 ('order_id.state', 'not in', ['done', 'cancel']),
-                                                 ('order_id', '=', so.id)], context=context)
-                            if sync_order_label_ids:
-                                write_vals['imp_sync_order_ref'] = sync_order_label_ids[0]
-                            else:
-                                err_msg = _('No Order in sync. instance with an open FO was found with the data in \'Origin\'')
-                                errors.append(err_msg)
-                                write_vals['type_change'] = 'error'
-                    else:
-                        err_msg = _('The FO/IR reference in \'Origin\' is not consistent with this PO')
-                        errors.append(err_msg)
-                        write_vals['type_change'] = 'error'
                 else:
                     err_msg = _('A PO with a Loan, Donation before expiry, Standard donation or In Kind Donation Order Type can\'t have an Source Document in its lines')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
             else:
                 if line.simu_id.order_id.po_from_fo or line.simu_id.order_id.po_from_ir:
-                    err_msg = _('The Origin is mandatory for a PO coming from a FO or an IR')
-                    errors.append(err_msg)
-                    write_vals['type_change'] = 'error'
+                    if line.type_change == 'split':  # get the origin of the original line
+                        write_vals['imp_origin'] = line.parent_line_id.po_line_id.origin
+                        err_msg = _('The product %s is missing the mandatory Origin. The Origin of the same number split line has been used')\
+                            % (line.imp_product_id and line.imp_product_id.default_code or '',)
+                        warnings.append(err_msg)
+                    else:
+                        err_msg = _('The Origin is mandatory for a PO coming from a FO or an IR')
+                        errors.append(err_msg)
+                        write_vals['type_change'] = 'error'
 
             # Stock Take Date
             stock_take_date = values[9]

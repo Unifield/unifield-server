@@ -106821,3 +106821,9 @@ msgstr "Voulez-vous re-sourcer les besoins de cette ligne d'Appel d'Offre ?"
 #: report:addons/stock/report/stock_reception_report_xls.mako:255
 msgid "INT Ref."
 msgstr "Réf. du INT"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1805
+#, python-format
+msgid "The product %s is missing the mandatory Origin. The Origin of the same number split line has been used"
+msgstr "Il manque l'Origine obligatoire sur le produit %s. L'Origine de la ligne divisée portant le même numéro a été utilisée"
