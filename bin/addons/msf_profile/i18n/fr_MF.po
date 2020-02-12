@@ -106826,4 +106826,10 @@ msgstr "Réf. du INT"
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1805
 #, python-format
 msgid "The product %s is missing the mandatory Origin. The Origin of the same number split line has been used"
-msgstr "Il manque l'Origine obligatoire sur le produit %s. L'Origine de la ligne divisée portant le même numéro a été utilisée"
+msgstr "Il manque l'Origine obligatoire sur le produit %s. L'Origine de la ligne scindée portant le même numéro a été utilisée"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1768
+#, python-format
+msgid "'Origin' Document of a split line must be the same as the one on the original line"
+msgstr "Le Document d'Origine d'une ligne scindée doit être le même que celui de la ligne originelle"
