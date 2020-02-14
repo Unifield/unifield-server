@@ -496,5 +496,10 @@
             <field name="method">us_6692_new_od_journals</field>
         </record>
 
+        <!-- UF17.0 -->
+        <record id="us_7025_7039_fix_nr_empty_ins" model="patch.scripts">
+            <field name="method">us_7025_7039_fix_nr_empty_ins</field>
+        </record>
+
     </data>
 </openerp>
