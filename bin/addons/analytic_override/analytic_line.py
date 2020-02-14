@@ -113,7 +113,7 @@ class account_analytic_line(osv.osv):
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]", ondelete='restrict'),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
         'free_account': fields.function(_get_is_free, fnct_search=_search_is_free, method=True, type='boolean', string='Free account?', help="Does that line come from a Free 1 or Free 2 account?"),
-        'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
+        'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed.", select=1),
         'reversal_origin_txt': fields.function(_get_reversal_origin_txt, string="Reversal origin", type='char', size=256,
                                                store={
                                                    'account.analytic.line': (_get_analytic_reversal, ['name', 'reversal_origin'], 20),

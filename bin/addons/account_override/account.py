@@ -1379,7 +1379,7 @@ class account_move_reconcile(osv.osv):
             return ''
 
     _columns = {
-        'name': fields.char('Entry Sequence', size=64, required=True),
+        'name': fields.char('Entry Sequence', size=64, required=True, select=1),
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id',
                                                string="Statement lines", help="This field give all statement lines linked to this move."),
     }

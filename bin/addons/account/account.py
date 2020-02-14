@@ -1709,7 +1709,7 @@ class account_move_reconcile(osv.osv):
     _name = "account.move.reconcile"
     _description = "Account Reconciliation"
     _columns = {
-        'name': fields.char('Name', size=64, required=True),
+        'name': fields.char('Name', size=64, required=True, select=1),
         'type': fields.char('Type', size=16, required=True),
         'line_id': fields.one2many('account.move.line', 'reconcile_id', 'Entry Lines'),
         'line_partial_ids': fields.one2many('account.move.line', 'reconcile_partial_id', 'Partial Entry lines'),
