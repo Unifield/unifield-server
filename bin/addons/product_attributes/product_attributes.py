@@ -394,6 +394,16 @@ class product_attributes(osv.osv):
 
         return [('id', 'in', ids)]
 
+    def _get_int_status_code(self, cr, uid, ids, field_name, args, context=None):
+        if context is None:
+            context = {}
+        res = {}
+
+        for product in self.browse(cr, uid, ids, fields_to_fetch=['international_status'], context=context):
+            res[product.id] = product.international_status.code
+
+        return res
+
     def _get_restriction(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
@@ -654,8 +664,9 @@ class product_attributes(osv.osv):
             string='Old code',
             size=1024,
         ),
-        'new_code' : fields.char('New code', size=64),
+        'new_code': fields.char('New code', size=64),
         'international_status': fields.many2one('product.international.status', 'Product Creator', required=False),
+        'int_status_code': fields.function(_get_int_status_code, method=True, readonly=True, type="char", size=64, string="Code of Product Creator", store=False),
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'batch_attributes': fields.function(_get_batch_attributes, type='selection', selection=[('no', 'X'), ('bn', 'BN+ED'), ('ed', 'ED only')], method=True, fnct_search=_search_batch_attributes, string="Batch Attr."),
@@ -843,6 +854,7 @@ class product_attributes(osv.osv):
             readonly=True,
             help="Automatically filled with UniData information.",
         ),
+        'oc_subscription': fields.boolean(string='OC Subscription'),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=7),
         'gmdn_code' : fields.char('GMDN Code', size=5),
@@ -977,6 +989,7 @@ class product_attributes(osv.osv):
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
+        'oc_subscription': False,
     }
 
     def _check_uom_category(self, cr, uid, ids, context=None):
@@ -1228,6 +1241,20 @@ class product_attributes(osv.osv):
             }
         }
 
+    def onchange_int_status(self, cr, uid, ids, int_status_id, context=None):
+        """
+        Set the value for the field 'oc_subscription' to True if the Product Creator is Unidata, else to False
+        """
+        if int_status_id:
+            int_status_code = self.pool.get('product.international.status').\
+                browse(cr, uid, int_status_id, context=context).code
+            return {
+                'value': {
+                    'oc_subscription': int_status_code == 'unidata',
+                }
+            }
+        return {}
+
     def _check_gmdn_code(self, cr, uid, ids, context=None):
         int_pattern = re.compile(r'^\d*$')
         for product in self.browse(cr, uid, ids, context=context):
@@ -1304,6 +1331,11 @@ class product_attributes(osv.osv):
                 heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
                 vals['heat_sensitive_item'] = heat2_id
             vals.update(self.onchange_heat(cr, uid, False, vals['heat_sensitive_item'], context=context).get('value', {}))
+
+        if vals.get('international_status'):
+            intstat_code = self.pool.get('product.international.status').browse(cr, uid, vals['international_status'],
+                                                                                fields_to_fetch=['code'], context=context).code
+            vals['oc_subscription'] = intstat_code == 'unidata'
 
         for f in ['sterilized', 'closed_article', 'single_use']:
             if f in vals and not vals.get(f):
@@ -1430,6 +1462,7 @@ class product_attributes(osv.osv):
                 if isinstance(intstat_id, (int,long)):
                     intstat_id = [intstat_id]
                 intstat_code = int_stat_obj.read(cr, uid, intstat_id, ['code'], context=context)[0]['code']
+                vals['oc_subscription'] = intstat_code == 'unidata'
             # just update SMRL that belongs to our instance:
             local_smrl_ids = smrl_obj.search(cr, uid, [
                 ('international_status_code', '!=', intstat_code),
