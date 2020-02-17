@@ -1306,13 +1306,16 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
             if new_thread.isAlive():
                 return self.go_to_simulation(cr, uid, ids, context=context)
             else:
-                return {'type': 'ir.actions.act_window',
-                        'res_model': 'purchase.order',
-                        'res_id': active_wiz.order_id.id,
-                        'view_type': 'form',
-                        'view_mode': 'form, tree',
-                        'target': 'crush',
-                        'context': context}
+                state = self.read(cr, uid, ids[0], ['state'], context=context)
+                if state['state'] != 'error':
+                    return {'type': 'ir.actions.act_window',
+                            'res_model': 'purchase.order',
+                            'res_id': active_wiz.order_id.id,
+                            'view_type': 'form',
+                            'view_mode': 'form, tree',
+                            'target': 'crush',
+                            'context': context}
+                return self.go_to_simulation(cr, uid, ids, context=context)
         else:
             self.run_import(cr.dbname, uid, ids, context)
             return True
@@ -1359,8 +1362,9 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
             cr.commit()
             cr.close(True)
         except Exception, e:
+            cr.rollback()
             logging.getLogger('po.simulation.run').warn('Exception', exc_info=True)
-            self.write(cr, uid, ids, {'message': e}, context=context)
+            self.write(cr, uid, ids, {'message': e, 'state': 'error'}, context=context)
             res = True
             cr.commit()
             cr.close(True)
