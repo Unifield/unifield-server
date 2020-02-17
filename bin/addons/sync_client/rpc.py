@@ -9,7 +9,7 @@ import sys
 import socket
 import zlib
 import xmlrpclib
-from timeout_transport import TimeoutTransport
+from timeout_transport import TimeoutTransport, TimeoutSafeTransport
 from osv import osv
 from tools.translate import _
 import tools
@@ -106,7 +106,7 @@ class XmlRPCConnector(Connector):
                 error = e
                 if i < self.retry:
                     retry = True
-                    self._logger.debug("retry to connect %s, error : %s" ,i, e)
+                    self._logger.warn("retry to connect %s, error : %s" ,i, e)
                 i += 1
         if error:
             raise osv.except_osv(_('Error!'), "Unable to proceed for the following reason:\n%s" % (e.faultCode if hasattr(e, 'faultCode') else tools.ustr(e)))
@@ -120,16 +120,21 @@ class SecuredXmlRPCConnector(XmlRPCConnector):
 
     def __init__(self, hostname, port=8070, timeout=10.0, retry=0):
         XmlRPCConnector.__init__(self, hostname, port, timeout=timeout, retry=retry)
+        self.timeout = timeout
         self.url = 'https://%s:%s/xmlrpc' % (self.hostname, self.port)
 
     def send(self, service_name, method, *args):
         url = '%s/%s' % (self.url, service_name)
         # Decide whether to accept self-signed certificates
         ctx = ssl.create_default_context()
+        transport = TimeoutSafeTransport(timeout=self.timeout)
+        # Enable gzip on all payloads
+        transport.encode_threshold = 0
         if not tools.config.get('secure_verify', True):
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
-        service = xmlrpclib.ServerProxy(url, allow_none=1, context=ctx)
+        service = xmlrpclib.ServerProxy(url, allow_none=1, context=ctx, transport=transport)
+
         return self._send(service, method, *args)
 
 class NetRPC_Exception(Exception):
@@ -392,7 +397,7 @@ class Object(object):
         return arguments
 
     def exists(self, oid, context=None):
-        # TODO: Fucking bug, we can't use the read(fields=['id']), 
+        # TODO: bug, we can't use the read(fields=['id']),
         # because the server returns a positive value but the record does not exist
         # into the database
         value = self.search_count([('id', '=', oid)], context=context)

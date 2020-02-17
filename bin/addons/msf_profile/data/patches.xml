@@ -491,6 +491,11 @@
             <field name="method">rec_entries_uf14_1_uf15</field>
         </record>
 
+        <!-- UF15.3 -->
+        <record id="us_7147_reset_duplicate_proj_fxa" model="patch.scripts">
+            <field name="method">us_7147_reset_duplicate_proj_fxa</field>
+        </record>
+
         <!-- UF16.0 -->
         <record id="us_6692_new_od_journals" model="patch.scripts">
             <field name="method">us_6692_new_od_journals</field>
