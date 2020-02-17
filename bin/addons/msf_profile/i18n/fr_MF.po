@@ -108793,4 +108793,23 @@ msgstr "Attention le champ \"Prochaine commande à recevoir (modifié)\" doit ê
 msgid "Warning, to complete Segment %s, field \"Next order to be received by (modified)\" must have date filled"
 msgstr "Attention, pour le Segment %s  le champ \"Prochaine commande à recevoir (modifié)\" doit être renseigné."
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1932
+#, python-format
+msgid "%s: info on line %s %s"
+msgstr "%s: info sur la ligne %s %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1802
+#, python-format
+msgid "Missing mandatory Origin. Origin of same number split line has been used."
+msgstr "Origine: champ obligatoire absent. L'Origine de la ligne scindée a été reprise."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1756
+#, python-format
+msgid "Origin in the imported file does not match the origin on the PO line. Imported Origin ignored"
+msgstr "l'Origine du fichier importé ne correspond pas à l'Origine de la ligne de BC. La valeur importée est ignorée."
+
+
 
