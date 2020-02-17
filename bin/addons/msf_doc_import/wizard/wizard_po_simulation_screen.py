@@ -1751,16 +1751,17 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Origin
             full_origin = values[8]
-            if full_origin and import_type in ('match', 'split'):
-                if full_origin != line.imp_origin:
+            instance_sync_order_ref = False
+            if full_origin and ':' in full_origin:
+                origin = full_origin.split(':')[0]
+                instance_sync_order_ref = full_origin.split(':')[-1]
+            else:
+                origin = full_origin
+
+            if origin and import_type in ('match', 'split'):
+                if origin != line.imp_origin:
                     info_msg.append(_('Origin in the imported file does not match the origin on the PO line. Imported Origin ignored'))
-            elif full_origin:
-                instance_sync_order_ref = False
-                if ':' in full_origin:
-                    origin = full_origin.split(':')[0]
-                    instance_sync_order_ref = full_origin.split(':')[-1]
-                else:
-                    origin = full_origin
+            elif origin:
                 if line.simu_id.order_id.order_type not in ['loan', 'donation_exp', 'donation_st', 'in_kind']:
                     so_ids = sale_obj.search(cr, uid, [('name', '=', origin), ('procurement_request', 'in', ['t', 'f'])],
                                              limit=1, context=context)
@@ -1801,7 +1802,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 if import_type == 'split':
                     info_msg.append(_('Missing mandatory Origin. Origin of same number split line has been used.'))
                 elif import_type != 'match' or not line.imp_origin:
-                    err_msg = _('The Origin is mandatory for a PO coming from a FO')
+                    err_msg = _('The Origin is mandatory for a PO coming from an FO/IR')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
 

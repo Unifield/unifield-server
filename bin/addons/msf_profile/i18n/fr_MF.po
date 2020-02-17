@@ -33186,8 +33186,8 @@ msgstr "Vues"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1492
 #, python-format
-msgid "The Origin is mandatory for a PO coming from a FO"
-msgstr "The Origin is mandatory for a PO coming from a FO"
+msgid "The Origin is mandatory for a PO coming from an FO/IR"
+msgstr "Le champ Origine est obligatoire pour BC venant d'une CdT/DI"
 
 #. module: kit
 #: code:addons/kit/kit.py:807
