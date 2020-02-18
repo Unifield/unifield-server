@@ -1318,7 +1318,7 @@ class product_attributes(osv.osv):
                 vals['heat_sensitive_item'] = heat2_id
             vals.update(self.onchange_heat(cr, uid, False, vals['heat_sensitive_item'], context=context).get('value', {}))
 
-        if vals.get('international_status') and not vals.get('oc_subscription'):
+        if vals.get('international_status') and 'oc_subscription' not in vals:
             intstat_code = self.pool.get('product.international.status').browse(cr, uid, vals['international_status'],
                                                                                 fields_to_fetch=['code'], context=context).code
             vals['oc_subscription'] = intstat_code == 'unidata'
