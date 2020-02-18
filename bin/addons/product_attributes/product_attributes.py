@@ -1241,20 +1241,6 @@ class product_attributes(osv.osv):
             }
         }
 
-    def onchange_int_status(self, cr, uid, ids, int_status_id, context=None):
-        """
-        Set the value for the field 'oc_subscription' to True if the Product Creator is Unidata, else to False
-        """
-        if int_status_id:
-            int_status_code = self.pool.get('product.international.status').\
-                browse(cr, uid, int_status_id, context=context).code
-            return {
-                'value': {
-                    'oc_subscription': int_status_code == 'unidata',
-                }
-            }
-        return {}
-
     def _check_gmdn_code(self, cr, uid, ids, context=None):
         int_pattern = re.compile(r'^\d*$')
         for product in self.browse(cr, uid, ids, context=context):
@@ -1332,7 +1318,7 @@ class product_attributes(osv.osv):
                 vals['heat_sensitive_item'] = heat2_id
             vals.update(self.onchange_heat(cr, uid, False, vals['heat_sensitive_item'], context=context).get('value', {}))
 
-        if vals.get('international_status'):
+        if vals.get('international_status') and not vals.get('oc_subscription'):
             intstat_code = self.pool.get('product.international.status').browse(cr, uid, vals['international_status'],
                                                                                 fields_to_fetch=['code'], context=context).code
             vals['oc_subscription'] = intstat_code == 'unidata'
@@ -1462,7 +1448,6 @@ class product_attributes(osv.osv):
                 if isinstance(intstat_id, (int,long)):
                     intstat_id = [intstat_id]
                 intstat_code = int_stat_obj.read(cr, uid, intstat_id, ['code'], context=context)[0]['code']
-                vals['oc_subscription'] = intstat_code == 'unidata'
             # just update SMRL that belongs to our instance:
             local_smrl_ids = smrl_obj.search(cr, uid, [
                 ('international_status_code', '!=', intstat_code),
