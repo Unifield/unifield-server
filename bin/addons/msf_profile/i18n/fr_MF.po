@@ -108793,4 +108793,7 @@ msgstr "Attention le champ \"Prochaine commande à recevoir (modifié)\" doit ê
 msgid "Warning, to complete Segment %s, field \"Next order to be received by (modified)\" must have date filled"
 msgstr "Attention, pour le Segment %s  le champ \"Prochaine commande à recevoir (modifié)\" doit être renseigné."
 
-
+#. module: product_attributes
+#: field:product.product,oc_subscription:0
+msgid "OC Subscription"
+msgstr "Abonnement OC"
