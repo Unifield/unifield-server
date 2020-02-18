@@ -367,6 +367,7 @@ def get_pg_type(f):
     type_dict = {
         fields.boolean: 'bool',
         fields.integer: 'int4',
+        fields.integer_null: 'int4',
         fields.integer_big: 'int8',
         fields.text: 'text',
         fields.date: 'date',
@@ -1360,6 +1361,10 @@ class orm_template(object):
                 if allfields and f not in allfields:
                     continue
                 res[f] = {'type': field_col._type}
+                if hasattr(field_col, '_with_null') and field_col._with_null:
+                    res[f]['with_null'] = True
+                if hasattr(field_col, 'null_value') and field_col.null_value:
+                    res[f]['null_value'] = field_col.null_value
                 # This additional attributes for M2M and function field is added
                 # because we need to display tooltip with this additional information
                 # when client is started in debug mode.
@@ -1585,7 +1590,7 @@ class orm_template(object):
             if node.get('filter_selector'):
                 try:
                     filter_eval = eval(node.get('filter_selector'))
-                    if filter_eval:
+                    if filter_eval and isinstance(filter_eval, list):
                         trans_filter_eval = []
                         for x in filter_eval:
                             trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])
@@ -3011,7 +3016,11 @@ class orm(orm_template):
         pass
 
     def _create_fk(self, cr, col_name, field_def, update=False):
-        ref = self.pool.get(field_def._obj)._table
+        try:
+            ref = self.pool.get(field_def._obj)._table
+        except:
+            print field_def._obj
+            raise
         # ir_actions is inherited so foreign key doesn't work on it
         if ref != 'ir_actions':
             to_create = True

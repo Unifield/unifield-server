@@ -32,12 +32,32 @@ class analytic_account(osv.osv):
     _name = "account.analytic.account"
     _inherit = "account.analytic.account"
 
+    def _get_dest_without_cc(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns a dict with key = id of the analytic account,
+        and value = True if the analytic account is a Destination of normal type allowing no Cost Center, False otherwise
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for a in self.browse(cr, uid, ids, fields_to_fetch=['category', 'type', 'allow_all_cc', 'dest_cc_ids'], context=context):
+            if a.category == 'DEST' and a.type == 'normal' and not a.allow_all_cc and not a.dest_cc_ids:
+                res[a.id] = True
+            else:
+                res[a.id] = False
+        return res
+
     def _get_active(self, cr, uid, ids, field_name, args, context=None):
-        '''
+        """
         If date out of date_start/date of given analytic account, then account is inactive.
         The comparison could be done via a date given in context.
-        '''
+
+        A normal-type destination allowing no CC is also seen as inactive whatever its activation dates
+        Exception when coming from a Supply workflow: PO/FO validation should not be blocked for that reason.
+        """
         res = {}
+        if context is None:
+            context = {}
         cmp_date = date.today().strftime('%Y-%m-%d')
         if context.get('date', False):
             cmp_date = context.get('date')
@@ -45,29 +65,50 @@ class analytic_account(osv.osv):
             res[a.id] = True
             if a.date_start > cmp_date:
                 res[a.id] = False
-            if a.date and a.date <= cmp_date:
+            elif a.date and a.date <= cmp_date:
+                res[a.id] = False
+            elif not context.get('from_supply_wkf') and a.dest_without_cc:
                 res[a.id] = False
         return res
 
     def _search_filter_active(self, cr, uid, ids, name, args, context=None):
         """
-        UTP-410: Add the search on active/inactive CC
+        Analytic accounts are seen as active if the date in context (or today's date) is included within the active date range.
+        In case of Destination with normal Type: it must additionally allows at least one Cost Center.
         """
         arg = []
         cmp_date = date.today().strftime('%Y-%m-%d')
         if context.get('date', False):
             cmp_date = context.get('date')
         for x in args:
-            if x[0] == 'filter_active' and x[2] == True:
+            # filter: active
+            if x[0] == 'filter_active' and x[2] is True:
+                arg.append('&')
                 arg.append('&')
                 arg.append(('date_start', '<=', cmp_date))
                 arg.append('|')
                 arg.append(('date', '>', cmp_date))
                 arg.append(('date', '=', False))
-            elif x[0] == 'filter_active' and x[2] == False:
+                arg.append('|')
+                arg.append('|')
+                arg.append('|')
+                arg.append(('category', '!=', 'DEST'))
+                arg.append(('type', '=', 'view'))
+                arg.append(('allow_all_cc', '=', True))
+                arg.append(('dest_cc_ids', '!=', False))
+            # filter: inactive
+            elif x[0] == 'filter_active' and x[2] is False:
+                arg.append('|')
                 arg.append('|')
                 arg.append(('date_start', '>', cmp_date))
                 arg.append(('date', '<=', cmp_date))
+                arg.append('&')
+                arg.append('&')
+                arg.append('&')
+                arg.append(('category', '=', 'DEST'))
+                arg.append(('type', '=', 'normal'))
+                arg.append(('allow_all_cc', '=', False))
+                arg.append(('dest_cc_ids', '=', False))
         return arg
 
     def _get_fake(self, cr, uid, ids, *a, **b):
@@ -275,6 +316,8 @@ class analytic_account(osv.osv):
                                                        string='Destinations compatible with the Cost Center',
                                                        type='many2many', relation='account.analytic.account',
                                                        fnct_search=_search_dest_compatible_with_cc_ids),
+        'dest_without_cc': fields.function(_get_dest_without_cc, type='boolean', method=True, store=False,
+                                           string="Destination allowing no Cost Center",),
     }
 
     _defaults ={

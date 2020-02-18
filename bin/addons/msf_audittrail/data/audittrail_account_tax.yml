@@ -1,0 +1,29 @@
+-
+  For Taxes (account.tax), track the creation, modification, and deletion
+-  
+  !python {model: audittrail.rule}: |
+    name = 'Taxes'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'account.tax')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids:
+        fields = ['name', 'description', 'type_tax_use', 'price_include', 'active', 'partner_id', 'type', 'amount', 'account_collected_id',
+                  'account_paid_id', 'base_code_id', 'base_sign', 'tax_code_id', 'tax_sign', 'ref_base_code_id', 'ref_base_sign',
+                  'ref_tax_code_id', 'ref_tax_sign', 'child_depend', 'sequence', 'include_base_amount', 'child_ids']
+
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.tax'), ('name', 'in', fields)], context=context)
+
+        vals = {
+            'name': name,
+            'object_id': object_ids[0],
+            'log_write': True,
+            'log_unlink': True,
+            'log_create': True,
+            'field_ids': [(6, 0, fields_ids)],
+        }
+
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)

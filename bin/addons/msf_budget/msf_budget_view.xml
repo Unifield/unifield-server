@@ -278,8 +278,10 @@
             <field name="field_parent">child_complete_ids</field>
             <field name="priority" eval="16"/>
             <field name="arch" type="xml">
-                <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts"
-                 toolbar="1" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
+                <tree colors="red:(date and date&lt;=current_date or dest_without_cc==True)"
+                      string="Analytic Accounts"
+                      toolbar="1" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
+                    <field name="dest_without_cc" invisible="1"/>
                     <field name="name"/>
                     <field name="code"/>
                     <field name="description"/>

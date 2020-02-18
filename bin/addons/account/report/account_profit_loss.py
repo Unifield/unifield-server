@@ -111,7 +111,7 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
             ctx['date_from'] = data['form'].get('date_from', False)
             ctx['date_to'] = data['form'].get('date_to', False)
         if 'instance_ids' in data['form']:
-            ctx['instance_ids'] = data['form']['instance_ids']       
+            ctx['instance_ids'] = data['form']['instance_ids']
 
         cal_list = {}
         account_id = data['form'].get('chart_account_id', False)
@@ -149,38 +149,38 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
                 if i < len(cal_list['expense']) and i < len(cal_list['income']):
                     temp={
                         'code': cal_list['expense'][i].code,
-                          'name': cal_list['expense'][i].name,
-                          'level': cal_list['expense'][i].level,
-                          'balance':cal_list['expense'][i].balance,
-                          'code1': cal_list['income'][i].code,
-                          'name1': cal_list['income'][i].name,
-                          'level1': cal_list['income'][i].level,
-                          'balance1':cal_list['income'][i].balance,
+                        'name': cal_list['expense'][i].name,
+                        'level': cal_list['expense'][i].level,
+                        'balance':cal_list['expense'][i].balance,
+                        'code1': cal_list['income'][i].code,
+                        'name1': cal_list['income'][i].name,
+                        'level1': cal_list['income'][i].level,
+                        'balance1':cal_list['income'][i].balance,
                     }
                     self.result_temp.append(temp)
                 else:
                     if i < len(cal_list['income']):
                         temp={
                             'code': '',
-                              'name': '',
-                              'level': False,
-                              'balance':False,
-                              'code1': cal_list['income'][i].code,
-                              'name1': cal_list['income'][i].name,
-                              'level1': cal_list['income'][i].level,
-                              'balance1':cal_list['income'][i].balance,
+                            'name': '',
+                            'level': False,
+                            'balance':False,
+                            'code1': cal_list['income'][i].code,
+                            'name1': cal_list['income'][i].name,
+                            'level1': cal_list['income'][i].level,
+                            'balance1':cal_list['income'][i].balance,
                         }
                         self.result_temp.append(temp)
                     if  i < len(cal_list['expense']):
                         temp={
                             'code': cal_list['expense'][i].code,
-                              'name': cal_list['expense'][i].name,
-                              'level': cal_list['expense'][i].level,
-                              'balance':cal_list['expense'][i].balance,
-                              'code1': '',
-                              'name1': '',
-                              'level1': False,
-                              'balance1':False,
+                            'name': cal_list['expense'][i].name,
+                            'level': cal_list['expense'][i].level,
+                            'balance':cal_list['expense'][i].balance,
+                            'code1': '',
+                            'name1': '',
+                            'level1': False,
+                            'balance1':False,
                         }
                         self.result_temp.append(temp)
         return None
@@ -192,6 +192,7 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         return self.result.get(group, [])
 
     def get_display_info(self, data):
+        # reminder: in case other items are added in the "Display" col., truncate the text with the truncate_list method
         info_data = []
         all_str = _('All')
 
@@ -232,6 +233,7 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         return infos and ", \n".join(infos) or _('No Filter')
 
     def get_prop_instances(self, data):
+        data_tools_obj = self.pool.get('data.tools')
         instances = []
         if data.get('form', False):
             if data['form'].get('instance_ids', False):
@@ -242,7 +244,8 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
                 # US-1166: mission only instances if none provided
                 instances = self._get_instances(get_code=True,
                                                 mission_filter=True)
-        return ', '.join(instances)
+        return data_tools_obj.truncate_list(instances)
+
 
 report_sxw.report_sxw('report.pl.account.horizontal', 'account.account',
                       'addons/account/report/account_profit_horizontal.rml',parser=report_pl_account_horizontal, header='internal landscape')

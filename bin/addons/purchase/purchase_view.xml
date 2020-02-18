@@ -263,7 +263,7 @@
                                     <field name="account_4_distribution" string="Acc. for Ana. Distrib." invisible="1"/>
                                     <field name="kit_pol_check" invisible="True"/>
                                     <field name="po_state_stored" invisible="True"/>
-                                    <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check', '=', False), ('po_state_stored', '!=', 'confirmed')]}"/>
+                                    <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check', '=', False), ('fake_state', 'not in', ['draft', 'validated', 'validated_n'])]}"/>
                                     <field name="red_color" invisible="1"/>
                                     <field name="tender_line_id" invisible="1"/>
                                     <field name="to_correct_ok" invisible="1"/>
@@ -1008,20 +1008,5 @@
         <menuitem action="purchase_line_form_action2" id="menu_purchase_line_order_draft" groups="base.group_extended" parent="menu_procurement_management_invoice" sequence="72"/>
 
 
-        <!--
-            Procurements
-        -->
-        <record id="view_procurement_form_inherit" model="ir.ui.view">
-            <field name="name">procurement.order.form.inherit</field>
-            <field name="model">procurement.order</field>
-            <field name="inherit_id" ref="procurement.procurement_form_view"/>
-            <field name="type">form</field>
-            <field name="priority">25</field>
-            <field name="arch" type="xml">
-                <xpath expr="/form/notebook/page/field[@name='close_move']" position="before">
-                    <field name="purchase_id"/>
-                </xpath>
-            </field>
-        </record>
     </data>
 </openerp>

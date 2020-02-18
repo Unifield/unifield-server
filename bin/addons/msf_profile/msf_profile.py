@@ -52,10 +52,122 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF16.0
+    def us_6692_new_od_journals(self, cr, uid, *a, **b):
+        """
+        1. Change the type of the existing correction journals (except OD) to "Correction Manual" so they remain usable
+
+        2. Create:
+        - ODM journals in all existing instances
+        - ODHQ journals in existing coordo instances
+
+        Notes:
+        - creations are done in Python as the objects created must sync normally
+        - none of these journals already exists in prod. DB.
+        """
+        user_obj = self.pool.get('res.users')
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
+        journal_obj = self.pool.get('account.journal')
+        current_instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if current_instance:  # existing instances only
+            # existing correction journals
+            cr.execute("""
+                       UPDATE account_analytic_journal
+                       SET type = 'correction_manual'
+                       WHERE type = 'correction'
+                       AND code != 'OD';
+                       """)
+            self._logger.warn('%s correction analytic journal(s) updated.' % (cr.rowcount,))
+            cr.execute("""
+                       UPDATE account_journal
+                       SET type = 'correction_manual'
+                       WHERE type = 'correction'
+                       AND code != 'OD';
+                       """)
+            self._logger.warn('%s correction journal(s) updated.' % (cr.rowcount,))
+            # ODM analytic journal
+            odm_analytic_vals = {
+                # Prop. Instance: by default the current one is used
+                'code': 'ODM',
+                'name': 'Correction manual',
+                'type': 'correction_manual',
+            }
+            odm_analytic_journal_id = analytic_journal_obj.create(cr, uid, odm_analytic_vals)
+            # ODM G/L journal
+            odm_vals = {
+                # Prop. Instance: by default the current one is used
+                'code': 'ODM',
+                'name': 'Correction manual',
+                'type': 'correction_manual',
+                'analytic_journal_id': odm_analytic_journal_id,
+            }
+            journal_obj.create(cr, uid, odm_vals)
+            if current_instance.level == 'coordo':
+                # ODHQ analytic journal
+                odhq_analytic_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ODHQ',
+                    'name': 'Correction automatic HQ',
+                    'type': 'correction_hq',
+                }
+                odhq_analytic_journal_id = analytic_journal_obj.create(cr, uid, odhq_analytic_vals)
+                # ODHQ G/L journal
+                odhq_vals = {
+                    # Prop. Instance: by default the current one is used
+                    'code': 'ODHQ',
+                    'name': 'Correction automatic HQ',
+                    'type': 'correction_hq',
+                    'analytic_journal_id': odhq_analytic_journal_id,
+                }
+                journal_obj.create(cr, uid, odhq_vals)
+        return True
+
+    def us_6684_push_backup(self, cr, uid, *a, **b):
+        backup_obj = self.pool.get('backup.config')
+        if backup_obj:
+            cr.execute("update ir_cron set manual_activation='f' where function='send_backup_bg' and model='msf.instance.cloud'")
+            cr.execute("update ir_cron set name='Send Continuous Backup', manual_activation='f' where function='sent_continuous_backup_bg' and model='backup.config'")
+            if cr.column_exists('backup_config', 'continuous_backup_enabled'):
+                cr.execute("update backup_config set backup_type='cont_back' where continuous_backup_enabled='t'")
+
+            # update active field on cron
+            bck_ids = backup_obj.search(cr, uid, [])
+            backup_obj.write(cr, uid, bck_ids, {})
+        return True
+
     def us_7024_update_standard(self, cr, uid, *a, **b):
         cr.execute("update product_product set standard_ok='standard' where standard_ok='True'")
         cr.execute("update product_product set standard_ok='non_standard' where standard_ok='False'")
         return True
+
+    # UF15.3
+    def us_7147_reset_duplicate_proj_fxa(self, cr, uid, *a, **b):
+        cr.execute("""
+            select am.name, am.id, aml.id, data.name
+                from account_move_line aml
+                inner join account_journal aj ON aml.journal_id = aj.id
+                inner join account_move am ON aml.move_id = am.id
+                inner join account_period ap ON aml.period_id = ap.id
+                inner join account_account aa ON aml.account_id = aa.id
+                inner join msf_instance i ON aml.instance_id = i.id
+                inner join ir_model_data data on data.res_id = aml.id and data.model = 'account.move.line'
+            where
+                aj.type = 'cur_adj' and
+                i.level = 'project' and
+                aml.reconcile_id is null and
+                aa.reconcile = 't' and
+                (aml.credit != 0 or aml.debit != 0)
+        """)
+        for x in cr.fetchall():
+            cr.execute("select id from sync_client_update_to_send where model='account.move.reconcile' and values ~* '.*sd.%s[,''].*'" % x[3]) # not_a_user_entry
+            if not cr.rowcount:
+                cr.execute("select id from sync_client_update_received where model='account.move.reconcile' and values ~* '.*sd.%s[,''].*'" % x[3]) # not_a_user_entry
+                if not cr.rowcount:
+                    cr.execute("update account_move_line set credit=0, debit=0 where move_id = %s", (x[1], ))
+                    cr.execute("update account_analytic_line set amount=0, amount_currency=0 where move_id in (select id from account_move_line where move_id = %s)", (x[1], ))
+                    self._logger.warn('Set 0 on FXA %s' % (x[0],))
+        return True
+
     # UF15.2
     def rec_entries_uf14_1_uf15(self, cr, uid, *a, **b):
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id

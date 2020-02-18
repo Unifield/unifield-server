@@ -1396,7 +1396,7 @@ class account_bank_statement_line(osv.osv):
         self.write(cr, uid, [st_line.id], {'move_ids': [(4, move_id, False)]}, context=context)
 
         torec = []
-        if st_line.amount >= 0:
+        if st_line.amount < 0:
             account_id = st.journal_id.default_credit_account_id.id
         else:
             account_id = st.journal_id.default_debit_account_id.id
@@ -1796,7 +1796,7 @@ class account_bank_statement_line(osv.osv):
         """
         If the statement line...
             - is being hardposted
-            - has a Partner Third Party
+            - has a Partner Third Party being neither Intermission nor Intersection
             - is booked on an income or expense account
         ... this method creates automated entries on partner payable or receivable account (JI), adds them to the
         regline JE, and returns a list of their ids that will have to be reconciled once the JE will be posted.
@@ -1806,8 +1806,8 @@ class account_bank_statement_line(osv.osv):
         if not st_line:
             return False
         automated_entries_ids = []
-        if posttype == 'hard' and st_line.partner_id and st_line.account_id.user_type.code in ('expense', 'income') and \
-                st_line.direct_invoice is False:
+        if posttype == 'hard' and st_line.partner_id and st_line.partner_id.partner_type not in ('intermission', 'section') and \
+                st_line.account_id.user_type.code in ('expense', 'income') and st_line.direct_invoice is False:
             # Prepare some elements
             move_line_obj = self.pool.get('account.move.line')
             current_date = time.strftime('%Y-%m-%d')

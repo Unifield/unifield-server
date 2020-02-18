@@ -195,10 +195,5 @@
                   sequence="4"
                   parent="stock.menu_stock_root" />
 
-        <menuitem action="procurement.action_orderpoint_form"
-                  id="procurement.menu_stock_order_points"
-                  parent="stock_automatic_procurements_menu"
-                  sequence="1" />
-    
     </data>
 </openerp>
