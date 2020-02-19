@@ -711,11 +711,19 @@ class stock_picking(osv.osv):
 
         return res
 
-    def do_incoming_shipment(self, cr, uid, wizard_ids, context=None):
+    def do_incoming_shipment(self, cr, uid, wizard_ids, shipment_ref=False, context=None):
         """
         Take the data in wizard_ids and lines of stock.incoming.processor and
         do the split of stock.move according to the data.
         """
+        """
+          ############## TODO ##################
+          - check do_incoming_shipment signature on all calls
+          - check CLAIM :)
+          - tests
+        """
+
+
         # Objects
         inc_proc_obj = self.pool.get('stock.incoming.processor')
         move_proc_obj = self.pool.get('stock.move.in.processor')
@@ -1053,6 +1061,7 @@ class stock_picking(osv.osv):
                     })
 
                 backorder_id = False
+                backorder_ids = False
                 if context.get('for_dpo', False) and picking_dict['purchase_id']:
                     # Look for an available IN for the same purchase order in case of DPO
                     backorder_ids = self.search(cr, uid, [
@@ -1060,8 +1069,16 @@ class stock_picking(osv.osv):
                         ('in_dpo', '=', True),
                         ('state', '=', 'assigned'),
                     ], limit=1, context=context)
-                    if backorder_ids:
-                        backorder_id = backorder_ids[0]
+                elif sync_in and picking_dict['purchase_id'] and shipment_ref:
+                    backorder_ids = self.search(cr, uid, [
+                        ('purchase_id', '=', picking_dict['purchase_id'][0]),
+                        ('shipment_ref', '=', shipment_ref),
+                        ('state', '=', 'shipped'),
+                    ], limit=1, context=context)
+
+                print 'sync_in', sync_in, 'purchase_id', picking_dict['purchase_id'], 'shipment_ref:', shipment_ref, backorder_ids
+                if backorder_ids:
+                    backorder_id = backorder_ids[0]
 
                 backorder_name = picking_dict['name']
                 if not backorder_id:
