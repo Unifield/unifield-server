@@ -12,6 +12,11 @@
         <setFont name="Helvetica" size="8"/>
         <fill color="black"/>
         <drawString x="20.0" y="10.0">Page : <pageNumber /></drawString>
+
+        <place x="1cm" y="18cm" height="1.8cm" width="15.0cm"> <!-- TODO: once OK set 10cm instead of 1 -->
+          <para fontSize="7.0" fontName="Helvetica">TODO</para>
+        </place>
+
       </pageGraphics>
     </pageTemplate>
   </template>
