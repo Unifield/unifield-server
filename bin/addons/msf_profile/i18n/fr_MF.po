@@ -108797,3 +108797,28 @@ msgstr "Attention, pour le Segment %s  le champ \"Prochaine commande à recevoir
 #: field:product.product,oc_subscription:0
 msgid "OC Subscription"
 msgstr "Abonnement OC"
+
+#. module: account_override
+#: field:account.invoice,refunded_invoice_id:0
+msgid "Refunded Invoice"
+msgstr "Facture Remboursée"
+
+#. module: account_override
+#: help:account.invoice,refunded_invoice_id:0
+msgid "The refunded invoice which has generated this document"
+msgstr "La facture remboursée qui a généré ce document"
+
+#. module: register_accounting
+#: field:account.bank.statement.line,imported_account_invoice_ids:0
+msgid "Real invoices imported"
+msgstr "Vraies factures importées"
+
+#. module: register_accounting
+#: field:account.bank.statement.line,number_imported_account_invoices:0
+msgid "Number of real invoices imported"
+msgstr "Nombre de vraies factures importées"
+
+#. module: register_accounting
+#: help:account.bank.statement.line,imported_account_invoice_ids:0
+msgid "The invoices imported, even partially, either directly into this register or indirectly via the import of the related cheque."
+msgstr "Les factures importées, même partiellement, soient directement dans ce registre soit indirectement via l'import du chèque associé."

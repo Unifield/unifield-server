@@ -766,6 +766,7 @@ class account_invoice(osv.osv):
             'synced': False,
             'counterpart_inv_number': False,
             'counterpart_inv_status': False,
+            'refunded_invoice_id': False,
         })
         if 'date_invoice' not in default:
             default.update({
@@ -1383,6 +1384,7 @@ class account_invoice(osv.osv):
         obj_journal = self.pool.get('account.journal')
         new_ids = []
         for invoice in invoices:
+            invoice.update({'refunded_invoice_id': invoice['id']})
             del invoice['id']
 
             if context.get('is_intermission', False):

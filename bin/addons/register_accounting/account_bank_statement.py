@@ -1176,6 +1176,18 @@ class account_bank_statement_line(osv.osv):
                     result[out.id]['red_on_supplier'] = True
         return result
 
+    def _get_number_imported_account_invoices(self, cr, uid, ids, field_name=None, args=None, context=None):
+        """
+        For each register line, gets the number of real account.invoices imported, even partially.
+        Other types of lines imported are ignored.
+        """
+        res = {}
+        if context is None:
+            context = {}
+        for regline in self.read(cr, uid, ids, ['imported_account_invoice_ids'], context=context):
+            res[regline['id']] = len(regline['imported_account_invoice_ids'])
+        return res
+
     _columns = {
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
@@ -1209,6 +1221,15 @@ class account_bank_statement_line(osv.osv):
         'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id',
                                                       string="Imported Invoices", required=False, readonly=True),
         'number_imported_invoice': fields.function(_get_number_imported_invoice, method=True, string='Number Invoices', type='integer'),
+        # store only account.invoices and ignore other lines imported
+        'imported_account_invoice_ids': fields.many2many('account.invoice', 'register_line_imported_account_invoice',
+                                                         'regline_id', 'invoice_id', string='Real invoices imported',
+                                                         required=False, readonly=True,
+                                                         help="The invoices imported, even partially, "
+                                                              "either directly into this register "
+                                                              "or indirectly via the import of the related cheque."),
+        'number_imported_account_invoices': fields.function(_get_number_imported_account_invoices, method=True, type='integer',
+                                                            string='Number of real invoices imported', store=False),
         'is_down_payment': fields.function(_get_down_payment_state, method=True, string="Is a down payment line?",
                                            type='boolean', store=False),
         'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line",
@@ -2248,6 +2269,7 @@ class account_bank_statement_line(osv.osv):
             'partner_move_line_ids': [],
             'advance_invoice_move_id': False,
             'direct_invoice_move_id': False,
+            'imported_account_invoice_ids': [],
         })
         # Copy analytic distribution if exists
         line = self.browse(cr, uid, [absl_id], context=context)[0]
