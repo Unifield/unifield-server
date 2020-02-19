@@ -53,6 +53,20 @@ class patch_scripts(osv.osv):
     }
 
     # UF16.0
+    def us_7181_add_oc_subscrpition_to_unidata_products(self, cr, uid, *a, **b):
+        """
+        Set the new 'oc_subscription' boolean to True for each product with 'Unidata' as Product Creator
+        """
+        cr.execute("""
+            UPDATE product_product SET oc_subscription = 't' WHERE id IN (
+                SELECT p.id FROM product_product p LEFT JOIN product_international_status i ON p.international_status = i.id
+                WHERE i.code = 'unidata'
+            )
+        """)
+        self._logger.warn('%s Unidata product(s) have been updated.' % (cr.rowcount,))
+
+        return True
+
     def us_6692_new_od_journals(self, cr, uid, *a, **b):
         """
         1. Change the type of the existing correction journals (except OD) to "Correction Manual" so they remain usable
