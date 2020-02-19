@@ -810,7 +810,7 @@ class orm_template(object):
         processed, rejected, headers = import_obj._import(cr, uid, import_id, use_new_cursor=False, auto_import=True)
         return processed, rejected, headers
 
-    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=',', context=None):
+    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=',', context=None, with_commit=True):
         headers = []
         list_data = []
         with open(csv_file, 'r') as fcsv:
@@ -832,10 +832,12 @@ class orm_template(object):
                     rejected.append((i, d, res[2]))
                 else:
                     processed.append((i, d))
-                cr.commit()
+                if with_commit:
+                    cr.commit()
             except Exception as e:
                 rejected.append((i, d, tools.ustr(e)))
-                cr.commit()
+                if with_commit:
+                    cr.commit()
 
         return processed, rejected, headers
 
