@@ -308,7 +308,7 @@
                                     <field name="rr_fmc_from_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('from', '3', rr_fmc_from_3)" nolabel="1"/>
                                     <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('to', '3', rr_fmc_to_3)" nolabel="1"/>
                                     <field name= "list_fmc" invisible="context.get('rule')!='cycle'" displayon="noteditable"/>
-                                    <button name="openform" special="openform" string="Edit 12 FMC" invisible="context.get('rule')!='cycle'" icon="terp-go-week" />
+                                    <button name="openform" special="openform" string="Edit 12 FMC" invisible="context.get('rule')!='cycle'" attrs="{'invisible': [('state', '!=', 'draft')]}"  icon="terp-go-week" />
 
                                 </tree>
                                 <form>
