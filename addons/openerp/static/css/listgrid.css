@@ -81,6 +81,15 @@
     cursor: pointer;
 }
 
+#line_ids_grid th {
+    background: url(../images/gradientlinebg.gif);
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+
 .grid-row .grid-cell {
     border-bottom: 1px solid #E3E3E3;
 }
