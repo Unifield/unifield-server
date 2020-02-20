@@ -324,7 +324,7 @@
                                     <field name="real_stock" />
                                     <field name="rr_amc" />
                                     <group colspan="4" col="4">
-                                    <separator string="FMC" colspan="1" />
+                                    <separator string="FMC" colspan="2" />
                                     <separator string="From" colspan="1" />
                                     <separator string="To" colspan="1" />
 
