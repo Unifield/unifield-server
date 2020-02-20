@@ -107,7 +107,7 @@ class patch_scripts(osv.osv):
                     AND a.is_inkind_donation = 'f' AND a.is_intermission = 't' 
             )
         """)
-        self._logger.warn('%s empty IVOs have been deleted.', (cr.rowcount(),))
+        self._logger.warn('%s empty IVOs have been deleted.', (cr.rowcount,))
 
         return True
 
