@@ -6,8 +6,9 @@
             <field name="name">composition.kit.form</field>
             <field name="model">composition.kit</field>
             <field name="type">form</field>
+			<field name="priority" eval="17"/>
             <field name="arch" type="xml">
-            	<form string="Kit Composition" > <!-- the hide_duplicate_button="1" is defined in the fields view get as "Theoretical Kit Composition" and "Kit Composition List have the same view" -->
+            	<form string="Theoretical Kit Composition" > <!-- the hide_duplicate_button="1" is defined in the fields view get as "Theoretical Kit Composition" and "Kit Composition List have the same view" -->
             		<group col="6" colspan="4">
             			<group col="4" colspan="4">
 	                        <field name="composition_type" invisible="True" />
@@ -59,7 +60,8 @@
 				            		<field name="item_uom_id" on_change="onchange_uom_qty(item_uom_id, item_qty)" domain="[('uom_by_product', '=', item_product_id)]" />
 				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
 				            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
-				            		<field name="item_lot"
+				            		<field name="comment" />
+									<field name="item_lot"
 				            			on_change="on_lot_change(item_product_id, item_lot, context)" 
 				            			attrs="{'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
 				            		<field name="item_exp" attrs="{'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
@@ -86,6 +88,94 @@
                     	<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
                         <button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
                         <button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
+                    </group>
+            	</form>
+            </field>
+		</record>
+
+		<record id="view_composition_kit_real_form" model="ir.ui.view">
+            <field name="name">composition.kit.real.form</field>
+            <field name="model">composition.kit</field>
+            <field name="type">form</field>
+			<field name="priority" eval="18"/>
+            <field name="arch" type="xml">
+            	<form string="Kit Composition List" > <!-- the hide_duplicate_button="1" is defined in the fields view get as "Theoretical Kit Composition" and "Kit Composition List have the same view" -->
+            		<group col="6" colspan="4">
+            			<group col="4" colspan="4">
+	                        <field name="composition_type" invisible="True" />
+	                        <field name="composition_product_id" colspan="4" on_change="on_change_product_id(composition_product_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+	                        <field name="composition_kit_creation_id" attrs="{'invisible': [('state', '!=', 'in_production')]}" />
+                        </group>
+                        <group col="6" colspan="2">
+                        	<field name="composition_version_id"
+                        		context="{'wizard_composition_type': 'theoretical', 'composition_type': 'theoretical'}"
+                        		attrs="{'readonly': [('state', '!=', 'draft')]}"
+                        		domain="[('composition_product_id', '=', composition_product_id), ('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]"
+                        		colspan="2" />
+	                        <field name="composition_creation_date" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+	                        <field name="composition_batch_check" invisible="True" colspan="2" />
+	                        <field name="composition_expiry_check" invisible="True" colspan="2" />
+							<newline/>
+	                        <field name="composition_reference" colspan="2" attrs="{'required': [('composition_expiry_check', '=', False)], 'invisible': [('composition_expiry_check', '=', True)], 'readonly': [('state', '!=', 'draft')]}" />
+	                        <field name="composition_lot_id" colspan="2"
+	                        	on_change="on_change_lot_id(composition_lot_id)"
+	                        	domain="[('product_id', '=', composition_product_id)]" attrs="{'required': [('composition_expiry_check', '=', True)], 'invisible': [('composition_expiry_check', '=', False)], 'readonly': [('state', '!=', 'draft')]}" />
+	                        <field name="composition_exp" colspan="2" />
+	                        <field name="active" invisible="1" colspan="1" />
+							<button colspan="2" name="reset_to_version" type="object" string="Load items from Version" icon="gtk-sort-descending" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+	                        <button colspan="2" name="modify_expiry_date" string="Modify Expiry Date" type="object" icon="terp-go-today" />
+                        </group>
+                    </group>
+                    <notebook colspan="4">
+                    	<page string="Composition Items">
+                    		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="4">
+                    			<form string="Theoretical Kit Item">
+				                    <group col="6" colspan="4">
+				            			<notebook colspan="4">
+				            				<page string="Composition Item">
+				           						<field name="item_module" />
+				           						<field name="item_product_id" />
+						                        <field name="item_qty" />
+						                        <field name="item_uom_id" domain="[('uom_by_product', '=', item_product_id)]" />
+					                        </page>
+					                        <page string="Notes">
+					                        	<field name="item_description" nolabel="True" />
+					                        </page>
+				            			</notebook>
+				                    </group>
+				            	</form>
+                    			<tree string="Theoretical Kit Item" editable="top" colors="red: inactive_product==True">
+				            		<field name="item_module" />
+				            		<field name="item_product_id" on_change="on_product_change(item_product_id)" />
+				            		<field name="item_qty" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
+				            		<field name="item_uom_id" on_change="onchange_uom_qty(item_uom_id, item_qty)" domain="[('uom_by_product', '=', item_product_id)]" />
+				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
+				            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
+				            		<field name="item_lot"
+				            			on_change="on_lot_change(item_product_id, item_lot, context)"
+				            			attrs="{'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
+				            		<field name="item_exp" attrs="{'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
+				            		<field name="hidden_asset_mandatory" invisible="True" />
+				            		<field name="hidden_batch_management_mandatory" />
+                                    <field name="hidden_perishable_mandatory" />
+                                    <field name="inactive_product" invisible="1" />
+                                    <field name="inactive_error" readonly="1" />
+				            	</tree>
+                    		</field>
+                    	</page>
+                    	<page string="Notes">
+                    		<field name="composition_description" nolabel="True" />
+                    	</page>
+                    </notebook>
+                    <group col="5" colspan="2">
+                    	<field name="state" colspan="3" />
+                    </group>
+                    <group col="7" colspan="2">
+                    	<button name="action_cancel" string="Cancel" type="object" icon="gtk-cancel" attrs="{'invisible': [('state', 'not in', ['draft'])]}" />
+                    	<button name="mark_as_completed" string="Mark as Completed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('active', '=', False)]}" />
+                    	<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('state', '!=', 'completed')]}" />
+                        <button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': [('state', '!=', 'completed')]}" />
+                        <button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': [('state', '!=', 'completed')]}" />
                     </group>
             	</form>
             </field>
@@ -194,7 +284,7 @@
                     <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />
                     <field name="composition_version_id"
                     	select="1"
-                    	context="{'wizard_composition_type': 'theoretical', 'composition_type': 'theoretical'}"
+                    	context="{'wizard_composition_type': 'theoretical'}"
                     	domain="[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')]" />
                     <field name="composition_combined_ref_lot" select="1" />
                     <field name="composition_exp" select="1" />
@@ -264,8 +354,10 @@
             <field name="name">composition.kit.item.tree</field>
             <field name="model">composition.item</field>
             <field name="type">tree</field>
+			<field name="priority">16</field>
             <field name="arch" type="xml">
             	<tree string="Kit Item" editable="top" hide_new_button="True" hide_delete_button="True">
+            		<field name="item_kit_name" />
             		<field name="item_kit_id" />
             		<field name="item_module" readonly="True" />
             		<field name="item_product_id" on_change="on_product_change(item_product_id)" readonly="True" />
@@ -273,6 +365,29 @@
             		<field name="item_uom_id" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_asset_id" readonly="True" />
             		<field name="item_lot" readonly="True" />
+            		<field name="item_exp" readonly="True" />
+            		<field name="hidden_batch_management_mandatory" />
+            		<field name="hidden_perishable_mandatory" />
+            		<field name="state" invisible="True" />
+            	</tree>
+            </field>
+		</record>
+
+		<record id="view_composition_kit_real_item_tree" model="ir.ui.view">
+            <field name="name">composition.kit.real.item.tree</field>
+            <field name="model">composition.item</field>
+            <field name="type">tree</field>
+			<field name="priority">17</field>
+            <field name="arch" type="xml">
+            	<tree string="Kit Item" editable="top" hide_new_button="True" hide_delete_button="True">
+            		<field name="item_kit_id" string="Kit/Product" />
+            		<field name="item_kit_batch" />
+            		<field name="item_module" readonly="True" />
+            		<field name="item_product_id" on_change="on_product_change(item_product_id)" readonly="True" string="Component/Product" />
+            		<field name="item_qty" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
+            		<field name="item_uom_id" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
+            		<field name="item_asset_id" readonly="True" />
+            		<field name="item_lot" readonly="True" string="Component/BN" />
             		<field name="item_exp" readonly="True" />
             		<field name="hidden_batch_management_mandatory" />
             		<field name="hidden_perishable_mandatory" />
@@ -288,6 +403,7 @@
             <field name="priority">2</field><!-- because of links from product.product -->
             <field name="arch" type="xml">
                 <search string="Search Theoretical Kit Composition Item">
+                    <field name="item_kit_name" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />
                     <field name="item_kit_id" domain="[('composition_type', '=', 'theoretical')]" select="1" />
                     <field name="item_module" select="1" />
                     <field name="item_product_id" select="1" />
@@ -309,7 +425,7 @@
             <field name="priority">1</field><!-- because of links from product.product -->
             <field name="arch" type="xml">
                 <search string="Search Real Kit Composition Item">
-                    <field name="item_kit_id" domain="[('composition_type', '=', 'real')]" select="1" />
+                    <field name="item_kit_id" domain="[('composition_type', '=', 'real')]" select="1" string="Kit" />
                     <field name="item_module" select="1" />
                     <field name="item_product_id" select="1" />
                     <field name="item_lot" select="1" />
@@ -364,6 +480,13 @@
             <field name="view_id" ref="view_composition_kit_real_tree" />
             <field name="act_window_id" ref="kit_composition_real_action" />
         </record>
+
+		<record id="kit_composition_real_action_form_view" model="ir.actions.act_window.view">
+            <field eval="10" name="sequence" />
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_composition_kit_real_form" />
+            <field name="act_window_id" ref="kit_composition_real_action" />
+        </record>
 		
 		<record id="kit_composition_real_item_action" model="ir.actions.act_window">
 			<field name="name">Kit Composition Item</field>
@@ -374,6 +497,13 @@
 			<field name="context">{'composition_type':'real'}</field>
 			<field name="search_view_id" ref="view_composition_kit_real_item_filter" />
 		</record>
+
+		<record id="kit_composition_real_item_action_tree_view" model="ir.actions.act_window.view">
+            <field eval="10" name="sequence" />
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_composition_kit_real_item_tree" />
+            <field name="act_window_id" ref="kit_composition_real_item_action" />
+        </record>
 		
 		<record id="kit_composition_real_action2" model="ir.actions.act_window">
 			<field name="name">Kit Composition List</field>

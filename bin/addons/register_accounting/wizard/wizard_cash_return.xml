@@ -100,7 +100,7 @@
             <field name='type'>tree</field>
             <field name='arch' type='xml'>
                 <tree editable="bottom" string="Advance Lines"
-                    colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')">
+                    colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid', 'invalid_small_amount');black:analytic_distribution_state in ('none')">
                     <field name="document_date" />
                     <field name="description" />
                     <field name="account_id" domain="[('restricted_area', '=', 'cash_return')]"/> 

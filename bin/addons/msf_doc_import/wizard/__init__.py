@@ -156,10 +156,6 @@ import wizard_import_picking_line
 import wiz_common_import
 import wizard_import_tender_line
 import wizard_delete_lines
-import wizard_import_auto_supply_line
-import wizard_import_order_cycle_line
-import wizard_import_threshold_value_line
-import wizard_import_stock_warehouse_order_point_line
 import wizard_import_product_list
 import wizard_import_product_line
 import wizard_import_supplier_catalogue

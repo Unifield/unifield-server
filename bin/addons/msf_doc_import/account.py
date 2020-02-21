@@ -358,7 +358,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         money[(booking_curr, period_name, r_document_date)]['credit'] += book_credit
                         r_credit = book_credit
 
-                    # Check which journal it is to be posted to: should be of type OD, MIG or INT
+                    # Check the journal code which must match with one of the journal types listed in ACCOUNTING_IMPORT_JOURNALS
                     if not line[cols['Journal Code']]:
                         errors.append(_('Line %s. No Journal Code specified') % (current_line_num,))
                         continue

@@ -492,7 +492,7 @@ class Entity(osv.osv):
         'max_update' : fields.integer('Max Update Sequence', readonly=True),
         'message_to_send' : fields.function(_get_nb_message_send, method=True, string='Nb message to send', type='integer', readonly=True),
         'update_to_send' : fields.function(_get_nb_update_send, method=True, string='Nb update to send', type='integer', readonly=True),
-
+        'previous_hw': fields.char('Last HW successfully used', size=128, select=True),
         # used to determine which sync rules to use
         # UF-2531: moved this from the RW module to the general sync module
         'usb_instance_type': fields.selection((('',''),('central_platform','Central Platform'),('remote_warehouse','Remote Warehouse')), string='USB Instance Type'),
@@ -553,7 +553,8 @@ class Entity(osv.osv):
         else:
             rule_module = self.pool.get('sync.client.rule')
             model_field_name = 'model'
-        obj_ids = rule_module.search(cr, uid, [('active', '=', True)])
+        # TODO JFB RR: remove USB rules from sync / instances
+        obj_ids = rule_module.search(cr, uid, [('active', '=', True), ('type', '!=', 'USB')])
         for obj in rule_module.read(cr, uid, obj_ids, [model_field_name, 'included_fields']):
             if obj[model_field_name] not in model_field_dict:
                 model_field_dict[obj[model_field_name]] = set()
@@ -762,6 +763,8 @@ class Entity(osv.osv):
         res = proxy.get_model_to_sync(entity.identifier, self._hardware_id)
         if not res[0]:
             raise Exception, res[1]
+
+        entity.write({'previous_hw': self._hardware_id}, context=context)
         check_md5(res[2], res[1], _('method set_rules'))
         self.pool.get('sync.client.rule').save(cr, uid, res[1], context=context)
 
@@ -1310,8 +1313,8 @@ class Entity(osv.osv):
             logger.info['nb_msg_not_run'] = nb_msg_not_run
             logger.info['nb_data_not_run'] = nb_data_not_run
 
-        self._logger.info('Not run updates : %d' % (nb_msg_not_run, ))
-        self._logger.info('Not run messages : %d' % (nb_data_not_run, ))
+        self._logger.info('Not run updates : %d' % (nb_data_not_run, ))
+        self._logger.info('Not run messages : %d' % (nb_msg_not_run, ))
         self._logger.info("Synchronization successfully done")
         return True
 

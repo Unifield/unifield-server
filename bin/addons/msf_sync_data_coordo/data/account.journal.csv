@@ -1,0 +1,2 @@
+code,currency,default_credit_account_id,default_debit_account_id,name,type,analytic_journal_id
+ODHQ,,,,Correction automatic HQ,correction_hq,Correction automatic HQ

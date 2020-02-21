@@ -33,6 +33,7 @@ import smtplib
 import socket
 import sys
 import threading
+
 import time
 import warnings
 import zipfile
@@ -71,6 +72,12 @@ _logger = logging.getLogger('tools')
 # We include the *Base ones just in case, currently they seem to be subclasses of the _* ones.
 SKIPPED_ELEMENT_TYPES = (etree._Comment, etree._ProcessingInstruction, etree.CommentBase, etree.PIBase)
 
+rsync_lock = threading.RLock()
+
+def _(d):
+    # just here to export the month when trans. file is generated
+    return d
+month_abbr = ['', _('Jan'), _('Feb'), _('Mar'), _('Apr'), _('May'), _('Jun'), _('Jul'), _('Aug'), _('Sep'), _('Oct'), _('Nov'), _('Dec')]
 
 # initialize a database with base/base.sql
 def init_db(cr):
@@ -161,6 +168,23 @@ def path_to_cygwin(path):
         new_path = '%s/' % new_path
     return new_path
 
+def force_wal_generation(cr, wal_path):
+    cr.execute('select * from pg_xlogfile_name_offset(pg_switch_xlog())')
+    file_name, offset = cr.fetchone()
+    _logger.warn('WAL generation forced %s %s' % (file_name, offset))
+    if not offset or not file_name:
+        return True
+    zip_new_wal = os.path.join(wal_path, '%s.7z' % file_name)
+    wait = 0
+    while True:
+        if os.path.exists(zip_new_wal):
+            return True
+        wait += 1
+        if wait > 30:
+            _logger.warn('7z Wal %s not found' % zip_new_wal)
+            return False
+        time.sleep(2)
+
 def sent_to_remote(local_path, config_dir=False, remote_user=False, remote_host=False, remote_dir=False):
 
     exe_dir = os.path.join(os.path.normcase(os.path.abspath(config['root_path'])), 'rsync')
@@ -187,11 +211,12 @@ def sent_to_remote(local_path, config_dir=False, remote_user=False, remote_host=
 
     remote_path = '%s/' % remote_dir
     try:
-        command = [sync, '--remove-source-files', '--partial-dir=.rsync-partial', '-a', '-e', '"%s" -F "%s"'%(ssh, sshconfig), '--include=*/', '--include=*7z', '--exclude=*', path_to_cygwin(local_path), "%s@%s:%s" % (remote_user, remote_host, remote_path)]
-        _logger.info(' '.join(command))
-        subprocess.check_output(command, stderr=subprocess.STDOUT)
-        _logger.info('Rsync ends')
-        return True
+        with rsync_lock:
+            command = [sync, '--remove-source-files', '--partial-dir=.rsync-partial', '-a', '-e', '"%s" -F "%s"'%(ssh, sshconfig), '--include=*/', '--include=*7z', '--exclude=*', path_to_cygwin(local_path), "%s@%s:%s" % (remote_user, remote_host, remote_path)]
+            _logger.info(' '.join(command))
+            subprocess.check_output(command, stderr=subprocess.STDOUT)
+            _logger.info('Rsync ends')
+            return True
     except subprocess.CalledProcessError, e:
         _logger.error('rsync %s' % e.output)
         raise Exception(e.output)
@@ -1861,14 +1886,28 @@ class Path():
         self.path = path
         self.delete = delete
 
-def use_prod_sync(cr):
+def use_prod_sync(cr, uid=False, pool=False):
     cr.execute('''SELECT host, database
             FROM sync_client_sync_server_connection''')
     host, database = cr.fetchone()
 
     if host and database and database.strip() == 'SYNC_SERVER' and \
             ('sync.unifield.net' in host.lower() or '212.95.73.129' in host):
-        return True
+        if uid and pool:
+            connection = pool.get('sync.client.sync_server_connection')
+            entity_obj = pool.get('sync.client.entity')
+            if not connection or not entity_obj:
+                return False
+            entity = entity_obj.get_entity(cr, uid)
+            if connection.is_connected:
+                # check HW on the sync server
+                proxy = pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
+                res = proxy.get_entity(entity.identifier, entity._hardware_id)
+                if res and res[0]:
+                    return True
+            return entity._hardware_id == entity.previous_hw
+        else:
+            return True
 
     return False
 
@@ -1912,3 +1951,8 @@ def get_fake(self, cr, uid, ids, *a, **b):
     for x in ids:
         ret[x] = False
     return ret
+
+def get_traceback(error):
+    import sys, traceback
+    tb_s = reduce(lambda x, y: x+y, traceback.format_exception(*sys.exc_info()))
+    return ustr(tb_s)

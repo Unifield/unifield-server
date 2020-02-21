@@ -471,7 +471,8 @@ class wizard_register_import(osv.osv_memory):
                         if line[cols['third_party']]:
                             # Type Operational Advance ==> EMPLOYEE required
                             if type_for_register == 'advance':
-                                tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
+                                tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])],
+                                                             order='active desc, id', limit=1, context=context)
                                 partner_type = 'employee'
                             # Type Internal transfer ==> JOURNAL required
                             elif type_for_register in ['transfer', 'transfer_same']:
@@ -497,7 +498,8 @@ class wizard_register_import(osv.osv_memory):
                                 if tp_ids:
                                     partner_type = 'partner'
                                 else:
-                                    tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
+                                    tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])],
+                                                                 order='active desc, id', limit=1, context=context)
                                     partner_type = 'employee'
                         # Any type for Spec. Treatment listed above ==> EMPTY partner NOT allowed
                         if not tp_ids:
@@ -512,7 +514,8 @@ class wizard_register_import(osv.osv_memory):
                         tp_ids = partner_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
                         partner_type = 'partner'
                         if not tp_ids:
-                            tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
+                            tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])],
+                                                         order='active desc, id', limit=1, context=context)
                             partner_type = 'employee'
                         if not tp_ids:
                             errors.append(_('Line %s. Third party not found: %s') % (current_line_num, line[cols['third_party']],))

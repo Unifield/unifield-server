@@ -123,7 +123,7 @@ class db(netsvc.ExportService):
             security.check_super(passwd)
         elif method in [ 'db_exist', 'list', 'list_lang', 'server_version',
                          'check_timezone', 'connected_to_prod_sync_server',
-                         'check_super_password_validity',
+                         'check_super_password_validity', 'check_password_validity',
                          'creation_get_resume_progress']:
             # params = params
             # No security check for these methods
@@ -265,6 +265,13 @@ class db(netsvc.ExportService):
     def exp_check_super_password_validity(self, password):
         try:
             security.check_super_password_validity(password)
+        except Exception as e:
+            return str(e)
+        return True
+
+    def exp_check_password_validity(self, login, password):
+        try:
+            security.check_password_validity(None, None, None, None, password, password, login)
         except Exception as e:
             return str(e)
         return True

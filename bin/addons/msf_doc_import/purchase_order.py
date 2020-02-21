@@ -388,6 +388,7 @@ class purchase_order(osv.osv):
             msg = _('No PO to export !')
             self.infolog(cr, uid, msg)
             context.update({'po_not_found': True})
+            return [], [], ['PO id', 'PO name']
 
         processed, rejected = [], []
         cr.execute('select id from purchase_order where id in %s for update skip locked', (tuple(po_ids),))

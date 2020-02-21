@@ -119,7 +119,7 @@ class documents_done_wizard(osv.osv):
 
     def _get_problem_sale_order(self, cr, uid, order, context=None):
         '''
-        Check if all stock moves, all procurement orders, all purchase orders
+        Check if all stock moves, all purchase orders
         and all stock picking generated from the sale order is closed or canceled
         '''
         if not context:
@@ -330,14 +330,6 @@ class documents_done_wizard(osv.osv):
                                              'doc_model': 'tender',
                                              'doc_id': tender.id,
                                              'doc_type': 'Tender'}, context=context)
-            # Search all procurement orders attached to the sale order
-            for proc in self.pool.get('procurement.order').browse(cr, uid, proc_ids, context=context):
-                pb_line_obj.create(cr, uid, {'problem_id': pb_id,
-                                             'doc_name': proc.name,
-                                             'doc_state': proc.state,
-                                             'doc_model': 'procurement.order',
-                                             'doc_id': proc.id,
-                                             'doc_type': 'Procurement Order'}, context=context)
 
             # Process all invoices
             for inv in self.pool.get('account.invoice').browse(cr, uid, invoice_ids, context=context):

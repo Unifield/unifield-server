@@ -38,8 +38,8 @@
             	<data>
                     <filter name="done" position="replace">
                         <!-- <separator orientation="vertical"/> -->
-                        <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Delivery orders already processed"/>
-                        <filter icon="gtk-yes" name="delivered" string="Delivered" domain="[('state', '=', 'delivered')]" help="Delivered Delivery Orders" />
+                        <filter icon="terp-dialog-close" name="done" string="Dispatched" domain="[('state','=','done')]" help="Delivery orders already processed"/>
+                        <filter icon="gtk-yes" name="delivered" string="Received" domain="[('state', '=', 'delivered')]" help="Delivered Delivery Orders" />
                         <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
                         <separator orientation="vertical"/>
 					</filter>

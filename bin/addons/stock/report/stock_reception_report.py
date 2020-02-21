@@ -30,7 +30,9 @@ class stock_reception_report(report_sxw.rml_parse):
             pick = move.picking_id
             pol = move.purchase_line_id
             po = pol.order_id
-            sol = move.purchase_line_id.sale_order_line_id
+            sol = move.purchase_line_id.linked_sol_id
+            int_name = move.move_dest_id and move.move_dest_id.picking_id.type == 'internal' and \
+                move.move_dest_id.picking_id.subtype == 'standard' and move.move_dest_id.picking_id.name or ''
             func_price_unit = move.price_unit
             if move.company_id.currency_id.id != po.pricelist_id.currency_id.id:
                 self.localcontext['currency_date'] = move.date
@@ -58,11 +60,12 @@ class stock_reception_report(report_sxw.rml_parse):
                 'total_cost': move.product_qty * move.price_unit,
                 'total_cost_func': move.product_qty * func_price_unit,
                 'dest_loc': move.location_dest_id and move.location_dest_id.name or '',
-                'final_dest_loc': sol and (sol.procurement_request and sol.order_id.location_requestor_id.name or sol.order_id.partner_id.name)
+                'final_dest_loc': sol and (sol.order_id.procurement_request and sol.order_id.location_requestor_id.name or sol.order_id.partner_id.name)
                 or move.location_dest_id and move.location_dest_id.name or '',
                 'exp_receipt_date': move.date_expected,
                 'actual_receipt_date': move.date,
                 'phys_recep_date': pick.physical_reception_date,
+                'int_name': int_name,
             })
 
         return res
