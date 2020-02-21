@@ -1875,7 +1875,7 @@ class account_invoice_line(osv.osv):
             - compute total amount (check_total field)
             - write total to the register line
         - Raise error msg if the related inv. has been generated via Sync. or by a Supply workflow (for Intermission/Intersection partners)
-          (for SI from Supply: merging lines is always allowed, deleting lines is allowed only for manual lines and merged lines.)
+          (for SI from Supply: merging lines is always allowed, deleting lines is allowed only for manual lines not having been merged.)
         """
         if not context:
             context = {}
@@ -1888,15 +1888,18 @@ class account_invoice_line(osv.osv):
         for invl in self.browse(cr, uid, ids):
             if invl.invoice_id and invl.invoice_id.id not in invoice_ids:
                 invoice = invl.invoice_id
-                invoice_ids.append(invoice.id)  # check each invoice only once
                 in_invoice = invoice.type == 'in_invoice' and not invoice.is_inkind_donation
                 supp_inv = in_invoice and not invoice.is_intermission
                 from_merge = context.get('from_merge')
+                from_supply = invoice.from_supply
                 intermission_or_section = invoice.partner_type in ('intermission', 'section')
+                check_line_per_line = from_supply and supp_inv and not from_merge
+                if not check_line_per_line:
+                    invoice_ids.append(invoice.id)  # check each invoice only once
                 deletion_allowed = True
                 if in_invoice and invoice.synced:
                     deletion_allowed = False
-                elif invoice.from_supply:
+                elif from_supply:
                     if intermission_or_section:
                         deletion_allowed = False
                     elif supp_inv and not from_merge and (invl.order_line_id or invl.merged_line):
