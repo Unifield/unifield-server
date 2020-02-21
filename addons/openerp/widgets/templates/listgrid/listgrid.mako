@@ -43,7 +43,7 @@ if (auto_field && auto_field.val()){
             % for i, (field, field_attrs) in enumerate(headers):
                 % if field == 'button':
                     <td class="grid-cell"></td>
-                % elif field_attrs.get('displayon') != 'noteditable':
+                % elif field_attrs.get('displayon') not in ('noteditable', 'notedition'):
                     % if field_attrs.get('displayon') == 'editable':
                        <% cnt -= 1 %>
                     % endif
@@ -162,7 +162,7 @@ if (auto_field && auto_field.val()){
                 sortable_value="${data[field].get_sortable_text()}">
                 % if impex:
                 	<a href="javascript: void(0)" onclick="do_select('${data['id']}')">${data[field].display()}</a>
-                % else:
+                % elif (edit_inline == -1 or not edit_inline or field_attrs.get('displayon') != 'notedition'):
                 	<span>${data[field].display()}</span>
                 % endif
             </td>
