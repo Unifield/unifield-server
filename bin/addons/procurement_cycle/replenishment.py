@@ -126,8 +126,10 @@ class replenishment_location_config(osv.osv):
 
         if 'synched' in vals and not vals['synched']:
             vals['remote_location_ids'] = [(6, 0, [])]
+        new_id = super(replenishment_location_config, self).create(cr, uid, vals, context)
 
-        return super(replenishment_location_config, self).create(cr, uid, vals, context)
+        self.log(cr, uid, new_id, _('Inventory Review Config has now been created'), action_xmlid='procurement_cycle.replenishment_review_config_action')
+        return new_id
 
     def check_no_duplicates(self, cr, uid, ids, context=None):
         instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
@@ -381,7 +383,7 @@ class replenishment_segment(osv.osv):
 
     _columns = {
         'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
-        'description_seg': fields.char('Description', required=1, size=28, select=1),
+        'description_seg': fields.char('Segment Description', required=1, size=28, select=1),
         'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, ondelete='cascade'),
         'amc_location_txt': fields.function(_get_amc_location_ids, type='text', method=1, string='AMC locations'),
 
@@ -1259,7 +1261,7 @@ class replenishment_segment_line(osv.osv):
         'product_description': fields.related('product_id', 'name',  string='Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
         'in_main_list': fields.function(_get_main_list, type='boolean', method=True, string='Prim. prod. list'),
-        'status': fields.selection([('active', 'Active'), ('new', 'New')], string='Life cycle status'),
+        'status': fields.selection([('active', 'Active'), ('new', 'New')], string='RR Lifecycle'),
         'min_qty': fields.float('Min Qty', related_uom='uom_id'),
         'max_qty': fields.float('Max Qty', related_uom='uom_id'),
         'auto_qty': fields.float('Auto. Supply Qty', related_uom='uom_id'),
@@ -2201,7 +2203,7 @@ class replenishment_product_list(osv.osv):
         'default_code': fields.char('Product Code', size=256, select=1, required=1),
         'product_description': fields.related('product_id', 'name',  string='Product Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
-        'description_seg': fields.char('Segment Description', required=1, size=28, select=1),
+        'description_seg': fields.char('Segment Reference', required=1, size=28, select=1),
         'list_ids': fields.function(misc.get_fake, fnct_search=_search_list_sublist, type='many2one', relation='product.list', method=True, string='Lists'),
     }
 

@@ -193,6 +193,7 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <Interior/>
+   <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="s97">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -202,6 +203,17 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+  </Style>
+  <Style ss:ID="s97u">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
+   <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="s143">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -223,6 +235,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
+   <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="s145">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -233,6 +246,7 @@
    </Borders>
    <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
    <NumberFormat ss:Format="Short Date"/>
+   <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="s149">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -255,6 +269,7 @@
    </Borders>
    <Interior ss:Color="#DDEBF7" ss:Pattern="Solid"/>
    <NumberFormat ss:Format="Short Date"/>
+   <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="s165">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -265,9 +280,10 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <Interior ss:Color="#DDEBF7" ss:Pattern="Solid"/>
+   <Protection ss:Protected="0"/>
   </Style>
  </Styles>
- <Worksheet ss:Name="Segment">
+ <Worksheet ss:Name="Segment" ss:Protected="1">
   <Names>
    <NamedRange ss:Name="_FilterDatabase" ss:RefersTo="=Segment!R8C1:R14C4"
     ss:Hidden="1"/>
@@ -368,7 +384,7 @@
     <Cell ss:StyleID="s89"><Data ss:Type="String">${_('Product code')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s89"><Data ss:Type="String">${_('Description')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s90"><Data ss:Type="String">${_('In prod. list')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s91"><Data ss:Type="String">${_('Life cycle status')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s91"><Data ss:Type="String">${_('RR-Lifecycle')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     % if objects[0].rule == 'cycle':
         <Cell ss:StyleID="s92"><Data ss:Type="String">${_('Buffer Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % elif objects[0].rule == 'minmax':
@@ -397,14 +413,14 @@
     <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.default_code|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.name|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.in_main_list and _('Y') or _('N')}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="String">${getSel(prod, 'status')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s97u"><Data ss:Type="String">${getSel(prod, 'status')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     % if objects[0].rule == 'cycle':
-        <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.buffer_qty}</Data></Cell>
+        <Cell ss:StyleID="s97u"><Data ss:Type="Number">${prod.buffer_qty}</Data></Cell>
     % elif objects[0].rule == 'minmax':
-        <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.min_qty}</Data></Cell>
-        <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.max_qty}</Data></Cell>
+        <Cell ss:StyleID="s97u"><Data ss:Type="Number">${prod.min_qty}</Data></Cell>
+        <Cell ss:StyleID="s97u"><Data ss:Type="Number">${prod.max_qty}</Data></Cell>
     % else:
-        <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.auto_qty}</Data></Cell>
+        <Cell ss:StyleID="s97u"><Data ss:Type="Number">${prod.auto_qty}</Data></Cell>
     % endif
     <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.real_stock}</Data></Cell>
     <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.rr_amc}</Data></Cell>
@@ -484,8 +500,17 @@
     </Pane>
 
    </Panes>
-   <ProtectObjects>False</ProtectObjects>
-   <ProtectScenarios>False</ProtectScenarios>
+   <ProtectObjects>True</ProtectObjects>
+   <ProtectScenarios>True</ProtectScenarios>
+   <AllowFormatCells/>
+   <AllowSizeCols/>
+   <AllowSizeRows/>
+   <AllowInsertRows/>
+   <AllowInsertHyperlinks/>
+   <AllowDeleteRows/>
+   <AllowSort/>
+   <AllowFilter/>
+   <AllowUsePivotTables/>
   </WorksheetOptions>
     <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
     <Range>R9C4:R${len(objects[0].line_ids)+9}C4</Range>

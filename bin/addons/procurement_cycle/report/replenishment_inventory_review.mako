@@ -35,6 +35,7 @@
   <Style ss:ID="s62">
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="24" ss:Color="#000000"
     ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s63">
    <Alignment ss:Vertical="Bottom" ss:WrapText="1"/>
@@ -57,8 +58,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
-    ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
   </Style>
   <Style ss:ID="s120">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom" ss:WrapText="1"/>
@@ -68,9 +68,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
-    ss:Bold="1"/>
-   <Interior/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
   </Style>
   <Style ss:ID="s121">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
@@ -80,8 +78,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
-    ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
    <NumberFormat ss:Format="Short Date"/>
   </Style>
   <Style ss:ID="s121DT">
@@ -92,8 +89,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
-    ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
   <NumberFormat ss:Format="General Date"/>
   </Style>
   <Style ss:ID="s122">
@@ -104,9 +100,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
-    ss:Bold="1"/>
-   <Interior/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
    <NumberFormat ss:Format="Short Date"/>
   </Style>
   <Style ss:ID="s123">
@@ -117,7 +111,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" />
    <NumberFormat ss:Format="Short Date"/>
   </Style>
   <Style ss:ID="s124">
@@ -128,7 +122,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Interior ss:Color="#FFC000" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
   </Style>
   <Style ss:ID="s125">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom" ss:WrapText="1"/>
@@ -138,7 +132,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Interior ss:Color="#FFC000" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
   </Style>
   <Style ss:ID="s126">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
@@ -148,14 +142,12 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
-   <Interior ss:Color="#FFC000" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1" />
   </Style>
   <Style ss:ID="s127">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
    <Borders/>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
-   <Interior ss:Color="#FFC000" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
   </Style>
   <Style ss:ID="s128">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -165,7 +157,8 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Interior ss:Color="#00B050" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s129">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -175,7 +168,8 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Interior ss:Color="#FFC000" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s130">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -185,8 +179,8 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
-   <Interior ss:Color="#FFC000" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s131">
    <Alignment ss:Vertical="Center" ss:WrapText="1"/>
@@ -196,8 +190,8 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
-   <Interior ss:Color="#00B0F0" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s132">
    <Alignment ss:Vertical="Bottom" ss:WrapText="1"/>
@@ -207,7 +201,8 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Interior ss:Color="#00B0F0" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s133">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -217,8 +212,8 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
-   <Interior ss:Color="#FFFF00" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s134">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -228,7 +223,8 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Interior ss:Color="#FFFF00" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s135">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -238,7 +234,8 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Interior ss:Color="#F88CF0" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s138">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
@@ -253,7 +250,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" />
   </Style>
   <Style ss:ID="s141">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -263,8 +260,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
-    ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
   </Style>
   <Style ss:ID="s145">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -274,8 +270,17 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
-    ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
+  </Style>
+  <Style ss:ID="s145red">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#FF0000" />
   </Style>
   <Style ss:ID="s146">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -285,7 +290,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" />
    <Interior/>
   </Style>
   <Style ss:ID="s147">
@@ -296,7 +301,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" />
    <Interior/>
    <NumberFormat ss:Format="Fixed"/>
   </Style>
@@ -308,7 +313,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" />
    <Interior/>
   <NumberFormat ss:Format="0"/>
   </Style>
@@ -320,8 +325,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
-    ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
    <NumberFormat ss:Format="Short Date"/>
   </Style>
   <Style ss:ID="s149">
@@ -332,7 +336,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" />
    <NumberFormat ss:Format="Short Date"/>
   </Style>
  </Styles>
@@ -384,7 +388,7 @@
     <Cell ss:StyleID="s63"/>
    </Row>
    <Row ss:Height="31.5">
-    <Cell ss:Index="2" ss:StyleID="s62"/>
+    <Cell ss:Index="2" ss:StyleID="s63"/>
     <Cell ss:Index="6" ss:StyleID="s63"/>
     <Cell ss:StyleID="s63"/>
     <Cell ss:StyleID="s63"/>
@@ -1044,7 +1048,7 @@
         </Cell>
     % endfor
     % for detail_pas in line.pas_ids:
-        <Cell ss:StyleID="s145">
+        <Cell ss:StyleID="s145${not detail_pas.projected and 'red' or ''}">
             % if detail_pas.projected is not None and detail_pas.projected is not False:
                 <Data ss:Type="Number">${int(detail_pas.projected)}</Data>
             % endif
