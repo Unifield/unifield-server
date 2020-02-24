@@ -159,6 +159,8 @@ class Frame(TinyWidget):
             td = [attrs, label]
 
             if self.is_search:
+                if hasattr(widget, 'class') and getattr(widget, 'class'):
+                    attrs['class'] += ' %s' % getattr(widget, 'class')
                 if colspan > 1:
                     attrs['colspan'] = colspan
                 if getattr(widget, 'full_name', None):

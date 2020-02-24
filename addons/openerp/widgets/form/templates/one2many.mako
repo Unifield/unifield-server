@@ -88,9 +88,10 @@
                 });
                 jQuery(document).ready(function() {
                      setTimeout(function () {
+                         console.log($('#_o2m_${name}').width());
                         $('#_o2m_${name}_mainscreen').width($('#_o2m_${name}').width()+'px');
                         $('#_o2m_${name} .pager').css('margin-right', ($('#_o2m_${name}_mainscreen').get()[0].scrollWidth - $('#_o2m_${name}').width() + 30)+'px');
-                     }, 30)
+                     }, 100)
                 })
             </script>
     % endif

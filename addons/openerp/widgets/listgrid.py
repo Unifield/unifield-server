@@ -637,12 +637,12 @@ class M2O(Char):
 class O2M(Char):
 
     def get_text(self):
-        return "(%d)" % len(self.value)
+        return "%d" % len(self.value)
 
 class M2M(Char):
 
     def get_text(self):
-        return "(%d)" % len(self.value)
+        return "%d" % len(self.value)
 
 class Selection(Char):
 
