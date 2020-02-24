@@ -1903,8 +1903,8 @@ def use_prod_sync(cr, uid=False, pool=False):
                 # check HW on the sync server
                 proxy = pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
                 res = proxy.get_entity(entity.identifier, entity._hardware_id)
-                if res and res[0]:
-                    return True
+                if res:
+                    return res[0]
             return entity._hardware_id == entity.previous_hw
         else:
             return True
