@@ -220,76 +220,59 @@
                         </script>
 
                     </html>
-                    <group colspan="2" col="2">
-                        <group colspan="2" col="4">
-                            <field name="name_seg" />
-                            <field name="description_seg" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="location_config_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('is_current_instance', '=', True)]" on_change="change_location_config_id(location_config_id, ir_requesting_location)"/>
-                            <separator string="Location Config"/>
-                            <field name="is_current_instance" invisible="1" />
-                            <field name="description" readonly="1" string="Loc config description"/>
-                            <field name="main_instance" readonly="1" />
-                            <newline />
-                            <field name="local_location_ids" colspan="2" nolabel="1" readonly="1">
-                                <tree>
-                                    <field name="complete_name" />
-                                </tree>
-                            </field>
-                            <field name="remote_location_ids" colspan="2" nolabel="1" readonly="1">
-                                <tree>
-                                    <field name="full_name" string="Project Locations"/>
-                                </tree>
-                            </field>
-                        </group>
-                        <group colspan="1" col="2">
-                            <field name="rule" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                            <field name="rule_alert" />
-                            <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('ir_requesting_location_rdo', '!=', False)]}" required="1"/>
-                            <field name="ir_requesting_location_rdo" attrs="{'invisible': ['|', ('ir_requesting_location_rdo', '=', False), ('_terp_editable', '=', 'False')]}" />
-                            <field name="product_list_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        </group>
-                        <group colspan="1" col="2">
-                            <field name="rr_amc" readonly="1" />
-                            <separator string="AMC Locations" colspan="2" />
-                            <field name="amc_location_txt" nolabel="1" colspan="2" />
-                        </group>
-                    </group>
-                    <group colspan="2" col="2">
-                        <field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="order_validation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="internal_lt" />
-                        <field name="supplier_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="handling_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="external_lt" />
-                        <field name="total_lt" />
-                        <group colspan="2" col="4" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
-                            <field name="order_coverage" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft'), ('rule', '=', 'cycle')]}" on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
-                            <field name="safety_stock" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft'), ('rule', '=', 'cycle')]}"/>
-                            <field name="previous_order_rdd" />
-                            <field name="date_preparing" />
-                            <field name="date_next_order_validated" />
-                            <field name="date_next_order_received" />
-                            <label colspan="2" />
-                            <field name="date_next_order_received_modified" attrs="{'readonly': [('state', '!=', 'draft')]}"  on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
-                        </group>
-                        <field name="last_generation" nolabel="1" colspan="2">
-                            <tree string="Generation Date">
-                                <field name="instance_id" />
-                                <field name="amc_date" />
-                                <field name="full_date" />
-                                <field name="review_date" />
-                            </tree>
+                    <field name="name_seg" />
+                    <field name="description_seg" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                    <field name="location_config_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('is_current_instance', '=', True)]" on_change="change_location_config_id(location_config_id, ir_requesting_location)"/>
+                    <notebook colspan="4">
+                        <page string="Parameters">
+                            <html colspan="4">
+                             <table id="rr-chrono" width="100%%">
+                                    <tr>
+                                        <td colspan="8" class="tlt">Total Lead Time (days) : <field name="total_lt" nolabel="1"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="ilt">Internal Lead Time (days) :  <field name="internal_lt" nolabel="1" /></td>
+                                        <td colspan="4" class="elt">External Lead Time (days) : <field name="external_lt" nolabel="1" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="oclt" colspan="2">Order Creation Lead Time (days) : <field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" nolabel="1"/></td>
+                                        <td class="ovlt" colspan="2">Order Validation Lead Time (days) : <field name="order_validation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" nolabel="1" /></td>
+                                        <td class="slt" colspan="2">Supplier Lead Time (days) : <field name="supplier_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" nolabel="1" /></td>
+                                        <td class="hlt" colspan="2">Handling Lead Time (days) : <field name="handling_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" attrs="{'readonly': [('state', '!=', 'draft')]}" nolabel="1" /></td>
+                                    </tr>
+                                </table>
+                             </html>
 
-                        </field>
-                    </group>
-                    <group colspan="4" col="8" name="import" string="Multiple line management" attrs="{'invisible': [('state', '!=', 'draft')]}">
-                        <field name="file_to_import" colspan="2" />
-                        <button name="import_lines" string="Import Lines" type="object" colspan="3" icon="gtk-dnd" />
-                        <button name="delete_multiple_lines" type="object" icon="gtk-remove" string="Delete selected lines" colspan="3" confirm="Do you want to delete these %%(number_selected)s line(s) ?"/>
-                        <button name="add_multiple_lines" type="object" icon="gtk-add" string="Add multiple products" colspan="8" />
-                    </group>
-                    <notebook>
-                        <page string="Products">
+
+                            <group colspan="4" col="6">
+                                <group colspan="2" col="2">
+                                    <field name="rule" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                    <field name="rule_alert" />
+                                    <field name="product_list_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                </group>
+
+                                <group colspan="2" col="2">
+                                    <field name="previous_order_rdd" />
+                                    <field name="date_preparing" />
+                                    <field name="date_next_order_validated" />
+                                    <field name="date_next_order_received" />
+                                    <label colspan="2" />
+                                    <field name="date_next_order_received_modified" attrs="{'readonly': [('state', '!=', 'draft')]}"  on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
+
+                                </group>
+
+                                <group colspan="2" col="2">
+                                    <field name="order_coverage" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft'), ('rule', '=', 'cycle')]}" on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
+                                    <field name="safety_stock" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft'), ('rule', '=', 'cycle')]}"/>
+                                </group>
+                            </group>
+
+                        <group colspan="4" col="8" name="import" string="Multiple line management" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                            <field name="file_to_import" colspan="2" />
+                            <button name="import_lines" string="Import Lines" type="object" colspan="3" icon="gtk-dnd" />
+                            <button name="delete_multiple_lines" type="object" icon="gtk-remove" string="Delete selected lines" colspan="3" confirm="Do you want to delete these %%(number_selected)s line(s) ?"/>
+                            <button name="add_multiple_lines" type="object" icon="gtk-add" string="Add multiple products" colspan="8" />
+                        </group>
                             <field name="line_ids" colspan="4" nolabel="1" default_get="rule=rule" scroll="1" attrs="{'readonly': [('state', '!=', 'draft')]}" o2m_selectable="2">
                                 <tree editable="top" editable_style="new" colors="red: not status">
                                     <field name="product_id" filter_selector="1" />
@@ -297,12 +280,12 @@
                                     <field name="uom_id" invisible="1" />
                                     <field name="in_main_list" filter_selector="1" />
                                     <field name="status" filter_selector="1" />
-                                    <field name="real_stock" />
-                                    <field name="rr_amc" />
                                     <field name="min_qty" invisible="context.get('rule')!='minmax'"/>
                                     <field name="max_qty" invisible="context.get('rule')!='minmax'"/>
                                     <field name="auto_qty" invisible="context.get('rule')!='auto'"/>
                                     <field name="buffer_qty" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="real_stock" />
+                                    <field name="rr_amc" />
                                     <field name="rr_fmc_1" invisible="context.get('rule')!='cycle'"/>
                                     <field name="rr_fmc_from_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('from', '1', rr_fmc_from_1)"/>
                                     <field name="rr_fmc_to_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('to', '1', rr_fmc_to_1)"/>
@@ -341,32 +324,67 @@
                                     <field name="rr_fmc_to_12" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_12', '!=', False)]}" on_change="change_fmc('to', '12', rr_fmc_to_12)"/>
                                 </tree>
                             </field>
+
+
                         </page>
-                        <page string="Chronogram">
-                            <html>
-                            &chrono;
-                            </html>
+
+                        <page string="Location Information">
+                            <separator string="Location Config"/>
+                            <field name="is_current_instance" invisible="1" />
+                            <group colspan="4" col="8">
+                                <field name="description" readonly="1" string="Loc config description"/>
+                                <field name="main_instance" readonly="1" />
+                                <group colspan="1" col="2">
+                                    <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('ir_requesting_location_rdo', '!=', False)]}" required="1"/>
+                                    <field name="ir_requesting_location_rdo" attrs="{'invisible': ['|', ('ir_requesting_location_rdo', '=', False), ('_terp_editable', '=', 'False')]}" />
+                                </group>
+                                <field name="rr_amc" readonly="1" />
+                            </group>
+
+
+                            <group colspan="4" col="6">
+                                <field name="local_location_ids" colspan="2" nolabel="1" readonly="1">
+                                    <tree>
+                                        <field name="complete_name" />
+                                    </tree>
+                                </field>
+
+                                <field name="remote_location_ids" colspan="2" nolabel="1" readonly="1">
+                                    <tree>
+                                        <field name="full_name" string="Project Locations"/>
+                                    </tree>
+                                </field>
+
+                                <group colspan="2" col="2">
+                                    <field name="last_generation" nolabel="1" colspan="2">
+                                        <tree string="Generation Date">
+                                            <field name="instance_id" />
+                                            <field name="amc_date" />
+                                            <field name="full_date" />
+                                            <field name="review_date" />
+                                        </tree>
+                                    </field>
+                                </group>
+                            </group>
+                            <group colspan="2" col="2">
+                                <separator string="AMC Locations" colspan="2" />
+                                <field name="amc_location_txt" nolabel="1" colspan="2" />
+                            </group>
                         </page>
                     </notebook>
-                    <field name="state" />
-                    <field name="has_inprogress_cal" invisible="1" />
-                    <group colspan="2">
-                        <button name="trigger_compute_segment_data" string="Compute Data" type="object" icon="gtk-execute" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}" force_editable="1"/>
-                        <button name="completed" string="Completed" type="object" icon="terp-check" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                        <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', 'not in', ['complete', 'archived', 'cancel'])]}" icon="gtk-go-back" />
-                        <button name="generate_order_calc" string="Generate Order Calc" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': [('state', '!=', 'complete')]}"/>
-                        <button name="set_as_archived" string="Archive" type="object" attrs="{'invisible':[('state', 'in', ['cancel', 'archived'])]}" icon="terp-locked" />
-                        <button name="set_as_cancel" string="Cancel" type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', True)]}" icon="gtk-cancel" />
-                        <button name="set_as_cancel_and_cancel_order" string="Cancel Segment and Order Calc." type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', False)]}" icon="gtk-cancel" confirm="This will cancel the Segment and the in-progess Order Calc. Do you confirm ?"/>
+                    <group colspan="4">
+                        <field name="state" />
+                        <field name="has_inprogress_cal" invisible="1" />
+                        <group colspan="2">
+                            <button name="trigger_compute_segment_data" string="Compute Data" type="object" icon="gtk-execute" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}" force_editable="1"/>
+                            <button name="completed" string="Completed" type="object" icon="terp-check" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                            <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', 'not in', ['complete', 'archived', 'cancel'])]}" icon="gtk-go-back" />
+                            <button name="generate_order_calc" string="Generate Order Calc" type="object" icon="gtk-convert" attrs="{'invisible': [('state', '!=', 'complete')]}"/>
+                            <button name="set_as_archived" string="Archive" type="object" attrs="{'invisible':[('state', 'in', ['cancel', 'archived'])]}" icon="terp-locked" />
+                            <button name="set_as_cancel" string="Cancel" type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', True)]}" icon="gtk-cancel" />
+                            <button name="set_as_cancel_and_cancel_order" string="Cancel Segment and Order Calc." type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', False)]}" icon="gtk-cancel" confirm="This will cancel the Segment and the in-progess Order Calc. Do you confirm ?"/>
+                        </group>
                     </group>
-                    <html>
-                        <script language="javascript">
-                            for (var field of ['order_creation_lt', 'order_validation_lt', 'internal_lt', 'supplier_lt', 'handling_lt', 'external_lt', 'total_lt']) {
-                                var curr_text = $('#'+field+'_svg').text();
-                                $('#'+field+'_svg').text(curr_text+ '('+$('#'+field).attr('value')+ ')');
-                            }
-                        </script>
-                    </html>
                 </form>
             </field>
         </record>
