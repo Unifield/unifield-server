@@ -106,7 +106,7 @@
                     <field name="frequence_name" />
                     <field name="next_scheduler" />
                     <newline />
-                    <button name="choose_change_frequence" type="object" string="Change/Choose Frequency" icon="gtk-go-forward" colspan="2" />
+                    <button name="choose_change_frequence" type="object" string="Change/Choose Frequency" icon="terp-go-today" colspan="2" />
                     <field name="review_active"  required="1" />
                     <field name="projected_view" required="1" />
                     <field name="rr_amc" required="1" />
@@ -251,7 +251,7 @@
                                     <field name="product_list_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                                 </group>
 
-                                <group colspan="2" col="2">
+                                <group colspan="2" col="2" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
                                     <field name="previous_order_rdd" />
                                     <field name="date_preparing" />
                                     <field name="date_next_order_validated" />
@@ -261,7 +261,7 @@
 
                                 </group>
 
-                                <group colspan="2" col="2">
+                                <group colspan="2" col="2" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
                                     <field name="order_coverage" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft'), ('rule', '=', 'cycle')]}" on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
                                     <field name="safety_stock" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft'), ('rule', '=', 'cycle')]}"/>
                                 </group>
@@ -280,56 +280,86 @@
                                     <field name="uom_id" invisible="1" />
                                     <field name="in_main_list" filter_selector="1" />
                                     <field name="status" filter_selector="1" />
+                                    <field name="real_stock" />
+                                    <field name="rr_amc" />
+                                    <field name="min_qty" invisible="context.get('rule')!='minmax'"/>
+                                    <field name="max_qty" invisible="context.get('rule')!='minmax'"/>
+                                    <field name="auto_qty" invisible="context.get('rule')!='auto'"/>
+                                    <field name="buffer_qty" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="rr_fmc_1" invisible="context.get('rule')!='cycle'" nolabel="1"/>
+                                    <field name="rr_fmc_from_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('from', '1', rr_fmc_from_1)"  nolabel="1"/>
+                                    <field name="rr_fmc_to_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('to', '1', rr_fmc_to_1)" nolabel="1"/>
+                                    <field name="rr_fmc_2" invisible="context.get('rule')!='cycle'"  nolabel="1"/>
+                                    <field name="rr_fmc_from_2" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_2', '!=', False)]}" on_change="change_fmc('from', '2', rr_fmc_from_2)" nolabel="1"/>
+                                    <field name="rr_fmc_to_2" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_2', '!=', False)]}" on_change="change_fmc('to', '2', rr_fmc_to_2)" nolabel="1"/>
+                                    <field name="rr_fmc_3" invisible="context.get('rule')!='cycle'" nolabel="1"/>
+                                    <field name="rr_fmc_from_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('from', '3', rr_fmc_from_3)" nolabel="1"/>
+                                    <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('to', '3', rr_fmc_to_3)" nolabel="1"/>
+                                    <field name= "list_fmc" invisible="context.get('rule')!='cycle'" displayon="notedition"/>
+                                    <button name="openform" special="openform" string="Edit 12 FMC" invisible="context.get('rule')!='cycle'" attrs="{'invisible': [('state', '!=', 'draft')]}"  icon="terp-go-week" />
+
+                                </tree>
+                                <form>
+                                    <field name="product_id" filter_selector="1" />
+                                    <field name="product_description" displayon="noteditable" filter_selector="1" />
+                                    <field name="uom_id" invisible="1" />
+                                    <field name="in_main_list" filter_selector="1" />
+                                    <field name="status" filter_selector="1" />
                                     <field name="min_qty" invisible="context.get('rule')!='minmax'"/>
                                     <field name="max_qty" invisible="context.get('rule')!='minmax'"/>
                                     <field name="auto_qty" invisible="context.get('rule')!='auto'"/>
                                     <field name="buffer_qty" invisible="context.get('rule')!='cycle'"/>
                                     <field name="real_stock" />
                                     <field name="rr_amc" />
-                                    <field name="rr_fmc_1" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="rr_fmc_from_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('from', '1', rr_fmc_from_1)"/>
-                                    <field name="rr_fmc_to_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('to', '1', rr_fmc_to_1)"/>
-                                    <field name="rr_fmc_2" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="rr_fmc_from_2" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_2', '!=', False)]}" on_change="change_fmc('from', '2', rr_fmc_from_2)"/>
-                                    <field name="rr_fmc_to_2" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_2', '!=', False)]}" on_change="change_fmc('to', '2', rr_fmc_to_2)"/>
-                                    <field name="rr_fmc_3" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="rr_fmc_from_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('from', '3', rr_fmc_from_3)"/>
-                                    <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('to', '3', rr_fmc_to_3)"/>
-                                    <field name="rr_fmc_4" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="rr_fmc_from_4" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_4', '!=', False)]}" on_change="change_fmc('from', '4', rr_fmc_from_4)"/>
-                                    <field name="rr_fmc_to_4" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_4', '!=', False)]}" on_change="change_fmc('to', '4', rr_fmc_to_4)"/>
-                                    <field name="rr_fmc_5" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="rr_fmc_from_5" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_5', '!=', False)]}" on_change="change_fmc('from', '5', rr_fmc_from_5)"/>
-                                    <field name="rr_fmc_to_5" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_5', '!=', False)]}" on_change="change_fmc('to', '5', rr_fmc_to_5)"/>
-                                    <field name="rr_fmc_6" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="rr_fmc_from_6" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_6', '!=', False)]}" on_change="change_fmc('from', '6', rr_fmc_from_6)"/>
-                                    <field name="rr_fmc_to_6" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_6', '!=', False)]}" on_change="change_fmc('to', '6', rr_fmc_to_6)"/>
-                                    <field name="rr_fmc_7" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="rr_fmc_from_7" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_7', '!=', False)]}" on_change="change_fmc('from', '7', rr_fmc_from_7)"/>
-                                    <field name="rr_fmc_to_7" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_7', '!=', False)]}" on_change="change_fmc('to', '7', rr_fmc_to_7)"/>
-                                    <field name="rr_fmc_8" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="rr_fmc_from_8" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_8', '!=', False)]}" on_change="change_fmc('from', '8', rr_fmc_from_8)"/>
-                                    <field name="rr_fmc_to_8" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_8', '!=', False)]}" on_change="change_fmc('to', '8', rr_fmc_to_8)"/>
-                                    <field name="rr_fmc_9" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="rr_fmc_from_9" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_9', '!=', False)]}" on_change="change_fmc('from', '9', rr_fmc_from_9)"/>
-                                    <field name="rr_fmc_to_9" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_9', '!=', False)]}" on_change="change_fmc('to', '9', rr_fmc_to_9)"/>
-                                    <field name="rr_fmc_10" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="rr_fmc_from_10" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_10', '!=', False)]}" on_change="change_fmc('from', '10', rr_fmc_from_10)"/>
-                                    <field name="rr_fmc_to_10" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_10', '!=', False)]}" on_change="change_fmc('to', '10', rr_fmc_to_10)"/>
-                                    <field name="rr_fmc_11" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="rr_fmc_from_11" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_11', '!=', False)]}" on_change="change_fmc('from', '11', rr_fmc_from_11)"/>
-                                    <field name="rr_fmc_to_11" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_11', '!=', False)]}" on_change="change_fmc('to', '11', rr_fmc_to_11)"/>
-                                    <field name="rr_fmc_12" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="rr_fmc_from_12" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_12', '!=', False)]}" on_change="change_fmc('from', '12', rr_fmc_from_12)"/>
-                                    <field name="rr_fmc_to_12" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_12', '!=', False)]}" on_change="change_fmc('to', '12', rr_fmc_to_12)"/>
-                                </tree>
+                                    <group colspan="4" col="4">
+                                    <separator string="FMC" colspan="2" />
+                                    <separator string="From" colspan="1" />
+                                    <separator string="To" colspan="1" />
+
+                                    <field name="rr_fmc_1" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('from', '1', rr_fmc_from_1)"  nolabel="1"/>
+                                    <field name="rr_fmc_to_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('to', '1', rr_fmc_to_1)" nolabel="1"/>
+                                    <field name="rr_fmc_2" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_2" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_2', '!=', False)]}" on_change="change_fmc('from', '2', rr_fmc_from_2)" nolabel="1"/>
+                                    <field name="rr_fmc_to_2" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_2', '!=', False)]}" on_change="change_fmc('to', '2', rr_fmc_to_2)" nolabel="1"/>
+                                    <field name="rr_fmc_3" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('from', '3', rr_fmc_from_3)" nolabel="1"/>
+                                    <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('to', '3', rr_fmc_to_3)" nolabel="1"/>
+                                    <field name="rr_fmc_4" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_4" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_4', '!=', False)]}" on_change="change_fmc('from', '4', rr_fmc_from_4)" nolabel="1"/>
+                                    <field name="rr_fmc_to_4" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_4', '!=', False)]}" on_change="change_fmc('to', '4', rr_fmc_to_4)" nolabel="1"/>
+                                    <field name="rr_fmc_5" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_5" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_5', '!=', False)]}" on_change="change_fmc('from', '5', rr_fmc_from_5)" nolabel="1"/>
+                                    <field name="rr_fmc_to_5" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_5', '!=', False)]}" on_change="change_fmc('to', '5', rr_fmc_to_5)" nolabel="1"/>
+                                    <field name="rr_fmc_6" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_6" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_6', '!=', False)]}" on_change="change_fmc('from', '6', rr_fmc_from_6)" nolabel="1"/>
+                                    <field name="rr_fmc_to_6" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_6', '!=', False)]}" on_change="change_fmc('to', '6', rr_fmc_to_6)" nolabel="1"/>
+                                    <field name="rr_fmc_7" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_7" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_7', '!=', False)]}" on_change="change_fmc('from', '7', rr_fmc_from_7)" nolabel="1"/>
+                                    <field name="rr_fmc_to_7" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_7', '!=', False)]}" on_change="change_fmc('to', '7', rr_fmc_to_7)" nolabel="1"/>
+                                    <field name="rr_fmc_8" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_8" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_8', '!=', False)]}" on_change="change_fmc('from', '8', rr_fmc_from_8)" nolabel="1"/>
+                                    <field name="rr_fmc_to_8" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_8', '!=', False)]}" on_change="change_fmc('to', '8', rr_fmc_to_8)" nolabel="1"/>
+                                    <field name="rr_fmc_9" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_9" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_9', '!=', False)]}" on_change="change_fmc('from', '9', rr_fmc_from_9)" nolabel="1"/>
+                                    <field name="rr_fmc_to_9" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_9', '!=', False)]}" on_change="change_fmc('to', '9', rr_fmc_to_9)" nolabel="1"/>
+                                    <field name="rr_fmc_10" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_10" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_10', '!=', False)]}" on_change="change_fmc('from', '10', rr_fmc_from_10)" nolabel="1"/>
+                                    <field name="rr_fmc_to_10" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_10', '!=', False)]}" on_change="change_fmc('to', '10', rr_fmc_to_10)" nolabel="1"/>
+                                    <field name="rr_fmc_11" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_11" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_11', '!=', False)]}" on_change="change_fmc('from', '11', rr_fmc_from_11)" nolabel="1"/>
+                                    <field name="rr_fmc_to_11" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_11', '!=', False)]}" on_change="change_fmc('to', '11', rr_fmc_to_11)" nolabel="1"/>
+                                    <field name="rr_fmc_12" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_12" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_12', '!=', False)]}" on_change="change_fmc('from', '12', rr_fmc_from_12)" nolabel="1"/>
+                                    <field name="rr_fmc_to_12" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_12', '!=', False)]}" on_change="change_fmc('to', '12', rr_fmc_to_12)" nolabel="1"/>
+                                    </group>
+                                </form>
                             </field>
 
 
                         </page>
 
                         <page string="Location Information">
-                            <separator string="Location Config"/>
                             <field name="is_current_instance" invisible="1" />
                             <group colspan="4" col="8">
                                 <field name="description" readonly="1" string="Loc config description"/>
@@ -345,13 +375,13 @@
                             <group colspan="4" col="6">
                                 <field name="local_location_ids" colspan="2" nolabel="1" readonly="1">
                                     <tree>
-                                        <field name="complete_name" />
+                                        <field name="complete_name" string="Current Instance Locations"/>
                                     </tree>
                                 </field>
 
                                 <field name="remote_location_ids" colspan="2" nolabel="1" readonly="1">
                                     <tree>
-                                        <field name="full_name" string="Project Locations"/>
+                                        <field name="full_name" string="Other Instance Locations"/>
                                     </tree>
                                 </field>
 
@@ -379,7 +409,7 @@
                             <button name="trigger_compute_segment_data" string="Compute Data" type="object" icon="gtk-execute" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}" force_editable="1"/>
                             <button name="completed" string="Completed" type="object" icon="terp-check" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                             <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', 'not in', ['complete', 'archived', 'cancel'])]}" icon="gtk-go-back" />
-                            <button name="generate_order_calc" string="Generate Order Calc" type="object" icon="gtk-convert" attrs="{'invisible': [('state', '!=', 'complete')]}"/>
+                            <button name="generate_order_calc" string="Generate Order Calc" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': [('state', '!=', 'complete')]}"/>
                             <button name="set_as_archived" string="Archive" type="object" attrs="{'invisible':[('state', 'in', ['cancel', 'archived'])]}" icon="terp-locked" />
                             <button name="set_as_cancel" string="Cancel" type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', True)]}" icon="gtk-cancel" />
                             <button name="set_as_cancel_and_cancel_order" string="Cancel Segment and Order Calc." type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', False)]}" icon="gtk-cancel" confirm="This will cancel the Segment and the in-progess Order Calc. Do you confirm ?"/>
@@ -465,7 +495,7 @@
             />
 
         <act_window id="action_from_location_config_to_segment"
-            name="Segments"
+            name="Replenishment Segments"
             src_model="replenishment.location.config"
             res_model="replenishment.segment"
             domain="[('location_config_id', '=', active_id)]"
@@ -481,64 +511,73 @@
                     <field name="name" />
                     <field name="segment_id" />
                     <field name="description_seg" />
-                    <field name="rule" />
-                    <field name="rule_alert" />
-                    <field name="total_lt" />
-                    <field name="new_order_reception_date" />
-                    <field name="generation_date" />
-                    <field name="next_generation_date" />
-                    <newline />
-                    <field name="ir_generation_date" />
-                    <field name="ir_id" />
-                    <group colspan="2" col="4">
-                        <separator string="Location Config"/>
-                        <field name="local_location_ids" nolabel="1">
-                            <tree>
-                                <field name="complete_name" />
-                                <field name="usage" />
-                                <field name="location_category" />
-                            </tree>
-                        </field>
-                        <field name="remote_location_ids" nolabel="1">
-                            <tree>
-                                <field name="full_name" string="Project Locations"/>
-                            </tree>
-                        </field>
-                    </group>
-                    <group colspan="2" col="2">
-                        <field name="instance_id" />
-                        <field name="location_config_id" />
-                        <field name="location_config_description" />
-                    </group>
-                    <newline />
-                    <group colspan="4" name="import" string="Import Lines" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                        <field name="file_to_import" colspan="2" />
-                        <button name="import_lines" string="Import Lines" type="object" colspan="2" icon="gtk-save" />
-                    </group>
-                    <field name="order_calc_line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" default_get="rule=rule">
-                        <tree editable="top" editable_style="new" colors="red:expired_qty_before_cons or (status!='new' and qty_lacking) or not valid_rr_fmc;orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc" hide_new_button="0" hide_delete_button="1">
-                            <field name="product_id" filter_selector="1" />
-                            <field name="product_description" displayon="noteditable" filter_selector="1" />
-                            <field name="uom_id" invisible="1" />
-                            <field name="status" invisible="1" />
-                            <field name="in_main_list" filter_selector="1" />
-                            <field name="valid_rr_fmc" invisible="context.get('rule')!='cycle'"/>
-                            <field name="real_stock" />
-                            <field name="pipeline_qty" />
-                            <field name="eta_for_next_pipeline" />
-                            <field name="reserved_stock_qty" />
-                            <field name="projected_stock_qty" />
-                            <field name="qty_lacking" invisible="context.get('rule')!='cycle'"/>
-                            <field name="qty_lacking_needed_by" invisible="context.get('rule')!='cycle'"/>
-                            <field name="open_loan" />
-                            <field name="expired_qty_before_cons" invisible="context.get('rule')!='cycle'"/>
-                            <field name="expired_qty_before_eta" invisible="context.get('rule')=='cycle'"/>
-                            <field name="proposed_order_qty" />
-                            <field name="agreed_order_qty" />
-                            <field name="order_qty_comment" />
-                            <field name="warning" invisible="context.get('rule')=='auto'"/>
-                        </tree>
-                    </field>
+                    <notebook colspan="4">
+                        <page string="Parameters">
+                            <group colspan="4" col="6">
+                                <group colspan="2" col="2">
+                                    <field name="rule" />
+                                    <field name="rule_alert" />
+                                    <field name="total_lt" />
+                                </group>
+                                <group colspan="2" col="2">
+                                    <field name="new_order_reception_date" />
+                                    <field name="generation_date" />
+                                    <field name="next_generation_date" />
+                                </group>
+                                <group colspan="2" col="2">
+                                    <field name="ir_generation_date" />
+                                    <field name="ir_id" />
+                                </group>
+                            </group>
+                            <group colspan="4" name="import" string="Import Lines" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                                <field name="file_to_import" colspan="2" />
+                                <button name="import_lines" string="Import Lines" type="object" colspan="2" icon="gtk-save" />
+                            </group>
+                            <field name="order_calc_line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" default_get="rule=rule" scroll="1">
+                                <tree editable="top" editable_style="new" colors="red:expired_qty_before_cons or (status!='new' and qty_lacking) or not valid_rr_fmc;orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc" hide_new_button="0" hide_delete_button="1">
+                                    <field name="product_id" filter_selector="1" />
+                                    <field name="product_description" displayon="noteditable" filter_selector="1" />
+                                    <field name="uom_id" invisible="1" />
+                                    <field name="status" invisible="1" />
+                                    <field name="in_main_list" filter_selector="1" />
+                                    <field name="valid_rr_fmc" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="real_stock" />
+                                    <field name="pipeline_qty" />
+                                    <field name="eta_for_next_pipeline" />
+                                    <field name="reserved_stock_qty" />
+                                    <field name="projected_stock_qty" />
+                                    <field name="qty_lacking" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="qty_lacking_needed_by" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="open_loan" />
+                                    <field name="expired_qty_before_cons" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="expired_qty_before_eta" invisible="context.get('rule')=='cycle'"/>
+                                    <field name="proposed_order_qty" />
+                                    <field name="agreed_order_qty" />
+                                    <field name="order_qty_comment" />
+                                    <field name="warning" invisible="context.get('rule')=='auto'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Location Information">
+                            <group colspan="4" col="6">
+                                <field name="instance_id" />
+                                <field name="location_config_id" />
+                                <field name="location_config_description" />
+                            </group>
+                                <field name="local_location_ids" nolabel="1" colspan="2">
+                                    <tree>
+                                        <field name="complete_name" string="Current Instance Locations"/>
+                                    </tree>
+                                </field>
+
+                                <field name="remote_location_ids" nolabel="1">
+                                    <tree>
+                                        <field name="full_name" string="Other Instance Locations"/>
+                                    </tree>
+                                </field>
+                        </page>
+                    </notebook>
+
                     <field name="state" />
                     <group colspan="2">
                     <button name="cancel" string="Cancel" type="object"  attrs="{'invisible':[('state', 'not in', ['draft', 'validated'])]}" icon="gtk-cancel" />
@@ -623,7 +662,7 @@
                         <button colspan="1" name="pipeline" string="Pipeline" type="object" icon="icons/pipe.png"/>
                         <button colspan="1" name="stock_by_location" string="Stock By Location" type="object" icon="gtk-indent"/>
                     </group>
-                    <field name="line_ids" colspan="4" nolabel="1" o2m_selectable="2">
+                    <field name="line_ids" colspan="4" nolabel="1" o2m_selectable="2" scroll="1">
                         <tree colors="red:expired_qty_before_cons or (status!='new' and qty_lacking) or not valid_rr_fmc;orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc">
                             <field name="product_id" filter_selector="1" />
                             <field name="product_description" filter_selector="1" />

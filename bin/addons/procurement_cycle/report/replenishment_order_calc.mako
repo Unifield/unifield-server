@@ -366,7 +366,7 @@
     <Cell ss:MergeAcross="1" ss:StyleID="m2348480924308"><Data ss:Type="String">${objects[0].location_config_id.name|x}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s67"><NamedCell ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Segment')|x}</Data><NamedCell
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Replenishment Segment')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:MergeAcross="1" ss:StyleID="m2348480924308"><Data ss:Type="String">${objects[0].segment_id.name|x}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>

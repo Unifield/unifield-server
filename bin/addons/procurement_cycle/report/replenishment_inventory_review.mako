@@ -171,6 +171,17 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" ss:Bold="1"/>
     <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
+  <Style ss:ID="s129red">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#FF0000" ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
+  </Style>
   <Style ss:ID="s130">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -852,7 +863,7 @@
     <Cell ss:StyleID="s128"><Data ss:Type="String">${_('Product Code')|x}</Data></Cell>
     <Cell ss:StyleID="s128"><Data ss:Type="String">${_('Product Description')|x}</Data></Cell>
     <Cell ss:StyleID="s128"><Data ss:Type="String">${_('Primary Product list')|x}</Data></Cell>
-    <Cell ss:StyleID="s129"><Data ss:Type="String">${_('Warnings Recap')|x}</Data></Cell>
+    <Cell ss:StyleID="s129red"><Data ss:Type="String">${_('Warnings Recap')|x}</Data></Cell>
     <Cell ss:StyleID="s129"><Data ss:Type="String">${_('Segment Ref/name')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('RR (threshold) applied')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('RR (qty) applied')|x}</Data></Cell>
