@@ -8,9 +8,9 @@
     <script type="text/javascript" src="/openerp/static/javascript/openerp/openerp.ui.textarea.js"></script>
 
     <script type="text/javascript" src="/openerp/static/javascript/scripts.js"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/form.js?v=15.4"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/form_state.js?v=14.0"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/listgrid.js?v=14.0"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/form.js?v=16.0"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/form_state.js?v=16.0"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/listgrid.js?v=16.0"></script>
 
     <script type="text/javascript" src="/openerp/static/javascript/m2o.js?v=14.0"></script>
     <script type="text/javascript" src="/openerp/static/javascript/m2m.js?v=12.0"></script>
