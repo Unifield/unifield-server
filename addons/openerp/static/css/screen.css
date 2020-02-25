@@ -2419,6 +2419,8 @@ table #rr-chrono  {
   text-align: center;
   border-collapse: collapse;
   margin-bottom: 15px;
+  border: 2px solid black;
+  background: #EEEEEE;
 }
 
 
