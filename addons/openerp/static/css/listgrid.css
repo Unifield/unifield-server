@@ -87,8 +87,22 @@
     position: sticky;
     top: 0;
     z-index: 1;
+    text-align: center !important;
 }
 
+.o2m-sticky td {
+    text-align: center !important;
+}
+.o2m-sticky input {
+    text-align: center !important;
+}
+.o2m-sticky select {
+    text-align: center !important;
+}
+
+.o2m-sticky input.datetime {
+    text-align: left !important;
+}
 
 .grid-row .grid-cell {
     border-bottom: 1px solid #E3E3E3;
