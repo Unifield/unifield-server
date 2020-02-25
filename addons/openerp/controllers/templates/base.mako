@@ -21,19 +21,19 @@
 
     <script type="text/javascript" src="/openerp/static/javascript/web_keyboard_shortcuts.js?v=7.0rc4b"></script>
 
-    <link rel="stylesheet" type="text/css" href="/openerp/static/css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="/openerp/static/css/style.css?v=16.0rc2"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/menu.css?v=2.7b1"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/tips.css?v=7.0"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/waitbox.css"/>
-    <link rel="stylesheet" type="text/css" href="/openerp/static/css/screen.css?v=9.0"/>
+    <link rel="stylesheet" type="text/css" href="/openerp/static/css/screen.css?v=16.0rc2"/>
 
     <link rel="stylesheet" type="text/css" href="/openerp/static/jscal/calendar-blue.css"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/dashboard.css"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/treegrid.css"/>
-    <link rel="stylesheet" type="text/css" href="/openerp/static/css/notebook.css"/>
+    <link rel="stylesheet" type="text/css" href="/openerp/static/css/notebook.css?v=16.0rc2"/>
 
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/pager.css"/>
-    <link rel="stylesheet" type="text/css" href="/openerp/static/css/listgrid.css"/>
+    <link rel="stylesheet" type="text/css" href="/openerp/static/css/listgrid.css?v=16.0rc2"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/autocomplete.css"/>
 
     <!--[if lt IE 9]>

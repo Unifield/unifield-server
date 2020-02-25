@@ -136,6 +136,9 @@ class List(TinyWidget):
 
         attrs = node_attributes(root)
 
+        if attrs.get('min_rows'):
+            self.min_rows = int(attrs.get('min_rows'))
+
         self.button_attrs = attrs.get('button_attrs', None)
 
         # Get the hide status of some buttons - by default buttons are shown
@@ -637,12 +640,12 @@ class M2O(Char):
 class O2M(Char):
 
     def get_text(self):
-        return "(%d)" % len(self.value)
+        return "%d" % len(self.value)
 
 class M2M(Char):
 
     def get_text(self):
-        return "(%d)" % len(self.value)
+        return "%d" % len(self.value)
 
 class Selection(Char):
 

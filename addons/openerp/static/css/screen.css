@@ -2415,43 +2415,47 @@ img.no_image {
     white-space: pre-line;
 }
 
-#rr-chrono table, #rr-chrono th, #rr-chrono td {
+table #rr-chrono  {
   text-align: center;
-  font-size: 14px;
-  font-weight: bold;
-  width: 400px;
-  padding: 20px;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+  border: 2px solid black;
+  background: #EEEEEE;
+}
+
+
+#rr-chrono td, #rr-chrono th {
+  text-align: center;
+  border: 1px solid black;
+  border-collapse: collapse;
+  padding: 3px 0 3px 0 ;
 }
 
 #rr-chrono .rr-text td{
-  font-size: 11px !important;
   font-weight: normal !important;
-  padding: 0 0 15px 0 !important;
   vertical-align: top;
+  border-collapse: collapse;
 }
 
+#rr-chrono input {
+   margin-left: 3px;
+   width: 4em;
+}
 #rr-chrono .tlt {
-  background-color: #00B894;
 }
 #rr-chrono .ilt {
-  background-color: #74B9FF;
 }
 #rr-chrono .elt {
-  background-color: #E17055;
 }
 #rr-chrono .oclt {
-  width: 8%;
-  background-color: #00CEC9;
+  width: 25%;
 }
 #rr-chrono .ovlt {
-  width: 8%;
-  background-color: #A29BF3;
+  width: 25%;
 }
 #rr-chrono .slt {
-  width: 70%;
-  background-color: #E84393;
+  width: 25%;
 }
 #rr-chrono .hlt {
-  width: 6%;
-  background-color: #55EFC4;
+  width: 25%;
 }

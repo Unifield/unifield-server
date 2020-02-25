@@ -5,6 +5,10 @@
     padding: 0 !important;
 }
 
+.small_filters {
+    width: 1px !important;
+}
+
 td.search_fields {
     padding: 0 4px;
 }
