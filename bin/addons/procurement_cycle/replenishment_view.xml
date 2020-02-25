@@ -79,7 +79,7 @@
         </record>
 
         <record id="replenishment_location_config_action" model="ir.actions.act_window">
-            <field name="name">Location config</field>
+            <field name="name"></field>
             <field name="res_model">replenishment.location.config</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -91,6 +91,7 @@
         <menuitem id="replenishment_location_config_menu"
             action="replenishment_location_config_action"
             sequence="10"
+            name="Location Config"
             parent="replenishment_configuration" />
 
 
@@ -148,14 +149,14 @@
                 <search string="Inventory Review Configuration">
                     <field name="name" />
                     <field name="description" />
-                    <field name="review_active" />
-                    <field name="active"  />
+                    <field name="review_active" class="small_filters" />
+                    <field name="active" class="small_filters" />
                 </search>
             </field>
         </record>
 
         <record id="replenishment_review_config_action" model="ir.actions.act_window">
-            <field name="name">Inventory Review Config</field>
+            <field name="name"></field>
             <field name="res_model">replenishment.location.config</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -178,6 +179,7 @@
         <menuitem id="replenishment_review_config_menu"
             action="replenishment_review_config_action"
             sequence="20"
+            name="Inventory Review Config"
             parent="replenishment_configuration" />
 
 
@@ -362,7 +364,7 @@
                         <page string="Location Information">
                             <field name="is_current_instance" invisible="1" />
                             <group colspan="4" col="8">
-                                <field name="description" readonly="1" string="Loc config description"/>
+                                <field name="description" readonly="1" string="Location Config Description"/>
                                 <field name="main_instance" readonly="1" />
                                 <group colspan="1" col="2">
                                     <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('ir_requesting_location_rdo', '!=', False)]}" required="1"/>
@@ -623,7 +625,7 @@
                     <field name="name" />
                     <field name="segment_id" />
                     <field name="description_seg" />
-                    <field name="rule" class="small_filters"/>
+                    <field name="rule" class="small_filters" string="Replenishment Rule"/>
                 </search>
             </field>
         </record>

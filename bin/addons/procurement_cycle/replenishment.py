@@ -383,7 +383,7 @@ class replenishment_segment(osv.osv):
 
     _columns = {
         'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
-        'description_seg': fields.char('Segment Description', required=1, size=28, select=1),
+        'description_seg': fields.char('Replenishment Segment Description', required=1, size=28, select=1),
         'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, ondelete='cascade'),
         'amc_location_txt': fields.function(_get_amc_location_ids, type='text', method=1, string='AMC locations'),
 
@@ -1470,7 +1470,7 @@ class replenishment_segment_date_generation(osv.osv):
         'instance_id': fields.many2one('msf.instance', string='Instance', select=1, required=1),
         'amc_date': fields.datetime('Date AMC/Stock Data'),
         'full_date': fields.datetime('Date Full Data (exp.)'),
-        'review_date': fields.datetime('Date InvReview Data'),
+        'review_date': fields.datetime('Date Inv. Review'),
     }
 
 replenishment_segment_date_generation()
@@ -2231,7 +2231,7 @@ class replenishment_product_list(osv.osv):
         'default_code': fields.char('Product Code', size=256, select=1, required=1),
         'product_description': fields.related('product_id', 'name',  string='Product Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
-        'description_seg': fields.char('Segment Reference', required=1, size=28, select=1),
+        'description_seg': fields.char('Replenishment Segment Reference', required=1, size=28, select=1),
         'list_ids': fields.function(misc.get_fake, fnct_search=_search_list_sublist, type='many2one', relation='product.list', method=True, string='Lists'),
     }
 

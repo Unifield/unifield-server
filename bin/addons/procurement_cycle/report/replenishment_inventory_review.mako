@@ -123,6 +123,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s125">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom" ss:WrapText="1"/>
@@ -133,6 +134,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s126">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
@@ -143,11 +145,13 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1" />
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s127">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
    <Borders/>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s128">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -158,7 +162,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" ss:Bold="1"/>
-    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
+    <Interior ss:Color="#00B050" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s129">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -169,7 +173,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" ss:Bold="1"/>
-    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
+   <Interior ss:Color="#FFC000" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s129red">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -179,8 +183,8 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#FF0000" ss:Bold="1"/>
-    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" ss:Bold="1"/>
+   <Interior ss:Color="#FF0000" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s130">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -191,7 +195,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
-    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
+   <Interior ss:Color="#FFC000" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s131">
    <Alignment ss:Vertical="Center" ss:WrapText="1"/>
@@ -202,7 +206,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
-    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
+   <Interior ss:Color="#00B0F0" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s132">
    <Alignment ss:Vertical="Bottom" ss:WrapText="1"/>
@@ -213,7 +217,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
-    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
+   <Interior ss:Color="#00B0F0" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s133">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -224,7 +228,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
-    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
+   <Interior ss:Color="#FFFF00" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s134">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -235,7 +239,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
-    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
+   <Interior ss:Color="#FFFF00" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s135">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -246,12 +250,24 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
-    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
+   <Interior ss:Color="#F88CF0" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="s135p">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Bold="1"/>
+   <Interior ss:Color="#D2AED6" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s138">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="24" ss:Color="#000000"
     ss:Bold="1"/>
+    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s140">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -900,7 +916,7 @@
         <Cell ss:StyleID="s135"><Data ss:Type="String">${_('RR-FMC M%s') % nb_month|x} ${get_month(objects[0].generation_date, nb_month)|x}</Data></Cell>
     % endfor
     % for nb_month in range(0, objects[0].projected_view):
-    <Cell ss:StyleID="s135"><Data ss:Type="String">${_('Projected M%s') % nb_month|x} ${get_month(objects[0].generation_date, nb_month)|x}</Data></Cell>
+    <Cell ss:StyleID="s135p"><Data ss:Type="String">${_('Projected M%s') % nb_month|x} ${get_month(objects[0].generation_date, nb_month)|x}</Data></Cell>
     % endfor
    </Row>
    % for line in objects[0].line_ids:
