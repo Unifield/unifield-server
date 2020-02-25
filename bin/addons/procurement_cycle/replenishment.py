@@ -126,8 +126,10 @@ class replenishment_location_config(osv.osv):
 
         if 'synched' in vals and not vals['synched']:
             vals['remote_location_ids'] = [(6, 0, [])]
+        new_id = super(replenishment_location_config, self).create(cr, uid, vals, context)
 
-        return super(replenishment_location_config, self).create(cr, uid, vals, context)
+        self.log(cr, uid, new_id, _('Inventory Review Config has now been created'), action_xmlid='procurement_cycle.replenishment_review_config_action')
+        return new_id
 
     def check_no_duplicates(self, cr, uid, ids, context=None):
         instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
@@ -301,7 +303,7 @@ replenishment_location_config()
 
 class replenishment_segment(osv.osv):
     _name = 'replenishment.segment'
-    _description = 'Segment'
+    _description = 'Replenishment Segment'
     _inherits = {'replenishment.location.config': 'location_config_id'}
     _rec_name = 'name_seg'
     _order = 'id desc'
@@ -381,7 +383,7 @@ class replenishment_segment(osv.osv):
 
     _columns = {
         'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
-        'description_seg': fields.char('Description', required=1, size=28, select=1),
+        'description_seg': fields.char('Replenishment Segment Description', required=1, size=28, select=1),
         'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, ondelete='cascade'),
         'amc_location_txt': fields.function(_get_amc_location_ids, type='text', method=1, string='AMC locations'),
 
@@ -1253,13 +1255,40 @@ class replenishment_segment_line(osv.osv):
 
         return ret
 
+    def _get_list_fmc(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        for id in ids:
+            ret[id] = ""
+        for line in self.browse(cr, uid, ids, context=context):
+            add = []
+            for x in range(4, 13):
+                rr_fmc = getattr(line, 'rr_fmc_%d'%x)
+                rr_from = getattr(line, 'rr_fmc_from_%d'%x)
+                rr_to = getattr(line, 'rr_fmc_to_%d'%x)
+                if rr_fmc and rr_from and rr_to:
+                    rr_from_dt = datetime.strptime(rr_from, '%Y-%m-%d')
+                    rr_to_dt = datetime.strptime(rr_to, '%Y-%m-%d')
+                    if rr_from_dt.year == rr_to_dt.year:
+                        if rr_from_dt.month == rr_to_dt.month:
+                            date_txt = '%s' % (misc.month_abbr[rr_from_dt.month])
+                        else:
+                            date_txt = '%s - %s' % (misc.month_abbr[rr_from_dt.month], misc.month_abbr[rr_to_dt.month])
+                    else:
+                        date_txt = '%s/%s - %s/%s' % (misc.month_abbr[rr_from_dt.month], rr_from_dt.year, misc.month_abbr[rr_to_dt.month], rr_to_dt.year)
+                    add.append("%s: %s" % (date_txt, round(rr_fmc)))
+                else:
+                    break
+            ret[line.id] = ' | '.join(add)
+        return ret
+
+
     _columns = {
-        'segment_id': fields.many2one('replenishment.segment', 'Segment', select=1, required=1),
+        'segment_id': fields.many2one('replenishment.segment', 'Replenishment Segment', select=1, required=1),
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1),
         'product_description': fields.related('product_id', 'name',  string='Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
         'in_main_list': fields.function(_get_main_list, type='boolean', method=True, string='Prim. prod. list'),
-        'status': fields.selection([('active', 'Active'), ('new', 'New')], string='Life cycle status'),
+        'status': fields.selection([('active', 'Active'), ('new', 'New')], string='RR Lifecycle'),
         'min_qty': fields.float('Min Qty', related_uom='uom_id'),
         'max_qty': fields.float('Max Qty', related_uom='uom_id'),
         'auto_qty': fields.float('Auto. Supply Qty', related_uom='uom_id'),
@@ -1268,6 +1297,7 @@ class replenishment_segment_line(osv.osv):
         'pipeline_before_rdd': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline Before RDD', multi='get_pipeline_before'),
         'pipeline_between_rdd_oc': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline between RDD and OC', multi='get_pipeline_before'),
         'rr_amc': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='RR-AMC', multi='get_stock_amc'),
+        'list_fmc': fields.function(_get_list_fmc, method=1, type='char', string='more FMC'),
         'rr_fmc_1': fields.float_null('RR FMC 1', related_uom='uom_id'),
         'rr_fmc_from_1': fields.date('From 1'),
         'rr_fmc_to_1': fields.date('To 1'),
@@ -1436,11 +1466,11 @@ class replenishment_segment_date_generation(osv.osv):
     _rec_name = 'date'
 
     _columns = {
-        'segment_id': fields.many2one('replenishment.segment', 'Segment', select=1, required=1),
+        'segment_id': fields.many2one('replenishment.segment', 'Replenishment Segment', select=1, required=1),
         'instance_id': fields.many2one('msf.instance', string='Instance', select=1, required=1),
         'amc_date': fields.datetime('Date AMC/Stock Data'),
         'full_date': fields.datetime('Date Full Data (exp.)'),
-        'review_date': fields.datetime('Date InvReview Data'),
+        'review_date': fields.datetime('Date Inv. Review'),
     }
 
 replenishment_segment_date_generation()
@@ -1721,7 +1751,7 @@ class replenishment_order_calc(osv.osv):
 
     _columns = {
         'name': fields.char('Reference', size=64, readonly=1, select=1),
-        'segment_id': fields.many2one('replenishment.segment', 'Segment', readonly=1),
+        'segment_id': fields.many2one('replenishment.segment', 'Replenishment Segment', readonly=1),
         'description_seg': fields.char('Description', required=1, size=28, readonly=1),
         'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, readonly=1),
         'location_config_description': fields.char('Description', size=28, readonly=1),
@@ -2197,11 +2227,11 @@ class replenishment_product_list(osv.osv):
 
     _columns = {
         'product_id': fields.many2one('product.product', 'Product', select=1, required=1),
-        'segment_id': fields.many2one('replenishment.segment', 'Segment', select=1, required=1),
+        'segment_id': fields.many2one('replenishment.segment', 'Replenishment Segment', select=1, required=1),
         'default_code': fields.char('Product Code', size=256, select=1, required=1),
         'product_description': fields.related('product_id', 'name',  string='Product Description', type='char', size=64, readonly=True, select=True, write_relate=False),
-        'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
-        'description_seg': fields.char('Segment Description', required=1, size=28, select=1),
+        'name_seg': fields.char('Replenishment Segment Reference', size=64, readonly=1, select=1),
+        'description_seg': fields.char('Replenishment Segment Description', required=1, size=28, select=1),
         'list_ids': fields.function(misc.get_fake, fnct_search=_search_list_sublist, type='many2one', relation='product.list', method=True, string='Lists'),
     }
 

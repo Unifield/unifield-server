@@ -33930,7 +33930,7 @@ msgstr "Vue originale"
 msgid "Asia/Hebron"
 msgstr "Asia/Hebron"
 
-#. modules: purchase, account, msf_outgoing, account_mcdb, msf_homere_interface, res_currency_tables, sync_client, procurement_request, account_hq_entries, kit, account_override, base, msf_currency_revaluation, specific_rules, register_accounting, stock, sale, analytic_distribution
+#. modules: purchase, account, msf_outgoing, account_mcdb, msf_homere_interface, res_currency_tables, sync_client, procurement_request, account_hq_entries, kit, account_override, base, msf_currency_revaluation, specific_rules, register_accounting, stock, sale, analytic_distribution, procurement_cycle
 #: view:account.invoice:0
 #: view:hq.analytic.reallocation:0
 #: view:hq.entries.unsplit:0
@@ -33962,6 +33962,7 @@ msgstr "Asia/Hebron"
 #: view:stock.cost.reevaluation:0
 #: view:physical.inventory.import.wizard:0
 #: view:sync.client.child_entity:0
+#: view:replenishment.order_calc:0
 msgid "Validate"
 msgstr "Valider"
 
@@ -37335,7 +37336,7 @@ msgstr "Draft - In progress"
 msgid "Do reconfigure..."
 msgstr "Do reconfigure..."
 
-#. modules: account, stock_override, supplier_catalogue, consumption_calculation, purchase_override, base, register_accounting, stock, analytic_distribution
+#. modules: account, stock_override, supplier_catalogue, consumption_calculation, purchase_override, base, register_accounting, stock, analytic_distribution, procurement_cycle
 #: field:account.analytic.chart,from_date:0
 #: field:account.chart,period_from:0
 #: field:project.account.analytic.line,from_date:0
@@ -37357,6 +37358,7 @@ msgstr "Do reconfigure..."
 #: field:supplier.historical.catalogue,from_date:0
 #: field:stock.expired.damaged.report,date_from:0
 #: report:addons/stock_override/report/stock_card_report_xls.mako:112
+#: view:replenishment.segment:0
 msgid "From"
 msgstr "De"
 
@@ -48051,7 +48053,7 @@ msgstr "Avec les écart"
 msgid "B/S Move to 0 accounts"
 msgstr "Comptes de bilan à 0"
 
-#. modules: product_attributes, consumption_calculation, procurement_report, mission_stock, stock
+#. modules: product_attributes, consumption_calculation, procurement_report, mission_stock, stock, procurement_cycle
 #: field:monthly.review.consumption.line,fmc:0
 #: field:wizard.export.fmc,fmc_id:0
 #: field:wizard.export.rac,rac_id:0
@@ -48071,6 +48073,7 @@ msgstr "Comptes de bilan à 0"
 #: code:addons/mission_stock/mission_stock.py:525
 #: report:addons/consumption_calculation/report/weekly_forecast_report_xls.mako:104
 #: report:addons/stock/report/products_situation_report_xls.mako:227
+#: view:replenishment.segment:0
 #, python-format
 msgid "FMC"
 msgstr "PCM"
@@ -58713,7 +58716,7 @@ msgstr "Le temps entre 2 réapprovisionnements. Sera utilisé pour calculer la q
 msgid "Scrap"
 msgstr "Rebuts"
 
-#. modules: supplier_catalogue, procurement, base, procurement_report, msf_config_locations, stock
+#. modules: supplier_catalogue, procurement, base, procurement_report, msf_config_locations, stock, procurement_cycle
 #: view:ir.property:0
 #: model:ir.ui.menu,name:base.next_id_15
 #: view:stock.remove.location.wizard:0
@@ -58722,6 +58725,8 @@ msgstr "Rebuts"
 #: view:procurement.batch.cron:0
 #: view:supplier.historical.catalogue:0
 #: view:products.situation.report:0
+#: view:replenishment.order_calc:0
+#: view:replenishment.segment:0
 msgid "Parameters"
 msgstr "Paramètres"
 
@@ -83170,10 +83175,11 @@ msgstr "Le système n'a pas trouvé d'\"id_staff\" pour le travailleur %s !"
 msgid "The line must have either the line number or the external ref. set"
 msgstr "La ligne doit au minimum avoir le numéro de ligne ou la ref. externe"
 
-#. modules: stock, mission_stock
+#. modules: stock, mission_stock, procurement_cycle
 #: field:stock.mission.report.line.location,location_name:0
 #: field:stock.location,complete_name:0
 #: field:stock.location,name:0
+#: view:replenishment.location.config:0
 msgid "Location Name"
 msgstr "Zone - Nom"
 
@@ -87123,7 +87129,7 @@ msgstr "Ligne 10 du fichier: la date '%s' est invalide. Les dates doivent avoir 
 msgid "TbD"
 msgstr "À déf."
 
-#. modules: account, stock_override, supplier_catalogue, consumption_calculation, register_accounting, base, stock, analytic_distribution, msf_supply_doc_export
+#. modules: account, stock_override, supplier_catalogue, consumption_calculation, register_accounting, base, stock, analytic_distribution, msf_supply_doc_export, procurement_cycle
 #: field:account.analytic.chart,to_date:0
 #: field:project.account.analytic.line,to_date:0
 #: field:partner.sms.send,mobile_to:0
@@ -87145,6 +87151,7 @@ msgstr "À déf."
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:215
 #: field:supplier.performance.wizard,date_to:0
 #: code:addons/stock_override/report/report_stock_move.py:740
+#: view:replenishment.segment:0
 msgid "To"
 msgstr "Au"
 
@@ -107270,7 +107277,6 @@ msgstr "Complet"
 msgid "Compute Data"
 msgstr "Calcul des données"
 
-
 #. module: procurement_cycle
 #: field:replenishment.segment.date.generation,amc_date:0
 msgid "Date AMC/Stock Data"
@@ -107280,11 +107286,6 @@ msgstr "Date calcul CMM/Stock"
 #: field:replenishment.segment.date.generation,full_date:0
 msgid "Date Full Data (exp.)"
 msgstr "Date données complètes (exp.)"
-
-#. module: procurement_cycle
-#: field:replenishment.segment.date.generation,review_date:0
-msgid "Date InvReview Data"
-msgstr "Date données de revue"
 
 #. module: procurement_cycle
 #: field:replenishment.order_calc,new_order_reception_date:0
@@ -107799,6 +107800,7 @@ msgstr "Instance Locale"
 #: field:replenishment.order_calc,location_config_id:0
 #: view:replenishment.segment:0
 #: field:replenishment.segment,location_config_id:0
+#: model:ir.ui.menu,name:procurement_cycle.replenishment_location_config_menu
 msgid "Location Config"
 msgstr "Config. Zone"
 
@@ -108390,6 +108392,7 @@ msgstr "Revue Active"
 
 #. module: procurement_cycle
 #: field:replenishment.location.config,last_review_error:0
+#: view:replenishment.location.config:0
 msgid "Review Error"
 msgstr "Erreur de la revue"
 
@@ -108851,3 +108854,134 @@ msgstr "Origine: champ obligatoire absent. L'Origine de la ligne scindée a ét�
 msgid "Origin in the imported file does not match the origin on the PO line. Imported Origin ignored"
 msgstr "l'Origine du fichier importé ne correspond pas à l'Origine de la ligne de BC. La valeur importée est ignorée."
 
+#. module: procurement_cycle
+#: view:replenishment.order_calc:0
+#: view:replenishment.segment:0
+msgid "Current Instance Locations"
+msgstr "Zones Instance Actuelle"
+
+#. module: procurement_cycle
+#: view:replenishment.location.config:0
+msgid "Current instance locations"
+msgstr "Zones Instance actuelle"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.date.generation,review_date:0
+msgid "Date Inv. Review"
+msgstr "Date Revue Inv."
+
+#. module: procurement_cycle
+#: view:replenishment.segment:0
+msgid "Edit 12 FMC"
+msgstr "Éditer 12 PCM"
+
+#. module: procurement_cycle
+#: view:replenishment.location.config:0
+msgid "Go to Inventory Review"
+msgstr "Ouvrir Revue d'Inventaire"
+
+#. module: procurement_cycle
+#: model:ir.ui.menu,name:procurement_cycle.replenishment_review_config_menu
+msgid "Inventory Review Config"
+msgstr "Config Revue d'Inventaire"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:131
+#, python-format
+msgid "Inventory Review Config has now been created"
+msgstr "Une Revue d'Inventaire a été créée"
+
+#. module: procurement_cycle
+#: view:replenishment.inventory.review:0
+msgid "Inventory Reviews"
+msgstr "Revues d'Inventaire"
+
+#: view:replenishment.segment:0
+msgid "Loc config description"
+msgstr "Description Config. Zone"
+
+#. module: procurement_cycle
+#: view:replenishment.segment:0
+msgid "Location Config Description"
+msgstr "Description Config. Zone"
+
+#. module: procurement_cycle
+#: view:replenishment.order_calc:0
+#: view:replenishment.segment:0
+msgid "Location Information"
+msgstr "Information Zone"
+
+#. module: procurement_cycle
+#: view:replenishment.segment:0
+msgid "Multiple line management"
+msgstr "Gestion de plusieurs lignes"
+
+#. module: procurement_cycle
+#: view:replenishment.order_calc:0
+msgid "Order Calculations"
+msgstr "Calculs de Commande"
+
+#. module: procurement_cycle
+#: view:replenishment.order_calc:0
+#: view:replenishment.segment:0
+msgid "Other Instance Locations"
+msgstr "Zones des autres instances"
+
+#. module: procurement_cycle
+#: view:replenishment.location.config:0
+msgid "Other instance locations"
+msgstr "Zones des autres instances"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,status:0
+msgid "RR Lifecycle"
+msgstr "Cycle RR"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_segment.mako:387
+msgid "RR-Lifecycle"
+msgstr "Cycle-RR"
+
+#. module: procurement_cycle
+#: view:replenishment.order_calc:0
+#: view:replenishment.segment:0
+msgid "Replenishment Rule"
+msgstr "Règle de Réappro."
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:369
+#: model:ir.ui.menu,name:procurement_cycle.replenishment_segment_menu
+#: field:replenishment.order_calc,segment_id:0
+#: field:replenishment.product.list,segment_id:0
+#: view:replenishment.segment:0
+#: field:replenishment.segment.date.generation,segment_id:0
+#: field:replenishment.segment.line,segment_id:0
+msgid "Replenishment Segment"
+msgstr "Segment de Réappro."
+
+#. module: procurement_cycle
+#: field:replenishment.product.list,description_seg:0
+#: field:replenishment.segment,description_seg:0
+msgid "Replenishment Segment Description"
+msgstr "Description Segment de Réappro."
+
+#. module: procurement_cycle
+#: field:replenishment.product.list,name_seg:0
+msgid "Replenishment Segment Reference"
+msgstr "Référence Segment de Réappro."
+
+#. module: procurement_cycle
+#: model:ir.actions.act_window,name:procurement_cycle.action_from_location_config_to_segment
+#: view:replenishment.segment:0
+msgid "Replenishment Segments"
+msgstr "Segments de Réappro."
+
+#. module: procurement_cycle
+#: model:ir.model,name:procurement_cycle.model_replenishment_segment_line_amc
+msgid "Segment Product AMC"
+msgstr "CCM Produit"
+
+#. module: procurement_cycle
+#: field:replenishment.segment.line,list_fmc:0
+msgid "more FMC"
+msgstr "plus de PCM"

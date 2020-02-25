@@ -204,6 +204,17 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
   </Style>
+  <Style ss:ID="s97u">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
+   <Protection ss:Protected="0"/>
+  </Style>
   <Style ss:ID="sw97">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -212,6 +223,17 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+  </Style>
+  <Style ss:ID="sw97u">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
+   <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="s97d">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -287,7 +309,7 @@
    <Interior ss:Color="#DDEBF7" ss:Pattern="Solid"/>
   </Style>
  </Styles>
- <Worksheet ss:Name="Order Calculation">
+ <Worksheet ss:Name="Order Calculation" ss:Protected="1">
   <Names>
    <NamedRange ss:Name="_FilterDatabase" ss:RefersTo="=Segment!R8C1:R14C4"
     ss:Hidden="1"/>
@@ -314,8 +336,8 @@
    <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- expirty eta -->
    <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- propo qty -->
    <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- agreed qty -->
-   <Column ss:AutoFitWidth="0" ss:Width="100" /> <!-- qty comment -->
-   <Column ss:AutoFitWidth="0" ss:Width="100" /> <!-- warning -->
+   <Column ss:AutoFitWidth="0" ss:Width="300" /> <!-- qty comment -->
+   <Column ss:AutoFitWidth="0" ss:Width="300" /> <!-- warning -->
    <Row ss:AutoFitHeight="0" ss:Height="31.5">
     <Cell ss:MergeAcross="9" ss:StyleID="s64"><Data ss:Type="String">${_('Order Calculation')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
@@ -344,7 +366,7 @@
     <Cell ss:MergeAcross="1" ss:StyleID="m2348480924308"><Data ss:Type="String">${objects[0].location_config_id.name|x}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s67"><NamedCell ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Segment')|x}</Data><NamedCell
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Replenishment Segment')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:MergeAcross="1" ss:StyleID="m2348480924308"><Data ss:Type="String">${objects[0].segment_id.name|x}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
@@ -465,14 +487,14 @@
         <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.expired_qty_before_eta}</Data></Cell>
     % endif
     <Cell ss:StyleID="s97"><Data ss:Type="Number">${int(prod.proposed_order_qty)}</Data></Cell>
-    <Cell ss:StyleID="s97">
+    <Cell ss:StyleID="s97u">
     % if prod.agreed_order_qty is False:
         <Data ss:Type="String" />
     % else:
         <Data ss:Type="Number">${prod.agreed_order_qty}</Data>
     % endif
     </Cell>
-    <Cell ss:StyleID="sw97"><Data ss:Type="String">${(prod.order_qty_comment or '')|x}</Data></Cell>
+    <Cell ss:StyleID="sw97u"><Data ss:Type="String">${(prod.order_qty_comment or '')|x}</Data></Cell>
     <Cell ss:StyleID="sw97"><Data ss:Type="String">${(prod.warning or '')|xn}</Data></Cell>
 
    </Row>
@@ -517,8 +539,17 @@
      <Number>0</Number>
     </Pane>
    </Panes>
-   <ProtectObjects>False</ProtectObjects>
-   <ProtectScenarios>False</ProtectScenarios>
+   <ProtectObjects>True</ProtectObjects>
+   <ProtectScenarios>True</ProtectScenarios>
+   <AllowFormatCells/>
+   <AllowSizeCols/>
+   <AllowSizeRows/>
+   <AllowInsertRows/>
+   <AllowInsertHyperlinks/>
+   <AllowDeleteRows/>
+   <AllowSort/>
+   <AllowFilter/>
+   <AllowUsePivotTables/>
   </WorksheetOptions>
  </Worksheet>
 </Workbook>

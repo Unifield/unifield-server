@@ -142,7 +142,7 @@
                         <field name="next_date" widget="date" />
                     </group>
                     <label colspan="2" />
-                    <button colspan="2" name="choose_frequency" type="object" string="Validate the frequency" icon="gtk-ok" />
+                    <button colspan="2" name="choose_frequency" type="object" string="Validate the frequency" icon="gtk-go-forward" />
                  </form>
             </field>
         </record>
