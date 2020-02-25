@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<!DOCTYPE TESTS [
-    <!ENTITY chrono SYSTEM "replenishment_view_chrono_svg.xml">
-]>
-
 <openerp>
     <data>
 
