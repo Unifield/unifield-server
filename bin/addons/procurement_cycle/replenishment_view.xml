@@ -376,20 +376,20 @@
 
                             <group colspan="4" col="6">
                                 <field name="local_location_ids" colspan="2" nolabel="1" readonly="1">
-                                    <tree>
+                                    <tree min_rows="10">
                                         <field name="complete_name" string="Current Instance Locations"/>
                                     </tree>
                                 </field>
 
                                 <field name="remote_location_ids" colspan="2" nolabel="1" readonly="1">
-                                    <tree>
+                                    <tree min_rows="10">
                                         <field name="full_name" string="Other Instance Locations"/>
                                     </tree>
                                 </field>
 
                                 <group colspan="2" col="2">
                                     <field name="last_generation" nolabel="1" colspan="2">
-                                        <tree string="Generation Date">
+                                        <tree string="Generation Date" min_rows="10">
                                             <field name="instance_id" />
                                             <field name="amc_date" />
                                             <field name="full_date" />
