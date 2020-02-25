@@ -75,7 +75,6 @@
         </record>
 
         <record id="replenishment_location_config_action" model="ir.actions.act_window">
-            <field name="name"></field>
             <field name="res_model">replenishment.location.config</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -152,7 +151,6 @@
         </record>
 
         <record id="replenishment_review_config_action" model="ir.actions.act_window">
-            <field name="name"></field>
             <field name="res_model">replenishment.location.config</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -462,7 +460,6 @@
         </record>
 
         <record id="replenishment_segment_action" model="ir.actions.act_window">
-            <field name="name"></field>
             <field name="res_model">replenishment.segment</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -627,7 +624,6 @@
         </record>
 
         <record id="replenishment_order_calc_action" model="ir.actions.act_window">
-            <field name="name"></field>
             <field name="res_model">replenishment.order_calc</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -781,7 +777,6 @@
         </record>
 
         <record id="replenishment_inventory_review_action" model="ir.actions.act_window">
-            <field name="name"></field>
             <field name="res_model">replenishment.inventory.review</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
