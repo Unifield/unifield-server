@@ -332,6 +332,8 @@ class PhysicalInventory(osv.osv):
         counted_quantities = {}
         max_line_no = 0
         available_line_no = {}
+        duplicates = {}
+
         for line in counting_lines:
 
             product_batch_expirydate = (line["product_id"][0],
@@ -339,8 +341,15 @@ class PhysicalInventory(osv.osv):
                                         line["expiry_date"])
 
             qty = float(line["quantity"]) if line["quantity"] else False
+            if line["quantity"] is False and product_batch_expirydate in duplicates:
+                # ignore duplicates if qty is not set
+                continue
+
             if qty is False:
                 available_line_no.setdefault(line["product_id"][0], []).append(line["line_no"])
+
+            if line["quantity"] is not False:
+                duplicates.setdefault(product_batch_expirydate, []).append(line["line_no"])
 
             counted_quantities[product_batch_expirydate] = qty
 
@@ -350,6 +359,14 @@ class PhysicalInventory(osv.osv):
             }
             if line["line_no"] > max_line_no:
                 max_line_no = line["line_no"]
+
+        if duplicates:
+            msg = []
+            for k in duplicates:
+                if len(duplicates[k]) > 1:
+                    msg.append( '- %s' % ', '.join(['%s' % line_n for  line_n in duplicates[k]]))
+            if msg:
+                raise osv.except_osv(_('Warning'), _('You have duplicates ! Please set Quantity only on one of these lines:\n %s') % ("\n".join(msg)))
 
         ###################################################
         # Now, compare theoretical and counted quantities #
@@ -365,13 +382,20 @@ class PhysicalInventory(osv.osv):
             prod_info[prod['id']] = prod
 
         # filter the case we had an entry with BN when product is not (anymore) BN mandatory:
+        attr_changed = []
         filtered_all_product_batch_expirydate = set()
         for prod_id, batch_n, exp_date in all_product_batch_expirydate:
             if batch_n and not prod_info[prod_id]['batch_management'] or exp_date and not prod_info[prod_id]['perishable']:
-                continue
+                line_number = counting_lines_per_product_batch_expirtydate.get((prod_id, batch_n or False, exp_date), {}).get('line_no', '')
+                if batch_n:
+                    attr_changed.append(_('Line %s, batch %s product is not BN anymore, please correct the line') % (line_number, batch_n))
+                else:
+                    attr_changed.append(_('Line %s, expiry %s product is not ED anymore, please correct the line') % (line_number, exp_date))
             else:
                 filtered_all_product_batch_expirydate.add((prod_id, batch_n, exp_date))
 
+        if attr_changed:
+            raise osv.except_osv(_('Warning'), "\n".join(attr_changed))
 
         new_discrepancies = []
         counting_lines_with_no_discrepancy = []
@@ -572,30 +596,23 @@ class PhysicalInventory(osv.osv):
                                          ('location_id', 'in', [location_id]),
                                          ('location_dest_id', 'in', [location_id]),
                                          ("product_id", 'in', product_ids),
+                                         ('product_qty', '!=', 0),
                                          ('state', '=', 'done')]
 
         moves_at_location_ids = move_obj.search(cr, uid, move_for_products_at_location, context=context)
-        moves_at_location = move_obj.read(cr, uid, moves_at_location_ids,
-                                          ["product_id",
-                                           "product_qty",
-                                           "prodlot_id",
-                                           "expired_date",
-                                           "location_id",
-                                           "product_uom",
-                                           "location_dest_id"],
-                                          context=context)
+        ftf = ["product_id", "product_qty", "prodlot_id", "expired_date", "location_id", "product_uom", "location_dest_id"]
+        moves_at_location = move_obj.browse(cr, uid, moves_at_location_ids, fields_to_fetch=ftf, context=context)
 
         # Sum all lines to get a set of (product, batchnumber) -> qty
         stocks = {}
         for move in moves_at_location:
 
-            product_id = move["product_id"][0]
-            product_qty = move["product_qty"]
-            batch_number = move["prodlot_id"][1] if move["prodlot_id"] else False
-            expiry_date = move["expired_date"]
+            product_id = move.product_id.id
+            product_qty = move.product_qty
+            batch_number = move.prodlot_id and move.prodlot_id.name or False
+            expiry_date = move.expired_date
 
-            # Dirty hack to ignore/hide internal batch numbers ("MSFBN")
-            if batch_number and batch_number.startswith("MSFBN"):
+            if batch_number and move.prodlot_id.type == 'internal':
                 batch_number = False
 
             product_batch_expirydate = (product_id, batch_number, expiry_date)
@@ -605,14 +622,14 @@ class PhysicalInventory(osv.osv):
             if not product_batch_expirydate in stocks.keys():
                 stocks[product_batch_expirydate] = 0.0
 
-            move_out = (move["location_id"][0] == location_id)
-            move_in = (move["location_dest_id"][0] == location_id)
+            move_out = (move.location_id.id == location_id)
+            move_in = (move.location_dest_id.id == location_id)
 
             if move_in and move_out:
                 continue
 
-            if move['product_uom'] and default_uom.get(product_id) and move['product_uom'][0] != default_uom[product_id]:
-                product_qty = uom_obj._compute_qty(cr, uid, move['product_uom'][0], product_qty, default_uom[product_id])
+            if move.product_uom and default_uom.get(product_id) and move.product_uom.id != default_uom[product_id]:
+                product_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, product_qty, default_uom[product_id])
 
             if move_in:
                 stocks[product_batch_expirydate] += product_qty
@@ -983,17 +1000,19 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         if context is None:
             context = {}
 
-        cr.execute('''select default_code, batch_number, expiry_date, count(*) from physical_inventory_counting
+        cr.execute('''select default_code, batch_number, expiry_date, array_agg(line_no) from physical_inventory_counting
             where quantity is not null and inventory_id in %s
             group by inventory_id, default_code, batch_number, expiry_date
             having count(*) > 1
         ''', (tuple(ids),))
         error = []
         for x in cr.fetchall():
-            error.append(_('Product: %s, BN: %s, ED: %s : %d lines') % (x[0], x[1] or '-', x[2] or '-', x[3]))
+            error.append(_('Product: %s, BN: %s, ED: %s : lines %s') % (x[0], x[1] or '-', x[2] or '-', ', '.join(['%s'%lin_n for lin_n in x[3]])))
 
         if error:
-            raise osv.except_osv(_('Error'), _("Counting Sheet contains duplicated products:\n %s") % ("\n ".join(error)))
+            wizard_obj = self.pool.get('physical.inventory.import.wizard')
+            error.insert(0, _('Probably due to BN/ED changes on product, you have duplicates, please remove Qty on duplicated lines'))
+            return wizard_obj.message_box(cr, uid, title=_('Error'), message='\n'.join(error))
 
         self.write(cr, uid, ids, {'state': 'counted'}, context=context)
         return {}
@@ -1018,6 +1037,22 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         self.write(cr, uid, ids, {'state': 'counting', 'discrepancies_generated': False}, context=context)
         return {}
 
+    def check_discrepancies_constraint(self, cr, uid, ids, context=None):
+        cr.execute('''
+            select array_agg(disc.line_no), COALESCE(batch_number, ''), expiry_date, product_id, inventory_id
+                from physical_inventory_discrepancy disc
+                where
+                    disc.ignored = 'f' and
+                    disc.inventory_id in %s
+                group by
+                    inventory_id, product_id, COALESCE(batch_number, ''), expiry_date
+                having count(*) > 1
+        ''', (tuple(ids),))
+        msg = []
+        for x in cr.fetchall():
+            msg.append(_(' - lines %s') % ',' .join(['%s'% ln for ln in x[0]]))
+        return msg
+
     def action_validate(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -1034,6 +1069,12 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
             raise osv.except_osv(_('Error'),
                                  _("Please remove non-stockable from the discrepancy report to validate:\n%s") % ("\n".join(error),)
                                  )
+
+        errors = self.check_discrepancies_constraint(cr, uid, ids, context=context)
+        if errors:
+            wizard_obj = self.pool.get('physical.inventory.import.wizard')
+            errors.insert(0, _('Probably due to BN/ED changes on product, you have duplicates'))
+            return wizard_obj.message_box(cr, uid, title=_('Error'), message='\n'.join(errors))
 
         for inv in self.browse(cr, uid, ids, fields_to_fetch=['name'], context=context):
             message = _('Physical Inventory') + " '" + inv.name + "' " + _("is validated.")
@@ -1062,6 +1103,12 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
 
         if self.search_exist(cr, uid, [('id', 'in', ids), '|', ('state', '!=', 'validated'), ('discrepancies_generated', '=', False)], context=context):
             raise osv.except_osv(_('Error'), _('Page need to be refreshed - please press "F5"'))
+
+        errors = self.check_discrepancies_constraint(cr, uid, ids, context=context)
+        if errors:
+            wizard_obj = self.pool.get('physical.inventory.import.wizard')
+            errors.insert(0, _('Probably due to BN/ED changes on product, you have duplicates'))
+            return wizard_obj.message_box(cr, uid, title=_('Error'), message='\n'.join(errors))
 
         for inv in self.read(cr, uid, ids, ['counting_line_ids',
                                             'discrepancy_line_ids',
@@ -1282,8 +1329,15 @@ class PhysicalInventoryCounting(osv.osv):
     }
 
     _sql_constraints = [
-        ('line_uniq', 'UNIQUE(inventory_id, product_id, batch_number, expiry_date)', _('The line product, batch number and expiry date must be unique!')),
     ]
+
+    def _auto_init(self, cr, context=None):
+        res = super(PhysicalInventoryCounting, self)._auto_init(cr, context)
+        # constraint already checked on file import and on generate disc.
+        # deactivated because of BN/ED switch
+        # inital constraint was incorrect bc not applied on ED prod (i.e when batch_name is null)
+        cr.drop_constraint_if_exists('physical_inventory_counting', 'physical_inventory_counting_line_uniq')
+        return res
 
     def create(self, cr, user, vals, context=None):
         # Compute line number

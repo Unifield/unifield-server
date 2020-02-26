@@ -12,6 +12,7 @@
             <field eval="0" name="active"/>
             <field eval="1" name="interval_number"/>
             <field name="model">msf.instance.cloud</field>
+            <field name="manual_activation" eval="False" />
         </record>
 
     </data>

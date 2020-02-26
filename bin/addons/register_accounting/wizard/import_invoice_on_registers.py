@@ -257,6 +257,11 @@ class wizard_import_invoice(osv.osv_memory):
                 if not ref or ref == 'false':
                     if line.line_ids and line.line_ids[0].move_id:
                         ref = line.line_ids[0].move_id.name
+                # get all the account invoices imported, even partially
+                invoice_ids = []
+                for aml in line.line_ids:
+                    if aml.invoice:
+                        invoice_ids.append(aml.invoice.id)
                 register_vals = {
                     'name': '%s Imported Invoice(s)%s' % (line.number_invoices, partial or ''),
                     'ref': ref or '',
@@ -268,6 +273,7 @@ class wizard_import_invoice(osv.osv_memory):
                     'employee_id': line.employee_id.id,
                     'amount': line.amount_currency < 0 and -line.amount or line.amount,
                     'imported_invoice_line_ids': [(4, x.id) for x in line.line_ids],
+                    'imported_account_invoice_ids': [(4, inv_id) for inv_id in invoice_ids],
                 }
 
                 # if we come from cheque, add a column for that

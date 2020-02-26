@@ -388,9 +388,12 @@ class purchase_order(osv.osv):
             msg = _('No PO to export !')
             self.infolog(cr, uid, msg)
             context.update({'po_not_found': True})
+            return [], [], ['PO id', 'PO name']
 
         processed, rejected = [], []
-        for index, po_id in enumerate(po_ids):
+        cr.execute('select id from purchase_order where id in %s for update skip locked', (tuple(po_ids),))
+        index = 0
+        for po_id, in cr.fetchall():
             # generate report:
             report_name = 'validated.purchase.order_xls' if export_wiz.export_format == 'excel' else 'validated.purchase.order_xml'
             datas = {'ids': [po_id]}
@@ -453,6 +456,7 @@ class purchase_order(osv.osv):
             self.write(cr, uid, [po_id], {'auto_exported_ok': True}, context=context)
             processed.append((index, [po_id, po_name]))
             self.infolog(cr, uid, _('%s successfully exported') % po_name)
+            index += 1
 
         return processed, rejected, ['PO id', 'PO name']
 
@@ -661,13 +665,8 @@ class purchase_order(osv.osv):
             ids = [ids]
         message = ''
         plural = ''
-        obj_data = self.pool.get('ir.model.data')
 
         for var in self.browse(cr, uid, ids, context=context):
-            # we check the supplier and the address
-            if var.partner_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'supplier_tbd')[1] \
-                    or var.partner_address_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'address_tbd')[1]:
-                raise osv.except_osv(_('Warning !'), _("\n You can't have a supplier or an address 'To Be Defined', please select a consistent supplier."))
             # we check the lines that need to be fixed
             if var.order_line:
                 for var in var.order_line:

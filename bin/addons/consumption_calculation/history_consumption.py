@@ -590,7 +590,8 @@ class product_product(osv.osv):
                         if cons_id:
                             consumption = cons_prod_obj.browse(cr, uid, cons_id[0], context=context).value
                         else:
-                            consumption = self.pool.get('product.product').compute_amc(cr, uid, r['id'], context=cons_context) or 0.00
+                            # TODO TEST JFB
+                            consumption = self.pool.get('product.product').compute_amc(cr, uid, r['id'], context=cons_context)[r['id']] or 0.00
                             cons_prod_obj.create(cr, uid, {'name': field_name,
                                                            'product_id': r['id'],
                                                            'consumption_id': obj_id,

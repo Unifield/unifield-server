@@ -60,7 +60,9 @@ class account_journal(osv.osv):
                 ('bank', 'Bank'),
                 ('cash','Cash'),
                 ('cheque', 'Cheque'),
-                ('correction','Correction'),
+                ('correction', 'Correction Auto'),
+                ('correction_hq', 'Correction HQ'),
+                ('correction_manual', 'Correction Manual'),
                 ('cur_adj', 'Currency Adjustment'),
                 ('depreciation', 'Depreciation'),
                 ('general', 'General'),
@@ -110,6 +112,51 @@ class account_journal(osv.osv):
         'update_posted': True,
         'group_invoice_lines': False,
     }
+
+    def _check_correction_type(self, cr, uid, ids, context=None):
+        """
+        Check that only one "Correction" and one "Correction HQ" journals exist per instance
+        """
+        if context is None:
+            context = {}
+        for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'instance_id'], context=context):
+            if journal.type in ('correction', 'correction_hq') and journal.instance_id:
+                journal_dom = [('type', '=', journal.type), ('instance_id', '=', journal.instance_id.id), ('id', '!=', journal.id)]
+                if self.search_exist(cr, uid, journal_dom, context=context):
+                    return False
+        return True
+
+    def _check_correction_analytic_journal(self, cr, uid, ids, context=None):
+        """
+        In case of Correction journal or Correction HQ journal, check that the analytic journal selected is the right one
+        """
+        if context is None:
+            context = {}
+        for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'analytic_journal_id', 'instance_id'], context=context):
+            if journal.type in ('correction', 'correction_hq'):
+                if not journal.analytic_journal_id:
+                    return False
+                elif journal.type != journal.analytic_journal_id.type or journal.instance_id != journal.analytic_journal_id.instance_id:
+                    return False
+        return True
+
+    def _check_hq_correction(self, cr, uid, ids, context=None):
+        """
+        Check that the prop. instance of the "Correction HQ" journal is a coordo
+        """
+        if context is None:
+            context = {}
+        for journal in self.browse(cr, uid, ids, fields_to_fetch=['type', 'instance_id'], context=context):
+            if journal.type == 'correction_hq' and (not journal.instance_id or journal.instance_id.level != 'coordo'):
+                return False
+        return True
+
+    _constraints = [
+        (_check_correction_type, 'A journal with this type already exists for this instance.', ['type', 'instance_id']),
+        (_check_correction_analytic_journal, 'The analytic journal selected must have the same type and prop. instance as this journal.',
+                                             ['type', 'analytic_journal_id', 'instance_id']),
+        (_check_hq_correction, 'The prop. instance of the "Correction HQ" journal must be a coordination.', ['type', 'instance_id']),
+    ]
 
     def get_current_period(self, cr, uid, context=None):
         periods = self.pool.get('account.period').find(cr, uid, datetime.date.today())
@@ -396,6 +443,29 @@ class account_journal(osv.osv):
             'search_view_id': search_view_id,
             'target': 'crush',
         }
+
+    def get_correction_journal(self, cr, uid, corr_type=False, context=None):
+        """
+        Returns the correction journal of the current instance (or False if not found):
+        - by default => standard Correction journal
+        - corr_type 'hq' => Correction HQ journal
+        - corr_type 'extra' => OD-Extra Accounting journal
+        - corr_type 'manual' => Correction Manual journal
+        """
+        if context is None:
+            context = {}
+        if corr_type == 'hq':
+            journal_type = 'correction_hq'
+        elif corr_type == 'extra':
+            journal_type = 'extra'
+        elif corr_type == 'manual':
+            journal_type = 'correction_manual'
+        else:
+            journal_type = 'correction'
+        journal_ids = self.search(cr, uid, [('type', '=', journal_type), ('is_current_instance', '=', True)],
+                                  order='id', limit=1, context=context)
+        return journal_ids and journal_ids[0] or False
+
 
 account_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

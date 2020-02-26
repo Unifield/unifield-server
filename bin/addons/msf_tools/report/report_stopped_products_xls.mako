@@ -83,12 +83,11 @@
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Unidata Status')|x}</Data></Cell>
         </Row>
 
-        <% standard_level = 'Standard' if line.standard_ok == 'True' else 'Non-standard' %>
         <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.default_code)|x}</Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.name_template)|x}</Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.international_status and line.international_status.name or '')|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(standard_level)|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${getSel(line, 'standard_ok')|x}</Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.state_ud and getSel(line, 'state_ud') or '')|x}</Data></Cell>
         </Row>
 

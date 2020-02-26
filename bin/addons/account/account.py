@@ -1709,7 +1709,7 @@ class account_move_reconcile(osv.osv):
     _name = "account.move.reconcile"
     _description = "Account Reconciliation"
     _columns = {
-        'name': fields.char('Name', size=64, required=True),
+        'name': fields.char('Name', size=64, required=True, select=1),
         'type': fields.char('Type', size=16, required=True),
         'line_id': fields.one2many('account.move.line', 'reconcile_id', 'Entry Lines'),
         'line_partial_ids': fields.one2many('account.move.line', 'reconcile_partial_id', 'Partial Entry lines'),
@@ -1894,6 +1894,7 @@ class account_tax(osv.osv):
 
     _name = 'account.tax'
     _description = 'Tax'
+    _trace = True
     _columns = {
         'name': fields.char('Tax Name', size=64, required=True, translate=True, help="This name will be displayed on reports"),
         'sequence': fields.integer('Sequence', required=True, help="The sequence field is used to order the tax lines from the lowest sequences to the higher ones. The order is important if you have a tax with several tax children. In this case, the evaluation order is important."),
@@ -1909,6 +1910,9 @@ class account_tax(osv.osv):
         'parent_id':fields.many2one('account.tax', 'Parent Tax Account', select=True),
         'child_ids':fields.one2many('account.tax', 'parent_id', 'Child Tax Accounts'),
         'child_depend':fields.boolean('Tax on Children', help="Set if the tax computation is based on the computation of child taxes rather than on the total amount."),
+        'partner_id': fields.many2one('res.partner', 'Partner',
+                                      domain=[('partner_type', '=', 'external'), ('active', '=', True)],
+                                      ondelete='restrict'),
         'python_compute':fields.text('Python Code'),
         'python_compute_inv':fields.text('Python Code (reverse)'),
         'python_applicable':fields.text('Python Code'),
@@ -1963,11 +1967,31 @@ class account_tax(osv.osv):
             ids = self.search(cr, user, args, limit=limit, context=context or {})
         return self.name_get(cr, user, ids, context=context)
 
+    def _check_tax_partner(self, cr, uid, vals, context=None):
+        """
+        Raises an error in case the partner selected for the tax isn't allowed
+        """
+        if context is None:
+            context = {}
+        partner_obj = self.pool.get('res.partner')
+        if vals.get('partner_id'):
+            partner = partner_obj.browse(cr, uid, vals['partner_id'], fields_to_fetch=['active', 'partner_type', 'name'], context=context)
+            if not partner.active or partner.partner_type != 'external':
+                raise osv.except_osv(_('Error'),
+                                     _("You can't link the tax to the Partner %s: only active external partners are allowed.") % partner.name)
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        self._check_tax_partner(cr, uid, vals, context=context)
+        return super(account_tax, self).create(cr, uid, vals, context=context)
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
         if vals.get('type', False) and vals['type'] in ('none', 'code'):
             vals.update({'amount': 0.0})
+        self._check_tax_partner(cr, uid, vals, context=context)
         return super(account_tax, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -2041,9 +2065,9 @@ class account_tax(osv.osv):
         obj_partener_address = self.pool.get('res.partner.address')
         for tax in taxes:
             # we compute the amount for the current tax object and append it to the result
-
+            description = "%s%s%s" % (tax.name, partner and ' - ' or '', partner and partner.name or '')  # tax name and INVOICE partner name
             data = {'id':tax.id,
-                    'name':tax.description and tax.description + " - " + tax.name or tax.name,
+                    'name': description,
                     'account_collected_id':tax.account_collected_id.id,
                     'account_paid_id':tax.account_paid_id.id,
                     'base_code_id': tax.base_code_id.id,
@@ -2200,10 +2224,11 @@ class account_tax(osv.osv):
                 todo = 0
             else:
                 todo = 1
+            description = "%s%s%s" % (tax.name, partner and ' - ' or '', partner and partner.name or '')  # tax name and INVOICE partner name
             res.append({
                 'id': tax.id,
                 'todo': todo,
-                'name': tax.name,
+                'name': description,
                 'amount': amount,
                 'account_collected_id': tax.account_collected_id.id,
                 'account_paid_id': tax.account_paid_id.id,
@@ -2245,7 +2270,7 @@ class account_tax(osv.osv):
             tax = {'name':'', 'amount':0.0, 'account_collected_id':1, 'account_paid_id':2}
             one tax for each tax id in IDS and their children
         """
-        res = self._unit_compute_inv(cr, uid, taxes, price_unit, address_id, product, partner=None)
+        res = self._unit_compute_inv(cr, uid, taxes, price_unit, address_id, product, partner=partner)
         total = 0.0
         obj_precision = self.pool.get('decimal.precision')
         for r in res:
@@ -2276,75 +2301,6 @@ class account_model(osv.osv):
     _defaults = {
         'legend': lambda self, cr, uid, context:_('You can specify year, month and date in the name of the model using the following labels:\n\n%(year)s: To Specify Year \n%(month)s: To Specify Month \n%(date)s: Current Date\n\ne.g. My model on %(date)s'),
     }
-    def generate(self, cr, uid, ids, datas={}, context=None):
-        move_ids = []
-        entry = {}
-        account_move_obj = self.pool.get('account.move')
-        account_move_line_obj = self.pool.get('account.move.line')
-        pt_obj = self.pool.get('account.payment.term')
-
-        if context is None:
-            context = {}
-
-        if datas.get('date', False):
-            context.update({'date': datas['date']})
-
-        period_id = self.pool.get('account.period').find(cr, uid, dt=context.get('date', False))
-        if not period_id:
-            raise osv.except_osv(_('No period found !'), _('Unable to find a valid period !'))
-        period_id = period_id[0]
-
-        for model in self.browse(cr, uid, ids, context=context):
-            entry['name'] = model.name%{'year':time.strftime('%Y'), 'month':time.strftime('%m'), 'date':time.strftime('%Y-%m')}
-            move_id = account_move_obj.create(cr, uid, {
-                'ref': entry['name'],
-                'period_id': period_id,
-                'journal_id': model.journal_id.id,
-                'date': context.get('date',time.strftime('%Y-%m-%d'))
-            })
-            move_ids.append(move_id)
-            for line in model.lines_id:
-                analytic_account_id = False
-                if line.analytic_account_id:
-                    if not model.journal_id.analytic_journal_id:
-                        raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (model.journal_id.name,))
-                    analytic_account_id = line.analytic_account_id.id
-                val = {
-                    'move_id': move_id,
-                    'journal_id': model.journal_id.id,
-                    'period_id': period_id,
-                    'analytic_account_id': analytic_account_id
-                }
-
-                date_maturity = time.strftime('%Y-%m-%d')
-                if line.date_maturity == 'partner':
-                    if not line.partner_id:
-                        raise osv.except_osv(_('Error !'), _("Maturity date of entry line generated by model line '%s' of model '%s' is based on partner payment term!" \
-                                                             "\nPlease define partner on it!")%(line.name, model.name))
-                    if line.partner_id.property_payment_term:
-                        payment_term_id = line.partner_id.property_payment_term.id
-                        pterm_list = pt_obj.compute(cr, uid, payment_term_id, value=1, date_ref=date_maturity)
-                        if pterm_list:
-                            pterm_list = [l[0] for l in pterm_list]
-                            pterm_list.sort()
-                            date_maturity = pterm_list[-1]
-
-                val.update({
-                    'name': line.name,
-                    'quantity': line.quantity,
-                    'debit': line.debit,
-                    'credit': line.credit,
-                    'account_id': line.account_id.id,
-                    'move_id': move_id,
-                    'partner_id': line.partner_id.id,
-                    'date': context.get('date',time.strftime('%Y-%m-%d')),
-                    'date_maturity': date_maturity
-                })
-                c = context.copy()
-                c.update({'journal_id': model.journal_id.id,'period_id': period_id})
-                account_move_line_obj.create(cr, uid, val, context=c)
-
-        return move_ids
 
 account_model()
 

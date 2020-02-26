@@ -196,19 +196,6 @@
 			</field>
 		</record>
 
-		<!--<record id="product_nomenclature_action" model="ir.actions.act_window">
-			<field name="name">Products by Nomenclature</field>
-			<field name="type">ir.actions.act_window</field>
-			<field name="res_model">product.nomenclature</field>
-			<field name="domain">[('parent_id','=',False)]</field>
-			<field name="view_type">tree</field>
-			<field name="view_id" ref="product_nomenclature_tree_view" />
-			<field name="help">Here is a list of all your products classified by
-				nomenclature.</field>
-		</record>
-		<menuitem action="product_nomenclature_action" id="menu_products_nomenclature_sales"
-			parent="base.menu_product" sequence="4" />-->
-		
 		<record id="product_nomenclature_action_form" model="ir.actions.act_window">
 			<field name="name">Products Nomenclature</field>
 			<field name="type">ir.actions.act_window</field>
