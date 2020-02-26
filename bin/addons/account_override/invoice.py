@@ -603,13 +603,17 @@ class account_invoice(osv.osv):
             'partner_move_line': False,
             'imported_invoices': False
         })
-        # Manual duplication should generate a "manual document not created through the supply workflow"
-        # so we don't keep the link to: FOs, Picking List
+        # Manual duplication should generate a "manual document not created through the supply workflow", so we don't keep
+        # the link to FOs and Picking List, and we reset the Source Doc if the invoice copied relates to a Supply workflow
         if context.get('from_button', False):
             default.update({
                 'order_ids': False,
                 'picking_id': False,
             })
+            inv = self.browse(cr, uid, inv_id, fields_to_fetch=['from_supply'], context=context)
+            if inv.from_supply:
+                default.update({'origin': ''})
+
         # Reset register_line_ids if not given in default
         if 'register_line_ids' not in default:
             default['register_line_ids'] = []
