@@ -1922,7 +1922,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         """
         if not context:
             context = {}
-        wiz_obj = self.pool.get('procurement.purchase.compute.all')
         wf_service = netsvc.LocalService("workflow")
 
         if new_cursor:
@@ -1967,11 +1966,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 self.pool.get('sale.order.sourcing.progress').write(cr, uid, prog_ids, {
                     'error': misc.ustr(e),
                 }, context=context)
-
-        if run_scheduler:
-            # Run Auto POs creation scheduler
-            wiz_id = wiz_obj.create(cr, uid, {}, context=context)
-            wiz_obj.procure_calculation_purchase(cr, uid, wiz_id, context=context)
 
         if new_cursor:
             cr.commit()
@@ -2113,10 +2107,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             line = self.browse(cr, uid, ids[0])
 
         if product and type:
-            seller = product_obj.browse(cr, uid, product).seller_id
-            sellerId = (seller and (seller.supplier or seller.manufacturer or seller.transporter) and seller.id) or False
-
             if l_type == 'make_to_order':
+                seller = product_obj.browse(cr, uid, product).seller_id
+                sellerId = (seller and (seller.supplier or seller.manufacturer or seller.transporter) and seller.id) or False
+
                 po_cft = 'po'
                 if line and \
                     ((line.product_id and line.product_id.type in ('service', 'service_recep')) or \

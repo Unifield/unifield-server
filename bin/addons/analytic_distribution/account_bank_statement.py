@@ -58,13 +58,15 @@ class account_bank_statement_line(osv.osv):
         # Prepare some values
         res = {}
         # Browse all given lines
-        for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id'], context=context):
+        for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id', 'amount'], context=context):
             if not line.get('analytic_distribution_id', False):
                 res[line.get('id')] = 'none'
                 continue
             distribution_id = line.get('analytic_distribution_id')[0]
             account_id = line.get('account_id', [False])[0]
-            res[line.get('id')] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distribution_id, False, account_id)
+            res[line.get('id')] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distribution_id,
+                                                                                                 False, account_id,
+                                                                                                 amount=line.get('amount', 0.0))
         return res
 
     _columns = {
@@ -72,7 +74,8 @@ class account_bank_statement_line(osv.osv):
         'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True,
                                                    help="This informs system that we can display or not an analytic button", store=False),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       selection=[('none', 'None'), ('valid', 'Valid'),
+                                                                  ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
     }
 

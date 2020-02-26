@@ -57,6 +57,7 @@ OBJ_TO_RECREATE = [
     'account.journal',
     'account.mcdb',
     'wizard.template',
+    'account.analytic.account',
 ]
 
 
@@ -245,9 +246,8 @@ class update_to_send(osv.osv,fv_formatter):
             if not rule.can_delete:
                 return 0
 
-            ids_to_delete = self.need_to_push(cr, uid,
-                                              self.search_deleted(cr, uid, module='sd', context=context),
-                                              context=context)
+            ids_to_delete = self.search_deleted(cr, uid, module='sd', context=context, for_sync=True)
+
             if not ids_to_delete:
                 return 0
 

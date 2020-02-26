@@ -41,11 +41,14 @@ class analytic_distribution_wizard(osv.osv_memory):
         'old_employee_id': fields.many2one('hr.employee', "Original employee of the line to be corrected", readonly=True),
         'new_partner_id': fields.many2one('res.partner', "New partner selected in the correction wizard", readonly=True),
         'new_employee_id': fields.many2one('hr.employee', "New employee selected in the correction wizard", readonly=True),
+        'invalid_small_amount': fields.boolean(string='Invalid small amount', invisible=True,
+                                               help="Displays in the wizard a warning message regarding small amount analytic distribution"),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
         'date': lambda *a: time.strftime('%Y-%m-%d'),
+        'invalid_small_amount': False,
     }
 
     def _check_lines(self, cr, uid, distribution_line_id, wiz_line_id, ltype):
@@ -150,6 +153,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         wizard = self.browse(cr, uid, wizard_id)
         ad_obj = self.pool.get('analytic.distribution')
         ana_line_obj = self.pool.get('account.analytic.line')
+        journal_obj = self.pool.get('account.journal')
+        analytic_journal_obj = self.pool.get('account.analytic.journal')
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         ml = wizard.move_line_id
         # US-5848: orig_date left unchanged not to break historical behavior,
@@ -176,12 +181,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                 entry_seq_data['sequence'] = biggest_reversal_aji.entry_sequence
 
         jtype = 'correction'
-        if wizard.move_line_id.account_id and wizard.move_line_id.account_id.type_for_register == 'donation':
+        if ml.account_id.type_for_register == 'donation':
             jtype = 'extra'
-        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid,
-                                                                                  [('type', '=', jtype), ('is_current_instance', '=', True)],
-                                                                                  order='id', limit=1)
-        correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
+        # Correction: of an HQ entry, or of a correction of an HQ entry
+        elif ml.journal_id.type in ('hq', 'correction_hq'):
+            jtype = 'hq'
+        correction_journal_id = analytic_journal_obj.get_correction_analytic_journal(cr, uid, corr_type=jtype, context=context)
         if not correction_journal_id:
             raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
         to_create = []
@@ -191,19 +196,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         old_line_ok = []
         any_reverse = False
         # Prepare journal and period information for entry sequences
-        journal_sql = """
-            SELECT id, code
-            FROM account_journal
-            WHERE type = %s 
-            AND is_current_instance = true
-            ORDER BY id
-            LIMIT 1;
-            """
-        cr.execute(journal_sql, (jtype,))
-        journal_sql_res = cr.fetchone()
-        journal_id = journal_sql_res[0]
-        code = journal_sql_res[1]
-        journal = self.pool.get('account.journal').browse(cr, uid, journal_id, context=context)
+        journal_id = journal_obj.get_correction_journal(cr, uid, corr_type=jtype, context=context)
+        if not journal_id:
+            raise osv.except_osv(_('Error'), _('No journal found for corrections!'))
+        journal = journal_obj.browse(cr, uid, journal_id, context=context)
+        code = journal.code
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date=posting_date, context=context)
         if not period_ids:
             raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (posting_date or ''))
@@ -228,6 +225,20 @@ class analytic_distribution_wizard(osv.osv_memory):
         old_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
         wiz_line_ids = self.pool.get('analytic.distribution.wizard.fp.lines').search(cr, uid, [('wizard_id', '=', wizard_id), ('type', '=', 'funding.pool')])
 
+        # block applying several AD lines to booking amount <= 1
+        if abs(ml.amount_currency) <= 1:
+            nb_fp_lines = len(wiz_line_ids)
+            nb_free1 = self.pool.get('analytic.distribution.wizard.f1.lines').search(cr, uid,
+                                                                                     [('wizard_id', '=', wizard_id), ('type', '=', 'free.1')],
+                                                                                     count=True, context=context)
+            nb_free2 = self.pool.get('analytic.distribution.wizard.f2.lines').search(cr, uid,
+                                                                                     [('wizard_id', '=', wizard_id), ('type', '=', 'free.2')],
+                                                                                     count=True, context=context)
+            if not all(n <= 1 for n in [nb_fp_lines, nb_free1, nb_free2]):
+                raise osv.except_osv(_('Error'),
+                                     _("Journal Items with a booking amount inferior or equal to 1 "
+                                       "can't have several analytic distribution lines."))
+
         # US-1398: determine if AD chain is from an HQ entry and from a pure AD
         # correction: analytic reallocation of HQ entry before validation
         # if yes this flag represents that we have to maintain OD sequence
@@ -248,8 +259,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         # US-1343/2: flag that the chain origin is an HQ
                         # entry: in other terms OD AJI from a HQ JI
                     is_HQ_origin = {
-                        'from_od': \
-                        original_al.journal_id.type == 'correction',
+                        'from_od': original_al.journal_id.type in ('correction', 'correction_hq'),
                     }
                     break
 
@@ -303,13 +313,14 @@ class analytic_distribution_wizard(osv.osv_memory):
 
                     old_line_ok.append(old_line.id)
 
-        to_reverse_ids = []
+        reversed_lines_ids = []  # to store the ids corresponding to all the lines of which the AD has been either edited or deleted
         for wiz_line in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x for x in old_line_ids if x not in old_line_ok]):
             # distribution line deleted by user
             if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [wiz_line.analytic_id.id]):
                 raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(wiz_line.analytic_id.code))
             to_reverse_ids = self._check_period_closed_on_fp_distrib_line(cr, uid, wiz_line.id, is_HQ_origin=is_HQ_origin)
             if to_reverse_ids:
+                reversed_lines_ids += to_reverse_ids
                 # reverse the line
                 #to_reverse_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
                 if period.state != 'draft':
@@ -360,8 +371,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
             name = False
             if period_closed or is_HQ_origin:
-                if period_closed or is_HQ_origin:
-                    create_date = posting_date
+                create_date = posting_date
                 name = ana_line_obj.join_without_redundancy(ml.name, 'COR')
                 if keep_seq_and_corrected:
                     create_date = keep_seq_and_corrected[2]  # is_HQ_origin keep date too
@@ -402,6 +412,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         for line in to_reverse:
             # reverse the line
             to_reverse_ids = ana_line_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+            reversed_lines_ids += to_reverse_ids
 
             # get the original sequence
             orig_line = ana_line_obj.browse(cr, uid, to_reverse_ids)[0]
@@ -441,8 +452,14 @@ class analytic_distribution_wizard(osv.osv_memory):
                 ana_line_obj.write(cr, uid, [ret[ret_id]], {'last_corrected_id': to_reverse_ids[0], 'journal_id': correction_journal_id, 'ref': orig_line.entry_sequence })
                 cr.execute('update account_analytic_line set entry_sequence = %s where id = %s', (get_entry_seq(entry_seq_data), ret[ret_id]) )
         # UFTP-194: Set missing entry sequence for created analytic lines
-        if have_been_created and to_reverse_ids:
-            cr.execute('update account_analytic_line set entry_sequence = %s, last_corrected_id = %s where id in %s', (get_entry_seq(entry_seq_data), to_reverse_ids[0], tuple(have_been_created)))
+        if have_been_created and reversed_lines_ids:
+            reversed_line_id = max(reversed_lines_ids)  # always consider that the line corrected is the most recent one
+            corrected_aji = ana_line_obj.read(cr, uid, reversed_line_id, ['entry_sequence', 'name'], context=context)
+            new_description = ana_line_obj.join_without_redundancy(corrected_aji['name'], 'COR')
+            cr.execute('update account_analytic_line '
+                       'set entry_sequence = %s, last_corrected_id = %s, ref = %s, name = %s '
+                       'where id in %s;', (get_entry_seq(entry_seq_data), reversed_line_id,
+                                           corrected_aji['entry_sequence'] or '', new_description, tuple(have_been_created)))
 
         #####
         ## FP: TO OVERRIDE

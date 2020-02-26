@@ -70,51 +70,6 @@ real_average_consumption_rw()
 The following 4 objects must have no new nor duplicate buttons in the view in Remote Wareshouse instances
 '''
 
-class stock_warehouse_orderpoint_rw(osv.osv):
-    _inherit = 'stock.warehouse.orderpoint'
-
-    # Do not show the button new, duplicate in the tree and form view
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        so_po_common = self.pool.get('so.po.common')
-        res = super(stock_warehouse_orderpoint_rw, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
-        return so_po_common.rw_view_remove_buttons(cr, uid, res, view_type, so_po_common.REMOTE_WAREHOUSE)
-
-stock_warehouse_orderpoint_rw()
-
-class threshold_value_rw(osv.osv):
-    _inherit = 'threshold.value'
-
-    # Do not show the button new, duplicate in the tree and form view
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        so_po_common = self.pool.get('so.po.common')
-        res = super(threshold_value_rw, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
-        return so_po_common.rw_view_remove_buttons(cr, uid, res, view_type, so_po_common.REMOTE_WAREHOUSE)
-
-threshold_value_rw()
-
-class stock_warehouse_order_cycle_rw(osv.osv):
-    _inherit = 'stock.warehouse.order.cycle'
-
-    # Do not show the button new, duplicate in the tree and form view
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        so_po_common = self.pool.get('so.po.common')
-        res = super(stock_warehouse_order_cycle_rw, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
-        return so_po_common.rw_view_remove_buttons(cr, uid, res, view_type, so_po_common.REMOTE_WAREHOUSE)
-
-stock_warehouse_order_cycle_rw()
-
-class stock_warehouse_automatic_supply_rw(osv.osv):
-    _inherit = 'stock.warehouse.automatic.supply'
-
-    # Do not show the button new, duplicate in the tree and form view
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        so_po_common = self.pool.get('so.po.common')
-        res = super(stock_warehouse_automatic_supply_rw, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
-        return so_po_common.rw_view_remove_buttons(cr, uid, res, view_type, so_po_common.REMOTE_WAREHOUSE)
-
-stock_warehouse_automatic_supply_rw()
-
-
 #US-702: remove buttons in some more views
 class stock_inventory_rw(osv.osv):
     _name = 'stock.inventory'

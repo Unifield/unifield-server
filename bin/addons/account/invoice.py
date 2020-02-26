@@ -253,6 +253,9 @@ class account_invoice(osv.osv):
             invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id','in',move.keys())], context=context)
         return invoice_ids
 
+    def _get_journal_type(self, cr, uid, context=None):
+        return self.pool.get('account.journal').get_journal_type(cr, uid, context)
+
     _name = "account.invoice"
     _description = 'Invoice'
     _order = "id desc"
@@ -328,6 +331,8 @@ class account_invoice(osv.osv):
             multi='all'),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, hide_default_menu=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'journal_type': fields.related('journal_id', 'type', type='selection', string='Journal Type',
+                                       selection=_get_journal_type, store=False),
         'company_id': fields.many2one('res.company', 'Company', required=True, change_default=True, readonly=True, states={'draft':[('readonly',False)]}),
         'check_total': fields.float('Total', digits_compute=dp.get_precision('Account'), states={'open':[('readonly',True)],'inv_close':[('readonly',True)],'paid':[('readonly',True)]}),
         'reconciled': fields.function(_reconciled, method=True, string='Paid/Reconciled', type='boolean',
@@ -761,6 +766,7 @@ class account_invoice(osv.osv):
             'synced': False,
             'counterpart_inv_number': False,
             'counterpart_inv_status': False,
+            'refunded_invoice_id': False,
         })
         if 'date_invoice' not in default:
             default.update({
@@ -1378,6 +1384,7 @@ class account_invoice(osv.osv):
         obj_journal = self.pool.get('account.journal')
         new_ids = []
         for invoice in invoices:
+            invoice.update({'refunded_invoice_id': invoice['id']})
             del invoice['id']
 
             if context.get('is_intermission', False):
