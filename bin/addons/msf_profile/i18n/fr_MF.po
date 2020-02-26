@@ -61735,9 +61735,10 @@ msgstr "Actions d'itération"
 msgid "CORDOBA ORO"
 msgstr "CORDOBA ORO"
 
-#. modules: purchase, sale
+#. modules: purchase, sale, account_override
 #: field:purchase.order,line_count:0
 #: field:sale.order,line_count:0
+#: field:account.invoice,line_count:0
 msgid "Line count"
 msgstr "# de lignes"
 

@@ -221,6 +221,19 @@ class account_invoice(osv.osv):
 
         return res
 
+    def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns the number of lines for each selected invoice
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['invoice_line'], context=context):
+            res[inv.id] = len(inv.invoice_line)
+        return res
+
     _columns = {
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
@@ -257,6 +270,7 @@ class account_invoice(osv.osv):
                                        selection=PARTNER_TYPE, readonly=True, store=False),
         'refunded_invoice_id': fields.many2one('account.invoice', string='Refunded Invoice', readonly=True,
                                                help='The refunded invoice which has generated this document'),  # 2 inv types for Refund Modify
+        'line_count': fields.function(_get_line_count, string='Line count', method=True, type='integer', store=False),
     }
 
     _defaults = {

@@ -149,6 +149,7 @@
                     <field name="user_id"/>
                     <field name="date_due"/>
                     <field name="origin"/>
+                    <field name="line_count"/>
                     <field name="currency_id"/>
                     <field name="residual" sum="Residual Amount"/>
                     <field name="amount_untaxed" sum="Untaxed Amount"/>
