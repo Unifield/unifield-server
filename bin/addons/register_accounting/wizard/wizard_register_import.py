@@ -22,6 +22,7 @@
 #
 ##############################################################################
 
+import tools
 from osv import osv
 from osv import fields
 from tools.translate import _
@@ -169,7 +170,7 @@ class wizard_register_import(osv.osv_memory):
                     'partner_type_mandatory': l.get('partner_type_mandatory', False),
                 }
                 if cheque_number:
-                    vals['cheque_number'] = str(cheque_number)
+                    vals['cheque_number'] = tools.ustr(cheque_number)
                 else:
                     vals['cheque_number'] = ''
                 absl_id = absl_obj.create(cr, uid, vals, context)
