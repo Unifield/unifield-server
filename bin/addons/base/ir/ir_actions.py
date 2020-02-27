@@ -324,6 +324,7 @@ class act_window(osv.osv):
             string='Groups',
             store=False,
         ),
+        'menu_id': fields.many2one('ir.ui.menu', 'On new tab open this menu')
     }
 
     _defaults = {
@@ -369,6 +370,12 @@ class act_window(osv.osv):
         for v in views_order:
             views.append((views_dict.get(v), v))
         res['views'] = views
+
+        ir_values_obj = self.pool.get('ir.values')
+        values_ids = ir_values_obj.search(cr, uid, [('key', '=', 'action'), ('key2', '=', 'tree_but_open'), ('model', '=', 'ir.ui.menu'), ('value', '=', 'ir.actions.act_window,%d'%action_id[1])], context=context)
+        if values_ids:
+            values_data = ir_values_obj.read(cr, uid, values_ids[0], ['res_id'], context=context)
+            res['menu_id'] = values_data['res_id']
         if not new_tab:
             res['target'] = 'crush'
         return res

@@ -122,6 +122,7 @@
             context="{'search_default_partner_id': [active_id]}"
             id="act_res_partner_2_sale_order"
             name="Field Order"
+            menu_id="sale.menu_sale_order"
             res_model="sale.order"
             src_model="res.partner"/>
 

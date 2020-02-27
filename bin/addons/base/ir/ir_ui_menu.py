@@ -141,7 +141,15 @@ class ir_ui_menu(osv.osv):
     def _get_full_name(self, cr, uid, ids, name, args, context):
         res = {}
         for m in self.browse(cr, uid, ids, context=context):
-            res[m.id] = self._get_one_full_name(m)
+            parents = []
+            p = m.parent_id
+            while p:
+                parents.insert(0, p.id)
+                p = p.parent_id
+            res[m.id] = {
+                'complete_name': self._get_one_full_name(m),
+                'parent_path_ids': parents,
+            }
         return res
 
     def _get_one_full_name(self, menu, level=6):
@@ -272,7 +280,8 @@ class ir_ui_menu(osv.osv):
                                       'menu_id', 'gid', 'Groups', help="If you have groups, the visibility of this menu will be based on these groups. "\
                                       "If this field is empty, OpenERP will compute visibility based on the related object's read access."),
         'complete_name': fields.function(_get_full_name, method=True,
-                                         string='Complete Name', type='char', size=128),
+                                         string='Complete Name', type='char', size=128, multi='parent'),
+        'parent_path_ids': fields.function(_get_full_name, method=True, string='Parents ids', releation='ir.ui.menu', type='one2many', multi='parent'),
         'icon': fields.selection(tools.icons, 'Icon', size=64),
         'icon_pict': fields.function(_get_icon_pict, method=True, type='char', size=32),
         'web_icon': fields.char('Web Icon File', size=128),

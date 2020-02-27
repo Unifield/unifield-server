@@ -440,6 +440,11 @@ form: module.record_id""" % (xml_id,)
         view_id = False
         if rec.get('view_id'):
             view_id = self.id_get(cr, rec.get('view_id','').encode('utf-8'))
+
+        menu_id = False
+        if rec.get('menu_id'):
+            menu_id = self.id_get(cr, rec.get('menu_id',''))
+
         domain = rec.get('domain','').encode('utf-8') or '[]'
         res_model = rec.get('res_model','').encode('utf-8')
         src_model = rec.get('src_model','').encode('utf-8')
@@ -495,6 +500,7 @@ form: module.record_id""" % (xml_id,)
             'usage': usage,
             'limit': limit,
             'auto_refresh': auto_refresh,
+            'menu_id': menu_id,
         }
 
         if rec.get('groups'):

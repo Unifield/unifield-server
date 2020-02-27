@@ -307,7 +307,7 @@
                                     <field name="rr_fmc_3" invisible="context.get('rule')!='cycle'" nolabel="1"/>
                                     <field name="rr_fmc_from_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('from', '3', rr_fmc_from_3)" nolabel="1"/>
                                     <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('to', '3', rr_fmc_to_3)" nolabel="1"/>
-                                    <field name= "list_fmc" invisible="context.get('rule')!='cycle'" displayon="noteditable"/>
+                                    <field name= "list_fmc" invisible="context.get('rule')!='cycle'" displayon="notedition"/>
                                     <button name="openform" special="openform" string="Edit 12 FMC" invisible="context.get('rule')!='cycle'" attrs="{'invisible': [('state', '!=', 'draft')]}"  icon="terp-go-week" />
 
                                 </tree>
@@ -460,6 +460,7 @@
             name="Order Calc."
             src_model="replenishment.segment"
             res_model="replenishment.order_calc"
+            menu_id="replenishment_order_calc_menu"
             domain="[('segment_id', '=', active_id)]"
             />
 
