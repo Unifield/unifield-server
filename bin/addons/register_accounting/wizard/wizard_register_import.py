@@ -233,6 +233,7 @@ class wizard_register_import(osv.osv_memory):
         # Some checks
         if not context:
             context = {}
+        context.update({'from_regline_import': True})
 
         # Prepare some values
         cr = pooler.get_db(dbname).cursor()
@@ -267,7 +268,7 @@ class wizard_register_import(osv.osv_memory):
                 fileobj = NamedTemporaryFile('w+b', delete=False)
                 fileobj.write(decodestring(wiz.file))
                 fileobj.close()
-                content = SpreadsheetXML(xmlfile=fileobj.name)
+                content = SpreadsheetXML(xmlfile=fileobj.name, context=context)
                 if not content:
                     raise osv.except_osv(_('Warning'), _('No content.'))
                 # Update wizard
@@ -377,6 +378,7 @@ class wizard_register_import(osv.osv_memory):
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
                     # utp1043 pad the line with False if some trailing columns missing. Occurs on Excel 2003
                     line.extend([False for i in range(len(cols) - len(line))])
+                    self.pool.get('msf.doc.import.accounting')._format_special_char(line)
                     # Bypass this line if NO debit AND NO credit
                     try:
                         bd = line[cols['amount_in']]
