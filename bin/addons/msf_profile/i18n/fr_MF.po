@@ -40728,11 +40728,6 @@ msgstr "Plus petit que l'UdM de référence"
 msgid "Returns the available locations for destination location of an outgoing delivery according to the address."
 msgstr "Retourne les zones disponible pour les zones de destination d'une livraison sortante selon l'adresse."
 
-#. module: account
-#: report:account.invoice2:0
-msgid "Draft Stock Transfer Voucher"
-msgstr "Bon Client en brouillon"
-
 #. module: purchase_allocation_report
 #: view:purchase.order.line.allocation.report:0
 msgid "Purchase order line allocation"
@@ -75798,8 +75793,7 @@ msgstr "Objet pour Recherche"
 msgid "Linked sale order line at synchro"
 msgstr "Linked sale order line at synchro"
 
-#. modules: account_override, account
-#: report:account.invoice2:0
+#. module: account_override
 #: view:account.invoice:0
 msgid "Stock Transfer Voucher"
 msgstr "Bon Client"
@@ -87367,11 +87361,6 @@ msgstr "Third party"
 #: selection:res.users,context_tz:0
 msgid "Indian/Antananarivo"
 msgstr "Indian/Antananarivo"
-
-#. module: account
-#: report:account.invoice2:0
-msgid "Cancelled Stock Transfer Voucher"
-msgstr "Bon Client annulé"
 
 #. module: msf_profile
 #: model:ir.actions.act_window,name:msf_profile.action_open_user_access_wizard
@@ -98952,9 +98941,10 @@ msgstr "Configuration Journalière"
 msgid "Order Waiting For Sourcing"
 msgstr "Commande En Attente de Sourcing"
 
-#. module: register_accounting
+#. modules: register_accounting, account
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:account.invoice2:0
 msgid "(Name, Function)"
 msgstr "(Nom, Fonction)"
 
@@ -108985,3 +108975,8 @@ msgstr "CCM Produit"
 #: field:replenishment.segment.line,list_fmc:0
 msgid "more FMC"
 msgstr "plus de PCM"
+
+#. module: account
+#: report:account.invoice2:0
+msgid "Payment Info:"
+msgstr "Informations de paiement :"

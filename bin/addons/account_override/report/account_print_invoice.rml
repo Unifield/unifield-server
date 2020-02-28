@@ -116,6 +116,11 @@
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
     </blockTableStyle>
+    <blockTableStyle id="table_sign">
+      <lineStyle kind="LINEBELOW" colorName="grey" start="0,0" stop="0,0"/>
+      <lineStyle kind="BOX" colorName="black" start="1,0" stop="1,0"/>
+      <blockValign value="MIDDLE"/>
+    </blockTableStyle>
     <initialize>
       <paraStyle name="all" alignment="justify"/>
     </initialize>
@@ -206,12 +211,12 @@
       <font color="white"> </font>
     </para>
 
-    <para style="terp_header">[[ o.is_debit_note == True and translate('Debit Note') or o.is_intermission and translate('Intermission Voucher OUT') or o.type == 'out_invoice' and translate('Stock Transfer Voucher') or translate('Invoice') ]] [[ o.number ]]
+    <para style="terp_header">[[ o.is_debit_note == True and translate('Debit Note') or o.is_intermission and translate('Intermission Voucher OUT') or translate('Invoice') ]] [[ o.number ]]
     [[ ((o.type == 'out_invoice' and (o.state == 'open' or o.state == 'paid')) or removeParentNode('para')) and '' ]]</para>
     <para style="terp_header">PRO-FORMA [[ ((o.type == 'out_invoice' and o.state == 'proforma2') or removeParentNode('para')) and '' ]]</para>
-    <para style="terp_header">[[ o.is_debit_note == True and translate('Draft Debit Note') or o.is_intermission and translate('Draft Intermission Voucher OUT') or o.type == 'out_invoice' and translate('Draft Stock Transfer Voucher') or translate('Draft Invoice') ]] 
+    <para style="terp_header">[[ o.is_debit_note == True and translate('Draft Debit Note') or o.is_intermission and translate('Draft Intermission Voucher OUT') or translate('Draft Invoice') ]]
     [[ ((o.type == 'out_invoice' and o.state == 'draft') or removeParentNode('para')) and '' ]]</para>
-    <para style="terp_header">[[ o.is_debit_note == True and translate('Cancelled Debit Note') or o.type == 'out_invoice' and translate('Cancelled Stock Transfer Voucher') or translate('Cancelled Invoice') ]] [[ o.number ]]
+    <para style="terp_header">[[ o.is_debit_note == True and translate('Cancelled Debit Note') or translate('Cancelled Invoice') ]] [[ o.number ]]
     [[ ((o.type == 'out_invoice' and o.state == 'cancel') or removeParentNode('para')) and '' ]]</para>
     <para style="terp_header">Refund [[ (o.type=='out_refund' or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
     <para style="terp_header">Supplier Refund [[ (o.type=='in_refund' or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
@@ -443,6 +448,68 @@
         </td>
       </tr>
     </blockTable>
+
+    <!-- Section displayed only for STV -->
+    <section>
+      [[ (o.type == 'out_invoice' and not o.is_debit_note and not o.is_inkind_donation and not o.is_intermission) or removeParentNode('section') ]]
+
+      <blockTable style="Table9a">
+        <tr>
+          <td>
+            <para style="terp_default_9" alignment="LEFT">[[translate('Payment Info:')]]</para>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <para style="terp_default_9" alignment="LEFT"></para>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <para style="terp_default_9" alignment="LEFT"></para>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <para style="terp_default_9" alignment="LEFT"></para>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <para style="terp_default_9" alignment="LEFT"></para>
+          </td>
+        </tr>
+	  </blockTable>
+
+      <para style="Text body">
+         <font color="white"> </font>
+      </para>
+      <para style="terp_default_9">
+        <font color="white"> </font>
+      </para>
+      <para style="terp_default_9">
+        <font color="white"> </font>
+      </para>
+      <blockTable style="table_sign">
+        <tr>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><para style="terp_default_9">[[translate("(Name, Function)")]]</para></td>
+        </tr>
+      </blockTable>
+      <blockTable style="table_sign">
+        <tr>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><para style="terp_default_9">[[translate("(Name, Function)")]]</para></td>
+        </tr>
+      </blockTable>
+    </section>
+
     <para style="terp_default_2">
       <font color="white"> </font>
     </para>
