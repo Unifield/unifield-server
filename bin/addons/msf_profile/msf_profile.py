@@ -72,20 +72,20 @@ class patch_scripts(osv.osv):
         to_run_name = []
         for msg in cr.fetchall():
             args = eval(msg[2])[0]
-            if args.get('shipment_ref', False) and '-s' in args['shipment_ref'] or args.get('name', False) and '-s' in args['name']:
+            if args.get('shipment_ref', False) and args['shipment_ref'].endswith('-s') or args.get('name', False) and args['name'].endswith('-s'):
                 to_run_ids.append(msg[0])
                 to_run_name.append(msg[1])
         if to_run_ids:
             cr.execute("""
-                UPDATE sync_client_message_received SET run = 't', manually_ran = 't', execution_date = %s 
+                UPDATE sync_client_message_received SET run = 't', manually_ran = 't', execution_date = %s
                 WHERE id IN %s""", (time.strftime("%Y-%m-%d %H:%M:%S"), tuple(to_run_ids))
-            )
+                       )
             self._logger.warn('The following Not Runs have been set to Run: %s.', (', '.join(to_run_name),))
 
         # 2
         cr.execute("""
-            SELECT p.id, p.name FROM stock_picking p LEFT JOIN stock_move m ON p.id = m.picking_id WHERE m.id IS NULL 
-                AND p.type = 'in' AND p.subtype = 'standard' AND p.state = 'done'
+            SELECT p.id, p.name FROM stock_picking p LEFT JOIN stock_move m ON p.id = m.picking_id WHERE m.id IS NULL
+                AND p.type = 'in' AND p.subtype = 'standard' AND p.state = 'done' AND coalesce(shipment_ref, '') != '' AND purchase_id is not null
         """)
         empty_in_ids = []
         empty_in_names = []
@@ -100,13 +100,17 @@ class patch_scripts(osv.osv):
             self._logger.warn('The following empty INs have been modified: %s.', (', '.join(empty_in_names),))
 
         # 3
+        try:
+            sync_id = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_sync')[1]
+        except:
+            return True
         cr.execute("""
             DELETE FROM account_invoice WHERE id IN (
                 SELECT a.id FROM account_invoice a LEFT JOIN account_invoice_line l ON a.id = l.invoice_id 
                     WHERE l.id IS NULL AND a.state = 'draft' AND a.type = 'out_invoice' AND a.is_debit_note = 'f'
-                    AND a.is_inkind_donation = 'f' AND a.is_intermission = 't' 
+                    AND a.is_inkind_donation = 'f' AND a.is_intermission = 't' AND user_id = %s
             )
-        """)
+        """, (sync_id, ))
         self._logger.warn('%s empty IVOs have been deleted.', (cr.rowcount,))
 
         return True
