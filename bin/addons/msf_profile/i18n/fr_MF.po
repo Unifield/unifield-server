@@ -108985,3 +108985,9 @@ msgstr "CCM Produit"
 #: field:replenishment.segment.line,list_fmc:0
 msgid "more FMC"
 msgstr "plus de PCM"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:287
+#, python-format
+msgid "Line %s. The Proprietary Instance must be the current instance %s."
+msgstr "Ligne %s. L'Instance Propriétaire doit être l'instance actuelle %s."
