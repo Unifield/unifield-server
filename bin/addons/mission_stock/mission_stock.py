@@ -830,17 +830,18 @@ class stock_mission_report(osv.osv):
                                 stock_mission_report_line smrl WHERE mission_report_id = %s
                                 AND p.id = smrl.product_id)
                             ''', (report['id'],))
-                for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
-                    line_obj.create(cr, uid, {
-                        'product_id': product,
-                        'mission_report_id': report['id'],
-                        'product_active': prod_active,
-                        'state_ud': prod_state_ud,
-                        'international_status_code': prod_creator,
-                        'product_state': prod_state or '',
-                        #'product_amc': product_values.get(product, {}).get('product_amc', 0),
-                        #'product_consumption': product_values.get(product, {}).get('reviewed_consumption', 0),
-                    }, context=context)
+                if report['local_report']:  # We only generate lines for the current instance
+                    for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
+                        line_obj.create(cr, uid, {
+                            'product_id': product,
+                            'mission_report_id': report['id'],
+                            'product_active': prod_active,
+                            'state_ud': prod_state_ud,
+                            'international_status_code': prod_creator,
+                            'product_state': prod_state or '',
+                            #'product_amc': product_values.get(product, {}).get('product_amc', 0),
+                            #'product_consumption': product_values.get(product, {}).get('reviewed_consumption', 0),
+                        }, context=context)
 
                 if report['local_report'] and not report['full_view']:
                     # update AMC / FMC

@@ -52,6 +52,23 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF17.0
+    def us_6641_remove_duplicates_from_stock_mission(self, cr, uid, *a, **b):
+        """
+        Remove duplicates products (lines not coming from the current instance) from the generated Stock Mission Report lines
+        """
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id.id
+
+        cr.execute("""
+                SELECT l.id FROM stock_mission_report_line l 
+                    LEFT JOIN ir_model_data d ON d.res_id = l.id AND d.model = 'stock.mission.report.line' AND d.module = 'sd'
+                WHERE d.name LIKE (SELECT identifier||'%' FROM sync_client_entity) AND 
+                    mission_report_id IN (SELECT id FROM stock_mission_report WHERE instance_id != %s)
+        """, (instance_id,))
+        self._logger.warn('%s Stock Mission Report lines have been deleted.' % (cr.rowcount,))
+
+        return True
+
     # UF16.0
     def us_7181_add_oc_subscrpition_to_unidata_products(self, cr, uid, *a, **b):
         """
