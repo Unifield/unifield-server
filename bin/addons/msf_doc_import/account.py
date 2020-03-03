@@ -283,7 +283,8 @@ class msf_doc_import_accounting(osv.osv_memory):
 
                     self._format_special_char(line)
 
-                    if current_instance and current_instance.code != line[cols['Proprietary Instance']]:
+                    file_prop_inst = line[cols['Proprietary Instance']] or ''
+                    if current_instance and current_instance.code != file_prop_inst.strip():
                         errors.append(_('Line %s. The Proprietary Instance must be the current instance %s.') % (current_line_num, current_instance.code))
                         continue
                     # Check document date
