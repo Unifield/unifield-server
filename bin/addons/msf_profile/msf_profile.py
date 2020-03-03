@@ -63,6 +63,9 @@ class patch_scripts(osv.osv):
             modify "Change Reason" to "False movement, bug US-7025/7039".
         3. Remove empty Draft IVOs.
         """
+        if not self.pool.get('sync.client.message_received'):
+            # new instance
+            return True
         # 1
         cr.execute("""
             SELECT id, identifier, arguments FROM sync_client_message_received
