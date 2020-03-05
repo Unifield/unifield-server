@@ -23,6 +23,7 @@ from osv import osv, fields
 
 import time
 import tools
+import re
 
 from tools.translate import _
 from datetime import datetime
@@ -338,6 +339,24 @@ class data_tools(osv.osv):
         if len(list_str) > limit:
             list_str = "%s%s" % (list_str[:limit-3], '...')
         return list_str
+
+    def replace_line_breaks(self, string_to_format):
+        """
+        Modifies the string in parameter:
+        - replaces the line breaks by spaces if they are in the middle of the string
+        - removes the line breaks and the spaces at the beginning and at the end
+        """
+        return re.sub('[\r\n]', ' ', string_to_format or '').strip()
+
+    def replace_line_breaks_from_vals(self, vals, fields):
+        """
+        Updates the vals (dict) in param.
+        For each of the fields (list) in param which is found in vals, applies "replace_line_breaks" to its value.
+        """
+        for field in fields:
+            if vals.get(field):
+                vals.update({field: self.replace_line_breaks(vals[field])})
+        return True
 
 
 data_tools()

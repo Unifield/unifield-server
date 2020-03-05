@@ -2089,6 +2089,8 @@ class account_bank_statement_line(osv.osv):
                                                                 values=values)
         self._check_cheque_number_uniticy(cr, uid, values.get('statement_id'),
                                           values.get('cheque_number'), context=context)
+        # remove useless spaces and line breaks in the description and ref
+        self.pool.get('data.tools').replace_line_breaks_from_vals(values, ['name', 'ref'])
 
         # Then create a new bank statement line
         absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
@@ -2120,6 +2122,7 @@ class account_bank_statement_line(osv.osv):
                     self._check_cheque_number_uniticy(cr, uid,
                                                       line['statement_id'][0], values.get('cheque_number'),
                                                       context=context)
+        self.pool.get('data.tools').replace_line_breaks_from_vals(values, ['name', 'ref'])
         if (one_field and field_match) or skip_check:
             return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         # Prepare some values

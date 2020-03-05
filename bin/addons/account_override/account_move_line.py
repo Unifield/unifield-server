@@ -550,6 +550,7 @@ class account_move_line(osv.osv):
             # UFTP-262: Add description from the move_id (US-2027) if there is not descr. on the line
             if m and m.manual_name and not vals.get('name'):
                 vals.update({'name': m.manual_name})
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'reference', 'ref'])
         # US-220: vals.ref must have 64 digits max
         if vals.get('ref'):
             vals['ref'] = vals['ref'][:64]
@@ -603,12 +604,14 @@ class account_move_line(osv.osv):
                     context.update({'date': m.date})
         # Note that _check_document_date HAVE TO be BEFORE the super write. If not, some problems appears in ournal entries document/posting date changes at the same time!
         self._check_document_date(cr, uid, ids, vals, context=context)
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'reference', 'ref'])
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         self._check_accounts_partner_compat(cr, uid, ids, context=context)
         # UFTP-262: Check reference field for all lines. Optimisation: Do nothing if reference is in vals as it will be applied on all lines.
         if context.get('from_web_menu', False) and not vals.get('reference', False):
             for ml in self.browse(cr, uid, ids):
                 if ml.move_id and ml.move_id.status == 'manu' and not ml.reference:
+                    # note: line breaks are removed from JE ref at JE creation/edition
                     super(account_move_line, self).write(cr, uid, [ml.id], {'reference': ml.move_id.ref}, context=context, check=False, update_check=False)
         return res
 
