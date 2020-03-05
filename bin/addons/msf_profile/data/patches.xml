@@ -520,5 +520,9 @@
         <record id="us_7215_prod_set_active_sync" model="patch.scripts">
             <field name="method">us_7215_prod_set_active_sync</field>
         </record>
+
+        <record id="us_7158_prod_set_uf_status" model="patch.scripts">
+            <field name="method">us_7158_prod_set_uf_status</field>
+        </record>
     </data>
 </openerp>

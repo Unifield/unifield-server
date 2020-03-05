@@ -47,8 +47,13 @@ class product_status(osv.osv):
         'no_internal': fields.boolean(string='Internal partners orders'),
         'no_consumption': fields.boolean(string='Consumption'),
         'no_storage': fields.boolean(string='Storage'),
+        'active': fields.boolean('Active'),
+        'mapped_to': fields.many2one('product.status', string='Replaced by'),
     }
 
+    _defaults = {
+        'active': True,
+    }
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -268,13 +273,20 @@ product_justification_code()
 class product_attributes_template(osv.osv):
     _inherit = "product.template"
 
+
     _columns = {
         'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable')], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
+        'state': fields.many2one('product.status', 'UniField Status', help="Tells the user if he can use the product or not.", required=1),
     }
+
+    def _get_valid_stat(self, cr, uid, context=None):
+        st_ids = self.pool.get('product.status').search(cr, uid, [('code', '=', 'valid')], context=context)
+        return st_ids and st_ids[0]
 
     _defaults = {
         'type': 'product',
         'cost_method': lambda *a: 'average',
+        'state': _get_valid_stat,
     }
 
 product_attributes_template()
@@ -289,15 +301,6 @@ class product_country_restriction(osv.osv):
     }
 
 product_country_restriction()
-
-class product_template(osv.osv):
-    _inherit = 'product.template'
-
-    _columns = {
-        'state': fields.many2one('product.status', 'Status', help="Tells the user if he can use the product or not."),
-    }
-
-product_template()
 
 
 class product_attributes(osv.osv):
@@ -1419,6 +1422,15 @@ class product_attributes(osv.osv):
                 vals['standard_ok'] = 'standard'
             elif vals['standard_ok'] == 'False':
                 vals['standard_ok'] = 'non_standard'
+
+        if vals and 'state' in vals:
+            st_obj = self.pool.get('product.status')
+            if vals['state']:
+                st = st_obj.browse(cr, uid, vals['state'], fields_to_fetch=['mapped_to'])
+                if st and st.mapped_to:
+                    vals['state'] = st.mapped_to.id
+            else:
+                vals['state'] = st_obj.search(cr, uid, [('code', '=', 'valid')], context=context)[0]
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
