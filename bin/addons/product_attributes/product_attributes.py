@@ -47,8 +47,13 @@ class product_status(osv.osv):
         'no_internal': fields.boolean(string='Internal partners orders'),
         'no_consumption': fields.boolean(string='Consumption'),
         'no_storage': fields.boolean(string='Storage'),
+        'active': fields.boolean('Active'),
+        'mapped_to': fields.many2one('product.status', string='Replaced by'),
     }
 
+    _defaults = {
+        'active': True,
+    }
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -268,13 +273,20 @@ product_justification_code()
 class product_attributes_template(osv.osv):
     _inherit = "product.template"
 
+
     _columns = {
         'type': fields.selection([('product','Stockable Product'),('consu', 'Non-Stockable')], 'Product Type', required=True, help="Will change the way procurements are processed. Consumables are stockable products with infinite stock, or for use when you have no inventory management in the system."),
+        'state': fields.many2one('product.status', 'UniField Status', help="Tells the user if he can use the product or not.", required=1),
     }
+
+    def _get_valid_stat(self, cr, uid, context=None):
+        st_ids = self.pool.get('product.status').search(cr, uid, [('code', '=', 'valid')], context=context)
+        return st_ids and st_ids[0]
 
     _defaults = {
         'type': 'product',
         'cost_method': lambda *a: 'average',
+        'state': _get_valid_stat,
     }
 
 product_attributes_template()
@@ -289,15 +301,6 @@ class product_country_restriction(osv.osv):
     }
 
 product_country_restriction()
-
-class product_template(osv.osv):
-    _inherit = 'product.template'
-
-    _columns = {
-        'state': fields.many2one('product.status', 'Status', help="Tells the user if he can use the product or not."),
-    }
-
-product_template()
 
 
 class product_attributes(osv.osv):
@@ -656,6 +659,17 @@ class product_attributes(osv.osv):
         return dom
 
 
+    def _get_local_from_hq(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for _id in ids:
+            res[_id] = False
+
+        if self.pool.get('res.company')._get_instance_level(cr, uid) == 'section':
+            for _id in self.search(cr, uid, [('id', 'in', ids), ('standard_ok', '=', 'non_standard_local')], context=context):
+                res[_id] = True
+
+        return res
+
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
@@ -947,6 +961,9 @@ class product_attributes(osv.osv):
             string='Standardization Level',
             required=True,
         ),
+        'local_from_hq': fields.function(_get_local_from_hq, method=1, type='boolean', string='Non-Standard Local from HQ'),
+        'active_change_date': fields.datetime('Date of last active change', readonly=1),
+        'active_sync_change_date': fields.datetime('Date of last active sync change', readonly=1),
         'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity', related_uom='uom_id', help="Standard Ordering Quantity. Quantity according to which the product should be ordered. The SoQ is usually determined by the typical packaging of the product."),
@@ -954,6 +971,21 @@ class product_attributes(osv.osv):
         'uf_write_date': fields.datetime(_('Write date')),
         'uf_create_date': fields.datetime(_('Creation date')),
     }
+
+    def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
+        if touched_fields != ['active', 'id']:
+            return super(product_attributes, self).need_to_push(cr, uid, ids, touched_fields=touched_fields, field=field, empty_ids=empty_ids, context=context)
+
+        if not empty_ids and not ids:
+            return ids
+
+        cr.execute("""
+            SELECT id  FROM product_product
+            WHERE
+                ( active_sync_change_date IS NULL AND active_change_date IS NOT NULL ) OR active_change_date > active_sync_change_date
+        """)
+        return [row[0] for row in cr.fetchall()]
+
 
     def _get_default_sensitive_item(self, cr, uid, context=None):
         """
@@ -1267,6 +1299,9 @@ class product_attributes(osv.osv):
             context = {}
 
         self.clean_standard(cr, uid, vals, context)
+        if context.get('sync_update_execution') and vals.get('local_from_hq'):
+            vals['active'] = False
+
         def update_existing_translations(model, res_id, xmlid):
             # If we are in the creation of product by sync. engine, attach the already existing translations to this product
             if context.get('sync_update_execution'):
@@ -1388,6 +1423,15 @@ class product_attributes(osv.osv):
             elif vals['standard_ok'] == 'False':
                 vals['standard_ok'] = 'non_standard'
 
+        if vals and 'state' in vals:
+            st_obj = self.pool.get('product.status')
+            if vals['state']:
+                st = st_obj.browse(cr, uid, vals['state'], fields_to_fetch=['mapped_to'])
+                if st and st.mapped_to:
+                    vals['state'] = st.mapped_to.id
+            else:
+                vals['state'] = st_obj.search(cr, uid, [('code', '=', 'valid')], context=context)[0]
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -1502,6 +1546,11 @@ class product_attributes(osv.osv):
                 })
 
         if 'active' in vals:
+            fields_to_update = ['active_change_date=%(now)s']
+            if context.get('sync_update_execution'):
+                fields_to_update += ['active_sync_change_date=%(now)s']
+            cr.execute('update product_product set '+', '.join(fields_to_update)+' where id in %(ids)s and active != %(active)s', {'now': fields.datetime.now(), 'ids': tuple(ids), 'active': vals['active']}) # not_a_user_entry
+
             local_smrl_ids = smrl_obj.search(cr, uid, [
                 ('product_id', 'in', ids),
                 ('full_view', '=', False),

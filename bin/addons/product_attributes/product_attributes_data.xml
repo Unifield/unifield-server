@@ -2,86 +2,101 @@
 <openerp>
     <data noupdate="0">
 
-		<record model="product.status" id="status_1">
-			<field name="code">valid</field>
-			<field name="name">Valid</field>
+        <record model="product.status" id="status_1">
+            <field name="code">valid</field>
+            <field name="name">Valid</field>
             <field name="no_external" eval="False" />
             <field name="no_esc" eval="False" />
             <field name="no_internal" eval="False" />
             <field name="no_consumption" eval="False" />
             <field name="no_storage" eval="False" />
-		</record>
-		<record model="product.status" id="status_2">
-			<field name="code">phase_out</field>
-			<field name="name">Phase Out</field>
-            <field name="no_external" eval="True" />
-            <field name="no_esc" eval="False" />
-            <field name="no_internal" eval="False" />
-            <field name="no_consumption" eval="False" />
-            <field name="no_storage" eval="False" />
-		</record>
-		<record model="product.status" id="status_3">
-			<field name="code">stopped</field>
-			<field name="name">Stopped</field>
-            <field name="no_external" eval="True" />
-            <field name="no_esc" eval="True" />
-            <field name="no_internal" eval="True" />
-            <field name="no_consumption" eval="False" />
-            <field name="no_storage" eval="False" />
-		</record>
-		<record model="product.status" id="status_4">
-			<field name="code">archived</field>
-			<field name="name">Archived</field>
+        </record>
+        <record model="product.status" id="status_forbidden">
+            <field name="code">forbidden</field>
+            <field name="name">Forbidden</field>
             <field name="no_external" eval="True" />
             <field name="no_esc" eval="True" />
             <field name="no_internal" eval="True" />
             <field name="no_consumption" eval="True" />
             <field name="no_storage" eval="True" />
-		</record>
-		<record model="product.status" id="status_5">
-			<field name="code">status1</field>
-			<field name="name">Status 1</field>
+        </record>
+        <record model="product.status" id="status_2">
+            <field name="code">phase_out</field>
+            <field name="name">Phase Out</field>
+            <field name="no_external" eval="True" />
+            <field name="no_esc" eval="False" />
+            <field name="no_internal" eval="False" />
+            <field name="no_consumption" eval="False" />
+            <field name="no_storage" eval="False" />
+        </record>
+        <record model="product.status" id="status_3">
+            <field name="code">stopped</field>
+            <field name="name">Stopped (to del)</field>
+            <field name="no_external" eval="True" />
+            <field name="no_esc" eval="True" />
+            <field name="no_internal" eval="True" />
+            <field name="no_consumption" eval="False" />
+            <field name="no_storage" eval="False" />
+            <field name="active" eval="False" />
+            <field name="mapped_to" ref="status_2" />
+        </record>
+        <record model="product.status" id="status_4">
+            <field name="code">archived</field>
+            <field name="name">Archived</field>
+            <field name="no_external" eval="True" />
+            <field name="no_esc" eval="True" />
+            <field name="no_internal" eval="True" />
+            <field name="no_consumption" eval="True" />
+            <field name="no_storage" eval="True" />
+        </record>
+        <record model="product.status" id="status_5">
+            <field name="code">status1</field>
+            <field name="name">Status 1 (to del)</field>
             <field name="no_external" eval="False" />
             <field name="no_esc" eval="False" />
             <field name="no_internal" eval="False" />
             <field name="no_consumption" eval="False" />
             <field name="no_storage" eval="False" />
-		</record>
-		<record model="product.status" id="status_6">
-			<field name="code">status2</field>
-			<field name="name">Status 2</field>
+            <field name="active" eval="False" />
+            <field name="mapped_to" ref="status_1" />
+        </record>
+        <record model="product.status" id="status_6">
+            <field name="code">status2</field>
+            <field name="name">Status 2 (to_del)</field>
             <field name="no_external" eval="False" />
             <field name="no_esc" eval="False" />
             <field name="no_internal" eval="False" />
             <field name="no_consumption" eval="False" />
             <field name="no_storage" eval="False" />
-		</record>
+            <field name="active" eval="False" />
+            <field name="mapped_to" ref="status_1" />
+        </record>
 
-		<record model="product.international.status" id="int_1">
-			<field name="code">itc</field>
-			<field name="name">ITC</field>
-		</record>
-		<record model="product.international.status" id="int_2">
-			<field name="code">esc</field>
+        <record model="product.international.status" id="int_1">
+            <field name="code">itc</field>
+            <field name="name">ITC</field>
+        </record>
+        <record model="product.international.status" id="int_2">
+            <field name="code">esc</field>
             <field name="name">ESC</field>
-		</record>
-		<record model="product.international.status" id="int_3">
-			<field name="code">hq</field>
-			<field name="name">HQ</field>
-		</record>
-		<record model="product.international.status" id="int_4">
-			<field name="code">local</field>
-			<field name="name">Local</field>
-		</record>
-		<record model="product.international.status" id="int_5">
-			<field name="code">temp</field>
-			<field name="name">Temporary</field>
-		</record>
-		<record model="product.international.status" id="int_6">
-			<field name="code">unidata</field>
+        </record>
+        <record model="product.international.status" id="int_3">
+            <field name="code">hq</field>
+            <field name="name">HQ</field>
+        </record>
+        <record model="product.international.status" id="int_4">
+            <field name="code">local</field>
+            <field name="name">Local</field>
+        </record>
+        <record model="product.international.status" id="int_5">
+            <field name="code">temp</field>
+            <field name="name">Temporary</field>
+        </record>
+        <record model="product.international.status" id="int_6">
+            <field name="code">unidata</field>
             <field name="name">UniData</field>
-		</record>
-            
+        </record>
+
         <record model="product.heat_sensitive" id="heat_yes">
             <field name="code">yes</field>
             <field name="name">Yes</field>
@@ -115,59 +130,59 @@
             <field name="active" eval="False" />
         </record>
 
-		<record model="product.cold_chain" id="cold_1">
-			<field name="code">*</field>
-			<field name="name">* - Keep Cool: used for a kit or article containing cold chain module or item(s)</field>
-		</record>
-		<record model="product.cold_chain" id="cold_2">
-			<field name="code">*0</field>
-			<field name="name">*0 - Problem if any window blue</field>
-		</record>
-		<record model="product.cold_chain" id="cold_3">
-			<field name="code">*0F</field>
-			<field name="name">*0F - Problem if any window blue or Freeze-tag = ALARM</field>
-		</record>
-		<record model="product.cold_chain" id="cold_4">
-			<field name="code">*A</field>
-			<field name="name">*A - Problem if A, B, C and/or D blue = ALARM</field>
-		</record>
-		<record model="product.cold_chain" id="cold_5">
-			<field name="code">*AF</field>
-			<field name="name">*AF - Problem if A, B, C and/or D blue or Freeze-tag = ALARM</field>
-		</record>
-		<record model="product.cold_chain" id="cold_6">
-			<field name="code">*B</field>
-			<field name="name">*B - Problem if B, C and/or D blue = ALARM</field>
-		</record>
-		<record model="product.cold_chain" id="cold_7">
-			<field name="code">*BF</field>
-			<field name="name">*BF - Problem if B, C and/or D blue or Freeze-tag = ALARM</field>
-		</record>
-		<record model="product.cold_chain" id="cold_8">
-			<field name="code">*C</field>
-			<field name="name">*C - Problem if C and D blue</field>
-		</record>
-		<record model="product.cold_chain" id="cold_9">
-			<field name="code">*CF</field>
-			<field name="name">*CF - Problem if C and/or D blue or Freeze-tag = ALARM</field>
-		</record>
-		<record model="product.cold_chain" id="cold_10">
-			<field name="code">*D</field>
-			<field name="name">*D - Store and transport at -25°C (store in deepfreezer, transport with dry-ice)</field>
-		</record>
-		<record model="product.cold_chain" id="cold_11">
-			<field name="code">*F</field>
-			<field name="name">*F - Cannot be frozen: check FreezeWatch</field>
-		</record>
-		<record model="product.cold_chain" id="cold_12">
-			<field name="code">*25</field>
-			<field name="name">*25 - Must be kept below 25°C (but not necesseraly in cold chain)</field>
-		</record>
-		<record model="product.cold_chain" id="cold_13">
-			<field name="code">*25F</field>
-			<field name="name">*25F - Must be kept below 25°C and cannot be frozen: check FreezeWatch</field>
-		</record>
+        <record model="product.cold_chain" id="cold_1">
+            <field name="code">*</field>
+            <field name="name">* - Keep Cool: used for a kit or article containing cold chain module or item(s)</field>
+        </record>
+        <record model="product.cold_chain" id="cold_2">
+            <field name="code">*0</field>
+            <field name="name">*0 - Problem if any window blue</field>
+        </record>
+        <record model="product.cold_chain" id="cold_3">
+            <field name="code">*0F</field>
+            <field name="name">*0F - Problem if any window blue or Freeze-tag = ALARM</field>
+        </record>
+        <record model="product.cold_chain" id="cold_4">
+            <field name="code">*A</field>
+            <field name="name">*A - Problem if A, B, C and/or D blue = ALARM</field>
+        </record>
+        <record model="product.cold_chain" id="cold_5">
+            <field name="code">*AF</field>
+            <field name="name">*AF - Problem if A, B, C and/or D blue or Freeze-tag = ALARM</field>
+        </record>
+        <record model="product.cold_chain" id="cold_6">
+            <field name="code">*B</field>
+            <field name="name">*B - Problem if B, C and/or D blue = ALARM</field>
+        </record>
+        <record model="product.cold_chain" id="cold_7">
+            <field name="code">*BF</field>
+            <field name="name">*BF - Problem if B, C and/or D blue or Freeze-tag = ALARM</field>
+        </record>
+        <record model="product.cold_chain" id="cold_8">
+            <field name="code">*C</field>
+            <field name="name">*C - Problem if C and D blue</field>
+        </record>
+        <record model="product.cold_chain" id="cold_9">
+            <field name="code">*CF</field>
+            <field name="name">*CF - Problem if C and/or D blue or Freeze-tag = ALARM</field>
+        </record>
+        <record model="product.cold_chain" id="cold_10">
+            <field name="code">*D</field>
+            <field name="name">*D - Store and transport at -25°C (store in deepfreezer, transport with dry-ice)</field>
+        </record>
+        <record model="product.cold_chain" id="cold_11">
+            <field name="code">*F</field>
+            <field name="name">*F - Cannot be frozen: check FreezeWatch</field>
+        </record>
+        <record model="product.cold_chain" id="cold_12">
+            <field name="code">*25</field>
+            <field name="name">*25 - Must be kept below 25°C (but not necesseraly in cold chain)</field>
+        </record>
+        <record model="product.cold_chain" id="cold_13">
+            <field name="code">*25F</field>
+            <field name="name">*25F - Must be kept below 25°C and cannot be frozen: check FreezeWatch</field>
+        </record>
 
-	</data>
+</data>
 </openerp>
 
