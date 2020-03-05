@@ -314,6 +314,20 @@ class update_to_send(osv.osv,fv_formatter):
         max_offset = len(update_ids)
         while min_offset < max_offset:
             offset = (min_offset + 200) < max_offset and min_offset + 200 or max_offset
+
+            # specific case to split the active field on product.product
+            # i.e: at COO an update received on product must not block a possible update on active field to the project
+            cr.execute('''
+                update product_product set active_sync_change_date = upd.create_date
+                    from sync_client_update_to_send upd, ir_model_data d, sync_client_rule rule
+                where
+                    rule.id = upd.rule_id and
+                    rule.sequence_number in (602, 603) and
+                    d.model = 'product.product' and
+                    d.name = upd.sdref and
+                    product_product.id = d.res_id and
+                    upd.id in %s
+            ''', (tuple(update_ids[min_offset:offset]),))
             for update in self.browse(cr, uid, update_ids[min_offset:offset], context=context):
                 try:
                     self.pool.get('ir.model.data').update_sd_ref(cr, uid,

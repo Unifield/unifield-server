@@ -959,6 +959,8 @@ class product_attributes(osv.osv):
             required=True,
         ),
         'local_from_hq': fields.function(_get_local_from_hq, method=1, type='boolean', string='Non-Standard Local from HQ'),
+        'active_change_date': fields.datetime('Date of last active change', readonly=1),
+        'active_sync_change_date': fields.datetime('Date of last active sync change', readonly=1),
         'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity', related_uom='uom_id', help="Standard Ordering Quantity. Quantity according to which the product should be ordered. The SoQ is usually determined by the typical packaging of the product."),
@@ -966,6 +968,21 @@ class product_attributes(osv.osv):
         'uf_write_date': fields.datetime(_('Write date')),
         'uf_create_date': fields.datetime(_('Creation date')),
     }
+
+    def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
+        if touched_fields != ['active', 'id']:
+            return super(product_attributes, self).need_to_push(cr, uid, ids, touched_fields=touched_fields, field=field, empty_ids=empty_ids, context=context)
+
+        if not empty_ids and not ids:
+            return ids
+
+        cr.execute("""
+            SELECT id  FROM product_product
+            WHERE
+                ( active_sync_change_date IS NULL AND active_change_date IS NOT NULL ) OR active_change_date > active_sync_change_date
+        """)
+        return [row[0] for row in cr.fetchall()]
+
 
     def _get_default_sensitive_item(self, cr, uid, context=None):
         """
@@ -1417,8 +1434,6 @@ class product_attributes(osv.osv):
             ids = [ids]
 
         self.clean_standard(cr, uid, vals, context)
-        if context.get('sync_update_execution') and vals.get('local_from_hq') and'active' in vals:
-            del vals['active']
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']
@@ -1519,6 +1534,11 @@ class product_attributes(osv.osv):
                 })
 
         if 'active' in vals:
+            fields_to_update = ['active_change_date=%(now)s']
+            if context.get('sync_update_execution'):
+                fields_to_update += ['active_sync_change_date=%(now)s']
+            cr.execute('update product_product set '+', '.join(fields_to_update)+' where id in %(ids)s and active != %(active)s', {'now': fields.datetime.now(), 'ids': tuple(ids), 'active': vals['active']}) # not_a_user_entry
+
             local_smrl_ids = smrl_obj.search(cr, uid, [
                 ('product_id', 'in', ids),
                 ('full_view', '=', False),
