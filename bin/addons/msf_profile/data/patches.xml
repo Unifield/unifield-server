@@ -513,8 +513,5 @@
             <field name="method">us_7181_add_oc_subscrpition_to_unidata_products</field>
         </record>
 
-        <record id="us_7025_7039_fix_nr_empty_ins" model="patch.scripts">
-            <field name="method">us_7025_7039_fix_nr_empty_ins</field>
-        </record>
     </data>
 </openerp>
