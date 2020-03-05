@@ -54,6 +54,9 @@ class patch_scripts(osv.osv):
 
     # UF17.0
     def us_7215_prod_set_active_sync(self, cr, uids, *a, **b):
+        if not self.pool.get('sync.client.message_received'):
+            # new instance
+            return True
         cr.execute('''
             update product_product p set
                 active_change_date=d.last_modification, active_sync_change_date=d.sync_date
