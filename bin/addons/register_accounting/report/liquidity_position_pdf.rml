@@ -5,13 +5,23 @@
   </docinit>
   <template pageSize="(842.0,595.0)" title="liquidity_position" author="Medecins Sans Frontieres" allowSplitting="20">
     <pageTemplate id="first">
-      <frame id="first" x1="42.0" y1="42.0" width="756" height="539" />
+      <frame id="first" x1="42.0" y1="-35.0" width="756" height="539" />
       <pageGraphics>
         <fill color="blue"/>
         <image x="18mm" y="270mm" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
         <setFont name="Helvetica" size="8"/>
         <fill color="black"/>
         <drawString x="20.0" y="10.0">Page : <pageNumber /></drawString>
+
+      <!-- Header -->
+      <place x="7.3cm" y="8.8cm" height="11.5cm" width="15.0cm">
+        <title style="text">Liquidity Position [[ getPeriod().name ]]</title>
+        <spacer length="6"/>
+        <para style="center">Period end date: [[ formatLang(getPeriod().date_stop, date=True) ]]</para>
+        <para style="center">Report date: [[ formatLang(time.strftime("%Y-%m-%d"), date=True) ]]</para>
+        <spacer length="24"/>
+      </place>
+
       </pageGraphics>
     </pageTemplate>
   </template>
@@ -40,11 +50,6 @@
   </stylesheet>
 
   <story>
-
-    <title style="text">Liquidity Position [[ getPeriod().name ]]</title>
-    <para style="center">Period end date: [[ formatLang(getPeriod().date_stop, date=True) ]]</para>
-    <para style="center">Report date: [[ formatLang(time.strftime("%Y-%m-%d"), date=True) ]]</para>
-    <spacer length="24"/>
 
     <section>
       [[ repeatIn(getRegistersByType(), 'reg_type') ]]
