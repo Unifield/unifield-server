@@ -108985,3 +108985,9 @@ msgstr "CCM Produit"
 #: field:replenishment.segment.line,list_fmc:0
 msgid "more FMC"
 msgstr "plus de PCM"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:350
+#, python-format
+msgid "Line %s. The period %s doesn't exist."
+msgstr "Ligne %s. La période %s n'existe pas."
