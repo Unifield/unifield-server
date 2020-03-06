@@ -569,7 +569,11 @@ class shipment(osv.osv):
             ('from_pack', '=', family.from_pack),
             ('to_pack', '=', family.to_pack)
         ], context=context)
-        for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=['product_uom', 'qty_per_pack'], context=context):
+        ftf = ['product_id', 'product_uom', 'qty_per_pack', 'location_dest_id']
+        for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=ftf, context=context):
+            if move.product_id and move.product_id.state.code == 'forbidden':  # Check constraints on lines
+                check_vals = {'location_dest_id': move.location_dest_id.id, 'move': move}
+                self.pool.get('product.product')._get_restriction_error(cr, uid, [move.product_id.id], check_vals, context=context)
             if family.selected_number < int(family.num_of_packs) and move.product_uom.rounding == 1 and \
                     move.qty_per_pack % move.product_uom.rounding != 0:
                 raise osv.except_osv(_('Error'), _('Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together'))
@@ -1587,6 +1591,10 @@ class shipment(osv.osv):
 
                 # closing FO lines:
                 for stock_move in packing.move_lines:
+                    if stock_move.product_id and stock_move.product_id.state.code == 'forbidden':  # Check constraints on lines
+                        check_vals = {'location_dest_id': stock_move.location_dest_id.id, 'move': stock_move}
+                        self.pool.get('product.product')._get_restriction_error(cr, uid, [stock_move.product_id.id],
+                                                                                check_vals, context=context)
                     if stock_move.sale_line_id:
                         open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
                             ('sale_line_id', '=', stock_move.sale_line_id.id),
@@ -3327,6 +3335,10 @@ class stock_picking(osv.osv):
             # for now, each new line from the wizard corresponds to a new stock.move
             # it could be interesting to regroup according to production lot/asset id
             for line in move_to_process:
+                if line.product_id and line.product_id.state.code == 'forbidden':  # Check constraints on lines
+                    check_vals = {'location_dest_id': line.location_dest_id.id, 'move': line}
+                    self.pool.get('product.product')._get_restriction_error(cr, uid, [line.product_id.id], check_vals, context=context)
+
                 if line.qty_to_process <= 0 or line.state != 'assigned' or line.product_qty == 0:
                     continue
 
@@ -3559,6 +3571,10 @@ class stock_picking(osv.osv):
             # For each processed lines, save the processed quantity to update the draft picking ticket
             # and create a new line on PPL
             for line in picking.move_lines:
+                if line.product_id:  # Check constraints on lines
+                    check_vals = {'location_dest_id': line.location_dest_id.id, 'move': line}
+                    self.pool.get('product.product')._get_restriction_error(cr, uid, [line.product_id.id], check_vals, context=context)
+
                 if line.state != 'assigned':
                     line.qty_to_process = 0
 
@@ -3707,6 +3723,10 @@ class stock_picking(osv.osv):
         picking = self.browse(cr, uid, ids[0], context=context)
         rounding_issues = []
         for move in picking.move_lines:
+            if move.product_id and move.product_id.state.code == 'forbidden':  # Check constraints on lines
+                check_vals = {'location_dest_id': move.location_dest_id.id, 'move': move}
+                self.pool.get('product.product')._get_restriction_error(cr, uid, [move.product_id.id], check_vals, context=context)
+
             if move.state == 'done':
                 continue
             if not ppl_processor._check_rounding(cr, uid, move.product_uom, move.num_of_packs, move.product_qty, context=context):

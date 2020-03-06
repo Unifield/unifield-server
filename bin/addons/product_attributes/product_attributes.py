@@ -1136,6 +1136,12 @@ class product_attributes(osv.osv):
             if location.usage != 'inventory' and not location.destruction_location and (not bef_scrap_id or location.id != bef_scrap_id):
                 constraints.append('storage')
 
+        # Compute the constraint if a destination location is passed in vals
+        if vals.get('location_dest_id'):
+            dest_location = self.pool.get('stock.location').browse(cr, uid, vals.get('location_dest_id'), context=context)
+            if not (dest_location.destruction_location or dest_location.quarantine_location) and dest_location.usage != 'internal':
+                constraints.append('cant_use')
+
         # Compute constraints if constraints is passed in vals
         if vals.get('constraints'):
             if isinstance(vals.get('constraints'), list):
@@ -1171,17 +1177,21 @@ class product_attributes(osv.osv):
                 error = True
                 msg = _('be stored anymore')
                 st_cond = product.state.no_storage
+            elif product.state.code == 'forbidden' and 'cant_use' in constraints:
+                error = True
+                msg = _('be sent')
+                st_cond = product.state.no_consumption
 
             if error:
                 # Build the error message
                 st_type = st_cond and _('status') or _('product creator')
                 st_name = st_cond and product.state.name or product.international_status.name
 
-                error_msg = _('The product [%s] %s gets the %s \'%s\' and consequently can\'t %s') % (product.default_code,
-                                                                                                      product.name,
-                                                                                                      st_type,
-                                                                                                      st_name,
-                                                                                                      msg)
+                error_msg = ''
+                if vals.get('move'):
+                    error_msg = _('%s line %s: ') % (vals['move'].picking_id.name, vals['move'].line_number)
+                error_msg += _('The product [%s] %s gets the %s \'%s\' and consequently can\'t %s') \
+                             % (product.default_code, product.name, st_type, st_name, msg)
         if context.get('noraise'):
             error = False
 
