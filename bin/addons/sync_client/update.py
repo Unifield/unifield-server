@@ -583,15 +583,20 @@ class update_received(osv.osv,fv_formatter):
             # Prepare updates
             # TODO: skip updates not preparable
             for update in updates:
-                if self.search_exist(cr, uid,
-                                     [('sdref', '=', update.sdref),
-                                      ('is_deleted', '=', False),
-                                         ('run', '=', False),
-                                      ('rule_sequence', '=', update.rule_sequence),
-                                      ('sequence_number', '<', update.sequence_number)]):
-                    # previous not run on the same (sdref, rule_sequence): do not execute
-                    self._set_not_run(cr, uid, [update.id], log="Cannot execute due to previous not run on the same record/rule.", context=context)
-                    continue
+                prev_nr_ids = self.search(cr, uid,
+                                          [('sdref', '=', update.sdref),
+                                           ('is_deleted', '=', False),
+                                              ('run', '=', False),
+                                              ('rule_sequence', '=', update.rule_sequence),
+                                              ('sequence_number', '<', update.sequence_number)])
+                # previous not run on the same (sdref, rule_sequence): do not execute
+                if prev_nr_ids:
+                    if update.rule_sequence in (602, 603):
+                        # update on product state, we don't care of previous NR
+                        self.write(cr, uid, prev_nr_ids, {'run': 't', 'log': 'Set as Run due to a later update on the same record/rule.', 'editable': False, 'execution_date': datetime.now()}, context=context)
+                    else:
+                        self._set_not_run(cr, uid, [update.id], log="Cannot execute due to previous not run on the same record/rule.", context=context)
+                        continue
 
                 row = eval(update.values)
 

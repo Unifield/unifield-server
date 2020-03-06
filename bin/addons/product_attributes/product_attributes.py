@@ -306,6 +306,14 @@ product_country_restriction()
 class product_attributes(osv.osv):
     _inherit = "product.product"
 
+    mapping_ud = {
+        'valid': 'valid',
+        'outdated': 'valid',
+        'discontinued': 'valid',
+        'forbidden': 'forbidden',
+        'archived': 'archived',
+    }
+
     def execute_migration(self, cr, moved_column, new_column):
         super(product_attributes, self).execute_migration(cr, moved_column, new_column)
 
@@ -1302,6 +1310,7 @@ class product_attributes(osv.osv):
         if context.get('sync_update_execution') and vals.get('local_from_hq'):
             vals['active'] = False
 
+
         def update_existing_translations(model, res_id, xmlid):
             # If we are in the creation of product by sync. engine, attach the already existing translations to this product
             if context.get('sync_update_execution'):
@@ -1353,10 +1362,24 @@ class product_attributes(osv.osv):
                 vals['heat_sensitive_item'] = heat2_id
             vals.update(self.onchange_heat(cr, uid, False, vals['heat_sensitive_item'], context=context).get('value', {}))
 
-        if vals.get('international_status') and 'oc_subscription' not in vals:
+        if vals.get('international_status'):
             intstat_code = self.pool.get('product.international.status').browse(cr, uid, vals['international_status'],
                                                                                 fields_to_fetch=['code'], context=context).code
-            vals['oc_subscription'] = intstat_code == 'unidata'
+
+            if intstat_code == 'unidata':
+                if 'oc_subscription' not in vals:
+                    vals['oc_subscription'] = True
+
+                if not context.get('sync_update_execution'):
+                    if 'state_ud' in vals:
+                        if self.mapping_ud.get(vals['state_ud']):
+                            vals['state'] = self.pool.get('product.status').search(cr, uid, [('code', '=', self.mapping_ud.get(vals['state_ud']))], context=context)[0]
+                            if vals['state_ud'] == 'archived':
+                                vals['active'] = False
+                    if not vals['oc_subscription']:
+                        vals['active'] = False
+                    elif vals.get('state_ud') != 'archived':
+                        vals['active'] = True
 
         for f in ['sterilized', 'closed_article', 'single_use']:
             if f in vals and not vals.get(f):
@@ -1365,6 +1388,11 @@ class product_attributes(osv.osv):
         vals['uf_create_date'] = vals.get('uf_create_date') or datetime.now()
 
         self.convert_price(cr, uid, vals, context)
+
+        if not context.get('sync_update_execution') and vals.get('active') is False:
+            # tirgger sync update on state only if created as inactive (as active=Ture is the default)
+            vals['active_change_date'] = datetime.now()
+
         res = super(product_attributes, self).create(cr, uid, vals, context=context)
 
         if context.get('sync_update_execution'):
@@ -1471,39 +1499,7 @@ class product_attributes(osv.osv):
                 if any(char.islower() for char in vals['default_code']):
                     vals['default_code'] = vals['default_code'].upper()
 
-        # update local stock mission report lines :
-        if 'state' in vals:
-            prod_state = ''
-            if vals['state']:
-                state_id = vals['state']
-                if isinstance(state_id, (int, long)):
-                    state_id = [state_id]
-                prod_state = prod_status_obj.read(cr, uid, state_id, ['code'], context=context)[0]['code']
-            local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', prod_state), ('product_id', 'in', ids), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
-            if local_smrl_ids:
-                no_sync_context = context.copy()
-                no_sync_context['sync_update_execution'] = False
-                smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': prod_state}, context=no_sync_context)
-
-        if 'international_status' in vals:
-            intstat_code = ''
-            if vals['international_status']:
-                intstat_id = vals['international_status']
-                if isinstance(intstat_id, (int,long)):
-                    intstat_id = [intstat_id]
-                intstat_code = int_stat_obj.read(cr, uid, intstat_id, ['code'], context=context)[0]['code']
-            # just update SMRL that belongs to our instance:
-            local_smrl_ids = smrl_obj.search(cr, uid, [
-                ('international_status_code', '!=', intstat_code),
-                ('product_id', 'in', ids),
-                ('full_view', '=', False),
-                ('mission_report_id.local_report', '=', True)
-            ], context=context)
-            if local_smrl_ids:
-                no_sync_context = context.copy()
-                no_sync_context['sync_update_execution'] = False
-                smrl_obj.write(cr, 1, local_smrl_ids, {'international_status_code': intstat_code or ''}, context=no_sync_context)
-
+        prod_state = ''
         if 'state_ud' in vals:
             # just update SMRL that belongs to our instance:
             local_smrl_ids = smrl_obj.search(cr, uid, [
@@ -1516,6 +1512,60 @@ class product_attributes(osv.osv):
                 no_sync_context = context.copy()
                 no_sync_context['sync_update_execution'] = False
                 smrl_obj.write(cr, 1, local_smrl_ids, {'state_ud': vals['state_ud'] or ''}, context=no_sync_context)
+
+            if not context.get('sync_update_execution'):
+                if self.mapping_ud.get(vals['state_ud']):
+                    prod_state =  self.mapping_ud[vals['state_ud']]
+                    vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', prod_state)], context=context)[0]
+
+                if vals['state_ud'] == 'archived':
+                    vals['active'] = False
+
+        unidata_product = False
+        if 'international_status' in vals:
+            intstat_code = ''
+            if vals['international_status']:
+                intstat_id = vals['international_status']
+                if isinstance(intstat_id, (int,long)):
+                    intstat_id = [intstat_id]
+                intstat_code = int_stat_obj.read(cr, uid, intstat_id, ['code'], context=context)[0]['code']
+                unidata_product = intstat_code == 'unidata'
+
+            # just update SMRL that belongs to our instance:
+            local_smrl_ids = smrl_obj.search(cr, uid, [
+                ('international_status_code', '!=', intstat_code),
+                ('product_id', 'in', ids),
+                ('full_view', '=', False),
+                ('mission_report_id.local_report', '=', True)
+            ], context=context)
+            if local_smrl_ids:
+                no_sync_context = context.copy()
+                no_sync_context['sync_update_execution'] = False
+                smrl_obj.write(cr, 1, local_smrl_ids, {'international_status_code': intstat_code or ''}, context=no_sync_context)
+        else:
+            unidata_product = self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context)
+
+
+        if unidata_product and not context.get('sync_update_execution') and 'oc_subscription' in vals:
+            if 'international_status' not in vals:
+                if self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '!=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context):
+                    raise osv.except_osv(_('Waning'), _("You can write the oc_subscription field on multiple products only if all products are UniData !"))
+
+            if not vals['oc_subscription']:
+                vals['active'] = False
+                prod_state = 'archived'
+            elif prod_state != 'archived':
+                vals['active'] = True
+
+        # update local stock mission report lines :
+        if not prod_state and 'state' in vals:
+            if vals['state']:
+                state_id = vals['state']
+                if isinstance(state_id, (int, long)):
+                    state_id = [state_id]
+                prod_state = prod_status_obj.read(cr, uid, state_id, ['code'], context=context)[0]['code']
+
+
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
@@ -1535,15 +1585,65 @@ class product_attributes(osv.osv):
 
         if context.get('sync_update_execution') and not context.get('bypass_sync_update', False):
             if vals.get('active', None) is False:
-                if self.deactivate_product(cr, uid, ids, context=context) is not True:
-                    vals.update({
-                        'active': True,
-                    })
-            elif vals.get('active', None) is True:
-                vals.update({
-                    'active': True,
-                    #                    'state': phase_out_status,
-                })
+                deactivate_result =  self.deactivate_product(cr, uid, ids, context=context, try_only=True)
+                if not deactivate_result['ok']:
+                    vals['active'] = True
+                    if unidata_product:
+
+                        prod_code = self.read(cr, uid, ids[0], ['default_code'], context=context)
+                        error_msg = []
+
+                        wiz_error = self.pool.get('product.deactivation.error').browse(cr, uid, deactivate_result['error'], context=context)
+                        if wiz_error.stock_exist:
+                            error_msg.append('Stock exists (internal locations)')
+
+                        doc_errors = []
+                        for error in wiz_error.error_lines:
+                            doc_errors.append(error.doc_ref)
+
+                        if doc_errors:
+                            error_msg.append('Product is contained in opened documents :\n - %s'  % ' \n - '.join(doc_errors))
+                        raise osv.except_osv('Warning', 'Product %s cannot be deactivated: \n * %s ' % (prod_code['default_code'], "\n * ".join(error_msg)))
+
+                elif unidata_product:
+                    # unidata prodcut inactive must also be archived: 1st set as phase out by the update one
+                    vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'archived')], context=context)[0]
+
+            if prod_state == 'archived' and unidata_product:
+                # received archived: set as phase out, when then active update will be processed it will then set archived if inactivation allowed
+                vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
+
+        ud_unable_to_inactive = set()
+        if 'active' in vals and not vals['active'] and not context.get('sync_update_execution') and unidata_product and context.get('sync_update_execution'):
+                    # UD tries to inactivate products: check mission stock qty, in-pipe, product list
+            cr.execute('''
+                        select
+                            l.product_id
+                        from
+                            stock_mission_report r, msf_instance i, stock_mission_report_line l
+                        where
+                            i.id = r.instance_id and
+                            i.state = 'active' and
+                            l.mission_report_id = r.id and
+                            -- l.product_id in %s and
+                            r.full_view = 'f' and
+                            ( l.internal_qty > 0 or l.in_pipe_qty > 0)
+                        group by l.product_id
+                    ''' , (tuple(ids), ))
+            ud_unable_to_inactive = set([x[0] for x in cr.fetchall()])
+
+            cr.execute('select name from product_list_line where name in %s', (tuple(ids), ))
+            ud_unable_to_inactive = set([x[0] for x in cr.fetchall()])
+
+        if ud_unable_to_inactive:
+            ids = list(set(id) - ud_unable_to_inactive)
+
+        if 'state' in vals:
+            local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', prod_state), ('product_id', 'in', ids), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
+            if local_smrl_ids:
+                no_sync_context = context.copy()
+                no_sync_context['sync_update_execution'] = False
+                smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': prod_state}, context=no_sync_context)
 
         if 'active' in vals:
             fields_to_update = ['active_change_date=%(now)s']
@@ -1582,7 +1682,18 @@ class product_attributes(osv.osv):
                     self.set_as_edonly(cr, uid, ids, context=context)
                 else:
                     self.set_as_nobn_noed(cr, uid, ids, context=context)
+
         res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
+        if ud_unable_to_inactive:
+            vals['active'] = True
+            vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
+            super(product_attributes, self).write(cr, uid, list(ud_unable_to_inactive), vals, context=context)
+
+            local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', 'phase_out'), ('product_id', 'in', list(ud_unable_to_inactive)), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
+            if local_smrl_ids:
+                no_sync_context = context.copy()
+                no_sync_context['sync_update_execution'] = False
+                smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': 'phase_out'}, context=no_sync_context)
 
         if product_uom_categ:
             uom_categ = 'uom_id' in vals and vals['uom_id'] and self.pool.get('product.uom').browse(cr, uid, vals['uom_id'], context=context).category_id.id or False
@@ -1590,6 +1701,9 @@ class product_attributes(osv.osv):
 
             if (uom_categ and uom_categ not in product_uom_categ) or (uos_categ and uos_categ not in product_uom_categ):
                 raise osv.except_osv(_('Error'), _('You cannot choose an UoM which is not in the same UoM category of default UoM'))
+
+        if ud_unable_to_inactive:
+            ids = ids + list(ud_unable_to_inactive)
 
         return res
 
@@ -1606,7 +1720,7 @@ class product_attributes(osv.osv):
 
         return True
 
-    def deactivate_product(self, cr, uid, ids, context=None):
+    def deactivate_product(self, cr, uid, ids, context=None, try_only=False):
         '''
         De-activate product.
         Check if the product is not used in any document in Unifield
@@ -1617,7 +1731,6 @@ class product_attributes(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # TODO JFB RR: constraint
         location_obj = self.pool.get('stock.location')
         po_line_obj = self.pool.get('purchase.order.line')
         tender_line_obj = self.pool.get('tender.line')
@@ -1862,6 +1975,10 @@ class product_attributes(osv.osv):
                                                         'doc_ref': invoice.invoice_id.number,
                                                         'doc_id': invoice.invoice_id.id}, context=context)
 
+
+                if try_only:
+                    return {'ok': False, 'error': wizard_id}
+
                 if context.get('sync_update_execution', False):
                     context['bypass_sync_update'] = True
                 self.write(cr, uid, product.id, {
@@ -1875,6 +1992,9 @@ class product_attributes(osv.osv):
                         'res_id': wizard_id,
                         'target': 'new',
                         'context': context}
+
+        if try_only:
+            return {'ok': True, 'error': False}
 
         if context.get('sync_update_execution', False):
             context['bypass_sync_update'] = True
