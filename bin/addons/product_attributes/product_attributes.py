@@ -25,6 +25,7 @@ from tools.translate import _
 from lxml import etree
 import tools
 from datetime import datetime
+import logging
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -1460,6 +1461,48 @@ class product_attributes(osv.osv):
             else:
                 vals['state'] = st_obj.search(cr, uid, [('code', '=', 'valid')], context=context)[0]
 
+    def hq_cron_deactivate_ud_products(self, cr, uid, context=None):
+        if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
+            return False
+
+        ids = []
+        products_used = set()
+
+        ud_prod_ids = self.search(cr, uid, ['&', ('international_status', '=', 'UniData'), '|', '|', ('oc_subscription', '=', False), ('state_ud', '=', 'archived'), ('state', '=', 'Phase Out')], context=context)
+        if ud_prod_ids:
+            products_used = self.unidata_products_used(cr, uid, ud_prod_ids)
+            ids = list(set(ud_prod_ids) - products_used)
+            if ids:
+                self.write(cr, uid, ids, {'active': False}, context=context)
+
+        logging.getLogger('UD deactivation').info('%d products deactivated, %d kept as active' % (len(ids), len(products_used)))
+
+        return True
+
+    def unidata_products_used(self, cr, uid, ids):
+        if not ids:
+            return set()
+
+        cr.execute('''
+                    select
+                        l.product_id
+                    from
+                        stock_mission_report r, msf_instance i, stock_mission_report_line l
+                    where
+                        i.id = r.instance_id and
+                        i.state = 'active' and
+                        l.mission_report_id = r.id and
+                        l.product_id in %s and
+                        r.full_view = 'f' and
+                        ( l.internal_qty > 0 or l.in_pipe_qty > 0)
+                    group by l.product_id
+                ''' , (tuple(ids), ))
+        ud_unable_to_inactive = set([x[0] for x in cr.fetchall()])
+
+        cr.execute('select name from product_list_line where name in %s', (tuple(ids), ))
+        ud_unable_to_inactive = ud_unable_to_inactive.union([x[0] for x in cr.fetchall()])
+        return ud_unable_to_inactive
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -1546,6 +1589,7 @@ class product_attributes(osv.osv):
             unidata_product = self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context)
 
 
+        reactivated_by_oc_subscription = False
         if unidata_product and not context.get('sync_update_execution') and 'oc_subscription' in vals:
             if 'international_status' not in vals:
                 if self.search_exist(cr, uid, [('id', 'in', ids), ('international_status', '!=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context):
@@ -1555,6 +1599,10 @@ class product_attributes(osv.osv):
                 vals['active'] = False
                 prod_state = 'archived'
             elif prod_state != 'archived':
+                if not prod_state and 'state' not in vals:
+                    # uf state is archived or phase_out, we must map it with uf state
+                    reactivated_by_oc_subscription = True
+
                 vals['active'] = True
 
         # update local stock mission report lines :
@@ -1613,30 +1661,14 @@ class product_attributes(osv.osv):
                 # received archived: set as phase out, when then active update will be processed it will then set archived if inactivation allowed
                 vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
 
-        ud_unable_to_inactive = set()
-        if 'active' in vals and not vals['active'] and not context.get('sync_update_execution') and unidata_product and context.get('sync_update_execution'):
-                    # UD tries to inactivate products: check mission stock qty, in-pipe, product list
-            cr.execute('''
-                        select
-                            l.product_id
-                        from
-                            stock_mission_report r, msf_instance i, stock_mission_report_line l
-                        where
-                            i.id = r.instance_id and
-                            i.state = 'active' and
-                            l.mission_report_id = r.id and
-                            -- l.product_id in %s and
-                            r.full_view = 'f' and
-                            ( l.internal_qty > 0 or l.in_pipe_qty > 0)
-                        group by l.product_id
-                    ''' , (tuple(ids), ))
-            ud_unable_to_inactive = set([x[0] for x in cr.fetchall()])
-
-            cr.execute('select name from product_list_line where name in %s', (tuple(ids), ))
-            ud_unable_to_inactive = set([x[0] for x in cr.fetchall()])
-
-        if ud_unable_to_inactive:
-            ids = list(set(id) - ud_unable_to_inactive)
+        ud_unable_to_inactive = []
+        if 'active' in vals and not vals['active'] and not context.get('sync_update_execution') and unidata_product:
+            ud_unable_to_inactive = self.unidata_products_used(cr, uid, ids)
+            if not prod_state:
+                vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'archived')], context=context)[0]
+            if ud_unable_to_inactive:
+                ids = list(set(ids) - ud_unable_to_inactive)
+                ud_unable_to_inactive = list(ud_unable_to_inactive)
 
         if 'state' in vals:
             local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', prod_state), ('product_id', 'in', ids), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
@@ -1645,7 +1677,7 @@ class product_attributes(osv.osv):
                 no_sync_context['sync_update_execution'] = False
                 smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': prod_state}, context=no_sync_context)
 
-        if 'active' in vals:
+        if ids and 'active' in vals:
             fields_to_update = ['active_change_date=%(now)s']
             if context.get('sync_update_execution'):
                 fields_to_update += ['active_sync_change_date=%(now)s']
@@ -1687,9 +1719,9 @@ class product_attributes(osv.osv):
         if ud_unable_to_inactive:
             vals['active'] = True
             vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
-            super(product_attributes, self).write(cr, uid, list(ud_unable_to_inactive), vals, context=context)
+            super(product_attributes, self).write(cr, uid, ud_unable_to_inactive, vals, context=context)
 
-            local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', 'phase_out'), ('product_id', 'in', list(ud_unable_to_inactive)), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
+            local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', 'phase_out'), ('product_id', 'in', ud_unable_to_inactive), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
             if local_smrl_ids:
                 no_sync_context = context.copy()
                 no_sync_context['sync_update_execution'] = False
@@ -1703,10 +1735,19 @@ class product_attributes(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot choose an UoM which is not in the same UoM category of default UoM'))
 
         if ud_unable_to_inactive:
-            ids = ids + list(ud_unable_to_inactive)
+            ids = ids + ud_unable_to_inactive
 
+        if reactivated_by_oc_subscription:
+            self.set_state_from_state_ud(cr, uid, ids, context=context)
         return res
 
+
+    def set_state_from_state_ud(self, cr, uid, ids, context=None):
+        for grp in self.read_group(cr, uid, [('id', 'in', ids)], fields=['state_ud'], groupby=['state_ud'], context=context):
+            ids_to_w = self.search(cr, uid, grp['__domain'], context=context)
+            if ids_to_w:
+                self.write(cr, uid, ids_to_w, {'state_ud': grp['state_ud']},  context=context)
+        return True
 
     def reactivate_product(self, cr, uid, ids, context=None):
         '''
