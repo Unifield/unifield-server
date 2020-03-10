@@ -19,7 +19,6 @@
         <spacer length="6"/>
         <para style="center">Period end date: [[ formatLang(getPeriod().date_stop, date=True) ]]</para>
         <para style="center">Report date: [[ formatLang(time.strftime("%Y-%m-%d"), date=True) ]]</para>
-        <spacer length="24"/>
       </place>
 
       </pageGraphics>
