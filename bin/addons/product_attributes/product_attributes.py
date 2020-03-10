@@ -674,7 +674,7 @@ class product_attributes(osv.osv):
             res[_id] = False
 
         if self.pool.get('res.company')._get_instance_level(cr, uid) == 'section':
-            for _id in self.search(cr, uid, [('id', 'in', ids), ('standard_ok', '=', 'non_standard_local')], context=context):
+            for _id in self.search(cr, uid, [('id', 'in', ids), ('standard_ok', '=', 'non_standard_local'), ('active', 'in', ['t', 'f'])], context=context):
                 res[_id] = True
 
         return res
@@ -970,7 +970,7 @@ class product_attributes(osv.osv):
             string='Standardization Level',
             required=True,
         ),
-        'local_from_hq': fields.function(_get_local_from_hq, method=1, type='boolean', string='Non-Standard Local from HQ'),
+        'local_from_hq': fields.function(_get_local_from_hq, method=1, type='boolean', string='Non-Standard Local from HQ', help='Set to True when HQ generates a sync update on NSL product', internal=1),
         'active_change_date': fields.datetime('Date of last active change', readonly=1),
         'active_sync_change_date': fields.datetime('Date of last active sync change', readonly=1),
         'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
@@ -982,7 +982,7 @@ class product_attributes(osv.osv):
     }
 
     def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
-        if touched_fields != ['active', 'id']:
+        if touched_fields != ['active', 'local_from_hq', 'id']:
             return super(product_attributes, self).need_to_push(cr, uid, ids, touched_fields=touched_fields, field=field, empty_ids=empty_ids, context=context)
 
         if not empty_ids and not ids:
@@ -1453,6 +1453,7 @@ class product_attributes(osv.osv):
                 vals['standard_ok'] = 'non_standard'
 
         if vals and 'state' in vals:
+            # here to manage old sync updates
             st_obj = self.pool.get('product.status')
             if vals['state']:
                 st = st_obj.browse(cr, uid, vals['state'], fields_to_fetch=['mapped_to'])
@@ -1542,6 +1543,11 @@ class product_attributes(osv.osv):
                 if any(char.islower() for char in vals['default_code']):
                     vals['default_code'] = vals['default_code'].upper()
 
+        if context.get('sync_update_execution') and vals.get('local_from_hq') and vals.get('active'):
+            del(vals['active'])
+
+
+        check_reactivate = False
         prod_state = ''
         if 'state_ud' in vals:
             # just update SMRL that belongs to our instance:
@@ -1563,6 +1569,8 @@ class product_attributes(osv.osv):
 
                 if vals['state_ud'] == 'archived':
                     vals['active'] = False
+                elif 'oc_subscription' not in vals:
+                    check_reactivate = True
 
         unidata_product = False
         if 'international_status' in vals:
@@ -1658,7 +1666,7 @@ class product_attributes(osv.osv):
                     vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'archived')], context=context)[0]
 
             if prod_state == 'archived' and unidata_product:
-                # received archived: set as phase out, when then active update will be processed it will then set archived if inactivation allowed
+                # received archived: set as phase out, when the "active" update is processed it will set archived state if inactivation is allowed
                 vals['state'] = prod_status_obj.search(cr, uid, [('code', '=', 'phase_out')], context=context)[0]
 
         ud_unable_to_inactive = []
@@ -1678,10 +1686,13 @@ class product_attributes(osv.osv):
                 smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': prod_state}, context=no_sync_context)
 
         if ids and 'active' in vals:
+
+            # to manage sync update generation on active field
             fields_to_update = ['active_change_date=%(now)s']
             if context.get('sync_update_execution'):
                 fields_to_update += ['active_sync_change_date=%(now)s']
             cr.execute('update product_product set '+', '.join(fields_to_update)+' where id in %(ids)s and active != %(active)s', {'now': fields.datetime.now(), 'ids': tuple(ids), 'active': vals['active']}) # not_a_user_entry
+
 
             local_smrl_ids = smrl_obj.search(cr, uid, [
                 ('product_id', 'in', ids),
@@ -1739,6 +1750,12 @@ class product_attributes(osv.osv):
 
         if reactivated_by_oc_subscription:
             self.set_state_from_state_ud(cr, uid, ids, context=context)
+
+        if check_reactivate:
+            # ud set only state_ud != archived, check if product must be reactivated
+            set_as_active = self.search(cr, uid, [('active', '=', False), ('oc_subscription', '=', True), ('id', 'in', ids)], context=context)
+            if set_as_active:
+                self.write(cr, uid, set_as_active, {'active': True}, context=context)
         return res
 
 
