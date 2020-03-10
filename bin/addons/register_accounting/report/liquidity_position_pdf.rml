@@ -5,7 +5,7 @@
   </docinit>
   <template pageSize="(842.0,595.0)" title="liquidity_position" author="Medecins Sans Frontieres" allowSplitting="20">
     <pageTemplate id="first">
-      <frame id="first" x1="42.0" y1="-35.0" width="756" height="539" />
+      <frame id="first" x1="42.0" y1="42.0" width="756" height="462" />
       <pageGraphics>
         <fill color="blue"/>
         <image x="18mm" y="270mm" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
