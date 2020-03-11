@@ -175,7 +175,7 @@ class import_analytic_lines(osv.osv_memory):
                 date += DateTime.RelativeDateTime(months=DateTime.now().month-1)
             key_reg = '%s-%s'%(row[1], date.strftime('%m-%Y'))
             if key_reg not in register_id:
-                p_ids = period_obj.search(cr, uid, [('date_start', '=', date.strftime('%Y-%m-01'))])
+                p_ids = period_obj.search(cr, uid, [('date_start', '=', date.strftime('%Y-%m-01')), ('special', '=', False)], limit=1)
                 reg_id = reg_obj.search(cr, uid, [('journal_id', '=', journal[row[1]]), ('period_id', '=', p_ids[0])])
                 if not reg_id:
                     logging.getLogger('import analytic').info("No register: journal: %s, period: %s, date: %s"%(journal[row[1]], p_ids[0], date.strftime('%Y-%m-01')))

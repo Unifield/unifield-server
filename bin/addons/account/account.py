@@ -950,7 +950,7 @@ class account_period(osv.osv):
     ]
 
     def next(self, cr, uid, period, step, context=None):
-        ids = self.search(cr, uid, [('date_start','>',period.date_start)])
+        ids = self.search(cr, uid, [('date_start','>',period.date_start)], order='date_start, number')
         if len(ids)>=step:
             return ids[step-1]
         return False
