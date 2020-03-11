@@ -1139,8 +1139,13 @@ class product_attributes(osv.osv):
         # Compute the constraint if a destination location is passed in vals
         if vals.get('location_dest_id'):
             dest_location = self.pool.get('stock.location').browse(cr, uid, vals.get('location_dest_id'), context=context)
-            if not (dest_location.destruction_location or dest_location.quarantine_location) and dest_location.usage != 'internal':
-                constraints.append('cant_use')
+            if not (dest_location.destruction_location or dest_location.quarantine_location):
+                if vals.get('move') and vals['move'].sale_line_id and not vals['move'].sale_line_id.order_id.procurement_request:
+                    if (vals['move'].picking_id.shipment_id and vals['move'].picking_id.shipment_id.partner_id.partner_type != 'internal') or \
+                            vals['move'].picking_id.partner_id.partner_type != 'internal':
+                        constraints.append('cant_use')
+                else:
+                    constraints.append('cant_use')
 
         # Compute constraints if constraints is passed in vals
         if vals.get('constraints'):

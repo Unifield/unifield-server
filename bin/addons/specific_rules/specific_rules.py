@@ -532,7 +532,7 @@ Expiry date. Only one line with same data is expected."""))
                 if line.hidden_batch_management_mandatory and not line.prod_lot_id:
                     raise osv.except_osv(_('Error'), _('The product %s is batch mandatory but the line with this product has no batch') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
 
-                if line.product_id:
+                if line.product_id and line.product_id.state.code != 'forbidden':
                     # Check constraints on lines
                     product_obj._get_restriction_error(cr, uid, [line.product_id.id], {'location_id': line.location_id.id}, context=context)
 
@@ -769,7 +769,7 @@ class stock_inventory_line(osv.osv):
         result.setdefault('value', {})['hidden_perishable_mandatory'] = False
         if product:
             product_obj = self.pool.get('product.product').browse(cr, uid, product)
-            if location_id:
+            if location_id and product_obj.state.code != 'forbidden':
                 result, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, product, field_name='product_id', values=result, vals={'location_id': location_id})
                 if test:
                     return result

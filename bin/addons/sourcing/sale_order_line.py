@@ -1613,6 +1613,12 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         company_currency_id = self.pool.get('res.users').get_company_currency_id(cr, uid)
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
+            if sourcing_line.procurement_request:  # Check constraints on lines
+                check_vals = {'constraints': 'consumption'}
+            else:
+                check_vals = {'obj_type': 'sale.order', 'partner_id': sourcing_line.order_id.partner_id.id}
+            self.pool.get('product.product')._get_restriction_error(cr, uid, [sourcing_line.product_id.id], vals=check_vals,
+                                                                    context=context)
             if sourcing_line.supplier and sourcing_line.supplier_type == 'esc' and \
                     sourcing_line.supplier_split_po == 'yes' and not sourcing_line.related_sourcing_id:
                 raise osv.except_osv(_('Error'), _('For this Supplier you have to select a Sourcing Group'))

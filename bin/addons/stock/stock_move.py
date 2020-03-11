@@ -930,6 +930,8 @@ class stock_move(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
             default = {}
+        prod_obj = self.pool.get('product.product')
+
         default = default.copy()
         if 'qty_processed' not in default:
             default['qty_processed'] = 0
@@ -940,6 +942,15 @@ class stock_move(osv.osv):
             default['pt_created'] = False
         if 'integrity_error' not in default:
             default['integrity_error'] = 'empty'
+
+        if 'product_id' in default:  # Check constraints on lines
+            move = self.browse(cr, uid, id, fields_to_fetch=['type'], context=context)
+            if move.type == 'in':
+                prod_obj._get_restriction_error(cr, uid, [move.product_id.id], {'partner_id': move.picking_id.partner_id.id},
+                                                context=context)
+            elif move.type == 'out' and move.product_id.state.code == 'forbidden':
+                check_vals = {'location_dest_id': move.location_dest_id.id, 'move': move}
+                prod_obj._get_restriction_error(cr, uid, [move.product_id.id], check_vals, context=context)
 
         return super(stock_move, self).copy(cr, uid, id, default, context=context)
 

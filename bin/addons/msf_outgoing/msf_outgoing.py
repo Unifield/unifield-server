@@ -3058,6 +3058,11 @@ class stock_picking(osv.osv):
             for line in wizard.move_ids:
                 move = line.move_id
 
+                if move.product_id and move.product_id.state.code == 'forbidden':  # Check constraints on lines
+                    check_vals = {'location_dest_id': move.location_dest_id.id, 'move': move}
+                    self.pool.get('product.product')._get_restriction_error(cr, uid, [move.product_id.id], check_vals,
+                                                                            context=context)
+
                 if move.picking_id.id != picking.id:
                     continue
 
