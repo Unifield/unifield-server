@@ -74,7 +74,7 @@ class patch_scripts(osv.osv):
         if not self.pool.get('sync.client.message_received'):
             # new instance
             return True
-        cr.execute('''
+        cr.execute("""
             update product_product p set
                 active_change_date=d.last_modification, active_sync_change_date=d.sync_date
             from
@@ -82,8 +82,10 @@ class patch_scripts(osv.osv):
             where
                 d.model='product.product' and
                 d.module='sd' and
-                d.res_id = p.id
-        ''')
+                d.res_id = p.id and
+                touched like '%''state''%'
+        """)
+        self._logger.warn('Set active_sync_change_date on %d product' % (cr.rowcount,))
         return True
 
     def us_7025_7039_fix_nr_empty_ins(self, cr, uid, *a, **b):

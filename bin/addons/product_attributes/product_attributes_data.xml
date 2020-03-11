@@ -183,6 +183,19 @@
             <field name="name">*25F - Must be kept below 25°C and cannot be frozen: check FreezeWatch</field>
         </record>
 
+        <record id="ir_cron_deactivate_ud_products" model="ir.cron">
+            <field name="function">hq_cron_deactivate_ud_products</field>
+            <field name="user_id">1</field>
+            <field name="name">HQ: deactivate UD products</field>
+            <field name="interval_type">days</field>
+            <field eval="-1" name="numbercall"/>
+            <field eval="5" name="priority"/>
+            <field eval="0" name="doall"/>
+            <field eval="1" name="active"/>
+            <field eval="1" name="interval_number"/>
+            <field name="model">product.product</field>
+        </record>
+
 </data>
 </openerp>
 
