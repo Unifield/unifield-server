@@ -214,7 +214,7 @@ class stock_picking(osv.osv):
             if pick.type in ['in', 'out']:
                 if not context.get('yesorno', False):
                     for move in pick.move_lines:
-                        if move.product_id and move.product_id.state.code == 'forbidden':  # Check constraints on lines
+                        if pick.type == 'out' and move.product_id and move.product_id.state.code == 'forbidden':  # Check constraints on lines
                             check_vals = {'location_dest_id': move.location_dest_id.id, 'move': move}
                             self.pool.get('product.product')._get_restriction_error(cr, uid, [move.product_id.id],
                                                                                     check_vals, context=context)
