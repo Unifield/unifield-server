@@ -89808,8 +89808,8 @@ msgstr "Contenu du RML"
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1096
 #, python-format
-msgid "The product [%s] %s gets the %s '%s' and consequently can't %s"
-msgstr "Le produit [%s] %s a le %s '%s' et ne peut donc plus %s"
+msgid "The product [%s] gets the %s '%s' and consequently can't %s"
+msgstr "Le produit [%s] a le %s '%s' et ne peut donc plus %s"
 
 #. module: sale
 #: model:ir.actions.act_window,help:sale.action_shop_form

@@ -1204,8 +1204,8 @@ class product_attributes(osv.osv):
                 error_msg = ''
                 if vals.get('move'):
                     error_msg = _('%s line %s: ') % (vals['move'].picking_id.name, vals['move'].line_number)
-                error_msg += _('The product [%s] %s gets the %s \'%s\' and consequently can\'t %s') \
-                             % (product.default_code, product.name, st_type, st_name, msg)
+                error_msg += _('The product [%s] gets the %s \'%s\' and consequently can\'t %s') \
+                             % (product.default_code, st_type, st_name, msg)
         if context.get('noraise'):
             error = False
 
@@ -1218,10 +1218,7 @@ class product_attributes(osv.osv):
         res, error_msg = self._test_restriction_error(cr, uid, ids, vals=vals, context=context)
 
         if res:
-            if isinstance(error_msg, unicode):
-                error_msg = error_msg.encode('ascii', 'ignore')
             raise osv.except_osv(_('Error'), error_msg)
-            return False
 
 
     def change_soq_quantity(self, cr, uid, ids, soq, uom_id, context=None):
