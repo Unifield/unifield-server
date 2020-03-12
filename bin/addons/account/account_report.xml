@@ -145,5 +145,16 @@
                 auto="False"
                 menu="False"/>
 
+        <!-- Invoice Excel Export -->
+        <report id="invoice_excel_export"
+                string="Invoice Excel Export"
+                target_filename="Invoice Excel Export"
+                model="account.invoice"
+                name="invoice.excel.export"
+                file="account/report/invoice_excel_export.mako"
+                report_type="webkit"
+                header="False"
+                auto="False"
+                menu="True"/>
     </data>
 </openerp>

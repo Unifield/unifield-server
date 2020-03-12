@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2020 TeMPO Consulting, MSF. All Rights Reserved
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,30 +19,18 @@
 #
 ##############################################################################
 
-import account_central_journal
-import account_general_journal
-import account_journal
-import account_balance
-import account_general_ledger
-import account_partner_ledger
-#import invoice
-import account_print_invoice
-#import overdue
-import account_print_overdue
-import account_aged_partner_balance
-#import tax_report
-import account_tax_report
-import account_tax_code
-import account_balance_landscape
-import account_invoice_report
-import account_report
-import account_entries_report
-import account_analytic_entries_report
-import account_balance_sheet
-import account_profit_loss
-import account_liquidity_balance
-import free_allocation_report
-import invoice_excel_export
+from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
+
+class invoice_excel_export(report_sxw.rml_parse):
+
+    def __init__(self, cr, uid, name, context=None):
+        super(invoice_excel_export, self).__init__(cr, uid, name, context=context)
+        # self.localcontext.update({
+        # })
+
+
+SpreadsheetReport('report.invoice.excel.export', 'account.invoice',
+                  'addons/account/report/invoice_excel_export.mako', parser=invoice_excel_export)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
