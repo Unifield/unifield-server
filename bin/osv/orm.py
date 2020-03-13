@@ -367,6 +367,7 @@ def get_pg_type(f):
     type_dict = {
         fields.boolean: 'bool',
         fields.integer: 'int4',
+        fields.integer_null: 'int4',
         fields.integer_big: 'int8',
         fields.text: 'text',
         fields.date: 'date',
@@ -809,7 +810,7 @@ class orm_template(object):
         processed, rejected, headers = import_obj._import(cr, uid, import_id, use_new_cursor=False, auto_import=True)
         return processed, rejected, headers
 
-    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=',', context=None):
+    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=',', context=None, with_commit=True):
         headers = []
         list_data = []
         with open(csv_file, 'r') as fcsv:
@@ -831,10 +832,12 @@ class orm_template(object):
                     rejected.append((i, d, res[2]))
                 else:
                     processed.append((i, d))
-                cr.commit()
+                if with_commit:
+                    cr.commit()
             except Exception as e:
                 rejected.append((i, d, tools.ustr(e)))
-                cr.commit()
+                if with_commit:
+                    cr.commit()
 
         return processed, rejected, headers
 
@@ -1360,6 +1363,10 @@ class orm_template(object):
                 if allfields and f not in allfields:
                     continue
                 res[f] = {'type': field_col._type}
+                if hasattr(field_col, '_with_null') and field_col._with_null:
+                    res[f]['with_null'] = True
+                if hasattr(field_col, 'null_value') and field_col.null_value:
+                    res[f]['null_value'] = field_col.null_value
                 # This additional attributes for M2M and function field is added
                 # because we need to display tooltip with this additional information
                 # when client is started in debug mode.
@@ -1585,7 +1592,7 @@ class orm_template(object):
             if node.get('filter_selector'):
                 try:
                     filter_eval = eval(node.get('filter_selector'))
-                    if filter_eval:
+                    if filter_eval and isinstance(filter_eval, list):
                         trans_filter_eval = []
                         for x in filter_eval:
                             trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])
@@ -3011,7 +3018,11 @@ class orm(orm_template):
         pass
 
     def _create_fk(self, cr, col_name, field_def, update=False):
-        ref = self.pool.get(field_def._obj)._table
+        try:
+            ref = self.pool.get(field_def._obj)._table
+        except:
+            print field_def._obj
+            raise
         # ir_actions is inherited so foreign key doesn't work on it
         if ref != 'ir_actions':
             to_create = True
@@ -3221,7 +3232,7 @@ class orm(orm_template):
                                 ('int4', 'integer_big', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                             ]
 
-                            if f_pg_type == 'varchar' and f._type == 'char' and f_pg_size < f.size:
+                            if f_pg_type == 'varchar' and f._type in ('char', 'selection') and f_pg_size < f.size:
                                 cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO temp_change_size' % (self._table, k))  # not_a_user_entry
                                 cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" VARCHAR(%d)' % (self._table, k, f.size))  # not_a_user_entry
                                 cr.execute('UPDATE "%s" SET "%s"=temp_change_size::VARCHAR(%d)' % (self._table, k, f.size))  # not_a_user_entry

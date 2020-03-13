@@ -399,7 +399,11 @@ class hq_report_ocb(report_sxw.report_sxw):
         pool = pooler.get_pool(cr.dbname)
         mi_obj = pool.get('msf.instance')
         period_obj = pool.get('account.period')
+        journal_obj = pool.get('account.journal')
+        # note: this list is used for both G/L and analytic journal types
         excluded_journal_types = ['hq', 'migration']  # journal types that should not be used to take lines
+        if not context.get('old_vi'):
+            excluded_journal_types.extend(['cur_adj', 'inkind', 'extra', 'system'])
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -457,8 +461,10 @@ class hq_report_ocb(report_sxw.report_sxw):
                 ]
 
                 if seqnums:
-                    je_ids = m_obj.search(cr, uid, [ ('name', 'in', seqnums) ],
-                                          context=context)
+                    excluded_journal_ids = journal_obj.search(cr, uid, [('type', 'in', excluded_journal_types)],
+                                                              order='NO_ORDER', context=context)
+                    je_ids = m_obj.search(cr, uid, [('name', 'in', seqnums), ('journal_id', 'not in', excluded_journal_ids)],
+                                          order='NO_ORDER', context=context)
                     if je_ids:
                         plresult_ji_in_ids = ml_obj.search(cr, uid, [
                             ('move_id', 'in', je_ids)
@@ -569,7 +575,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND c.instance_id in %s
                 AND c.state != 'draft';
                 """,
-            # Pay attention to take analytic line that are not on HQ and MIGRATION journals.
+            # get only the analytic lines which are not booked on the excluded journals
             'rawdata': """
                 SELECT al.id, i.code,
                        CASE WHEN j.code IN ('OD', 'ODHQ', 'ODX') THEN j.code ELSE aj.code END AS journal,
@@ -615,7 +621,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND al.exported in %s
                 AND al.instance_id in %s;
                 """,
-            # Exclude lines that come from a HQ or MIGRATION journal
+            # Ignore the lines booked on the excluded journals
             # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
             # Don't include the lines that have analytic lines. This is to not retrieve expense/income accounts
             'bs_entries_consolidated': """
@@ -631,7 +637,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 AND aml.exported in %s
                 AND aml.instance_id in %s;
                 """,
-            # Do not take lines that come from a HQ or MIGRATION journal
+            # Ignore the lines booked on the excluded journals
             # Do not take journal items that have analytic lines because they are taken from "rawdata" SQL request
             'bs_entries': """
                 SELECT aml.id, i.code, j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, 
@@ -801,11 +807,15 @@ class hq_report_ocb(report_sxw.report_sxw):
                     'key': 'balance_previous_month',
                     'query_params': (previous_period_id,
                                      # note: engagements are also excluded since there are no ENG/ENGI "G/L" journals
-                                     tuple(excluded_journal_types + ['cur_adj']),
+                                     tuple(excluded_journal_types),
                                      tuple(instance_ids)),
                 }
             ])
         if plresult_ji_in_ids:
+            if not context.get('old_vi'):
+                # Feb. 2020: log if this is used at least once. Cf. the whole code related to plresult_ji_in_ids might
+                # be obsolete in new OCB VI (in any case it's only used for Dec. export)
+                pool.get('ir.config_parameter').set_param(cr, 1, 'ocb_vi.has_pl_result', True)
             processrequests.append({
                 'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'plresult',

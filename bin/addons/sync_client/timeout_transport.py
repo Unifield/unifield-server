@@ -30,6 +30,9 @@ class TimeoutHTTPSConnection(httplib.HTTPSConnection):
         if self.timeout is not None:
             self.sock.settimeout(self.timeout)
 
+    def set_timeout(self, timeout):
+        self.timeout = timeout
+
 class TimeoutSafeTransport(xmlrpclib.SafeTransport):
 
     def __init__(self, timeout=None, *args, **kwargs):
@@ -37,7 +40,8 @@ class TimeoutSafeTransport(xmlrpclib.SafeTransport):
         self.timeout = timeout
 
     def make_connection(self, host):
-        self._connection = host, TimeoutHTTPSConnection(host)
+        chost, self._extra_headers, _ = self.get_host_info(host)
+        self._connection = host, TimeoutHTTPSConnection(chost)
         self._connection[1].set_timeout(self.timeout)
         return self._connection[1]
 

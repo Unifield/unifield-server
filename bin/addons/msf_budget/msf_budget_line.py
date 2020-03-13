@@ -376,9 +376,9 @@ class msf_budget_line(osv.osv):
         return res
 
     _columns = {
-        'budget_id': fields.many2one('msf.budget', 'Budget', ondelete='cascade'),
+        'budget_id': fields.many2one('msf.budget', 'Budget', ondelete='cascade', select=1),
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type', '!=', 'view')]),
-        'destination_id': fields.many2one('account.analytic.account', 'Destination', domain=[('category', '=', 'DEST')]),
+        'destination_id': fields.many2one('account.analytic.account', 'Destination', domain=[('category', '=', 'DEST')], select=1),
         'name': fields.function(_get_name, method=True, store=False, string="Name", type="char", readonly="True", size=512),
         'month1': fields.float("Month 01"),
         'month2': fields.float("Month 02"),

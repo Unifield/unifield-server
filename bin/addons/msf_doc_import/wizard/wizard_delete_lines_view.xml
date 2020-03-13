@@ -136,64 +136,6 @@
             </field>
         </record>
 
-        <!-- Auto supply line delete tree/search views -->
-        <record id="stock_warehouse_automatic_supply_line_tree_delete_view" model="ir.ui.view">
-            <field name="name">stock.warehouse.automatic.supply.line.tree.delete.view</field>
-            <field name="model">stock.warehouse.automatic.supply.line</field>
-            <field name="type">tree</field>
-            <field name="priority" eval="99" />
-            <field name="arch" type="xml">
-                <tree string="Automatic supply lines to remove" noteditable="True" >
-                    <field name="product_id" />
-                    <field name="product_qty" />
-                    <field name="product_uom_id" />
-                </tree>
-            </field>
-        </record>
-
-        <record id="stock_warehouse_automatic_supply_line_search_delete_view" model="ir.ui.view">
-            <field name="name">stock.warehouse.automatic.supply.line.search.delete.view</field>
-            <field name="model">stock.warehouse.automatic.supply.line</field>
-            <field name="type">search</field>
-            <field name="priority" eval="99" />
-            <field name="arch" type="xml">
-                <tree string="Automatic supply lines to remove" noteditable="True">
-                    <field name="product_id" />
-                    <field name="product_qty" />
-                </tree>
-            </field>
-        </record>
-        
-        <!-- Threshold value line delete tree/search views -->
-        <record id="threshold_value_line_tree_delete_view" model="ir.ui.view">
-            <field name="name">threshold.value.line.tree.delete.view</field>
-            <field name="model">threshold.value.line</field>
-            <field name="type">tree</field>
-            <field name="priority" eval="99" />
-            <field name="arch" type="xml">
-                <tree string="Threshold value lines to remove" noteditable="True">
-                    <field name="product_id" />
-                    <field name="product_uom_id" />
-                    <field name="fixed_threshold_value" invisible="context.get('compute_method') != 'fixed'" />
-                    <field name="fixed_product_qty" invisible="context.get('compute_method') != 'fixed'" />
-                    <field name="threshold_value" invisible="context.get('compute_method') != 'computed'" />
-                </tree>
-            </field>
-        </record>
-
-        <record id="threshold_value_line_search_delete_view" model="ir.ui.view">
-            <field name="name">threshold.value.line.search.delete.view</field>
-            <field name="model">threshold.value.line</field>
-            <field name="type">search</field>
-            <field name="priority" eval="99" />
-            <field name="arch" type="xml">
-                <search string="Threshold value lines to remove">
-                    <field name="product_id" />
-                    <field name="product_uom_id" />
-                </search>
-            </field>
-        </record>
-
         <!-- Stock inventory line delete tree/search views -->
         <record id="stock_inventory_line_tree_delete_view" model="ir.ui.view">
             <field name="name">stock.inventory.line.tree.delete.view</field>

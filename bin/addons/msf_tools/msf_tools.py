@@ -329,6 +329,17 @@ class data_tools(osv.osv):
 
         return True
 
+    def truncate_list(self, item_list, limit=300, separator=', '):
+        """
+        Returns a string corresponding to the list of items in parameter, separated by the "separator".
+        If the string > "limit", cuts it and adds "..." at the end.
+        """
+        list_str = separator.join([item for item in item_list if item]) or ''
+        if len(list_str) > limit:
+            list_str = "%s%s" % (list_str[:limit-3], '...')
+        return list_str
+
+
 data_tools()
 
 

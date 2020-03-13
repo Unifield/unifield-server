@@ -661,7 +661,12 @@
                                                         '&amp;', ('type', '=', 'out_invoice'), ('from_supply', '=', True)]}"/>
                             <newline/>
                             <field domain="[('partner_id.ref_companies', 'in', [company_id])]" name="partner_bank_id" />
-                            <field name="origin" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_supply', '=', True)]}"/>
+                            <field name="refunded_invoice_id" invisible="1"/>
+                            <field name="origin"
+                                   attrs="{'readonly': ['|', '|',
+                                                        ('state', '!=', 'draft'),
+                                                        ('refunded_invoice_id', '!=', False),
+                                                        ('from_supply', '=', True)]}"/>
                             <field colspan="4" domain="[('partner_id','=',partner_id)]" name="address_contact_id" />
                             <field name="move_id" />
                             <separator colspan="4" string="Additional Information"/>

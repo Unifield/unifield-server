@@ -769,7 +769,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 obj = self.pool.get(obj_type).browse(cr, uid, vals[field_name], context=context)
                 if not line_field:
                     # AD at line level
-                    invalid_small_amount = obj.analytic_distribution_state == 'invalid_small_amount' or False
+                    distrib_state = hasattr(obj, 'analytic_distribution_state') and getattr(obj, 'analytic_distribution_state') or ''
+                    invalid_small_amount = distrib_state == 'invalid_small_amount' or False
                 else:
                     # AD at header level
                     lines = hasattr(obj, line_field) and getattr(obj, line_field) or []
