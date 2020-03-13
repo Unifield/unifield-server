@@ -59,7 +59,7 @@ import fields
 from query import Query
 import tools
 from tools.safe_eval import safe_eval as eval
-
+import xmlid_no_delete
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
 from tools import SKIPPED_ELEMENT_TYPES, cache
 
@@ -3983,8 +3983,21 @@ class orm(orm_template):
             referenced_ids = pool_model_data.search(cr, uid,
                                                     [('res_id','in',list(sub_ids)),('model','=',self._name)],
                                                     order='NO_ORDER', context=context)
+
+            if self._name in xmlid_no_delete.prevent_deletion:
+                cr.execute('''select module, name from ir_model_data
+                        where
+                            (module, name) in %s and
+                            id in %s
+                        limit 1
+                ''', (tuple(xmlid_no_delete.prevent_deletion[self._name]), tuple(referenced_ids)))
+                no_delete = cr.fetchone()
+                if no_delete:
+                    raise except_orm(_('Error'), _('Unable to delete this record defined as Master Data: object: %s, xmlid: %s.%s') % (self._name, no_delete[0], no_delete[1]))
+
             # Step 2. Marching towards the real deletion of referenced records
             pool_model_data.unlink(cr, uid, referenced_ids, context=context)
+
 
             if context.get('avoid_sdref_deletion') and hasattr(self, '_unlink_sdref') and self._unlink_sdref:
                 cr.execute("DELETE FROM ir_model_data WHERE model=%s AND res_id in %s AND module='sd'", (self._name, sub_ids))
