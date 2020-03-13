@@ -108978,5 +108978,5 @@ msgstr "plus de PCM"
 
 #. module: account
 #: report:account.invoice2:0
-msgid "Payment Info:"
+msgid "Payment Information:"
 msgstr "Informations de paiement :"

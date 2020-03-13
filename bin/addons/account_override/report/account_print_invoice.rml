@@ -105,6 +105,14 @@
       <lineStyle kind="LINEAFTER" colorName="#000000" />
     </blockTableStyle>
 
+    <blockTableStyle id="TablePayment">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="0,0"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
+      <lineStyle kind="LINEBEFORE" colorName="#000000" />
+    </blockTableStyle>
+
     <blockTableStyle id="Table2">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
@@ -453,32 +461,16 @@
     <section>
       [[ (o.type == 'out_invoice' and not o.is_debit_note and not o.is_inkind_donation and not o.is_intermission) or removeParentNode('section') ]]
 
-      <blockTable style="Table9a">
+      <blockTable style="TablePayment" colWidths="190,340">
         <tr>
           <td>
-            <para style="terp_default_9" alignment="LEFT">[[translate('Payment Info:')]]</para>
+            <para style="terp_default_9" alignment="LEFT">[[translate('Payment Information:')]]</para>
           </td>
+          <td></td>
         </tr>
-        <tr>
-          <td>
-            <para style="terp_default_9" alignment="LEFT"></para>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <para style="terp_default_9" alignment="LEFT"></para>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <para style="terp_default_9" alignment="LEFT"></para>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <para style="terp_default_9" alignment="LEFT"></para>
-          </td>
-        </tr>
+        <tr></tr>
+        <tr></tr>
+        <tr></tr>
 	  </blockTable>
 
       <para style="Text body">
