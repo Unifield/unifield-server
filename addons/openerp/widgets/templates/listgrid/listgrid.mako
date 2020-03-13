@@ -189,6 +189,38 @@ if (auto_field && auto_field.val()){
 </%def>
 
 <div class="box-a list-a">
+% if any([field != 'button' and field_attrs.get('filter_selector') for field, field_attrs in headers]):
+<div class="o2m_filter_block">
+    <table id="${name}_o2m_filter" class="o2m_header_filter"><tr>
+        % for (field, field_attrs) in headers:
+            % if field != 'button' and field_attrs.get('filter_selector'):
+               <% has_filter = True %>
+                <td> ${field_attrs['string']|br}:
+                    % if field_attrs['type'] == 'selection':
+                        <select id="${name}_${field}" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" kind="selection">
+                            <option value=""></option>
+                            % for key, val in field_attrs['selection']:
+                                <option value="${key}">${val}</option>
+                            % endfor
+                        </select>
+                    % elif field_attrs['type'] == 'boolean':
+                        <select id="${name}_${field}" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" kind="boolean">
+                            <option value=""></option>
+                            <option value="t">${_('Yes')}</option>
+                            <option value="f">${_('No')}</option>
+                        </select>
+                    % else:
+                        <input id="${name}_${field}" type="text" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" onkeydown="if (event.keyCode == 13) new ListView('${name}').update_o2m_filter();"/>
+                    % endif
+                </td>
+            % endif
+        % endfor
+        <td><button type="button" onclick="new ListView('${name}').update_o2m_filter()">${_('Search')}</button></td>
+        <td><button type="button" onclick="new ListView('${name}').clear_filter()">${_('Clear')}</button></td>
+    </table>
+</div>
+% endif
+
     <div class="inner">
         <table id="${name}" class="gridview" width="100%" cellspacing="0" cellpadding="0">
             % if pageable:
@@ -291,38 +323,8 @@ if (auto_field && auto_field.val()){
                                 </td>
                                 % else:
                                 <td class="pager-cell" style="width: 90%">
-                                    <% has_filter = False %>
-                                    <table id="${name}_o2m_filter" class="o2m_header_filter"><tr>
-                                        % for (field, field_attrs) in headers:
-                                            % if field != 'button' and field_attrs.get('filter_selector'):
-                                               <% has_filter = True %>
-                                                <td> ${field_attrs['string']|br}:
-                                                    % if field_attrs['type'] == 'selection':
-                                                        <select id="${name}_${field}" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" kind="selection">
-                                                            <option value=""></option>
-                                                            % for key, val in field_attrs['selection']:
-                                                                <option value="${key}">${val}</option>
-                                                            % endfor
-                                                        </select>
-                                                    % elif field_attrs['type'] == 'boolean':
-                                                        <select id="${name}_${field}" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" kind="boolean">
-                                                            <option value=""></option>
-                                                            <option value="t">${_('Yes')}</option>
-                                                            <option value="f">${_('No')}</option>
-                                                        </select>
-                                                    % else:
-                                                        <input id="${name}_${field}" type="text" class="paging ignore_changes_when_leaving_page" style="width: auto" field="${field}" onkeydown="if (event.keyCode == 13) new ListView('${name}').update_o2m_filter();"/>
-                                                    % endif
-                                                </td>
-                                            % endif
-                                        % endfor
-                                        % if has_filter:
-                                            <td><button type="button" onclick="new ListView('${name}').update_o2m_filter()">${_('Search')}</button></td>
-                                            <td><button type="button" onclick="new ListView('${name}').clear_filter()">${_('Clear')}</button></td>
-                                        % endif
-                                    </table>
                                 </td>
-                                % endif 
+                                % endif
                                 <td class="pager-cell" style="width: 90%">
                                     ${pager.display()}
                                 </td>
