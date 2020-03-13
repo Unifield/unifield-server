@@ -21,7 +21,7 @@
 
 import osv
 import fields
-import sdref_no_delete
+import xmlid_no_delete
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
