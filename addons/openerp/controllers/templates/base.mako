@@ -33,7 +33,7 @@
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/notebook.css?v=16.0rc2"/>
 
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/pager.css"/>
-    <link rel="stylesheet" type="text/css" href="/openerp/static/css/listgrid.css?v=16.0rc2"/>
+    <link rel="stylesheet" type="text/css" href="/openerp/static/css/listgrid.css?v=16.1"/>
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/autocomplete.css"/>
 
     <!--[if lt IE 9]>
