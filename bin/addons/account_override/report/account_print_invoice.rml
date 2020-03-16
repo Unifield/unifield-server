@@ -105,7 +105,7 @@
       <lineStyle kind="LINEAFTER" colorName="#000000" />
     </blockTableStyle>
 
-    <blockTableStyle id="TablePayment">
+    <blockTableStyle id="Table_Payment">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
       <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="0,0"/>
@@ -124,7 +124,7 @@
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
     </blockTableStyle>
-    <blockTableStyle id="table_sign">
+    <blockTableStyle id="Table_Sign">
       <lineStyle kind="LINEBELOW" colorName="grey" start="0,0" stop="0,0"/>
       <lineStyle kind="BOX" colorName="black" start="1,0" stop="1,0"/>
       <blockValign value="MIDDLE"/>
@@ -460,7 +460,7 @@
     <!-- Section displayed only for STV -->
     <section>
       [[ (o.type == 'out_invoice' and not o.is_debit_note and not o.is_inkind_donation and not o.is_intermission) or removeParentNode('section') ]]
-      <blockTable style="TablePayment" colWidths="212,318">
+      <blockTable style="Table_Payment" colWidths="212,318">
         <tr>
           <td>
             <para style="terp_default_9" alignment="LEFT">[[translate('Payment Information:')]]</para>
@@ -482,7 +482,7 @@
         <font color="white"> </font>
       </para>
 
-      <blockTable colWidths="120mm, 60mm" style="table_sign">
+      <blockTable colWidths="120mm, 60mm" style="Table_Sign">
         <tr>
           <td></td>
           <td></td>
@@ -491,7 +491,7 @@
           <td><para style="terp_default_9">[[translate("(Name, Function)")]]</para></td>
         </tr>
       </blockTable>
-      <blockTable colWidths="120mm, 60mm" style="table_sign">
+      <blockTable colWidths="120mm, 60mm" style="Table_Sign">
         <tr>
           <td></td>
           <td></td>
