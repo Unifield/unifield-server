@@ -1070,7 +1070,7 @@ class replenishment_segment(osv.osv):
         calc_ids = calc_obj.search(cr, uid, [('segment_id', 'in', ids), ('state', 'not in', ['cancel', 'closed'])], context=context)
         if calc_ids:
             calc_name = calc_obj.read(cr, uid, calc_ids, ['name'], context=context)
-            raise osv.except_osv(_('Warning'), _('Please cancel or close the following Order Cacl:\n%s') % (', '.join([x['name'] for x in calc_name])))
+            raise osv.except_osv(_('Warning'), _('Please cancel or close the following Order Calc:\n%s') % (', '.join([x['name'] for x in calc_name])))
 
     def set_as_archived(self, cr, uid, ids, context=None):
         self.check_inprogress_order_calc(cr, uid, ids, context=context)

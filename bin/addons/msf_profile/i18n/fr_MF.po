@@ -108020,7 +108020,7 @@ msgstr "En attente enre DLS et CC"
 #. module: procurement_cycle
 #: code:addons/procurement_cycle/replenishment.py:1045
 #, python-format
-msgid "Please cancel or close the following Order Cacl:\n"
+msgid "Please cancel or close the following Order Calc:\n"
 "%s"
 msgstr "Veuillez annuler ou fermer les Calculs de commande suivants:\n"
 "%s"
