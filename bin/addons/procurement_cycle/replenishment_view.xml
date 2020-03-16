@@ -674,8 +674,8 @@
                             <field name="expired_qty_before_cons" />
                             <field name="total_expired_qty" />
                             <field name="projected_stock_qty" />
-                            <field name="unit_of_supply_amc" />
-                            <field name="unit_of_supply_fmc" />
+                            <field name="unit_of_supply_amc" string=" of supply (RR-AMC)"/>
+                            <field name="unit_of_supply_fmc" string=" of supply (RR-FMC)"/>
                             <field name="warning" />
                             <field name="open_loan" />
                             <field name="qty_lacking" />
@@ -741,6 +741,23 @@
                         </form>
                     </field>
                     <field name="state" />
+                    <html>
+                        <script type="text/javascript">
+                        set_label = function() {
+                            if  ($('#_terp_editable').val() == 'True') {
+                                var unit = $('#time_unit option:selected ').html();
+                            } else {
+                                var unit = $('#time_unit').html();
+                            }
+                            var amc_field = $('#grid-data-column\\/line_ids\\/unit_of_supply_amc');
+                            amc_field.html(unit+' '+amc_field.html());
+                            var fmc_field = $('#grid-data-column\\/line_ids\\/unit_of_supply_fmc')
+                            fmc_field.html(unit+' '+fmc_field.html());
+                        }
+                        new ListView('line_ids').after_reload = set_label;
+                        set_label();
+                        </script>
+                    </html>
                 </form>
             </field>
         </record>
@@ -808,8 +825,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Product List Consistency Report" hide_new_button="1" hide_delete_button="1" hide_edit_button="1" notselectable="1">
-                    <field name="default_code" />
-                    <field name="product_description" />
+                    <field name="product_id" />
                     <field name="name_seg" />
                     <field name="description_seg" />
                 </tree>
@@ -844,6 +860,8 @@
                     <field name="name_seg" />
                     <field name="description_seg" />
                     <field name="list_ids" />
+                    <newline />
+                    <filter string="Group by Product" name="group_product" icon="terp-accessories-archiver" context="{'group_by':'product_id'}" />
                 </search>
             </field>
         </record>
@@ -853,6 +871,7 @@
             <field name="res_model">replenishment.product.list</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_group_product': 1}</field>
         </record>
 
         <menuitem id="replenishment_product_list_menu"

@@ -2787,7 +2787,7 @@ class orm(orm_template):
             assert groupby_def and groupby_def._classic_write, "Fields in 'groupby' must be regular database-persisted fields (no function or related fields), or function fields with store=True"
 
         fget = self.fields_get(cr, uid, fields)
-        float_int_fields = filter(lambda x: fget[x]['type'] in ('float', 'integer'), fields)
+        float_int_fields = filter(lambda x: fget[x]['type'] in ('float', 'integer') or fget[x].get('group_operator'), fields)
         flist = ''
         group_count = group_by = groupby
         if groupby:
