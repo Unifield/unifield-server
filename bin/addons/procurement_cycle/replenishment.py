@@ -942,6 +942,7 @@ class replenishment_segment(osv.osv):
             _('New'): 'new',
         }
         error = []
+        code_created = {}
         created = 0
         updated = 0
         ignored = 0
@@ -957,12 +958,10 @@ class replenishment_segment(osv.osv):
             prod_code = prod_code.strip()
 
             cells_nb = len(row.cells)
-            if cells_nb > 4 and row.cells[4].data and not isinstance(row.cells[4].data, (int, long, float)):
-                line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[4].data))
 
             data_towrite = {
                 'status': cells_nb > 3 and status.get(row.cells[3].data and row.cells[3].data.strip()),
-                'buffer_qty': cells_nb > 4 and row.cells[4].data,
+                'buffer_qty': False,
                 'min_qty': 0,
                 'max_qty': 0,
                 'auto_qty': 0
@@ -975,7 +974,11 @@ class replenishment_segment(osv.osv):
                 })
 
 
-            if cells_nb > 4 and seg.rule == 'cycle':
+            if cells_nb > 6 and seg.rule == 'cycle':
+                if row.cells[6].data and not isinstance(row.cells[6].data, (int, long, float)):
+                    line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[6].data))
+                else:
+                    data_towrite['buffer_qty'] = row.cells[6].data
                 first_fmc_col = 7 - 3
                 for fmc in range(1, 13):
                     first_fmc_col += 3
@@ -1000,29 +1003,33 @@ class replenishment_segment(osv.osv):
                             'rr_fmc_from_%d' % fmc: row.cells[first_fmc_col+1].data.strftime('%Y-%m-%d'),
                             'rr_fmc_to_%d' % fmc: row.cells[first_fmc_col+2].data.strftime('%Y-%m-%d'),
                         })
-            elif cells_nb > 4 and seg.rule == 'minmax':
-                if not row.cells[4] or not isinstance(row.cells[4].data, (int, long, float)):
-                    line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[4].data))
-                elif not row.cells[5] or not isinstance(row.cells[5].data, (int, long, float)):
-                    line_error.append(_('Line %d: Max Qty, number expected, found %s') % (idx+1, row.cells[5].data))
-                elif row.cells[5].data < row.cells[4].data:
-                    line_error.append(_('Line %d: Max Qty (%s) must be larger than Min Qty (%s)') % (idx+1, row.cells[5].data, row.cells[4].data))
+            elif cells_nb > 6 and seg.rule == 'minmax':
+                if not row.cells[6] or not isinstance(row.cells[6].data, (int, long, float)):
+                    line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[6].data))
+                elif not row.cells[7] or not isinstance(row.cells[7].data, (int, long, float)):
+                    line_error.append(_('Line %d: Max Qty, number expected, found %s') % (idx+1, row.cells[7].data))
+                elif row.cells[7].data < row.cells[6].data:
+                    line_error.append(_('Line %d: Max Qty (%s) must be larger than Min Qty (%s)') % (idx+1, row.cells[7].data, row.cells[6].data))
                 else:
                     data_towrite.update({
-                        'min_qty': row.cells[4].data,
-                        'max_qty': row.cells[5].data,
+                        'min_qty': row.cells[6].data,
+                        'max_qty': row.cells[7].data,
                     })
-            elif cells_nb > 4:
-                if not row.cells[4] or not isinstance(row.cells[4].data, (int, long, float)):
-                    line_error.append(_('Line %d: Auto Supply Qty, number expected, found %s') % (idx+1, row.cells[4].data))
+            elif cells_nb > 6:
+                if not row.cells[6] or not isinstance(row.cells[6].data, (int, long, float)):
+                    line_error.append(_('Line %d: Auto Supply Qty, number expected, found %s') % (idx+1, row.cells[6].data))
                 else:
-                    data_towrite['auto_qty'] = row.cells[4].data
+                    data_towrite['auto_qty'] = row.cells[6].data
 
             if prod_code not in existing_line:
                 prod_id = product_obj.search(cr, uid, [('default_code', '=ilike', prod_code)], context=context)
                 if not prod_id:
                     line_error.append(_('Line %d: product code %s not found') % (idx+1, prod_code))
                 else:
+                    if prod_id[0] in code_created:
+                        line_error.append(_('Line %d: product code %s already defined in the file') % (idx+1, prod_code))
+
+                    code_created[prod_id[0]] = True
                     data_towrite['product_id'] = prod_id[0]
                     data_towrite['segment_id'] = seg.id
             else:
