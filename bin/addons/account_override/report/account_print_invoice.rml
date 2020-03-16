@@ -460,8 +460,7 @@
     <!-- Section displayed only for STV -->
     <section>
       [[ (o.type == 'out_invoice' and not o.is_debit_note and not o.is_inkind_donation and not o.is_intermission) or removeParentNode('section') ]]
-
-      <blockTable style="TablePayment" colWidths="190,340">
+      <blockTable style="TablePayment" colWidths="212,318">
         <tr>
           <td>
             <para style="terp_default_9" alignment="LEFT">[[translate('Payment Information:')]]</para>
@@ -482,6 +481,7 @@
       <para style="terp_default_9">
         <font color="white"> </font>
       </para>
+
       <blockTable style="table_sign">
         <tr>
           <td></td>
