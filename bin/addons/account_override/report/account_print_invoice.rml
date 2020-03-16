@@ -220,7 +220,7 @@
     </para>
 
     <para style="terp_header">[[ o.is_debit_note == True and translate('Debit Note') or o.is_intermission and translate('Intermission Voucher OUT') or translate('Invoice') ]] [[ o.number ]]
-    [[ ((o.type == 'out_invoice' and (o.state == 'open' or o.state == 'paid')) or removeParentNode('para')) and '' ]]</para>
+    [[ ((o.type == 'out_invoice' and (o.state in ('open', 'paid', 'inv_close'))) or removeParentNode('para')) and '' ]]</para>
     <para style="terp_header">PRO-FORMA [[ ((o.type == 'out_invoice' and o.state == 'proforma2') or removeParentNode('para')) and '' ]]</para>
     <para style="terp_header">[[ o.is_debit_note == True and translate('Draft Debit Note') or o.is_intermission and translate('Draft Intermission Voucher OUT') or translate('Draft Invoice') ]]
     [[ ((o.type == 'out_invoice' and o.state == 'draft') or removeParentNode('para')) and '' ]]</para>
@@ -482,7 +482,7 @@
         <font color="white"> </font>
       </para>
 
-      <blockTable style="table_sign">
+      <blockTable colWidths="120mm, 60mm" style="table_sign">
         <tr>
           <td></td>
           <td></td>
@@ -491,7 +491,7 @@
           <td><para style="terp_default_9">[[translate("(Name, Function)")]]</para></td>
         </tr>
       </blockTable>
-      <blockTable style="table_sign">
+      <blockTable colWidths="120mm, 60mm" style="table_sign">
         <tr>
           <td></td>
           <td></td>
