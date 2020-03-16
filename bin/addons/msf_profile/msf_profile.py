@@ -111,7 +111,7 @@ class patch_scripts(osv.osv):
             DELETE FROM account_invoice WHERE id IN (
                 SELECT a.id FROM account_invoice a LEFT JOIN account_invoice_line l ON a.id = l.invoice_id 
                     WHERE l.id IS NULL AND a.state = 'draft' AND a.type = 'out_invoice' AND a.is_debit_note = 'f'
-                    AND a.is_inkind_donation = 'f' AND a.is_intermission = 't' AND a.user_id = %s AND a.name like 'IN/%%'
+                    AND a.is_inkind_donation = 'f' AND a.is_intermission = 't' AND a.user_id = %s AND a.name like 'IN/%%' AND a.create_date < '2020-01-17 00:00:00'
             )
         """, (sync_id, ))
         self._logger.warn('%s empty IVOs have been deleted.', (cr.rowcount,))
