@@ -512,5 +512,6 @@
         <record id="us_7181_add_oc_subscrpition_to_unidata_products" model="patch.scripts">
             <field name="method">us_7181_add_oc_subscrpition_to_unidata_products</field>
         </record>
+
     </data>
 </openerp>
