@@ -42,7 +42,7 @@
                                     <field name="created_by_rfq" invisible="0" readonly="1" />
                                     <field name="state" invisible="1" />
                                     <field name="line_state" invisible="1" />
-                                    <button name="ask_unlink" type="object" string="Delete" icon="gtk-del" attrs="{'invisible': ['|', ('state', '=', 'done'), ('line_state', 'in', ['done', 'cancel'])]}" />
+                                    <button name="ask_unlink" type="object" string="Cancel" icon="gtk-del" attrs="{'invisible': ['|', ('state', '=', 'done'), ('line_state', 'in', ['done', 'cancel'])]}" />
                                 </tree>
                             </field>
                             <newline/>
@@ -517,12 +517,20 @@
             <field name="model">tender.line.cancel.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Tender line cancelation">
+                <form string="Tender line cancellation">
                     <field name="last_line" invisible="1" />
                     <field name="only_exp" invisible="1" />
+                    <field name="tender_line_has_rfq_lines" invisible="1" />
                     <group colspan="4" col="1" attrs="{'invisible': [('only_exp', '=', True)]}">
                         <html>
-                            <h4 style="text-align: center; margin: 10px">Would you re-source the needs sourced by this tender line ?</h4>
+                            <h4 style="text-align: center; margin: 10px"><translate>Would you re-source the needs sourced by this tender line ?</translate></h4>
+                        </html>
+                    </group>
+                    <group colspan="6" attrs="{'invisible': [('tender_line_has_rfq_lines', '=', False)]}">
+                        <html>
+                            <h4 style="text-align: center; margin: 10px"><translate>
+                                The tender line(s) you are about to cancel are linked to open RfQ line(s). They will be cancelled as well if you proceed.
+                            </translate></h4>
                         </html>
                     </group>
                     <group colspan="6" attrs="{'invisible': [('last_line', '=', False)]}">
@@ -535,16 +543,14 @@
                         </html>
                     </group>
                     <newline />
-                    <group colspan="4" col="6" attrs="{'invisible': [('only_exp', '=', True)]}">
-                        <separator string="Actions" colspan="6" />
-                        <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
-                        <button name="just_cancel" string="No" type="object" icon="gtk-execute" colspan="2" context="{'has_to_be_resourced': False}" />
-                        <button name="cancel_and_resource" string="Yes" type="object" icon="gtk-execute" colspan="2" />
-                    </group>
-                    <group colspan="4" col="4" attrs="{'invisible': [('only_exp', '=', False)]}">
+                    <group colspan="4" col="4" attrs="{'invisible': [('only_exp', '=', True)]}">
                         <separator string="Actions" colspan="4" />
-                        <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
-                        <button name="just_cancel" string="Confirm cancelation" type="object" icon="gtk-execute" colspan="2" context="{'has_to_be_resourced': False}" />
+                        <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" context="{'has_to_be_resourced': False}" />
+                        <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                    </group>
+                    <group colspan="4" col="2" attrs="{'invisible': [('only_exp', '=', False)]}">
+                        <separator string="Actions" colspan="2" />
+                        <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" context="{'has_to_be_resourced': False}" />
                     </group>
                 </form>
             </field>
@@ -556,7 +562,7 @@
             <field name="type">form</field>
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
-                <form string="Tender cancelation">
+                <form string="Tender cancellation">
                     <group colspan="4" col="1">
                         <html>
                             <h4 style="text-align: center; margin: 10px">All lines of this tender have been canceled. Would you also cancel this tender ?</h4>
@@ -575,22 +581,27 @@
             <field name="model">tender.cancel.wizard</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Tender cancelation">
+                <form string="Tender cancellation">
                     <field name="not_draft" invisible="1" />
+                    <field name="tender_source" invisible="1" />
                     <group colspan="4" col="1" attrs="{'invisible': [('not_draft', '=', False)]}">
                         <html>
-                            <h4 style="text-align: center; margin: 10px">Some Requests for Quotation have been generated by this tender. All these RfQs will be canceled if you cancel the tender.</h4>
+                            <h4 style="text-align: center; margin: 10px">
+                                <translate>Some Requests for Quotation have been generated by this tender. All these RfQs will be canceled if you cancel the tender.</translate>
+                            </h4>
                         </html>
                     </group>
-                    <group colspan="4" col="1">
+                    <group colspan="4" col="1" attrs="{'invisible': [('tender_source', '=', False)]}">
                         <html>
-                            <h4 style="text-align: center; margin: 10px">If you click on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines attached to this tender will be re-sourced.</h4>
+                            <h4 style="text-align: center; margin: 10px">
+                                <translate>If you click on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines attached to this tender will be re-sourced.</translate>
+                            </h4>
                         </html>
                     </group>
                     <newline />
                     <separator string="Actions" />
                     <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" context="{'has_to_be_resourced': False}" />
-                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" attrs="{'invisible': [('tender_source', '=', False)]}" />
                 </form>
             </field>
         </record>
@@ -602,15 +613,29 @@
             <field name="priority" eval="101" />
             <field name="arch" type="xml">
                 <form string="Cancel Request for Quotation">
+                    <field name="has_linked_line" invisible="1" />
+                    <field name="cancel_linked_tender" invisible="1" />
                     <group colspan="4" col="1">
                         <html>
-                            <h4 style="text-align: center; margin: 10px">If you click on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines sourced by this Request for Quotation will be re-sourced.</h4>
+                            <h3 style="text-align: center; margin: 13px"><translate>Please confirm that you want to cancel all lines of this RfQ</translate></h3>
+                        </html>
+                    </group>
+                    <group colspan="4" col="1" attrs="{'invisible': [('has_linked_line', '=', False)]}">
+                        <html>
+                            <h3 style="text-align: center; margin: 10px"><translate>If you click on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines sourced by this Request for Quotation will be re-sourced.</translate></h3>
+                        </html>
+                    </group>
+                    <group colspan="4" col="1" attrs="{'invisible': [('cancel_linked_tender', '=', False)]}">
+                        <html>
+                            <h3 style="text-align: center; margin: 10px"><translate>This RfQ is the only non-cancelled one linked to a Tender. You can cancel it as well by clicking 'Cancel only both' or 'Cancel both &amp; Resource the Tender'.</translate></h3>
                         </html>
                     </group>
                     <newline />
                     <separator string="Actions" />
-                    <button name="cancel_po" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
-                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_po" string="Cancel only" type="object" icon="gtk-cancel" colspan="1" />
+                    <button name="cancel_and_cancel_tender" string="Cancel only both" type="object" icon="gtk-cancel" colspan="1" attrs="{'invisible': [('cancel_linked_tender', '=', False)]}" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="1" attrs="{'invisible': [('has_linked_line', '=', False)]}" />
+                    <button name="cancel_and_resource_tender" string="Cancel both &amp; Resource the Tender" type="object" icon="gtk-cancel" colspan="1" attrs="{'invisible': [('cancel_linked_tender', '=', False), ('order_id.tender_id.sale_order_id', '!=', False)]}" />
                 </form>
             </field>
         </record>

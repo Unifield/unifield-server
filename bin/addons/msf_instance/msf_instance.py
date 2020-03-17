@@ -680,7 +680,8 @@ class msf_instance_cloud(osv.osv):
                 to_write['active'] = False
             elif to_activate:
                 if not cron_data.active:
-                    to_write['active'] = True
+                    if self.pool.get('backup.config').search(cr, uid, [('backup_type', '=', 'sharepoint')]):
+                        to_write['active'] = True
 
                 next_cron = DateTime.strptime(cron_data.nextcall, '%Y-%m-%d %H:%M:%S')
                 if not cron_data.active or abs(round(next_cron.hour + next_cron.minute/60.,2) - round(myself['cloud_schedule_time'],2)) > 0.001:
@@ -707,6 +708,17 @@ class msf_instance_cloud(osv.osv):
         return now_dt >= start_dt or now_dt <= end_dt
 
     def send_backup_bg(self, cr, uid, progress=False, context=None):
+        if not self.pool.get('backup.config').search(cr, uid, [('backup_type', '=', 'sharepoint')]):
+            self._logger.warn('SharePoint push: the cron task is active but the backup configuration is set to Cont. Backup')
+            return True
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        if not local_instance:
+            return True
+        info = self._get_cloud_info(cr, uid, local_instance.id)
+        for data in ['url', 'login', 'password']:
+            if not info[data]:
+                self.pool.get('sync.version.instance.monitor').create(cr, uid, {'cloud_error': 'SharePoint indentifiers not set.'}, context=context)
+                return True
         thread = threading.Thread(target=self.send_backup_run, args=(cr.dbname, uid, progress, context))
         thread.start()
         return True
@@ -739,7 +751,7 @@ class msf_instance_cloud(osv.osv):
         progress_obj = False
 
         try:
-            if not config.get('send_to_onedrive') and not misc.use_prod_sync(cr):
+            if not config.get('send_to_onedrive') and not misc.use_prod_sync(cr, uid, self.pool):
                 raise osv.except_osv(_('Warning'), _('Only production instances are allowed !'))
 
             if not local_instance:

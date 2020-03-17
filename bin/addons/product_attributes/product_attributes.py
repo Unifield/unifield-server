@@ -394,6 +394,16 @@ class product_attributes(osv.osv):
 
         return [('id', 'in', ids)]
 
+    def _get_int_status_code(self, cr, uid, ids, field_name, args, context=None):
+        if context is None:
+            context = {}
+        res = {}
+
+        for product in self.browse(cr, uid, ids, fields_to_fetch=['international_status'], context=context):
+            res[product.id] = product.international_status.code
+
+        return res
+
     def _get_restriction(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
@@ -654,8 +664,9 @@ class product_attributes(osv.osv):
             string='Old code',
             size=1024,
         ),
-        'new_code' : fields.char('New code', size=64),
+        'new_code': fields.char('New code', size=64),
         'international_status': fields.many2one('product.international.status', 'Product Creator', required=False),
+        'int_status_code': fields.function(_get_int_status_code, method=True, readonly=True, type="char", size=64, string="Code of Product Creator", store=False),
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'batch_attributes': fields.function(_get_batch_attributes, type='selection', selection=[('no', 'X'), ('bn', 'BN+ED'), ('ed', 'ED only')], method=True, fnct_search=_search_batch_attributes, string="Batch Attr."),
@@ -832,6 +843,8 @@ class product_attributes(osv.osv):
         'state_ud': fields.selection(
             selection=[
                 ('valid', 'Valid'),
+                ('outdated', 'Outdated'),
+                ('discontinued', 'Discontinued'),
                 ('phase_out', 'Phase Out'),
                 ('stopped', 'Stopped'),
                 ('archived', 'Archived'),
@@ -841,6 +854,7 @@ class product_attributes(osv.osv):
             readonly=True,
             help="Automatically filled with UniData information.",
         ),
+        'oc_subscription': fields.boolean(string='OC Subscription'),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=7),
         'gmdn_code' : fields.char('GMDN Code', size=5),
@@ -923,9 +937,13 @@ class product_attributes(osv.osv):
         'function_value': fields.text(string='Function', translate=True),
         'standard_ok': fields.selection(
             selection=[
-                ('True', 'Standard'),
-                ('False', 'Non-standard'),
+                #('True', 'Standard'),
+                #('False', 'Non-standard'),
+                ('standard', 'Standard'),
+                ('non_standard', 'Non-standard'),
+                ('non_standard_local', 'Non-standard Local'),
             ],
+            size=20,
             string='Standardization Level',
             required=True,
         ),
@@ -967,10 +985,11 @@ class product_attributes(osv.osv):
         'restricted_country': False,
         'sterilized': 'no',
         'single_use': 'no',
-        'standard_ok': 'False',
+        'standard_ok': 'non_standard',
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
+        'oc_subscription': False,
     }
 
     def _check_uom_category(self, cr, uid, ids, context=None):
@@ -1247,6 +1266,7 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
 
+        self.clean_standard(cr, uid, vals, context)
         def update_existing_translations(model, res_id, xmlid):
             # If we are in the creation of product by sync. engine, attach the already existing translations to this product
             if context.get('sync_update_execution'):
@@ -1298,6 +1318,11 @@ class product_attributes(osv.osv):
                 vals['heat_sensitive_item'] = heat2_id
             vals.update(self.onchange_heat(cr, uid, False, vals['heat_sensitive_item'], context=context).get('value', {}))
 
+        if vals.get('international_status') and 'oc_subscription' not in vals:
+            intstat_code = self.pool.get('product.international.status').browse(cr, uid, vals['international_status'],
+                                                                                fields_to_fetch=['code'], context=context).code
+            vals['oc_subscription'] = intstat_code == 'unidata'
+
         for f in ['sterilized', 'closed_article', 'single_use']:
             if f in vals and not vals.get(f):
                 vals[f] = 'no'
@@ -1346,6 +1371,22 @@ class product_attributes(osv.osv):
 
         return converted
 
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
+        # to allow True / False in standard_ok for old sync updates
+
+        fg = super(product_attributes, self).fields_get(cr, uid, fields=fields, context=context, with_uom_rounding=with_uom_rounding)
+        if context and context.get('sync_update_execution') and  fg.get('standard_ok', {}).get('selection'):
+            selection = fg['standard_ok']['selection'][:]
+            selection += [('False', 'Non Standard (deprecated)'), ('True', 'Standard (deprecated)')]
+            fg['standard_ok']['selection'] = selection
+        return fg
+
+    def clean_standard(self, cr, uid, vals, context):
+        if vals and 'standard_ok' in vals:
+            if vals['standard_ok'] == 'True':
+                vals['standard_ok'] = 'standard'
+            elif vals['standard_ok'] == 'False':
+                vals['standard_ok'] = 'non_standard'
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
@@ -1360,6 +1401,7 @@ class product_attributes(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        self.clean_standard(cr, uid, vals, context)
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']
@@ -1526,6 +1568,7 @@ class product_attributes(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # TODO JFB RR: constraint
         location_obj = self.pool.get('stock.location')
         po_line_obj = self.pool.get('purchase.order.line')
         tender_line_obj = self.pool.get('tender.line')
@@ -1534,14 +1577,6 @@ class product_attributes(osv.osv):
         kit_obj = self.pool.get('composition.item')
         inv_obj = self.pool.get('stock.inventory.line')
         in_inv_obj = self.pool.get('initial.stock.inventory.line')
-        auto_supply_obj = self.pool.get('stock.warehouse.automatic.supply')
-        auto_supply_line_obj = self.pool.get('stock.warehouse.automatic.supply.line')
-        cycle_obj = self.pool.get('stock.warehouse.order.cycle')
-        cycle_line_obj = self.pool.get('stock.warehouse.order.cycle.line')
-        threshold_obj = self.pool.get('threshold.value')
-        threshold_line_obj = self.pool.get('threshold.value.line')
-        orderpoint_obj = self.pool.get('stock.warehouse.orderpoint')
-        orderpoint_line_obj = self.pool.get('stock.warehouse.orderpoint.line')
         invoice_obj = self.pool.get('account.invoice.line')
 
         error_obj = self.pool.get('product.deactivation.error')
@@ -1791,43 +1826,6 @@ class product_attributes(osv.osv):
                         'res_id': wizard_id,
                         'target': 'new',
                         'context': context}
-
-        # Remove the replenishment rules associated to this product
-        # Automatic supply
-        auto_line_ids = auto_supply_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
-        for auto in auto_supply_line_obj.browse(cr, uid, auto_line_ids, context=context):
-            if len(auto.supply_id.line_ids) == 1:
-                auto_supply_obj.unlink(cr, uid, [auto.supply_id.id], context=context)
-            else:
-                auto_supply_line_obj.unlink(cr, uid, [auto.id], context=context)
-
-        # Order cycle
-        cycle_ids = cycle_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
-        for cycle in cycle_line_obj.browse(cr, uid, cycle_ids, context=context):
-            if len(cycle.order_cycle_id.product_line_ids) == 1:
-                cycle_obj.unlink(cr, uid, [cycle.order_cycle_id.id], context=context)
-            else:
-                cycle_line_obj.unlink(cr, uid, [cycle.id], context=context)
-
-        # Threshold value
-        threshold_ids = threshold_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
-        for threshold in threshold_line_obj.browse(cr, uid, threshold_ids, context=context):
-            if len(threshold.threshold_value_id.line_ids) == 1:
-                threshold_obj.unlink(cr, uid, [threshold.threshold_value_id.id], context=context)
-            else:
-                threshold_line_obj.unlink(cr, uid, [threshold.id], context=context)
-
-        # Minimum stock rules
-        orderpoint_line_ids = orderpoint_line_obj.search(cr, uid,
-                                                         [('product_id', 'in', ids)], context=context)
-        for orderpoint_line in orderpoint_line_obj.browse(cr, uid,
-                                                          orderpoint_line_ids, context=context):
-            if len(orderpoint_line.supply_id.line_ids) == 1:
-                orderpoint_obj.unlink(cr, uid, [orderpoint_line.supply_id.id],
-                                      context=context)
-            else:
-                orderpoint_line_obj.unlink(cr, uid, [orderpoint_line.id],
-                                           context=context)
 
         if context.get('sync_update_execution', False):
             context['bypass_sync_update'] = True

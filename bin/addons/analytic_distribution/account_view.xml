@@ -93,7 +93,7 @@
                         <field name="analytic_distribution_id" invisible="1"/>
                     </xpath>
                     <xpath expr="/form//tree" position="attributes">
-                        <attribute name="colors">blue:state in ('draft') and analytic_distribution_state in ('valid', 'none');black:state in ('valid') and analytic_distribution_state in ('valid', 'none');red:analytic_distribution_state in ('invalid') or state in ('draft')</attribute>
+                        <attribute name="colors">blue:state in ('draft') and analytic_distribution_state in ('valid', 'none');black:state in ('valid') and analytic_distribution_state in ('valid', 'none');red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or state in ('draft')</attribute>
                     </xpath>
                     <xpath expr="/form//tree//field[@name='partner_id']" position="after">
                         <field name="analytic_distribution_id" invisible="1"/>

@@ -23,7 +23,6 @@ import related_sourcing
 import sale_order_line
 import wizard
 
-import procurement_order
 import product_supplierinfo
 import product_template
 import purchase_order

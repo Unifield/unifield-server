@@ -15,6 +15,7 @@ from xlwt import Workbook, easyxf, Borders
 import tempfile
 import base64
 
+
 class report_stock_move(osv.osv):
     _name = "report.stock.move"
     _rec_name = 'location_id'
@@ -503,9 +504,34 @@ product will be shown.""",
         )
 
     def getLines(self, cr, uid, datas, currency_id, context=None):
-
         if context is None:
             context = {}
+
+        PARTNER_TYPES = {
+            'internal': _('Internal'),
+            'section': _('Inter-section'),
+            'external': _('External'),
+            'esc': _('ESC'),
+            'intermission': _('Intermission'),
+        }
+
+        ORDER_TYPES = {
+            'regular': _('Regular'),
+            'donation_exp': _('Donation before expiry'),
+            'donation_st': _('Standard donation'),
+            'loan': _('Loan'),
+            'in_kind': _('In Kind Donation'),
+            'purchase_list': _('Purchase List'),
+            'direct': _('Direct Purchase Order'),
+        }
+
+        ORDER_CATEGORIES = {
+            'medical': _('Medical'),
+            'log': _('Logistic'),
+            'service': _('Service'),
+            'transport': _('Transport'),
+            'other': _('Other'),
+        }
 
         _logger = logging.getLogger('in.out.report')
         prod_obj = self.pool.get('product.product')
@@ -552,12 +578,19 @@ product will be shown.""",
                     pick.name as pick_name,
                     m.date as date,
                     uom.name as uom_name,
+                    nom.name as nom_name,
                     t.standard_price as standard_price,
                     m.location_id as location_src_id,
                     m.location_dest_id as location_dest_id,
+                    par.name as partner_name,
+                    par.partner_type as partner_type,
                     m.reason_type_id as reason_type_id,
                     lot.name as lot_name,
                     lot.life_date as life_date,
+                    COALESCE(pick.origin, m.origin) as origin,
+                    pi.ref as pi_name,
+                    case when m.sale_line_id is not null and not so.procurement_request then so.order_type when m.purchase_line_id is not null then po.order_type end as order_type,
+                    case when m.sale_line_id is not null then so.categ when m.purchase_line_id is not null then po.categ end as order_category,
                     case when pick.subtype not in ('ppl', 'packing') then null when so.procurement_request then %s else pl.currency_id end as bug_pl
                 from
                     stock_move m
@@ -566,10 +599,16 @@ product will be shown.""",
                     inner join product_template t on t.id = p.product_tmpl_id
                     left join stock_picking pick on m.picking_id = pick.id
                     left join stock_production_lot lot on lot.id = m.prodlot_id
-                    left join ir_translation trans on trans.name='product.template,name' and trans.res_id=t.id and lang=%s
+                    left join ir_translation trans on trans.name='product.template,name' and trans.res_id=t.id and trans.lang=%s
                     left join sale_order_line sol on m.sale_line_id = sol.id
                     left join sale_order so on sol.order_id = so.id
+                    left join purchase_order_line pol on m.purchase_line_id = pol.id
+                    left join purchase_order po on pol.order_id = po.id
                     left join product_pricelist pl on so.pricelist_id = pl.id
+                    left join product_nomenclature nom on nom.id = t.nomen_manda_0
+                    left join res_partner par on par.id = m.partner_id
+                    left join physical_inventory_discrepancy pi_discr on pi_discr.move_id = m.id
+                    left join physical_inventory pi on pi.id = pi_discr.inventory_id
                 where
                     m.id in %s
                 order by p.default_code, m.date asc, lot.name
@@ -606,7 +645,6 @@ product will be shown.""",
                         prod_stock_cache[move['product_id']] = {'to_date': move_date, 'stock': prod_stock}
                     else:
                         prod_stock = prod_stock_cache[move['product_id']]['stock']
-
 
                     if move['prodlot_id']:
                         ctx.update({'prodlot_id': move['prodlot_id'], 'from_strict_date': bn_stock_cache.get(move['prodlot_id'], {}).get('to_date', False)})
@@ -645,6 +683,7 @@ product will be shown.""",
                         move['default_code'],
                         move['product_name'],
                         move['uom_name'],
+                        move['nom_name'],
                         move_date and datetime.datetime.strptime(move_date, '%Y-%m-%d %H:%M:%S') or '',
                         move['lot_name'] or '',
                         move['life_date'] and datetime.datetime.strptime(move['life_date'], '%Y-%m-%d'),
@@ -655,8 +694,13 @@ product will be shown.""",
                         prod_stock,
                         location_info.get(move['location_src_id']),
                         location_info.get(move['location_dest_id']),
+                        move['partner_name'],
+                        PARTNER_TYPES.get(move['partner_type']) or '',
                         reason_info.get(move['reason_type_id']) or '',
-                        move['pick_name'] or move['move_name'] or '',
+                        move['pi_name'] or move['pick_name'] or move['move_name'] or '',
+                        move['pi_name'] and move['move_name'] or move['origin'] or '',
+                        ORDER_TYPES.get(move['order_type']) or '',
+                        ORDER_CATEGORIES.get(move['order_category']) or '',
                     ]
 
             raise StopIteration
@@ -726,6 +770,13 @@ product will be shown.""",
                 """)
             row_style.borders = borders
 
+            row_left_style = easyxf("""
+                font: height 200;
+                font: name Calibri;
+                align: wrap on, vert center, horiz left;
+            """)
+            row_left_style.borders = borders
+
             date_time_format = easyxf(
                 """
                     font: height 200;
@@ -774,7 +825,7 @@ product will be shown.""",
 
             row_count += 1
             pos = 0
-            headers = [(_('Product Code'), '', 25), (_('Product Description'), '', 70), (_('UoM'), '', 11),  (_('Stock Move Date'), date_time_format,20), (_('Batch'), '',30), (_('Exp Date'), date_format, 11), (_('Quantity'), '', 10), (_('Unit Price (%s)') % (currency.name,), '', 10), (_('Movement value (%s)') % (currency.name,) , '', 10), (_('BN stock after movement (instance)'), '', 10), (_('Total stock after movement (instance)'), '', 10),  (_('Source'), '', 40), (_('Destination'), '', 40), (_('Reason Type'), '', 30), (_('Document Ref.'), '', 40)]
+            headers = [(_('Product Code'), '', 25), (_('Product Description'), '', 70), (_('UoM'), '', 11),  (_('Product Main Type'), '', 11),  (_('Stock Move Date'), date_time_format,20), (_('Batch'), '',30), (_('Exp Date'), date_format, 11), (_('Quantity'), '', 10), (_('Unit Price (%s)') % (currency.name,), '', 10), (_('Movement value (%s)') % (currency.name,) , '', 10), (_('BN stock after movement (instance)'), '', 10), (_('Total stock after movement (instance)'), '', 10),  (_('Source'), '', 40), (_('Destination'), '', 40), (_('Partner'), '', 30), (_('Partner Type'), '', 15), (_('Reason Type'), '', 30), (_('Document Ref.'), '', 40), (_('Origin'), '', 70), (_('Order Type'), '', 15), (_('Order Category'), '', 11)]
 
             for header_row, col_type, size in headers:
                 sheet.col(pos).width = size * 256
@@ -793,7 +844,10 @@ product will be shown.""",
                     if value and headers[col_count][1]:
                         style = headers[col_count][1]
                     else:
-                        style = row_style
+                        if col_count == 18:  # Change style on Origin column
+                            style = row_left_style
+                        else:
+                            style = row_style
                     sheet.write(row_count, col_count, value, style)
                     col_count += 1
                 #sheet.row(row_count).height = 60*20

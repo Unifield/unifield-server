@@ -901,19 +901,19 @@
                                 <button name="set_delivered"
                                         icon="gtk-apply"
                                         type="object"
-                                        string="Confirm Delivery"
+                                        string="Confirm Reception"
                                         attrs="{'invisible': ['|', '|', '|', '|',
                                                               ('type', '!=', 'out'), ('subtype', '!=', 'standard'),
                                                               ('state', '!=', 'done'),
                                                               ('partner_type', 'not in', ['internal', 'intermission', 'section']),
                                                               ('is_company', '=', True),
                                                               ]}"
-                                        confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"
+                                        confirm="Synchronization engine should confirm the reception once recorded on the receiving instance, do you want to continue?"
                                 />
                                 <button name="set_delivered"
                                         icon="gtk-apply"
                                         type="object"
-                                        string="Confirm Delivery"
+                                        string="Confirm Reception"
                                         attrs="{'invisible': ['|', '|', '|',
                                                               ('type', '!=', 'out'), ('subtype', '!=', 'standard'),
                                                               ('state', '!=', 'done'),

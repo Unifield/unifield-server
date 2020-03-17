@@ -27,7 +27,6 @@
                 "stock_override",
                 "msf_order_date",
                 "stock",
-                "threshold_value",
                 "procurement_cycle",
                 "procurement_auto",
                 ],

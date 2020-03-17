@@ -12,17 +12,24 @@
                     <field name="parent_model" invisible="1" />
                     <field name="search_default_not_restricted" invisible="1" />
                     <field name="current_id" invisible="1" />
-                    <field name="product_ids" nolabel="1" colspan="4" mode="tree" domain="context.get('product_ids_domain', [])" context="{'search_default_not_restricted': search_default_not_restricted, 'wizard_id': current_id}" on_change="add_products(product_ids)">
-                        <tree string="Products" editable="top">
-                            <field name="default_code" readonly="True" />
-                            <field name="name" readonly="True" />
-                            <field name="uom_id" invisible="1" />
-                            <field name="import_product_qty" on_change="on_change_import_product_qty(import_product_qty, context)" readonly="False" />
-                        </tree>
-                    </field>
-                    <separator colspan="4" string="Actions" />
-                    <button special="cancel" string="Cancel" icon="gtk-cancel" />
-                    <button name="fill_lines" string="Add products" icon="terp-check" colspan="3" type="object" />
+                    <field name="display_error" invisible="1" />
+                    <group colspan="4" attrs="{'invisible': [('display_error', '=', True)]}">
+                        <field name="product_ids" nolabel="1" colspan="4" mode="tree" domain="context.get('product_ids_domain', [])" context="{'search_default_not_restricted': search_default_not_restricted, 'wizard_id': current_id}" on_change="add_products(product_ids)">
+                            <tree string="Products" editable="top">
+                                <field name="default_code" readonly="True" />
+                                <field name="name" readonly="True" />
+                                <field name="uom_id" invisible="1" />
+                                <field name="import_product_qty" on_change="on_change_import_product_qty(import_product_qty, context)" readonly="False" />
+                            </tree>
+                        </field>
+                        <separator colspan="4" string="Actions" />
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                        <button name="fill_lines" string="Add products" icon="terp-check" colspan="3" type="object" />
+                    </group>
+                    <group colspan="4" attrs="{'invisible': [('display_error', '=', False)]}">
+                        <field name="msg" readonly="1" colspan="4" widget="full_text" nolabel="1"/>
+                        <button type="object" name="button_close" string="Ok" icon="terp-check" colspan="4"/>
+                    </group>
                 </form>
             </field>
         </record>
@@ -38,15 +45,22 @@
                     <field name="parent_model" invisible="1" />
                     <field name="search_default_not_restricted" invisible="1" />
                     <field name="current_id" invisible="1" />
-                    <field name="product_ids" nolabel="1" colspan="4" mode="tree" domain="context.get('product_ids_domain', [])" context="{'search_default_not_restricted': search_default_not_restricted, 'wizard_id': current_id}">
-                        <tree string="Products" editable="top">
-                            <field name="default_code" readonly="True" />
-                            <field name="name" readonly="True" />
-                        </tree>
-                    </field>
-                    <separator colspan="4" string="Actions" />
-                    <button special="cancel" string="Cancel" icon="gtk-cancel" />
-                    <button name="fill_lines" string="Add products" icon="terp-check" colspan="3" type="object" />
+                    <field name="display_error" invisible="1" />
+                    <group colspan="4" attrs="{'invisible': [('display_error', '=', True)]}">
+                        <field name="product_ids" nolabel="1" colspan="4" mode="tree" domain="context.get('product_ids_domain', [])" context="{'search_default_not_restricted': search_default_not_restricted, 'wizard_id': current_id}">
+                            <tree string="Products" editable="top">
+                                <field name="default_code" readonly="True" />
+                                <field name="name" readonly="True" />
+                            </tree>
+                        </field>
+                        <separator colspan="4" string="Actions" />
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                        <button name="fill_lines" string="Add products" icon="terp-check" colspan="3" type="object" />
+                    </group>
+                    <group colspan="4" attrs="{'invisible': [('display_error', '=', False)]}">
+                        <field name="msg" readonly="1" colspan="4" widget="full_text" nolabel="1"/>
+                        <button type="object" name="button_close" string="Ok" icon="terp-check" colspan="4"/>
+                    </group>
                 </form>
             </field>
         </record>

@@ -89,7 +89,7 @@ class wizard_advance_line(osv.osv_memory):
             line_distrib_id = line.analytic_distribution_id and line.analytic_distribution_id.id or False
             account_id = line.account_id and line.account_id.id or False
             res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(
-                cr, uid, line_distrib_id, cash_return_distrib_id, account_id)
+                cr, uid, line_distrib_id, cash_return_distrib_id, account_id, amount=line.amount or 0.0)
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
@@ -151,7 +151,7 @@ class wizard_advance_line(osv.osv_memory):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'analytic_distribution_state': fields.function(
             _get_distribution_state, method=True, type='selection',
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
             string="Distribution state",
             help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(
@@ -926,7 +926,8 @@ class wizard_cash_return(osv.osv_memory):
             if partner:
                 if partner._name == 'res.partner':
                     partner_id = partner.id
-                    advances_with_supplier.setdefault(adv_move, []).append(advance)
+                    if partner.partner_type not in ('intermission', 'section'):
+                        advances_with_supplier.setdefault(adv_move, []).append(advance)
                 elif partner._name == 'hr.employee':
                     line_employee_id = partner.id
             debit = abs(advance.amount)
@@ -945,7 +946,8 @@ class wizard_cash_return(osv.osv_memory):
                                            account_id, debit, credit, adv_return_ref, adv_move, distrib_id, context=context)
             adv_move_data.append((adv_move, adv_id))
 
-        # if advance lines have a Partner Third Party: create Payable Entries and add them to the advance closing JE
+        # if advance lines have a Partner Third Party being neither Intermission nor Intersection:
+        # create Payable Entries and add them to the advance closing JE
         to_reconcile = {}  # per advance line
         payable_lines = []
         for adv_move in advances_with_supplier:
