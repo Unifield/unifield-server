@@ -1329,6 +1329,9 @@ class stock_picking(osv.osv):
     def _manual_create_rw_messages(self, cr, uid, context=None):
         return
 
+    def enter_reason_cr(self, cr, uid, ids, context=None):
+        return self.enter_reason(cr, uid, ids, context=context)
+
     @check_rw_warning
     def enter_reason(self, cr, uid, ids, context=None):
         '''
