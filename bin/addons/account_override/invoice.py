@@ -63,13 +63,13 @@ class account_invoice(osv.osv):
                 prefix = 'DN_'
             # Intermission voucher OUT
             elif not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
-                prefix = 'IMO_'
+                prefix = 'IVO_'
         elif inv.type == 'in_invoice':
             # Supplier invoice
             prefix = 'SI_'
             # Intermission voucher IN
             if not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
-                prefix = 'IMI_'
+                prefix = 'IVI_'
             # Direct invoice
             elif inv.is_direct_invoice:
                 prefix = 'DI_'
