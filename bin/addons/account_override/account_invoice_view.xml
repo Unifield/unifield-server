@@ -541,7 +541,11 @@
                                     <field name="line_number" displayon="noteditable"/>
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
-                                    <field name="name"/>
+                                    <field name="product_id"
+                                                   on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
+                                                   attrs="{'readonly': ['|',
+                                                                        ('from_supply', '=', True),
+                                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}" />
                                     <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]"
                                            context="{'type': parent.type, 'journal_type': parent.journal_type, 'intermission_type': parent.type == 'out_invoice' and 'out' or 'in'}"
                                     />
@@ -556,7 +560,6 @@
                                                                 ('from_supply', '=', True),
                                                                 '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"
                                     />
-                                    <field name="product_id" invisible="1"/>
                                     <field name="uos_id" string="UOM"
                                            on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
                                            attrs="{'readonly': ['|',
@@ -566,6 +569,7 @@
                                     <field name="price_unit"
                                            attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                                     <field name="price_subtotal"/>
+                                    <field name="name"/>
                                     <field name="inactive_product" invisible="1" />
                                     <field name="inactive_error" invisible="1" />
                                 </tree>
