@@ -220,6 +220,7 @@
                     <field name="name"/>
                     <field name="date_due"/>
                     <field name="origin"/>
+                    <field name="line_count"/>
                     <field name="currency_id"/>
                     <field name="residual"/>
                     <field name="amount_total"/>
@@ -334,6 +335,7 @@
                     <field name="partner_id"/>
                     <field name="name"/>
                     <field name="origin"/>
+                    <field name="line_count"/>
                     <field name="currency_id"/>
                     <field name="amount_total"/>
                     <field name="state"/>
@@ -460,6 +462,7 @@
                     <field name="partner_id"/>
                     <field name="name"/>
                     <field name="origin"/>
+                    <field name="line_count"/>
                     <field name="currency_id"/>
                     <field name="amount_total"/>
                     <field name="state"/>
