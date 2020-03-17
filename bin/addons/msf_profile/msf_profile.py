@@ -52,6 +52,72 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF17.0
+    def us_7025_7039_fix_nr_empty_ins(self, cr, uid, *a, **b):
+        """
+        1. Set the Not Runs to run:
+            - Error from coordo: "Exception: Something goes wrong with this message and no confirmation of delivery".
+            - Error from project: "Exception: Unable to receive Shipment Details into an Incoming Shipment in this
+                instance as IN IN/XXXXX (POXXXXX) already fully/partially cancelled/Closed".
+        2. Remove reference data from empty INs (Backorder, Origin, links to FO, links to PO, Ship Reference, ...) and
+            modify "Change Reason" to "False movement, bug US-7025/7039".
+        3. Remove empty Draft IVOs.
+        """
+        if not self.pool.get('sync.client.message_received'):
+            # new instance
+            return True
+        # 1
+        cr.execute("""
+            SELECT id, identifier, arguments FROM sync_client_message_received
+            WHERE run = 'f' AND remote_call IN ('stock.picking.closed_in_validates_delivery_out_ship', 'stock.picking.partial_shipped_fo_updates_in_po')
+        """)
+        to_run_ids = []
+        to_run_name = []
+        for msg in cr.fetchall():
+            args = eval(msg[2])[0]
+            if args.get('shipment_ref', False) and args['shipment_ref'].endswith('-s') or args.get('name', False) and args['name'].endswith('-s'):
+                to_run_ids.append(msg[0])
+                to_run_name.append(msg[1])
+        if to_run_ids:
+            cr.execute("""
+                UPDATE sync_client_message_received SET run = 't', manually_ran = 't', execution_date = %s
+                WHERE id IN %s""", (time.strftime("%Y-%m-%d %H:%M:%S"), tuple(to_run_ids))
+                       )
+            self._logger.warn('The following Not Runs have been set to Run: %s.', (', '.join(to_run_name),))
+
+        # 2
+        cr.execute("""
+            SELECT p.id, p.name FROM stock_picking p LEFT JOIN stock_move m ON p.id = m.picking_id WHERE m.id IS NULL
+                AND p.type = 'in' AND p.subtype = 'standard' AND p.state = 'done' AND coalesce(shipment_ref, '') != '' AND purchase_id is not null
+        """)
+        empty_in_ids = []
+        empty_in_names = []
+        for inc in cr.fetchall():
+            empty_in_ids.append(inc[0])
+            empty_in_names.append(inc[1])
+        if empty_in_ids:
+            cr.execute("""
+                UPDATE stock_picking SET sale_id = NULL, purchase_id = NULL, backorder_id = NULL, origin = '', 
+                    shipment_ref = '', change_reason = 'False movement, bug US-7025/7039' WHERE id IN %s
+            """, (tuple(empty_in_ids),))
+            self._logger.warn('The following empty INs have been modified: %s.', (', '.join(empty_in_names),))
+
+        # 3
+        try:
+            sync_id = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_sync')[1]
+        except:
+            return True
+        cr.execute("""
+            DELETE FROM account_invoice WHERE id IN (
+                SELECT a.id FROM account_invoice a LEFT JOIN account_invoice_line l ON a.id = l.invoice_id 
+                    WHERE l.id IS NULL AND a.state = 'draft' AND a.type = 'out_invoice' AND a.is_debit_note = 'f'
+                    AND a.is_inkind_donation = 'f' AND a.is_intermission = 't' AND user_id = %s
+            )
+        """, (sync_id, ))
+        self._logger.warn('%s empty IVOs have been deleted.', (cr.rowcount,))
+
+        return True
+
     # UF16.0
     def us_7181_add_oc_subscrpition_to_unidata_products(self, cr, uid, *a, **b):
         """
