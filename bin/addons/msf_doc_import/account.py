@@ -350,6 +350,11 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_('Line %s. Period is missing.') % (current_line_num))
                         continue
                     period_name = line[cols['Period']]
+                    if not isinstance(period_name, basestring):
+                        period_name = '%s' % period_name
+                    if not period_obj.search_exist(cr, uid, [('name', '=', period_name)], context=context):
+                        errors.append(_("Line %s. The period %s doesn't exist.") % (current_line_num, period_name,))
+                        continue
                     if not (booking_curr, period_name, r_document_date) in money:
                         money[(booking_curr, period_name, r_document_date)] = {}
                     if not 'debit' in money[(booking_curr, period_name, r_document_date)]:

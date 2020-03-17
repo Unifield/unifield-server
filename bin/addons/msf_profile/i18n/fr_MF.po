@@ -108987,3 +108987,9 @@ msgstr "Ligne %s. L'Instance Propriétaire doit être l'instance actuelle %s."
 #: report:account.invoice2:0
 msgid "Payment Information:"
 msgstr "Informations de paiement :"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:350
+#, python-format
+msgid "Line %s. The period %s doesn't exist."
+msgstr "Ligne %s. La période %s n'existe pas."
