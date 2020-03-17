@@ -360,7 +360,7 @@ class account_period(osv.osv):
         'is_system': fields.function(_get_is_system, fnct_search=_get_search_is_system, method=True, type='boolean', string="System period ?", readonly=True),
     }
 
-    _order = 'date_start, number'
+    _order = 'date_start DESC, number DESC'
 
     def create(self, cr, uid, vals, context=None):
         if not context:
