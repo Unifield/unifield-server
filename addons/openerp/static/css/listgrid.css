@@ -243,6 +243,14 @@ strong#total_sum_label {
 .o2m_header_filter img {
     cursor: pointer;
 }
+
+.htmlbox {
+    display: flex;
+    align-items: center;
+}
+.warning {
+    margin-right: 3px;
+}
 /**
  * vim: sts=4 st=4 et
  *
