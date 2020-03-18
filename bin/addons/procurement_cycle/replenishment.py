@@ -1901,6 +1901,7 @@ class replenishment_order_calc(osv.osv):
                         'type': 'make_to_order',
                         'stock_take_date': calc.generation_date,
                         'date_planned': calc.new_order_reception_date,
+                        'notes': line.order_qty_comment,
                     }, context=context)
 
             self.write(cr, uid, calc.id, {'state': 'closed', 'ir_generation_date': time.strftime('%Y-%m-%d'), 'ir_id': ir_id}, context=context)
