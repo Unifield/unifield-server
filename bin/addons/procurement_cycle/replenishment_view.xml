@@ -213,6 +213,16 @@
                                 msg_dom = $('#review_active_warn');
                                 msg_dom.show();
                             }
+
+                            new ListView('line_ids').after_reload = function() {
+                                var has_filter = $('#line_ids\\/_terp_domain').val();
+                                var nb_lines = $('#line_ids\\/_terp_count').val();
+                                if (has_filter != '[]' || nb_lines != "0") {
+                                    $("#rule option:not(:selected)").attr("disabled", "disabled");
+                                } else {
+                                    $("#rule option:not(:selected)").removeAttr("disabled");
+                                }
+                            };
                         </script>
 
                     </html>
@@ -242,7 +252,8 @@
 
                             <group colspan="4" col="6">
                                 <group colspan="2" col="2">
-                                    <field name="rule" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                    <field name="rule" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('have_product', '=', True)]}" />
+                                    <field name="have_product" invisible="1" />
                                     <field name="rule_alert" />
                                     <field name="product_list_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                                 </group>

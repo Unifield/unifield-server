@@ -381,6 +381,25 @@ class replenishment_segment(osv.osv):
             ret[x[0]] = True
         return ret
 
+    def _get_have_product(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+
+        if ids:
+            cr.execute('''select segment.id
+                from
+                    replenishment_segment segment, replenishment_segment_line line
+                where
+                    line.segment_id = segment.id and
+                    segment.id in %s
+                group by segment.id
+                having count(line.id) > 0
+                ''', (tuple(ids), ))
+            for x in cr.fetchall():
+                ret[x[0]] = True
+        return ret
+
     _columns = {
         'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
         'description_seg': fields.char('Replenishment Segment Description', required=1, size=28, select=1),
@@ -413,10 +432,12 @@ class replenishment_segment(osv.osv):
         'has_inprogress_cal': fields.function(_get_has_inprogress_cal, type='boolean', method=1, internal=1, string='Has in-progess Order Calc.'),
         'safety_and_buffer_warn': fields.function(_get_safety_and_buffer_warn, type='boolean', method=1, internal=1, string='Lines has buffer and seg has safety'),
         'last_review_date': fields.datetime('Last review date', readonly=1),
+        'have_product': fields.function(_get_have_product, type='boolean', method=1, internal=1, string='Products are set'),
     }
 
     _defaults = {
         'state': 'draft',
+        'have_product': False,
     }
 
     _sql_constraints = [
