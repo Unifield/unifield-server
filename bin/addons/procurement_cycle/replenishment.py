@@ -738,6 +738,7 @@ class replenishment_segment(osv.osv):
                 pas = max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rdd - total_fmc)
                 ss_stock = 0
                 warnings = []
+                warnings_html = []
                 qty_lacking = 0
                 qty_lacking_needed_by = False
                 proposed_order_qty = 0
@@ -751,14 +752,20 @@ class replenishment_segment(osv.osv):
                         if total_month_oc+total_month:
                             ss_stock = seg.safety_stock * ((total_fmc_oc+total_fmc)/(total_month_oc+total_month))
                         if total_month and pas and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
-                            warnings.append(_('Projected use of safety stock/buffer'))
+                            wmsg = _('Projected use of safety stock/buffer')
+                            warnings.append(wmsg)
+                            warnings_html.append(_('<span title="%s">%s</span>') % (misc.escape_html(wmsg), misc.escape_html(_('SS used'))))
                         if qty_lacking:
-                            warnings.append(_('Stock-out before next ETA'))
+                            wmsg = _('Stock-out before next ETA')
+                            warnings.append(wmsg)
+                            warnings_html.append(_('<span title="%s">%s</span>')  % (misc.escape_html(wmsg), misc.escape_html(_('Stock out'))))
 
                         if lacking_eta:
                             qty_lacking_needed_by = (today + relativedelta(days=month_of_supply_eta*30.44)).strftime('%Y-%m-%d')
                     if review_id and round(sum_line.get(line.id, {}).get('expired_before_rdd',0)):
-                        warnings.append(_('Forecasted expiries'))
+                        wmsg = _('Forecasted expiries')
+                        warnings.append(wmsg)
+                        warnings_html.append(_('<span title="%s">%s</span>') % (misc.escape_html(wmsg), misc.escape_html(_('Expiries'))))
 
                     proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rdd_oc)
 
@@ -767,14 +774,20 @@ class replenishment_segment(osv.osv):
 
                     if line.status != 'new' and sum_line.get(line.id, {}).get('real_stock') - sum_line.get(line.id, {}).get('expired_qty_before_eta') <= line.min_qty:
                         if sum_line.get(line.id, {}).get('expired_qty_before_eta'):
-                            warnings.append(_('Alert: "inventory – batches expiring before ETA <= Min"'))
+                            wmsg = _('Alert: "inventory – batches expiring before ETA <= Min"')
+                            warnings.append(wmsg)
+                            warnings_html.append(_('<span title="%s">%s</span>') % (misc.escape_html(wmsg), misc.escape_html(_('Expiries'))))
                         else:
-                            warnings.append(_('Alert: "inventory <= Min"'))
+                            wmsg = _('Alert: "inventory <= Min"')
+                            warnings.append(wmsg)
+                            warnings_html.append(_('<span title="%s">%s</span>') % (misc.escape_html(wmsg), misc.escape_html(_('Insufficient'))))
                 else:
                     proposed_order_qty = line.auto_qty
 
                 if not valid_rr_fmc:
-                    warnings.append(_('Invalid FMC'))
+                    wmsg = _('Invalid FMC')
+                    warnings.append(wmsg)
+                    warnings_html.append(_('<span title="%s">%s</span>') % (misc.escape_html(wmsg), misc.escape_html(_('FMC'))))
 
                 line_data = {
                     'product_id': line.product_id.id,
@@ -788,10 +801,13 @@ class replenishment_segment(osv.osv):
                     'expired_qty_before_cons': False if seg.rule !='cycle' else round(sum_line.get(line.id, {}).get('expired_before_rdd',0)),
                     'expired_qty_before_eta': round(sum_line.get(line.id, {}).get('expired_qty_before_eta',0)),
                     'warning': "\n".join(warnings),
+                    'warning_html': False,
                     'valid_rr_fmc': valid_rr_fmc,
                     'status': line.status,
                     'open_loan': sum_line.get(line.id, {}).get('open_loan', False),
                 }
+                if warnings_html:
+                    line_data['warning_html'] = '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html("\n".join(warnings)), "<br>".join(warnings_html))
 
                 # order_cacl
                 if not review_id:
@@ -1919,6 +1935,7 @@ class replenishment_order_calc_line(osv.osv):
         'agreed_order_qty': fields.float_null('Agreed Order Qty', related_uom='uom_id'),
         'order_qty_comment': fields.char('Order Qty Comment', size=512),
         'warning': fields.text('Warning', readonly='1'),
+        'warning_html': fields.text('Warning', readonly='1'),
     }
 
 replenishment_order_calc_line()
@@ -2021,6 +2038,7 @@ class replenishment_inventory_review_line(osv.osv):
         'unit_of_supply_amc': fields.float_null('Days/weeks/months of supply (RR-AMC)', null_value='N/A'),
         'unit_of_supply_fmc': fields.float_null('Days/weeks/months of supply (RR-FMC)', null_value='N/A'),
         'warning': fields.text('Warning', readonly='1'), # OC
+        'warning_html': fields.text('Warning', readonly='1'), # OC
         'open_loan': fields.boolean('Open Loan', readonly=1), # OC
         'qty_lacking': fields.float_null('Qty lacking before next ETA', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
         'qty_lacking_needed_by': fields.date('Qty lacking needed by', readonly=1), # OC

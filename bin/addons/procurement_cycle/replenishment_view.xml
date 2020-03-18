@@ -549,7 +549,7 @@
                                     <field name="proposed_order_qty" />
                                     <field name="agreed_order_qty" />
                                     <field name="order_qty_comment" />
-                                    <field name="warning" invisible="context.get('rule')=='auto'"/>
+                                    <field name="warning_html" invisible="context.get('rule')=='auto'" widget="html_text"/>
                                 </tree>
                             </field>
                         </page>
@@ -676,7 +676,7 @@
                             <field name="projected_stock_qty" />
                             <field name="unit_of_supply_amc" string=" of supply (RR-AMC)"/>
                             <field name="unit_of_supply_fmc" string=" of supply (RR-FMC)"/>
-                            <field name="warning" />
+                            <field name="warning_html" widget="html_text"/>
                             <field name="open_loan" />
                             <field name="qty_lacking" />
                             <field name="qty_lacking_needed_by" />
