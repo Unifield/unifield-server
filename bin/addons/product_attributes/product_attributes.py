@@ -1417,7 +1417,7 @@ class product_attributes(osv.osv):
             ids = [ids]
 
         self.clean_standard(cr, uid, vals, context)
-        if context.get('sync_update_execution') and vals.get('local_from_hq') and'active' in vals:
+        if context.get('sync_update_execution') and vals.get('local_from_hq') and vals.get('active'):
             del vals['active']
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
