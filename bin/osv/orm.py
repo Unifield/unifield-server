@@ -2834,7 +2834,7 @@ class orm(orm_template):
         if limited_groupby and not limit:
             limit = 20
 
-        limit_str = limit and ' limit %d' % limit
+        limit_str = limit and ' limit %d' % limit or ''
         offset_str = offset and ' offset %d' % offset or ''
         if len(groupby_list) < 2 and context.get('group_by_no_leaf'):
             group_count = '_'
