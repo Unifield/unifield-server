@@ -108985,3 +108985,10 @@ msgstr "CCM Produit"
 #: field:replenishment.segment.line,list_fmc:0
 msgid "more FMC"
 msgstr "plus de PCM"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1308
+#: code:addons/product_attributes/product_attributes.py:1445
+#, python-format
+msgid "Product Code %s must include a 'Z' character"
+msgstr "Le Code Produit %s doit inclure un caractère 'Z'"

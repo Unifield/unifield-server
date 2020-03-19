@@ -1288,6 +1288,10 @@ class product_attributes(osv.osv):
                     _('Batch and Expiry attributes do not conform')
                 )
 
+        intstat_code = False
+        if vals.get('international_status'):
+            intstat_code = self.pool.get('product.international.status').browse(cr, uid, vals['international_status'],
+                                                                                fields_to_fetch=['code'], context=context).code
         if 'default_code' in vals:
             if not context.get('sync_update_execution'):
                 vals['default_code'] = vals['default_code'].strip()
@@ -1298,6 +1302,11 @@ class product_attributes(osv.osv):
                     )
                 if any(char.islower() for char in vals['default_code']):
                     vals['default_code'] = vals['default_code'].upper()
+                if intstat_code and intstat_code == 'local' and 'Z' not in vals['default_code']:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _("Product Code %s must include a 'Z' character") % (vals['default_code'],),
+                    )
 
         if vals.get('xmlid_code'):
             if not context.get('sync_update_execution') and ' ' in vals['xmlid_code']:
@@ -1318,9 +1327,7 @@ class product_attributes(osv.osv):
                 vals['heat_sensitive_item'] = heat2_id
             vals.update(self.onchange_heat(cr, uid, False, vals['heat_sensitive_item'], context=context).get('value', {}))
 
-        if vals.get('international_status') and 'oc_subscription' not in vals:
-            intstat_code = self.pool.get('product.international.status').browse(cr, uid, vals['international_status'],
-                                                                                fields_to_fetch=['code'], context=context).code
+        if intstat_code and 'oc_subscription' not in vals:
             vals['oc_subscription'] = intstat_code == 'unidata'
 
         for f in ['sterilized', 'closed_article', 'single_use']:
@@ -1408,6 +1415,12 @@ class product_attributes(osv.osv):
             vals['track_outgoing'] = vals['batch_management']
             if vals['batch_management']:
                 vals['perishable'] = True
+
+        intstat_code = False
+        if 'international_status' in vals:
+            intstat_code = int_stat_obj.browse(cr, uid, vals['international_status'], fields_to_fetch=['code'],
+                                               context=context).code
+
         if 'default_code' in vals:
             if vals['default_code'] == 'XXX':
                 vals['duplicate_ok'] = True
@@ -1426,6 +1439,11 @@ class product_attributes(osv.osv):
                         )
                 if any(char.islower() for char in vals['default_code']):
                     vals['default_code'] = vals['default_code'].upper()
+                if intstat_code and intstat_code == 'local' and 'Z' not in vals['default_code']:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _("Product Code %s must include a 'Z' character") % (vals['default_code'],),
+                    )
 
         # update local stock mission report lines :
         if 'state' in vals:
@@ -1441,13 +1459,7 @@ class product_attributes(osv.osv):
                 no_sync_context['sync_update_execution'] = False
                 smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': prod_state}, context=no_sync_context)
 
-        if 'international_status' in vals:
-            intstat_code = ''
-            if vals['international_status']:
-                intstat_id = vals['international_status']
-                if isinstance(intstat_id, (int,long)):
-                    intstat_id = [intstat_id]
-                intstat_code = int_stat_obj.read(cr, uid, intstat_id, ['code'], context=context)[0]['code']
+        if intstat_code:
             # just update SMRL that belongs to our instance:
             local_smrl_ids = smrl_obj.search(cr, uid, [
                 ('international_status_code', '!=', intstat_code),
