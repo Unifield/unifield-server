@@ -837,8 +837,8 @@
             <field name="arch" type="xml">
                 <tree string="Product List Consistency Report" hide_new_button="1" hide_delete_button="1" hide_edit_button="1" notselectable="1">
                     <field name="product_id" />
-                    <field name="name_seg" />
-                    <field name="description_seg" />
+                    <field name="name_seg" not_sortable="1"/>
+                    <field name="description_seg" not_sortable="1"/>
                 </tree>
             </field>
         </record>

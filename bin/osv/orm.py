@@ -459,7 +459,7 @@ class orm_template(object):
         """Override this method to do specific things when a view on the object is opened."""
         pass
 
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, count=False):
         raise NotImplementedError(_('The read_group method is not implemented on this object !'))
 
     def _field_create(self, cr, context=None):
@@ -2739,7 +2739,7 @@ class orm(orm_template):
     _protected = ['read', 'write', 'create', 'default_get', 'perm_read', 'unlink', 'fields_get', 'fields_view_get', 'search', 'name_get', 'distinct_field_get', 'name_search', 'copy', 'import_data', 'search_count', 'exists']
     __logger = logging.getLogger('orm')
     __schema = logging.getLogger('orm.schema')
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, count=False):
         """
         Get the list of records in list view grouped by the given ``groupby`` fields
 
@@ -2825,11 +2825,33 @@ class orm(orm_template):
 
         from_clause, where_clause, where_clause_params = query.get_sql()
         where_clause = where_clause and ' WHERE ' + where_clause
-        limit_str = limit and ' limit %d' % limit or ''
+        if count:
+            cr.execute('SELECT count(%s) ' % (qualified_groupby_field,) + ' FROM ' + from_clause + where_clause, where_clause_params)  # not_a_user_entry
+            return cr.fetchone()[0]
+
+        limited_groupby = self._name == 'replenishment.product.list'
+
+        if limited_groupby and not limit:
+            limit = 20
+
+        limit_str = limit and ' limit %d' % limit
         offset_str = offset and ' offset %d' % offset or ''
         if len(groupby_list) < 2 and context.get('group_by_no_leaf'):
             group_count = '_'
-        cr.execute('SELECT min(%s.id) AS id, count(%s.id) AS %s_count' % (self._table, self._table, group_count) + (flist and ',') + flist + ' FROM ' + from_clause + where_clause + gb + limit_str + offset_str, where_clause_params)  # not_a_user_entry
+
+        query_orderby = ''
+        if limited_groupby:
+            if gb:
+                gb += ',default_code'
+            if orderby:
+                split_orderby = orderby.split(' ')
+                query_orderby = ' order by default_code '
+                if len(split_orderby) == 2 and split_orderby[1].strip().lower() in ['asc', 'desc']:
+                    query_orderby = '%s %s ' % (query_orderby, split_orderby[1])
+            else:
+                query_orderby = ' order by default_code '
+
+        cr.execute('SELECT min(%s.id) AS id, count(%s.id) AS %s_count' % (self._table, self._table, group_count) + (flist and ',') + flist + ' FROM ' + from_clause + where_clause + gb + query_orderby + limit_str + offset_str, where_clause_params)  # not_a_user_entry
         alldata = {}
         groupby = group_by
         for r in cr.dictfetchall():
