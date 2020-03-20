@@ -31,6 +31,7 @@ import csv
 from tools.misc import ustr
 from tools.translate import _
 from tools import config
+from base import currency_date
 import time
 import sys
 
@@ -360,7 +361,7 @@ class hr_payroll_import(osv.osv_memory):
         return pwd.decode('base64')
 
     def _uf_side_rounding_line_check_gap(self, cr, uid,
-                                         currency_id, currency_code, posting_date, gap_amount, context=None):
+                                         currency_id, currency_code, curr_date, gap_amount, context=None):
         """
         US-201 check balance gap no more than 1 EUR
         """
@@ -376,7 +377,8 @@ class hr_payroll_import(osv.osv_memory):
         if eur_ids[0] != currency_id:
             # booking <> EUR
             new_ctx = context is not None and context.copy() or {}
-            new_ctx['date'] = posting_date
+
+            new_ctx['currency_date'] = curr_date
             eur_amount = self.pool.get('res.currency').compute(cr, uid,
                                                                currency_id, eur_ids[0], gap_amount, round=True,
                                                                context=new_ctx)
@@ -593,10 +595,11 @@ class hr_payroll_import(osv.osv_memory):
                     # Check balance
                     res_amount_rounded = round(res_amount, 2)
                     if res_amount_rounded != 0.0:
+                        curr_date = currency_date.get_date(self, cr, header_vals['document_date'], header_vals['date'])
                         self._uf_side_rounding_line_check_gap(cr, uid,
                                                               header_vals['currency_id'],
                                                               header_vals['currency_code'],
-                                                              header_vals['date'],
+                                                              curr_date,
                                                               res_amount_rounded,
                                                               context=context)
 

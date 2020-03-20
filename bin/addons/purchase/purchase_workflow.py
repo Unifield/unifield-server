@@ -99,6 +99,7 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        context['from_back_sync'] = True
         for pol in self.browse(cr, uid, ids, context=context):
             to_trigger = False
             # linked FO line already exists ?
@@ -127,7 +128,7 @@ class purchase_order_line(osv.osv):
 
             # convert from currency of pol to currency of sol
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
-                                                                         round=False, context={'date': pol.order_id.date_order})
+                                                                         round=False, context={'currency_date': pol.order_id.date_order})
 
             if sale_order.order_type == 'regular' and price_unit_converted < 0.00001:
                 price_unit_converted = 0.00001
@@ -176,6 +177,7 @@ class purchase_order_line(osv.osv):
                 'type': 'make_to_order',
                 'is_line_split': pol.is_line_split,
                 'original_line_id': pol.original_line_id.linked_sol_id.id if pol.original_line_id else False,
+                'procurement_request': sale_order.procurement_request,
             }
 
             # update modification comment if it is set
@@ -212,12 +214,21 @@ class purchase_order_line(osv.osv):
                     netsvc.LocalService('workflow').trg_validate(uid, 'sale.order.line', new_sol, 'sourced', cr)
                     linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
                         ('sale_line_id', '=', sol_values['original_line_id']),
-                        ('type', '=', 'out')],
+                        ('type', '=', 'out'),
+                        ('state', 'in', ['assigned', 'confirmed'])],
                         context=context)
                     if len(linked_out_moves) > 1:
+                        # try first confirmed OUT, if not found link assigned OUT
+                        out_to_update = False
                         for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
-                            if out_move.state in ('assigned', 'confirmed') and out_move.product_qty == sol_values['product_uom_qty']:
-                                self.pool.get('stock.move').write(cr, uid, [out_move.id], {'sale_line_id': new_sol}, context=context)
+                            if out_move.product_qty == sol_values['product_uom_qty']:
+                                if out_move.state == 'confirmed':
+                                    out_to_update = out_move.id
+                                    break
+                                elif out_move.state == 'assigned':
+                                    out_to_update = out_move.id
+                        if out_to_update:
+                            self.pool.get('stock.move').write(cr, uid, [out_to_update], {'sale_line_id': new_sol}, context=context)
 
             else:  # update FO line
                 if pol.linked_sol_id and not pol.linked_sol_id.analytic_distribution_id and not pol.linked_sol_id.order_id.analytic_distribution_id and ad_id and not sale_order.procurement_request:
@@ -256,6 +267,7 @@ class purchase_order_line(osv.osv):
                     rule_obj._manual_create_sync_message(cr, uid, 'sale.order.line', pol.linked_sol_id.id, {},
                                                          'purchase.order.line.sol_update_original_pol', rule_obj._logger, check_identifier=False, context=context)
 
+        context['from_back_sync'] = False
 
         return True
 
@@ -276,12 +288,13 @@ class purchase_order_line(osv.osv):
         if isinstance(fo_id, list):
             fo_id = fo_id[0]
 
+        context['from_back_sync'] = True
         sale_order = self.pool.get('sale.order').browse(cr, uid, fo_id, context=context)
         new_sol_id = False
         for pol in self.browse(cr, uid, ids, context=context):
             # convert from currency of pol to currency of sol
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
-                                                                         round=False, context={'date': pol.order_id.date_order})
+                                                                         round=False, context={'currency_date': pol.order_id.date_order})
 
             if sale_order.order_type == 'regular' and price_unit_converted < 0.00001:
                 price_unit_converted = 0.00001
@@ -352,6 +365,7 @@ class purchase_order_line(osv.osv):
             # update current PO line:
             self.write(cr, uid, pol.id, {'link_so_id': fo_id, 'linked_sol_id': new_sol_id}, context=context)
 
+        context['from_back_sync'] = False
         return new_sol_id
 
 

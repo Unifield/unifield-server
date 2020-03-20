@@ -329,6 +329,17 @@ class data_tools(osv.osv):
 
         return True
 
+    def truncate_list(self, item_list, limit=300, separator=', '):
+        """
+        Returns a string corresponding to the list of items in parameter, separated by the "separator".
+        If the string > "limit", cuts it and adds "..." at the end.
+        """
+        list_str = separator.join([item for item in item_list if item]) or ''
+        if len(list_str) > limit:
+            list_str = "%s%s" % (list_str[:limit-3], '...')
+        return list_str
+
+
 data_tools()
 
 
@@ -989,7 +1000,7 @@ class user_rights_tools(osv.osv_memory):
                 file_d.close()
                 self.pool.get('msf.import.export').import_xml(cr, uid, [wiz], raise_on_error=True, context=context)
                 if sync_server and model == 'msf_field_access_rights.field_access_rule_line':
-                    cr.execute("""select d.name from msf_field_access_rights_field_access_rule_line line
+                    cr.execute("""select coalesce(d.name, f.model || ' ' || f.name)  from msf_field_access_rights_field_access_rule_line line
                             left join ir_model_fields f on f.id = line.field
                             left join ir_model_data d on d.res_id = line.id and d.model='msf_field_access_rights.field_access_rule_line' and d.module!='sd'
                         where f.state='deprecated'
@@ -1094,9 +1105,13 @@ class job_in_progress(osv.osv_memory):
         if not nb_lines:
             raise osv.except_osv(_('Warning'), _('No line to process'))
 
+
         object_id = src_ids[0]
         if main_object_id:
             object_id = main_object_id
+
+        if self.search(cr, 1, [('state', '=', 'in-progress'), ('model', '=', model), ('res_id', '=', object_id)]):
+            return True
 
         src_name = self.pool.get(model).read(cr, uid, object_id, ['name']).get('name')
 

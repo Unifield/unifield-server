@@ -47,6 +47,7 @@ import tools
 from tools.safe_eval import safe_eval as eval
 from tools import ustr
 
+import psycopg2
 _regex = re.compile('\[\[(.+?)\]\]')
 
 def str2xml(s):
@@ -67,7 +68,7 @@ def _child_get(node, self=None, tagname=None):
                             eval(n.get('rml_except'), {}, self.localcontext)
                         except GeneratorExit:
                             continue
-                        except Exception, e:
+                        except Exception:
                             logging.getLogger('report').warning('rml_except: "%s"',n.get('rml_except',''), exc_info=True)
                             continue
                     if n.get('rml_tag'):
@@ -79,7 +80,7 @@ def _child_get(node, self=None, tagname=None):
                             yield n2
                         except GeneratorExit:
                             yield n
-                        except Exception, e:
+                        except Exception:
                             logging.getLogger('report').warning('rml_tag: "%s"',n.get('rml_tag',''), exc_info=True)
                             yield n
                     else:
@@ -90,7 +91,7 @@ def _child_get(node, self=None, tagname=None):
                 eval(n.get('rml_except'), {}, self.localcontext)
             except GeneratorExit:
                 continue
-            except Exception, e:
+            except Exception:
                 logging.getLogger('report').warning('rml_except: "%s"',n.get('rml_except',''), exc_info=True)
                 continue
         if self and self.localcontext and n.get('rml_tag'):
@@ -103,37 +104,39 @@ def _child_get(node, self=None, tagname=None):
                 tagname = ''
             except GeneratorExit:
                 pass
-            except Exception, e:
+            except Exception:
                 logging.getLogger('report').warning('rml_tag: "%s"',n.get('rml_tag',''), exc_info=True)
                 pass
         if (tagname is None) or (n.tag==tagname):
             yield n
 
 def _process_text(self, txt):
-        if not self.localcontext:
-            return str2xml(txt)
-        if not txt:
-            return ''
-        result = ''
-        sps = _regex.split(txt)
-        while sps:
-            # This is a simple text to translate
-            to_translate = tools.ustr(sps.pop(0))
-            result += tools.ustr(self.localcontext.get('translate', lambda x:x)(to_translate))
-            if sps:
-                try:
-                    txt = None
-                    expr = sps.pop(0)
-                    txt = eval(expr, self.localcontext)
-                    if txt and isinstance(txt, basestring):
-                        txt = tools.ustr(txt)
-                except Exception:
-                    pass
-                if isinstance(txt, basestring):
-                    result += str2xml(txt)
-                elif txt and (txt is not None) and (txt is not False):
-                    result += ustr(txt)
-        return result
+    if not self.localcontext:
+        return str2xml(txt)
+    if not txt:
+        return ''
+    result = ''
+    sps = _regex.split(txt)
+    while sps:
+        # This is a simple text to translate
+        to_translate = tools.ustr(sps.pop(0))
+        result += tools.ustr(self.localcontext.get('translate', lambda x:x)(to_translate))
+        if sps:
+            try:
+                txt = None
+                expr = sps.pop(0)
+                txt = eval(expr, self.localcontext)
+                if txt and isinstance(txt, basestring):
+                    txt = tools.ustr(txt)
+            except psycopg2.Error:
+                raise
+            except Exception:
+                pass
+            if isinstance(txt, basestring):
+                result += str2xml(txt)
+            elif txt and (txt is not None) and (txt is not False):
+                result += ustr(txt)
+    return result
 
 def text_get(node):
     return ''.join([ustr(n.text) for n in node])

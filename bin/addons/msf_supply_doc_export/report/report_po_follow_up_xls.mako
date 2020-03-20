@@ -84,7 +84,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@"/>
+   <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@"/>
   </Style>
   <Style ss:ID="short_date_grey">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -95,7 +95,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:Color="#747474"/>
-   <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@"/>
+   <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@"/>
   </Style>
   <Style ss:ID="short_date_fr">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>

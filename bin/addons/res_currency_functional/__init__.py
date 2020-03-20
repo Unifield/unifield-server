@@ -19,7 +19,6 @@
 #
 ##############################################################################
 
-import res_currency_functional
 import res_currency_rate_functional
 import account_move_compute_currency
 import account_move_line_compute_currency

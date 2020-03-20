@@ -345,24 +345,6 @@ class product_attributes(osv.osv):
 
         return
 
-    def _search_mandatory_creator(self, cr, uid, obj, name, args, context=None):
-        '''
-        Filter the search according to the args parameter
-        '''
-        if context is None:
-            context = {}
-
-        data_obj = self.pool.get('ir.model.data')
-
-        res_id = 0  # To prevent search
-        instance_level = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level
-        if instance_level == 'section':
-            res_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
-        elif instance_level == 'coordo':
-            res_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
-
-        return [('international_status', '=', res_id)]
-
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
@@ -411,6 +393,16 @@ class product_attributes(osv.osv):
                 return []
 
         return [('id', 'in', ids)]
+
+    def _get_int_status_code(self, cr, uid, ids, field_name, args, context=None):
+        if context is None:
+            context = {}
+        res = {}
+
+        for product in self.browse(cr, uid, ids, fields_to_fetch=['international_status'], context=context):
+            res[product.id] = product.international_status.code
+
+        return res
 
     def _get_restriction(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -637,6 +629,33 @@ class product_attributes(osv.osv):
         """
         return True
 
+    def _get_batch_attributes(self, cr, uid, ids, field_name, args, context=None):
+        ret = {}
+        for prod in self.read(cr, uid, ids, ['batch_management', 'perishable'], context=context):
+            if prod['batch_management']:
+                ret[prod['id']] = 'bn'
+            elif prod['perishable']:
+                ret[prod['id']] = 'ed'
+            else:
+                ret[prod['id']] = 'no'
+        return ret
+
+    def _search_batch_attributes(self, cr, uid, obj, name, args, context=None):
+
+        dom = []
+        for arg in args:
+            if arg[0] == 'batch_attributes':
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Warning'), _('This filter is not implemented yet'))
+                if arg[2] == 'no':
+                    dom += [ '&', ('batch_management', '=', False), ('perishable', '=', False)]
+                elif arg[2] == 'bn':
+                    dom += [ '&', ('batch_management', '=', True), ('perishable', '=', True)]
+                elif arg[2] == 'ed':
+                    dom += [ '&', ('batch_management', '=', False), ('perishable', '=', True)]
+        return dom
+
+
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
@@ -645,12 +664,12 @@ class product_attributes(osv.osv):
             string='Old code',
             size=1024,
         ),
-        'new_code' : fields.char('New code', size=64),
+        'new_code': fields.char('New code', size=64),
         'international_status': fields.many2one('product.international.status', 'Product Creator', required=False),
-        'mandatory_creator': fields.function(_get_dummy, fnct_search=_search_mandatory_creator, type='many2one',
-                                             relation='product.international.status', method=True, string='Mandatory Product Creator'),
+        'int_status_code': fields.function(_get_int_status_code, method=True, readonly=True, type="char", size=64, string="Code of Product Creator", store=False),
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
+        'batch_attributes': fields.function(_get_batch_attributes, type='selection', selection=[('no', 'X'), ('bn', 'BN+ED'), ('ed', 'ED only')], method=True, fnct_search=_search_batch_attributes, string="Batch Attr."),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
         'product_catalog_path' : fields.char('Product Catalog Path', size=1024),
         'is_ssl': fields.function(
@@ -824,6 +843,8 @@ class product_attributes(osv.osv):
         'state_ud': fields.selection(
             selection=[
                 ('valid', 'Valid'),
+                ('outdated', 'Outdated'),
+                ('discontinued', 'Discontinued'),
                 ('phase_out', 'Phase Out'),
                 ('stopped', 'Stopped'),
                 ('archived', 'Archived'),
@@ -833,6 +854,7 @@ class product_attributes(osv.osv):
             readonly=True,
             help="Automatically filled with UniData information.",
         ),
+        'oc_subscription': fields.boolean(string='OC Subscription'),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=7),
         'gmdn_code' : fields.char('GMDN Code', size=5),
@@ -915,9 +937,13 @@ class product_attributes(osv.osv):
         'function_value': fields.text(string='Function', translate=True),
         'standard_ok': fields.selection(
             selection=[
-                ('True', 'Standard'),
-                ('False', 'Non-standard'),
+                #('True', 'Standard'),
+                #('False', 'Non-standard'),
+                ('standard', 'Standard'),
+                ('non_standard', 'Non-standard'),
+                ('non_standard_local', 'Non-standard Local'),
             ],
+            size=20,
             string='Standardization Level',
             required=True,
         ),
@@ -959,10 +985,11 @@ class product_attributes(osv.osv):
         'restricted_country': False,
         'sterilized': 'no',
         'single_use': 'no',
-        'standard_ok': 'False',
+        'standard_ok': 'non_standard',
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
+        'oc_subscription': False,
     }
 
     def _check_uom_category(self, cr, uid, ids, context=None):
@@ -992,17 +1019,29 @@ class product_attributes(osv.osv):
 
         res = super(product_attributes, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
+        if view_type == 'search' and context.get('display_batch_attr'):
+            root = etree.fromstring(res['arch'])
+            for field in root.xpath('//group[@name="batch_attr"]'):
+                field.set('invisible', '0')
+            res['arch'] = etree.tostring(root)
+
+        if view_type == 'search' and context.get('display_active_filter'):
+            root = etree.fromstring(res['arch'])
+            for field in root.xpath('//group[@name="display_active_filter"]'):
+                field.set('invisible', '0')
+            res['arch'] = etree.tostring(root)
+
         if view_type == 'search' and context.get('available_for_restriction'):
             context.update({'search_default_not_restricted': 1})
             root = etree.fromstring(res['arch'])
             # xpath of fields to be modified
-            xpath = '//filter[@string="Service with Reception"]'
+            xpath = '//filter[@name="service_with_reception"]'
             fields = root.xpath(xpath)
 
             if not fields:
                 return res
 
-            state_index = root.index(fields[0])
+            parent_node = fields[0].getparent()
             new_separator = """<separator orientation="vertical" />"""
             sep_form = etree.fromstring(new_separator)
             arg = context.get('available_for_restriction')
@@ -1017,12 +1056,13 @@ class product_attributes(osv.osv):
                                                                     context=context)
             else:
                 filter_domain = "[('available_for_restriction','=',%s)]" % arg
-            new_filter = """<filter string="Only not forbidden" name="not_restricted" icon="terp-accessories-archiver-minus" domain="%s" />""" % filter_domain
+            new_filter = """<filter string="%s" name="not_restricted" icon="terp-accessories-archiver-minus" domain="%s" />""" % (_('Only not forbidden'), filter_domain)
             #generate new xml form$
             new_form = etree.fromstring(new_filter)
             # instert new form just after state index position
-            root.insert(state_index+1, new_form)
-            root.insert(state_index+1, sep_form)
+            state_index = parent_node.index(fields[0])
+            parent_node.insert(state_index+1, new_form)
+            parent_node.insert(state_index+1, sep_form)
             # generate xml back to string
             res['arch'] = etree.tostring(root)
 
@@ -1226,6 +1266,7 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
 
+        self.clean_standard(cr, uid, vals, context)
         def update_existing_translations(model, res_id, xmlid):
             # If we are in the creation of product by sync. engine, attach the already existing translations to this product
             if context.get('sync_update_execution'):
@@ -1277,15 +1318,19 @@ class product_attributes(osv.osv):
                 vals['heat_sensitive_item'] = heat2_id
             vals.update(self.onchange_heat(cr, uid, False, vals['heat_sensitive_item'], context=context).get('value', {}))
 
+        if vals.get('international_status') and 'oc_subscription' not in vals:
+            intstat_code = self.pool.get('product.international.status').browse(cr, uid, vals['international_status'],
+                                                                                fields_to_fetch=['code'], context=context).code
+            vals['oc_subscription'] = intstat_code == 'unidata'
+
         for f in ['sterilized', 'closed_article', 'single_use']:
             if f in vals and not vals.get(f):
                 vals[f] = 'no'
 
-        vals['uf_create_date'] = vals.get('uf_create_date', datetime.now())
+        vals['uf_create_date'] = vals.get('uf_create_date') or datetime.now()
 
         self.convert_price(cr, uid, vals, context)
-        res = super(product_attributes, self).create(cr, uid, vals,
-                                                     context=context)
+        res = super(product_attributes, self).create(cr, uid, vals, context=context)
 
         if context.get('sync_update_execution'):
             # Update existing translations for product.product and product.template
@@ -1326,6 +1371,22 @@ class product_attributes(osv.osv):
 
         return converted
 
+    def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
+        # to allow True / False in standard_ok for old sync updates
+
+        fg = super(product_attributes, self).fields_get(cr, uid, fields=fields, context=context, with_uom_rounding=with_uom_rounding)
+        if context and context.get('sync_update_execution') and  fg.get('standard_ok', {}).get('selection'):
+            selection = fg['standard_ok']['selection'][:]
+            selection += [('False', 'Non Standard (deprecated)'), ('True', 'Standard (deprecated)')]
+            fg['standard_ok']['selection'] = selection
+        return fg
+
+    def clean_standard(self, cr, uid, vals, context):
+        if vals and 'standard_ok' in vals:
+            if vals['standard_ok'] == 'True':
+                vals['standard_ok'] = 'standard'
+            elif vals['standard_ok'] == 'False':
+                vals['standard_ok'] = 'non_standard'
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
@@ -1340,6 +1401,7 @@ class product_attributes(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        self.clean_standard(cr, uid, vals, context)
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']
@@ -1462,6 +1524,15 @@ class product_attributes(osv.osv):
         vals['uf_write_date'] = vals.get('uf_write_date', datetime.now())
 
         self.convert_price(cr, uid, vals, context)
+        if context.get('sync_update_execution') and 'batch_management' in vals and 'perishable' in vals:
+            init_sync = not bool(self.pool.get('res.users').get_browse_user_instance(cr, uid))
+            if not init_sync:
+                if vals.get('batch_management'):
+                    self.set_as_bned(cr, uid, ids, context=context)
+                elif vals.get('perishable'):
+                    self.set_as_edonly(cr, uid, ids, context=context)
+                else:
+                    self.set_as_nobn_noed(cr, uid, ids, context=context)
         res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
 
         if product_uom_categ:
@@ -1497,6 +1568,7 @@ class product_attributes(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # TODO JFB RR: constraint
         location_obj = self.pool.get('stock.location')
         po_line_obj = self.pool.get('purchase.order.line')
         tender_line_obj = self.pool.get('tender.line')
@@ -1505,14 +1577,6 @@ class product_attributes(osv.osv):
         kit_obj = self.pool.get('composition.item')
         inv_obj = self.pool.get('stock.inventory.line')
         in_inv_obj = self.pool.get('initial.stock.inventory.line')
-        auto_supply_obj = self.pool.get('stock.warehouse.automatic.supply')
-        auto_supply_line_obj = self.pool.get('stock.warehouse.automatic.supply.line')
-        cycle_obj = self.pool.get('stock.warehouse.order.cycle')
-        cycle_line_obj = self.pool.get('stock.warehouse.order.cycle.line')
-        threshold_obj = self.pool.get('threshold.value')
-        threshold_line_obj = self.pool.get('threshold.value.line')
-        orderpoint_obj = self.pool.get('stock.warehouse.orderpoint')
-        orderpoint_line_obj = self.pool.get('stock.warehouse.orderpoint.line')
         invoice_obj = self.pool.get('account.invoice.line')
 
         error_obj = self.pool.get('product.deactivation.error')
@@ -1553,10 +1617,10 @@ class product_attributes(osv.osv):
                                                        ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
 
             # Check if the product is in stock picking
-            # All stock moves in a stock.picking not draft/cancel/done or all stock moves in a shipment not delivered/done/cancel
+            # All stock moves in a stock.picking not draft/cancel/done/delivered or all stock moves in a shipment not delivered/done/cancel
             has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
                                                       ('picking_id', '!=', False),
-                                                      '|', ('picking_id.state', 'not in', ['draft', 'done', 'cancel']),
+                                                      '|', ('picking_id.state', 'not in', ['draft', 'done', 'delivered', 'cancel']),
                                                       '&', ('picking_id.shipment_id', '!=', False),
                                                       ('picking_id.shipment_id.state', 'not in', ['delivered', 'done', 'cancel']),
                                                       ], context=context)
@@ -1763,43 +1827,6 @@ class product_attributes(osv.osv):
                         'target': 'new',
                         'context': context}
 
-        # Remove the replenishment rules associated to this product
-        # Automatic supply
-        auto_line_ids = auto_supply_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
-        for auto in auto_supply_line_obj.browse(cr, uid, auto_line_ids, context=context):
-            if len(auto.supply_id.line_ids) == 1:
-                auto_supply_obj.unlink(cr, uid, [auto.supply_id.id], context=context)
-            else:
-                auto_supply_line_obj.unlink(cr, uid, [auto.id], context=context)
-
-        # Order cycle
-        cycle_ids = cycle_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
-        for cycle in cycle_line_obj.browse(cr, uid, cycle_ids, context=context):
-            if len(cycle.order_cycle_id.product_line_ids) == 1:
-                cycle_obj.unlink(cr, uid, [cycle.order_cycle_id.id], context=context)
-            else:
-                cycle_line_obj.unlink(cr, uid, [cycle.id], context=context)
-
-        # Threshold value
-        threshold_ids = threshold_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
-        for threshold in threshold_line_obj.browse(cr, uid, threshold_ids, context=context):
-            if len(threshold.threshold_value_id.line_ids) == 1:
-                threshold_obj.unlink(cr, uid, [threshold.threshold_value_id.id], context=context)
-            else:
-                threshold_line_obj.unlink(cr, uid, [threshold.id], context=context)
-
-        # Minimum stock rules
-        orderpoint_line_ids = orderpoint_line_obj.search(cr, uid,
-                                                         [('product_id', 'in', ids)], context=context)
-        for orderpoint_line in orderpoint_line_obj.browse(cr, uid,
-                                                          orderpoint_line_ids, context=context):
-            if len(orderpoint_line.supply_id.line_ids) == 1:
-                orderpoint_obj.unlink(cr, uid, [orderpoint_line.supply_id.id],
-                                      context=context)
-            else:
-                orderpoint_line_obj.unlink(cr, uid, [orderpoint_line.id],
-                                           context=context)
-
         if context.get('sync_update_execution', False):
             context['bypass_sync_update'] = True
 
@@ -1816,20 +1843,10 @@ class product_attributes(osv.osv):
             return True
 
         product = self.browse(cr, uid, ids[0], fields_to_fetch=['qty_available', 'batch_management', 'perishable'], context=context)
-        vals = {}
 
-        if context.get('needed_batch_mngmt') is not None:
-            vals.update({'batch_management': context['needed_batch_mngmt']})
-            context.pop('needed_batch_mngmt')
-            if vals['batch_management'] and not (product.perishable or context.get('needed_perishable')):
-                raise osv.except_osv(_('Error'),
-                                     _('You are not allowed to have a Batch managed product without an Expiry Date'))
-        if context.get('needed_perishable') is not None:
-            vals.update({'perishable': context['needed_perishable']})
-            context.pop('needed_perishable')
-            if not vals['perishable'] and (product.batch_management or vals.get('batch_management')):
-                raise osv.except_osv(_('Error'),
-                                     _('You are not allowed to have a Batch managed product without an Expiry Date'))
+        change_target = context.get('change_target')
+        if not change_target:
+            raise osv.except_osv(_('Error'), _('Missing Target in context'))
 
         in_use_stock = product.qty_available > 0 or False
         if not in_use_stock:  # Check stock IN - stock OUT
@@ -1875,7 +1892,7 @@ class product_attributes(osv.osv):
                 in_use_stock = True
 
         if in_use_stock:
-            context['prod_data'] = {'id': product.id, 'vals': vals}
+            context['prod_data'] = {'id': product.id, 'change_target': change_target}
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'change.bn.ed.mandatory.wizard',
@@ -1884,8 +1901,20 @@ class product_attributes(osv.osv):
                 'target': 'new',
                 'context': context,
             }
+
+        self._apply_change_bn_ed(cr, uid, ids, change_target, context)
+        return True
+
+    def _apply_change_bn_ed(self, cr, uid, ids, change_target, context=None):
+        if change_target == 'edonly':
+            self.set_as_edonly(cr, uid, ids, context=context)
+        elif change_target == 'bn':
+            self.set_as_bned(cr, uid, ids, context=context)
+        elif change_target == 'nobn_noed':
+            self.set_as_nobn_noed(cr, uid, ids, context=context)
         else:
-            return self.write(cr, uid, ids, vals, context=context)
+            raise osv.except_osv(_('Error'), _('Unknown %s target') % (change_target, ))
+        return True
 
     def copy(self, cr, uid, id, default=None, context=None):
         product_xxx = self.search(cr, uid, [('default_code', '=', 'XXX')])
@@ -1906,6 +1935,8 @@ class product_attributes(osv.osv):
                        prodlot_ids=False,
                        attribute_ids=False,
                        packaging=False,
+                       uf_create_date=False,
+                       uf_write_date=False
                        )
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
@@ -1921,6 +1952,357 @@ class product_attributes(osv.osv):
             if duplicate:
                 res.update({'warning': {'title': 'Warning', 'message':'The Code already exists'}})
         return res
+
+    fake_ed = '2999-12-31'
+    fake_bn = 'TO-BE-REPLACED'
+
+    def _update_bn_id_on_fk(self, cr, new_id, old_ids):
+        # get all fk
+        cr.execute("""
+            SELECT tc.table_name, kcu.column_name, ref.delete_rule
+            FROM information_schema.table_constraints AS tc
+                JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name
+                JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = tc.constraint_name
+                JOIN information_schema.referential_constraints AS ref ON ref.constraint_name = tc.constraint_name
+            WHERE
+                tc.constraint_type = 'FOREIGN KEY' AND
+                ccu.table_name='stock_production_lot' AND
+                ccu.column_name='id'
+        """)
+
+        # following records have on delete casace and we want to delete them
+        ignore = [ 'stock_production_lot_revision.lot_id', 'unconsistent_stock_report_line.prodlot_id']
+
+        for table, column, const_type in cr.fetchall():
+            if '%s.%s' % (table, column) in ignore:
+                continue
+            cr.execute("update "+table+" set "+column+"=%s where "+column+" in %s", (new_id, tuple(old_ids))) # not_a_user_entry
+
+        return True
+
+
+    def _remove_all_bned(self, cr, uid, product_ids, context=None):
+        '''
+            Reset BN
+            Rest ED
+        '''
+        if not context.get('sync_update_execution'):
+            prod_obj = self
+        else:
+            prod_obj = super(product_attributes, self)
+        prod_obj.write(cr, uid, product_ids, {'perishable': False, 'batch_management': False}, context=context)
+
+        cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', prodlot_id=NULL, expired_date=NULL, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=stock_move.prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where product_id in %s", (tuple(product_ids), ))
+        cr.execute("delete from stock_production_lot where product_id in %s", (tuple(product_ids), ))
+
+        # save as draft
+        for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+            cr.execute("update "+ table + " set prodlot_id=NULL, expiry_date=NULL, lot_check='f', exp_check='f' where product_id in %s", (tuple(product_ids), )) # not_a_user_entry
+        # ISI
+        cr.execute("""update initial_stock_inventory_line set
+            hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', expiry_date=NULL, prodlot_name=''
+            where product_id in %s
+        """, (tuple(product_ids), ))
+
+        # Previous Inventory
+        cr.execute("""update stock_inventory_line set
+            hidden_batch_management_mandatory='f', hidden_perishable_mandatory='f', expiry_date=NULL
+            where product_id in %s""", (tuple(product_ids), ))
+
+        # Consump
+        cr.execute("""update real_average_consumption_line set
+            date_mandatory='f', batch_mandatory='f', expiry_date=NULL
+            where product_id in %s""", (tuple(product_ids), ))
+
+        #PI CS
+        cr.execute("update physical_inventory_counting set batch_number='', expiry_date=NULL where product_id in %s", (tuple(product_ids), ))
+
+        #PI Disc.
+        cr.execute("update physical_inventory_discrepancy set batch_number='', expiry_date=NULL where product_id in %s", (tuple(product_ids), ))
+
+    def switch_bn_to_no(self, cr, uid, ids, context=None):
+        # i
+        if context is None:
+            context = {}
+        prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', True), ('perishable', '=', True)], context=context)
+        if prod_to_change:
+            self._remove_all_bned(cr, uid,  prod_to_change, context=context)
+        return True
+
+    def switch_no_to_bn(self, cr, uid, ids, context=None):
+        # ii
+        if context is None:
+            context = {}
+        lot_obj = self.pool.get('stock.production.lot')
+        prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', False)], context=context)
+        if prod_to_change:
+            if not context.get('sync_update_execution'):
+                prod_obj = self
+            else:
+                prod_obj = super(product_attributes, self)
+            prod_obj.write(cr, uid, prod_to_change, {'perishable': True, 'batch_management': True}, context=context)
+        for prod_id in prod_to_change:
+            batch_id = lot_obj._get_or_create_lot(cr, uid, name=self.fake_bn, expiry_date=self.fake_ed, product_id=prod_id, context=context)
+            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel')", (batch_id, self.fake_ed, prod_id))
+            count = cr.rowcount
+
+            # all available move except IN
+            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s where product_id=%s and state = 'assigned' and type!='in'", (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
+
+            # Available Shipped or Available Updated IN
+            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f' where product_id=%s and state = 'assigned' and type='in'", (prod_id, ))
+            cr.execute("""update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f', prodlot_id=%s, expired_date=%s where product_id=%s and state = 'assigned' and type='in'
+                and picking_id in (select id from stock_picking where state in ('updated', 'shipped') and type='in') """, (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
+
+            # save as draft
+            for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+                cr.execute("update "+ table + " set prodlot_id=%s, expiry_date=%s, lot_check='t', exp_check='t' where product_id = %s and quantity>0", (batch_id, self.fake_ed, prod_id,)) # not_a_user_entry
+                count += cr.rowcount
+
+            # Previous Inventory
+            cr.execute("""update stock_inventory_line set
+                hidden_batch_management_mandatory='t', hidden_perishable_mandatory='t', prod_lot_id=%s, expiry_date=%s
+                where product_id = %s""", (batch_id, self.fake_ed, prod_id ))
+            count += cr.rowcount
+
+            # Consump.
+            cr.execute("update real_average_consumption_line set date_mandatory='t', batch_mandatory='t', prodlot_id=%s, expiry_date=%s where product_id = %s", (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
+
+            if not count:
+                if lot_obj.browse(cr, 1, batch_id, fields_to_fetch=['delete_ok'], context=context).delete_ok:
+                    lot_obj.unlink(cr, 1, [batch_id], context=context)
+
+        if prod_to_change:
+            # save as draft
+            for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+                cr.execute("update "+ table + " set lot_check='t', exp_check='t' where product_id in %s and quantity=0", (tuple(prod_to_change),)) # not_a_user_entry
+            # ISI done
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='t',  hidden_perishable_mandatory='t', prodlot_name=%s, expiry_date=%s
+                where product_id in %s and inventory_id in
+                    (select id from initial_stock_inventory where state = 'done')
+            """, (self.fake_bn, self.fake_ed, tuple(prod_to_change) ))
+
+            # ISI confirm /drart
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='t',  hidden_perishable_mandatory='t'
+                where product_id in %s and inventory_id in
+                    (select id from initial_stock_inventory where state in ('confirm', 'draft'))
+            """, (tuple(prod_to_change), ))
+
+            #PI CS
+            cr.execute("update physical_inventory_counting set batch_number=%s, expiry_date=%s where product_id in %s", (self.fake_bn, self.fake_ed, tuple(prod_to_change), ))
+
+            #PI CS
+            cr.execute("update physical_inventory_discrepancy set batch_number=%s, expiry_date=%s where product_id in %s", (self.fake_bn, self.fake_ed, tuple(prod_to_change), ))
+
+        return len(prod_to_change)
+
+    def switch_ed_to_no(self, cr, uid, ids, context=None):
+        # iii
+        if context is None:
+            context = {}
+        prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', True)], context=context)
+        if prod_to_change:
+            self._remove_all_bned(cr, uid, prod_to_change, context=context)
+        return len(prod_to_change)
+
+    def switch_bn_to_ed(self, cr, uid, ids, context=None):
+        # iv
+        if context is None:
+            context = {}
+        seq_obj = self.pool.get('ir.sequence')
+        prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', True), ('perishable', '=', True)], context=context)
+        if prod_to_change:
+            if not context.get('sync_update_execution'):
+                prod_obj = self
+            else:
+                prod_obj = super(product_attributes, self)
+            prod_obj.write(cr, uid, prod_to_change, {'batch_management': False}, context=context)
+
+            # check if we should merge lot: i.e P1 BN1 EDA / P1 BN2 EDA : same EDA BN1+BN2 must be merged
+            cr.execute("select min(id), array_agg(id) from stock_production_lot where product_id in %s group by product_id, life_date having count(*)>1", (tuple(prod_to_change),))
+            for to_merge in cr.fetchall():
+                to_keep = to_merge[0]
+                merged = to_merge[1]
+                merged.remove(to_keep)
+                cr.execute("update stock_move set prodlot_id=%s, old_lot_info=(select name||'#'||life_date from stock_production_lot where id=stock_move.prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id in %s",  (to_keep, tuple(merged)))
+                self._update_bn_id_on_fk(cr, to_keep, merged)
+                cr.execute("delete from stock_production_lot where id in %s", (tuple(merged), ))
+
+            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t' where product_id in %s" , (tuple(prod_to_change),))
+            # rename lot
+            seq_obj = self.pool.get('ir.sequence')
+            cr.execute("select id from stock_production_lot where type='standard' and product_id in %s order by life_date", (tuple(prod_to_change),))
+            for bn_lot_to_internal in cr.fetchall():
+                new_name = seq_obj.get(cr, uid, 'stock.lot.serial')
+                cr.execute("update stock_production_lot set type='internal', name=%s where id=%s", (new_name, bn_lot_to_internal[0]))
+
+            # save as draft
+            for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+                cr.execute("update "+ table + " set lot_check='f', exp_check='t' where product_id in %s", (tuple(prod_to_change),)) # not_a_user_entry
+
+            # ISI draft / confirm / done
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='f', prodlot_name=''
+                where product_id in %s
+            """, (tuple(prod_to_change), ))
+
+            # Previous Inventory
+            cr.execute("""update stock_inventory_line set
+                hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t'
+                where product_id in %s""", (tuple(prod_to_change), ))
+
+            # Consump
+            cr.execute("""update real_average_consumption_line set
+                batch_mandatory='f'
+                where product_id in %s""", (tuple(prod_to_change), ))
+            #PI CS
+            # untouch batch_number for dupliactes ED/prod id
+            cr.execute("""update physical_inventory_counting set batch_number=NULL where product_id in %s""", (tuple(prod_to_change), ))
+
+            #PI Disc.
+            cr.execute("update physical_inventory_discrepancy set batch_number=NULL where product_id in %s", (tuple(prod_to_change), ))
+            #cr.execute("""update physical_inventory_counting set batch_number='' where id in (
+            #    select min(id) from physical_inventory_counting where product_id in %s group by inventory_id, product_id, expiry_date having count(*) < 2
+            #    ) """, (tuple(prod_to_change), ))
+
+        return len(prod_to_change)
+
+    def switch_no_to_ed(self, cr, uid, ids, context=None):
+        # vi
+        if context is None:
+            context = {}
+        lot_obj = self.pool.get('stock.production.lot')
+        prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', False)], context=context)
+        if prod_to_change:
+            if not context.get('sync_update_execution'):
+                prod_obj = self
+            else:
+                prod_obj = super(product_attributes, self)
+            prod_obj.write(cr, uid, prod_to_change, {'perishable': True}, context=context)
+
+        for prod_id in prod_to_change:
+            batch_id = lot_obj._get_or_create_lot(cr, uid, name=False, expiry_date=self.fake_ed, product_id=prod_id, context=context)
+            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s where product_id=%s and state in ('done', 'cancel')", (batch_id, self.fake_ed, prod_id))
+            count = cr.rowcount
+
+            # Assigned except IN
+            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s where product_id=%s and state = 'assigned' and type!='in'", (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
+
+            # Available Shipped or Available Updated IN
+            cr.execute("update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t' where product_id=%s and state='assigned' and type='in'", (prod_id,))
+            cr.execute("""update stock_move set hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prodlot_id=%s, expired_date=%s where product_id=%s and state = 'assigned' and type='in'
+                    and picking_id in (select id from stock_picking where state in ('updated', 'shipped') and type='in')""", (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
+
+            # save as draft
+            for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+                cr.execute("update "+ table + " set prodlot_id=%s, expiry_date=%s, lot_check='f', exp_check='t' where product_id in %s", (batch_id, self.fake_ed, tuple(prod_to_change),)) # not_a_user_entry
+                count += cr.rowcount
+            # Consump.
+            cr.execute("update real_average_consumption_line set date_mandatory='t', batch_mandatory='f', prodlot_id=%s, expiry_date=%s where product_id = %s", (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
+
+            # Previous Inventory
+            cr.execute("""update stock_inventory_line set
+                hidden_batch_management_mandatory='f', hidden_perishable_mandatory='t', prod_lot_id=%s, expiry_date=%s
+                where product_id = %s""", (batch_id, self.fake_ed, prod_id))
+            count += cr.rowcount
+
+            if not count:
+                if lot_obj.browse(cr, 1, batch_id, fields_to_fetch=['delete_ok'], context=context).delete_ok:
+                    lot_obj.unlink(cr, 1, [batch_id], context=context)
+
+        if prod_to_change:
+            # ISI done
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='f',  hidden_perishable_mandatory='t', prodlot_name=%s, expiry_date=%s
+                where product_id in %s and inventory_id in
+                    (select id from  initial_stock_inventory where state = 'done')
+            """, (self.fake_bn, self.fake_ed, tuple(prod_to_change) ))
+
+            # ISI confirm /draft
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='t',  hidden_perishable_mandatory='t'
+                where product_id in %s and inventory_id in
+                    (select id from  initial_stock_inventory where state in ('confirm', 'draft'))
+            """, (tuple(prod_to_change), ))
+
+            #PI CS
+            cr.execute("update physical_inventory_counting set batch_number='', expiry_date=%s where product_id in %s", (self.fake_ed, tuple(prod_to_change), ))
+            #PI Disc
+            cr.execute("update physical_inventory_discrepancy set batch_number='', expiry_date=%s where product_id in %s", (self.fake_ed, tuple(prod_to_change), ))
+
+        return len(prod_to_change)
+
+    def switch_ed_to_bn(self, cr, uid, ids, context=None):
+        # v
+        if context is None:
+            context = {}
+        prod_to_change = self.search(cr, uid, [('id', 'in', ids), ('batch_management', '=', False), ('perishable', '=', True)], context=context)
+        if prod_to_change:
+            if not context.get('sync_update_execution'):
+                prod_obj = self
+            else:
+                prod_obj = super(product_attributes, self)
+            prod_obj.write(cr, uid, prod_to_change, {'batch_management': True}, context=context)
+            cr.execute("update stock_move set old_lot_info=(select name||'#'||life_date from stock_production_lot where id=stock_move.prodlot_id)||E'\n'||COALESCE(old_lot_info, '') where prodlot_id is not null and product_id in %s",  (tuple(prod_to_change), ))
+            cr.execute("update stock_move set hidden_batch_management_mandatory='t', hidden_perishable_mandatory='f' where product_id in %s",  (tuple(prod_to_change), ))
+            cr.execute("update stock_production_lot set name=%s, type='standard' where product_id in %s", (self.fake_bn, tuple(prod_to_change)))
+            # save as draft
+            for table in ['internal_move_processor', 'outgoing_delivery_move_processor', 'stock_move_in_processor', 'stock_move_processor']:
+                cr.execute("update "+ table + " set prodlot_id=(select id from stock_production_lot where life_date="+table+".expiry_date and product_id="+table+".product_id), lot_check='t', exp_check='t' where product_id in %s and expiry_date is not null", (tuple(prod_to_change),)) # not_a_user_entry
+                cr.execute("update "+ table + " set integrity_status='missing_lot' where product_id in %s and prodlot_id is null and expiry_date is not null", (tuple(prod_to_change),)) # not_a_user_entry
+                cr.execute("update "+ table + " set lot_check='t', exp_check='t' where product_id in %s and prodlot_id is null and expiry_date is null", (tuple(prod_to_change),)) # not_a_user_entry
+
+            # ISI
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='t', prodlot_name=''
+                where product_id in %s and inventory_id in
+                    (select id from  initial_stock_inventory where state in ('confirm', 'draft'))
+            """, (tuple(prod_to_change), ))
+            cr.execute("""update initial_stock_inventory_line set
+                hidden_batch_management_mandatory='t', prodlot_name=%s
+                where product_id in %s and inventory_id in
+                    (select id from  initial_stock_inventory where state ='done')
+            """, (self.fake_bn, tuple(prod_to_change), ))
+
+            # Previous Inventory
+            cr.execute("""update stock_inventory_line set
+                hidden_batch_management_mandatory='t', hidden_perishable_mandatory='t'
+                where product_id in %s""", (tuple(prod_to_change), ))
+
+            # Consumption Report
+            cr.execute("""update real_average_consumption_line set
+                date_mandatory='t', batch_mandatory='t'
+                where product_id in %s""", (tuple(prod_to_change), ))
+
+            #PI CS
+            cr.execute("update physical_inventory_counting set batch_number=%s where product_id in %s", (self.fake_bn, tuple(prod_to_change), ))
+            #PI Disc.
+            cr.execute("update physical_inventory_discrepancy set batch_number=%s where product_id in %s", (self.fake_bn, tuple(prod_to_change), ))
+
+        return len(prod_to_change)
+
+    def set_as_edonly(self, cr, uid, ids, context=None):
+        nb = self.switch_no_to_ed(cr, uid, ids, context)
+        nb += self.switch_bn_to_ed(cr, uid, ids, context)
+        return nb
+
+    def set_as_bned(self, cr, uid, ids, context=None):
+        nb = self.switch_no_to_bn(cr, uid, ids, context)
+        nb += self.switch_ed_to_bn(cr, uid, ids, context)
+        return nb
+
+    def set_as_nobn_noed(self, cr, uid, ids, context=None):
+        nb = self.switch_ed_to_no(cr, uid, ids, context)
+        nb += self.switch_bn_to_no(cr, uid, ids, context)
+        return nb
 
     _constraints = [
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])
@@ -2162,10 +2544,8 @@ class change_bn_ed_mandatory_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        prod_obj = self.pool.get('product.product')
         if context.get('prod_data'):
-            prod_obj.write(cr, uid, context['prod_data']['id'], context['prod_data']['vals'], context=context)
-            context.pop('prod_data')
+            self.pool.get('product.product')._apply_change_bn_ed(cr, uid, [context['prod_data']['id']], context['prod_data']['change_target'], context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 

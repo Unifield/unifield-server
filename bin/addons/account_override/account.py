@@ -66,6 +66,7 @@ class account_account(osv.osv):
             cmp_date = context.get('date')
         for x in args:
             if x[0] == 'filter_active' and x[2] == True:
+                arg.append('&')
                 arg.append(('activation_date', '<=', cmp_date))
                 arg.append('|')
                 arg.append(('inactivation_date', '>', cmp_date))
@@ -886,7 +887,9 @@ class account_move(osv.osv):
                                      domain="[('state', '=', 'draft')]", hide_default_menu=True),
         'journal_id': fields.many2one('account.journal', 'Journal',
                                       required=True, states={'posted':[('readonly',True)]},
-                                      domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj', 'system', 'extra']), ('instance_filter', '=', True)]",
+                                      domain="[('type', 'not in', "
+                                             " ['accrual', 'hq', 'inkind', 'cur_adj', 'system', 'extra', 'correction', 'correction_hq']),"
+                                             "('instance_filter', '=', True)]",
                                       hide_default_menu=True),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
@@ -1186,11 +1189,13 @@ class account_move(osv.osv):
                 raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
-                if m.status == 'sys':
+                if m.status == 'sys' and not context.get('from_recurring_entries'):
                     raise osv.except_osv(_('Warning'), _("You can't approve a Journal Entry that comes from the system!"))
                 # UFTP-105: Do not permit to validate a journal entry on a period that is not open
                 if m.period_id and m.period_id.state != 'draft':
                     raise osv.except_osv(_('Warning'), _('You cannot post entries in a non-opened period: %s') % (m.period_id.name))
+                if m.journal_id.type in ('correction', 'correction_hq'):
+                    raise osv.except_osv(_('Warning'), _('The journal %s is forbidden in manual entries.') % (m.journal_id.code))
                 prev_currency_id = False
                 for ml in m.line_id:
                     # Check that the currency and type of the (journal) third party is correct
@@ -1378,7 +1383,7 @@ class account_move_reconcile(osv.osv):
             return ''
 
     _columns = {
-        'name': fields.char('Entry Sequence', size=64, required=True),
+        'name': fields.char('Entry Sequence', size=64, required=True, select=1),
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id',
                                                string="Statement lines", help="This field give all statement lines linked to this move."),
     }
