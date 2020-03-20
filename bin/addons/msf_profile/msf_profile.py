@@ -62,10 +62,12 @@ class patch_scripts(osv.osv):
         cr.execute("""
                 SELECT l.id FROM stock_mission_report_line l 
                     LEFT JOIN ir_model_data d ON d.res_id = l.id AND d.model = 'stock.mission.report.line' AND d.module = 'sd'
-                WHERE d.name LIKE (SELECT identifier||'%' FROM sync_client_entity) AND 
+                WHERE d.name LIKE (SELECT identifier||'%%' FROM sync_client_entity) AND 
                     mission_report_id IN (SELECT id FROM stock_mission_report WHERE instance_id != %s)
         """, (instance_id,))
-        self._logger.warn('%s Stock Mission Report lines have been deleted.' % (cr.rowcount,))
+        lines_to_del = [l[0] for l in cr.fetchall()]
+        cr.execute("""DELETE FROM stock_mission_report_line WHERE id IN %s""", (tuple(lines_to_del),))
+        self._logger.warn('%s Stock Mission Report lines have been deleted.' % (len(lines_to_del),))
 
         return True
 
