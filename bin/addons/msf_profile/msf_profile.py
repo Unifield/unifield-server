@@ -57,8 +57,10 @@ class patch_scripts(osv.osv):
         """
         Remove duplicates products (lines not coming from the current instance) from the generated Stock Mission Report lines
         """
-        instance_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id.id
+        if not self.pool.get('sync.client.message_received'):  # New instance
+            return True
 
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id.id
         cr.execute("""
                 SELECT l.id FROM stock_mission_report_line l 
                     LEFT JOIN ir_model_data d ON d.res_id = l.id AND d.model = 'stock.mission.report.line' AND d.module = 'sd'
@@ -66,6 +68,7 @@ class patch_scripts(osv.osv):
                     mission_report_id IN (SELECT id FROM stock_mission_report WHERE instance_id != %s)
         """, (instance_id,))
         lines_to_del = [l[0] for l in cr.fetchall()]
+
         cr.execute("""DELETE FROM stock_mission_report_line WHERE id IN %s""", (tuple(lines_to_del),))
         self._logger.warn('%s Stock Mission Report lines have been deleted.' % (len(lines_to_del),))
 
