@@ -71,6 +71,19 @@ class patch_scripts(osv.osv):
 
         return True
 
+    # UF16.1
+    def remove_ir_actions_linked_to_deleted_modules(self, cr, uid, *a, **b):
+        # delete remove actions
+        cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where module in ('procurement_report', 'threshold_value') and model='ir.actions.act_window')")
+
+        # delete xmlid
+        cr.execute("delete from ir_model_data where module in ('procurement_report', 'threshold_value') and model='ir.actions.act_window'")
+
+        # delete sdred
+        cr.execute("delete from ir_model_data where name in ('procurement_report_action_auto_supply_rules_report', 'procurement_report_action_min_max_rules_report', 'procurement_report_action_order_cycle_rules_report', 'procurement_report_action_compute_schedulers_min_max', 'threshold_value_action_compute_schedulers_threshold', 'procurement_report_action_procurement_batch_form', 'procurement_report_action_procurement_rules_report', 'threshold_value_action_threshold_value', 'procurement_report_action_threshold_value_rules_report')")
+
+        return True
+
     def us_7025_7039_fix_nr_empty_ins(self, cr, uid, *a, **b):
         """
         1. Set the Not Runs to run:
@@ -106,7 +119,7 @@ class patch_scripts(osv.osv):
         # 2
         cr.execute("""
             SELECT p.id, p.name FROM stock_picking p LEFT JOIN stock_move m ON p.id = m.picking_id WHERE m.id IS NULL
-                AND p.type = 'in' AND p.subtype = 'standard' AND p.state = 'done' AND coalesce(shipment_ref, '') != '' AND purchase_id is not null
+                AND p.type = 'in' AND p.subtype = 'standard' AND p.state = 'done' AND shipment_ref like '%s' AND purchase_id is not null
         """)
         empty_in_ids = []
         empty_in_names = []
@@ -129,7 +142,7 @@ class patch_scripts(osv.osv):
             DELETE FROM account_invoice WHERE id IN (
                 SELECT a.id FROM account_invoice a LEFT JOIN account_invoice_line l ON a.id = l.invoice_id 
                     WHERE l.id IS NULL AND a.state = 'draft' AND a.type = 'out_invoice' AND a.is_debit_note = 'f'
-                    AND a.is_inkind_donation = 'f' AND a.is_intermission = 't' AND user_id = %s
+                    AND a.is_inkind_donation = 'f' AND a.is_intermission = 't' AND a.user_id = %s AND a.name like 'IN/%%' AND a.create_date < '2020-01-17 00:00:00'
             )
         """, (sync_id, ))
         self._logger.warn('%s empty IVOs have been deleted.', (cr.rowcount,))
