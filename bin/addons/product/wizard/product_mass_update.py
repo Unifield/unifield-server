@@ -45,7 +45,8 @@ class product_mass_update(osv.osv):
         'percent_completed': fields.function(_get_percent_completed, method=True, string='% completed', type='integer', readonly=True),
         'message': fields.text(string='Message', readonly=True),
         'product_ids': fields.many2many('product.product', 'prod_mass_update_product_rel', 'product_id',
-                                        'prod_mass_update_id', string="Product selection", order_by="default_code"),
+                                        'prod_mass_update_id', string="Product selection", order_by="default_code",
+                                        domain=[('active', 'in', ['t', 'f'])]),
         'not_deactivated_product_ids': fields.one2many('product.mass.update.errors', 'p_mass_upd_id',
                                                        string="Product(s) that can not be deactivated"),
         'has_not_deactivable': fields.boolean(string='Document has non-deactivable product(s)', readonly=True),
@@ -352,34 +353,34 @@ class product_mass_update(osv.osv):
 
             p_mass_upd_vals = {}
             msg = ''
-            if not_deactivated:
+            if not_deactivated or not_activated:
                 cr.rollback()  # Rollback deactivation and product seller creation
-                for wiz_prod_error in self.pool.get('product.deactivation.error').browse(cr, uid, not_deactivated):
-                    err_vals = {
-                        'p_mass_upd_id': p_mass_upd.id,
-                        'product_id': wiz_prod_error.product_id.id,
-                        'stock_exist': wiz_prod_error.stock_exist,
-                        'open_documents': wiz_prod_error.error_lines and ', '.join([x.doc_ref for x in wiz_prod_error.error_lines if x.doc_ref]) or '',
-                        'not_deactivable': True,
-                    }
-                    upd_errors_obj.create(cr, uid, err_vals, context=context)
+                if not_deactivated:
+                    for wiz_prod_error in self.pool.get('product.deactivation.error').browse(cr, uid, not_deactivated):
+                        err_vals = {
+                            'p_mass_upd_id': p_mass_upd.id,
+                            'product_id': wiz_prod_error.product_id.id,
+                            'stock_exist': wiz_prod_error.stock_exist,
+                            'open_documents': wiz_prod_error.error_lines and ', '.join([x.doc_ref for x in wiz_prod_error.error_lines if x.doc_ref]) or '',
+                            'not_deactivable': True,
+                        }
+                        upd_errors_obj.create(cr, uid, err_vals, context=context)
 
-                msg += _('Some products could not be deactivated. No product will be changed until all of them can be deactivated. ')
-                p_mass_upd_vals.update({'has_not_deactivable': True})
-            if not_activated:
-                cr.rollback()  # Rollback deactivation and product seller creation
-                for prod_id in not_activated:
-                    err_vals = {
-                        'p_mass_upd_id': p_mass_upd.id,
-                        'product_id': prod_id,
-                        'not_activable': True,
-                    }
-                    upd_errors_obj.create(cr, uid, err_vals, context=context)
+                    msg += _('Some products could not be deactivated. No product will be changed until all of them can be deactivated.\n')
+                    p_mass_upd_vals.update({'has_not_deactivable': True})
+                if not_activated:
+                    for prod_id in not_activated:
+                        err_vals = {
+                            'p_mass_upd_id': p_mass_upd.id,
+                            'product_id': prod_id,
+                            'not_activable': True,
+                        }
+                        upd_errors_obj.create(cr, uid, err_vals, context=context)
 
-                msg += _('Some NSL products could not be activated to ensure that there is no duplicate “Local” product. No product will be changed and those NSL products should be activated manually. ')
-                p_mass_upd_vals.update({'has_not_activable': True})
-            if p_mass_upd_vals and (not_deactivated or not_activated):
-                msg += _('Please check the corresponding tab(s).')
+                    msg += _('Some NSL products could not be activated to ensure that there is no duplicate “Local” product. No product will be changed and those NSL products should be activated manually.\n')
+                    p_mass_upd_vals.update({'has_not_activable': True})
+
+                msg += _('Please check the corresponding tab.')
                 p_mass_upd_vals.update({
                     'message': msg,
                     'state': 'error',
