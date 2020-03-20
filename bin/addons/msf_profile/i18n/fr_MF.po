@@ -108993,3 +108993,10 @@ msgstr "Informations de paiement :"
 #, python-format
 msgid "Line %s. The period %s doesn't exist."
 msgstr "Ligne %s. La période %s n'existe pas."
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1308
+#: code:addons/product_attributes/product_attributes.py:1445
+#, python-format
+msgid "Product Code %s must include a 'Z' character"
+msgstr "Le Code Produit %s doit inclure un caractère 'Z'"
