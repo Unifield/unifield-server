@@ -612,7 +612,7 @@
                                     confirm="Warning, you are going to Cancel!"
                                     />
                                 <field name="from_wkf_sourcing" invisible="1" />
-                                <button name="enter_reason"
+                                <button name="enter_reason_cr"
                                     states="assigned,confirmed,draft,shipped,updated"
                                     attrs="{'invisible': ['|', '|', ('state', 'not in', ['assigned', 'confirmed', 'draft', 'shipped', 'updated']), ('progress_memory_not_done', '!=', False), ('from_wkf_sourcing', '=', False)]}"
                                     string="Cancel &amp; Resource"
