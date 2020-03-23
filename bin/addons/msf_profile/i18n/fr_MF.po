@@ -4445,11 +4445,6 @@ msgstr "Passer l'étape des Assistants de Configuration"
 msgid "There is no income account defined for this product: \"%s\" (id:%d)"
 msgstr "Il n'y a pas de compte de produit défini pour ce produit : \"%s\" (id : %d)."
 
-#. module: register_accounting
-#: view:wizard.register.opening.confirmation:0
-msgid "Register Starting Balance"
-msgstr "Solde Initial du Registre"
-
 #. module: finance
 #: code:addons/finance/cash_request.py:276
 #, python-format
