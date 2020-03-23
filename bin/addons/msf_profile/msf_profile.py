@@ -62,7 +62,7 @@ class patch_scripts(osv.osv):
         cr.execute("""
                    UPDATE account_cashbox_line
                    SET number = 0 
-                   WHERE starting_id = (
+                   WHERE starting_id IN (
                        SELECT id FROM account_bank_statement
                        WHERE state = 'draft'
                        AND prev_reg_id IS NULL
