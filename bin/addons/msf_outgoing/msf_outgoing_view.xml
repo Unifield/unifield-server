@@ -153,6 +153,7 @@
                 <tree colors="blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date"
                     string="Picking Tickets" hide_new_button="1">
                     <field name="name" />
+                    <field name="flow_type" />
                     <field name="partner_id2" />
                     <field name="backorder_id" string="ORIGINAL PICK" />
                     <field name="sale_id" invisible="True" />
@@ -207,9 +208,9 @@
                             <field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
                             <field name="incoming_id" readonly="True" />
                         </group>
-                        <group colspan="6" col="6">
-                            <button name="export_pick" type="object" string="Export PICK" icon="gtk-execute" colspan="2"/>
-                            <button name="import_pick" type="object" string="Import PICK" icon="gtk-execute" colspan="2" attrs="{'invisible': [('state', 'not in', ['draft', 'assigned'])]}" />
+                        <group colspan="6" col="2">
+                            <button name="export_pick" type="object" string="Export PICK" icon="gtk-execute"/>
+                            <button name="import_pick" type="object" string="Import PICK" icon="gtk-execute" attrs="{'invisible': [('state', 'not in', ['draft', 'assigned'])]}" />
                         </group>
                     </group>
 
@@ -234,8 +235,8 @@
                                 widget="one2many_list"
                                 default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
                                 on_change="onchange_move()"
-                                filter_selector="[('Show unprocessed lines', [('state', 'in', ['confirmed', 'assigned', 'draft']), ('product_qty', '!=', 0)]), ('Show all lines', []), ('Show not available lines', [('state', '=', 'confirmed')])]"
-                                default_selector="state == 'draft' and '0' or '1'"
+                                filter_selector="[('Show unprocessed lines', [('state', 'in', ['confirmed', 'assigned', 'draft']), ('product_qty', '!=', 0)]), ('Show unprocessed available lines', [('state', '=', 'assigned'), ('product_qty', '!=', 0)]), ('Show all lines', []), ('Show not available lines', [('state', '=', 'confirmed')])]"
+                                default_selector="state == 'draft' and '0' or '2'"
                                 o2m_selectable="2">
                                 <tree string="Stock Moves" nopopup="fake_state=='assigned'" noteditable="fake_state=='cancel'" hide_new_button="context.get('from_wkf')" hide_delete_button="1" editable="both" colors="red: inactive_product==True" editable_style="new">
                                     <field name="line_number" readonly="1"/>
@@ -443,7 +444,7 @@
 			<field name="type">search</field>
             <field name="priority">18</field>
 			<field name="arch" type="xml">
-				<search string="Picking Tickets">
+				<search string="Picking Lists &amp; Picking Tickets">
 					<group col="8" colspan="4">
 						<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" />
 						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" />
@@ -580,7 +581,7 @@
 
 		<!-- Added 'subtype' in domain -->
 		<record id="action_picking_ticket" model="ir.actions.act_window">
-			<field name="name">Picking Tickets</field>
+			<field name="name">Picking Lists &amp; Picking Tickets</field>
 			<field name="res_model">stock.picking</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field>
@@ -673,8 +674,9 @@
                             <field name='ppl_customize_label' required="True" />
                             <field name="description_ppl"  />
                         </group>
-                        <group name="import" string=" Update Packing with import " colspan="6" attrs="{'invisible': [('state', '!=', 'assigned')]}">
-                            <button name="wizard_update_ppl_to_create_ship" string="Update Packing with import" icon="gtk-dnd" type="object"/>
+                        <group colspan="6" col="2">
+                            <button name="export_ppl" string="Export Packing" icon="gtk-execute" type="object"/>
+                            <button name="wizard_update_ppl_to_create_ship" string="Import Packing" icon="gtk-execute" type="object" attrs="{'invisible': [('state', '!=', 'assigned')]}"/>
                         </group>
 
                     </group>
@@ -759,8 +761,8 @@
                                 <button name="ppl_return" string="Return Products..." states="confirmed,assigned" type="object" icon="gtk-undo" context="{'from_button': True}" />
                                 <button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
                                 <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" />
-                                <button name="ppl_pack_lines" states="assigned" string="Pack Lines..." type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('flow_type', '=', 'quick'), ('state', '=', 'done')]}" />
                                 <button name="check_ppl_integrity" states="assigned" string="Check Integrity" type="object" icon="gtk-info"/>
+                                <button name="ppl_pack_lines" states="assigned" string="Pack Lines..." type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('flow_type', '=', 'quick'), ('state', '=', 'done')]}" />
                                 <button name="ppl_step2" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver" context="{'from_button': True}" />
                             </group>
                         </page>
@@ -1304,7 +1306,7 @@
 
                     <notebook colspan="4">
                         <page string="Pack Families">
-                            <field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', 'not in', ['draft','shipped'])]}">
+                            <field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', 'not in', ['draft','shipped'])], 'notselectable': [('state', '!=', 'draft')]}" o2m_selectable="2">
                                 <tree string="Pack Families" colors="red: not_shipped" editable="both" hide_new_button="1" hide_delete_button="1" editable_style="new" noteditable="fake_state not in ['draft','assigned']">
                                     <field name="fake_state" invisible="True" />
                                     <field name="sale_order_id" readonly="1"/>
@@ -1425,18 +1427,18 @@
                         <field name="state" readonly="1"/>
                         <field name="is_company" invisible="1" />
                         <field name="num_of_packs" invisible="1" />
-                        <button name="copy_all" type="object" icon="gtk-jump-to" string="Copy all"  attrs="{'invisible': [('state', '!=', 'draft')]}" />
-                        <button name="uncopy_all" type="object" icon="gtk-undo" string="Clear all" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                        <button name="copy_all" type="object" icon="gtk-jump-to" string="Copy"  attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                        <button name="uncopy_all" type="object" icon="gtk-undo" string="Clear" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                         <button name="add_packs" states="shipped" string="Add Packs to Shipment" type="object" icon="gtk-add" context="{'from_button': True}" />
                         <button name="return_packs" states="draft" string="Return Packs to Stock..." type="object" icon="gtk-undo" context="{'from_button': True}" />
                         <button name="do_create_shipment_bg" states="draft" string="Create Shipment" type="object" icon="gtk-add" context="{'from_button': True}" />
                         <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />
                         <button name="validate_bg" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
-                        <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
+                        <button name="set_delivered" icon="gtk-apply" type="object" string="Confirm Reception"
                                 attrs="{'invisible': ['|','|', '&amp;', ('is_company', '=', False), ('partner_type', 'in', ['internal', 'intermission', 'section']), ('state', '!=', 'done'), ('num_of_packs', '=', 0)]}" />
-                        <button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery"
+                        <button name="set_delivered" icon="gtk-apply" type="object" string="Confirm Reception"
                                 attrs="{'invisible': ['|','|', '|', ('num_of_packs', '=', 0), ('is_company', '=', True), ('partner_type', 'not in', ['internal', 'intermission', 'section']), ('state', '!=', 'done')]}"
-                        confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"/>
+                        confirm="Synchronization engine should confirm the reception once recorded on the receiving instance, do you want to continue?"/>
                     </group>
                 </form>
             </field>
@@ -1499,7 +1501,7 @@
 		</record>
 		<!-- Added 'subtype' in domain -->
 		<record id="action_shipment" model="ir.actions.act_window">
-			<field name="name">Shipment Lists</field>
+			<field name="name">Shipment Lists &amp; Shipments</field>
 			<field name="res_model">shipment</field>
 			<field name="type">ir.actions.act_window</field>
 			<field name="view_type">form</field>

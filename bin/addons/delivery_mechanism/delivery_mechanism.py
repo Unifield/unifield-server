@@ -1330,6 +1330,9 @@ class stock_picking(osv.osv):
     def _manual_create_rw_messages(self, cr, uid, context=None):
         return
 
+    def enter_reason_cr(self, cr, uid, ids, context=None):
+        return self.enter_reason(cr, uid, ids, context=context)
+
     @check_rw_warning
     def enter_reason(self, cr, uid, ids, context=None):
         '''
@@ -1345,93 +1348,6 @@ class stock_picking(osv.osv):
         wiz_obj = self.pool.get('wizard')
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, picking_id=ids[0]))
-
-    def cancel_and_update_out(self, cr, uid, ids, context=None):
-        '''
-        update corresponding out picking if exists and cancel the picking
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        # objects
-        move_obj = self.pool.get('stock.move')
-        purchase_obj = self.pool.get('purchase.order')
-        # workflow
-        wf_service = netsvc.LocalService("workflow")
-
-        for obj in self.browse(cr, uid, ids, context=context):
-            # corresponding sale ids to be manually corrected after purchase workflow trigger
-            sale_ids = []
-            for move in obj.move_lines:
-                data_back = move_obj.create_data_back(move)
-                diff_qty = -data_back['product_qty']
-                # update corresponding out move - no move created, no need to handle line sequencing policy
-                out_move_id = self._update_mirror_move(cr, uid, ids, data_back, diff_qty, out_move=False, context=context)
-                # for out cancellation, two points:
-                # - if pick/pack/ship: check that nothing is in progress
-                # - if nothing in progress, and the out picking is canceled, trigger the so to correct the corresponding so manually
-                if out_move_id:
-                    out_move = move_obj.browse(cr, uid, out_move_id, context=context)
-                    if out_move.picking_id.subtype in ('standard', 'picking') and out_move.picking_id.type == 'out' and not out_move.product_qty:
-                        move_id = False
-                        if out_move.picking_id and out_move.sale_line_id:
-                            # replace the stock move in the procurement order by the non cancelled stock move
-                            sale_id = out_move.picking_id.sale_id.id
-                            move_domain = [
-                                ('picking_id.type', '=', 'out'),
-                                ('picking_id.subtype', 'in', ('standard', 'picking')),
-                                #('picking_id.sale_id', '=', sale_id),
-                                ('sale_line_id', '=', out_move.sale_line_id.id),
-                                ('id', '!=', out_move_id),
-                                ('processed_stock_move', '=', True),
-                            ]
-                            move_domain_not_done = move_domain
-                            move_domain_not_cancel = move_domain
-                            move_domain_not_done.append(('state', 'not in', ['done', 'cancel']))
-                            move_domain_not_cancel.append(('state', '!=', 'cancel'))
-
-                            move_id = move_obj.search(cr, uid, move_domain_not_done, context=context)
-                            if not move_id:
-                                move_id = move_obj.search(cr, uid, move_domain_not_cancel, context=context)
-
-                            if move_id:
-                                proc_id = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', out_move_id)], context=context)
-                                self.pool.get('procurement.order').write(cr, uid, proc_id, {'move_id': move_id[0]}, context=context)
-
-                        # the corresponding move can be canceled - the OUT picking workflow is triggered automatically if needed
-                        move_obj.action_cancel(cr, uid, [out_move_id], context=context)
-                        # open points:
-                        # - when searching for open picking tickets - we should take into account the specific move (only product id ?)
-                        # - and also the state of the move not in (cancel done)
-                        # correct the corresponding so manually if exists - could be in shipping exception
-                        if out_move.picking_id and out_move.picking_id.sale_id:
-                            if out_move.picking_id.sale_id.id not in sale_ids:
-                                sale_ids.append(out_move.picking_id.sale_id.id)
-
-                    # UFTP-345: Check if all lines from the original pick are either closed or cancel and qty is 0, then close this PICK
-                    mirror_pick = out_move.picking_id
-                    if mirror_pick and mirror_pick.id:
-                        ptc = self.browse(cr, uid, mirror_pick.id, context=context)
-                        if all(m.product_qty == 0.00 and m.state in ('done', 'cancel') for m in ptc.move_lines):
-                            ptc.action_done(context=context)
-                        elif mirror_pick.subtype == 'picking' and ptc.state == 'draft':
-                            # If there are still some lines available with qty 0, then check if any in progress PICK, if all complete, then close the PICK
-                            self.validate(cr, uid, [mirror_pick.id], context=context)
-
-            # correct the corresponding po manually if exists - should be in shipping exception
-            if obj.purchase_id:
-                wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
-                msg_log = _('The Purchase Order %s is %s%% received.') % (obj.purchase_id.name, round(obj.purchase_id.shipped_rate, 2))
-                purchase_obj.log(cr, uid, obj.purchase_id.id, msg_log)
-
-            # correct the corresponding so
-            for sale_id in sale_ids:
-                wf_service.trg_write(uid, 'sale.order', sale_id, cr)
-                wf_service.trg_validate(uid, 'sale.order', sale_id, 'ship_corrected', cr)
-
-        return True
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -1462,71 +1378,3 @@ class stock_picking(osv.osv):
 
 
 stock_picking()
-
-
-class purchase_order_line(osv.osv):
-    '''
-    add the link to procurement order
-    '''
-    _inherit = 'purchase.order.line'
-    _columns = {
-        'procurement_id': fields.many2one(
-            'procurement.order',
-            string='Procurement Reference',
-            readonly=True,
-        ),
-    }
-    _defaults = {'procurement_id': False, }
-
-purchase_order_line()
-
-
-class procurement_order(osv.osv):
-    '''
-    inherit po_values_hook
-    '''
-    _inherit = 'procurement.order'
-
-    def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
-
-        - allow to modify the data for purchase order line creation
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        sale_obj = self.pool.get('sale.order.line')
-        line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-        # give the purchase order line a link to corresponding procurement
-        procurement = kwargs['procurement']
-        line.update({'procurement_id': procurement.id, })
-
-        # for Internal Request (IR) on make_to_order we update PO line data according to the data of the IR (=sale_order)
-        sale_order_line_ids = sale_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
-        for sol in sale_obj.browse(cr, uid, sale_order_line_ids, context=context):
-            if (sol.order_id.procurement_request or procurement.supplier.partner_type == 'esc') and not sol.product_id and sol.comment:
-                line.update({'product_id': False,
-                             'name': 'Description: %s' % sol.comment,
-                             'comment': procurement.tender_line_id and procurement.tender_line_id.comment or sol.comment,
-                             'product_qty': sol.product_uom_qty,
-                             'price_unit': sol.price_unit,
-                             'date_planned': sol.date_planned,
-                             'product_uom': sol.product_uom.id,
-                             'nomen_manda_0': sol.nomen_manda_0.id,
-                             'nomen_manda_1': sol.nomen_manda_1.id or False,
-                             'nomen_manda_2': sol.nomen_manda_2.id or False,
-                             'nomen_manda_3': sol.nomen_manda_3.id or False,
-                             'nomen_sub_0': sol.nomen_sub_0.id or False,
-                             'nomen_sub_1': sol.nomen_sub_1.id or False,
-                             'nomen_sub_2': sol.nomen_sub_2.id or False,
-                             'nomen_sub_3': sol.nomen_sub_3.id or False,
-                             'nomen_sub_4': sol.nomen_sub_4.id or False,
-                             'nomen_sub_5': sol.nomen_sub_5.id or False})
-
-        if procurement.tender_line_id and procurement.tender_line_id.purchase_order_line_id and procurement.tender_line_id.purchase_order_line_id.comment:
-            line['comment'] = procurement.tender_line_id.purchase_order_line_id.comment
-
-        return line
-
-procurement_order()

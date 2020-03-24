@@ -145,6 +145,7 @@
                     </xpath>
                     <xpath expr="/search/group[2]/field[@name='period_id']" position="after">
                         <field name="supplier_reference"/>
+                        <field name="name"/>
                     </xpath>
                     <xpath expr="/search/group[1]/separator[1]" position="replace">
                     </xpath>
@@ -220,6 +221,7 @@
                     <field name="name"/>
                     <field name="date_due"/>
                     <field name="origin"/>
+                    <field name="line_count"/>
                     <field name="currency_id"/>
                     <field name="residual"/>
                     <field name="amount_total"/>
@@ -334,6 +336,7 @@
                     <field name="partner_id"/>
                     <field name="name"/>
                     <field name="origin"/>
+                    <field name="line_count"/>
                     <field name="currency_id"/>
                     <field name="amount_total"/>
                     <field name="state"/>
@@ -460,6 +463,7 @@
                     <field name="partner_id"/>
                     <field name="name"/>
                     <field name="origin"/>
+                    <field name="line_count"/>
                     <field name="currency_id"/>
                     <field name="amount_total"/>
                     <field name="state"/>
@@ -541,7 +545,11 @@
                                     <field name="line_number" displayon="noteditable"/>
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
-                                    <field name="name"/>
+                                    <field name="product_id"
+                                                   on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
+                                                   attrs="{'readonly': ['|',
+                                                                        ('from_supply', '=', True),
+                                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}" />
                                     <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]"
                                            context="{'type': parent.type, 'journal_type': parent.journal_type, 'intermission_type': parent.type == 'out_invoice' and 'out' or 'in'}"
                                     />
@@ -556,7 +564,6 @@
                                                                 ('from_supply', '=', True),
                                                                 '&amp;', ('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"
                                     />
-                                    <field name="product_id" invisible="1"/>
                                     <field name="uos_id" string="UOM"
                                            on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
                                            attrs="{'readonly': ['|',
@@ -566,6 +573,7 @@
                                     <field name="price_unit"
                                            attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                                     <field name="price_subtotal"/>
+                                    <field name="name"/>
                                     <field name="inactive_product" invisible="1" />
                                     <field name="inactive_error" invisible="1" />
                                 </tree>
@@ -661,7 +669,12 @@
                                                         '&amp;', ('type', '=', 'out_invoice'), ('from_supply', '=', True)]}"/>
                             <newline/>
                             <field domain="[('partner_id.ref_companies', 'in', [company_id])]" name="partner_bank_id" />
-                            <field name="origin" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_supply', '=', True)]}"/>
+                            <field name="refunded_invoice_id" invisible="1"/>
+                            <field name="origin"
+                                   attrs="{'readonly': ['|', '|',
+                                                        ('state', '!=', 'draft'),
+                                                        ('refunded_invoice_id', '!=', False),
+                                                        ('from_supply', '=', True)]}"/>
                             <field colspan="4" domain="[('partner_id','=',partner_id)]" name="address_contact_id" />
                             <field name="move_id" />
                             <separator colspan="4" string="Additional Information"/>
@@ -824,6 +837,7 @@
                     <group col="10" colspan="4">
                         <field name="journal_id" widget="selection" select='1'/>
                         <field name="period_id" select='1' string="Period"/>
+                        <field name="name"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">

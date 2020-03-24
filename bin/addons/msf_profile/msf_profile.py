@@ -52,7 +52,100 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+
+    def remove_ir_actions_linked_to_deleted_modules(self, cr, uid, *a, **b):
+        # delete remove actions
+        cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where module in ('procurement_report', 'threshold_value') and model='ir.actions.act_window')")
+
+        # delete xmlid
+        cr.execute("delete from ir_model_data where module in ('procurement_report', 'threshold_value') and model='ir.actions.act_window'")
+
+        # delete sdred
+        cr.execute("delete from ir_model_data where name in ('procurement_report_action_auto_supply_rules_report', 'procurement_report_action_min_max_rules_report', 'procurement_report_action_order_cycle_rules_report', 'procurement_report_action_compute_schedulers_min_max', 'threshold_value_action_compute_schedulers_threshold', 'procurement_report_action_procurement_batch_form', 'procurement_report_action_procurement_rules_report', 'threshold_value_action_threshold_value', 'procurement_report_action_threshold_value_rules_report')")
+
+        return True
+
+    # UF17.0
+    def us_7025_7039_fix_nr_empty_ins(self, cr, uid, *a, **b):
+        """
+        1. Set the Not Runs to run:
+            - Error from coordo: "Exception: Something goes wrong with this message and no confirmation of delivery".
+            - Error from project: "Exception: Unable to receive Shipment Details into an Incoming Shipment in this
+                instance as IN IN/XXXXX (POXXXXX) already fully/partially cancelled/Closed".
+        2. Remove reference data from empty INs (Backorder, Origin, links to FO, links to PO, Ship Reference, ...) and
+            modify "Change Reason" to "False movement, bug US-7025/7039".
+        3. Remove empty Draft IVOs.
+        """
+        if not self.pool.get('sync.client.message_received'):
+            # new instance
+            return True
+        # 1
+        cr.execute("""
+            SELECT id, identifier, arguments FROM sync_client_message_received
+            WHERE run = 'f' AND remote_call IN ('stock.picking.closed_in_validates_delivery_out_ship', 'stock.picking.partial_shipped_fo_updates_in_po')
+        """)
+        to_run_ids = []
+        to_run_name = []
+        for msg in cr.fetchall():
+            args = eval(msg[2])[0]
+            if args.get('shipment_ref', False) and args['shipment_ref'].endswith('-s') or args.get('name', False) and args['name'].endswith('-s'):
+                to_run_ids.append(msg[0])
+                to_run_name.append(msg[1])
+        if to_run_ids:
+            cr.execute("""
+                UPDATE sync_client_message_received SET run = 't', manually_ran = 't', execution_date = %s
+                WHERE id IN %s""", (time.strftime("%Y-%m-%d %H:%M:%S"), tuple(to_run_ids))
+                       )
+            self._logger.warn('The following Not Runs have been set to Run: %s.', (', '.join(to_run_name),))
+
+        # 2
+        cr.execute("""
+            SELECT p.id, p.name FROM stock_picking p LEFT JOIN stock_move m ON p.id = m.picking_id WHERE m.id IS NULL
+                AND p.type = 'in' AND p.subtype = 'standard' AND p.state = 'done' AND shipment_ref like '%s' AND purchase_id is not null
+        """)
+        empty_in_ids = []
+        empty_in_names = []
+        for inc in cr.fetchall():
+            empty_in_ids.append(inc[0])
+            empty_in_names.append(inc[1])
+        if empty_in_ids:
+            cr.execute("""
+                UPDATE stock_picking SET sale_id = NULL, purchase_id = NULL, backorder_id = NULL, origin = '', 
+                    shipment_ref = '', change_reason = 'False movement, bug US-7025/7039' WHERE id IN %s
+            """, (tuple(empty_in_ids),))
+            self._logger.warn('The following empty INs have been modified: %s.', (', '.join(empty_in_names),))
+
+        # 3
+        try:
+            sync_id = self.pool.get('ir.model.data').get_object_reference(cr, 1, 'base', 'user_sync')[1]
+        except:
+            return True
+        cr.execute("""
+            DELETE FROM account_invoice WHERE id IN (
+                SELECT a.id FROM account_invoice a LEFT JOIN account_invoice_line l ON a.id = l.invoice_id 
+                    WHERE l.id IS NULL AND a.state = 'draft' AND a.type = 'out_invoice' AND a.is_debit_note = 'f'
+                    AND a.is_inkind_donation = 'f' AND a.is_intermission = 't' AND a.user_id = %s AND a.name like 'IN/%%' AND a.create_date < '2020-01-17 00:00:00'
+            )
+        """, (sync_id, ))
+        self._logger.warn('%s empty IVOs have been deleted.', (cr.rowcount,))
+
+        return True
+
     # UF16.0
+    def us_7181_add_oc_subscrpition_to_unidata_products(self, cr, uid, *a, **b):
+        """
+        Set the new 'oc_subscription' boolean to True for each product with 'Unidata' as Product Creator
+        """
+        cr.execute("""
+            UPDATE product_product SET oc_subscription = 't' WHERE id IN (
+                SELECT p.id FROM product_product p LEFT JOIN product_international_status i ON p.international_status = i.id
+                WHERE i.code = 'unidata'
+            )
+        """)
+        self._logger.warn('%s Unidata product(s) have been updated.' % (cr.rowcount,))
+
+        return True
+
     def us_6692_new_od_journals(self, cr, uid, *a, **b):
         """
         1. Change the type of the existing correction journals (except OD) to "Correction Manual" so they remain usable
@@ -120,6 +213,52 @@ class patch_scripts(osv.osv):
                     'analytic_journal_id': odhq_analytic_journal_id,
                 }
                 journal_obj.create(cr, uid, odhq_vals)
+        return True
+
+    def us_6684_push_backup(self, cr, uid, *a, **b):
+        backup_obj = self.pool.get('backup.config')
+        if backup_obj:
+            cr.execute("update ir_cron set manual_activation='f' where function='send_backup_bg' and model='msf.instance.cloud'")
+            cr.execute("update ir_cron set name='Send Continuous Backup', manual_activation='f' where function='sent_continuous_backup_bg' and model='backup.config'")
+            if cr.column_exists('backup_config', 'continuous_backup_enabled'):
+                cr.execute("update backup_config set backup_type='cont_back' where continuous_backup_enabled='t'")
+
+            # update active field on cron
+            bck_ids = backup_obj.search(cr, uid, [])
+            backup_obj.write(cr, uid, bck_ids, {})
+        return True
+
+    def us_7024_update_standard(self, cr, uid, *a, **b):
+        cr.execute("update product_product set standard_ok='standard' where standard_ok='True'")
+        cr.execute("update product_product set standard_ok='non_standard' where standard_ok='False'")
+        return True
+
+    # UF15.3
+    def us_7147_reset_duplicate_proj_fxa(self, cr, uid, *a, **b):
+        cr.execute("""
+            select am.name, am.id, aml.id, data.name
+                from account_move_line aml
+                inner join account_journal aj ON aml.journal_id = aj.id
+                inner join account_move am ON aml.move_id = am.id
+                inner join account_period ap ON aml.period_id = ap.id
+                inner join account_account aa ON aml.account_id = aa.id
+                inner join msf_instance i ON aml.instance_id = i.id
+                inner join ir_model_data data on data.res_id = aml.id and data.model = 'account.move.line'
+            where
+                aj.type = 'cur_adj' and
+                i.level = 'project' and
+                aml.reconcile_id is null and
+                aa.reconcile = 't' and
+                (aml.credit != 0 or aml.debit != 0)
+        """)
+        for x in cr.fetchall():
+            cr.execute("select id from sync_client_update_to_send where model='account.move.reconcile' and values ~* '.*sd.%s[,''].*'" % x[3]) # not_a_user_entry
+            if not cr.rowcount:
+                cr.execute("select id from sync_client_update_received where model='account.move.reconcile' and values ~* '.*sd.%s[,''].*'" % x[3]) # not_a_user_entry
+                if not cr.rowcount:
+                    cr.execute("update account_move_line set credit=0, debit=0 where move_id = %s", (x[1], ))
+                    cr.execute("update account_analytic_line set amount=0, amount_currency=0 where move_id in (select id from account_move_line where move_id = %s)", (x[1], ))
+                    self._logger.warn('Set 0 on FXA %s' % (x[0],))
         return True
 
     # UF15.2

@@ -953,31 +953,6 @@
             </field>
         </record>
               
-        <record id="view_compute_schedulers_wizard_replace" model="ir.ui.view">
-            <field name="name">Compute Schedulers</field>
-            <field name="model">procurement.order.compute.all</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="procurement.view_compute_schedulers_wizard" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form" position="replace">
-                    <form>
-                    <label string="This wizard allows you to run all procurement, production and/or purchase orders that should be processed based on their configuration. By default, the scheduler is launched automatically every night by OpenERP. You can use this menu to force it to be launched now. Note that it runs in the background, you may have to wait for a few minutes until it has finished computing." colspan="4"/>
-                    <separator colspan="4"/>
-                    <group col="2" colspan="4">
-                        <button icon='gtk-cancel' special="cancel"
-                            string="Cancel" />
-                        <button name="procure_calculation" string="Compute POs Creation"
-                                colspan="1" type="object" icon="gtk-ok" />
-                        </group>
-                    </form>
-                    </xpath>
-
-                </data>
-            </field>
-        </record>
-
-
         <record id="sale_order_unlink_wizard" model="ir.ui.view">
             <field name="name">sale.order.unlink.wizard</field>
             <field name="model">sale.order.unlink.wizard</field>

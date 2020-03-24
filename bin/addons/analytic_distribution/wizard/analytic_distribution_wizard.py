@@ -769,7 +769,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 obj = self.pool.get(obj_type).browse(cr, uid, vals[field_name], context=context)
                 if not line_field:
                     # AD at line level
-                    invalid_small_amount = obj.analytic_distribution_state == 'invalid_small_amount' or False
+                    distrib_state = hasattr(obj, 'analytic_distribution_state') and getattr(obj, 'analytic_distribution_state') or ''
+                    invalid_small_amount = distrib_state == 'invalid_small_amount' or False
                 else:
                     # AD at header level
                     lines = hasattr(obj, line_field) and getattr(obj, line_field) or []
@@ -1048,7 +1049,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     if not fpline.cost_center_id.filter_active:
                         raise osv.except_osv(_('Error'), _('Cost center %s is not active at this date: %s') % (fpline.cost_center_id.code or '', w.posting_date))
                     if not fpline.destination_id.filter_active:
-                        raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') % (fpline.destination_id.code or '', w.posting_date))
+                        raise osv.except_osv(_('Error'), _('Destination %s is either inactive at the date %s, or it allows no Cost Center.')
+                                             % (fpline.destination_id.code or '', w.posting_date))
             # UF-1678
             # For funding pool analytic account, check is done on DOCUMENT date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
             if w.distribution_id and w.document_date:

@@ -35,7 +35,6 @@
         "stock_data.xml",
         "stock_view.xml",
         "stock_workflow.xml",
-        "procurement_view.xml",
         "stock_report.xml",
         "report/report_destruction_location_view.xml",
         "destruction_report.xml",
