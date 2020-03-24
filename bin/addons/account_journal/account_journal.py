@@ -184,6 +184,7 @@ class account_journal(osv.osv):
 
     def onchange_type(self, cr, uid, ids, type, currency, context=None):
         analytic_journal_obj = self.pool.get('account.analytic.journal')
+        company = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id
 #        value = super(account_journal, self).onchange_type(cr, uid, ids, type, currency, context)
         default_dom = [('type','<>','view'),('type','<>','consolidation')]
         value =  {'value': {}, 'domain': {}}
@@ -202,18 +203,30 @@ class account_journal(osv.osv):
             value['value']['analytic_journal_id'] = analytic_cash_journal
             value['domain']['default_debit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
             value['domain']['default_credit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
+            if company.cash_debit_account_id:
+                value['value']['default_debit_account_id'] = company.cash_debit_account_id.id
+            if company.cash_credit_account_id:
+                value['value']['default_credit_account_id'] = company.cash_credit_account_id.id
         elif type == 'bank':
             analytic_bank_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'BNK'),
                                                                           ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_bank_journal
             value['domain']['default_debit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
             value['domain']['default_credit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
+            if company.bank_debit_account_id:
+                value['value']['default_debit_account_id'] = company.bank_debit_account_id.id
+            if company.bank_credit_account_id:
+                value['value']['default_credit_account_id'] = company.bank_credit_account_id.id
         elif type == 'cheque':
             analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK'),
                                                                             ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cheque_journal
             value['domain']['default_debit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
             value['domain']['default_credit_account_id'] = ACCOUNT_RESTRICTED_AREA['journals']
+            if company.cheque_debit_account_id:
+                value['value']['default_debit_account_id'] = company.cheque_debit_account_id.id
+            if company.cheque_credit_account_id:
+                value['value']['default_credit_account_id'] = company.cheque_credit_account_id.id
         elif type == 'cur_adj':
             debit_default_dom = [('type','<>','view'),('type','<>','consolidation')]
             credit_default_dom = [('type','<>','view'),('type','<>','consolidation')]
