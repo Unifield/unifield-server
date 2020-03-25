@@ -109029,9 +109029,9 @@ msgstr "Compte de Crédit par défaut pour les Journaux de Banque"
 #. module: account_override
 #: field:res.company,cash_debit_account_id:0
 msgid "Cash Default Debit Account"
-msgstr "Compte de Débit par défaut pour les Journaux de Caisse"
+msgstr "Compte de Débit par défaut pour les Journaux de Liquidités"
 
 #. module: account_override
 #: field:res.company,cash_credit_account_id:0
 msgid "Cash Default Credit Account"
-msgstr "Compte de Crédit par défaut pour les Journaux de Caisse"
+msgstr "Compte de Crédit par défaut pour les Journaux de Liquidités"
