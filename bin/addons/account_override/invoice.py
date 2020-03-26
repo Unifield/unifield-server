@@ -637,7 +637,7 @@ class account_invoice(osv.osv):
         # Default behaviour
         new_id = super(account_invoice, self).copy(cr, uid, inv_id, default, context)
         # Case where you split an invoice
-        if 'split_it' in context:
+        if 'from_split' in context:
             purchase_obj = self.pool.get('purchase.order')
             sale_obj = self.pool.get('sale.order')
             if purchase_obj:
@@ -1848,7 +1848,7 @@ class account_invoice_line(osv.osv):
 
         new_id = super(account_invoice_line, self).copy(cr, uid, inv_id, default, context)
 
-        if 'split_it' in context:
+        if 'from_split' in context:
             purchase_lines_obj = self.pool.get('purchase.order.line')
             sale_lines_obj = self.pool.get('sale.order.line')
 
@@ -1911,19 +1911,21 @@ class account_invoice_line(osv.osv):
                 in_invoice = invoice.type == 'in_invoice' and not invoice.is_inkind_donation
                 supp_inv = in_invoice and not invoice.is_intermission
                 from_merge = context.get('from_merge')
+                from_split = context.get('from_split')
                 from_supply = invoice.from_supply
                 intermission_or_section = invoice.partner_type in ('intermission', 'section')
-                check_line_per_line = from_supply and supp_inv and not from_merge
+                check_line_per_line = from_supply and supp_inv and not from_merge and not from_split
                 if not check_line_per_line:
                     invoice_ids.append(invoice.id)  # check each invoice only once
                 deletion_allowed = True
-                if in_invoice and invoice.synced:
-                    deletion_allowed = False
-                elif from_supply:
-                    if intermission_or_section:
+                if not context.get('from_split'):  # always allow deletion due to the use of the "Split invoice" feature
+                    if in_invoice and invoice.synced:
                         deletion_allowed = False
-                    elif supp_inv and not from_merge and (invl.order_line_id or invl.merged_line):
-                        deletion_allowed = False
+                    elif from_supply:
+                        if intermission_or_section:
+                            deletion_allowed = False
+                        elif supp_inv and not from_merge and (invl.order_line_id or invl.merged_line):
+                            deletion_allowed = False
                 if not deletion_allowed:
                     # will be displayed when trying to delete lines manually / merge lines / or split invoices
                     raise osv.except_osv(_('Error'), _("This document has been generated via a Supply workflow or via synchronization. "
