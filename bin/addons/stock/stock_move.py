@@ -1405,11 +1405,6 @@ class stock_move(osv.osv):
             context = {}
 
         self.write(cr, uid, ids, {'qty_to_process': 0,'state': 'confirmed', 'prodlot_id': False, 'expired_date': False})
-        if not context.get('sync_message_execution', False):
-            for line in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
-                if line.location_id.location_id and line.location_id.location_id.usage != 'view':
-                    self.write(cr, uid, [line.id], {'location_id': line.location_id.location_id.id})
-
         res = []
 
         fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',
