@@ -291,9 +291,10 @@ class replenishment_location_config(osv.osv):
             if not error:
                 logger.info('Inventory Review for config %s complete' % (config.name,))
                 review_obj.write(cr, uid, review_id, {'state': 'complete'}, context=context)
-                config.frequence_id.write({'last_run': now})
-                next_date = config.frequence_id.next_date
-                self.write(cr, uid, config.id, {'next_scheduler': next_date, 'last_review_error': False}, context=context)
+                if config.frequence_id:
+                    config.frequence_id.write({'last_run': now})
+                    next_date = config.frequence_id.next_date
+                    self.write(cr, uid, config.id, {'next_scheduler': next_date, 'last_review_error': False}, context=context)
             else:
                 self.write(cr, uid, config.id, {'last_review_error': "\n".join(error)}, context=context)
         return True
