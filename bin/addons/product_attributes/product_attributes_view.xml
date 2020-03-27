@@ -881,7 +881,7 @@
                     <field name="product_id" invisible="1" />
                     <group colspan="4" col="1">
                         <html>
-                            <h3 style="text-align: center; margin: 10px"><translate>This is a NSL product, please ensure that there is no duplicate “Local” product with which this product should be merged. If you activate and start to use this product it will no longer be possible to merge it with another.</translate></h3>
+                            <h3 style="text-align: center; margin: 10px"><translate>This is an NSL (Non-standard Local) product, please ensure that there is no duplicate “Local” product with which this product should be merged. If you activate and start to use this product it will no longer be possible to merge it with another.</translate></h3>
                         </html>
                     </group>
                     <group colspan="4" col="2">

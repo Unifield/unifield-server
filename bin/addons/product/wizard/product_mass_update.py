@@ -377,7 +377,7 @@ class product_mass_update(osv.osv):
                         }
                         upd_errors_obj.create(cr, uid, err_vals, context=context)
 
-                    msg += _('Some NSL products could not be activated to ensure that there is no duplicate “Local” product. No product will be changed and those NSL products should be activated manually.\n')
+                    msg += _('Some NSL (Non-standard Local) products could not be activated to ensure that there is no duplicate “Local” product. No product will be changed and those NSL products should be activated manually.\n')
                     p_mass_upd_vals.update({'has_not_activable': True})
 
                 msg += _('Please check the corresponding tab.')
