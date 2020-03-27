@@ -1780,9 +1780,13 @@ class account_invoice_line(osv.osv):
             ivi_or_si_synced = inv.type == 'in_invoice' and not inv.is_inkind_donation and inv.synced
             intermission_or_section_from_supply = inv.partner_type in ('intermission', 'section') and inv.from_supply
             from_split = context.get('from_split')
-            if context.get('from_inv_form') and (ivi_or_si_synced or (intermission_or_section_from_supply and not from_split)):
-                raise osv.except_osv(_('Error'), _('This document has been generated via a Supply workflow or via synchronization. '
-                                                   'You can\'t add lines manually.'))
+            if context.get('from_inv_form'):
+                if from_split and ivi_or_si_synced:
+                    raise osv.except_osv(_('Error'), _('This document has been generated via synchronization. '
+                                                       'You can\'t split its lines.'))
+                elif not from_split and (ivi_or_si_synced or intermission_or_section_from_supply):
+                    raise osv.except_osv(_('Error'), _('This document has been generated via a Supply workflow or via synchronization. '
+                                                       'You can\'t add lines manually.'))
 
     def create(self, cr, uid, vals, context=None):
         """
