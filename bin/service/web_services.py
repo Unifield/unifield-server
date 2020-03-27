@@ -87,7 +87,7 @@ def check_tz():
     try:
         cr.execute('select now() - %s', (datetime.datetime.now(),))
         now = cr.fetchone()[0]
-        if abs(now) >= datetime.timedelta(hours=1):
+        if abs(now) >= datetime.timedelta(minutes=10):
             return _('Time zones of UniField server and PostgreSQL server differ. Please check the computer configuration.')
     finally:
         cr.close()

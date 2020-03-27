@@ -40728,11 +40728,6 @@ msgstr "Plus petit que l'UdM de référence"
 msgid "Returns the available locations for destination location of an outgoing delivery according to the address."
 msgstr "Retourne les zones disponible pour les zones de destination d'une livraison sortante selon l'adresse."
 
-#. module: account
-#: report:account.invoice2:0
-msgid "Draft Stock Transfer Voucher"
-msgstr "Bon Client en brouillon"
-
 #. module: purchase_allocation_report
 #: view:purchase.order.line.allocation.report:0
 msgid "Purchase order line allocation"
@@ -61736,9 +61731,10 @@ msgstr "Actions d'itération"
 msgid "CORDOBA ORO"
 msgstr "CORDOBA ORO"
 
-#. modules: purchase, sale
+#. modules: purchase, sale, account_override
 #: field:purchase.order,line_count:0
 #: field:sale.order,line_count:0
+#: field:account.invoice,line_count:0
 msgid "Line count"
 msgstr "# de lignes"
 
@@ -75799,8 +75795,7 @@ msgstr "Objet pour Recherche"
 msgid "Linked sale order line at synchro"
 msgstr "Linked sale order line at synchro"
 
-#. modules: account_override, account
-#: report:account.invoice2:0
+#. module: account_override
 #: view:account.invoice:0
 msgid "Stock Transfer Voucher"
 msgstr "Bon Client"
@@ -87368,11 +87363,6 @@ msgstr "Third party"
 #: selection:res.users,context_tz:0
 msgid "Indian/Antananarivo"
 msgstr "Indian/Antananarivo"
-
-#. module: account
-#: report:account.invoice2:0
-msgid "Cancelled Stock Transfer Voucher"
-msgstr "Bon Client annulé"
 
 #. module: msf_profile
 #: model:ir.actions.act_window,name:msf_profile.action_open_user_access_wizard
@@ -98954,9 +98944,10 @@ msgstr "Configuration Journalière"
 msgid "Order Waiting For Sourcing"
 msgstr "Commande En Attente de Sourcing"
 
-#. module: register_accounting
+#. modules: register_accounting, account
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:account.invoice2:0
 msgid "(Name, Function)"
 msgstr "(Nom, Fonction)"
 
@@ -109020,7 +109011,30 @@ msgstr "Le Document a des produits non-désactivables"
 msgid "Document has non-activable product(s)"
 msgstr "Le Document a des produits non-activables"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:287
+#, python-format
+msgid "Line %s. The Proprietary Instance must be the current instance %s."
+msgstr "Ligne %s. L'Instance Propriétaire doit être l'instance actuelle %s."
+
+#. module: account
+#: report:account.invoice2:0
+msgid "Payment Information:"
+msgstr "Informations de paiement :"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:350
+#, python-format
+msgid "Line %s. The period %s doesn't exist."
+msgstr "Ligne %s. La période %s n'existe pas."
+
 #. module: product_attributes
 #: view:product.ask.activate.wizard:0
 msgid "This is a NSL product, please ensure that there is no duplicate “Local” product with which this product should be merged. If you activate and start to use this product it will no longer be possible to merge it with another."
 msgstr "Ce produit est NSL, veuillez vous assurer qu'il n'y a pas de produit “Local” doublon avec lequel ce produit devrait être fusionné. Si vous activez ce produit et commencez à l'utiliser, il ne sera plus possible de le fusionner avec un autre."
+
+#: code:addons/product_attributes/product_attributes.py:1308
+#: code:addons/product_attributes/product_attributes.py:1445
+#, python-format
+msgid "Product Code %s must include a 'Z' character"
+msgstr "Le Code Produit %s doit inclure un caractère 'Z'"
