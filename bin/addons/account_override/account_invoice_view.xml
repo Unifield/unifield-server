@@ -629,7 +629,16 @@
                                 <field name="amount_total"/>
                             </group>
                             <group col="6" colspan="4" states="draft">
-                                <label string=""/>
+
+                                <group attrs="{'invisible': [('type', '=', 'out_invoice')]}">
+                                    <!-- in IVI shift the "Validate button" right -->
+                                    <label string=""/>
+                                </group>
+
+                                <button name="button_split_invoice" type="object" string="Split Intermission Voucher OUT"
+                                        icon="gtk-cut"
+                                        attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}"/>
+
                                 <!-- add a confirmation step only for IVOs when "synced" isn't selected -->
                                 <button name="invoice_open" type="object" string="Validate"
                                         icon="gtk-go-forward"
@@ -748,6 +757,11 @@
                         </group>
                         <field name="partner_type" invisible="1"/>
                         <group col="8" colspan="4">
+
+                            <button name="button_split_invoice" type="object" string="Split Stock Transfer Voucher"
+                                    icon="gtk-cut"
+                                    attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}"/>
+
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
                             <!-- add a confirmation step only for STV (not for Customer Refunds)
                                  when the partner type is compatible with a synchro but "synced" isn't ticked -->
