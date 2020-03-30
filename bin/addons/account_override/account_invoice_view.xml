@@ -760,6 +760,7 @@
 
                             <button name="button_split_invoice" type="object" string="Split Stock Transfer Voucher"
                                     icon="gtk-cut"
+                                    context="{'from_stv': True}"
                                     attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}"/>
 
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
