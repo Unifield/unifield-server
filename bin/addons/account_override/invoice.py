@@ -625,7 +625,7 @@ class account_invoice(osv.osv):
                 'picking_id': False,
             })
             inv = self.browse(cr, uid, inv_id, fields_to_fetch=['from_supply'], context=context)
-            if inv.from_supply:
+            if inv.from_supply and not context.get('from_split'):
                 default.update({'origin': ''})
 
         # Reset register_line_ids if not given in default
