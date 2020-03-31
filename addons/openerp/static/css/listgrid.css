@@ -86,7 +86,6 @@
     font-weight: bold;
     position: sticky;
     top: 0;
-    z-index: 1;
     text-align: center !important;
 }
 
@@ -230,13 +229,27 @@ strong#total_sum_label {
     color: #7D7979;
     font-size: 0.9em;
 }
-
+.o2m_filter_block {
+    width: 99.5%;
+    border-bottom: 1px solid rgb(153, 153, 153);
+    padding-bottom: 5px;
+}
 .o2m_header_filter td {
     padding-right: 10px;
     padding-left: 4px;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 .o2m_header_filter img {
     cursor: pointer;
+}
+
+.htmlbox {
+    display: flex;
+    align-items: center;
+}
+.warning {
+    margin-right: 3px;
 }
 /**
  * vim: sts=4 st=4 et

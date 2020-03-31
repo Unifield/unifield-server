@@ -85,7 +85,7 @@ import itertools
                                     % if field_attrs.get('type') == 'progressbar':
                                         ${grouped[j][field].display()}
                                     % else:
-                                        % if grp_row.get(field):
+                                        % if grp_row.get(field) or grp_row.get(field) == 0:
                                             % if field_attrs.get('type') == 'many2one':
                                                 ${isinstance(grp_row.get(field), (int, long)) and " " or grp_row.get(field)[-1]}
                                             % elif field_attrs.get('type') == 'selection':

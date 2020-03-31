@@ -799,6 +799,12 @@ class HtmlView(TinyWidget):
 
 register_widget(HtmlView, ["html"])
 
+class HtmlText(Char):
+
+    template = "/openerp/widgets/form/templates/html.mako"
+
+register_widget(HtmlText, ["html_text"])
+
 class Form(TinyInputWidget):
     """A generic form widget
     """
