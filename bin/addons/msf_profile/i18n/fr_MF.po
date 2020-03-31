@@ -58282,6 +58282,7 @@ msgstr "Journal Ajustement"
 #: field:replenishment.order_calc.line,warning:0
 #: field:replenishment.inventory.review.line,warning_html:0
 #: field:replenishment.order_calc.line,warning_html:0
+#: view:product.ask.activate.wizard:0
 #, python-format
 msgid "Warning"
 msgstr "Avertissement"
@@ -96495,6 +96496,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: selection:export.report.stock.move,state:0
 #: view:replenishment.order_calc:0
 #: view:replenishment.segment:0
+#: view:product.ask.activate.wizard:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -105349,6 +105351,11 @@ msgstr "Mise à jour en cours, veuillez laisser cette fenêtre ouverte et appuye
 msgid "Non-Deactivable Products"
 msgstr "Produits Non-Désactivables"
 
+#. module: product
+#: view:product.mass.update:0
+msgid "Non-Activable Products"
+msgstr "Produits Non-Activables"
+
 #. module: product, procurement_cycle
 #: view:product.mass.update:0
 #: model:ir.actions.act_window,name:procurement_cycle.action_replenishment_product_list
@@ -105372,9 +105379,26 @@ msgid "You can not apply an update on no products."
 msgstr "Vous ne pouvez pas appliquer de mise à jour à aucun produits."
 
 #. module: product
-#: code:addons/product/wizard/product_mass_update.py:287
-msgid "Some products could not be deactivated. No product will be changed until all of them can be deactivated. Please check the corresponding tab."
-msgstr "Certains produits n'ont pas pu être désactivés. Aucun produit ne sera modifié tant qu'ils ne pourront pas tous être désactivés. Veuillez vérifier l'onglet approprié."
+#: code:addons/product/wizard/product_mass_update.py:369
+#, python-format
+msgid "Some products could not be deactivated. No product will be changed until all of them can be deactivated.\n"
+""
+msgstr "Certains produits n'ont pas pu être désactivés. Aucun produit ne sera modifié tant qu'ils ne pourront pas tous être désactivés.\n"
+""
+
+#. module: product
+#: code:addons/product/wizard/product_mass_update.py:380
+#, python-format
+msgid "Some NSL (Non-standard Local) products could not be activated to ensure that there is no duplicate “Local” product. No product will be changed and those NSL products should be activated manually.\n"
+""
+msgstr "Certains produits NSL (Non-standard Local) n'ont pas pu être activés afin d'assurer qu'il n'y a pas de produit “Local” en doublon. Aucun produit ne sera modifié et ces produits NSL devraient être activés manuellement.\n"
+""
+
+#. module: product
+#: code:addons/product/wizard/product_mass_update.py:383
+#, python-format
+msgid "Please check the corresponding tab."
+msgstr "Veuillez vérifier l'onglet approprié."
 
 #. module: product
 #: field:product.mass.update,name:0
@@ -108989,6 +109013,16 @@ msgstr "CCM Produit"
 msgid "more FMC"
 msgstr "plus de PCM"
 
+#. module: product
+#: field:product.mass.update,has_not_deactivable:0
+msgid "Document has non-deactivable product(s)"
+msgstr "Le Document a des produits non-désactivables"
+
+#. module: product
+#: field:product.mass.update,has_not_activable:0
+msgid "Document has non-activable product(s)"
+msgstr "Le Document a des produits non-activables"
+
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1308
 #: code:addons/product_attributes/product_attributes.py:1445
@@ -109046,3 +109080,9 @@ msgstr "SS utilisé"
 #, python-format
 msgid "Stock out"
 msgstr "Rupture"
+
+#. module: product_attributes
+#: view:product.ask.activate.wizard:0
+msgid "This is an NSL (Non-standard Local) product, please ensure that there is no duplicate “Local” product with which this product should be merged. If you activate and start to use this product it will no longer be possible to merge it with another."
+msgstr "Ce produit est NSL (Non-standard Local), veuillez vous assurer qu'il n'y a pas de produit “Local” doublon avec lequel ce produit devrait être fusionné. Si vous activez ce produit et commencez à l'utiliser, il ne sera plus possible de le fusionner avec un autre."
+
