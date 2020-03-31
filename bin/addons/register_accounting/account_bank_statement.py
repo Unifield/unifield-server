@@ -700,18 +700,15 @@ The starting balance will be proposed automatically and the closing balance is t
             aml_ids = aml_obj.search(cr, uid, [('statement_id', 'in', register_ids),
                                                ('account_id', 'in', account_ids), ],
                                      order='date DESC', context=context)
-        aml_list = []
-        for aml in aml_obj.browse(cr, uid, aml_ids,
-                                  fields_to_fetch=['is_reconciled', 'reconcile_id', 'reconcile_partial_id'], context=context):
-            total_rec_ok = aml.reconcile_id and aml_obj.search_exist(cr, uid,
-                                                                     [('reconcile_id', '=', aml.reconcile_id.id),
-                                                                      ('date', '>', min_posting_date)], context=context)
-            partial_rec_ok = aml.reconcile_partial_id and aml_obj.search_exist(cr, uid,
-                                                                               [('reconcile_partial_id', '=', aml.reconcile_partial_id.id),
-                                                                                ('date', '>', min_posting_date)], context=context)
-            if not aml.is_reconciled or total_rec_ok or partial_rec_ok:
-                aml_list.append(aml.id)
-        return aml_list
+        if not aml_ids:
+            return []
+        cr.execute('''select l1.id from account_move_line l1
+                 left join account_move_line l2 on l2.date > %s and (l2.reconcile_id = l1.reconcile_id or l2.reconcile_partial_id = l1.reconcile_partial_id)
+                 where l1.id in %s
+                 group by l1.id
+                 having (l1.reconcile_id is null and l1.reconcile_partial_id is null) or count(l2) > 0
+                ''', (min_posting_date, tuple(aml_ids)))
+        return [x[0] for x in cr.fetchall()]
 
     def open_register(self, cr, uid, reg_id, cash_opening_balance=None, context=None):
         """

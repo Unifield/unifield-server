@@ -211,10 +211,10 @@ class account_move_line(osv.osv):
         if context is None:
             context = {}
         res = {}
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = False
-            if line.reconcile_partial_id or line.reconcile_id:
-                res[line.id] = True
+        for _id in ids:
+            res[_id] = False
+        for line in self.search(cr, uid, [('id', 'in', ids), '|', ('reconcile_partial_id', '!=', False), ('reconcile_id', '!=', False)], context=context):
+            res[line] = True
         return res
 
     def _search_is_reconciled(self, cr, uid, obj, name, args, context):
