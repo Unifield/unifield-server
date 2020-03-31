@@ -58280,6 +58280,8 @@ msgstr "Journal Ajustement"
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:429
 #: field:replenishment.inventory.review.line,warning:0
 #: field:replenishment.order_calc.line,warning:0
+#: field:replenishment.inventory.review.line,warning_html:0
+#: field:replenishment.order_calc.line,warning_html:0
 #, python-format
 msgid "Warning"
 msgstr "Avertissement"
@@ -108020,7 +108022,7 @@ msgstr "En attente enre DLS et CC"
 #. module: procurement_cycle
 #: code:addons/procurement_cycle/replenishment.py:1045
 #, python-format
-msgid "Please cancel or close the following Order Cacl:\n"
+msgid "Please cancel or close the following Order Calc:\n"
 "%s"
 msgstr "Veuillez annuler ou fermer les Calculs de commande suivants:\n"
 "%s"
@@ -108956,6 +108958,7 @@ msgstr "Règle de Réappro."
 #: view:replenishment.segment:0
 #: field:replenishment.segment.date.generation,segment_id:0
 #: field:replenishment.segment.line,segment_id:0
+#: model:ir.model,name:procurement_cycle.model_replenishment_segment
 msgid "Replenishment Segment"
 msgstr "Segment de Réappro."
 
@@ -108992,3 +108995,54 @@ msgstr "plus de PCM"
 #, python-format
 msgid "Product Code %s must include a 'Z' character"
 msgstr "Le Code Produit %s doit inclure un caractère 'Z'"
+
+#. module: procurement_cycle
+#: view:replenishment.inventory.review:0
+msgid " of supply (RR-AMC)"
+msgstr " d'appro (RR-CMM)"
+
+#. module: procurement_cycle
+#: view:replenishment.inventory.review:0
+msgid " of supply (RR-FMC)"
+msgstr " d'appro (RR-PCM)"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:790
+#: code:addons/procurement_cycle/replenishment.py:801
+#, python-format
+msgid "Expiries"
+msgstr "Expiration"
+
+#. module: procurement_cycle
+#: view:replenishment.product.list:0
+msgid "Group by Product"
+msgstr "Ggrouper par produit"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:805
+#, python-format
+msgid "Insufficient"
+msgstr "Insuffisant"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1068
+#, python-format
+msgid "Line %d: product code %s already defined in the file"
+msgstr "Ligne %d: le code %s est déjà présent dans le fichier"
+
+#. module: procurement_cycle
+#: field:replenishment.segment,have_product:0
+msgid "Products are set"
+msgstr "Les produits sont définis"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:779
+#, python-format
+msgid "SS used"
+msgstr "SS utilisé"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:783
+#, python-format
+msgid "Stock out"
+msgstr "Rupture"

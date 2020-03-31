@@ -279,6 +279,17 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" />
   </Style>
+  <Style ss:ID="irrel">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" />
+   <Interior ss:Color="#D9D9D9" ss:Pattern="Solid"/>
+  </Style>
   <Style ss:ID="s141">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -928,21 +939,36 @@
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.segment_ref_name|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.rule=='cycle' and 'PAS' or '')|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${getSel(line, 'rule')|x}</Data></Cell>
-    <Cell ss:StyleID="s140">
-        % if line.min_qty:
-            <Data ss:Type="Number">${line.min_qty}</Data>
-        % endif
-    </Cell>
-    <Cell ss:StyleID="s140">
-        % if line.max_qty:
-            <Data ss:Type="Number">${line.max_qty}</Data>
-        % endif
-    </Cell>
-    <Cell ss:StyleID="s140">
-        % if line.auto_qty:
-            <Data ss:Type="Number">${line.auto_qty}</Data>
-        % endif
-    </Cell>
+    % if line.rule == 'minmax':
+        <Cell ss:StyleID="s140">
+            % if line.min_qty:
+                <Data ss:Type="Number">${line.min_qty}</Data>
+            % endif
+        </Cell>
+    % else:
+        <Cell ss:StyleID="irrel" />
+    % endif
+
+    % if line.rule == 'minmax':
+        <Cell ss:StyleID="s140">
+            % if line.max_qty:
+                <Data ss:Type="Number">${line.max_qty}</Data>
+            % endif
+        </Cell>
+    % else:
+        <Cell ss:StyleID="irrel" />
+    % endif
+
+    % if line.rule == 'auto':
+        <Cell ss:StyleID="s140">
+            % if line.auto_qty:
+                <Data ss:Type="Number">${line.auto_qty}</Data>
+            % endif
+        </Cell>
+    % else:
+        <Cell ss:StyleID="irrel" />
+    % endif
+
     <Cell ss:StyleID="s140">
         % if line.internal_lt:
             <Data ss:Type="Number">${line.internal_lt}</Data>
@@ -968,12 +994,23 @@
             <Data ss:Type="Number">${line.safety_stock}</Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s140">
-        % if line.buffer_qty:
-            <Data ss:Type="Number">${line.buffer_qty}</Data>
-        % endif
-    </Cell>
-    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.valid_rr_fmc and _('Yes') or _('No') }</Data></Cell>
+
+    % if line.rule == 'cycle':
+        <Cell ss:StyleID="s140">
+            % if line.buffer_qty:
+                <Data ss:Type="Number">${line.buffer_qty}</Data>
+            % endif
+        </Cell>
+    % else:
+        <Cell ss:StyleID="irrel" />
+    % endif
+
+    % if line.rule == 'cycle':
+        <Cell ss:StyleID="s141"><Data ss:Type="String">${line.valid_rr_fmc and _('Yes') or _('No') }</Data></Cell>
+    % else:
+        <Cell ss:StyleID="irrel" />
+    % endif
+
     <Cell ss:StyleID="s141">
         % if line.rr_fmc_avg:
             <Data ss:Type="Number">${line.rr_fmc_avg}</Data>
