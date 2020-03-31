@@ -106178,6 +106178,12 @@ msgid "This document has been generated via a Supply workflow or via synchroniza
 msgstr "Ce document a été généré via un flux \"Supply\" ou via la synchronisation. Les lignes existantes ne peuvent pas être supprimées."
 
 #. module: account_override
+#: code:addons/account_override/invoice.py:1785
+#, python-format
+msgid "This document has been generated via synchronization. You can't split its lines."
+msgstr "Ce document a été généré via la synchronisation. Vous ne pouvez pas scinder ses lignes."
+
+#. module: account_override
 #: code:addons/account_override/invoice.py:848
 #, python-format
 msgid "Synchronized invoices are allowed only with Intermission and Intersection partners."
