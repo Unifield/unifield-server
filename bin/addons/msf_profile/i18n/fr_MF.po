@@ -76464,6 +76464,7 @@ msgstr "# de lignes importées"
 #: code:addons/consumption_calculation/weekly_forecast_report.py:506
 #: report:order.type.donation.certificate:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:220
+#: report:msf.purchase.quotation:0
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -92654,7 +92655,7 @@ msgstr "Support Niveau 1"
 msgid "America/Anguilla"
 msgstr "America/Anguilla"
 
-#. modules: tender_flow, financing_contract, account_override, product_attributes, msf_accrual, msf_doc_import, finance, base_setup, account_mcdb, res_currency_tables, supplier_catalogue, stock_override, product_asset, analytic_override, purchase_compare_rfq, msf_supply_doc_export, analytic_distribution, product, msf_homere_interface, msf_instance, register_accounting, specific_rules, kit, base, msf_currency_revaluation, account_subscription, return_claim, res_currency_functional, msf_budget, purchase, account, msf_outgoing, msf_partner, purchase_allocation_report, sale, transport_mgmt, stock, sync_so, purchase_followup, consumption_calculation, procurement_request, order_types,
+#. modules: tender_flow, financing_contract, account_override, product_attributes, msf_accrual, msf_doc_import, finance, base_setup, account_mcdb, res_currency_tables, supplier_catalogue, stock_override, product_asset, analytic_override, purchase_compare_rfq, msf_supply_doc_export, analytic_distribution, product, msf_homere_interface, msf_instance, register_accounting, specific_rules, kit, base, msf_currency_revaluation, account_subscription, return_claim, res_currency_functional, msf_budget, purchase, account, msf_outgoing, msf_partner, purchase_allocation_report, sale, transport_mgmt, stock, sync_so, purchase_followup, consumption_calculation, procurement_request, order_types, purchase_override
 #: view:account.account:0
 #: report:account.analytic.account.journal:0
 #: view:account.analytic.line:0
@@ -92841,6 +92842,7 @@ msgstr "America/Anguilla"
 #: report:order.type.donation.certificate:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:238
 #: report:addons/stock/report/stock_delivery_report_xls.mako:221
+#: report:msf.purchase.quotation:0
 #, python-format
 msgid "Currency"
 msgstr "Devise"

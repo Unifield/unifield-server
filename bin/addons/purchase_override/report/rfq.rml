@@ -505,7 +505,7 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="20.0,62.5,100,303.0,141.0,70.5,75.0" style="LinesTable">
+        <blockTable colWidths="20.0,62.5,100,253.0,116.0,55.5,70.0,55.0,40.0" style="LinesTable">
             <tr>
                 <td>
                     <para style="Lines"><i>Line</i></para>
@@ -528,11 +528,17 @@
                 <td>
                     <para style="Lines"><i>Unit of Measure</i></para>
                 </td>
+                <td>
+                    <para style="Lines"><i>Unit Price</i></para>
+                </td>
+                <td>
+                    <para style="Lines"><i>Currency</i></para>
+                </td>
             </tr>
         </blockTable>
 
         <section>
-            <blockTable colWidths="20.0,62.5,100,303.0,141.0,70.5,75.0" style="LinesTable">
+            <blockTable colWidths="20.0,62.5,100,253.0,116.0,55.5,70.0,55.0,40.0" style="LinesTable">
                 [[ repeatIn(objects[0].order_line, 'line') ]]
                 [[ (line.order_id.state != 'cancel' and line.state not in ['cancel', 'cancel_r']) or removeParentNode('blockTable') ]]
                 <tr>
@@ -557,6 +563,12 @@
                     </td>
                     <td>
                         <para style="LinesBlue" alignment="CENTER">[[ line.product_uom.name ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line.order_id.rfq_state in ('updated', 'done') and line.price_unit or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="CENTER">[[ line.order_id.rfq_state in ('updated', 'done') and line.currency_id.name or '' ]]</para>
                     </td>
                 </tr>
             </blockTable>
