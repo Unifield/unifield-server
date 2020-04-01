@@ -54605,7 +54605,6 @@ msgstr "Montant final en devise d'enregistrement"
 
 #. module: consumption_calculation, stock
 #: field:product.history.consumption.month,date_from:0
-#: field:stock.reception.wizard,start_date:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:170
 #: field:stock.delivery.wizard,start_date:0
 msgid "Date from"
@@ -64646,7 +64645,6 @@ msgstr "Exemple : 2% à 14 jours nets, solde à 30 jours fin de mois"
 
 #. module: consumption_calculation, stock
 #: field:product.history.consumption.month,date_to:0
-#: field:stock.reception.wizard,end_date:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:178
 #: field:stock.delivery.wizard,end_date:0
 msgid "Date to"
@@ -103431,16 +103429,6 @@ msgid "RECEPTIONS REPORT"
 msgstr "RAPPORT DES RÉCEPTIONS"
 
 #. module: stock
-#: report:addons/stock/report/stock_reception_report_xls.mako:180
-msgid "IN date from"
-msgstr "Date IN à partir de"
-
-#. module: stock
-#: report:addons/stock/report/stock_reception_report_xls.mako:188
-msgid "IN date to"
-msgstr "Date IN à"
-
-#. module: stock
 #: report:addons/stock/report/stock_reception_report_xls.mako:231
 #: report:addons/stock/report/stock_delivery_report_xls.mako:214
 msgid "Order Priority"
@@ -109000,3 +108988,15 @@ msgstr "Ligne %s. La période %s n'existe pas."
 #, python-format
 msgid "Product Code %s must include a 'Z' character"
 msgstr "Le Code Produit %s doit inclure un caractère 'Z'"
+
+#. module: stock
+#: field:stock.reception.wizard,start_date:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:184
+msgid "Actual Receipt Date from"
+msgstr "Date de Réception réelle du"
+
+#. module: stock
+#: field:stock.reception.wizard,end_date:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:192
+msgid "Actual Receipt Date to"
+msgstr "Date de Réception réelle au"
