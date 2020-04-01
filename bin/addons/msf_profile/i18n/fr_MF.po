@@ -109100,3 +109100,37 @@ msgstr "Rupture"
 msgid "This is an NSL (Non-standard Local) product, please ensure that there is no duplicate “Local” product with which this product should be merged. If you activate and start to use this product it will no longer be possible to merge it with another."
 msgstr "Ce produit est NSL (Non-standard Local), veuillez vous assurer qu'il n'y a pas de produit “Local” doublon avec lequel ce produit devrait être fusionné. Si vous activez ce produit et commencez à l'utiliser, il ne sera plus possible de le fusionner avec un autre."
 
+#. module: msf_instance
+#: view:res.company:0
+msgid "Liquidity Accounts"
+msgstr "Comptes de Trésorerie"
+
+#. module: account_override
+#: field:res.company,cheque_debit_account_id:0
+msgid "Cheque Default Debit Account"
+msgstr "Compte de Débit par défaut pour les Journaux de Chèques"
+
+#. module: account_override
+#: field:res.company,cheque_credit_account_id:0
+msgid "Cheque Default Credit Account"
+msgstr "Compte de Crédit par défaut pour les Journaux de Chèques"
+
+#. module: account_override
+#: field:res.company,bank_debit_account_id:0
+msgid "Bank Default Debit Account"
+msgstr "Compte de Débit par défaut pour les Journaux de Banque"
+
+#. module: account_override
+#: field:res.company,bank_credit_account_id:0
+msgid "Bank Default Credit Account"
+msgstr "Compte de Crédit par défaut pour les Journaux de Banque"
+
+#. module: account_override
+#: field:res.company,cash_debit_account_id:0
+msgid "Cash Default Debit Account"
+msgstr "Compte de Débit par défaut pour les Journaux de Liquidités"
+
+#. module: account_override
+#: field:res.company,cash_credit_account_id:0
+msgid "Cash Default Credit Account"
+msgstr "Compte de Crédit par défaut pour les Journaux de Liquidités"
