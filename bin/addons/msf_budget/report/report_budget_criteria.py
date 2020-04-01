@@ -154,7 +154,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
         # Prepare some values
         line_type = line.get('line_type', '')
         res = []
-        date_context = {'date': date_stop, 'currency_table_id': currency_table}
+        date_context = {'currency_date': date_stop, 'currency_table_id': currency_table}
         cur_obj = self.pool.get('res.currency')
         # Construct conditions to fetch right analytic lines
         sql_conditions = ""
@@ -232,8 +232,8 @@ class report_budget_actual_2(report_sxw.rml_parse):
                 })
             else:
                 result[int(month_nb)] = {
-                        key: line_amount or 0.0
-                    }
+                    key: line_amount or 0.0
+                }
         # Transformation/conversion of 'result' to be a list (advantage: keep the sort/order)
         for month in result.keys():
             amounts = result[month]

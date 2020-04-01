@@ -511,7 +511,8 @@ class purchase_order(osv.osv):
                         # PO state must not go back:
                         if po.push_fo:
                             # fo push, 2 line added, L2 cancel , sync => resulting PO must be validated
-                            po_state_seq['sourced_p'] = 0
+                            po_state_seq['draft_p'] = 0
+                            po_state_seq['sourced_p'] = 5
                         if po_state_seq.get(res[po.id], 100) < po_state_seq.get(po.state, 0):
                             res[po.id] = po.state
                 else:
@@ -1686,7 +1687,13 @@ class purchase_order(osv.osv):
                 return True
 
             for pol in po.order_line:
-                wiz_id = wiz_obj.create(cr, uid, {'order_id': po.id}, context=context)
+                vals = {'order_id': po.id}
+                if context.get('rfq_ok', False) and po.tender_id:
+                    pending_rfqs_same_tender = self.search(cr, uid, [('id', '!=', po.id), ('state', '!=', 'cancel'),
+                                                                     ('tender_id', '=', po.tender_id.id)], context=context)
+                    if not pending_rfqs_same_tender:
+                        vals.update({'cancel_linked_tender': True})
+                wiz_id = wiz_obj.create(cr, uid, vals, context=context)
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': 'purchase.order.cancel.wizard',
@@ -2601,9 +2608,9 @@ class purchase_order(osv.osv):
         # set cross_docking_ok:
         cross_docking_ok = False
         for rfq_line in rfq.order_line:
-            if rfq_line.linked_sol_id and not rfq_line.linked_sol_id.order_id.procurement_request or \
-                    (rfq_line.linked_sol_id.order_id.procurement_request and
-                        rfq_line.linked_sol_id.order_id.location_requestor_id.usage == 'customer'):
+            if rfq_line.linked_sol_id and (not rfq_line.linked_sol_id.order_id.procurement_request or \
+                                           (rfq_line.linked_sol_id.order_id.procurement_request and
+                                            rfq_line.linked_sol_id.order_id.location_requestor_id.usage == 'customer')):
                 cross_docking_ok = True
                 break
         self.write(cr, uid, [new_po_id], {'cross_docking_ok': cross_docking_ok}, context=context)

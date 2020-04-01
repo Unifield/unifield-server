@@ -616,6 +616,9 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        """
+            deprecated method: kept only to manage in-pipe updates during UF14.0 -> UF15.0
+        """
         if not ids:
             return True
         if context is None:
@@ -722,6 +725,8 @@ class product_product(osv.osv):
 
     # UF-2254: Treat the case of product with empty or XXX for default_code
     def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         if not ids:
             return True
         res = super(product_product, self).write(cr, uid, ids, vals, context=context)

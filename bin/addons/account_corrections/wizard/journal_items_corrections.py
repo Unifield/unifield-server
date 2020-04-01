@@ -49,7 +49,9 @@ class journal_items_corrections_lines(osv.osv_memory):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = 'none'
             if line.analytic_distribution_id:
-                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, False, line.account_id.id)
+                amount = (line.debit_currency or 0.0) - (line.credit_currency or 0.0)
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id,
+                                                                                              False, line.account_id.id, amount=amount)
         return res
 
     def _get_is_analytic_target(self, cr, uid, ids, name, args,  context=None):
@@ -220,7 +222,8 @@ class journal_items_corrections_lines(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string="Book. Curr.", readonly=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution", readonly=True),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       selection=[('none', 'None'), ('valid', 'Valid'),
+                                                                  ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'is_analytic_target': fields.function(_get_is_analytic_target, type='boolean', string='Is analytic target', method=True, invisible=True),
         'is_account_correctible': fields.function(_get_is_account_correctible,

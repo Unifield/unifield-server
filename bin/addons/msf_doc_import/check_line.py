@@ -295,7 +295,7 @@ def product_value(cr, uid, **kwargs):
                 p_ids = product_obj.search(cr, uid, [('default_code', '=ilike', product_code)], context=context)
                 if not p_ids:
                     comment += _(' Code: %s') % (product_code)
-                    msg = _('Product code doesn\'t exist in the DB.')
+                    msg = _('Product code %s doesn\'t exist in the DB.') % product_code
                 else:
                     default_code = p_ids[0]
                     product = product_obj.browse(cr, uid, default_code)

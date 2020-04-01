@@ -536,59 +536,6 @@ class financing_contract_contract(osv.osv):
             'context': context
         }
 
-    def menu_allocated_expense_report(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        wiz_obj = self.pool.get('wizard.expense.report')
-        wiz_id = wiz_obj.create(cr, uid, {'reporting_type': 'allocated',
-                                          'filename': 'allocated_expenses.csv',
-                                          'contract_id': ids[0]}, context=context)
-        # we open a wizard
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.expense.report',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_id': [wiz_id],
-            'context': context,
-        }
-
-    def menu_project_expense_report(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-
-        wiz_obj = self.pool.get('wizard.expense.report')
-        wiz_id = wiz_obj.create(cr, uid, {'reporting_type': 'project',
-                                          'filename': 'project_expenses.csv',
-                                          'contract_id': ids[0]}, context=context)
-        # we open a wizard
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.expense.report',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_id': [wiz_id],
-            'context': context,
-        }
-
-    def menu_csv_interactive_report(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        wiz_obj = self.pool.get('wizard.interactive.report')
-        wiz_id = wiz_obj.create(cr, uid, {'filename': 'interactive_report.csv',
-                                          'contract_id': ids[0]}, context=context)
-        # we open a wizard
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.interactive.report',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_id': [wiz_id],
-            'context': context,
-        }
 
     def allocated_expenses_report(self, cr, uid, ids, context=None):
         """

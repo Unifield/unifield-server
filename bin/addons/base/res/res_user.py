@@ -652,6 +652,8 @@ class users(osv.osv):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
 
+        if 'name' not in values:
+            values['name'] = values['login']
         user_id = super(users, self).create(cr, uid, values, context)
         if 'log_xmlrpc' in values:
             # clear the cache of the list of uid to log

@@ -484,6 +484,8 @@ class expression(object):
                     elif left in table._columns:
                         params = table._columns[left]._symbol_set[1](right)
 
+                    if operator in ('like', 'ilike', 'not like', 'not ilike', '=like', '=ilike'):
+                        params = params.replace('\\', '\\\\')
                     if add_null:
                         query = '(%s OR %s IS NULL)' % (query, left)
 

@@ -104,6 +104,7 @@
                         <field name="date" select='1'/>
                         <field name="partner_id" select='1'/>
                         <field name="name" select="1"/>
+                        <field name="purchase_id"/>
                     </group>
                     <newline/>
                 </search>

@@ -13,7 +13,8 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Supplier catalogues">
-                    <filter name="active" domain="[('active', '=', False)]" string="Inactive" icon="gtk-undo" />
+                    <filter icon="terp-personal+" name="active" string="Show Active" domain="[('active', '=', True)]" default="1" />
+                    <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[('active', '=', False)]" />
                     <field name="partner_id" />
                     <field name="name" />
                     <field name="period_from" />
