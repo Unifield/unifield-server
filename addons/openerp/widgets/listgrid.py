@@ -442,6 +442,7 @@ class List(TinyWidget):
 
         myfields = [] # check for duplicate fields
 
+        set_tooltip = {}
         for node in root.childNodes:
 
             if node.nodeName == 'button':
@@ -466,7 +467,6 @@ class List(TinyWidget):
                 headers += [("separator", {'type': 'separator', 'string': '|', 'not_sortable': 1})]
             elif node.nodeName == 'field':
                 attrs = node_attributes(node)
-
                 if 'name' in attrs:
 
                     name = attrs['name']
@@ -516,6 +516,9 @@ class List(TinyWidget):
                     if 'real_sum' in attrs:
                         field_real_total[name] = [attrs['real_sum'], 0.0]
 
+                    if fields[name].get('tooltip'):
+                        set_tooltip[name] = fields[name].get('tooltip')
+
                     for i, row in enumerate(data):
                         row_value = values[i]
                         if invisible:
@@ -539,19 +542,28 @@ class List(TinyWidget):
                                     break
                             except:
                                 pass
-
                         row[name] = cell
+
                     if invisible:
                         continue
 
                     headers += [(name, fields[name])]
+
+        if set_tooltip:
+            for row in data:
+                for to_set in set_tooltip:
+                    if isinstance(row[set_tooltip[to_set]], Hidden):
+                        row[to_set].tooltip = row[set_tooltip[to_set]].widget.get_display_value()
+                    else:
+                        row[to_set].tooltip = row[set_tooltip[to_set]].get_display_value()
+
 
         return headers, hiddens, data, field_total, field_real_total, buttons
 
 class Char(TinyWidget):
     template = "/openerp/widgets/templates/listgrid/char.mako"
 
-    params = ['text', 'link', 'value', 'truncate']
+    params = ['text', 'link', 'value', 'truncate', 'tooltip']
 
     def __init__(self, **attrs):
 
@@ -559,6 +571,7 @@ class Char(TinyWidget):
 
         self.attrs = attrs.copy()
 
+        self.tooltip = attrs.get('tooltip_value')
         self.text = self.get_text()
         self.link = self.get_link()
 
