@@ -306,6 +306,20 @@ class Cursor(object):
         return self.rowcount
 
     @check
+    def get_referenced(self, table, column='id'):
+        self.execute("""
+            SELECT tc.table_name, kcu.column_name, ref.delete_rule
+            FROM information_schema.table_constraints AS tc
+                JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name
+                JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = tc.constraint_name
+                JOIN information_schema.referential_constraints AS ref ON ref.constraint_name = tc.constraint_name
+            WHERE
+                tc.constraint_type = 'FOREIGN KEY' AND
+                ccu.table_name=%s AND
+                ccu.column_name=%s
+        """, (table, column))
+        return self.fetchall()
+    @check
     def drop_constraint_if_exists(self, table, constraint):
         self.execute("SELECT conname FROM pg_constraint WHERE conname = %s", (constraint, ))
         if self.fetchone():

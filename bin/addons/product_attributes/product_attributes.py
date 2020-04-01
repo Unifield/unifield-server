@@ -314,6 +314,7 @@ class product_attributes(osv.osv):
         'forbidden': 'forbidden',
         'archived': 'archived',
     }
+    merge_field_to_keep = ['procure_method', 'standard_price', 'list_price', 'soq_quantity', 'description_sale', 'description_purchase', 'procure_delay']
 
     def execute_migration(self, cr, moved_column, new_column):
         super(product_attributes, self).execute_migration(cr, moved_column, new_column)
@@ -977,6 +978,10 @@ class product_attributes(osv.osv):
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity', related_uom='uom_id', help="Standard Ordering Quantity. Quantity according to which the product should be ordered. The SoQ is usually determined by the typical packaging of the product."),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+        # TODO remove from copy
+        'nsl_merged': fields.boolean('NSF Merged'),
+        'replace_product_id': fields.many2one('product.product', string='Old product'),
+        'replaced_by_product_id': fields.many2one('product.product', string='Replaced by'),
         'uf_write_date': fields.datetime(_('Write date')),
         'uf_create_date': fields.datetime(_('Creation date')),
     }
@@ -1543,8 +1548,13 @@ class product_attributes(osv.osv):
                 if any(char.islower() for char in vals['default_code']):
                     vals['default_code'] = vals['default_code'].upper()
 
-        if context.get('sync_update_execution') and vals.get('local_from_hq') and vals.get('active'):
-            del(vals['active'])
+        if context.get('sync_update_execution') and vals.get('local_from_hq'):
+            if vals.get('active'):
+                del(vals['active'])
+            if self.search_exist(cr, uid, [('id', 'in', ids), ('nsl_merged', '=', True)], context=context):
+                for field in self.merge_field_to_keep:
+                    if field in vals:
+                        del(vals[field])
 
 
         check_reactivate = False
@@ -2530,6 +2540,82 @@ class product_attributes(osv.osv):
         nb = self.switch_ed_to_no(cr, uid, ids, context)
         nb += self.switch_bn_to_no(cr, uid, ids, context)
         return nb
+
+    def check_same_value(self, cr, uid, new_prod_id, old_prod_id, context=None):
+        fields_to_check = [
+            'type', 'subtype', 'perishable', 'batch_management', 'uom_id'
+        ]
+        old_values = self.read(cr, uid, old_prod_id, fields_to_check, context=context)
+        new_values = self.read(cr, uid, new_prod_id, fields_to_check, context=context)
+
+        failed = []
+        for f in fields_to_check:
+            if old_values[f] != new_values[f]:
+                failed.append(f)
+
+        if failed:
+            fields_data = self.fields_get(cr, uid, failed, context=context)
+            raise osv.except_osv(
+                _('Warning'),
+                _('There is an inconsistency between the selected products: %(attr)s need to be the same. Please update your local product %(attr)s and then proceed with the merge.') % {'attr': ', '.join([fields_data[x].get('string') for x in failed])}
+            )
+        return True
+
+    def merge_product(self, cr, uid, nsl_prod_id, context=None):
+        # TODO: check constraints
+        local_id = 4
+        new_prod = nsl_prod_id[0]
+        if not self.search_exist(cr, uid, [('id', '=', new_prod), ('active', '=', False), ('international_status', '=', 'UniData'), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)], context=context):
+            print self.search_exist(cr, uid, [('id', '=', new_prod), ('active', '=', False), ('international_status', '=', 'UniData'),], context=context)
+            raise osv.except_osv(_('Warning'), _('New product: condition not met: inactive, NSL'))
+
+        if not self.search_exist(cr, uid, [('id', '=', local_id), ('active', '=', True), ('international_status', '=', 'Local'), ('replaced_by_product_id', '=', False)], context=context):
+            raise osv.except_osv(_('Warning'), _('Old merged product: condition not met: active, local product'))
+
+
+        self.check_same_value( cr, uid, new_prod, local_id, context)
+        blacklist_table = {
+            'product_template': [
+                ('product_product', 'product_tmpl_id')
+            ],
+            'product_product': [
+                ('stock_mission_report_line', 'product_id'),
+                ('stock_mission_report_line_location', 'product_id'),
+                ('prod_mass_update_product_rel', 'prod_mass_update_id'),
+                ('product_mass_update_errors', 'product_id'),
+                ('product_product', 'replace_product_id'),
+                ('product_product', 'replaced_by_product_id'),
+            ]
+        }
+
+        new_data = self.read(cr, uid, new_prod, ['default_code','old_code'], context=context)
+        old_prod_data = self.read(cr, uid, local_id, self.merge_field_to_keep+['default_code'], context=context)
+
+        default_code = new_data['default_code']
+        for table in ['product_product', 'product_template']:
+            for x in cr.get_referenced(table):
+                if (x[0], x[1]) in blacklist_table.get(table):
+                    continue
+
+                params = {'old_prod': local_id, 'new_prod': new_prod}
+                if cr.column_exists(x[0], 'default_code'):
+                    params['default_code'] = default_code
+                    add_query = ' , default_code=%(default_code)s '
+                else:
+                    add_query = ''
+
+                cr.execute('update '+x[0]+' set '+x[1]+'=%(new_prod)s '+add_query+' where '+x[1]+'=%(old_prod)s', params) # not_a_user_entry
+
+        new_data = {'active': True, 'replace_product_id': local_id, 'old_code': '%s;%s' % (new_data['old_code'], old_prod_data['default_code']) if new_data['old_code'] else old_prod_data['default_code'], 'nsl_merged': True}
+        for field in self.merge_field_to_keep:
+            new_data[field] = old_prod_data[field]
+        self.write(cr, uid, new_prod, new_data, context=context)
+
+        self.write(cr, uid, local_id, {'active': False, 'replaced_by_product_id': new_prod}, context=context)
+        # TODO: track changes
+        # mission stock (location) to 0 on old product
+        return True
+
 
     _constraints = [
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])
