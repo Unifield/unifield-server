@@ -1197,7 +1197,7 @@ CREATE OR REPLACE view report_stock_inventory AS (
         context['with_expiry'] = 1
         return super(report_stock_inventory, self).read(cr, uid, ids, fields, context, load)
 
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, count=False):
         '''
         UF-1546: This method is to remove the lines that have quantity = 0 from the list view
         '''
@@ -1219,7 +1219,7 @@ CREATE OR REPLACE view report_stock_inventory AS (
             if product_qty_found_tuple:
                 domain.remove(product_qty_found_tuple)
 
-        res = super(report_stock_inventory, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
+        res = super(report_stock_inventory, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby, count=count)
 
         # UTP-582: product qty filter (default with != 0.0)
         if not product_qty_tuple:

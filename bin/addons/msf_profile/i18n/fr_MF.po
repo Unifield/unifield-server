@@ -58275,6 +58275,9 @@ msgstr "Journal Ajustement"
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:429
 #: field:replenishment.inventory.review.line,warning:0
 #: field:replenishment.order_calc.line,warning:0
+#: field:replenishment.inventory.review.line,warning_html:0
+#: field:replenishment.order_calc.line,warning_html:0
+#: view:product.ask.activate.wizard:0
 #, python-format
 msgid "Warning"
 msgstr "Avertissement"
@@ -96483,6 +96486,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: selection:export.report.stock.move,state:0
 #: view:replenishment.order_calc:0
 #: view:replenishment.segment:0
+#: view:product.ask.activate.wizard:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -105338,6 +105342,11 @@ msgstr "Mise à jour en cours, veuillez laisser cette fenêtre ouverte et appuye
 msgid "Non-Deactivable Products"
 msgstr "Produits Non-Désactivables"
 
+#. module: product
+#: view:product.mass.update:0
+msgid "Non-Activable Products"
+msgstr "Produits Non-Activables"
+
 #. module: product, procurement_cycle
 #: view:product.mass.update:0
 #: model:ir.actions.act_window,name:procurement_cycle.action_replenishment_product_list
@@ -105361,9 +105370,26 @@ msgid "You can not apply an update on no products."
 msgstr "Vous ne pouvez pas appliquer de mise à jour à aucun produits."
 
 #. module: product
-#: code:addons/product/wizard/product_mass_update.py:287
-msgid "Some products could not be deactivated. No product will be changed until all of them can be deactivated. Please check the corresponding tab."
-msgstr "Certains produits n'ont pas pu être désactivés. Aucun produit ne sera modifié tant qu'ils ne pourront pas tous être désactivés. Veuillez vérifier l'onglet approprié."
+#: code:addons/product/wizard/product_mass_update.py:369
+#, python-format
+msgid "Some products could not be deactivated. No product will be changed until all of them can be deactivated.\n"
+""
+msgstr "Certains produits n'ont pas pu être désactivés. Aucun produit ne sera modifié tant qu'ils ne pourront pas tous être désactivés.\n"
+""
+
+#. module: product
+#: code:addons/product/wizard/product_mass_update.py:380
+#, python-format
+msgid "Some NSL (Non-standard Local) products could not be activated to ensure that there is no duplicate “Local” product. No product will be changed and those NSL products should be activated manually.\n"
+""
+msgstr "Certains produits NSL (Non-standard Local) n'ont pas pu être activés afin d'assurer qu'il n'y a pas de produit “Local” en doublon. Aucun produit ne sera modifié et ces produits NSL devraient être activés manuellement.\n"
+""
+
+#. module: product
+#: code:addons/product/wizard/product_mass_update.py:383
+#, python-format
+msgid "Please check the corresponding tab."
+msgstr "Veuillez vérifier l'onglet approprié."
 
 #. module: product
 #: field:product.mass.update,name:0
@@ -106167,6 +106193,12 @@ msgstr "Ce document a été généré via un flux \"Supply\" ou via la synchroni
 #, python-format
 msgid "This document has been generated via a Supply workflow or via synchronization. Existing lines can't be deleted."
 msgstr "Ce document a été généré via un flux \"Supply\" ou via la synchronisation. Les lignes existantes ne peuvent pas être supprimées."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:1785
+#, python-format
+msgid "This document has been generated via synchronization. You can't split its lines."
+msgstr "Ce document a été généré via la synchronisation. Vous ne pouvez pas scinder ses lignes."
 
 #. module: account_override
 #: code:addons/account_override/invoice.py:848
@@ -108011,7 +108043,7 @@ msgstr "En attente enre DLS et CC"
 #. module: procurement_cycle
 #: code:addons/procurement_cycle/replenishment.py:1045
 #, python-format
-msgid "Please cancel or close the following Order Cacl:\n"
+msgid "Please cancel or close the following Order Calc:\n"
 "%s"
 msgstr "Veuillez annuler ou fermer les Calculs de commande suivants:\n"
 "%s"
@@ -108947,6 +108979,7 @@ msgstr "Règle de Réappro."
 #: view:replenishment.segment:0
 #: field:replenishment.segment.date.generation,segment_id:0
 #: field:replenishment.segment.line,segment_id:0
+#: model:ir.model,name:procurement_cycle.model_replenishment_segment
 msgid "Replenishment Segment"
 msgstr "Segment de Réappro."
 
@@ -108994,9 +109027,76 @@ msgstr "Informations de paiement :"
 msgid "Line %s. The period %s doesn't exist."
 msgstr "Ligne %s. La période %s n'existe pas."
 
+#. module: product
+#: field:product.mass.update,has_not_deactivable:0
+msgid "Document has non-deactivable product(s)"
+msgstr "Le Document a des produits non-désactivables"
+
+#. module: product
+#: field:product.mass.update,has_not_activable:0
+msgid "Document has non-activable product(s)"
+msgstr "Le Document a des produits non-activables"
+
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1308
 #: code:addons/product_attributes/product_attributes.py:1445
 #, python-format
 msgid "Product Code %s must include a 'Z' character"
 msgstr "Le Code Produit %s doit inclure un caractère 'Z'"
+
+#. module: procurement_cycle
+#: view:replenishment.inventory.review:0
+msgid " of supply (RR-AMC)"
+msgstr " d'appro (RR-CMM)"
+
+#. module: procurement_cycle
+#: view:replenishment.inventory.review:0
+msgid " of supply (RR-FMC)"
+msgstr " d'appro (RR-PCM)"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:790
+#: code:addons/procurement_cycle/replenishment.py:801
+#, python-format
+msgid "Expiries"
+msgstr "Expiration"
+
+#. module: procurement_cycle
+#: view:replenishment.product.list:0
+msgid "Group by Product"
+msgstr "Ggrouper par produit"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:805
+#, python-format
+msgid "Insufficient"
+msgstr "Insuffisant"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1068
+#, python-format
+msgid "Line %d: product code %s already defined in the file"
+msgstr "Ligne %d: le code %s est déjà présent dans le fichier"
+
+#. module: procurement_cycle
+#: field:replenishment.segment,have_product:0
+msgid "Products are set"
+msgstr "Les produits sont définis"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:779
+#, python-format
+msgid "SS used"
+msgstr "SS utilisé"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:783
+#, python-format
+msgid "Stock out"
+msgstr "Rupture"
+
+#. module: product_attributes
+#: view:product.ask.activate.wizard:0
+msgid "This is an NSL (Non-standard Local) product, please ensure that there is no duplicate “Local” product with which this product should be merged. If you activate and start to use this product it will no longer be possible to merge it with another."
+msgstr "Ce produit est NSL (Non-standard Local), veuillez vous assurer qu'il n'y a pas de produit “Local” doublon avec lequel ce produit devrait être fusionné. Si vous activez ce produit et commencez à l'utiliser, il ne sera plus possible de le fusionner avec un autre."
+

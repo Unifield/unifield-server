@@ -291,9 +291,10 @@ class replenishment_location_config(osv.osv):
             if not error:
                 logger.info('Inventory Review for config %s complete' % (config.name,))
                 review_obj.write(cr, uid, review_id, {'state': 'complete'}, context=context)
-                config.frequence_id.write({'last_run': now})
-                next_date = config.frequence_id.next_date
-                self.write(cr, uid, config.id, {'next_scheduler': next_date, 'last_review_error': False}, context=context)
+                if config.frequence_id:
+                    config.frequence_id.write({'last_run': now})
+                    next_date = config.frequence_id.next_date
+                    self.write(cr, uid, config.id, {'next_scheduler': next_date, 'last_review_error': False}, context=context)
             else:
                 self.write(cr, uid, config.id, {'last_review_error': "\n".join(error)}, context=context)
         return True
@@ -381,6 +382,25 @@ class replenishment_segment(osv.osv):
             ret[x[0]] = True
         return ret
 
+    def _get_have_product(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+
+        if ids:
+            cr.execute('''select segment.id
+                from
+                    replenishment_segment segment, replenishment_segment_line line
+                where
+                    line.segment_id = segment.id and
+                    segment.id in %s
+                group by segment.id
+                having count(line.id) > 0
+                ''', (tuple(ids), ))
+            for x in cr.fetchall():
+                ret[x[0]] = True
+        return ret
+
     _columns = {
         'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
         'description_seg': fields.char('Replenishment Segment Description', required=1, size=28, select=1),
@@ -413,10 +433,12 @@ class replenishment_segment(osv.osv):
         'has_inprogress_cal': fields.function(_get_has_inprogress_cal, type='boolean', method=1, internal=1, string='Has in-progess Order Calc.'),
         'safety_and_buffer_warn': fields.function(_get_safety_and_buffer_warn, type='boolean', method=1, internal=1, string='Lines has buffer and seg has safety'),
         'last_review_date': fields.datetime('Last review date', readonly=1),
+        'have_product': fields.function(_get_have_product, type='boolean', method=1, internal=1, string='Products are set'),
     }
 
     _defaults = {
         'state': 'draft',
+        'have_product': False,
     }
 
     _sql_constraints = [
@@ -738,6 +760,7 @@ class replenishment_segment(osv.osv):
                 pas = max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rdd - total_fmc)
                 ss_stock = 0
                 warnings = []
+                warnings_html = []
                 qty_lacking = 0
                 qty_lacking_needed_by = False
                 proposed_order_qty = 0
@@ -751,14 +774,20 @@ class replenishment_segment(osv.osv):
                         if total_month_oc+total_month:
                             ss_stock = seg.safety_stock * ((total_fmc_oc+total_fmc)/(total_month_oc+total_month))
                         if total_month and pas and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
-                            warnings.append(_('Projected use of safety stock/buffer'))
+                            wmsg = _('Projected use of safety stock/buffer')
+                            warnings.append(wmsg)
+                            warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('SS used'))))
                         if qty_lacking:
-                            warnings.append(_('Stock-out before next ETA'))
+                            wmsg = _('Stock-out before next ETA')
+                            warnings.append(wmsg)
+                            warnings_html.append('<span title="%s">%s</span>'  % (misc.escape_html(wmsg), misc.escape_html(_('Stock out'))))
 
                         if lacking_eta:
                             qty_lacking_needed_by = (today + relativedelta(days=month_of_supply_eta*30.44)).strftime('%Y-%m-%d')
                     if review_id and round(sum_line.get(line.id, {}).get('expired_before_rdd',0)):
-                        warnings.append(_('Forecasted expiries'))
+                        wmsg = _('Forecasted expiries')
+                        warnings.append(wmsg)
+                        warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('Expiries'))))
 
                     proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rdd_oc)
 
@@ -767,14 +796,20 @@ class replenishment_segment(osv.osv):
 
                     if line.status != 'new' and sum_line.get(line.id, {}).get('real_stock') - sum_line.get(line.id, {}).get('expired_qty_before_eta') <= line.min_qty:
                         if sum_line.get(line.id, {}).get('expired_qty_before_eta'):
-                            warnings.append(_('Alert: "inventory – batches expiring before ETA <= Min"'))
+                            wmsg = _('Alert: "inventory – batches expiring before ETA <= Min"')
+                            warnings.append(wmsg)
+                            warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('Expiries'))))
                         else:
-                            warnings.append(_('Alert: "inventory <= Min"'))
+                            wmsg = _('Alert: "inventory <= Min"')
+                            warnings.append(wmsg)
+                            warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('Insufficient'))))
                 else:
                     proposed_order_qty = line.auto_qty
 
                 if not valid_rr_fmc:
-                    warnings.append(_('Invalid FMC'))
+                    wmsg = _('Invalid FMC')
+                    warnings.append(wmsg)
+                    warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('FMC'))))
 
                 line_data = {
                     'product_id': line.product_id.id,
@@ -788,10 +823,13 @@ class replenishment_segment(osv.osv):
                     'expired_qty_before_cons': False if seg.rule !='cycle' else round(sum_line.get(line.id, {}).get('expired_before_rdd',0)),
                     'expired_qty_before_eta': round(sum_line.get(line.id, {}).get('expired_qty_before_eta',0)),
                     'warning': "\n".join(warnings),
+                    'warning_html': False,
                     'valid_rr_fmc': valid_rr_fmc,
                     'status': line.status,
                     'open_loan': sum_line.get(line.id, {}).get('open_loan', False),
                 }
+                if warnings_html:
+                    line_data['warning_html'] = '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html("\n".join(warnings)), "<br>".join(warnings_html))
 
                 # order_cacl
                 if not review_id:
@@ -942,6 +980,7 @@ class replenishment_segment(osv.osv):
             _('New'): 'new',
         }
         error = []
+        code_created = {}
         created = 0
         updated = 0
         ignored = 0
@@ -957,12 +996,10 @@ class replenishment_segment(osv.osv):
             prod_code = prod_code.strip()
 
             cells_nb = len(row.cells)
-            if cells_nb > 4 and row.cells[4].data and not isinstance(row.cells[4].data, (int, long, float)):
-                line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[4].data))
 
             data_towrite = {
                 'status': cells_nb > 3 and status.get(row.cells[3].data and row.cells[3].data.strip()),
-                'buffer_qty': cells_nb > 4 and row.cells[4].data,
+                'buffer_qty': False,
                 'min_qty': 0,
                 'max_qty': 0,
                 'auto_qty': 0
@@ -975,7 +1012,11 @@ class replenishment_segment(osv.osv):
                 })
 
 
-            if cells_nb > 4 and seg.rule == 'cycle':
+            if cells_nb > 6 and seg.rule == 'cycle':
+                if row.cells[6].data and not isinstance(row.cells[6].data, (int, long, float)):
+                    line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[6].data))
+                else:
+                    data_towrite['buffer_qty'] = row.cells[6].data
                 first_fmc_col = 7 - 3
                 for fmc in range(1, 13):
                     first_fmc_col += 3
@@ -1000,29 +1041,33 @@ class replenishment_segment(osv.osv):
                             'rr_fmc_from_%d' % fmc: row.cells[first_fmc_col+1].data.strftime('%Y-%m-%d'),
                             'rr_fmc_to_%d' % fmc: row.cells[first_fmc_col+2].data.strftime('%Y-%m-%d'),
                         })
-            elif cells_nb > 4 and seg.rule == 'minmax':
-                if not row.cells[4] or not isinstance(row.cells[4].data, (int, long, float)):
-                    line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[4].data))
-                elif not row.cells[5] or not isinstance(row.cells[5].data, (int, long, float)):
-                    line_error.append(_('Line %d: Max Qty, number expected, found %s') % (idx+1, row.cells[5].data))
-                elif row.cells[5].data < row.cells[4].data:
-                    line_error.append(_('Line %d: Max Qty (%s) must be larger than Min Qty (%s)') % (idx+1, row.cells[5].data, row.cells[4].data))
+            elif cells_nb > 6 and seg.rule == 'minmax':
+                if not row.cells[6] or not isinstance(row.cells[6].data, (int, long, float)):
+                    line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[6].data))
+                elif not row.cells[7] or not isinstance(row.cells[7].data, (int, long, float)):
+                    line_error.append(_('Line %d: Max Qty, number expected, found %s') % (idx+1, row.cells[7].data))
+                elif row.cells[7].data < row.cells[6].data:
+                    line_error.append(_('Line %d: Max Qty (%s) must be larger than Min Qty (%s)') % (idx+1, row.cells[7].data, row.cells[6].data))
                 else:
                     data_towrite.update({
-                        'min_qty': row.cells[4].data,
-                        'max_qty': row.cells[5].data,
+                        'min_qty': row.cells[6].data,
+                        'max_qty': row.cells[7].data,
                     })
-            elif cells_nb > 4:
-                if not row.cells[4] or not isinstance(row.cells[4].data, (int, long, float)):
-                    line_error.append(_('Line %d: Auto Supply Qty, number expected, found %s') % (idx+1, row.cells[4].data))
+            elif cells_nb > 6:
+                if not row.cells[6] or not isinstance(row.cells[6].data, (int, long, float)):
+                    line_error.append(_('Line %d: Auto Supply Qty, number expected, found %s') % (idx+1, row.cells[6].data))
                 else:
-                    data_towrite['auto_qty'] = row.cells[4].data
+                    data_towrite['auto_qty'] = row.cells[6].data
 
             if prod_code not in existing_line:
                 prod_id = product_obj.search(cr, uid, [('default_code', '=ilike', prod_code)], context=context)
                 if not prod_id:
                     line_error.append(_('Line %d: product code %s not found') % (idx+1, prod_code))
                 else:
+                    if prod_id[0] in code_created:
+                        line_error.append(_('Line %d: product code %s already defined in the file') % (idx+1, prod_code))
+
+                    code_created[prod_id[0]] = True
                     data_towrite['product_id'] = prod_id[0]
                     data_towrite['segment_id'] = seg.id
             else:
@@ -1063,7 +1108,7 @@ class replenishment_segment(osv.osv):
         calc_ids = calc_obj.search(cr, uid, [('segment_id', 'in', ids), ('state', 'not in', ['cancel', 'closed'])], context=context)
         if calc_ids:
             calc_name = calc_obj.read(cr, uid, calc_ids, ['name'], context=context)
-            raise osv.except_osv(_('Warning'), _('Please cancel or close the following Order Cacl:\n%s') % (', '.join([x['name'] for x in calc_name])))
+            raise osv.except_osv(_('Warning'), _('Please cancel or close the following Order Calc:\n%s') % (', '.join([x['name'] for x in calc_name])))
 
     def set_as_archived(self, cr, uid, ids, context=None):
         self.check_inprogress_order_calc(cr, uid, ids, context=context)
@@ -1857,6 +1902,7 @@ class replenishment_order_calc(osv.osv):
                         'type': 'make_to_order',
                         'stock_take_date': calc.generation_date,
                         'date_planned': calc.new_order_reception_date,
+                        'notes': line.order_qty_comment,
                     }, context=context)
 
             self.write(cr, uid, calc.id, {'state': 'closed', 'ir_generation_date': time.strftime('%Y-%m-%d'), 'ir_id': ir_id}, context=context)
@@ -1912,6 +1958,7 @@ class replenishment_order_calc_line(osv.osv):
         'agreed_order_qty': fields.float_null('Agreed Order Qty', related_uom='uom_id'),
         'order_qty_comment': fields.char('Order Qty Comment', size=512),
         'warning': fields.text('Warning', readonly='1'),
+        'warning_html': fields.text('Warning', readonly='1'),
     }
 
 replenishment_order_calc_line()
@@ -2014,6 +2061,7 @@ class replenishment_inventory_review_line(osv.osv):
         'unit_of_supply_amc': fields.float_null('Days/weeks/months of supply (RR-AMC)', null_value='N/A'),
         'unit_of_supply_fmc': fields.float_null('Days/weeks/months of supply (RR-FMC)', null_value='N/A'),
         'warning': fields.text('Warning', readonly='1'), # OC
+        'warning_html': fields.text('Warning', readonly='1'), # OC
         'open_loan': fields.boolean('Open Loan', readonly=1), # OC
         'qty_lacking': fields.float_null('Qty lacking before next ETA', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
         'qty_lacking_needed_by': fields.date('Qty lacking needed by', readonly=1), # OC
@@ -2230,7 +2278,7 @@ class replenishment_product_list(osv.osv):
         'segment_id': fields.many2one('replenishment.segment', 'Replenishment Segment', select=1, required=1),
         'default_code': fields.char('Product Code', size=256, select=1, required=1),
         'product_description': fields.related('product_id', 'name',  string='Product Description', type='char', size=64, readonly=True, select=True, write_relate=False),
-        'name_seg': fields.char('Replenishment Segment Reference', size=64, readonly=1, select=1),
+        'name_seg': fields.char('Replenishment Segment Reference', size=64, readonly=1, select=1, group_operator='count'),
         'description_seg': fields.char('Replenishment Segment Description', required=1, size=28, select=1),
         'list_ids': fields.function(misc.get_fake, fnct_search=_search_list_sublist, type='many2one', relation='product.list', method=True, string='Lists'),
     }

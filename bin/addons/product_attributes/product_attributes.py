@@ -1578,9 +1578,22 @@ class product_attributes(osv.osv):
         '''
         Re-activate product.
         '''
+        wiz_obj = self.pool.get('product.ask.activate.wizard')
+
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level
         for product in self.browse(cr, uid, ids, context=context):
             if product.active:
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already active.') % (product.default_code, product.name))
+            if instance_level in ['project', 'coordo'] and product.standard_ok == 'non_standard_local':
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'product.ask.activate.wizard',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'res_id': wiz_obj.create(cr, uid, {'product_id': product.id}, context=context),
+                    'target': 'new',
+                    'context': context
+                }
 
         self.write(cr, uid, ids, {'active': True}, context=context)
 
@@ -2589,6 +2602,32 @@ class change_bn_ed_mandatory_wizard(osv.osv_memory):
 
 
 change_bn_ed_mandatory_wizard()
+
+
+class product_ask_activate_wizard(osv.osv_memory):
+    _name = 'product.ask.activate.wizard'
+
+    _columns = {
+        'product_id': fields.many2one('product.product', string='Product', required=True),
+    }
+
+    def do_activate_product(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        prod_id = self.browse(cr, uid, ids[0], context=context).product_id.id
+        self.pool.get('product.product').write(cr, uid, prod_id, {'active': True}, context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def button_close(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        return {'type': 'ir.actions.act_window_close'}
+
+
+product_ask_activate_wizard()
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
