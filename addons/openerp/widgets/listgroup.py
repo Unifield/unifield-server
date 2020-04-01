@@ -226,17 +226,33 @@ class ListGroup(List):
 
         self.group_by_ctx, self.hiddens, self.headers = parse(self.group_by_ctx, self.hiddens, self.headers, None, self.group_by_ctx)
 
-        self.grp_records = proxy.read_group(self.context.get('__domain', []) + (self.domain or []),
-                                            fields.keys(), self.group_by_ctx, 0, False, self.context)
 
+        limited_groupby = self.model == 'replenishment.product.list'
+        order_by = ''
         terp_params = getattr(cherrypy.request, 'terp_params', [])
         if terp_params.sort_key and terp_params.sort_key in self.group_by_ctx and self.group_by_ctx.index(terp_params.sort_key) == 0:
+            order_by = terp_params.sort_key
             if terp_params.sort_order == 'desc':
                 rev = True
+                order_by += ' desc'
             else:
                 rev = False
-            self.grp_records = sorted(self.grp_records, key=itemgetter(terp_params.sort_key), reverse=rev)
+                order_by += ' asc'
 
+        read_offset = 0
+        read_limit = False
+        read_groupby = False
+        if limited_groupby:
+            read_offset = terp_offset
+            read_limit = terp_limit
+            read_groupby = order_by
+            order_by = False
+
+        self.grp_records = proxy.read_group(self.context.get('__domain', []) + (self.domain or []),
+                                            fields.keys(), self.group_by_ctx, read_offset, read_limit, self.context, read_groupby)
+
+        if order_by:
+            self.grp_records = sorted(self.grp_records, key=itemgetter(terp_params.sort_key), reverse=rev)
         for grp_rec in self.grp_records:
             if not grp_rec.get('__domain'):
                 grp_rec['__domain'] = self.context.get('__domain', []) + (self.domain or [])
@@ -246,14 +262,19 @@ class ListGroup(List):
         self.grouped, grp_ids = parse_groups(self.group_by_ctx, self.grp_records, self.headers, self.ids, model, terp_offset, terp_limit, self.context, self.data, self.field_total, fields, self.rounding_values)
 
         if self.pageable:
-            self.count = len(self.grouped)
+            if limited_groupby:
+                self.count = proxy.read_group(self.context.get('__domain', []) + (self.domain or []), fields.keys(), self.group_by_ctx, 0, False, self.context, False, True)
+            else:
+                self.count = len(self.grouped)
+
             self.pager = Pager(ids=self.ids, offset=self.offset, limit=self.limit, count=self.count)
             self.pager._name = self.name
 
         # Display only the lines according to pager
-        start_index = self.offset
-        end_index = self.offset + self.limit
-        self.grp_records = self.grp_records[start_index:end_index]
+        if not limited_groupby:
+            start_index = self.offset
+            end_index = self.offset + self.limit
+            self.grp_records = self.grp_records[start_index:end_index]
 
 
 class MultipleGroup(List):
