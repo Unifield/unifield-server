@@ -1219,7 +1219,7 @@ class replenishment_segment_line(osv.osv):
                 segment[x.segment_id.id] = {
                     'context': {
                         'to_date': to_date.strftime('%Y-%m-%d'),
-                        'from_date': (to_date -  relativedelta(months=x.segment_id.location_config_id.rr_amc)).strftime('%Y-%m-%d'),
+                        'from_date': (to_date -  relativedelta(months=x.segment_id.location_config_id.rr_amc, days=1)).strftime('%Y-%m-%d'),
                         'amc_location_ids': [loc.id for loc in x.segment_id.location_config_id.local_location_ids],
                     },
                     'prod_seg_line': {},
@@ -1584,7 +1584,7 @@ class replenishment_segment_line_amc(osv.osv):
 
             seg_context = {
                 'to_date': to_date.strftime('%Y-%m-%d'),
-                'from_date': (to_date - relativedelta(months=segment.rr_amc)).strftime('%Y-%m-%d'),
+                'from_date': (to_date - relativedelta(months=segment.rr_amc, days=1)).strftime('%Y-%m-%d'),
                 'amc_location_ids': [x.id for x in segment.local_location_ids],
             }
             lines = {}

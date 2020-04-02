@@ -1964,6 +1964,9 @@ class product_product(osv.osv):
         if not nb_months:
             nb_months = 1
 
+        if context.get('amc_location_ids'):
+            nb_months = (to_date_str-from_date_str).days/30.44
+
         for p_id in res:
             if p_id in product_dict:
                 prod_uom = product_dict[p_id]['uom_id'][0]
