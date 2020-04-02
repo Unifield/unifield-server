@@ -905,7 +905,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]</field>
-            <field name="context">{'type':'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out'}</field>
+            <field name="context">{'type':'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
@@ -933,7 +933,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field name="view_id" ref="view_intermission_form"/>
             <field name="domain">[('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]</field>
-            <field name="context">{'type':'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in'}</field>
+            <field name="context">{'type':'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
@@ -961,7 +961,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', False)]</field>
-            <field name="context">{'type':'out_invoice', 'journal_type': 'sale'}</field>
+            <field name="context">{'type':'out_invoice', 'journal_type': 'sale', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
             <field name="help">With Customer Invoices you can create and manage sales invoices issued to your customers. OpenERP can also generate draft invoices automatically from sales orders or deliveries. You should only confirm them before sending them to your customers.</field>
         </record>
