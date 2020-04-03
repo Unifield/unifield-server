@@ -5928,6 +5928,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:replenishment.order_calc.line,product_description:0
 #: field:replenishment.segment,description_seg:0
 #: field:replenishment.segment.line,product_description:0
+#: report:addons/account/report/invoice_excel_export.mako:67
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -8347,6 +8348,7 @@ msgstr "Générer les écarts"
 #: report:addons/procurement_request/report/internal_request_import_overview_export_xls.mako:216
 #: report:addons/specific_rules/report/unconsistent_stock_report_xls.mako:98
 #: code:addons/stock_override/report/report_stock_move.py:759
+#: report:addons/account/report/invoice_excel_export.mako:68
 #, python-format
 msgid "Quantity"
 msgstr "Quantité"
@@ -20888,7 +20890,7 @@ msgstr "Numéro de référence interne au cas où celle-ci serait différente du
 msgid "Product category MSFID \"%s\" not found"
 msgstr "Product category MSFID \"%s\" not found"
 
-#. modules: sales_followup, product, msf_outgoing, procurement, sale, account_override, product_attributes, purchase_followup, msf_supply_doc_export, stock
+#. modules: sales_followup, product, msf_outgoing, procurement, sale, account_override, product_attributes, purchase_followup, msf_supply_doc_export, stock, account
 #: view:return.ppl.move.processor:0
 #: field:physical.inventory.discrepancy,product_uom_id:0
 #: view:account.invoice:0
@@ -20905,6 +20907,7 @@ msgstr "Product category MSFID \"%s\" not found"
 #: report:msf.freight_manifest:0
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:221
 #: report:sales.follow.up.report_pdf:0
+#: report:addons/account/report/invoice_excel_export.mako:69
 #: view:stock.move:0
 msgid "UOM"
 msgstr "UdM"
@@ -21826,6 +21829,12 @@ msgstr "automated.export.job.progress"
 #: model:ir.actions.report.xml,name:msf_supply_doc_export.report_purchase_order_xls
 msgid "Purchase Order Excel Export"
 msgstr "Export Excel - Bon de Commande"
+
+#. module: account
+#: report:addons/account/report/invoice_excel_export.mako:9
+#: model:ir.actions.report.xml,name:account.invoice_excel_export
+msgid "Invoice Excel Export"
+msgstr "Export Excel - Facture"
 
 #. module: account
 #: model:ir.model,name:account.model_report_invoice_created
@@ -37428,6 +37437,7 @@ msgstr "Macao"
 #: report:account.third_party_ledger_other:0
 #: report:addons/account/report/account_partner_ledger.mako:364
 #: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:235
+#: report:addons/account/report/invoice_excel_export.mako:71
 msgid "Subtotal"
 msgstr "Sous-total"
 
@@ -48773,6 +48783,7 @@ msgstr "wizard.incoming.xml.export"
 #: field:funding.pool.distribution.line,percentage:0
 #: field:msf.budget.line,percentage:0
 #: report:msf.pdf.budget.summary:0
+#: report:addons/account/report/invoice_excel_export.mako:70
 #: model:product.uom.categ,name:msf_profile.uom_category_percentage
 msgid "Percentage"
 msgstr "Pourcentage"
@@ -49373,6 +49384,7 @@ msgstr "Montant total"
 #: field:stock.delivery.wizard,partner_id:0
 #: field:account.invoice.tax,partner_id:0
 #: field:account.tax,partner_id:0
+#: report:addons/account/report/invoice_excel_export.mako:80
 #, python-format
 msgid "Partner"
 msgstr "Partenaire"
@@ -53648,6 +53660,7 @@ msgstr "Balance Agée Partenaire"
 #: report:addons/sale/report/fo_allocation_report.mako:225
 #: report:sale.order.allocation.report:0
 #: report:addons/account/report/free_allocation_report.mako:199
+#: report:addons/account/report/invoice_excel_export.mako:73
 #, python-format
 msgid "Account"
 msgstr "Compte"
@@ -63004,8 +63017,9 @@ msgstr "Enregistrer sous"
 msgid "Execution date"
 msgstr "Date d'exécution"
 
-#. module: purchase_allocation_report
+#. modules: purchase_allocation_report, account
 #: field:purchase.order.line.allocation.report,cost_center_id:0
+#: report:addons/account/report/invoice_excel_export.mako:74
 msgid "Cost center"
 msgstr "Centre de coût"
 
@@ -64574,7 +64588,7 @@ msgstr "Vous ne pouvez pas lire ce document (%s) ! Assurez-vous que votre utilis
 msgid "Followups Management"
 msgstr "Gestion des Suivis"
 
-#. modules: msf_doc_import, msf_tools, msf_supply_doc_export, sale
+#. modules: msf_doc_import, msf_tools, msf_supply_doc_export, sale, account
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:64
 #: field:incoming.import.xml.line,line_number:0
 #: field:purchase.line.import.xml.line,line_number:0
@@ -64583,6 +64597,7 @@ msgstr "Gestion des Suivis"
 #: code:addons/sale/wizard/internal_request_import.py:42
 #: field:internal.request.import.error.line,line_number:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:232
+#: report:addons/account/report/invoice_excel_export.mako:65
 #, python-format
 msgid "Line number"
 msgstr "Numéro de ligne"
@@ -82625,6 +82640,7 @@ msgstr "SFTP connection succeeded"
 #: field:product.mass.update.errors,product_id:0
 #: view:products.situation.report:0
 #: field:replenishment.product.list,product_id:0
+#: report:addons/account/report/invoice_excel_export.mako:66
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -90194,6 +90210,7 @@ msgstr "Ceci est la liste de tous vos types de colis."
 #: field:wizard.register.import.lines,date:0
 #: report:addons/account/report/free_allocation_report.mako:173
 #: field:free.allocation.wizard,posting_date_from:0
+#: report:addons/account/report/invoice_excel_export.mako:78
 msgid "Posting date"
 msgstr "Date de Comptabilisation"
 
@@ -90429,11 +90446,12 @@ msgstr "Produits Sortants à facturer"
 msgid "Starting date of the catalogue."
 msgstr "Date de début du Catalogue."
 
-#. modules: account_override, msf_partner, purchase_compare_rfq, stock
+#. modules: account_override, msf_partner, purchase_compare_rfq, stock, account
 #: field:wizard.split.invoice.lines,price_unit:0
 #: field:res.partner,price_unit:0
 #: code:addons/purchase_compare_rfq/wizard/compare_rfq.py:451
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:785
+#: report:addons/account/report/invoice_excel_export.mako:72
 #, python-format
 msgid "Unit price"
 msgstr "Prix unitaire"
@@ -94870,6 +94888,7 @@ msgstr "Facture venant de"
 #: field:account.destination.summary,destination_id:0
 #: view:account.destination.summary:0
 #: code:addons/stock_override/report/report_stock_move.py:759
+#: report:addons/account/report/invoice_excel_export.mako:75
 #, python-format
 msgid "Destination"
 msgstr "Destination"
@@ -109000,3 +109019,43 @@ msgstr "Ligne %s. La période %s n'existe pas."
 #, python-format
 msgid "Product Code %s must include a 'Z' character"
 msgstr "Le Code Produit %s doit inclure un caractère 'Z'"
+
+#. module: account
+#: report:addons/account/report/invoice_excel_export.mako:56
+msgid "Sheet"
+msgstr "Feuille"
+
+#. module: account
+#: report:addons/account/report/invoice_excel_export.mako:76
+msgid "Voucher number"
+msgstr "Numéro du bon"
+
+#. module: account
+#: report:addons/account/report/invoice_excel_export.mako:77
+msgid "Voucher status"
+msgstr "Statut du bon"
+
+#. module: account
+#: report:addons/account/report/invoice_excel_export.mako:79
+msgid "Ship #"
+msgstr "Num. d'Exp."
+
+#. module: account
+#: report:addons/account/report/invoice_excel_export.mako:81
+msgid "FO number"
+msgstr "Num. CdT"
+
+#. module: account
+#: report:addons/account/report/invoice_excel_export.mako:82
+msgid "PO number"
+msgstr "Num. BC"
+
+#. module: account
+#: report:addons/account/report/invoice_excel_export.mako:83
+msgid "Counterpart invoice number"
+msgstr "Numéro de la facture de contrepartie"
+
+#. module: account
+#: report:addons/account/report/invoice_excel_export.mako:84
+msgid "Counterpart invoice status"
+msgstr "Etat de la facture de contrepartie"

@@ -59,10 +59,29 @@
 
 <ss:Worksheet ss:Name="${sheet_title|x}">
 <Table x:FullColumns="1" x:FullRows="1">
-  <Column ss:AutoFitWidth="1" ss:Width="100" />
+  <Column ss:AutoFitWidth="1" ss:Width="100" ss:Span="19"/>
 
   <Row>
       <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line number')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Description')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UOM')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Percentage')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Unit price')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Account')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost center')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Voucher number')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Voucher status')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Posting date')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ship #')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Partner')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('FO number')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('PO number')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Counterpart invoice number')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Counterpart invoice status')}</Data></Cell>
   </Row>
   % for line in o.invoice_line:
   <Row>
