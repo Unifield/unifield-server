@@ -1456,7 +1456,10 @@ class product_attributes(osv.osv):
                         )
                 if any(char.islower() for char in vals['default_code']):
                     vals['default_code'] = vals['default_code'].upper()
-                if intstat_code and intstat_code == 'local' and 'Z' not in vals['default_code']:
+                # Look at current international status if none is given
+                current_instat_code = self.browse(cr, uid, ids[0], fields_to_fetch=['international_status'], context=context).international_status.code
+                prod_instat_code = intstat_code or current_instat_code or False
+                if prod_instat_code and prod_instat_code == 'local' and 'Z' not in vals['default_code']:
                     raise osv.except_osv(
                         _('Error'),
                         _("Product Code %s must include a 'Z' character") % (vals['default_code'],),
