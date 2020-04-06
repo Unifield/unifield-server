@@ -92,6 +92,7 @@ WHITE_LIST_MODEL = [
     'product.justification.code',
     'product.list',
     'product.list.line',
+    'product.merged',
     'product.nomenclature',
     'product.pricelist',
     'product.pricelist.type',

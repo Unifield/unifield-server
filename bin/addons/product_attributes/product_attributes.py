@@ -686,7 +686,7 @@ class product_attributes(osv.osv):
             res[_id] = False
 
         if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
-            for _id in self.search(cr, uid, [('id', 'in', ids), ('standard_ok', '=', 'non_standard_local'), ('active', '=', True), ('replace_product_id', '=', True)], context=context):
+            for _id in self.search(cr, uid, [('id', 'in', ids), ('standard_ok', '=', 'non_standard_local'), ('active', '=', True), ('replace_product_id', '!=', False)], context=context):
                 res[_id] = True
 
         return res
@@ -700,6 +700,14 @@ class product_attributes(osv.osv):
         if context.get('sync_update_execution') or self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
             for p_id in self.search(cr, uid, [('id', 'in', ids), ('active', '=', False), ('international_status', '=', 'UniData'), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)], context=context):
                 res[p_id] = True
+        return res
+
+    def _get_nsl_merged(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for _id in ids:
+            res[_id] = False
+        for _id in self.search(cr, uid, [('id', 'in', ids), ('replaced_by_product_id', '!=', False), ('active', 'in', ['t', 'f'])], context=context):
+            res[_id] = True
         return res
 
     _columns = {
@@ -1001,6 +1009,7 @@ class product_attributes(osv.osv):
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity', related_uom='uom_id', help="Standard Ordering Quantity. Quantity according to which the product should be ordered. The SoQ is usually determined by the typical packaging of the product."),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+        'nsl_merged': fields.function(_get_nsl_merged, method=True, type='boolean', string='NSL merged'),
         'replace_product_id': fields.many2one('product.product', string='Merged from', select=1),
         'replaced_by_product_id': fields.many2one('product.product', string='Merged to'),
         'allow_merge': fields.function(_get_allow_merge, type='boolean', method=True, string="UD Allow merge"),
