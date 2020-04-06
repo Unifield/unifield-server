@@ -156,5 +156,14 @@
                 header="False"
                 auto="False"
                 menu="True"/>
+        <!-- define a sequence for the Invoice Excel Export -->
+        <function model="ir.values" name="write">
+            <function model="ir.values" name="search"
+                      eval="[[('key', '=', 'action'),
+                              ('key2', '=', 'client_print_multi'),
+                              ('model', '=', 'account.invoice'),
+                              ('name', '=', 'Invoice Excel Export')]]" />
+            <value eval="{'sequence': 97}" />
+        </function>
     </data>
 </openerp>
