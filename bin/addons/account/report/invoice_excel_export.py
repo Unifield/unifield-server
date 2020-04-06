@@ -27,8 +27,29 @@ class invoice_excel_export(report_sxw.rml_parse):
 
     def __init__(self, cr, uid, name, context=None):
         super(invoice_excel_export, self).__init__(cr, uid, name, context=context)
-        # self.localcontext.update({
-        # })
+        self.localcontext.update({
+            'distribution_lines': self._get_distribution_lines,
+        })
+
+    def _get_distribution_lines(self, inv_line):
+        """
+        Returns distrib. line data related to the invoice line in parameter, as a list of dicts
+        """
+        fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
+        distrib_lines = []
+        distribution = inv_line.analytic_distribution_id or inv_line.invoice_id.analytic_distribution_id or False
+        if distribution:
+            distrib_ids = fp_distrib_line_obj.search(self.cr, self.uid, [('distribution_id', '=', distribution.id)])
+            for distrib in fp_distrib_line_obj.browse(self.cr, self.uid, distrib_ids):
+                distrib_lines.append(
+                    {
+                        'percentage': distrib.percentage,
+                        'cost_center': distrib.cost_center_id.code or '',
+                        'destination': distrib.destination_id.code or '',
+                        'subtotal': inv_line.price_subtotal*distrib.percentage/100,
+                    }
+                )
+        return distrib_lines
 
 
 SpreadsheetReport('report.invoice.excel.export', 'account.invoice',

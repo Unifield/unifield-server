@@ -36,7 +36,17 @@
       <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
     </Borders>
   </Style>
-  <Style ss:ID="short_date">
+  <Style ss:ID="line_number">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+    <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <NumberFormat ss:Format="Standard"/>
+  </Style>
+  <Style ss:ID="line_date">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
     <Borders>
       <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -83,10 +93,31 @@
       <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Counterpart invoice number')}</Data></Cell>
       <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Counterpart invoice status')}</Data></Cell>
   </Row>
-  % for line in o.invoice_line:
-  <Row>
-      <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.line_number or '')|x}</Data></Cell>
-  </Row>
+  % for inv_line in o.invoice_line:
+      % for distrib_line in distribution_lines(inv_line):
+        <Row>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.line_number or ''|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.product_id and inv_line.product_id.default_code or ''|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.name|x}</Data></Cell>
+            <Cell ss:StyleID="line_number"><Data ss:Type="Number">${inv_line.quantity|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.uos_id and inv_line.uos_id.name or ''|x}</Data></Cell>
+            <Cell ss:StyleID="line_number"><Data ss:Type="Number">${distrib_line['percentage']|x}</Data></Cell>
+            <Cell ss:StyleID="line_number"><Data ss:Type="Number">${distrib_line['subtotal']|x}</Data></Cell>
+            <Cell ss:StyleID="line_number"><Data ss:Type="Number">${inv_line.price_unit|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.account_id.code|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${distrib_line['cost_center']|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${distrib_line['destination']|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.invoice_id.number or ''|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${getSel(inv_line.invoice_id, 'state')|x}</Data></Cell>
+            <Cell ss:StyleID="line_date"><Data ss:Type="String">${inv_line.invoice_id.date_invoice or False|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${"TODO"|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.invoice_id.partner_id.name|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${"TODO"|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${"TODO"|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.invoice_id.counterpart_inv_number or ''|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.invoice_id.counterpart_inv_status or ''|x}</Data></Cell>
+        </Row>
+      % endfor
   % endfor
 
 </Table>
