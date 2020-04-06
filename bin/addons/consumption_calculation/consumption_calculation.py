@@ -1936,7 +1936,7 @@ class product_product(osv.osv):
             if move['reason_type_id'][0] in (return_id, return_good_id, replacement_id) and location_dict[move['location_id'][0]]['usage'] == 'customer':
                 res[move['product_id'][0]] -= uom_obj._compute_qty(cr, uid, move['product_uom'][0], move['product_qty'], product_dict[move['product_id'][0]]['uom_id'][0])
             elif location_dict[move['location_dest_id'][0]]['usage'] == 'customer':
-                res[move['product_id'][0]] = uom_obj._compute_qty(cr, uid, move['product_uom'][0], move['product_qty'], product_dict[move['product_id'][0]]['uom_id'][0])
+                res[move['product_id'][0]] += uom_obj._compute_qty(cr, uid, move['product_uom'][0], move['product_qty'], product_dict[move['product_id'][0]]['uom_id'][0])
 
             # Update the limit in time
             if not context.get('from_date') and (not from_date or move['date'] < from_date):
@@ -1963,6 +1963,9 @@ class product_product(osv.osv):
         nb_months = self._get_date_diff(from_date_str, to_date_str)
         if not nb_months:
             nb_months = 1
+
+        if context.get('amc_location_ids'):
+            nb_months = ((to_date_str-from_date_str).days + 1)/30.44
 
         for p_id in res:
             if p_id in product_dict:
