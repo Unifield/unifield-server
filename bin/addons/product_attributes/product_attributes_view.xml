@@ -118,10 +118,11 @@
                                 <field name="state_ud" colspan="3" />
                                 <field name="oc_subscription" colspan="3" readonly="1" attrs="{'invisible': [('int_status_code', '!=', 'unidata')]}"/>
                                 <field name="active" readonly="1"/>
+                                <field name="allow_merge" invisible="1" />
                                 <group colspan="1" col="1">
                                    <button name="deactivate_product" icon="gtk-execute" string="De-activate product" type="object" attrs="{'invisible': [('active', '=', False)]}" />
                                    <button name="reactivate_product" icon="gtk-execute" string="Re-activate product" type="object" attrs="{'invisible': [('active', '=', True)]}" />
-                                   <button name="merge_product" icon="gtk-execute" string="Merge product" type="object"  />
+                                   <button name="open_merge_product_wizard" icon="gtk-execute" string="Merge product" type="object"  attrs="{'invisible': [('allow_merge', '=', False)]}"/>
                                 </group>
                             </group>
                             <group colspan="2" col="3" name="quality">

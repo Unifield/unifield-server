@@ -173,7 +173,7 @@ class Cursor(object):
                 if osv_pool:
                     for key in osv_pool._sql_error.keys():
                         if key in ie[0]:
-                            self.__logger.warn("Normal Constraint Error: %s : %s", self._obj.query or query, ie[0])
+                            self.__logger.warn("Normal Constraint Error: %s : %s", self._obj.query or query, tools.misc.ustr(ie[0]))
                             #US-88: if error occurred for account analytic then just clear the cache
                             if 'account_analytic_account_parent_id_fkey' in ie[0]:
                                 cache.clean_caches_for_db(self.dbname)
