@@ -37,7 +37,9 @@ class invoice_excel_export(report_sxw.rml_parse):
         """
         fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
         distrib_lines = []
-        distribution = inv_line.analytic_distribution_id or inv_line.invoice_id.analytic_distribution_id or False
+        distribution = False
+        if inv_line.account_id.is_analytic_addicted:  # don't take header distrib for lines which shouldn't be linked to any AD
+            distribution = inv_line.analytic_distribution_id or inv_line.invoice_id.analytic_distribution_id or False
         if distribution:
             distrib_ids = fp_distrib_line_obj.search(self.cr, self.uid, [('distribution_id', '=', distribution.id)])
             for distrib in fp_distrib_line_obj.browse(self.cr, self.uid, distrib_ids):
@@ -49,6 +51,15 @@ class invoice_excel_export(report_sxw.rml_parse):
                         'subtotal': inv_line.price_subtotal*distrib.percentage/100,
                     }
                 )
+        else:
+            distrib_lines.append(
+                {
+                    'percentage': 100,
+                    'cost_center': '',
+                    'destination': '',
+                    'subtotal': inv_line.price_subtotal,
+                }
+            )
         return distrib_lines
 
 
