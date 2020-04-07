@@ -269,6 +269,7 @@ class account_invoice_sync(osv.osv):
                 if po_ids:
                     po_id = po_ids[0]
             if po_id:
+                vals.update({'main_purchase_id': po_id})
                 po_fields = ['picking_ids', 'analytic_distribution_id', 'order_line', 'name']
                 po = po_obj.browse(cr, uid, po_id, fields_to_fetch=po_fields, context=context)
                 po_number = po.name
