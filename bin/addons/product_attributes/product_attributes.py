@@ -2687,8 +2687,26 @@ class product_attributes(osv.osv):
         self.write(cr, uid, local_id, {'active': False, 'replaced_by_product_id': nsl_prod_id}, context=context)
         if not context.get('sync_update_execution'):
             self.pool.get('product.merged').create(cr, 1, {'new_product_id': nsl_prod_id, 'old_product_id': local_id}, context=context)
-        # TODO: track changes done to test
-        # mission stock (location) to 0 on old product
+
+        # reset mission stock on nsl + old to 0, will be computed on next mission stock update
+        mission_stock_fields_reset = [
+            'stock_qty', 'stock_val',
+            'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
+            'secondary_qty', 'secondary_val',
+            'cu_qty', 'cu_val',
+            'central_qty', 'central_val',
+            'cross_qty', 'cross_val',
+            'wh_qty', 'internal_qty'
+        ]
+        cr.execute('''
+            update stock_mission_report_line set ''' + ', '.join(['%s=%%(zero)s' % field  for field in mission_stock_fields_reset]) + '''
+                where
+                mission_report_id in (select id from stock_mission_report where full_view='f' and instance_id=%(local_instance_id)s) and
+                product_id in %(product_ids)s
+        ''', {'zero': 0, 'local_instance_id': self.pool.get('res.company')._get_instance_id(cr, uid),  'product_ids': (nsl_prod_id, local_id)}) # not_a_user_entry
+        cr.execute("delete from mission_line_move_rel where move_id in (select id from stock_move where product_id = %s)", (nsl_prod_id,))
+        cr.execute("delete from mission_move_rel where move_id in (select id from stock_move where product_id = %s)", (nsl_prod_id,))
+
         return True
 
 
