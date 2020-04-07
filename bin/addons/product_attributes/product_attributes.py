@@ -1369,6 +1369,10 @@ class product_attributes(osv.osv):
                     _('Batch and Expiry attributes do not conform')
                 )
 
+        intstat_code = False
+        if vals.get('international_status'):
+            intstat_code = self.pool.get('product.international.status').browse(cr, uid, vals['international_status'],
+                                                                                fields_to_fetch=['code'], context=context).code
         if 'default_code' in vals:
             if not context.get('sync_update_execution'):
                 vals['default_code'] = vals['default_code'].strip()
@@ -1379,6 +1383,11 @@ class product_attributes(osv.osv):
                     )
                 if any(char.islower() for char in vals['default_code']):
                     vals['default_code'] = vals['default_code'].upper()
+                if intstat_code and intstat_code == 'local' and 'Z' not in vals['default_code']:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _("Product Code %s must include a 'Z' character") % (vals['default_code'],),
+                    )
 
         if vals.get('xmlid_code'):
             if not context.get('sync_update_execution') and ' ' in vals['xmlid_code']:
@@ -1400,9 +1409,6 @@ class product_attributes(osv.osv):
             vals.update(self.onchange_heat(cr, uid, False, vals['heat_sensitive_item'], context=context).get('value', {}))
 
         if vals.get('international_status'):
-            intstat_code = self.pool.get('product.international.status').browse(cr, uid, vals['international_status'],
-                                                                                fields_to_fetch=['code'], context=context).code
-
             if intstat_code == 'unidata':
                 if 'oc_subscription' not in vals:
                     vals['oc_subscription'] = True
@@ -1554,12 +1560,19 @@ class product_attributes(osv.osv):
             ids = [ids]
 
         self.clean_standard(cr, uid, vals, context)
+
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']
             vals['track_outgoing'] = vals['batch_management']
             if vals['batch_management']:
                 vals['perishable'] = True
+
+        intstat_code = False
+        if 'international_status' in vals:
+            intstat_code = int_stat_obj.browse(cr, uid, vals['international_status'], fields_to_fetch=['code'],
+                                               context=context).code
+
         if 'default_code' in vals:
             if vals['default_code'] == 'XXX':
                 vals['duplicate_ok'] = True
@@ -1578,6 +1591,15 @@ class product_attributes(osv.osv):
                         )
                 if any(char.islower() for char in vals['default_code']):
                     vals['default_code'] = vals['default_code'].upper()
+                # Look at current international status if none is given
+                prod_instat_code = intstat_code
+                if not prod_instat_code:
+                    prod_instat_code = self.browse(cr, uid, ids[0], fields_to_fetch=['international_status'], context=context).international_status.code
+                if prod_instat_code and prod_instat_code == 'local' and 'Z' not in vals['default_code']:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _("Product Code %s must include a 'Z' character") % (vals['default_code'],),
+                    )
 
         if context.get('sync_update_execution') and vals.get('local_from_hq'):
             if vals.get('active'):
@@ -1621,13 +1643,7 @@ class product_attributes(osv.osv):
 
         unidata_product = False
         if 'international_status' in vals:
-            intstat_code = ''
-            if vals['international_status']:
-                intstat_id = vals['international_status']
-                if isinstance(intstat_id, (int,long)):
-                    intstat_id = [intstat_id]
-                intstat_code = int_stat_obj.read(cr, uid, intstat_id, ['code'], context=context)[0]['code']
-                unidata_product = intstat_code == 'unidata'
+            unidata_product = intstat_code == 'unidata'
 
             # just update SMRL that belongs to our instance:
             local_smrl_ids = smrl_obj.search(cr, uid, [
@@ -1817,9 +1833,22 @@ class product_attributes(osv.osv):
         '''
         Re-activate product.
         '''
+        wiz_obj = self.pool.get('product.ask.activate.wizard')
+
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level
         for product in self.browse(cr, uid, ids, context=context):
             if product.active:
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already active.') % (product.default_code, product.name))
+            if instance_level in ['project', 'coordo'] and product.standard_ok == 'non_standard_local':
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'product.ask.activate.wizard',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'res_id': wiz_obj.create(cr, uid, {'product_id': product.id}, context=context),
+                    'target': 'new',
+                    'context': context
+                }
 
         self.write(cr, uid, ids, {'active': True}, context=context)
 
@@ -2996,6 +3025,32 @@ class change_bn_ed_mandatory_wizard(osv.osv_memory):
 
 
 change_bn_ed_mandatory_wizard()
+
+
+class product_ask_activate_wizard(osv.osv_memory):
+    _name = 'product.ask.activate.wizard'
+
+    _columns = {
+        'product_id': fields.many2one('product.product', string='Product', required=True),
+    }
+
+    def do_activate_product(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        prod_id = self.browse(cr, uid, ids[0], context=context).product_id.id
+        self.pool.get('product.product').write(cr, uid, prod_id, {'active': True}, context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def button_close(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        return {'type': 'ir.actions.act_window_close'}
+
+
+product_ask_activate_wizard()
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
