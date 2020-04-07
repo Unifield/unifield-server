@@ -27,8 +27,10 @@ class invoice_excel_export(report_sxw.rml_parse):
 
     def __init__(self, cr, uid, name, context=None):
         super(invoice_excel_export, self).__init__(cr, uid, name, context=context)
+        self.invoices = {}
         self.localcontext.update({
             'distribution_lines': self._get_distribution_lines,
+            'shipment_number': self._get_shipment_number,
         })
 
     def _get_distribution_lines(self, inv_line):
@@ -61,6 +63,23 @@ class invoice_excel_export(report_sxw.rml_parse):
                 }
             )
         return distrib_lines
+
+    def _get_shipment_number(self, inv):
+        """
+        Returns the shipment number for Intermission Vouchers linked to a supply workflow
+        """
+        if self.invoices.get(inv.id, {}).get('shipment', None) is not None:
+            return self.invoices[inv.id]['shipment']
+        ship_or_out_ref = ''
+        if inv.from_supply and inv.is_intermission:
+            if inv.type == 'out_invoice':  # IVO
+                if inv.name:
+                    ship_or_out_ref = inv.name.split()[-1]
+            elif inv.type == 'in_invoice':  # IVI
+                if inv.picking_id:
+                    ship_or_out_ref = inv.picking_id.shipment_ref or ''
+        self.invoices.setdefault(inv.id, {}).update({'shipment': ship_or_out_ref})
+        return ship_or_out_ref
 
 
 SpreadsheetReport('report.invoice.excel.export', 'account.invoice',

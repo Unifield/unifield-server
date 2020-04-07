@@ -280,6 +280,8 @@ class account_invoice_sync(osv.osv):
                                                        limit=1, context=context)
                 if main_in_ids:
                     main_in = stock_picking_obj.browse(cr, uid, main_in_ids[0], fields_to_fetch=['name'], context=context)
+                    if main_in:
+                        vals.update({'picking_id': main_in.id})
                 # fill in the Analytic Distribution
                 # at header level if applicable
                 po_distrib = po.analytic_distribution_id
