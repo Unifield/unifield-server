@@ -69,7 +69,19 @@
 
 <ss:Worksheet ss:Name="${sheet_title|x}">
 <Table x:FullColumns="1" x:FullRows="1">
-  <Column ss:AutoFitWidth="1" ss:Width="100" ss:Span="19"/>
+  <Column ss:AutoFitWidth="1" ss:Width="80"/>
+  <Column ss:AutoFitWidth="1" ss:Width="120"/>
+  <Column ss:AutoFitWidth="1" ss:Index="3" ss:Width="300"/>
+  <Column ss:AutoFitWidth="1" ss:Width="110"/>
+  <Column ss:AutoFitWidth="1" ss:Width="80" ss:Span="1"/>
+  <Column ss:AutoFitWidth="1" ss:Width="140"/>
+  <Column ss:AutoFitWidth="1" ss:Width="110" ss:Span="3"/>
+  <Column ss:AutoFitWidth="1" ss:Index="12" ss:Width="150"/>
+  <Column ss:AutoFitWidth="1" ss:Width="100" ss:Span="1"/>
+  <Column ss:AutoFitWidth="1" ss:Index="15" ss:Width="210"/>
+  <Column ss:AutoFitWidth="1" ss:Width="200"/>
+  <Column ss:AutoFitWidth="1" ss:Width="210" ss:Span="1"/>
+  <Column ss:AutoFitWidth="1" ss:Width="150" ss:Span="1"/>
 
   <Row>
       <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line number')}</Data></Cell>
@@ -115,13 +127,30 @@
             <Cell ss:StyleID="line"><Data ss:Type="String">${fo_number(o)|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${po_number(inv_line)|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.invoice_id.counterpart_inv_number or ''|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.invoice_id.counterpart_inv_status or ''|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${getSel(inv_line.invoice_id, 'counterpart_inv_status') or ''|x}</Data></Cell>
         </Row>
       % endfor
   % endfor
 
 </Table>
-<x:WorksheetOptions/>
+<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <FitToPage/>
+   <PageSetup>
+       <Layout x:Orientation="Landscape"/>
+       <Header x:Margin="0.4921259845"/>
+       <Footer x:Margin="0.4921259845"/>
+       <PageMargins x:Bottom="0.984251969" x:Left="0.78740157499999996" x:Right="0.78740157499999996" x:Top="0.984251969"/>
+   </PageSetup>
+   <Print>
+       <ValidPrinterInfo/>
+       <PaperSizeIndex>9</PaperSizeIndex>
+       <HorizontalResolution>600</HorizontalResolution>
+       <VerticalResolution>600</VerticalResolution>
+   </Print>
+   <Selected/>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+</WorksheetOptions>
 </ss:Worksheet>
 % endfor
 </Workbook>
