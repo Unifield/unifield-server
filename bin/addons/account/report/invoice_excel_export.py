@@ -109,7 +109,7 @@ class invoice_excel_export(report_sxw.rml_parse):
     def _get_po_number(self, inv_line):
         """
         Returns the PO number for Intermission Voucher Lines linked to a supply workflow.
-        For the IVO: PO to external partner in order to buy the goods
+        For the IVO: PO to the external partner in order to buy the goods
         For the IVI: PO to the intermission partner which triggered the creation of the FO
         """
         inv = inv_line.invoice_id
@@ -118,9 +118,14 @@ class invoice_excel_export(report_sxw.rml_parse):
             # process only once per invoice except for IVO from Supply where the check must be done line by line
             return self.invoices[inv.id]['po']
         po_number = ''
+        po_line_obj = self.pool.get('purchase.order.line')
         if inv.from_supply and inv.is_intermission:
             if inv.type == 'out_invoice':  # IVO
-                pass  # TODO
+                fo_line = inv_line.sale_order_line_id
+                if fo_line and fo_line.type == 'make_to_order':  # the line is sourced on a PO
+                    pol = po_line_obj.search(self.cr, self.uid, [('sale_order_line_id', '=', fo_line.id)])
+                    if pol:
+                        po_number = po_line_obj.browse(self.cr, self.uid, pol[0], fields_to_fetch=['order_id']).order_id.name
             elif inv.type == 'in_invoice':  # IVI
                 if inv.main_purchase_id:
                     po_number = inv.main_purchase_id.name
