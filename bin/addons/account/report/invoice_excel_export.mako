@@ -121,7 +121,7 @@
             <Cell ss:StyleID="line"><Data ss:Type="String">${distrib_line['destination']|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.invoice_id.number or ''|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${getSel(inv_line.invoice_id, 'state')|x}</Data></Cell>
-            <Cell ss:StyleID="line_date"><Data ss:Type="String">${inv_line.invoice_id.date_invoice or False|x}</Data></Cell>
+            <Cell ss:StyleID="line_date"><Data ss:Type="DateTime">${inv_line.invoice_id.date_invoice or False|n}T00:00:00.000</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${shipment_number(o)|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.invoice_id.partner_id.name|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${fo_number(o)|x}</Data></Cell>

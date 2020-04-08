@@ -109069,17 +109069,17 @@ msgstr "Statut du bon"
 #. module: account
 #: report:addons/account/report/invoice_excel_export.mako:79
 msgid "Ship #"
-msgstr "Num. d'Exp."
+msgstr "Numéro d'Expé."
 
 #. module: account
 #: report:addons/account/report/invoice_excel_export.mako:81
 msgid "FO number"
-msgstr "Num. CdT"
+msgstr "Numéro de la CdT"
 
 #. module: account
 #: report:addons/account/report/invoice_excel_export.mako:82
 msgid "PO number"
-msgstr "Num. BC"
+msgstr "Numéro du BC"
 
 #. module: account
 #: report:addons/account/report/invoice_excel_export.mako:83
