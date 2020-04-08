@@ -762,12 +762,15 @@ class account_invoice(osv.osv):
             'move_name':False,
             'internal_number': False,
             'main_purchase_id': False,
-            'from_supply': False,
-            'synced': False,
             'counterpart_inv_number': False,
             'counterpart_inv_status': False,
             'refunded_invoice_id': False,
         })
+        if not context.get('from_split'):  # some values are kept in case of inv. generated via the "Split" feature
+            default.update({
+                'from_supply': False,
+                'synced': False,
+            })
         if 'date_invoice' not in default:
             default.update({
                 'date_invoice':False
