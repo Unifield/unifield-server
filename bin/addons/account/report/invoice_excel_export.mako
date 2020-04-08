@@ -113,7 +113,7 @@
             <Cell ss:StyleID="line"><Data ss:Type="String">${shipment_number(o)|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.invoice_id.partner_id.name|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${fo_number(o)|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${po_number(o)|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${po_number(inv_line)|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.invoice_id.counterpart_inv_number or ''|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.invoice_id.counterpart_inv_status or ''|x}</Data></Cell>
         </Row>

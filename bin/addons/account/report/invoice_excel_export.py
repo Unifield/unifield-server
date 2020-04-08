@@ -68,7 +68,8 @@ class invoice_excel_export(report_sxw.rml_parse):
 
     def _get_shipment_number(self, inv):
         """
-        Returns the shipment number for Intermission Vouchers linked to a supply workflow
+        Returns the "shipment" or "simple OUT" number having generated the IVO if linked to a supply workflow
+        Displayed for both the IVO and the IVI.
         """
         if self.invoices.get(inv.id, {}).get('shipment', None) is not None:
             # process only once per invoice
@@ -86,7 +87,8 @@ class invoice_excel_export(report_sxw.rml_parse):
 
     def _get_fo_number(self, inv):
         """
-        Returns the FO number for Intermission Vouchers linked to a supply workflow
+        Returns the FO number related to the IVO if any.
+        Displayed for both the IVO and the IVI.
         """
         if self.invoices.get(inv.id, {}).get('fo', None) is not None:
             # process only once per invoice
@@ -104,12 +106,16 @@ class invoice_excel_export(report_sxw.rml_parse):
         self.invoices.setdefault(inv.id, {}).update({'fo': fo_number})
         return fo_number
 
-    def _get_po_number(self, inv):
+    def _get_po_number(self, inv_line):
         """
-        Returns the PO number for Intermission Vouchers linked to a supply workflow
+        Returns the PO number for Intermission Voucher Lines linked to a supply workflow.
+        For the IVO: PO to external partner in order to buy the goods
+        For the IVI: PO to the intermission partner which triggered the creation of the FO
         """
-        if self.invoices.get(inv.id, {}).get('po', None) is not None:
-            # process only once per invoice
+        inv = inv_line.invoice_id
+        ivo_from_supply = inv.is_intermission and inv.type == 'out_invoice' and inv.from_supply
+        if not ivo_from_supply and self.invoices.get(inv.id, {}).get('po', None) is not None:
+            # process only once per invoice except for IVO from Supply where the check must be done line by line
             return self.invoices[inv.id]['po']
         po_number = ''
         if inv.from_supply and inv.is_intermission:
