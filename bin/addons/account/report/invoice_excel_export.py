@@ -32,6 +32,7 @@ class invoice_excel_export(report_sxw.rml_parse):
             'distribution_lines': self._get_distribution_lines,
             'shipment_number': self._get_shipment_number,
             'fo_number': self._get_fo_number,
+            'po_number': self._get_po_number,
         })
 
     def _get_distribution_lines(self, inv_line):
@@ -70,6 +71,7 @@ class invoice_excel_export(report_sxw.rml_parse):
         Returns the shipment number for Intermission Vouchers linked to a supply workflow
         """
         if self.invoices.get(inv.id, {}).get('shipment', None) is not None:
+            # process only once per invoice
             return self.invoices[inv.id]['shipment']
         ship_or_out_ref = ''
         if inv.from_supply and inv.is_intermission:
@@ -87,6 +89,7 @@ class invoice_excel_export(report_sxw.rml_parse):
         Returns the FO number for Intermission Vouchers linked to a supply workflow
         """
         if self.invoices.get(inv.id, {}).get('fo', None) is not None:
+            # process only once per invoice
             return self.invoices[inv.id]['fo']
         fo_number = ''
         if inv.from_supply and inv.is_intermission:
@@ -100,6 +103,23 @@ class invoice_excel_export(report_sxw.rml_parse):
                     fo_number = inv.main_purchase_id.short_partner_ref or ''
         self.invoices.setdefault(inv.id, {}).update({'fo': fo_number})
         return fo_number
+
+    def _get_po_number(self, inv):
+        """
+        Returns the PO number for Intermission Vouchers linked to a supply workflow
+        """
+        if self.invoices.get(inv.id, {}).get('po', None) is not None:
+            # process only once per invoice
+            return self.invoices[inv.id]['po']
+        po_number = ''
+        if inv.from_supply and inv.is_intermission:
+            if inv.type == 'out_invoice':  # IVO
+                pass  # TODO
+            elif inv.type == 'in_invoice':  # IVI
+                if inv.main_purchase_id:
+                    po_number = inv.main_purchase_id.name
+        self.invoices.setdefault(inv.id, {}).update({'po': po_number})
+        return po_number
 
 
 SpreadsheetReport('report.invoice.excel.export', 'account.invoice',
