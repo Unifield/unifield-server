@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="export_replenishment_product_list_form">
+            <field name="name">wizard.export.replenishment.product.list</field>
+            <field name="model">wizard.export.replenishment.product.list</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+
+                <form string="Export Product List Consistency Report">
+                    <group colspan="4">
+                        <group col="1"></group>
+                        <group col="2" colspan="2">
+                            <field colspan="2" name="list_id"/>
+                            <button colspan="2" name="create_report" string="Export" type="object" icon="gtk-print"/>
+                        </group>
+                        <group col="1"></group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <!-- Actions -->
+        <act_window id="action_replenishment_product_list"
+            name="Export Product List"
+            res_model="wizard.export.replenishment.product.list"
+            src_model="replenishment.product.list"
+            view_mode="form"
+            view_type="form"
+            key2="client_print_multi"
+            target="new" />
+    </data>
+</openerp>
+

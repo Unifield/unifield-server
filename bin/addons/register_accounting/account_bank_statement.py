@@ -700,18 +700,15 @@ The starting balance will be proposed automatically and the closing balance is t
             aml_ids = aml_obj.search(cr, uid, [('statement_id', 'in', register_ids),
                                                ('account_id', 'in', account_ids), ],
                                      order='date DESC', context=context)
-        aml_list = []
-        for aml in aml_obj.browse(cr, uid, aml_ids,
-                                  fields_to_fetch=['is_reconciled', 'reconcile_id', 'reconcile_partial_id'], context=context):
-            total_rec_ok = aml.reconcile_id and aml_obj.search_exist(cr, uid,
-                                                                     [('reconcile_id', '=', aml.reconcile_id.id),
-                                                                      ('date', '>', min_posting_date)], context=context)
-            partial_rec_ok = aml.reconcile_partial_id and aml_obj.search_exist(cr, uid,
-                                                                               [('reconcile_partial_id', '=', aml.reconcile_partial_id.id),
-                                                                                ('date', '>', min_posting_date)], context=context)
-            if not aml.is_reconciled or total_rec_ok or partial_rec_ok:
-                aml_list.append(aml.id)
-        return aml_list
+        if not aml_ids:
+            return []
+        cr.execute('''select l1.id from account_move_line l1
+                 left join account_move_line l2 on l2.date > %s and (l2.reconcile_id = l1.reconcile_id or l2.reconcile_partial_id = l1.reconcile_partial_id)
+                 where l1.id in %s
+                 group by l1.id
+                 having (l1.reconcile_id is null and l1.reconcile_partial_id is null) or count(l2) > 0
+                ''', (min_posting_date, tuple(aml_ids)))
+        return [x[0] for x in cr.fetchall()]
 
     def open_register(self, cr, uid, reg_id, cash_opening_balance=None, context=None):
         """
@@ -1176,6 +1173,18 @@ class account_bank_statement_line(osv.osv):
                     result[out.id]['red_on_supplier'] = True
         return result
 
+    def _get_number_imported_account_invoices(self, cr, uid, ids, field_name=None, args=None, context=None):
+        """
+        For each register line, gets the number of real account.invoices imported, even partially.
+        Other types of lines imported are ignored.
+        """
+        res = {}
+        if context is None:
+            context = {}
+        for regline in self.read(cr, uid, ids, ['imported_account_invoice_ids'], context=context):
+            res[regline['id']] = len(regline['imported_account_invoice_ids'])
+        return res
+
     _columns = {
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
@@ -1209,6 +1218,15 @@ class account_bank_statement_line(osv.osv):
         'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id',
                                                       string="Imported Invoices", required=False, readonly=True),
         'number_imported_invoice': fields.function(_get_number_imported_invoice, method=True, string='Number Invoices', type='integer'),
+        # store only account.invoices and ignore other lines imported
+        'imported_account_invoice_ids': fields.many2many('account.invoice', 'register_line_imported_account_invoice',
+                                                         'regline_id', 'invoice_id', string='Real invoices imported',
+                                                         required=False, readonly=True,
+                                                         help="The invoices imported, even partially, "
+                                                              "either directly into this register "
+                                                              "or indirectly via the import of the related cheque."),
+        'number_imported_account_invoices': fields.function(_get_number_imported_account_invoices, method=True, type='integer',
+                                                            string='Number of real invoices imported', store=False),
         'is_down_payment': fields.function(_get_down_payment_state, method=True, string="Is a down payment line?",
                                            type='boolean', store=False),
         'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line",
@@ -1396,7 +1414,7 @@ class account_bank_statement_line(osv.osv):
         self.write(cr, uid, [st_line.id], {'move_ids': [(4, move_id, False)]}, context=context)
 
         torec = []
-        if st_line.amount >= 0:
+        if st_line.amount < 0:
             account_id = st.journal_id.default_credit_account_id.id
         else:
             account_id = st.journal_id.default_debit_account_id.id
@@ -1796,7 +1814,7 @@ class account_bank_statement_line(osv.osv):
         """
         If the statement line...
             - is being hardposted
-            - has a Partner Third Party
+            - has a Partner Third Party being neither Intermission nor Intersection
             - is booked on an income or expense account
         ... this method creates automated entries on partner payable or receivable account (JI), adds them to the
         regline JE, and returns a list of their ids that will have to be reconciled once the JE will be posted.
@@ -1806,8 +1824,8 @@ class account_bank_statement_line(osv.osv):
         if not st_line:
             return False
         automated_entries_ids = []
-        if posttype == 'hard' and st_line.partner_id and st_line.account_id.user_type.code in ('expense', 'income') and \
-                st_line.direct_invoice is False:
+        if posttype == 'hard' and st_line.partner_id and st_line.partner_id.partner_type not in ('intermission', 'section') and \
+                st_line.account_id.user_type.code in ('expense', 'income') and st_line.direct_invoice is False:
             # Prepare some elements
             move_line_obj = self.pool.get('account.move.line')
             current_date = time.strftime('%Y-%m-%d')
@@ -2068,6 +2086,8 @@ class account_bank_statement_line(osv.osv):
                                                                 values=values)
         self._check_cheque_number_uniticy(cr, uid, values.get('statement_id'),
                                           values.get('cheque_number'), context=context)
+        # remove useless spaces and line breaks in the description and ref
+        self.pool.get('data.tools').replace_line_breaks_from_vals(values, ['name', 'ref'])
 
         # Then create a new bank statement line
         absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
@@ -2099,6 +2119,7 @@ class account_bank_statement_line(osv.osv):
                     self._check_cheque_number_uniticy(cr, uid,
                                                       line['statement_id'][0], values.get('cheque_number'),
                                                       context=context)
+        self.pool.get('data.tools').replace_line_breaks_from_vals(values, ['name', 'ref'])
         if (one_field and field_match) or skip_check:
             return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         # Prepare some values
@@ -2248,6 +2269,7 @@ class account_bank_statement_line(osv.osv):
             'partner_move_line_ids': [],
             'advance_invoice_move_id': False,
             'direct_invoice_move_id': False,
+            'imported_account_invoice_ids': [],
         })
         # Copy analytic distribution if exists
         line = self.browse(cr, uid, [absl_id], context=context)[0]

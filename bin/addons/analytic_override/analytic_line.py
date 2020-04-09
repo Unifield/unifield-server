@@ -113,7 +113,7 @@ class account_analytic_line(osv.osv):
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]", ondelete='restrict'),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
         'free_account': fields.function(_get_is_free, fnct_search=_search_is_free, method=True, type='boolean', string='Free account?', help="Does that line come from a Free 1 or Free 2 account?"),
-        'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
+        'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed.", select=1),
         'reversal_origin_txt': fields.function(_get_reversal_origin_txt, string="Reversal origin", type='char', size=256,
                                                store={
                                                    'account.analytic.line': (_get_analytic_reversal, ['name', 'reversal_origin'], 20),
@@ -292,6 +292,7 @@ class account_analytic_line(osv.osv):
                                                                       context=context)
                 if reversed_aal_ids:
                     vals['reversal_origin'] = reversed_aal_ids[0]  # reversal_origin_txt will be automatically updated
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'ref'])
         # Default behaviour
         res = super(account_analytic_line, self).create(cr, uid, vals, context=context)
         # Check date
@@ -320,6 +321,7 @@ class account_analytic_line(osv.osv):
                 if not el in vals:
                     vals2.update({el: l[el] and l[el]['id'] or False})
             self._check_date(cr, uid, vals2, context=context)
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name', 'ref'])
         res = super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
         return res

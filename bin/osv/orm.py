@@ -367,6 +367,7 @@ def get_pg_type(f):
     type_dict = {
         fields.boolean: 'bool',
         fields.integer: 'int4',
+        fields.integer_null: 'int4',
         fields.integer_big: 'int8',
         fields.text: 'text',
         fields.date: 'date',
@@ -458,7 +459,7 @@ class orm_template(object):
         """Override this method to do specific things when a view on the object is opened."""
         pass
 
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, count=False):
         raise NotImplementedError(_('The read_group method is not implemented on this object !'))
 
     def _field_create(self, cr, context=None):
@@ -809,7 +810,7 @@ class orm_template(object):
         processed, rejected, headers = import_obj._import(cr, uid, import_id, use_new_cursor=False, auto_import=True)
         return processed, rejected, headers
 
-    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=',', context=None):
+    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=',', context=None, with_commit=True):
         headers = []
         list_data = []
         with open(csv_file, 'r') as fcsv:
@@ -831,10 +832,12 @@ class orm_template(object):
                     rejected.append((i, d, res[2]))
                 else:
                     processed.append((i, d))
-                cr.commit()
+                if with_commit:
+                    cr.commit()
             except Exception as e:
                 rejected.append((i, d, tools.ustr(e)))
-                cr.commit()
+                if with_commit:
+                    cr.commit()
 
         return processed, rejected, headers
 
@@ -1360,6 +1363,10 @@ class orm_template(object):
                 if allfields and f not in allfields:
                     continue
                 res[f] = {'type': field_col._type}
+                if hasattr(field_col, '_with_null') and field_col._with_null:
+                    res[f]['with_null'] = True
+                if hasattr(field_col, 'null_value') and field_col.null_value:
+                    res[f]['null_value'] = field_col.null_value
                 # This additional attributes for M2M and function field is added
                 # because we need to display tooltip with this additional information
                 # when client is started in debug mode.
@@ -1585,7 +1592,7 @@ class orm_template(object):
             if node.get('filter_selector'):
                 try:
                     filter_eval = eval(node.get('filter_selector'))
-                    if filter_eval:
+                    if filter_eval and isinstance(filter_eval, list):
                         trans_filter_eval = []
                         for x in filter_eval:
                             trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])
@@ -2732,7 +2739,7 @@ class orm(orm_template):
     _protected = ['read', 'write', 'create', 'default_get', 'perm_read', 'unlink', 'fields_get', 'fields_view_get', 'search', 'name_get', 'distinct_field_get', 'name_search', 'copy', 'import_data', 'search_count', 'exists']
     __logger = logging.getLogger('orm')
     __schema = logging.getLogger('orm.schema')
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, count=False):
         """
         Get the list of records in list view grouped by the given ``groupby`` fields
 
@@ -2780,7 +2787,7 @@ class orm(orm_template):
             assert groupby_def and groupby_def._classic_write, "Fields in 'groupby' must be regular database-persisted fields (no function or related fields), or function fields with store=True"
 
         fget = self.fields_get(cr, uid, fields)
-        float_int_fields = filter(lambda x: fget[x]['type'] in ('float', 'integer'), fields)
+        float_int_fields = filter(lambda x: fget[x]['type'] in ('float', 'integer') or fget[x].get('group_operator'), fields)
         flist = ''
         group_count = group_by = groupby
         if groupby:
@@ -2818,11 +2825,33 @@ class orm(orm_template):
 
         from_clause, where_clause, where_clause_params = query.get_sql()
         where_clause = where_clause and ' WHERE ' + where_clause
+        if count:
+            cr.execute('SELECT count(%s) ' % (qualified_groupby_field,) + ' FROM ' + from_clause + where_clause, where_clause_params)  # not_a_user_entry
+            return cr.fetchone()[0]
+
+        limited_groupby = self._name == 'replenishment.product.list'
+
+        if limited_groupby and not limit:
+            limit = 20
+
         limit_str = limit and ' limit %d' % limit or ''
         offset_str = offset and ' offset %d' % offset or ''
         if len(groupby_list) < 2 and context.get('group_by_no_leaf'):
             group_count = '_'
-        cr.execute('SELECT min(%s.id) AS id, count(%s.id) AS %s_count' % (self._table, self._table, group_count) + (flist and ',') + flist + ' FROM ' + from_clause + where_clause + gb + limit_str + offset_str, where_clause_params)  # not_a_user_entry
+
+        query_orderby = ''
+        if limited_groupby:
+            if gb:
+                gb += ',default_code'
+            if orderby:
+                split_orderby = orderby.split(' ')
+                query_orderby = ' order by default_code '
+                if len(split_orderby) == 2 and split_orderby[1].strip().lower() in ['asc', 'desc']:
+                    query_orderby = '%s %s ' % (query_orderby, split_orderby[1])
+            else:
+                query_orderby = ' order by default_code '
+
+        cr.execute('SELECT min(%s.id) AS id, count(%s.id) AS %s_count' % (self._table, self._table, group_count) + (flist and ',') + flist + ' FROM ' + from_clause + where_clause + gb + query_orderby + limit_str + offset_str, where_clause_params)  # not_a_user_entry
         alldata = {}
         groupby = group_by
         for r in cr.dictfetchall():
@@ -3011,7 +3040,11 @@ class orm(orm_template):
         pass
 
     def _create_fk(self, cr, col_name, field_def, update=False):
-        ref = self.pool.get(field_def._obj)._table
+        try:
+            ref = self.pool.get(field_def._obj)._table
+        except:
+            print field_def._obj
+            raise
         # ir_actions is inherited so foreign key doesn't work on it
         if ref != 'ir_actions':
             to_create = True
@@ -3221,7 +3254,7 @@ class orm(orm_template):
                                 ('int4', 'integer_big', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                             ]
 
-                            if f_pg_type == 'varchar' and f._type == 'char' and f_pg_size < f.size:
+                            if f_pg_type == 'varchar' and f._type in ('char', 'selection') and f_pg_size < f.size:
                                 cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO temp_change_size' % (self._table, k))  # not_a_user_entry
                                 cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" VARCHAR(%d)' % (self._table, k, f.size))  # not_a_user_entry
                                 cr.execute('UPDATE "%s" SET "%s"=temp_change_size::VARCHAR(%d)' % (self._table, k, f.size))  # not_a_user_entry

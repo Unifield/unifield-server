@@ -55,27 +55,28 @@
                         <page string="Line">
                             <field name="invoice_type" invisible="1"/>
                             <field name="from_supply" invisible="1"/>
+                            <field name="line_synced" invisible="1"/>
                             <field name="partner_type" invisible="1"/>
                             <field name="product_id"
                                    on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
                                    default_focus="1"
                                    attrs="{'readonly': ['|',
-                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('synced', '=', True),
+                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                         '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
                             />
                             <field name="uos_id"
                                    on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
                                    attrs="{'readonly': ['|',
-                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), ('synced', '=', True),
+                                                        '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                         '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
                             />
                             <field name="quantity" attrs="{'readonly': ['|',
-                                                           '&amp;', ('invoice_type', '=', 'in_invoice'), ('synced', '=', True),
+                                                           '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
                                                            '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
                             />
-                            <field name="price_unit" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
+                            <field name="price_unit" attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                             <field name="discount" groups="base.group_extended"
-                                   attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
+                                   attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
                             <field colspan="4" name="name"/>
                             <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
                             <field domain="[('type','&lt;&gt;','view'), ('company_id', '=', parent.company_id), ('parent_id', '!=', False)]" name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
@@ -148,6 +149,7 @@
                     <field name="user_id"/>
                     <field name="date_due"/>
                     <field name="origin"/>
+                    <field name="line_count"/>
                     <field name="currency_id"/>
                     <field name="residual" sum="Residual Amount"/>
                     <field name="amount_untaxed" sum="Untaxed Amount"/>
@@ -180,7 +182,9 @@
                         <field string="Supplier" name="partner_id" domain="[('supplier', '=', True)]"
                                on_change="onchange_partner_id(type, partner_id, date_invoice, payment_term, partner_bank_id, company_id)"
                                context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}"
-                               attrs="{'readonly': ['|', ('state', '!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"
+                               attrs="{'readonly': ['|',
+                                                    ('state', '!=', 'draft'),
+                                                    '&amp;', ('type', '=', 'in_invoice'), '|', ('synced', '=', True), ('from_supply', '=', True)]}"
                         />
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id"/>
                         <field name="fiscal_position" groups="base.group_extended" widget="selection"/>
@@ -199,13 +203,30 @@
                             <field name="date_due"/>
                             <field name="check_total" required="2"/>
                             <field colspan="4" default_get="{'check_total': check_total, 'invoice_line': invoice_line, 'address_invoice_id': address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}" name="invoice_line" nolabel="1">
-                                <tree string="Invoice lines">
-                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"/>
-                                    <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id"/>
+                                <tree string="Invoice lines" editable="both">
+                                    <field name="from_supply" invisible="1"/>
+                                    <field name="line_synced" invisible="1"/>
+                                    <field name="invoice_type" invisible="1"/>
+                                    <field name="partner_type" invisible="1"/>
+                                    <field name="product_id"
+                                           attrs="{'readonly': ['|',
+                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
+                                                                '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
+                                           on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
+                                    />
+                                    <field name="account_id"
+                                           domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
+                                    />
                                     <field name="invoice_line_tax_id" view_mode="2" context="{'type':parent.type}" domain="[('parent_id','=',False)]"/>
                                     <field domain="[('type','&lt;&gt;','view'), ('company_id', '=', parent.company_id), ('parent_id', '!=', False)]" name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
-                                    <field name="quantity"/>
-                                    <field name="price_unit"/>
+                                    <field name="quantity"
+                                           attrs="{'readonly': ['|',
+                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True),('from_supply', '=', True),
+                                                                '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
+                                    />
+                                    <field name="price_unit"
+                                           attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"
+                                    />
                                      <!-- Removed if subtotal is set -->
                                     <field name="price_subtotal"/>
                                     <field name="name"/>
@@ -263,10 +284,12 @@
                                                        ('state', '!=', 'draft'),
                                                        '&amp;', '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True), ('from_supply', '=', True)]}"/>
                             <newline/>
+                            <field name="refunded_invoice_id" invisible="1"/>
                             <field name="origin" groups="base.group_extended"
-                                   attrs="{'readonly': ['|',
+                                   attrs="{'readonly': ['|', '|',
                                                         ('state', '!=', 'draft'),
-                                                        '&amp;', '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True), ('from_supply', '=', True)]}"/>
+                                                        ('refunded_invoice_id', '!=', False),
+                                                        '&amp;', ('type', '=', 'in_invoice'), ('from_supply', '=', True)]}"/>
                             <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" groups="base.group_extended"/>
                             <field name="user_id"
                                    attrs="{'readonly': ['|', ('state', '!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
@@ -303,6 +326,7 @@
                 <form string="Invoice">
                     <group colspan="4" col="8">
                     <field name="journal_id" groups="base.group_user" widget="selection"/>
+                    <field name="journal_type" invisible="1"/>
                     <field name="number"/>
                     <field name="type" invisible="1"/>
                     <field name="currency_id" width="50"/>
@@ -337,7 +361,50 @@
                                                                     ('from_supply', '=', True),
                                                                     ('partner_type', 'in', ('intermission', 'section'))]}"/>
                             <field name="payment_term" widget="selection"/>
-                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'fake': 1, 'from_inv_form': True}"/>
+                            <field colspan="4" name="invoice_line" nolabel="1" context="{'fake': 1, 'from_inv_form': True}">
+                                <tree string="Invoice Line"
+                                      colors="red:inactive_product == True or analytic_distribution_state in ('invalid', 'invalid_small_amount');blue:inactive_product == False and analytic_distribution_state in ('valid');black:inactive_product == False and analytic_distribution_state in ('none')"
+                                      editable="both">
+                                    <field name="invoice_type" invisible="1"/>
+                                    <field name="line_synced" invisible="1"/>
+                                    <field name="from_supply" invisible="1"/>
+                                    <field name="partner_type" invisible="1"/>
+                                    <field name="line_number" displayon="noteditable"/>
+                                    <field name="is_corrected" invisible="1"/>
+                                    <button name="button_open_analytic_lines" string="Have been corrected" type="object"
+                                            icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
+                                    <field name="inactive_product" invisible="1"/>
+                                    <field name="product_id"
+                                           on_change="product_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
+                                           attrs="{'readonly': ['|',
+                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
+                                                                '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"
+                                    />
+                                    <field name="account_id"
+                                           domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]"
+                                           context="{'type': parent.type, 'journal_type': parent.journal_type}"
+                                    />
+                                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object"
+                                            icon="terp-stock_symbol-selection" context="context"
+                                            attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                                    <field name="analytic_distribution_state_recap" readonly="1"/>
+                                    <field name="analytic_distribution_state" invisible="1"/>
+                                    <field name="is_allocatable" invisible="1"/>
+                                    <field name="quantity"
+                                           attrs="{'readonly': ['|',
+                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
+                                                                '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"/>
+                                    <field name="uos_id" string="UoM"
+                                           on_change="uos_id_change(product_id, uos_id, quantity, name, parent.type, parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id, {'company_id': parent.company_id})"
+                                           attrs="{'readonly': ['|',
+                                                                '&amp;', ('invoice_type', '=', 'in_invoice'), '|', ('line_synced', '=', True), ('from_supply', '=', True),
+                                                                '&amp;', '&amp;', ('invoice_type', '=', 'out_invoice'), ('from_supply', '=', True), ('partner_type', 'in', ('intermission', 'section'))]}"/>
+                                    <field name="price_unit"
+                                           attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('line_synced', '=', True)]}"/>
+                                    <field name="price_subtotal"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
                             <group col="1" colspan="2">
                                 <field name="tax_line" nolabel="1">
                                     <tree editable="bottom" string="Taxes">
@@ -387,8 +454,10 @@
                             <newline/>
                             <field domain="[('partner_id.ref_companies', 'in', [company_id])]" name="partner_bank_id"
                                 groups="base.group_extended"/>
-                            <field name="origin" attrs="{'readonly': ['|',
+                            <field name="refunded_invoice_id" invisible="1"/>
+                            <field name="origin" attrs="{'readonly': ['|', '|',
                                                                       ('state', '!=', 'draft'),
+                                                                      ('refunded_invoice_id', '!=', False),
                                                                       '&amp;', '&amp;',
                                                                       ('type', '=', 'out_invoice'),
                                                                       ('from_supply', '=', True),

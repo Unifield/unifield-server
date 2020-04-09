@@ -291,10 +291,8 @@ class account_period(osv.osv):
                 self.check_unposted_entries(cr, uid, period.id, context=context)
 
         # check if unposted move lines are linked to this period
-        move_lines = move_line_obj.search(cr, uid, [('period_id', 'in', ids)])
-        for move_line in move_line_obj.browse(cr, uid, move_lines):
-            if move_line.state != 'valid':
-                raise osv.except_osv(_('Error !'), _('You cannot close a period containing unbalanced move lines!'))
+        if move_line_obj.search_exist(cr, uid, [('period_id', 'in', ids), ('state', '!=', 'valid')]):
+            raise osv.except_osv(_('Error !'), _('You cannot close a period containing unbalanced move lines!'))
 
         # otherwise, change the period's and journal period's states
         if context['state']:
@@ -362,7 +360,7 @@ class account_period(osv.osv):
         'is_system': fields.function(_get_is_system, fnct_search=_get_search_is_system, method=True, type='boolean', string="System period ?", readonly=True),
     }
 
-    _order = 'date_start, number'
+    _order = 'date_start DESC, number DESC'
 
     def create(self, cr, uid, vals, context=None):
         if not context:

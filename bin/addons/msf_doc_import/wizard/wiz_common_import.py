@@ -31,9 +31,7 @@ from tools.translate import _
 
 NO_QTY_MODELS = [
     'monthly.review.consumption',
-    'stock.warehouse.orderpoint',
-    'threshold.value',
-    'stock.warehouse.order.cycle',
+    'replenishment.segment',
 ]
 
 
@@ -177,10 +175,14 @@ class wizard_common_import_line(osv.osv_memory):
                                         'wiz_id', 'product_id', string='Products'),
         'search_default_not_restricted': fields.integer('Search default not restricted', invisible=True),  # UFTP-15 (for context reinject in product_ids m2m for 'add multiple lines' button)
         'current_id': fields.function(_get_current_id, method=True, type='integer', string='ID'),
+        'msg': fields.text('Msg'),
+        'display_error': fields.boolean('Error'),
     }
 
     _defaults = {
         'search_default_not_restricted': 0,
+        'msg': '',
+        'display_error': False,
     }
 
     def add_products(self, cr, uid, ids, product_ids, context=None):
@@ -247,8 +249,15 @@ class wizard_common_import_line(osv.osv_memory):
 
             context['wizard_id'] = wiz['id']
 
-            line_obj.create_multiple_lines(cr, uid, parent_id, product_ids, context=context)
+            ret = line_obj.create_multiple_lines(cr, uid, parent_id, product_ids, context=context)
 
+            if isinstance(ret, dict) and ret.get('msg'):
+                self.write(cr, uid, wiz['id'], {'msg': ret['msg'], 'product_ids': [(6, 0, [])], 'display_error': True}, context=context)
+                return True
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def button_close(self, cr, uid, ids, conext=None):
         return {'type': 'ir.actions.act_window_close'}
 
 wizard_common_import_line()
@@ -278,6 +287,8 @@ class product_product(osv.osv):
     _inherit = 'product.product'
 
     def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         import_product_qty = 'import_product_qty'
         if len(vals) == 1 and import_product_qty in vals:
             self._write_imp_product_qty(cr, uid, ids, field_name=import_product_qty, values=vals[import_product_qty], args=None, context=context)
@@ -768,220 +779,6 @@ class stock_picking(osv.osv):
             open_wizard(cr, uid, ids[0], 'stock.picking', 'stock.move', context=context)
 
 stock_picking()
-
-
-class stock_warehouse_orderpoint_line(osv.osv):
-    _inherit = 'stock.warehouse.orderpoint.line'
-
-    def create_multiple_lines(self, cr, uid, parent_id, product_ids,
-                              context=None):
-        '''
-        Create lines according to product in list
-        '''
-        p_obj = self.pool.get('product.product')
-        swo_obj = self.pool.get('stock.warehouse.orderpoint')
-
-        # get parent default vals
-        parent_vals = {
-            'product_min_qty': 0.,
-            'product_max_qty': 0.,
-            'qty_multiple': 1.0,
-        }
-        if parent_id:
-            parent_r = swo_obj.read(cr, uid, parent_id, parent_vals.keys(),
-                                    context=context)
-            if parent_r:
-                for f in parent_vals.keys():
-                    parent_vals[f] = parent_r[f] or 0.
-
-        # set line vals
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'],
-                                 context=context):
-            values = {
-                'product_id': p_data['id'],
-                'product_uom_id': p_data['uom_id'][0],
-                'supply_id': parent_id,
-            }
-            for k in parent_vals:
-                values[k] = parent_vals[k]
-
-            values.update(self.onchange_product_id(cr, uid, False,
-                                                   p_data['id'], p_data['uom_id'][0],
-                                                   values.get('product_min_qty', 0.),
-                                                   values.get('product_max_qty', 0.),
-                                                   context=context).get('value', {}))
-
-            domain = [
-                ('product_id', '=', p_data['id']),
-                ('supply_id', '=', parent_id),
-            ]
-            if not self.search(cr, uid, domain, context=context):
-                self.create(cr, uid, values,
-                            context=dict(context, noraise=True))
-
-        return True
-
-stock_warehouse_orderpoint_line()
-
-
-class stock_warehouse_orderpoint(osv.osv):
-    _inherit = 'stock.warehouse.orderpoint'
-
-    def add_multiple_lines(self, cr, uid, ids, context=None):
-        '''
-        Open the wizard to open multiple lines
-        '''
-        if context is None:
-            context = {}
-        context.update({
-            'product_ids_domain': [('type','=','product')],
-            'add_multiple_line': True,
-        })
-
-        return self.pool.get('wizard.common.import.line').open_wizard(cr, uid,
-                                                                      ids[0], 'stock.warehouse.orderpoint',
-                                                                      'stock.warehouse.orderpoint.line', context=context)
-
-stock_warehouse_orderpoint()
-
-
-class stock_warehouse_auto_supply_line(osv.osv):
-    _inherit = 'stock.warehouse.automatic.supply.line'
-
-    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
-        '''
-        Create lines according to product in list
-        '''
-        p_obj = self.pool.get('product.product')
-
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
-            values = {'product_id': p_data['id'],
-                      'product_uom_id': p_data['uom_id'][0],
-                      'supply_id': parent_id}
-
-            values.update(self.onchange_product_id(cr, uid, False, p_data['id'], p_data['uom_id'][0], p_data['import_product_qty'], context=context).get('value', {}))
-            # Set the quantity to 0.00
-            values.update({'product_qty': p_data['import_product_qty']})
-
-            if not self.search(cr, uid, [('product_id', '=', p_data['id']), ('supply_id', '=', parent_id)], context=context):
-                self.create(cr, uid, values, context=dict(context, noraise=True))
-
-        return True
-
-stock_warehouse_auto_supply_line()
-
-
-class stock_warehouse_auto_supply(osv.osv):
-    _inherit = 'stock.warehouse.automatic.supply'
-
-    def add_multiple_lines(self, cr, uid, ids, context=None):
-        '''
-        Open the wizard to open multiple lines
-        '''
-        context = context is None and {} or context
-        context.update({'product_ids_domain': [('type', 'not in', ['consu', 'service', 'service_recep'])]})
-
-        return self.pool.get('wizard.common.import.line').\
-            open_wizard(cr, uid, ids[0], 'stock.warehouse.automatic.supply', 'stock.warehouse.automatic.supply.line', context=context)
-
-stock_warehouse_auto_supply()
-
-
-class stock_warehouse_order_cycle_line(osv.osv):
-    _inherit = 'stock.warehouse.order.cycle.line'
-
-    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
-        '''
-        Create lines according to product in list
-        '''
-        p_obj = self.pool.get('product.product')
-
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
-            values = {'product_id': p_data['id'],
-                      'uom_id': p_data['uom_id'][0],
-                      'order_cycle_id': parent_id}
-
-            values.update(self.product_change(cr, uid, False, p_data['id'], context=context).get('value', {}))
-            # Set the quantity to 0.00
-            values.update({'safety_stock': p_data['import_product_qty']})
-
-            if not self.search(cr, uid, [('product_id', '=', p_data['id']), ('order_cycle_id', '=', parent_id)], context=context):
-                self.create(cr, uid, values, context=dict(context, noraise=True))
-
-        return True
-
-stock_warehouse_order_cycle_line()
-
-
-class stock_warehouse_order_cycle(osv.osv):
-    _inherit = 'stock.warehouse.order.cycle'
-
-    def add_multiple_lines(self, cr, uid, ids, context=None):
-        '''
-        Open the wizard to open multiple lines
-        '''
-        context = context is None and {} or context
-        context.update({'product_ids_domain': [('type', 'not in', ['consu', 'service', 'service_recep'])]})
-
-        return self.pool.get('wizard.common.import.line').\
-            open_wizard(cr, uid, ids[0], 'stock.warehouse.order.cycle', 'stock.warehouse.order.cycle.line', context=context)
-
-stock_warehouse_order_cycle()
-
-
-class threshold_value_line(osv.osv):
-    _inherit = 'threshold.value.line'
-
-    def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
-        '''
-        Create lines according to product in list
-        '''
-        p_obj = self.pool.get('product.product')
-
-        t_data = self.pool.get('threshold.value').browse(cr, uid, parent_id, context=context)
-
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
-            values = {'product_id': p_data['id'],
-                      'product_uom_id': p_data['uom_id'],
-                      'threshold_value_id': parent_id}
-
-            values.update(self.onchange_product_id(cr,
-                                                   uid,
-                                                   False,
-                                                   p_data['id'],
-                                                   t_data.compute_method,
-                                                   t_data.consumption_method,
-                                                   t_data.consumption_period_from,
-                                                   t_data.consumption_period_to,
-                                                   t_data.frequency,
-                                                   t_data.safety_month,
-                                                   t_data.lead_time,
-                                                   t_data.supplier_lt,).get('value', {}))
-            # Set the quantity to 0.00
-            values.update({'fixed_product_qty': p_data['import_product_qty'], 'fixed_threshold_value': 0.00})
-
-            if not self.search(cr, uid, [('product_id', '=', p_data['id']), ('threshold_value_id', '=', parent_id)], context=context):
-                self.create(cr, uid, values, context=dict(context, noraise=True))
-
-        return True
-
-threshold_value_line()
-
-
-class threshold_value(osv.osv):
-    _inherit = 'threshold.value'
-
-    def add_multiple_lines(self, cr, uid, ids, context=None):
-        '''
-        Open the wizard to open multiple lines
-        '''
-        context = context is None and {} or context
-        context.update({'product_ids_domain': [('type', 'not in', ['consu', 'service', 'service_recep'])]})
-
-        return self.pool.get('wizard.common.import.line').\
-            open_wizard(cr, uid, ids[0], 'threshold.value', 'threshold.value.line', context=context)
-
-threshold_value()
 
 
 class stock_inventory_line(osv.osv):

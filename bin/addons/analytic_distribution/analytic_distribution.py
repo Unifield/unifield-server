@@ -19,8 +19,10 @@
 #
 ##############################################################################
 
+import time
 from osv import osv
 from tools.translate import _
+
 
 class analytic_distribution(osv.osv):
     _name = 'analytic.distribution'
@@ -43,9 +45,11 @@ class analytic_distribution(osv.osv):
         return True
 
     def _get_distribution_state(self, cr, uid, distrib_id, parent_id, account_id, context=None,
-                                doc_date=False, posting_date=False, manual=False):
+                                doc_date=False, posting_date=False, manual=False, amount=False):
         """
         Return distribution state
+
+        Check that there is only one AD line for amounts <= 1 ONLY IF an amount is passed in param.
         """
         if context is None:
             context = {}
@@ -57,11 +61,15 @@ class analytic_distribution(osv.osv):
                 return 'valid'
         if not distrib_id:
             if parent_id:
-                return self._get_distribution_state(cr, uid, parent_id, False, account_id, context)
+                return self._get_distribution_state(cr, uid, parent_id, False, account_id, context, amount=amount)
             return 'none'
         distrib = self.browse(cr, uid, distrib_id)
         if not distrib.funding_pool_lines:
             return 'none'
+        # set AD as invalid when several distrib. lines are applied to booking amount <= 1
+        if amount is not None and amount is not False and abs(amount) <= 1:
+            if not all(len(d) <= 1 for d in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]):
+                return 'invalid_small_amount'
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
@@ -150,6 +158,32 @@ class analytic_distribution(osv.osv):
             if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp.tuple_destination_account_ids if not x.disabled]:
                 return 'invalid', _('account/destination tuple not compatible with given FP analytic account')
         return res, info
+
+    def check_cc_distrib_active(self, cr, uid, distrib_br, posting_date=False, prefix='', from_supply=False):
+        """
+        Checks the Cost Center Distribution Lines of the distribution in param.:
+        raises an error if the CC or the Dest. used is not active at the posting date selected (or today's date)
+        If needed a "prefix" can be added to the error message.
+        """
+        cc_distrib_line_obj = self.pool.get('cost.center.distribution.line')
+        if distrib_br:
+            if not posting_date:
+                posting_date = time.strftime('%Y-%m-%d')
+            # note: the browse is used to specify the date and the from_supply tag in context
+            for cline in cc_distrib_line_obj.browse(cr, uid, [ccl.id for ccl in distrib_br.cost_center_lines],
+                                                    fields_to_fetch=['analytic_id', 'destination_id'],
+                                                    context={'date': posting_date, 'from_supply_wkf': from_supply}):
+                if cline.analytic_id and not cline.analytic_id.filter_active:
+                    raise osv.except_osv(_('Error'), _('%sCost center account %s is not active at this date: %s') %
+                                         (prefix, cline.analytic_id.code or '', posting_date))
+                if not cline.destination_id.filter_active:
+                    if from_supply:
+                        raise osv.except_osv(_('Error'), _('%sDestination %s is not active at this date: %s') %
+                                             (prefix, cline.destination_id.code or '', posting_date))
+                    else:
+                        raise osv.except_osv(_('Error'), _('%sDestination %s is either inactive at the date %s, or it allows no Cost Center.') %
+                                             (prefix, cline.destination_id.code or '', posting_date))
+
 
 analytic_distribution()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
