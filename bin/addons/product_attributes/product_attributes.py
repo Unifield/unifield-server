@@ -2478,26 +2478,31 @@ class product_attributes(osv.osv):
             ]
         }
 
-        old_prod_data = self.read(cr, uid, local_id, self.merged_fields_to_keep+['default_code'], context=context)
 
-        default_code = new_data['default_code']
-        for table in ['product_product', 'product_template']:
-            for x in cr.get_referenced(table):
-                if (x[0], x[1]) in blacklist_table.get(table):
-                    continue
+        new_data = {'active': True, 'replace_product_id': local_id}
 
-                params = {'old_prod': local_id, 'nsl_prod_id': nsl_prod_id}
-                if cr.column_exists(x[0], 'default_code'):
-                    params['default_code'] = default_code
-                    add_query = ' , default_code=%(default_code)s '
-                else:
-                    add_query = ''
+        if not context.get('sync_update_execution'):
+            old_prod_data = self.read(cr, uid, local_id, self.merged_fields_to_keep+['default_code'], context=context)
 
-                cr.execute('update '+x[0]+' set '+x[1]+'=%(nsl_prod_id)s '+add_query+' where '+x[1]+'=%(old_prod)s', params) # not_a_user_entry
+            default_code = new_data['default_code']
+            for table in ['product_product', 'product_template']:
+                for x in cr.get_referenced(table):
+                    if (x[0], x[1]) in blacklist_table.get(table):
+                        continue
 
-        new_data = {'active': True, 'replace_product_id': local_id, 'old_code': '%s;%s' % (new_data['old_code'], old_prod_data['default_code']) if new_data['old_code'] else old_prod_data['default_code']}
-        for field in self.merged_fields_to_keep:
-            new_data[field] = old_prod_data[field]
+                    params = {'old_prod': local_id, 'nsl_prod_id': nsl_prod_id}
+                    if cr.column_exists(x[0], 'default_code'):
+                        params['default_code'] = default_code
+                        add_query = ' , default_code=%(default_code)s '
+                    else:
+                        add_query = ''
+
+                    cr.execute('update '+x[0]+' set '+x[1]+'=%(nsl_prod_id)s '+add_query+' where '+x[1]+'=%(old_prod)s', params) # not_a_user_entry
+
+            new_data['old_code'] = '%s;%s' % (new_data['old_code'], old_prod_data['default_code']) if new_data['old_code'] else old_prod_data['default_code']
+            for field in self.merged_fields_to_keep:
+                new_data[field] = old_prod_data[field]
+
         self.write(cr, uid, nsl_prod_id, new_data, context=context)
 
         self.write(cr, uid, local_id, {'active': False, 'replaced_by_product_id': nsl_prod_id}, context=context)
