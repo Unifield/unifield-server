@@ -1502,7 +1502,7 @@ class product_attributes(osv.osv):
 
             # do not erase values from merged product
             if self.search_exist(cr, uid, [('id', 'in', ids), ('replace_product_id', '!=', False)], context=context):
-                for field in self.merged_fields_to_keep:
+                for field in self.merged_fields_to_keep + ['old_code']:
                     if field in vals:
                         del(vals[field])
 
