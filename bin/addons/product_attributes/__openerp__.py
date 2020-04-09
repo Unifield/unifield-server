@@ -31,6 +31,7 @@
     'init_xml': [
         'security/ir.model.access.csv',
         'wizard/product_where_used_view.xml',
+        'wizard/product_merged_view.xml',
         'report/standard_price_track_changes_report.xml',
         'data/product_section_code.xml',
         'data/product_supply_source.xml',
