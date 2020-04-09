@@ -2479,7 +2479,7 @@ class product_attributes(osv.osv):
         }
 
 
-        new_data = {'active': True, 'replace_product_id': local_id}
+        new_write_data = {'active': True, 'replace_product_id': local_id}
 
         if not context.get('sync_update_execution'):
             old_prod_data = self.read(cr, uid, local_id, self.merged_fields_to_keep+['default_code'], context=context)
@@ -2499,11 +2499,11 @@ class product_attributes(osv.osv):
 
                     cr.execute('update '+x[0]+' set '+x[1]+'=%(nsl_prod_id)s '+add_query+' where '+x[1]+'=%(old_prod)s', params) # not_a_user_entry
 
-            new_data['old_code'] = '%s;%s' % (new_data['old_code'], old_prod_data['default_code']) if new_data['old_code'] else old_prod_data['default_code']
+            new_write_data['old_code'] = '%s;%s' % (new_data['old_code'], old_prod_data['default_code']) if new_data['old_code'] else old_prod_data['default_code']
             for field in self.merged_fields_to_keep:
-                new_data[field] = old_prod_data[field]
+                new_write_data[field] = old_prod_data[field]
 
-        self.write(cr, uid, nsl_prod_id, new_data, context=context)
+        self.write(cr, uid, nsl_prod_id, new_write_data, context=context)
 
         self.write(cr, uid, local_id, {'active': False, 'replaced_by_product_id': nsl_prod_id}, context=context)
         if not context.get('sync_update_execution'):
