@@ -38,6 +38,7 @@ class invoice_excel_export(report_sxw.rml_parse):
     def _get_distribution_lines(self, inv_line):
         """
         Returns distrib. line data related to the invoice line in parameter, as a list of dicts
+        Note: it gives a result even for lines without AD: the line subtotal is retrieved in any cases
         """
         fp_distrib_line_obj = self.pool.get('funding.pool.distribution.line')
         distrib_lines = []
@@ -123,9 +124,9 @@ class invoice_excel_export(report_sxw.rml_parse):
             if inv.type == 'out_invoice':  # IVO
                 fo_line = inv_line.sale_order_line_id
                 if fo_line and fo_line.type == 'make_to_order':  # the line is sourced on a PO
-                    pol = po_line_obj.search(self.cr, self.uid, [('sale_order_line_id', '=', fo_line.id)])
-                    if pol:
-                        po_number = po_line_obj.browse(self.cr, self.uid, pol[0], fields_to_fetch=['order_id']).order_id.name
+                    pol_ids = po_line_obj.search(self.cr, self.uid, [('sale_order_line_id', '=', fo_line.id)])
+                    if pol_ids:
+                        po_number = po_line_obj.browse(self.cr, self.uid, pol_ids[0], fields_to_fetch=['order_id']).order_id.name
             elif inv.type == 'in_invoice':  # IVI
                 if inv.main_purchase_id:
                     po_number = inv.main_purchase_id.name
