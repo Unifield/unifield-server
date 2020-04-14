@@ -74,8 +74,9 @@
   <Column ss:AutoFitWidth="1" ss:Index="3" ss:Width="300"/>
   <Column ss:AutoFitWidth="1" ss:Width="110"/>
   <Column ss:AutoFitWidth="1" ss:Width="80" ss:Span="1"/>
+  <Column ss:AutoFitWidth="1" ss:Width="110"/>
   <Column ss:AutoFitWidth="1" ss:Width="140"/>
-  <Column ss:AutoFitWidth="1" ss:Width="110" ss:Span="3"/>
+  <Column ss:AutoFitWidth="1" ss:Width="110" ss:Span="2"/>
   <Column ss:AutoFitWidth="1" ss:Index="12" ss:Width="150"/>
   <Column ss:AutoFitWidth="1" ss:Width="100" ss:Span="1"/>
   <Column ss:AutoFitWidth="1" ss:Index="15" ss:Width="210"/>
@@ -90,8 +91,8 @@
       <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
       <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UOM')}</Data></Cell>
       <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Percentage')}</Data></Cell>
-      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
       <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Unit price')}</Data></Cell>
+      <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
       <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Account')}</Data></Cell>
       <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost center')}</Data></Cell>
       <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
@@ -114,8 +115,8 @@
             <Cell ss:StyleID="line_number"><Data ss:Type="Number">${inv_line.quantity|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.uos_id and inv_line.uos_id.name or ''|x}</Data></Cell>
             <Cell ss:StyleID="line_number"><Data ss:Type="Number">${distrib_line['percentage']|x}</Data></Cell>
-            <Cell ss:StyleID="line_number"><Data ss:Type="Number">${distrib_line['subtotal']|x}</Data></Cell>
             <Cell ss:StyleID="line_number"><Data ss:Type="Number">${inv_line.price_unit|x}</Data></Cell>
+            <Cell ss:StyleID="line_number"><Data ss:Type="Number">${distrib_line['subtotal']|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${inv_line.account_id.code|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${distrib_line['cost_center']|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${distrib_line['destination']|x}</Data></Cell>
