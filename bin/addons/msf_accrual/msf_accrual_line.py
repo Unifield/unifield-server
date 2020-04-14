@@ -23,6 +23,8 @@ from osv import fields, osv
 from tools.translate import _
 import datetime
 from dateutil.relativedelta import relativedelta
+from base import currency_date
+
 
 class msf_accrual_line(osv.osv):
     _name = 'msf.accrual.line'
@@ -38,11 +40,12 @@ class msf_accrual_line(osv.osv):
     def _get_functional_amount(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         for accrual_line in self.browse(cr, uid, ids, context=context):
-            date_context = {'date': accrual_line.date}
+            curr_date = currency_date.get_date(self, cr, accrual_line.document_date, accrual_line.date)
+            date_context = {'currency_date': curr_date}
             res[accrual_line.id] =  self.pool.get('res.currency').compute(cr,
                                                                           uid,
                                                                           accrual_line.currency_id.id,
-                                                                          accrual_line.functional_currency_id.id, 
+                                                                          accrual_line.functional_currency_id.id,
                                                                           accrual_line.accrual_amount or 0.0,
                                                                           round=True,
                                                                           context=date_context)
@@ -69,6 +72,23 @@ class msf_accrual_line(osv.osv):
             res[rec.id] = es
         return res
 
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Gets the Analytic Distribution state of the accrual lines by calling the standard _get_distribution_state method
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        distrib_obj = self.pool.get('analytic.distribution')
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['analytic_distribution_id', 'expense_account_id', 'accrual_amount'],
+                                context=context):
+            distrib_id = line.analytic_distribution_id and line.analytic_distribution_id.id or False
+            res[line.id] = distrib_obj._get_distribution_state(cr, uid, distrib_id, parent_id=False, account_id=line.expense_account_id.id,
+                                                               context=context, amount=line.accrual_amount or 0.0)
+        return res
+
     _columns = {
         'date': fields.date("Date"),
         'document_date': fields.date("Document Date", required=True),
@@ -88,6 +108,10 @@ class msf_accrual_line(osv.osv):
         'partner_id': fields.many2one('res.partner', 'Third Party Partner', ondelete="restrict"),
         'employee_id': fields.many2one('hr.employee', 'Third Party Employee', ondelete="restrict"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, store=False, type='selection',
+                                                       selection=[('none', 'None'), ('valid', 'Valid'),
+                                                                  ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
+                                                       string="Distribution state"),
         'functional_amount': fields.function(_get_functional_amount, method=True, store=False, string="Functional Amount", type="float", readonly="True"),
         'functional_currency_id': fields.many2one('res.currency', 'Functional Currency', required=True, readonly=True),
         'move_line_id': fields.many2one('account.move.line', 'Account Move Line', readonly=True),
@@ -161,7 +185,7 @@ class msf_accrual_line(osv.osv):
 
         if 'document_date' in vals and vals.get('period_id', False):
             # US-192 check doc date regarding post date
-            # => read (as date readonly in form) to get posting date: 
+            # => read (as date readonly in form) to get posting date:
             # is end of period
             posting_date = self.pool.get('account.period').read(cr, uid,
                                                                 vals['period_id'], ['date_stop', ],
@@ -206,6 +230,7 @@ class msf_accrual_line(osv.osv):
                 raise osv.except_osv(_('Warning !'), _("The period '%s' is not open!" % accrual_line.period_id.name))
 
             move_date = accrual_line.period_id.date_stop
+            curr_date = currency_date.get_date(self, cr, accrual_line.document_date, move_date)
             if accrual_line.accrual_type == 'reversing_accrual':
                 reversal_move_posting_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
                 reversal_move_document_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
@@ -279,7 +304,7 @@ class msf_accrual_line(osv.osv):
                 'move_id': reversal_move_id,
                 'date': reversal_move_posting_date,
                 'document_date': reversal_move_document_date,
-                'source_date': move_date,
+                'source_date': curr_date,  # date from the original accrual line
                 'journal_id': accrual_line.journal_id.id,
                 'period_id': reversal_period_id,
                 'reference': accrual_line.reference,
@@ -296,7 +321,7 @@ class msf_accrual_line(osv.osv):
                 'move_id': reversal_move_id,
                 'date': reversal_move_posting_date,
                 'document_date': reversal_move_document_date,
-                'source_date': move_date,
+                'source_date': curr_date,  # date from the original accrual line
                 'journal_id': accrual_line.journal_id.id,
                 'period_id': reversal_period_id,
                 'reference': accrual_line.reference,
@@ -491,6 +516,7 @@ class msf_accrual_line(osv.osv):
         if ids:
             for accrual_line in self.browse(cr, uid, ids, context=context):
                 move_date = accrual_line.period_id.date_stop
+                curr_date = currency_date.get_date(self, cr, accrual_line.document_date, move_date)
 
                 reversal_period_ids = period_obj.find(cr, uid, posting_date, context=context)
                 reversal_period_id = reversal_period_ids[0]
@@ -514,7 +540,7 @@ class msf_accrual_line(osv.osv):
                     'move_id': reversal_move_id,
                     'date': posting_date,
                     'document_date': document_date,
-                    'source_date': move_date,
+                    'source_date': curr_date,  # date from the original accrual line
                     'journal_id': accrual_line.journal_id.id,
                     'period_id': reversal_period_id,
                     'reference': accrual_line.reference,
@@ -531,7 +557,7 @@ class msf_accrual_line(osv.osv):
                     'move_id': reversal_move_id,
                     'date': posting_date,
                     'document_date': document_date,
-                    'source_date': move_date,
+                    'source_date': curr_date,
                     'journal_id': accrual_line.journal_id.id,
                     'period_id': reversal_period_id,
                     'reference': accrual_line.reference,

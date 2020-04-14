@@ -87,7 +87,7 @@
                     <para style="TextInfoBold">Location : </para>
                 </td>
                 <td>
-                    <para style="TextInfo">[[ objects[0].location_id and objects[0].location_id.name or '' ]]</para>
+                    <para style="TextInfo">[[ objects[0].location_id and objects[0].location_id.name or (objects[0].segment_id and objects[0].segment_id.local_location_ids and ', '.join([x.name for x in objects[0].segment_id.local_location_ids])) or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInfo"> </para>

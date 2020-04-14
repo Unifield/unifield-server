@@ -363,6 +363,19 @@ class stock_picking(osv.osv):
                 'context': context,
                 }
 
+    def export_ppl(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids,(int,long)):
+            ids = [ids]
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'pre.packing.excel.export',
+            'datas': {'ids': ids},
+            'context': context,
+        }
+
     def wizard_update_ppl_to_create_ship(self, cr, uid, ids, context=None):
         '''
         Launches the wizard to update lines from a file
@@ -424,19 +437,3 @@ class stock_picking(osv.osv):
 
 
 stock_picking()
-
-
-class stock_move(osv.osv):
-    _inherit = 'stock.move'
-
-    def write(self, cr, uid, ids, vals, context=None):
-        if not ids:
-            return True
-        vals.update({
-            'to_correct_ok': False,
-            'text_error': False,
-        })
-        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
-
-
-stock_move()

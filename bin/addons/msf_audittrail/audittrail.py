@@ -70,6 +70,14 @@ class product_template(osv.osv):
 product_template()
 
 
+class product_category(osv.osv):
+    _name = 'product.category'
+    _inherit = 'product.category'
+    _trace = True
+
+product_category()
+
+
 class res_partner(osv.osv):
     _name = 'res.partner'
     _inherit = 'res.partner'
@@ -250,11 +258,6 @@ class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
     _trace = True
-
-    # [utp-360]: I rename the 'date' to 'Actual Receipt Date' because before it was 'Date'
-    _columns = {
-        'date': fields.datetime('Actual Receipt Date', required=True, select=True, help="Move date: scheduled date until move is done, then date of actual move processing", readonly=True),
-    }
 
 stock_move()
 
@@ -1161,6 +1164,8 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                 sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']], context=context)
                 if field['name'] in sel:
                     res = dict(sel[field['name']]['selection']).get(values)
+                    if not res:  # if values is not found as key in selection
+                        res = values
                 else:
                     res = values
             return res

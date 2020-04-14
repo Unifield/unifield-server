@@ -30,7 +30,7 @@
         </record>
 
         <record model="ir.values" id="action_report_rates_table_values">
-            <field name="model_id" ref="res_currency_tables.model_res_currency_table" />
+            <field name="model_id" ref="base.model_res_currency_table" />
             <field name="object" eval="1" />
             <field name="name">FX rates by currency table</field>
             <field name="key2">client_print_multi</field>

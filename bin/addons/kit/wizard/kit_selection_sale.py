@@ -22,6 +22,7 @@
 from osv import fields, osv
 from tools.translate import _
 import decimal_precision as dp
+import netsvc
 
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
@@ -110,6 +111,7 @@ class kit_selection_sale(osv.osv_memory):
             ids = [ids]
         # objects
         sol_obj = self.pool.get('sale.order.line')
+        wf_service = netsvc.LocalService("workflow")
         # id of corresponding sale order line
         sol_ids = context['active_ids']
         sol_id = context['active_ids'][0]
@@ -171,6 +173,8 @@ class kit_selection_sale(osv.osv_memory):
                     # copy the original purchase order line
                     last_line_id = sol_obj.copy(cr, uid, last_line_id, values, context=ctx_keep_info)
                     # as so *line* state is draft anyhow, we do not need to process the created line
+                    if obj.order_line_id_kit_selection_sale.state == 'validated':
+                        wf_service.trg_validate(uid, 'sale.order.line', last_line_id, 'validated', cr)
                 else:
                     # first item to be treated, we update the existing line
                     last_line_id = obj.order_line_id_kit_selection_sale.id

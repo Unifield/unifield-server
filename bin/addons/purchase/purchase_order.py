@@ -511,7 +511,8 @@ class purchase_order(osv.osv):
                         # PO state must not go back:
                         if po.push_fo:
                             # fo push, 2 line added, L2 cancel , sync => resulting PO must be validated
-                            po_state_seq['sourced_p'] = 0
+                            po_state_seq['draft_p'] = 0
+                            po_state_seq['sourced_p'] = 5
                         if po_state_seq.get(res[po.id], 100) < po_state_seq.get(po.state, 0):
                             res[po.id] = po.state
                 else:
@@ -1039,8 +1040,11 @@ class purchase_order(osv.osv):
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
 
         res_partner_obj = self.pool.get('res.partner')
-        for order in self.read(cr, uid, ids, ['partner_id', 'warehouse_id'], context=context):
+        for order in self.read(cr, uid, ids, ['partner_id', 'warehouse_id', 'partner_ref', 'rfq_ok'], context=context):
             partner_type = res_partner_obj.read(cr, uid, int(vals.get('partner_id', order['partner_id'][0])), ['partner_type'], context=context)['partner_type']
+            if order['partner_ref'] and not order['rfq_ok'] and partner_type not in ['external', 'esc'] and \
+                    'partner_ref' in vals and vals['partner_ref'] == False:
+                vals.pop('partner_ref')
             if vals.get('order_type'):
                 if vals.get('order_type') in ['donation_exp', 'donation_st']:
                     vals.update({'invoice_method': partner_type == 'section' and 'picking' or 'manual'})
@@ -1054,8 +1058,7 @@ class purchase_order(osv.osv):
                     vals.update({'invoice_method': 'picking'})
             # we need to update the location_id because it is readonly and so does not pass in the vals of create and write
             vals = self._get_location_id(cr, uid, vals,  warehouse_id=vals.get('warehouse_id', order['warehouse_id'] and order['warehouse_id'][0] or False), context=context)
-            # FIXME here it is useless to continue as the next loop will
-            # overwrite vals
+            # FIXME here it is useless to continue as the next loop will overwrite vals
             break
 
         # Fix bug invalid syntax for type date:
@@ -1684,7 +1687,13 @@ class purchase_order(osv.osv):
                 return True
 
             for pol in po.order_line:
-                wiz_id = wiz_obj.create(cr, uid, {'order_id': po.id}, context=context)
+                vals = {'order_id': po.id}
+                if context.get('rfq_ok', False) and po.tender_id:
+                    pending_rfqs_same_tender = self.search(cr, uid, [('id', '!=', po.id), ('state', '!=', 'cancel'),
+                                                                     ('tender_id', '=', po.tender_id.id)], context=context)
+                    if not pending_rfqs_same_tender:
+                        vals.update({'cancel_linked_tender': True})
+                wiz_id = wiz_obj.create(cr, uid, vals, context=context)
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': 'purchase.order.cancel.wizard',
@@ -2599,9 +2608,9 @@ class purchase_order(osv.osv):
         # set cross_docking_ok:
         cross_docking_ok = False
         for rfq_line in rfq.order_line:
-            if rfq_line.linked_sol_id and not rfq_line.linked_sol_id.order_id.procurement_request or \
-                    (rfq_line.linked_sol_id.order_id.procurement_request and
-                        rfq_line.linked_sol_id.order_id.location_requestor_id.usage == 'customer'):
+            if rfq_line.linked_sol_id and (not rfq_line.linked_sol_id.order_id.procurement_request or \
+                                           (rfq_line.linked_sol_id.order_id.procurement_request and
+                                            rfq_line.linked_sol_id.order_id.location_requestor_id.usage == 'customer')):
                 cross_docking_ok = True
                 break
         self.write(cr, uid, [new_po_id], {'cross_docking_ok': cross_docking_ok}, context=context)

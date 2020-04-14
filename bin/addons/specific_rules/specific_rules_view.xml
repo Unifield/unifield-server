@@ -395,47 +395,6 @@
         </record>
 
 
-        <!-- Add on_change method on UoM field of Min/Max rule -->
-        <record id="add_onchange_uom_stock_warehouse_orderpoint_view" model="ir.ui.view">
-            <field name="name">add.onchange.uom.stock.warehouse.orderpoint.view</field>
-            <field name="model">stock.warehouse.orderpoint</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="procurement.view_warehouse_orderpoint_form" />
-            <field name="arch" type="xml">
-                <data>
-
-                    <xpath expr="//field[@name='product_id']" position="attributes">
-                        <attribute name="invisible">1</attribute>
-                    </xpath>
-
-                    <xpath expr="/form//field[@name='product_uom']" position="attributes">
-                        <attribute name="invisible">1</attribute>
-                    </xpath>
-
-                    <xpath expr="//group[5]" position="replace">
-                        <!-- Procurement Orders to Process replaced by stock.warehouse.orderpoint lines -->
-                        <group colspan="4" col="4">
-                        <separator colspan="4" string="Order min/max quantity by product" />
-                        <field name="line_ids" nolabel="1" colspan="4"
-                            context="{'product_min_qty': product_min_qty, 'product_max_qty': product_max_qty, 'qty_multiple': qty_multiple}">
-                            <tree string="Products" editable="top"
-                                colors="red: product_qty &lt;= 0.00">
-                                <field name="product_id" on_change="onchange_product_id(product_id, product_uom_id, product_min_qty, product_max_qty)" />
-                                <field name="product_uom_id" domain="[('uom_by_product', '=', product_id)]"
-                                    on_change="onchange_uom_qty(product_uom_id, product_min_qty, product_max_qty)"/>
-                                <field name="product_min_qty"
-                                    on_change="onchange_uom_qty(product_uom_id, product_min_qty, product_max_qty)" />
-                                <field name="product_max_qty"
-                                    on_change="onchange_uom_qty(product_uom_id, product_min_qty, product_max_qty)" />
-                                <field name="qty_multiple" />
-                            </tree>
-                        </field>
-                        </group>
-                    </xpath>
-
-                </data>
-            </field>
-        </record>
 
 </data>
 </openerp>

@@ -525,7 +525,7 @@
   </Cell>
   % endif
   <Cell ss:StyleID="s36">
-    <Data ss:Type="String">${( line[0] and line[0].journal_id and line[0].journal_id.name or '')|x}</Data>
+    <Data ss:Type="String">${( line[0] and line[0].journal_id and line[0].journal_id.code or '')|x}</Data>
   </Cell>
   <Cell ss:StyleID="s36">
     <Data ss:Type="String">${( line[0] and line[0].move_id and line[0].move_id.move_id and line[0].move_id.move_id.name or '')|x}</Data>
@@ -549,13 +549,13 @@
     <Data ss:Type="String">${( getAccountName(line[0]) or '')|x}</Data>
   </Cell>
   <Cell ss:StyleID="s36">
-    <Data ss:Type="String">${( line[0] and line[0].destination_id and line[0].destination_id.name or '')|x}</Data>
+    <Data ss:Type="String">${( line[0] and line[0].destination_id and line[0].destination_id.code or '')|x}</Data>
   </Cell>
   <Cell ss:StyleID="s36">
-    <Data ss:Type="String">${( line[0] and line[0].cost_center_id and line[0].cost_center_id.name or '')|x}</Data>
+    <Data ss:Type="String">${( line[0] and line[0].cost_center_id and line[0].cost_center_id.code or '')|x}</Data>
   </Cell>
   <Cell ss:StyleID="s36">
-    <Data ss:Type="String">${( line[0] and line[0].account_id and line[0].account_id.name or '')|x}</Data>
+    <Data ss:Type="String">${( line[0] and line[0].account_id and line[0].account_id.code or '')|x}</Data>
   </Cell>
   <Cell ss:StyleID="s38">
     <Data ss:Type="Number">${( line[0] and line[0].amount_currency  or '')|x}</Data>
