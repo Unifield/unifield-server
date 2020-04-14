@@ -25,6 +25,7 @@
       <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
       <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
     </Borders>
+    <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="editable_number">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -35,6 +36,7 @@
       <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
     </Borders>
     <NumberFormat ss:Format="Standard"/>
+    <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="non_editable">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -45,6 +47,7 @@
       <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
       <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
     </Borders>
+    <Protection/>
   </Style>
   <Style ss:ID="non_editable_number">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -56,6 +59,7 @@
       <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
     </Borders>
     <NumberFormat ss:Format="Standard"/>
+    <Protection/>
   </Style>
   <Style ss:ID="non_editable_date">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -67,11 +71,13 @@
       <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
     </Borders>
     <NumberFormat ss:Format="Short Date"/>
+    <Protection/>
   </Style>
 </Styles>
 % for o in objects:
-<!-- we can export only one inv. at a time -->
-<ss:Worksheet ss:Name="${o.number or "%s%s" % (_('Sheet'), 1)|x}">
+<!-- Sheet must be protected otherwise the protection on the cells has no effect -->
+<!-- Default Sheet name is "Sheet1" (we can export only one inv. at a time) -->
+<ss:Worksheet ss:Name="${o.number or "%s%s" % (_('Sheet'), 1)|x}" ss:Protected="1">
 <Table x:FullColumns="1" x:FullRows="1">
   <Column ss:AutoFitWidth="1" ss:Width="100"/>
   <Column ss:AutoFitWidth="1" ss:Width="250"/>
