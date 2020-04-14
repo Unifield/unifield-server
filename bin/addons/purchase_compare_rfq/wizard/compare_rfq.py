@@ -277,26 +277,29 @@ class wizard_compare_rfq(osv.osv_memory):
                     _('No supplier selected !')
                 )
 
-            # In case of removing supplier on all lines
-            if deselect:
-                wiz_lines = wl_obj.search(cr, uid, [
-                    ('compare_id', '=', wiz.id),
-                ], context=context)
-                wl_obj.write(cr, uid, wiz_lines, {
-                    'choosen_supplier_id': False,
-                    'rfq_line_id': False,
-                }, context=context)
-            else:
-                for l in wiz.line_ids:
-                    rfql_id = self._get_rfq_line(
-                        cr, uid, l, wiz.supplier_id.id, context=context)
-                    if not rfql_id:
-                        continue
+            selected_lines_ids = []
+            if context.get('button_selected_ids'):
+                selected_lines_ids = context['button_selected_ids']
 
-                    wl_obj.write(cr, uid, [l.id], {
-                        'choosen_supplier_id': wiz.supplier_id.id,
-                        'rfq_line_id': rfql_id,
-                    }, context=context)
+            if deselect:  # In case of removing supplier on all lines
+                wiz_lines = []
+                if not selected_lines_ids:
+                    wiz_lines = wl_obj.search(cr, uid, [('compare_id', '=', wiz.id)], context=context)
+                wl_obj.write(cr, uid, selected_lines_ids or wiz_lines, {'choosen_supplier_id': False,
+                                                                        'rfq_line_id': False}, context=context)
+            else:
+                if selected_lines_ids:
+                    for line_id in selected_lines_ids:
+                        wl_obj.write(cr, uid, selected_lines_ids, {'choosen_supplier_id': wiz.supplier_id.id,
+                                                                   'rfq_line_id': line_id}, context=context)
+                else:
+                    for l in wiz.line_ids:
+                        rfql_id = self._get_rfq_line(cr, uid, l, wiz.supplier_id.id, context=context)
+                        if not rfql_id:
+                            continue
+
+                        wl_obj.write(cr, uid, [l.id], {'choosen_supplier_id': wiz.supplier_id.id,
+                                                       'rfq_line_id': rfql_id}, context=context)
 
         return {
             'type': 'ir.actions.act_window',
@@ -312,9 +315,7 @@ class wizard_compare_rfq(osv.osv_memory):
         """
         Remove the supplier from all lines
         """
-        return self.add_supplier_all_lines(cr, uid, ids,
-                                           context=context, deselect=True)
-
+        return self.add_supplier_all_lines(cr, uid, ids, context=context, deselect=True)
 
     def update_tender(self, cr, uid, ids, context=None):
         '''
