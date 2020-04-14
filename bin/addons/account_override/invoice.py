@@ -1625,6 +1625,16 @@ class account_invoice(osv.osv):
             return True
         return False
 
+    def export_invoice(self, cr, uid, ids, data, context=None):
+        """
+        Opens the Export Invoice report
+        """
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'account.export_invoice',
+            'datas': data,
+        }
+
 
 account_invoice()
 

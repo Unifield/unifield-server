@@ -165,5 +165,17 @@
                               ('name', '=', 'Invoice Excel Export')]]" />
             <value eval="{'sequence': 97}" />
         </function>
+
+         <!-- Export Invoice report -->
+         <report id="export_invoice"
+                 string="Export Invoice"
+                 target_filename="Export Invoice"
+                 model="account.invoice"
+                 name="account.export_invoice"
+                 file="account/report/export_invoice.mako"
+                 report_type="webkit"
+                 header="False"
+                 auto="False"
+                 menu="False"/>
     </data>
 </openerp>
