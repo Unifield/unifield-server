@@ -301,6 +301,10 @@ class wizard_compare_rfq(osv.osv_memory):
                         wl_obj.write(cr, uid, [l.id], {'choosen_supplier_id': wiz.supplier_id.id,
                                                        'rfq_line_id': rfql_id}, context=context)
 
+        if context.get('button_selected_ids'):
+            # Prevent the same ids to be found if no line is selected on the same wizard
+            context['button_selected_ids'] = []
+
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'wizard.compare.rfq',
