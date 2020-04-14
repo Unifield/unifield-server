@@ -528,8 +528,11 @@
                             <field name="name" string="Reference"
                                    attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_supply', '=', True)]}"/>
                             <newline/>
-                            <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                                <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object"
+                            <group name="import" string=" Import Lines " colspan="4" col="4">
+                                <button name="import_invoice" string="Import Invoice" icon="gtk-execute" colspan="2" type="object"
+                                        attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <button name="export_invoice" string="Export Invoice" icon="gtk-execute" colspan="2" type="object"/>
+                                <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
                                         attrs="{'invisible': [('state', '!=', 'draft')],
                                                 'readonly': ['|',
                                                              ('from_supply', '=', True),
@@ -728,8 +731,15 @@
                     <button name="button_reset_taxes" position="replace"/>
                     <button name="invoice_proforma2" position="replace"/>
                     <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='invoice_line']" position="before" >
-                        <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object"
+                        <group name="import" string=" Import Lines " colspan="4" col="4"
+                               attrs="{'invisible': [('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}">
+                            <button name="import_invoice" string="Import Invoice" icon="gtk-execute" colspan="2" type="object"
+                                    attrs="{'readonly': [('state', '!=', 'draft')],
+                                            'invisible': [('type', '!=', 'out_invoice')]}"/>
+                            <button name="export_invoice" string="Export Invoice" icon="gtk-execute" colspan="2" type="object"
+                                    attrs="{'invisible': [('type', '!=', 'out_invoice')]}"/>
+                            <newline/>
+                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
                                     attrs="{'invisible': [('state', '!=', 'draft')],
                                             'readonly': [('type', '=', 'out_invoice'),
                                                          ('from_supply', '=', True),
