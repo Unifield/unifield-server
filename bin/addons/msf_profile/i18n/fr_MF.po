@@ -104192,8 +104192,9 @@ msgstr "Le rapport est en cours de génération."
 msgid "BN-management"
 msgstr "Géré par Numéro de Lot"
 
-#. module: specific_rules
+#. modules: specific_rules, account
 #: report:addons/specific_rules/report/unconsistent_stock_report_xls.mako:100
+#: report:addons/account/report/invoice_excel_export.mako:79
 msgid "Document number"
 msgstr "Numéro du Document"
 
