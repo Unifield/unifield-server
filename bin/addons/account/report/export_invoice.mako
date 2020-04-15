@@ -123,12 +123,26 @@
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
   </Row>
 
+  <% is_ro = is_readonly(o) %>
   % for inv_line in o.invoice_line:
     <Row>
         <Cell ss:StyleID="non_editable"><Data ss:Type="String">${inv_line.line_number or ''|x}</Data></Cell>
-        <Cell ss:StyleID="non_editable"><Data ss:Type="String">${inv_line.product_id and inv_line.product_id.default_code or ''|x}</Data></Cell>
+        % if is_ro:
+            <Cell ss:StyleID="non_editable">
+        % else:
+            <Cell ss:StyleID="editable">
+        % endif
+        <Data ss:Type="String">${inv_line.product_id and inv_line.product_id.default_code or ''|x}</Data></Cell>
+
         <Cell ss:StyleID="editable"><Data ss:Type="String">${inv_line.account_id.code|x}</Data></Cell>
-        <Cell ss:StyleID="non_editable_number"><Data ss:Type="Number">${inv_line.quantity|x}</Data></Cell>
+
+        % if is_ro:
+            <Cell ss:StyleID="non_editable_number">
+        % else:
+            <Cell ss:StyleID="editable_number">
+        % endif
+        <Data ss:Type="Number">${inv_line.quantity|x}</Data></Cell>
+
         <Cell ss:StyleID="editable_number"><Data ss:Type="Number">${inv_line.price_unit|x}</Data></Cell>
     </Row>
   % endfor
