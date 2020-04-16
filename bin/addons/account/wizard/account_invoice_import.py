@@ -1,0 +1,218 @@
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) TeMPO Consulting (<http://www.tempo-consulting.fr/>), MSF.
+#    All Rights Reserved
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+from osv import osv
+from osv import fields
+from tools.translate import _
+from tempfile import NamedTemporaryFile
+from base64 import decodestring
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+import threading
+import pooler
+import logging
+
+
+class account_invoice_import(osv.osv_memory):
+    _name = 'account.invoice.import'
+
+    _columns = {
+        'file': fields.binary(string="File", filters='*.xml, *.xls', required=True),
+        'filename': fields.char(string="Imported filename", size=256),
+        'progression': fields.float(string="Progression", readonly=True),
+        'message': fields.char(string="Message", size=256, readonly=True),
+        'state': fields.selection([('draft', 'Created'), ('inprogress', 'In Progress'), ('error', 'Error'), ('done', 'Done')],
+                                  string="State", readonly=True, required=True),
+        'error_ids': fields.one2many('account.invoice.import.errors', 'wizard_id', "Errors", readonly=True),
+        'invoice_id': fields.many2one('account.invoice', 'Invoice', required=True, readonly=True),
+    }
+
+    _defaults = {
+        'progression': lambda *a: 0.0,
+        'state': lambda *a: 'draft',
+    }
+
+    def _import(self, dbname, uid, ids, context=None):
+        """
+        Checks file data, and either updates the lines or displays the errors found
+        """
+        if context is None:
+            context = {}
+        cr = pooler.get_db(dbname).cursor()
+        errors = []
+        invoice_line_obj = self.pool.get('account.invoice.line')
+        currency_obj = self.pool.get('res.currency')
+
+        try:
+            for wiz in self.browse(cr, uid, ids, context):
+                self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': 1.00}, context)
+                if not wiz.file:
+                    raise osv.except_osv(_('Error'), _('Nothing to import.'))
+                fileobj = NamedTemporaryFile('w+b', delete=False)
+                fileobj.write(decodestring(wiz.file))
+                fileobj.close()
+                content = SpreadsheetXML(xmlfile=fileobj.name, context=context)
+                if not content:
+                    raise osv.except_osv(_('Warning'), _('No content.'))
+                rows = content.getRows()
+                nb_rows = len([x for x in content.getRows()])
+                self.write(cr, uid, [wiz.id], {'message': _('Checking header…'), 'progression': 5.00}, context)
+                # indexes of the file columns:
+                cols = {
+                    'line_number': 0,
+                    'product': 1,
+                    'account': 2,
+                    'quantity': 3,
+                    'unit_price': 4,
+                }
+                # number of the first line in the file containing data (not header)
+                base_num = 10
+                rows.next()  # number is ignored
+                rows.next()  # journal is ignored
+                currency_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, rows.next())
+                try:
+                    currency_name = currency_line[1]
+                except IndexError, e:
+                    raise osv.except_osv(_('Warning'), _('No currency found.'))
+                currency_ids = currency_obj.search(cr, uid,
+                                                   [('name', '=', currency_name), ('currency_table_id', '=', False),
+                                                    ('active', '=', True)], limit=1, context=context)
+                if not currency_ids:
+                    raise osv.except_osv(_('Error'), _("Currency %s not found or inactive.") % currency_name)
+                partner_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, rows.next())
+                try:
+                    partner = partner_line[1]
+                except IndexError, e:
+                    raise osv.except_osv(_('Warning'), _('No partner found.'))
+                rows.next()  # document date is ignored
+                posting_date_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, rows.next())
+                try:
+                    posting_date = posting_date_line[1].strftime('%Y-%m-%d')
+                except IndexError, e:
+                    raise osv.except_osv(_('Warning'), _("The posting date either doesn't exist or has a wrong format."))
+
+                # ignore: header account, empty line, line with titles
+                for i in range(3):
+                    rows.next()
+                header_percent = 10  # percentage of the process reached AFTER having checked the header
+                self.write(cr, uid, [wiz.id], {'message': _('Checking lines…'), 'progression': header_percent}, context)
+                lines_percent = 99  # % of the process to be reached AFTER having checked and updated the lines
+                # check the lines
+                for num, r in enumerate(rows):
+                    current_line_num = num + base_num
+                    line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
+                    line.extend([False for i in range(len(cols) - len(line))])
+                    if not line[cols['line_number']]:
+                        errors.append(_('Line %s: the line number is missing.') % (current_line_num,))
+                        continue
+                    line_number = line[cols['line_number']]
+                    invoice_line_dom = [('invoice_id', '=', wiz.invoice_id.id), ('line_number', '=', line_number)]
+                    invoice_line_ids = invoice_line_obj.search(cr, uid, invoice_line_dom, limit=1, context=context)
+                    if not invoice_line_ids:
+                        errors.append(_("Line %s: the line number %s doesn't exist in the invoice.") % (current_line_num, line_number))
+                        continue
+                    product_code = line[cols['product']]
+                    account_code = line[cols['account']]
+                    account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)], limit=1, context=context)
+                    account = account_ids and account_ids[0] or False
+                    # update the line
+                    vals = {
+                        'account_id': account,
+                    }
+                    invoice_line_obj.write(cr, uid, invoice_line_ids[0], vals)
+                    # update the percent
+                    if current_line_num == nb_rows:
+                        self.write(cr, uid, [wiz.id], {'progression': lines_percent}, context)
+                    elif current_line_num % 5 == 0:  # refresh every 5 lines
+                        self.write(cr, uid, [wiz.id],
+                                   {'progression': header_percent + (current_line_num / float(nb_rows) * (lines_percent - header_percent))},
+                                   context)
+            wiz_state = 'done'
+            # cancel the process in case of errors
+            if errors:
+                cr.rollback()
+                message = _('Import FAILED.')
+                # delete old errors and create new ones
+                error_ids = self.pool.get('account.invoice.import.errors').search(cr, uid, [], context)
+                if error_ids:
+                    self.pool.get('account.invoice.import.errors').unlink(cr, uid, error_ids, context)
+                for e in errors:
+                    self.pool.get('account.invoice.import.errors').create(cr, uid, {'wizard_id': wiz.id, 'name': e}, context)
+                wiz_state = 'error'
+            else:
+                message = _('Import successful.')
+            # 100% progression
+            self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0}, context)
+            cr.commit()
+            cr.close(True)
+        except osv.except_osv as osv_error:
+            logging.getLogger('account.invoice.import').warn('OSV Exception', exc_info=True)
+            cr.rollback()
+            self.write(cr, uid, ids, {'message': _("An error occurred %s: %s") %
+                                                 (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
+            cr.close(True)
+        except Exception as e:
+            logging.getLogger('account.invoice.import').warn('Exception', exc_info=True)
+            cr.rollback()
+            self.write(cr, uid, ids, {'message': _("An error occurred: %s") %
+                                                 (e and e.args and e.args[0] or ''), 'state': 'done', 'progression': 100.0})
+            cr.close(True)
+        return True
+
+    def button_validate(self, cr, uid, ids, context=None):
+        """
+        Starts thread and returns the wizard with the state "inprogress"
+        """
+        if context is None:
+            context = {}
+        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+        thread.start()
+        self.write(cr, uid, ids, {'state': 'inprogress'}, context)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.invoice.import',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': ids[0],
+            'context': context,
+            'target': 'new',
+        }
+
+    def button_update(self, cr, uid, ids, context=None):
+        """
+        Updates the view to follow the progression
+        """
+        return False
+
+account_invoice_import()
+
+
+class account_invoice_import_errors(osv.osv_memory):
+    _name = 'account.invoice.import.errors'
+
+    _columns = {
+        'name': fields.text("Description", readonly=True, required=True),
+        'wizard_id': fields.many2one('account.invoice.import', "Wizard", required=True, readonly=True),
+    }
+
+account_invoice_import_errors()
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
