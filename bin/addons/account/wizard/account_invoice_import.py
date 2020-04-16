@@ -59,8 +59,10 @@ class account_invoice_import(osv.osv_memory):
             context = {}
         cr = pooler.get_db(dbname).cursor()
         errors = []
+        invoice_obj = self.pool.get('account.invoice')
         invoice_line_obj = self.pool.get('account.invoice.line')
         currency_obj = self.pool.get('res.currency')
+        partner_obj = self.pool.get('res.partner')
 
         try:
             for wiz in self.browse(cr, uid, ids, context):
@@ -73,6 +75,7 @@ class account_invoice_import(osv.osv_memory):
                 content = SpreadsheetXML(xmlfile=fileobj.name, context=context)
                 if not content:
                     raise osv.except_osv(_('Warning'), _('No content.'))
+                invoice = wiz.invoice_id
                 rows = content.getRows()
                 nb_rows = len([x for x in content.getRows()])
                 self.write(cr, uid, [wiz.id], {'message': _('Checking header…'), 'progression': 5.00}, context)
@@ -100,16 +103,26 @@ class account_invoice_import(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _("Currency %s not found or inactive.") % currency_name)
                 partner_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, rows.next())
                 try:
-                    partner = partner_line[1]
+                    partner_name = partner_line[1]
                 except IndexError, e:
                     raise osv.except_osv(_('Warning'), _('No partner found.'))
+                partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_name), ('active', '=', True)], context=context)
+                if not partner_ids:
+                    raise osv.except_osv(_('Error'), _("Partner %s not found or inactive.") % partner_name)
                 rows.next()  # document date is ignored
                 posting_date_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, rows.next())
                 try:
                     posting_date = posting_date_line[1].strftime('%Y-%m-%d')
-                except IndexError, e:
+                except (IndexError, AttributeError), e:
                     raise osv.except_osv(_('Warning'), _("The posting date either doesn't exist or has a wrong format."))
-
+                invoice_dom = [('id', '=', invoice.id),
+                               ('currency_id', '=', currency_ids[0]),
+                               ('partner_id', '=', partner_ids[0]),
+                               ('date_invoice', '=', posting_date)]
+                if not invoice_obj.search_exist(cr, uid, invoice_dom, context=context):
+                    raise osv.except_osv(_('Warning'),
+                                         _("The combination \"Currency, Partner and Posting Date\" of the imported file "
+                                           "doesn't match with the current invoice."))
                 # ignore: header account, empty line, line with titles
                 for i in range(3):
                     rows.next()
@@ -125,7 +138,7 @@ class account_invoice_import(osv.osv_memory):
                         errors.append(_('Line %s: the line number is missing.') % (current_line_num,))
                         continue
                     line_number = line[cols['line_number']]
-                    invoice_line_dom = [('invoice_id', '=', wiz.invoice_id.id), ('line_number', '=', line_number)]
+                    invoice_line_dom = [('invoice_id', '=', invoice.id), ('line_number', '=', line_number)]
                     invoice_line_ids = invoice_line_obj.search(cr, uid, invoice_line_dom, limit=1, context=context)
                     if not invoice_line_ids:
                         errors.append(_("Line %s: the line number %s doesn't exist in the invoice.") % (current_line_num, line_number))
@@ -167,7 +180,7 @@ class account_invoice_import(osv.osv_memory):
         except osv.except_osv as osv_error:
             logging.getLogger('account.invoice.import').warn('OSV Exception', exc_info=True)
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occurred %s: %s") %
+            self.write(cr, uid, ids, {'message': _("An error occurred: %s: %s") %
                                                  (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
             cr.close(True)
         except Exception as e:
