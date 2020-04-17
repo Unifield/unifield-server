@@ -841,6 +841,16 @@ class real_average_consumption_line(osv.osv):
 
         return res
 
+    def _check_rac_state(self, cr, uid, ids, context=None):
+        '''
+        Check if the state of the linked report is draft
+        '''
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.rac_id.state != 'draft':
+                return False
+
+        return True
+
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'ref': fields.related('product_id', 'default_code', type='char', size=64, readonly=True,
@@ -873,10 +883,10 @@ class real_average_consumption_line(osv.osv):
         'inactive_error': lambda *a: '',
     }
 
-# uf-1344 => need to pass the context so we use create and write instead
-#    _constraints = [
-#        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty']),
-#    ]
+    _constraints = [
+        # (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty']),  # uf-1344 => need to pass the context so we use create and write instead
+        (_check_rac_state, "The lines of a Real Consumption Report can only be modified in a Draft report", ['rac_id']),
+    ]
 
     _sql_constraints = [
         ('unique_lot_poduct', "unique(product_id, prodlot_id, rac_id)", 'The couple product, batch number has to be unique'),
