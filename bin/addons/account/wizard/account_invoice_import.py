@@ -162,7 +162,12 @@ class account_invoice_import(osv.osv_memory):
                     if not account_ids:
                         errors.append(_("Line %s: the account %s doesn't exist.") % (current_line_num, account_code))
                         continue
-                    vals['account_id'] = account_ids[0]
+                    account = account_obj.browse(cr, uid, account_ids[0], fields_to_fetch=['activation_date', 'inactivation_date'],
+                                                 context=context)
+                    if posting_date < account.activation_date or (account.inactivation_date and posting_date >= account.inactivation_date):
+                        errors.append(_("Line %s: the account %s is inactive.") % (current_line_num, account_code))
+                        continue
+                    vals['account_id'] = account.id
                     if not unit_price:
                         errors.append(_("Line %s: the unit price (mandatory) is missing.") % (current_line_num,))
                         continue
