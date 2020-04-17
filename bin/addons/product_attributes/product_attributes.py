@@ -2428,6 +2428,9 @@ class product_attributes(osv.osv):
         return ''
 
     def open_merge_product_wizard(self, cr, uid, prod_id, context=None):
+        if self.pool.get('res.company')._get_instance_level(cr, uid) != 'coordo':
+            raise osv.except_osv(_('Warning'), _('Merge products can only be done at Coordo level.'))
+
         wiz_id = self.pool.get('product.merged.wizard').create(cr, uid, {'old_product_id': prod_id[0]}, context=context)
         return {
             'type': 'ir.actions.act_window',
