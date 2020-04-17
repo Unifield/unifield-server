@@ -2462,11 +2462,11 @@ class product_attributes(osv.osv):
 
         new_data = self.read(cr, uid, nsl_prod_id, ['default_code','old_code', 'allow_merge'], context=context)
         if not new_data['allow_merge']:
-            raise osv.except_osv(_('Warning'), _('New product: condition not met: inactive, NSL'))
+            raise osv.except_osv(_('Warning'), _('New product %s condition not met: inactive, NSL') % new_data['default_code'])
 
         error_used = self._error_has_move_or_bn(cr, uid, nsl_prod_id, context=None)
         if error_used:
-            raise osv.except_osv(_('Warning'), _('The selected NSL product has already been used in the past. Merge cannot be done for this product : %s') % error_used)
+            raise osv.except_osv(_('Warning'), _('The selected NSL product %s has already been used in the past. Merge cannot be done for this product : %s') % (new_data['default_code'], error_used))
 
 
         local_dom = [('id', '=', local_id), ('international_status', '=', 'Local'), ('replaced_by_product_id', '=', False)]
@@ -2475,12 +2475,14 @@ class product_attributes(osv.osv):
         else:
             local_dom += [('active', 'in', ['t', 'f'])]
         if not self.search_exist(cr, uid, local_dom, context=context):
-            raise osv.except_osv(_('Warning'), _('Old merged product: condition not met: active, local product'))
+            old_prod = self.read(cr, uid, local_id, ['default_code'], context=context)
+            raise osv.except_osv(_('Warning'), _('Old merged product %s: condition not met: active, local product') % old_prod['default_code'])
 
 
         block_msg = self.check_same_value( cr, uid,  nsl_prod_id, local_id, blocker=True, context=context)
         if block_msg:
-            raise osv.except_osv(_('Warning'), block_msg)
+            prod_data = self.read(cr, uid, [nsl_prod_id, local_id], ['default_code'], context=context)
+            raise osv.except_osv(_('Warning'), '%s\nProducts: %s and %s' % (block_msg, prod_data[0]['default_code'], prod_data[1]['default_code']))
 
         blacklist_table = {
             'product_template': [
