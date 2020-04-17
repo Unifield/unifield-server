@@ -10,8 +10,8 @@ class product_merged_wizard(osv.osv_memory):
 
 
     _columns = {
-        'new_product_id': fields.many2one('product.product', 'UD NSL Product', readonly=1, required=1),
-        'old_product_id': fields.many2one('product.product', 'Old local Product', select=1, domain=[('active', '=', True), ('international_status', '=', 'Local'), ('replaced_by_product_id', '=', False)]),
+        'old_product_id': fields.many2one('product.product', 'Old local Product', readonly=1),
+        'new_product_id': fields.many2one('product.product', 'UD NSL Product', domain=[('international_status', '=', 'UniData'), ('active', '=', False), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)]),
         'warning_msg': fields.text('Warning Message'),
         'warning_checked': fields.boolean('Warning Checked'),
     }
@@ -24,6 +24,10 @@ class product_merged_wizard(osv.osv_memory):
         block_msg = prod_obj.check_same_value(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, blocker=True, context=context)
         if block_msg:
             raise osv.except_osv(_('Warning'), block_msg)
+
+        error_used = prod_obj._error_has_move_or_bn(cr, uid, wiz.new_product_id.id, context=context)
+        if error_used:
+            raise osv.except_osv(_('Warning'), _('New product is used: %s') % error_used)
 
         if not wiz.warning_checked:
             warn_msg = prod_obj.check_same_value(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, blocker=False, context=context)
@@ -43,7 +47,9 @@ class product_merged_wizard(osv.osv_memory):
 
 
         prod_obj.merge_product(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, context=None)
-        return {'type': 'ir.actions.act_window_close'}
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'product.product_normal_action', ['form', 'tree'], context=context)
+        res['res_id'] = wiz.new_product_id.id
+        return res
 
     def change_warning(self, cr, uid, ids, context=None):
         return {'value': {'warning_checked': False, 'warning_msg': False}}

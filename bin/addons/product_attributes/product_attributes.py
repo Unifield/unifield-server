@@ -2427,8 +2427,8 @@ class product_attributes(osv.osv):
 
         return ''
 
-    def open_merge_product_wizard(self, cr, uid, nsl_prod_id, context=None):
-        wiz_id = self.pool.get('product.merged.wizard').create(cr, uid, {'new_product_id': nsl_prod_id[0]}, context=context)
+    def open_merge_product_wizard(self, cr, uid, prod_id, context=None):
+        wiz_id = self.pool.get('product.merged.wizard').create(cr, uid, {'old_product_id': prod_id[0]}, context=context)
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'product.merged.wizard',
@@ -2442,6 +2442,17 @@ class product_attributes(osv.osv):
         }
 
 
+    def _error_has_move_or_bn(self, cr, uid, prod_id, context=None):
+        error = []
+        move_nb = self.pool.get('stock.move').search(cr, uid, [('product_id', '=', prod_id)], count=True, context=context)
+        if move_nb:
+            error.append(_('%d stock move(s)') % move_nb)
+        bn_nb = self.pool.get('stock.production.lot').search(cr, uid, [('product_id', '=', prod_id)], count=True, context=context)
+        if bn_nb:
+            error.append(_('%d batch(es)') % bn_nb)
+
+        return ', '.join(error)
+
     def merge_product(self, cr, uid, nsl_prod_id, local_id, context=None):
         if context is None:
             context = {}
@@ -2449,6 +2460,10 @@ class product_attributes(osv.osv):
         new_data = self.read(cr, uid, nsl_prod_id, ['default_code','old_code', 'allow_merge'], context=context)
         if not new_data['allow_merge']:
             raise osv.except_osv(_('Warning'), _('New product: condition not met: inactive, NSL'))
+
+        error_used = self._error_has_move_or_bn(cr, uid, nsl_prod_id, context=None)
+        if error_used:
+            raise osv.except_osv(_('Warning'), _('New product is used: %s') % error_used)
 
 
         local_dom = [('id', '=', local_id), ('international_status', '=', 'Local'), ('replaced_by_product_id', '=', False)]
