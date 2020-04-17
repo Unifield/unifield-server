@@ -182,9 +182,10 @@ class account_invoice_import(osv.osv_memory):
                         if not product_code:
                             vals['product_id'] = False  # delete the existing value
                         else:
-                            product_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)], limit=1, context=context)
+                            product_ids = product_obj.search(cr, uid, [('default_code', '=', product_code), ('active', '=', True)],
+                                                             limit=1, context=context)
                             if not product_ids:
-                                errors.append(_("Line %s: the product %s doesn't exist.") % (current_line_num, product_code))
+                                errors.append(_("Line %s: the product %s doesn't exist or is inactive.") % (current_line_num, product_code))
                                 continue
                             vals['product_id'] = product_ids[0]
                         if not quantity:
