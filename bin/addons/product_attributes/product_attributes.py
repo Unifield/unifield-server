@@ -2463,7 +2463,7 @@ class product_attributes(osv.osv):
 
         error_used = self._error_has_move_or_bn(cr, uid, nsl_prod_id, context=None)
         if error_used:
-            raise osv.except_osv(_('Warning'), _('New product is used: %s') % error_used)
+            raise osv.except_osv(_('Warning'), _('The selected NSL product has already been used in the past. Merge cannot be done for this product : %s') % error_used)
 
 
         local_dom = [('id', '=', local_id), ('international_status', '=', 'Local'), ('replaced_by_product_id', '=', False)]
