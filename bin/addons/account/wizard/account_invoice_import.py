@@ -30,6 +30,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import threading
 import pooler
 import logging
+import tools
 
 
 class account_invoice_import(osv.osv_memory):
@@ -134,22 +135,39 @@ class account_invoice_import(osv.osv_memory):
                     current_line_num = num + base_num
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
                     line.extend([False for i in range(len(cols) - len(line))])
-                    if not line[cols['line_number']]:
+                    # get the data
+                    line_number = line[cols['line_number']] and tools.ustr(line[cols['line_number']])
+                    product_code = line[cols['product']] and tools.ustr(line[cols['product']])
+                    account_code = line[cols['account']] and tools.ustr(line[cols['account']])
+                    quantity = line[cols['quantity']]
+                    unit_price = line[cols['unit_price']]
+                    if not line_number:
                         errors.append(_('Line %s: the line number is missing.') % (current_line_num,))
                         continue
-                    line_number = line[cols['line_number']]
                     invoice_line_dom = [('invoice_id', '=', invoice.id), ('line_number', '=', line_number)]
                     invoice_line_ids = invoice_line_obj.search(cr, uid, invoice_line_dom, limit=1, context=context)
                     if not invoice_line_ids:
                         errors.append(_("Line %s: the line number %s doesn't exist in the invoice.") % (current_line_num, line_number))
                         continue
-                    product_code = line[cols['product']]
-                    account_code = line[cols['account']]
+                    if not account_code:
+                        errors.append(_("Line %s: the account (mandatory) is missing.") % (current_line_num,))
+                        continue
                     account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)], limit=1, context=context)
-                    account = account_ids and account_ids[0] or False
+                    if not account_ids:
+                        errors.append(_("Line %s: the account %s doesn't exist.") % (current_line_num, account_code))
+                        continue
+                    if not unit_price:
+                        errors.append(_("Line %s: the unit price (mandatory) is missing.") % (current_line_num,))
+                        continue
+                    try:
+                        unit_price = float(unit_price)
+                    except ValueError, e:
+                        errors.append(_("Line %s: the unit price format is incorrect.") % (current_line_num,))
+                        continue
                     # update the line
                     vals = {
-                        'account_id': account,
+                        'account_id': account_ids[0],
+                        'price_unit': unit_price,
                     }
                     invoice_line_obj.write(cr, uid, invoice_line_ids[0], vals)
                     # update the percent
