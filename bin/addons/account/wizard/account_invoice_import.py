@@ -27,6 +27,7 @@ from tools.translate import _
 from tempfile import NamedTemporaryFile
 from base64 import decodestring
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from account.report import export_invoice
 import threading
 import pooler
 import logging
@@ -64,6 +65,8 @@ class account_invoice_import(osv.osv_memory):
         invoice_line_obj = self.pool.get('account.invoice.line')
         currency_obj = self.pool.get('res.currency')
         partner_obj = self.pool.get('res.partner')
+        account_obj = self.pool.get('account.account')
+        product_obj = self.pool.get('product.product')
 
         try:
             for wiz in self.browse(cr, uid, ids, context):
@@ -130,9 +133,12 @@ class account_invoice_import(osv.osv_memory):
                 header_percent = 10  # percentage of the process reached AFTER having checked the header
                 self.write(cr, uid, [wiz.id], {'message': _('Checking lines…'), 'progression': header_percent}, context)
                 lines_percent = 99  # % of the process to be reached AFTER having checked and updated the lines
+                # use the method from export_invoice to determine whether the product and quantity columns are editable
+                all_fields_editable = not export_invoice.is_readonly(self, invoice)
                 # check the lines
                 for num, r in enumerate(rows):
                     current_line_num = num + base_num
+                    vals = {}
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
                     line.extend([False for i in range(len(cols) - len(line))])
                     # get the data
@@ -152,10 +158,11 @@ class account_invoice_import(osv.osv_memory):
                     if not account_code:
                         errors.append(_("Line %s: the account (mandatory) is missing.") % (current_line_num,))
                         continue
-                    account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)], limit=1, context=context)
+                    account_ids = account_obj.search(cr, uid, [('code', '=', account_code)], limit=1, context=context)
                     if not account_ids:
                         errors.append(_("Line %s: the account %s doesn't exist.") % (current_line_num, account_code))
                         continue
+                    vals['account_id'] = account_ids[0]
                     if not unit_price:
                         errors.append(_("Line %s: the unit price (mandatory) is missing.") % (current_line_num,))
                         continue
@@ -164,11 +171,27 @@ class account_invoice_import(osv.osv_memory):
                     except ValueError, e:
                         errors.append(_("Line %s: the unit price format is incorrect.") % (current_line_num,))
                         continue
+                    vals['price_unit'] = unit_price
+                    # edit the Product and Quantity only if it is allowed
+                    if all_fields_editable:
+                        if not product_code:
+                            vals['product_id'] = False  # delete the existing value
+                        else:
+                            product_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)], limit=1, context=context)
+                            if not product_ids:
+                                errors.append(_("Line %s: the product %s doesn't exist.") % (current_line_num, product_code))
+                                continue
+                            vals['product_id'] = product_ids[0]
+                        if not quantity:
+                            errors.append(_("Line %s: the quantity (mandatory) is missing.") % (current_line_num,))
+                            continue
+                        try:
+                            quantity = float(quantity)
+                        except ValueError, e:
+                            errors.append(_("Line %s: the quantity format is incorrect.") % (current_line_num,))
+                            continue
+                        vals['quantity'] = quantity
                     # update the line
-                    vals = {
-                        'account_id': account_ids[0],
-                        'price_unit': unit_price,
-                    }
                     invoice_line_obj.write(cr, uid, invoice_line_ids[0], vals)
                     # update the percent
                     if current_line_num == nb_rows:
