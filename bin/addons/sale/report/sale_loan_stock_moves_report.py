@@ -148,8 +148,8 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 setattr(move, 'balance', 0)
 
                 key = (
-                    so_found and so_found.id or 'NF%s' % po_found.id,
-                    po_found and po_found.id or 'NF%s' % so_found.id,
+                    so_found and so_found.id or 'NF%s' % (po_found and po_found.id or '',),
+                    po_found and po_found.id or 'NF%s' % (so_found and so_found.id or '',),
                     move.product_id.id
                 )
                 if key not in move_by_fo_po_prod:
