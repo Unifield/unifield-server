@@ -139,6 +139,9 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 po_found = get_po_from_so_id.get(so_found.id)
                 if po_found and so_found.state == po_found.state == 'done':
                     status = _('Closed')
+            else:
+                so_found = False
+                po_found = False
 
             if status != _('Closed') or not report.remove_completed:
                 setattr(move, 'status', status)
