@@ -425,7 +425,7 @@ class ir_cron(osv.osv):
             ids = [ids]
         toret = super(ir_cron, self).write(cr, uid, ids, vals, context=context)
         crons = self.browse(cr, uid, ids, context=context)
-        if crons and crons[0] and crons[0].model=='backup.config':
+        if crons and crons[0] and crons[0].model=='backup.config' and crons[0].function == 'scheduled_backups':
             #Find the scheduled action
             bkp_model = self.pool.get('backup.config')
             bkp_ids = bkp_model.search(cr, uid, (['|', ('scheduledbackup', '=', True), ('scheduledbackup', '=', False)]), context=context)
