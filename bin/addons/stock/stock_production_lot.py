@@ -8,7 +8,6 @@ from tools.translate import _
 import decimal_precision as dp
 from mx import DateTime
 from dateutil.relativedelta import relativedelta
-from lxml import etree
 
 class stock_production_lot(osv.osv):
     _name = 'stock.production.lot'
@@ -631,29 +630,6 @@ class stock_production_lot(osv.osv):
 
         return super(stock_production_lot, self).write(cr, uid, ids, vals, context=context)
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        """
-        Correct fields in order to have those from account_statement_from_invoice_lines (in case where account_statement_from_invoice is used)
-        """
-        if context is None:
-            context = {}
-
-        # warehouse wizards or inventory screen
-        label = False
-        if view_type == 'tree':
-            if (context.get('expiry_date_check', False) and not context.get('batch_number_check', False)) or context.get('hidden_perishable_mandatory', False):
-                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_production_lot_expiry_date_tree')
-                if view:
-                    view_id = view[1]
-            if context.get('location_id') and isinstance(context['location_id'], (int, long)):
-                label = self.pool.get('stock.location').read(cr, uid, context['location_id'], ['name'], context=context)['name']
-
-        result = super(stock_production_lot, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if label:
-            root = etree.fromstring(result['arch'])
-            root.set('string', '%s %s %s' % (root.get('string'), _('Location: '), label))
-            result['arch'] = etree.tostring(root)
-        return result
 
     def create_sequence(self, cr, uid, vals, context=None):
         """

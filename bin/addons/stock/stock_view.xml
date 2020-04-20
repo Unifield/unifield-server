@@ -363,7 +363,7 @@
                     <field name="product_id"/>
                     <field name="stock_available"/>
                     <field name="stock_virtual" />
-
+                    <field name="stock_location_id" />
                     <field name="date"/>
                     <field name="delete_ok" invisible="1" />
                     <field name="uom_id" invisible="1" />
