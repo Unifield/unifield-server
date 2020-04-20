@@ -885,10 +885,9 @@ class real_average_consumption_line(osv.osv):
                 inner join real_average_consumption_line line on line.rac_id = rac.id
                 inner join product_product product on product.id = line.product_id
                 inner join stock_production_lot bn on bn.id = line.prodlot_id
-                left join real_average_consumption_line write_line on write_line.rac_id = rac.id
             where
                 rac.state = 'draft' and
-                write_line.id in %s
+                (rac.id, line.product_id, line.prodlot_id) in (select rac_id, product_id, prodlot_id from real_average_consumption_line where id in %s)
             group by
                 product.default_code, bn.name, bn.id, rac.id, rac.name
             having count(*) > 1
