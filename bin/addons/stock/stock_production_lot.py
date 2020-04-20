@@ -335,8 +335,11 @@ class stock_production_lot(osv.osv):
             context = {}
 
         res = {}
+        stock_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+        if context.get('full'):  # Prevent to display the location's complete_name
+            context.pop('full')
         for _id in ids:
-            res[_id] = context['location_id'] if isinstance(context.get('location_id'), (int, long)) else False
+            res[_id] = context['location_id'] if isinstance(context.get('location_id'), (int, long)) else stock_id
 
         return res
 

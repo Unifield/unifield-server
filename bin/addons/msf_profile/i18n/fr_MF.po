@@ -109122,3 +109122,8 @@ msgstr "Compte de Débit par défaut pour les Journaux de Liquidités"
 #: field:res.company,cash_credit_account_id:0
 msgid "Cash Default Credit Account"
 msgstr "Compte de Crédit par défaut pour les Journaux de Liquidités"
+
+#. module: stock
+#: field:stock.production.lot,stock_location_id:0
+msgid "Location of Stock Level"
+msgstr "Zone du Niveau de Stock"
