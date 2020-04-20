@@ -409,6 +409,7 @@ class real_average_consumption(osv.osv):
 
             if rac.created_ok:
                 return {'type': 'ir.actions.close_window'}
+            line_obj._unique_lot_poduct(cr, uid, [x.id for x in rac.line_ids])
             line_obj._check_qty(cr, uid, [x.id for x in rac.line_ids])
 
         partner_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
@@ -873,13 +874,37 @@ class real_average_consumption_line(osv.osv):
         'inactive_error': lambda *a: '',
     }
 
-# uf-1344 => need to pass the context so we use create and write instead
-#    _constraints = [
-#        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty']),
-#    ]
 
-    _sql_constraints = [
-        ('unique_lot_poduct', "unique(product_id, prodlot_id, rac_id)", 'The couple product, batch number has to be unique'),
+    def _unique_lot_poduct(self, cr, uid, ids, context=None):
+        if not ids:
+            return True
+
+        cr.execute('''
+            select product.default_code, bn.name, bn.id, rac.id, rac.name
+                from real_average_consumption_line line
+                inner join real_average_consumption rac on rac.id = line.rac_id
+                inner join product_product product on product.id = line.product_id
+                inner join stock_production_lot bn on bn.id = line.prodlot_id
+            where
+                rac.state = 'draft' and
+                line.id in %s
+            group by
+                product.default_code, bn.name, bn.id, rac.id, rac.name
+            having count(*) > 1
+        ''', (tuple(ids), ))
+        error = []
+        for x in cr.fetchall():
+            error.append('%s: %s %s' % (x[4], x[0], x[1]))
+            if len(error) > 5:
+                error.append('...')
+                break
+        if error:
+            raise osv.except_osv(_('Error'), _('The couple product, batch number has to be unique:\n%s') % "\n".join(error))
+
+        return True
+
+    _constraints = [
+        (_unique_lot_poduct, "The couple product, batch number has to be unique", ['product_id'])
     ]
 
     def create(self, cr, uid, vals=None, context=None):

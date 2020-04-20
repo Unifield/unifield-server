@@ -54,6 +54,10 @@ class patch_scripts(osv.osv):
 
 
     # UF17.0
+    def us_7015_del_rac_line_sql(self, cr, uid, *a, **b):
+        cr.drop_constraint_if_exists('real_average_consumption_line', 'real_average_consumption_line_unique_lot_poduct')
+        return True
+
     def us_7221_reset_starting_balance(self, cr, uid, *a, **b):
         """
         Reset the Starting Balance of the first register created for each journal if it is still in Draft state
