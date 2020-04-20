@@ -209,8 +209,8 @@
                 % if r.display_bn_ed:
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.partner_id.name or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getSel(o.partner_id, 'partner_type') or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.partner_id and o.partner_id.name or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.partner_id and getSel(o.partner_id, 'partner_type') or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getUserCompany()['instance_id'].name|x}</Data></Cell>
                 % if isQtyOut(o):
                 <Cell ss:StyleID="line_right${i}"><Data ss:Type="String"></Data></Cell>
