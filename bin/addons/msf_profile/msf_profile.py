@@ -53,6 +53,34 @@ class patch_scripts(osv.osv):
     }
 
 
+    # UF17.0
+    def us_7221_reset_starting_balance(self, cr, uid, *a, **b):
+        """
+        Reset the Starting Balance of the first register created for each journal if it is still in Draft state
+        """
+        # Cashbox details set to zero
+        cr.execute("""
+                   UPDATE account_cashbox_line
+                   SET number = 0 
+                   WHERE starting_id IN (
+                       SELECT id FROM account_bank_statement
+                       WHERE state = 'draft'
+                       AND prev_reg_id IS NULL
+                       AND journal_id IN (SELECT id FROM account_journal WHERE type='cash')
+                   );
+                   """)
+        # Starting Balance set to zero
+        cr.execute("""
+                   UPDATE account_bank_statement
+                   SET balance_start = 0.0
+                   WHERE state = 'draft'
+                   AND prev_reg_id IS NULL
+                   AND journal_id IN (SELECT id FROM account_journal WHERE type in ('bank', 'cash'));
+                   """)
+        self._logger.warn('Starting Balance set to zero in %s registers.' % (cr.rowcount,))
+        return True
+
+    # UF16.1
     def remove_ir_actions_linked_to_deleted_modules(self, cr, uid, *a, **b):
         # delete remove actions
         cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where module in ('procurement_report', 'threshold_value') and model='ir.actions.act_window')")
@@ -65,7 +93,6 @@ class patch_scripts(osv.osv):
 
         return True
 
-    # UF17.0
     def us_7025_7039_fix_nr_empty_ins(self, cr, uid, *a, **b):
         """
         1. Set the Not Runs to run:

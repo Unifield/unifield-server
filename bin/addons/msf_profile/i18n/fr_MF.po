@@ -4445,11 +4445,6 @@ msgstr "Passer l'étape des Assistants de Configuration"
 msgid "There is no income account defined for this product: \"%s\" (id:%d)"
 msgstr "Il n'y a pas de compte de produit défini pour ce produit : \"%s\" (id : %d)."
 
-#. module: register_accounting
-#: view:wizard.register.opening.confirmation:0
-msgid "Register Starting Balance"
-msgstr "Solde Initial du Registre"
-
 #. module: finance
 #: code:addons/finance/cash_request.py:276
 #, python-format
@@ -40728,11 +40723,6 @@ msgstr "Plus petit que l'UdM de référence"
 msgid "Returns the available locations for destination location of an outgoing delivery according to the address."
 msgstr "Retourne les zones disponible pour les zones de destination d'une livraison sortante selon l'adresse."
 
-#. module: account
-#: report:account.invoice2:0
-msgid "Draft Stock Transfer Voucher"
-msgstr "Bon Client en brouillon"
-
 #. module: purchase_allocation_report
 #: view:purchase.order.line.allocation.report:0
 msgid "Purchase order line allocation"
@@ -60779,11 +60769,6 @@ msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Journal 
 msgid "In Progress..."
 msgstr "En Cours..."
 
-#. module: register_accounting
-#: field:wizard.register.opening.confirmation,confirm_opening_balance:0
-msgid "Do you want to open the register with the following starting balance?"
-msgstr "Voulez-vous ouvrir le registre avec le solde initial suivant ?"
-
 #. module: msf_outgoing
 #: field:stock.move.memory.shipment.create,selected_weight:0
 #: field:stock.move.memory.shipment.returnpacks,selected_weight:0
@@ -61312,7 +61297,6 @@ msgstr "Save new settings and close the wizard"
 #. modules: account, register_accounting
 #: view:account.bank.statement:0
 #: view:account.bank.statement:0
-#: field:wizard.register.opening.confirmation,opening_balance:0
 #: field:account.bank.statement,balance_start:0
 msgid "Starting Balance"
 msgstr "Solde Initial"
@@ -61738,9 +61722,10 @@ msgstr "Actions d'itération"
 msgid "CORDOBA ORO"
 msgstr "CORDOBA ORO"
 
-#. modules: purchase, sale
+#. modules: purchase, sale, account_override
 #: field:purchase.order,line_count:0
 #: field:sale.order,line_count:0
+#: field:account.invoice,line_count:0
 msgid "Line count"
 msgstr "# de lignes"
 
@@ -68458,12 +68443,11 @@ msgstr "Order of Month"
 msgid "External Partners"
 msgstr "External Partners"
 
-#. modules: register_accounting, finance
+#. module: finance
 #: field:cash.request.liquidity,type:0
 #: field:cash.request.liquidity.bank,type:0
 #: field:cash.request.liquidity.cash,type:0
 #: field:cash.request.liquidity.cheque,type:0
-#: field:wizard.register.opening.confirmation,register_type:0
 msgid "Register Type"
 msgstr "Type de Registre"
 
@@ -75801,8 +75785,7 @@ msgstr "Objet pour Recherche"
 msgid "Linked sale order line at synchro"
 msgstr "Linked sale order line at synchro"
 
-#. modules: account_override, account
-#: report:account.invoice2:0
+#. module: account_override
 #: view:account.invoice:0
 msgid "Stock Transfer Voucher"
 msgstr "Bon Client"
@@ -87370,11 +87353,6 @@ msgstr "Third party"
 #: selection:res.users,context_tz:0
 msgid "Indian/Antananarivo"
 msgstr "Indian/Antananarivo"
-
-#. module: account
-#: report:account.invoice2:0
-msgid "Cancelled Stock Transfer Voucher"
-msgstr "Bon Client annulé"
 
 #. module: msf_profile
 #: model:ir.actions.act_window,name:msf_profile.action_open_user_access_wizard
@@ -98956,9 +98934,10 @@ msgstr "Configuration Journalière"
 msgid "Order Waiting For Sourcing"
 msgstr "Commande En Attente de Sourcing"
 
-#. module: register_accounting
+#. modules: register_accounting, account
 #: report:bank.reconciliation:0
 #: report:cash.inventory:0
+#: report:account.invoice2:0
 msgid "(Name, Function)"
 msgstr "(Nom, Fonction)"
 
@@ -99677,8 +99656,8 @@ msgstr "Rapport - date"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/register_opening.py:91
 #, python-format
-msgid "You must tick the boxes before clicking on Yes."
-msgstr "Vous devez cocher les cases avant de cliquer sur Oui."
+msgid "You must tick the box before clicking on Yes."
+msgstr "Vous devez cocher la case avant de cliquer sur Oui."
 
 #. module: msf_partner
 #: view:res.partner:0
@@ -109019,6 +108998,23 @@ msgstr "CCM Produit"
 msgid "more FMC"
 msgstr "plus de PCM"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:287
+#, python-format
+msgid "Line %s. The Proprietary Instance must be the current instance %s."
+msgstr "Ligne %s. L'Instance Propriétaire doit être l'instance actuelle %s."
+
+#. module: account
+#: report:account.invoice2:0
+msgid "Payment Information:"
+msgstr "Informations de paiement :"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:350
+#, python-format
+msgid "Line %s. The period %s doesn't exist."
+msgstr "Ligne %s. La période %s n'existe pas."
+
 #. module: product
 #: field:product.mass.update,has_not_deactivable:0
 msgid "Document has non-deactivable product(s)"
@@ -109092,3 +109088,37 @@ msgstr "Rupture"
 msgid "This is an NSL (Non-standard Local) product, please ensure that there is no duplicate “Local” product with which this product should be merged. If you activate and start to use this product it will no longer be possible to merge it with another."
 msgstr "Ce produit est NSL (Non-standard Local), veuillez vous assurer qu'il n'y a pas de produit “Local” doublon avec lequel ce produit devrait être fusionné. Si vous activez ce produit et commencez à l'utiliser, il ne sera plus possible de le fusionner avec un autre."
 
+#. module: msf_instance
+#: view:res.company:0
+msgid "Liquidity Accounts"
+msgstr "Comptes de Trésorerie"
+
+#. module: account_override
+#: field:res.company,cheque_debit_account_id:0
+msgid "Cheque Default Debit Account"
+msgstr "Compte de Débit par défaut pour les Journaux de Chèques"
+
+#. module: account_override
+#: field:res.company,cheque_credit_account_id:0
+msgid "Cheque Default Credit Account"
+msgstr "Compte de Crédit par défaut pour les Journaux de Chèques"
+
+#. module: account_override
+#: field:res.company,bank_debit_account_id:0
+msgid "Bank Default Debit Account"
+msgstr "Compte de Débit par défaut pour les Journaux de Banque"
+
+#. module: account_override
+#: field:res.company,bank_credit_account_id:0
+msgid "Bank Default Credit Account"
+msgstr "Compte de Crédit par défaut pour les Journaux de Banque"
+
+#. module: account_override
+#: field:res.company,cash_debit_account_id:0
+msgid "Cash Default Debit Account"
+msgstr "Compte de Débit par défaut pour les Journaux de Liquidités"
+
+#. module: account_override
+#: field:res.company,cash_credit_account_id:0
+msgid "Cash Default Credit Account"
+msgstr "Compte de Crédit par défaut pour les Journaux de Liquidités"

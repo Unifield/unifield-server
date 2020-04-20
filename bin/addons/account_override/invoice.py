@@ -63,13 +63,13 @@ class account_invoice(osv.osv):
                 prefix = 'DN_'
             # Intermission voucher OUT
             elif not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
-                prefix = 'IMO_'
+                prefix = 'IVO_'
         elif inv.type == 'in_invoice':
             # Supplier invoice
             prefix = 'SI_'
             # Intermission voucher IN
             if not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
-                prefix = 'IMI_'
+                prefix = 'IVI_'
             # Direct invoice
             elif inv.is_direct_invoice:
                 prefix = 'DI_'
@@ -221,6 +221,19 @@ class account_invoice(osv.osv):
 
         return res
 
+    def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns the number of lines for each selected invoice
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['invoice_line'], context=context):
+            res[inv.id] = len(inv.invoice_line)
+        return res
+
     _columns = {
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
@@ -257,6 +270,7 @@ class account_invoice(osv.osv):
                                        selection=PARTNER_TYPE, readonly=True, store=False),
         'refunded_invoice_id': fields.many2one('account.invoice', string='Refunded Invoice', readonly=True,
                                                help='The refunded invoice which has generated this document'),  # 2 inv types for Refund Modify
+        'line_count': fields.function(_get_line_count, string='Line count', method=True, type='integer', store=False),
     }
 
     _defaults = {
@@ -603,13 +617,18 @@ class account_invoice(osv.osv):
             'partner_move_line': False,
             'imported_invoices': False
         })
-        # Manual duplication should generate a "manual document not created through the supply workflow"
-        # so we don't keep the link to: FOs, Picking List
+        # Manual duplication should generate a "manual document not created through the supply workflow", so we don't keep
+        # the link to FOs and Picking List, and we reset the Source Doc if the invoice copied relates to a Supply workflow
         if context.get('from_button', False):
             default.update({
                 'order_ids': False,
                 'picking_id': False,
             })
+            if not context.get('from_split'):
+                inv = self.browse(cr, uid, inv_id, fields_to_fetch=['from_supply'], context=context)
+                if inv.from_supply:
+                    default.update({'origin': ''})
+
         # Reset register_line_ids if not given in default
         if 'register_line_ids' not in default:
             default['register_line_ids'] = []
