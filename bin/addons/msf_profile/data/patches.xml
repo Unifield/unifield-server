@@ -513,5 +513,19 @@
             <field name="method">us_7181_add_oc_subscrpition_to_unidata_products</field>
         </record>
 
+        <!-- UF16.1 -->
+        <record id="remove_ir_actions_linked_to_deleted_modules" model="patch.scripts">
+            <field name="method">remove_ir_actions_linked_to_deleted_modules</field>
+        </record>
+
+        <record id="us_7025_7039_fix_nr_empty_ins" model="patch.scripts">
+            <field name="method">us_7025_7039_fix_nr_empty_ins</field>
+        </record>
+
+        <!-- UF17.0 -->
+        <record id="us_7221_reset_starting_balance" model="patch.scripts">
+            <field name="method">us_7221_reset_starting_balance</field>
+        </record>
+
     </data>
 </openerp>

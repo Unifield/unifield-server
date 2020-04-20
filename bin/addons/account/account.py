@@ -828,7 +828,7 @@ class account_fiscalyear(osv.osv):
         'state': 'draft',
         'company_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.id,
     }
-    _order = "date_start"
+    _order = "date_start DESC"
 
     def _check_fiscal_year(self, cr, uid, ids, context=None):
         current_fiscal_yr = self.browse(cr, uid, ids, context=context)[0]
@@ -920,7 +920,6 @@ class account_period(osv.osv):
     _defaults = {
         'state': 'draft',
     }
-    _order = "date_start"
 
     def _check_duration(self,cr,uid,ids,context=None):
         obj_period = self.browse(cr, uid, ids[0], context=context)
@@ -951,7 +950,7 @@ class account_period(osv.osv):
     ]
 
     def next(self, cr, uid, period, step, context=None):
-        ids = self.search(cr, uid, [('date_start','>',period.date_start)])
+        ids = self.search(cr, uid, [('date_start','>',period.date_start)], order='date_start, number')
         if len(ids)>=step:
             return ids[step-1]
         return False

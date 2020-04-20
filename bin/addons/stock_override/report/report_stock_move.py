@@ -208,11 +208,11 @@ class report_stock_move(osv.osv):
         context['with_expiry'] = 1
         return super(report_stock_move, self).read(cr, uid, ids, fields, context, load)
 
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, count=False):
         '''
         Add functional currency on all lines
         '''
-        res = super(report_stock_move, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
+        res = super(report_stock_move, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby, count=count)
         if self._name == 'report.stock.move':
             for data in res:
                 # If no information to display, don't display the currency

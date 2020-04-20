@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from base import currency_date
 from tools.translate import _
+from . import ACCOUNT_RESTRICTED_AREA
 
 
 class res_company(osv.osv):
@@ -61,6 +62,18 @@ class res_company(osv.osv):
                                               string='Date Type Used', store=False, readonly=1),
         'currency_date_beginning': fields.function(_get_currency_date_beginning, method=True, type='date',
                                                    string='Since', store=False, readonly=1),
+        'cheque_debit_account_id': fields.many2one('account.account', 'Cheque Default Debit Account',
+                                                   domain=ACCOUNT_RESTRICTED_AREA['journals']),
+        'cheque_credit_account_id': fields.many2one('account.account', 'Cheque Default Credit Account',
+                                                    domain=ACCOUNT_RESTRICTED_AREA['journals']),
+        'bank_debit_account_id': fields.many2one('account.account', 'Bank Default Debit Account',
+                                                 domain=ACCOUNT_RESTRICTED_AREA['journals']),
+        'bank_credit_account_id': fields.many2one('account.account', 'Bank Default Credit Account',
+                                                  domain=ACCOUNT_RESTRICTED_AREA['journals']),
+        'cash_debit_account_id': fields.many2one('account.account', 'Cash Default Debit Account',
+                                                 domain=ACCOUNT_RESTRICTED_AREA['journals']),
+        'cash_credit_account_id': fields.many2one('account.account', 'Cash Default Credit Account',
+                                                  domain=ACCOUNT_RESTRICTED_AREA['journals']),
     }
 
 
