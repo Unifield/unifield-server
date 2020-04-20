@@ -1269,8 +1269,14 @@ class account_invoice(osv.osv):
                                            'price_unit': invl.price_unit, 'description': invl.name, 'wizard_id': wizard_id}, context=context)
         # Return wizard
         if wizard_id:
+            if context.get('from_stv'):
+                wizard_title = _('Split Stock Transfer Voucher')
+            elif context.get('is_intermission') and context.get('intermission_type', '') == 'out':
+                wizard_title = _('Split Intermission Voucher OUT')
+            else:
+                wizard_title = _('Split Invoice')
             return {
-                'name': "Split Invoice",
+                'name': wizard_title,
                 'type': 'ir.actions.act_window',
                 'res_model': 'wizard.split.invoice',
                 'target': 'new',

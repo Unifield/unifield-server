@@ -629,7 +629,16 @@
                                 <field name="amount_total"/>
                             </group>
                             <group col="6" colspan="4" states="draft">
-                                <label string=""/>
+
+                                <group attrs="{'invisible': [('type', '=', 'out_invoice')]}">
+                                    <!-- in IVI shift the "Validate button" right -->
+                                    <label string=""/>
+                                </group>
+
+                                <button name="button_split_invoice" type="object" string="Split Intermission Voucher OUT"
+                                        icon="gtk-cut"
+                                        attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}"/>
+
                                 <!-- add a confirmation step only for IVOs when "synced" isn't selected -->
                                 <button name="invoice_open" type="object" string="Validate"
                                         icon="gtk-go-forward"
@@ -748,6 +757,12 @@
                         </group>
                         <field name="partner_type" invisible="1"/>
                         <group col="8" colspan="4">
+
+                            <button name="button_split_invoice" type="object" string="Split Stock Transfer Voucher"
+                                    icon="gtk-cut"
+                                    context="{'from_stv': True}"
+                                    attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}"/>
+
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
                             <!-- add a confirmation step only for STV (not for Customer Refunds)
                                  when the partner type is compatible with a synchro but "synced" isn't ticked -->
@@ -890,7 +905,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]</field>
-            <field name="context">{'type':'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out'}</field>
+            <field name="context">{'type':'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
@@ -918,7 +933,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field name="view_id" ref="view_intermission_form"/>
             <field name="domain">[('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]</field>
-            <field name="context">{'type':'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in'}</field>
+            <field name="context">{'type':'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
@@ -946,7 +961,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', False)]</field>
-            <field name="context">{'type':'out_invoice', 'journal_type': 'sale'}</field>
+            <field name="context">{'type':'out_invoice', 'journal_type': 'sale', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
             <field name="help">With Customer Invoices you can create and manage sales invoices issued to your customers. OpenERP can also generate draft invoices automatically from sales orders or deliveries. You should only confirm them before sending them to your customers.</field>
         </record>
