@@ -8,6 +8,8 @@ from tools.translate import _
 import decimal_precision as dp
 from mx import DateTime
 from dateutil.relativedelta import relativedelta
+from lxml import etree
+
 
 class stock_production_lot(osv.osv):
     _name = 'stock.production.lot'
@@ -330,16 +332,14 @@ class stock_production_lot(osv.osv):
         return res
 
     def _get_stock_location_id(self, cr, uid, ids, field_name, arg, context=None):
-        # TODO remove if location name set in title
         if context is None:
             context = {}
 
         res = {}
-        stock_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
         if context.get('full'):  # Prevent to display the location's complete_name
             context.pop('full')
         for _id in ids:
-            res[_id] = context['location_id'] if isinstance(context.get('location_id'), (int, long)) else stock_id
+            res[_id] = context['location_id'] if isinstance(context.get('location_id'), (int, long)) else False
 
         return res
 
@@ -632,6 +632,30 @@ class stock_production_lot(osv.osv):
             revision_obj.create(cr, uid, values, context=context)
 
         return super(stock_production_lot, self).write(cr, uid, ids, vals, context=context)
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Correct fields in order to have those from account_statement_from_invoice_lines (in case where account_statement_from_invoice is used)
+        """
+        if context is None:
+            context = {}
+
+        has_location = False
+        if view_type == 'tree':
+            if (context.get('expiry_date_check', False) and not context.get('batch_number_check', False)) or context.get('hidden_perishable_mandatory', False):
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_production_lot_expiry_date_tree')
+                if view:
+                    view_id = view[1]
+            if context.get('location_id') and isinstance(context['location_id'], (int, long)):
+                has_location = True
+
+        result = super(stock_production_lot, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if not has_location:
+            root = etree.fromstring(result['arch'])
+            for node in root.xpath("//field[@name='stock_location_id']"):
+                node.set('invisible', "1")
+            result['arch'] = etree.tostring(root)
+        return result
 
 
     def create_sequence(self, cr, uid, vals, context=None):
