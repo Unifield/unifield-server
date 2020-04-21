@@ -167,6 +167,15 @@ class account_invoice_import(osv.osv_memory):
                     if posting_date < account.activation_date or (account.inactivation_date and posting_date >= account.inactivation_date):
                         errors.append(_("Line %s: the account %s is inactive.") % (current_line_num, account_code))
                         continue
+                    # restricted_area = accounts allowed. Note: the context is different for each type and used in the related fnct_search
+                    if invoice.is_intermission:
+                        restricted_area = 'intermission_lines'  # for IVI / IVO
+                    else:
+                        restricted_area = 'invoice_lines'  # for SI / STV
+                    if not account_obj.search_exist(cr, uid, [('id', '=', account.id), ('restricted_area', '=', restricted_area)],
+                                                    context=context):
+                        errors.append(_("Line %s: the account %s is not allowed.") % (current_line_num, account_code))
+                        continue
                     vals['account_id'] = account.id
                     try:
                         unit_price = float(unit_price)
