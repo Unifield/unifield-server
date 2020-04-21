@@ -9903,6 +9903,7 @@ msgstr "tender.cancel.wizard"
 #. module: account_override
 #: view:account.invoice:0
 #: model:ir.model,name:account_override.model_wizard_split_invoice
+#: code:addons/account_override/invoice.py:1276
 msgid "Split Invoice"
 msgstr "Fractionner Facture"
 
@@ -109182,3 +109183,15 @@ msgstr "Compte de Débit par défaut pour les Journaux de Liquidités"
 #: field:res.company,cash_credit_account_id:0
 msgid "Cash Default Credit Account"
 msgstr "Compte de Crédit par défaut pour les Journaux de Liquidités"
+
+#. module: account_override
+#: view:account.invoice:0
+#: code:addons/account_override/invoice.py:1274
+msgid "Split Intermission Voucher OUT"
+msgstr "Fractionner Bon Intermission OUT"
+
+#. module: account_override
+#: view:account.invoice:0
+#: code:addons/account_override/invoice.py:1272
+msgid "Split Stock Transfer Voucher"
+msgstr "Fractionner Bon Client"
