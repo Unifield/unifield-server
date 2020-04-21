@@ -145,8 +145,8 @@ class account_invoice_import(osv.osv_memory):
                     line_number = line[cols['line_number']] and tools.ustr(line[cols['line_number']])
                     product_code = line[cols['product']] and tools.ustr(line[cols['product']])
                     account_code = line[cols['account']] and tools.ustr(line[cols['account']])
-                    quantity = line[cols['quantity']]
-                    unit_price = line[cols['unit_price']]
+                    quantity = line[cols['quantity']] or 0.0
+                    unit_price = line[cols['unit_price']] or 0.0
                     if not line_number:
                         errors.append(_('Line %s: the line number is missing.') % (current_line_num,))
                         continue
@@ -168,9 +168,6 @@ class account_invoice_import(osv.osv_memory):
                         errors.append(_("Line %s: the account %s is inactive.") % (current_line_num, account_code))
                         continue
                     vals['account_id'] = account.id
-                    if not unit_price:
-                        errors.append(_("Line %s: the unit price (mandatory) is missing.") % (current_line_num,))
-                        continue
                     try:
                         unit_price = float(unit_price)
                     except ValueError, e:
@@ -188,9 +185,6 @@ class account_invoice_import(osv.osv_memory):
                                 errors.append(_("Line %s: the product %s doesn't exist or is inactive.") % (current_line_num, product_code))
                                 continue
                             vals['product_id'] = product_ids[0]
-                        if not quantity:
-                            errors.append(_("Line %s: the quantity (mandatory) is missing.") % (current_line_num,))
-                            continue
                         try:
                             quantity = float(quantity)
                         except ValueError, e:
