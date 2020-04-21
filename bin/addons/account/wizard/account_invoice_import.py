@@ -263,6 +263,71 @@ class account_invoice_import(osv.osv_memory):
         """
         return False
 
+    def button_refresh_invoice(self, cr, uid, ids, context=None):
+        """
+        Displays the updated invoice
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        inv_obj = self.pool.get('account.invoice')
+        ir_model_obj = self.pool.get('ir.model.data')
+        wiz = self.browse(cr, uid, ids[0], fields_to_fetch=['invoice_id'], context=context)
+        if wiz:
+            invoice = wiz.invoice_id
+            domain = []
+            view_id = False
+            name = _('Invoice')
+            id_dom = [('id', '=', invoice.id)]
+            ivo_dom = [('type', '=', 'out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
+                       ('is_intermission', '=', True)]
+            ivi_dom = [('type', '=', 'in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
+                       ('is_intermission', '=', True)]
+            stv_dom = [('type', '=', 'out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
+                       ('is_intermission', '=', False)]
+            si_dom = [('type', '=', 'in_invoice'), ('is_direct_invoice', '=', False), ('is_inkind_donation', '=', False),
+                      ('is_debit_note', '=', False), ('is_intermission', '=', False)]
+            # IVO
+            if inv_obj.search_exist(cr, uid, id_dom + ivo_dom, context=context):
+                domain = ivo_dom
+                view_id = ir_model_obj.get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
+                name = _('Intermission Voucher OUT')
+            # IVI
+            elif inv_obj.search_exist(cr, uid, id_dom + ivi_dom, context=context):
+                domain = ivi_dom
+                view_id = ir_model_obj.get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
+                name = _('Intermission Voucher IN')
+            # STV
+            elif inv_obj.search_exist(cr, uid, id_dom + stv_dom, context=context):
+                domain = stv_dom
+                view_id = ir_model_obj.get_object_reference(cr, uid, 'account', 'invoice_form')
+                name = _('Stock Transfer Vouchers')
+            # SI
+            elif inv_obj.search_exist(cr, uid, id_dom + si_dom, context=context):
+                domain = si_dom
+                view_id = ir_model_obj.get_object_reference(cr, uid, 'account', 'invoice_supplier_form')
+                name = _('Supplier Invoices')
+            if domain and view_id:
+                view_id = view_id[1] or False
+                res = {
+                       'domain': domain,
+                       'view_type': 'form',
+                       'res_model': 'account.invoice',
+                       'view_id': [view_id],
+                       'view_mode': 'form,tree',
+                       'target': 'crush',
+                       'name': name,
+                       'res_id': invoice.id,
+                       'context': context,
+                       'type': 'ir.actions.act_window',
+                }
+            else:
+                # simply close the wizard
+                res = {'type': 'ir.actions.act_window_close'}
+        return res
+
+
 account_invoice_import()
 
 
@@ -273,6 +338,7 @@ class account_invoice_import_errors(osv.osv_memory):
         'name': fields.text("Description", readonly=True, required=True),
         'wizard_id': fields.many2one('account.invoice.import', "Wizard", required=True, readonly=True),
     }
+
 
 account_invoice_import_errors()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -37,7 +37,8 @@
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
                         <button name="button_validate" type="object" string="Import" icon="terp-camera_test"/>
                     </group>
-
+                    <button name="button_refresh_invoice" type="object" icon="terp-camera_test" string="Ok"
+                            attrs="{'invisible': [('state', '!=', 'done')]}"/>
                     <field name="state" invisible="1"/>
                 </form>
             </field>
