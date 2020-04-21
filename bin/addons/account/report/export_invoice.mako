@@ -113,7 +113,7 @@
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${o.account_id.code|x}</Data></Cell>
   </Row>
 
-  <Row></Row>
+  <Row><Cell ss:StyleID="editable"><Data ss:Type="String"></Data></Cell></Row>
 
   <Row>
       <Cell ss:StyleID="non_editable"><Data ss:Type="String">${_('Line number')}</Data></Cell>
