@@ -82,6 +82,8 @@ class account_invoice_import(osv.osv_memory):
                 if not content:
                     raise osv.except_osv(_('Warning'), _('No content.'))
                 invoice = wiz.invoice_id
+                if invoice.state != 'draft':
+                    raise osv.except_osv(_('Warning'), _('The import is allowed only in Draft state.'))
                 rows = content.getRows()
                 nb_rows = len([x for x in content.getRows()])
                 self.write(cr, uid, [wiz.id], {'message': _('Checking header…'), 'progression': 5.00}, context)

@@ -109361,3 +109361,9 @@ msgstr "Ligne %s : le format du prix unitaire est incorrect."
 #, python-format
 msgid "Line %s: the product %s doesn't exist or is inactive."
 msgstr "Ligne %s : le produit %s n'existe pas ou est inactif."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:86
+#, python-format
+msgid "The import is allowed only in Draft state."
+msgstr "L'import est autorisé uniquement à l'état Brouillon."
