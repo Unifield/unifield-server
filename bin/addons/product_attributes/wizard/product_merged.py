@@ -25,7 +25,7 @@ class product_merged_wizard(osv.osv_memory):
         if block_msg:
             raise osv.except_osv(_('Warning'), block_msg)
 
-        error_used = prod_obj._error_has_move_or_bn(cr, uid, wiz.new_product_id.id, context=context)
+        error_used = prod_obj._error_used_in_doc(cr, uid, wiz.new_product_id.id, context=context)
         if error_used:
             raise osv.except_osv(_('Warning'), _('The selected NSL product has already been used in the past. Merge cannot be done for this product : %s') % error_used)
 

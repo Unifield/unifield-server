@@ -2453,14 +2453,30 @@ class product_attributes(osv.osv):
         }
 
 
-    def _error_has_move_or_bn(self, cr, uid, prod_id, context=None):
+    def _error_used_in_doc(self, cr, uid, prod_id, context=None):
         error = []
-        move_nb = self.pool.get('stock.move').search(cr, uid, [('product_id', '=', prod_id)], count=True, context=context)
-        if move_nb:
-            error.append(_('%d stock move(s)') % move_nb)
-        bn_nb = self.pool.get('stock.production.lot').search(cr, uid, [('product_id', '=', prod_id)], count=True, context=context)
-        if bn_nb:
-            error.append(_('%d batch(es)') % bn_nb)
+
+        doc_field_error_dom = [
+            ('stock.move', 'product_id', _('stock move(s)'), []),
+            ('stock.production.lot', 'product_id', _('batch(es)'), []),
+            ('purchase.order.line', 'product_id', _('PO line(s)'), [('rfq_ok', '=', False)]),
+            ('purchase.order.line', 'product_id', _('RfQ line(s)'), [('rfq_ok', '=', True)]),
+            ('sale.order.line', 'product_id', _('FO line(s)'), [('procurement_request', '=', False)]),
+            ('sale.order.line', 'product_id', _('IR line(s)'), [('procurement_request', '=', True)]),
+            ('tender.line', 'product_id', _('Tender line(s)'), []),
+            ('physical.inventory.counting', 'product_id', _('Inventory line(s)'), []),
+            ('initial.stock.inventory.line', 'product_id', _('Initial Stock Inventory line(s)'), []),
+            ('real.average.consumption.line', 'product_id', _('RAC line(s)'), []),
+            ('replenishment.segment.line', 'product_id', _('Replenishment Segment line(s)'), []),
+            ('product.list.line', 'name', _('Product list line(s)'), []),
+            ('composition.kit', 'composition_product_id', _('Composition Kit(s)'), []),
+            ('composition.item', 'item_product_id', _('Composition Kit line(s)'), []),
+        ]
+
+        for obj, field, msg, dom in doc_field_error_dom:
+            nb = self.pool.get(obj).search(cr, uid, [(field, '=', prod_id)]+dom, count=True, context=context)
+            if nb:
+                error.append('%d %s' % (nb, msg))
 
         return ', '.join(error)
 
@@ -2472,7 +2488,7 @@ class product_attributes(osv.osv):
         if not new_data['allow_merge']:
             raise osv.except_osv(_('Warning'), _('New product %s condition not met: inactive, NSL') % new_data['default_code'])
 
-        error_used = self._error_has_move_or_bn(cr, uid, nsl_prod_id, context=None)
+        error_used = self._error_used_in_doc(cr, uid, nsl_prod_id, context=None)
         if error_used:
             raise osv.except_osv(_('Warning'), _('The selected NSL product %s has already been used in the past. Merge cannot be done for this product : %s') % (new_data['default_code'], error_used))
 
