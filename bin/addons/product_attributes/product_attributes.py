@@ -673,6 +673,13 @@ class product_attributes(osv.osv):
 
         return res
 
+    def _get_product_instance_level(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        level = self.pool.get('res.company')._get_instance_level(cr, uid)
+        for _id in ids:
+            res[_id] = level
+        return res
+
     def _get_allow_merge(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for _id in ids:
@@ -995,6 +1002,7 @@ class product_attributes(osv.osv):
         'allow_merge': fields.function(_get_allow_merge, type='boolean', method=True, string="UD Allow merge"),
         'uf_write_date': fields.datetime(_('Write date')),
         'uf_create_date': fields.datetime(_('Creation date')),
+        'instance_level': fields.function(_get_product_instance_level, method=True, string='Instance Level', internal=1, type='char'),
     }
 
     def _get_default_sensitive_item(self, cr, uid, context=None):
