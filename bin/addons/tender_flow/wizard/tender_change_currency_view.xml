@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="tender_change_currency_view" model="ir.ui.view">
+            <field name="name">tender.change.currency.view</field>
+            <field name="model">tender.change.currency</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Change currency of the tender">
+                    <field name="tender_id" invisible="1" />
+                    <field name="old_currency_id" readonly="1" />
+                    <field name="new_currency_id" required="1" />
+                    <separator colspan="4" />
+                    <button special="cancel" string="Close" icon="gtk-cancel" colspan="2" />
+                    <button name="apply_to_lines" string="Apply to lines" icon="gtk-execute" type="object" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

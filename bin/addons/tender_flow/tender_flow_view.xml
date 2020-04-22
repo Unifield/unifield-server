@@ -20,7 +20,11 @@
                         <field name="categ" attrs="{'readonly': [('state', '!=', 'draft')]}"
                             on_change="onchange_categ(categ)"/>
                         <field name="priority" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="delivery_address" colspan="4" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('dest_address', '=', company_id)]"/>
+                        <field name="delivery_address" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('dest_address', '=', company_id)]"/>
+                        <group col="4" colspan="2">
+                            <field name="currency_id" colspan="1" attrs="{'readonly': [('state', '!=', 'comparison')]}" />
+                            <button name="change_currency" string="Change Cur." icon="terp-dolar" type="object" attrs="{'invisible': [('state', '!=', 'comparison')]}" />
+                        </group>
                         <field name="details" />
                     </group>
                     <notebook colspan="5">
@@ -70,6 +74,7 @@
                                     <field name="notes" />
                                     <field name="amount_total" />
                                     <field name="currency_id" />
+                                    <field name="amount_total_tender_currency" />
                                     <field name="rfq_state" />
                                 </tree>
                             </field>

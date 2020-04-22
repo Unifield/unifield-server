@@ -11067,9 +11067,10 @@ msgstr "Référence Fournisseur:"
 msgid "Stock Picking"
 msgstr "Stock Picking"
 
-#. modules: purchase_override, sale
+#. modules: purchase_override, sale, tender_flow
 #: field:purchase.order.change.currency,old_pricelist_id:0
 #: field:sale.order.change.currency,old_pricelist_id:0
+#: field:tender.change.currency,old_currency_id:0
 msgid "Old currency"
 msgstr "Ancienne devise"
 
@@ -15681,11 +15682,12 @@ msgstr "Warning! You cannot delete a synched supplier catalogue line created in 
 msgid "Total Selection"
 msgstr "Total Selection"
 
-#. modules: purchase_override, sale, purchase, procurement_request
+#. modules: purchase_override, sale, purchase, procurement_request, tender_flow
 #: view:purchase.order.change.currency:0
 #: view:sale.order.change.currency:0
 #: view:sale.order:0
 #: view:purchase.order:0
+#: view:tender.change.currency:0
 msgid "Apply to lines"
 msgstr "Appliquer aux lignes"
 
@@ -40593,11 +40595,6 @@ msgstr "Monaco"
 #: report:addons/account_override/report/open_invoices_xls.mako:305
 msgid "Supplier Refunds"
 msgstr "Avoirs Fournisseur"
-
-#. module: tender_flow
-#: field:tender.line,func_total_price:0
-msgid "Func. Total Price"
-msgstr "Prix Total Fonc."
 
 #. modules: sync_client, analytic_distribution
 #: model:ir.ui.menu,name:sync_client.ops_menu
@@ -70817,7 +70814,7 @@ msgstr "Banque"
 msgid "Only Kit products can be used for kits."
 msgstr "Seuls les Produits de Kit peuvent être utilisés pour les Kits."
 
-#. modules: sales_followup, account, purchase_override, procurement_request, res_currency_tables, sync_client, documents_done, product, kit, base, purchase_followup, sale, stock, msf_profile
+#. modules: sales_followup, account, purchase_override, procurement_request, res_currency_tables, sync_client, documents_done, product, kit, base, purchase_followup, sale, stock, msf_profile, tender_flow
 #: view:account.invoice.confirm:0
 #: view:base.language.install:0
 #: view:base.module.import:0
@@ -70838,6 +70835,7 @@ msgstr "Seuls les Produits de Kit peuvent être utilisés pour les Kits."
 #: view:sale.order.followup:0
 #: view:physical.inventory.import.wizard:0
 #: view:msf.instance.cloud.progress:0
+#: view:tender.change.currency:0
 msgid "Close"
 msgstr "Fermer"
 
@@ -76455,6 +76453,7 @@ msgstr "# de lignes importées"
 #: code:addons/consumption_calculation/weekly_forecast_report.py:506
 #: report:order.type.donation.certificate:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:220
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:73
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -93947,9 +93946,10 @@ msgstr "Sortie - Zone"
 msgid "Amount:"
 msgstr "Montant :"
 
-#. modules: purchase_override, sale
+#. modules: purchase_override, sale, tender_flow
 #: field:purchase.order.change.currency,new_pricelist_id:0
 #: field:sale.order.change.currency,new_pricelist_id:0
+#: field:tender.change.currency,new_currency_id:0
 msgid "New currency"
 msgstr "Nouvelle devise"
 
@@ -96564,6 +96564,7 @@ msgstr "Si le champ actif est sur Faux, cela vous permet de cacher le compte san
 #: field:tender.line,tender_id:0
 #: view:board.board:0
 #: selection:procurement.request.sourcing.document,linked_model:0
+#: field:tender.change.currency,tender_id:0
 msgid "Tender"
 msgstr "Appel d'offres"
 
@@ -109122,3 +109123,45 @@ msgstr "Compte de Débit par défaut pour les Journaux de Liquidités"
 #: field:res.company,cash_credit_account_id:0
 msgid "Cash Default Credit Account"
 msgstr "Compte de Crédit par défaut pour les Journaux de Liquidités"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
+msgid "Unit Price (Comparison Currency)"
+msgstr "Prix Unitaire (Devise de Comparaison)"
+
+#. module: purchase
+#: field:purchase.order,amount_total_tender_currency:0
+msgid "Total (Comparison Currency)"
+msgstr "Total (Devise de Comparaison)"
+
+#. module: purchase
+#: help:purchase.order,amount_total_tender_currency:0
+msgid "The total amount using the tender's currency for comparison"
+msgstr "Le montant total calculé en utilisant la devise de l'appel d'offre pour la comparaison"
+
+#. modules: purchase_compare_rfq, tender_flow
+#: field:wizard.compare.rfq,currency_id:0
+#: field:tender,currency_id:0
+msgid "Currency for Comparison"
+msgstr "Devise pour la Comparaison"
+
+#. module: tender_flow
+#: help:tender,currency_id:0
+msgid "Currency to use while comparing RfQs"
+msgstr "Devise à utiliser pour comparer les DdDs"
+
+#. module: tender_flow
+#: view:tender:0
+msgid "Change Cur."
+msgstr "Changer Dev."
+
+#. module: tender_flow
+#: code:addons/tender_flow/wizard/tender_change_currency.py:63
+#, python-format
+msgid "The currency of the Tender id:%s (%s) has been changed from id:%s (%s) to id:%s (%s)"
+msgstr "La devise de l'Appel d'Offre id:%s (%s) a été changé de id:%s (%s) en id:%s (%s)"
+
+#. module: tender_flow
+#: view:tender.change.currency:0
+msgid "Change currency of the tender"
+msgstr "Changer la devise de l'appel d'offre"

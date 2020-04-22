@@ -74,6 +74,18 @@ class wizard_compare_rfq(osv.osv_memory):
 
         return True
 
+    def _get_currency(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            if wiz.tender_id.currency_id:
+                res[wiz.id] = wiz.tender_id.currency_id.id
+            else:
+                res[wiz.id] = cur_id
+
+        return res
+
     _columns = {
         'line_ids': fields.one2many(
             'wizard.compare.rfq.line',
@@ -152,10 +164,13 @@ class wizard_compare_rfq(osv.osv_memory):
             store=False,
             readonly=False,
         ),
-        'currency_id': fields.many2one(
-            'res.currency',
-            string='Currency',
-            readonly=True,
+        'currency_id': fields.function(
+            _get_currency,
+            string="Currency for Comparison",
+            type='many2one',
+            relation='res.currency',
+            method=True,
+            store=False
         ),
     }
 
@@ -219,7 +234,6 @@ class wizard_compare_rfq(osv.osv_memory):
                 'warehouse_id': wh_id and wh_id.id or False,
                 'details': tender.details or '',
                 'notes': tender.notes or '',
-                'currency_id': tender.creator.company_id.currency_id.id,
             }, context=context)
 
             context.update({'tender_id': tender.id})
@@ -479,8 +493,6 @@ class wizard_compare_rfq_line(osv.osv_memory):
         if context is None:
             context = context
 
-        func_cur_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
-
         # Force the reading of some fields
         forced_flds = [
             'tender_line_id',
@@ -489,13 +501,15 @@ class wizard_compare_rfq_line(osv.osv_memory):
             if ffld not in vals:
                 vals.append(ffld)
 
-        res = super(wizard_compare_rfq_line, self).\
-            read(cr, uid, ids, vals, context=context, load=load)
+        res = super(wizard_compare_rfq_line, self).read(cr, uid, ids, vals, context=context, load=load)
 
+        cur_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
         t_id = context.get('tender_id', False)
         s_ids = []
         if t_id:
-            s_ids = t_obj.browse(cr, uid, t_id, context=context).supplier_ids
+            tender = t_obj.browse(cr, uid, t_id, fields_to_fetch=['supplier_ids', 'currency_id'], context=context)
+            s_ids = tender.supplier_ids
+            cur_id = tender.currency_id.id
 
         for sup in s_ids:
             sid = sup.id
@@ -509,14 +523,9 @@ class wizard_compare_rfq_line(osv.osv_memory):
                 if rfql_ids:
                     rfql = pol_obj.browse(cr, uid, rfql_ids[0], context=context)
                     pu = rfql.price_unit
-                    same_cur = rfql.order_id.pricelist_id.currency_id.id == func_cur_id
+                    same_cur = rfql.order_id.pricelist_id.currency_id.id == cur_id
                     if not same_cur:
-                        pu = cur_obj.compute(
-                            cr, uid,
-                            rfql.order_id.pricelist_id.currency_id.id,
-                            func_cur_id,
-                            pu,
-                            round=True)
+                        pu = cur_obj.compute(cr, uid, rfql.order_id.pricelist_id.currency_id.id, cur_id, pu, round=True)
 
                 r.update({
                     'name_%s' % sid: sup.name,

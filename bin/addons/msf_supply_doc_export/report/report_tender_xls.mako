@@ -60,17 +60,18 @@
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
 <Column ss:AutoFitWidth="1" ss:Width="320" />
-% for x in range(2,nb_of_columns):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
-% endfor
-    
+<Column ss:AutoFitWidth="1" ss:Width="150" />
+<Column ss:AutoFitWidth="1" ss:Width="70" />
+
 ## we loop over the tender_line_ids
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Unit Price (Comparison Currency)')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery Requested Date')}</Data></Cell>
     </Row>
     % for line in o.tender_line_ids:
@@ -80,6 +81,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.qty or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit and computePrice(line.currency_id.id, line.tender_id.currency_id.id, line.price_unit) or '')|x}</Data></Cell>
         % if isDate(o.requested_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.requested_date|n}T00:00:00.000</Data></Cell>
         % else:
