@@ -109347,8 +109347,8 @@ msgstr "La combinaison \"Devise, Partenaire et Date de Comptabilisation\" du fic
 #. module: account
 #: code:addons/account/wizard/account_invoice_import.py:121
 #, python-format
-msgid "The posting date either doesn't exist or has a wrong format."
-msgstr "La date de comptabilisation n'existe pas ou a un mauvais format."
+msgid "The posting date has a wrong format."
+msgstr "La date de comptabilisation a un mauvais format."
 
 #. module: account
 #: code:addons/account/wizard/account_invoice_import.py:183

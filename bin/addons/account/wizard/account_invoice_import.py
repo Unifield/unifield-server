@@ -28,6 +28,7 @@ from tempfile import NamedTemporaryFile
 from base64 import decodestring
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from account.report import export_invoice
+from datetime import datetime
 import threading
 import pooler
 import logging
@@ -120,9 +121,14 @@ class account_invoice_import(osv.osv_memory):
                 rows.next()  # document date is ignored
                 posting_date_line = import_cell_data_obj.get_line_values(cr, uid, ids, rows.next())
                 try:
-                    posting_date = posting_date_line[1].strftime('%Y-%m-%d')
-                except (IndexError, AttributeError), e:
-                    raise osv.except_osv(_('Warning'), _("The posting date either doesn't exist or has a wrong format."))
+                    posting_date = posting_date_line[1] or False
+                except IndexError, e:
+                    posting_date = False
+                if posting_date:
+                    try:
+                        posting_date = posting_date.strftime('%Y-%m-%d')
+                    except AttributeError, e:
+                        raise osv.except_osv(_('Warning'), _("The posting date has a wrong format."))
                 invoice_dom = [('id', '=', invoice.id),
                                ('currency_id', '=', currency_ids[0]),
                                ('partner_id', '=', partner_ids[0]),
@@ -168,7 +174,8 @@ class account_invoice_import(osv.osv_memory):
                         continue
                     account = account_obj.browse(cr, uid, account_ids[0], fields_to_fetch=['activation_date', 'inactivation_date'],
                                                  context=context)
-                    if posting_date < account.activation_date or (account.inactivation_date and posting_date >= account.inactivation_date):
+                    checking_date = posting_date or datetime.now().strftime('%Y-%m-%d')
+                    if checking_date < account.activation_date or (account.inactivation_date and checking_date >= account.inactivation_date):
                         errors.append(_("Line %s: the account %s is inactive.") % (current_line_num, account_code))
                         continue
                     # restricted_area = accounts allowed. Note: the context is different for each type and used in the related fnct_search
