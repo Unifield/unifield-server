@@ -109248,13 +109248,25 @@ msgstr "Fractionner Bon Intermission OUT"
 msgid "Split Stock Transfer Voucher"
 msgstr "Fractionner Bon Client"
 
-#. modules: account_override, account, register_accounting
-#: report:addons/account/report/export_invoice.mako:9
-#: model:ir.actions.report.xml,name:account.export_invoice
+#. modules: account_override, register_accounting
 #: view:account.invoice:0
 #: view:account.invoice:0
 msgid "Export Invoice"
 msgstr "Exporter la Facture"
+
+#. module: account
+#: report:addons/account/report/export_invoice.mako:9
+#: model:ir.actions.report.xml,name:account.export_invoice
+msgid "Export - Invoice"
+msgstr "Export - Facture"
+
+#. modules: account_override, account, register_accounting
+#: view:account.invoice.import:0
+#: code:addons/account_override/invoice.py:1652
+#: view:account.invoice:0
+#, python-format
+msgid "Import Invoice"
+msgstr "Importer la Facture"
 
 #. module: account
 #: code:addons/account/wizard/account_invoice_import.py:159

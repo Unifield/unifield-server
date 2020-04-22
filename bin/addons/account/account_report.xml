@@ -168,8 +168,8 @@
 
          <!-- Export Invoice report -->
          <report id="export_invoice"
-                 string="Export Invoice"
-                 target_filename="Export Invoice"
+                 string="Export - Invoice"
+                 target_filename="Export - Invoice"
                  model="account.invoice"
                  name="account.export_invoice"
                  file="account/report/export_invoice.mako"
