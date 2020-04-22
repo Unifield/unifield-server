@@ -151,7 +151,7 @@
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <FitToPage/>
    <PageSetup>
-       <Layout x:Orientation="Landscape"/>
+       <Layout x:Orientation="Portrait"/>
        <Header x:Margin="0.4921259845"/>
        <Footer x:Margin="0.4921259845"/>
        <PageMargins x:Bottom="0.984251969" x:Left="0.78740157499999996" x:Right="0.78740157499999996" x:Top="0.984251969"/>

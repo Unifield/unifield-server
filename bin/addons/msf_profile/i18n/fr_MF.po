@@ -68673,7 +68673,7 @@ msgstr "Utilisé dans le code pour sélectionner des prix spécifiques calculés
 msgid "Kit Composition"
 msgstr "Kit - Composition"
 
-#. modules: register_accounting, msf_homere_interface, account_override, base, msf_doc_import, msf_profile, sync_client, msf_supply_doc_export
+#. modules: register_accounting, msf_homere_interface, account_override, base, msf_doc_import, msf_profile, sync_client, msf_supply_doc_export, account
 #: view:ir.attachment:0
 #: view:ir.attachment:0
 #: selection:msf.doc.import.accounting,state:0
@@ -68686,6 +68686,7 @@ msgstr "Kit - Composition"
 #: field:account.direct.invoice.wizard.line,create_date:0
 #: selection:sync.client.log_sale_purchase,action_type:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:896
+#: selection:account.invoice.import,state:0
 msgid "Created"
 msgstr "Créé"
 
@@ -73516,6 +73517,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/account_override/period.py:148
 #: code:addons/account_override/account.py:1256
 #: code:addons/account/wizard/account_invoice_import.py:0
+#: selection:account.invoice.import,state:0
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -82843,6 +82845,7 @@ msgstr "Sélectionner un fournisseur"
 #: selection:wizard.import.ppl.to.create.ship,state:0
 #: selection:wizard.import.product.line,state:0
 #: selection:product.mass.update,state:0
+#: selection:account.invoice.import,state:0
 #, python-format
 msgid "Done"
 msgstr "Terminé"
@@ -83602,7 +83605,7 @@ msgstr "OPW"
 msgid "Sourced-n line"
 msgstr "Ligne sourcée-n"
 
-#. modules: analytic_distribution, sales_followup, register_accounting, reason_types_moves, msf_homere_interface, stock_override, consumption_calculation, sale, specific_rules, order_types, msf_tools, mission_stock, msf_doc_import, stock, product
+#. modules: analytic_distribution, sales_followup, register_accounting, reason_types_moves, msf_homere_interface, stock_override, consumption_calculation, sale, specific_rules, order_types, msf_tools, mission_stock, msf_doc_import, stock, product, acccount
 #: field:import.commitment.wizard,in_progress:0
 #: view:product.history.consumption:0
 #: selection:product.history.consumption,fake_status:0
@@ -83647,6 +83650,7 @@ msgstr "Ligne sourcée-n"
 #: selection:wizard.import.product.line,state:0
 #: selection:product.mass.update,state:0
 #: selection:stock.expired.damaged.report,state:0
+#: selection:account.invoice.import,state:0
 #, python-format
 msgid "In Progress"
 msgstr "En cours"

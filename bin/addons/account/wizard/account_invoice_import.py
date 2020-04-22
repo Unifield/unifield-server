@@ -67,6 +67,8 @@ class account_invoice_import(osv.osv_memory):
         partner_obj = self.pool.get('res.partner')
         account_obj = self.pool.get('account.account')
         product_obj = self.pool.get('product.product')
+        import_cell_data_obj = self.pool.get('import.cell.data')
+        errors_obj = self.pool.get('account.invoice.import.errors')
 
         try:
             for wiz in self.browse(cr, uid, ids, context):
@@ -95,7 +97,7 @@ class account_invoice_import(osv.osv_memory):
                 base_num = 10
                 rows.next()  # number is ignored
                 rows.next()  # journal is ignored
-                currency_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, rows.next())
+                currency_line = import_cell_data_obj.get_line_values(cr, uid, ids, rows.next())
                 try:
                     currency_name = currency_line[1]
                 except IndexError, e:
@@ -105,7 +107,7 @@ class account_invoice_import(osv.osv_memory):
                                                     ('active', '=', True)], limit=1, context=context)
                 if not currency_ids:
                     raise osv.except_osv(_('Error'), _("Currency %s not found or inactive.") % currency_name)
-                partner_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, rows.next())
+                partner_line = import_cell_data_obj.get_line_values(cr, uid, ids, rows.next())
                 try:
                     partner_name = partner_line[1]
                 except IndexError, e:
@@ -114,7 +116,7 @@ class account_invoice_import(osv.osv_memory):
                 if not partner_ids:
                     raise osv.except_osv(_('Error'), _("Partner %s not found or inactive.") % partner_name)
                 rows.next()  # document date is ignored
-                posting_date_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, rows.next())
+                posting_date_line = import_cell_data_obj.get_line_values(cr, uid, ids, rows.next())
                 try:
                     posting_date = posting_date_line[1].strftime('%Y-%m-%d')
                 except (IndexError, AttributeError), e:
@@ -139,7 +141,7 @@ class account_invoice_import(osv.osv_memory):
                 for num, r in enumerate(rows):
                     current_line_num = num + base_num
                     vals = {}
-                    line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
+                    line = import_cell_data_obj.get_line_values(cr, uid, ids, r)
                     line.extend([False for i in range(len(cols) - len(line))])
                     # get the data
                     line_number = line[cols['line_number']] and tools.ustr(line[cols['line_number']])
@@ -201,7 +203,7 @@ class account_invoice_import(osv.osv_memory):
                             continue
                         vals['quantity'] = quantity
                     # update the line
-                    invoice_line_obj.write(cr, uid, invoice_line_ids[0], vals)
+                    invoice_line_obj.write(cr, uid, invoice_line_ids[0], vals, context=context)
                     # update the percent
                     if current_line_num == nb_rows:
                         self.write(cr, uid, [wiz.id], {'progression': lines_percent}, context)
@@ -215,11 +217,11 @@ class account_invoice_import(osv.osv_memory):
                 cr.rollback()
                 message = _('Import FAILED.')
                 # delete old errors and create new ones
-                error_ids = self.pool.get('account.invoice.import.errors').search(cr, uid, [], context)
+                error_ids = errors_obj.search(cr, uid, [], context)
                 if error_ids:
-                    self.pool.get('account.invoice.import.errors').unlink(cr, uid, error_ids, context)
+                    errors_obj.unlink(cr, uid, error_ids, context)
                 for e in errors:
-                    self.pool.get('account.invoice.import.errors').create(cr, uid, {'wizard_id': wiz.id, 'name': e}, context)
+                    errors_obj.create(cr, uid, {'wizard_id': wiz.id, 'name': e}, context)
                 wiz_state = 'error'
             else:
                 message = _('Import successful.')
