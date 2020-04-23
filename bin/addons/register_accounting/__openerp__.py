@@ -53,7 +53,6 @@
         'account_view.xml',
         'account_bank_statement_workflow.xml',
         'wizard/wizard_closing_cashbox.xml',
-        'wizard/wizard_cashbox_write_off.xml',
         'wizard/wizard_register_reopen.xml',
         'wizard/wizard_temp_posting.xml',
         'wizard/wizard_hard_posting.xml',
