@@ -47,6 +47,7 @@ class tender(osv.osv):
         default.update({
             'internal_state': 'draft',  # UF-733: Reset the internal_state
             'supplier_info_updated': False,
+            'currency_id': False,
         })
         if not 'sale_order_id' in default:
             default['sale_order_id'] = False
