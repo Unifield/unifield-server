@@ -54,6 +54,44 @@ class patch_scripts(osv.osv):
 
 
     # UF17.0
+    def us_7236_remove_reg_wkf_and_partial_close_state(self, cr, uid, *a, **b):
+        """
+        Both the workflows and the "Partial Close" state are not used anymore in the registers, so:
+        - deletes the workflow related to registers
+        - sets to Open the existing registers in "Partial Close" state
+        """
+        delete_wkf_transition = """
+            DELETE FROM wkf_transition
+            WHERE (signal IN ('button_open', 'button_confirm_cash', 'button_reopen', 'button_write_off') OR signal IS NULL)
+            AND act_from IN 
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='account.cash.statement.workflow' AND osv='account.bank.statement')
+                );
+        """
+        delete_wkf_workitem = """
+            DELETE FROM wkf_workitem WHERE act_id IN
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='account.cash.statement.workflow' AND osv='account.bank.statement')
+                );
+        """
+        delete_wkf_activity = """
+            DELETE FROM wkf_activity 
+            WHERE wkf_id = (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract');
+        """
+        delete_wkf = """
+            DELETE FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract';
+        """
+        update_reg_state = """
+            UPDATE account_bank_statement SET state = 'open' WHERE state = 'partial_close';
+        """
+        cr.execute(delete_wkf_transition)
+        cr.execute(delete_wkf_workitem)
+        cr.execute(delete_wkf_activity)
+        cr.execute(delete_wkf)
+        cr.execute(update_reg_state)
+        self._logger.warn('%s registers in Partial Close state have been re-opened.' % (cr.rowcount,))
+        return True
+
     def us_7221_reset_starting_balance(self, cr, uid, *a, **b):
         """
         Reset the Starting Balance of the first register created for each journal if it is still in Draft state
