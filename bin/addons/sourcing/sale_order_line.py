@@ -2387,10 +2387,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         return result
 
     def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None,
-                   context=None, orderby=False):
+                   context=None, orderby=False, count=False):
         res = super(sale_order_line, self).read_group(cr, uid, domain, fields,
                                                       groupby, offset=offset, limit=limit, context=context,
-                                                      orderby=orderby)
+                                                      orderby=orderby, count=count)
 
         if 'line_number' in fields:
             """

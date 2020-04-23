@@ -54,7 +54,9 @@ class stock_picking(osv.osv):
 
         self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], values)
 
-        if move_line.picking_id and move_line.picking_id.purchase_id and move_line.picking_id.purchase_id.order_type == 'in_kind':
+        order_type = move_line.picking_id and move_line.picking_id.purchase_id and move_line.picking_id.purchase_id.order_type
+        is_intersection = move_line.picking_id and move_line.picking_id.partner_id and move_line.picking_id.partner_id.partner_type == 'section'
+        if order_type == 'in_kind' or (order_type in ['donation_exp', 'donation_st'] and is_intersection):
             order_line = move_line.purchase_line_id or False
             account_id = (order_line.product_id and order_line.product_id.donation_expense_account and order_line.product_id.donation_expense_account.id) \
                 or (order_line.product_id.categ_id and order_line.product_id.categ_id.donation_expense_account and order_line.product_id.categ_id.donation_expense_account.id) \

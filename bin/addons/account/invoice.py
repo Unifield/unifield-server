@@ -332,7 +332,7 @@ class account_invoice(osv.osv):
         'currency_id': fields.many2one('res.currency', 'Currency', required=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, hide_default_menu=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_type': fields.related('journal_id', 'type', type='selection', string='Journal Type',
-                                       selection=_get_journal_type, store=False),
+                                       selection=_get_journal_type, store=False, write_relate=False),
         'company_id': fields.many2one('res.company', 'Company', required=True, change_default=True, readonly=True, states={'draft':[('readonly',False)]}),
         'check_total': fields.float('Total', digits_compute=dp.get_precision('Account'), states={'open':[('readonly',True)],'inv_close':[('readonly',True)],'paid':[('readonly',True)]}),
         'reconciled': fields.function(_reconciled, method=True, string='Paid/Reconciled', type='boolean',
@@ -762,12 +762,15 @@ class account_invoice(osv.osv):
             'move_name':False,
             'internal_number': False,
             'main_purchase_id': False,
-            'from_supply': False,
-            'synced': False,
             'counterpart_inv_number': False,
             'counterpart_inv_status': False,
             'refunded_invoice_id': False,
         })
+        if not context.get('from_split'):  # some values are kept in case of inv. generated via the "Split" feature
+            default.update({
+                'from_supply': False,
+                'synced': False,
+            })
         if 'date_invoice' not in default:
             default.update({
                 'date_invoice':False
@@ -2103,4 +2106,29 @@ class res_partner(osv.osv):
         return super(res_partner, self).copy(cr, uid, ids, default, context=context)
 res_partner()
 
+
+class ir_values(osv.osv):
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
+        """
+        Hides the Report "Invoice Excel Export" in the menu of other invoices than IVO/IVI
+        """
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
+        model_names = [x[0] for x in models]
+        if key == 'action' and key2 == 'client_print_multi' and 'account.invoice' in model_names:
+            new_act = []
+            for v in values:
+                if not context.get('is_intermission') and len(v) > 2 and v[2].get('report_name', '') == 'invoice.excel.export':
+                    continue
+                else:
+                    new_act.append(v)
+            values = new_act
+        return values
+
+
+ir_values()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
