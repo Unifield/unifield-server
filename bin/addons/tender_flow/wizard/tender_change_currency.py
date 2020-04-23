@@ -55,10 +55,6 @@ class tender_change_currency(osv.osv_memory):
         line_obj = self.pool.get('tender.line')
 
         for wiz in self.browse(cr, uid, ids, context=context):
-            for line in wiz.tender_id.tender_line_ids:
-                new_price = currency_obj.compute(cr, uid, wiz.old_currency_id.id, wiz.new_currency_id.id, line.price_unit, round=False, context=context)
-                line_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=c)
-
             tender_obj.write(cr, uid, wiz.tender_id.id, {'currency_id': wiz.new_currency_id.id}, context=context)
             self.infolog(cr, uid, _('The currency of the Tender id:%s (%s) has been changed from id:%s (%s) to id:%s (%s)') % (
                 wiz.tender_id.id, wiz.tender_id.name, wiz.old_currency_id.id, wiz.old_currency_id.name,
