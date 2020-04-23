@@ -109,7 +109,7 @@ class account_invoice_import(osv.osv_memory):
                                                    [('name', '=', currency_name), ('currency_table_id', '=', False),
                                                     ('active', '=', True)], limit=1, context=context)
                 if not currency_ids:
-                    raise osv.except_osv(_('Error'), _("Currency %s not found or inactive.") % currency_name)
+                    raise osv.except_osv(_('Error'), _("Currency %s not found or inactive.") % (currency_name or '',))
                 partner_line = import_cell_data_obj.get_line_values(cr, uid, ids, rows.next())
                 try:
                     partner_name = partner_line[1]
@@ -117,7 +117,7 @@ class account_invoice_import(osv.osv_memory):
                     raise osv.except_osv(_('Warning'), _('No partner found.'))
                 partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_name), ('active', '=', True)], context=context)
                 if not partner_ids:
-                    raise osv.except_osv(_('Error'), _("Partner %s not found or inactive.") % partner_name)
+                    raise osv.except_osv(_('Error'), _("Partner %s not found or inactive.") % (partner_name or '',))
                 rows.next()  # document date is ignored
                 posting_date_line = import_cell_data_obj.get_line_values(cr, uid, ids, rows.next())
                 try:
