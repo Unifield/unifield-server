@@ -62,15 +62,10 @@ class tender_rfq_comparison(report_sxw.rml_parse):
                 if rfql_ids:
                     rfql = pol_obj.browse(self.cr, self.uid, rfql_ids[0])
                     pu = rfql.price_unit
-                    same_cur = rfql.order_id.pricelist_id.currency_id.id == self.localcontext['company'].currency_id.id
-                    if not same_cur:
-                        pu = cur_obj.compute(
-                            self.cr,
-                            self.uid,
-                            rfql.order_id.pricelist_id.currency_id.id,
-                            self.localcontext['company'].currency_id.id,
-                            pu,
-                            round=True)
+                    to_cur = rfql.order_id.tender_id.currency_id and rfql.order_id.tender_id.currency_id.id or \
+                             self.localcontext['company'].currency_id.id
+                    if rfql.order_id.pricelist_id.currency_id.id != to_cur:
+                        pu = cur_obj.compute(self.cr, self.uid, rfql.order_id.pricelist_id.currency_id.id, to_cur, pu, round=True)
 
                 line_vals.update({
                     'name_%s' % sid: sup.name,

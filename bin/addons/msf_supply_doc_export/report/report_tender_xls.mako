@@ -61,7 +61,9 @@
 <Column ss:AutoFitWidth="1" ss:Width="120" />
 <Column ss:AutoFitWidth="1" ss:Width="320" />
 <Column ss:AutoFitWidth="1" ss:Width="70" />
-<Column ss:AutoFitWidth="1" ss:Width="150" />
+<Column ss:AutoFitWidth="1" ss:Width="70" />
+<Column ss:AutoFitWidth="1" ss:Width="70" />
+<Column ss:AutoFitWidth="1" ss:Width="140" />
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 
 ## we loop over the tender_line_ids
