@@ -29,7 +29,7 @@ class osv_memory_autovacuum(osv.osv_memory):
         for model in self.pool.obj_list():
             obj = self.pool.get(model)
             if isinstance(obj, orm_memory):
-                obj.vaccum(cr, uid)
+                obj.vaccum(cr, uid, force=True)
         return True
 
 osv_memory_autovacuum()
