@@ -11,7 +11,7 @@ class product_merged_wizard(osv.osv_memory):
 
     _columns = {
         'old_product_id': fields.many2one('product.product', 'Old local Product', readonly=1),
-        'new_product_id': fields.many2one('product.product', 'UD NSL Product', domain=[('international_status', '=', 'UniData'), ('active', '=', False), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)]),
+        'new_product_id': fields.many2one('product.product', 'UD NSL Product', domain=[('international_status', '=', 'UniData'), ('active', '=', False), ('replace_product_id', '=', False)]),
         'warning_msg': fields.text('Warning Message'),
         'warning_checked': fields.boolean('Warning Checked'),
     }
@@ -24,6 +24,9 @@ class product_merged_wizard(osv.osv_memory):
         error_used = prod_obj._error_used_in_doc(cr, uid, wiz.new_product_id.id, context=context)
         if error_used:
             raise osv.except_osv(_('Warning'), _('The selected NSL product has already been used in the past. Merge cannot be done for this product.'))
+
+        if prod_obj._has_pipe(cr, uid, wiz.new_product_id.id):
+            raise osv.except_osv(_('Warning'), _('Warning there is stock / pipeline in at least one of the instances in this mission! Therefore this product cannot be merged.'))
 
         block_msg = prod_obj.check_same_value(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, blocker=True, context=context)
         if block_msg:

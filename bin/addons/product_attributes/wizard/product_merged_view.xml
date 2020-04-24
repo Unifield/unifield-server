@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <form string="Merge Product">
                     <field name="old_product_id" colspan="4" />
-                    <field name="new_product_id" colspan="4" required="1" on_change="change_warning()"/>
+                    <field name="new_product_id" colspan="4" required="1" on_change="change_warning()" context="{'search_default_nsl': 1, 'display_active_filter': 0, 'display_nsl_filter': 1}"/>
                     <field name="warning_checked" invisible="1" />
                     <group colspan="4" attrs="{'invisible': [('warning_msg', '=', False)]}">
                         <separator colspan="4" string="Warning" />

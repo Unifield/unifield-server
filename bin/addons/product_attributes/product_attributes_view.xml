@@ -477,6 +477,11 @@
                        <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
                        <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
                        <filter string="Asset" icon="terp-accessories-archiver" domain="[('subtype','=','asset')]"/>
+                       <group name="display_nsl_filter" invisible="1">
+                           <newline />
+                           <filter string="NSL" name ="nsl" domain="[('standard_ok', '=', 'non_standard_local')]" />
+                           <filter string="SL + ST" name ="sl_st" domain="[('standard_ok', 'in', ['standard_local', 'non_standard'])]" />
+                        </group>
                        <group name="display_active_filter" invisible="1">
                              <label />
                             <filter name="active" string="Active" domain="[('active', '=', True)]" icon="terp-check" />

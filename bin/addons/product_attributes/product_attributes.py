@@ -652,23 +652,30 @@ class product_attributes(osv.osv):
 
 
     def _get_local_from_hq(self, cr, uid, ids, field_name, args, context=None):
+        '''
+            used by sync to set active=False at coo / proj
+        '''
+
         res = {}
         for _id in ids:
             res[_id] = False
 
         if self.pool.get('res.company')._get_instance_level(cr, uid) == 'section':
-            for _id in self.search(cr, uid, [('id', 'in', ids), ('standard_ok', '=', 'non_standard_local'), ('active', 'in', ['t', 'f'])], context=context):
+            for _id in self.search(cr, uid, [('id', 'in', ids), ('standard_ok', '=', 'non_standard_local'), ('international_status', '=', 'UniData'), ('active', 'in', ['t', 'f'])], context=context):
                 res[_id] = True
 
         return res
 
     def _get_local_activation_from_merge(self, cr, uid, ids, field_name, args, context=None):
+        '''
+            used by sync to not sync down active=True from coo to proj, activation of UD prod from COO will be done by the sync merge update
+        '''
         res = {}
         for _id in ids:
             res[_id] = False
 
         if self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
-            for _id in self.search(cr, uid, [('id', 'in', ids), ('standard_ok', '=', 'non_standard_local'), ('active', '=', True), ('replace_product_id', '!=', False)], context=context):
+            for _id in self.search(cr, uid, [('id', 'in', ids), ('international_status', '=', 'UniData'), ('active', '=', True), ('replace_product_id', '!=', False)], context=context):
                 res[_id] = True
 
         return res
@@ -687,7 +694,7 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
         if context.get('sync_update_execution') or self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
-            for p_id in self.search(cr, uid, [('id', 'in', ids), ('active', '=', False), ('international_status', '=', 'UniData'), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)], context=context):
+            for p_id in self.search(cr, uid, [('id', 'in', ids), ('active', '=', False), ('international_status', '=', 'UniData'), ('replace_product_id', '=', False)], context=context):
                 res[p_id] = True
         return res
 
@@ -1078,6 +1085,12 @@ class product_attributes(osv.osv):
         if view_type == 'search' and context.get('display_active_filter'):
             root = etree.fromstring(res['arch'])
             for field in root.xpath('//group[@name="display_active_filter"]'):
+                field.set('invisible', '0')
+            res['arch'] = etree.tostring(root)
+
+        if view_type == 'search' and context.get('display_nsl_filter'):
+            root = etree.fromstring(res['arch'])
+            for field in root.xpath('//group[@name="display_nsl_filter"]'):
                 field.set('invisible', '0')
             res['arch'] = etree.tostring(root)
 
@@ -2480,6 +2493,31 @@ class product_attributes(osv.osv):
 
         return ', '.join(error)
 
+
+    def _has_pipe(self, cr, uid, ids):
+        if not ids:
+            return False
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        cr.execute('''
+                    select
+                        l.product_id
+                    from
+                        stock_mission_report r, msf_instance i, stock_mission_report_line l
+                    where
+                        i.id = r.instance_id and
+                        i.state = 'active' and
+                        l.mission_report_id = r.id and
+                        l.product_id in %s and
+                        r.full_view = 'f' and
+                        ( l.internal_qty > 0 or l.in_pipe_qty > 0)
+                    group by l.product_id
+                ''' , (tuple(ids), ))
+        return [x[0] for x in cr.fetchall()]
+
+
     def merge_product(self, cr, uid, nsl_prod_id, local_id, context=None):
         if context is None:
             context = {}
@@ -2492,6 +2530,8 @@ class product_attributes(osv.osv):
         if error_used:
             raise osv.except_osv(_('Warning'), _('The selected NSL product %s has already been used in the past. Merge cannot be done for this product') % (new_data['default_code'], ))
 
+        if self._has_pipe(cr, uid, nsl_prod_id):
+            raise osv.except_osv(_('Warning'), _('Warning there is stock / pipeline in at least one of the instances in this mission! Therefore the product cannot be merged') % (new_data['default_code'], ))
 
         local_dom = [('id', '=', local_id), ('international_status', '=', 'Local'), ('replaced_by_product_id', '=', False)]
         if not context.get('sync_update_execution'):
