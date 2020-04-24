@@ -840,23 +840,10 @@ class tender(osv.osv):
 
     def change_currency(self, cr, uid, ids, context=None):
         '''
-        Launches the wizard to change the currency and update lines
+        Just reload the tender
         '''
         if not context:
             context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for tender in self.browse(cr, uid, ids, context=context):
-            data = {'tender_id': tender.id, 'old_currency_id': tender.currency_id.id, 'new_currency_id': tender.currency_id.id}
-            wiz = self.pool.get('tender.change.currency').create(cr, uid, data, context=context)
-            return {'type': 'ir.actions.act_window',
-                    'res_model': 'tender.change.currency',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'res_id': wiz,
-                    'target': 'new'}
 
         return True
 
@@ -929,6 +916,7 @@ class tender_line(osv.osv):
         '''
         return the total price
         '''
+        cur_obj = self.pool.get('res.currency')
         result = {}
         for line in self.browse(cr, uid, ids, context=context):
             result[line.id] = {}
@@ -943,6 +931,17 @@ class tender_line(osv.osv):
             else:
                 curr_id = func_cur
             result[line.id]['currency_id'] = curr_id
+
+            # Calculate the prices using the tender's currency
+            if func_cur != curr_id:
+                result[line.id]['tender_price_unit'] = cur_obj.compute(cr, uid, func_cur, curr_id, line.price_unit,
+                                                                       round=False, context=context)
+                result[line.id]['tender_total_price'] = result[line.id]['total_price'] and \
+                                                        cur_obj.compute(cr, uid, func_cur, curr_id, result[line.id]['total_price'],
+                                                                        round=False, context=context) or 0.0
+            else:
+                result[line.id]['tender_price_unit'] = line.price_unit
+                result[line.id]['tender_total_price'] = result[line.id]['total_price']
 
         return result
 
@@ -965,8 +964,10 @@ class tender_line(osv.osv):
         # functions
         'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
         'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", digits_compute=dp.get_precision('Purchase Price Computation'), readonly=True),  # same precision as related field!
+        'tender_price_unit': fields.function(_get_total_price, method=True, type="float", string="Price unit", digits_compute=dp.get_precision('Purchase Price Computation'), multi='total', store=False, readonly=True),
         'delivery_confirmed_date': fields.related('purchase_order_line_id', 'confirmed_delivery_date', type="date", string="Delivery Confirmed Date", readonly=True),
         'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
+        'tender_total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
         'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
         'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
         'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="char", string="Related Line Number", readonly=True,),

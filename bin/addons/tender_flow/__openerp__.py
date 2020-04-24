@@ -43,7 +43,6 @@
         'board_purchase_view.xml',
         'tender_flow_report.xml',
         'audittrail_data_tender.yml',
-        'wizard/tender_change_currency_view.xml',
     ],
     'installable': True,
 }

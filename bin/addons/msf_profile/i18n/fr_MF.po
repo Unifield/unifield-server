@@ -11067,10 +11067,9 @@ msgstr "Référence Fournisseur:"
 msgid "Stock Picking"
 msgstr "Stock Picking"
 
-#. modules: purchase_override, sale, tender_flow
+#. modules: purchase_override, sale
 #: field:purchase.order.change.currency,old_pricelist_id:0
 #: field:sale.order.change.currency,old_pricelist_id:0
-#: field:tender.change.currency,old_currency_id:0
 msgid "Old currency"
 msgstr "Ancienne devise"
 
@@ -15682,12 +15681,11 @@ msgstr "Warning! You cannot delete a synched supplier catalogue line created in 
 msgid "Total Selection"
 msgstr "Total Selection"
 
-#. modules: purchase_override, sale, purchase, procurement_request, tender_flow
+#. modules: purchase_override, sale, purchase, procurement_request
 #: view:purchase.order.change.currency:0
 #: view:sale.order.change.currency:0
 #: view:sale.order:0
 #: view:purchase.order:0
-#: view:tender.change.currency:0
 msgid "Apply to lines"
 msgstr "Appliquer aux lignes"
 
@@ -29664,6 +29662,7 @@ msgstr "purchase.import.xml.line"
 #. modules: tender_flow, msf_doc_import
 #: field:tender.line,price_unit:0
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:243
+#: field:tender.line,tender_price_unit:0
 msgid "Price unit"
 msgstr "Prix unitaire"
 
@@ -48563,6 +48562,7 @@ msgstr "Chinese (HK)"
 #: field:tender.line,total_price:0
 #: report:invoice:0
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:226
+#: field:tender.line,tender_total_price:0
 msgid "Total Price"
 msgstr "Prix Total"
 
@@ -70814,7 +70814,7 @@ msgstr "Banque"
 msgid "Only Kit products can be used for kits."
 msgstr "Seuls les Produits de Kit peuvent être utilisés pour les Kits."
 
-#. modules: sales_followup, account, purchase_override, procurement_request, res_currency_tables, sync_client, documents_done, product, kit, base, purchase_followup, sale, stock, msf_profile, tender_flow
+#. modules: sales_followup, account, purchase_override, procurement_request, res_currency_tables, sync_client, documents_done, product, kit, base, purchase_followup, sale, stock, msf_profile
 #: view:account.invoice.confirm:0
 #: view:base.language.install:0
 #: view:base.module.import:0
@@ -70835,7 +70835,6 @@ msgstr "Seuls les Produits de Kit peuvent être utilisés pour les Kits."
 #: view:sale.order.followup:0
 #: view:physical.inventory.import.wizard:0
 #: view:msf.instance.cloud.progress:0
-#: view:tender.change.currency:0
 msgid "Close"
 msgstr "Fermer"
 
@@ -93946,10 +93945,9 @@ msgstr "Sortie - Zone"
 msgid "Amount:"
 msgstr "Montant :"
 
-#. modules: purchase_override, sale, tender_flow
+#. modules: purchase_override, sale
 #: field:purchase.order.change.currency,new_pricelist_id:0
 #: field:sale.order.change.currency,new_pricelist_id:0
-#: field:tender.change.currency,new_currency_id:0
 msgid "New currency"
 msgstr "Nouvelle devise"
 
@@ -96564,7 +96562,6 @@ msgstr "Si le champ actif est sur Faux, cela vous permet de cacher le compte san
 #: field:tender.line,tender_id:0
 #: view:board.board:0
 #: selection:procurement.request.sourcing.document,linked_model:0
-#: field:tender.change.currency,tender_id:0
 msgid "Tender"
 msgstr "Appel d'offres"
 
@@ -109160,8 +109157,3 @@ msgstr "Changer Dev."
 #, python-format
 msgid "The currency of the Tender id:%s (%s) has been changed from id:%s (%s) to id:%s (%s)"
 msgstr "La devise de l'Appel d'Offre id:%s (%s) a été changé de id:%s (%s) en id:%s (%s)"
-
-#. module: tender_flow
-#: view:tender.change.currency:0
-msgid "Change currency of the tender"
-msgstr "Changer la devise de l'appel d'offre"
