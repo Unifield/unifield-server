@@ -1067,6 +1067,22 @@ class product_attributes(osv.osv):
 
         return True
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        if context is None:
+            context= {}
+
+        # to filter NSL prod by default on the m2o field in the merge prod wizard
+        if context.get('search_default_nsl'):
+            filter_standard_ok = False
+            for arg in args:
+                if arg[0] == 'standard_ok':
+                    filter_standard_ok = True
+                    break
+            if not filter_standard_ok:
+                args.append(('standard_ok', '=', 'non_standard_local'))
+
+        return super(product_attributes, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         Add a filter if the 'available_for_restriction' attribute is passed on context
