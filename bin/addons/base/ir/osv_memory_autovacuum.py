@@ -21,15 +21,21 @@
 
 from osv import osv
 from osv.orm import orm_memory
+from tools import misc
+import logging
 
 class osv_memory_autovacuum(osv.osv_memory):
     _name = 'osv_memory.autovacuum'
 
     def power_on(self, cr, uid, context=None):
+        logger = logging.getLogger('power_on')
         for model in self.pool.obj_list():
             obj = self.pool.get(model)
             if isinstance(obj, orm_memory):
-                obj.vaccum(cr, uid, force=True)
+                try:
+                    obj.vaccum(cr, uid, force=True)
+                except Exception, e:
+                    logger.error('Error: %s' % misc.get_traceback(e))
         return True
 
 osv_memory_autovacuum()
