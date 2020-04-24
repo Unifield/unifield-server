@@ -1244,8 +1244,8 @@ class tender_line(osv.osv):
         for tender_line in self.browse(cr, uid, ids, context=context):
             # commom fields:
             pricelist = tender_line.supplier_id.property_product_pricelist_purchase.id,
-            if tender_line.currency_id:
-                price_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', tender_line.currency_id.id)], context=context)
+            if tender_line.purchase_order_line_id:
+                price_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', tender_line.purchase_order_line_id.currency_id.id)], context=context)
                 if price_ids:
                     pricelist = price_ids[0]
             tender = tender_line.tender_id
