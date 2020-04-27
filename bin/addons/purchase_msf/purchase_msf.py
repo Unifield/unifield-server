@@ -16,18 +16,10 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
 
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 from osv import osv, fields
-from osv.orm import browse_record, browse_null
-from tools.translate import _
-import decimal_precision as dp
-import netsvc
-import pooler
-import time
 
 class purchase_order_line(osv.osv):
     '''
@@ -42,19 +34,19 @@ class purchase_order_line(osv.osv):
         result = {}
         for record in self.browse(cr, uid, ids, context=context):
             result[record.id] = {
-                                 'manufacturer_id': False,
-                                 'second_manufacturer_id': False,
-                                 'third_manufacturer_id': False,
-                                }
+                'manufacturer_id': False,
+                'second_manufacturer_id': False,
+                'third_manufacturer_id': False,
+            }
             po_supplier = record.order_id.partner_id
             if record.product_id:
                 for seller_id in record.product_id.seller_ids:
                     if seller_id.name == po_supplier:
                         result[record.id] = {
-                                             'manufacturer_id': seller_id.manufacturer_id.id,
-                                             'second_manufacturer_id': seller_id.second_manufacturer_id.id,
-                                             'third_manufacturer_id': seller_id.third_manufacturer_id.id,
-                                             }
+                            'manufacturer_id': seller_id.manufacturer_id.id,
+                            'second_manufacturer_id': seller_id.second_manufacturer_id.id,
+                            'third_manufacturer_id': seller_id.third_manufacturer_id.id,
+                        }
                         break
 
         return result
@@ -74,14 +66,14 @@ class purchase_order_line(osv.osv):
                 result[i].update({f:False,})
 
         line_result = self.read(cr, uid, ids, ['product_id', 'order_id'],
-                context=context)
+                                context=context)
         product_list = [x['product_id'][0] for x in line_result if x['product_id']]
         product_dict = dict((x['id'], x) for x in prod_obj.read(cr, uid, product_list,
-                ['default_code', 'name', 'seller_ids'], context=context))
+                                                                ['default_code', 'name', 'seller_ids'], context=context))
 
         order_ids = set([line['order_id'][0] for line in line_result])
         results_order = order_obj.read(cr, uid, list(order_ids), ['id', 'partner_id'],
-                context=context)
+                                       context=context)
         order_id_to_partnerid = {}
         for result_order in results_order:
             if result_order['partner_id']:
@@ -95,7 +87,7 @@ class purchase_order_line(osv.osv):
                     seller_ids.add(seller_id)
 
         supplierinfos_by_id = dict([(x['id'], x) for x in seller_obj.read(cr, uid,
-            list(seller_ids), ['name', 'product_code', 'product_name'], context=context)])
+                                                                          list(seller_ids), ['name', 'product_code', 'product_name'], context=context)])
 
         for line in line_result:
             # default values
@@ -116,7 +108,7 @@ class purchase_order_line(osv.osv):
                     partner_id = order_id_to_partnerid[order_id]
 
                     sellers = [x for x in prod['seller_ids'] if
-                            supplierinfos_by_id[x]['name'][0] == partner_id]
+                               supplierinfos_by_id[x]['name'][0] == partner_id]
                     if sellers:
                         seller_id = sellers[0]
                         supplierinfo = supplierinfos_by_id[seller_id]
@@ -124,10 +116,10 @@ class purchase_order_line(osv.osv):
                         supplier_name = supplierinfo['product_name']
             # update dic
             result[line['id']].update(internal_code=internal_code,
-                                  internal_name=internal_name,
-                                  supplier_code=supplier_code,
-                                  supplier_name=supplier_name,
-                                  )
+                                      internal_name=internal_name,
+                                      supplier_code=supplier_code,
+                                      supplier_name=supplier_name,
+                                      )
 
         return result
 
@@ -156,16 +148,22 @@ class product_product(osv.osv):
         def _name_get(d):
             name = d.get('name','')
             code = d.get('default_code',False)
-            if code:
+            if code and not name:
+                name = code
+            elif code:
                 name = '[%s] %s' % (code,name)
             if d.get('variants'):
                 name = '%s - %s' % (name, d['variants'],)
             return (d['id'], name)
 
-        partner_id = context.get('partner_id', False)
         result = []
+
+        if context.get('default_code_only'):
+            fields_to_read = ['id', 'default_code']
+        else:
+            fields_to_read = ['id', 'name', 'default_code', 'variants']
         read_result = self.read(cr, user, ids,
-                                ['id', 'name', 'default_code', 'variants'],
+                                fields_to_read,
                                 context=context)
 
         for product_dict in read_result:

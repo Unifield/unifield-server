@@ -25,6 +25,8 @@ from osv import osv
 from osv import fields
 from time import strftime
 from lxml import etree
+from base import currency_date
+
 
 class account_move_line(osv.osv):
     _name = 'account.move.line'
@@ -86,7 +88,8 @@ class account_move_line(osv.osv):
             res[ml.id] = {'output_currency': currency_id, 'output_amount': 0.0, 'output_amount_debit': 0.0, 'output_amount_credit': 0.0}
             # output_amount field
             # Update with date
-            context.update({'date': ml.source_date or ml.date or strftime('%Y-%m-%d')})
+            curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
+            context.update({'currency_date': curr_date or strftime('%Y-%m-%d')})
             # Now call the common method to calculate the output values
             if currency_id == company_currency_id:
                 res[ml.id].update({'output_amount': ml.debit - ml.credit, 'output_amount_debit': ml.debit, 'output_amount_credit': ml.credit})

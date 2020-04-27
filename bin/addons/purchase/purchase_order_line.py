@@ -157,9 +157,11 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         res = {}
-        for pol in self.browse(cr, uid, ids, context=context):
-            res[
-                pol.id] = pol.linked_sol_id and pol.linked_sol_id.order_id.client_order_ref or False
+        for pol in self.browse(cr, uid, ids, fields_to_fetch=['linked_sol_id'], context=context):
+            res[pol.id] = {
+                'customer_ref': pol.linked_sol_id and pol.linked_sol_id.order_id.client_order_ref or False,
+                'ir_name_for_sync': pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.name or '',
+            }
 
         return res
 
@@ -482,7 +484,7 @@ class purchase_order_line(osv.osv):
         'soq_updated': fields.boolean(string='SoQ updated', readonly=True),
         'red_color': fields.boolean(string='Red color'),
         'customer_ref': fields.function(_get_customer_ref, method=True, type="text", store=False,
-                                        string="Customer ref."),
+                                        string="Customer ref.", multi='custo_ref_ir_name'),
         'name': fields.char('Description', size=256, required=True),
         'product_qty': fields.float('Quantity', required=True, digits=(16, 2), related_uom='product_uom'),
         'taxes_id': fields.many2many('account.tax', 'purchase_order_taxe', 'ord_id', 'tax_id', 'Taxes'),
@@ -563,6 +565,7 @@ class purchase_order_line(osv.osv):
         'validation_date': fields.date('Validation Date', readonly=True),
         'confirmation_date': fields.date('Confirmation Date', readonly=True),
         'closed_date': fields.date('Closed Date', readonly=True),
+        'ir_name_for_sync': fields.function(_get_customer_ref, type='char', size=64, string='IR name to put on PO line after sync', multi='custo_ref_ir_name', method=1),
     }
 
     _defaults = {
@@ -742,6 +745,15 @@ class purchase_order_line(osv.osv):
                     'partner_type': pol.order_id.partner_id.partner_type,
                 })
 
+            # check that the analytic accounts are active. Done at the end to use the newest AD of the pol (to re-browse)
+            pol_ad = self.browse(cr, uid, pol.id, fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
+            ad = pol_ad or po.analytic_distribution_id or False
+            if ad:
+                if pol_ad:
+                    prefix = _("Analytic Distribution on line %s:\n") % pol.line_number
+                else:
+                    prefix = _("Analytic Distribution at header level:\n")
+                ad_obj.check_cc_distrib_active(cr, uid, ad, prefix=prefix, from_supply=True)
         return True
 
 
@@ -2042,6 +2054,23 @@ class purchase_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'invoiced': True}, context=context)
         self.pool.get('account.invoice').button_compute(cr, uid, inv_ids.values(), {'type':'in_invoice'}, set_total=True)
+
+
+    def update_date_expected(self, cr, uid, source, data, context=None):
+        line_info = data.to_dict()
+        stock_move = self.pool.get('stock.move')
+        if line_info.get('sync_local_id') and line_info.get('date_expected'):
+            pol_id = self.search(cr, uid, [('sync_linked_sol', '=', line_info['sync_local_id'])], limit=1, context=context)
+            if pol_id:
+                move_id = stock_move.search(cr, uid, [('purchase_line_id', '=', pol_id), ('type', '=', 'in'), ('state', '=', 'assigned')])
+                if move_id:
+                    stock_move.write(cr, uid, move_id[0], {'date_expected': line_info.get('date_expected')}, context=context)
+                    # to update Expected Receipt Date on picking
+                    picking_id = stock_move.browse(cr, uid, move_id[0], fields_to_fetch=['picking_id']).picking_id
+                    if picking_id:
+                        picking_id.write({}, context=context)
+        return True
+
 purchase_order_line()
 
 

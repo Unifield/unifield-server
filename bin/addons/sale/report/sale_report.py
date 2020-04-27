@@ -100,8 +100,8 @@ class sale_report(osv.osv):
         ],
     }
 
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0,limit=None, context=None, orderby=False):
-        res = super(sale_report, self).read_group(cr, uid, domain,fields, groupby, offset, limit, context, orderby)
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0,limit=None, context=None, orderby=False, count=False):
+        res = super(sale_report, self).read_group(cr, uid, domain,fields, groupby, offset, limit, context, orderby, count=count)
         if self._name == 'sale.report':
             for data in res:
                 if not '__count' in data or data['__count'] != 0:

@@ -22,7 +22,6 @@ from operator import itemgetter
 
 from osv import osv, fields
 import netsvc
-import tools
 
 class base_setup_company(osv.osv_memory):
     """
@@ -159,22 +158,5 @@ IBAN: BE74 1262 0121 6907 - SWIFT: CPDF BE71 - VAT: BE0477.472.701'''),
                                                              partner_id=int(company.partner_id)),
                                                         context=context)
 base_setup_company()
-
-class res_currency(osv.osv):
-    _inherit = 'res.currency'
-
-    def name_get(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-#        We can use the following line,if we want to restrict this name_get for company setup only
-#        But, its better to show currencies as name(Code).
-        if not len(ids):
-            return []
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        reads = self.read(cr, uid, ids, ['name','symbol'], context, load='_classic_write')
-        return [(x['id'], tools.ustr(x['name']) + (x['symbol'] and (' (' + tools.ustr(x['symbol']) + ')') or '')) for x in reads]
-
-res_currency()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

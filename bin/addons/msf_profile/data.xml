@@ -67,7 +67,7 @@
     </record>
     <record id="base.main_address" model="res.partner.address">
         <field name="partner_id" ref="base.main_partner"/>
-        <field name="name">MSF</field>
+        <field name="name"></field>
         <field name="street">Rue de Lausanne 78</field>
         <field name="street2">CP 116</field>
         <field name="zip">1211</field>
@@ -78,9 +78,6 @@
     </record>
 
     <record id="order_types.res_partner_local_market" model="res.partner">
-        <field name="lang">en_MF</field>
-    </record>
-    <record id="msf_doc_import.supplier_tbd" model="res.partner">
         <field name="lang">en_MF</field>
     </record>
 

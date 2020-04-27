@@ -338,6 +338,7 @@ class act_window(osv.osv):
         'auto_search':lambda *a: True,
         'multi': False,
         'sidebar_open': lambda *a: False,
+        'name': '',
     }
 
     def for_xml_id(self, cr, uid, module, xml_id, context=None):

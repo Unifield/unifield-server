@@ -60,7 +60,8 @@ class ir_cron(osv.osv, netsvc.Agent):
         'model': fields.char('Object', size=64, help="Name of object whose function will be called when this scheduler will run. e.g. 'res.partener'"),
         'function': fields.char('Function', size=64, help="Name of the method to be called on the object when this scheduler is executed."),
         'args': fields.text('Arguments', help="Arguments to be passed to the method. e.g. (uid,)"),
-        'priority': fields.integer('Priority', help='0=Very Urgent\n10=Not urgent')
+        'priority': fields.integer('Priority', help='0=Very Urgent\n10=Not urgent'),
+        'manual_activation': fields.boolean('Manual Activation', internal=1, readonly=1, help='Used to set active as RO'),
     }
 
     _defaults = {
@@ -71,7 +72,8 @@ class ir_cron(osv.osv, netsvc.Agent):
         'interval_type' : lambda *a: 'months',
         'numbercall' : lambda *a: 1,
         'active' : lambda *a: 1,
-        'doall' : lambda *a: 0
+        'doall' : lambda *a: 0,
+        'manual_activation': True
     }
 
     def _check_args(self, cr, uid, ids, context=None):

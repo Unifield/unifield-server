@@ -1085,19 +1085,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
         sale_order_line_obj = self.pool.get('sale.order.line')
-        proc_obj = self.pool.get('procurement.order')
         for sale in self.browse(cr, uid, ids, context=context):
             for pick in sale.picking_ids:
                 if pick.state not in ('draft', 'cancel'):
                     raise osv.except_osv(
                         _('Could not cancel sales order !'),
                         _('You must first cancel all picking attached to this sales order.'))
-                if pick.state == 'cancel':
-                    for mov in pick.move_lines:
-                        proc_ids = proc_obj.search(cr, uid, [('move_id', '=', mov.id)])
-                        if proc_ids:
-                            for proc in proc_ids:
-                                wf_service.trg_validate(uid, 'procurement.order', proc, 'button_check', cr)
             for r in self.read(cr, uid, ids, ['picking_ids']):
                 for pick in r['picking_ids']:
                     wf_service.trg_validate(uid, 'stock.picking', pick, 'button_cancel', cr)
@@ -2046,12 +2039,10 @@ class sale_order_line(osv.osv):
         'product_id': fields.many2one('product.product', 'Product', domain=[('sale_ok', '=', True)], change_default=True),
         'invoice_lines': fields.many2many('account.invoice.line', 'sale_order_line_invoice_rel', 'order_line_id', 'invoice_id', 'Invoice Lines', readonly=True),
         'invoiced': fields.boolean('Invoiced', readonly=True),
-        'procurement_id': fields.many2one('procurement.order', 'Procurement', select=1),
         'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Sale Price Computation'), readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
         'tax_id': fields.many2many('account.tax', 'sale_order_tax', 'order_line_id', 'tax_id', 'Taxes', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'type': fields.selection([('make_to_stock', 'from stock'), ('make_to_order', 'on order')], 'Procurement Method', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'property_ids': fields.many2many('mrp.property', 'sale_order_line_property_rel', 'order_id', 'property_id', 'Properties', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'address_allotment_id': fields.many2one('res.partner.address', 'Allotment Partner'),
         'product_uom_qty': fields.float('Quantity (UoM)', digits=(16, 2), required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, related_uom='product_uom'),
         'product_uom': fields.many2one('product.uom', 'Unit of Measure ', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
@@ -2118,6 +2109,7 @@ class sale_order_line(osv.osv):
         'from_cancel_out': fields.boolean('OUT cancel'),
         'created_by_sync': fields.boolean(string='Created by Synchronisation'),
         'cancelled_by_sync': fields.boolean(string='Cancelled by Synchronisation'),
+        'ir_name_from_sync': fields.char(size=64, string='IR name to put on PO line after sync', invisible=True),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2139,6 +2131,7 @@ class sale_order_line(osv.osv):
         'stock_take_date': _get_stock_take_date,
         'created_by_sync': False,
         'cancelled_by_sync': False,
+        'ir_name_from_sync': '',
     }
 
     def _check_stock_take_date(self, cr, uid, ids, context=None):
@@ -2268,6 +2261,8 @@ class sale_order_line(osv.osv):
             'cancelled_by_sync': False,
         })
 
+        if 'ir_name_from_sync' not in default:
+            default['ir_name_from_sync'] = False
         if 'in_name_goods_return' not in default:
             default['in_name_goods_return'] = False
 
@@ -2310,7 +2305,7 @@ class sale_order_line(osv.osv):
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
 
-        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line']:
+        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line', 'ir_name_from_sync']:
             if x not in default:
                 default[x] = False
 
@@ -3590,16 +3585,6 @@ class expected_sale_order_line(osv.osv):
 expected_sale_order_line()
 
 
-class procurement_order(osv.osv):
-    _inherit = 'procurement.order'
-
-    _columns = {
-        'sale_id': fields.many2one('sale.order', string='Sale'),
-    }
-
-procurement_order()
-
-
 class sale_config_picking_policy(osv.osv_memory):
     """
     Set order_policy to picking
@@ -3693,15 +3678,11 @@ class sale_order_cancelation_wizard(osv.osv_memory):
         """
         Make a trg_write on FO to check if it can be canceled
         """
-        proc_obj = self.pool.get('procurement.order')
-
         if context is None:
             context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        wf_service = netsvc.LocalService("workflow")
 
         for wiz in self.browse(cr, uid, ids, context=context):
             for lc in wiz.order_ids:
@@ -3710,10 +3691,6 @@ class sale_order_cancelation_wizard(osv.osv_memory):
                         _('Error'),
                         _('You must choose an action for each order'),
                     )
-                if lc.action == 'close':
-                    proc_ids = proc_obj.search(cr, uid, [('sale_id', '=', lc.order_id.id)], context=context)
-                    proc_obj.action_cancel(cr, uid, proc_ids)
-                    wf_service.trg_write(uid, 'sale.order', lc.order_id.id, cr)
 
         return self.leave_it(cr, uid, ids, context=context)
 
