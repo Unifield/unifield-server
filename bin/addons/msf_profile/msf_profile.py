@@ -76,10 +76,10 @@ class patch_scripts(osv.osv):
         """
         delete_wkf_activity = """
             DELETE FROM wkf_activity 
-            WHERE wkf_id = (SELECT id FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract');
+            WHERE wkf_id = (SELECT id FROM wkf WHERE name='account.cash.statement.workflow' AND osv='account.bank.statement');
         """
         delete_wkf = """
-            DELETE FROM wkf WHERE name='wkf.financing.contract' AND osv='financing.contract.contract';
+            DELETE FROM wkf WHERE name='account.cash.statement.workflow' AND osv='account.bank.statement';
         """
         update_reg_state = """
             UPDATE account_bank_statement SET state = 'open' WHERE state = 'partial_close';
@@ -87,7 +87,7 @@ class patch_scripts(osv.osv):
         cr.execute(delete_wkf_transition)
         cr.execute(delete_wkf_workitem)
         cr.execute(delete_wkf_activity)
-        cr.execute(delete_wkf)
+        cr.execute(delete_wkf)  # will also delete data in wkf_instance because of the ONDELETE 'cascade'
         cr.execute(update_reg_state)
         self._logger.warn('%s registers in Partial Close state have been re-opened.' % (cr.rowcount,))
         return True
