@@ -52683,8 +52683,8 @@ msgstr "Asie/Manille"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/purchase_order.py:141
 #, python-format
-msgid "No PO found with the name %s"
-msgstr "No PO found with the name %s"
+msgid "No validated PO found with the name %s"
+msgstr "No validated PO found with the name %s"
 
 #. modules: order_types, stock
 #: view:stock.print.certificate:0
