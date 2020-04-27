@@ -694,7 +694,13 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
         if context.get('sync_update_execution') or self.pool.get('res.company')._get_instance_level(cr, uid) == 'coordo':
-            for p_id in self.search(cr, uid, [('id', 'in', ids), ('active', '=', False), ('international_status', '=', 'UniData'), ('replace_product_id', '=', False)], context=context):
+            dom = [('id', 'in', ids), ('international_status', '=', 'UniData'), ('replace_product_id', '=', False)]
+            if context.get('sync_update_execution'):
+                # UD prod deactivated in coordo + merge + sync : proj does not see the deactivation
+                dom += [('active', 'in', ['t', 'f'])]
+            else:
+                dom += [('active', '=', False)]
+            for p_id in self.search(cr, uid, dom, context=context):
                 res[p_id] = True
         return res
 
