@@ -109207,3 +109207,13 @@ msgstr "Fractionner Bon Intermission OUT"
 #: code:addons/account_override/invoice.py:1272
 msgid "Split Stock Transfer Voucher"
 msgstr "Fractionner Bon Client"
+
+#. module: delivery_mechanism
+#: code:addons/delivery_mechanism/delivery_mechanism.py:705
+#, python-format
+msgid "Error: %s\n"
+"\n"
+"Please reset the incoming shipment processing and fix the source of the error before re-try the processing."
+msgstr "Erreur: %s\n"
+"\n"
+"Veuillez réinitialiser le processus de la livraison entrante et corriger la source de cette erreur avant de recommencer le processus."

@@ -25,6 +25,7 @@ from osv import osv, fields
 from tools.translate import _
 from order_types.stock import check_rw_warning
 import logging
+import tools
 
 
 class stock_picking_processing_info(osv.osv_memory):
@@ -701,9 +702,9 @@ class stock_picking(osv.osv):
             logging.getLogger('stock.picking').warn('Exception do_incoming_shipment', exc_info=True)
             for wiz in inc_proc_obj.read(new_cr, uid, wizard_ids, ['picking_id'], context=context):
                 self.update_processing_info(new_cr, uid, wiz['picking_id'][0], False, {
-                    'error_msg': '%s\n\nPlease reset the incoming shipment '\
-                                 'processing and fix the source of the error'\
-                                 'before re-try the processing.' % str(e),
+                    'error_msg': _('Error: %s\n\nPlease reset the incoming shipment '\
+                                 'processing and fix the source of the error '\
+                                 'before re-try the processing.') % tools.ustr(e.value),
                 }, context=context)
         finally:
             # Close the cursor
