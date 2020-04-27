@@ -495,7 +495,11 @@ class account_bank_statement(osv.osv):
         if not register:
             raise osv.except_osv(_('Error'), _('Please select a register first.'))
         context.update({'check_advance_reconciled': True})
-        domain = [('account_id.type_for_register', '=', 'advance'), ('state', '=', 'hard'), ('reconciled', '=', False), ('amount', '<=', 0.0), ('date', '<=', date)]
+        domain = [('account_id.type_for_register', '=', 'advance'),
+                  ('state', 'in', ['temp', 'hard']),
+                  ('reconciled', '=', False),
+                  ('amount', '<=', 0.0),
+                  ('date', '<=', date)]
         name = _('Open Advances')
         if register.journal_id and register.journal_id.currency:
             # prepare some values
