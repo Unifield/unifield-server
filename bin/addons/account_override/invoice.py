@@ -1631,6 +1631,33 @@ class account_invoice(osv.osv):
             return True
         return False
 
+    def export_invoice(self, cr, uid, ids, data, context=None):
+        """
+        Opens the Export Invoice report
+        """
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'account.export_invoice',
+            'datas': data,
+        }
+
+    def import_invoice(self, cr, uid, ids, data, context=None):
+        """
+        Opens the Import Invoice wizard
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        wiz_id = self.pool.get('account.invoice.import').create(cr, uid, {'invoice_id': ids[0]}, context=context)
+        return {
+            'name': _('Import Invoice'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.invoice.import',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': [wiz_id],
+        }
+
 
 account_invoice()
 
