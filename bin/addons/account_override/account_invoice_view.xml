@@ -638,6 +638,14 @@
                                     <label string=""/>
                                 </group>
 
+                                <button string="Cancel document" name="invoice_cancel"
+                                        confirm="Do you really want to cancel this document?"
+                                        type="workflow" icon="gtk-cancel"
+                                        attrs="{'invisible': ['|', '|',
+                                                              ('state', '!=', 'draft'),
+                                                              ('type', '!=', 'out_invoice'),
+                                                              ('from_supply', '=', False)]}"/>
+
                                 <button name="button_split_invoice" type="object" string="Split Intermission Voucher OUT"
                                         icon="gtk-cut"
                                         attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}"/>
@@ -767,6 +775,14 @@
                         </group>
                         <field name="partner_type" invisible="1"/>
                         <group col="8" colspan="4">
+
+                            <button string="Cancel document" name="invoice_cancel"
+                                    type="workflow" icon="gtk-cancel"
+                                    confirm="Do you really want to cancel this document?"
+                                    attrs="{'invisible': ['|', '|',
+                                                          ('state', '!=', 'draft'),
+                                                          ('type', '!=', 'out_invoice'),
+                                                          ('from_supply', '=', False)]}"/>
 
                             <button name="button_split_invoice" type="object" string="Split Stock Transfer Voucher"
                                     icon="gtk-cut"

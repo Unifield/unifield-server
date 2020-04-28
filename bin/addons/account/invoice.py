@@ -1223,6 +1223,13 @@ class account_invoice(osv.osv):
                 self.log(cr, uid, inv_id, message, context=ctx)
         return True
 
+    def cancel_invoice_from_workflow(self, cr, uid, ids, *args):
+        """
+        Sets the invoice to Cancelled and not Synchronized
+        """
+        self.write(cr, uid, ids, {'state': 'cancel', 'synced': False})
+        return True
+
     def action_cancel(self, cr, uid, ids, *args):
         context = {} # TODO: Use context from arguments
         account_move_obj = self.pool.get('account.move')
