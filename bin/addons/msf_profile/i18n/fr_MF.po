@@ -38465,7 +38465,7 @@ msgstr "Créer des Périodes Mensuelles"
 #. module: stock
 #: code:addons/stock/physical_inventory.py:1411
 #: field:physical.inventory.discrepancy,discrepancy_value:0
-#: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:813
+#: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:833
 #, python-format
 msgid "Discrepancy Value"
 msgstr "Valeur des Écarts"
@@ -41502,8 +41502,9 @@ msgid "The partner is missing."
 msgstr "The partner is missing."
 
 #. module: stock
+#: view:physical.inventory:0
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:682
-msgid "With discrepencies"
+msgid "With discrepancies"
 msgstr "Avec les écarts"
 
 #. module: base
@@ -48043,11 +48044,6 @@ msgstr "America/Nassau"
 #: model:product.uom.categ,name:product.product_uom_categ_unit
 msgid "Unit"
 msgstr "Unité"
-
-#. module: stock
-#: view:physical.inventory:0
-msgid "With discrepancies"
-msgstr "Avec les écart"
 
 #. module: msf_instance
 #: view:res.company:0
@@ -91160,7 +91156,6 @@ msgstr "Vous ne pouvez pas avoir deux lignes pour le produit %s avec un prix moy
 #: field:wizard.import.po.simulation.screen.line,imp_discrepancy:0
 #: field:wizard.simu.import.po.line,discrepancy:0
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:801
-#: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:811
 msgid "Discrepancy"
 msgstr "Écarts"
 
@@ -92374,11 +92369,6 @@ msgstr "Valid lines"
 #: help:sale.installer,sale_margin:0
 msgid "Gives the margin of profitability by calculating the difference between Unit Price and Cost Price."
 msgstr "Donne la marge de rentabilité en calculant la différence entre le prix unitaire et le prix"
-
-#. module: stock
-#: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:803
-msgid "Discrepancy value"
-msgstr "Valeur des écarts"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -109195,3 +109185,13 @@ msgstr "Fractionner Bon Intermission OUT"
 #: code:addons/account_override/invoice.py:1272
 msgid "Split Stock Transfer Voucher"
 msgstr "Fractionner Bon Client"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:841
+msgid "Total Discrepancy"
+msgstr "Écart Total"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:843
+msgid "Total Discrepancy Value"
+msgstr "Valeur Totale des Écarts"

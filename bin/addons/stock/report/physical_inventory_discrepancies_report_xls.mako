@@ -18,9 +18,8 @@
  <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">
   <WindowHeight>9660</WindowHeight>
   <WindowWidth>17370</WindowWidth>
-  <WindowTopX>480</WindowTopX>
-  <WindowTopY>195</WindowTopY>
-  <TabRatio>319</TabRatio>
+  <WindowTopX>120</WindowTopX>
+  <WindowTopY>75</WindowTopY>
   <ProtectStructure>False</ProtectStructure>
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
@@ -87,6 +86,8 @@
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"
@@ -96,8 +97,8 @@
   <Style ss:ID="s27">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"
@@ -129,9 +130,9 @@
   <Style ss:ID="s30">
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <NumberFormat ss:Format="0"/>
@@ -141,16 +142,17 @@
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#0"/>
   </Style>
   <Style ss:ID="s32">
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
   </Style>
@@ -190,6 +192,18 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#0"/>
+  </Style>
+  <Style ss:ID="s36dec">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#,##0.00"/>
   </Style>
   <Style ss:ID="s37">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -240,6 +254,7 @@
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
@@ -247,10 +262,11 @@
   <Style ss:ID="s43">
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
-   <NumberFormat ss:Format="0"/>
+   <NumberFormat ss:Format="#,##0.00"/>
   </Style>
   <Style ss:ID="s44">
    <Borders>
@@ -276,9 +292,10 @@
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#,##0.00"/>
   </Style>
   <Style ss:ID="s47">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -292,8 +309,8 @@
   <Style ss:ID="s48">
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
   </Style>
@@ -309,9 +326,9 @@
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
   </Style>
@@ -329,23 +346,38 @@
    <Borders/>
   </Style>
   <Style ss:ID="s57">
-   <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#,##0.00"/>
     ss:Bold="1"/>
   </Style>
   <Style ss:ID="s58">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#0"/>
+  </Style>
+  <Style ss:ID="s58dec">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#,##0.00"/>
   </Style>
   <Style ss:ID="s59">
    <Borders>
@@ -368,60 +400,67 @@
    </Borders>
   </Style>
   <Style ss:ID="s63">
-   <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000" ss:Bold="1"/>
+  </Style>
+  <Style ss:ID="s64">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000" ss:Bold="1"/>
+  </Style>
+  <Style ss:ID="s65">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#,##0.00"/>
+  </Style>
+  <Style ss:ID="s66">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
   </Style>
-  <Style ss:ID="s64">
-   <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
-   </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
-  </Style>
-  <Style ss:ID="s65">
-   <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-   </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"
-    ss:Bold="1"/>
-  </Style>
-  <Style ss:ID="s66">
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-   </Borders>
-  </Style>
   <Style ss:ID="s67" ss:Parent="s16">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#,##0.00"/>
   </Style>
   <Style ss:ID="s68">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#,##0.00"/>
   </Style>
   <Style ss:ID="s69">
    <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
@@ -466,8 +505,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"
-    ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000" ss:Bold="1"/>
   </Style>
   <Style ss:ID="s80">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
@@ -477,8 +515,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"
-    ss:Bold="1"/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000" ss:Bold="1"/>
   </Style>
  </Styles>
  <Worksheet ss:Name="stock">
@@ -681,11 +718,11 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:MergeAcross="1" ss:StyleID="s78"><Data ss:Type="String">${_('With discrepencies')|x}</Data><NamedCell
+    <Cell ss:MergeAcross="1" ss:StyleID="s78"><Data ss:Type="String">${_('With discrepancies')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s58"><Data ss:Type="Number">${objects[0].discrepancy_lines_number}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s58"><Data ss:Type="Number">${objects[0].discrepancy_lines_value}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s58dec"><Data ss:Type="Number">${objects[0].discrepancy_lines_value}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s66"><Data ss:Type="Number">${objects[0].discrepancy_lines_absvalue}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
@@ -775,16 +812,16 @@
     <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Family')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Item code')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Item code')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Description')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Description')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s37"><Data ss:Type="String">${_('UoM')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('UoM')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s45"><Data ss:Type="String">${_('Unit price')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Unit price')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s26"><Data ss:Type="String">${_('currency (functional)')|x}</Data><NamedCell
@@ -793,30 +830,30 @@
     <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Quantity Theorical')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Quantity counted')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Quantity counted')|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s47"><Data ss:Type="String">${_('Batch no')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Batch no')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Expiry date')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Expiry date')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s41"><Data ss:Type="String">${_('Discrepancy')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Discrepancy')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s41"><Data ss:Type="String">${_('Discrepancy value')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Discrepancy Value')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s41"><Data ss:Type="String">${_('Total QTY before INV')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total QTY before INV')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Total QTY after INV')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total QTY after INV')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Total Value after INV')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total Value after INV')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Discrepancy')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total Discrepancy')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s45"><Data ss:Type="String">${_('Discrepancy Value')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Total Discrepancy Value')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s45"><Data ss:Type="String">${_('Adjustment type')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Adjustment type')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s45"><Data ss:Type="String">${_('Comments / actions (in case of discrepancy)')|x}</Data><NamedCell
+    <Cell ss:StyleID="s26"><Data ss:Type="String">${_('Comments / actions (in case of discrepancy)')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
 <% index = 0 %>
    </Row>
@@ -837,7 +874,7 @@
     <Cell ss:StyleID="s43"><Data ss:Type="Number">${item.discrepancy_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s42"><Data ss:Type="Number">${item.total_product_theoretical_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s36"><Data ss:Type="Number">${item.total_product_counted_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s36"><Data ss:Type="Number">${item.total_product_counted_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s36dec"><Data ss:Type="Number">${item.total_product_counted_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s36"><Data ss:Type="Number">${item.total_product_discrepancy_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s46"><Data ss:Type="Number">${item.total_product_discrepancy_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s50"><Data ss:Type="String">${item.reason_type_id and item.reason_type_id.complete_name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
