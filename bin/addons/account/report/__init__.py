@@ -43,6 +43,7 @@ import account_profit_loss
 import account_liquidity_balance
 import free_allocation_report
 import invoice_excel_export
+import export_invoice
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

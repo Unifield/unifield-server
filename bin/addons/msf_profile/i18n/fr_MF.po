@@ -5924,6 +5924,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:replenishment.segment,description_seg:0
 #: field:replenishment.segment.line,product_description:0
 #: report:addons/account/report/invoice_excel_export.mako:67
+#: field:account.invoice.import.errors,name:0
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -8344,6 +8345,7 @@ msgstr "Générer les écarts"
 #: report:addons/specific_rules/report/unconsistent_stock_report_xls.mako:98
 #: code:addons/stock_override/report/report_stock_move.py:759
 #: report:addons/account/report/invoice_excel_export.mako:68
+#: report:addons/account/report/export_invoice.mako:122
 #, python-format
 msgid "Quantity"
 msgstr "Quantité"
@@ -8680,7 +8682,7 @@ msgstr "Message ESC 2"
 msgid "The currency used to enter statement"
 msgstr "Devise utilisée pour entrer les relevés"
 
-#. modules: register_accounting, account_hq_entries, msf_homere_interface, msf_doc_import
+#. modules: register_accounting, account_hq_entries, msf_homere_interface, msf_doc_import, account
 #: field:msf.doc.import.accounting,filename:0
 #: field:hq.entries.import,filename:0
 #: field:hr.expat.employee.import,filename:0
@@ -8688,6 +8690,7 @@ msgstr "Devise utilisée pour entrer les relevés"
 #: field:hr.payroll.employee.import,filename:0
 #: field:hr.payroll.import,filename:0
 #: field:wizard.register.import,filename:0
+#: field:account.invoice.import,filename:0
 msgid "Imported filename"
 msgstr "Nom du fichier importé"
 
@@ -13212,7 +13215,7 @@ msgstr "You cannot cancel a purchase order line which has already been synchroni
 msgid "Line %s of the imported file: UoM [%s] not found ! Details: %s"
 msgstr "Line %s of the imported file: UoM [%s] not found ! Details: %s"
 
-#. modules: msf_budget, register_accounting, msf_homere_interface, supplier_catalogue, consumption_calculation, account_hq_entries, msf_doc_import, analytic_distribution, stock, msf_doc_import
+#. modules: msf_budget, register_accounting, msf_homere_interface, supplier_catalogue, consumption_calculation, account_hq_entries, msf_doc_import, analytic_distribution, stock, msf_doc_import, account
 #: code:addons/msf_doc_import/msf_import_export.py:368
 #: code:addons/stock/physical_inventory.py:662
 #: code:addons/stock/physical_inventory.py:877
@@ -13237,6 +13240,7 @@ msgstr "Line %s of the imported file: UoM [%s] not found ! Details: %s"
 #: code:addons/register_accounting/wizard/wizard_register_import.py:260
 #: code:addons/supplier_catalogue/supplier_catalogue.py:627
 #: code:addons/supplier_catalogue/wizard/catalogue_import_lines.py:45
+#: code:addons/account/wizard/account_invoice_import.py:75
 #, python-format
 msgid "Nothing to import."
 msgstr "Rien à importer."
@@ -18775,10 +18779,11 @@ msgstr "Journaliser les requettes XMLRPC"
 msgid " with warning"
 msgstr "avec avertissement"
 
-#. modules: msf_doc_import, register_accounting, account_override
+#. modules: msf_doc_import, register_accounting, account_override, account
 #: code:addons/msf_doc_import/account.py:618
 #: code:addons/register_accounting/wizard/wizard_register_import.py:669
 #: code:addons/account_override/finance_export.py:241
+#: code:addons/account/wizard/account_invoice_import.py:239
 #, python-format
 msgid "An error occurred: %s"
 msgstr "Une erreur est survenue : %s"
@@ -19909,13 +19914,14 @@ msgstr "Colis"
 msgid "Some entries are already reconciled !"
 msgstr "Certaines écritures sont déjà lettrées !"
 
-#. modules: msf_doc_import, register_accounting, consumption_calculation
+#. modules: msf_doc_import, register_accounting, consumption_calculation, account
 #: field:weekly.forecast.report,progress:0
 #: field:abstract.wizard.import,progression:0
 #: field:msf.doc.import.accounting,progression:0
 #: field:msf.import.export,progression:0
 #: field:wizard.import.batch,progression:0
 #: field:wizard.register.import,progression:0
+#: field:account.invoice.import,progression:0
 msgid "Progression"
 msgstr "Progression"
 
@@ -21236,9 +21242,10 @@ msgstr "Commandes de Terrain par Client durant les 90 derniers jours"
 msgid "Display accounts?"
 msgstr "Display accounts?"
 
-#. modules: msf_doc_import, register_accounting
+#. modules: msf_doc_import, register_accounting, account
 #: code:addons/msf_doc_import/account.py:601
 #: code:addons/register_accounting/wizard/wizard_register_import.py:653
+#: code:addons/account/wizard/account_invoice_import.py:225
 #, python-format
 msgid "Import successful."
 msgstr "Import réussi."
@@ -22569,9 +22576,10 @@ msgstr "Facture à  traiter"
 msgid "The bank statement used for bank reconciliation"
 msgstr "Relevé bancaire utilisé pour la reconciliation bancaire"
 
-#. modules: msf_doc_import, register_accounting
+#. modules: msf_doc_import, register_accounting, account
 #: code:addons/msf_doc_import/account.py:587
 #: code:addons/register_accounting/wizard/wizard_register_import.py:639
+#: code:addons/account/wizard/account_invoice_import.py:216
 #, python-format
 msgid "Import FAILED."
 msgstr "L'import a ÉCHOUÉ."
@@ -26636,8 +26644,9 @@ msgstr "Période inconnue!"
 msgid "Paid"
 msgstr "Payé"
 
-#. module: register_accounting
+#. modules: register_accounting, account
 #: code:addons/register_accounting/wizard/wizard_register_import.py:268
+#: code:addons/account/wizard/account_invoice_import.py:81
 #, python-format
 msgid "No content."
 msgstr "Aucun contenu."
@@ -30071,7 +30080,7 @@ msgstr "America/Argentina/San_Juan"
 msgid "Operator '%s' not suported"
 msgstr "Operator '%s' not suported"
 
-#. modules: register_accounting, account_mcdb, msf_homere_interface, financing_contract, procurement_request, consumption_calculation, sync_client, msf_config_locations, stock_forecast, base, msf_currency_revaluation, specific_rules, msf_doc_import, stock, analytic_distribution
+#. modules: register_accounting, account_mcdb, msf_homere_interface, financing_contract, procurement_request, consumption_calculation, sync_client, msf_config_locations, stock_forecast, base, msf_currency_revaluation, specific_rules, msf_doc_import, stock, analytic_distribution, account
 #: view:account.line.csv.export:0
 #: field:account.line.csv.export,message:0
 #: field:import.commitment.wizard,last_error:0
@@ -30120,6 +30129,7 @@ msgstr "Operator '%s' not suported"
 #: view:sync.client.register_entity:0
 #: field:sync.client.register_entity,message:0
 #: selection:sync.client.register_entity,state:0
+#: field:account.invoice.import,message:0
 msgid "Message"
 msgstr "Message"
 
@@ -41935,7 +41945,7 @@ msgstr "Non-facturé"
 msgid "Contract code/name:"
 msgstr "Contrat - Code/Nom:"
 
-#. modules: sales_followup, register_accounting, import_data, sync_client, base, purchase_followup, msf_doc_import, stock, product
+#. modules: sales_followup, register_accounting, import_data, sync_client, base, purchase_followup, msf_doc_import, stock, product, account
 #: view:base.module.update:0
 #: view:base.update.translations:0
 #: selection:import_data,import_mode:0
@@ -41962,6 +41972,7 @@ msgstr "Contrat - Code/Nom:"
 #: view:product.product:0
 #: view:sync.client.update_entity:0
 #: view:stock.expired.damaged.report:0
+#: view:account.invoice.import:0
 msgid "Update"
 msgstr "Mettre à jour"
 
@@ -43288,11 +43299,12 @@ msgstr "Mise à jour de l'entité"
 msgid "Monthly Budget (XLS)"
 msgstr "Budget Mensuel (XLS)"
 
-#. modules: msf_doc_import, procurement_request
+#. modules: msf_doc_import, procurement_request, account
 #: field:abstract.wizard.import,info_message:0
 #: view:wizard.import.batch:0
 #: field:wizard.import.batch,info_message:0
 #: view:internal.request.import:0
+#: view:account.invoice.import.errors:0
 msgid "Information"
 msgstr "Informations"
 
@@ -45001,7 +45013,7 @@ msgstr "Kit - Mem Vérification"
 msgid "Output Out"
 msgstr "Modèles de Taxe"
 
-#. modules: stock_forecast, register_accounting, msf_outgoing, documents_done, unifield_setup, account_override, purchase_compare_rfq, base, stock, msf_profile, msf_doc_import, sale, account_hq_entries, res_currency_tables
+#. modules: stock_forecast, register_accounting, msf_outgoing, documents_done, unifield_setup, account_override, purchase_compare_rfq, base, stock, msf_profile, msf_doc_import, sale, account_hq_entries, res_currency_tables, account
 #: field:wizard.split.invoice.lines,wizard_id:0
 #: view:ir.actions.wizard:0
 #: field:wizard.ir.model.menu.create.line,wizard_id:0
@@ -45045,6 +45057,7 @@ msgstr "Modèles de Taxe"
 #: field:stock.move.processor,wizard_id:0
 #: field:warning.import.currencies.lines,wizard_id:0
 #: field:sale.order.leave.close,wizard_id:0
+#: field:account.invoice.import.errors,wizard_id:0
 msgid "Wizard"
 msgstr "Assistant"
 
@@ -49381,6 +49394,7 @@ msgstr "Montant total"
 #: field:account.invoice.tax,partner_id:0
 #: field:account.tax,partner_id:0
 #: report:addons/account/report/invoice_excel_export.mako:80
+#: report:addons/account/report/export_invoice.mako:100
 #, python-format
 msgid "Partner"
 msgstr "Partenaire"
@@ -53657,6 +53671,7 @@ msgstr "Balance Agée Partenaire"
 #: report:sale.order.allocation.report:0
 #: report:addons/account/report/free_allocation_report.mako:199
 #: report:addons/account/report/invoice_excel_export.mako:73
+#: report:addons/account/report/export_invoice.mako:0
 #, python-format
 msgid "Account"
 msgstr "Compte"
@@ -54637,14 +54652,27 @@ msgstr "Recherches Objet"
 msgid "  value amount: 0.02"
 msgstr " valeur du montant : 0,02"
 
-#. modules: msf_doc_import, register_accounting
+#. modules: msf_doc_import, register_accounting, account
 #: code:addons/msf_doc_import/account.py:201
 #: code:addons/msf_doc_import/account.py:254
 #: code:addons/register_accounting/wizard/wizard_register_import.py:257
 #: code:addons/register_accounting/wizard/wizard_register_import.py:355
+#: code:addons/account/wizard/account_invoice_import.py:73
 #, python-format
 msgid "Checking file…"
 msgstr "Vérification du fichier…"
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:85
+#, python-format
+msgid "Checking header…"
+msgstr "Vérification de l'en-tête…"
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:134
+#, python-format
+msgid "Checking lines…"
+msgstr "Vérification des lignes…"
 
 #. modules: tender_flow, purchase_allocation_report, register_accounting, return_claim, transport_mgmt, res_currency_tables, stock_override, stock_forecast, analytic, stock, msf_order_date, reason_types_moves, procurement_request, consumption_calculation, purchase_override, kit, out_step, purchase, account, msf_outgoing, sale, sales_followup, procurement
 #: selection:account.account,type:0
@@ -57361,6 +57389,7 @@ msgstr "Dépenses budgétisées pour la période M+3"
 #: field:wizard.register.creation.lines,journal_id:0
 #: view:stock.picking:0
 #: model:ir.model,name:sync_so.model_account_journal
+#: report:addons/account/report/export_invoice.mako:92
 #, python-format
 msgid "Journal"
 msgstr "Journal"
@@ -58287,6 +58316,7 @@ msgstr "Journal Ajustement"
 #: field:replenishment.inventory.review.line,warning_html:0
 #: field:replenishment.order_calc.line,warning_html:0
 #: view:product.ask.activate.wizard:0
+#: code:addons/account/wizard/account_invoice_import.py:81
 #, python-format
 msgid "Warning"
 msgstr "Avertissement"
@@ -64591,6 +64621,7 @@ msgstr "Gestion des Suivis"
 #: field:internal.request.import.error.line,line_number:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:232
 #: report:addons/account/report/invoice_excel_export.mako:65
+#: report:addons/account/report/export_invoice.mako:119
 #, python-format
 msgid "Line number"
 msgstr "Numéro de ligne"
@@ -64970,6 +65001,7 @@ msgstr "PO line to confirm"
 #: field:hq.entries.split,date:0
 #: selection:integrity.finance.wizard,filter:0
 #: code:addons/account_override/res_company.py:40
+#: report:addons/account/report/export_invoice.mako:108
 #, python-format
 msgid "Posting Date"
 msgstr "Date de Comptabilisation"
@@ -68641,7 +68673,7 @@ msgstr "Utilisé dans le code pour sélectionner des prix spécifiques calculés
 msgid "Kit Composition"
 msgstr "Kit - Composition"
 
-#. modules: register_accounting, msf_homere_interface, account_override, base, msf_doc_import, msf_profile, sync_client, msf_supply_doc_export
+#. modules: register_accounting, msf_homere_interface, account_override, base, msf_doc_import, msf_profile, sync_client, msf_supply_doc_export, account
 #: view:ir.attachment:0
 #: view:ir.attachment:0
 #: selection:msf.doc.import.accounting,state:0
@@ -68654,6 +68686,7 @@ msgstr "Kit - Composition"
 #: field:account.direct.invoice.wizard.line,create_date:0
 #: selection:sync.client.log_sale_purchase,action_type:0
 #: code:addons/msf_supply_doc_export/msf_supply_doc_export.py:896
+#: selection:account.invoice.import,state:0
 msgid "Created"
 msgstr "Créé"
 
@@ -73483,6 +73516,8 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/account/wizard/account_report_liquidity_balance.py:75
 #: code:addons/account_override/period.py:148
 #: code:addons/account_override/account.py:1256
+#: code:addons/account/wizard/account_invoice_import.py:0
+#: selection:account.invoice.import,state:0
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -73909,7 +73944,7 @@ msgstr "Global"
 msgid "Do you want to update the Date of Stock Take of all/selected Order lines ?"
 msgstr "Voulez-vous mettre à jour la Date de Prise de Stock sur toutes les lignes de la Commande ou les lignes sélectionnées ?"
 
-#. modules: register_accounting, msf_homere_interface, documents_done, consumption_calculation, msf_button_access_rights, mission_stock, msf_doc_import, analytic_distribution, sourcing, sale
+#. modules: register_accounting, msf_homere_interface, documents_done, consumption_calculation, msf_button_access_rights, mission_stock, msf_doc_import, analytic_distribution, sourcing, sale, account
 #: field:mass.reallocation.verification.wizard,error_ids:0
 #: field:monthly.review.consumption.line,text_error:0
 #: field:real.average.consumption.line,text_error:0
@@ -73926,6 +73961,7 @@ msgstr "Voulez-vous mettre à jour la Date de Prise de Stock sur toutes les lign
 #: field:wizard.register.import,error_ids:0
 #: field:msf.import.export,error_message:0
 #: code:addons/sourcing/wizard/multiple_sourcing.py:252
+#: field:account.invoice.import,error_ids:0
 #, python-format
 msgid "Errors"
 msgstr "Erreurs"
@@ -74080,6 +74116,7 @@ msgstr "Ligne %s :: Le mouvement n'est pas  'Disponible'. Vérifier le statut du
 #: selection:res.request,ref_doc1:0
 #: selection:res.request,ref_doc2:0
 #: view:account.direct.invoice.wizard:0
+#: field:account.invoice.import,invoice_id:0
 msgid "Invoice"
 msgstr "Facture"
 
@@ -75812,8 +75849,9 @@ msgstr "Bon Client"
 msgid "Asset Follow Up"
 msgstr "Actif - Suivi"
 
-#. module: register_accounting
+#. modules: register_accounting, account
 #: view:wizard.register.import:0
+#: view:account.invoice.import:0
 msgid "Select file to import"
 msgstr "Sélectionner le fichier à importer"
 
@@ -76471,6 +76509,7 @@ msgstr "# de lignes importées"
 #: code:addons/consumption_calculation/weekly_forecast_report.py:506
 #: report:order.type.donation.certificate:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:220
+#: report:addons/account/report/export_invoice.mako:123
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -81011,7 +81050,7 @@ msgstr "Bermudes"
 msgid "Wizard lines for internal picking processor"
 msgstr "Wizard lines for internal picking processor"
 
-#. modules: vertical_integration, register_accounting, res_currency_tables, account_hq_entries, update_client, msf_tools, msf_doc_import, analytic_distribution
+#. modules: vertical_integration, register_accounting, res_currency_tables, account_hq_entries, update_client, msf_tools, msf_doc_import, analytic_distribution, account
 #: view:hq.entries.import:0
 #: view:import.commitment.wizard:0
 #: view:msf.doc.import.accounting:0
@@ -81024,6 +81063,7 @@ msgstr "Wizard lines for internal picking processor"
 #: view:import.table.currencies:0
 #: view:sync_client.upgrade:0
 #: view:wizard.import.mapping:0
+#: view:account.invoice.import:0
 msgid "Import"
 msgstr "Importer"
 
@@ -81703,6 +81743,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:replenishment.inventory.review,state:0
 #: field:replenishment.order_calc,state:0
 #: field:replenishment.segment,state:0
+#: field:account.invoice.import,state:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -82633,6 +82674,7 @@ msgstr "SFTP connection succeeded"
 #: view:products.situation.report:0
 #: field:replenishment.product.list,product_id:0
 #: report:addons/account/report/invoice_excel_export.mako:66
+#: report:addons/account/report/export_invoice.mako:120
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -82803,6 +82845,7 @@ msgstr "Sélectionner un fournisseur"
 #: selection:wizard.import.ppl.to.create.ship,state:0
 #: selection:wizard.import.product.line,state:0
 #: selection:product.mass.update,state:0
+#: selection:account.invoice.import,state:0
 #, python-format
 msgid "Done"
 msgstr "Terminé"
@@ -82862,7 +82905,7 @@ msgstr "Avertissement, vous êtes sur le point d'Annuler ou Ressourcer!"
 msgid "Computation"
 msgstr "Calcul"
 
-#. modules: register_accounting, msf_homere_interface, import_data, account_hq_entries, export_import_lang, base, msf_doc_import, mission_stock, analytic_distribution
+#. modules: register_accounting, msf_homere_interface, import_data, account_hq_entries, export_import_lang, base, msf_doc_import, mission_stock, analytic_distribution, account
 #: field:int.commitment.export.wizard,data:0
 #: field:import_category,file:0
 #: field:import_nomenclature,file:0
@@ -82880,6 +82923,7 @@ msgstr "Calcul"
 #: field:hr.payroll.employee.import,file:0
 #: field:hr.payroll.import,file:0
 #: field:wizard.register.import,file:0
+#: field:account.invoice.import,file:0
 msgid "File"
 msgstr "Fichier"
 
@@ -83561,7 +83605,7 @@ msgstr "OPW"
 msgid "Sourced-n line"
 msgstr "Ligne sourcée-n"
 
-#. modules: analytic_distribution, sales_followup, register_accounting, reason_types_moves, msf_homere_interface, stock_override, consumption_calculation, sale, specific_rules, order_types, msf_tools, mission_stock, msf_doc_import, stock, product
+#. modules: analytic_distribution, sales_followup, register_accounting, reason_types_moves, msf_homere_interface, stock_override, consumption_calculation, sale, specific_rules, order_types, msf_tools, mission_stock, msf_doc_import, stock, product, acccount
 #: field:import.commitment.wizard,in_progress:0
 #: view:product.history.consumption:0
 #: selection:product.history.consumption,fake_status:0
@@ -83606,6 +83650,7 @@ msgstr "Ligne sourcée-n"
 #: selection:wizard.import.product.line,state:0
 #: selection:product.mass.update,state:0
 #: selection:stock.expired.damaged.report,state:0
+#: selection:account.invoice.import,state:0
 #, python-format
 msgid "In Progress"
 msgstr "En cours"
@@ -90952,6 +90997,11 @@ msgstr "Valeur de crédit ou débit erronée dans le modèle (Crédit + Débit d
 msgid "Number"
 msgstr "Nombre"
 
+#. module: account
+#: report:addons/account/report/export_invoice.mako:88
+msgid "Number"
+msgstr "Numéro"
+
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:303
 #, python-format
@@ -92851,6 +92901,7 @@ msgstr "America/Anguilla"
 #: report:order.type.donation.certificate:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:238
 #: report:addons/stock/report/stock_delivery_report_xls.mako:221
+#: report:addons/account/report/export_invoice.mako:96
 #, python-format
 msgid "Currency"
 msgstr "Devise"
@@ -95784,6 +95835,7 @@ msgstr "wizard.export.po.validated"
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:290
 #: report:account.invoice2:0
 #: code:addons/account_override/res_company.py:40
+#: report:addons/account/report/export_invoice.mako:104
 #, python-format
 msgid "Document Date"
 msgstr "Date du Document"
@@ -96495,6 +96547,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:replenishment.order_calc:0
 #: view:replenishment.segment:0
 #: view:product.ask.activate.wizard:0
+#: view:account.invoice.import:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -97726,6 +97779,7 @@ msgstr "À"
 #: selection:sync.monitor,user_rights:0
 #: selection:shipment.add.pack.processor.line,integrity_status:0
 #: selection:stock.move,integrity_error:0
+#: view:account.invoice.import:0
 #: code:addons/msf_outgoing/__init__.py:26
 msgid "Ok"
 msgstr "Ok"
@@ -106292,8 +106346,9 @@ msgstr "Impossible de récupérer la devise."
 msgid "Impossible to retrieve the account code at line level."
 msgstr "Impossible de récupérer le code comptable au niveau d'une ligne."
 
-#. module: account_override
+#. modules: account_override, account
 #: code:addons/account_override/account_invoice_sync.py:193
+#: code:addons/account/wizard/account_invoice_import.py:107
 #, python-format
 msgid "Currency %s not found or inactive."
 msgstr "Devise %s non trouvée ou inactive."
@@ -109055,6 +109110,7 @@ msgstr "Le Code Produit %s doit inclure un caractère 'Z'"
 
 #. module: account
 #: report:addons/account/report/invoice_excel_export.mako:56
+#: report:addons/account/report/export_invoice.mako:80
 msgid "Sheet"
 msgstr "Feuille"
 
@@ -109195,3 +109251,119 @@ msgstr "Fractionner Bon Intermission OUT"
 #: code:addons/account_override/invoice.py:1272
 msgid "Split Stock Transfer Voucher"
 msgstr "Fractionner Bon Client"
+
+#. modules: account_override, register_accounting
+#: view:account.invoice:0
+#: view:account.invoice:0
+msgid "Export Invoice"
+msgstr "Exporter la Facture"
+
+#. module: account
+#: report:addons/account/report/export_invoice.mako:9
+#: model:ir.actions.report.xml,name:account.export_invoice
+msgid "Export - Invoice"
+msgstr "Export - Facture"
+
+#. modules: account_override, account, register_accounting
+#: view:account.invoice.import:0
+#: code:addons/account_override/invoice.py:1652
+#: view:account.invoice:0
+#, python-format
+msgid "Import Invoice"
+msgstr "Importer la Facture"
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:159
+#, python-format
+msgid "Line %s: the account (mandatory) is missing."
+msgstr "Ligne %s : il manque le compte (obligatoire)."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:163
+#, python-format
+msgid "Line %s: the account %s doesn't exist."
+msgstr "Ligne %s : le compte %s n'existe pas."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:115
+#, python-format
+msgid "Partner %s not found or inactive."
+msgstr "Partenaire %s non trouvé ou inactif."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:233
+#, python-format
+msgid "An error occurred: %s: %s"
+msgstr "Une erreur est survenue : %s : %s"
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:177
+#, python-format
+msgid "Line %s: the account %s is not allowed."
+msgstr "Ligne %s : le compte %s n'est pas autorisé."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:168
+#, python-format
+msgid "Line %s: the account %s is inactive."
+msgstr "Ligne %s : le compte %s est inactif."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:102
+#, python-format
+msgid "No currency found."
+msgstr "Pas de devise trouvée."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:112
+#, python-format
+msgid "No partner found."
+msgstr "Pas de partenaire trouvé."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:200
+#, python-format
+msgid "Line %s: the quantity format is incorrect."
+msgstr "Ligne %s : le format de la quantité est incorrect."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:156
+#, python-format
+msgid "Line %s: the line number %s doesn't exist in the invoice."
+msgstr "Ligne %s : le numéro de ligne %s n'existe pas dans la facture."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:151
+#, python-format
+msgid "Line %s: the line number is missing."
+msgstr "Ligne %s : il manque le numéro de ligne."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:128
+#, python-format
+msgid "The combination \"Currency, Partner and Posting Date\" of the imported file doesn't match with the current invoice."
+msgstr "La combinaison \"Devise, Partenaire et Date de Comptabilisation\" du fichier importé ne correspond pas à la facture actuelle."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:121
+#, python-format
+msgid "The posting date has a wrong format."
+msgstr "La date de comptabilisation a un mauvais format."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:183
+#, python-format
+msgid "Line %s: the unit price format is incorrect."
+msgstr "Ligne %s : le format du prix unitaire est incorrect."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:194
+#, python-format
+msgid "Line %s: the product %s doesn't exist or is inactive."
+msgstr "Ligne %s : le produit %s n'existe pas ou est inactif."
+
+#. module: account
+#: code:addons/account/wizard/account_invoice_import.py:86
+#, python-format
+msgid "The import is allowed only in Draft state."
+msgstr "L'import est autorisé uniquement à l'état Brouillon."
