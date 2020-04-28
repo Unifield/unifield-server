@@ -624,8 +624,10 @@ class account_invoice(osv.osv):
                 'order_ids': False,
                 'picking_id': False,
             })
+            inv = self.browse(cr, uid, inv_id, fields_to_fetch=['state', 'from_supply'], context=context)
+            if inv.state == 'cancel':
+                raise osv.except_osv(_('Warning'), _("You can't duplicate a Cancelled invoice."))
             if not context.get('from_split'):
-                inv = self.browse(cr, uid, inv_id, fields_to_fetch=['from_supply'], context=context)
                 if inv.from_supply:
                     default.update({'origin': ''})
 
