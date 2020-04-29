@@ -98928,7 +98928,6 @@ msgstr "Picking – fermé"
 #: field:stock.move.memory.out,prodlot_id:0
 #: field:stock.move.split.lines.exist,prodlot_id:0
 #: view:stock.production.lot:0
-#: field:stock.reserved.products,prodlot_id:0
 msgid "Production Lot"
 msgstr "Lot de Production"
 
@@ -109195,3 +109194,8 @@ msgstr "Fractionner Bon Intermission OUT"
 #: code:addons/account_override/invoice.py:1272
 msgid "Split Stock Transfer Voucher"
 msgstr "Fractionner Bon Client"
+
+#. module: msf_outgoing
+#: field:stock.reserved.products,prodlot_id:0
+msgid "Batch Number - Expiry Date"
+msgstr "Numéro de Lot - Date d'Expiration"
