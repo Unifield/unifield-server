@@ -25571,12 +25571,6 @@ msgstr "BERMUDIAN DOLLAR"
 msgid "Please choose an output currency before export."
 msgstr "Veuillez choisir une devise d'impression avant d'exporter!"
 
-#. module: account_override
-#: view:account.invoice:0
-#: report:account.invoice2:0
-msgid "I/MI voucher date"
-msgstr "I/MI date du bon"
-
 #. module: msf_config_locations
 #: view:stock.location.configuration.wizard:0
 msgid "Add Location and create new one"

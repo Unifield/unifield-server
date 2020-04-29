@@ -239,7 +239,7 @@
     <blockTable colWidths="106,106,106,106,106" style="Table_Invoice_General_Header">
       <tr>
         <td>
-          <para style="terp_tblheader_General_Centre">[[ o.is_intermission and translate('I/MI voucher date') or translate('Document Date') ]]</para>
+          <para style="terp_tblheader_General_Centre">[[ translate('Document Date') ]]</para>
         </td>
         <td>
           <para style="terp_tblheader_General_Centre">Posting Date</para>
