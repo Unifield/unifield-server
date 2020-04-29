@@ -219,7 +219,7 @@
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
   </Style>
@@ -309,7 +309,7 @@
   <Style ss:ID="s48">
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>"production"
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
@@ -470,7 +470,7 @@
    <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s70">
-   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+   <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
    <Borders/>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="24" ss:Color="#000000"
     ss:Bold="1"/>
@@ -535,7 +535,7 @@
    <Column ss:Index="16" ss:Width="67.5"/>
    <Column ss:AutoFitWidth="0" ss:Width="78" ss:Span="2"/>
    <Column ss:Index="20" ss:AutoFitWidth="0" ss:Width="273"/>
-   <Row ss:Height="31.5" ss:StyleID="s71">
+   <Row ss:Height="35" ss:StyleID="s71">
     <Cell ss:StyleID="s70"><Data ss:Type="String">${_('INVENTORY REPORT')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s69"><NamedCell ss:Name="Print_Titles"/><NamedCell
