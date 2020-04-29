@@ -152,6 +152,7 @@
                     <xpath expr="/search/group[1]/filter[@name='unpaid']" position="after">
                         <filter name="paid" icon="terp-dolar" string="Paid" domain="[('state', '=', 'paid')]"/>
                         <filter name="closed" icon="terp-dialog-close" string="Closed" domain="[('state', '=', 'inv_close')]" />
+                        <filter name="cancel_state" icon="terp-gtk-stop" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
                         <separator orientation="vertical"/>
                             <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not')]"/>
                             <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
