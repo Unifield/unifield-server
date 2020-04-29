@@ -699,7 +699,7 @@ class product_attributes(osv.osv):
                 # UD prod deactivated in coordo + merge + sync : proj does not see the deactivation
                 dom += [('active', 'in', ['t', 'f'])]
             else:
-                dom += [('active', '=', False)]
+                dom += ['|', '&', ('active', '=', False), ('standard_ok', '=', 'non_standard_local'), '&', ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard'])]
             for p_id in self.search(cr, uid, dom, context=context):
                 res[p_id] = True
         return res
@@ -1009,7 +1009,7 @@ class product_attributes(osv.osv):
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity', related_uom='uom_id', help="Standard Ordering Quantity. Quantity according to which the product should be ordered. The SoQ is usually determined by the typical packaging of the product."),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
-        'nsl_merged': fields.function(_get_nsl_merged, method=True, type='boolean', string='NSL merged'),
+        'nsl_merged': fields.function(_get_nsl_merged, method=True, type='boolean', string='UD / NSL merged'),
         'replace_product_id': fields.many2one('product.product', string='Merged from', select=1),
         'replaced_by_product_id': fields.many2one('product.product', string='Merged to'),
         'allow_merge': fields.function(_get_allow_merge, type='boolean', method=True, string="UD Allow merge"),
@@ -1073,22 +1073,6 @@ class product_attributes(osv.osv):
 
         return True
 
-    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
-        if context is None:
-            context= {}
-
-        # to filter NSL prod by default on the m2o field in the merge prod wizard
-        if context.get('search_default_nsl'):
-            filter_standard_ok = False
-            for arg in args:
-                if arg[0] == 'standard_ok':
-                    filter_standard_ok = True
-                    break
-            if not filter_standard_ok:
-                args.append(('standard_ok', '=', 'non_standard_local'))
-
-        return super(product_attributes, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
-
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         Add a filter if the 'available_for_restriction' attribute is passed on context
@@ -1110,9 +1094,9 @@ class product_attributes(osv.osv):
                 field.set('invisible', '0')
             res['arch'] = etree.tostring(root)
 
-        if view_type == 'search' and context.get('display_nsl_filter'):
+        if view_type == 'tree' and context.get('display_old_code'):
             root = etree.fromstring(res['arch'])
-            for field in root.xpath('//group[@name="display_nsl_filter"]'):
+            for field in root.xpath('//field[@name="old_code"]'):
                 field.set('invisible', '0')
             res['arch'] = etree.tostring(root)
 
@@ -2483,7 +2467,7 @@ class product_attributes(osv.osv):
             'view_mode': 'form',
             'target': 'new',
             'context': context,
-            'height': '300px',
+            'height': '400px',
             'width': '720px',
         }
 
@@ -2546,11 +2530,11 @@ class product_attributes(osv.osv):
 
         new_data = self.read(cr, uid, nsl_prod_id, ['default_code','old_code', 'allow_merge'], context=context)
         if not new_data['allow_merge']:
-            raise osv.except_osv(_('Warning'), _('New product %s condition not met: inactive, NSL') % new_data['default_code'])
+            raise osv.except_osv(_('Warning'), _('New product %s condition not met') % new_data['default_code'])
 
         error_used = self._error_used_in_doc(cr, uid, nsl_prod_id, context=None)
         if error_used:
-            raise osv.except_osv(_('Warning'), _('The selected NSL product %s has already been used in the past. Merge cannot be done for this product') % (new_data['default_code'], ))
+            raise osv.except_osv(_('Warning'), _('The selected UD product %s has already been used in the past. Merge cannot be done for this product') % (new_data['default_code'], ))
 
         if self._has_pipe(cr, uid, nsl_prod_id):
             raise osv.except_osv(_('Warning'), _('Warning there is stock / pipeline in at least one of the instances in this mission! Therefore the product cannot be merged') % (new_data['default_code'], ))

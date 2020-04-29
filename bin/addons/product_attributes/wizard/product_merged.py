@@ -11,11 +11,12 @@ class product_merged_wizard(osv.osv_memory):
 
     _columns = {
         'old_product_id': fields.many2one('product.product', 'Old local Product', readonly=1),
-        'new_product_id': fields.many2one('product.product', 'UD NSL Product', domain=[('international_status', '=', 'UniData'), ('active', '=', False), ('replace_product_id', '=', False)]),
+        'new_product_id': fields.many2one('product.product', 'UD Product', domain=[('international_status', '=', 'UniData'), ('active', '=', False), ('replace_product_id', '=', False), ('standard_ok', '=', 'non_standard_local')]),
+        'show_ud': fields.boolean('Use Standard / Non Standard UD product', help="Unticked: display UD NSL inactive products\nTicked: display UD ST + NS active products"),
+        'ud_old_code': fields.char('UD Old code', readonly=1, size=1024),
         'warning_msg': fields.text('Warning Message'),
         'warning_checked': fields.boolean('Warning Checked'),
     }
-
 
     def do_merge_product(self, cr, uid, ids, context=None):
         prod_obj = self.pool.get('product.product')
@@ -23,7 +24,7 @@ class product_merged_wizard(osv.osv_memory):
 
         error_used = prod_obj._error_used_in_doc(cr, uid, wiz.new_product_id.id, context=context)
         if error_used:
-            raise osv.except_osv(_('Warning'), _('The selected NSL product has already been used in the past. Merge cannot be done for this product.'))
+            raise osv.except_osv(_('Warning'), _('The selected UD product has already been used in the past. Merge cannot be done for this product.'))
 
         if prod_obj._has_pipe(cr, uid, wiz.new_product_id.id):
             raise osv.except_osv(_('Warning'), _('Warning there is stock / pipeline in at least one of the instances in this mission! Therefore this product cannot be merged.'))
@@ -44,7 +45,7 @@ class product_merged_wizard(osv.osv_memory):
                     'target': 'new',
                     'res_id': ids[0],
                     'context': context,
-                    'height': '300px',
+                    'height': '400px',
                     'width': '720px',
                 }
 
@@ -54,7 +55,16 @@ class product_merged_wizard(osv.osv_memory):
         res['res_id'] = wiz.new_product_id.id
         return res
 
-    def change_warning(self, cr, uid, ids, context=None):
-        return {'value': {'warning_checked': False, 'warning_msg': False}}
+    def show_ud(self, cr, uid, ids, show_ud, context=None):
+        if show_ud:
+            return {'domain': {'new_product_id': [('international_status', '=', 'UniData'), ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard']), ('replace_product_id', '=', False)]}}
+        else:
+            return {'domain': {'new_product_id': [('international_status', '=', 'UniData'), ('active', '=', False), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)]}}
+
+    def change_warning(self, cr, uid, ids, new_prod, context=None):
+        old_code =False
+        if new_prod:
+            old_code = self.pool.get('product.product').browse(cr, uid, new_prod, fields_to_fetch=['old_code'], context=context).old_code
+        return {'value': {'warning_checked': False, 'warning_msg': False, 'ud_old_code': old_code}}
 
 product_merged_wizard()
