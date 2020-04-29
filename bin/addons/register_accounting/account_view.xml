@@ -16,7 +16,7 @@
                 <xpath expr="/form" position="replace">
                     <form string="Bank Statement" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                         <group col="6" colspan="4">
-                            <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'partial_close', 'confirm'))]}"/>
+                            <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'confirm'))]}"/>
                             <field name="journal_id" domain="[('type', '=', 'bank'),('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" select="1"/>
                             <newline/>
                             <field name="period_id" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
@@ -207,7 +207,7 @@
                 <xpath expr="/form" position="replace">
                     <form string="Statement" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                         <group col="6" colspan="4">
-                            <field name="name" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'partial_close', 'confirm'))]}"/>
+                            <field name="name" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'confirm'))]}"/>
                             <field name="company_id" select="1" groups="base.group_multi_company" invisible="True"/>
                             <field name="journal_id" on_change="onchange_journal_id(journal_id)" domain="[('type','=','cash'),('is_current_instance','=',True)]" select="1"/>
                             <newline/>
@@ -794,7 +794,7 @@
             <field name="arch" type="xml">
                 <form string="Cheque Register" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                     <group col="7" colspan="4">
-                        <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'partial_close', 'confirm'))]}"/>
+                        <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'confirm'))]}"/>
                         <field name="journal_id" domain="[('type', '=', 'cheque'),('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" select="1"/>
                         <newline/>
                         <field name="date" select="1" on_change="onchange_date(date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>

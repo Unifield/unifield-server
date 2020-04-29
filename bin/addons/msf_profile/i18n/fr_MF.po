@@ -2612,12 +2612,6 @@ msgstr "Veuillez définir ici la méthode qui sera utilisée pour générer les 
 "\"Détail\" recopie chaque écriture de journal de l'année précédente, même celles qui ont été lettrées\n"
 "\"Non lettré\" recopie uniquement les écritures  non lettrées sur le premier jour du nouvel exercice comptable."
 
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/cashbox_write_off.py:93
-#, python-format
-msgid "This action is only for partially closed registers."
-msgstr "This action is only for partially closed registers."
-
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/account_commitment.py:524
 #, python-format
@@ -3270,11 +3264,6 @@ msgstr "Sainte-Lucie"
 #: field:free.allocation.wizard,fiscalyear_id:0
 msgid "Fiscal Year"
 msgstr "Exercice Comptable"
-
-#. module: register_accounting
-#: selection:cashbox.write.off,choice:0
-msgid "Re-open Register"
-msgstr "Re-ouvrir le Registre"
 
 #. module: analytic_distribution
 #: field:account.analytic.line,real_period_id:0
@@ -31738,12 +31727,6 @@ msgstr "Volume total"
 msgid "Married"
 msgstr "Marié"
 
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/cashbox_write_off.py:88
-#, python-format
-msgid "You cannot do anything as long as the \"Close CashBox\" button has not been used."
-msgstr "Vous ne pouvez rien faire tant que le bouton 'Fermer Caisse\" n'ait été activé"
-
 #. module: account_override
 #: code:addons/account_override/invoice.py:858
 #, python-format
@@ -56568,11 +56551,6 @@ msgstr "Logistique"
 msgid "Print report"
 msgstr "Imprimer Rapport"
 
-#. module: register_accounting
-#: model:ir.model,name:register_accounting.model_cashbox_write_off
-msgid "cashbox.write.off"
-msgstr "cashbox.write.off"
-
 #. module: base
 #: model:res.currency,currency_name:base.CVE
 msgid "CAPE VERDE ESCUDO"
@@ -58197,11 +58175,6 @@ msgstr "Journal Ajustement"
 #: code:addons/register_accounting/partner.py:50
 #: code:addons/register_accounting/wizard/cashbox_closing.py:43
 #: code:addons/register_accounting/wizard/cashbox_closing.py:102
-#: code:addons/register_accounting/wizard/cashbox_write_off.py:68
-#: code:addons/register_accounting/wizard/cashbox_write_off.py:81
-#: code:addons/register_accounting/wizard/cashbox_write_off.py:88
-#: code:addons/register_accounting/wizard/cashbox_write_off.py:93
-#: code:addons/register_accounting/wizard/cashbox_write_off.py:99
 #: code:addons/register_accounting/wizard/direct_invoice.py:101
 #: code:addons/register_accounting/wizard/direct_invoice.py:190
 #: code:addons/register_accounting/wizard/direct_invoice.py:193
@@ -59034,11 +59007,6 @@ msgstr "Vous ne pouvez pas créer ce document (%s) ! Assurez-vous que votre util
 #: selection:sync.client.entity,usb_instance_type:0
 msgid "Central Platform"
 msgstr "Central Platform"
-
-#. module: register_accounting
-#: field:cashbox.write.off,choice:0
-msgid "Decision about CashBox"
-msgstr "Décision à propos de la Caisse"
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/hr.py:290
@@ -63820,12 +63788,6 @@ msgstr "TVA OK"
 msgid "The supplier approves the Purchase Order."
 msgstr "Le fournisseur valide le Bon de Commande"
 
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/cashbox_write_off.py:68
-#, python-format
-msgid "Please use 'Close CashBox' button before."
-msgstr "Veuillez d'abord utiliser le bouton 'Fermer Caisse'."
-
 #. module: account
 #: field:account.invoice.tax,factor_base:0
 msgid "Multipication factor for Base code"
@@ -66531,11 +66493,6 @@ msgstr "Lignes d'Assistant pour valider le processeur de picking"
 #: selection:board.board.line,position:0
 msgid "Right"
 msgstr "Droit"
-
-#. module: register_accounting
-#: field:cashbox.write.off,account_id:0
-msgid "Write-off Account"
-msgstr "Compte d'Ajustement"
 
 #. module: msf_cross_docking
 #: code:addons/msf_cross_docking/cross_docking.py:623
@@ -75240,11 +75197,6 @@ msgstr "Options Facture d'Avoirs"
 msgid "Africa/Harare"
 msgstr "Africa/Harare"
 
-#. module: register_accounting
-#: model:ir.actions.act_window,name:register_accounting.action_write_off
-msgid "Re-open partially closed register"
-msgstr "Re-open partially closed register"
-
 #. modules: msf_outgoing, specific_rules
 #: code:addons/msf_outgoing/wizard/picking_processor.py:951
 #: code:addons/specific_rules/wizard/stock_partial_move.py:143
@@ -79870,12 +79822,6 @@ msgstr "\n"
 #: selection:sync.client.sync_manager,state:0
 msgid "Corrupted"
 msgstr "Corrompu"
-
-#. module: register_accounting
-#: code:addons/register_accounting/wizard/cashbox_write_off.py:81
-#, python-format
-msgid "You cannot decide about Cash Discrepancy without selecting any CashBox!"
-msgstr "Vous ne pouvez pas décider d'un Ecart de trésorerie sans sélectionner une Caisse."
 
 #. module: purchase
 #: view:purchase.order:0
@@ -86092,11 +86038,6 @@ msgstr "DLS"
 msgid "Child Tax Accounts"
 msgstr "Comptes de Taxe Enfant"
 
-#. module: register_accounting
-#: view:cashbox.write.off:0
-msgid "Decision about the action to do on this CashBox"
-msgstr "Decision about the action to do on this CashBox"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1398
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1464
@@ -89667,11 +89608,6 @@ msgstr "Compte / Destination :"
 #: help:shipment.add.pack.processor,address_id:0
 msgid "Address of the customer"
 msgstr "Adresse du Client"
-
-#. module: register_accounting
-#: view:cashbox.write.off:0
-msgid "Write-off - Wizard"
-msgstr "Ajustement - Assistant"
 
 #. module: kit
 #: code:addons/kit/wizard/kit_mass_import.py:526
@@ -93414,11 +93350,6 @@ msgstr "Tiers"
 msgid "Datas"
 msgstr "Données"
 
-#. module: register_accounting
-#: field:cashbox.write.off,amount:0
-msgid "CashBox difference"
-msgstr "Ecart de Caisse"
-
 #. module: base
 #: code:addons/base/module/module.py:346
 #, python-format
@@ -96069,7 +96000,6 @@ msgid "Europe/Athens"
 msgstr "Europe/Athens"
 
 #. modules: register_accounting, purchase
-#: code:addons/register_accounting/wizard/cashbox_write_off.py:99
 #: code:addons/register_accounting/wizard/register_reopen.py:82
 #: code:addons/purchase/purchase_order.py:1734
 #, python-format
@@ -96482,7 +96412,6 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:purchase.order.followup.from.menu:0
 #: view:split.purchase.order.line.wizard:0
 #: view:account.invoice.refund:0
-#: view:cashbox.write.off:0
 #: view:register.reopen:0
 #: view:wizard.cash.return:0
 #: view:wizard.closing.cashbox:0
@@ -97751,7 +97680,6 @@ msgstr "À"
 #: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
 #: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
-#: view:cashbox.write.off:0
 #: view:register.reopen:0
 #: view:wizard.cash.return:0
 #: view:wizard.import.cheque:0
@@ -97790,11 +97718,6 @@ msgstr "Ok"
 #: model:process.transition,note:purchase.process_transition_invoicefrompackinglist0
 msgid "The invoice is created automatically if the Invoice control of the purchase order is 'On picking'. The invoice can also be generated manually by the accountant (Invoice control = Manual)."
 msgstr "La facture est créée automatiquement si le contrôle de facture du bon de commande est 'Sur Picking' La facture peut aussi être genérée manuellement par le comptable (Contrôle de facture = Manuel)."
-
-#. module: account
-#: selection:account.bank.statement,state:0
-msgid "Partial Close"
-msgstr "Clôture Partielle"
 
 #. module: supplier_catalogue
 #: help:supplier.catalogue.line,min_qty:0
@@ -109369,3 +109292,9 @@ msgstr "Ligne %s : le produit %s n'existe pas ou est inactif."
 #, python-format
 msgid "The import is allowed only in Draft state."
 msgstr "L'import est autorisé uniquement à l'état Brouillon."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/cashbox_closing.py:58
+#, python-format
+msgid "Theoretical Balance is not equal to the Cashbox Balance."
+msgstr "Le Solde Théorique n'est pas égal au Solde de Caisse."

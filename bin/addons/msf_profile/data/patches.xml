@@ -531,5 +531,9 @@
             <field name="method">us_7015_del_rac_line_sql</field>
         </record>
 
+        <record id="us_7236_remove_reg_wkf_and_partial_close_state" model="patch.scripts">
+            <field name="method">us_7236_remove_reg_wkf_and_partial_close_state</field>
+        </record>
+
     </data>
 </openerp>
