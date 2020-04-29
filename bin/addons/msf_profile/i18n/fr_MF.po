@@ -31383,6 +31383,7 @@ msgstr "Display Free 2?"
 #: selection:analytic.distribution.wizard,register_line_state:0
 #: view:account.bank.statement:0
 #: selection:account.bank.statement.line,state:0
+#: view:account.bank.statement.line:0
 msgid "Hard"
 msgstr "Comptabilisé"
 
@@ -35565,6 +35566,7 @@ msgstr "    - %s :\n"
 #: field:product.mass.update,product_state:0
 #: field:product.mass.update,state:0
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:235
+#: report:addons/register_accounting/report/open_advances_xls.mako:160
 #, python-format
 msgid "Status"
 msgstr "Statut"
