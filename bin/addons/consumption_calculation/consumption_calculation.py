@@ -820,6 +820,8 @@ class real_average_consumption_line(osv.osv):
             #recursion: can't use write
             cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, asset_mandatory=%s, prodlot_id=%s, expiry_date=%s, asset_id=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, asset_mandatory, prodlot_id, expiry_date, asset_id, obj.id))  # not_a_user_entry
 
+        self._unique_lot_poduct(cr, uid, ids)
+
         return True
 
     def _get_product(self, cr, uid, ids, context=None):
@@ -873,14 +875,34 @@ class real_average_consumption_line(osv.osv):
         'inactive_error': lambda *a: '',
     }
 
-# uf-1344 => need to pass the context so we use create and write instead
-#    _constraints = [
-#        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty']),
-#    ]
 
-    _sql_constraints = [
-        ('unique_lot_poduct', "unique(product_id, prodlot_id, rac_id)", 'The couple product, batch number has to be unique'),
-    ]
+    def _unique_lot_poduct(self, cr, uid, ids, context=None):
+        if not ids:
+            return True
+        cr.execute('''
+            select product.default_code, bn.name, bn.id, rac.id, rac.name
+                from real_average_consumption rac
+                inner join real_average_consumption_line line on line.rac_id = rac.id
+                inner join product_product product on product.id = line.product_id
+                inner join stock_production_lot bn on bn.id = line.prodlot_id
+            where
+                rac.state = 'draft' and
+                (rac.id, line.product_id, line.prodlot_id) in (select rac_id, product_id, prodlot_id from real_average_consumption_line where id in %s)
+            group by
+                product.default_code, bn.name, bn.id, rac.id, rac.name
+            having count(*) > 1
+        ''', (tuple(ids), ))
+        error = []
+        for x in cr.fetchall():
+            error.append('%s: %s %s' % (x[4], x[0], x[1]))
+            if len(error) > 5:
+                error.append('...')
+                break
+        if error:
+            raise osv.except_osv(_('Error'), _('The couple product, batch number has to be unique:\n%s') % "\n".join(error))
+
+        return True
+
 
     def create(self, cr, uid, vals=None, context=None):
         '''

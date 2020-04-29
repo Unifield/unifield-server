@@ -242,13 +242,13 @@ class account_invoice_import(osv.osv_memory):
             logging.getLogger('account.invoice.import').warn('OSV Exception', exc_info=True)
             cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occurred: %s: %s") %
-                                                 (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
+                                      (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
             cr.close(True)
         except Exception as e:
             logging.getLogger('account.invoice.import').warn('Exception', exc_info=True)
             cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occurred: %s") %
-                                                 (e and e.args and e.args[0] or ''), 'state': 'done', 'progression': 100.0})
+                                      (e and e.args and e.args[0] or ''), 'state': 'done', 'progression': 100.0})
             cr.close(True)
         return True
 

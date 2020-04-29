@@ -527,5 +527,9 @@
             <field name="method">us_7221_reset_starting_balance</field>
         </record>
 
+        <record id="us_7015_del_rac_line_sql" model="patch.scripts">
+            <field name="method">us_7015_del_rac_line_sql</field>
+        </record>
+
     </data>
 </openerp>
