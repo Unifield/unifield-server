@@ -52,7 +52,51 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+
     # UF17.0
+    def us_7015_del_rac_line_sql(self, cr, uid, *a, **b):
+        cr.drop_constraint_if_exists('real_average_consumption_line', 'real_average_consumption_line_unique_lot_poduct')
+        return True
+
+    def us_7221_reset_starting_balance(self, cr, uid, *a, **b):
+        """
+        Reset the Starting Balance of the first register created for each journal if it is still in Draft state
+        """
+        # Cashbox details set to zero
+        cr.execute("""
+                   UPDATE account_cashbox_line
+                   SET number = 0 
+                   WHERE starting_id IN (
+                       SELECT id FROM account_bank_statement
+                       WHERE state = 'draft'
+                       AND prev_reg_id IS NULL
+                       AND journal_id IN (SELECT id FROM account_journal WHERE type='cash')
+                   );
+                   """)
+        # Starting Balance set to zero
+        cr.execute("""
+                   UPDATE account_bank_statement
+                   SET balance_start = 0.0
+                   WHERE state = 'draft'
+                   AND prev_reg_id IS NULL
+                   AND journal_id IN (SELECT id FROM account_journal WHERE type in ('bank', 'cash'));
+                   """)
+        self._logger.warn('Starting Balance set to zero in %s registers.' % (cr.rowcount,))
+        return True
+
+    # UF16.1
+    def remove_ir_actions_linked_to_deleted_modules(self, cr, uid, *a, **b):
+        # delete remove actions
+        cr.execute("delete from ir_act_window where id in (select res_id from ir_model_data where module in ('procurement_report', 'threshold_value') and model='ir.actions.act_window')")
+
+        # delete xmlid
+        cr.execute("delete from ir_model_data where module in ('procurement_report', 'threshold_value') and model='ir.actions.act_window'")
+
+        # delete sdred
+        cr.execute("delete from ir_model_data where name in ('procurement_report_action_auto_supply_rules_report', 'procurement_report_action_min_max_rules_report', 'procurement_report_action_order_cycle_rules_report', 'procurement_report_action_compute_schedulers_min_max', 'threshold_value_action_compute_schedulers_threshold', 'procurement_report_action_procurement_batch_form', 'procurement_report_action_procurement_rules_report', 'threshold_value_action_threshold_value', 'procurement_report_action_threshold_value_rules_report')")
+
+        return True
+
     def us_7025_7039_fix_nr_empty_ins(self, cr, uid, *a, **b):
         """
         1. Set the Not Runs to run:
@@ -88,7 +132,7 @@ class patch_scripts(osv.osv):
         # 2
         cr.execute("""
             SELECT p.id, p.name FROM stock_picking p LEFT JOIN stock_move m ON p.id = m.picking_id WHERE m.id IS NULL
-                AND p.type = 'in' AND p.subtype = 'standard' AND p.state = 'done' AND coalesce(shipment_ref, '') != '' AND purchase_id is not null
+                AND p.type = 'in' AND p.subtype = 'standard' AND p.state = 'done' AND shipment_ref like '%s' AND purchase_id is not null
         """)
         empty_in_ids = []
         empty_in_names = []
@@ -111,7 +155,7 @@ class patch_scripts(osv.osv):
             DELETE FROM account_invoice WHERE id IN (
                 SELECT a.id FROM account_invoice a LEFT JOIN account_invoice_line l ON a.id = l.invoice_id 
                     WHERE l.id IS NULL AND a.state = 'draft' AND a.type = 'out_invoice' AND a.is_debit_note = 'f'
-                    AND a.is_inkind_donation = 'f' AND a.is_intermission = 't' AND user_id = %s
+                    AND a.is_inkind_donation = 'f' AND a.is_intermission = 't' AND a.user_id = %s AND a.name like 'IN/%%' AND a.create_date < '2020-01-17 00:00:00'
             )
         """, (sync_id, ))
         self._logger.warn('%s empty IVOs have been deleted.', (cr.rowcount,))
