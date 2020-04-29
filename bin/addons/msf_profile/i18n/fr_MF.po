@@ -103651,10 +103651,11 @@ msgstr "Toutes les lignes seront confirmées si leur status le permet"
 msgid "Confirm document"
 msgstr "Confirmer le document"
 
-#. modules: purchase, sale, procurement_request
+#. modules: purchase, sale, procurement_request, account_override
 #: view:sale.order:0
 #: view:purchase.order:0
 #: view:sale.order:0
+#: view:account.invoice:0
 msgid "Cancel document"
 msgstr "Annuler le document"
 
@@ -109367,3 +109368,19 @@ msgstr "Ligne %s : le produit %s n'existe pas ou est inactif."
 #, python-format
 msgid "The import is allowed only in Draft state."
 msgstr "L'import est autorisé uniquement à l'état Brouillon."
+
+#. module: account_override
+#: view:account.invoice:0
+msgid "Do you really want to cancel this document?"
+msgstr "Voulez-vous vraiment annuler ce document ?"
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:629
+#, python-format
+msgid "You can't duplicate a Cancelled invoice."
+msgstr "Vous ne pouvez pas dupliquer une facture Annulée."
+
+#. module: account
+#: report:account.invoice2:0
+msgid "Cancelled Intermission Voucher OUT"
+msgstr "Bon Intermission OUT annulé"
