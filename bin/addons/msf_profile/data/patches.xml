@@ -531,5 +531,9 @@
             <field name="method">us_7015_del_rac_line_sql</field>
         </record>
 
+        <record id="us_7425_clean_period_not_run" model="patch.scripts">
+            <field name="method">us_7425_clean_period_not_run</field>
+        </record>
+
     </data>
 </openerp>
