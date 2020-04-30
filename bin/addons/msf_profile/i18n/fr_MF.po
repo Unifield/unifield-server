@@ -109298,3 +109298,8 @@ msgstr "L'import est autorisé uniquement à l'état Brouillon."
 #, python-format
 msgid "Theoretical Balance is not equal to the Cashbox Balance."
 msgstr "Le Solde Théorique n'est pas égal au Solde de Caisse."
+
+#. module: account
+#: constraint:account.cashbox.line:0
+msgid "The values of the Closing Balance lines must be unique per register."
+msgstr "Les valeurs des lignes du Solde de Clôture doivent être uniques par registre."
