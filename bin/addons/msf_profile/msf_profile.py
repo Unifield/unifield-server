@@ -56,7 +56,7 @@ class patch_scripts(osv.osv):
     # UF17.0
     def us_7425_clean_period_not_run(self, cr, uid, *a, **b):
         """
-        Sets as "Run without execution" the updates related to the field-closing of periods received by OCBHQ and not executed
+        Sets as "Run without execution" the updates related to the field-closing of periods received from OCBHQ and not executed
         in projects and coordos because the related FY is already Mission-Closed.
         """
         if self.pool.get('sync_client.version') and self.pool.get('sync.client.entity'):
