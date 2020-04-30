@@ -457,7 +457,7 @@
             <field name="priority">21</field>
             <field name="arch" type="xml">
                 <tree string="Intermission Voucher" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
-                    <field name="document_date" string="I/MI voucher date"/>
+                    <field name="document_date"/>
                     <field name="date_invoice"/>
                     <field name="number"/>
                     <field name="partner_id"/>
@@ -508,7 +508,7 @@
                                                     '&amp;', ('type', '=', 'out_invoice'), ('from_supply', '=', True)]}"/>
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" string="Partner address"/>
                         <newline/>
-                        <field name="document_date" string="I/MI voucher date" />
+                        <field name="document_date"/>
                         <field name="date_invoice"/>
                         <newline/>
                         <group colspan="8" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
