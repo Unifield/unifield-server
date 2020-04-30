@@ -11,7 +11,7 @@ class product_merged_wizard(osv.osv_memory):
 
     _columns = {
         'old_product_id': fields.many2one('product.product', 'Old local Product', readonly=1),
-        'new_product_id': fields.many2one('product.product', 'UD Product', domain=[('international_status', '=', 'UniData'), ('active', '=', False), ('replace_product_id', '=', False), ('standard_ok', '=', 'non_standard_local')]),
+        'new_product_id': fields.many2one('product.product', 'UD Product'),
         'show_ud': fields.boolean('Use Standard / Non Standard UD product', help="Unticked: display UD NSL inactive products\nTicked: display UD ST + NS active products"),
         'ud_old_code': fields.char('UD Old code', readonly=1, size=1024),
         'warning_msg': fields.text('Warning Message'),
@@ -36,7 +36,7 @@ class product_merged_wizard(osv.osv_memory):
         if not wiz.warning_checked:
             warn_msg = prod_obj.check_same_value(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, blocker=False, context=context)
             if warn_msg:
-                self.write(cr, uid, ids, {'warning_msg': warn_msg, 'warning_checked': True, 'ud_old_code': wiz.new_product_id.old_code, 'show_ud': wiz.show_ud}, context=context)
+                self.write(cr, uid, ids, {'warning_msg': warn_msg, 'warning_checked': True, 'ud_old_code': wiz.new_product_id.old_code}, context=context)
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': 'product.merged.wizard',

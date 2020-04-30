@@ -655,7 +655,7 @@ class product_attributes(osv.osv):
         for arg in args:
             if arg[1] != '=':
                 raise osv.except_osv(_('Warning'), _('This filter is not implemented yet'))
-            if args[2]:
+            if arg[2]:
                 dom = [('international_status', '=', 'UniData'), ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard']), ('replace_product_id', '=', False)]
             else:
                 dom = [('international_status', '=', 'UniData'), ('active', '=', False), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)]
