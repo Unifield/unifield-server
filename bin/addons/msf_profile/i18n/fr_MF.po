@@ -98907,7 +98907,6 @@ msgstr "Picking – fermé"
 #: field:stock.move.memory.out,prodlot_id:0
 #: field:stock.move.split.lines.exist,prodlot_id:0
 #: view:stock.production.lot:0
-#: field:stock.reserved.products,prodlot_id:0
 msgid "Production Lot"
 msgstr "Lot de Production"
 
@@ -109300,3 +109299,8 @@ msgstr "L'import est autorisé uniquement à l'état Brouillon."
 #, python-format
 msgid "Theoretical Balance is not equal to the Cashbox Balance."
 msgstr "Le Solde Théorique n'est pas égal au Solde de Caisse."
+
+#. module: msf_outgoing
+#: field:stock.reserved.products,prodlot_id:0
+msgid "Batch Number - Expiry Date"
+msgstr "Numéro de Lot - Date d'Expiration"
