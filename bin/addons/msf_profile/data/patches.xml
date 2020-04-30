@@ -535,5 +535,9 @@
             <field name="method">us_7236_remove_reg_wkf_and_partial_close_state</field>
         </record>
 
+        <record id="us_7425_clean_period_not_run" model="patch.scripts">
+            <field name="method">us_7425_clean_period_not_run</field>
+        </record>
+
     </data>
 </openerp>
