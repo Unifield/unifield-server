@@ -408,7 +408,7 @@ if (auto_field && auto_field.val()){
                                 % for i, (field, field_attrs) in enumerate(headers):
                                     % if field == 'button':
                                         <td class="grid-cell">&nbsp;</td>
-                                    % else:
+                                    % elif field_attrs.get('displayon') != 'editable':
                                         <td class="grid-cell">&nbsp;</td>
                                     % endif
                                 % endfor
