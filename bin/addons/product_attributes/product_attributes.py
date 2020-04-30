@@ -650,6 +650,17 @@ class product_attributes(osv.osv):
                     dom += [ '&', ('batch_management', '=', False), ('perishable', '=', True)]
         return dom
 
+    def _search_show_ud(self, cr, uid, obj, name, args, context=None):
+        dom = []
+        for arg in args:
+            if arg[1] != '=':
+                raise osv.except_osv(_('Warning'), _('This filter is not implemented yet'))
+            if args[2]:
+                dom = [('international_status', '=', 'UniData'), ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard']), ('replace_product_id', '=', False)]
+            else:
+                dom = [('international_status', '=', 'UniData'), ('active', '=', False), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)]
+
+        return dom
 
     def _get_local_from_hq(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -1016,6 +1027,7 @@ class product_attributes(osv.osv):
         'uf_write_date': fields.datetime(_('Write date')),
         'uf_create_date': fields.datetime(_('Creation date')),
         'instance_level': fields.function(_get_product_instance_level, method=True, string='Instance Level', internal=1, type='char'),
+        'show_ud': fields.function(_get_dummy, fnct_search=_search_show_ud, method=True, type='boolean', string='Search UD NSL or ST/NS', internal=1),
     }
 
     def _get_default_sensitive_item(self, cr, uid, context=None):

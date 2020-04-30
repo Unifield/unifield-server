@@ -9,8 +9,8 @@
             <field name="arch" type="xml">
                 <form string="Merge Product">
                     <field name="old_product_id" colspan="4" />
-                    <field name="show_ud" on_change="show_ud(show_ud)" attrs="{'readonly': [('new_product_id', '!=', False)]}"/>
-                    <field name="new_product_id" colspan="4" required="1" on_change="change_warning(new_product_id)" context="{'display_active_filter': 0, 'display_old_code': 1}"/>
+                    <field name="show_ud" attrs="{'readonly': [('new_product_id', '!=', False)]}"/>
+                    <field name="new_product_id" colspan="4" required="1" on_change="change_warning(new_product_id)" domain="[('show_ud', '=', show_ud)]" context="{'display_active_filter': 0, 'display_old_code': 1}"/>
                     <field name="ud_old_code" />
                     <field name="warning_checked" invisible="1" />
                     <group colspan="4" attrs="{'invisible': [('warning_msg', '=', False)]}">

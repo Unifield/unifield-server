@@ -36,7 +36,7 @@ class product_merged_wizard(osv.osv_memory):
         if not wiz.warning_checked:
             warn_msg = prod_obj.check_same_value(cr, uid, wiz.new_product_id.id, wiz.old_product_id.id, blocker=False, context=context)
             if warn_msg:
-                self.write(cr, uid, ids, {'warning_msg': warn_msg, 'warning_checked': True}, context=context)
+                self.write(cr, uid, ids, {'warning_msg': warn_msg, 'warning_checked': True, 'ud_old_code': wiz.new_product_id.old_code, 'show_ud': wiz.show_ud}, context=context)
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': 'product.merged.wizard',
@@ -54,12 +54,6 @@ class product_merged_wizard(osv.osv_memory):
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'product.product_normal_action', ['form', 'tree'], context=context)
         res['res_id'] = wiz.new_product_id.id
         return res
-
-    def show_ud(self, cr, uid, ids, show_ud, context=None):
-        if show_ud:
-            return {'domain': {'new_product_id': [('international_status', '=', 'UniData'), ('active', '=', True), ('standard_ok', 'in', ['non_standard', 'standard']), ('replace_product_id', '=', False)]}}
-        else:
-            return {'domain': {'new_product_id': [('international_status', '=', 'UniData'), ('active', '=', False), ('standard_ok', '=', 'non_standard_local'), ('replace_product_id', '=', False)]}}
 
     def change_warning(self, cr, uid, ids, new_prod, context=None):
         old_code =False
