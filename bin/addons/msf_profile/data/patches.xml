@@ -539,5 +539,8 @@
             <field name="method">us_7425_clean_period_not_run</field>
         </record>
 
+        <record id="us_6513_rename_dispatch_to_shipment" model="patch.scripts">
+            <field name="method">us_6513_rename_dispatch_to_shipment</field>
+        </record>
     </data>
 </openerp>

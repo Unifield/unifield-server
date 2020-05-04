@@ -228,6 +228,17 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def us_6513_rename_dispatch_to_shipment(self, cr, uid, *a, **b):
+        """
+        Rename the locations named 'Dispatch' to 'Shipment' for normal Location and Stock Mission report
+        """
+        cr.execute("""UPDATE stock_location SET name = 'Shipment' WHERE name = 'Dispatch'""")
+        cr.execute("""
+            UPDATE stock_mission_report_line_location SET remote_location_name = 'Shipment' 
+            WHERE remote_location_name = 'Dispatch' 
+        """)
+        return True
+
     # UF16.0
     def us_7181_add_oc_subscrpition_to_unidata_products(self, cr, uid, *a, **b):
         """
