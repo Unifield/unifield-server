@@ -44008,8 +44008,9 @@ msgid "\n"
 msgstr "\n"
 "	Veuillez vérifier l'orthographe sur la colonne '%s'."
 
-#. module: sync_client
+#. modules: sync_client, register_accounting
 #: view:sync.monitor:0
+#: code:addons/register_accounting/account_bank_statement.py:2085
 msgid "create"
 msgstr "créer"
 
@@ -109298,3 +109299,15 @@ msgstr "L'import est autorisé uniquement à l'état Brouillon."
 #, python-format
 msgid "Theoretical Balance is not equal to the Cashbox Balance."
 msgstr "Le Solde Théorique n'est pas égal au Solde de Caisse."
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2084
+#, python-format
+msgid "You can't %s lines in the register %s (%s) as it isn't Open."
+msgstr "Vous ne pouvez pas %s des lignes dans le registre %s (%s) car il n'est pas Ouvert."
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2085
+#, python-format
+msgid "post"
+msgstr "comptabiliser"
