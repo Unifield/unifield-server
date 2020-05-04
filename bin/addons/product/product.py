@@ -641,6 +641,8 @@ class product_product(osv.osv):
             if arg[0] == 'expected_prod_creator':
                 prod_creator_ids = self._get_authorized_creator(cr, uid, arg[2]=='bned', context)
 
+        if arg[2]!='bned':
+            return [('international_status', 'in', prod_creator_ids), ('replaced_by_product_id', '=', False)]
         return [('international_status', 'in', prod_creator_ids)]
 
     _defaults = {
