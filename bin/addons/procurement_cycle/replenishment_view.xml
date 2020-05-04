@@ -261,7 +261,7 @@
                                     <field name="product_list_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                                 </group>
 
-                                <group colspan="2" col="2" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
+                                <group colspan="2" col="2">
                                     <field name="previous_order_rdd" />
                                     <field name="date_preparing" />
                                     <field name="date_next_order_validated" />
@@ -271,9 +271,9 @@
 
                                 </group>
 
-                                <group colspan="2" col="2" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
+                                <group colspan="2" col="2">
                                     <field name="order_coverage" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft'), ('rule', '=', 'cycle')]}" on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
-                                    <field name="safety_stock" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft'), ('rule', '=', 'cycle')]}"/>
+                                    <field name="safety_stock" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft'), ('rule', '=', 'cycle')], 'invisible': [('rule', '!=', 'cycle')]}"/>
                                 </group>
                             </group>
 
