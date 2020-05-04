@@ -103,7 +103,10 @@
                     <field name="next_scheduler" />
                     <newline />
                     <button name="choose_change_frequence" type="object" string="Change/Choose Frequency" icon="terp-go-today" colspan="2" />
-                    <field name="review_active"  required="1" />
+                    <group colspan="2" col="4">
+                        <field name="review_active"   />
+                        <field name="include_product" />
+                    </group>
                     <field name="projected_view" required="1" />
                     <field name="rr_amc" required="1" />
                     <field name="sleeping" required="1" />
@@ -281,12 +284,15 @@
                             <button name="add_multiple_lines" type="object" icon="gtk-add" string="Add multiple products" colspan="8" />
                         </group>
                             <field name="line_ids" colspan="4" nolabel="1" default_get="rule=rule" scroll="1" attrs="{'readonly': [('state', '!=', 'draft')]}" o2m_selectable="2">
-                                <tree editable="top" editable_style="new" colors="red: not status">
+                                <tree editable="top" editable_style="new" colors="red: not status or (display_paired_icon and not status_tooltip)">
                                     <field name="product_id" filter_selector="1" />
                                     <field name="product_description" displayon="noteditable" filter_selector="1" />
                                     <field name="uom_id" invisible="1" />
                                     <field name="in_main_list" filter_selector="1" />
-                                    <field name="status" filter_selector="1" />
+                                    <field name="status" filter_selector="1" tooltip="status_tooltip"/>
+                                    <field name="status_tooltip" invisible="1" />
+                                    <field name="display_paired_icon" invisible="1" />
+                                    <button name="set_paired_product" string="Set Paired Product" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('display_paired_icon', '=', False)]}" type="object" icon="gtk-convert" />
                                     <field name="real_stock" />
                                     <field name="rr_amc" />
                                     <field name="min_qty" invisible="context.get('rule')!='minmax'"/>
@@ -559,6 +565,8 @@
                                     <field name="expired_qty_before_eta" invisible="context.get('rule')=='cycle'"/>
                                     <field name="proposed_order_qty" />
                                     <field name="agreed_order_qty" />
+                                    <field name="cost_price" />
+                                    <field name="line_value" />
                                     <field name="order_qty_comment" />
                                     <field name="warning_html" invisible="context.get('rule')=='auto'" widget="html_text"/>
                                 </tree>
@@ -583,8 +591,12 @@
                                 </field>
                         </page>
                     </notebook>
-
                     <field name="state" />
+                    <group colspan="2" col="6">
+                        <field name="total_value" colspan="4"/>
+                        <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
+                    </group>
+                    <label colspan="2" />
                     <group colspan="2">
                     <button name="cancel" string="Cancel" type="object"  attrs="{'invisible':[('state', 'not in', ['draft', 'validated'])]}" icon="gtk-cancel" />
                     <button name="validated" string="Validate" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" icon="terp-check" />
@@ -890,6 +902,108 @@
             sequence="100"
             parent="replenishment_configuration" />
 
+
+        <record id="product_stock_out_form" model="ir.ui.view">
+            <field name="name">product.stock_out.form</field>
+            <field name="model">product.stock_out</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Stock Out" hide_duplicate_button="1" hide_new_button="1" hide_delete_button="1" force_string="1">
+                    <field name="name" />
+                    <newline />
+                    <field name="location_id" attrs="{'readonly':[('state', '!=', 'draft')]}" />
+                    <group colspan="4" col="8" name="import" string="Import" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                        <field name="file_to_import" colspan="2" />
+                        <button name="import_lines" string="Import Lines" type="object" colspan="3" icon="gtk-dnd" />
+                    </group>
+                    <field name="line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" scroll="1">
+                        <tree editable="top" editable_style="new">
+                            <field name="line_number"  />
+                            <field name="product_code" displayon="noteditable" />
+                            <field name="product_description" displayon="noteditable" />
+                            <field name="product_id" displayon="editable" filter_selector="1" domain="[('id', 'not in', [substitute_1_product_id,, substitute_2_product_id, substitute_3_product_id])]"/>
+                            <field name="uom_id" invisible="1" />
+                            <field name="from_date" on_change="change_date(from_date, to_date, product_id, parent.id)" />
+                            <field name="to_date" on_change="change_date(from_date, to_date, product_id, parent.id)"/>
+                            <field name="nb_days" />
+                            <field name="qty_missed" />
+                            <field name="substitute_1_product_code" displayon="noteditable" />
+                            <field name="substitute_1_product_description" displayon="noteditable" />
+                            <field name="substitute_1_product_id" displayon="editable" domain="[('id', 'not in', [product_id, substitute_2_product_id, substitute_3_product_id])]"/>
+                            <field name="substitute_1_uom_id" invisible="1" />
+                            <field name="substitute_1_qty" />
+
+                            <field name="substitute_2_product_code" displayon="noteditable" />
+                            <field name="substitute_2_product_description" displayon="noteditable" />
+                            <field name="substitute_2_product_id" displayon="editable" domain="[('id', 'not in', [product_id, substitute_1_product_id, substitute_3_product_id])]"/>
+                            <field name="substitute_2_uom_id" invisible="1" />
+                            <field name="substitute_2_qty" />
+
+                            <field name="substitute_3_product_code" displayon="noteditable" />
+                            <field name="substitute_3_product_description" displayon="noteditable" />
+                            <field name="substitute_3_product_id" displayon="editable" domain="[('id', 'not in', [product_id, substitute_1_product_id, substitute_2_product_id])]"/>
+                            <field name="substitute_3_uom_id" invisible="1" />
+                            <field name="substitute_3_qty" />
+                        </tree>
+                    </field>
+                    <group colspan="4" col="10">
+                        <field name="state" />
+                        <field name="adjusted_amc" attrs="{'invisible': [('state', '!=', 'closed')]}" />
+                        <button name="set_as_cancelled" string="Cancel" type="object"  attrs="{'invisible':[('state', 'in', ['cancelled', 'closed'])]}" icon="gtk-cancel" />
+                        <button name="set_as_validated" string="Validate" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" icon="terp-check" />
+                        <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', '=', 'draft')]}" icon="gtk-go-back" />
+                        <button name="apply_set_closed" string="Close &amp; Adjust RR-AMC" type="object" attrs="{'invisible':[('state', '!=', 'validated')]}" icon="gtk-convert"/>
+                        <button name="set_closed" string="Close only" type="object" attrs="{'invisible':[('state', '!=', 'validated')]}" icon="gtk-close"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="product_stock_out_tree" model="ir.ui.view">
+            <field name="name">product.stock_out.tree</field>
+            <field name="model">product.stock_out</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Stock Outs" hide_delete_button="1" colors="grey: state in ('closed', 'cancelled')">
+                    <field name="name" />
+                    <field name="location_id" />
+                    <field name="line_ids" />
+                    <field name="adjusted_amc" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="product_stock_out_search" model="ir.ui.view">
+            <field name="name">product.stock_out.search</field>
+            <field name="model">product.stock_out</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Stock Outs">
+                    <filter string="Draft" domain="[('state', '=', 'draft')]" icon="terp-document-new"/>
+                    <filter string="Validated" domain="[('state', '=', 'validated')]" icon="gtk-ok"/>
+                    <filter string="Closed" domain="[('state', '=', 'closed')]" icon="gtk-close"/>
+                    <filter string="Cancelled" domain="[('state', '=', 'cancel')]" icon="gtk-cancel"/>
+                    <separator orientation="vertical"/>
+                    <filter string="RR-AMC Adjusted" domain="[('adjusted_amc', '=', True)]" icon="gtk-add"/>
+                    <separator orientation="vertical"/>
+                    <field name="name" />
+                    <field name="location_id" />
+                </search>
+            </field>
+        </record>
+
+        <record id="product_stock_out_action" model="ir.actions.act_window">
+            <field name="res_model">product.stock_out</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="product_stock_out_menu"
+            action="product_stock_out_action"
+            sequence="145"
+            name="Stock outs"
+            parent="stock.menu_stock_inventory_control" />
 
     </data>
 </openerp>

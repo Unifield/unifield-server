@@ -195,6 +195,27 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <Interior/>
   </Style>
+    <Style ss:ID="s973D">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="0.000"/>
+  </Style>
+    <Style ss:ID="s972D">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="Fixed"/>
+  </Style>
+
   <Style ss:ID="s97">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
    <Borders>
@@ -244,6 +265,29 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <NumberFormat ss:Format="Short Date"/>
+  </Style>
+    <Style ss:ID="s98">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"
+    ss:Bold="1"/>
+   <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="s100">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="Fixed"/>
   </Style>
   <Style ss:ID="s143">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -308,6 +352,18 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <Interior ss:Color="#DDEBF7" ss:Pattern="Solid"/>
   </Style>
+    <Style ss:ID="s95total">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="Fixed"/>
+  </Style>
+
  </Styles>
  <Worksheet ss:Name="Order Calculation" ss:Protected="1">
   <Names>
@@ -336,6 +392,8 @@
    <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- expirty eta -->
    <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- propo qty -->
    <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- agreed qty -->
+   <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- cost price -->
+   <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- line value -->
    <Column ss:AutoFitWidth="0" ss:Width="300" /> <!-- qty comment -->
    <Column ss:AutoFitWidth="0" ss:Width="300" /> <!-- warning -->
    <Row ss:AutoFitHeight="0" ss:Height="31.5">
@@ -399,6 +457,9 @@
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:MergeAcross="1" ss:StyleID="m2348480924348"><Data ss:Type="String">${getSel(objects[0], 'rule')|x}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
+    <Cell ss:Index="13" ss:StyleID="s67"><Data ss:Type="String">${_('Total Value')} ${company.currency_id.name|x}</Data></Cell>
+    <Cell ss:StyleID="s95total" ss:Formula="=SUM(R[4]C:R[${4+len(objects[0].order_calc_line_ids)}]C)"><Data ss:Type="Number">${objects[0].total_value or 0}</Data></Cell>
+
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="9">
     <Cell ss:StyleID="s78"><NamedCell ss:Name="Print_Titles"/><NamedCell
@@ -447,14 +508,18 @@
     % endif
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Proposed Order Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Agreed Order Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Cost Price')|x} ${company.currency_id.name|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Line Value')|x} ${company.currency_id.name|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Order Qty Comment')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Warning')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
 
+   <% cnt = 0 %>
    % for prod in objects[0].order_calc_line_ids:
        % if only_warning() and not prod.warning:
                  <% continue %>
        % endif
+   <% cnt += 1 %>
    <Row ss:AutoFitHeight="0" ss:Height="15.75">
     <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.default_code|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.name|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
@@ -494,11 +559,14 @@
         <Data ss:Type="Number">${prod.agreed_order_qty}</Data>
     % endif
     </Cell>
+    <Cell ss:StyleID="s973D"><Data ss:Type="Number">${prod.cost_price}</Data></Cell>
+    <Cell ss:StyleID="s972D" ss:Formula="=RC[-2]*RC[-1]"><Data ss:Type="Number">${prod.line_value or 0}</Data></Cell>
     <Cell ss:StyleID="sw97u"><Data ss:Type="String">${(prod.order_qty_comment or '')|x}</Data></Cell>
     <Cell ss:StyleID="sw97"><Data ss:Type="String">${(prod.warning or '')|xn}</Data></Cell>
 
    </Row>
    % endfor
+
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>

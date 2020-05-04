@@ -160,6 +160,8 @@ class product_product(osv.osv):
 
         if context.get('default_code_only'):
             fields_to_read = ['id', 'default_code']
+        elif context.get('default_description_only'):
+            fields_to_read = ['id', 'name']
         else:
             fields_to_read = ['id', 'name', 'default_code', 'variants']
         read_result = self.read(cr, user, ids,

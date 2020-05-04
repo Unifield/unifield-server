@@ -12,6 +12,7 @@ from tools import misc, drop_view_if_exists
 import threading
 import logging
 import pooler
+import decimal_precision as dp
 
 class replenishment_location_config(osv.osv):
     _name = 'replenishment.location.config'
@@ -87,6 +88,7 @@ class replenishment_location_config(osv.osv):
 
         # inventory review
         'review_active': fields.boolean('Scheduled Inventory Review active'),
+        'include_product': fields.boolean('Include products not covered in Replenishment Segment'),
         'projected_view': fields.integer('Standard Projected view (months)'),
         'rr_amc': fields.integer('RR-AMC period (months)', required=1),
         'sleeping': fields.integer('Sleeping stock periodicity (months)'),
@@ -105,6 +107,7 @@ class replenishment_location_config(osv.osv):
 
     _defaults = {
         'active': True,
+        'include_product': True,
         'synched': _get_default_synced,
         'main_instance': lambda s, cr, uid, c: s.pool.get('res.company')._get_instance_id(cr, uid),
         'projected_view': 8,
@@ -444,6 +447,7 @@ class replenishment_segment(osv.osv):
     _sql_constraints = [
         ('oc_ss_positive', 'check(safety_stock>=0 and order_coverage>=0)', 'Safety Stock and Order Coverage must be positive or 0')
     ]
+
     def create(self, cr, uid, vals, context=None):
         if 'name_seg' not in vals:
             vals['name_seg'] = self.pool.get('ir.sequence').get(cr, uid, 'replenishment.segment')
@@ -839,6 +843,7 @@ class replenishment_segment(osv.osv):
                         'agreed_order_qty': round(proposed_order_qty) or False,
                         'in_main_list': line.in_main_list,
                         'projected_stock_qty': round(pas),
+                        'cost_price': line.product_id.standard_price,
                     })
                     order_calc_line.create(cr, uid, line_data, context=context)
 
@@ -978,6 +983,8 @@ class replenishment_segment(osv.osv):
         status = {
             _('Active'): 'active',
             _('New'): 'new',
+            _('Replaced'): 'replaced',
+            _('Replacing'): 'replacing',
         }
         error = []
         code_created = {}
@@ -999,6 +1006,8 @@ class replenishment_segment(osv.osv):
 
             data_towrite = {
                 'status': cells_nb > 3 and status.get(row.cells[3].data and row.cells[3].data.strip()),
+                'replacing_product_id': False,
+                'replaced_product_id': False,
                 'buffer_qty': False,
                 'min_qty': 0,
                 'max_qty': 0,
@@ -1012,52 +1021,81 @@ class replenishment_segment(osv.osv):
                 })
 
 
-            if cells_nb > 6 and seg.rule == 'cycle':
-                if row.cells[6].data and not isinstance(row.cells[6].data, (int, long, float)):
-                    line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[6].data))
+            col_replacing = 4
+            col_replaced = 5
+            col_buffer_min_qty = 8
+            col_first_fmc = 9
+
+            if cells_nb > col_replacing and row.cells[col_replacing].data and row.cells[col_replacing].data.strip():
+                if data_towrite['status'] != 'replacing':
+                    line_error.append(_('Line %d: you can not set a Replacing product on this line, please change the satus or remove the replacing product') % (idx+1, ))
                 else:
-                    data_towrite['buffer_qty'] = row.cells[6].data
-                first_fmc_col = 7 - 3
+                    replacing_id = product_obj.search(cr, uid, [('default_code', '=ilike', row.cells[col_replacing].data.strip())], context=context)
+                    if not replacing_id:
+                        line_error.append(_('Line %d: replacing product code %s not found') % (idx+1, row.cells[col_replacing].data))
+                    else:
+                        data_towrite['replacing_product_id'] = replacing_id[0]
+            elif data_towrite['status'] == 'replacing' and not data_towrite['replacing_product_id']:
+                line_error.append(_('Line %d: replacing product must be set !') % (idx+1, ))
+
+            if cells_nb > col_replaced and row.cells[col_replaced].data and row.cells[col_replaced].data.strip():
+                if data_towrite['status'] != 'replaced':
+                    line_error.append(_('Line %d: you can not set a Replaced product on this line, please change the satus or remove the replaced product') % (idx+1, ))
+                else:
+                    replaced_id = product_obj.search(cr, uid, [('default_code', '=ilike', row.cells[col_replaced].data.strip())], context=context)
+                    if not replaced_id:
+                        line_error.append(_('Line %d: replaced product code %s not found') % (idx+1, row.cells[col_replaced].data))
+                    else:
+                        data_towrite['replaced_product_id'] = replaced_id[0]
+            elif data_towrite['status'] == 'replaced' and not data_towrite['replaced_product_id']:
+                line_error.append(_('Line %d: replaced product must be set !') % (idx+1, ))
+
+
+            if cells_nb > col_buffer_min_qty and seg.rule == 'cycle':
+                if row.cells[col_buffer_min_qty].data and not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float)):
+                    line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
+                else:
+                    data_towrite['buffer_qty'] = row.cells[col_buffer_min_qty].data
                 for fmc in range(1, 13):
-                    first_fmc_col += 3
-                    if cells_nb - 1 >= first_fmc_col and row.cells[first_fmc_col].data:
-                        if cells_nb - 1 < first_fmc_col+1:
+                    if cells_nb - 1 >=  col_first_fmc and row.cells[col_first_fmc].data:
+                        if cells_nb - 1 < col_first_fmc+1:
                             line_error.append(_('Line %d: FMC FROM %d, date expected') % (idx+1, fmc))
                             continue
-                        if not row.cells[first_fmc_col+1].type == 'datetime':
-                            line_error.append(_('Line %d: FMC FROM %d, date is not valid, found %s') % (idx+1, fmc, row.cells[first_fmc_col+1].data))
+                        if not row.cells[col_first_fmc+1].type == 'datetime':
+                            line_error.append(_('Line %d: FMC FROM %d, date is not valid, found %s') % (idx+1, fmc, row.cells[col_first_fmc+1].data))
                             continue
-                        if cells_nb - 1 < first_fmc_col+2:
+                        if cells_nb - 1 < col_first_fmc+2:
                             line_error.append(_('Line %d: FMC TO %d, date expected') % (idx+1, fmc))
                             continue
-                        if not row.cells[first_fmc_col+2].data or row.cells[first_fmc_col+2].type != 'datetime':
-                            line_error.append(_('Line %d: FMC TO %d, date is not valid, found %s') % (idx+1, fmc, row.cells[first_fmc_col+2].data))
+                        if not row.cells[col_first_fmc+2].data or row.cells[col_first_fmc+2].type != 'datetime':
+                            line_error.append(_('Line %d: FMC TO %d, date is not valid, found %s') % (idx+1, fmc, row.cells[col_first_fmc+2].data))
                             continue
-                        if not isinstance(row.cells[first_fmc_col].data, (int, long, float)):
-                            line_error.append(_('Line %d: FMC %d, number expected, found %s') % (idx+1, fmc, row.cells[first_fmc_col].data))
+                        if not isinstance(row.cells[col_first_fmc].data, (int, long, float)):
+                            line_error.append(_('Line %d: FMC %d, number expected, found %s') % (idx+1, fmc, row.cells[col_first_fmc].data))
                             continue
                         data_towrite.update({
-                            'rr_fmc_%d' % fmc: row.cells[first_fmc_col].data,
-                            'rr_fmc_from_%d' % fmc: row.cells[first_fmc_col+1].data.strftime('%Y-%m-%d'),
-                            'rr_fmc_to_%d' % fmc: row.cells[first_fmc_col+2].data.strftime('%Y-%m-%d'),
+                            'rr_fmc_%d' % fmc: row.cells[col_first_fmc].data,
+                            'rr_fmc_from_%d' % fmc: row.cells[col_first_fmc+1].data.strftime('%Y-%m-%d'),
+                            'rr_fmc_to_%d' % fmc: row.cells[col_first_fmc+2].data.strftime('%Y-%m-%d'),
                         })
-            elif cells_nb > 6 and seg.rule == 'minmax':
-                if not row.cells[6] or not isinstance(row.cells[6].data, (int, long, float)):
-                    line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[6].data))
-                elif not row.cells[7] or not isinstance(row.cells[7].data, (int, long, float)):
-                    line_error.append(_('Line %d: Max Qty, number expected, found %s') % (idx+1, row.cells[7].data))
-                elif row.cells[7].data < row.cells[6].data:
-                    line_error.append(_('Line %d: Max Qty (%s) must be larger than Min Qty (%s)') % (idx+1, row.cells[7].data, row.cells[6].data))
+                    col_first_fmc += 3
+            elif cells_nb > col_buffer_min_qty and seg.rule == 'minmax':
+                if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float)):
+                    line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
+                elif not row.cells[col_buffer_min_qty+1] or not isinstance(row.cells[col_buffer_min_qty+1].data, (int, long, float)):
+                    line_error.append(_('Line %d: Max Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty+1].data))
+                elif row.cells[col_buffer_min_qty+1].data < row.cells[col_buffer_min_qty].data:
+                    line_error.append(_('Line %d: Max Qty (%s) must be larger than Min Qty (%s)') % (idx+1, row.cells[col_buffer_min_qty+1].data, row.cells[col_buffer_min_qty].data))
                 else:
                     data_towrite.update({
-                        'min_qty': row.cells[6].data,
-                        'max_qty': row.cells[7].data,
+                        'min_qty': row.cells[col_buffer_min_qty].data,
+                        'max_qty': row.cells[col_buffer_min_qty+1].data,
                     })
-            elif cells_nb > 6:
-                if not row.cells[6] or not isinstance(row.cells[6].data, (int, long, float)):
-                    line_error.append(_('Line %d: Auto Supply Qty, number expected, found %s') % (idx+1, row.cells[6].data))
+            elif cells_nb > col_buffer_min_qty:
+                if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float)):
+                    line_error.append(_('Line %d: Auto Supply Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
                 else:
-                    data_towrite['auto_qty'] = row.cells[6].data
+                    data_towrite['auto_qty'] = row.cells[col_buffer_min_qty].data
 
             if prod_code not in existing_line:
                 prod_id = product_obj.search(cr, uid, [('default_code', '=ilike', prod_code)], context=context)
@@ -1099,6 +1137,12 @@ class replenishment_segment(osv.osv):
 
         if self.pool.get('replenishment.segment.line').search_exist(cr, uid, [('segment_id', 'in', ids), ('status', '=', False)], context=context):
             raise osv.except_osv(_('Warning'), _('Please complete Lifeycle status for products missing this, see red lines'))
+
+        if self.pool.get('replenishment.segment.line').search_exist(cr, uid, [('segment_id', 'in', ids), ('status', '=', 'replacing'), ('replacing_product_id', '=', False)], context=context):
+            raise osv.except_osv(_('Warning'), _('Please complete Replacing products with a paired product, see red lines'))
+
+        if self.pool.get('replenishment.segment.line').search_exist(cr, uid, [('segment_id', 'in', ids), ('status', '=', 'replaced'), ('replaced_product_id', '=', False)], context=context):
+            raise osv.except_osv(_('Warning'), _('Please complete Replaced products with a paired product, see red lines'))
 
         self.write(cr, uid, ids, {'state': 'complete'}, context=context)
         return True
@@ -1181,8 +1225,25 @@ class replenishment_segment_line(osv.osv):
                    )
         for x in cr.fetchall():
             ret[x[0]] = True
+
         return ret
 
+
+    def _get_status_tooltip(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        if not ids:
+            return {}
+        for x in ids:
+            ret[x] = ''
+        cr.execute('''select seg_line.id, prod.default_code
+            from replenishment_segment_line seg_line, product_product prod
+            where
+                seg_line.id in %s and
+                (seg_line.replacing_product_id = prod.id or seg_line.replaced_product_id = prod.id) ''', (tuple(ids), )
+                   )
+        for x in cr.fetchall():
+            ret[x[0]] = x[1]
+        return ret
 
     def _where_calc(self, cr, uid, domain, active_test=True, context=None):
         new_dom = []
@@ -1327,6 +1388,13 @@ class replenishment_segment_line(osv.osv):
             ret[line.id] = ' | '.join(add)
         return ret
 
+    def _get_display_paired_icon(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        for _id in ids:
+            ret[_id] = False
+        for _id in self.search(cr, uid, [('id', 'in', ids), ('status', 'in', ['replaced', 'replacing'])], context=context):
+            ret[_id] = True
+        return ret
 
     _columns = {
         'segment_id': fields.many2one('replenishment.segment', 'Replenishment Segment', select=1, required=1),
@@ -1334,7 +1402,9 @@ class replenishment_segment_line(osv.osv):
         'product_description': fields.related('product_id', 'name',  string='Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
         'in_main_list': fields.function(_get_main_list, type='boolean', method=True, string='Prim. prod. list'),
-        'status': fields.selection([('active', 'Active'), ('new', 'New')], string='RR Lifecycle'),
+        'status_tooltip': fields.function(_get_status_tooltip, type='char', method=True, string='Paired product'),
+        'display_paired_icon': fields.function(_get_display_paired_icon, type='boolean', method=True, string='Display paired icon'),
+        'status': fields.selection([('active', 'Active'), ('new', 'New'), ('replaced', 'Replaced'), ('replacing', 'Replacing')], string='RR Lifecycle'),
         'min_qty': fields.float('Min Qty', related_uom='uom_id'),
         'max_qty': fields.float('Max Qty', related_uom='uom_id'),
         'auto_qty': fields.float('Auto. Supply Qty', related_uom='uom_id'),
@@ -1380,6 +1450,8 @@ class replenishment_segment_line(osv.osv):
         'rr_fmc_12': fields.float_null('RR FMC 12', related_uom='uom_id'),
         'rr_fmc_from_12': fields.date('From 12'),
         'rr_fmc_to_12': fields.date('To 12'),
+        'replacing_product_id': fields.many2one('product.product', 'Replacing product', select=1),
+        'replaced_product_id': fields.many2one('product.product', 'Replaced product', select=1),
     }
 
     _sql_constraints = [
@@ -1460,6 +1532,21 @@ class replenishment_segment_line(osv.osv):
         'status': 'active',
     }
 
+    def _remove_paired_product(self, cr, uid, vals, context=None):
+        if vals and 'status' in vals:
+            if vals['status'] != 'replaced':
+                vals['replaced_product_id'] = False
+            if vals['status'] != 'replacing':
+                vals['replacing_product_id'] = False
+
+    def create(self, cr, uid, vals, context=None):
+        self._remove_paired_product(cr, uid, vals, context=context)
+        return super(replenishment_segment_line, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        self._remove_paired_product(cr, uid, vals, context=context)
+        return super(replenishment_segment_line, self).write(cr, uid, ids, vals, context=context)
+
     def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
         exist_ids = {}
         exist_code = []
@@ -1504,6 +1591,25 @@ class replenishment_segment_line(osv.osv):
 
         return {}
 
+    def set_paired_product(self, cr, uid, ids, context=None):
+
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_cycle', 'replenishment_segment_line_paired_form')[1]
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'replenishment.segment.line',
+            'res_id': ids[0],
+            'view_id': [view_id],
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context,
+            'height': '300px',
+            'width': '720px',
+        }
+
+    def save_paired(self, cr, uid, ids, context=None):
+        return {'type': 'ir.actions.act_window_close', 'o2m_refresh': 'line_ids'}
+
 replenishment_segment_line()
 
 class replenishment_segment_date_generation(osv.osv):
@@ -1534,7 +1640,7 @@ class replenishment_segment_line_amc(osv.osv):
         'reserved_stock': fields.float('Reserved Stock'),
         'real_stock': fields.float('Reserved Stock'),
         'expired_before_rdd': fields.float('Expired Qty before RDD'),
-        'expired_qty_before_eta': fields.float('Qty expiring before ETA'),
+        'expired_qty_before_eta': fields.float('Qty expiring before RDD'),
         'expired_between_rdd_oc': fields.float('Expired Qty between RDD and OC'),
         'open_loan': fields.boolean('Open Loan'),
         'sleeping_qty': fields.float('Sleeping Qty'),
@@ -1795,6 +1901,21 @@ class replenishment_order_calc(osv.osv):
 
         return super(replenishment_order_calc, self).create(cr, uid, vals, context)
 
+    def _get_total_value(self, cr, uid, ids, field_name, arg, context=None):
+        cr.execute('''
+            select
+                calc.id, sum(line.cost_price*line.agreed_order_qty)
+            from replenishment_order_calc calc
+            left join replenishment_order_calc_line line on line.order_calc_id = calc.id
+            where
+                calc.id in %s
+            group by calc.id''', (tuple(ids), ))
+        ret = {}
+        for x in cr.fetchall():
+            ret[x[0]] = x[1]
+
+        return ret
+
     _columns = {
         'name': fields.char('Reference', size=64, readonly=1, select=1),
         'segment_id': fields.many2one('replenishment.segment', 'Replenishment Segment', readonly=1),
@@ -1816,6 +1937,7 @@ class replenishment_order_calc(osv.osv):
         'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1),
         'file_to_import': fields.binary(string='File to import'),
         'ir_id': fields.many2one('sale.order', 'Generated IR', readonly=1),
+        'total_value': fields.function(_get_total_value, method=True, type='float', with_null=True, string='Total Value', digits=(16, 2)),
     }
 
     _defaults = {
@@ -1837,10 +1959,10 @@ class replenishment_order_calc(osv.osv):
 
         if calc.rule == 'cycle':
             qty_col = 13
-            comment_col = 14
+            comment_col = 16
         elif calc.rule in ('auto', 'minmax'):
             qty_col = 11
-            comment_col = 12
+            comment_col = 14
         idx = -1
 
         error = []
@@ -1937,11 +2059,28 @@ class replenishment_order_calc_line(osv.osv):
     _description = 'Order Calculation Lines'
     _order = 'product_id, order_calc_id'
 
+    def __init__(self, pool, cr):
+        super(replenishment_order_calc_line, self).__init__(pool, cr)
+        cr.execute('select cur.name from res_company comp, res_currency cur where cur.id=comp.currency_id limit 1')
+        cur = cr.fetchone()
+        if cur and cur[0]:
+            self._columns['cost_price'].string = _('Cost Price %s') % cur[0]
+            self._columns['line_value'].string = _('Line Value %s') % cur[0]
+            pool.get('replenishment.order_calc')._columns['total_value'].string = _('Total Value %s') % cur[0]
+
+    def _get_line_value(self, cr, uid, ids, field_name, arg, context=None):
+        cr.execute(''' select id, cost_price*agreed_order_qty from replenishment_order_calc_line where id in %s ''', (tuple(ids), ))
+        ret = {}
+        for x in cr.fetchall():
+            ret[x[0]] = x[1]
+
+        return ret
+
     _columns = {
         'order_calc_id': fields.many2one('replenishment.order_calc', 'Order Calc', required=1, select=1),
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1, readonly=1),
         'product_description': fields.related('product_id', 'name',  string='Description', type='char', size=64, readonly=True, select=True, write_relate=False),
-        'status': fields.selection([('active', 'Active'), ('new', 'New')], string='Life cycle status', readony=1),
+        'status': fields.selection([('active', 'Active'), ('new', 'New'), ('replaced', 'Replaced'), ('replacing', 'Replacing')], string='Life cycle status', readony=1),
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
         'in_main_list': fields.boolean('Prim. prod. list', readonly=1),
         'valid_rr_fmc': fields.boolean('Valid FMC', readonly=1),
@@ -1954,9 +2093,11 @@ class replenishment_order_calc_line(osv.osv):
         'qty_lacking_needed_by': fields.date('Qty lacking needed by', readonly=1),
         'open_loan': fields.boolean('Open Loan', readonly=1),
         'expired_qty_before_cons': fields.float('Expired Qty before cons.', readonly=1, related_uom='uom_id'),
-        'expired_qty_before_eta': fields.float('Expired Qty before ETA', readonly=1, related_uom='uom_id'),
+        'expired_qty_before_eta': fields.float('Expired Qty before RDD', readonly=1, related_uom='uom_id'),
         'proposed_order_qty': fields.float('Proposed Order Qty', readonly=1, related_uom='uom_id'),
         'agreed_order_qty': fields.float_null('Agreed Order Qty', related_uom='uom_id'),
+        'cost_price': fields.float('Cost Price', readonly=1, digits_compute=dp.get_precision('Account Computation')),
+        'line_value': fields.function(_get_line_value, method=True, type='float', with_null=True, string='Line Value', digits=(16, 2)),
         'order_qty_comment': fields.char('Order Qty Comment', size=512),
         'warning': fields.text('Warning', readonly='1'),
         'warning_html': fields.text('Warning', readonly='1'),
@@ -2302,3 +2443,313 @@ class wizard_export_replenishment_product_list(osv.osv_memory):
         }
 
 wizard_export_replenishment_product_list()
+
+class product_stock_out(osv.osv):
+    _name = 'product.stock_out'
+    _description = 'Product Stock Outs'
+
+    _columns = {
+        'name': fields.char('Reference', size=64, readonly=1, select=1),
+        'location_id': fields.many2one('stock.location', 'Location', domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep'])]", required=1),
+        'state': fields.selection([('draft', 'Draft'), ('validated', 'Validated'), ('closed', 'Closed'), ('cancelled', 'Cancelled')], 'State', readonly=1),
+        'line_ids': fields.one2many('product.stock_out.line', 'stock_out_id', 'Stock Out Lines'),
+        'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', required=True, ondelete='cascade'),
+        'file_to_import': fields.binary(string='File to import'),
+        'adjusted_amc': fields.boolean('RR-AMC adjusted', readonly=1),
+    }
+
+    _defaults = {
+        'state': 'draft',
+        'adjusted_amc': False,
+    }
+    def create(self, cr, uid, vals, context=None):
+        vals['name'] = self.pool.get('ir.sequence').get(cr, uid, 'product.stock_out')
+
+        name = vals['name']
+        code = 'stock_out.line'
+        self.pool.get('ir.sequence.type').create(cr, uid, {'name': name, 'code': code})
+        vals['sequence_id'] = self.pool.get('ir.sequence').create(cr, uid, {
+            'name': name,
+            'code': code,
+            'prefix': '',
+            'padding': 0,
+        })
+
+        return super(product_stock_out, self).create(cr, uid, vals, context=context)
+
+    def import_lines(self, cr, uid, ids, context=None):
+        line_obj = self.pool.get('product.stock_out.line')
+        product_obj = self.pool.get('product.product')
+
+        obj = self.browse(cr, uid, ids[0], context=context)
+        if not obj.file_to_import:
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        file_data = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
+
+        existing_line = {}
+        for line in obj.line_ids:
+            existing_line[line.line_number] = line.id
+
+        idx = 0
+        error = []
+        updated = 0
+        ignored = 0
+        created = 0
+        for row in file_data.getRows():
+            line_error = []
+            idx += 1
+            cells_nb = len(row.cells)
+            if idx < 7 or cells_nb < 2:
+                # header
+                continue
+
+            prod_line = row.cells[0].data
+            prod_code = row.cells[1].data
+            if not prod_code:
+                continue
+            prod_code = prod_code.strip()
+
+            data_towrite = {
+                'product_id': False,
+                'from_date': False,
+                'to_date': False,
+                'qty_missed': False,
+                'substitute_1_product_id': False,
+                'substitute_1_qty': False,
+                'substitute_2_product_id': False,
+                'substitute_2_qty': False,
+                'substitute_3_product_id': False,
+                'substitute_3_qty': False,
+            }
+
+            if prod_line and prod_line not in existing_line:
+                error.append(_('XLS Line %d: product line %s not found.') % (idx, prod_line))
+                continue
+            prod_id = product_obj.search(cr, uid, [('default_code', '=ilike', prod_code)], context=context)
+            if not prod_id:
+                line_error.append(_('XLS Line %d: product code %s not found') % (idx, prod_line))
+            else:
+                data_towrite['product_id'] = prod_id[0]
+
+
+            if cells_nb < 5:
+                line_error.append(_('XLS Line %d: dates from and to required') % (idx,))
+                error += line_error
+                ignored += 1
+                continue
+
+            if not row.cells[3].type == 'datetime':
+                line_error.append(_('XLS Line %d: FROM DATE %d, date is not valid, found %s') % (idx, row.cells[3].data))
+                error += line_error
+                continue
+
+            if not row.cells[4].type == 'datetime':
+                line_error.append(_('XLS Line %d: TO DATE %d, date is not valid, found %s') % (idx, row.cells[4].data))
+                error += line_error
+                continue
+
+            data_towrite['from_date'] = row.cells[3].data.strftime('%Y-%m-%d')
+            data_towrite['to_date'] = row.cells[4].data.strftime('%Y-%m-%d')
+
+            error_date = line_obj.change_date(cr, uid, [existing_line.get(prod_line, 0)], data_towrite['from_date'], data_towrite['to_date'], data_towrite['product_id'], obj.id, context=context)
+            if error_date.get('warning', {}).get('message'):
+                line_error.append(_('XLS Line %d: %s') % (idx, error_date['warning']['message']))
+
+
+            if cells_nb > 6 and row.cells[6].data and not isinstance(row.cells[6].data, (int, long, float)):
+                line_error.append(_('XLS Line %d: Missing Qty must be a number, found %s') % (idx, row.cells[6].data))
+            else:
+                data_towrite['qty_missed'] = row.cells[6].data
+
+            replace_prod_col = 7
+            for sub in [1, 2, 3]:
+                if cells_nb > replace_prod_col and row.cells[replace_prod_col].data:
+                    sub_prod_code = row.cells[replace_prod_col].data.strip()
+                    sub_prod_ids = product_obj.search(cr, uid, [('default_code', '=ilike', sub_prod_code)], context=context)
+                    if not sub_prod_ids:
+                        line_error.append(_('XLS Line %d: product substitution %d code %s not found') % (idx, sub, prod_line))
+                    else:
+                        data_towrite['substitute_%d_product_id' % sub] = sub_prod_ids[0]
+
+                    if cells_nb > replace_prod_col+2 and row.cells[replace_prod_col+2].data:
+                        if not isinstance(row.cells[replace_prod_col+2].data, (int, long, float)):
+                            line_error.append(_('XLS Line %d: Substitution Qty %d must be a number, found %s') % (idx, sub, row.cells[replace_prod_col+2].data))
+                        else:
+                            data_towrite['substitute_%d_qty' % sub] = row.cells[replace_prod_col+2].data
+
+                replace_prod_col += 3
+
+            if data_towrite['substitute_1_product_id'] and data_towrite['substitute_1_product_id'] in [data_towrite['substitute_2_product_id'], data_towrite['substitute_3_product_id']] \
+                    or data_towrite['substitute_2_product_id'] and data_towrite['substitute_2_product_id'] == data_towrite['substitute_3_product_id']:
+                line_error.append(_('XLS Line %d: substitute products must be different')% (idx, ))
+
+            if data_towrite['product_id'] in [data_towrite['substitute_1_product_id'], data_towrite['substitute_2_product_id'], data_towrite['substitute_3_product_id']]:
+                line_error.append(_('XLS Line %d: you can not substitute a product by itself')% (idx, ))
+
+            if line_error:
+                error += line_error
+                ignored += 1
+                continue
+            if not prod_line:
+                data_towrite['stock_out_id'] = obj.id
+                line_obj.create(cr, uid, data_towrite, context=context)
+                created += 1
+            else:
+                line_obj.write(cr, uid, existing_line[prod_line], data_towrite, context=context)
+                updated += 1
+
+        self.write(cr, uid, obj.id, {'file_to_import': False}, context=context)
+        wizard_obj = self.pool.get('physical.inventory.import.wizard')
+        if error:
+            error.insert(0, _('%d line(s) created, %d line(s) updated, %d line(s) in error') % (created, updated, ignored))
+            return wizard_obj.message_box_noclose(cr, uid, title=_('Importation errors'), message='\n'.join(error))
+
+        return wizard_obj.message_box_noclose(cr, uid, title=_('Importation Done'), message=_('%d line(s) created, %d line(s) updated') % (created, updated))
+
+    def set_as_draft(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state': 'draft', 'adjusted_amc': False}, context=context)
+        return True
+
+    def set_as_validated(self, cr, uid, ids, context=None):
+        warn = []
+        for sub in ['1', '2', '3']:
+            if len(warn) > 10:
+                warn.append('...')
+                break
+            cr.execute('''
+                select
+                    line_number from product_stock_out_line line
+                where
+                    line.stock_out_id in %s and
+                    substitute_'''+sub+'''_product_id is not null and
+                    substitute_'''+sub+'''_qty is null
+                ''', (tuple(ids),)) # not_a_user_entry
+            for x in cr.fetchall():
+                if len(warn) > 10:
+                    break
+                warn.append(_('Line %d, "%s Qty used as substitute" must be set') % (x[0], sub))
+
+        if warn:
+            raise osv.except_osv(_('Warning'), "\n".join(warn))
+
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        return True
+
+    def set_as_cancelled(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state': 'cancelled'}, context=context)
+        return True
+
+    def apply_set_closed(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state': 'closed', 'adjusted_amc': True}, context=context)
+        return True
+
+    def set_closed(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'state': 'closed'}, context=context)
+        return True
+product_stock_out()
+
+class product_stock_out_line(osv.osv):
+    _name = 'product.stock_out.line'
+    _description = 'Stock Outs Lines'
+    _rec_name = 'product_id'
+    _order = 'line_number'
+
+    def _get_nb_days(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        for st_out in self.browse(cr, uid, ids, fields_to_fetch=['from_date', 'to_date']):
+            if st_out.from_date and st_out.to_date:
+                res[st_out.id] = (datetime.strptime(st_out.to_date, '%Y-%m-%d') - datetime.strptime(st_out.from_date, '%Y-%m-%d')).days
+            else:
+                res[st_out.id] = 0
+
+        return res
+
+    _columns = {
+        'line_number': fields.integer('Line', readonly=1),
+        'stock_out_id': fields.many2one('product.stock_out', 'Product Stock Out', required=1, select=1),
+        'product_id': fields.many2one('product.product', 'Stock out product', required=1, select=1),
+        'product_code': fields.related('product_id', 'default_code',  string='Stock out product', type='char', size=64, readonly=True, select=True, write_relate=False),
+        'product_description': fields.related('product_id', 'name',  string='Description', type='char', size=64, readonly=True, select=True, write_relate=False),
+        'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
+        'from_date': fields.date('Stock out from', required=1),
+        'to_date': fields.date('Stock out to', required=1),
+        'nb_days': fields.function(_get_nb_days, method=1, type='integer', string='Days of stock out'),
+        'qty_missed': fields.float_null('Qty missed', related_uom='uom_id'),
+        'substitute_1_product_id': fields.many2one('product.product', '1. Substitute product', select=1),
+        'substitute_1_product_code': fields.related('substitute_1_product_id', 'default_code',  string='1. Substitute product', type='char', size=64, readonly=True, select=True, write_relate=False),
+        'substitute_1_product_description': fields.related('substitute_1_product_id', 'name',  string='1. Description', type='char', size=64, readonly=True, select=True, write_relate=False),
+        'substitute_1_uom_id': fields.related('substitute_1_product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
+        'substitute_1_qty': fields.float_null('1. Qty used as substitute', related_uom='substitute_1_uom_id'),
+
+        'substitute_2_product_id': fields.many2one('product.product', '2. Substitute product', select=1),
+        'substitute_2_product_code': fields.related('substitute_2_product_id', 'default_code',  string='2. Substitute product', type='char', size=64, readonly=True, select=True, write_relate=False),
+        'substitute_2_product_description': fields.related('substitute_2_product_id', 'name',  string='2. Description', type='char', size=64, readonly=True, select=True, write_relate=False),
+        'substitute_2_uom_id': fields.related('substitute_2_product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
+        'substitute_2_qty': fields.float_null('2. Qty used as substitute', related_uom='substitute_2_uom_id'),
+
+        'substitute_3_product_id': fields.many2one('product.product', '3. Substitute product', select=1),
+        'substitute_3_product_code': fields.related('substitute_3_product_id', 'default_code',  string='3. Substitute product', type='char', size=64, readonly=True, select=True, write_relate=False),
+        'substitute_3_product_description': fields.related('substitute_3_product_id', 'name',  string='3. Description', type='char', size=64, readonly=True, select=True, write_relate=False),
+        'substitute_3_uom_id': fields.related('substitute_3_product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
+        'substitute_3_qty': fields.float_null('3. Qty used as substitute', related_uom='substitute_3_uom_id'),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if vals.get('stock_out_id'):
+            stock_out = self.pool.get('product.stock_out').browse(cr, uid, vals['stock_out_id'], fields_to_fetch=['sequence_id'], context=context)
+            vals['line_number'] = self.pool.get('ir.sequence').get_id(cr, uid, stock_out.sequence_id.id, code_or_id='id', context=context)
+
+        return super(product_stock_out_line, self).create(cr, uid, vals, context)
+
+
+    def change_date(self, cr, uid, ids, from_date, to_date, product_id, stock_out_id, context=None):
+
+        if len(ids) > 1:
+            raise osv.except_osv(_('Error'), "ids must have 1 element in product_stock_out_line change_date %s" % (ids,))
+
+        val = {'nb_days': 0}
+        warn = []
+        now_str = datetime.now().strftime('%Y-%m-%d')
+        if from_date and from_date >= now_str:
+            warn.append(_('The "Stock out from" date (%s) must be in the past.') % from_date)
+        if to_date and to_date > now_str:
+            warn.append(_('The "Stock out to" date (%s) cannot be in the future.') % to_date)
+
+        if from_date and to_date:
+            if from_date > to_date:
+                warn.append(_('The "Stock out from" date (%s) must be before the "Stock out to" date (%s)') % (from_date, to_date))
+
+            val['nb_days'] = (datetime.strptime(to_date, '%Y-%m-%d') - datetime.strptime(from_date, '%Y-%m-%d')).days
+
+            if product_id and stock_out_id:
+                cr.execute('''
+                select line_number from product_stock_out_line
+                    where
+                        id != %s and
+                        stock_out_id = %s and
+                        product_id = %s and
+                        (from_date, to_date) OVERLAPS (%s, %s)
+                    ''', (ids[0], stock_out_id, product_id, from_date, to_date)
+                )
+                for x in cr.fetchall():
+                    warn.append(_('Dates overlap with line %s') % (x[0],))
+        ret = {
+            'value': val,
+        }
+        if warn:
+            ret['warning'] = {'message': '\n'.join(warn)}
+
+        return ret
+
+    def check_date(self, cr, uid, ids, context=None):
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['from_date', 'to_date', 'line_number', 'product_id', 'stock_out_id'], context=context):
+            get_msg = self.change_date(cr, uid, [line.id], line.from_date, line.to_date, line.product_id.id, line.stock_out_id and line.stock_out_id.id, context)
+            if get_msg.get('warning', {}).get('message'):
+                raise osv.except_osv(_('Warning'), "%s %s: %s" % (_('Line'), line.line_number, get_msg['warning']['message']))
+
+        return True
+
+    _constraints = [
+        (check_date, 'Wrong date values', []),
+    ]
+product_stock_out_line()

@@ -105,6 +105,9 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
     ss:Bold="1"/>
   </Style>
+    <Style ss:ID="s82">
+   <Protection ss:Protected="0"/>
+  </Style>
   <Style ss:ID="s89">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -156,6 +159,7 @@
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"
@@ -193,8 +197,38 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <Interior/>
-   <Protection ss:Protected="0"/>
+    <Protection ss:Protected="0"/>
   </Style>
+    <Style ss:ID="s973D">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="0.000"/>
+  </Style>
+    <Style ss:ID="s972D">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="Fixed"/>
+  </Style>
+  <Style ss:ID="s97p">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+  </Style>
+
   <Style ss:ID="s97">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
    <Borders>
@@ -203,6 +237,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="s97u">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -214,6 +249,61 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
    <Protection ss:Protected="0"/>
+  </Style>
+  <Style ss:ID="sw97">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <Protection ss:Protected="0"/>
+  </Style>
+  <Style ss:ID="sw97u">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
+   <Protection ss:Protected="0"/>
+  </Style>
+  <Style ss:ID="s97d">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="Short Date"/>
+   <Protection ss:Protected="0"/>
+  </Style>
+    <Style ss:ID="s98">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"
+    ss:Bold="1"/>
+   <Interior ss:Color="#DCDEE2" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="s100">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="Fixed"/>
   </Style>
   <Style ss:ID="s143">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -235,7 +325,6 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
-   <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="s145">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -246,7 +335,6 @@
    </Borders>
    <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
    <NumberFormat ss:Format="Short Date"/>
-   <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="s149">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -269,7 +357,6 @@
    </Borders>
    <Interior ss:Color="#DDEBF7" ss:Pattern="Solid"/>
    <NumberFormat ss:Format="Short Date"/>
-   <Protection ss:Protected="0"/>
   </Style>
   <Style ss:ID="s165">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -280,28 +367,46 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <Interior ss:Color="#DDEBF7" ss:Pattern="Solid"/>
-   <Protection ss:Protected="0"/>
   </Style>
+    <Style ss:ID="s95total">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="Fixed"/>
+  </Style>
+
  </Styles>
- <Worksheet ss:Name="Replenishment Segment" ss:Protected="1">
+ <Worksheet ss:Name="Stock Out" ss:Protected="1">
   <Names>
    <NamedRange ss:Name="_FilterDatabase" ss:RefersTo="=Segment!R8C1:R14C4"
     ss:Hidden="1"/>
    <NamedRange ss:Name="Print_Titles" ss:RefersTo="=Segment!R1:R8"/>
    <NamedRange ss:Name="Print_Area" ss:RefersTo="=Segment!C1:C4"/>
   </Names>
-   <Table x:FullColumns="1"
-   x:FullRows="1" ss:DefaultColumnWidth="60.75" ss:DefaultRowHeight="15">
-   <Column ss:AutoFitWidth="0" ss:Width="87.75"/>
-   <Column ss:AutoFitWidth="0" ss:Width="210.75"/>
-   <Column ss:AutoFitWidth="0" ss:Width="63"/>
-   <Column ss:AutoFitWidth="0" ss:Width="127.5"/>
-   <Column ss:AutoFitWidth="0" ss:Width="66"/>
-   <Column ss:AutoFitWidth="0" ss:Width="82.5" ss:Span="1"/>
-   <Column ss:Index="8" ss:AutoFitWidth="0" ss:Width="75.75" ss:Span="1"/>
+   <Table x:FullColumns="1" x:FullRows="1" ss:DefaultColumnWidth="60.75" ss:DefaultRowHeight="15">
+   <Column ss:AutoFitWidth="0" ss:Width="20"/> <!-- line -->
+   <Column ss:AutoFitWidth="0" ss:Width="80"/> <!--prod code -->
+   <Column ss:AutoFitWidth="0" ss:Width="210.75"/> <!--prod desc -->
+   <Column ss:AutoFitWidth="0" ss:Width="63"/> <!-- from  -->
+   <Column ss:AutoFitWidth="0" ss:Width="63"/> <!-- to -->
+   <Column ss:AutoFitWidth="0" ss:Width="93"/> <!-- days -->
+   <Column ss:AutoFitWidth="0" ss:Width="93" /> <!-- qty -->
+   <Column ss:AutoFitWidth="0" ss:Width="80" /> <!-- 1. code -->
+   <Column ss:AutoFitWidth="0" ss:Width="210.75" /> <!-- desc -->
+   <Column ss:AutoFitWidth="0" ss:Width="93" /> <!-- qty  -->
+   <Column ss:AutoFitWidth="0" ss:Width="80" /> <!-- 2. code -->
+   <Column ss:AutoFitWidth="0" ss:Width="210.75" /> <!-- des -->
+   <Column ss:AutoFitWidth="0" ss:Width="93" /> <!-- qty -->
+   <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- 3. code -->
+   <Column ss:AutoFitWidth="0" ss:Width="210.75" /> <!-- desc -->
+   <Column ss:AutoFitWidth="0" ss:Width="93" /> <!-- qty -->
    <Row ss:AutoFitHeight="0" ss:Height="31.5">
-    <Cell ss:MergeAcross="6" ss:StyleID="s64"><Data ss:Type="String">${_('Product segment')|x}</Data><NamedCell
-      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:MergeAcross="9" ss:StyleID="s64"><Data ss:Type="String">${_('Stock Out')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="18.75" ss:StyleID="s65">
     <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/><NamedCell
@@ -317,17 +422,21 @@
     <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
+   <Cell />
     <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Reference')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="m2348480924348"><Data ss:Type="String">${objects[0].name_seg|x}</Data><NamedCell
+    <Cell ss:StyleID="m2348480924308"><Data ss:Type="String">${objects[0].name|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Location Config')|x}</Data><NamedCell
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Location')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:MergeAcross="1" ss:StyleID="m2348480924308"><Data ss:Type="String">${objects[0].name|x}</Data><NamedCell
+    <Cell ss:MergeAcross="1" ss:StyleID="m2348480924308"><Data ss:Type="String">${objects[0].location_id.name|x}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s67"><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${_('State')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="m2348480924308"><Data ss:Type="String">${getSel(objects[0], 'state')|x}</Data><NamedCell
+      ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="8.25">
     <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/><NamedCell
@@ -335,31 +444,6 @@
     <Cell ss:StyleID="s75"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s75"><NamedCell ss:Name="Print_Titles"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/></Cell>
-   </Row>
-   <Row ss:AutoFitHeight="0" ss:Height="15.75">
-    <Cell ss:StyleID="s76"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
-    <Cell ss:StyleID="m2348480924348"><Data ss:Type="String">${objects[0].description_seg|x}</Data><NamedCell
-      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s67"><NamedCell ss:Name="Print_Titles"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Location Description')|x}</Data><NamedCell
-      ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:MergeAcross="1" ss:StyleID="m2348480924348"><Data ss:Type="String">${objects[0].description|x}</Data><NamedCell
-      ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/></Cell>
-   </Row>
-   <Row ss:AutoFitHeight="0" ss:Height="9">
-    <Cell ss:StyleID="s78"><NamedCell ss:Name="Print_Titles"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s67"><NamedCell ss:Name="Print_Titles"/><NamedCell
-      ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s67"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
@@ -381,92 +465,82 @@
     <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="32.0625" ss:StyleID="s87">
-    <Cell ss:StyleID="s89"><Data ss:Type="String">${_('Product code')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s89"><Data ss:Type="String">${_('Line')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s89"><Data ss:Type="String">${_('Stock out product')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s89"><Data ss:Type="String">${_('Description')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s90"><Data ss:Type="String">${_('In prod. list')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s91"><Data ss:Type="String">${_('RR-Lifecycle')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s91"><Data ss:Type="String">${_('Replacing Product')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s91"><Data ss:Type="String">${_('Replaced Product')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Real Stock')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s91"><Data ss:Type="String">${_('RR-AMC')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-    % if objects[0].rule == 'cycle':
-        <Cell ss:StyleID="s92"><Data ss:Type="String">${_('Buffer Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-    % elif objects[0].rule == 'minmax':
-        <Cell ss:StyleID="s92"><Data ss:Type="String">${_('Min Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-        <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Max Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-    % else:
-        <Cell ss:StyleID="s92"><Data ss:Type="String">${_('Auto Supply Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-    % endif
-
-    % if objects[0].rule == 'cycle':
-        <% i = 0 %>
-        <% styles = ['s143', 's149'] %>
-        % for fmc in range(1, 13):
-        <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('RR FMC %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-        <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('From %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-        <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('To %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-        <% i = 1 - i %>
-        % endfor
-    % endif
+    <Cell ss:StyleID="s90"><Data ss:Type="String">${_('Stock out from')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Stock out to')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Days of stock out')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Qty missed')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('1. Substitute product')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('1. Description')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('1. Qty used as substitute')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('2. Substitute product')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('2. Description')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('2. Qty used as substitute')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('3. Substitute product')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('3. Description')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('3. Qty used as substitute')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
 
    % for prod in objects[0].line_ids:
    <Row ss:AutoFitHeight="0" ss:Height="15.75">
+    <Cell ss:StyleID="s97p"><Data ss:Type="Number">${prod.line_number}</Data></Cell>
     <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.default_code|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.name|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.in_main_list and _('Y') or _('N')}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s97u"><Data ss:Type="String">${getSel(prod, 'status')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s97u"><Data ss:Type="String">${(prod.replacing_product_id and prod.replacing_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s97u"><Data ss:Type="String">${(prod.replaced_product_id and prod.replaced_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.real_stock}</Data></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.rr_amc}</Data></Cell>
-    % if objects[0].rule == 'cycle':
-        <Cell ss:StyleID="s97u">
-        % if prod.buffer_qty is not False:
-            <Data ss:Type="Number">${prod.buffer_qty}</Data>
+    <Cell ss:StyleID="s97d">
+        % if isDate(prod.from_date):
+        <Data ss:Type="DateTime">${prod.from_date|n}T00:00:00.000</Data>
+        % else:
+        <Data ss:Type="String"></Data>
         % endif
-        </Cell>
-    % elif objects[0].rule == 'minmax':
-        <Cell ss:StyleID="s97u"><Data ss:Type="Number">${prod.min_qty}</Data></Cell>
-        <Cell ss:StyleID="s97u"><Data ss:Type="Number">${prod.max_qty}</Data></Cell>
+    </Cell>
+    <Cell ss:StyleID="s97d">
+        % if isDate(prod.to_date):
+        <Data ss:Type="DateTime">${prod.to_date|n}T00:00:00.000</Data>
+        % else:
+        <Data ss:Type="String"></Data>
+        % endif
+    </Cell>
+    <Cell ss:StyleID="s97" ss:Formula="=RC[-1]-RC[-2]"><Data ss:Type="Number">${prod.nb_days}</Data></Cell>
+    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.qty_missed}</Data></Cell>
+
+    <Cell ss:StyleID="s96"><Data ss:Type="String">${(prod.substitute_1_product_id and prod.substitute_1_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s96"><Data ss:Type="String">${(prod.substitute_1_product_id and prod.substitute_1_product_id.name or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s97">
+    % if prod.substitute_1_qty is False:
+        <Data ss:Type="String" />
     % else:
-        <Cell ss:StyleID="s97u"><Data ss:Type="Number">${prod.auto_qty}</Data></Cell>
+        <Data ss:Type="Number">${prod.substitute_1_qty}</Data>
     % endif
+    </Cell>
 
-    % if objects[0].rule == 'cycle':
-        <!-- s144+s145 / s165/s151 -->
-        <% i = 0 %>
-        <% styles = [('s144', 's145'), ('s165', 's151')] %>
-         % for fmc in range(1, 13):
-            <Cell ss:StyleID="${styles[i][0]}">
-            % if getattr(prod, 'rr_fmc_%d'%fmc) is False:
-                <Data ss:Type="String" />
-            % else:
-                <Data ss:Type="Number">${getattr(prod, 'rr_fmc_%d'%fmc) or ''}</Data>
-            % endif
-            </Cell>
-        <% from_date = getattr(prod, 'rr_fmc_from_%d'%fmc) %>
-        <Cell ss:StyleID="${styles[i][1]}">
-         % if isDate(from_date):
-            <Data ss:Type="DateTime">${from_date|n}T00:00:00.000</Data>
-        % else:
-            <Data ss:Type="String"></Data>
-        % endif
-        </Cell>
-
-        <% to_date = getattr(prod, 'rr_fmc_to_%d'%fmc) %>
-        <Cell ss:StyleID="${styles[i][1]}">
-         % if isDate(to_date):
-            <Data ss:Type="DateTime">${to_date|n}T00:00:00.000</Data>
-        % else:
-            <Data ss:Type="String"></Data>
-        % endif
-        </Cell>
-        <% i = 1 - i %>
-        % endfor
+    <Cell ss:StyleID="s96"><Data ss:Type="String">${(prod.substitute_2_product_id and prod.substitute_2_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s96"><Data ss:Type="String">${(prod.substitute_2_product_id and prod.substitute_2_product_id.name or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s97">
+    % if prod.substitute_2_qty is False:
+        <Data ss:Type="String" />
+    % else:
+        <Data ss:Type="Number">${prod.substitute_2_qty}</Data>
     % endif
+    </Cell>
+
+    <Cell ss:StyleID="s96"><Data ss:Type="String">${(prod.substitute_3_product_id and prod.substitute_3_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s96"><Data ss:Type="String">${(prod.substitute_3_product_id and prod.substitute_3_product_id.name or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s97">
+    % if prod.substitute_3_qty is False:
+        <Data ss:Type="String" />
+    % else:
+        <Data ss:Type="Number">${prod.substitute_3_qty}</Data>
+    % endif
+    </Cell>
+
    </Row>
    % endfor
+
+    % for x in xrange(1, 500):
+    <Row ss:AutoFitHeight="0" ss:StyleID="s82"/>
+    % endfor
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
@@ -489,8 +563,8 @@
    <DoNotDisplayGridlines/>
           <FreezePanes/>
         <FrozenNoSplit/>
-   <SplitHorizontal>8</SplitHorizontal>
-   <TopRowBottomPane>8</TopRowBottomPane>
+   <SplitHorizontal>6</SplitHorizontal>
+   <TopRowBottomPane>6</TopRowBottomPane>
    <SplitVertical>2</SplitVertical>
    <LeftColumnRightPane>2</LeftColumnRightPane>
    <ActivePane>0</ActivePane>
@@ -506,7 +580,6 @@
     <Pane>
      <Number>0</Number>
     </Pane>
-
    </Panes>
    <ProtectObjects>True</ProtectObjects>
    <ProtectScenarios>True</ProtectScenarios>
@@ -520,12 +593,5 @@
    <AllowFilter/>
    <AllowUsePivotTables/>
   </WorksheetOptions>
-    <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
-    <Range>R9C4:R${len(objects[0].line_ids)+9}C4</Range>
-    <Type>List</Type>
-    <CellRangeList/>
-    <Value>&quot;${_('Active')|x},${_('New')|x},${_('Replaced')|x},${_('Replacing')|x}&quot;</Value>
-  </DataValidation>
-
  </Worksheet>
 </Workbook>

@@ -1964,15 +1964,53 @@ class product_product(osv.osv):
         if not nb_months:
             nb_months = 1
 
+        adjusted_qty = {}
+        adjusted_day = {}
         if context.get('amc_location_ids'):
+            cr.execute('''
+                select line.product_id, line.from_date, line.to_date, line.qty_missed, substitute_1_product_id, substitute_1_qty, substitute_2_product_id, substitute_2_qty,substitute_3_product_id, substitute_3_qty
+                    from product_stock_out_line line, product_stock_out st
+                    where
+                        line.stock_out_id = st.id and
+                        st.state = 'closed' and
+                        st.adjusted_amc = 't' and
+                        ( line.product_id in %(product)s or substitute_1_product_id in %(product)s or substitute_2_product_id in %(product)s or substitute_3_product_id in %(product)s ) and
+                        st.location_id in %(location)s and
+                        (from_date, to_date) OVERLAPS (%(from)s, %(to)s)
+            ''', {'product': tuple(res.keys()), 'location': tuple(context.get('amc_location_ids')), 'from': from_date, 'to': to_date})
+
+            for x in cr.fetchall():
+                from_over = max(from_date, x[1])
+                to_over = min(to_date, x[2])
+                overlap_days = (strptime(to_over, '%Y-%m-%d') - strptime(from_over, '%Y-%m-%d')).days
+                if x[0] in res.keys():
+                    if  x[3] is None:
+                        adjusted_day.setdefault(x[0], 0)
+                        adjusted_day[x[0]] -= overlap_days
+                    else:
+                        adjusted_qty.setdefault(x[0], 0)
+                        adjusted_qty[x[0]] += (x[3]/(strptime(x[2], '%Y-%m-%d') - strptime(x[1], '%Y-%m-%d')).days * overlap_days)
+                for idx in [4, 6, 8]:
+                    if x[idx] in res.keys() and x[idx+1]:
+                        adjusted_qty.setdefault(x[idx], 0)
+                        adjusted_qty[x[idx]] -= (x[idx+1]/(strptime(x[2], '%Y-%m-%d') - strptime(x[1], '%Y-%m-%d')).days * overlap_days)
+
+
             nb_months = ((to_date_str-from_date_str).days + 1)/30.44
 
         for p_id in res:
+            p_nb_nb_months = nb_months
+            if p_id in adjusted_day:
+                p_nb_nb_months += adjusted_day[p_id]/30.44
+
+            if p_id in adjusted_qty:
+                res[p_id] += adjusted_qty[p_id]
+
             if p_id in product_dict:
                 prod_uom = product_dict[p_id]['uom_id'][0]
-                res[p_id] = uom_obj._compute_qty(cr, uid, prod_uom, res[p_id]/nb_months, prod_uom)
+                res[p_id] = uom_obj._compute_qty(cr, uid, prod_uom, res[p_id]/p_nb_nb_months, prod_uom)
             else:
-                res[p_id] = res[p_id]/nb_months
+                res[p_id] = res[p_id]/p_nb_nb_months
 
         return res
 
@@ -2045,7 +2083,6 @@ class product_product(osv.osv):
             'from_date': from_date,
             'to_date': to_date})
 
-        # TODO TEST JFB
         return self.compute_amc(cr, uid, ids, context=context)
 
 
