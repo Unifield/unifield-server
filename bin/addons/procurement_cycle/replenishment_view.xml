@@ -923,8 +923,8 @@
                             <field name="product_description" displayon="noteditable" />
                             <field name="product_id" displayon="editable" filter_selector="1" domain="[('id', 'not in', [substitute_1_product_id,, substitute_2_product_id, substitute_3_product_id])]"/>
                             <field name="uom_id" invisible="1" />
-                            <field name="from_date" on_change="change_date(from_date, to_date, product_id, parent.id)" />
-                            <field name="to_date" on_change="change_date(from_date, to_date, product_id, parent.id)"/>
+                            <field name="from_date" on_change="change_date(from_date, to_date)" />
+                            <field name="to_date" on_change="change_date(from_date, to_date)"/>
                             <field name="nb_days" />
                             <field name="qty_missed" />
                             <field name="substitute_1_product_code" displayon="noteditable" />

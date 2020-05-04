@@ -1210,6 +1210,44 @@ class replenishment_segment(osv.osv):
         if self.pool.get('replenishment.segment.line').search_exist(cr, uid, [('segment_id', 'in', ids), ('status', '=', 'replacing'), ('replaced_product_id', '=', False)], context=context):
             raise osv.except_osv(_('Warning'), _('Please complete Replaced products with a paired product, see red lines'))
 
+        cr.execute('''
+            select prod.default_code, pair.default_code
+                from replenishment_segment_line l1
+                left join product_product prod on l1.product_id = prod.id
+                left join replenishment_segment_line l2 on l2.product_id = l1.replacing_product_id and l2.segment_id = l1.segment_id
+                left join product_product pair on pair.id = l1.replacing_product_id
+            where
+                l1.segment_id in %s and
+                l1.replacing_product_id is not null and
+                l2 is null
+            ''', (tuple(ids),))
+        warn_pair = []
+        for x in cr.fetchall():
+            if len(warn_pair) > 5:
+                warn_pair.append('...')
+                break
+            warn_pair.append(_('Product %s: the paired product %s is not defined in the Segment, please create a segment line for the paired product') % (x[0], x[1]))
+
+        cr.execute('''
+            select prod.default_code, pair.default_code
+                from replenishment_segment_line l1
+                left join product_product prod on l1.product_id = prod.id
+                left join replenishment_segment_line l2 on l2.product_id = l1.replaced_product_id and l2.segment_id = l1.segment_id
+                left join product_product pair on pair.id = l1.replaced_product_id
+            where
+                l1.segment_id in %s and
+                l1.replaced_product_id is not null and
+                l2 is null
+            ''', (tuple(ids),))
+        for x in cr.fetchall():
+            if len(warn_pair) > 5:
+                warn_pair.append('...')
+                break
+            warn_pair.append(_('Product %s: the paired product %s is not defined in the Segment, please create a segment line for the paired product') % (x[0], x[1]))
+
+        if warn_pair:
+            raise osv.except_osv(_('Warning'),"\n".join(warn_pair))
+
         self.write(cr, uid, ids, {'state': 'complete'}, context=context)
         return True
 
@@ -2632,7 +2670,7 @@ class product_stock_out(osv.osv):
             data_towrite['from_date'] = row.cells[3].data.strftime('%Y-%m-%d')
             data_towrite['to_date'] = row.cells[4].data.strftime('%Y-%m-%d')
 
-            error_date = line_obj.change_date(cr, uid, [existing_line.get(prod_line, 0)], data_towrite['from_date'], data_towrite['to_date'], data_towrite['product_id'], obj.id, context=context)
+            error_date = line_obj.change_date(cr, uid, [existing_line.get(prod_line, 0)], data_towrite['from_date'], data_towrite['to_date'], context=context)
             if error_date.get('warning', {}).get('message'):
                 line_error.append(_('XLS Line %d: %s') % (idx, error_date['warning']['message']))
 
@@ -2710,6 +2748,19 @@ class product_stock_out(osv.osv):
                     break
                 warn.append(_('Line %d, "%s Qty used as substitute" must be set') % (x[0], sub))
 
+        cr.execute('''
+            select
+                l1.line_number,l2.line_number
+            from
+                product_stock_out_line l1
+            left join product_stock_out_line l2 on l2.product_id = l1.product_id and l2.stock_out_id = l1.stock_out_id and l1.id < l2.id
+            where
+                (l1.from_date, l1.to_date) OVERLAPS (l2.from_date, l2.to_date) and
+                l1.stock_out_id in %s
+            ''', (tuple(ids), ))
+        for x in cr.fetchall():
+            warn.append(_('L%s and L%s: dates overlap.') % (x[0], x[1]))
+
         if warn:
             raise osv.except_osv(_('Warning'), "\n".join(warn))
 
@@ -2783,7 +2834,7 @@ class product_stock_out_line(osv.osv):
         return super(product_stock_out_line, self).create(cr, uid, vals, context)
 
 
-    def change_date(self, cr, uid, ids, from_date, to_date, product_id, stock_out_id, context=None):
+    def change_date(self, cr, uid, ids, from_date, to_date, context=None):
 
         if len(ids) > 1:
             raise osv.except_osv(_('Error'), "ids must have 1 element in product_stock_out_line change_date %s" % (ids,))
@@ -2801,19 +2852,6 @@ class product_stock_out_line(osv.osv):
                 warn.append(_('The "Stock out from" date (%s) must be before the "Stock out to" date (%s)') % (from_date, to_date))
 
             val['nb_days'] = (datetime.strptime(to_date, '%Y-%m-%d') - datetime.strptime(from_date, '%Y-%m-%d')).days
-
-            if product_id and stock_out_id:
-                cr.execute('''
-                select line_number from product_stock_out_line
-                    where
-                        id != %s and
-                        stock_out_id = %s and
-                        product_id = %s and
-                        (from_date, to_date) OVERLAPS (%s, %s)
-                    ''', (ids[0], stock_out_id, product_id, from_date, to_date)
-                )
-                for x in cr.fetchall():
-                    warn.append(_('Dates overlap with line %s') % (x[0],))
         ret = {
             'value': val,
         }
@@ -2823,8 +2861,8 @@ class product_stock_out_line(osv.osv):
         return ret
 
     def check_date(self, cr, uid, ids, context=None):
-        for line in self.browse(cr, uid, ids, fields_to_fetch=['from_date', 'to_date', 'line_number', 'product_id', 'stock_out_id'], context=context):
-            get_msg = self.change_date(cr, uid, [line.id], line.from_date, line.to_date, line.product_id.id, line.stock_out_id and line.stock_out_id.id, context)
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['from_date', 'to_date', 'line_number'], context=context):
+            get_msg = self.change_date(cr, uid, [line.id], line.from_date, line.to_date, context=context)
             if get_msg.get('warning', {}).get('message'):
                 raise osv.except_osv(_('Warning'), "%s %s: %s" % (_('Line'), line.line_number, get_msg['warning']['message']))
 
