@@ -63,16 +63,14 @@ class account_cashbox_line(osv.osv):
         'ending_id': fields.many2one('account.bank.statement', ondelete='cascade'),
     }
 
-    def _check_cashbox_closing_duplicates(self, cr, uid, ids, context=None):
+    def _check_cashbox_closing_duplicates(self, cr, uid, ids):
         """
         Blocks duplicated values in the Cashbox Closing Balance
         """
-        if context is None:
-            context = {}
-        for line in self.browse(cr, uid, ids, fields_to_fetch=['ending_id', 'pieces'], context=context):
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['ending_id', 'pieces']):
             if line.ending_id:
                 dom = [('ending_id', '=', line.ending_id.id), ('pieces', '=', line.pieces), ('id', '!=', line.id)]
-                if self.search_exist(cr, uid, dom, context=context):
+                if self.search_exist(cr, uid, dom):
                     return False
         return True
 
