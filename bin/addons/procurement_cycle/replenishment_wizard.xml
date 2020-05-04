@@ -41,8 +41,8 @@
                 <form string="Set Paired Product">
                         <field name="product_id" readonly="1" colspan="4"/>
                         <field name="status" invisible="1" />
-                        <field name="replaced_product_id" attrs="{'invisible': [('status', '!=', 'replaced')], 'required':  [('status', '=', 'replaced')]}" colspan="4" domain="[('id', '!=', product_id)]" />
-                        <field name="replacing_product_id" attrs="{'invisible': [('status', '!=', 'replacing')], 'required':  [('status', '=', 'replacing')]}" colspan="4" domain="[('id', '!=', product_id)]"/>
+                        <field name="replacing_product_id" attrs="{'invisible': [('status', '!=', 'replaced')], 'required':  [('status', '=', 'replaced')]}" colspan="4" domain="[('id', '!=', product_id)]" />
+                        <field name="replaced_product_id" attrs="{'invisible': [('status', '!=', 'replacing')], 'required':  [('status', '=', 'replacing')]}" colspan="4" domain="[('id', '!=', product_id)]"/>
                         <group colspan="4">
                             <button name="save_paired" icon="gtk-ok" string="Save" type="object"/>
                             <button special="cancel" string="Close" icon="gtk-cancel" />

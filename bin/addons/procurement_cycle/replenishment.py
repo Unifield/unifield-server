@@ -581,7 +581,7 @@ class replenishment_segment(osv.osv):
                 prod_eta[x[0]] = x[1]
 
             cr.execute('''
-                select segment_line_id, sum(reserved_stock), sum(real_stock - reserved_stock - expired_before_rdd), sum(expired_before_rdd), sum(expired_between_rdd_oc), bool_or(open_loan), sum(total_expiry_nocons_qty), sum(real_stock), sum(expired_qty_before_eta), sum(sleeping_qty)
+                select segment_line_id, sum(reserved_stock), sum(real_stock - reserved_stock - expired_before_rdd), sum(expired_before_rdd), sum(expired_between_rdd_oc), bool_or(open_loan), sum(total_expiry_nocons_qty), sum(real_stock), sum(expired_qty_before_eta), sum(sleeping_qty), bool_or(open_donation)
                     from replenishment_segment_line_amc amc, replenishment_segment_line line
                     where
                         line.id = amc.segment_line_id and
@@ -596,6 +596,7 @@ class replenishment_segment(osv.osv):
                     'expired_before_rdd': x[3] or 0,
                     'expired_rdd_oc': x[4] or 0,
                     'open_loan': x[5] or False,
+                    'open_donation': x[10] or False,
                     'total_expiry_nocons_qty': x[6] or 0,
                     'real_stock': x[7] or 0,
                     'expired_qty_before_eta': x[8] or 0,
@@ -642,10 +643,11 @@ class replenishment_segment(osv.osv):
                 rdd = datetime.strptime(seg.date_next_order_received_modified or seg.date_next_order_received, '%Y-%m-%d')
 
             oc = rdd + relativedelta(months=seg.order_coverage)
-            for line in seg.line_ids:
+            line_ids_order = sorted(seg.line_ids, key=lambda x: bool(x.replaced_product_id))
+            lacking_by_prod = {}
+            for line in line_ids_order:
                 total_fmc = 0
                 total_month = 0
-                month_of_supply_eta = 0
                 month_of_supply = 0
 
                 total_fmc_oc = 0
@@ -657,16 +659,43 @@ class replenishment_segment(osv.osv):
                 before_rdd = False
 
                 lacking = False
-                lacking_eta = False
-
-                total_fmc_eta = 0
-                eta = prod_eta.get(line.product_id.id, False) and datetime.strptime(prod_eta[line.product_id.id], '%Y-%m-%d %H:%M:%S') + relativedelta(hour=0, minute=0, second=0, microsecond=0) or today
-                if eta < today:
-                    eta = today
 
                 fmc_by_month = {}
                 detailed_pas = []
                 if seg.rule == 'cycle':
+
+                    cr.execute('''
+                        select m.date, sum(product_qty) from stock_move m, stock_picking p
+                            where
+                                m.picking_id = p.id and
+                                m.state in ('assigned', 'confirmed') and
+                                m.location_dest_id in %s and
+                                m.product_id = %s and
+                                m.date <= %s
+                            group by m.date
+                            ''', (tuple(loc_ids), line.product_id.id, oc)
+                               )
+                    pipe_data = {}
+                    for x in cr.fetchall():
+                        pipe_data[datetime.strptime('%s 23:59:59' % (x[0].split(' ')[0], ), '%Y-%m-%d %H:%M:%S')] = x[1]
+
+                    pipe_date = sorted(pipe_data.keys())
+
+
+                    if line.status== 'replacing':
+                        compute_begin_date = lacking_by_prod.get(line.replaced_product_id.id) or datetime.strptime('3000-01-01', '%Y-%m-%d')
+                    else:
+                        compute_begin_date = today
+
+                    pas_full = sum_line[line.id]['pas_no_pipe_no_fmc']
+                    qty_lacking = 0
+                    for x in pipe_date[:]:
+                        if x <= compute_begin_date:
+                            pas_full += pipe_data[x]
+                            pipe_date.pop(0)
+                        else:
+                            break
+
                     for fmc_d in range(1, 13):
                         from_fmc = getattr(line, 'rr_fmc_from_%d'%fmc_d)
                         to_fmc = getattr(line, 'rr_fmc_to_%d'%fmc_d)
@@ -681,24 +710,54 @@ class replenishment_segment(osv.osv):
 
                             if rdd <= to_fmc:
                                 before_rdd = True
-                            begin = max(today, from_fmc)
-                            end = min(rdd, to_fmc)
 
-                            end_eta = min(eta, to_fmc)
-                            if end_eta >= begin:
-                                month = (end_eta-begin).days/30.44
-                                total_fmc_eta += month*num_fmc
-                                if not lacking_eta:
-                                    if total_fmc_eta < sum_line[line.id]['pas_no_pipe_no_fmc']:
-                                        month_of_supply_eta += month
-                                    elif num_fmc:
-                                        month_of_supply_eta += max(0, (sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc_eta + month*num_fmc ) / num_fmc)
-                                        if prod_eta.get(line.product_id.id, False):
-                                            lacking_eta = True
+                            begin = max(compute_begin_date, from_fmc)
+                            end = min(rdd, to_fmc)
 
                             if end >= begin:
                                 month = (end-begin).days/30.44
                                 total_month += month
+
+
+                                new_begin = begin
+                                period_conso = total_fmc+month*num_fmc
+                                if period_conso <= pas_full:
+                                    pas_full -= period_conso
+                                else:
+                                    # missing stock to cover the full period
+                                    for x in pipe_date[:]:
+                                        # add pipe before period
+                                        if x <= begin:
+                                            pas_full += pipe_data[x]
+                                            pipe_date.pop(0)
+                                        else:
+                                            break
+                                    if period_conso > pas_full:
+                                        # still not enough stock
+                                        for x in pipe_date[:]:
+                                            if x <= end:
+                                                # compute missing just before the next pipe
+                                                ndays = (x - new_begin).days
+                                                qty = num_fmc/30.44*ndays
+                                                pas_full -= qty
+                                                if pas_full < 0:
+                                                    qty_lacking += pas_full
+
+                                                # new available qty is the qty in the pipe
+                                                pas_full = pipe_data[x]
+                                                new_begin = pipe_date.pop(0)
+                                            else:
+                                                break
+
+                                    if end >= new_begin:
+                                        # all qty in pipe is added
+                                        # compute consumption from last received to the end
+                                        qty = (num_fmc/30.44)*(end - new_begin).days
+                                        pas_full -= qty
+                                        if pas_full < 0:
+                                            qty_lacking += pas_full
+                                            pas_full = 0
+
                                 if not lacking:
                                     if total_fmc+month*num_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
                                         month_of_supply += month
@@ -728,7 +787,7 @@ class replenishment_segment(osv.osv):
                             if not review_id:
                                 if oc <= to_fmc:
                                     before_oc = True
-                                begin_oc = max(rdd, from_fmc)
+                                begin_oc = max(rdd, from_fmc, compute_begin_date)
                                 end_oc = min(oc, to_fmc)
                                 if end_oc >= begin_oc:
                                     month = (end_oc-begin_oc).days/30.44
@@ -756,11 +815,11 @@ class replenishment_segment(osv.osv):
 
 
 
-                pas = max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rdd - total_fmc)
+                #pas = max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rdd - total_fmc)
+                pas = pas_full
                 ss_stock = 0
                 warnings = []
                 warnings_html = []
-                qty_lacking = 0
                 qty_lacking_needed_by = False
                 proposed_order_qty = 0
                 if seg.rule == 'cycle':
@@ -769,7 +828,7 @@ class replenishment_segment(osv.osv):
                             ss_stock = seg.safety_stock * total_fmc_oc / total_month_oc
                     else:
                         # sum fmc from today to ETC - qty in stock
-                        qty_lacking =  max(0, total_fmc_eta - sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0))
+                        #qty_lacking =  max(0, total_fmc - sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0))
                         if total_month_oc+total_month:
                             ss_stock = seg.safety_stock * ((total_fmc_oc+total_fmc)/(total_month_oc+total_month))
                         if total_month and pas and pas <= line.buffer_qty + seg.safety_stock * (total_fmc / total_month):
@@ -777,18 +836,23 @@ class replenishment_segment(osv.osv):
                             warnings.append(wmsg)
                             warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('SS used'))))
                         if qty_lacking:
-                            wmsg = _('Stock-out before next ETA')
+                            wmsg = _('Stock-out before next RDD')
                             warnings.append(wmsg)
                             warnings_html.append('<span title="%s">%s</span>'  % (misc.escape_html(wmsg), misc.escape_html(_('Stock out'))))
 
-                        if lacking_eta:
-                            qty_lacking_needed_by = (today + relativedelta(days=month_of_supply_eta*30.44)).strftime('%Y-%m-%d')
+                        if lacking:
+                            qty_lacking_needed_by = today + relativedelta(days=month_of_supply*30.44)
                     if review_id and round(sum_line.get(line.id, {}).get('expired_before_rdd',0)):
                         wmsg = _('Forecasted expiries')
                         warnings.append(wmsg)
                         warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('Expiries'))))
 
-                    proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rdd_oc)
+                    if line.status == 'replaced':
+                        proposed_order_qty = 0
+                        qty_lacking = 0
+                    else:
+                        #print line.product_id.default_code, 'total_fmc_oc', total_fmc_oc, 'ss_stock', ss_stock, 'line.buffer_qty', line.buffer_qty, 'expired_rdd_oc', sum_line.get(line.id, {}).get('expired_rdd_oc',0), 'pas', pas, 'line.pipeline_between_rdd_oc', line.pipeline_between_rdd_oc
+                        proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rdd_oc)
 
                 elif seg.rule == 'minmax':
                     proposed_order_qty = max(0, line.max_qty - sum_line.get(line.id, {}).get('real_stock') + sum_line.get(line.id, {}).get('reserved_stock_qty') + sum_line.get(line.id, {}).get('expired_qty_before_eta', 0) - line.pipeline_before_rdd)
@@ -810,6 +874,12 @@ class replenishment_segment(osv.osv):
                     warnings.append(wmsg)
                     warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('FMC'))))
 
+                if review_id and month_of_supply and month_of_supply > line.segment_id.projected_view + line.segment_id.safety_stock:
+                    wmsg = _('Excess Stock')
+                    warnings.append(wmsg)
+                    warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('Excess'))))
+
+                lacking_by_prod[line.product_id.id] = qty_lacking_needed_by
                 line_data = {
                     'product_id': line.product_id.id,
                     'uom_id': line.uom_id.id,
@@ -817,8 +887,8 @@ class replenishment_segment(osv.osv):
                     'pipeline_qty': round(line.pipeline_before_rdd or 0),
                     'eta_for_next_pipeline': prod_eta.get(line.product_id.id, False),
                     'reserved_stock_qty': sum_line.get(line.id, {}).get('reserved_stock_qty'),
-                    'qty_lacking': False if seg.rule !='cycle' or not prod_eta.get(line.product_id.id, False) else round(qty_lacking),
-                    'qty_lacking_needed_by': qty_lacking_needed_by,
+                    'qty_lacking': False if seg.rule !='cycle' else round(qty_lacking),
+                    'qty_lacking_needed_by': qty_lacking_needed_by and qty_lacking_needed_by.strftime('%Y-%m-%d') or False,
                     'expired_qty_before_cons': False if seg.rule !='cycle' else round(sum_line.get(line.id, {}).get('expired_before_rdd',0)),
                     'expired_qty_before_eta': round(sum_line.get(line.id, {}).get('expired_qty_before_eta',0)),
                     'warning': "\n".join(warnings),
@@ -826,6 +896,7 @@ class replenishment_segment(osv.osv):
                     'valid_rr_fmc': valid_rr_fmc,
                     'status': line.status,
                     'open_loan': sum_line.get(line.id, {}).get('open_loan', False),
+                    'open_donation': sum_line.get(line.id, {}).get('open_donation', False),
                 }
                 if warnings_html:
                     line_data['warning_html'] = '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html("\n".join(warnings)), "<br>".join(warnings_html))
@@ -1016,13 +1087,13 @@ class replenishment_segment(osv.osv):
                 })
 
 
-            col_replacing = 4
-            col_replaced = 5
+            col_replaced = 4
+            col_replacing = 5
             col_buffer_min_qty = 8
             col_first_fmc = 9
 
             if cells_nb > col_replacing and row.cells[col_replacing].data and row.cells[col_replacing].data.strip():
-                if data_towrite['status'] != 'replacing':
+                if data_towrite['status'] != 'replaced':
                     line_error.append(_('Line %d: you can not set a Replacing product on this line, please change the satus or remove the replacing product') % (idx+1, ))
                 else:
                     replacing_id = product_obj.search(cr, uid, [('default_code', '=ilike', row.cells[col_replacing].data.strip())], context=context)
@@ -1030,11 +1101,11 @@ class replenishment_segment(osv.osv):
                         line_error.append(_('Line %d: replacing product code %s not found') % (idx+1, row.cells[col_replacing].data))
                     else:
                         data_towrite['replacing_product_id'] = replacing_id[0]
-            elif data_towrite['status'] == 'replacing' and not data_towrite['replacing_product_id']:
+            elif data_towrite['status'] == 'replaced' and not data_towrite['replacing_product_id']:
                 line_error.append(_('Line %d: replacing product must be set !') % (idx+1, ))
 
             if cells_nb > col_replaced and row.cells[col_replaced].data and row.cells[col_replaced].data.strip():
-                if data_towrite['status'] != 'replaced':
+                if data_towrite['status'] != 'replacing':
                     line_error.append(_('Line %d: you can not set a Replaced product on this line, please change the satus or remove the replaced product') % (idx+1, ))
                 else:
                     replaced_id = product_obj.search(cr, uid, [('default_code', '=ilike', row.cells[col_replaced].data.strip())], context=context)
@@ -1042,7 +1113,7 @@ class replenishment_segment(osv.osv):
                         line_error.append(_('Line %d: replaced product code %s not found') % (idx+1, row.cells[col_replaced].data))
                     else:
                         data_towrite['replaced_product_id'] = replaced_id[0]
-            elif data_towrite['status'] == 'replaced' and not data_towrite['replaced_product_id']:
+            elif data_towrite['status'] == 'replacing' and not data_towrite['replaced_product_id']:
                 line_error.append(_('Line %d: replaced product must be set !') % (idx+1, ))
 
 
@@ -1133,10 +1204,10 @@ class replenishment_segment(osv.osv):
         if self.pool.get('replenishment.segment.line').search_exist(cr, uid, [('segment_id', 'in', ids), ('status', '=', False)], context=context):
             raise osv.except_osv(_('Warning'), _('Please complete Lifeycle status for products missing this, see red lines'))
 
-        if self.pool.get('replenishment.segment.line').search_exist(cr, uid, [('segment_id', 'in', ids), ('status', '=', 'replacing'), ('replacing_product_id', '=', False)], context=context):
+        if self.pool.get('replenishment.segment.line').search_exist(cr, uid, [('segment_id', 'in', ids), ('status', '=', 'replaced'), ('replacing_product_id', '=', False)], context=context):
             raise osv.except_osv(_('Warning'), _('Please complete Replacing products with a paired product, see red lines'))
 
-        if self.pool.get('replenishment.segment.line').search_exist(cr, uid, [('segment_id', 'in', ids), ('status', '=', 'replaced'), ('replaced_product_id', '=', False)], context=context):
+        if self.pool.get('replenishment.segment.line').search_exist(cr, uid, [('segment_id', 'in', ids), ('status', '=', 'replacing'), ('replaced_product_id', '=', False)], context=context):
             raise osv.except_osv(_('Warning'), _('Please complete Replaced products with a paired product, see red lines'))
 
         self.write(cr, uid, ids, {'state': 'complete'}, context=context)
@@ -1527,9 +1598,9 @@ class replenishment_segment_line(osv.osv):
 
     def _remove_paired_product(self, cr, uid, vals, context=None):
         if vals and 'status' in vals:
-            if vals['status'] != 'replaced':
-                vals['replaced_product_id'] = False
             if vals['status'] != 'replacing':
+                vals['replaced_product_id'] = False
+            if vals['status'] != 'replaced':
                 vals['replacing_product_id'] = False
 
     def create(self, cr, uid, vals, context=None):
@@ -1636,12 +1707,14 @@ class replenishment_segment_line_amc(osv.osv):
         'expired_qty_before_eta': fields.float('Qty expiring before RDD'),
         'expired_between_rdd_oc': fields.float('Expired Qty between RDD and OC'),
         'open_loan': fields.boolean('Open Loan'),
+        'open_donation': fields.boolean('Donations pending'),
         'sleeping_qty': fields.float('Sleeping Qty'),
         'total_expiry_nocons_qty': fields.float('Qty expiring no cons.'),
     }
 
     _defaults = {
-        'open_loan': False
+        'open_loan': False,
+        'open_donation': False,
     }
 
     def generate_segment_data(self, cr, uid, context=None, seg_ids=False, force_review=False):
@@ -1743,6 +1816,21 @@ class replenishment_segment_line_amc(osv.osv):
                 for loan in cr.fetchall():
                     open_loan[loan[0]] = True
 
+                open_donation = {}
+                cr.execute('''
+                    select distinct(m.product_id) from stock_move m, stock_picking p, stock_reason_type rt
+                        where
+                            m.picking_id = p.id and
+                            m.state in ('assigned', 'confirmed') and
+                            p.type = 'out' and
+                            m.location_id in %s and
+                            m.product_id in %s and
+                            m.reason_type_id = rt.id and
+                            rt.name in ('Donation (standard)', 'Donation before expiry')
+                        ''', (tuple(seg_context['amc_location_ids']), tuple(lines.keys())))
+                for don in cr.fetchall():
+                    open_donation[don[0]] = True
+
             # AMC
             if not segment.remote_location_ids:
                 amc = prod_obj.compute_amc(cr, uid, lines.keys(), context=seg_context)
@@ -1756,6 +1844,7 @@ class replenishment_segment_line_amc(osv.osv):
                         'expired_between_rdd_oc': 0,
                         'expired_qty_before_eta': 0,
                         'open_loan': open_loan.get(prod_id, False),
+                        'open_donation': open_donation.get(prod_id, False),
                         'reserved_stock': stock_qties.get(prod_id, {}).get('qty_reserved'),
 
                     })
@@ -2079,9 +2168,10 @@ class replenishment_order_calc_line(osv.osv):
         'eta_for_next_pipeline': fields.date('ETA for Next Pipeline', readonly=1),
         'reserved_stock_qty': fields.float('Reserved Stock Qty', readonly=1, related_uom='uom_id'),
         'projected_stock_qty': fields.float('Projected Stock Level', readonly=1, related_uom='uom_id'),
-        'qty_lacking': fields.float('Qty lacking before next ETA', readonly=1, related_uom='uom_id'),
+        'qty_lacking': fields.float('Qty lacking before next RDD', readonly=1, related_uom='uom_id'),
         'qty_lacking_needed_by': fields.date('Qty lacking needed by', readonly=1),
         'open_loan': fields.boolean('Open Loan', readonly=1),
+        'open_donation': fields.boolean('Donations pending', readonly=1),
         'expired_qty_before_cons': fields.float('Expired Qty before cons.', readonly=1, related_uom='uom_id'),
         'expired_qty_before_eta': fields.float('Expired Qty before RDD', readonly=1, related_uom='uom_id'),
         'proposed_order_qty': fields.float('Proposed Order Qty', readonly=1, related_uom='uom_id'),
@@ -2170,7 +2260,7 @@ class replenishment_inventory_review_line(osv.osv):
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1), # OC
         'product_description': fields.related('product_id', 'name',  string='Description', type='char', size=64, readonly=True, select=True, write_relate=False), # OC
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False), # OC
-        'status': fields.selection([('active', 'Active'), ('new', 'New')], string='Life cycle status'), # OC
+        'status': fields.selection([('active', 'Active'), ('new', 'New'), ('replaced', 'Replaced'), ('replacing', 'Replacing')], string='Life cycle status'), # OC
         'primay_product_list': fields.char('Primary Product List', size=512), # OC
         'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Replenishment Rule (Order quantity)', required=1), #Seg
         'min_qty': fields.float('Min Qty', related_uom='uom_id'), # Seg line
@@ -2195,7 +2285,8 @@ class replenishment_inventory_review_line(osv.osv):
         'warning': fields.text('Warning', readonly='1'), # OC
         'warning_html': fields.text('Warning', readonly='1'), # OC
         'open_loan': fields.boolean('Open Loan', readonly=1), # OC
-        'qty_lacking': fields.float_null('Qty lacking before next ETA', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
+        'open_donation': fields.boolean('Donations pending', readonly=1), # OC
+        'qty_lacking': fields.float_null('Qty lacking before next RDD', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
         'qty_lacking_needed_by': fields.date('Qty lacking needed by', readonly=1), # OC
         'eta_for_next_pipeline': fields.date('ETA for Next Pipeline', readonly=1), # Seg
 

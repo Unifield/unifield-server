@@ -914,6 +914,7 @@
     <Cell ss:StyleID="s132"><Data ss:Type="String">${_('Qty of Projected Expiries before consumption')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Qty expiring within period')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Open Loan on product (Yes/No)')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Donation pendings (Yes/No)')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Sleeping stock Qty')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${getSel(objects[0], 'time_unit')|x} ${_('of supply (RR-AMC)')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${getSel(objects[0], 'time_unit')|x} ${_('of supply (RR-FMC)')|x}</Data></Cell>
@@ -1057,6 +1058,7 @@
         % endif
     </Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.open_loan and _('Yes') or _('No') }</Data></Cell>
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.open_donation and _('Yes') or _('No') }</Data></Cell>
     <Cell ss:StyleID="s141">
         % if line.sleeping_qty:
             <Data ss:Type="Number">${line.sleeping_qty}</Data>
