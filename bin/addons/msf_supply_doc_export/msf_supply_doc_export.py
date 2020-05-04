@@ -732,7 +732,7 @@ class po_follow_up_mixin(object):
                 res.append(line)
         return res
 
-    def getPOLines(self, po_id, pending_only_ok=False):
+    def getPOLines(self, export_format, po_id, pending_only_ok=False):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
         pol_obj = self.pool.get('purchase.order.line')
         prod_obj = self.pool.get('product.product')
@@ -817,7 +817,8 @@ class po_follow_up_mixin(object):
                     'total_func_currency': '',
                 }
                 report_lines.append(report_line)
-                report_lines.extend(self.printAnalyticLines(analytic_lines))
+                if export_format != 'xls':
+                    report_lines.extend(self.printAnalyticLines(analytic_lines))
                 first_line = False
 
             for spsul in sorted(same_product_same_uom, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
@@ -867,7 +868,8 @@ class po_follow_up_mixin(object):
                 #     report_line['qty_backordered'] = spsul.get('product_qty', '')
 
                 if first_line:
-                    report_lines.extend(self.printAnalyticLines(analytic_lines))
+                    if export_format != 'xls':
+                        report_lines.extend(self.printAnalyticLines(analytic_lines))
                     first_line = False
 
             for spl in sorted(same_product, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
@@ -916,7 +918,8 @@ class po_follow_up_mixin(object):
                 #     report_line['qty_backordered'] = spl.get('product_qty', '')
 
                 if first_line:
-                    report_lines.extend(self.printAnalyticLines(analytic_lines))
+                    if export_format != 'xls':
+                        report_lines.extend(self.printAnalyticLines(analytic_lines))
                     first_line = False
 
             for ol in other_product:
