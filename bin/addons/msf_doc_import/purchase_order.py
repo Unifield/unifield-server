@@ -210,9 +210,9 @@ class purchase_order(osv.osv):
         if not po_name:
             raise osv.except_osv(_('Error'), _('No PO name found in the given import file'))
 
-        po_id = self.search(cr, uid, [('name', '=', po_name)], context=context)
+        po_id = self.search(cr, uid, [('name', '=', po_name), ('state', 'in', ['validated', 'validated_p'])], context=context)
         if not po_id:
-            raise osv.except_osv(_('Error'), _('No PO found with the name %s') % po_name)
+            raise osv.except_osv(_('Error'), _('No validated PO found with the name %s') % po_name)
 
         return po_id[0]
 

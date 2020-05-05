@@ -532,6 +532,9 @@ class so_po_common(osv.osv_memory):
         if src_values.get('source_sync_line_id'):
             res['original_purchase_line_id'] = src_values['source_sync_line_id']
 
+        if src_values.get('pol_external_ref'):
+            res['external_ref'] = src_values['pol_external_ref']
+
         return res
 
 
