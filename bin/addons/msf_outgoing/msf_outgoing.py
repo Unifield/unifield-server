@@ -4619,7 +4619,7 @@ class stock_reserved_products(osv.osv):
         'uom_id': fields.many2one('product.uom', 'UoM'),
         'product_code': fields.char('Product', size=256),
         'hidden_product_code': fields.char('Product', size=256),
-        'prodlot_id': fields.many2one('stock.production.lot', 'Production Lot', context={'with_expiry': True}),
+        'prodlot_id': fields.many2one('stock.production.lot', 'Batch Number - Expiry Date', context={'with_expiry': True}),
         'picking_id': fields.char('Document', size=256),
         'product_qty': fields.float('Qty', related_uom='uom_id', group_operator='no_group'),
     }

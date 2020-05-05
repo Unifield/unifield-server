@@ -54,8 +54,74 @@ class patch_scripts(osv.osv):
 
 
     # UF17.0
+    def us_7425_clean_period_not_run(self, cr, uid, *a, **b):
+        """
+        Sets as "Run without execution" the updates related to the field-closing of periods received from OCBHQ and not executed
+        in projects and coordos because the related FY is already Mission-Closed.
+        """
+        if self.pool.get('sync_client.version') and self.pool.get('sync.client.entity'):
+            oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1;"
+            cr.execute(oc_sql)
+            oc = cr.fetchone()[0]
+            if oc == 'ocb':
+                instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+                if instance and instance.level in ['project', 'coordo']:
+                    update_dom = [('model', '=', 'account.period'),
+                                  ('run', '=', False),
+                                  ('log', 'like', "Fiscal Year is already in Mission-Closed.")]
+                    update_ids = self.pool.get('sync.client.update_received').search(cr, uid, update_dom)
+                    if update_ids:
+                        update_sync_received = """
+                            UPDATE sync_client_update_received
+                            SET manually_ran='t', run='t', execution_date=now(), 
+                            manually_set_run_date=now(), editable='f', 
+                            log='Set manually to run without execution'
+                            WHERE id IN %s;
+                        """
+                        cr.execute(update_sync_received, (tuple(update_ids),))
+                        self._logger.warn('%s Not Runs on periods set as manually run without exec. as the FY is already closed.' %
+                                          (cr.rowcount,))
+
     def us_7015_del_rac_line_sql(self, cr, uid, *a, **b):
         cr.drop_constraint_if_exists('real_average_consumption_line', 'real_average_consumption_line_unique_lot_poduct')
+        return True
+
+    def us_7236_remove_reg_wkf_and_partial_close_state(self, cr, uid, *a, **b):
+        """
+        Both the workflows and the "Partial Close" state are not used anymore in the registers, so:
+        - deletes the workflow related to registers
+        - sets to Open the existing registers in "Partial Close" state
+        """
+        delete_wkf_transition = """
+            DELETE FROM wkf_transition
+            WHERE (signal IN ('button_open', 'button_confirm_cash', 'button_reopen', 'button_write_off') OR signal IS NULL)
+            AND act_from IN 
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='account.cash.statement.workflow' AND osv='account.bank.statement')
+                );
+        """
+        delete_wkf_workitem = """
+            DELETE FROM wkf_workitem WHERE act_id IN
+                (SELECT id FROM wkf_activity WHERE wkf_id = 
+                    (SELECT id FROM wkf WHERE name='account.cash.statement.workflow' AND osv='account.bank.statement')
+                );
+        """
+        delete_wkf_activity = """
+            DELETE FROM wkf_activity 
+            WHERE wkf_id = (SELECT id FROM wkf WHERE name='account.cash.statement.workflow' AND osv='account.bank.statement');
+        """
+        delete_wkf = """
+            DELETE FROM wkf WHERE name='account.cash.statement.workflow' AND osv='account.bank.statement';
+        """
+        update_reg_state = """
+            UPDATE account_bank_statement SET state = 'open' WHERE state = 'partial_close';
+        """
+        cr.execute(delete_wkf_transition)
+        cr.execute(delete_wkf_workitem)
+        cr.execute(delete_wkf_activity)
+        cr.execute(delete_wkf)  # will also delete data in wkf_instance because of the ONDELETE 'cascade'
+        cr.execute(update_reg_state)
+        self._logger.warn('%s registers in Partial Close state have been re-opened.' % (cr.rowcount,))
         return True
 
     def us_7221_reset_starting_balance(self, cr, uid, *a, **b):

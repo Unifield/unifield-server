@@ -219,7 +219,7 @@ class account_cash_statement(osv.osv):
 
     _columns = {
         'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines',
-                                    states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
+                                    states={'confirm': [('readonly', True)], 'draft': [('readonly', True)]}),
         'open_advance_amount': fields.float('Unrecorded Advances'),
         'unrecorded_expenses_amount': fields.float('Unrecorded expenses'),
         'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
