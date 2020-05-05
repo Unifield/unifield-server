@@ -13,6 +13,7 @@ import threading
 import logging
 import pooler
 import decimal_precision as dp
+import math
 
 class replenishment_location_config(osv.osv):
     _name = 'replenishment.location.config'
@@ -509,12 +510,14 @@ class replenishment_segment(osv.osv):
             cr.close(True)
 
     def trigger_compute_segment_data(self, cr, uid, ids, context):
+        self.save_past_fmc(cr, uid, ids, context)
         return self.pool.get('replenishment.segment.line.amc').generate_segment_data(cr, uid, context=context, seg_ids=ids, force_review=True)
 
     def generate_order_calc(self, cr, uid, ids, context=None):
         return self.generate_order_cacl_inv_data(cr, uid, ids, context=context)
 
     def generate_order_cacl_inv_data(self, cr, uid, ids, review_id=False, context=None, review_date=False, coeff=1):
+
         if context is None:
             context = {}
 
@@ -638,6 +641,24 @@ class replenishment_segment(osv.osv):
                                     if date <= end_date.strftime('%Y-%m-%d'):
                                         expired += exp_by_month[prod.id][date]
                                 pipe_by_prod_by_month_minus_expired.setdefault(prod.id, {}).update({end_date.strftime('%Y-%m-%d'): prod.incoming_qty - expired})
+
+
+                hmc = {}
+                total_fmc_hmc = {}
+                cr.execute('''
+                    select line.product_id, amc.month, sum(amc.amc)
+                    from replenishment_segment_line line
+                    inner join replenishment_segment_line_amc_detailed_amc amc on amc.segment_line_id = line.id
+                    where
+                        line.segment_id = %s
+                    group by line.product_id, amc.month
+                ''', (seg.id, ))
+
+                for x in cr.fetchall():
+                    hmc.setdefault(x[0], 0)
+                    total_fmc_hmc.setdefault(x[0], 0)
+                    hmc[x[0]] += x[2]*x[2]
+                    total_fmc_hmc[x[0]] += x[2]
 
             else:
                 rdd = datetime.strptime(seg.date_next_order_received_modified or seg.date_next_order_received, '%Y-%m-%d')
@@ -914,6 +935,13 @@ class replenishment_segment(osv.osv):
                     order_calc_line.create(cr, uid, line_data, context=context)
 
                 else: # review
+                    std_dev_hmc = False
+                    amc = False
+                    if total_fmc_hmc.get(line.product_id.id):
+                        amc = total_fmc_hmc[line.product_id.id] / float(seg.rr_amc)
+                        std_dev_hmc_tmp = hmc.get(line.product_id.id, 0) / float(seg.rr_amc) - (amc*amc)
+                        if std_dev_hmc_tmp > 0:
+                            std_dev_hmc = math.sqrt(std_dev_hmc_tmp)
                     line_data.update({
                         'review_id': review_id,
                         'segment_ref_name': "%s / %s" % (seg.name_seg, seg.description_seg),
@@ -939,6 +967,8 @@ class replenishment_segment(osv.osv):
                         'pas_ids': detailed_pas,
                         'segment_line_id': line.id,
                         'sleeping_qty': round(sum_line.get(line.id, {}).get('sleeping_qty',0)),
+                        'std_dev_hmc': std_dev_hmc,
+                        'coef_var_hmc': amc and std_dev_hmc/amc or False,
                     })
                     if seg.rule == 'cycle':
                         line_data.update({
@@ -1305,6 +1335,38 @@ class replenishment_segment(osv.osv):
                 data['ir_requesting_location'] = False
 
         return {'value': data}
+
+
+    def save_past_fmc(self, cr, uid, ids, context=None):
+        first_day_of_month = (datetime.now() + relativedelta(day=1)).strftime('%Y-%m-%d')
+        past_fmc_obj = self.pool.get('replenishment.segment.line.amc.past_fmc')
+        for _id in ids:
+            cr.execute('''
+                select * from replenishment_segment_line line where segment_id = %s and rr_fmc_from_1 < %s
+            ''', (_id, first_day_of_month))
+            for x in cr.dictfetchall():
+                to_update = {}
+                for fmc_d in range(1, 13):
+                    from_fmc = x['rr_fmc_from_%d'%fmc_d]
+                    to_fmc = x['rr_fmc_to_%d'%fmc_d]
+                    num_fmc = x['rr_fmc_%d'%fmc_d]
+
+                    if from_fmc >= first_day_of_month or not from_fmc or not to_fmc or num_fmc is False:
+                        break
+
+                    upper = min(to_fmc, first_day_of_month)
+                    key = datetime.strptime(from_fmc, '%Y-%m-%d')
+
+                    while key.strftime('%Y-%m-%d') < upper:
+                        to_update[key.strftime('%Y-%m-%d')] = num_fmc
+                        key+=relativedelta(months=1)
+
+                if to_update:
+                    cr.execute('delete from replenishment_segment_line_amc_past_fmc where segment_line_id=%s and month in %s', (x['id'], tuple(to_update.keys())))
+                    for month in to_update:
+                        past_fmc_obj.create(cr, uid, {'segment_line_id': x['id'], 'month': month, 'fmc': to_update[month]}, context=context)
+
+        return True
 
 replenishment_segment()
 
@@ -1761,6 +1823,7 @@ class replenishment_segment_line_amc(osv.osv):
         prod_obj = self.pool.get('product.product')
         last_gen_obj = self.pool.get('replenishment.segment.date.generation')
         month_exp_obj = self.pool.get('replenishment.segment.line.amc.month_exp')
+        amc_details_obj = self.pool.get('replenishment.segment.line.amc.detailed.amc')
 
         datetime_now = datetime.now()
         instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
@@ -1870,8 +1933,16 @@ class replenishment_segment_line_amc(osv.osv):
                     open_donation[don[0]] = True
 
             # AMC
+            amc_by_month = {}
             if not segment.remote_location_ids:
-                amc = prod_obj.compute_amc(cr, uid, lines.keys(), context=seg_context)
+                if gen_inv_review:
+                    cr.execute('''
+                        delete from replenishment_segment_line_amc_detailed_amc where segment_line_id in
+                            (select seg_line.id from replenishment_segment_line seg_line where seg_line.segment_id = %s) ''', (segment.id, )
+                               )
+                    amc, amc_by_month = prod_obj.compute_amc(cr, uid, lines.keys(), context=seg_context, compute_amc_by_month=True)
+                else:
+                    amc = prod_obj.compute_amc(cr, uid, lines.keys(), context=seg_context)
             else:
                 amc = {}
             for prod_id in lines.keys():
@@ -1891,6 +1962,10 @@ class replenishment_segment_line_amc(osv.osv):
                             'total_expiry_nocons_qty': 0,
                             'sleeping_qty': 0,
                         })
+
+                        for month in amc_by_month.get(prod_id, {}):
+                            amc_details_obj.create(cr, uid, {'segment_line_id': lines[prod_id], 'month': '%s-01' % (month,) , 'amc': amc_by_month[prod_id][month]}, context=context)
+
                 if lines[prod_id] in cache_line_amc:
                     self.write(cr, uid, cache_line_amc[lines[prod_id]], data, context=context)
                 else:
@@ -2006,6 +2081,26 @@ class replenishment_segment_line_amc_month_exp(osv.osv):
     }
 
 replenishment_segment_line_amc_month_exp()
+
+class replenishment_segment_line_amc_detailed_amc(osv.osv):
+    _name = 'replenishment.segment.line.amc.detailed.amc'
+    _rec_name = 'line_amc_id'
+    _columns = {
+        'segment_line_id': fields.many2one('replenishment.segment.line', 'Seg Line', required=1, select=1),
+        'month': fields.date('Month', required=1, select=1),
+        'amc': fields.float('AMC'),
+    }
+replenishment_segment_line_amc_detailed_amc()
+
+class replenishment_segment_line_amc_past_fmc(osv.osv):
+    _name = 'replenishment.segment.line.amc.past_fmc'
+    _rec_name = 'line_amc_id'
+    _columns = {
+        'segment_line_id': fields.many2one('replenishment.segment.line', 'Seg Line', required=1, select=1),
+        'month': fields.date('Month', required=1, select=1),
+        'fmc': fields.float('FMC'),
+    }
+replenishment_segment_line_amc_past_fmc()
 
 class replenishment_order_calc(osv.osv):
     _name = 'replenishment.order_calc'
@@ -2339,6 +2434,9 @@ class replenishment_inventory_review_line(osv.osv):
         'detail_ids': fields.one2many('replenishment.inventory.review.line.stock', 'review_line_id', 'Exp by month'),
         'detail_exp_nocons':  fields.one2many('replenishment.inventory.review.line.exp.nocons', 'review_line_id', 'Exp.'),
         'segment_line_id': fields.integer('Segment line id', 'Seg line id', internal=1, select=1),
+
+        'std_dev_hmc': fields.float('Standard Deviation HMC'),
+        'coef_var_hmc': fields.float('Coefficient of Variation of HMC'),
     }
 
 replenishment_inventory_review_line()
