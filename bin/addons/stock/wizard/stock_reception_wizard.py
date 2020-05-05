@@ -45,8 +45,8 @@ class stock_reception_wizard(osv.osv_memory):
         'report_date': fields.datetime(string='Date of the demand', readonly=True),
         'company_id': fields.many2one('res.company', string='Company', readonly=True),
         'moves_ids': fields.text(string='Moves', readonly=True),
-        'start_date': fields.date(string='Date from'),
-        'end_date': fields.date(string='Date to'),
+        'start_date': fields.date(string='Actual Receipt Date from'),
+        'end_date': fields.date(string='Actual Receipt Date to'),
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type'),
         'partner_id': fields.many2one('res.partner', string='Partner', help="The partner you want have the IN data"),
         'order_category': fields.selection(ORDER_CATEGORY, string='Order Category'),
@@ -80,10 +80,10 @@ class stock_reception_wizard(osv.osv_memory):
                 ('picking_id.state', '=', 'done'),
             ]
             if wizard.start_date:
-                move_domain.append(('picking_id.date', '>=', wizard.start_date))
+                move_domain.append(('picking_id.date_done', '>=', wizard.start_date))
 
             if wizard.end_date:
-                move_domain.append(('picking_id.date', '<=', wizard.end_date))
+                move_domain.append(('picking_id.date_done', '<=', wizard.end_date))
 
             if wizard.reason_type_id:
                 move_domain.append(('reason_type_id', '=', wizard.reason_type_id.id))
