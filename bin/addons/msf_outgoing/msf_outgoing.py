@@ -1116,8 +1116,8 @@ class shipment(osv.osv):
                         raise osv.except_osv(_('Error'), _('Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together'))
 
                     move_data.setdefault(move.id, {
-                        'initial': move.product_qty,
-                        'partial_qty': 0,
+                        'inital_pck_nb': move.to_pack - move.from_pack + 1,
+                        'return_pck_nb': 0,
                     })
 
                     for seq in stay:
@@ -1136,8 +1136,7 @@ class shipment(osv.osv):
                             'state': 'assigned',
                         }
                         # The original move is never modified, but canceled
-                        move_data[move.id]['partial_qty'] += new_qty
-
+                        move_data[move.id]['return_pck_nb'] += selected_number
                         move_obj.copy(cr, uid, move.id, move_values, context=context)
 
                     # Get the back_to_draft sequences
@@ -1163,7 +1162,7 @@ class shipment(osv.osv):
                     move_obj.copy(cr, uid, move.id, move_values, context=context)
                     context['non_stock_noupdate'] = False
 
-                    move_data[move.id]['partial_qty'] += new_qty
+                    move_data[move.id]['return_pck_nb'] += selected_number
 
                     # Create the draft move
                     # Dispatch -> Distribution
@@ -1189,7 +1188,7 @@ class shipment(osv.osv):
                     move_obj.write(cr, uid, [move.id], move_values, context=context)
 
                 for move_vals in move_data.values():
-                    if round(move_vals['initial'], 13) != round(move_vals['partial_qty'], 13):
+                    if move_vals['return_pck_nb'] != move_vals['inital_pck_nb']:
                         raise osv.except_osv(
                             _('Processing Error'),
                             _('The sum of the processed quantities is not equal to the sum of the initial quantities'),
