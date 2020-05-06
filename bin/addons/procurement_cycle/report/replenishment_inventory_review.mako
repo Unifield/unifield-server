@@ -300,6 +300,17 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
   </Style>
+  <Style ss:ID="s141p">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
+    <NumberFormat ss:Format="Percent"/>
+  </Style>
   <Style ss:ID="s145">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -906,6 +917,14 @@
     <Cell ss:StyleID="s129"><Data ss:Type="String">${_('Valid RR-FMC(s)')|x}</Data></Cell>
     <Cell ss:StyleID="s129"><Data ss:Type="String">${_('RR-FMC (average for period)')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('RR-AMC (average for AMC period)')|x}</Data></Cell>
+
+    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Standard Deviation HMC')|x}</Data></Cell>
+    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Coefficient of Variation of HMC')|x}</Data></Cell>
+    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Standard Deviation of HMC vs FMC')|x}</Data></Cell>
+    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Coefficient of Variant of HMC and FMC')|x}</Data></Cell>
+
+
+
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Real Stock in location(s)')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Pipeline Qty')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Reserved Stock Qty')|x}</Data></Cell>
@@ -918,9 +937,9 @@
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Sleeping stock Qty')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${getSel(objects[0], 'time_unit')|x} ${_('of supply (RR-AMC)')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${getSel(objects[0], 'time_unit')|x} ${_('of supply (RR-FMC)')|x}</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Qty lacking before next ETA date')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Qty lacking before next RDD')|x}</Data></Cell>
     <Cell ss:StyleID="s133"><Data ss:Type="String">${_('Qty lacking needed by')|x}</Data></Cell>
-    <Cell ss:StyleID="s134"><Data ss:Type="String">${_('ETA date of next incoming delivery')|x}</Data></Cell>
+    <Cell ss:StyleID="s134"><Data ss:Type="String">${_('ETA date of next pipeline')|x}</Data></Cell>
     <Cell ss:StyleID="s133"><Data ss:Type="String">${_('Date to start preparing the next order')|x}</Data></Cell>
     <Cell ss:StyleID="s134"><Data ss:Type="String">${_('Next order to be generated/issued by date')|x}</Data></Cell>
     <Cell ss:StyleID="s134"><Data ss:Type="String">${_('RDD for next order')|x}</Data></Cell>
@@ -1022,6 +1041,34 @@
             <Data ss:Type="Number">${line.rr_amc}</Data>
         % endif
     </Cell>
+    
+    <Cell ss:StyleID="s141">
+        % if line.std_dev_hmc:
+            <Data ss:Type="Number">${line.std_dev_hmc}</Data>
+        % endif
+    </Cell>
+    <Cell ss:StyleID="s141p">
+        % if line.coef_var_hmc:
+            <Data ss:Type="Number">${line.coef_var_hmc/100.}</Data>
+        % endif
+    </Cell>
+    % if line.rule == 'cycle':
+    <Cell ss:StyleID="s141p">
+        % if line.avg_error_hmc_fmc:
+            <Data ss:Type="Number">${line.avg_error_hmc_fmc/100.}</Data>
+        % endif
+    </Cell>
+    <Cell ss:StyleID="s141p">
+        % if line.coef_var_hmc_fmc:
+            <Data ss:Type="Number">${line.coef_var_hmc_fmc/100.}</Data>
+        % endif
+    </Cell>
+    % else:
+        <Cell ss:StyleID="irrel" />
+        <Cell ss:StyleID="irrel" />
+    % endif
+
+
     <Cell ss:StyleID="s141">
         % if line.real_stock:
             <Data ss:Type="Number">${line.real_stock}</Data>

@@ -510,7 +510,6 @@ class replenishment_segment(osv.osv):
             cr.close(True)
 
     def trigger_compute_segment_data(self, cr, uid, ids, context):
-        self.save_past_fmc(cr, uid, ids, context)
         return self.pool.get('replenishment.segment.line.amc').generate_segment_data(cr, uid, context=context, seg_ids=ids, force_review=True)
 
     def generate_order_calc(self, cr, uid, ids, context=None):
@@ -608,6 +607,8 @@ class replenishment_segment(osv.osv):
 
 
             today = datetime.now() + relativedelta(hour=0, minute=0, second=0, microsecond=0)
+            if seg.rule == 'cycle':
+                self.save_past_fmc(cr, uid, [seg.id], context=context)
 
             if review_id:
                 rdd = today + relativedelta(months=seg.projected_view, day=1, days=-1)
@@ -643,7 +644,21 @@ class replenishment_segment(osv.osv):
                                 pipe_by_prod_by_month_minus_expired.setdefault(prod.id, {}).update({end_date.strftime('%Y-%m-%d'): prod.incoming_qty - expired})
 
 
-                hmc = {}
+                past_fmc = {}
+                if seg.rule == 'cycle':
+                    cr.execute('''
+                        select line.product_id, fmc.month, fmc
+                        from replenishment_segment_line line
+                        inner join replenishment_segment_line_amc_past_fmc fmc on fmc.segment_line_id = line.id
+                        where
+                            line.segment_id = %s
+                    ''', (seg.id, ))
+                    for x in cr.fetchall():
+                        past_fmc.setdefault(x[0], {}).update({x[1]: x[2]})
+
+
+                sum_hmc2 = {}
+                hmc_month = {}
                 total_fmc_hmc = {}
                 cr.execute('''
                     select line.product_id, amc.month, sum(amc.amc)
@@ -655,9 +670,10 @@ class replenishment_segment(osv.osv):
                 ''', (seg.id, ))
 
                 for x in cr.fetchall():
-                    hmc.setdefault(x[0], 0)
+                    sum_hmc2.setdefault(x[0], 0)
+                    hmc_month.setdefault(x[0], {}).update({x[1]: x[2]})
                     total_fmc_hmc.setdefault(x[0], 0)
-                    hmc[x[0]] += x[2]*x[2]
+                    sum_hmc2[x[0]] += x[2]*x[2]
                     total_fmc_hmc[x[0]] += x[2]
 
             else:
@@ -939,9 +955,31 @@ class replenishment_segment(osv.osv):
                     amc = False
                     if total_fmc_hmc.get(line.product_id.id):
                         amc = total_fmc_hmc[line.product_id.id] / float(seg.rr_amc)
-                        std_dev_hmc_tmp = hmc.get(line.product_id.id, 0) / float(seg.rr_amc) - (amc*amc)
+                        std_dev_hmc_tmp = sum_hmc2.get(line.product_id.id, 0) / float(seg.rr_amc) - (amc*amc)
                         if std_dev_hmc_tmp > 0:
                             std_dev_hmc = math.sqrt(std_dev_hmc_tmp)
+
+                    avg_error_hmc_fmc = False
+                    coef_var_hmc_fmc = False
+                    if seg.rule == 'cycle':
+                        diff_hmc_fmc = 0
+                        diff_hmc_fmc2 = 0
+                        sum_fmc = 0
+                        nb_month = 0
+                        for month in hmc_month.get(line.product_id.id, {}):
+                            nb_month += 1
+                            hmc = hmc_month[line.product_id.id][month]
+                            fmc = past_fmc.get(line.product_id.id, {}).get(month, hmc)
+
+                            sum_fmc += fmc
+                            diff_hmc_fmc_tmp = hmc - fmc
+                            diff_hmc_fmc += diff_hmc_fmc_tmp
+                            diff_hmc_fmc2 += diff_hmc_fmc_tmp*diff_hmc_fmc_tmp
+
+                        if nb_month and sum_fmc:
+                            coef_var_hmc_fmc = 100 * nb_month/float(sum_fmc) * math.sqrt(diff_hmc_fmc2/nb_month)
+                            avg_error_hmc_fmc = 100 * diff_hmc_fmc / float(sum_fmc)
+
                     line_data.update({
                         'review_id': review_id,
                         'segment_ref_name': "%s / %s" % (seg.name_seg, seg.description_seg),
@@ -968,7 +1006,9 @@ class replenishment_segment(osv.osv):
                         'segment_line_id': line.id,
                         'sleeping_qty': round(sum_line.get(line.id, {}).get('sleeping_qty',0)),
                         'std_dev_hmc': std_dev_hmc,
-                        'coef_var_hmc': amc and std_dev_hmc/amc or False,
+                        'coef_var_hmc': amc and 100 * std_dev_hmc/amc or False,
+                        'avg_error_hmc_fmc': avg_error_hmc_fmc,
+                        'coef_var_hmc_fmc': coef_var_hmc_fmc,
                     })
                     if seg.rule == 'cycle':
                         line_data.update({
@@ -2436,7 +2476,9 @@ class replenishment_inventory_review_line(osv.osv):
         'segment_line_id': fields.integer('Segment line id', 'Seg line id', internal=1, select=1),
 
         'std_dev_hmc': fields.float('Standard Deviation HMC'),
-        'coef_var_hmc': fields.float('Coefficient of Variation of HMC'),
+        'coef_var_hmc': fields.float('Coefficient of Variation of HMC (%)'),
+        'coef_var_hmc_fmc': fields.float_null('Coefficient of Variation of HMC and FMC (%)'),
+        'avg_error_hmc_fmc': fields.float_null('Average Relative Forecast Error (%)'),
     }
 
 replenishment_inventory_review_line()

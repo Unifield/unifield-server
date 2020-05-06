@@ -743,6 +743,10 @@
                             <field name="external_lt" />
                             <field name="total_lt" />
                             <field name="order_coverage" />
+                            <field name="std_dev_hmc"  />
+                            <field name="coef_var_hmc" />
+                            <field name="avg_error_hmc_fmc"  />
+                            <field name="coef_var_hmc_fmc"  />
                             <field name="rule"  invisible="1"/>
                             <field name="pas_ids" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
                                 <tree>
