@@ -38,8 +38,8 @@
                                     <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('uom_by_product', '=', product_id)]"/>
                                     <field name="supplier_id" />
                                     <field name="delivery_confirmed_date" />
-                                    <field name="tender_price_unit" />
-                                    <field name="tender_total_price" />
+                                    <field name="price_unit" />
+                                    <field name="total_price" />
                                     <field name="currency_id" />
                                     <field name="purchase_order_id" />
                                     <field name="purchase_order_line_number" />

@@ -916,7 +916,6 @@ class tender_line(osv.osv):
         '''
         return the total price
         '''
-        cur_obj = self.pool.get('res.currency')
         result = {}
         for line in self.browse(cr, uid, ids, context=context):
             result[line.id] = {}
@@ -925,23 +924,16 @@ class tender_line(osv.osv):
             else:
                 result[line.id]['total_price'] = 0.0
 
-            func_cur = self.pool.get('tender').browse(cr, uid, uid, context=context).company_id.currency_id.id
-            if line.tender_id.currency_id:
-                curr_id = line.tender_id.currency_id.id
+            result[line.id]['func_currency_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+            if line.purchase_order_line_id:
+                result[line.id]['currency_id'] = line.purchase_order_line_id.order_id.pricelist_id.currency_id.id
             else:
-                curr_id = func_cur
-            result[line.id]['currency_id'] = curr_id
+                result[line.id]['currency_id'] = result[line.id]['func_currency_id']
 
-            # Calculate the prices using the tender's currency
-            if func_cur != curr_id:
-                result[line.id]['tender_price_unit'] = cur_obj.compute(cr, uid, func_cur, curr_id, line.price_unit,
-                                                                       round=False, context=context)
-                result[line.id]['tender_total_price'] = result[line.id]['total_price'] and \
-                                                        cur_obj.compute(cr, uid, func_cur, curr_id, result[line.id]['total_price'],
-                                                                        round=False, context=context) or 0.0
-            else:
-                result[line.id]['tender_price_unit'] = line.price_unit
-                result[line.id]['tender_total_price'] = result[line.id]['total_price']
+            result[line.id]['func_total_price'] = self.pool.get('res.currency').compute(cr, uid, result[line.id]['currency_id'],
+                                                                                        result[line.id]['func_currency_id'],
+                                                                                        result[line.id]['total_price'],
+                                                                                        round=True, context=context)
 
         return result
 
@@ -964,10 +956,8 @@ class tender_line(osv.osv):
         # functions
         'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
         'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", digits_compute=dp.get_precision('Purchase Price Computation'), readonly=True),  # same precision as related field!
-        'tender_price_unit': fields.function(_get_total_price, method=True, type="float", string="Price unit", digits_compute=dp.get_precision('Purchase Price Computation'), multi='total', store=False, readonly=True),
         'delivery_confirmed_date': fields.related('purchase_order_line_id', 'confirmed_delivery_date', type="date", string="Delivery Confirmed Date", readonly=True),
         'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
-        'tender_total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
         'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
         'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
         'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="char", string="Related Line Number", readonly=True,),

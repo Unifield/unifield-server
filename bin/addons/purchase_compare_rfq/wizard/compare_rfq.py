@@ -509,7 +509,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
         if t_id:
             tender = t_obj.browse(cr, uid, t_id, fields_to_fetch=['supplier_ids', 'currency_id'], context=context)
             s_ids = tender.supplier_ids
-            cur_id = tender.currency_id.id
+            cur_id = tender.currency_id and tender.currency_id.id or cur_id
 
         for sup in s_ids:
             sid = sup.id

@@ -29662,7 +29662,6 @@ msgstr "purchase.import.xml.line"
 #. modules: tender_flow, msf_doc_import
 #: field:tender.line,price_unit:0
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:243
-#: field:tender.line,tender_price_unit:0
 msgid "Price unit"
 msgstr "Prix unitaire"
 
@@ -48562,7 +48561,6 @@ msgstr "Chinese (HK)"
 #: field:tender.line,total_price:0
 #: report:invoice:0
 #: report:addons/stock/report/stock_expired_damaged_report_xls.mako:226
-#: field:tender.line,tender_total_price:0
 msgid "Total Price"
 msgstr "Prix Total"
 
