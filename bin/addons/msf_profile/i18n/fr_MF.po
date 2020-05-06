@@ -40603,11 +40603,6 @@ msgstr "Monaco"
 msgid "Supplier Refunds"
 msgstr "Avoirs Fournisseur"
 
-#. module: tender_flow
-#: field:tender.line,func_total_price:0
-msgid "Func. Total Price"
-msgstr "Prix Total Fonc."
-
 #. modules: sync_client, analytic_distribution
 #: model:ir.ui.menu,name:sync_client.ops_menu
 #: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_operation
@@ -76474,6 +76469,7 @@ msgstr "# de lignes importées"
 #: report:addons/stock/report/stock_delivery_report_xls.mako:220
 #: report:addons/account/report/export_invoice.mako:123
 #: report:msf.purchase.quotation:0
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:73
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -109630,3 +109626,40 @@ msgstr "Vous ne pouvez pas %s des lignes dans le registre %s (%s) car il n'est p
 #, python-format
 msgid "post"
 msgstr "comptabiliser"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
+msgid "Unit Price (Comparison Currency)"
+msgstr "Prix Unitaire (Devise de Comparaison)"
+
+#. module: purchase
+#: field:purchase.order,amount_total_tender_currency:0
+msgid "Total (Comparison Currency)"
+msgstr "Total (Devise de Comparaison)"
+
+#. module: purchase
+#: help:purchase.order,amount_total_tender_currency:0
+msgid "The total amount using the tender's currency for comparison"
+msgstr "Le montant total calculé en utilisant la devise de l'appel d'offre pour la comparaison"
+
+#. modules: purchase_compare_rfq, tender_flow
+#: field:wizard.compare.rfq,currency_id:0
+#: field:tender,currency_id:0
+msgid "Currency for Comparison"
+msgstr "Devise pour la Comparaison"
+
+#. module: tender_flow
+#: help:tender,currency_id:0
+msgid "Currency to use while comparing RfQs"
+msgstr "Devise à utiliser pour comparer les DdDs"
+
+#. module: tender_flow
+#: view:tender:0
+msgid "Change Cur."
+msgstr "Changer Dev."
+
+#. module: tender_flow
+#: code:addons/tender_flow/wizard/tender_change_currency.py:63
+#, python-format
+msgid "The currency of the Tender id:%s (%s) has been changed from id:%s (%s) to id:%s (%s)"
+msgstr "La devise de l'Appel d'Offre id:%s (%s) a été changé de id:%s (%s) en id:%s (%s)"

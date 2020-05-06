@@ -387,25 +387,35 @@ class request_for_quotation_report_xls(WebKitParser):
         a = super(request_for_quotation_report_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
+
 request_for_quotation_report_xls('report.request.for.quotation_xls','purchase.order','addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako')
 
 
-class tender_report_xls(WebKitParser):
-    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+class parser_tender_report_xls(report_sxw.rml_parse):
 
-    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
-        report_xml.webkit_debug = 1
-        report_xml.header= " "
-        report_xml.webkit_header.html = "${_debug or ''|n}"
-        return super(tender_report_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+    def __init__(self, cr, uid, name, context=None):
+        super(parser_tender_report_xls, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'computePrice': self._compute_price,
+        })
+
+    def _compute_price(self, line_currency_id, tender_currency_id, price):
+        cur_obj = self.pool.get('res.currency')
+        return round(cur_obj.compute(self.cr, self.uid, line_currency_id, tender_currency_id, price, round=False, context=self.localcontext), 2)
+
+
+class tender_report_xls(SpreadsheetReport):
+
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        super(tender_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
-        ids = getIds(self, cr, uid, ids, context)
-        a = super(tender_report_xls, self).create(cr, uid, ids, data, context)
+        a = super(tender_report_xls, self).create(cr, uid, ids, data, context=context)
         return (a[0], 'xls')
 
-tender_report_xls('report.tender_xls','tender','addons/msf_supply_doc_export/report/report_tender_xls.mako')
+
+tender_report_xls('report.tender_xls', 'tender', 'addons/msf_supply_doc_export/report/report_tender_xls.mako', parser=parser_tender_report_xls, header='internal')
+
 
 class stock_cost_reevaluation_report_xls(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
