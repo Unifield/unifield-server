@@ -158,6 +158,8 @@ class patch_scripts(osv.osv):
             return True
 
         instance_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id.id
+        if not instance_id:
+            return True
         cr.execute("""
                 SELECT l.id FROM stock_mission_report_line l 
                     LEFT JOIN ir_model_data d ON d.res_id = l.id AND d.model = 'stock.mission.report.line' AND d.module = 'sd'
