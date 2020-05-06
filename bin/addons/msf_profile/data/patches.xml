@@ -542,5 +542,9 @@
         <record id="us_6513_rename_dispatch_to_shipment" model="patch.scripts">
             <field name="method">us_6513_rename_dispatch_to_shipment</field>
         </record>
+
+        <record id="us_6641_remove_duplicates_from_stock_mission" model="patch.scripts">
+            <field name="method">us_6641_remove_duplicates_from_stock_mission</field>
+        </record>
     </data>
 </openerp>

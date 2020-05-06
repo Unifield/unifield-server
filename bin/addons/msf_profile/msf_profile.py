@@ -150,6 +150,28 @@ class patch_scripts(osv.osv):
         self._logger.warn('Starting Balance set to zero in %s registers.' % (cr.rowcount,))
         return True
 
+    def us_6641_remove_duplicates_from_stock_mission(self, cr, uid, *a, **b):
+        """
+        Remove duplicates products (lines not coming from the current instance) from the generated Stock Mission Report lines
+        """
+        if not self.pool.get('sync.client.message_received'):  # New instance
+            return True
+
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id.id
+        cr.execute("""
+                SELECT l.id FROM stock_mission_report_line l 
+                    LEFT JOIN ir_model_data d ON d.res_id = l.id AND d.model = 'stock.mission.report.line' AND d.module = 'sd'
+                WHERE d.name LIKE (SELECT identifier||'%%' FROM sync_client_entity) AND 
+                    mission_report_id IN (SELECT id FROM stock_mission_report WHERE instance_id != %s)
+        """, (instance_id,))
+
+        lines_to_del = [l[0] for l in cr.fetchall()]
+        if lines_to_del:
+            cr.execute("""DELETE FROM stock_mission_report_line WHERE id IN %s""", (tuple(lines_to_del),))
+            self._logger.warn('%s Stock Mission Report lines have been deleted.' % (len(lines_to_del),))
+
+        return True
+
     # UF16.1
     def remove_ir_actions_linked_to_deleted_modules(self, cr, uid, *a, **b):
         # delete remove actions
