@@ -44012,8 +44012,9 @@ msgid "\n"
 msgstr "\n"
 "	Veuillez vérifier l'orthographe sur la colonne '%s'."
 
-#. module: sync_client
+#. modules: sync_client, register_accounting
 #: view:sync.monitor:0
+#: code:addons/register_accounting/account_bank_statement.py:2085
 msgid "create"
 msgstr "créer"
 
@@ -109615,3 +109616,15 @@ msgstr "Date de Réception réelle du"
 #: report:addons/stock/report/stock_reception_report_xls.mako:192
 msgid "Actual Receipt Date to"
 msgstr "Date de Réception réelle au"
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2084
+#, python-format
+msgid "You can't %s lines in the register %s (%s) as it isn't Open."
+msgstr "Vous ne pouvez pas %s des lignes dans le registre %s (%s) car il n'est pas Ouvert."
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2085
+#, python-format
+msgid "post"
+msgstr "comptabiliser"
