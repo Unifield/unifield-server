@@ -517,6 +517,7 @@ class documents_done_problem(osv.osv_memory):
                 if line.doc_model == 'account.invoice':
                     invoice_state = self.pool.get('account.invoice').browse(cr, uid, line.doc_id, context=context).state
                     if invoice_state == 'draft':
+                        # TODO: TEST JFB
                         wf_service.trg_validate(uid, line.doc_model, line.doc_id, 'invoice_cancel', cr)
 #                    elif invoice_state not in ('cancel', 'paid'):
 #                        raise osv.except_osv(_('Error'), _('You cannot set the SO to \'Closed\' because the following invoices are not Cancelled or Paid : %s') % ([map(x.name + '/') for x in error_inv_ids]))
