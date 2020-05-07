@@ -58,9 +58,12 @@ class stock_reception_report(report_sxw.rml_parse):
                     final_dest_loc = int_move_dest_loc
                 else:
                     final_dest_loc = sol.order_id.location_requestor_id.name
-            elif sol and move.location_dest_id.id == model_obj.get_object_reference(self.cr, self.uid, 'msf_cross_docking',
-                                                                                    'stock_location_cross_docking')[1]:
-                final_dest_loc = sol.order_id.partner_id.name
+            elif move.location_dest_id.id == model_obj.get_object_reference(self.cr, self.uid, 'msf_cross_docking',
+                                                                            'stock_location_cross_docking')[1]:
+                if sol:
+                    final_dest_loc = sol.order_id.partner_id.name
+                else:  # In case the IN has no linked FO/IR but sent to Cross Docking
+                    final_dest_loc = move.location_dest_id.name
             elif int_move_dest_loc:
                 if linked_int_move_done:
                     final_dest_loc = int_move_dest_loc
