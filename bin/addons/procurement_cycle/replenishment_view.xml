@@ -112,6 +112,7 @@
                     <field name="sleeping" required="1" />
                     <field name="time_unit" required="1" />
                     <field name="alert_threshold_deviation" required="1" />
+                    <newline />
                     <group colspan="2">
                         <button name="force_generate_inventory_review" string="Generate Inventory Review" type="object" icon="gtk-execute" />
                         <button name="inventory_review" string="Go to Inventory Review" type="object" icon="gtk-info" />
@@ -311,7 +312,7 @@
                                     <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('to', '3', rr_fmc_to_3)" nolabel="1"/>
                                     <field name= "list_fmc" invisible="context.get('rule')!='cycle'" displayon="notedition"/>
                                     <button name="openform" special="openform" string="Edit 12 FMC" invisible="context.get('rule')!='cycle'" attrs="{'invisible': [('state', '!=', 'draft')]}"  icon="terp-go-week" />
-                                    <field name="warning_html" widget="html_text"/>
+                                    <field name="warning_html" widget="html_text" displayon="noteditable"/>
 
                                 </tree>
                                 <form>
@@ -747,7 +748,7 @@
                             <field name="order_coverage" />
                             <field name="std_dev_hmc"  />
                             <field name="coef_var_hmc" />
-                            <field name="avg_error_hmc_fmc"  />
+                            <field name="std_dev_hmc_fmc"  />
                             <field name="coef_var_hmc_fmc"  />
                             <field name="rule"  invisible="1"/>
                             <field name="pas_ids" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
@@ -915,6 +916,19 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Stock Out" hide_duplicate_button="1" hide_new_button="1" hide_delete_button="1" force_string="1">
+                    <field name="warning" invisible="1" />
+                     <html colspan="4">
+                     <p id="active_warn" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                            <translate>As this location is not the lowest level (consumption level) of your Location config the RR-AMC will not be adjusted based on this stock out entry. If you need this to be considered please create a stock out entry at the consumption level for this to be considered.</translate>
+                        </p>
+                        <script language="javascript">
+                            var active_warn = $('#warning').val();
+                            if (active_warn == "1") {
+                                msg_dom = $('#active_warn');
+                                msg_dom.show();
+                            }
+                        </script>
+                    </html>
                     <field name="name" />
                     <newline />
                     <field name="location_id" attrs="{'readonly':[('state', '!=', 'draft')]}" />

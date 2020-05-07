@@ -1053,9 +1053,9 @@
         % endif
     </Cell>
     % if line.rule == 'cycle':
-    <Cell ss:StyleID="s141p">
-        % if line.avg_error_hmc_fmc:
-            <Data ss:Type="Number">${line.avg_error_hmc_fmc/100.}</Data>
+    <Cell ss:StyleID="s141">
+        % if line.std_dev_hmc_fmc:
+            <Data ss:Type="Number">${line.std_dev_hmc_fmc}</Data>
         % endif
     </Cell>
     <Cell ss:StyleID="s141p">

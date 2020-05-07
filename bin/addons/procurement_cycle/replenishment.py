@@ -117,6 +117,7 @@ class replenishment_location_config(osv.osv):
         'rr_amc': 3,
         'time_unit': 'm',
         'last_review_error': False,
+        'alert_threshold_deviation': 50,
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -304,6 +305,104 @@ class replenishment_location_config(osv.osv):
                 self.write(cr, uid, config.id, {'last_review_error': "\n".join(error)}, context=context)
         return True
 
+    def generate_hidden_segment(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        loc_config_obj = self.pool.get('replenishment.location.config')
+        segment_obj = self.pool.get('replenishment.segment')
+        all_config_ids = loc_config_obj.search(cr, uid, [('include_product', '=', True), ('review_active', '=', True), ('id', 'in', ids)], context=context)
+        for loc_config in loc_config_obj.browse(cr, uid, all_config_ids, context=context):
+            amc_location_ids = [x.id for x in loc_config.local_location_ids]
+            if not amc_location_ids:
+                continue
+            hidden_seg_ids = segment_obj.search(cr, uid, [('location_config_id', '=', loc_config.id), ('hidden', '=', True)], context=context)
+            if not hidden_seg_ids:
+                hidden_seg = segment_obj.create(cr, uid, {
+                    'location_config_id': loc_config.id,
+                    'hidden': True,
+                    'description_seg': 'HIDDEN',
+                    'order_creation_lt': 0,
+                    'order_validation_lt': 0,
+                    'supplier_lt': 0,
+                    'handling_lt': 0,
+                    'rule': 'auto',
+                    'state': 'complete',
+                }, context=context)
+            else:
+                hidden_seg = hidden_seg_ids[0]
+            # get prod in stock on main level
+            cr.execute('''
+                select msl.product_id from
+                    stock_mission_report_line_location msl
+                where
+                    msl.location_id in %s and
+                    msl.quantity > 0 and
+                    msl.product_id not in (
+                        select
+                            seg_line.product_id
+                        from replenishment_segment_line seg_line, replenishment_segment seg
+                        where
+                            seg.state in ('draft', 'complete') and seg_line.segment_id = seg.id and seg.location_config_id = %s
+
+                    )
+                group by msl.product_id
+            ''', (tuple(amc_location_ids), loc_config.id))
+
+            for prod in cr.fetchall():
+                self.pool.get('replenishment.segment.line').create(cr, uid, {'state': 'active', 'product_id': prod[0], 'segment_id': hidden_seg}, context=context)
+
+            if loc_config.is_current_instance:
+                # get prod in stock on lower level
+                cr.execute('''
+                    select msl.product_id from
+                        stock_mission_report_line_location msl, stock_location_instance loc_instance, remote_location_configuration_rel rel
+                    where
+                        loc_instance.instance_id = remote_instance_id and
+                        loc_instance.instance_db_id = remote_location_id and
+                        rel.location_id = %s and
+                        msl.quantity > 0 and
+                        msl.product_id not in (
+                            select
+                                seg_line.product_id
+                            from replenishment_segment_line seg_line, replenishment_segment seg
+                            where
+                                seg.state in ('draft', 'complete') and seg_line.segment_id = seg.id and seg.location_config_id = %s
+
+                        )
+                    group by msl.product_id
+                ''', (loc_config.id, loc_config.id))
+
+                for prod in cr.fetchall():
+                    self.pool.get('replenishment.segment.line').create(cr, uid, {'state': 'active', 'product_id': prod[0], 'segment_id': hidden_seg}, context=context)
+
+                # in pipe at coo / only project
+                cr.execute('''
+                    select move.product_id from
+                        stock_move move, stock_picking p
+                    where
+                        move.picking_id = p.id and
+                        move.location_dest_id in %s and
+                        move.product_qty > 0 and
+                        move.state in ('confirmed','waiting','assigned') and
+                        move.product_id not in (
+                              select
+                                seg_line.product_id
+                            from replenishment_segment_line seg_line, replenishment_segment seg
+                            where
+                                seg.state in ('draft', 'complete') and seg_line.segment_id = seg.id and seg.location_config_id = %s
+
+                        )
+                    group by move.product_id
+                ''', (tuple(amc_location_ids), loc_config.id))
+
+                for prod in cr.fetchall():
+                    self.pool.get('replenishment.segment.line').create(cr, uid, {'state': 'active', 'product_id': prod[0], 'segment_id': hidden_seg}, context=context)
+
+        return True
+
 replenishment_location_config()
 
 
@@ -439,11 +538,13 @@ class replenishment_segment(osv.osv):
         'safety_and_buffer_warn': fields.function(_get_safety_and_buffer_warn, type='boolean', method=1, internal=1, string='Lines has buffer and seg has safety'),
         'last_review_date': fields.datetime('Last review date', readonly=1),
         'have_product': fields.function(_get_have_product, type='boolean', method=1, internal=1, string='Products are set'),
+        'hidden': fields.boolean('Hidden', help='Used to store not segemented products with stock/pipeline'),
     }
 
     _defaults = {
         'state': 'draft',
         'have_product': False,
+        'hidden': False,
     }
 
     _sql_constraints = [
@@ -511,6 +612,7 @@ class replenishment_segment(osv.osv):
             cr.close(True)
 
     def trigger_compute_segment_data(self, cr, uid, ids, context):
+        # TODO: rmeove this line
         return self.pool.get('replenishment.segment.line.amc').generate_segment_data(cr, uid, context=context, seg_ids=ids, force_review=True)
 
     def generate_order_calc(self, cr, uid, ids, context=None):
@@ -700,6 +802,7 @@ class replenishment_segment(osv.osv):
 
                 fmc_by_month = {}
                 detailed_pas = []
+                pas_full = False
                 if seg.rule == 'cycle':
 
                     cr.execute('''
@@ -917,6 +1020,12 @@ class replenishment_segment(osv.osv):
                     warnings.append(wmsg)
                     warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('Excess'))))
 
+                if review_id and seg.hidden:
+                    wmsg = _('Product is not in any related segment, only in stock / pipeline of location')
+                    warnings.append(wmsg)
+                    warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('No Segment'))))
+
+
                 lacking_by_prod[line.product_id.id] = qty_lacking_needed_by
                 line_data = {
                     'product_id': line.product_id.id,
@@ -929,18 +1038,19 @@ class replenishment_segment(osv.osv):
                     'qty_lacking_needed_by': qty_lacking_needed_by and qty_lacking_needed_by.strftime('%Y-%m-%d') or False,
                     'expired_qty_before_cons': False if seg.rule !='cycle' else round(sum_line.get(line.id, {}).get('expired_before_rdd',0)),
                     'expired_qty_before_eta': round(sum_line.get(line.id, {}).get('expired_qty_before_eta',0)),
-                    'warning': "\n".join(warnings),
+                    'warning': False,
                     'warning_html': False,
                     'valid_rr_fmc': valid_rr_fmc,
                     'status': line.status,
                     'open_loan': sum_line.get(line.id, {}).get('open_loan', False),
                     'open_donation': sum_line.get(line.id, {}).get('open_donation', False),
                 }
-                if warnings_html:
-                    line_data['warning_html'] = '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html("\n".join(warnings)), "<br>".join(warnings_html))
 
                 # order_cacl
                 if not review_id:
+                    if warnings_html:
+                        line_data['warning_html'] = '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html("\n".join(warnings)), "<br>".join(warnings_html))
+                        line_data['warning'] = "\n".join(warnings),
                     line_data.update({
                         'order_calc_id': calc_id,
                         'proposed_order_qty': round(proposed_order_qty),
@@ -960,7 +1070,8 @@ class replenishment_segment(osv.osv):
                         if std_dev_hmc_tmp > 0:
                             std_dev_hmc = math.sqrt(std_dev_hmc_tmp)
 
-                    avg_error_hmc_fmc = False
+                    #avg_error_hmc_fmc = False
+                    std_dev_hmc_fmc = False
                     coef_var_hmc_fmc = False
                     if seg.rule == 'cycle':
                         diff_hmc_fmc = 0
@@ -978,12 +1089,13 @@ class replenishment_segment(osv.osv):
                             diff_hmc_fmc2 += diff_hmc_fmc_tmp*diff_hmc_fmc_tmp
 
                         if nb_month and sum_fmc:
-                            coef_var_hmc_fmc = 100 * nb_month/float(sum_fmc) * math.sqrt(diff_hmc_fmc2/nb_month)
-                            avg_error_hmc_fmc = 100 * diff_hmc_fmc / float(sum_fmc)
+                            std_dev_hmc_fmc = math.sqrt(diff_hmc_fmc2/nb_month)
+                            coef_var_hmc_fmc = 100 * nb_month/float(sum_fmc) * std_dev_hmc_fmc
+                            #avg_error_hmc_fmc = 100 * diff_hmc_fmc / float(sum_fmc)
 
                     line_data.update({
                         'review_id': review_id,
-                        'segment_ref_name': "%s / %s" % (seg.name_seg, seg.description_seg),
+                        'segment_ref_name': not seg.hidden and "%s / %s" % (seg.name_seg, seg.description_seg),
                         'rr_fmc_avg': False if seg.rule !='cycle' else total_month and total_fmc/total_month,
                         'rr_amc': line.rr_amc,
                         'total_expired_qty': sum_line.get(line.id, {}).get('total_expiry_nocons_qty', 0),
@@ -1008,9 +1120,19 @@ class replenishment_segment(osv.osv):
                         'sleeping_qty': round(sum_line.get(line.id, {}).get('sleeping_qty',0)),
                         'std_dev_hmc': std_dev_hmc,
                         'coef_var_hmc': amc and 100 * std_dev_hmc/amc or False,
-                        'avg_error_hmc_fmc': avg_error_hmc_fmc,
+                        #'avg_error_hmc_fmc': avg_error_hmc_fmc,
+                        'std_dev_hmc_fmc': std_dev_hmc_fmc,
                         'coef_var_hmc_fmc': coef_var_hmc_fmc,
                     })
+                    if review_id and line_data['coef_var_hmc_fmc'] and line_data['coef_var_hmc_fmc'] > line.segment_id.location_config_id.alert_threshold_deviation:
+                        wmsg = _('Variation of HMC/FMC')
+                        warnings.append(wmsg)
+                        warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('HMC/FMC Dev.'))))
+
+                    if warnings_html:
+                        line_data['warning_html'] = '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html("\n".join(warnings)), "<br>".join(warnings_html))
+                        line_data['warning'] = "\n".join(warnings),
+
                     if seg.rule == 'cycle':
                         line_data.update({
                             'projected_stock_qty': round(pas),
@@ -1319,8 +1441,13 @@ class replenishment_segment(osv.osv):
         if warn_pair:
             raise osv.except_osv(_('Warning'),"\n".join(warn_pair))
 
+        for seg in self.browse(cr, uid, ids, fields_to_fetch=['location_config_id'], context=context):
+            if seg.location_config_id.include_product:
+                self.pool.get('replenishment.location.config').generate_hidden_segment(cr, uid, seg.location_config_id.id, context=context)
+
         self.write(cr, uid, ids, {'state': 'complete'}, context=context)
         return True
+
 
     def check_inprogress_order_calc(self, cr, uid, ids, context=None):
         calc_obj = self.pool.get('replenishment.order_calc')
@@ -1604,7 +1731,7 @@ class replenishment_segment_line(osv.osv):
     def _get_warning(self, cr, uid, ids, field_name, arg, context=None):
         ret = {}
         for _id in ids:
-            ret[_id] = {'warning': False, 'warning_html': False}
+            ret[_id] = {'warning': False, 'warning_html': ''}
 
 
         new_ids = self.search(cr, uid, [('id', 'in', ids), ('status', '=', 'new')], context=context)
@@ -1624,7 +1751,7 @@ class replenishment_segment_line(osv.osv):
                 m.picking_id = p.id and
                 m.product_id = line.product_id and
                 line.id in %s and
-                p.type = 'in' and
+                (p.type = 'in' or p.type = 'internal' and p.subtype = 'sysint') and
                 m.state in ('confirmed','waiting','assigned') and
                 line.status = 'replaced'
             group by line.id
@@ -1747,6 +1874,18 @@ class replenishment_segment_line(osv.osv):
             return True
 
     def _uniq_prod_location(self, cr, uid, ids, context=None):
+        # delete line in hidden seg
+        cr.execute('''
+           delete from replenishment_segment_line where id in (
+            select line.id from replenishment_segment_line line
+                inner join replenishment_segment seg on seg.id = line.segment_id
+                where
+                    seg.hidden = 't' and
+                    (product_id, location_config_id) in
+                    (select product_id, location_config_id from replenishment_segment_line l2, replenishment_segment seg2 where l2.id in %s and seg2.id = l2.segment_id and seg2.hidden = 'f')
+            )
+            ''', (tuple(ids), ))
+
         cr.execute('''select prod.default_code, array_agg(seg.name_seg)
             from replenishment_segment_line orig_seg_line, replenishment_segment_line seg_line, replenishment_segment seg, product_product prod
             where
@@ -2057,8 +2196,6 @@ class replenishment_segment_line_amc(osv.osv):
                 last_gen_data['full_date'] = datetime_now
                 expired_obj = self.pool.get('product.likely.expire.report')
 
-                rdd_date = datetime.strptime(segment.date_next_order_received_modified or segment.date_next_order_received, '%Y-%m-%d')
-                oc_date = rdd_date + relativedelta(months=segment.order_coverage)
 
                 amc_data_to_update = {}
                 if gen_inv_review:
@@ -2084,56 +2221,59 @@ class replenishment_segment_line_amc(osv.osv):
                             amc_data_to_update.setdefault(cache_line_amc[lines[prod_expired.id]],{}).update({'total_expiry_nocons_qty': prod_expired.qty_available})
 
 
-                if segment.rule == 'cycle':
-                    expired_id = expired_obj.create(cr, uid, {'segment_id': segment.id, 'date_to': oc_date.strftime('%Y-%m-%d')})
-                    expired_obj._process_lines(cr, uid, expired_id, context=context, create_cr=False)
-                    # before rdd
-                    cr.execute("""
-                        select line.product_id, sum(itemline.expired_qty)
-                        from product_likely_expire_report_line line, product_likely_expire_report_item item, product_likely_expire_report_item_line itemline
-                        where
-                            item.line_id = line.id and
-                            report_id=%s and
-                            itemline.item_id = item.id and
-                            itemline.expired_date <= %s
-                        group by line.product_id
-                        having sum(itemline.expired_qty) > 0 """, (expired_id, rdd_date.strftime('%Y-%m-%d')))
-                    for x in cr.fetchall():
-                        amc_data_to_update.setdefault(cache_line_amc[lines[x[0]]], {}).update({'expired_before_rdd': x[1]})
-
-                    # between rdd and oc
-                    cr.execute("""
-                        select line.product_id, sum(itemline.expired_qty)
-                        from product_likely_expire_report_line line, product_likely_expire_report_item item, product_likely_expire_report_item_line itemline
-                        where
-                            item.line_id = line.id and
-                            report_id=%s and
-                            itemline.item_id = item.id and
-                            itemline.expired_date > %s
-                        group by line.product_id
-                        having sum(itemline.expired_qty) > 0""", (expired_id, rdd_date.strftime('%Y-%m-%d')))
-                    for x in cr.fetchall():
-                        amc_data_to_update.setdefault(cache_line_amc[lines[x[0]]], {}).update({'expired_between_rdd_oc': x[1]})
-                else:
-                    for prod_expired in prod_obj.browse(cr, uid, prod_with_stock, fields_to_fetch=['qty_available'], context={'location': seg_context['amc_location_ids'], 'stock_expired_before_date': rdd_date.strftime('%Y-%m-%d')}):
-                        amc_data_to_update.setdefault(cache_line_amc[lines[prod_expired.id]],{}).update({'expired_qty_before_eta': prod_expired.qty_available})
-
-                for to_update in amc_data_to_update:
-                    self.write(cr, uid, to_update, amc_data_to_update[to_update], context=context)
-
-                if gen_inv_review:
+                if not segment.hidden:
+                    rdd_date = datetime.strptime(segment.date_next_order_received_modified or segment.date_next_order_received, '%Y-%m-%d')
+                    oc_date = rdd_date + relativedelta(months=segment.order_coverage)
                     if segment.rule == 'cycle':
+                        expired_id = expired_obj.create(cr, uid, {'segment_id': segment.id, 'date_to': oc_date.strftime('%Y-%m-%d')})
+                        expired_obj._process_lines(cr, uid, expired_id, context=context, create_cr=False)
+                        # before rdd
                         cr.execute("""
-                            select line.product_id, item.period_start, sum(item.expired_qty), line.id
-                            from product_likely_expire_report_line line, product_likely_expire_report_item item
+                            select line.product_id, sum(itemline.expired_qty)
+                            from product_likely_expire_report_line line, product_likely_expire_report_item item, product_likely_expire_report_item_line itemline
                             where
                                 item.line_id = line.id and
                                 report_id=%s and
-                                item.period_start <= %s
-                            group by line.product_id, item.period_start, line.id
-                            having sum(item.expired_qty) > 0 """, (expired_id, projected_view))
+                                itemline.item_id = item.id and
+                                itemline.expired_date <= %s
+                            group by line.product_id
+                            having sum(itemline.expired_qty) > 0 """, (expired_id, rdd_date.strftime('%Y-%m-%d')))
                         for x in cr.fetchall():
-                            month_exp_obj.create(cr, uid, {'line_amc_id': cache_line_amc[lines[x[0]]], 'month': x[1], 'quantity': x[2], 'expiry_line_id': x[3]}, context=context)
+                            amc_data_to_update.setdefault(cache_line_amc[lines[x[0]]], {}).update({'expired_before_rdd': x[1]})
+
+                        # between rdd and oc
+                        cr.execute("""
+                            select line.product_id, sum(itemline.expired_qty)
+                            from product_likely_expire_report_line line, product_likely_expire_report_item item, product_likely_expire_report_item_line itemline
+                            where
+                                item.line_id = line.id and
+                                report_id=%s and
+                                itemline.item_id = item.id and
+                                itemline.expired_date > %s
+                            group by line.product_id
+                            having sum(itemline.expired_qty) > 0""", (expired_id, rdd_date.strftime('%Y-%m-%d')))
+                        for x in cr.fetchall():
+                            amc_data_to_update.setdefault(cache_line_amc[lines[x[0]]], {}).update({'expired_between_rdd_oc': x[1]})
+                    else:
+                        for prod_expired in prod_obj.browse(cr, uid, prod_with_stock, fields_to_fetch=['qty_available'], context={'location': seg_context['amc_location_ids'], 'stock_expired_before_date': rdd_date.strftime('%Y-%m-%d')}):
+                            amc_data_to_update.setdefault(cache_line_amc[lines[prod_expired.id]],{}).update({'expired_qty_before_eta': prod_expired.qty_available})
+
+                    for to_update in amc_data_to_update:
+                        self.write(cr, uid, to_update, amc_data_to_update[to_update], context=context)
+
+                    if gen_inv_review:
+                        if segment.rule == 'cycle':
+                            cr.execute("""
+                                select line.product_id, item.period_start, sum(item.expired_qty), line.id
+                                from product_likely_expire_report_line line, product_likely_expire_report_item item
+                                where
+                                    item.line_id = line.id and
+                                    report_id=%s and
+                                    item.period_start <= %s
+                                group by line.product_id, item.period_start, line.id
+                                having sum(item.expired_qty) > 0 """, (expired_id, projected_view))
+                            for x in cr.fetchall():
+                                month_exp_obj.create(cr, uid, {'line_amc_id': cache_line_amc[lines[x[0]]], 'month': x[1], 'quantity': x[2], 'expiry_line_id': x[3]}, context=context)
 
             if last_gen_id:
                 last_gen_obj.write(cr, uid, last_gen_id, last_gen_data, context=context)
@@ -2516,8 +2656,8 @@ class replenishment_inventory_review_line(osv.osv):
 
         'std_dev_hmc': fields.float('Standard Deviation HMC'),
         'coef_var_hmc': fields.float('Coefficient of Variation of HMC (%)'),
+        'std_dev_hmc_fmc': fields.float_null('Standard Deviation of HMC vs FMC'),
         'coef_var_hmc_fmc': fields.float_null('Coefficient of Variation of HMC and FMC (%)'),
-        'avg_error_hmc_fmc': fields.float_null('Average Relative Forecast Error (%)'),
     }
 
 replenishment_inventory_review_line()
@@ -2683,9 +2823,9 @@ class replenishment_product_list(osv.osv):
             from
                 product_product prod
                 left join replenishment_segment_line seg_line on seg_line.product_id = prod.id
-                left join replenishment_segment segment on segment.id = seg_line.segment_id
+                left join replenishment_segment segment on segment.id = seg_line.segment_id and segment.hidden='f'
             where
-                segment.state != 'cancel'or segment.state is null
+                segment.state != 'cancel' or segment.state is null
         )""")
 
     def _search_list_sublist(self, cr, uid, obj, name, args, context=None):
@@ -2754,6 +2894,7 @@ class product_stock_out(osv.osv):
         'sequence_id': fields.many2one('ir.sequence', 'Lines Sequence', required=True, ondelete='cascade'),
         'file_to_import': fields.binary(string='File to import'),
         'adjusted_amc': fields.boolean('RR-AMC adjusted', readonly=1),
+        'warning': fields.boolean('Warning', readonly=1),
     }
 
     _defaults = {
@@ -2905,7 +3046,7 @@ class product_stock_out(osv.osv):
         return wizard_obj.message_box_noclose(cr, uid, title=_('Importation Done'), message=_('%d line(s) created, %d line(s) updated') % (created, updated))
 
     def set_as_draft(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'state': 'draft', 'adjusted_amc': False}, context=context)
+        self.write(cr, uid, ids, {'state': 'draft', 'adjusted_amc': False, 'warning': False}, context=context)
         return True
 
     def set_as_validated(self, cr, uid, ids, context=None):
@@ -2951,7 +3092,26 @@ class product_stock_out(osv.osv):
         return True
 
     def apply_set_closed(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'state': 'closed', 'adjusted_amc': True}, context=context)
+        warning = False
+        instance_id = self.pool.get('res.company')._get_instance_id(cr, uid)
+        cr.execute('''
+            select count(so.id) from product_stock_out so
+                left join product_stock_out_line line on so.id = line.stock_out_id
+                left join replenishment_segment_line seg_line on seg_line.product_id = line.product_id
+                left join replenishment_segment seg on seg.id = seg_line.segment_id
+                left join replenishment_location_config config on config.id = seg.location_config_id
+                left join local_location_configuration_rel local_rel on local_rel.config_id = config.id
+            where
+                 so.id in %s and
+                 config.main_instance = %s and
+                 config.synched = 't' and
+                 local_rel.location_id = so.location_id and 
+                 seg.state = 'complete'
+        ''', (tuple(ids), instance_id))
+        nb = cr.fetchone()
+        if nb and nb[0]:
+            warning = True
+        self.write(cr, uid, ids, {'state': 'closed', 'adjusted_amc': True, 'warning': warning}, context=context)
         return True
 
     def set_closed(self, cr, uid, ids, context=None):
