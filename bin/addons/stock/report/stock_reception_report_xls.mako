@@ -181,7 +181,7 @@
             <Cell ss:StyleID="big_header" ss:MergeAcross="1"><Data ss:Type="String">${_('FILTERS')|x}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${_('IN date from')|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${_('Actual Receipt Date from')|x}</Data></Cell>
             % if r.start_date and isDate(r.start_date):
             <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(r.start_date)|n}</Data></Cell>
             % else:
@@ -189,7 +189,7 @@
             % endif
         </Row>
         <Row>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${_('IN date to')|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${_('Actual Receipt Date to')|x}</Data></Cell>
             % if r.end_date and isDate(r.end_date):
             <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(r.end_date)|n}</Data></Cell>
             % else:

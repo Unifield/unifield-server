@@ -44013,8 +44013,9 @@ msgid "\n"
 msgstr "\n"
 "	Veuillez vérifier l'orthographe sur la colonne '%s'."
 
-#. module: sync_client
+#. modules: sync_client, register_accounting
 #: view:sync.monitor:0
+#: code:addons/register_accounting/account_bank_statement.py:2085
 msgid "create"
 msgstr "créer"
 
@@ -52675,8 +52676,8 @@ msgstr "Asie/Manille"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/purchase_order.py:141
 #, python-format
-msgid "No PO found with the name %s"
-msgstr "No PO found with the name %s"
+msgid "No validated PO found with the name %s"
+msgstr "No validated PO found with the name %s"
 
 #. modules: order_types, stock
 #: view:stock.print.certificate:0
@@ -54623,7 +54624,6 @@ msgstr "Montant final en devise d'enregistrement"
 
 #. module: consumption_calculation, stock
 #: field:product.history.consumption.month,date_from:0
-#: field:stock.reception.wizard,start_date:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:170
 #: field:stock.delivery.wizard,start_date:0
 msgid "Date from"
@@ -64660,7 +64660,6 @@ msgstr "Exemple : 2% à 14 jours nets, solde à 30 jours fin de mois"
 
 #. module: consumption_calculation, stock
 #: field:product.history.consumption.month,date_to:0
-#: field:stock.reception.wizard,end_date:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:178
 #: field:stock.delivery.wizard,end_date:0
 msgid "Date to"
@@ -103444,16 +103443,6 @@ msgid "RECEPTIONS REPORT"
 msgstr "RAPPORT DES RÉCEPTIONS"
 
 #. module: stock
-#: report:addons/stock/report/stock_reception_report_xls.mako:180
-msgid "IN date from"
-msgstr "Date IN à partir de"
-
-#. module: stock
-#: report:addons/stock/report/stock_reception_report_xls.mako:188
-msgid "IN date to"
-msgstr "Date IN à"
-
-#. module: stock
 #: report:addons/stock/report/stock_reception_report_xls.mako:231
 #: report:addons/stock/report/stock_delivery_report_xls.mako:214
 msgid "Order Priority"
@@ -109616,3 +109605,27 @@ msgstr "lot(s)"
 #, python-format
 msgid "stock move(s)"
 msgstr "mouvement(s) de stock"
+
+#. module: stock
+#: field:stock.reception.wizard,start_date:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:184
+msgid "Actual Receipt Date from"
+msgstr "Date de Réception réelle du"
+
+#. module: stock
+#: field:stock.reception.wizard,end_date:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:192
+msgid "Actual Receipt Date to"
+msgstr "Date de Réception réelle au"
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2084
+#, python-format
+msgid "You can't %s lines in the register %s (%s) as it isn't Open."
+msgstr "Vous ne pouvez pas %s des lignes dans le registre %s (%s) car il n'est pas Ouvert."
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2085
+#, python-format
+msgid "post"
+msgstr "comptabiliser"
