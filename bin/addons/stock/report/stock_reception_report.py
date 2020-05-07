@@ -53,13 +53,17 @@ class stock_reception_report(report_sxw.rml_parse):
                                                   context=self.localcontext)
                 int_move_dest_loc = linked_int_move.location_dest_id.name
                 linked_int_move_done = linked_int_move.state == 'done'
+
+            cross_docking_id = model_obj.get_object_reference(self.cr, self.uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
             if sol and sol.procurement_request:
                 if int_move_dest_loc and sol.order_id.location_requestor_id.usage == 'internal':
                     final_dest_loc = int_move_dest_loc
+                elif sol.order_id.location_requestor_id.usage != 'customer' and move.location_dest_id.id == cross_docking_id:
+                    # For the UC with IR (Stock location) to IN sent to Cross Docking
+                    final_dest_loc = move.location_dest_id.name
                 else:
                     final_dest_loc = sol.order_id.location_requestor_id.name
-            elif move.location_dest_id.id == model_obj.get_object_reference(self.cr, self.uid, 'msf_cross_docking',
-                                                                            'stock_location_cross_docking')[1]:
+            elif move.location_dest_id.id == cross_docking_id:
                 if sol:
                     final_dest_loc = sol.order_id.partner_id.name
                 else:  # In case the IN has no linked FO/IR but sent to Cross Docking
