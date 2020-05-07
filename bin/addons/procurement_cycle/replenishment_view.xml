@@ -483,7 +483,7 @@
             <field name="res_model">replenishment.segment</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[]</field>
+            <field name="domain">[('hidden', '=', False)]</field>
             <field name="context">{'search_default_current_instance': True}</field>
         </record>
 
@@ -513,7 +513,7 @@
             name="Replenishment Segments"
             src_model="replenishment.location.config"
             res_model="replenishment.segment"
-            domain="[('location_config_id', '=', active_id)]"
+            domain="[('location_config_id', '=', active_id), ('hidden', '=', False)]"
             context="{'search_view': False}"
             />
 

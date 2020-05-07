@@ -612,8 +612,20 @@ class replenishment_segment(osv.osv):
             cr.close(True)
 
     def trigger_compute_segment_data(self, cr, uid, ids, context):
-        # TODO: rmeove this line
-        return self.pool.get('replenishment.segment.line.amc').generate_segment_data(cr, uid, context=context, seg_ids=ids, force_review=True)
+        cr.execute('''
+            select hidden_seg.id from
+                replenishment_segment hidden_seg, replenishment_segment this, replenishment_location_config config
+                where
+                    this.location_config_id = hidden_seg.location_config_id and
+                    config.id = this.location_config_id and
+                    hidden_seg.hidden = 't' and
+                    config.include_product = 't' and
+                    this.state = 'complete' and
+                    this.id in %s
+            ''', (tuple(ids),))
+        other_ids = [x[0] for x in cr.fetchall()]
+        seg_ids = ids + other_ids
+        return self.pool.get('replenishment.segment.line.amc').generate_segment_data(cr, uid, context=context, seg_ids=seg_ids, force_review=True)
 
     def generate_order_calc(self, cr, uid, ids, context=None):
         return self.generate_order_cacl_inv_data(cr, uid, ids, context=context)
