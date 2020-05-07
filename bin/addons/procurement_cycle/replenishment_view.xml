@@ -111,6 +111,7 @@
                     <field name="rr_amc" required="1" />
                     <field name="sleeping" required="1" />
                     <field name="time_unit" required="1" />
+                    <field name="alert_threshold_deviation" required="1" />
                     <group colspan="2">
                         <button name="force_generate_inventory_review" string="Generate Inventory Review" type="object" icon="gtk-execute" />
                         <button name="inventory_review" string="Go to Inventory Review" type="object" icon="gtk-info" />
@@ -310,6 +311,7 @@
                                     <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('to', '3', rr_fmc_to_3)" nolabel="1"/>
                                     <field name= "list_fmc" invisible="context.get('rule')!='cycle'" displayon="notedition"/>
                                     <button name="openform" special="openform" string="Edit 12 FMC" invisible="context.get('rule')!='cycle'" attrs="{'invisible': [('state', '!=', 'draft')]}"  icon="terp-go-week" />
+                                    <field name="warning_html" widget="html_text"/>
 
                                 </tree>
                                 <form>

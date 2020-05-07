@@ -101,6 +101,7 @@ class replenishment_location_config(osv.osv):
         'is_current_instance': fields.function(_get_instance,  method=True, type='boolean', fnct_search=_search_is_current_instance, string='Defined in the instance', multi='_get_instance'),
         'is_project': fields.function(_get_instance,  method=True, type='boolean', string='Is project instance', multi='_get_instance'),
         'last_review_error': fields.text('Review Error', readonly=1),
+        'alert_threshold_deviation': fields.float_null('Alert threshold deviation AMC vs. FMC (%)'),
     }
 
     def _get_default_synced(self, cr, uid, context=None):
@@ -1600,6 +1601,42 @@ class replenishment_segment_line(osv.osv):
             ret[_id] = True
         return ret
 
+    def _get_warning(self, cr, uid, ids, field_name, arg, context=None):
+        ret = {}
+        for _id in ids:
+            ret[_id] = {'warning': False, 'warning_html': False}
+
+
+        new_ids = self.search(cr, uid, [('id', 'in', ids), ('status', '=', 'new')], context=context)
+        if new_ids:
+            for line in self.browse(cr, uid, new_ids, fields_to_fetch=['real_stock'], context=context):
+                if line.real_stock:
+                    warn = _('Product has stock - check status!')
+                    ret[line.id] = {
+                        'warning': warn,
+                        'warning_html': '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html(warn), _('New?'))
+                    }
+
+        cr.execute('''
+            select line.id from
+                stock_move m, stock_picking p, replenishment_segment_line line
+            where
+                m.picking_id = p.id and
+                m.product_id = line.product_id and
+                line.id in %s and
+                p.type = 'in' and
+                m.state in ('confirmed','waiting','assigned') and
+                line.status = 'replaced'
+            group by line.id
+        ''', (tuple(ids), ))
+        for line in cr.fetchall():
+            warn = _('Product has pipeline - check status!')
+            ret[line[0]] = {
+                'warning': warn,
+                'warning_html': '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html(warn), _('Replaced?'))
+            }
+        return ret
+
     _columns = {
         'segment_id': fields.many2one('replenishment.segment', 'Replenishment Segment', select=1, required=1),
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1),
@@ -1656,6 +1693,8 @@ class replenishment_segment_line(osv.osv):
         'rr_fmc_to_12': fields.date('To 12'),
         'replacing_product_id': fields.many2one('product.product', 'Replacing product', select=1),
         'replaced_product_id': fields.many2one('product.product', 'Replaced product', select=1),
+        'warning': fields.function(_get_warning, method=1, string='Warning', multi='get_warn', type='text'),
+        'warning_html': fields.function(_get_warning, method=1, string='Warning', multi='get_warn', type='text'),
     }
 
     _sql_constraints = [
