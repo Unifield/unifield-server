@@ -5779,7 +5779,7 @@ msgstr "Informations supplémentaires"
 msgid "Search Real Kit Composition Item"
 msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 
-#. modules: process, financing_contract, account_hq_entries, account_override, product_attributes, base_report_designer, msf_accrual, return_claim, account_mcdb, stock_override, analytic, purchase_followup, msf_doc_import, stock, product, finance, msf_homere_interface, hr, register_accounting, base, product_list, msf_tools, procurement_report, purchase, account, msf_outgoing, vertical_integration, sale, sales_followup, procurement, sourcing, msf_audittrail, msf_supply_doc_export, consumption_calculation, specific_rules, procurement_cycle
+#. modules: process, financing_contract, account_hq_entries, account_override, product_attributes, base_report_designer, msf_accrual, return_claim, account_mcdb, stock_override, analytic, purchase_followup, msf_doc_import, stock, product, finance, msf_homere_interface, hr, register_accounting, base, product_list, msf_tools, procurement_report, purchase, account, msf_outgoing, vertical_integration, sale, sales_followup, procurement, sourcing, msf_audittrail, msf_supply_doc_export, consumption_calculation, specific_rules, procurement_cycle, analytic_distribution
 #: view:account.account.type:0
 #: field:account.account.type,note:0
 #: view:account.analytic.account:0
@@ -5915,6 +5915,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:replenishment.segment.line,product_description:0
 #: report:addons/account/report/invoice_excel_export.mako:67
 #: field:account.invoice.import.errors,name:0
+#: field:account.commitment,description:0
 #, python-format
 msgid "Description"
 msgstr "Description"

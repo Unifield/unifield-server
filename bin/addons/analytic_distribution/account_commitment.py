@@ -84,6 +84,7 @@ class account_commitment(osv.osv):
         'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')], string="Type", readonly=True),
         'notes': fields.text(string="Comment"),
         'purchase_id': fields.many2one('purchase.order', string="Source document", readonly=True),
+        'description': fields.char(string="Description", size=256),
     }
 
     _defaults = {
@@ -137,9 +138,26 @@ class account_commitment(osv.osv):
             raise osv.except_osv(_('Error'), _('Error creating commitment sequence!'))
         return super(account_commitment, self).create(cr, uid, vals, context=context)
 
+    def _update_aal_desc(self, cr, uid, ids, vals, context=None):
+        """
+        Updates AJI desc. with the new description of the CV if any, else with its Entry Sequence
+        """
+        if context is None:
+            context = {}
+        aal_obj = self.pool.get('account.analytic.line')
+        if 'description' in vals:
+            for cv in self.browse(cr, uid, ids, fields_to_fetch=['state', 'name', 'line_ids'], context=context):
+                if cv.state == 'open':
+                    desc = vals.get('description') or cv.name
+                    for cv_line in cv.line_ids:
+                        analytic_lines = cv_line.analytic_lines
+                        if analytic_lines:
+                            aal_obj.write(cr, uid, [analytic_l.id for analytic_l in analytic_lines], {'name': desc}, context=context)
+
     def write(self, cr, uid, ids, vals, context=None):
         """
         Update analytic lines date if date in vals for validated commitment voucher.
+        Update AJI description if the CV desc. has been changed.
         """
         # Some verifications
         if not ids:
@@ -183,6 +201,7 @@ class account_commitment(osv.osv):
                                         'amount': new_aal_amount,
                                         }
                             aal_obj.write(cr, uid, aal.id, aal_vals, context=context)
+        self._update_aal_desc(cr, uid, ids, vals, context=context)
         # Default behaviour
         res = super(account_commitment, self).write(cr, uid, ids, vals, context=context)
         return res
@@ -376,7 +395,8 @@ class account_commitment(osv.osv):
                 if not al_ids:
                     # Create engagement journal lines
                     self.pool.get('analytic.distribution').\
-                        create_account_analytic_lines(cr, uid, [distrib_id], c.name, c.date, cl.amount, c.journal_id and c.journal_id.id,
+                        create_account_analytic_lines(cr, uid, [distrib_id], c.description or c.name, c.date, cl.amount,
+                                                      c.journal_id and c.journal_id.id,
                                                       c.currency_id and c.currency_id.id, c.date or False,
                                                       (c.purchase_id and c.purchase_id.name) or c.name or False, c.date,
                                                       cl.account_id and cl.account_id.id or False, False, False, cl.id, context=context)
