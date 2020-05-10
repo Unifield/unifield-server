@@ -2399,6 +2399,7 @@ class orm_memory(orm_template):
             return True
         tounlink = []
 
+        logger = logging.getLogger('memory.vacuum')
         # Age-based expiration
         if self._max_hours:
             max = time.time() - self._max_hours * 60 * 60
@@ -2406,13 +2407,18 @@ class orm_memory(orm_template):
                 if v['internal.date_access'] < max:
                     tounlink.append(k)
             self.unlink(cr, 1, tounlink)
+            if tounlink:
+                logger.info('delete %d %s based on age' % (len(tounlink), self._name))
 
         # Count-based expiration
         if self._max_count and len(self.datas) > self._max_count:
             # sort by access time to remove only the first/oldest ones in LRU fashion
             records = self.datas.items()
             records.sort(key=lambda x:x[1]['internal.date_access'])
-            self.unlink(cr, 1, [x[0] for x in records[:len(self.datas)-self._max_count]])
+            tounlink = [x[0] for x in records[:len(self.datas)-self._max_count]]
+            self.unlink(cr, 1, tounlink)
+            if tounlink:
+                logger.info('delete %d %s based on count' % (len(tounlink), self._name))
 
         return True
 
