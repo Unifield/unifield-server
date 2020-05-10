@@ -1101,6 +1101,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         _('You must first cancel all invoices attached to this sales order.'))
             for r in self.read(cr, uid, ids, ['invoice_ids']):
                 for inv in r['invoice_ids']:
+                    # TODO: TEST JFB
                     wf_service.trg_validate(uid, 'account.invoice', inv, 'invoice_cancel', cr)
             sale_order_line_obj.write(cr, uid, [l.id for l in  sale.order_line],
                                       {'state': 'cancel'}, context=context)

@@ -41,7 +41,7 @@ class account_invoice_sync(osv.osv):
             ('open', 'Open'),
             ('paid', 'Paid'),
             ('inv_close', 'Closed'),
-            ('cancel', 'Cancelled'),
+            ('cancel', 'Cancelled'),  # this state isn't synced anymore since US-7136
         ], string='Counterpart Invoice Status', readonly=True),
     }
 
