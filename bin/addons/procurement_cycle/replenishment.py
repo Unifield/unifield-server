@@ -1292,8 +1292,8 @@ class replenishment_segment(osv.osv):
                 })
 
 
-            col_replaced = 4
-            col_replacing = 5
+            col_replacing = 4
+            col_replaced = 5
             col_buffer_min_qty = 8
             col_first_fmc = 9
 
