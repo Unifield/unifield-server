@@ -1143,7 +1143,7 @@ class replenishment_segment(osv.osv):
 
                     if warnings_html:
                         line_data['warning_html'] = '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html("\n".join(warnings)), "<br>".join(warnings_html))
-                        line_data['warning'] = "\n".join(warnings),
+                        line_data['warning'] = "\n".join(warnings)
 
                     if seg.rule == 'cycle':
                         line_data.update({
