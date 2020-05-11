@@ -2495,6 +2495,9 @@ class replenishment_order_calc(osv.osv):
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
         return True
 
+    def button_dummy(self, cr, uid, ids, context=None):
+        return True
+
 replenishment_order_calc()
 
 class replenishment_order_calc_line(osv.osv):
