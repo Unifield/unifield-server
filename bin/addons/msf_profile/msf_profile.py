@@ -3688,13 +3688,6 @@ class base_setup_company(osv.osv_memory):
                 for field in ['country_id','state_id']:
                     if address[field]:
                         ret[field] = address[field].id
-            # Currency
-            cur = self.pool.get('res.currency').search(cr, uid, [('name','=','EUR')])
-            if company.currency_id:
-                ret['currency'] = company.currency_id.id
-            elif cur:
-                ret['currency'] = cur[0]
-
             fp = tools.file_open(opj('msf_profile', 'data', 'msf.jpg'), 'rb')
             ret['logo'] = base64.encodestring(fp.read())
             fp.close()
