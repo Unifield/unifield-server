@@ -324,10 +324,10 @@ class replenishment_location_config(osv.osv):
                     'location_config_id': loc_config.id,
                     'hidden': True,
                     'description_seg': 'HIDDEN',
-                    'order_creation_lt': 0,
-                    'order_validation_lt': 0,
-                    'supplier_lt': 0,
-                    'handling_lt': 0,
+                    'order_creation_lt': 1,
+                    'order_validation_lt': 1,
+                    'supplier_lt': 1,
+                    'handling_lt': 1,
                     'rule': 'auto',
                     'state': 'complete',
                 }, context=context)
@@ -360,9 +360,10 @@ class replenishment_location_config(osv.osv):
                     select msl.product_id from
                         stock_mission_report_line_location msl, stock_location_instance loc_instance, remote_location_configuration_rel rel
                     where
-                        loc_instance.instance_id = remote_instance_id and
-                        loc_instance.instance_db_id = remote_location_id and
-                        rel.location_id = %s and
+                        loc_instance.instance_id = msl.remote_instance_id and
+                        loc_instance.instance_db_id = msl.remote_location_id and
+                        rel.config_id = %s and
+                        rel.location_id = loc_instance.id and
                         msl.quantity > 0 and
                         msl.product_id not in (
                             select
@@ -2305,7 +2306,7 @@ class replenishment_segment_line_amc_month_exp(osv.osv):
     _name = 'replenishment.segment.line.amc.month_exp'
     _rec_name = 'line_amc_id'
     _columns = {
-        'line_amc_id': fields.many2one('replenishment.segment.line.amc', 'Line AMC', required=1, select=1),
+        'line_amc_id': fields.many2one('replenishment.segment.line.amc', 'Line AMC', required=1, select=1, ondelete='cascade'),
         'month': fields.date('Month', required=1, select=1),
         'quantity': fields.float('Qty'),
         'expiry_line_id': fields.many2one('product.likely.expire.report.line', 'Expiry Line'),
@@ -2317,7 +2318,7 @@ class replenishment_segment_line_amc_detailed_amc(osv.osv):
     _name = 'replenishment.segment.line.amc.detailed.amc'
     _rec_name = 'line_amc_id'
     _columns = {
-        'segment_line_id': fields.many2one('replenishment.segment.line', 'Seg Line', required=1, select=1),
+        'segment_line_id': fields.many2one('replenishment.segment.line', 'Seg Line', required=1, select=1, ondelete='cascade'),
         'month': fields.date('Month', required=1, select=1),
         'amc': fields.float('AMC'),
     }
@@ -2327,7 +2328,7 @@ class replenishment_segment_line_amc_past_fmc(osv.osv):
     _name = 'replenishment.segment.line.amc.past_fmc'
     _rec_name = 'line_amc_id'
     _columns = {
-        'segment_line_id': fields.many2one('replenishment.segment.line', 'Seg Line', required=1, select=1),
+        'segment_line_id': fields.many2one('replenishment.segment.line', 'Seg Line', required=1, select=1, ondelete='cascade'),
         'month': fields.date('Month', required=1, select=1),
         'fmc': fields.float('FMC'),
     }
