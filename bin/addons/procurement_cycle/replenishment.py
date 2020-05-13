@@ -795,6 +795,10 @@ class replenishment_segment(osv.osv):
             else:
                 rdd = datetime.strptime(seg.date_next_order_received_modified or seg.date_next_order_received, '%Y-%m-%d')
 
+            if seg.date_next_order_received_modified or seg.date_next_order_received:
+                seg_rdd = datetime.strptime(seg.date_next_order_received_modified or seg.date_next_order_received, '%Y-%m-%d')
+            else:
+                seg_rdd = rdd
             oc = rdd + relativedelta(months=seg.order_coverage)
             line_ids_order = sorted(seg.line_ids, key=lambda x: bool(x.replaced_product_id))
             lacking_by_prod = {}
@@ -866,12 +870,11 @@ class replenishment_segment(osv.osv):
                                 before_rdd = True
 
                             begin = max(compute_begin_date, from_fmc)
-                            end = min(rdd, to_fmc)
+                            end = min(seg_rdd, to_fmc)
 
+                            end_projected = min(rdd, end)
                             if end >= begin:
                                 month = (end-begin).days/30.44
-                                total_month += month
-
 
                                 new_begin = begin
                                 period_conso = total_fmc+month*num_fmc
@@ -912,6 +915,10 @@ class replenishment_segment(osv.osv):
                                             qty_lacking += pas_full
                                             pas_full = 0
 
+                            if end_projected >= begin:
+                                month = (end_projected-begin).days/30.44
+                                total_month += month
+
                                 if not lacking:
                                     if total_fmc+month*num_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
                                         month_of_supply += month
@@ -921,12 +928,12 @@ class replenishment_segment(osv.osv):
 
 
                                 if review_id:
-                                    if end.month == begin.month and end.year == begin.year:
-                                        fmc_by_month[end.strftime('%Y-%m-%d')] = {'value': num_fmc, 'accumulated': total_fmc+month*num_fmc}
+                                    if end_projected.month == begin.month and end_projected.year == begin.year:
+                                        fmc_by_month[end_projected.strftime('%Y-%m-%d')] = {'value': num_fmc, 'accumulated': total_fmc+month*num_fmc}
                                     else:
                                         tmp_begin = begin
                                         accumulated = total_fmc
-                                        while tmp_begin <= end:
+                                        while tmp_begin <= end_projected:
                                             tmp_end = tmp_begin + relativedelta(months=1, day=1, days=-1)
                                             if tmp_begin.day !=1:
                                                 nb_month = (tmp_end - tmp_begin).days/30.44
@@ -1028,7 +1035,7 @@ class replenishment_segment(osv.osv):
                     warnings.append(wmsg)
                     warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('FMC'))))
 
-                if review_id and month_of_supply and month_of_supply > line.segment_id.projected_view + line.segment_id.safety_stock:
+                if review_id and month_of_supply and month_of_supply*30.44 > (seg_rdd-today).days + line.segment_id.safety_stock*30.44:
                     wmsg = _('Excess Stock')
                     warnings.append(wmsg)
                     warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('Excess'))))
