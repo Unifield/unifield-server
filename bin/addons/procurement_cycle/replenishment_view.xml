@@ -239,17 +239,17 @@
                             <html colspan="4">
                              <table id="rr-chrono" width="100%%">
                                     <tr>
-                                        <td colspan="8" class="tlt">Total Lead Time (days) : <field name="total_lt" nolabel="1"/></td>
+                                        <td colspan="8" class="tlt"><translate>Total Lead Time (days) :</translate><field name="total_lt" nolabel="1"/></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="4" class="ilt">Internal Lead Time (days) :  <field name="internal_lt" nolabel="1" /></td>
-                                        <td colspan="4" class="elt">External Lead Time (days) : <field name="external_lt" nolabel="1" /></td>
+                                        <td colspan="4" class="ilt"><translate>Internal Lead Time (days) :</translate><field name="internal_lt" nolabel="1" /></td>
+                                        <td colspan="4" class="elt"><translate>External Lead Time (days) :</translate><field name="external_lt" nolabel="1" /></td>
                                     </tr>
                                     <tr>
-                                        <td class="oclt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="order_creation_lt">Order Creation Lead Time (days) : <field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1"/></td>
-                                        <td class="ovlt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="order_validation_lt">Order Validation Lead Time (days) : <field name="order_validation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
-                                        <td class="slt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="supplier_lt">Supplier Lead Time (days) : <field name="supplier_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
-                                        <td class="hlt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="handling_lt">Handling Lead Time (days) : <field name="handling_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
+                                        <td class="oclt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="order_creation_lt"><translate>Order Creation Lead Time (days) :</translate><field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1"/></td>
+                                        <td class="ovlt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="order_validation_lt"><translate>Order Validation Lead Time (days) :</translate><field name="order_validation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
+                                        <td class="slt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="supplier_lt"><translate>Supplier Lead Time (days) :</translate><field name="supplier_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
+                                        <td class="hlt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="handling_lt"><translate>Handling Lead Time (days) :</translate><field name="handling_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
                                     </tr>
                                 </table>
                              </html>
