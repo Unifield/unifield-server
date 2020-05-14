@@ -324,6 +324,7 @@ class replenishment_location_config(osv.osv):
                     'location_config_id': loc_config.id,
                     'hidden': True,
                     'description_seg': 'HIDDEN',
+                    'name_seg': 'Stock/Pipe products not segmented',
                     'order_creation_lt': 1,
                     'order_validation_lt': 1,
                     'supplier_lt': 1,
