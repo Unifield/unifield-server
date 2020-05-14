@@ -1800,7 +1800,7 @@ class replenishment_segment_line(osv.osv):
         'real_stock': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='Real Stock', multi='get_stock_amc'),
         'pipeline_before_rdd': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline Before RDD', multi='get_pipeline_before'),
         'pipeline_between_rdd_oc': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline between RDD and OC', multi='get_pipeline_before'),
-        'rr_amc': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='RR-AMC', multi='get_stock_amc'),
+        'rr_amc': fields.function(_get_real_stock, type='float', method=True, string='RR-AMC', multi='get_stock_amc'),
         'list_fmc': fields.function(_get_list_fmc, method=1, type='char', string='more FMC'),
         'rr_fmc_1': fields.float_null('RR FMC 1', related_uom='uom_id'),
         'rr_fmc_from_1': fields.date('From 1'),

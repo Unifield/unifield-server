@@ -204,6 +204,16 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
   </Style>
+  <Style ss:ID="s97n">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="Fixed"/>
+  </Style>
   <Style ss:ID="s97u">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
    <Borders>
@@ -419,7 +429,7 @@
     <Cell ss:StyleID="s97u"><Data ss:Type="String">${(prod.replacing_product_id and prod.replacing_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s97u"><Data ss:Type="String">${(prod.replaced_product_id and prod.replaced_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.real_stock}</Data></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.rr_amc}</Data></Cell>
+    <Cell ss:StyleID="s97n"><Data ss:Type="Number">${prod.rr_amc}</Data></Cell>
     % if objects[0].rule == 'cycle':
         <Cell ss:StyleID="s97u">
         % if prod.buffer_qty is not False:

@@ -311,6 +311,17 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
     <NumberFormat ss:Format="Percent"/>
   </Style>
+  <Style ss:ID="s145n">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
+   <NumberFormat ss:Format="Fixed"/>
+  </Style>
   <Style ss:ID="s145">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -933,7 +944,7 @@
     <Cell ss:StyleID="s132"><Data ss:Type="String">${_('Qty of Projected Expiries before consumption')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Qty expiring within period')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Open Loan on product (Yes/No)')|x}</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Donation pendings (Yes/No)')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Donations pending (Yes/No)')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Sleeping stock Qty')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${getSel(objects[0], 'time_unit')|x} ${_('of supply (RR-AMC)')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${getSel(objects[0], 'time_unit')|x} ${_('of supply (RR-FMC)')|x}</Data></Cell>
@@ -1036,13 +1047,13 @@
             <Data ss:Type="Number">${line.rr_fmc_avg}</Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s145">
+    <Cell ss:StyleID="s145n">
         % if line.rr_amc:
             <Data ss:Type="Number">${line.rr_amc}</Data>
         % endif
     </Cell>
     
-    <Cell ss:StyleID="s141">
+    <Cell ss:StyleID="s145n">
         % if line.std_dev_hmc:
             <Data ss:Type="Number">${line.std_dev_hmc}</Data>
         % endif
@@ -1053,7 +1064,7 @@
         % endif
     </Cell>
     % if line.rule == 'cycle':
-    <Cell ss:StyleID="s141">
+    <Cell ss:StyleID="s145n">
         % if line.std_dev_hmc_fmc:
             <Data ss:Type="Number">${line.std_dev_hmc_fmc}</Data>
         % endif
@@ -1111,12 +1122,12 @@
             <Data ss:Type="Number">${line.sleeping_qty}</Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s141">
+    <Cell ss:StyleID="s145n">
         % if line.unit_of_supply_amc:
             <Data ss:Type="Number">${line.unit_of_supply_amc}</Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s146">
+    <Cell ss:StyleID="s145n">
         % if line.unit_of_supply_fmc:
             <Data ss:Type="Number">${line.unit_of_supply_fmc}</Data>
         % endif
