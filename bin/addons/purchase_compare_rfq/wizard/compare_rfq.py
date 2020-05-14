@@ -360,6 +360,7 @@ class wizard_compare_rfq(osv.osv_memory):
                 tl_obj.write(cr, uid, [wl_brw.tender_line_id.id], {
                     'purchase_order_line_id': pol_id,
                     'comment': wl_brw.rfq_line_id.comment or '',
+                    'supplier_id': wl_brw.choosen_supplier_id and wl_brw.choosen_supplier_id.id or False,
                 }, context=context)
 
             # UF-733: if all tender lines have been compared (have PO Line id),
@@ -367,7 +368,7 @@ class wizard_compare_rfq(osv.osv_memory):
             # for proceeding to other actions (create PO, Done etc)
             flag = tl_obj.search(cr, uid, [
                 ('tender_id', '=', t_id),
-                ('line_state', '!=' ,'cancel'),
+                ('line_state', '!=', 'cancel'),
                 ('purchase_order_line_id', '=', False),
             ], limit=1, context=context)
 
@@ -385,6 +386,7 @@ class wizard_compare_rfq(osv.osv_memory):
             'res_id': t_id,
             'context': context
         }
+
 
 wizard_compare_rfq()
 
