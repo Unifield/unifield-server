@@ -160,6 +160,11 @@ class account_invoice_import(osv.osv_memory):
                     if not line_number:
                         errors.append(_('Line %s: the line number is missing.') % (current_line_num,))
                         continue
+                    try:
+                        line_number = int(line_number)
+                    except ValueError, e:
+                        errors.append(_("Line %s: the line number format is incorrect.") % (current_line_num,))
+                        continue
                     invoice_line_dom = [('invoice_id', '=', invoice.id), ('line_number', '=', line_number)]
                     invoice_line_ids = invoice_line_obj.search(cr, uid, invoice_line_dom, limit=1, context=context)
                     if not invoice_line_ids:
