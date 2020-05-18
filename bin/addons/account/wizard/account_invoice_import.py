@@ -152,7 +152,7 @@ class account_invoice_import(osv.osv_memory):
                     line = import_cell_data_obj.get_line_values(cr, uid, ids, r)
                     line.extend([False for i in range(len(cols) - len(line))])
                     # get the data
-                    line_number = line[cols['line_number']] and tools.ustr(line[cols['line_number']])
+                    line_number = line[cols['line_number']]
                     product_code = line[cols['product']] and tools.ustr(line[cols['product']])
                     account_code = line[cols['account']] and tools.ustr(line[cols['account']])
                     quantity = line[cols['quantity']] or 0.0
