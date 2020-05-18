@@ -645,6 +645,8 @@ class replenishment_segment(osv.osv):
 
         calc_id = False
         for seg in self.browse(cr, uid, ids, context):
+            if seg.hidden and (not seg.location_config_id.include_product or not seg.line_ids):
+                continue
             instances_name_by_id = {seg.main_instance.id: seg.main_instance.code}
             all_instances = set([seg.main_instance.id])
             for remote_loc in seg.remote_location_ids:
@@ -807,6 +809,7 @@ class replenishment_segment(osv.osv):
                 total_fmc = 0
                 total_month = 0
                 month_of_supply = 0
+                month_of_supply_oc = 0
 
                 total_fmc_oc = 0
                 total_month_oc = 0
@@ -817,6 +820,7 @@ class replenishment_segment(osv.osv):
                 before_rdd = False
 
                 lacking = False
+                lacking_oc = False
 
                 fmc_by_month = {}
                 detailed_pas = []
@@ -870,81 +874,75 @@ class replenishment_segment(osv.osv):
                             if rdd <= to_fmc:
                                 before_rdd = True
 
-                            begin = max(compute_begin_date, from_fmc)
-                            end = min(seg_rdd, to_fmc)
-
-                            end_projected = min(rdd, end)
-                            if end >= begin:
-                                month = (end-begin).days/30.44
-
-                                new_begin = begin
-                                period_conso = total_fmc+month*num_fmc
-                                if period_conso <= pas_full:
-                                    pas_full -= period_conso
+                            begin_init = max(compute_begin_date, from_fmc)
+                            end_loop = min(rdd, to_fmc)
+                            begin = begin_init
+                            while begin < end_loop:
+                                end = min(begin + relativedelta(months=1, day=1, days=-1), end_loop)
+                                if begin < seg_rdd < end:
+                                    split_dates = [(begin, seg_rdd), (seg_rdd, end)]
                                 else:
-                                    # missing stock to cover the full period
-                                    for x in pipe_date[:]:
-                                        # add pipe before period
-                                        if x <= begin:
-                                            pas_full += pipe_data[x]
-                                            pipe_date.pop(0)
-                                        else:
-                                            break
-                                    if period_conso > pas_full:
-                                        # still not enough stock
-                                        for x in pipe_date[:]:
-                                            if x <= end:
-                                                # compute missing just before the next pipe
-                                                ndays = (x - new_begin).days
-                                                qty = num_fmc/30.44*ndays
-                                                pas_full -= qty
-                                                if pas_full < 0:
-                                                    qty_lacking += pas_full
+                                    split_dates = [(begin, end)]
 
-                                                # new available qty is the qty in the pipe
-                                                pas_full = pipe_data[x]
-                                                new_begin = pipe_date.pop(0)
+                                for begin, end in split_dates:
+                                    date_before_rdd = seg_rdd >= end
+                                    month = ((end-begin).days + 1)/30.44
+
+                                    new_begin = begin
+                                    period_conso = total_fmc+month*num_fmc
+                                    if period_conso <= pas_full:
+                                        pas_full -= period_conso
+                                    else:
+                                        # missing stock to cover the full period
+                                        for x in pipe_date[:]:
+                                            # add pipe before period
+                                            if x <= begin:
+                                                pas_full += pipe_data[x]
+                                                pipe_date.pop(0)
                                             else:
                                                 break
+                                        if period_conso > pas_full:
+                                            # still not enough stock
+                                            for x in pipe_date[:]:
+                                                if x <= end:
+                                                    # compute missing just before the next pipe
+                                                    ndays = (x - new_begin).days + 1
+                                                    qty = num_fmc/30.44*ndays
+                                                    pas_full -= qty
+                                                    if pas_full < 0 and date_before_rdd:
+                                                        qty_lacking += pas_full
 
-                                    if end >= new_begin:
-                                        # all qty in pipe is added
-                                        # compute consumption from last received to the end
-                                        qty = (num_fmc/30.44)*(end - new_begin).days
-                                        pas_full -= qty
-                                        if pas_full < 0:
-                                            qty_lacking += pas_full
-                                            pas_full = 0
+                                                    # new available qty is the qty in the pipe
+                                                    pas_full = pipe_data[x]
+                                                    new_begin = pipe_date.pop(0)
+                                                else:
+                                                    break
 
-                            if end_projected >= begin:
-                                month = (end_projected-begin).days/30.44
-                                total_month += month
+                                        if end >= new_begin:
+                                            # all qty in pipe is added
+                                            # compute consumption from last received to the end
+                                            qty = (num_fmc/30.44)*((end - new_begin).days+1)
+                                            pas_full -= qty
+                                            if pas_full < 0:
+                                                if date_before_rdd:
+                                                    qty_lacking += pas_full
+                                                pas_full = 0
 
-                                if not lacking:
-                                    if total_fmc+month*num_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
-                                        month_of_supply += month
-                                    elif num_fmc:
-                                        month_of_supply += max(0, (sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc) / num_fmc)
-                                        lacking = True
+                                    total_month += month
 
+                                    if not lacking:
+                                        if total_fmc+month*num_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
+                                            month_of_supply += month
+                                        elif num_fmc:
+                                            month_of_supply += max(0, (sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc) / num_fmc)
+                                            lacking = True
+                                    total_fmc += month*num_fmc
 
-                                if review_id:
-                                    if end_projected.month == begin.month and end_projected.year == begin.year:
-                                        fmc_by_month[end_projected.strftime('%Y-%m-%d')] = {'value': num_fmc, 'accumulated': total_fmc+month*num_fmc}
-                                    else:
-                                        tmp_begin = begin
-                                        accumulated = total_fmc
-                                        while tmp_begin <= end_projected:
-                                            tmp_end = tmp_begin + relativedelta(months=1, day=1, days=-1)
-                                            if tmp_begin.day !=1:
-                                                nb_month = (tmp_end - tmp_begin).days/30.44
-                                                accumulated += nb_month*num_fmc
-                                            else:
-                                                accumulated += num_fmc
-                                            fmc_by_month[tmp_end.strftime('%Y-%m-%d')] = {'value': num_fmc, 'accumulated': accumulated}
-                                            tmp_begin += relativedelta(months=1, day=1)
+                                    if review_id:
+                                        fmc_by_month[end.strftime('%Y-%m-%d')] = {'value': num_fmc, 'pas': pas_full}
 
-                                total_fmc += month*num_fmc
+                                begin += relativedelta(months=1, day=1)
+
 
                             if not review_id:
                                 if oc <= to_fmc:
@@ -952,10 +950,22 @@ class replenishment_segment(osv.osv):
                                 begin_oc = max(rdd, from_fmc, compute_begin_date)
                                 end_oc = min(oc, to_fmc)
                                 if end_oc >= begin_oc:
-                                    month = (end_oc-begin_oc).days/30.44
+                                    month = ((end_oc-begin_oc).days +1)/30.44
                                     total_month_oc += month
+
+                                    # used to compute SODate on replaced prod (period: RDD + OC)
+                                    if not lacking and not lacking_oc:
+                                        if total_fmc+total_fmc_oc+month*num_fmc < sum_line[line.id]['pas_no_pipe_no_fmc']:
+                                            month_of_supply_oc += month
+                                        elif num_fmc:
+                                            month_of_supply_oc += max(0, (sum_line[line.id]['pas_no_pipe_no_fmc'] - total_fmc_oc - total_fmc) / num_fmc)
+                                            lacking_oc = True
+
                                     total_fmc_oc += month*num_fmc
                     if not review_id:
+                        month_of_supply_oc += month_of_supply
+                        if lacking or lacking_oc:
+                            lacking_by_prod[line.product_id.id] = today + relativedelta(days=month_of_supply_oc*30.44)
                         valid_rr_fmc = before_today and before_rdd and before_oc
                     else:
                         valid_rr_fmc = before_today and before_rdd
@@ -967,12 +977,7 @@ class replenishment_segment(osv.osv):
                             detailed_pas.append((0, 0, {
                                 'date': end_date.strftime('%Y-%m-%d'),
                                 'rr_fmc': rr_fmc_month,
-                                'projected': rr_fmc_month and max(0,
-                                                                  sum_line.get(line.id, {}).get('real_stock', 0) -
-                                                                  sum_line.get(line.id, {}).get('reserved_stock_qty', 0) +
-                                                                  pipe_by_prod_by_month_minus_expired.get(line.product_id.id, {}).get(end_date.strftime('%Y-%m-%d'), 0) -
-                                                                  fmc_by_month.get(end_date.strftime('%Y-%m-%d'), {}).get('accumulated', 0)
-                                                                  ),
+                                'projected': rr_fmc_month and max(0, fmc_by_month.get(end_date.strftime('%Y-%m-%d'), {}).get('pas',0)),
                             }))
 
 
@@ -1013,7 +1018,6 @@ class replenishment_segment(osv.osv):
                         proposed_order_qty = 0
                         qty_lacking = 0
                     else:
-                        #print line.product_id.default_code, 'total_fmc_oc', total_fmc_oc, 'ss_stock', ss_stock, 'line.buffer_qty', line.buffer_qty, 'expired_rdd_oc', sum_line.get(line.id, {}).get('expired_rdd_oc',0), 'pas', pas, 'line.pipeline_between_rdd_oc', line.pipeline_between_rdd_oc
                         proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rdd_oc)
 
                 elif seg.rule == 'minmax':
@@ -1047,7 +1051,7 @@ class replenishment_segment(osv.osv):
                     warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('No Segment'))))
 
 
-                lacking_by_prod[line.product_id.id] = qty_lacking_needed_by
+                #lacking_by_prod[line.product_id.id] = qty_lacking_needed_by
                 line_data = {
                     'product_id': line.product_id.id,
                     'uom_id': line.uom_id.id,
@@ -2227,6 +2231,7 @@ class replenishment_segment_line_amc(osv.osv):
                                )
 
                     projected_view = (datetime_now + relativedelta(months=segment.projected_view, day=1, days=-1)).strftime('%Y-%m-%d')
+
                     # sleeping qty
                     sleeping_context = {
                         'to_date': datetime_now.strftime('%Y-%m-%d'),
@@ -2611,7 +2616,7 @@ class replenishment_inventory_review(osv.osv):
         product_code = [x.default_code for x in data['products']]
 
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_move_form3', ['tree', 'form'], new_tab=True, context=context)
-        res['domain'] = ['&', '&', '|', ('location_id', 'in', data['location_ids']), ('location_dest_id', 'in', data['location_ids']), ('state', 'in', ['confirmed', 'assigned']), ('product_id', 'in', product_ids)]
+        res['domain'] = ['&', '&', ('location_dest_id', 'in', data['location_ids']), ('state', 'in', ['confirmed', 'assigned']), ('product_id', 'in', product_ids)]
         res['name'] = _('Pipeline %s: %s') % (data['inv_review'].location_config_id.name, ', '.join(product_code))
         return res
 
