@@ -109263,6 +109263,12 @@ msgid "Line %s: the quantity format is incorrect."
 msgstr "Ligne %s : le format de la quantité est incorrect."
 
 #. module: account
+#: code:addons/account/wizard/account_invoice_import.py:166
+#, python-format
+msgid "Line %s: the line number format is incorrect."
+msgstr "Ligne %s : le format du numéro de ligne est incorrect."
+
+#. module: account
 #: code:addons/account/wizard/account_invoice_import.py:156
 #, python-format
 msgid "Line %s: the line number %s doesn't exist in the invoice."
