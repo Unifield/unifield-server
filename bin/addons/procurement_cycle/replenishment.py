@@ -254,6 +254,9 @@ class replenishment_location_config(osv.osv):
                 self.write(cr, uid, config.id, {'last_review_error': _('No Segment found')}, context=context)
                 continue
 
+            if config.include_product:
+                self.generate_hidden_segment(cr, uid, config.id, context)
+
             segments = segment_obj.browse(cr, uid, segment_ids, fields_to_fetch=['name_seg'], context=context)
 
             review_id = False
