@@ -323,7 +323,7 @@
             <field name="model">account.invoice</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Invoice">
+                <form string="Invoice" noteditable="state=='cancel'">
                     <group colspan="4" col="8">
                     <field name="journal_id" groups="base.group_user" widget="selection"/>
                     <field name="journal_type" invisible="1"/>

@@ -152,13 +152,18 @@ class account_invoice_import(osv.osv_memory):
                     line = import_cell_data_obj.get_line_values(cr, uid, ids, r)
                     line.extend([False for i in range(len(cols) - len(line))])
                     # get the data
-                    line_number = line[cols['line_number']] and tools.ustr(line[cols['line_number']])
+                    line_number = line[cols['line_number']]
                     product_code = line[cols['product']] and tools.ustr(line[cols['product']])
                     account_code = line[cols['account']] and tools.ustr(line[cols['account']])
                     quantity = line[cols['quantity']] or 0.0
                     unit_price = line[cols['unit_price']] or 0.0
                     if not line_number:
                         errors.append(_('Line %s: the line number is missing.') % (current_line_num,))
+                        continue
+                    try:
+                        line_number = int(line_number)
+                    except ValueError, e:
+                        errors.append(_("Line %s: the line number format is incorrect.") % (current_line_num,))
                         continue
                     invoice_line_dom = [('invoice_id', '=', invoice.id), ('line_number', '=', line_number)]
                     invoice_line_ids = invoice_line_obj.search(cr, uid, invoice_line_dom, limit=1, context=context)

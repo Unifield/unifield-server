@@ -74,6 +74,18 @@ class wizard_compare_rfq(osv.osv_memory):
 
         return True
 
+    def _get_currency(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            if wiz.tender_id.currency_id:
+                res[wiz.id] = wiz.tender_id.currency_id.id
+            else:
+                res[wiz.id] = cur_id
+
+        return res
+
     _columns = {
         'line_ids': fields.one2many(
             'wizard.compare.rfq.line',
@@ -152,10 +164,13 @@ class wizard_compare_rfq(osv.osv_memory):
             store=False,
             readonly=False,
         ),
-        'currency_id': fields.many2one(
-            'res.currency',
-            string='Currency',
-            readonly=True,
+        'currency_id': fields.function(
+            _get_currency,
+            string="Currency for Comparison",
+            type='many2one',
+            relation='res.currency',
+            method=True,
+            store=False
         ),
     }
 
@@ -219,7 +234,6 @@ class wizard_compare_rfq(osv.osv_memory):
                 'warehouse_id': wh_id and wh_id.id or False,
                 'details': tender.details or '',
                 'notes': tender.notes or '',
-                'currency_id': tender.creator.company_id.currency_id.id,
             }, context=context)
 
             context.update({'tender_id': tender.id})
@@ -277,26 +291,33 @@ class wizard_compare_rfq(osv.osv_memory):
                     _('No supplier selected !')
                 )
 
-            # In case of removing supplier on all lines
-            if deselect:
-                wiz_lines = wl_obj.search(cr, uid, [
-                    ('compare_id', '=', wiz.id),
-                ], context=context)
-                wl_obj.write(cr, uid, wiz_lines, {
-                    'choosen_supplier_id': False,
-                    'rfq_line_id': False,
-                }, context=context)
-            else:
-                for l in wiz.line_ids:
-                    rfql_id = self._get_rfq_line(
-                        cr, uid, l, wiz.supplier_id.id, context=context)
-                    if not rfql_id:
-                        continue
+            selected_lines_ids = []
+            if context.get('button_selected_ids'):
+                selected_lines_ids = context['button_selected_ids']
 
-                    wl_obj.write(cr, uid, [l.id], {
-                        'choosen_supplier_id': wiz.supplier_id.id,
-                        'rfq_line_id': rfql_id,
-                    }, context=context)
+            if deselect:  # In case of removing supplier on all lines
+                wiz_lines = []
+                if not selected_lines_ids:
+                    wiz_lines = wl_obj.search(cr, uid, [('compare_id', '=', wiz.id)], context=context)
+                wl_obj.write(cr, uid, selected_lines_ids or wiz_lines, {'choosen_supplier_id': False,
+                                                                        'rfq_line_id': False}, context=context)
+            else:
+                if selected_lines_ids:
+                    for line_id in selected_lines_ids:
+                        wl_obj.write(cr, uid, selected_lines_ids, {'choosen_supplier_id': wiz.supplier_id.id,
+                                                                   'rfq_line_id': line_id}, context=context)
+                else:
+                    for l in wiz.line_ids:
+                        rfql_id = self._get_rfq_line(cr, uid, l, wiz.supplier_id.id, context=context)
+                        if not rfql_id:
+                            continue
+
+                        wl_obj.write(cr, uid, [l.id], {'choosen_supplier_id': wiz.supplier_id.id,
+                                                       'rfq_line_id': rfql_id}, context=context)
+
+        if context.get('button_selected_ids'):
+            # Prevent the same ids to be found if no line is selected on the same wizard
+            context['button_selected_ids'] = []
 
         return {
             'type': 'ir.actions.act_window',
@@ -312,9 +333,7 @@ class wizard_compare_rfq(osv.osv_memory):
         """
         Remove the supplier from all lines
         """
-        return self.add_supplier_all_lines(cr, uid, ids,
-                                           context=context, deselect=True)
-
+        return self.add_supplier_all_lines(cr, uid, ids, context=context, deselect=True)
 
     def update_tender(self, cr, uid, ids, context=None):
         '''
@@ -479,8 +498,6 @@ class wizard_compare_rfq_line(osv.osv_memory):
         if context is None:
             context = context
 
-        func_cur_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
-
         # Force the reading of some fields
         forced_flds = [
             'tender_line_id',
@@ -489,13 +506,15 @@ class wizard_compare_rfq_line(osv.osv_memory):
             if ffld not in vals:
                 vals.append(ffld)
 
-        res = super(wizard_compare_rfq_line, self).\
-            read(cr, uid, ids, vals, context=context, load=load)
+        res = super(wizard_compare_rfq_line, self).read(cr, uid, ids, vals, context=context, load=load)
 
+        cur_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
         t_id = context.get('tender_id', False)
         s_ids = []
         if t_id:
-            s_ids = t_obj.browse(cr, uid, t_id, context=context).supplier_ids
+            tender = t_obj.browse(cr, uid, t_id, fields_to_fetch=['supplier_ids', 'currency_id'], context=context)
+            s_ids = tender.supplier_ids
+            cur_id = tender.currency_id and tender.currency_id.id or cur_id
 
         for sup in s_ids:
             sid = sup.id
@@ -509,14 +528,9 @@ class wizard_compare_rfq_line(osv.osv_memory):
                 if rfql_ids:
                     rfql = pol_obj.browse(cr, uid, rfql_ids[0], context=context)
                     pu = rfql.price_unit
-                    same_cur = rfql.order_id.pricelist_id.currency_id.id == func_cur_id
+                    same_cur = rfql.order_id.pricelist_id.currency_id.id == cur_id
                     if not same_cur:
-                        pu = cur_obj.compute(
-                            cr, uid,
-                            rfql.order_id.pricelist_id.currency_id.id,
-                            func_cur_id,
-                            pu,
-                            round=True)
+                        pu = cur_obj.compute(cr, uid, rfql.order_id.pricelist_id.currency_id.id, cur_id, pu, round=True)
 
                 r.update({
                     'name_%s' % sid: sup.name,

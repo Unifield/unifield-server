@@ -54,6 +54,34 @@ class patch_scripts(osv.osv):
 
 
     # UF17.0
+    def us_7425_clean_period_not_run(self, cr, uid, *a, **b):
+        """
+        Sets as "Run without execution" the updates related to the field-closing of periods received from OCBHQ and not executed
+        in projects and coordos because the related FY is already Mission-Closed.
+        """
+        if self.pool.get('sync_client.version') and self.pool.get('sync.client.entity'):
+            oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1;"
+            cr.execute(oc_sql)
+            oc = cr.fetchone()[0]
+            if oc == 'ocb':
+                instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+                if instance and instance.level in ['project', 'coordo']:
+                    update_dom = [('model', '=', 'account.period'),
+                                  ('run', '=', False),
+                                  ('log', 'like', "Fiscal Year is already in Mission-Closed.")]
+                    update_ids = self.pool.get('sync.client.update_received').search(cr, uid, update_dom)
+                    if update_ids:
+                        update_sync_received = """
+                            UPDATE sync_client_update_received
+                            SET manually_ran='t', run='t', execution_date=now(), 
+                            manually_set_run_date=now(), editable='f', 
+                            log='Set manually to run without execution'
+                            WHERE id IN %s;
+                        """
+                        cr.execute(update_sync_received, (tuple(update_ids),))
+                        self._logger.warn('%s Not Runs on periods set as manually run without exec. as the FY is already closed.' %
+                                          (cr.rowcount,))
+
     def us_7015_del_rac_line_sql(self, cr, uid, *a, **b):
         cr.drop_constraint_if_exists('real_average_consumption_line', 'real_average_consumption_line_unique_lot_poduct')
         return True
@@ -120,6 +148,30 @@ class patch_scripts(osv.osv):
                    AND journal_id IN (SELECT id FROM account_journal WHERE type in ('bank', 'cash'));
                    """)
         self._logger.warn('Starting Balance set to zero in %s registers.' % (cr.rowcount,))
+        return True
+
+    def us_6641_remove_duplicates_from_stock_mission(self, cr, uid, *a, **b):
+        """
+        Remove duplicates products (lines not coming from the current instance) from the generated Stock Mission Report lines
+        """
+        if not self.pool.get('sync.client.message_received'):  # New instance
+            return True
+
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id.id
+        if not instance_id:
+            return True
+        cr.execute("""
+                SELECT l.id FROM stock_mission_report_line l 
+                    LEFT JOIN ir_model_data d ON d.res_id = l.id AND d.model = 'stock.mission.report.line' AND d.module = 'sd'
+                WHERE d.name LIKE (SELECT identifier||'%%' FROM sync_client_entity) AND 
+                    mission_report_id IN (SELECT id FROM stock_mission_report WHERE instance_id != %s)
+        """, (instance_id,))
+
+        lines_to_del = [l[0] for l in cr.fetchall()]
+        if lines_to_del:
+            cr.execute("""DELETE FROM stock_mission_report_line WHERE id IN %s""", (tuple(lines_to_del),))
+            self._logger.warn('%s Stock Mission Report lines have been deleted.' % (len(lines_to_del),))
+
         return True
 
     # UF16.1
@@ -198,6 +250,17 @@ class patch_scripts(osv.osv):
         """, (sync_id, ))
         self._logger.warn('%s empty IVOs have been deleted.', (cr.rowcount,))
 
+        return True
+
+    def us_6513_rename_dispatch_to_shipment(self, cr, uid, *a, **b):
+        """
+        Rename the locations named 'Dispatch' to 'Shipment' for normal Location and Stock Mission report
+        """
+        cr.execute("""UPDATE stock_location SET name = 'Shipment' WHERE name = 'Dispatch'""")
+        cr.execute("""
+            UPDATE stock_mission_report_line_location SET remote_location_name = 'Shipment' 
+            WHERE remote_location_name = 'Dispatch' 
+        """)
         return True
 
     # UF16.0

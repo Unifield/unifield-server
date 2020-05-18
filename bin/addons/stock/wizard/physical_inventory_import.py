@@ -75,6 +75,8 @@ class PhysicalInventoryImportWizard(osv.osv_memory):
             if iv_ids:
                 inventory_obj.write(cr, uid, iv_ids, {'discrepancies_generated': True}, context=context)
             inventory_obj.pre_process_discrepancies(cr, uid, items, context=context)
+            for iv_id in iv_ids:
+                inventory_obj._update_total_product(cr, uid, iv_id, context=context)
             return self.close_action()
         # Found, an action is missing on a line
         return self.no_action()

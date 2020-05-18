@@ -401,6 +401,7 @@ class PhysicalInventory(osv.osv):
         counting_lines_with_no_discrepancy = []
         used_line_no = {}
         # For each of them, compare the theoretical and counted qty
+
         for product_batch_expirydate in filtered_all_product_batch_expirydate:
             # If the key is not known, assume 0
             theoretical_qty = theoretical_quantities.get(product_batch_expirydate, 0.0)
@@ -464,11 +465,6 @@ class PhysicalInventory(osv.osv):
         physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': create_discrepancy_lines, 'discrepancies_generated': False, 'has_bad_stock': False}, context=context)
 
 
-        self._update_total_product(cr, uid, inventory_id,
-                                   theoretical_quantities,
-                                   counted_quantities,
-                                   context=context)
-
         return self.resolve_discrepancies_anomalies(cr, uid, inventory_id, context=context)
 
     def re_generate_discrepancies(self, cr, uid, inventory_ids, context=None):
@@ -520,57 +516,25 @@ class PhysicalInventory(osv.osv):
             return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Warning', anomalies, inventory_id=inventory_id)
         else:
             self.write(cr, uid, inventory_id, {'discrepancies_generated': True}, context=context)
+            self._update_total_product(cr, uid, inventory_id, context=context)
             return {}
 
 
-    def _update_total_product(self, cr, uid, inventory_id, theoretical_qties, counted_qties, context=None):
+    def _update_total_product(self, cr, uid, inventory_id, context=None):
         """
         theoretical_qties and counted_qties are indexed with (product_id, batchnumber, expirydate)
         """
-        def read_single(model, id_, column):
-            return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
-        def read_many(model, ids, columns):
-            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
-        def write(model, id_, vals):
-            return self.pool.get(model).write(cr, uid, [id_], vals, context=context)
 
-        discrepancy_line_ids = read_single("physical.inventory",
-                                           inventory_id,
-                                           'discrepancy_line_ids')
 
-        discrepancy_lines = read_many("physical.inventory.discrepancy",
-                                      discrepancy_line_ids,
-                                      ["product_id"])
-
-        all_product_ids = set([ l["product_id"][0] for l in discrepancy_lines ])
-
-        total_product_theoretical_qties = {}
-        total_product_counted_qties = {}
-        for product_id in all_product_ids:
-
-            # FIXME : how to not take into account ignored lines in the count ? :/
-            total_product_theoretical_qties[product_id] = sum([ qty for k, qty in theoretical_qties.items() if k[0] == product_id ])
-            total_product_counted_qties[product_id] = sum([ qty for k, qty in counted_qties.items() if k[0] == product_id ])
-
-        update_discrepancy_lines = {}
-        for line in discrepancy_lines:
-            id_ = line["id"]
-            product_id = line["product_id"][0]
-            update_discrepancy_lines[id_] = {
-                'total_product_theoretical_qty': total_product_theoretical_qties[product_id],
-                'total_product_counted_qty': total_product_counted_qties[product_id]
-            }
-
-        todo = [(1, idu, values) for idu, values in update_discrepancy_lines.items()]
-
-        write("physical.inventory", inventory_id, {'discrepancy_line_ids':todo})
-
+        cr.execute('update physical_inventory_discrepancy set total_product_theoretical_qty=0, total_product_counted_qty=0 where inventory_id = %s', (inventory_id, ))
+        cr.execute("select product_id, sum(theoretical_qty), sum(counted_qty) from physical_inventory_discrepancy where ignored = 'f' and inventory_id = %s group by product_id", (inventory_id, ))
+        for x in cr.fetchall():
+            cr.execute('update physical_inventory_discrepancy set total_product_theoretical_qty=%s, total_product_counted_qty=%s where inventory_id = %s and product_id = %s', (x[1], x[2], inventory_id, x[0]))
 
     def pre_process_discrepancies(self, cr, uid, items, context=None):
         discrepancies = self.pool.get('physical.inventory.discrepancy')
         ignore_ids = [item['line_id'] for item in items if item['action'] == 'ignore']
         count_ids = [item['line_id'] for item in items if item['action'] == 'count']
-
         if ignore_ids:
             discrepancies.write(cr, uid, ignore_ids, {'counted_qty': 0.0, 'ignored': True})
         if count_ids:

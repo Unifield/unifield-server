@@ -418,6 +418,18 @@ class account_invoice(osv.osv):
             for node in nodes:
                 node.set('string', partner_string)
             res['arch'] = etree.tostring(doc)
+        elif view_type == 'search':
+            # remove the Cancel filter in all invoices but IVO and STV
+            context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
+                context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
+            context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
+                not context.get('is_debit_note', False)
+            if not context_ivo and not context_stv:
+                doc = etree.XML(res['arch'])
+                filter_node = doc.xpath("/search/group[1]/filter[@name='cancel_state']")
+                if filter_node:
+                    filter_node[0].getparent().remove(filter_node[0])
+                res['arch'] = etree.tostring(doc)
         return res
 
     def get_log_context(self, cr, uid, context=None):
@@ -1221,6 +1233,13 @@ class account_invoice(osv.osv):
                 ctx['type'] = obj_inv.type
                 message = _('Invoice ') + " '" + name + "' "+ _("is validated.")
                 self.log(cr, uid, inv_id, message, context=ctx)
+        return True
+
+    def cancel_invoice_from_workflow(self, cr, uid, ids, *args):
+        """
+        Sets the invoice to Cancelled and not Synchronized
+        """
+        self.write(cr, uid, ids, {'state': 'cancel', 'synced': False})
         return True
 
     def action_cancel(self, cr, uid, ids, *args):

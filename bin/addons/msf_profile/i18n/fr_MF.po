@@ -5395,6 +5395,7 @@ msgstr "validated - (sale.order.line)"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1072
+#: code:addons/product_attributes/product_attributes.py:1205
 #, python-format
 msgid "be %s externally"
 msgstr "be %s externally"
@@ -5778,7 +5779,7 @@ msgstr "Informations supplémentaires"
 msgid "Search Real Kit Composition Item"
 msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 
-#. modules: process, financing_contract, account_hq_entries, account_override, product_attributes, base_report_designer, msf_accrual, return_claim, account_mcdb, stock_override, analytic, purchase_followup, msf_doc_import, stock, product, finance, msf_homere_interface, hr, register_accounting, base, product_list, msf_tools, procurement_report, purchase, account, msf_outgoing, vertical_integration, sale, sales_followup, procurement, sourcing, msf_audittrail, msf_supply_doc_export, consumption_calculation, specific_rules, procurement_cycle
+#. modules: process, financing_contract, account_hq_entries, account_override, product_attributes, base_report_designer, msf_accrual, return_claim, account_mcdb, stock_override, analytic, purchase_followup, msf_doc_import, stock, product, finance, msf_homere_interface, hr, register_accounting, base, product_list, msf_tools, procurement_report, purchase, account, msf_outgoing, vertical_integration, sale, sales_followup, procurement, sourcing, msf_audittrail, msf_supply_doc_export, consumption_calculation, specific_rules, procurement_cycle, analytic_distribution
 #: view:account.account.type:0
 #: field:account.account.type,note:0
 #: view:account.analytic.account:0
@@ -5914,6 +5915,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:replenishment.segment.line,product_description:0
 #: report:addons/account/report/invoice_excel_export.mako:67
 #: field:account.invoice.import.errors,name:0
+#: field:account.commitment,description:0
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -8008,6 +8010,7 @@ msgstr "Assistant d'importation de la liste du personnel"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1080
+#: code:addons/product_attributes/product_attributes.py:1213
 #, python-format
 msgid "be supplied/exchanged internally"
 msgstr "be supplied/exchanged internally"
@@ -12731,6 +12734,7 @@ msgstr "Statistiques des Mouvements"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1432
+#: code:addons/product_attributes/product_attributes.py:1654
 #, python-format
 msgid "You cannot choose an UoM which is not in the same UoM category of default UoM"
 msgstr "You cannot choose an UoM which is not in the same UoM category of default UoM"
@@ -14710,6 +14714,7 @@ msgstr "Aucune période n'a été définie pour la ligne '%s' !"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1068
+#: code:addons/product_attributes/product_attributes.py:1201
 #, python-format
 msgid "be exchanged"
 msgstr "be exchanged"
@@ -19351,6 +19356,8 @@ msgstr "Sélectionner la période"
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1238
 #: code:addons/product_attributes/product_attributes.py:1320
+#: code:addons/product_attributes/product_attributes.py:1386
+#: code:addons/product_attributes/product_attributes.py:1524
 #, python-format
 msgid "White spaces are not allowed in product code"
 msgstr "White spaces are not allowed in product code"
@@ -21582,6 +21589,7 @@ msgstr "ir.ui.view"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:136
+#: code:addons/product_attributes/product_attributes.py:137
 #, python-format
 msgid "You cannot delete this heat sensitive because it's used at least in one product"
 msgstr "You cannot delete this heat sensitive because it's used at least in one product"
@@ -25560,12 +25568,6 @@ msgstr "BERMUDIAN DOLLAR"
 msgid "Please choose an output currency before export."
 msgstr "Veuillez choisir une devise d'impression avant d'exporter!"
 
-#. module: account_override
-#: view:account.invoice:0
-#: report:account.invoice2:0
-msgid "I/MI voucher date"
-msgstr "I/MI date du bon"
-
 #. module: msf_config_locations
 #: view:stock.location.configuration.wizard:0
 msgid "Add Location and create new one"
@@ -27620,6 +27622,7 @@ msgstr "* You can use the template of the export for the format that you need to
 
 #. module: product_attributes
 #: field:product.where.used,product_ids:0
+#: view:product.where.used:0
 msgid "Parent products"
 msgstr "Produits Parent"
 
@@ -32064,6 +32067,7 @@ msgstr "Nouveau Code"
 
 #. module: product_attributes
 #: code:addons/product_attributes/standard_price_track_changes.py:118
+#: code:addons/product_attributes/standard_price_track_changes.py:119
 #, python-format
 msgid "Operation not allowed"
 msgstr "Operation not allowed"
@@ -40600,11 +40604,6 @@ msgstr "Monaco"
 msgid "Supplier Refunds"
 msgstr "Avoirs Fournisseur"
 
-#. module: tender_flow
-#: field:tender.line,func_total_price:0
-msgid "Func. Total Price"
-msgstr "Prix Total Fonc."
-
 #. modules: sync_client, analytic_distribution
 #: model:ir.ui.menu,name:sync_client.ops_menu
 #: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_operation
@@ -41818,6 +41817,7 @@ msgstr "Résumé de l'import précédent"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1093
+#: code:addons/product_attributes/product_attributes.py:1226
 #, python-format
 msgid "status"
 msgstr "status"
@@ -44008,8 +44008,9 @@ msgid "\n"
 msgstr "\n"
 "	Veuillez vérifier l'orthographe sur la colonne '%s'."
 
-#. module: sync_client
+#. modules: sync_client, register_accounting
 #: view:sync.monitor:0
+#: code:addons/register_accounting/account_bank_statement.py:2085
 msgid "create"
 msgstr "créer"
 
@@ -48540,6 +48541,7 @@ msgstr "Date de Début de Contrat"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1076
+#: code:addons/product_attributes/product_attributes.py:1209
 #, python-format
 msgid "be %s ESC"
 msgstr "be %s ESC"
@@ -51497,6 +51499,7 @@ msgstr "MSF Locations configuration"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1088
+#: code:addons/product_attributes/product_attributes.py:1221
 #, python-format
 msgid "be stored anymore"
 msgstr "be stored anymore"
@@ -52668,8 +52671,8 @@ msgstr "Asie/Manille"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/purchase_order.py:141
 #, python-format
-msgid "No PO found with the name %s"
-msgstr "No PO found with the name %s"
+msgid "No validated PO found with the name %s"
+msgstr "No validated PO found with the name %s"
 
 #. modules: order_types, stock
 #: view:stock.print.certificate:0
@@ -52995,6 +52998,7 @@ msgstr "La définition du code de taxe dépend de la déclaration fiscale de vot
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1093
+#: code:addons/product_attributes/product_attributes.py:1226
 #, python-format
 msgid "product creator"
 msgstr "product creator"
@@ -54575,6 +54579,7 @@ msgstr "Fermer les statuts de l'Exercice Comptable et des périodes"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1076
+#: code:addons/product_attributes/product_attributes.py:1209
 #, python-format
 msgid "purchased at"
 msgstr "purchased at"
@@ -54614,7 +54619,6 @@ msgstr "Montant final en devise d'enregistrement"
 
 #. module: consumption_calculation, stock
 #: field:product.history.consumption.month,date_from:0
-#: field:stock.reception.wizard,start_date:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:170
 #: field:stock.delivery.wizard,start_date:0
 msgid "Date from"
@@ -58292,6 +58296,7 @@ msgstr "Journal Ajustement"
 #: field:replenishment.order_calc.line,warning_html:0
 #: view:product.ask.activate.wizard:0
 #: code:addons/account/wizard/account_invoice_import.py:81
+#: view:product.merged.wizard:0
 #, python-format
 msgid "Warning"
 msgstr "Avertissement"
@@ -64433,6 +64438,7 @@ msgstr "Approvisionnement Automatique : %s"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1076
+#: code:addons/product_attributes/product_attributes.py:1209
 #, python-format
 msgid "shipped to"
 msgstr "shipped to"
@@ -64649,7 +64655,6 @@ msgstr "Exemple : 2% à 14 jours nets, solde à 30 jours fin de mois"
 
 #. module: consumption_calculation, stock
 #: field:product.history.consumption.month,date_to:0
-#: field:stock.reception.wizard,end_date:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:178
 #: field:stock.delivery.wizard,end_date:0
 msgid "Date to"
@@ -76464,6 +76469,8 @@ msgstr "# de lignes importées"
 #: report:order.type.donation.certificate:0
 #: report:addons/stock/report/stock_delivery_report_xls.mako:220
 #: report:addons/account/report/export_invoice.mako:123
+#: report:msf.purchase.quotation:0
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:73
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -79010,6 +79017,7 @@ msgstr "Import / Import Translations"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1084
+#: code:addons/product_attributes/product_attributes.py:1217
 #, python-format
 msgid "be consumed internally"
 msgstr "be consumed internally"
@@ -79454,6 +79462,7 @@ msgstr "Mise à jour des Qtés Indicatives de Stock"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:187
+#: code:addons/product_attributes/product_attributes.py:188
 #, python-format
 msgid "You cannot delete this cold chain because it's used at least in one product"
 msgstr "You cannot delete this cold chain because it's used at least in one product"
@@ -82623,6 +82632,7 @@ msgstr "SFTP connection succeeded"
 #: field:replenishment.product.list,product_id:0
 #: report:addons/account/report/invoice_excel_export.mako:66
 #: report:addons/account/report/export_invoice.mako:120
+#: field:product.ask.activate.wizard,product_id:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -87899,6 +87909,7 @@ msgstr "O"
 
 #. module: product_attributes
 #: code:addons/product_attributes/standard_price_track_changes.py:119
+#: code:addons/product_attributes/standard_price_track_changes.py:120
 #, python-format
 msgid "Copy of standard.price.track.changes is not allowed"
 msgstr "Copy of standard.price.track.changes is not allowed"
@@ -88992,6 +89003,7 @@ msgstr "You can't source a %s 'on order'."
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1247
+#: code:addons/product_attributes/product_attributes.py:1400
 #, python-format
 msgid "White spaces are not allowed in XML ID code"
 msgstr "White spaces are not allowed in XML ID code"
@@ -89788,6 +89800,7 @@ msgstr "Contenu du RML"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1096
+#: code:addons/product_attributes/product_attributes.py:1229
 #, python-format
 msgid "The product [%s] %s gets the %s '%s' and consequently can't %s"
 msgstr "The product [%s] %s gets the %s '%s' and consequently can't %s"
@@ -90669,6 +90682,7 @@ msgstr "XML non valide pour la Vue Architecture!"
 #: view:stock.reception.wizard:0
 #: view:stock.move.cancel.more.wizard:0
 #: view:stock.picking.cancel.more.wizard:0
+#: view:product.ask.activate.wizard:0
 msgid "Actions"
 msgstr "Actions"
 
@@ -92652,7 +92666,7 @@ msgstr "Support Niveau 1"
 msgid "America/Anguilla"
 msgstr "America/Anguilla"
 
-#. modules: tender_flow, financing_contract, account_override, product_attributes, msf_accrual, msf_doc_import, finance, base_setup, account_mcdb, res_currency_tables, supplier_catalogue, stock_override, product_asset, analytic_override, purchase_compare_rfq, msf_supply_doc_export, analytic_distribution, product, msf_homere_interface, msf_instance, register_accounting, specific_rules, kit, base, msf_currency_revaluation, account_subscription, return_claim, res_currency_functional, msf_budget, purchase, account, msf_outgoing, msf_partner, purchase_allocation_report, sale, transport_mgmt, stock, sync_so, purchase_followup, consumption_calculation, procurement_request, order_types,
+#. modules: tender_flow, financing_contract, account_override, product_attributes, msf_accrual, msf_doc_import, finance, base_setup, account_mcdb, res_currency_tables, supplier_catalogue, stock_override, product_asset, analytic_override, purchase_compare_rfq, msf_supply_doc_export, analytic_distribution, product, msf_homere_interface, msf_instance, register_accounting, specific_rules, kit, base, msf_currency_revaluation, account_subscription, return_claim, res_currency_functional, msf_budget, purchase, account, msf_outgoing, msf_partner, purchase_allocation_report, sale, transport_mgmt, stock, sync_so, purchase_followup, consumption_calculation, procurement_request, order_types, purchase_override
 #: view:account.account:0
 #: report:account.analytic.account.journal:0
 #: view:account.analytic.line:0
@@ -92840,6 +92854,7 @@ msgstr "America/Anguilla"
 #: report:addons/msf_supply_doc_export/report/supplier_performance_report_xls.mako:238
 #: report:addons/stock/report/stock_delivery_report_xls.mako:221
 #: report:addons/account/report/export_invoice.mako:96
+#: report:msf.purchase.quotation:0
 #, python-format
 msgid "Currency"
 msgstr "Devise"
@@ -96479,6 +96494,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:replenishment.segment:0
 #: view:product.ask.activate.wizard:0
 #: view:account.invoice.import:0
+#: view:product.merged.wizard:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -97134,7 +97150,7 @@ msgstr "Total Solde Initial"
 msgid "Removal date"
 msgstr "Date de Retrait"
 
-#. modules: msf_budget, sync_client, res_currency_tables, financing_contract, msf_homere_interface, msf_instance, export_import_lang, msf_outgoing, msf_doc_import
+#. modules: msf_budget, sync_client, res_currency_tables, financing_contract, msf_homere_interface, msf_instance, export_import_lang, msf_outgoing, msf_doc_import, product_attributes
 #: view:base.language.export:0
 #: view:base.language.import:0
 #: view:msf.language.import:0
@@ -97147,6 +97163,7 @@ msgstr "Date de Retrait"
 #: code:addons/sync_client/backup.py:124
 #: view:ppl.set_pack_on_lines:0
 #: code:addons/msf_doc_import/purchase_order.py:61
+#: view:product.ask.activate.wizard:0
 #, python-format
 msgid "OK"
 msgstr "OK"
@@ -98907,7 +98924,6 @@ msgstr "Picking – fermé"
 #: field:stock.move.memory.out,prodlot_id:0
 #: field:stock.move.split.lines.exist,prodlot_id:0
 #: view:stock.production.lot:0
-#: field:stock.reserved.products,prodlot_id:0
 msgid "Production Lot"
 msgstr "Lot de Production"
 
@@ -102059,12 +102075,14 @@ msgstr "Valeur Totale Sortante"
 
 #. module: sale
 #: code:addons/sale/wizard/sale_donation_stock_moves.py:118
+#: code:addons/sale/wizard/sale_loan_stock_moves.py:120
 #, python-format
 msgid "The Product (%s) does not have this Nomenclature"
 msgstr "Le Produit (%s) n'a pas cette Nomenclature"
 
 #. module: sale
 #: field:sale.donation.stock.moves,nomen_manda_0:0
+#: field:sale.loan.stock.moves,nomen_manda_0:0
 msgid "Product Main Type"
 msgstr "Type Principal du Produit"
 
@@ -102255,9 +102273,10 @@ msgstr "Si vous cliquez sur 'Annuler & Réallouer', toutes les lignes du Bon de 
 msgid "In Pipe Qty"
 msgstr "Qté en cours"
 
-#. modules: mission_stock, msf_field_access_rights
+#. modules: mission_stock, msf_field_access_rights, product_attributes
 #: field:mission.stock.wizard,instance_level:0
 #: field:msf_field_access_rights.field_access_rule,instance_level:0
+#: field:product.product,instance_level:0
 msgid "Instance Level"
 msgstr "Niveau de l'instance"
 
@@ -103422,16 +103441,6 @@ msgid "RECEPTIONS REPORT"
 msgstr "RAPPORT DES RÉCEPTIONS"
 
 #. module: stock
-#: report:addons/stock/report/stock_reception_report_xls.mako:180
-msgid "IN date from"
-msgstr "Date IN à partir de"
-
-#. module: stock
-#: report:addons/stock/report/stock_reception_report_xls.mako:188
-msgid "IN date to"
-msgstr "Date IN à"
-
-#. module: stock
 #: report:addons/stock/report/stock_reception_report_xls.mako:231
 #: report:addons/stock/report/stock_delivery_report_xls.mako:214
 msgid "Order Priority"
@@ -103576,10 +103585,11 @@ msgstr "Toutes les lignes seront confirmées si leur status le permet"
 msgid "Confirm document"
 msgstr "Confirmer le document"
 
-#. modules: purchase, sale, procurement_request
+#. modules: purchase, sale, procurement_request, account_override
 #: view:sale.order:0
 #: view:purchase.order:0
 #: view:sale.order:0
+#: view:account.invoice:0
 msgid "Cancel document"
 msgstr "Annuler le document"
 
@@ -105263,8 +105273,9 @@ msgstr "Vous devez etre sur une instance Coordo ou HQ pour ajouter des produits 
 msgid "The file has no row, nothing to import"
 msgstr "Le fichier n'a pas de ligne, il n'y a rien à importer"
 
-#. module: product
+#. module: product, product_attributes
 #: selection:product.mass.update,product_state:0
+#: model:product.status,name:product_attributes.status_5
 msgid "Status 1"
 msgstr "Statut 1"
 
@@ -109252,6 +109263,12 @@ msgid "Line %s: the quantity format is incorrect."
 msgstr "Ligne %s : le format de la quantité est incorrect."
 
 #. module: account
+#: code:addons/account/wizard/account_invoice_import.py:166
+#, python-format
+msgid "Line %s: the line number format is incorrect."
+msgstr "Ligne %s : le format du numéro de ligne est incorrect."
+
+#. module: account
 #: code:addons/account/wizard/account_invoice_import.py:156
 #, python-format
 msgid "Line %s: the line number %s doesn't exist in the invoice."
@@ -109293,6 +109310,17 @@ msgstr "Ligne %s : le produit %s n'existe pas ou est inactif."
 msgid "The import is allowed only in Draft state."
 msgstr "L'import est autorisé uniquement à l'état Brouillon."
 
+#. module: account_override
+#: view:account.invoice:0
+msgid "Do you really want to cancel this document?"
+msgstr "Voulez-vous vraiment annuler ce document ?"
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:629
+#, python-format
+msgid "You can't duplicate a Cancelled invoice."
+msgstr "Vous ne pouvez pas dupliquer une facture Annulée."
+
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/cashbox_closing.py:58
 #, python-format
@@ -109303,3 +109331,364 @@ msgstr "Le Solde Théorique n'est pas égal au Solde de Caisse."
 #: constraint:account.cashbox.line:0
 msgid "The values of the Closing Balance lines must be unique per register."
 msgstr "Les valeurs des lignes du Solde de Clôture doivent être uniques par registre."
+
+#. module: account
+#: report:account.invoice2:0
+msgid "Cancelled Intermission Voucher OUT"
+msgstr "Bon Intermission OUT annulé"
+
+#. module: msf_outgoing
+#: field:stock.reserved.products,prodlot_id:0
+msgid "Batch Number - Expiry Date"
+msgstr "Numéro de Lot - Date d'Expiration"
+
+#. module: product_attributes
+#: help:product.product,local_activation_from_merge:0
+msgid "Activate on COO from merge"
+msgstr "Active en COO par une fusion"
+
+#. module: product_attributes
+#: selection:product.product,batch_attributes:0
+msgid "BN+ED"
+msgstr "NL+DE"
+
+#. module: product_attributes
+#: field:product.product,batch_attributes:0
+msgid "Batch Attr."
+msgstr "Attr. Lot"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2504
+#, python-format
+msgid "Composition Kit line(s)"
+msgstr "Ligne(s) de Composition Kit"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2503
+#, python-format
+msgid "Composition Kit(s)"
+msgstr "Composition(s) Kit"
+
+#. module: product_attributes
+#: selection:product.product,batch_attributes:0
+msgid "ED only"
+msgstr "Seulement DE"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2495
+#, python-format
+msgid "FO line(s)"
+msgstr "Ligne(s) de CdT"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2496
+#, python-format
+msgid "IR line(s)"
+msgstr "Ligne(s) de DI"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2499
+#, python-format
+msgid "Initial Stock Inventory line(s)"
+msgstr "Ligne(s) d'inventaire initial"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2498
+#, python-format
+msgid "Inventory line(s)"
+msgstr "Ligne(s) d'inventaire"
+
+#. module: product_attributes
+#: sql_constraint:product.merged:0
+msgid "Local product already merged"
+msgstr "Produit Local déjà fusionné"
+
+#. module: product_attributes
+#: view:product.merged.wizard:0
+msgid "Merge Product"
+msgstr "Fusion Produits"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2471
+#, python-format
+msgid "Merge products can only be done at Coordo level."
+msgstr "La Fusion ne peut être exécutée qu'à la Coordo"
+
+#. module: product_attributes
+#: field:product.product,replace_product_id:0
+msgid "Merged from"
+msgstr "Fusion depuis"
+
+#. module: product_attributes
+#: field:product.product,replaced_by_product_id:0
+msgid "Merged to"
+msgstr "Fusion vers"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1978
+#, python-format
+msgid "Missing Target in context"
+msgstr "Cible manquante dans le contexte"
+
+#. module: product_attributes
+#: model:ir.model,name:product_attributes.model_product_merged
+msgid "NSL products merged"
+msgstr "Fusion de produits"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2545
+#, python-format
+msgid "New product %s condition not met"
+msgstr "Nouveau produit %s: condition non satisfaite"
+
+#. module: product_attributes
+#: field:product.product,local_activation_from_merge:0
+msgid "Non-Standard Local from COO"
+msgstr "NSL depuis COO"
+
+#. module: product_attributes
+#: field:product.product,local_from_hq:0
+msgid "Non-Standard Local from HQ"
+msgstr "NSL depuis HQ"
+
+#. module: product_attributes
+#: field:product.merged,old_product_id:0
+#: field:product.merged.wizard,old_product_id:0
+msgid "Old local Product"
+msgstr "Ancien produit Local"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2561
+#, python-format
+msgid "Old merged product %s: condition not met: active, local product"
+msgstr "Ancien produit fusionné %s: condition non satisfaite: actif, local"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2493
+#, python-format
+msgid "PO line(s)"
+msgstr "Ligne(s) de BC"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2502
+#, python-format
+msgid "Product list line(s)"
+msgstr "Ligne(s) de liste de produits"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2500
+#, python-format
+msgid "RAC line(s)"
+msgstr "Lignes CMR"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2501
+#, python-format
+msgid "Replenishment Segment line(s)"
+msgstr "Line(s) de Segment de Rappro"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2494
+#, python-format
+msgid "RfQ line(s)"
+msgstr "Ligne(s) devis"
+
+#. module: product_attributes
+#: field:product.product,show_ud:0
+msgid "Search UD NSL or ST/NS"
+msgstr "Recherche UD NSL ou ST/NS"
+
+#. module: product_attributes
+#: help:product.product,local_from_hq:0
+msgid "Set to True when HQ generates a sync update on NSL product"
+msgstr "Set to True when HQ generates a sync update on NSL product"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2497
+#, python-format
+msgid "Tender line(s)"
+msgstr "Ligne(s) d'AO"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2549
+#, python-format
+msgid "The selected UD product %s has already been used in the past. Merge cannot be done for this product"
+msgstr "Le produit UD %s a déjà été utilisé. La fusion ne peut pas se faire."
+
+#. module: product_attributes
+#: code:addons/product_attributes/wizard/product_merged.py:27
+#, python-format
+msgid "The selected UD product has already been used in the past. Merge cannot be done for this product."
+msgstr "Le produit UD sélectionné a déjà été utilisé. La fusion ne peut pas se faire."
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2464
+#, python-format
+msgid "There is an inconsistency between the selected products: %(attr)s need to be the same. Please update your local product %(attr)s and then proceed with the merge."
+msgstr "Il y a une inconsistance entre les produits: %(attr)s doivent être identiques. Veuillez mettre à jour les valeurs %(attr)s du produit local et recommencer la fusion."
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2465
+#, python-format
+msgid "There is an inconsistency between the selected products’  %(attr)s . Do you still want to proceed with the merge?"
+msgstr "Il y a une inconsistance entre ces valeurs des produits  %(attr)s. Voulez-vous tout de même exécuter la fusion ?"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:644
+#: code:addons/product_attributes/product_attributes.py:657
+#, python-format
+msgid "This filter is not implemented yet"
+msgstr "filtre non implémenté"
+
+#. module: product_attributes
+#: field:product.product,nsl_merged:0
+msgid "UD / NSL merged"
+msgstr "Fusionné UD / NSL"
+
+#. module: product_attributes
+#: field:product.product,allow_merge:0
+msgid "UD Allow merge"
+msgstr "UD fusion autorisée"
+
+#. module: product_attributes
+#: field:product.merged,new_product_id:0
+msgid "UD NSL Product"
+msgstr "Produit UD NSL"
+
+#. module: product_attributes
+#: field:product.merged.wizard,ud_old_code:0
+msgid "UD Old code"
+msgstr "UD Ancien Code"
+
+#. module: product_attributes
+#: field:product.merged.wizard,new_product_id:0
+msgid "UD Product"
+msgstr "Produit UD"
+
+#. module: product_attributes
+#: sql_constraint:product.merged:0
+msgid "UD already used to merge a local product"
+msgstr "Produit UD déjà utilisé pour une fusion"
+
+#. module: product_attributes
+#: field:product.product,state_ud:0
+msgid "UniData Status"
+msgstr "Statut UniData"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2045
+#, python-format
+msgid "Unknown %s target"
+msgstr "Cible %s inconnue"
+
+#. module: product_attributes
+#: help:product.merged.wizard,show_ud:0
+msgid "Unticked: display UD NSL inactive products\n"
+"Ticked: display UD ST + NS active products"
+msgstr "Décoché: affiche les produits UD NSL inactifs\n"
+"Coché: affiche les produits UD ST + NS actifs"
+
+#. module: product_attributes
+#: field:product.merged.wizard,show_ud:0
+msgid "Use Standard / Non Standard UD product"
+msgstr "Utilisé un produit UD Standard / Non Standard"
+
+#. module: product_attributes
+#: field:product.merged.wizard,warning_checked:0
+msgid "Warning Checked"
+msgstr "Avertissement vérifié"
+
+#. module: product_attributes
+#: field:product.merged.wizard,warning_msg:0
+msgid "Warning Message"
+msgstr "Message d'Avertissement"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2552
+#, python-format
+msgid "Warning there is stock / pipeline in at least one of the instances in this mission! Therefore the product cannot be merged"
+msgstr "Attention il y a du stock / pipeline dans au moins une instance de la mission ! Le produit ne peut être fusionné."
+
+#. module: product_attributes
+#: code:addons/product_attributes/wizard/product_merged.py:30
+#, python-format
+msgid "Warning there is stock / pipeline in at least one of the instances in this mission! Therefore this product cannot be merged."
+msgstr "Attention il y a du stock / pipeline dans au moins une instance de la mission ! Le produit ne peut être fusionné."
+
+#. module: product_attributes
+#: selection:product.product,batch_attributes:0
+msgid "X"
+msgstr "X"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2492
+#, python-format
+msgid "batch(es)"
+msgstr "lot(s)"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:2491
+#, python-format
+msgid "stock move(s)"
+msgstr "mouvement(s) de stock"
+
+#. module: stock
+#: field:stock.reception.wizard,start_date:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:184
+msgid "Actual Receipt Date from"
+msgstr "Date de Réception réelle du"
+
+#. module: stock
+#: field:stock.reception.wizard,end_date:0
+#: report:addons/stock/report/stock_reception_report_xls.mako:192
+msgid "Actual Receipt Date to"
+msgstr "Date de Réception réelle au"
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2084
+#, python-format
+msgid "You can't %s lines in the register %s (%s) as it isn't Open."
+msgstr "Vous ne pouvez pas %s des lignes dans le registre %s (%s) car il n'est pas Ouvert."
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2085
+#, python-format
+msgid "post"
+msgstr "comptabiliser"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
+msgid "Unit Price (Comparison Currency)"
+msgstr "Prix Unitaire (Devise de Comparaison)"
+
+#. module: purchase
+#: field:purchase.order,amount_total_tender_currency:0
+msgid "Total (Comparison Currency)"
+msgstr "Total (Devise de Comparaison)"
+
+#. module: purchase
+#: help:purchase.order,amount_total_tender_currency:0
+msgid "The total amount using the tender's currency for comparison"
+msgstr "Le montant total calculé en utilisant la devise de l'appel d'offre pour la comparaison"
+
+#. modules: purchase_compare_rfq, tender_flow
+#: field:wizard.compare.rfq,currency_id:0
+#: field:tender,currency_id:0
+msgid "Currency for Comparison"
+msgstr "Devise pour la Comparaison"
+
+#. module: tender_flow
+#: help:tender,currency_id:0
+msgid "Currency to use while comparing RfQs"
+msgstr "Devise à utiliser pour comparer les DdDs"
+
+#. module: tender_flow
+#: view:tender:0
+msgid "Change Cur."
+msgstr "Changer Dev."
+
+#. module: tender_flow
+#: code:addons/tender_flow/wizard/tender_change_currency.py:63
+#, python-format
+msgid "The currency of the Tender id:%s (%s) has been changed from id:%s (%s) to id:%s (%s)"
+msgstr "La devise de l'Appel d'Offre id:%s (%s) a été changé de id:%s (%s) en id:%s (%s)"

@@ -152,6 +152,7 @@
                     <xpath expr="/search/group[1]/filter[@name='unpaid']" position="after">
                         <filter name="paid" icon="terp-dolar" string="Paid" domain="[('state', '=', 'paid')]"/>
                         <filter name="closed" icon="terp-dialog-close" string="Closed" domain="[('state', '=', 'inv_close')]" />
+                        <filter name="cancel_state" icon="terp-gtk-stop" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
                         <separator orientation="vertical"/>
                             <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not')]"/>
                             <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
@@ -457,7 +458,7 @@
             <field name="priority">21</field>
             <field name="arch" type="xml">
                 <tree string="Intermission Voucher" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
-                    <field name="document_date" string="I/MI voucher date"/>
+                    <field name="document_date"/>
                     <field name="date_invoice"/>
                     <field name="number"/>
                     <field name="partner_id"/>
@@ -478,7 +479,7 @@
             <field name="type">form</field>
             <field name="priority">64</field>
             <field name="arch" type="xml">
-                <form string="Intermission Voucher">
+                <form string="Intermission Voucher" noteditable="state=='cancel'">
                     <group colspan="4" col="8">
                         <field name="fake_journal_id" domain="[('is_current_instance','=',True)]" />
                         <field name="journal_type" invisible="1"/>
@@ -508,7 +509,7 @@
                                                     '&amp;', ('type', '=', 'out_invoice'), ('from_supply', '=', True)]}"/>
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" string="Partner address"/>
                         <newline/>
-                        <field name="document_date" string="I/MI voucher date" />
+                        <field name="document_date"/>
                         <field name="date_invoice"/>
                         <newline/>
                         <group colspan="8" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
@@ -531,7 +532,8 @@
                             <group name="import" string=" Import Lines " colspan="4" col="4">
                                 <button name="import_invoice" string="Import Invoice" icon="gtk-execute" colspan="2" type="object"
                                         attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                                <button name="export_invoice" string="Export Invoice" icon="gtk-execute" colspan="2" type="object"/>
+                                <button name="export_invoice" string="Export Invoice" icon="gtk-execute" colspan="2" type="object"
+                                        force_editable="1"/>
                                 <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
                                         attrs="{'invisible': [('state', '!=', 'draft')],
                                                 'readonly': ['|',
@@ -637,6 +639,14 @@
                                     <!-- in IVI shift the "Validate button" right -->
                                     <label string=""/>
                                 </group>
+
+                                <button string="Cancel document" name="invoice_cancel"
+                                        confirm="Do you really want to cancel this document?"
+                                        type="workflow" icon="gtk-cancel"
+                                        attrs="{'invisible': ['|', '|',
+                                                              ('state', '!=', 'draft'),
+                                                              ('type', '!=', 'out_invoice'),
+                                                              ('from_supply', '=', False)]}"/>
 
                                 <button name="button_split_invoice" type="object" string="Split Intermission Voucher OUT"
                                         icon="gtk-cut"
@@ -746,7 +756,8 @@
                                     attrs="{'readonly': [('state', '!=', 'draft')],
                                             'invisible': [('type', '!=', 'out_invoice')]}"/>
                             <button name="export_invoice" string="Export Invoice" icon="gtk-execute" colspan="2" type="object"
-                                    attrs="{'invisible': [('type', '!=', 'out_invoice')]}"/>
+                                    attrs="{'invisible': [('type', '!=', 'out_invoice')]}"
+                                    force_editable="1"/>
                             <newline/>
                             <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
                                     attrs="{'invisible': [('state', '!=', 'draft')],
@@ -767,6 +778,14 @@
                         </group>
                         <field name="partner_type" invisible="1"/>
                         <group col="8" colspan="4">
+
+                            <button string="Cancel document" name="invoice_cancel"
+                                    type="workflow" icon="gtk-cancel"
+                                    confirm="Do you really want to cancel this document?"
+                                    attrs="{'invisible': ['|', '|',
+                                                          ('state', '!=', 'draft'),
+                                                          ('type', '!=', 'out_invoice'),
+                                                          ('from_supply', '=', False)]}"/>
 
                             <button name="button_split_invoice" type="object" string="Split Stock Transfer Voucher"
                                     icon="gtk-cut"
