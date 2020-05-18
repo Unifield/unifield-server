@@ -2678,7 +2678,7 @@ class replenishment_inventory_review_line(osv.osv):
         'date_next_order_validated': fields.date('Next order to be validated by'), # Seg
         'date_next_order_rdd': fields.date('RDD for next order'), # Seg
         'internal_lt': fields.integer('Internal LT'),
-        'external_lt': fields.integer('External LT)'),
+        'external_lt': fields.integer('External LT'),
         'total_lt': fields.integer('Total LT'),
         'order_coverage': fields.integer('Order Coverage'),
         'pas_ids': fields.one2many('replenishment.inventory.review.line.pas', 'review_line_id', 'PAS by month'),
