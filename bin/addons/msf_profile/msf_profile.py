@@ -3938,6 +3938,30 @@ class sync_tigger_something_target(osv.osv):
 
 sync_tigger_something_target()
 
+class sync_tigger_something_target_lower(osv.osv):
+    _inherit = 'sync.trigger.something.target'
+    _name = 'sync.trigger.something.target.lower'
+
+    _columns = {
+
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+
+        if context.get('sync_update_execution') and vals.get('name') == 'sync_fp':
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+            if current_instance and current_instance.instance == vals.get('destination'):
+                fp_to_coo_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), ('instance_id', '=', current_instance.id)], context=context)
+                if fp_to_coo_ids:
+                    logging.getLogger('trigger').info('Touch %d fp' % (len(fp_to_coo_ids),))
+                    self.pool.get('account.analytic.account').synchronize(cr, uid, fp_to_coo_ids, context=context)
+
+        return super(sync_tigger_something_target_lower, self).create(cr, uid, vals, context)
+
+sync_tigger_something_target_lower()
+
 class sync_tigger_something(osv.osv):
     _name = 'sync.trigger.something'
 

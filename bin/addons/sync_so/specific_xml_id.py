@@ -420,6 +420,8 @@ class msf_instance(osv.osv):
                                     sibling_target_ids += [x.id for x in sibling.target_cost_center_ids]
                             self.pool.get('account.target.costcenter').synchronize(cr, uid, sibling_target_ids, context=context)
 
+                    if instance.level == 'project' and instance.parent_id:
+                        self.pool.get('sync.trigger.something.target.lower').create(cr, uid, {'name': 'sync_fp', 'destination': instance.parent_id.instance}, context={})
         return super(msf_instance, self).write(cr, uid, ids, vals, context=context)
 
 msf_instance()
