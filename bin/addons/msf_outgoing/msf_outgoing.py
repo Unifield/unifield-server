@@ -1964,6 +1964,9 @@ class stock_picking(osv.osv):
                     raise osv.except_osv(_('Error !'), msg_intl % (
                         user.company_id.name or '', ))
 
+        if context.get('picking_type') == 'internal_move' and obj.previous_chained_pick_id:
+            default['previous_chained_pick_id'] = obj.previous_chained_pick_id.id
+
         result = super(stock_picking, self).copy(cr, uid, copy_id, default=default, context=context)
         if not context.get('allow_copy', False):
             if obj.subtype == 'picking' and obj.backorder_id:
