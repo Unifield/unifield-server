@@ -66,12 +66,10 @@ class base_setup_company(osv.osv_memory):
             return defaults
         company = companies.browse(cr, uid, company_id[0], context=context)
         defaults['company_id'] = company.id
-        defaults['currency'] = company.currency_id.id
 
         if not self._show_company_data(cr, uid, context=context):
             return defaults
 
-        defaults['currency'] = company.currency_id.id
         for field in ['name','logo','rml_header1','rml_footer1','rml_footer2']:
             defaults[field] = company[field]
 
@@ -96,7 +94,6 @@ class base_setup_company(osv.osv_memory):
         'country_id':fields.selection(_get_all_countries, 'Country'),
         'email':fields.char('E-mail', size=64),
         'phone':fields.char('Phone', size=64),
-        'currency':fields.many2one('res.currency', 'Currency', required=True),
         'rml_header1':fields.char('Report Header', size=200,
                                   help='''This sentence will appear at the top right corner of your reports.
 We suggest you to put a slogan here:
@@ -128,7 +125,6 @@ IBAN: BE74 1262 0121 6907 - SWIFT: CPDF BE71 - VAT: BE0477.472.701'''),
             'rml_footer1':payload.rml_footer1,
             'rml_footer2':payload.rml_footer2,
             'logo':payload.logo,
-            'currency_id':payload.currency.id,
             'account_no':payload.account_no,
         })
 
