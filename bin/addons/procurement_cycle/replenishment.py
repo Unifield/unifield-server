@@ -892,7 +892,7 @@ class replenishment_segment(osv.osv):
                                     month = ((end-begin).days + 1)/30.44
 
                                     new_begin = begin
-                                    period_conso = total_fmc+month*num_fmc
+                                    period_conso = month*num_fmc
                                     if period_conso <= pas_full:
                                         pas_full -= period_conso
                                     else:
