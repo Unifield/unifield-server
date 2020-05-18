@@ -155,6 +155,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Physical Reception Date
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
+        ## INT Ref.
+        <Column ss:AutoFitWidth="1" ss:Width="80.0" />
 
         ## WORKSHEET HEADER
         <Row>
@@ -179,7 +181,7 @@
             <Cell ss:StyleID="big_header" ss:MergeAcross="1"><Data ss:Type="String">${_('FILTERS')|x}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${_('IN date from')|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${_('Actual Receipt Date from')|x}</Data></Cell>
             % if r.start_date and isDate(r.start_date):
             <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(r.start_date)|n}</Data></Cell>
             % else:
@@ -187,7 +189,7 @@
             % endif
         </Row>
         <Row>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${_('IN date to')|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${_('Actual Receipt Date to')|x}</Data></Cell>
             % if r.end_date and isDate(r.end_date):
             <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(r.end_date)|n}</Data></Cell>
             % else:
@@ -250,6 +252,7 @@
             _('Expected Receipt Date'),
             _('Actual Receipt Date'),
             _('Physical Reception Date'),
+            _('INT Ref.'),
         ]
         %>
         <Row>
@@ -306,6 +309,7 @@
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['int_name']|x}</Data></Cell>
             </Row>
         % endfor
 

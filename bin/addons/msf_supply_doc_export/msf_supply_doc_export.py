@@ -387,25 +387,35 @@ class request_for_quotation_report_xls(WebKitParser):
         a = super(request_for_quotation_report_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
+
 request_for_quotation_report_xls('report.request.for.quotation_xls','purchase.order','addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako')
 
 
-class tender_report_xls(WebKitParser):
-    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+class parser_tender_report_xls(report_sxw.rml_parse):
 
-    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
-        report_xml.webkit_debug = 1
-        report_xml.header= " "
-        report_xml.webkit_header.html = "${_debug or ''|n}"
-        return super(tender_report_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+    def __init__(self, cr, uid, name, context=None):
+        super(parser_tender_report_xls, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'computePrice': self._compute_price,
+        })
+
+    def _compute_price(self, line_currency_id, tender_currency_id, price):
+        cur_obj = self.pool.get('res.currency')
+        return round(cur_obj.compute(self.cr, self.uid, line_currency_id, tender_currency_id, price, round=False, context=self.localcontext), 2)
+
+
+class tender_report_xls(SpreadsheetReport):
+
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        super(tender_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
-        ids = getIds(self, cr, uid, ids, context)
-        a = super(tender_report_xls, self).create(cr, uid, ids, data, context)
+        a = super(tender_report_xls, self).create(cr, uid, ids, data, context=context)
         return (a[0], 'xls')
 
-tender_report_xls('report.tender_xls','tender','addons/msf_supply_doc_export/report/report_tender_xls.mako')
+
+tender_report_xls('report.tender_xls', 'tender', 'addons/msf_supply_doc_export/report/report_tender_xls.mako', parser=parser_tender_report_xls, header='internal')
+
 
 class stock_cost_reevaluation_report_xls(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -624,20 +634,21 @@ class po_follow_up_mixin(object):
     def yieldPoLines(self, po_line_ids):
         if len(po_line_ids):
             self.cr.execute("""
-                SELECT pl.id, pl.state, pl.line_number, adl.id, ppr.id, ppr.default_code, pt.name, uom.id, 
-                    uom.name, pl.confirmed_delivery_date, pl.date_planned, pl.product_qty, pl.price_unit, pl.linked_sol_id, 
-                    spar.name, so.client_order_ref, pl.origin
+                SELECT pl.id, pl.state, pl.line_number, adl.id, ppr.id, ppr.default_code, COALESCE(tr.value, pt.name), 
+                    uom.id, uom.name, pl.confirmed_delivery_date, pl.date_planned, pl.product_qty, pl.price_unit, 
+                    pl.linked_sol_id, spar.name, so.client_order_ref, pl.origin
                 FROM purchase_order_line pl
                     LEFT JOIN analytic_distribution adl ON pl.analytic_distribution_id = adl.id
                     LEFT JOIN product_product ppr ON pl.product_id = ppr.id
                     LEFT JOIN product_template pt ON ppr.product_tmpl_id = pt.id
+                    LEFT JOIN ir_translation tr ON tr.res_id = pt.id AND tr.name = 'product.template,name' AND tr.lang = %s
                     LEFT JOIN product_uom uom ON pl.product_uom = uom.id
                     LEFT JOIN sale_order_line sol ON pl.linked_sol_id = sol.id
                     LEFT JOIN sale_order so ON sol.order_id = so.id
                     LEFT JOIN res_partner spar ON so.partner_id = spar.id
                 WHERE pl.id IN %s
                 ORDER BY pl.line_number, pl.id
-            """, (tuple(po_line_ids),))
+            """, (self.localcontext.get('lang', 'en_MF'), tuple(po_line_ids)))
 
             for pol in self.cr.fetchall():
                 yield pol
@@ -731,7 +742,7 @@ class po_follow_up_mixin(object):
                 res.append(line)
         return res
 
-    def getPOLines(self, po_id, pending_only_ok=False):
+    def getPOLines(self, export_format, po_id, pending_only_ok=False):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
         pol_obj = self.pool.get('purchase.order.line')
         prod_obj = self.pool.get('product.product')
@@ -761,6 +772,7 @@ class po_follow_up_mixin(object):
         if not self.localcontext.get('processed_pos'):
             self.localcontext['processed_pos'] = []
 
+        po_state = get_sel(self.cr, self.uid, 'purchase.order', 'state', po[1], context=self.localcontext) or ''
         for line in self.yieldPoLines(po_line_ids):
             analytic_lines = self.getAnalyticLines(po, line)
             same_product_same_uom = []
@@ -778,8 +790,6 @@ class po_follow_up_mixin(object):
 
             first_line = True
             # Display information of the initial reception
-            state_to_display = pol_obj._get_state_to_display(self.cr, self.uid, [line[0]], False, False,
-                                                             context=self.localcontext)[line[0]]
             if not same_product_same_uom:
                 report_line = {
                     'order_ref': po[2] or '',
@@ -787,9 +797,11 @@ class po_follow_up_mixin(object):
                     'order_confirmed_date': line[9],
                     'delivery_requested_date': line[10],
                     'raw_state': line[1],
-                    'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line[1], {}) or '',
-                    'state': state_to_display or '',
-                    'order_status': self._get_states().get(po[1], ''),
+                    'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line[1],
+                                           context=self.localcontext) or '',
+                    'state': get_sel(self.cr, self.uid, 'purchase.order.line', 'state_to_display', line[1],
+                                     context=self.localcontext) or '',
+                    'order_status': po_state,
                     'item': line[2] or '',
                     'code': line[5] or '',
                     'description': line[6] or '',
@@ -808,13 +820,15 @@ class po_follow_up_mixin(object):
                     'supplier': po[5] or '',
                     'supplier_ref': po[6] and '.' in po[6] and po[6].split('.')[1] or '',
                     # new
-                    'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', po[7], {}) or '',
+                    'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', po[7],
+                                          context=self.localcontext) or '',
                     'currency': po[8] or '',
                     'total_currency': '',
                     'total_func_currency': '',
                 }
                 report_lines.append(report_line)
-                report_lines.extend(self.printAnalyticLines(analytic_lines))
+                if export_format != 'xls':
+                    report_lines.extend(self.printAnalyticLines(analytic_lines))
                 first_line = False
 
             for spsul in sorted(same_product_same_uom, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
@@ -824,9 +838,11 @@ class po_follow_up_mixin(object):
                     'order_confirmed_date': line[9] or po[9],
                     'delivery_requested_date': line[10],
                     'raw_state': line[1],
-                    'order_status': self._get_states().get(po[1], ''),
-                    'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line[1], {}) or '',
-                    'state': state_to_display or '',
+                    'order_status': po_state,
+                    'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line[1],
+                                                          context=self.localcontext) or '',
+                    'state': get_sel(self.cr, self.uid, 'purchase.order.line', 'state_to_display', line[1],
+                                     context=self.localcontext) or '',
                     'item': line[2] or '',
                     'code': line[5] or '',
                     'description': line[6] or '',
@@ -845,7 +861,8 @@ class po_follow_up_mixin(object):
                     'supplier': po[5] or '',
                     'supplier_ref': po[6] and '.' in po[6] and po[6].split('.')[1] or '',
                     # new
-                    'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', po[7], {}) or '',
+                    'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', po[7],
+                                          context=self.localcontext) or '',
                     'currency': po[8] or '',
                     'total_currency': self.get_total_currency(spsul.get('price_unit'), spsul.get('state') == 'done' and spsul.get('product_qty', '') or 0.0),
                     'total_func_currency': self.get_total_func_currency(
@@ -861,7 +878,8 @@ class po_follow_up_mixin(object):
                 #     report_line['qty_backordered'] = spsul.get('product_qty', '')
 
                 if first_line:
-                    report_lines.extend(self.printAnalyticLines(analytic_lines))
+                    if export_format != 'xls':
+                        report_lines.extend(self.printAnalyticLines(analytic_lines))
                     first_line = False
 
             for spl in sorted(same_product, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
@@ -871,9 +889,11 @@ class po_follow_up_mixin(object):
                     'order_confirmed_date': line[9] or po[9],
                     'delivery_requested_date': line[10],
                     'raw_state': line[1],
-                    'order_status': self._get_states().get(po[1], ''),
-                    'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line[1], {}) or '',
-                    'state': state_to_display or '',
+                    'order_status': po_state,
+                    'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line[1],
+                                                          context=self.localcontext) or '',
+                    'state': get_sel(self.cr, self.uid, 'purchase.order.line', 'state_to_display', line[1],
+                                     context=self.localcontext) or '',
                     'item': line[2] or '',
                     'code': line[5] or '',
                     'description': line[6] or '',
@@ -892,7 +912,8 @@ class po_follow_up_mixin(object):
                     'supplier': po[5] or '',
                     'supplier_ref': po[6] and '.' in po[6] and po[6].split('.')[1] or '',
                     # new
-                    'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', po[7], {}) or '',
+                    'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', po[7],
+                                          context=self.localcontext) or '',
                     'currency': po[8] or '',
                     'total_currency': self.get_total_currency(spl.get('price_unit'), spl.get('state') == 'done' and spl.get('product_qty', 0.0) or 0.0),
                     'total_func_currency': self.get_total_func_currency(
@@ -907,7 +928,8 @@ class po_follow_up_mixin(object):
                 #     report_line['qty_backordered'] = spl.get('product_qty', '')
 
                 if first_line:
-                    report_lines.extend(self.printAnalyticLines(analytic_lines))
+                    if export_format != 'xls':
+                        report_lines.extend(self.printAnalyticLines(analytic_lines))
                     first_line = False
 
             for ol in other_product:
@@ -919,9 +941,11 @@ class po_follow_up_mixin(object):
                     'order_confirmed_date': self.format_date(line[9] or po[9]),
                     'delivery_requested_date': self.format_date(line[10]),
                     'raw_state': line[1],
-                    'order_status': self._get_states().get(po[1], ''),
-                    'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line[1], {}) or '',
-                    'state': state_to_display or '',
+                    'order_status': po_state,
+                    'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line[1],
+                                           context=self.localcontext) or '',
+                    'state': get_sel(self.cr, self.uid, 'purchase.order.line', 'state_to_display', line[1],
+                                     context=self.localcontext) or '',
                     'item': line[2] or '',
                     'code': prod_brw.default_code or '',
                     'description': prod_brw.name or '',
@@ -940,7 +964,8 @@ class po_follow_up_mixin(object):
                     'supplier': po[5] or '',
                     'supplier_ref': po[6] and '.' in po[6] and po[6].split('.')[1] or '',
                     # new
-                    'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', po[7], {}) or '',
+                    'order_type': get_sel(self.cr, self.uid, 'purchase.order', 'order_type', po[7],
+                                          context=self.localcontext) or '',
                     'currency': po[8] or '',
                     'total_currency': self.get_total_currency(ol.get('price_unit'), ol.get('state') == 'done' and ol.get('product_qty', 0.0) or 0.0),
                     'total_func_currency': self.get_total_func_currency(

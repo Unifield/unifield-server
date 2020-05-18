@@ -329,7 +329,7 @@ class res_currency(osv.osv):
                 partner_list = ' / '.join(x.res_id.name for x in properties)
                 raise osv.except_osv(_('Error !'),
                                      _('You cannot uncheck the ESC checkbox because this currency is used on these \'ESC\' partners : \
-                                      %s' % partner_list))
+                                      %s') % partner_list)
 
         if 'active' in values and not values.get('currency_table_id', False) and pricelist_obj:
             if values['active'] == False:
@@ -501,7 +501,7 @@ class res_currency(osv.osv):
                             date = line[0]
                         elif line[0] != date:
                             raise osv.except_osv(_('Error'),
-                                                 _("All dates should be equal for all lines in file %s." % file_to_import))
+                                                 _("All dates should be equal for all lines in file %s.") % file_to_import)
                 line_number += 1
 
             # check that this date is a real date

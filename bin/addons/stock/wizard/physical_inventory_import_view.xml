@@ -13,6 +13,26 @@
                 </form>
             </field>
         </record>
+        <record id="physical_inventory_import_wizard_view_noclose" model="ir.ui.view">
+            <field name="name">Importation Report</field>
+            <field name="model">physical.inventory.import.wizard</field>
+            <field name="type">form</field>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <form>
+                    <html>
+                        <script language="javascript">
+                        $(document).ready(function() {
+                            $(".ui-dialog-titlebar-close",window.top.document ).hide();
+                        });
+                        </script>
+                    </html>
+                    <field name="message" nolabel="1" colspan="4"/>
+                    <separator colspan="4"/>
+                    <button string="Close" icon="gtk-ok" colspan="4" name="action_close" type="object"/>
+                </form>
+            </field>
+        </record>
         <record id="physical_inventory_action_box_wizard_view" model="ir.ui.view">
             <field name="name">Importation Report</field>
             <field name="model">physical.inventory.import.wizard</field>

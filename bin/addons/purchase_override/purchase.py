@@ -299,12 +299,12 @@ class purchase_order_cancel_wizard(osv.osv_memory):
 
         return res
 
-
     _columns = {
         'order_id': fields.many2one('purchase.order', string='Order to delete'),
         'has_linked_line': fields.function(_get_has_linked_line, method=True, type='boolean', string='has linked line'),
         'unlink_po': fields.boolean(string='Unlink PO'),
         'last_lines': fields.boolean(string='Remove last lines of the FO'),
+        'cancel_linked_tender': fields.boolean(string='This is the last open RfQ linked the the Tender'),
     }
 
     def _get_last_lines(self, cr, uid, order_id, context=None):
@@ -363,10 +363,11 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 
-    def cancel_po(self, cr, uid, ids, context=None, resource=False):
+    def cancel_po(self, cr, uid, ids, context=None, resource=False, cancel_tender=False, resource_tender=False):
         '''
         Cancel the PO and display his form
         @param resource: do we have to resource the cancelled line ?
+        @param cancel_tender: do we have to cancel the tender linked to the RfQ ?
         '''
         if context is None:
             context = {}
@@ -382,7 +383,8 @@ class purchase_order_cancel_wizard(osv.osv_memory):
 
         # cancel all non-confirmed lines:
         if po.rfq_ok:
-            self.pool.get('purchase.order').cancel_rfq(cr, uid, [po.id], context=context, resource=resource)
+            self.pool.get('purchase.order').cancel_rfq(cr, uid, [po.id], context=context, resource=resource,
+                                                       cancel_tender=cancel_tender, resource_tender=resource_tender)
         else:
             for pol in po.order_line:
                 if (pol.order_id.partner_type in ('external', 'esc') and pol.state in ('draft', 'validated', 'validated_n'))\
@@ -399,12 +401,24 @@ class purchase_order_cancel_wizard(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
+    def cancel_and_cancel_tender(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        return self.cancel_po(cr, uid, ids, context=context, cancel_tender=True)
 
     def cancel_and_resource(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
 
         return self.cancel_po(cr, uid, ids, context=context, resource=True)
+
+    def cancel_and_resource_tender(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        return self.cancel_po(cr, uid, ids, context=context, cancel_tender=True, resource_tender=True)
+
 
 purchase_order_cancel_wizard()
 

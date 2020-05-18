@@ -411,7 +411,7 @@ class product_product(osv.osv):
         #UF-2170: remove the standard price value from the list if the value comes from the sync
         #US-803: If the price comes from rw_sync, then take it
         # US-3254: update standard_pricde during initial sync (i.e if msf.instance is not set)
-        if 'standard_price' in vals and context.get('sync_update_execution', False) and not context.get('rw_sync', False):
+        if 'standard_price' in vals and context.get('sync_update_execution', False) and not context.get('rw_sync', False) and not context.get('keep_standard_price'):
             msf_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
             if msf_instance:
                 del vals['standard_price']

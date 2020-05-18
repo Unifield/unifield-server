@@ -253,6 +253,9 @@ class account_invoice(osv.osv):
             invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id','in',move.keys())], context=context)
         return invoice_ids
 
+    def _get_journal_type(self, cr, uid, context=None):
+        return self.pool.get('account.journal').get_journal_type(cr, uid, context)
+
     _name = "account.invoice"
     _description = 'Invoice'
     _order = "id desc"
@@ -328,6 +331,8 @@ class account_invoice(osv.osv):
             multi='all'),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, hide_default_menu=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'journal_type': fields.related('journal_id', 'type', type='selection', string='Journal Type',
+                                       selection=_get_journal_type, store=False, write_relate=False),
         'company_id': fields.many2one('res.company', 'Company', required=True, change_default=True, readonly=True, states={'draft':[('readonly',False)]}),
         'check_total': fields.float('Total', digits_compute=dp.get_precision('Account'), states={'open':[('readonly',True)],'inv_close':[('readonly',True)],'paid':[('readonly',True)]}),
         'reconciled': fields.function(_reconciled, method=True, string='Paid/Reconciled', type='boolean',
@@ -413,6 +418,18 @@ class account_invoice(osv.osv):
             for node in nodes:
                 node.set('string', partner_string)
             res['arch'] = etree.tostring(doc)
+        elif view_type == 'search':
+            # remove the Cancel filter in all invoices but IVO and STV
+            context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
+                context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
+            context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
+                not context.get('is_debit_note', False)
+            if not context_ivo and not context_stv:
+                doc = etree.XML(res['arch'])
+                filter_node = doc.xpath("/search/group[1]/filter[@name='cancel_state']")
+                if filter_node:
+                    filter_node[0].getparent().remove(filter_node[0])
+                res['arch'] = etree.tostring(doc)
         return res
 
     def get_log_context(self, cr, uid, context=None):
@@ -757,11 +774,15 @@ class account_invoice(osv.osv):
             'move_name':False,
             'internal_number': False,
             'main_purchase_id': False,
-            'from_supply': False,
-            'synced': False,
             'counterpart_inv_number': False,
             'counterpart_inv_status': False,
+            'refunded_invoice_id': False,
         })
+        if not context.get('from_split'):  # some values are kept in case of inv. generated via the "Split" feature
+            default.update({
+                'from_supply': False,
+                'synced': False,
+            })
         if 'date_invoice' not in default:
             default.update({
                 'date_invoice':False
@@ -1214,6 +1235,13 @@ class account_invoice(osv.osv):
                 self.log(cr, uid, inv_id, message, context=ctx)
         return True
 
+    def cancel_invoice_from_workflow(self, cr, uid, ids, *args):
+        """
+        Sets the invoice to Cancelled and not Synchronized
+        """
+        self.write(cr, uid, ids, {'state': 'cancel', 'synced': False})
+        return True
+
     def action_cancel(self, cr, uid, ids, *args):
         context = {} # TODO: Use context from arguments
         account_move_obj = self.pool.get('account.move')
@@ -1378,6 +1406,7 @@ class account_invoice(osv.osv):
         obj_journal = self.pool.get('account.journal')
         new_ids = []
         for invoice in invoices:
+            invoice.update({'refunded_invoice_id': invoice['id']})
             del invoice['id']
 
             if context.get('is_intermission', False):
@@ -2096,4 +2125,29 @@ class res_partner(osv.osv):
         return super(res_partner, self).copy(cr, uid, ids, default, context=context)
 res_partner()
 
+
+class ir_values(osv.osv):
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
+        """
+        Hides the Report "Invoice Excel Export" in the menu of other invoices than IVO/IVI
+        """
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
+        model_names = [x[0] for x in models]
+        if key == 'action' and key2 == 'client_print_multi' and 'account.invoice' in model_names:
+            new_act = []
+            for v in values:
+                if not context.get('is_intermission') and len(v) > 2 and v[2].get('report_name', '') == 'invoice.excel.export':
+                    continue
+                else:
+                    new_act.append(v)
+            values = new_act
+        return values
+
+
+ir_values()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

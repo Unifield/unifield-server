@@ -778,9 +778,9 @@ class shipment(osv.osv):
             del context['create_shipment']
 
             # Log creation message
-            message = _('The new Shipment id:%s (%s) has been created.')
-            self.log(cr, uid, new_shipment_id, message % (new_shipment_id, shipment_name,))
-            self.infolog(cr, uid, message % (new_shipment_id, shipment_name))
+            message = _('The new Shipment (%s) has been created and is "Ready to Ship".')
+            self.log(cr, uid, new_shipment_id, message % (shipment_name,))
+            self.infolog(cr, uid, message % (shipment_name,))
 
             context['shipment_id'] = new_shipment_id
 
@@ -1116,8 +1116,8 @@ class shipment(osv.osv):
                         raise osv.except_osv(_('Error'), _('Warning, this range of packs contains one or more products with a decimal quantity per pack. All packs must be processed together'))
 
                     move_data.setdefault(move.id, {
-                        'initial': move.product_qty,
-                        'partial_qty': 0,
+                        'inital_pck_nb': move.to_pack - move.from_pack + 1,
+                        'return_pck_nb': 0,
                     })
 
                     for seq in stay:
@@ -1136,8 +1136,7 @@ class shipment(osv.osv):
                             'state': 'assigned',
                         }
                         # The original move is never modified, but canceled
-                        move_data[move.id]['partial_qty'] += new_qty
-
+                        move_data[move.id]['return_pck_nb'] += selected_number
                         move_obj.copy(cr, uid, move.id, move_values, context=context)
 
                     # Get the back_to_draft sequences
@@ -1163,7 +1162,7 @@ class shipment(osv.osv):
                     move_obj.copy(cr, uid, move.id, move_values, context=context)
                     context['non_stock_noupdate'] = False
 
-                    move_data[move.id]['partial_qty'] += new_qty
+                    move_data[move.id]['return_pck_nb'] += selected_number
 
                     # Create the draft move
                     # Dispatch -> Distribution
@@ -1189,7 +1188,7 @@ class shipment(osv.osv):
                     move_obj.write(cr, uid, [move.id], move_values, context=context)
 
                 for move_vals in move_data.values():
-                    if round(move_vals['initial'], 13) != round(move_vals['partial_qty'], 13):
+                    if move_vals['return_pck_nb'] != move_vals['inital_pck_nb']:
                         raise osv.except_osv(
                             _('Processing Error'),
                             _('The sum of the processed quantities is not equal to the sum of the initial quantities'),
@@ -1634,26 +1633,37 @@ class shipment(osv.osv):
         return True
 
     def copy_all(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Error'), _('Please select at least one line.'))
+
         cr.execute('''
-            update stock_move set selected_number = (to_pack-from_pack)+1 where picking_id in (
-                select id
-                    from stock_picking
-                    where
-                        shipment_id in %s and
-                        state = 'draft'
-            )''', (tuple(ids),))
+            update stock_move set selected_number = (to_pack-from_pack)+1
+            where picking_id in (
+                select id from stock_picking where shipment_id in %s and state = 'draft'
+            ) and id =ANY(
+                select unnest(move_lines) from pack_family_memory where id in %s
+            )''', (tuple(ids), tuple(context.get('button_selected_ids'))))
         return True
 
     def uncopy_all(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Error'), _('Please select at least one line.'))
+
         cr.execute('''
-            update stock_move set selected_number = 0 where picking_id in (
-                select id
-                    from stock_picking
-                    where
-                        shipment_id in %s and
-                        state = 'draft'
-            )''', (tuple(ids),))
+            update stock_move set selected_number = 0 
+            where picking_id in (
+                select id from stock_picking where shipment_id in %s and state = 'draft'
+            ) and id =ANY(
+                select unnest(move_lines) from pack_family_memory where id in %s
+            )''', (tuple(ids), tuple(context.get('button_selected_ids'))))
         return True
+
 
 shipment()
 
@@ -1669,11 +1679,24 @@ class shipment_additionalitems(osv.osv):
         'comment': fields.char(string='Comment', size=1024),
         'volume': fields.float(digits=(16, 2), string=u'Volume[dm³]'),
         'weight': fields.float(digits=(16, 2), string='Weight[kg]'),
-        'value': fields.float('Value', help='Total Value of the additional item. The value is to be defined in the currency selected for the partner.'),
+        'value': fields.float('Value', help='Total Value of the additional item. The value is to be defined in the currency selected for the partner.'),  # The string is modified in the fields_view_get
         'kc': fields.boolean('KC', help='Defines whether the additional item is to be kept cool.'),
         'dg': fields.boolean('DG', help='Defines whether the additional item is a dangerous good.'),
         'cs': fields.boolean('CS', help='Defines whether the additional item is a controlled substance.'),
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='tree', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+
+        res = super(shipment_additionalitems, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
+        company_currency_name = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.currency_id.name
+        for field in res['fields']:
+            if field == 'value':
+                res['fields'][field]['string'] = _('Value [') + company_currency_name + _(']')
+
+        return res
+
 
 shipment_additionalitems()
 
@@ -2654,7 +2677,10 @@ class stock_picking(osv.osv):
                                                                                 'padding': 2}, context=context)}
 
                         shipment_id = shipment_obj.create(cr, uid, values, context=context)
-                        shipment_obj.log(cr, uid, shipment_id, _('The new Draft Shipment %s has been created.') % (name,))
+                        # Log creation message
+                        message = _('The new Shipment List (%s) has been created.')
+                        shipment_obj.log(cr, uid, shipment_id, message % (name,))
+                        shipment_obj.infolog(cr, uid, message % (name,))
                     else:
                         shipment_id = vals['shipment_id']
                 else:
@@ -2713,8 +2739,6 @@ class stock_picking(osv.osv):
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
         moves_states = {}
         pick_to_check = set()
-
-        wf_service = netsvc.LocalService("workflow")
 
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.subtype == 'standard':
@@ -2822,9 +2846,6 @@ class stock_picking(osv.osv):
                                 ], order='NO_ORDER', limit=1, context=context)
                             if other_linked_moves:
                                 move_obj.update_linked_documents(cr, uid, move.id, other_linked_moves[0], context=context)
-                                proc_ids = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', other_linked_moves[0])], context=context)
-                                for proc_id in proc_ids:
-                                    wf_service.trg_write(uid, 'procurement.order', proc_id, cr)
                         move.unlink(force=True)
 #                        move.action_done(context=context)
                 elif move.product_qty != 0.00:
@@ -4586,27 +4607,6 @@ class pack_family_memory(osv.osv):
 pack_family_memory()
 
 
-class procurement_order(osv.osv):
-    '''
-    procurement order workflow
-    '''
-    _inherit = 'procurement.order'
-
-    def _hook_check_mts_on_message(self, cr, uid, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the _check_make_to_stock_product method from procurement>procurement.py>procurement.order
-
-        - allow to modify the message written back to procurement order
-        '''
-        message = super(procurement_order, self)._hook_check_mts_on_message(cr, uid, context=context, *args, **kwargs)
-        procurement = kwargs['procurement']
-        if procurement.move_id.picking_id.state == 'draft' and procurement.move_id.picking_id.subtype == 'picking':
-            message = _("Shipment Process in Progress.")
-        return message
-
-procurement_order()
-
 class stock_reserved_products(osv.osv):
     _auto = False
     _name ='stock.reserved.products'
@@ -4618,7 +4618,7 @@ class stock_reserved_products(osv.osv):
         'uom_id': fields.many2one('product.uom', 'UoM'),
         'product_code': fields.char('Product', size=256),
         'hidden_product_code': fields.char('Product', size=256),
-        'prodlot_id': fields.many2one('stock.production.lot', 'Production Lot', context={'with_expiry': True}),
+        'prodlot_id': fields.many2one('stock.production.lot', 'Batch Number - Expiry Date', context={'with_expiry': True}),
         'picking_id': fields.char('Document', size=256),
         'product_qty': fields.float('Qty', related_uom='uom_id', group_operator='no_group'),
     }

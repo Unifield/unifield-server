@@ -38,13 +38,13 @@ class multi_company_default(osv.osv):
         'sequence': fields.integer('Sequence'),
         'name': fields.char('Name', size=256, required=True, help='Name it to easily find a record'),
         'company_id': fields.many2one('res.company', 'Main Company', required=True,
-            help='Company where the user is connected'),
+                                      help='Company where the user is connected'),
         'company_dest_id': fields.many2one('res.company', 'Default Company', required=True,
-            help='Company to store the current record'),
+                                           help='Company to store the current record'),
         'object_id': fields.many2one('ir.model', 'Object', required=True,
-            help='Object affected by this rule'),
+                                     help='Object affected by this rule'),
         'expression': fields.char('Expression', size=256, required=True,
-            help='Expression, must be True to match\nuse context.get or user (browse)'),
+                                  help='Expression, must be True to match\nuse context.get or user (browse)'),
         'field_id': fields.many2one('ir.model.fields', 'Field', help='Select field property'),
     }
 
@@ -73,6 +73,7 @@ class res_company(osv.osv):
     _name = "res.company"
     _description = 'Companies'
     _order = 'name'
+    _trace = True
     _columns = {
         'name': fields.char('Company Name', size=64, required=True),
         'parent_id': fields.many2one('res.company', 'Parent Company', select=True),
@@ -92,7 +93,7 @@ class res_company(osv.osv):
     }
 
     def _search(self, cr, uid, args, offset=0, limit=None, order=None,
-            context=None, count=False, access_rights_uid=None):
+                context=None, count=False, access_rights_uid=None):
 
         if context is None:
             context = {}
@@ -106,8 +107,8 @@ class res_company(osv.osv):
             cmp_ids = list(set([user.company_id.id] + [cmp.id for cmp in user.company_ids]))
             return cmp_ids
         return super(res_company, self)._search(cr, uid, args, offset=offset,
-                limit=limit, order=order, context=context, count=count,
-                access_rights_uid=access_rights_uid)
+                                                limit=limit, order=order, context=context, count=count,
+                                                access_rights_uid=access_rights_uid)
 
     def _company_default_get(self, cr, uid, object=False, field=False, context=None):
         """
@@ -187,7 +188,7 @@ class res_company(osv.osv):
     def _get_logo(self, cr, uid, ids):
         return open(os.path.join(
             tools.config['root_path'], '..', 'pixmaps', 'openerp-header.png'),
-                    'rb') .read().encode('base64')
+            'rb') .read().encode('base64')
 
     def _get_header3(self,cr,uid,ids):
         return """

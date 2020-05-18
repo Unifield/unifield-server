@@ -57,6 +57,7 @@ class purchase_order(osv.osv):
                 'amount_untaxed': 0.0,
                 'amount_tax': 0.0,
                 'amount_total': 0.0,
+                'amount_total_tender_currency': 0.0,
             }
             val = val1 = 0.0
             cur = order.pricelist_id.currency_id
@@ -68,6 +69,12 @@ class purchase_order(osv.osv):
             res[order.id]['amount_tax']=cur_obj.round(cr, uid, cur.rounding, val)
             res[order.id]['amount_untaxed']=cur_obj.round(cr, uid, cur.rounding, val1)
             res[order.id]['amount_total']=res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
+            if order.tender_id and order.tender_id.currency_id \
+                    and order.tender_id.currency_id.id != order.pricelist_id.currency_id.id:
+                res[order.id]['amount_total_tender_currency'] = round(cur_obj.compute(cr, uid, cur.id, order.tender_id.currency_id.id,
+                                                                                      res[order.id]['amount_total'], round=False, context=context), 2)
+            else:
+                res[order.id]['amount_total_tender_currency'] = res[order.id]['amount_total']
         return res
 
     def _set_minimum_planned_date(self, cr, uid, ids, name, value, arg, context=None):
@@ -511,7 +518,8 @@ class purchase_order(osv.osv):
                         # PO state must not go back:
                         if po.push_fo:
                             # fo push, 2 line added, L2 cancel , sync => resulting PO must be validated
-                            po_state_seq['sourced_p'] = 0
+                            po_state_seq['draft_p'] = 0
+                            po_state_seq['sourced_p'] = 5
                         if po_state_seq.get(res[po.id], 100) < po_state_seq.get(po.state, 0):
                             res[po.id] = po.state
                 else:
@@ -806,7 +814,10 @@ class purchase_order(osv.osv):
                 (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
                 (_get_order_state_changed, ['state'], 10),
             ]
-        }, multi="sums",help="The total amount"),
+        }, multi="sums", help="The total amount"),
+        'amount_total_tender_currency': fields.function(_amount_all, method=True, string='Total (Comparison Currency)',
+                                                        digits_compute= dp.get_precision('Purchase Price'), store=False,
+                                                        multi="sums", help="The total amount using the tender's currency for comparison"),
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position'),
         'create_uid':  fields.many2one('res.users', 'Responsible'),
         'company_id': fields.many2one('res.company','Company',required=True,select=1),
@@ -1686,7 +1697,13 @@ class purchase_order(osv.osv):
                 return True
 
             for pol in po.order_line:
-                wiz_id = wiz_obj.create(cr, uid, {'order_id': po.id}, context=context)
+                vals = {'order_id': po.id}
+                if context.get('rfq_ok', False) and po.tender_id:
+                    pending_rfqs_same_tender = self.search(cr, uid, [('id', '!=', po.id), ('state', '!=', 'cancel'),
+                                                                     ('tender_id', '=', po.tender_id.id)], context=context)
+                    if not pending_rfqs_same_tender:
+                        vals.update({'cancel_linked_tender': True})
+                wiz_id = wiz_obj.create(cr, uid, vals, context=context)
                 return {
                     'type': 'ir.actions.act_window',
                     'res_model': 'purchase.order.cancel.wizard',

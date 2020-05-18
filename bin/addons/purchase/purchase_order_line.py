@@ -745,6 +745,15 @@ class purchase_order_line(osv.osv):
                     'partner_type': pol.order_id.partner_id.partner_type,
                 })
 
+            # check that the analytic accounts are active. Done at the end to use the newest AD of the pol (to re-browse)
+            pol_ad = self.browse(cr, uid, pol.id, fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
+            ad = pol_ad or po.analytic_distribution_id or False
+            if ad:
+                if pol_ad:
+                    prefix = _("Analytic Distribution on line %s:\n") % pol.line_number
+                else:
+                    prefix = _("Analytic Distribution at header level:\n")
+                ad_obj.check_cc_distrib_active(cr, uid, ad, prefix=prefix, from_supply=True)
         return True
 
 
@@ -1264,7 +1273,10 @@ class purchase_order_line(osv.osv):
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False, 'stock_take_date': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False})
+
+        if not context.get('split_line'):
+            default.update({'stock_take_date': False})
 
         # from RfQ line to PO line: grab the linked sol if has:
         if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):
@@ -2045,6 +2057,23 @@ class purchase_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'invoiced': True}, context=context)
         self.pool.get('account.invoice').button_compute(cr, uid, inv_ids.values(), {'type':'in_invoice'}, set_total=True)
+
+
+    def update_date_expected(self, cr, uid, source, data, context=None):
+        line_info = data.to_dict()
+        stock_move = self.pool.get('stock.move')
+        if line_info.get('sync_local_id') and line_info.get('date_expected'):
+            pol_id = self.search(cr, uid, [('sync_linked_sol', '=', line_info['sync_local_id'])], limit=1, context=context)
+            if pol_id:
+                move_id = stock_move.search(cr, uid, [('purchase_line_id', '=', pol_id), ('type', '=', 'in'), ('state', '=', 'assigned')])
+                if move_id:
+                    stock_move.write(cr, uid, move_id[0], {'date_expected': line_info.get('date_expected')}, context=context)
+                    # to update Expected Receipt Date on picking
+                    picking_id = stock_move.browse(cr, uid, move_id[0], fields_to_fetch=['picking_id']).picking_id
+                    if picking_id:
+                        picking_id.write({}, context=context)
+        return True
+
 purchase_order_line()
 
 
