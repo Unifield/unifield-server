@@ -644,7 +644,6 @@ class replenishment_segment(osv.osv):
             context['inv_review'] = True
         order_calc_line = self.pool.get('replenishment.order_calc.line')
         review_line = self.pool.get('replenishment.inventory.review.line')
-        prod_obj = self.pool.get('product.product')
 
         calc_id = False
         for seg in self.browse(cr, uid, ids, context):
@@ -726,7 +725,8 @@ class replenishment_segment(osv.osv):
                     'expired_qty_before_eta': x[8] or 0,
                     'sleeping_qty': x[9] or 0,
                 }
-
+                if review_id:
+                    sum_line[x[0]]['pas_no_pipe_no_fmc'] -= sum_line[x[0]]['expired_rdd_oc']
 
             today = datetime.now() + relativedelta(hour=0, minute=0, second=0, microsecond=0)
             if seg.rule == 'cycle':
@@ -735,8 +735,6 @@ class replenishment_segment(osv.osv):
             if review_id:
                 rdd = today + relativedelta(months=seg.projected_view, day=1, days=-1)
                 exp_by_month = {}
-                pipe_by_prod_by_month_minus_expired = {}
-                all_prod_ids = [x.product_id.id for x in seg.line_ids]
 
                 if seg.rule == 'cycle':
                     # sum expired by month
@@ -752,18 +750,8 @@ class replenishment_segment(osv.osv):
                             group by line.product_id, exp.month
                     ''', (seg.id, today.strftime('%Y-%m-%d'), rdd.strftime('%Y-%m-%d')))
                     for x in cr.fetchall():
-                        exp_by_month.setdefault(x[0], {}).update({x[1]: x[2]})
-
-                    # pipeline by month
-                    if loc_ids:
-                        for nb_month in range(1, seg.projected_view+1):
-                            end_date = today + relativedelta(months=nb_month, day=1, days=-1)
-                            for prod in prod_obj.browse(cr, uid, all_prod_ids, fields_to_fetch=['incoming_qty', 'default_code'], context={'to_date': end_date, 'location': loc_ids}):
-                                expired = 0
-                                for date in exp_by_month.get(prod.id, {}).keys():
-                                    if date <= end_date.strftime('%Y-%m-%d'):
-                                        expired += exp_by_month[prod.id][date]
-                                pipe_by_prod_by_month_minus_expired.setdefault(prod.id, {}).update({end_date.strftime('%Y-%m-%d'): prod.incoming_qty - expired})
+                        end_day_month = (datetime.strptime(x[1], '%Y-%m-%d')+relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
+                        exp_by_month.setdefault(x[0], {}).update({end_day_month: x[2]})
 
 
                 past_fmc = {}
@@ -974,13 +962,15 @@ class replenishment_segment(osv.osv):
                         valid_rr_fmc = before_today and before_rdd
 
                     if review_id and loc_ids and seg.rule == 'cycle':
+                        total_expired_qty = sum_line[line.id].get('expired_rdd_oc', 0) + sum_line[line.id].get('expired_before_rdd', 0)
                         for nb_month in range(1, line.segment_id.projected_view+1):
                             end_date = today + relativedelta(months=nb_month, day=1, days=-1)
+                            total_expired_qty -= exp_by_month.get(line.product_id.id, {}).get(end_date.strftime('%Y-%m-%d'), 0)
                             rr_fmc_month = fmc_by_month.get(end_date.strftime('%Y-%m-%d'), {}).get('value', False)
                             detailed_pas.append((0, 0, {
                                 'date': end_date.strftime('%Y-%m-%d'),
                                 'rr_fmc': rr_fmc_month,
-                                'projected': rr_fmc_month and max(0, fmc_by_month.get(end_date.strftime('%Y-%m-%d'), {}).get('pas',0)),
+                                'projected': rr_fmc_month and max(0, fmc_by_month.get(end_date.strftime('%Y-%m-%d'), {}).get('pas',0)) + total_expired_qty,
                             }))
 
 
@@ -2254,7 +2244,10 @@ class replenishment_segment_line_amc(osv.osv):
                     rdd_date = datetime.strptime(segment.date_next_order_received_modified or segment.date_next_order_received, '%Y-%m-%d')
                     oc_date = rdd_date + relativedelta(months=segment.order_coverage)
                     if segment.rule == 'cycle':
-                        expired_id = expired_obj.create(cr, uid, {'segment_id': segment.id, 'date_to': oc_date.strftime('%Y-%m-%d')})
+                        max_expired_date = oc_date.strftime('%Y-%m-%d')
+                        if gen_inv_review:
+                            max_expired_date = max(oc_date.strftime('%Y-%m-%d'), projected_view)
+                        expired_id = expired_obj.create(cr, uid, {'segment_id': segment.id, 'date_to': max_expired_date})
                         expired_obj._process_lines(cr, uid, expired_id, context=context, create_cr=False)
                         # before rdd
                         cr.execute("""
