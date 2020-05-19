@@ -52,8 +52,34 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
-
     # UF17.0
+    def recursive_fix_int_previous_chained_pick(self, cr, uid, to_fix_pick_id, prev_chain_pick_id, context=None):
+        if context is None:
+            context = {}
+
+        pick_obj = self.pool.get('stock.picking')
+        pick_obj.write(cr, uid, to_fix_pick_id, {'previous_chained_pick_id': prev_chain_pick_id}, context=context)
+        pick = pick_obj.browse(cr, uid, to_fix_pick_id, fields_to_fetch=['backorder_id'], context=context)
+        if pick.backorder_id:
+            self.recursive_fix_int_previous_chained_pick(cr, uid, pick.backorder_id.id, prev_chain_pick_id, context={})
+
+        return True
+
+    def us_7533_fix_int_previous_chained_pick_id(self, cr, uid, *a, **b):
+        """
+        Fix the previous_chained_pick_id of INTs which have been partially processed
+        """
+        cr.execute("""
+            SELECT backorder_id, previous_chained_pick_id FROM stock_picking 
+            WHERE type = 'internal' AND subtype = 'standard' AND backorder_id IS NOT NULL 
+                AND previous_chained_pick_id IS NOT NULL
+        """)
+
+        for pick in cr.fetchall():
+            self.recursive_fix_int_previous_chained_pick(cr, uid, pick[0], pick[1], context={})
+
+        return True
+
     def us_7425_clean_period_not_run(self, cr, uid, *a, **b):
         """
         Sets as "Run without execution" the updates related to the field-closing of periods received from OCBHQ and not executed
