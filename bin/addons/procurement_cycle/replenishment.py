@@ -871,7 +871,7 @@ class replenishment_segment(osv.osv):
                             while begin < end_loop:
                                 end = min(begin + relativedelta(months=1, day=1, days=-1), end_loop)
                                 if begin < seg_rdd < end:
-                                    split_dates = [(begin, seg_rdd), (seg_rdd, end)]
+                                    split_dates = [(begin, seg_rdd), (seg_rdd+relativedelta(days=1), end)]
                                 else:
                                     split_dates = [(begin, end)]
 
