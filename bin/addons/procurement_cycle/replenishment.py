@@ -2154,19 +2154,20 @@ class replenishment_segment_line_amc(osv.osv):
                     open_loan[loan[0]] = True
 
                 open_donation = {}
-                cr.execute('''
-                    select distinct(m.product_id) from stock_move m, stock_picking p, stock_reason_type rt
-                        where
-                            m.picking_id = p.id and
-                            m.state in ('assigned', 'confirmed') and
-                            p.type = 'out' and
-                            m.location_id in %s and
-                            m.product_id in %s and
-                            m.reason_type_id = rt.id and
-                            rt.name in ('Donation (standard)', 'Donation before expiry')
-                        ''', (tuple(seg_context['amc_location_ids']), tuple(lines.keys())))
-                for don in cr.fetchall():
-                    open_donation[don[0]] = True
+                if seg_context['amc_location_ids']:
+                    cr.execute('''
+                        select distinct(m.product_id) from stock_move m, stock_picking p, stock_reason_type rt
+                            where
+                                m.picking_id = p.id and
+                                m.state in ('assigned', 'confirmed') and
+                                p.type = 'out' and
+                                m.location_id in %s and
+                                m.product_id in %s and
+                                m.reason_type_id = rt.id and
+                                rt.name in ('Donation (standard)', 'Donation before expiry')
+                            ''', (tuple(seg_context['amc_location_ids']), tuple(lines.keys())))
+                    for don in cr.fetchall():
+                        open_donation[don[0]] = True
 
             # AMC
             amc_by_month = {}
