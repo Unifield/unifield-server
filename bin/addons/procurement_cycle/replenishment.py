@@ -255,7 +255,9 @@ class replenishment_location_config(osv.osv):
                 continue
 
             if config.include_product:
-                self.generate_hidden_segment(cr, uid, config.id, context)
+                if not segment_obj.search_exist(cr, uid, [('location_config_id', '=', config.id), ('hidden', '=', True)], context=context):
+                    self.generate_hidden_segment(cr, uid, config.id, context)
+                    segment_ids = segment_obj.search(cr, uid, seg_dom, context=context)
 
             segments = segment_obj.browse(cr, uid, segment_ids, fields_to_fetch=['name_seg'], context=context)
 
@@ -304,6 +306,8 @@ class replenishment_location_config(osv.osv):
                     config.frequence_id.write({'last_run': now})
                     next_date = config.frequence_id.next_date
                     self.write(cr, uid, config.id, {'next_scheduler': next_date, 'last_review_error': False}, context=context)
+                else:
+                    self.write(cr, uid, config.id, {'last_review_error': False}, context=context)
             else:
                 self.write(cr, uid, config.id, {'last_review_error': "\n".join(error)}, context=context)
         return True
@@ -316,7 +320,7 @@ class replenishment_location_config(osv.osv):
             ids = [ids]
         loc_config_obj = self.pool.get('replenishment.location.config')
         segment_obj = self.pool.get('replenishment.segment')
-        all_config_ids = loc_config_obj.search(cr, uid, [('include_product', '=', True), ('review_active', '=', True), ('id', 'in', ids)], context=context)
+        all_config_ids = loc_config_obj.search(cr, uid, [('include_product', '=', True), ('id', 'in', ids)], context=context)
         for loc_config in loc_config_obj.browse(cr, uid, all_config_ids, context=context):
             amc_location_ids = [x.id for x in loc_config.local_location_ids]
             if not amc_location_ids:
