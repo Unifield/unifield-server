@@ -41,23 +41,12 @@ class stock_reception_report(report_sxw.rml_parse):
                                                          move.company_id.currency_id.id, move.price_unit,
                                                          round=False, context=self.localcontext), 2)
 
-            # Get the linked INT's move destination location and look if it's done
-            int_move_dest_loc = False
-            linked_int_move_done = False
-            int_domain = [('type', '=', 'internal'), ('line_number', '=', move.line_number),
-                          ('picking_id.previous_chained_pick_id', '=', pick.id)]
-            linked_int_move_ids = move_obj.search(self.cr, self.uid, int_domain, context=self.localcontext)
-            if linked_int_move_ids:
-                linked_int_move = move_obj.browse(self.cr, self.uid, linked_int_move_ids[0],
-                                                  fields_to_fetch=['location_dest_id', 'state'],
-                                                  context=self.localcontext)
-                int_move_dest_loc = linked_int_move.location_dest_id.name
-                linked_int_move_done = linked_int_move.state == 'done'
-
+            # Get the linked INT's move using move.move_dest_id
             cross_docking_id = model_obj.get_object_reference(self.cr, self.uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
             if sol and sol.procurement_request:
-                if int_move_dest_loc and sol.order_id.location_requestor_id.usage == 'internal':
-                    final_dest_loc = int_move_dest_loc
+                if move.move_dest_id and move.move_dest_id.picking_id.type == 'internal' \
+                        and move.move_dest_id.picking_id.subtype == 'standard' and sol.order_id.location_requestor_id.usage == 'internal':
+                    final_dest_loc = move.move_dest_id.location_dest_id.name
                 elif sol.order_id.location_requestor_id.usage != 'customer' and move.location_dest_id.id == cross_docking_id:
                     # For the UC with IR (Stock location) to IN sent to Cross Docking
                     final_dest_loc = move.location_dest_id.name
@@ -68,9 +57,10 @@ class stock_reception_report(report_sxw.rml_parse):
                     final_dest_loc = sol.order_id.partner_id.name
                 else:  # In case the IN has no linked FO/IR but sent to Cross Docking
                     final_dest_loc = move.location_dest_id.name
-            elif int_move_dest_loc:
-                if linked_int_move_done:
-                    final_dest_loc = int_move_dest_loc
+            elif move.move_dest_id and move.move_dest_id.picking_id.type == 'internal' \
+                    and move.move_dest_id.picking_id.subtype == 'standard':
+                if move.move_dest_id.state == 'done':
+                    final_dest_loc = move.move_dest_id.location_dest_id.name
                 else:  # Do not show the destination if the linked INT move is not done
                     final_dest_loc = ''
             elif move.location_dest_id:
