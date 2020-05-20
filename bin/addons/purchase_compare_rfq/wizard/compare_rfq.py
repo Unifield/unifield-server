@@ -253,7 +253,7 @@ class wizard_compare_rfq(osv.osv_memory):
                 'context': context,
             }
 
-    def _get_rfq_line(self, cr, uid, line, supplier_id, context=None):
+    def _get_rfq_line(self, cr, uid, tender_line_id, supplier_id, context=None):
         """
         Return the ID of the RfQ line matching with the wizard line and the
         selected supplier
@@ -264,7 +264,7 @@ class wizard_compare_rfq(osv.osv_memory):
         pol_obj = self.pool.get('purchase.order.line')
         rfql_ids = pol_obj.search(cr, uid, [
             ('order_id.partner_id', '=', supplier_id),
-            ('tender_line_id', '=', line.tender_line_id.id),
+            ('tender_line_id', '=', tender_line_id),
             ('price_unit', '!=', 0.00),
         ], context=context)
 
@@ -304,11 +304,13 @@ class wizard_compare_rfq(osv.osv_memory):
             else:
                 if selected_lines_ids:
                     for line_id in selected_lines_ids:
-                        wl_obj.write(cr, uid, selected_lines_ids, {'choosen_supplier_id': wiz.supplier_id.id,
-                                                                   'rfq_line_id': line_id}, context=context)
+                        tl_id = wl_obj.browse(cr, uid, line_id, fields_to_fetch=['tender_line_id'], context=context).tender_line_id.id
+                        rfql_id = self._get_rfq_line(cr, uid, tl_id, wiz.supplier_id.id, context=context)
+                        wl_obj.write(cr, uid, line_id, {'choosen_supplier_id': wiz.supplier_id.id,
+                                                        'rfq_line_id': rfql_id or False}, context=context)
                 else:
                     for l in wiz.line_ids:
-                        rfql_id = self._get_rfq_line(cr, uid, l, wiz.supplier_id.id, context=context)
+                        rfql_id = self._get_rfq_line(cr, uid, l.tender_line_id.id, wiz.supplier_id.id, context=context)
                         if not rfql_id:
                             continue
 
@@ -360,6 +362,7 @@ class wizard_compare_rfq(osv.osv_memory):
                 tl_obj.write(cr, uid, [wl_brw.tender_line_id.id], {
                     'purchase_order_line_id': pol_id,
                     'comment': wl_brw.rfq_line_id.comment or '',
+                    'supplier_id': wl_brw.choosen_supplier_id and wl_brw.choosen_supplier_id.id or False,
                 }, context=context)
 
             # UF-733: if all tender lines have been compared (have PO Line id),
@@ -367,7 +370,7 @@ class wizard_compare_rfq(osv.osv_memory):
             # for proceeding to other actions (create PO, Done etc)
             flag = tl_obj.search(cr, uid, [
                 ('tender_id', '=', t_id),
-                ('line_state', '!=' ,'cancel'),
+                ('line_state', '!=', 'cancel'),
                 ('purchase_order_line_id', '=', False),
             ], limit=1, context=context)
 
@@ -385,6 +388,7 @@ class wizard_compare_rfq(osv.osv_memory):
             'res_id': t_id,
             'context': context
         }
+
 
 wizard_compare_rfq()
 
