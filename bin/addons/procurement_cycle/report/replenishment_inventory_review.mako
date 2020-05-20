@@ -967,9 +967,9 @@
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.product_id.name|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.primay_product_list or '')|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.warning or ''|xn}</Data></Cell>
-    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.segment_ref_name|x}</Data></Cell>
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.segment_ref_name or '')|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.rule=='cycle' and 'PAS' or '')|x}</Data></Cell>
-    <Cell ss:StyleID="s141"><Data ss:Type="String">${getSel(line, 'rule')|x}</Data></Cell>
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.segment_ref_name and getSel(line, 'rule') or '')|x}</Data></Cell>
     % if line.rule == 'minmax':
         <Cell ss:StyleID="s140">
             % if line.min_qty:
@@ -1001,22 +1001,22 @@
     % endif
 
     <Cell ss:StyleID="s140">
-        % if line.internal_lt:
+        % if line.segment_ref_name and line.internal_lt:
             <Data ss:Type="Number">${line.internal_lt}</Data>
         % endif
     </Cell>
     <Cell ss:StyleID="s140">
-        % if line.external_lt:
+        % if line.segment_ref_name and line.external_lt:
             <Data ss:Type="Number">${line.external_lt}</Data>
         % endif
     </Cell>
     <Cell ss:StyleID="s140">
-        % if line.total_lt:
+        % if line.segment_ref_name and line.total_lt:
             <Data ss:Type="Number">${line.total_lt}</Data>
         % endif
     </Cell>
     <Cell ss:StyleID="s140">
-        % if line.order_coverage:
+        % if line.segment_ref_name and line.order_coverage:
             <Data ss:Type="Number">${line.order_coverage}</Data>
         % endif
     </Cell>

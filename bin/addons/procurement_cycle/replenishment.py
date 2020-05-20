@@ -1084,6 +1084,8 @@ class replenishment_segment(osv.osv):
                     order_calc_line.create(cr, uid, line_data, context=context)
 
                 else: # review
+                    if seg.hidden:
+                        line_data['valid_rr_fmc'] = False
                     std_dev_hmc = False
                     amc = False
                     if total_fmc_hmc.get(line.product_id.id):

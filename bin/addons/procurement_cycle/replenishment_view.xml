@@ -683,7 +683,7 @@
                         <button colspan="1" name="stock_by_location" string="Stock By Location" type="object" icon="gtk-indent"/>
                     </group>
                     <field name="line_ids" colspan="4" nolabel="1" o2m_selectable="2" scroll="1">
-                        <tree colors="red:expired_qty_before_cons or (status!='new' and qty_lacking) or not valid_rr_fmc;orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc">
+                        <tree colors="red:expired_qty_before_cons or (status!='new' and qty_lacking) or (not valid_rr_fmc and segment_ref_name);orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc">
                             <field name="product_id" filter_selector="1" />
                             <field name="product_description" filter_selector="1" />
                             <field name="uom_id" invisible="1" />
