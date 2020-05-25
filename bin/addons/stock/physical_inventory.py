@@ -527,7 +527,8 @@ class PhysicalInventory(osv.osv):
 
 
         cr.execute('update physical_inventory_discrepancy set total_product_theoretical_qty=0, total_product_counted_qty=0 where inventory_id = %s', (inventory_id, ))
-        cr.execute("select product_id, sum(theoretical_qty), sum(counted_qty) from physical_inventory_discrepancy where ignored = 'f' and inventory_id = %s group by product_id", (inventory_id, ))
+        # theo qty of ignored lines must be counted as qty after inv
+        cr.execute("select product_id, sum(theoretical_qty), sum(case when ignored='f' then counted_qty else theoretical_qty end) from physical_inventory_discrepancy where inventory_id = %s group by product_id", (inventory_id, ))
         for x in cr.fetchall():
             cr.execute('update physical_inventory_discrepancy set total_product_theoretical_qty=%s, total_product_counted_qty=%s where inventory_id = %s and product_id = %s', (x[1], x[2], inventory_id, x[0]))
 
