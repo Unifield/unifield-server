@@ -546,5 +546,9 @@
         <record id="us_6641_remove_duplicates_from_stock_mission" model="patch.scripts">
             <field name="method">us_6641_remove_duplicates_from_stock_mission</field>
         </record>
+
+        <record id="us_7533_fix_int_previous_chained_pick_id" model="patch.scripts">
+            <field name="method">us_7533_fix_int_previous_chained_pick_id</field>
+        </record>
     </data>
 </openerp>
