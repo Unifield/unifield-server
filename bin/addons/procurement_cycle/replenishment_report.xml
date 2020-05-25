@@ -49,6 +49,16 @@
             report_type="webkit"
             menu="False"
             />
+
+      <report
+            id="report_product_stock_out_xls"
+            string="Stock Out"
+            model="product.stock_out"
+            name="report_product_stock_out_xls"
+            file="procurement_cycle/report/product_stock_out.mako"
+            report_type="webkit"
+            menu="True"
+            />
     </data>
 </openerp>
 

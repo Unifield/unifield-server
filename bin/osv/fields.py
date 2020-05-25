@@ -798,6 +798,7 @@ class function(_column):
         self._fnct_inv = fnct_inv
         self._arg = arg
         self._multi = multi
+        self._with_null = args.get('with_null', False)
         if 'relation' in args:
             self._obj = args['relation']
 

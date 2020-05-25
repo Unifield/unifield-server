@@ -971,6 +971,7 @@ class orm_template(object):
 
                 # recursive call for getting children and returning [(0,0,{})] or [(1,ID,{})]
                 field_type = fields_def[field[len(prefix)]]['type']
+                with_null = fields_def[field[len(prefix)]].get('with_null')
                 if field_type not in ('one2many', 'many2one', 'many2many',
                                       'integer', 'boolean', 'float', 'selection',
                                       'reference'):
@@ -1082,7 +1083,10 @@ class orm_template(object):
                     else:
                         res = 0
 
-                row[field[len(prefix)]] = res or False
+                if with_null and not res and res is not None and res is not False:
+                    row[field[len(prefix)]] = res
+                else:
+                    row[field[len(prefix)]] = res or False
 
             result = (row, nbrmax, warning, data_res_id, xml_id)
             return result

@@ -30,6 +30,26 @@
             view_type="form"
             key2="client_print_multi"
             target="new" />
+
+
+        <record model="ir.ui.view" id="replenishment_segment_line_paired_form">
+            <field name="name">replenishment.segment.line.paired</field>
+            <field name="model">replenishment.segment.line</field>
+            <field name="type">form</field>
+            <field name="priority">25</field>
+            <field name="arch" type="xml">
+                <form string="Set Paired Product">
+                        <field name="product_id" readonly="1" colspan="4"/>
+                        <field name="status" invisible="1" />
+                        <field name="replacing_product_id" attrs="{'invisible': [('status', '!=', 'replaced')], 'required':  [('status', '=', 'replaced')]}" colspan="4" domain="[('id', '!=', product_id)]" />
+                        <field name="replaced_product_id" attrs="{'invisible': [('status', '!=', 'replacing')], 'required':  [('status', '=', 'replacing')]}" colspan="4" domain="[('id', '!=', product_id)]"/>
+                        <group colspan="4">
+                            <button name="save_paired" icon="gtk-ok" string="Save" type="object"/>
+                            <button special="cancel" string="Close" icon="gtk-cancel" />
+                        </group>
+                </form>
+            </field>
+        </record>
     </data>
 </openerp>
 

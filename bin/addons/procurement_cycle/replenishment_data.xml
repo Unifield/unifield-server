@@ -44,6 +44,20 @@
             <field name="number_increment">1</field>
         </record>
 
+        <record id="sequence_stock_out_type" model="ir.sequence.type">
+            <field name="name">Stock out</field>
+            <field name="code">product.stock_out</field>
+        </record>
+
+        <record id="sequence_stock_out" model="ir.sequence">
+            <field name="name">Stock out</field>
+            <field name="code">product.stock_out</field>
+            <field name="prefix">SO/%(y)s/%(instance)s/</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
        <record id="ir_cron_replenishment_segment" model="ir.cron">
             <field name="function">replenishment_compute_all_bg</field>
             <field name="user_id">1</field>
