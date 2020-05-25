@@ -922,18 +922,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     _("You cannot choose a source location which is the destination location of the Internal Request"),
                 )
 
-            if line.type == 'make_to_order' and \
-               line.po_cft not in ['cft'] and \
-               not line.product_id and \
-               line.order_id.procurement_request and \
-               line.supplier and \
-               line.supplier.partner_type not in ['internal', 'section', 'intermission', 'esc']:
-                raise osv.except_osv(
-                    _('Warning'),
-                    _("""For an Internal Request with a procurement method 'On Order' and without product,
-the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ESC' type."""),
-                )
-
             if line.product_id and \
                line.product_id.type in ('consu', 'service', 'service_recep') and \
                line.type == 'make_to_stock':
@@ -982,11 +970,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     raise osv.except_osv(
                         _('Warning'),
                         _("You can't Source 'from stock' if you don't have product."),
-                    )
-                if line.supplier and line.supplier.partner_type in ('external'):
-                    raise osv.except_osv(
-                        _('Warning'),
-                        _("You can't Source to an 'External' partner if you don't have product."),
                     )
 
             if line.state not in ('draft', 'cancel') and line.product_id and line.supplier and not context.get('bypass_product_constraints'):
@@ -1189,7 +1172,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             ('id', 'in', ids),
             ('product_id', '=', False),
             ('order_id.procurement_request', '=', False),
-            ('supplier.partner_type', '!=', 'esc'),
+            ('supplier.partner_type', 'not in', ['esc', 'external']),
         ], count=True, context=context)
 
         if no_prod:
@@ -1238,21 +1221,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         if mto_no_cft_no_sup:
             raise osv.except_osv(_('Warning'), _("The supplier must be chosen before sourcing the line"))
-
-        mto_no_cft_no_prod = self.search(cr, uid, [
-            ('id', 'in', ids),
-            ('type', '=', 'make_to_order'),
-            ('po_cft', 'not in', ['cft']),
-            ('supplier', '!=', False),
-            ('product_id', '=', False),
-            ('order_id.procurement_request', '=', True),
-            ('supplier.partner_type', 'not in', ['internal', 'section', 'intermission', 'esc']),
-        ], count=True, context=context)
-
-        if mto_no_cft_no_prod:
-            raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
-                    the supplier must be either in 'Internal', 'Inter-Section', 'Intermission' or 'ESC' type.
-                    """))
 
         stock_no_loc = self.search(cr, uid, [
             ('id', 'in', ids),
