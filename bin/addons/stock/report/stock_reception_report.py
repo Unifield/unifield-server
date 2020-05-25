@@ -52,7 +52,10 @@ class stock_reception_report(report_sxw.rml_parse):
                     final_dest_loc = move.location_dest_id.name
                 elif sol.order_id.location_requestor_id.usage == 'customer' and move.location_dest_id.id != cross_docking_id:
                     # For the UC with IR (Consumption Unit) to IN not sent to Cross Docking
-                    final_dest_loc = move.move_dest_id.location_dest_id.name
+                    if move.move_dest_id.state == 'done':
+                        final_dest_loc = move.move_dest_id.location_dest_id.name
+                    else:
+                        final_dest_loc = ''
                 else:
                     final_dest_loc = sol.order_id.location_requestor_id.name
             elif move.location_dest_id.id == cross_docking_id:
