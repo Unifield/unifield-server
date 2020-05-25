@@ -23721,6 +23721,7 @@ msgstr "Configurer Votre Stock Alloué"
 
 #. module: stock
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:809
+#: field:physical.inventory.discrepancy,total_product_counted_value:0
 msgid "Total Value after INV"
 msgstr "Valeur totale après INV"
 
@@ -30928,11 +30929,6 @@ msgstr "Numéro de séquence de l'acompte"
 #: selection:purchase.report,partner_zone:0
 msgid "International"
 msgstr "International"
-
-#. module: stock
-#: field:physical.inventory.discrepancy,total_product_theoretical_qty:0
-msgid "Total Theoretical Quantity for product"
-msgstr "Quantité totale théorique du produit"
 
 #. modules: purchase, account, vertical_integration, register_accounting, stock
 #: field:account.bank.statement,user_id:0
@@ -43665,6 +43661,7 @@ msgstr "Vérification Numéro de Lot"
 
 #. module: stock
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:805
+#: field:physical.inventory.discrepancy,total_product_theoretical_qty:0
 msgid "Total QTY before INV"
 msgstr "QTÉ totale avant INV"
 
@@ -48415,11 +48412,6 @@ msgstr "Stock Sécurité (en mois)"
 #: field:stock.picking,from_wkf_sourcing:0
 msgid "From wkf sourcing"
 msgstr "From wkf sourcing"
-
-#. module: stock
-#: field:physical.inventory.discrepancy,total_product_counted_qty:0
-msgid "Total Counted Quantity for product"
-msgstr "Quantité totale comptée du produit"
 
 #. module: msf_tools
 #: view:automated.export.job:0
@@ -79415,6 +79407,7 @@ msgstr "Created when PO validated"
 
 #. module: stock
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:807
+#: field:physical.inventory.discrepancy,total_product_counted_qty:0
 msgid "Total QTY after INV"
 msgstr "QTÉ totale après INV"
 
@@ -97806,13 +97799,6 @@ msgstr "Asia/Oral"
 #, python-format
 msgid "Create Picking"
 msgstr "Créer Picking"
-
-#. module: stock
-#: code:addons/stock/physical_inventory.py:1420
-#: field:physical.inventory.discrepancy,total_product_counted_value:0
-#, python-format
-msgid "Total Counted Value for product"
-msgstr "Valeur totale comptée du produit"
 
 #. module: purchase_allocation_report
 #: model:ir.module.module,description:purchase_allocation_report.module_meta_information

@@ -527,7 +527,8 @@ class PhysicalInventory(osv.osv):
 
 
         cr.execute('update physical_inventory_discrepancy set total_product_theoretical_qty=0, total_product_counted_qty=0 where inventory_id = %s', (inventory_id, ))
-        cr.execute("select product_id, sum(theoretical_qty), sum(counted_qty) from physical_inventory_discrepancy where ignored = 'f' and inventory_id = %s group by product_id", (inventory_id, ))
+        # theo qty of ignored lines must be counted as qty after inv
+        cr.execute("select product_id, sum(theoretical_qty), sum(case when ignored='f' then counted_qty else theoretical_qty end) from physical_inventory_discrepancy where inventory_id = %s group by product_id", (inventory_id, ))
         for x in cr.fetchall():
             cr.execute('update physical_inventory_discrepancy set total_product_theoretical_qty=%s, total_product_counted_qty=%s where inventory_id = %s and product_id = %s', (x[1], x[2], inventory_id, x[0]))
 
@@ -1459,9 +1460,9 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'comment': fields.char(size=128, string='Comment'),
 
         # Total for product
-        'total_product_theoretical_qty': fields.float('Total Theoretical Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom_id'),
-        'total_product_counted_qty': fields.float('Total Counted Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom_id'),
-        'total_product_counted_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Counted Value for product")),
+        'total_product_theoretical_qty': fields.float('Total QTY before INV', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom_id'), # col N
+        'total_product_counted_qty': fields.float('Total QTY after INV', digits_compute=dp.get_precision('Product UoM'), readonly=True, related_uom='product_uom_id'), # col O
+        'total_product_counted_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Value after INV")),
         'total_product_discrepancy_qty': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy for product"), related_uom='product_uom_id'),
         'total_product_discrepancy_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy Value for product")),
         'ignored': fields.boolean('Ignored', readonly=True),
