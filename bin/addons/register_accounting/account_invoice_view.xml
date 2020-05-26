@@ -45,7 +45,8 @@
                             <field colspan="4" default_get="{'check_total': check_total, 'address_invoice_id':
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}"
                                 name="invoice_line" nolabel="1">
-                                <tree editable="bottom" string="Invoice lines" colors="red:analytic_distribution_state == 'invalid' or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none','valid')">
+                                <tree editable="bottom" string="Invoice lines"
+                                      colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none','valid')">
                                     <field name="name"/>
                                     <field name="reference"/>
                                     <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]" name="account_id"/>
@@ -245,6 +246,7 @@
                     <field name="user_id" invisible="1"/>
                     <field name="date_due"/>
                     <field name="origin"/>
+                    <field name="line_count"/>
                     <field name="currency_id"/>
                     <field name="residual" sum="Residual Amount"/>
                     <field name="amount_untaxed" sum="Untaxed Amount" invisible="1"/>
@@ -315,8 +317,15 @@
                         <field name="supplier_reference"/>
                     </field>
                     <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='invoice_line']" position="before" >
-                        <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object"
+                        <group name="import" string=" Import Lines " colspan="4" col="4"
+                               attrs="{'invisible': [('state', '!=', 'draft'), ('type', '!=', 'in_invoice')]}">
+                            <button name="import_invoice" string="Import Invoice" icon="gtk-execute" colspan="2" type="object"
+                                    attrs="{'readonly': [('state', '!=', 'draft')],
+                                            'invisible': [('type', '!=', 'in_invoice')]}"/>
+                            <button name="export_invoice" string="Export Invoice" icon="gtk-execute" colspan="2" type="object"
+                                    attrs="{'invisible': [('type', '!=', 'in_invoice')]}"/>
+                            <newline/>
+                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
                                     attrs="{'invisible': [('state', '!=', 'draft')],
                                             'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                         </group>

@@ -119,7 +119,7 @@ class documents_done_wizard(osv.osv):
 
     def _get_problem_sale_order(self, cr, uid, order, context=None):
         '''
-        Check if all stock moves, all procurement orders, all purchase orders
+        Check if all stock moves, all purchase orders
         and all stock picking generated from the sale order is closed or canceled
         '''
         if not context:
@@ -330,14 +330,6 @@ class documents_done_wizard(osv.osv):
                                              'doc_model': 'tender',
                                              'doc_id': tender.id,
                                              'doc_type': 'Tender'}, context=context)
-            # Search all procurement orders attached to the sale order
-            for proc in self.pool.get('procurement.order').browse(cr, uid, proc_ids, context=context):
-                pb_line_obj.create(cr, uid, {'problem_id': pb_id,
-                                             'doc_name': proc.name,
-                                             'doc_state': proc.state,
-                                             'doc_model': 'procurement.order',
-                                             'doc_id': proc.id,
-                                             'doc_type': 'Procurement Order'}, context=context)
 
             # Process all invoices
             for inv in self.pool.get('account.invoice').browse(cr, uid, invoice_ids, context=context):
@@ -525,6 +517,7 @@ class documents_done_problem(osv.osv_memory):
                 if line.doc_model == 'account.invoice':
                     invoice_state = self.pool.get('account.invoice').browse(cr, uid, line.doc_id, context=context).state
                     if invoice_state == 'draft':
+                        # TODO: TEST JFB
                         wf_service.trg_validate(uid, line.doc_model, line.doc_id, 'invoice_cancel', cr)
 #                    elif invoice_state not in ('cancel', 'paid'):
 #                        raise osv.except_osv(_('Error'), _('You cannot set the SO to \'Closed\' because the following invoices are not Cancelled or Paid : %s') % ([map(x.name + '/') for x in error_inv_ids]))

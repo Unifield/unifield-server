@@ -448,19 +448,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
         ana_j_obj = self.pool.get('account.analytic.journal')
         aal_obj = self.pool.get('account.analytic.line')
         # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                            ('is_current_instance', '=', True)], order='id', limit=1, context=context)
-        j_corr_id = j_corr_ids and j_corr_ids[0] or False
-        j_ana_corr_ids = ana_j_obj.search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)],
-                                          order='id', limit=1, context=context)
-        j_ana_corr_id = j_ana_corr_ids and j_ana_corr_ids[0] or False
+        j_corr_id = j_obj.get_correction_journal(cr, uid, context=context)
+        j_ana_corr_id = ana_j_obj.get_correction_analytic_journal(cr, uid, context=context)
         # Search extra-accounting journal
-        j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
-                                             ('is_current_instance', '=', True)], order='id', limit=1)
-        j_extra_id = j_extra_ids and j_extra_ids[0] or False
-        j_ana_extra_ids = ana_j_obj.search(cr, uid, [('type', '=', 'extra'), ('is_current_instance', '=', True)],
-                                           order='id', limit=1, context=context)
-        j_ana_extra_id = j_ana_extra_ids and j_ana_extra_ids[0] or False
+        j_extra_id = j_obj.get_correction_journal(cr, uid, corr_type='extra', context=context)
+        j_ana_extra_id = ana_j_obj.get_correction_analytic_journal(cr, uid, corr_type='extra', context=context)
 
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context,
@@ -662,14 +654,13 @@ receivable, item have not been corrected, item have not been reversed and accoun
                                                               new_account_id, context=context)
 
         # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                            ('is_current_instance', '=', True)], order='id', limit=1, context=context)
-        j_corr_id = j_corr_ids and j_corr_ids[0] or False
+        j_corr_id = j_obj.get_correction_journal(cr, uid, context=context)
 
         # Search extra-accounting journal
-        j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
-                                             ('is_current_instance', '=', True)], order='id', limit=1)
-        j_extra_id = j_extra_ids and j_extra_ids[0] or False
+        j_extra_id = j_obj.get_correction_journal(cr, uid, corr_type='extra', context=context)
+
+        # Search for the "Correction HQ" journal
+        hq_corr_journal_id = j_obj.get_correction_journal(cr, uid, corr_type='hq', context=context)
 
         # Search attached period
         period_obj = self.pool.get('account.period')
@@ -718,6 +709,13 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
                 if new_account.type_for_register != 'donation':
                     raise osv.except_osv(_('Error'), _('You come from a donation account. And new one is not a Donation account. You should give a Donation account!'))
+
+            # Correction: of an HQ entry, or of a correction of an HQ entry
+            if ml.journal_id.type in ('hq', 'correction_hq'):
+                journal_id = hq_corr_journal_id
+                if not journal_id:
+                    raise osv.except_osv(_('Error'), _('No "correction HQ" journal found!'))
+
             if not journal_id:
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
 

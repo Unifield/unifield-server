@@ -55,6 +55,8 @@
         'data/audittrail_account_analytic_journal.yml',
         'data/audittrail_account_journal.yml',
         'data/audittrail_account_account.yml',
+        'data/audittrail_account_tax.yml',
+        'data/audittrail_res_company.yml',
         'audittrail_report.xml',
         'audittrail_invoice_data.yml',
     ],

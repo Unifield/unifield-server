@@ -641,6 +641,8 @@ class product_product(osv.osv):
             if arg[0] == 'expected_prod_creator':
                 prod_creator_ids = self._get_authorized_creator(cr, uid, arg[2]=='bned', context)
 
+        if arg[2]!='bned':
+            return [('international_status', 'in', prod_creator_ids), ('replaced_by_product_id', '=', False)]
         return [('international_status', 'in', prod_creator_ids)]
 
     _defaults = {
@@ -720,45 +722,6 @@ class product_product(osv.osv):
     def on_order(self, cr, uid, ids, orderline, quantity):
         pass
 
-    def name_get(self, cr, user, ids, context=None):
-        if context is None:
-            context = {}
-        if not len(ids):
-            return []
-        def _name_get(d):
-            name = d.get('name','')
-            code = d.get('default_code',False)
-            if code:
-                name = '[%s] %s' % (code,name)
-            if d.get('variants'):
-                name = name + ' - %s' % (d['variants'],)
-            return (d['id'], name)
-
-        partner_id = context.get('partner_id', False)
-
-        result = []
-        for product in self.browse(cr, user, ids, context=context,
-                                   fields_to_fetch=['seller_ids', 'id', 'name', 'default_code',
-                                                    'variants']):
-            sellers = filter(lambda x: x.name.id == partner_id, product.seller_ids)
-            if sellers:
-                for s in sellers:
-                    mydict = {
-                        'id': product.id,
-                        'name': s.product_name or product.name,
-                        'default_code': s.product_code or product.default_code,
-                        'variants': product.variants
-                    }
-                    result.append(_name_get(mydict))
-            else:
-                mydict = {
-                    'id': product.id,
-                    'name': product.name,
-                    'default_code': product.default_code,
-                    'variants': product.variants
-                }
-                result.append(_name_get(mydict))
-        return result
 
     def name_search(self, cr, user, name='', args=None, operator='ilike', context=None, limit=100):
         if not args:

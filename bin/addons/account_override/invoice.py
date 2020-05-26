@@ -63,13 +63,13 @@ class account_invoice(osv.osv):
                 prefix = 'DN_'
             # Intermission voucher OUT
             elif not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
-                prefix = 'IMO_'
+                prefix = 'IVO_'
         elif inv.type == 'in_invoice':
             # Supplier invoice
             prefix = 'SI_'
             # Intermission voucher IN
             if not inv.is_debit_note and not inv.is_inkind_donation and inv.is_intermission:
-                prefix = 'IMI_'
+                prefix = 'IVI_'
             # Direct invoice
             elif inv.is_direct_invoice:
                 prefix = 'DI_'
@@ -221,6 +221,19 @@ class account_invoice(osv.osv):
 
         return res
 
+    def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns the number of lines for each selected invoice
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for inv in self.browse(cr, uid, ids, fields_to_fetch=['invoice_line'], context=context):
+            res[inv.id] = len(inv.invoice_line)
+        return res
+
     _columns = {
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
@@ -255,6 +268,9 @@ class account_invoice(osv.osv):
         'is_merged_by_account': fields.boolean("Is merged by account"),
         'partner_type': fields.related('partner_id', 'partner_type', string='Partner Type', type='selection',
                                        selection=PARTNER_TYPE, readonly=True, store=False),
+        'refunded_invoice_id': fields.many2one('account.invoice', string='Refunded Invoice', readonly=True,
+                                               help='The refunded invoice which has generated this document'),  # 2 inv types for Refund Modify
+        'line_count': fields.function(_get_line_count, string='Line count', method=True, type='integer', store=False),
     }
 
     _defaults = {
@@ -601,13 +617,19 @@ class account_invoice(osv.osv):
             'partner_move_line': False,
             'imported_invoices': False
         })
-        # Manual duplication should generate a "manual document not created through the supply workflow"
-        # so we don't keep the link to: FOs, Picking List
+        # Manual duplication should generate a "manual document not created through the supply workflow", so we don't keep
+        # the link to FOs and Picking List, and we reset the Source Doc if the invoice copied relates to a Supply workflow
         if context.get('from_button', False):
             default.update({
                 'order_ids': False,
                 'picking_id': False,
             })
+            inv = self.browse(cr, uid, inv_id, fields_to_fetch=['state', 'from_supply'], context=context)
+            if inv.state == 'cancel':
+                raise osv.except_osv(_('Warning'), _("You can't duplicate a Cancelled invoice."))
+            if not context.get('from_split') and inv.from_supply:
+                default.update({'origin': ''})
+
         # Reset register_line_ids if not given in default
         if 'register_line_ids' not in default:
             default['register_line_ids'] = []
@@ -617,7 +639,7 @@ class account_invoice(osv.osv):
         # Default behaviour
         new_id = super(account_invoice, self).copy(cr, uid, inv_id, default, context)
         # Case where you split an invoice
-        if 'split_it' in context:
+        if 'from_split' in context:
             purchase_obj = self.pool.get('purchase.order')
             sale_obj = self.pool.get('sale.order')
             if purchase_obj:
@@ -1248,8 +1270,14 @@ class account_invoice(osv.osv):
                                            'price_unit': invl.price_unit, 'description': invl.name, 'wizard_id': wizard_id}, context=context)
         # Return wizard
         if wizard_id:
+            if context.get('from_stv'):
+                wizard_title = _('Split Stock Transfer Voucher')
+            elif context.get('is_intermission') and context.get('intermission_type', '') == 'out':
+                wizard_title = _('Split Intermission Voucher OUT')
+            else:
+                wizard_title = _('Split Invoice')
             return {
-                'name': "Split Invoice",
+                'name': wizard_title,
                 'type': 'ir.actions.act_window',
                 'res_model': 'wizard.split.invoice',
                 'target': 'new',
@@ -1476,6 +1504,7 @@ class account_invoice(osv.osv):
                     and [(6, 0, vals['invoice_line_tax_id'])] or False
 
                 # create merge line
+                vals.update({'merged_line': True})
                 if not self.pool.get('account.invoice.line').create(cr, uid,
                                                                     vals, context=context):
                     break
@@ -1509,6 +1538,8 @@ class account_invoice(osv.osv):
             }, context=context)
 
         res = {}
+        if context is None:
+            context = {}
         if not ids:
             return False
         if isinstance(ids, (int, long, )):
@@ -1518,6 +1549,7 @@ class account_invoice(osv.osv):
         ad_obj = self.pool.get('analytic.distribution')
 
         # merging
+        context.update({'from_merge': True})
         for inv_br in self.browse(cr, uid, ids, context=context):
             merge_invoice(inv_br)
 
@@ -1599,6 +1631,33 @@ class account_invoice(osv.osv):
         if aml_obj.search_exist(cr, uid, [('id', 'in', aml_ids), ('reconcile_id', '!=', False)], context=context):
             return True
         return False
+
+    def export_invoice(self, cr, uid, ids, data, context=None):
+        """
+        Opens the Export Invoice report
+        """
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'account.export_invoice',
+            'datas': data,
+        }
+
+    def import_invoice(self, cr, uid, ids, data, context=None):
+        """
+        Opens the Import Invoice wizard
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        wiz_id = self.pool.get('account.invoice.import').create(cr, uid, {'invoice_id': ids[0]}, context=context)
+        return {
+            'name': _('Import Invoice'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.invoice.import',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': [wiz_id],
+        }
 
 
 account_invoice()
@@ -1696,17 +1755,23 @@ class account_invoice_line(osv.osv):
                                            help="Field used for import only"),
         'from_supply': fields.related('invoice_id', 'from_supply', type='boolean', string='From Supply', readonly=True, store=False),
         'synced': fields.related('invoice_id', 'synced', type='boolean', string='Synchronized', readonly=True, store=False),
+        # field "line_synced" created to be used in the views where the "synced" field at doc level is displayed
+        # (avoids having 2 fields with the same name within the same view)
+        'line_synced': fields.related('invoice_id', 'synced', type='boolean', string='Synchronized', readonly=True, store=False,
+                                      help='Technical field, similar to "synced"'),
         'invoice_type': fields.related('invoice_id', 'type', string='Invoice Type', type='selection', readonly=True, store=False,
                                        selection=[('out_invoice', 'Customer Invoice'),
                                                   ('in_invoice', 'Supplier Invoice'),
                                                   ('out_refund', 'Customer Refund'),
                                                   ('in_refund', 'Supplier Refund')]),
+        'merged_line': fields.boolean(string='Merged Line', help='Line generated by the merging of other lines', readonly=True),
     }
 
     _defaults = {
         'price_unit': lambda *a: 0.00,
         'is_corrected': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
+        'merged_line': lambda *a: False,
     }
 
     _order = 'line_number'
@@ -1749,9 +1814,14 @@ class account_invoice_line(osv.osv):
             inv = inv_obj.browse(cr, uid, invoice_id, fields_to_fetch=inv_fields, context=context)
             ivi_or_si_synced = inv.type == 'in_invoice' and not inv.is_inkind_donation and inv.synced
             intermission_or_section_from_supply = inv.partner_type in ('intermission', 'section') and inv.from_supply
-            if context.get('from_inv_form') and (ivi_or_si_synced or intermission_or_section_from_supply):
-                raise osv.except_osv(_('Error'), _('This document has been generated via a Supply workflow or via synchronization. '
-                                                   'You can\'t add lines manually.'))
+            from_split = context.get('from_split')
+            if context.get('from_inv_form'):
+                if from_split and ivi_or_si_synced:
+                    raise osv.except_osv(_('Error'), _('This document has been generated via synchronization. '
+                                                       'You can\'t split its lines.'))
+                elif not from_split and (ivi_or_si_synced or intermission_or_section_from_supply):
+                    raise osv.except_osv(_('Error'), _('This document has been generated via a Supply workflow or via synchronization. '
+                                                       'You can\'t add lines manually.'))
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -1818,7 +1888,7 @@ class account_invoice_line(osv.osv):
 
         new_id = super(account_invoice_line, self).copy(cr, uid, inv_id, default, context)
 
-        if 'split_it' in context:
+        if 'from_split' in context:
             purchase_lines_obj = self.pool.get('purchase.order.line')
             sale_lines_obj = self.pool.get('sale.order.line')
 
@@ -1841,11 +1911,13 @@ class account_invoice_line(osv.osv):
         Copy an invoice line without its move lines,
         without the link to a reversed invoice line,
         and without link to PO/FO lines when the duplication is manual
+        Reset the merged_line tag.
         """
         if default is None:
             default = {}
         default.update({'move_lines': False,
                         'reversed_invoice_line_id': False,
+                        'merged_line': False,
                         })
         # Manual duplication should generate a "manual document not created through the supply workflow"
         # so we don't keep the link to PO/FO at line level
@@ -1863,6 +1935,7 @@ class account_invoice_line(osv.osv):
             - compute total amount (check_total field)
             - write total to the register line
         - Raise error msg if the related inv. has been generated via Sync. or by a Supply workflow (for Intermission/Intersection partners)
+          (for SI from Supply: merging lines is always allowed, deleting lines is allowed only for manual lines not having been merged.)
         """
         if not context:
             context = {}
@@ -1875,9 +1948,24 @@ class account_invoice_line(osv.osv):
         for invl in self.browse(cr, uid, ids):
             if invl.invoice_id and invl.invoice_id.id not in invoice_ids:
                 invoice = invl.invoice_id
-                invoice_ids.append(invoice.id)  # check each invoice only once
-                is_ivi_or_si = invoice.type == 'in_invoice' and not invoice.is_inkind_donation
-                if (is_ivi_or_si and invoice.synced) or (invoice.from_supply and invoice.partner_type in ('intermission', 'section')):
+                in_invoice = invoice.type == 'in_invoice' and not invoice.is_inkind_donation
+                supp_inv = in_invoice and not invoice.is_intermission
+                from_merge = context.get('from_merge')
+                from_split = context.get('from_split')
+                from_supply = invoice.from_supply
+                intermission_or_section = invoice.partner_type in ('intermission', 'section')
+                check_line_per_line = from_supply and supp_inv and not from_merge and not from_split
+                if not check_line_per_line:
+                    invoice_ids.append(invoice.id)  # check each invoice only once
+                deletion_allowed = True
+                if in_invoice and invoice.synced:
+                    deletion_allowed = False
+                elif from_supply and not context.get('from_split'):  # allow deletion due to the "Split" feature (available in Draft)
+                    if intermission_or_section:
+                        deletion_allowed = False
+                    elif supp_inv and not from_merge and (invl.order_line_id or invl.merged_line):
+                        deletion_allowed = False
+                if not deletion_allowed:
                     # will be displayed when trying to delete lines manually / merge lines / or split invoices
                     raise osv.except_osv(_('Error'), _("This document has been generated via a Supply workflow or via synchronization. "
                                                        "Existing lines can't be deleted."))

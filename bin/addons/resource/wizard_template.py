@@ -64,9 +64,9 @@ class finance_query_method(osv.osv):
             model_data.unlink(cr, 1, ir_data_to_del, context=context)
         return True
 
-    def search_deleted(self, cr, uid, module=None, res_ids=None, context=None):
+    def search_deleted(self, cr, uid, module=None, res_ids=None, context=None, for_sync=False):
         # search unlinked records
-        ids = super(finance_query_method, self).search_deleted(cr, uid, module=module, res_ids=res_ids, context=context)
+        ids = super(finance_query_method, self).search_deleted(cr, uid, module=module, res_ids=res_ids, context=context, for_sync=for_sync)
 
         if not res_ids:
             # search old synced records now set as not synced => this must trigger deletion to lower level

@@ -32188,11 +32188,6 @@ msgstr "Tipo de certificado"
 msgid "Claim Partner"
 msgstr "Reclamación - Tercero"
 
-#. module: account_msf
-#: view:account.invoice:0
-msgid "I/MI voucher date"
-msgstr "I/MI fecha del bono"
-
 #. module: base_report_designer
 #: view:base_report_designer.installer:0
 #: model:ir.actions.act_window,name:base_report_designer.action_report_designer_wizard
