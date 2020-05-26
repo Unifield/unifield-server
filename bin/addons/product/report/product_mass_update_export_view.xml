@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="product_mass_update_export_xls"
+            string="Product Mass Update Errors"
+            model="product.mass.update"
+            name="product_mass_update_export_xls"
+            file="product/report/product_mass_update_export_xls.mako"
+            report_type="webkit"
+            menu="False"
+            />
+    </data>
+</openerp>

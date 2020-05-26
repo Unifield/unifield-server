@@ -64,103 +64,6 @@
             </field>
         </record>
 
-        <record id="inherit_view_move_form" model="ir.ui.view">
-            <field name="name">inherit.view.move.form</field>
-            <field name="model">stock.move</field>
-            <field name="type">form</field>
-            <field name="priority">40</field>
-            <field name="inherit_id" ref="stock.view_move_form" />
-            <field name="arch" type="xml">
-                <xpath expr="/form//field[@name='product_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='product_qty']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='product_uom']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                    <attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='location_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='location_dest_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='address_id']" position="replace">
-                	<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" 
-                				attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-                	<field name="address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-                </xpath>
-                <xpath expr="/form//field[@name='picking_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='tracking_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='date_expected']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='name']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//button[@string='New pack']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//button[@string='Split']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-            </field>
-        </record>
-        
-        <record id="inherit_view_move_form_reception_picking" model="ir.ui.view">
-            <field name="name">inherit.view.move.form</field>
-            <field name="model">stock.move</field>
-            <field name="type">form</field>
-            <field name="priority">40</field>
-            <field name="inherit_id" ref="stock.view_move_form_reception_picking" />
-            <field name="arch" type="xml">
-                <xpath expr="/form//field[@name='product_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='product_qty']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='product_uom']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                    <attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='location_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='location_dest_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='address_id']" position="replace">
-                	<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" 
-                				attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-                	<field name="address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
-                </xpath>
-                <xpath expr="/form//field[@name='picking_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='tracking_id']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='date_expected']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//field[@name='name']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//button[@string='New pack']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-                <xpath expr="/form//button[@string='Split']" position="attributes">
-                    <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
-                </xpath>
-            </field>
-        </record>        
 
         <record id="view_split_in_lots" model="ir.ui.view">
             <field name="name">view.split.in.lots</field>
@@ -279,33 +182,6 @@
             </field>
         </record>
 
-        <record id="unifield_view_move_tree" model="ir.ui.view">
-            <field name="name">unifield.view.move.tree</field>
-            <field name="model">stock.move</field>
-            <field name="type">tree</field>
-            <field name="priority">40</field>
-            <field name="inherit_id" ref="stock.view_move_tree" />
-            <field name="arch" type="xml">
-                <xpath expr="/tree" position="attributes">
-                    <attribute name="editable">top</attribute>
-                    <attribute name="noteditable">1</attribute>
-                    <attribute name="hide_new_button">1</attribute>
-                    <attribute name="hide_delete_button">1</attribute>
-                </xpath>
-
-                <xpath expr="/tree//field[@name='picking_id']" position="attributes">
-                    <attribute name="string">Picking Ref.</attribute>
-                </xpath>
-
-                <xpath expr="/tree//field[@name='tracking_id']" position="replace" />
-
-                <xpath expr="/tree//button[@string='Split in production lots']" position="replace" />
-                <xpath expr="/tree//button[@string='Put in current pack']" position="replace" />
-                <xpath expr="/tree//button[@string='Put in a new pack']" position="replace" />
-                <xpath expr="/tree//button[@string='Scrap Products']" position="replace" />
-            </field>
-        </record>
-
         <record id="stock.view_picking_form" model="ir.ui.view">
             <field name="name">view.picking.form</field>
             <field name="model">stock.picking</field>
@@ -341,9 +217,8 @@
                                 default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'date_expected': min_date, 'reason_type_id': reason_type_id, 'from_wkf': from_wkf}"
                                 context="{'reason_type_id': reason_type_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
                                 on_change="onchange_move()"
-                                attrs="{'readonly': [('from_manage_expired', '=', True)]}"
                                 >
-                                <tree colors="grey:scrapped == True; red: inactive_product or to_correct_ok or expired_lot" string="Stock Moves" noteditable="linked_incoming_move != False" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
+                                <tree colors="grey:scrapped == True; red: inactive_product or to_correct_ok or expired_lot" string="Stock Moves" noteditable="linked_incoming_move == True or from_manage_expired_move == True" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
                                     <field name="line_number"/>
                                     <field name="product_id" />
                                     <field name="comment" />
@@ -353,11 +228,11 @@
                                     <field name="product_uos" invisible="1"/>
                                     <field name="scrapped" invisible="1"/>
                                     <field name="linked_incoming_move" invisible="1"/>
+                                    <field name="from_manage_expired_move" invisible="1"/>
                                     <field name="asset_id"/>
                                     <field name="prodlot_id"/>
                                     <field name="expired_date"/>
 
-                                    <!--<button name="%(stock.track_line)d" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" states="draft,waiting,confirmed,assigned"/>-->
 
                                     <field name="tracking_id"/>
                                     <field name="location_id"/>
@@ -381,7 +256,7 @@
                                     <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                     <button name="call_cancel_wizard" icon="gtk-del" string="Cancel &amp; Resource" type="object" 
                                             confirm="Do you really want to delete selected record ?"
-                                            attrs="{'invisible': ['|', ('from_wkf', '=', False), ('fake_state', 'in', ('cancel', 'done'))]}" 
+                                            attrs="{'invisible': ['|', ('from_wkf', '=', False), ('fake_state', 'in', ('cancel', 'done'))]}"
                                             context="{'from_int': 1, 'from_button': True}"/>
                                 </tree>
 
@@ -429,7 +304,7 @@
                                             context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" 
                                             />
                                        <field name="location_dest_id"
-                                            domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_id)]" 
+                                            domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_id)]"
                                             on_change="location_dest_change(location_dest_id, location_id, product_id)"
                                             />
                                     </group>
@@ -481,7 +356,7 @@
                                 <field name="from_manage_expired" invisible="1" />
                                 <!-- <button name="return_to_state" string="Return to initial state" states="import" icon="gtk-execute" type="object" />-->
                                 <button name="call_cancel_wizard" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel" type="object"  context="{'from_button': True}"/>
-                                <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': ['|', '&amp;', ('state', 'in', ['done', 'cancel', 'import']), ('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" />
+                                <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': ['|', ('state', 'in', ['done', 'cancel', 'import']), '&amp;', ('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" />
                                 <button name="expired_assign" states="confirmed,assigned" string="Check Expired Products' Availability" type="object" icon="gtk-find" context="{'from_button': True}" attrs="{'invisible': ['|', ('state', 'not in', ['confirmed', 'assigned']), ('from_manage_expired', '=', False)]}" />
                                 <button name="check_availability_manually" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}" attrs="{'invisible': [('from_manage_expired', '=', True)]}"/>
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
@@ -489,7 +364,7 @@
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" context="{'from_button': True}"/>
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
-                                <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
+                                <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','!=','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
                         <page string="Additional info">
@@ -737,7 +612,7 @@
                                     confirm="Warning, you are going to Cancel!"
                                     />
                                 <field name="from_wkf_sourcing" invisible="1" />
-                                <button name="enter_reason"
+                                <button name="enter_reason_cr"
                                     states="assigned,confirmed,draft,shipped,updated"
                                     attrs="{'invisible': ['|', '|', ('state', 'not in', ['assigned', 'confirmed', 'draft', 'shipped', 'updated']), ('progress_memory_not_done', '!=', False), ('from_wkf_sourcing', '=', False)]}"
                                     string="Cancel &amp; Resource"
@@ -759,7 +634,7 @@
                                 <group colspan="1" states="done">
                                     <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 </group>
-                                <button states="done" name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
+                                <button states="done" name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','!=','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
                         <page string="Additional Info">
@@ -785,7 +660,7 @@
             <field name="arch" type="xml">
                 <search string="Stock Moves">
                     <group col="14" colspan="4">
-                        <filter icon="terp-go-today" string="Today" domain="[('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders processed Today or planned for Today"/>
+                        <filter icon="terp-go-today" string="Today" domain="['&amp;', ('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders processed Today or planned for Today"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state','=','done')]" help="Stock moves that have been processed"/>
                         <filter icon="terp-stock" string="Future" name="future" domain="[('state','in',('assigned','confirmed','waiting'))]" help="Stock moves that are Confirmed, Available or Waiting"/>
@@ -880,7 +755,7 @@
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                            <field name="min_date" string="Expected Shipped Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}"
+                            <field name="min_date" string="Expected Shipped Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel', 'delivered'])]}"
                             on_change="change_min_date()" required="1" />
                             <field name="min_date_manually" invisible="1" />
                             <field name="warehouse_id"
@@ -1021,28 +896,27 @@
                             </field>
                             <group col="12" colspan="4">
                                 <field name="state" invisible="True"/>
-                                <field name="delivered" invisible="True"/>
                                 <field name="state_hidden"/>
                                 <field name="is_company" invisible="1" />
                                 <button name="set_delivered"
                                         icon="gtk-apply"
                                         type="object"
-                                        string="Confirm Delivery"
-                                        attrs="{'invisible': ['|', '|', '|', '|', '|',
+                                        string="Confirm Reception"
+                                        attrs="{'invisible': ['|', '|', '|', '|',
                                                               ('type', '!=', 'out'), ('subtype', '!=', 'standard'),
-                                                              ('state', '!=', 'done'), ('delivered', '=', True),
+                                                              ('state', '!=', 'done'),
                                                               ('partner_type', 'not in', ['internal', 'intermission', 'section']),
                                                               ('is_company', '=', True),
                                                               ]}"
-                                        confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"
+                                        confirm="Synchronization engine should confirm the reception once recorded on the receiving instance, do you want to continue?"
                                 />
                                 <button name="set_delivered"
                                         icon="gtk-apply"
                                         type="object"
-                                        string="Confirm Delivery"
-                                        attrs="{'invisible': ['|', '|', '|', '|',
+                                        string="Confirm Reception"
+                                        attrs="{'invisible': ['|', '|', '|',
                                                               ('type', '!=', 'out'), ('subtype', '!=', 'standard'),
-                                                              ('state', '!=', 'done'), ('delivered', '=', True),
+                                                              ('state', '!=', 'done'),
                                                               '&amp;',
                                                               ('partner_type', 'in', ['internal', 'intermission', 'section']),
                                                               ('is_company', '=', False),
@@ -1058,7 +932,7 @@
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
                                 <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
-                                <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
+                                <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','not in',['done','delivered']),('invoice_state','=','invoiced'),('invoice_state','=','none')]}" type="action" icon="terp-gtk-go-back-rtl"/>
                             </group>
                         </page>
                         <page string="Additional info">
@@ -1210,7 +1084,7 @@
                     <field name="allow_cr" invisible="1" />
                     <group colspan="4" col="1" attrs="{'invisible': [('allow_cr', '=', False)]}">
                         <html>
-                            <h4 style="text-align: center; margin: 10px">If you click on 'Cancel &amp; Resource' button, all lines of this delivery OUT attached to a Field order or an Internal Request will be re-sourced. All lines or quantities already processed wouldn't be re-sourced.</h4>
+                            <h4 style="text-align: center; margin: 10px"><translate>If you click on 'Cancel &amp; Resource' button, all lines of this delivery OUT attached to a Field order or an Internal Request will be re-sourced. All lines or quantities already processed wouldn't be re-sourced.</translate></h4>
                         </html>
                     </group>
                     <newline />
@@ -1254,7 +1128,7 @@
                 <form string="Cancel move">
                     <group colspan="4" col="1" attrs="{'invisible': [('cancel_only', '=', True)]}">
                         <html>
-                            <h4 style="text-align: center; margin: 10px">Would you re-source the need sourced by this stock move ?</h4>
+                            <h4 style="text-align: center; margin: 10px"><translate>Would you re-source the need sourced by this stock move ?</translate></h4>
                         </html>
                     </group>
                     <newline />

@@ -217,9 +217,10 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
                 cnopts = pysftp.CnOpts()
                 cnopts.hostkeys = None
                 sftp = pysftp.Connection(obj.ftp_url, username=obj.ftp_login, password=obj.ftp_password, cnopts=cnopts)
+                sftp._transport.set_keepalive(15)
             except:
                 self.infolog(cr, uid, _('%s :: SFTP connection failed') % obj.name)
-                raise osv.except_osv(_('Error'), _('Not able to connect to FTP server at location %s') % obj.ftp_url)
+                raise osv.except_osv(_('Error'), _('Not able to connect to SFTP server at location %s') % obj.ftp_url)
 
         if not context.get('no_raise_if_ok'):
             raise osv.except_osv(_('Info'), _('Connection succeeded'))

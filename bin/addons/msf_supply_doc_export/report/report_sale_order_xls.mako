@@ -79,7 +79,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Justification Coordination')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('HQ Remarks')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Justification Y/N')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Status')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('State')}</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>

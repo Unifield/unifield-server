@@ -23,6 +23,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from time import strftime
+from base import currency_date
+
 
 class analytic_line(osv.osv):
     _name = "account.analytic.line"
@@ -280,26 +282,26 @@ class analytic_line(osv.osv):
         context.update({'from': 'mass_reallocation'}) # this permits reallocation to be accepted when rewrite analaytic lines
         move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
 
+        ir_seq_obj = self.pool.get('ir.sequence')
+
         aaj_obj = self.pool.get('account.analytic.journal')
-        correction_journal_ids = aaj_obj.search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)],
-                                                order='id', limit=1)
-        correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
-        if not correction_journal_id:
+        od_analytic_journal_id = aaj_obj.get_correction_analytic_journal(cr, uid, context=context)
+        if not od_analytic_journal_id:
             raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
 
         # sequence info from GL journal
         aj_obj = self.pool.get('account.journal')
-        gl_correction_journal_ids = aj_obj.search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)],
-                                                  order='id', limit=1)
-        gl_correction_journal_id = gl_correction_journal_ids and gl_correction_journal_ids[0] or False
+        gl_correction_journal_id = aj_obj.get_correction_journal(cr, uid, context=context)
         if not gl_correction_journal_id:
             raise osv.except_osv(_('Error'), _('No GL journal found for corrections!'))
         gl_correction_journal_rec = aj_obj.browse(cr, uid, gl_correction_journal_id, context=context)
 
         is_donation = {}
         gl_correction_odx_journal_rec = False
+        gl_correction_odhq_journal_rec = False
         # Process lines
         for aline in self.browse(cr, uid, ids, context=context):
+            curr_date = currency_date.get_date(self, cr, aline.document_date, aline.date, source_date=aline.source_date)
             if account.category in ['OC', 'DEST']:
                 # Period verification
                 period = aline.period_id
@@ -320,7 +322,7 @@ class analytic_line(osv.osv):
                     vals = {
                         fieldname: account_id,
                         'date': aline.date,
-                        'source_date': aline.source_date or aline.date,
+                        'source_date': curr_date,
                     }
                     self.write(cr, uid, [aline.id], vals, context=context)
                 # else reverse line before recreating them with right values
@@ -333,28 +335,36 @@ class analytic_line(osv.osv):
 
                     if is_donation[aline.move_id.account_id.id]:
                         if not gl_correction_odx_journal_rec:
-                            odx_aji = aj_obj.search(cr, uid, [('type', '=', 'extra'), ('is_current_instance', '=', True)],
-                                                    order='id', limit=1)
-                            if not odx_aji:
+                            gl_correction_odx_journal_id = aj_obj.get_correction_journal(cr, uid, corr_type='extra', context=context)
+                            if not gl_correction_odx_journal_id:
                                 raise osv.except_osv(_('Error'), _('No GL journal found for ODX'))
-                            gl_correction_odx_journal_id = odx_aji[0]
                             gl_correction_odx_journal_rec = aj_obj.browse(cr, uid, gl_correction_odx_journal_id, context=context)
-
-                            correction_odx_journal_ids = aaj_obj.search(cr, uid, [('type', '=', 'extra'), ('is_current_instance', '=', True)],
-                                                                        order='id', limit=1)
-                            correction_odx_journal_id = correction_odx_journal_ids and correction_odx_journal_ids[0] or False
-                            if not correction_odx_journal_id:
+                            odx_analytic_journal_id = aaj_obj.get_correction_analytic_journal(cr, uid, corr_type='extra', context=context)
+                            if not odx_analytic_journal_id:
                                 raise osv.except_osv(_('Error'), _('No analytic journal found for ODX!'))
 
-
-                        seqnum = self.pool.get('ir.sequence').get_id(cr, uid, gl_correction_odx_journal_rec.sequence_id.id, context=seq_num_ctx)
+                        seqnum = ir_seq_obj.get_id(cr, uid, gl_correction_odx_journal_rec.sequence_id.id, context=seq_num_ctx)
                         entry_seq = "%s-%s-%s" % (move_prefix, gl_correction_odx_journal_rec.code, seqnum)
-                        corr_j = correction_odx_journal_id
+                        corr_j = odx_analytic_journal_id
+                    # Correction: of an HQ entry, or of a correction of an HQ entry
+                    elif aline.journal_id.type in ('hq', 'correction_hq'):
+                        if not gl_correction_odhq_journal_rec:
+                            gl_correction_odhq_journal_id = aj_obj.get_correction_journal(cr, uid, corr_type='hq', context=context)
+                            if not gl_correction_odhq_journal_id:
+                                raise osv.except_osv(_('Error'), _('No "correction HQ" journal found!'))
+                            gl_correction_odhq_journal_rec = aj_obj.browse(cr, uid, gl_correction_odhq_journal_id,
+                                                                           fields_to_fetch=['sequence_id', 'code'], context=context)
+                            odhq_analytic_journal_id = aaj_obj.get_correction_analytic_journal(cr, uid, corr_type='hq', context=context)
+                            if not odhq_analytic_journal_id:
+                                raise osv.except_osv(_('Error'), _('No "correction HQ" analytic journal found!'))
+                        seqnum = ir_seq_obj.get_id(cr, uid, gl_correction_odhq_journal_rec.sequence_id.id, context=seq_num_ctx)
+                        entry_seq = "%s-%s-%s" % (move_prefix, gl_correction_odhq_journal_rec.code, seqnum)
+                        corr_j = odhq_analytic_journal_id
                     else:
                         # compute entry sequence
-                        seqnum = self.pool.get('ir.sequence').get_id(cr, uid, gl_correction_journal_rec.sequence_id.id, context=seq_num_ctx)
+                        seqnum = ir_seq_obj.get_id(cr, uid, gl_correction_journal_rec.sequence_id.id, context=seq_num_ctx)
                         entry_seq = "%s-%s-%s" % (move_prefix, gl_correction_journal_rec.code, seqnum)
-                        corr_j = correction_journal_id
+                        corr_j = od_analytic_journal_id
 
                     # First reverse line
                     rev_ids = self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id], posting_date=date)
@@ -370,7 +380,7 @@ class analytic_line(osv.osv):
                     # then create new lines
                     cor_name = self.pool.get('account.analytic.line').join_without_redundancy(aline.name, 'COR')
                     cor_ids = self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
-                                                                                              'source_date': aline.source_date or aline.date, 'journal_id': corr_j,
+                                                                                              'source_date': curr_date, 'journal_id': corr_j,
                                                                                               'name': cor_name, 'ref': aline.entry_sequence, 'real_period_id': correction_period_ids[0]}, context=context)
                     self.pool.get('account.analytic.line').write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
                     # finally flag analytic line as reallocated
@@ -401,6 +411,7 @@ class analytic_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some value
+        ad_obj = self.pool.get('analytic.distribution')
         account = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['category', 'date_start', 'date'], context=context)
         account_type = account and account.get('category', False) or False
         res = []
@@ -442,12 +453,13 @@ class analytic_line(osv.osv):
                 check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aline.account_id.id])
                 if check_accounts and aline.account_id.id in check_accounts:
                     continue
-
-                if aline.account_id and aline.account_id.id == msf_private_fund:
-                    res.append(aline.id)
-                elif aline.account_id and aline.cost_center_id and aline.account_id.cost_center_ids:
-                    if account_id in [x and x.id for x in aline.account_id.cost_center_ids] or aline.account_id.id == msf_private_fund:
+                if ad_obj.check_dest_cc_compatibility(cr, uid, aline.destination_id and aline.destination_id.id or False,
+                                                      account_id, context=context):
+                    if aline.account_id and aline.account_id.id == msf_private_fund:
                         res.append(aline.id)
+                    elif aline.account_id and aline.cost_center_id and aline.account_id.cost_center_ids:
+                        if account_id in [x and x.id for x in aline.account_id.cost_center_ids] or aline.account_id.id == msf_private_fund:
+                            res.append(aline.id)
         elif account_type == 'FUNDING':
             fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['cost_center_ids', 'tuple_destination_account_ids'], context=context)
             cc_ids = fp and fp.get('cost_center_ids', []) or []
@@ -473,7 +485,8 @@ class analytic_line(osv.osv):
                     res.append(aline.id)
         elif account_type == "DEST":
             for aline in self.browse(cr, uid, ids, context=context):
-                if aline.general_account_id and account_id in [x.id for x in aline.general_account_id.destination_ids]:
+                if ad_obj.check_dest_cc_compatibility(cr, uid, account_id, aline.cost_center_id and aline.cost_center_id.id or False, context=context) and \
+                        aline.general_account_id and account_id in [x.id for x in aline.general_account_id.destination_ids]:
                     res.append(aline.id)
         else:
             # Case of FREE1 and FREE2 lines
@@ -507,6 +520,7 @@ class analytic_line(osv.osv):
                         new_dest_id, new_dest_br,
                         new_cc_id, new_cc_br,
                         new_fp_id, new_fp_br):
+            ad_obj = self.pool.get('analytic.distribution')
             if not general_account_br.is_analytic_addicted:
                 res.append((id, entry_sequence, ''))
                 return False
@@ -517,6 +531,12 @@ class analytic_line(osv.osv):
                 # not compatible with general account
                 res.append((id, entry_sequence, _('DEST')))
                 return False
+
+            # check cost center with destination
+            if new_dest_id and new_cc_id:
+                if not ad_obj.check_dest_cc_compatibility(cr, uid, new_dest_id, new_cc_id, context=context):
+                    res.append((id, entry_sequence, _('CC/DEST')))
+                    return False
 
             # check funding pool (expect for MSF Private Fund)
             if not new_fp_id == msf_pf_id:  # all OK for MSF Private Fund

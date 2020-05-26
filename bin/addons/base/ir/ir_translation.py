@@ -21,6 +21,7 @@
 
 from osv import fields, osv
 import tools
+import logging
 
 TRANSLATION_TYPE = [
     ('field', 'Field'),
@@ -65,7 +66,30 @@ class ir_translation(osv.osv):
         # They are used to resolve the res_id above after loading is done.
         'module': fields.char('Module', size=64, help='Maps to the ir_model_data for which this translation is provided.'),
         'xml_id': fields.char('XML Id', size=128, help='Maps to the ir_model_data for which this translation is provided.', select=True),
+        'updated_by_modules': fields.boolean('Updated by last msf_profile update'),
     }
+
+    _defaults = {
+        'updated_by_modules': False,
+    }
+
+    def has_duplicate(self, cr, uid, verbose=False, context=None):
+
+        cr.execute("""select src,type,count(*), lang
+            from ir_translation
+            where
+                type in ('code', 'sql_constraint') and
+                lang in ('fr_MF', 'en_MF')
+            group by src,type, lang
+            having count(distinct(value)) > 1"""
+                   )
+
+        nb = cr.rowcount
+        if verbose:
+            logger = logging.getLogger('translate')
+            for x in cr.fetchall():
+                logger.warn("%s duplicated %s %s translations: %s" % (x[2], x[3], x[1], x[0]))
+        return nb
 
     def _auto_init(self, cr, context={}):
         super(ir_translation, self)._auto_init(cr, context)
@@ -251,12 +275,7 @@ class ir_translation(osv.osv):
 
         ids = super(ir_translation, self).create(cursor, user, vals, context=context)
         if clear:
-            for trans_obj in self.read(cursor, user, [ids], ['name','type','res_id','src','lang'], context=context):
-                self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
-                self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
-                self._get_ids_dict.clear_cache(cursor.dbname, user,
-                                               trans_obj['name'], trans_obj['type'],
-                                               trans_obj['lang'], [trans_obj['res_id']])
+            self.clear_transid(cursor, user, ids, context=context)
         return ids
 
     def write(self, cursor, user, ids, vals, clear=True, context=None):
@@ -287,13 +306,23 @@ class ir_translation(osv.osv):
                 result = super(ir_translation, self).write(cursor, user, ids, vals, context=context)
 
         if clear:
-            for trans_obj in self.read(cursor, user, ids, ['name','type','res_id','src','lang'], context=context):
-                self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
-                self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
-                self._get_ids_dict.clear_cache(cursor.dbname, user,
-                                               trans_obj['name'], trans_obj['type'],
-                                               trans_obj['lang'], [trans_obj['res_id']])
+            self.clear_transid(cursor, user, ids, context=context)
         return result
+
+    def clear_transid(self, cr, uid, ids, context=None):
+        """
+        Clears the translation cache
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for trans_obj in self.read(cr, uid, ids, ['name','type','res_id','src','lang'], context=context):
+            self._get_source.clear_cache(cr.dbname, uid, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
+            self._get_ids.clear_cache(cr.dbname, uid, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
+            self._get_ids_dict.clear_cache(cr.dbname, uid, trans_obj['name'], trans_obj['type'],trans_obj['lang'], [trans_obj['res_id']])
+        return True
 
     def unlink(self, cursor, user, ids, clear=True, context=None):
         if context is None:

@@ -693,7 +693,7 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Requested Date of all order lines ?'), }
+        return {'name': _('Do you want to update the Requested Date of all/selected Order lines ?'), }
 
     def confirmed_data(self, cr, uid, ids, context=None):
         '''
@@ -701,7 +701,7 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'), }
+        return {'name': _('Do you want to update the Confirmed Delivery Date of all/selected Order lines ?'), }
 
     def stock_take_data(self, cr, uid, ids, context=None):
         '''
@@ -709,7 +709,7 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
-        return {'name': _('Do you want to update the Date of Stock Take of all order lines ?'), }
+        return {'name': _('Do you want to update the Date of Stock Take of all/selected Order lines ?'), }
 
     def update_date(self, cr, uid, ids, context=None):
         '''
@@ -818,48 +818,6 @@ class sale_order_line(osv.osv):
 sale_order_line()
 
 
-class procurement_order(osv.osv):
-    '''
-    date modifications
-    '''
-    _inherit = 'procurement.order'
-
-    def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
-
-        - allow to modify the data for purchase order line creation
-        '''
-        if context is None:
-            context = {}
-        line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-        procurement = kwargs['procurement']
-        # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
-        # confirmed_delivery_date (confirmed date) = False
-        line.update({'date_planned': procurement.date_planned, 'confirmed_delivery_date': False, })
-        return line
-
-    def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the make_po method from purchase>purchase.py>procurement_order
-
-        - allow to modify the data for purchase order creation
-        '''
-        if context is None:
-            context = {}
-        values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
-        line = kwargs['line']
-        # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
-        # confirmed_delivery_date (confirmed date) = False
-        # both values are taken from line
-        values.update({'delivery_requested_date': line['date_planned'], 'delivery_confirmed_date': line['confirmed_delivery_date'], })
-        return values
-
-procurement_order()
-
-
 class stock_picking(osv.osv):
     _name = 'stock.picking'
     _inherit = 'stock.picking'
@@ -911,7 +869,7 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'manual_min_date_stock_picking': value}, context=context)
+        cr.execute("update stock_picking set manual_min_date_stock_picking=%s where id in %s", (value, tuple(ids)))
         return True
 
     _columns = {'date': fields.datetime('Creation Date', help="Date of Order", select=True),
@@ -980,14 +938,6 @@ class stock_move(osv.osv):
     '''
     _inherit = 'stock.move'
 
-    def default_get(self, cr, uid, fields, context=None):
-        if not context:
-            context = {}
-
-        res = super(stock_move, self).default_get(cr, uid, fields, context=context)
-        res['date'] = res['date_expected'] = context.get('date_expected', time.strftime('%Y-%m-%d %H:%M:%S'))
-
-        return res
 
     def do_partial(self, cr, uid, ids, partial_datas, context=None):
         '''

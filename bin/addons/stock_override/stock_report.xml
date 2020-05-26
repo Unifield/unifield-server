@@ -29,7 +29,9 @@
                 name="delivery.order"
                 header="True"
                 rml="addons/stock_override/report/delivery_order.rml"
-                string="Delivery Order" />
+                string="Delivery Order"
+                view_ids="stock.view_picking_out_tree,stock.view_picking_out_form"
+                />
 
     </data>
 </openerp>

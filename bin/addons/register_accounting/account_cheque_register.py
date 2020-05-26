@@ -56,7 +56,7 @@ class one2many_register(fields.one2many):
                         continue
                     # UFTP-348: We take all register lines IDs and we delete those that are hard-posted, imported in another register and hard posted
                     # List of hard posted linked register lines
-                    # We omit to search on bank registers as the import cheque wizard is only available on bank register 
+                    # We omit to search on bank registers as the import cheque wizard is only available on bank register
                     #+ and this is the only wizard that add "from_import_cheque_id". So if a register line have
                     #+ this field filled in, so it comes from a cheque import.
                     # Note that account_bank_statement_line_move_rel invert columns. move_id = register line and
@@ -93,7 +93,7 @@ class account_cheque_register(osv.osv):
         'display_type': fields.selection([('not_reconciled', 'Outstanding cheques only'), ('all', 'All cheques')], \
                                          string="Display type", required=True, states={'draft': [('readonly', True)]}),
         'line_ids': one2many_register('account.bank.statement.line', 'statement_id', 'Statement lines', \
-                                      states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft': [('readonly', True)]}),
+                                      states={'confirm': [('readonly', True)], 'draft': [('readonly', True)]}),
     }
 
     _defaults = {

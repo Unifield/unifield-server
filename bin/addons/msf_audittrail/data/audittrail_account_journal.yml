@@ -1,0 +1,28 @@
+-
+  For Journals (account.journal), track the creation, modification, and deletion
+-
+  !python {model: audittrail.rule}: |
+    name = 'Journals'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'account.journal')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids:
+        fields = ['name', 'code', 'type', 'default_debit_account_id', 'default_credit_account_id', 'instance_id', 'currency',
+                  'analytic_journal_id', 'bank_account_name', 'bank_account_number', 'bank_swift_code', 'bank_address', 'bank_journal_id']
+
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.journal'), ('name', 'in', fields)], context=context)
+
+        vals = {
+            'name': name,
+            'object_id': object_ids[0],
+            'log_write': True,
+            'log_unlink': True,
+            'log_create': True,
+            'field_ids': [(6, 0, fields_ids)],
+        }
+
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)

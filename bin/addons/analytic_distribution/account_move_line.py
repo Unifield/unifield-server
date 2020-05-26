@@ -21,6 +21,8 @@
 
 from osv import fields, osv
 from tools.translate import _
+from base import currency_date
+
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
@@ -56,14 +58,20 @@ class account_move_line(osv.osv):
         res = {}
         distrib_obj = self.pool.get('analytic.distribution')
         sql = """
-            SELECT aml.id, aml.analytic_distribution_id AS distrib_id, m.analytic_distribution_id AS move_distrib_id, aml.account_id
+            SELECT aml.id, aml.analytic_distribution_id AS distrib_id, m.analytic_distribution_id AS move_distrib_id, aml.account_id, 
+            aml.document_date, aml.date, m.status, aml.amount_currency
             FROM account_move_line AS aml, account_move AS m
             WHERE aml.move_id = m.id
             AND aml.id IN %s
             ORDER BY aml.id;"""
         cr.execute(sql, (tuple(ids),))
         for line in cr.fetchall():
-            res[line[0]] = distrib_obj._get_distribution_state(cr, uid, line[1], line[2], line[3])
+            manual = line[6] == 'manu'
+            amount = False
+            if manual or context.get('from_correction'):  # in the standard JE view check amount only for manual entries
+                amount = line[7]
+            res[line[0]] = distrib_obj._get_distribution_state(cr, uid, line[1], line[2], line[3], doc_date=line[4],
+                                                               posting_date=line[5], manual=manual, amount=amount)
         return res
 
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
@@ -107,7 +115,8 @@ class account_move_line(osv.osv):
         'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True,
                                                    help="This informs system that we can display or not an analytic button", store=False),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       selection=[('none', 'None'), ('valid', 'Valid'),
+                                                                  ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean',
                                                                   string='Header Distrib.?'),
@@ -159,18 +168,23 @@ class account_move_line(osv.osv):
             line_distrib_id = (obj_line.get('analytic_distribution_id', False) and obj_line.get('analytic_distribution_id')[0]) or (move.get('analytic_distribution_id', False) and move.get('analytic_distribution_id')[0]) or False
             # When you create a journal entry manually, we should not have analytic lines if ONE line is invalid!
             other_lines_are_ok = True
-            result = self.search(cr, uid, [('move_id', '=', move.get('id', False)), ('move_id.status', '=', 'manu'), ('state', '!=', 'valid')], count=1)
-            if result and result > 0 and move.get('status', False) == 'manu':
-                other_lines_are_ok = False
+            #result = self.search(cr, uid, [('move_id', '=', move.get('id', False)), ('move_id.status', '=', 'manu'), ('state', '!=', 'valid')], count=1)
+            if move.get('status', False) == 'manu':
+                result = self.search(cr, uid, [('move_id', '=', move.get('id', False)), ('state', '!=', 'valid')], count=1)
+                if result and result > 0:
+                    other_lines_are_ok = False
             # Check that line have analytic-a-holic account and have a distribution
             if line_distrib_id and account.get('is_analytic_addicted', False) and other_lines_are_ok:
-                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distrib_id, {}, account.get('id'))
+                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distrib_id, {}, account.get('id'),
+                                                                                           amount=amount  # booking amount
+                                                                                           )
                 # For manual journal entries, do not raise an error. But delete all analytic distribution linked to other_lines because if one line is invalid, all lines should not create analytic lines
-                if ana_state == 'invalid' and move.get('status', '') == 'manu':
+                invalid_state = ana_state in ('invalid', 'invalid_small_amount')
+                if invalid_state and move.get('status', '') == 'manu':
                     ana_line_ids = acc_ana_line_obj.search(cr, uid, [('move_id', 'in', move.get('line_id', []))])
                     acc_ana_line_obj.unlink(cr, uid, ana_line_ids)
                     continue
-                elif ana_state == 'invalid':
+                elif invalid_state:
                     raise osv.except_osv(_('Warning'), _('Invalid analytic distribution.'))
                 if not journal.get('analytic_journal_id', False):
                     raise osv.except_osv(_('Warning'),_("No Analytic Journal! You have to define an analytic journal on the '%s' journal!") % (journal.get('name', ''), ))
@@ -192,7 +206,9 @@ class account_move_line(osv.osv):
 
                     dl_total_amount_rounded = 0.
                     for distrib_line in distrib_lines:
-                        context.update({'date': obj_line.get('source_date', False) or obj_line.get('date', False)})
+                        curr_date = currency_date.get_date(self, cr, obj_line.get('document_date', False),
+                                                           obj_line.get('date', False), source_date=obj_line.get('source_date', False))
+                        context.update({'currency_date': curr_date})
                         anal_amount = distrib_line.percentage*amount/100
                         anal_amount_rounded = round(anal_amount, 2)
                         dl_total_amount_rounded += anal_amount_rounded
@@ -237,7 +253,7 @@ class account_move_line(osv.osv):
                             'currency_id': analytic_currency_id,
                             'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
                             'document_date': obj_line.get('document_date', False),
-                            'source_date': obj_line.get('source_date', False) or obj_line.get('date', False),  # UFTP-361 source_date from date if not any (posting date)
+                            'source_date': curr_date,
                             'real_period_id': obj_line['period_id'] and obj_line['period_id'][0] or False,  # US-945/2
                         }
                         # Update values if we come from a funding pool
@@ -483,7 +499,10 @@ class account_move_line(osv.osv):
         if context.get('from_web_menu', False):
             res = []
             for ml in self.browse(cr, uid, ids):
-                distrib_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, ml.analytic_distribution_id.id, ml.move_id and ml.move_id.analytic_distribution_id and ml.move_id.analytic_distribution_id.id or False, vals.get('account_id') or ml.account_id.id)
+                distrib_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, ml.analytic_distribution_id.id,
+                                                                                               ml.move_id and ml.move_id.analytic_distribution_id and ml.move_id.analytic_distribution_id.id or False,
+                                                                                               vals.get('account_id') or ml.account_id.id,
+                                                                                               doc_date=ml.document_date, posting_date=ml.date, manual=ml.move_id.status=='manu')
                 if distrib_state in ['invalid', 'none']:
                     vals.update({'state': 'draft'})
                 # Add account_id because of an error with account_activable module for checking date

@@ -359,6 +359,12 @@ class so_po_common(osv.osv_memory):
         header_result['currency_id'] = currency_id
         return header_result
 
+    def check_merge(self, cr, uid, prod_id):
+        merged = self.pool.get('product.product').search(cr, uid, [('replace_product_id', '=', prod_id), ('active', 'in', ['t', 'f'])])
+        if merged:
+            return merged[0]
+        return prod_id
+
     def get_product_id(self, cr, uid, data, default_code=False, context=None):
         # us-1586: use msfid to search product in intersection flow, else use sdref
         # US-3282: intermission / intersection: last try on default_code
@@ -376,11 +382,11 @@ class so_po_common(osv.osv_memory):
             # msfid has no uniq constraint if only 1 active product: ok, elif more than 1 product found raise
             prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', 'in', ['t', 'f'])], limit=2, order='NO_ORDER', context=context)
             if len(prod_ids) == 1:
-                return prod_ids[0]
+                return self.check_merge(cr, uid, prod_ids[0])
             elif len(prod_ids) > 1:
                 prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', '=', 't')], limit=2, order='NO_ORDER', context=context)
                 if len(prod_ids) == 1:
-                    return prod_ids[0]
+                    return self.check_merge(cr, uid, prod_ids[0])
                 raise Exception("Duplicate product for msfid %s" % msfid)
 
         if hasattr(data, 'id') and data.id:
@@ -391,12 +397,12 @@ class so_po_common(osv.osv_memory):
         if pid:
             prod_id = prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(pid), context=context)
             if prod_id:
-                return prod_id
+                return self.check_merge(cr, uid, prod_id)
 
         if default_code:
             prod_ids = prod_obj.search(cr, uid, [('default_code', '=', default_code), ('active', 'in', ['t', 'f'])], limit=1, order='NO_ORDER', context=context)
             if prod_ids:
-                return prod_ids[0]
+                return self.check_merge(cr, uid, prod_ids[0])
 
         return False
 
@@ -525,6 +531,9 @@ class so_po_common(osv.osv_memory):
 
         if src_values.get('source_sync_line_id'):
             res['original_purchase_line_id'] = src_values['source_sync_line_id']
+
+        if src_values.get('pol_external_ref'):
+            res['external_ref'] = src_values['pol_external_ref']
 
         return res
 

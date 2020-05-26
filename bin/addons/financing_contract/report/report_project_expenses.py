@@ -1,29 +1,7 @@
 from report import report_sxw
-import pooler
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 assert _  # pyflakes check
-
-
-
-class report_project_expenses(report_sxw.report_sxw):
-    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
-
-    def create(self, cr, uid, ids, data, context=None):
-        pool = pooler.get_pool(cr.dbname)
-
-        obj = pool.get('wizard.expense.report')
-        # Context updated with wizard's value
-        contract_id = data['id']
-        reporting_type = 'project'
-
-        csv_data = obj._get_expenses_data(cr, uid, contract_id, reporting_type, context=context)
-
-        return obj._create_csv(csv_data)
-
-report_project_expenses('report.financing.project.expenses', 'financing.contract.contract', False, parser=False)
-
 
 class report_project_expenses2(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -96,7 +74,9 @@ class report_project_expenses2(report_sxw.rml_parse):
         return res
 
     def getBookAm(self,contract,analytic_line):
-        date_context = {'date': analytic_line.document_date,'currency_table_id': contract.currency_table_id and contract.currency_table_id.id or None}
+        # this report is based on doc. date
+        date_context = {'currency_date': analytic_line.document_date,
+                        'currency_table_id': contract.currency_table_id and contract.currency_table_id.id or None}
         amount = self.pool.get('res.currency').compute(self.cr, self.uid, analytic_line.currency_id.id, contract.reporting_currency.id, analytic_line.amount_currency or 0.0, round=True, context=date_context)
         self.len1 += 1
         self.len2 += 1
@@ -146,8 +126,11 @@ class report_project_expenses2(report_sxw.rml_parse):
 
         # UFTP-16: First search in the triplet in format line, then in the second block below, search in quadruplet
         for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
-            # US-460: Include also the funding pool in the criteria when searching for the quadruplet of the contract line 
-            criteria_for_adl = [('account_id', '=', analytic_line.general_account_id.id), ('account_destination_id', '=', analytic_line.destination_id.id), ('funding_pool_id', '=', analytic_line.account_id.id)]
+            # US-460: Include also the funding pool in the criteria when searching for the quadruplet of the contract line
+            criteria_for_adl = [('account_id', '=', analytic_line.general_account_id.id),
+                                ('account_destination_id', '=', analytic_line.destination_id and analytic_line.destination_id.id or False),
+                                ('funding_pool_id', '=', analytic_line.account_id.id),
+                                ('cost_center_id', '=', analytic_line.cost_center_id and analytic_line.cost_center_id.id or False)]
             ids_adl = self.pool.get('financing.contract.account.quadruplet').search(self.cr, self.uid, criteria_for_adl)
 
             ids_fcfl = format_line_obj.search(self.cr, self.uid, [('account_quadruplet_ids','in',ids_adl), ('format_id', '=', contract.format_id.id)])

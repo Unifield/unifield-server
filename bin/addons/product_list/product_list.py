@@ -73,6 +73,25 @@ class product_list(osv.osv):
             'reviewer_id': False,
         }, context=context)
 
+    def _get_real_product_ids(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        for _id in ids:
+            res[_id] = []
+
+        cr.execute('select list_id, name from product_list_line where list_id in %s', (tuple(ids),))
+        for x in cr.fetchall():
+            res[x[0]].append(x[1])
+
+        return res
+
+    def _search_real_product_ids(self, cr, uid, obj, name, args, context):
+        if not context:
+            context = {}
+        if not args:
+            return []
+
+        return [('product_ids.name', args[0][1], args[0][2])]
+
     _columns = {
         'name': fields.char(
             size=128,
@@ -149,6 +168,7 @@ class product_list(osv.osv):
             type='integer',
             string='# of products',
         ),
+        'real_product_ids': fields.function(_get_real_product_ids, method=True, type='many2many', relation='product.product', fnct_search=_search_real_product_ids, string='Products', domain=[('in_any_product_list', '=', True)]),
 
     }
 
@@ -242,6 +262,16 @@ class product_list_line(osv.osv):
     def _get_product(self, cr, uid, ids, context=None):
         return self.pool.get('product.list.line').\
             search(cr, uid, [('name', 'in', ids)], context=context)
+
+    def name_get(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        ret = []
+        for pl in self.browse(cr, uid, ids, fields_to_fetch=['name'], context=context):
+            ret.append((pl.id, '[%s] %s' % (pl.name.default_code, pl.name.name)))
+
+        return ret
 
     _columns = {
         'name': fields.many2one(
@@ -478,7 +508,7 @@ product and can't be deleted"""),
             select=1
         ),  # US-45: Added this field but hidden, for UniData to be able to import the Id
         'xmlid_code': fields.char(
-            'Hidden xmlid code',
+            'Xmlid Code',
             size=18,
         ),  # UF-2254: this code is only used for xml_id purpose, added ONLY when creating the product
     }

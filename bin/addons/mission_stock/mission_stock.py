@@ -40,7 +40,7 @@ from xlwt import Workbook, easyxf, Borders, add_palette_colour
 import tempfile
 import shutil
 from mx.DateTime import DateTime as mxdt
-
+import re
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
 STOCK_MISSION_REPORT_NAME_PATTERN = 'Mission_Stock_Report_%s_%s'
@@ -48,61 +48,61 @@ CSV_DELIMITER = ';'
 
 HEADER_DICT = {
     'ns_nv_vals': (
-        ('Reference', 'default_code'),
-        ('Name', 'pt_name'),
-        ('UoM', 'pu_name'),
-        ('Instance stock', 'l_internal_qty'),
-        ('Warehouse stock', 'l_wh_qty'),
-        ('Cross-Docking Qty.', 'l_cross_qty'),
-        ('Secondary Stock Qty.', 'l_secondary_qty'),
-        ('Internal Cons. Unit Qty.', 'l_cu_qty'),
-        ('AMC', 'product_amc'),
-        ('FMC', 'product_consumption'),
-        ('In Pipe Qty', 'l_in_pipe_qty'),),
+        (_('Reference'), 'default_code'),
+        (_('Name'), 'pt_name'),
+        (_('UoM'), 'pu_name'),
+        (_('Instance stock'), 'l_internal_qty'),
+        (_('Warehouse stock'), 'l_wh_qty'),
+        (_('Cross-Docking Qty.'), 'l_cross_qty'),
+        (_('Secondary Stock Qty.'), 'l_secondary_qty'),
+        (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
+        (_('AMC'), 'product_amc'),
+        (_('FMC'), 'product_consumption'),
+        (_('In Pipe Qty'), 'l_in_pipe_qty'),),
     'ns_v_vals': (
-        ('Reference', 'default_code'),
-        ('Name', 'pt_name'),
-        ('UoM', 'pu_name'),
-        ('Cost Price', 'pt_standard_price'),
-        ('Func. Cur.', 'rc_name'),
-        ('Instance stock', 'l_internal_qty'),
-        ('Instance stock val.', 'l_internal_qty_pt_price'),
-        ('Warehouse stock', 'l_wh_qty'),
-        ('Cross-Docking Qty.', 'l_cross_qty'),
-        ('Secondary Stock Qty.', 'l_secondary_qty'),
-        ('Internal Cons. Unit Qty.', 'l_cu_qty'),
-        ('AMC', 'product_amc'),
-        ('FMC', 'product_consumption'),
-        ('In Pipe Qty', 'l_in_pipe_qty'),),
+        (_('Reference'), 'default_code'),
+        (_('Name'), 'pt_name'),
+        (_('UoM'), 'pu_name'),
+        (_('Cost Price'), 'pt_standard_price'),
+        (_('Func. Cur.'), 'rc_name'),
+        (_('Instance stock'), 'l_internal_qty'),
+        (_('Instance stock val.'), 'l_internal_qty_pt_price'),
+        (_('Warehouse stock'), 'l_wh_qty'),
+        (_('Cross-Docking Qty.'), 'l_cross_qty'),
+        (_('Secondary Stock Qty.'), 'l_secondary_qty'),
+        (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
+        (_('AMC'), 'product_amc'),
+        (_('FMC'), 'product_consumption'),
+        (_('In Pipe Qty'), 'l_in_pipe_qty'),),
     's_nv_vals': (
-        ('Reference', 'default_code'),
-        ('Name', 'pt_name'),
-        ('UoM', 'pu_name'),
-        ('Instance stock', 'l_internal_qty'),
-        ('Stock Qty.', 'l_stock_qty'),
-        ('Unallocated Stock Qty.', 'l_central_qty'),
-        ('Cross-Docking Qty.', 'l_cross_qty'),
-        ('Secondary Stock Qty.', 'l_secondary_qty'),
-        ('Internal Cons. Unit Qty.', 'l_cu_qty'),
-        ('AMC', 'product_amc'),
-        ('FMC', 'product_consumption'),
-        ('In Pipe Qty', 'l_in_pipe_qty'),),
+        (_('Reference'), 'default_code'),
+        (_('Name'), 'pt_name'),
+        (_('UoM'), 'pu_name'),
+        (_('Instance stock'), 'l_internal_qty'),
+        (_('Stock Qty.'), 'l_stock_qty'),
+        (_('Unallocated Stock Qty.'), 'l_central_qty'),
+        (_('Cross-Docking Qty.'), 'l_cross_qty'),
+        (_('Secondary Stock Qty.'), 'l_secondary_qty'),
+        (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
+        (_('AMC'), 'product_amc'),
+        (_('FMC'), 'product_consumption'),
+        (_('In Pipe Qty'), 'l_in_pipe_qty'),),
     's_v_vals': (
-        ('Reference', 'default_code'),
-        ('Name', 'pt_name'),
-        ('UoM', 'pu_name'),
-        ('Cost Price', 'pt_standard_price'),
-        ('Func. Cur.', 'rc_name'),
-        ('Instance stock', 'l_internal_qty'),
-        ('Instance stock val.', 'l_internal_qty_pt_price'),
-        ('Stock Qty.', 'l_stock_qty'),
-        ('Unallocated Stock Qty.', 'l_central_qty'),
-        ('Cross-Docking Qty.', 'l_cross_qty'),
-        ('Secondary Stock Qty.', 'l_secondary_qty'),
-        ('Internal Cons. Unit Qty.', 'l_cu_qty'),
-        ('AMC', 'product_amc'),
-        ('FMC', 'product_consumption'),
-        ('In Pipe Qty', 'l_in_pipe_qty'),),
+        (_('Reference'), 'default_code'),
+        (_('Name'), 'pt_name'),
+        (_('UoM'), 'pu_name'),
+        (_('Cost Price'), 'pt_standard_price'),
+        (_('Func. Cur.'), 'rc_name'),
+        (_('Instance stock'), 'l_internal_qty'),
+        (_('Instance stock val.'), 'l_internal_qty_pt_price'),
+        (_('Stock Qty.'), 'l_stock_qty'),
+        (_('Unallocated Stock Qty.'), 'l_central_qty'),
+        (_('Cross-Docking Qty.'), 'l_cross_qty'),
+        (_('Secondary Stock Qty.'), 'l_secondary_qty'),
+        (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
+        (_('AMC'), 'product_amc'),
+        (_('FMC'), 'product_consumption'),
+        (_('In Pipe Qty'), 'l_in_pipe_qty'),),
 }
 
 
@@ -240,7 +240,7 @@ class stock_mission_report(osv.osv):
                                         string='Is a local report ?', help='If the report is a local report, it will be updated periodically'),
         'report_line': fields.one2many('stock.mission.report.line', 'mission_report_id', string='Lines'),
         'last_update': fields.datetime(string='Last update'),
-        'move_ids': fields.many2many('stock.move', 'mission_move_rel', 'mission_id', 'move_id', string='Noves'),
+        'move_ids': fields.many2many('stock.move', 'mission_move_rel', 'mission_id', 'move_id', string='Moves'),
         'export_ok': fields.boolean(string='Export file possible ?'),
         'export_state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done'), ('error', 'Error')], string="Export state"),
         'export_error_msg': fields.text('Error message', readonly=True)
@@ -498,7 +498,7 @@ class stock_mission_report(osv.osv):
         sheet.write(0, 1, instance_name, row_style)
         sheet.col(0).width=5000
         sheet.write(1, 0, _("Instance selection"), row_style)
-        report_name = 'All loc'
+        report_name = _('All loc')
         sheet.write(1, 1, report_name, row_style)
         sheet.col(1).width=5000
 
@@ -508,23 +508,23 @@ class stock_mission_report(osv.osv):
         sheet.remove_splits = True
 
         fixed_data = [
-            ('Reference', 'default_code'),
-            ('Name', 'pt_name'),
-            ('UoM', 'pu_name'),
-            ('Cost Price', 'pt_standard_price'),
-            ('Func. Cur.', 'rc_name')
+            (_('Reference'), 'default_code'),
+            (_('Name'), 'pt_name'),
+            (_('UoM'), 'pu_name'),
+            (_('Cost Price'), 'pt_standard_price'),
+            (_('Func. Cur.'), 'rc_name')
         ]
         repeated_data = [
-            ('Instance stock', 'l_internal_qty'),
-            ('Instance stock val.', 'l_internal_qty_pt_price'),
-            ('Stock Qty.', 'l_stock_qty'),
-            ('Unallocated Stock Qty.', 'l_central_qty'),
-            ('Cross-Docking Qty.', 'l_cross_qty'),
-            ('Secondary Stock Qty.', 'l_secondary_qty'),
-            ('Internal Cons. Unit Qty.', 'l_cu_qty'),
-            ('AMC', 'product_amc'),
-            ('FMC', 'product_consumption'),
-            ('In Pipe Qty', 'l_in_pipe_qty')
+            (_('Instance stock'), 'l_internal_qty'),
+            (_('Instance stock val.'), 'l_internal_qty_pt_price'),
+            (_('Stock Qty.'), 'l_stock_qty'),
+            (_('Unallocated Stock Qty.'), 'l_central_qty'),
+            (_('Cross-Docking Qty.'), 'l_cross_qty'),
+            (_('Secondary Stock Qty.'), 'l_secondary_qty'),
+            (_('Internal Cons. Unit Qty.'), 'l_cu_qty'),
+            (_('AMC'), 'product_amc'),
+            (_('FMC'), 'product_consumption'),
+            (_('In Pipe Qty'), 'l_in_pipe_qty')
         ]
 
         header_row = []
@@ -773,7 +773,9 @@ class stock_mission_report(osv.osv):
 
         logging.getLogger('MSR').info("""___ Number of MSR lines to be updated: %s, at %s""" % (len(product_reviewed_ids) + len(product_amc_ids), time.strftime('%Y-%m-%d %H:%M:%S')))
 
-        product_values = dict.fromkeys(product_ids, {})
+        product_values = {}
+        for p_id in product_ids:
+            product_values[p_id] = {}
 
         # Update the final dict with this results
         for product_dict in product_amc_result:
@@ -828,23 +830,24 @@ class stock_mission_report(osv.osv):
                                 stock_mission_report_line smrl WHERE mission_report_id = %s
                                 AND p.id = smrl.product_id)
                             ''', (report['id'],))
-                for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
-                    line_obj.create(cr, uid, {
-                        'product_id': product,
-                        'mission_report_id': report['id'],
-                        'product_active': prod_active,
-                        'state_ud': prod_state_ud,
-                        'international_status_code': prod_creator,
-                        'product_state': prod_state or '',
-                        #'product_amc': product_values.get(product, {}).get('product_amc', 0),
-                        #'product_consumption': product_values.get(product, {}).get('reviewed_consumption', 0),
-                    }, context=context)
+                if report['local_report']:  # We only generate lines for the current instance
+                    for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
+                        line_obj.create(cr, uid, {
+                            'product_id': product,
+                            'mission_report_id': report['id'],
+                            'product_active': prod_active,
+                            'state_ud': prod_state_ud,
+                            'international_status_code': prod_creator,
+                            'product_state': prod_state or '',
+                            #'product_amc': product_values.get(product, {}).get('product_amc', 0),
+                            #'product_consumption': product_values.get(product, {}).get('reviewed_consumption', 0),
+                        }, context=context)
 
                 if report['local_report'] and not report['full_view']:
                     # update AMC / FMC
                     cr.execute('select id, product_id, product_amc, product_consumption from stock_mission_report_line where mission_report_id = %s', (report['id'],))
                     for x in cr.fetchall():
-                        if product_values.get(x[1]) and ( (x[2] or 0) != product_values.get(x[1], {}).get('product_amc', 0) or (x[3] or 0) != product_values.get(x[1], {}).get('reviewed_consumption', 0)):
+                        if (x[2] or 0) != product_values.get(x[1], {}).get('product_amc', 0) or (x[3] or 0) != product_values.get(x[1], {}).get('reviewed_consumption', 0):
                             line_obj.write(cr, uid, x[0], {'product_amc': product_values.get(x[1], {}).get('product_amc', 0), 'product_consumption':  product_values.get(x[1], {}).get('reviewed_consumption', 0)}, context=context)
 
                 msr_in_progress = self.pool.get('msr_in_progress')
@@ -1315,13 +1318,13 @@ class stock_mission_report_line_location(osv.osv):
             }
 
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id
-        cr.execute('''select line.id, loc.name from stock_mission_report_line_location line, stock_location loc
+        cr.execute('''select line.id, loc.name, loc.id from stock_mission_report_line_location line, stock_location loc
             where line.location_id = loc.id and line.id in %s''', (tuple(ids), ))
 
         for x in cr.fetchall():
             res[x[0]] = {
                 'instance_id': instance_id,
-                'location_name': x[1],
+                'location_name': '%s/%s' % (x[1], x[2]),
             }
 
         return res
@@ -1329,7 +1332,19 @@ class stock_mission_report_line_location(osv.osv):
     def _set_instance_loc(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
         # set instance and location name to process received updates
         assert name in ('instance_id', 'location_name'), 'Bad query'
-        cr.execute('update stock_mission_report_line_location set remote_'+name+'=%s where id=%s', (value or 'NULL', id)) # not_a_user_entry
+        if name == 'instance_id':
+            cr.execute('update stock_mission_report_line_location set remote_instance_id=%s where id=%s', (value or 'NULL', id))
+            return True
+
+        loc_id = 0
+        loc_name = value
+        if value:
+            m = re.match('(.*)/([0-9]+)$', value)
+            if m:
+                loc_id = int(m.group(2))
+                loc_name = m.group(1)
+
+        cr.execute('update stock_mission_report_line_location set remote_location_name=%s, remote_location_id=%s where id=%s', (loc_name or 'NULL', loc_id, id))
         return True
 
     _columns = {
@@ -1344,8 +1359,9 @@ class stock_mission_report_line_location(osv.osv):
 
         'remote_instance_id': fields.many2one('msf.instance', 'Instance', select=1),
         'remote_location_name': fields.char('Location', size=128, select=1),
-        # TODO
-        # batch
+        'remote_location_id': fields.integer('ID of remote location'),
+        #  TODO JFB RR
+        # force sync ??
     }
 
     _sql_constraints = [
@@ -1510,7 +1526,7 @@ class stock_mission_report_line(osv.osv):
         'in_pipe_coor_val': fields.float(digits=(16,2), string='In Pipe from Coord.', related_uom='uom_id'),
         'updated': fields.boolean(string='Updated'),
         'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean', store=True),
-        'move_ids': fields.many2many('stock.move', 'mission_line_move_rel', 'line_id', 'move_id', string='Noves'),
+        'move_ids': fields.many2many('stock.move', 'mission_line_move_rel', 'line_id', 'move_id', string='Moves'),
         'instance_id': fields.many2one(
             'msf.instance',
             string='HQ Instance',

@@ -212,6 +212,13 @@ class ir_model(osv.osv):
         else:
             x_name = a._columns.keys()[0]
         x_custom_model._rec_name = x_name
+
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        model = self.browse(cr, uid, res_id, fields_to_fetch=['model'])
+        a = 'ir_model_%s' % model.model.replace('.', '')
+        print a
+        return a
+
 ir_model()
 
 class ir_model_fields(osv.osv):
@@ -651,6 +658,10 @@ class ir_model_access(osv.osv):
 
         if context.get('from_system'):
             vals['from_system'] = True
+
+        if not context.get('sync_update_execution') and not context.get('from_synced_ur'):
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+
         self.call_cache_clearing_methods(cr)
         res = super(ir_model_access, self).write(cr, uid, ids, vals, context=context)
         return res
@@ -660,13 +671,20 @@ class ir_model_access(osv.osv):
             context = {}
         if context.get('from_system'):
             vals['from_system'] = True
+        if not context.get('sync_update_execution') and not context.get('from_synced_ur'):
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         self.call_cache_clearing_methods(cr)
         res = super(ir_model_access, self).create(cr, uid, vals, context=context)
         return res
 
-    def unlink(self, cr, uid, *args, **argv):
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('sync_update_execution') and not context.get('from_synced_ur'):
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         self.call_cache_clearing_methods(cr)
-        res = super(ir_model_access, self).unlink(cr, uid, *args, **argv)
+        res = super(ir_model_access, self).unlink(cr, uid, ids, context)
         return res
 
 ir_model_access()
@@ -833,13 +851,18 @@ class ir_model_data(osv.osv):
                         identifier = self.pool.get('sync.client.entity').get_entity(cr, uid).identifier
                         if identifier != xml_id.split('/')[0]:
                             model_obj.write(cr, uid, [res_id], {'locally_created': False}, context=context)
-                    self.create(cr, uid, {
+                    xmlid_data = {
                         'name': xml_id,
                         'model': model,
                         'module': module,
                         'res_id': res_id,
-                        'noupdate': noupdate
-                    },context=context)
+                        'noupdate': noupdate,
+                    }
+                    if context.get('sync_update_execution') and model == 'account.move.reconcile' and module == 'sd':
+                        if self.search_exist(cr, uid, [('model', '=', 'account.move.reconcile'), ('res_id', '=', res_id), ('module', '=', 'sd'), ('resend', '=', True)], context=context):
+                            xmlid_data['resend'] = True
+                            xmlid_data['touched'] = "['line_id']"
+                    self.create(cr, uid, xmlid_data, context=context)
                     if model_obj._inherits and not context.get('sync_update_execution', False):
                         for table in model_obj._inherits:
                             inherit_id = model_obj.browse(cr, uid,
@@ -869,7 +892,7 @@ class ir_model_data(osv.osv):
             cr.execute('delete from ir_model_data where res_id=%s and model=%s', (res_id, model))
         return True
 
-    def ir_set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=None, xml_id=False):
+    def ir_set(self, cr, uid, key, key2, name, models, value, replace=True, isobject=False, meta=None, xml_id=False, view_ids=False):
         if type(models[0])==type([]) or type(models[0])==type(()):
             model,res_id = models[0]
         else:
@@ -886,12 +909,16 @@ class ir_model_data(osv.osv):
         else:
             where += ' and (key2 is null)'
 
-        cr.execute('select * from ir_values where model=%s and key=%s and name=%s'+where,(model, key, name)) # not_a_user_entry
+        cr.execute('select id from ir_values where model=%s and key=%s and name=%s'+where,(model, key, name)) # not_a_user_entry
         res = cr.fetchone()
         if not res:
-            res = ir.ir_set(cr, uid, key, key2, name, models, value, replace, isobject, meta)
+            res = ir.ir_set(cr, uid, key, key2, name, models, value, replace, isobject, meta, view_ids)
         elif xml_id:
             cr.execute('UPDATE ir_values set value=%s WHERE model=%s and key=%s and name=%s'+where,(value, model, key, name)) # not_a_user_entry
+        if key == 'action' and view_ids is not False:
+            cr.execute('DELETE FROM actions_view_rel WHERE action_id = %s', (res[0],))
+            for x in view_ids:
+                cr.execute('INSERT INTO actions_view_rel (action_id, view_id) VALUES (%s, %s)', (res[0], x))
         return True
 
     def _process_end(self, cr, uid, modules):
@@ -948,5 +975,36 @@ class ir_model_data(osv.osv):
                             'restart with --update=module', res_id, model)
         return True
 ir_model_data()
+
+class ir_model_access_empty(osv.osv):
+    _name = 'ir.model.access.empty'
+    _auto = False
+
+    _columns = {
+        'name': fields.char('Name', size=64),
+        'model_id': fields.many2one('ir.model', 'Object'),
+        'group_id': fields.many2one('res.groups', string='Group'),
+        'perm_read': fields.boolean('Read Access'),
+        'perm_write': fields.boolean('Write Access'),
+        'perm_create': fields.boolean('Create Access'),
+        'perm_unlink': fields.boolean('Delete Access'),
+    }
+
+    def init(self, cr):
+        tools.drop_view_if_exists(cr, 'ir_model_access_empty')
+        cr.execute("""CREATE OR REPLACE VIEW ir_model_access_empty AS (
+        SELECT model.id as id,
+        ''::varchar as name,
+        model.id as model_id,
+        NULL::integer as group_id,
+        'f'::boolean as perm_read,
+        'f'::boolean as perm_write,
+        'f'::boolean as perm_create,
+        'f'::boolean as perm_unlink
+        from ir_model model
+        left join ir_model_access ac on ac.model_id = model.id
+        where ac.id is null)""")
+
+ir_model_access_empty()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -25,6 +25,8 @@ from dateutil.relativedelta import relativedelta
 
 from osv import osv, fields
 from tools.translate import _
+from base import currency_date
+
 
 class WizardCurrencyrevaluation(osv.osv_memory):
     _name = 'wizard.currency.revaluation'
@@ -257,9 +259,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if not revaluation_account:
             raise osv.except_osv(_('Settings Error!'),
                                  _('Revaluation account is not set in company settings'))
-        if not self.pool.get('res.company').check_revaluation_default_account_has_sup_destination(cr, uid, cp, context=context):
-            raise osv.except_osv(_('Settings Error!'),
-                                 _('The default revaluation account must have a default destination SUP'))
         # Entry period
         # Posting date
         res['posting_date'] = False
@@ -397,7 +396,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         # Compute unrealized gain loss
         ctx_rate = context.copy()
-        ctx_rate['date'] = revaluation_date
+        ctx_rate['currency_date'] = revaluation_date
         user_obj = self.pool.get('res.users')
         cp_currency_id = user_obj.browse(cr, uid, uid,
                                          context=context).company_id.currency_id.id
@@ -520,8 +519,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # if the account has a 'expense' or 'income' type
         distribution_id = False
         if revaluation_account.user_type.code in ['expense', 'income']:
-            destination_id = model_data_obj.get_object_reference(
-                cr, uid, 'analytic_distribution', 'analytic_account_destination_support')[1]
+            if not revaluation_account.default_destination_id:
+                raise osv.except_osv(_('Settings Error!'), _('The default revaluation account "%s - %s" must have '
+                                                             'a default destination.') % (revaluation_account.code, revaluation_account.name))
+            destination_id = revaluation_account.default_destination_id.id
 
             # UFTP-189: Show warning message when the fx gain/loss is missing to select (before it was fix for me)
             cc_list = account_ana_obj.search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
@@ -537,7 +538,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                  'destination_id': destination_id,
                  'currency_id': currency_id,
                  'percentage': 100.0,
-                 'source_date': form.posting_date,
+                 'source_date': form.posting_date,  # revaluation entry doc & posting date
                  },
                 context=context)
             fp_distrib_obj.create(
@@ -548,7 +549,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                  'cost_center_id': cost_center_id,
                  'currency_id': currency_id,
                  'percentage': 100.0,
-                 'source_date': form.posting_date,
+                 'source_date': form.posting_date,  # revaluation entry doc & posting date
                  },
                 context=context)
 
@@ -972,11 +973,12 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             # Copy the line
             rev_line_id = line_obj.copy(cr, uid, line.id, vals, context=context)
             # Do the reverse
+            curr_date = currency_date.get_date(self, cr, line.document_date, line.date)
             vals.update({
                 'debit': line.credit,
                 'credit': line.debit,
                 # (US-1682) Set the booking amounts to False in order not to trigger the recomputation of the functional amounts
-                # in _update_amount_bis (in account_move_line_compute_currency) that could generate slight amount differences
+                # in _compute_currency_on_create_write (in account_move_line_compute_currency) that could generate slight amount differences
                 'credit_currency': False,
                 'debit_currency': False,
                 'amount_currency': False,
@@ -984,7 +986,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 'name': line_obj.join_without_redundancy(line.name, 'REV'),
                 'reversal_line_id': line.id,
                 'account_id': line.account_id.id,
-                'source_date': line.date,
+                'source_date': curr_date,
                 'reversal': True,
                 'reference': line.move_id and line.move_id.name or '',
                 'ref': line.move_id and line.move_id.name or '',

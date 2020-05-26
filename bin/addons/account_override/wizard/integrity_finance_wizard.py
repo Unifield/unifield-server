@@ -44,6 +44,7 @@ class integrity_finance_wizard(osv.osv_memory):
         'instance_ids': fields.many2many('msf.instance', 'integrity_finance_wizard_instance_rel',
                                          'wizard_id', 'instance_id',
                                          string='Proprietary Instances'),
+        'move_state': fields.selection([('posted', 'Posted'), ('draft', 'Unposted')], string="Entry Status"),
     }
 
     _defaults = {
@@ -104,6 +105,7 @@ class integrity_finance_wizard(osv.osv_memory):
             'date_from': wiz.date_from or False,
             'date_to': wiz.date_to or False,
             'instance_ids': wiz.instance_ids and [inst.id for inst in wiz.instance_ids],
+            'move_state': wiz.move_state or '',
         })
         company = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
         current_instance = company.instance_id and company.instance_id.code or ''

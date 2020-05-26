@@ -98,7 +98,7 @@ def login(db_name, login, password):
         # check if the user have to change his password
         cr.execute("""SELECT force_password_change
         FROM res_users
-        WHERE login=%s""", (lower_login,))
+        WHERE login=%s AND active and (coalesce(is_synchronizable,'f') = 'f' or coalesce(synchronize, 'f') = 'f')""", (lower_login,))
         force_password = [x[0] for x in cr.fetchall()]
         if any(force_password):
             raise Exception("ForcePasswordChange: The admin requests your password change ...")

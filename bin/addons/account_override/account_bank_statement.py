@@ -56,6 +56,7 @@ class account_bank_statement_line(osv.osv):
             # UF-2300: for the case of sync, the line can also be created if the partner is inactive
             if not context.get('sync_update_execution', False) and absl and absl[0] and absl[0].partner_id and not absl[0].partner_id.active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (absl[0].partner_id.name or '',))
+            self._check_on_regline_big_amounts(cr, uid, res, context=context)
         return res
 
     _columns = {

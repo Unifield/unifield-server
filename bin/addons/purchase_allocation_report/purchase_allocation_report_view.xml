@@ -129,6 +129,7 @@
             <field name="model">purchase.order</field>
             <field name="name">Allocation report</field>
             <field eval="'ir.actions.server,%d'%action_from_purchase_order_allocation_report" name="value"/>
+            <field name="view_ids" ref="purchase.purchase_order_form,purchase.purchase_order_tree" />
             <field eval="True" name="object"/>
         </record>
             

@@ -116,7 +116,7 @@
                     <field name="force_password_change"/>
                     <field name="log_xmlrpc" attrs="{'invisible': [('instance_level', '!=', 'hq')]}"/>
                     <field name="synchronize"
-                           attrs="{'invisible': ['|', '|', ('is_erp_manager', '=', True), ('instance_level', '!=', 'hq'), ('is_synchronizable', '=', False)]}"/>
+                           attrs="{'invisible': [('is_erp_manager', '=', True)], 'readonly': ['|', ('instance_level', '!=', 'hq'), ('is_synchronizable', '=', False)]}"/>
                     <field name="is_erp_manager" invisible="1"/>
                     <field name="instance_level" invisible="1"/>
                     <field name="is_synchronizable" invisible="1"/>

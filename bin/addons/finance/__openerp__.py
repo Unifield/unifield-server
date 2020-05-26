@@ -29,15 +29,13 @@
     "website": "http://unifield.msf.org",
     # account_voucher: need it to change account_voucher object. Note that account_voucher is the dependance of account_payment which is in depandancy of register_accounting.
     # account_msf: was deleted because of a dependance loop. But don't know why account_msf was in dependancy of account_override module (now finance one)
-    "depends" : ["analytic_override", "account_override", "purchase_msf", "account_voucher"],
+    "depends" : ["analytic_override", "account_override", "purchase_msf"],
     "category" : "Generic Modules/Accounting",
     "init_xml" : [],
     "demo_xml" : [],
     "update_xml" : [
         'board_account_view.xml',
-        'account_invoice_workflow.xml',
         'account_view.xml',
-        'account_invoice_view.xml',
         'account_analytic_line_view.xml',
         'account_sequence.xml',
         'wizard/account_report_partner_balance_tree_view.xml', # uf-1715

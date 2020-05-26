@@ -10,6 +10,7 @@
             <field name="arch" type="xml">
                 <tree string="Requests" colors="blue:state in ('waiting');gray:state in ('closed')">
                     <field name="create_date"/>
+                    <field name="import_name"/>
                     <field name="act_from"/>
                     <field name="act_to"/>
                     <field name="name"/>
@@ -26,6 +27,7 @@
             <field name="arch" type="xml">
                 <form string="Requests">
                     <group colspan="4" col="6">
+                        <field name="import_name"/>
 	                    <field name="name" colspan="4"/>
 	                    <field name="create_date" string="Request Date"/>
 	                    <newline/>
@@ -77,19 +79,22 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Requests">
-                    <filter string="Current" icon="terp-camera_test" domain="['|',('state','=','draft'),('state','=','active')]"
-                    help="Draft and Active"/>
-                    <separator orientation="vertical"/>
+                    <filter string="Draft" icon="terp-document-new" name="draft" domain="[('state', '=', 'draft')]" />
+                    <filter string="Current" icon="terp-camera_test" domain="[('state','=','active')]" />
                     <filter string="Waiting" icon="terp-gtk-media-pause" domain="[('state','=','waiting')]"/>
+                    <filter string="Closed" icon="gtk-close" domain="[('state','=','closed')]"/>
+                    <separator orientation="vertical"/>
+                    <filter name="active" string="Active" domain="[('active', '=', True)]" icon="terp-check" />
+                    <filter name="inactive" string="Inactive" domain="[('active', '=', False)]" icon="gtk-dialog-error"/>
                     <separator orientation="vertical"/>
                     <field name="act_from"/>
                     <field name="act_to" select="1"/>
                     <field name="name"/>
                     <field name="state"/>
-	                <newline/>
-	                <group expand="0" string="Group By" colspan="4">
+                    <newline/>
+                    <group expand="0" string="Group By" colspan="4">
                         <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
-	                </group>
+                    </group>
                 </search>
             </field>
         </record>

@@ -22,6 +22,7 @@
 import pooler
 import tools
 import os
+import time
 import psutil
 from osv import osv, fields
 from tools.translate import _
@@ -91,6 +92,10 @@ class MonitorLogger(object):
         if status in ('failed', 'aborted'):
             self.final_status = status
         self.info[step] = status
+
+        endfield = '%s_enddate' % step
+        if endfield in self.monitor._columns:
+            self.info[endfield] = time.strftime('%Y-%m-%d %H:%M:%S')
         if step == 'status' and status != 'in-progress':
             self.info['end'] = fields.datetime.now()
             self.monitor.last_status = (status, self.info['end'], self.info['nb_data_not_run'], self.info['nb_msg_not_run'])
@@ -233,20 +238,33 @@ class sync_monitor(osv.osv):
         'end' : fields.datetime("End Date", readonly=True),
         'user_rights': fields.selection(status_dict.items(), string="User Rights", readonly=True),
         'data_pull' : fields.selection(status_dict.items(), string="Data Pull", readonly=True),
-        'data_pull_receive' : fields.selection(status_dict.items(), string="DP receive", readonly=True),
-        'data_pull_execute' : fields.selection(status_dict.items(), string="DP execute", readonly=True),
+        'data_pull_enddate': fields.datetime('End of Data Pull'),
+        'data_pull_receive' : fields.selection(status_dict.items(), string="D. Pull receive", readonly=True),
+        'data_pull_receive_enddate': fields.datetime('End of Data Pull Receive'),
+        'data_pull_execute' : fields.selection(status_dict.items(), string="D. Pull execute", readonly=True),
+        'data_pull_execute_enddate': fields.datetime('End of Data Pull Exec'),
 
         'msg_pull' : fields.selection(status_dict.items(), string="Msg Pull", readonly=True),
-        'msg_pull_receive' : fields.selection(status_dict.items(), string="MP receive", readonly=True),
+        'msg_pull_enddate': fields.datetime('End of Msg Pull'),
+        'msg_pull_receive' : fields.selection(status_dict.items(), string="Msg Pull receive", readonly=True),
+        'msg_pull_receive_enddate': fields.datetime('End of Msg Pull Receive'),
         'msg_pull_execute' : fields.selection(status_dict.items(), string="Msg execute", readonly=True),
+        'msg_pull_execute_enddate': fields.datetime('End of Msg Pull Exec'),
 
         'data_push' : fields.selection(status_dict.items(), string="Data Push", readonly=True),
-        'data_push_create' : fields.selection(status_dict.items(), string="DP create", readonly=True),
-        'data_push_send' : fields.selection(status_dict.items(), string="DP send", readonly=True),
+        'data_push_enddate': fields.datetime('End of Data Push'),
+        'data_push_create' : fields.selection(status_dict.items(), string="Data Push create", readonly=True),
+        'data_push_create_enddate': fields.datetime('End of Data Push Create'),
+        'data_push_send' : fields.selection(status_dict.items(), string="Data Push send", readonly=True),
+        'data_push_send_enddate': fields.datetime('End of Data Push Send'),
 
         'msg_push' : fields.selection(status_dict.items(), string="Msg Push", readonly=True),
-        'msg_push_create' : fields.selection(status_dict.items(), string="MP Create", readonly=True),
-        'msg_push_send' : fields.selection(status_dict.items(), string="MP Send", readonly=True),
+        'msg_push_enddate': fields.datetime('End of Msg Push'),
+        'msg_push_create' : fields.selection(status_dict.items(), string="Msg Push Create", readonly=True),
+        'msg_push_create_enddate': fields.datetime('End of Msg Push Create'),
+        'msg_push_send' : fields.selection(status_dict.items(), string="Msg Push Send", readonly=True),
+        'msg_push_send_enddate': fields.datetime('End of Msg Push Send'),
+
         'status' : fields.selection(status_dict.items(), string="Status", readonly=True),
         'error' : fields.text("Messages", readonly=True),
         'state' : fields.function(_is_syncing, method=True, type='selection', string="Is Syncing", selection=[('syncing', 'Syncing'), ('not_syncing', 'Done'), ('aborting', 'Aborting')]),
@@ -366,7 +384,7 @@ class sync_version_instance_monitor(osv.osv):
         'backup_path': fields.char('Backup Location', size=128),
         'backup_date': fields.datetime("Backup Date", readonly=True,
                                        required=True),
-        'backup_size': fields.integer('Backup Size', readonly=True),
+        'backup_size': fields.integer_big('Backup Size', readonly=True),
         'instance_state': fields.related('instance_id', 'state', type='selection',
                                          selection=[('draft', 'Draft'),
                                                     ('active', 'Active'),
@@ -378,7 +396,9 @@ class sync_version_instance_monitor(osv.osv):
         'cloud_date': fields.datetime('Cloud Date', readonly=True),
         'cloud_backup': fields.char('Cloud Dump', size=256, readonly=True),
         'cloud_error': fields.text('Cloud last error', readonly=True),
-        'cloud_size': fields.integer('Cloud Size Zipped', readonly=True),
+        'cloud_size': fields.integer_big('Cloud Size Zipped', readonly=True),
+        'nb_late_vi': fields.integer('# late VI jobs'),
+        'vi_details': fields.text('Last exec VI job'),
     }
 
     _defaults = {

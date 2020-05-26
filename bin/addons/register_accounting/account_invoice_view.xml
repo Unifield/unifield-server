@@ -45,7 +45,8 @@
                             <field colspan="4" default_get="{'check_total': check_total, 'address_invoice_id':
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}"
                                 name="invoice_line" nolabel="1">
-                                <tree editable="bottom" string="Invoice lines" colors="red:analytic_distribution_state == 'invalid' or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none','valid')">
+                                <tree editable="bottom" string="Invoice lines"
+                                      colors="red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none','valid')">
                                     <field name="name"/>
                                     <field name="reference"/>
                                     <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]" name="account_id"/>
@@ -149,14 +150,14 @@
                         <field name="type" invisible="1"/>
                         <field name="currency_id" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
                         <newline/>
-                        <field name="partner_id" domain="[('supplier', '=', True)]" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
+                        <field name="partner_id" domain="[('supplier', '=', True)]" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', 'in', ['paid', 'inv_close'])]}"/>
 
-                        <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
+                        <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', 'in', ['paid', 'inv_close'])]}"/>
                         <newline/>
-                        <field name="document_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
+                        <field name="document_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', 'in', ['paid', 'inv_close'])]}"/>
                         <field name="date_invoice" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
                         <field name="register_posting_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
-                        <field name="reference" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}" />
+                        <field name="reference" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', 'in', ['paid', 'inv_close'])]}" />
                         <newline/>
                         <label string="" colspan="4"/>
                         <field name="amount_total"/>
@@ -165,11 +166,11 @@
                     <group colspan="2"/>
                     <notebook colspan="4">
                         <page string="Invoice">
-                            <field name="account_id" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'in_invoice')]" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <field name="account_id" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'in_invoice')]" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid', 'inv_close'])]}"/>
                             <field name="check_total" readonly="1" invisible="1"/>
                             <field colspan="4" default_get="{'check_total': check_total, 'address_invoice_id':
                                 address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}"
-                                name="invoice_line" nolabel="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}">
+                                name="invoice_line" nolabel="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid','inv_close'])]}">
                                 <tree editable="bottom" string="Invoice lines" >
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
@@ -193,23 +194,23 @@
                             </field>
                         </page>
                         <page string="Other Info">
-                            <field domain="[('partner_id', '=', partner_id)]" name="partner_bank_id" on_change="onchange_partner_bank(partner_bank_id)" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <field domain="[('partner_id', '=', partner_id)]" name="partner_bank_id" on_change="onchange_partner_bank(partner_bank_id)" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid', 'inv_close'])]}"/>
                             <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)"
-                                widget="selection" groups="base.group_multi_company" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                                widget="selection" groups="base.group_multi_company" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid', 'inv_close'])]}"/>
                             <newline/>
-                            <field name="payment_term" widget="selection" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
-                            <field name="name" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <field name="payment_term" widget="selection" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid','inv_close'])]}"/>
+                            <field name="name" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid','inv_close'])]}"/>
                             <newline/>
-                            <field name="origin" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
-                            <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
-                            <field name="user_id" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <field name="origin" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid','inv_close'])]}"/>
+                            <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid','inv_close'])]}"/>
+                            <field name="user_id" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','in',['paid','inv_close'])]}"/>
                             <separator colspan="4" string="Additional Information"/>
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                     </notebook>
                     <group col="4" colspan="4">
                         <field name="state" readonly="1" colspan="2"/>
-                        <button name="%(action_direct_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute" colspan="2"/>
+                        <button name="%(action_direct_invoice_refund)d" type='action' string='Refund' states='open,paid,inv_close' icon="gtk-execute" colspan="2"/>
                     </group>
                 </form>
             </field>
@@ -245,6 +246,7 @@
                     <field name="user_id" invisible="1"/>
                     <field name="date_due"/>
                     <field name="origin"/>
+                    <field name="line_count"/>
                     <field name="currency_id"/>
                     <field name="residual" sum="Residual Amount"/>
                     <field name="amount_untaxed" sum="Untaxed Amount" invisible="1"/>
@@ -315,12 +317,23 @@
                         <field name="supplier_reference"/>
                     </field>
                     <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='invoice_line']" position="before" >
-                        <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <group name="import" string=" Import Lines " colspan="4" col="4"
+                               attrs="{'invisible': [('state', '!=', 'draft'), ('type', '!=', 'in_invoice')]}">
+                            <button name="import_invoice" string="Import Invoice" icon="gtk-execute" colspan="2" type="object"
+                                    attrs="{'readonly': [('state', '!=', 'draft')],
+                                            'invisible': [('type', '!=', 'in_invoice')]}"/>
+                            <button name="export_invoice" string="Export Invoice" icon="gtk-execute" colspan="2" type="object"
+                                    attrs="{'invisible': [('type', '!=', 'in_invoice')]}"/>
+                            <newline/>
+                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
+                                    attrs="{'invisible': [('state', '!=', 'draft')],
+                                            'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                         </group>
                     </xpath>
                     <field name="journal_id" position="replace">
-                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"/>
+                        <field name="journal_id"
+                               domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"
+                               attrs="{'readonly': ['|', ('state', '!=', 'draft'), '&amp;', ('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                         <field name="vat_ok" invisible="1" />
                     </field>
                     <button name="action_cancel_draft" position="replace"/>
@@ -348,11 +361,15 @@
                                 </tree>
                             </field>
                         </page>
+                        <!-- display the Counterpart Invoice tab in SI, hide it in SR -->
+                        <page string="Counterpart Invoice" attrs="{'invisible': [('type', '!=', 'in_invoice')]}">
+                            <field name="from_supply" invisible="1"/>  <!-- make the field exportable -->
+                            <field name="synced" readonly="1"/>  <!-- SI can never be ticked as "Synced" manually -->
+                            <newline/>
+                            <field name="counterpart_inv_number"/>
+                            <field name="counterpart_inv_status"/>
+                        </page>
                     </page>
-
-                    <xpath expr="/form//field[@name='tax_line']" position="attributes">
-                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
-                    </xpath>
 
                     <xpath expr="/form//field[@name='amount_untaxed']" position="attributes">
                         <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
@@ -365,27 +382,6 @@
                     <!-- Take care of attrs redefinition that omit the "states" one. So we need to add readonly with state to avoid this bug  -->
                     <xpath expr="/form//button[@name='button_reset_taxes']" position="attributes">
                         <attribute name="attrs">{'invisible': [('vat_ok', '=', False)], 'readonly': [('state', '!=', 'draft')]}</attribute>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
-
-    <!-- Invoice search view -->
-        <record id="inherit_view_account_invoice_filter2" model="ir.ui.view">
-            <field name="name">inherit.view.account.invoice.filter.2</field>
-            <field name="model">account.invoice</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_invoice_filter"/>
-            <field name="priority">18</field>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/search/group[1]/filter[@name='paid']" position="after">
-                        <separator orientation="vertical"/>
-                        <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not')]"/>
-                        <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
-                        <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported')]"/>
-                        <separator orientation="vertical"/>
                     </xpath>
                 </data>
             </field>

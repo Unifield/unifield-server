@@ -111,7 +111,7 @@ class local_message_rule(osv.osv):
             return self.browse(cr, uid, rules, context=context)[0]
         return False
 
-    def _manual_create_sync_message(self, cr, real_uid, model_name, res_id, return_info, rule_method, logger, check_identifier=True, context=None):
+    def _manual_create_sync_message(self, cr, real_uid, model_name, res_id, return_info, rule_method, logger, check_identifier=True, context=None, extra_arg=None, force_domain=False):
         if context is None:
             context ={}
         if True:
@@ -125,13 +125,15 @@ class local_message_rule(osv.osv):
                 return
 
             model_obj = self.pool.get(model_name)
-            if res_id not in model_obj.search(cr, uid, eval(rule.domain), order='NO_ORDER', context=context):
+            if not force_domain and res_id not in model_obj.search(cr, uid, eval(rule.domain), order='NO_ORDER', context=context):
                 return
 
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")
             partner = model_obj.browse(cr, uid, res_id)[rule.destination_name]
             partner_name = partner.name
             arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, destination=partner, context=context)
+            if extra_arg:
+                arguments[0].update(extra_arg)
             sale_name = ''
             if 'name' in arguments[0]:
                 sale_name = arguments[0]['name']
@@ -153,7 +155,8 @@ class local_message_rule(osv.osv):
                 'generate_message' : True,
             }
             msg_to_send_obj.create(cr, uid, data, context=context)
-            logger.info("A manual message for the method: %s, created for the object: %s " % (rule_method, sale_name))
+            if logger:
+                logger.info("A manual message for the method: %s, created for the object: %s " % (rule_method, sale_name))
             if at is None:
                 del context['active_test']
             else:
@@ -266,13 +269,6 @@ class message_to_send(osv.osv):
 
         generated_ids = []
         for id in obj_ids:
-            # US-1467: Check if this fo has any line, if not just ignore it and show a warning message in log file!
-            if 'normal_fo_create_po' in rule.remote_call and args[id] and args[id][0]:
-                if len(args[id][0].get('order_line')) == 0:
-                    self._logger.warn("::::WARNING: The FO %s (state: %s) has no line! Cannot be synced!" % (args[id][0].get('name'), args[id][0].get('state')))
-                    ignored_ids.append(id)
-                    continue
-
             for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
                 # UF-2531: allow this when creating usb msg for the INT from scratch from RW to CP
                 if destination is False:
@@ -330,6 +326,7 @@ class message_to_send(osv.osv):
                 'call' : message.remote_call,
                 'dest' : message.destination_name,
                 'args' : message.arguments,
+                'client_db_id': message.id,
             })
             msg_ids.append(message.id)
 
@@ -349,6 +346,8 @@ message_to_send()
 class message_received(osv.osv):
     _name = "sync.client.message_received"
     _rec_name = 'identifier'
+    _order = 'create_date desc, id desc'
+
     _columns = {
         'identifier' : fields.char('Identifier', size=128, readonly=True),
         'sequence': fields.integer('Sequence', readonly = True),
@@ -361,8 +360,14 @@ class message_received(osv.osv):
         'create_date' :fields.datetime('Receive Date', readonly=True),
         'editable' : fields.boolean("Set editable"),
         'rule_sequence': fields.integer('Sequence of the linked rule', required=True),
+        'manually_ran': fields.boolean('Has been manually tried', readonly=True),
+        'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
+        'sync_id': fields.integer('Sync server seq. id', required=True, select=1),
     }
 
+    _sql_constraints = [
+        ('sync_id_uniq', 'unique(sync_id)', 'Duplicates sync_id'),
+    ]
     _logger = logging.getLogger('sync.client')
 
     def create(self, cr, uid, vals, context=None):
@@ -377,15 +382,22 @@ class message_received(osv.osv):
         return super(message_received, self).create(cr, uid, vals, context=context)
 
     def unfold_package(self, cr, uid, package, context=None):
-        for data in package:
-            self.create(cr, uid, {
-                'identifier' : data['id'],
-                'remote_call' : data['call'],
-                'arguments' : data['args'],
-                'sequence' : data['sequence'],
-                'source' : data['source'] }, context=context)
+        last_seq = False
 
-            entity_obj = self.pool.get( "sync.client.entity")
+        for data in package:
+            # prevent duplicates if previous message_received_by_sync_id has failed
+            if not self.search_exist(cr, uid, [('sync_id', '=', data['sync_id'])], context=context):
+                self.create(cr, uid, {
+                    'identifier' : data['id'],
+                    'remote_call' : data['call'],
+                    'arguments' : data['args'],
+                    'sequence' : data['sequence'],
+                    'source' : data['source'],
+                    'sync_id': data['sync_id']}, context=context)
+            last_seq = data['sequence']
+
+        if last_seq:
+            entity_obj = self.pool.get('sync.client.entity')
             entity = entity_obj.get_entity(cr, uid, context=context)
             entity_obj.write(cr, uid, entity.id, {'message_last' :data['sequence']}, context=context)
 
@@ -402,6 +414,19 @@ class message_received(osv.osv):
             else:
                 res.append(arg)
         return res
+
+    def manual_execute(self, cr, uid, ids, context=None):
+        try:
+            self.execute(cr, uid, ids, context=context)
+        except:
+            raise
+        finally:
+            self.write(cr, uid, ids, {'manually_ran': True}, context=context)
+        return True
+
+    def manual_set_as_run(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'run': True, 'log': 'Set manually to run without execution', 'manually_set_run_date': fields.datetime.now(), 'editable': False}, context=context)
+        return True
 
     def execute(self, cr, uid, ids=None, context=None):
         # scope the context of message executions and loggers
@@ -470,7 +495,6 @@ class message_received(osv.osv):
 
         return len(ids)
 
-    _order = 'create_date desc, id desc'
 
 message_received()
 

@@ -29,12 +29,13 @@ from osv import osv
 from tools.translate import _
 import netsvc
 
-from msf_doc_import import GENERIC_MESSAGE
+from msf_doc_import import GENERIC_MESSAGE, PPL_IMPORT_FOR_UPDATE_MESSAGE
 from msf_doc_import.wizard import INT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_internal_import
 from msf_doc_import.wizard import IN_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_incoming_import
 from msf_doc_import.wizard import IN_LINE_COLUMNS_FOR_IMPORT as columns_for_incoming_import
 from msf_doc_import.wizard import OUT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_delivery_import
 from msf_doc_import.wizard import OUT_LINE_COLUMNS_FOR_IMPORT as columns_for_delivery_import
+from msf_doc_import.wizard import PPL_COLUMNS_LINES_FOR_IMPORT as ppl_columns_lines_for_import
 from msf_doc_import.wizard.wizard_in_simulation_screen import LINES_COLUMNS as IN_LINES_COLUMNS
 from msf_doc_import.wizard.wizard_in_simulation_screen import HEADER_COLUMNS
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
@@ -87,7 +88,7 @@ class stock_picking(osv.osv):
         in_id = self.pool.get('stock.picking').search(cr, uid, [
             ('purchase_id', '=', po_id[0]),
             ('type', '=', 'in'),
-            ('state', '=', 'assigned'),
+            ('state', 'in', ['assigned', 'shipped']),
         ], context=context)
         if not in_id:
             raise osv.except_osv(_('Error'), _('No available IN found for the given PO %s') % po_name)
@@ -203,18 +204,14 @@ class stock_picking(osv.osv):
         root = ET.fromstring(file_content)
         parcel_from = root.findall('.//field[@name="parcel_from"]')
         parcel_to = root.findall('.//field[@name="parcel_to"]')
-        total_weight = root.findall('.//field[@name="total_weight"]')
         if parcel_from:
             parcel_from = parcel_from[0].text or ''
             parcel_from = parcel_from.strip()
         if parcel_to:
             parcel_to = parcel_to[0].text or ''
             parcel_to = parcel_to.strip()
-        if total_weight:
-            total_weight = total_weight[0].text or ''
-            total_weight = total_weight.strip()
 
-        return parcel_from and parcel_to and total_weight and True or False
+        return parcel_from and parcel_to and True or False
 
 
     def auto_import_incoming_shipment(self, cr, uid, file_path, context=None):
@@ -309,7 +306,7 @@ class stock_picking(osv.osv):
 
         pick = self.browse(cr, uid, ids[0], context=context)
         if not pick.filetype:
-            raise osv.except_osv(_('Error'), _('You must select a file type before print the template'))
+            raise osv.except_osv(_('Error'), _('You must select a file type'))
 
         report_name = pick.filetype == 'excel' and 'incoming.shipment.xls' or 'incoming.shipment.xml'
 
@@ -366,6 +363,57 @@ class stock_picking(osv.osv):
                 'context': context,
                 }
 
+    def export_ppl(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids,(int,long)):
+            ids = [ids]
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'pre.packing.excel.export',
+            'datas': {'ids': ids},
+            'context': context,
+        }
+
+    def wizard_update_ppl_to_create_ship(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to update lines from a file
+        '''
+        # Objects
+        wiz_obj = self.pool.get('wizard.import.ppl.to.create.ship')
+
+        context = context is None and {} or context
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        context.update({'active_id': ids[0]})
+
+        # header_cols = ppl_columns_lines_headers_for_import
+        cols = ppl_columns_lines_for_import
+
+        # TODO: Create a specific template for this case (US-2269)
+        # columns_header = [(_(f[0]), f[1]) for f in header_cols]
+        # default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
+        # file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        export_id = wiz_obj.create(cr, uid, {'file': False,
+                                             'filename_template': 'template.xls',
+                                             'filename': 'Lines_Not_Imported.xls',
+                                             'message': """%s %s"""
+                                                        % (_(PPL_IMPORT_FOR_UPDATE_MESSAGE), ', '.join([_(f) for f in cols])),
+                                             'picking_id': ids[0],
+                                             'state': 'draft',}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.ppl.to.create.ship',
+                'res_id': export_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'crush',
+                'context': context,
+                }
+
     def check_lines_to_fix(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -389,19 +437,3 @@ class stock_picking(osv.osv):
 
 
 stock_picking()
-
-
-class stock_move(osv.osv):
-    _inherit = 'stock.move'
-
-    def write(self, cr, uid, ids, vals, context=None):
-        if not ids:
-            return True
-        vals.update({
-            'to_correct_ok': False,
-            'text_error': False,
-        })
-        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
-
-
-stock_move()

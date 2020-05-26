@@ -19,10 +19,11 @@
 #
 ##############################################################################
 
-from osv import osv
+from osv import osv, fields
 
 import time
 import tools
+import re
 
 from tools.translate import _
 from datetime import datetime
@@ -32,11 +33,14 @@ import math
 
 import netsvc
 from zipfile import ZipFile
-import csv
 from cStringIO import StringIO
 from base64 import encodestring
 from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 import logging
+import threading
+import traceback
+import pooler
+from msf_doc_import.msf_import_export_conf import MODEL_DICT
 
 class lang(osv.osv):
     '''
@@ -325,6 +329,35 @@ class data_tools(osv.osv):
         context['common']['rt_internal_supply'] = rt_internal_supply
 
         return True
+
+    def truncate_list(self, item_list, limit=300, separator=', '):
+        """
+        Returns a string corresponding to the list of items in parameter, separated by the "separator".
+        If the string > "limit", cuts it and adds "..." at the end.
+        """
+        list_str = separator.join([item for item in item_list if item]) or ''
+        if len(list_str) > limit:
+            list_str = "%s%s" % (list_str[:limit-3], '...')
+        return list_str
+
+    def replace_line_breaks(self, string_to_format):
+        """
+        Modifies the string in parameter:
+        - replaces the line breaks by spaces if they are in the middle of the string
+        - removes the line breaks and the spaces at the beginning and at the end
+        """
+        return re.sub('[\r\n]', ' ', string_to_format or '').strip()
+
+    def replace_line_breaks_from_vals(self, vals, fields):
+        """
+        Updates the vals (dict) in param.
+        For each of the fields (list) in param which is found in vals, applies "replace_line_breaks" to its value.
+        """
+        for field in fields:
+            if vals.get(field):
+                vals.update({field: self.replace_line_breaks(vals[field])})
+        return True
+
 
 data_tools()
 
@@ -667,10 +700,19 @@ class ir_translation(osv.osv):
                 return prod[0]['product_tmpl_id'][0]
         return res_id
 
-    def _audit_product_name(self, cr, uid, ids, vals, context=None):
-        if context.get('sync_update_execution') and vals.get('name') == 'product.template,name' and vals.get('lang'):
-            templ_obj = self.pool.get('product.template')
-            audit_rule_ids = templ_obj.check_audit(cr, uid, 'write')
+    def _audit_translatable_fields(self, cr, uid, ids, vals, context=None):
+        """
+        Fills in the Track Changes for translatable fields at synchro time,
+        e.g. track the updates received on journal name in the Track Changes of the Journal object
+        """
+        fields = ['product.template,name', 'account.account,name', 'account.analytic.account,name',
+                  'account.journal,name', 'account.analytic.journal,name']
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and vals.get('name') in fields and vals.get('lang'):
+            obj_name = vals['name'].split(',')[0]
+            obj = self.pool.get(obj_name)
+            audit_rule_ids = obj.check_audit(cr, uid, 'write')
             if audit_rule_ids:
                 new_ctx = context.copy()
                 new_ctx['lang'] = vals['lang']
@@ -678,14 +720,14 @@ class ir_translation(osv.osv):
                 if not template_id and ids:
                     template_id = self.browse(cr, uid, ids[0], fields_to_fetch=['res_id'], context=new_ctx).res_id
                 if template_id:
-                    previous = templ_obj.read(cr, uid, [template_id], ['name'], context=new_ctx)[0]
+                    previous = obj.read(cr, uid, [template_id], ['name'], context=new_ctx)[0]
                     audit_obj = self.pool.get('audittrail.rule')
-                    audit_obj.audit_log(cr, uid, audit_rule_ids, templ_obj, template_id, 'write', previous, {template_id: {'name': vals['value']}} , context=context)
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, obj, template_id, 'write', previous, {template_id: {'name': vals['value']}} , context=context)
 
 
 
     def write(self, cr, uid, ids, vals, clear=False, context=None):
-        self._audit_product_name(cr, uid, ids, vals, context=context)
+        self._audit_translatable_fields(cr, uid, ids, vals, context=context)
         return super(ir_translation, self).write(cr, uid, ids, vals, clear=clear, context=context)
 
 
@@ -731,8 +773,8 @@ class ir_translation(osv.osv):
                 self.write(cr, uid, ids, vals, context=context)
                 return ids[0]
 
-        if context.get('sync_update_execution') and vals.get('res_id') and vals.get('name') == 'product.template,name' and vals.get('lang'):
-            self._audit_product_name(cr, uid, False, vals, context=context)
+        if context.get('sync_update_execution') and vals.get('res_id') and vals.get('lang'):
+            self._audit_translatable_fields(cr, uid, False, vals, context=context)
 
         return super(ir_translation, self).create(cr, uid, vals, clear=clear, context=context)
 
@@ -871,6 +913,8 @@ class finance_tools(osv.osv):
                             show_date=False, custom_msg=False, context=None):
         """
         Checks that posting date >= document date
+        Depending on the config made in the Reconfigure Wizard, can also check that the document date is included
+        in the same FY as the related posting date.
 
         :type document_date: orm date
         :type posting_date: orm date
@@ -895,6 +939,20 @@ class finance_tools(osv.osv):
                         'Posting date should be later than Document Date.')
             raise osv.except_osv(_('Error'), msg)
 
+        # if the system doesn't allow doc dates from previous FY, check that this condition is met
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if not setup or not setup.previous_fy_dates_allowed:
+            # 01/01/FY <= document date <= 31/12/FY
+            posting_date_obj = self.pool.get('date.tools').orm2date(posting_date)
+            check_range_start = self.get_orm_date(1, 1, year=posting_date_obj.year)
+            check_range_end = self.get_orm_date(31, 12, year=posting_date_obj.year)
+            if not (check_range_start <= document_date <= check_range_end):
+                if show_date:
+                    msg = _('Document date (%s) should be in posting date FY') % (document_date, )
+                else:
+                    msg = _('Document date should be in posting date FY')
+                raise osv.except_osv(_('Error'), msg)
+
     def truncate_amount(self, amount, digits):
         stepper = pow(10.0, digits)
         return math.trunc(stepper * amount) / stepper
@@ -913,6 +971,8 @@ class user_rights_tools(osv.osv_memory):
         logger: where to log progression of import
         '''
 
+        if context is None:
+            context = {}
         zp = StringIO(plain_zip)
         ur = self.pool.get('user_rights.tools').unzip_file(cr, uid, zp, context=context)
         z = ZipFile(zp)
@@ -931,6 +991,11 @@ class user_rights_tools(osv.osv_memory):
         wiz_id = uac_processor.create(cr, uid, {'file_to_import_uac': data})
         uac_processor.do_process_uac(cr, uid, [wiz_id])
 
+        import_key = {}
+        for x in MODEL_DICT:
+            import_key[MODEL_DICT[x]['model']] = x
+
+        context['from_synced_ur'] = True
         for model in ['msf_button_access_rights.button_access_rule', 'ir.model.access', 'ir.rule', 'ir.actions.act_window', 'msf_field_access_rights.field_access_rule', 'msf_field_access_rights.field_access_rule_line']:
             zip_to_import = ur[model]
             obj_to_import = self.pool.get(model)
@@ -946,27 +1011,23 @@ class user_rights_tools(osv.osv_memory):
                     self._logger.info(log_line)
                     logger.append(log_line)
                     logger.write()
-                with z.open(zp_f, 'r') as csvfile:
-                    reader = csv.reader(csvfile, delimiter=',')
-                    fields = False
-                    data = []
-                    for row in reader:
-                        if not fields:
-                            fields = row
-                        else:
-                            data.append(row)
-                    ret = obj_to_import.import_data(cr, uid, fields, data, display_all_errors=False, has_header=True, context={'from_synced_ur': True})
-                    if ret and ret[0] == -1:
-                        raise osv.except_osv(_('Warning !'), _("Import %s failed\n Data: %s\n%s") % (zp_f,ret[1], ret[2]))
-                    if sync_server and model == 'msf_field_access_rights.field_access_rule_line':
-                        cr.execute("""select d.name from msf_field_access_rights_field_access_rule_line line
-                                left join ir_model_fields f on f.id = line.field
-                                left join ir_model_data d on d.res_id = line.id and d.model='msf_field_access_rights.field_access_rule_line' and d.module!='sd'
-                            where f.state='deprecated'
-                            """)
-                        error = [x[0] for x in cr.fetchall()]
-                        if error:
-                            raise osv.except_osv(_('Warning !'), _("FARL %s the following rules are on deprecated rows:\n - %s") % (zp_f, "\n - ".join(error)))
+
+                file_d = z.open(zp_f, 'r')
+
+                wiz_key = import_key[model]
+                wiz = self.pool.get('msf.import.export').create(cr, uid, {'model_list_selection': wiz_key, 'import_file': encodestring(file_d.read())}, context=context)
+                file_d.close()
+                self.pool.get('msf.import.export').import_xml(cr, uid, [wiz], raise_on_error=True, context=context)
+                if sync_server and model == 'msf_field_access_rights.field_access_rule_line':
+                    cr.execute("""select coalesce(d.name, f.model || ' ' || f.name)  from msf_field_access_rights_field_access_rule_line line
+                            left join ir_model_fields f on f.id = line.field
+                            left join ir_model_data d on d.res_id = line.id and d.model='msf_field_access_rights.field_access_rule_line' and d.module!='sd'
+                        where f.state='deprecated'
+                        """)
+                    error = [x[0] for x in cr.fetchall()]
+                    if error:
+                        raise osv.except_osv(_('Warning !'), _("FARL %s the following rules are on deprecated rows:\n - %s") % (zp_f, "\n - ".join(error)))
+
 
             if not sync_server and hasattr(obj_to_import, '_common_import') and obj_to_import._common_import:
                 dom = [('imported_flag', '=', False)]
@@ -992,26 +1053,26 @@ class user_rights_tools(osv.osv_memory):
             'ir.actions.act_window': False,
         }
 
-        expected_files = 9
+        expected_files = 7
         z = ZipFile(zfile)
         nb = 0
         for f in z.infolist():
             if f.filename.endswith('/'):
                 continue
             nb += 1
-            if 'bar' in f.filename.lower():
+            if 'button_access' in f.filename.lower():
                 ur['msf_button_access_rights.button_access_rule'].append(f.filename)
-            elif 'acl' in f.filename.lower():
+            elif 'access_control' in f.filename.lower():
                 ur['ir.model.access'] = f.filename
-            elif 'record rules' in f.filename.lower():
+            elif 'record_rules' in f.filename.lower():
                 ur['ir.rule'] = f.filename
-            elif 'windows' in f.filename.lower():
+            elif 'window' in f.filename.lower():
                 ur['ir.actions.act_window'] = f.filename
-            elif f.filename.lower().endswith('xml'):
+            elif 'user_access' in f.filename.lower():
                 ur['UAC'] = f.filename
-            elif 'rule lines' in f.filename.lower():
+            elif 'rule_lines' in f.filename.lower():
                 ur['msf_field_access_rights.field_access_rule_line'] = f.filename
-            elif 'field access' in f.filename.lower():
+            elif 'field_access_rules' in f.filename.lower():
                 ur['msf_field_access_rights.field_access_rule'] = f.filename
             elif raise_error:
                 raise osv.except_osv(_('Warning !'), _('Extra file "%s" found in zip !') % (f.filename))
@@ -1025,3 +1086,105 @@ class user_rights_tools(osv.osv_memory):
         return ur
 
 user_rights_tools()
+
+class job_in_progress(osv.osv_memory):
+    _name = 'job.in_progress'
+    _columns = {
+        'res_id': fields.integer('Db Id'),
+        'model': fields.char('Object', size=256),
+        'name': fields.char('Name', size=256),
+        'total': fields.integer('Total to process'),
+        'nb_processed': fields.integer('Total processed'),
+        'state': fields.selection([('in-progress', 'In Progress'), ('done', 'Done'), ('error', 'Error')], 'State'),
+        'target_link': fields.text('Target'),
+        'error': fields.text('Error'),
+        'read': fields.boolean('Msg read by user'),
+        'src_name': fields.char('Src Name', size=256),
+        'target_name': fields.char('Target Name', size=256),
+    }
+
+    _defaults = {
+        'read': False,
+        'state': 'in-progress',
+    }
+
+    # force uid=1 to by pass osv_memory domain
+    def read(self, cr, uid, *a, **b):
+        return super(job_in_progress, self).read(cr, 1, *a, **b)
+
+    def search(self, cr, uid, *a, **b):
+        return super(job_in_progress, self).search(cr, 1, *a, **b)
+
+    def write(self, cr, uid, *a, **b):
+        return super(job_in_progress, self).write(cr, 1, *a, **b)
+
+    def _prepare_run_bg_job(self, cr, uid, src_ids, model, method_to_call, nb_lines, name, return_success=True, main_object_id=False, context=None):
+        assert len(src_ids) == 1, 'Can only process 1 object'
+
+        if not nb_lines:
+            raise osv.except_osv(_('Warning'), _('No line to process'))
+
+
+        object_id = src_ids[0]
+        if main_object_id:
+            object_id = main_object_id
+
+        if self.search(cr, 1, [('state', '=', 'in-progress'), ('model', '=', model), ('res_id', '=', object_id)]):
+            return True
+
+        src_name = self.pool.get(model).read(cr, uid, object_id, ['name']).get('name')
+
+        job_id = self.create(cr, uid, {'res_id': object_id, 'model': model, 'name': name, 'total': nb_lines, 'src_name': src_name})
+        th = threading.Thread(
+            target=self._run_bg_job,
+            args=(cr, uid, job_id,  method_to_call),
+            kwargs={'src_ids': src_ids, 'context': context}
+        )
+        th.start()
+        th.join(3)
+        if not th.isAlive():
+            job_data = self.pool.get('job.in_progress').read(cr, uid, job_id, ['target_link', 'state', 'error'])
+            self.unlink(cr, uid, [job_id])
+            if job_data['state'] == 'done':
+                return job_data.get('target_link') or return_success
+            else:
+                raise osv.except_osv(_('Warning'), job_data['error'])
+
+        return return_success
+
+
+    def _run_bg_job(self, cr, uid, job_id, method, src_ids, context=None):
+
+        new_cr = pooler.get_db(cr.dbname).cursor()
+        try:
+            res = False
+            process_error = False
+            res = method(new_cr, uid, src_ids, context, job_id=job_id)
+        except osv.except_osv, er:
+            new_cr.rollback()
+            if job_id:
+                process_error = True
+                self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'error', 'error': tools.ustr(er.value)})
+            raise
+
+        except Exception:
+            new_cr.rollback()
+            if job_id:
+                process_error = True
+                self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'error', 'error': tools.ustr(traceback.format_exc())})
+            raise
+
+        finally:
+            if job_id:
+                if not process_error:
+                    target_name = False
+                    if isinstance(res, bool):
+                        # if target is not a dict, do not display button
+                        res = False
+                    if res and res.get('res_id') and res.get('res_model'):
+                        target_name = self.pool.get(res['res_model']).read(new_cr, uid, res['res_id'], ['name']).get('name')
+
+                    self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'done', 'target_link': res, 'target_name': target_name})
+                new_cr.commit()
+                new_cr.close(True)
+job_in_progress()

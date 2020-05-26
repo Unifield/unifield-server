@@ -193,13 +193,6 @@ class account_analytic_account(osv.osv):
         (check_currency, 'Error! The currency has to be the same as the currency of the selected company', ['currency_id', 'company_id']),
     ]
 
-    def copy(self, cr, uid, id, default=None, context=None):
-        if not default:
-            default = {}
-        default['code'] = False
-        default['line_ids'] = []
-        return super(account_analytic_account, self).copy(cr, uid, id, default, context=context)
-
     def on_change_company(self, cr, uid, id, company_id):
         if not company_id:
             return {}
@@ -253,7 +246,7 @@ class account_analytic_line(osv.osv):
         'date': fields.date('Date', required=True, select=True),
         'amount': fields.float('Amount', required=True, help='Calculated by multiplying the quantity and the price given in the Product\'s cost price. Always expressed in the company main currency.', digits_compute=dp.get_precision('Account')),
         'unit_amount': fields.float('Quantity', help='Specifies the amount of quantity to count.'),
-        'account_id': fields.many2one('account.analytic.account', 'Analytic Account', required=True, ondelete='cascade', select=True, domain=[('type','<>','view')], m2o_order='code'),
+        'account_id': fields.many2one('account.analytic.account', 'Analytic Account', required=True, ondelete='restrict', select=True, domain=[('type','<>','view')], m2o_order='code'),
         'user_id': fields.many2one('res.users', 'User'),
         'company_id': fields.related('account_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
 

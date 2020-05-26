@@ -331,9 +331,10 @@ class product_template(osv.osv):
                                       store = {
             'product.template': (lambda self, cr, uid, ids, c=None: ids, ['standard_price'], 10),
         }),
-        'volume': fields.float('Volume', help="The volume in m3."),
-        'weight': fields.float('Gross weight', help="The gross weight in Kg."),
-        'weight_net': fields.float('Net weight', help="The net weight in Kg."),
+        'volume': fields.float('Volume', help="The volume in dm3.", digits=(16, 5)),
+        'volume_updated': fields.boolean(string='Volume updated (deprecated)', readonly=True),
+        'weight': fields.float('Gross weight', help="The gross weight in Kg.", digits=(16,5)),
+        'weight_net': fields.float('Net weight', help="The net weight in Kg.", digits=(16,5)),
         'cost_method': fields.selection([('standard','Standard Price'), ('average','Average Price')], 'Costing Method', required=True,
                                         help="Standard Price: the cost price is fixed and recomputed periodically (usually at the end of the year), Average Price: the cost price is recomputed at each reception of products."),
         'warranty': fields.float('Warranty (months)'),
@@ -400,6 +401,7 @@ class product_template(osv.osv):
         'mes_type' : lambda *a: 'fixed',
         'categ_id' : _default_category,
         'type' : lambda *a: 'consu',
+        'volume_updated': False,
     }
 
     def _check_uom(self, cursor, user, ids, context=None):
@@ -432,6 +434,48 @@ class product_template(osv.osv):
 product_template()
 
 class product_product(osv.osv):
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        new_dom = []
+        location_id = False
+        filter_qty = False
+        filter_in_any_product_list = False
+        for x in domain:
+            if x[0] == 'location_id':
+                location_id = x[2]
+
+            elif x[0] == 'postive_qty':
+                filter_qty = True
+
+            elif x[0] == 'in_any_product_list':
+                filter_in_any_product_list = True
+            else:
+                new_dom.append(x)
+
+        ret = super(product_product, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if filter_qty:
+            stock_warehouse_obj = self.pool.get('stock.warehouse')
+            stock_location_obj = self.pool.get('stock.location')
+            if not location_id:
+                wids = stock_warehouse_obj.search(cr, uid, [], order='NO_ORDER', context=context)
+                location_id = stock_warehouse_obj.read(cr, uid, wids[0], ['lot_stock_id'], context=context)['lot_stock_id'][0]
+            if isinstance(location_id, basestring):
+                location_id = stock_location_obj.search(cr, uid, [('name','ilike', location_id)], context=context)
+
+            if not isinstance(location_id, list):
+                location_id = [location_id]
+
+            child_location_ids = stock_location_obj.search(cr, uid, [('location_id', 'child_of', location_id)], order='NO_ORDER')
+            location_ids = child_location_ids or location_id
+            ret.tables.append('"stock_mission_report_line_location"')
+            ret.joins['"product_product"'] = [('"stock_mission_report_line_location"', 'id', 'product_id', 'LEFT JOIN')]
+            ret.where_clause.append(' "stock_mission_report_line_location"."remote_instance_id" is NULL AND "stock_mission_report_line_location"."location_id" in %s ')
+            ret.where_clause_params.append(tuple(location_ids))
+            ret.having = ' GROUP BY "product_product"."id" HAVING sum("stock_mission_report_line_location"."quantity") >0 '
+        if filter_in_any_product_list:
+            ret.tables.append('"product_list_line"')
+            ret.joins['"product_product"'] = [('"product_list_line"', 'id', 'name', 'INNER JOIN')]
+        return ret
+
     def view_header_get(self, cr, uid, view_id, view_type, context=None):
         if context is None:
             context = {}
@@ -553,6 +597,53 @@ class product_product(osv.osv):
                 (data['name'] or '') + (data['variants'] and (' - '+data['variants']) or '')
         return res
 
+    def _get_authorized_creator(self, cr, uid, check_edbn, context=None):
+        obj_data = self.pool.get('ir.model.data')
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
+        prod_creator = []
+        if instance_level == 'section':
+            if check_edbn:
+                # ITC, ESC, HQ, Local, ED
+                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_1')[1])
+                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_2')[1])
+                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1])
+                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1])
+                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1])
+            else:
+                prod_creator = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]]
+        elif instance_level == 'coordo':
+            prod_creator = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]]
+        return prod_creator
+
+    def _get_expected_prod_creator(self, cr, uid, ids, field_names, arg, context=None):
+        if context is None:
+            context = {}
+
+        res = {}
+        prod_creator = self._get_authorized_creator(cr, uid, check_edbn=True, context=context)
+        for _id in ids:
+            res[_id] = False
+
+        if prod_creator:
+            for _id in self.search(cr, uid, [('id', 'in', ids), ('international_status', 'in', prod_creator)], context=context):
+                res[_id] = True
+        return res
+
+    def _expected_prod_creator_search(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns all documents according to the product creator
+        '''
+        if context is None:
+            context = {}
+
+        prod_creator_ids = []
+        for arg in args:
+            if arg[0] == 'expected_prod_creator':
+                prod_creator_ids = self._get_authorized_creator(cr, uid, arg[2]=='bned', context)
+
+        if arg[2]!='bned':
+            return [('international_status', 'in', prod_creator_ids), ('replaced_by_product_id', '=', False)]
+        return [('international_status', 'in', prod_creator_ids)]
 
     _defaults = {
         'active': lambda *a: 1,
@@ -584,8 +675,8 @@ class product_product(osv.osv):
         'price_margin': fields.float('Variant Price Margin', digits_compute=dp.get_precision('Sale Price')),
         'pricelist_id': fields.dummy(string='Pricelist', relation='product.pricelist', type='many2one'),
         'name_template': fields.related('product_tmpl_id', 'name', string="Name", type='char', size=128, store=True, write_relate=False),
+        'expected_prod_creator': fields.function(_get_expected_prod_creator, method=True, type='boolean', fnct_search=_expected_prod_creator_search, readonly=True, string='Expected Product Creator for Product Mass Update'),
     }
-
 
     def unlink(self, cr, uid, ids, context=None):
         unlink_ids = []
@@ -631,45 +722,6 @@ class product_product(osv.osv):
     def on_order(self, cr, uid, ids, orderline, quantity):
         pass
 
-    def name_get(self, cr, user, ids, context=None):
-        if context is None:
-            context = {}
-        if not len(ids):
-            return []
-        def _name_get(d):
-            name = d.get('name','')
-            code = d.get('default_code',False)
-            if code:
-                name = '[%s] %s' % (code,name)
-            if d.get('variants'):
-                name = name + ' - %s' % (d['variants'],)
-            return (d['id'], name)
-
-        partner_id = context.get('partner_id', False)
-
-        result = []
-        for product in self.browse(cr, user, ids, context=context,
-                                   fields_to_fetch=['seller_ids', 'id', 'name', 'default_code',
-                                                    'variants']):
-            sellers = filter(lambda x: x.name.id == partner_id, product.seller_ids)
-            if sellers:
-                for s in sellers:
-                    mydict = {
-                        'id': product.id,
-                        'name': s.product_name or product.name,
-                        'default_code': s.product_code or product.default_code,
-                        'variants': product.variants
-                    }
-                    result.append(_name_get(mydict))
-            else:
-                mydict = {
-                    'id': product.id,
-                    'name': product.name,
-                    'default_code': product.default_code,
-                    'variants': product.variants
-                }
-                result.append(_name_get(mydict))
-        return result
 
     def name_search(self, cr, user, name='', args=None, operator='ilike', context=None, limit=100):
         if not args:
@@ -927,48 +979,6 @@ class product_supplierinfo(osv.osv):
     _constraints = [
         (_check_uom, 'Error: The default UOM and the Supplier Product UOM must be in the same category.', ['product_uom']),
     ]
-    def price_get(self, cr, uid, supplier_ids, product_id, product_qty=1, context=None):
-        """
-        Calculate price from supplier pricelist.
-        @param supplier_ids: Ids of res.partner object.
-        @param product_id: Id of product.
-        @param product_qty: specify quantity to purchase.
-        """
-        if type(supplier_ids) in (int,long,):
-            supplier_ids = [supplier_ids]
-        res = {}
-        product_pool = self.pool.get('product.product')
-        partner_pool = self.pool.get('res.partner')
-        pricelist_pool = self.pool.get('product.pricelist')
-        currency_pool = self.pool.get('res.currency')
-        currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        for supplier in partner_pool.browse(cr, uid, supplier_ids,
-                                            context=context,
-                                            fields_to_fetch=['property_product_pricelist_purchase', 'id']):
-            # Compute price from standard price of product
-            price = product_pool.price_get(cr, uid, [product_id], 'standard_price', context=context)[product_id]
-
-            # Compute price from Purchase pricelist of supplier
-            pricelist_id = supplier.property_product_pricelist_purchase.id
-            if pricelist_id:
-                price = pricelist_pool.price_get(cr, uid, [pricelist_id], product_id, product_qty, context=context).setdefault(pricelist_id, 0)
-                price = currency_pool.compute(cr, uid, pricelist_pool.browse(cr, uid, pricelist_id).currency_id.id, currency_id, price)
-
-            # Compute price from supplier pricelist which are in Supplier Information
-            supplier_info_ids = self.search(cr, uid,
-                                            [('name','=',supplier.id),('product_id','=',product_id)],
-                                            order='NO_ORDER')
-            if supplier_info_ids:
-                cr.execute('SELECT * ' \
-                           'FROM pricelist_partnerinfo ' \
-                           'WHERE suppinfo_id IN %s' \
-                           'AND min_quantity <= %s ' \
-                           'ORDER BY min_quantity DESC LIMIT 1', (tuple(supplier_info_ids),product_qty,))
-                res2 = cr.dictfetchone()
-                if res2:
-                    price = res2['price']
-            res[supplier.id] = price
-        return res
     _order = 'sequence'
 product_supplierinfo()
 

@@ -10,16 +10,13 @@
                 <form string="Theoretical Kit mass import">
                     <field name="display_warning_message" invisible="1" />
                     <field name="display_error_message" invisible="1" />
-                    <field name="show_template" invisible="1" />
                     <separator colspan="4" string="Information" />
                     <field name="name" readonly="1" />
                     <newline />
                     <field name="file_to_import" filename="filename" accept="application/vnd.ms-excel,application/xml"/>
                     <field name="filename" invisible="1" />
                     <group colspan="2" col="2" attrs="{'invisible': [('state', '!=', 'draft')]}">
-                        <field name="template_file" filename="template_filename" attrs="{'invisible': [('show_template', '=', False)]}" />
-                        <field name="template_filename" invisible="1" />
-                        <button name="get_template" string="Get template" colspan="2" type="object" attrs="{'invisible': [('show_template', '=', True)]}" />
+                        <button name="get_template" string="Get template" colspan="2" type="object" />
                     </group>
                     <group colspan="4" col="4" name="check_messages" attrs="{'invisible': [('state', '!=', 'check_error')]}">
                         <html>

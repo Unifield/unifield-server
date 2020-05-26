@@ -19,7 +19,7 @@ import zipfile
 import tempfile
 import codecs
 import re
-
+import logging
 # new mako filter |xn to escape html entities + replace \n by &#10;
 xml_escapes = {
     '&' : '&amp;',
@@ -40,28 +40,12 @@ class SpreadsheetReport(WebKitParser):
         'date': report_sxw._date_format,
         'datetime': report_sxw._dttime_format
     }
-
+    log_export = False
 
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         if not rml:
             rml = 'addons/spreadsheet_xml/report/spreadsheet_xls.mako'
         WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
-        self.sheet_name_used = []
-        self.total_sheet_number = 1
-
-    def sheet_name(self, default_name=False, context=None):
-        sheet_max_size = 31
-        if not default_name:
-            default_name = 'Sheet %s' % (self.total_sheet_number, )
-
-        default_name = default_name[0:sheet_max_size].replace('/','_')
-
-        if default_name in self.sheet_name_used:
-            default_name = '%s %s'% (default_name[0:sheet_max_size - len('%s' % self.total_sheet_number) - 1], self.total_sheet_number)
-
-        self.sheet_name_used.append(default_name)
-        self.total_sheet_number += 1
-        return default_name
 
     def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
         if context is None:
@@ -70,17 +54,18 @@ class SpreadsheetReport(WebKitParser):
             return super(WebKitParser,self).create_single_pdf(cr, uid, ids, data, report_xml, context=context)
 
         self.report_xml = report_xml
-        self.parser_instance = self.parser(cr, uid, self.name2, context=context)
+        parser_instance = self.parser(cr, uid, self.name2, context=context)
         self.pool = pooler.get_pool(cr.dbname)
 
         if not context.get('splitbrowse'):
             objs = self.getObjects(cr, uid, ids, context)
         else:
             objs = []
-            self.parser_instance.localcontext['ids'] = ids
-            self.parser_instance.localcontext['context'] = context
-        self.parser_instance.set_context(objs, data, ids, report_xml.report_type)
-
+            parser_instance.localcontext['ids'] = ids
+            parser_instance.localcontext['context'] = context
+        parser_instance.set_context(objs, data, ids, report_xml.report_type)
+        orig_file = self.report_xml.report_file or self.tmpl
+        parser_instance.orig_file = orig_file and "addons/%s"%orig_file or self.name
         template = False
         if report_xml.report_file:
             path = addons.get_module_resource(report_xml.report_file)
@@ -96,24 +81,20 @@ class SpreadsheetReport(WebKitParser):
             raise osv.except_osv(_('Error!'), _('Webkit Report template not found !'))
 
         self.localcontext.update({'lang': context.get('lang')})
-        self.parser_instance.localcontext.update({'setLang':self.setLang})
-        self.parser_instance.localcontext.update({'formatLang':self.formatLang})
-
+        parser_instance.localcontext.update({'setLang':self.setLang})
+        parser_instance.localcontext.update({'formatLang':parser_instance.format_xls_lang})
 
         null, tmpname = tempfile.mkstemp()
         fileout = codecs.open(tmpname, 'wb', 'utf8')
         body_mako_tpl = Template(template, input_encoding='utf-8', default_filters=['unicode'])
         try:
-            mako_ctx = Context(fileout, _=self.translate_call, **self.parser_instance.localcontext)
+            mako_ctx = Context(fileout, _=parser_instance.translate_call, **parser_instance.localcontext)
             body_mako_tpl.render_context(mako_ctx)
             fileout.close()
         except Exception:
             msg = exceptions.text_error_template().render()
             netsvc.Logger().notifyChannel('Webkit render', netsvc.LOG_ERROR, msg)
             raise osv.except_osv(_('Webkit render'), msg)
-
-        # circular reference on parse_instance, force memory free
-        del self.parser_instance
 
         if context.get('zipit'):
             null1, tmpzipname = tempfile.mkstemp()
@@ -138,17 +119,17 @@ class SpreadsheetReport(WebKitParser):
 
     def getObjects(self, cr, uid, ids, context):
         table_obj = pooler.get_pool(cr.dbname).get(self.table)
-        self.sheet_name_used = []
-        self.total_sheet_number = 1
-        self.parser_instance.localcontext['sheet_name'] = self.sheet_name
         return table_obj.browse(cr, uid, ids, list_class=report_sxw.browse_record_list, context=context, fields_process=self._fields_process)
 
     def create(self, cr, uid, ids, data, context=None):
-        a = super(SpreadsheetReport, self).create(cr, uid, ids, data, context)
-        # This permit to test XLS report generation with tools.tests_reports without given some warning
-        # Cf. tools/tests_reports.py:89
-        return a
-
+        if self.log_export:
+            logger = logging.getLogger('XLS export')
+            logger.info('Exporting %d %s ...' % (len(ids), self.table))
+        try:
+            return super(SpreadsheetReport, self).create(cr, uid, ids, data, context)
+        finally:
+            if self.log_export:
+                logger.info('End of Export %s' % (self.table,))
 class SpreadsheetCreator(object):
     def __init__(self, title, headers, datas):
         self.headers = headers

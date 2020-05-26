@@ -65,7 +65,7 @@
   </Style>
 </Styles>
 
-<ss:Worksheet ss:Name="Unconsistent stock">
+<ss:Worksheet ss:Name="${_('Unconsistent stock')|x}">
 <Table x:FullColumns="1" x:FullRows="1">
 
     # Product code
@@ -89,15 +89,15 @@
 
     % for o in objects:
     <Row ss:AutoFitHeight="1">
-        <Cell ss:StyleID="header"><Data ss:Type="String">Code</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Description</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">BN-management</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">ED-management</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">BN</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">ED</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Quantity</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Location</Data></Cell>
-        <Cell ss:StyleID="header"><Data ss:Type="String">Document number</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Code')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('BN-management')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('ED-management')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('BN')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('ED')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Quantity')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Location')|x}</Data></Cell>
+        <Cell ss:StyleID="header"><Data ss:Type="String">${_('Document number')|x}</Data></Cell>
     </Row>
 
         % for l in o.line_ids:

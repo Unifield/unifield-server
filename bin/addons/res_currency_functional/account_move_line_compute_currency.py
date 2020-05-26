@@ -20,45 +20,16 @@
 #
 ##############################################################################
 
-from osv import fields, osv
-import decimal_precision as dp
+from osv import osv
 from tools.translate import _
+from base import currency_date
 import netsvc
 import traceback
 import time
 
+
 class account_move_line_compute_currency(osv.osv):
     _inherit = "account.move.line"
-
-    def _get_reconcile_total_partial_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
-        """
-        Informs for each move line if a reconciliation or a partial reconciliation have been made. Else return False.
-        """
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-        ret = {}
-        for line in self.read(cr, uid, ids, ['reconcile_id','reconcile_partial_id']):
-            if line['reconcile_id']:
-                ret[line['id']] = line['reconcile_id']
-            elif line['reconcile_partial_id']:
-                ret[line['id']] = line['reconcile_partial_id']
-            else:
-                ret[line['id']] = False
-        return ret
-
-    _columns = {
-        'debit_currency': fields.float('Booking Out', digits_compute=dp.get_precision('Account')),
-        'credit_currency': fields.float('Booking In', digits_compute=dp.get_precision('Account')),
-        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, write_relate=False),
-        # Those fields are for UF-173: Accounting Journals.
-        # Since they are used in the move line view, they are added in Multi-Currency.
-        'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
-    }
-
-    _defaults = {
-        'debit_currency': 0.0,
-        'credit_currency': 0.0,
-    }
 
     def create_addendum_line(self, cr, uid, lines, total, context=None):
         """
@@ -477,6 +448,13 @@ class account_move_line_compute_currency(osv.osv):
                                                      context=new_ctx).reconcile_date or None
                         cr.execute('UPDATE account_move_line SET reconcile_id=%s, reconcile_txt=%s, reconcile_date=%s WHERE id=%s',
                                    (reconciled.id, reconcile_txt or '', reconcile_date, partner_line_id))
+
+                        if self.pool.get('sync.client.orm_extended'):
+                            # touch to trigger a sync (FXA created at project for reconciliation done at coo)
+                            self.pool.get('account.move.reconcile').synchronize(cr, 1, [reconciled.id], context=new_ctx)
+                            if context.get('sync_update_execution'):
+                                self.pool.get('ir.model.data').mark_resend(cr, 1, 'account.move.reconcile', reconciled.id, context=context)
+
                         self.log_reconcile(cr, uid, reconcile_obj=reconciled, aml_id=partner_line_id, previous={}, context={})
         return True
 
@@ -497,11 +475,8 @@ class account_move_line_compute_currency(osv.osv):
             # amount currency is not set; it is computed from the 2 other fields
             ctx = {}
             # WARNING: since SP2, source_date have priority to date if exists. That's why it should be used for computing amounts
-            if move_line.date:
-                ctx['date'] = move_line.date
-            # source_date is more important than date
-            if move_line.source_date:
-                ctx['date'] = move_line.source_date
+            curr_date = currency_date.get_date(self, cr, move_line.document_date, move_line.date, source_date=move_line.source_date)
+            ctx['currency_date'] = curr_date
 
             if move_line.period_id.state != 'done' and not move_line.period_id.is_system:
                 if move_line.debit_currency != 0.0 or move_line.credit_currency != 0.0:
@@ -557,8 +532,8 @@ class account_move_line_compute_currency(osv.osv):
             if vals['date'] < period.get('date_start') or vals['date'] > period.get('date_stop'):
                 raise osv.except_osv(_('Warning !'), _('Posting date (%s) is outside of defined period: %s!') % (vals.get('date'), period.get('name') or '',))
 
-    def _update_amount_bis(self, cr, uid, vals, currency_id, curr_fun, date=False, source_date=False,
-                           debit_currency=False, credit_currency=False, context=None):
+    def _compute_currency_on_create_write(self, cr, uid, vals, currency_id, curr_fun, document_date=False, posting_date=False,
+                                          source_date=False, debit_currency=False, credit_currency=False, context=None):
         if context is None:
             context = {}
         newvals = {}
@@ -566,17 +541,23 @@ class account_move_line_compute_currency(osv.osv):
         cur_obj = self.pool.get('res.currency')
 
         # WARNING: source_date field have priority to date field. This is because of SP2 Specifications
-        if vals.get('date', date):
-            ctxcurr['date'] = vals.get('date', date)
-        if vals.get('source_date', source_date):
-            ctxcurr['date'] = vals.get('source_date', source_date)
+        curr_date = currency_date.get_date(self, cr, vals.get('document_date', document_date), vals.get('date', posting_date),
+                                           source_date=vals.get('source_date', source_date))
+        ctxcurr['currency_date'] = curr_date
+        if currency_date.get_date_type(self, cr) == 'document':
+            date_in_vals = vals.get('document_date')
+        else:
+            date_in_vals = vals.get('date')
 
         if 'currency_table_id' in context:
             ctxcurr['currency_table_id'] = context['currency_table_id']
-#        if ctxcurr.get('date', False):
-#            newvals['date'] = ctxcurr['date']
 
-        if vals.get('credit_currency') or vals.get('debit_currency'):
+        if context.get('from_web_menu') and (vals.get('debit_currency', False) is not False or vals.get('credit_currency', False) is not False):
+            # use case where one of the booking fields MANUALLY CHANGED IN THE INTERFACE has a value, EVEN IF IT IS 0.00
+            newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
+            newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
+            newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
+        elif vals.get('credit_currency') or vals.get('debit_currency'):
             newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
@@ -584,7 +565,7 @@ class account_move_line_compute_currency(osv.osv):
             newvals['credit_currency'] = cur_obj.compute(cr, uid, curr_fun, currency_id, vals.get('credit') or 0.0, round=True, context=ctxcurr)
             newvals['debit_currency'] = cur_obj.compute(cr, uid, curr_fun, currency_id, vals.get('debit') or 0.0, round=True, context=ctxcurr)
             newvals['amount_currency'] = newvals['debit_currency'] - newvals['credit_currency']
-        elif vals.get('amount_currency'):
+        elif vals.get('amount_currency') not in (None, False):
             if vals['amount_currency'] < 0:
                 newvals['credit_currency'] = -vals['amount_currency']
                 newvals['debit_currency'] = 0
@@ -593,7 +574,7 @@ class account_move_line_compute_currency(osv.osv):
                 newvals['credit_currency'] = 0
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, newvals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
-        elif (vals.get('date') or vals.get('source_date')) and (credit_currency or debit_currency):
+        elif (date_in_vals or vals.get('source_date')) and (credit_currency or debit_currency):
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, debit_currency or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, credit_currency or 0.0, round=True, context=ctxcurr)
             newvals['amount_currency'] = debit_currency - credit_currency
@@ -610,7 +591,8 @@ class account_move_line_compute_currency(osv.osv):
         """
         # Some verifications
         self.check_date(cr, uid, vals)
-        date_to_compute = False
+        doc_date = False
+        posting_date = False
         is_system_period = False
 
         if 'period_id' in vals:
@@ -621,7 +603,9 @@ class account_move_line_compute_currency(osv.osv):
 
         if not 'date' in vals:
             if vals.get('move_id'):
-                date_to_compute = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['date'])['date']
+                move = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['document_date', 'date'])
+                doc_date = move['document_date']
+                posting_date = move['date']
             else:
                 logger = netsvc.Logger()
                 logger.notifyChannel("warning", netsvc.LOG_WARNING, "No date for new account_move_line!")
@@ -659,7 +643,8 @@ class account_move_line_compute_currency(osv.osv):
         # and for revaluation lines (US-1682)
         if not is_system_period and not newvals.get('is_addendum_line', False) and not \
                 (context.get('sync_update_execution', False) and 'is_revaluated_ok' in newvals and newvals['is_revaluated_ok']):
-            newvals.update(self._update_amount_bis(cr, uid, vals, newvals['currency_id'], curr_fun, date=date_to_compute, context=context))
+            newvals.update(self._compute_currency_on_create_write(cr, uid, vals, newvals['currency_id'], curr_fun,
+                                                                  document_date=doc_date, posting_date=posting_date, context=context))
         return super(account_move_line_compute_currency, self).create(cr, uid, newvals, context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
@@ -680,6 +665,7 @@ class account_move_line_compute_currency(osv.osv):
         # Browse lines
         for line in self.browse(cr, uid, ids):
             newvals = vals.copy()
+            doc_date = vals.get('document_date', line.document_date)
             date = vals.get('date', line.date)
             source_date = vals.get('source_date', line.source_date)
             # Add currency on line
@@ -688,7 +674,10 @@ class account_move_line_compute_currency(osv.osv):
             currency_id = vals.get('currency_id') or line.currency_id.id
             func_currency = line.account_id.company_id.currency_id.id
             if line.period_id and not line.period_id.is_system and not (context.get('sync_update_execution', False) and line.is_revaluated_ok):
-                newvals.update(self._update_amount_bis(cr, uid, newvals, currency_id, func_currency, date, source_date, line.debit_currency, line.credit_currency, context=context))
+                newvals.update(self._compute_currency_on_create_write(cr, uid, newvals, currency_id, func_currency, document_date=doc_date,
+                                                                      posting_date=date, source_date=source_date,
+                                                                      debit_currency=line.debit_currency, credit_currency=line.credit_currency,
+                                                                      context=context))
             res = res and super(account_move_line_compute_currency, self).write(cr, uid, [line.id], newvals, context, check=check, update_check=update_check)
             # Update addendum line for reconciliation entries if this line is reconciled
             if vals.get('reconcile_id'):
@@ -702,58 +691,6 @@ class account_move_line_compute_currency(osv.osv):
     def _get_journal_move_line(self, cr, uid, ids, context=None):
         return self.pool.get('account.move.line').search(cr, uid, [('journal_id', 'in', ids)])
 
-    def _get_line_account_type(self, cr, uid, ids, field_name=None, arg=None, context=None):
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-        ret = {}
-        for line in self.browse(cr, uid, ids, fields_to_fetch=['account_id']):
-            ret[line.id] = line.account_id and line.account_id.user_type and line.account_id.user_type.name or False
-        return ret
-
-    def _store_journal_account(self, cr, uid, ids, context=None):
-        return self.pool.get('account.move.line').search(cr, uid, [('account_id', 'in', ids)])
-
-    def _store_journal_account_type(self, cr, uid, ids, context=None):
-        return self.pool.get('account.move.line').search(cr, uid, [('account_id.user_type', 'in', ids)])
-
-    def _search_reconcile_total_partial(self, cr, uid, ids, field_names, args, context=None):
-        """
-        Search either total reconciliation name or partial reconciliation name
-        """
-        if context is None:
-            context = {}
-        arg = []
-        for x in args:
-            if x[0] == 'reconcile_total_partial_id' and x[1] in ['=','ilike','like'] and x[2]:
-                arg.append('|')
-                arg.append(('reconcile_id', x[1], x[2]))
-                arg.append(('reconcile_partial_id', x[1], x[2]))
-            elif x[0] == 'reconcile_total_partial_id':
-                raise osv.except_osv(_('Error'), _('Operator not supported!'))
-            else:
-                arg.append(x)
-        return arg
-
-    _columns = {
-        'debit_currency': fields.float('Book. Debit', digits_compute=dp.get_precision('Account')),
-        'credit_currency': fields.float('Book. Credit', digits_compute=dp.get_precision('Account')),
-        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False, write_relate=False),
-        # Those fields are for UF-173: Accounting Journals.
-        # Since they are used in the move line view, they are added in Multi-Currency.
-        'account_type': fields.function(_get_line_account_type, type='char', size=64, method=True, string="Account Type",
-                                        store = {
-                                            'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['account_id'], 10),
-                                            'account.account': (_store_journal_account, ['user_type'], 10),
-                                            'account.account.type': (_store_journal_account_type, ['name'], 10),
-                                        }
-                                        ),
-        'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, fnct_search=_search_reconcile_total_partial, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
-    }
-
-    _defaults = {
-        'debit_currency': 0.0,
-        'credit_currency': 0.0,
-    }
 
 account_move_line_compute_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

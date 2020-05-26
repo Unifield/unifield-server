@@ -476,9 +476,11 @@ class import_data(osv.osv_memory):
 
                     if ids_to_update:
                         #UF-2170: remove the standard price value from the list for update product case
-                        if 'standard_price' in data:
-                            del data['standard_price']
-                        impobj.write(cr, uid, ids_to_update, data)
+                        # US-6468: remove BN/ED attr for update
+                        for to_remove in ['standard_price', 'perishable', 'batch_management']:
+                            if to_remove in data:
+                                del data[to_remove]
+                        impobj.write(cr, uid, ids_to_update, data, context=context)
                         nb_update_success += 1
                         cr.commit()
                     else:
@@ -527,12 +529,15 @@ class import_data(osv.osv_memory):
     Find in attachment the rejected lines'''%(nb_error)
 
             request_obj = self.pool.get('res.request')
-            req_id = request_obj.create(cr, uid,
-                                        {'name': "%s %s"%(import_type, objname,),
-                                         'act_from': uid,
-                                         'act_to': uid,
-                                         'body': summary,
-                                         })
+            req_data = {
+                'name': "%s %s"%(import_type, objname,),
+                'act_from': uid,
+                'act_to': uid,
+                'body': summary,
+            }
+            if self._name in ('import_product', 'update_product') and obj.get('import_name'):
+                req_data['import_name'] = obj.get('import_name')
+            req_id = request_obj.create(cr, uid, req_data)
             if req_id:
                 request_obj.request_send(cr, uid, [req_id])
                 request_obj.request_close(cr, uid, [req_id])
@@ -572,6 +577,10 @@ import_data()
 class import_product(osv.osv_memory):
     _name = 'import_product'
     _inherit = 'import_data'
+
+    _columns = {
+        'import_name': fields.char('Import name', size=512),
+    }
 
     _defaults = {
         'object': lambda *a: 'product.product',

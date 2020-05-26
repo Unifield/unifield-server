@@ -83,6 +83,7 @@
             <rng:optional><rng:attribute name="hide_save_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_cancel_button"/></rng:optional>
             <rng:optional><rng:attribute name="show_add_button"/></rng:optional>
+            <rng:optional><rng:attribute name="force_string"/></rng:optional>
             <rng:ref name="container"/>
         </rng:element>
     </rng:define>
@@ -135,7 +136,9 @@
             <rng:optional><rng:attribute name="colors"/></rng:optional>
             <rng:optional><rng:attribute name="color"/></rng:optional>
             <rng:optional><rng:attribute name="editable"/></rng:optional>
+            <rng:optional><rng:attribute name="editable_style"/></rng:optional>
             <rng:optional><rng:attribute name="noteditable"/></rng:optional>
+            <rng:optional><rng:attribute name="nopopup"/></rng:optional>
             <rng:optional><rng:attribute name="notselectable"/></rng:optional>
             <rng:optional><rng:attribute name="resequencable"/></rng:optional>
             <rng:optional><rng:attribute name="toolbar"/></rng:optional>
@@ -195,6 +198,7 @@
 
     <rng:define name="html">
         <rng:element name="html">
+            <rng:optional><rng:attribute name="colspan"/></rng:optional>
             <rng:zeroOrMore>
                     <rng:text/>
                     <rng:ref name="any"/>
@@ -370,8 +374,9 @@
             <rng:optional><rng:attribute name="rowspan"/></rng:optional>
             <rng:optional><rng:attribute name="string"/></rng:optional>
             <rng:optional><rng:attribute name="col"/></rng:optional>
-			<rng:optional><rng:attribute name="attrs"/></rng:optional>
+            <rng:optional><rng:attribute name="attrs"/></rng:optional>
             <rng:optional><rng:attribute name="select"/></rng:optional>
+            <rng:optional><rng:attribute name="invisible"/></rng:optional>
             <rng:optional><rng:attribute name="orientation"/></rng:optional>
             <rng:zeroOrMore>
                 <rng:choice>
@@ -434,6 +439,7 @@
             <rng:optional><rng:attribute name="editable"/></rng:optional>
             <rng:optional><rng:attribute name="domain_filter"/></rng:optional>
             <rng:optional><rng:attribute name="attrs"/></rng:optional>
+            <rng:optional><rng:attribute name="class"/></rng:optional>
             <rng:optional><rng:attribute name="string"/></rng:optional>
             <rng:optional><rng:attribute name="completion"/></rng:optional>
             <rng:optional><rng:attribute name="width"/></rng:optional>
@@ -463,6 +469,7 @@
             <rng:optional><rng:attribute name="nolabel"/></rng:optional>
             <rng:optional><rng:attribute name="default"/></rng:optional>
             <rng:optional><rng:attribute name="default_get"/></rng:optional>
+            <rng:optional><rng:attribute name="scroll"/></rng:optional>
             <rng:optional><rng:attribute name="required"/></rng:optional>
             <rng:optional><rng:attribute name="readonly"/></rng:optional>
             <rng:optional><rng:attribute name="view_mode"/></rng:optional>
@@ -486,7 +493,11 @@
             <rng:optional><rng:attribute name="get_selection"/></rng:optional>
             <rng:optional><rng:attribute name="accept"/></rng:optional>
             <rng:optional><rng:attribute name="filter_selector"/></rng:optional>
+            <rng:optional><rng:attribute name="default_selector"/></rng:optional>
             <rng:optional><rng:attribute name="o2m_selectable"/></rng:optional>
+            <rng:optional><rng:attribute name="required_error_msg"/></rng:optional>
+            <rng:optional><rng:attribute name="truncate"/></rng:optional>
+            <rng:optional><rng:attribute name="tooltip"/></rng:optional>
             <rng:zeroOrMore>
                 <rng:choice>
                     <rng:ref name="diagram"/>

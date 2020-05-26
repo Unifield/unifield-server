@@ -24,12 +24,11 @@ from osv import osv, fields
 from tools.translate import _
 import logging
 import tools
-from os import path
 
 class res_company(osv.osv):
     _name = 'res.company'
     _inherit = 'res.company'
-    
+
     def init(self, cr):
         """
             Create a instance for yml test
@@ -51,12 +50,12 @@ class res_company(osv.osv):
             tools.convert_xml_import(cr, current_module, file, {}, mode='init', noupdate=False)
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', string="Proprietary Instance", 
-            help="Representation of the current instance"),
+        'instance_id': fields.many2one('msf.instance', string="Proprietary Instance",
+                                       help="Representation of the current instance"),
         'second_time': fields.boolean('Config. Wizard launched for the second time'),
         'company_second_time': fields.boolean('Company Config. Wizard launched for the second time'),
     }
-    
+
     _defaults = {
         'second_time': lambda *a: False,
         'company_second_time': lambda *a: False,
@@ -73,7 +72,7 @@ class res_company(osv.osv):
                                          {'instance_id': new_instance_id},
                                          context=context)
         return
-    
+
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
         Erase some unused data copied from the original object, which sometime could become dangerous, as in UF-1631/1632, 
@@ -93,24 +92,12 @@ class res_company(osv.osv):
             if ftd in res:
                 del(res[ftd])
         return res
-    
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        if 'currency_id' in vals:
-            for company in self.browse(cr, uid, ids, context=context):
-                sale = self.pool.get('product.pricelist').search(cr,uid,[('currency_id','=',vals['currency_id']), ('type','=','sale')])
-                purchase = self.pool.get('product.pricelist').search(cr,uid,[('currency_id','=',vals['currency_id']), ('type','=','purchase')])
-                tmp_vals = {}
-                if sale:
-                    tmp_vals['property_product_pricelist'] = sale[0]
-                if purchase:
-                    tmp_vals['property_product_pricelist_purchase'] = purchase[0]
-                if tmp_vals:
-                    self.pool.get('res.partner').write(cr, uid, [company.partner_id.id], tmp_vals, context=context)
 
         instance_obj = self.pool.get('msf.instance')
         if 'instance_id' in vals:
@@ -137,6 +124,18 @@ class res_company(osv.osv):
                 for object in ['account.analytic.journal', 'account.journal', 'account.analytic.line', 'account.move', 'account.move.line', 'account.bank.statement']:
                     self._refresh_objects(cr, uid, object, old_instance_id, vals['instance_id'], context=context)
         return super(res_company, self).write(cr, uid, ids, vals, context=context)
-                
+
+    def _get_instance_level(self, cr, uid):
+        instance = self._get_instance_record(cr, uid)
+        return instance and instance.level
+
+    def _get_instance_id(self, cr, uid):
+        instance = self._get_instance_record(cr, uid)
+        return instance and instance.id
+
+    def _get_instance_record(self, cr, uid):
+        user = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'])
+        return user.company_id and user.company_id.instance_id
+
 res_company()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
