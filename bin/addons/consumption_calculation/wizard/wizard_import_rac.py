@@ -238,6 +238,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
                     continue
                 context.update({'line_num': line_num})
                 line_id = line_obj.create(cr, uid, line_data, context=context)
+
                 complete_lines += 1
                 # when we enter the create, we catch the raise error into the context value of 'error_message'
                 list_message = context.get('error_message')
@@ -248,20 +249,24 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
                 if error or list_message:
                     if consumed_qty or product_id==product_tbd:
                         lines_to_correct += 1
+                cr.commit()
             except IndexError, e:
                 # the IndexError is often happening when we open Excel file into LibreOffice because the latter adds empty lines
                 error_log += _("Line %s ignored: the system reference an object that doesn't exist in the Excel file. Details: %s\n") % (line_num, e)
                 ignore_lines += 1
+                cr.rollback()
                 continue
             except osv.except_osv as osv_error:
                 osv_value = osv_error.value
                 osv_name = osv_error.name
                 error_log += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
                 ignore_lines += 1
+                cr.rollback()
                 continue
             except Exception, e:
                 error_log += _("Line %s ignored: an error appeared in the Excel file. Details: %s\n") % (line_num, e)
                 ignore_lines += 1
+                cr.rollback()
                 continue
         if error_log: error_log = _("Reported errors for ignored lines : \n") + error_log
         end_time = time.time()

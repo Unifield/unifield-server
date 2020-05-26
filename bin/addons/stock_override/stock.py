@@ -34,87 +34,6 @@ from order_types.stock import check_cp_rw
 from order_types.stock import check_rw_warning
 
 
-
-#----------------------------------------------------------
-# Procurement Order
-#----------------------------------------------------------
-class procurement_order(osv.osv):
-    _name = 'procurement.order'
-    _inherit = 'procurement.order'
-
-    def create(self, cr, uid, vals, context=None):
-        '''
-        create method for filling flag from yml tests
-        '''
-        if context is None:
-            context = {}
-        return super(procurement_order, self).create(cr, uid, vals, context=context)
-
-    # @@@override: procurement>procurement.order->action_confirm()
-    def action_confirm(self, cr, uid, ids, context=None):
-        """ Confirms procurement and writes exception message if any.
-        @return: True
-        """
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        move_obj = self.pool.get('stock.move')
-        data_obj = self.pool.get('ir.model.data')
-
-        for procurement in self.browse(cr, uid, ids, context=context):
-            if procurement.product_qty <= 0.00:
-                raise osv.except_osv(_('Data Insufficient !'),
-                                     _('Please check the Quantity in Procurement Order(s), it should not be less than 1!'))
-            if procurement.product_id.type in ('product', 'consu'):
-                if not procurement.move_id:
-                    if procurement.procure_method == 'make_to_order':
-                        reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
-                        source = procurement.product_id.product_tmpl_id.property_stock_procurement.id
-                    else:
-                        source = procurement.location_id.id
-                        reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-                    id = move_obj.create(cr, uid, {
-                        'name': procurement.name,
-                        'location_id': source,
-                        'location_dest_id': procurement.location_id.id,
-                        'product_id': procurement.product_id.id,
-                        'product_qty': procurement.product_qty,
-                        'product_uom': procurement.product_uom.id,
-                        'date_expected': procurement.date_planned,
-                        'state': 'draft',
-                        'company_id': procurement.company_id.id,
-                        'auto_validate': True,
-                        'reason_type_id': reason_type_id,
-                    })
-                    move_obj.action_confirm(cr, uid, [id], context=context)
-                    if procurement.procure_method == 'make_to_order':
-                        move_obj.write(cr, uid, [id], {'state': 'hidden'}, context=context)
-                    self.write(cr, uid, [procurement.id], {'move_id': id, 'close_move': 1})
-        self.write(cr, uid, ids, {'state': 'confirmed', 'message': ''})
-        return True
-    # @@@END override: procurement>procurement.order->action_confirm()
-
-    def copy_data(self, cr, uid, id, default=None, context=None):
-        '''
-        reset link to purchase order from update of on order purchase order
-        '''
-        if not default:
-            default = {}
-        default.update({'so_back_update_dest_po_id_procurement_order': False,
-                        'so_back_update_dest_pol_id_procurement_order': False})
-        return super(procurement_order, self).copy_data(cr, uid, id, default, context=context)
-
-    _columns = {
-        'so_back_update_dest_po_id_procurement_order': fields.many2one('purchase.order', string='Destination of new purchase order line', readonly=True),
-        'so_back_update_dest_pol_id_procurement_order': fields.many2one('purchase.order.line', string='Original purchase order line', readonly=True),
-    }
-
-    _defaults = {
-    }
-
-
-procurement_order()
-
-
 #----------------------------------------------------------
 # Stock Picking
 #----------------------------------------------------------
@@ -1490,8 +1409,10 @@ class stock_move(osv.osv):
 
             if product['batch_management']:
                 vals['hidden_batch_management_mandatory'] = True
+                vals['hidden_perishable_mandatory'] = False
             elif product['perishable']:
                 vals['hidden_perishable_mandatory'] = True
+                vals['hidden_batch_management_mandatory'] = False
             else:
                 vals.update({'hidden_batch_management_mandatory': False,
                              'hidden_perishable_mandatory': False})
@@ -1581,10 +1502,15 @@ class stock_move(osv.osv):
             # complete hidden flags - needed if not created from GUI
             product = prod_obj.read(cr, uid, vals['product_id'],
                                     ['batch_management', 'perishable', 'type'], context=context)
+
             vals.update({
-                'hidden_batch_management_mandatory': product['batch_management'],
-                'hidden_perishable_mandatory': product['perishable'],
+                'hidden_batch_management_mandatory': False,
+                'hidden_perishable_mandatory': False,
             })
+            if product['batch_management']:
+                vals['hidden_batch_management_mandatory'] = True
+            elif product['perishable']:
+                vals['hidden_perishable_mandatory'] = True
 
             if vals.get('picking_id'):
                 pick_dict = pick_obj.read(cr, uid, vals['picking_id'], ['type'], context=context)

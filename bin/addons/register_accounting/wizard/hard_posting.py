@@ -49,7 +49,7 @@ class wizard_hard_posting(osv.osv_memory):
                 if st_line.get('state', False) != 'hard':
                     tochange.append(st_line.get('id'))
             real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-            absl_obj.posting(cr, real_uid, tochange, 'hard')
+            absl_obj.posting(cr, real_uid, tochange, 'hard', context=context)
             return open_register_view(self, cr, uid, st_line.get('statement_id')[0])
         else:
             raise osv.except_osv(_('Warning'), _('You have to select some lines before using this wizard.'))

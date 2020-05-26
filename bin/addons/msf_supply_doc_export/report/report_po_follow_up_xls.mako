@@ -84,7 +84,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@"/>
+   <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@"/>
   </Style>
   <Style ss:ID="short_date_grey">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -95,7 +95,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:Color="#747474"/>
-   <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@"/>
+   <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@"/>
   </Style>
   <Style ss:ID="short_date_fr">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -221,7 +221,7 @@
     </Row>
     
 % for o in objects:
-  % for line in getPOLines(o.id):
+  % for line in getPOLines(getRunParms()['export_format'], o.id):
     % if (getRunParms()['pending_only_ok'] and float(line['qty_backordered']) > 0) or not getRunParms()['pending_only_ok']: 
     <Row ss:AutoFitHeight="1">
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>

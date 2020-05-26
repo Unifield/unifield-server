@@ -35,6 +35,9 @@ class ppl_set_pack_on_lines(osv.osv_memory):
         'to_pack': fields.integer('To Pack', required=True),
     }
 
+    def cancel(self, cr, uid, ids, context=None):
+        return {'type': 'ir.actions.act_window_close'}
+
     def set_pack(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -44,7 +47,7 @@ class ppl_set_pack_on_lines(osv.osv_memory):
         m_ids = move_obj.search(cr, uid, [('picking_id', '=', wiz.picking_id.id), ('id', 'in', context.get('button_selected_ids', []))], context=context)
 
         move_obj.write(cr, uid, m_ids, {'from_pack': wiz.from_pack, 'to_pack': wiz.to_pack, 'integrity_error': ''}, context=context)
-        return {'type': 'ir.actions.act_window_close', 'o2m_refresh': 'move_lines'}
+        return {'type': 'ir.actions.act_window_close'}
 
     def change_pack(self, cr, uid, ids, fp, to, context=None):
         value = {}

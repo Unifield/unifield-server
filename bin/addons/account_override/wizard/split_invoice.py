@@ -56,6 +56,7 @@ class wizard_split_invoice(osv.osv_memory):
         # Prepare some values
         if context is None:
             context = {}
+        context.update({'from_split': True})
 
         wizard = self.browse(cr, uid, ids[0], context=context)
         invoice_ids = [] # created invoices
@@ -85,7 +86,7 @@ class wizard_split_invoice(osv.osv_memory):
         if not len(line_to_modify):
             raise osv.except_osv(_('Error'), _('No line were modified. No split done.'))
         # Create a copy of invoice
-        new_inv_id = inv_obj.copy(cr, uid, invoice_origin_id, {'invoice_line': []}, context={'split_it': '1'})
+        new_inv_id = inv_obj.copy(cr, uid, invoice_origin_id, {'invoice_line': []}, context=context)
         invoice_ids.append(new_inv_id)
         if not new_inv_id:
             raise osv.except_osv(_('Error'), _('The creation of a new invoice failed.'))
@@ -94,7 +95,7 @@ class wizard_split_invoice(osv.osv_memory):
         for wiz_line in wizard.invoice_line_ids:
             if wiz_line.invoice_line_id:
                 # create values for the new invoice line
-                invl_obj.copy(cr, uid, wiz_line.invoice_line_id.id, {'quantity': wiz_line.quantity,'invoice_id': new_inv_id}, context={'split_it': '1'})
+                invl_obj.copy(cr, uid, wiz_line.invoice_line_id.id, {'quantity': wiz_line.quantity,'invoice_id': new_inv_id}, context=context)
                 # then update old line if exists
                 qty = wiz_line.invoice_line_id.quantity - wiz_line.quantity
                 # If quantity superior to 0, then write old line, if 0 then delete line

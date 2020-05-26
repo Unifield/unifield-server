@@ -91,7 +91,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Journal Entry Model Line" editable="bottom"
-                    colors="red: exp_in_ad_state in ('no_header', 'bad_header', 'invalid')">
+                    colors="red: exp_in_ad_state in ('no_header', 'bad_header', 'invalid', 'invalid_small_amount')">
                     <field name="sequence" readonly="1"/>
                     <field name="name"/>
                     <field name="account_id" domain="[('restricted_area', '=', 'recurring_lines')]"/>
@@ -213,6 +213,7 @@
             id="act_account_subscription_to_account_move_line_open"
             name="Recurring Entries To Validate"
             domain="[('move_id.state','=','draft'), ('is_recurring', '=', True)]"
+            context="{'from_recurring_entries': True}"
             res_model="account.move.line"
             src_model="account.subscription"
             view_id="account_move_line_recurring_entries_to_validate"/>
