@@ -290,6 +290,18 @@ class analytic_account(osv.osv):
                 dom.append(('id', 'in', compatible_dest_ids))
         return dom
 
+    def is_field_translatable(self, cr, uid, context=None):
+        """
+        POC: this a copy from the method of the product.product model
+        """
+        if context is None:
+            context = {}
+        lang_obj = self.pool.get('res.lang')
+        active_lang_ids = lang_obj.search(cr, uid, [('active', '=', True), ('translatable', '=', True)], context=context)
+        if len(active_lang_ids) > 1:
+            return False
+        return True
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
