@@ -46,7 +46,8 @@ class sale_donation_stock_moves_report_parser(report_sxw.rml_parse):
         '''
         result = []
         for move in report.sm_ids:
-            result.append(self.pool.get('stock.move').browse(self.cr, self.uid, move))
+            if self._get_qty(move) != 0:
+                result.append(self.pool.get('stock.move').browse(self.cr, self.uid, move))
 
         return sorted(result, key=lambda r: (r['date']), reverse=True)
 
