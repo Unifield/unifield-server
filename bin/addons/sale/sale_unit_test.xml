@@ -111,8 +111,6 @@
             <test expr="picking_ids[0].state">done</test>
         </assert>
 
-        <!-- Run all schedulers -->
-        <function model="procurement.order" name="run_scheduler"/>
 
         <assert id="test_order_1" model="sale.order" string="the sales order is now done">
             <test expr="state">done</test>

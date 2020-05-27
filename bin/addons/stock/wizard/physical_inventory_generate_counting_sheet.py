@@ -135,7 +135,6 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         if context is None:
             context = {}
 
-
         prod_info = {}
         move_obj = self.pool.get('stock.move')
         prod_obj = self.pool.get('product.product')
@@ -156,16 +155,16 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                   ('location_dest_id', 'in', [location_id]),
                   ('state', '=', 'done'),
                   ('product_id', 'in', prod_info.keys()),
-                  ('prodlot_id', '!=', False)
+                  ('prodlot_id', '!=', False),
+                  ('product_qty', '!=', 0),
                   ]
 
         move_ids = move_obj.search(cr, uid, domain, context=context)
 
-        for move in move_obj.read(cr, uid, move_ids, ['product_id', 'prodlot_id', 'expired_date']):
-            product_id = move["product_id"][0]
+        for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=['product_id', 'prodlot_id', 'expired_date'], context=context):
+            product_id = move.product_id.id
 
-
-            if move['prodlot_id'] and move["prodlot_id"][1].startswith("MSFBN"):
+            if move.prodlot_id and move.prodlot_id.type == 'internal':
                 if prod_info.get(product_id, {}).get('batch_management'):
                     # old move when product was ED only, now it's BN so ignore the move
                     continue
@@ -174,10 +173,10 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                 if not prod_info.get(product_id, {}).get('batch_management'):
                     # old move when this product was BN, now it's ED only so ignore this stock move
                     continue
-                batch_number = move["prodlot_id"][1]
+                batch_number = move.prodlot_id.name
 
             key = (product_id, default_code_dict.get(product_id))
-            BN_and_ED[key].add((batch_number, move["expired_date"], move["prodlot_id"][0]))
+            BN_and_ED[key].add((batch_number, move.expired_date, move.prodlot_id.id))
 
         return BN_and_ED
 

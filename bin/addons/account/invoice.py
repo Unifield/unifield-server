@@ -27,6 +27,7 @@ import netsvc
 from osv import fields, osv, orm
 from tools.translate import _
 from msf_partner import PARTNER_TYPE
+from base import currency_date
 
 
 class account_invoice(osv.osv):
@@ -252,6 +253,9 @@ class account_invoice(osv.osv):
             invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id','in',move.keys())], context=context)
         return invoice_ids
 
+    def _get_journal_type(self, cr, uid, context=None):
+        return self.pool.get('account.journal').get_journal_type(cr, uid, context)
+
     _name = "account.invoice"
     _description = 'Invoice'
     _order = "id desc"
@@ -327,6 +331,8 @@ class account_invoice(osv.osv):
             multi='all'),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True, readonly=True, states={'draft':[('readonly',False)]}),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, hide_default_menu=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'journal_type': fields.related('journal_id', 'type', type='selection', string='Journal Type',
+                                       selection=_get_journal_type, store=False, write_relate=False),
         'company_id': fields.many2one('res.company', 'Company', required=True, change_default=True, readonly=True, states={'draft':[('readonly',False)]}),
         'check_total': fields.float('Total', digits_compute=dp.get_precision('Account'), states={'open':[('readonly',True)],'inv_close':[('readonly',True)],'paid':[('readonly',True)]}),
         'reconciled': fields.function(_reconciled, method=True, string='Paid/Reconciled', type='boolean',
@@ -412,6 +418,18 @@ class account_invoice(osv.osv):
             for node in nodes:
                 node.set('string', partner_string)
             res['arch'] = etree.tostring(doc)
+        elif view_type == 'search':
+            # remove the Cancel filter in all invoices but IVO and STV
+            context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
+                context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
+            context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
+                not context.get('is_debit_note', False)
+            if not context_ivo and not context_stv:
+                doc = etree.XML(res['arch'])
+                filter_node = doc.xpath("/search/group[1]/filter[@name='cancel_state']")
+                if filter_node:
+                    filter_node[0].getparent().remove(filter_node[0])
+                res['arch'] = etree.tostring(doc)
         return res
 
     def get_log_context(self, cr, uid, context=None):
@@ -756,11 +774,15 @@ class account_invoice(osv.osv):
             'move_name':False,
             'internal_number': False,
             'main_purchase_id': False,
-            'from_supply': False,
-            'synced': False,
             'counterpart_inv_number': False,
             'counterpart_inv_status': False,
+            'refunded_invoice_id': False,
         })
+        if not context.get('from_split'):  # some values are kept in case of inv. generated via the "Split" feature
+            default.update({
+                'from_supply': False,
+                'synced': False,
+            })
         if 'date_invoice' not in default:
             default.update({
                 'date_invoice':False
@@ -1111,7 +1133,7 @@ class account_invoice(osv.osv):
     def line_get_convert(self, cr, uid, x, part, date, context=None):
         return {
             'date_maturity': x.get('date_maturity', False),
-            'partner_id': part,
+            'partner_id': x.get('partner_id') or part,
             'name': x['name'][:64],
             'date': date,
             'debit_currency': x['price']>0 and x['price'],
@@ -1211,6 +1233,13 @@ class account_invoice(osv.osv):
                 ctx['type'] = obj_inv.type
                 message = _('Invoice ') + " '" + name + "' "+ _("is validated.")
                 self.log(cr, uid, inv_id, message, context=ctx)
+        return True
+
+    def cancel_invoice_from_workflow(self, cr, uid, ids, *args):
+        """
+        Sets the invoice to Cancelled and not Synchronized
+        """
+        self.write(cr, uid, ids, {'state': 'cancel', 'synced': False})
         return True
 
     def action_cancel(self, cr, uid, ids, *args):
@@ -1377,6 +1406,7 @@ class account_invoice(osv.osv):
         obj_journal = self.pool.get('account.journal')
         new_ids = []
         for invoice in invoices:
+            invoice.update({'refunded_invoice_id': invoice['id']})
             del invoice['id']
 
             if context.get('is_intermission', False):
@@ -1856,13 +1886,35 @@ class account_invoice_tax(osv.osv):
             raise osv.except_osv(_('Warning !'), _('The Untaxed Amount is zero. Please press the Save & Edit button before saving the %s tax.') % (vals['name']))
         return True
 
+    def _update_tax_partner(self, cr, uid, vals, context=None):
+        """
+        Updates vals with the partner of the related tax
+
+        Note that in case a partner_id is already in vals, it is used (e.g. in case of a SI refund the SR tax lines must be exactly
+        the same as the SI ones, even if the partner linked to the related account.tax has changed in the meantime)
+        """
+        if context is None:
+            context = {}
+        tax_obj = self.pool.get('account.tax')
+        if 'partner_id' not in vals and 'account_tax_id' in vals:
+            tax_partner_id = False
+            if vals['account_tax_id']:  # note that at doc level it's possible not to have any link to a tax from the system
+                tax = tax_obj.browse(cr, uid, vals['account_tax_id'], fields_to_fetch=['partner_id'], context=context)
+                tax_partner_id = tax.partner_id and tax.partner_id.id or False
+            vals.update({'partner_id': tax_partner_id})
 
     def create(self, cr, uid, vals, context=None):
-        if context == None:
+        if context is None:
             context = {}
         self._check_untaxed_amount(cr, uid, vals, context)
+        self._update_tax_partner(cr, uid, vals, context=context)
         return super(account_invoice_tax, self).create(cr, uid, vals, context=context)
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        self._update_tax_partner(cr, uid, vals, context=context)
+        return super(account_invoice_tax, self).write(cr, uid, ids, vals, context=context)
 
     def _count_factor(self, cr, uid, ids, name, args, context=None):
         res = {}
@@ -1896,16 +1948,31 @@ class account_invoice_tax(osv.osv):
         'company_id': fields.related('account_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
         'factor_base': fields.function(_count_factor, method=True, string='Multipication factor for Base code', type='float', multi="all"),
         'factor_tax': fields.function(_count_factor, method=True, string='Multipication factor Tax code', type='float', multi="all"),
-        'account_tax_id': fields.many2one('account.tax', 'Tax', domain=[('price_include', '=', False)])
+        'account_tax_id': fields.many2one('account.tax', 'Tax', domain=[('price_include', '=', False)]),
+        'partner_id': fields.many2one('res.partner', 'Partner', ondelete='restrict'),
     }
 
-
-    def tax_code_change(self, cr, uid, ids, account_tax_id, amount_untaxed, context=None):
+    def tax_code_change(self, cr, uid, ids, account_tax_id, amount_untaxed, inv_partner_id, context=None):
+        if context is None:
+            context = {}
         ret = {}
         if account_tax_id:
             atx_obj = self.pool.get('account.tax')
-            atx = atx_obj.browse(cr, uid, account_tax_id, context=context)
-            ret = {'value': {'account_id': atx.account_collected_id.id, 'name': "{0} - {1}".format(atx.name, atx.description or ''), 'base_amount': amount_untaxed, 'amount': self._calculate_tax(cr, uid, account_tax_id, amount_untaxed)}}
+            partner_obj = self.pool.get('res.partner')
+            inv_partner = inv_partner_id and partner_obj.browse(cr, uid, inv_partner_id,
+                                                                fields_to_fetch=['name', 'lang'], context=context) or None
+            inv_partner_name = inv_partner and inv_partner.name or ''
+            # use the language of the partner for the tax name (to be consistent with what's done when clicking on Compute Taxes)
+            inv_partner_lang = inv_partner and inv_partner.lang or ''
+            new_context = context.copy()
+            if inv_partner_lang:
+                new_context.update({'lang': inv_partner_lang})
+            tax = atx_obj.browse(cr, uid, account_tax_id, fields_to_fetch=['name', 'account_collected_id'], context=new_context)
+            description = "%s%s%s" % (tax.name, inv_partner_name and ' - ' or '', inv_partner_name or '')
+            ret = {'value': {'account_id': tax.account_collected_id and tax.account_collected_id.id or False,
+                             'name': description,
+                             'base_amount': amount_untaxed,
+                             'amount': self._calculate_tax(cr, uid, account_tax_id, amount_untaxed)}}
         return ret
 
     def _calculate_tax(self, cr, uid, account_tax_id, amount_untaxed):
@@ -1918,7 +1985,7 @@ class account_invoice_tax(osv.osv):
             tax_amount = round(atx.amount * amount_untaxed, 2)
         return tax_amount
 
-    def base_change(self, cr, uid, ids, base, currency_id=False, company_id=False, date_invoice=False):
+    def base_change(self, cr, uid, ids, base, currency_id=False, company_id=False, document_date=False, date_invoice=False):
         cur_obj = self.pool.get('res.currency')
         company_obj = self.pool.get('res.company')
         company_currency = False
@@ -1928,10 +1995,12 @@ class account_invoice_tax(osv.osv):
         if company_id:
             company_currency = company_obj.read(cr, uid, [company_id], ['currency_id'])[0]['currency_id'][0]
         if currency_id and company_currency:
-            base = cur_obj.compute(cr, uid, currency_id, company_currency, base*factor, context={'date': date_invoice or time.strftime('%Y-%m-%d')}, round=False)
+            curr_date = currency_date.get_date(self, cr, document_date, date_invoice)
+            base = cur_obj.compute(cr, uid, currency_id, company_currency, base*factor,
+                                   context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
         return {'value': {'base_amount':base}}
 
-    def amount_change(self, cr, uid, ids, amount, currency_id=False, company_id=False, date_invoice=False):
+    def amount_change(self, cr, uid, ids, amount, currency_id=False, company_id=False, document_date=False, date_invoice=False):
         cur_obj = self.pool.get('res.currency')
         company_obj = self.pool.get('res.company')
         company_currency = False
@@ -1941,7 +2010,9 @@ class account_invoice_tax(osv.osv):
         if company_id:
             company_currency = company_obj.read(cr, uid, [company_id], ['currency_id'])[0]['currency_id'][0]
         if currency_id and company_currency:
-            amount = cur_obj.compute(cr, uid, currency_id, company_currency, amount*factor, context={'date': date_invoice or time.strftime('%Y-%m-%d')}, round=False)
+            curr_date = currency_date.get_date(self, cr, document_date, date_invoice)
+            amount = cur_obj.compute(cr, uid, currency_id, company_currency, amount*factor,
+                                     context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
         return {'value': {'tax_amount': amount}}
 
     _order = 'sequence'
@@ -1952,6 +2023,8 @@ class account_invoice_tax(osv.osv):
         'sequence': 0,
     }
     def compute(self, cr, uid, invoice_id, context=None):
+        if context is None:
+            context = {}
         tax_grouped = {}
         tax_obj = self.pool.get('account.tax')
         cur_obj = self.pool.get('res.currency')
@@ -1973,14 +2046,20 @@ class account_invoice_tax(osv.osv):
                 if inv.type in ('out_invoice','in_invoice'):
                     val['base_code_id'] = tax['base_code_id']
                     val['tax_code_id'] = tax['tax_code_id']
-                    val['base_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['base'] * tax['base_sign'], context={'date': inv.date_invoice or time.strftime('%Y-%m-%d')}, round=False)
-                    val['tax_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['amount'] * tax['tax_sign'], context={'date': inv.date_invoice or time.strftime('%Y-%m-%d')}, round=False)
+                    curr_date = currency_date.get_date(self, cr, inv.document_date, inv.date_invoice)
+                    val['base_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['base'] * tax['base_sign'],
+                                                         context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
+                    val['tax_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['amount'] * tax['tax_sign'],
+                                                        context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
                     val['account_id'] = tax['account_collected_id'] or line.account_id.id
                 else:
                     val['base_code_id'] = tax['ref_base_code_id']
                     val['tax_code_id'] = tax['ref_tax_code_id']
-                    val['base_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['base'] * tax['ref_base_sign'], context={'date': inv.date_invoice or time.strftime('%Y-%m-%d')}, round=False)
-                    val['tax_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['amount'] * tax['ref_tax_sign'], context={'date': inv.date_invoice or time.strftime('%Y-%m-%d')}, round=False)
+                    curr_date = currency_date.get_date(self, cr, inv.document_date, inv.date_invoice)
+                    val['base_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['base'] * tax['ref_base_sign'],
+                                                         context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
+                    val['tax_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, val['amount'] * tax['ref_tax_sign'],
+                                                        context={'currency_date': curr_date or time.strftime('%Y-%m-%d')}, round=False)
                     val['account_id'] = tax['account_paid_id'] or line.account_id.id
 
                 key = tax['id']  # taxes are grouped by id
@@ -2023,7 +2102,8 @@ class account_invoice_tax(osv.osv):
                 'price': t['amount'] or 0.0,
                 'account_id': t['account_id'],
                 'tax_code_id': t['tax_code_id'],
-                'tax_amount': t['tax_amount']
+                'tax_amount': t['tax_amount'],
+                'partner_id': t['partner_id'],
             })
         return res
 
@@ -2045,4 +2125,29 @@ class res_partner(osv.osv):
         return super(res_partner, self).copy(cr, uid, ids, default, context=context)
 res_partner()
 
+
+class ir_values(osv.osv):
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
+        """
+        Hides the Report "Invoice Excel Export" in the menu of other invoices than IVO/IVI
+        """
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
+        model_names = [x[0] for x in models]
+        if key == 'action' and key2 == 'client_print_multi' and 'account.invoice' in model_names:
+            new_act = []
+            for v in values:
+                if not context.get('is_intermission') and len(v) > 2 and v[2].get('report_name', '') == 'invoice.excel.export':
+                    continue
+                else:
+                    new_act.append(v)
+            values = new_act
+        return values
+
+
+ir_values()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

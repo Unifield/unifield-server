@@ -63,7 +63,7 @@ class finance_archive(finance_export.finance_archive):
         """
         Takes data in parameter corresponding to ACCOUNT MOVE LINES (results from 'bs_entries' or 'plresult' requests)
         1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
-        2) Modifies it for all OD entries that originate from HQ entry corrections:
+        2) Modifies it for all entries that originate from HQ entry corrections:
         - instance: 'EAUD' or 'SIEG' if this matches the first 4 characters of the original HQ entry (if not: 'SIEG' by default)
         - journal: the journal name corresponds to the 9-to-11 characters of the reference field of the original HQ entry
         Returns a list of tuples (same format as data)
@@ -80,7 +80,7 @@ class finance_archive(finance_export.finance_archive):
             line_list = list(line)
             line_list[journal_type] = self._get_journal_type_value(cr, uid, line_list[journal_type])
             od_hq_entry = False
-            if line_list[journal] == 'OD':
+            if line_list[journal] in ('OD', 'ODHQ'):  # 'OD' for entries before US-6692
                 aml = aml_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['corrected_line_id', 'reversal_line_id'])
                 corrected_aml = aml.corrected_line_id
                 reversed_aml = aml.reversal_line_id
@@ -107,7 +107,7 @@ class finance_archive(finance_export.finance_archive):
         """
         Takes data in parameter corresponding to ACCOUNT ANALYTIC LINES (results from 'rawdata' request)
         1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
-        2) Modifies it for all OD entries that originate from HQ entry corrections:
+        2) Modifies it for all entries that originate from HQ entry corrections:
         - instance: 'EAUD' or 'SIEG' if this matches the first 4 characters of the original HQ entry (if not: 'SIEG' by default)
         - journal: the journal name corresponds to the 9-to-11 characters of the reference field of the original HQ entry
         Returns a list of tuples (same format as data)
@@ -124,7 +124,7 @@ class finance_archive(finance_export.finance_archive):
             line_list = list(line)
             line_list[journal_type] = self._get_journal_type_value(cr, uid, line_list[journal_type])
             od_hq_entry = False
-            if line_list[journal] == 'OD':
+            if line_list[journal] in ('OD', 'ODHQ'):  # 'OD' for entries before US-6692
                 aal = aal_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['last_corrected_id', 'reversal_origin'])
                 corrected_aal = aal.last_corrected_id
                 reversed_aal = aal.reversal_origin
@@ -151,7 +151,7 @@ class finance_archive(finance_export.finance_archive):
         """
         ##### WARNING #####
         ### THIS CALLS THE METHOD postprocess_add_db_id FROM OCB ###
-        - first modify the data for all lines corresponding to OD entries originating from HQ entry corrections
+        - first modify the data for all lines corresponding to entries originating from HQ entry corrections
         - then call OCB method on the new data to change first column for the DB ID
         """
         new_data = self._handle_od_ji_entries(cr, uid, data)  # we handle account move lines
@@ -162,7 +162,7 @@ class finance_archive(finance_export.finance_archive):
         """
         ##### WARNING #####
         ### THIS CALLS THE METHOD postprocess_add_db_id FROM OCB ###
-        - first modify the data for all lines corresponding to OD entries originating from HQ entry corrections
+        - first modify the data for all lines corresponding to entries originating from HQ entry corrections
         - then call OCB method on the new data to change first column for the DB ID
         """
         new_data = self._handle_od_aji_entries(cr, uid, data)  # we handle account analytic lines
@@ -341,7 +341,7 @@ class hq_report_ocp(report_sxw.report_sxw):
             # Pay attention to take analytic lines that are not on HQ, MIGRATION, IN-KIND and ODX journals.
             'rawdata': """
                 SELECT al.id, SUBSTR(i.code, 1, 3),
-                       CASE WHEN j.code = 'OD' THEN j.code ELSE aj.code END AS journal,
+                       CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.code ELSE aj.code END AS journal,
                        al.entry_sequence, al.name, al.ref, al.document_date, al.date,
                        a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, 
                        CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, 
@@ -350,7 +350,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                        CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit, 
                        CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS credit,
                        cc.name AS "functional_currency", hr.identification_id as "emplid", aml.partner_id, hr.name_resource as hr_name,
-                       CASE WHEN j.code = 'OD' THEN j.type ELSE aj.type END AS journal_type
+                       CASE WHEN j.code IN ('OD', 'ODHQ') THEN j.type ELSE aj.type END AS journal_type
                 FROM account_analytic_line AS al, 
                      account_account AS a, 
                      account_analytic_account AS aa, 

@@ -31,9 +31,11 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import threading
 import pooler
 import mx
+from base import currency_date
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
 from spreadsheet_xml import SPECIAL_CHAR
 import re
+
 
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
@@ -90,7 +92,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 move_vals = {
                     'currency_id': currency_id,
                     'manual_currency_id': currency_id,
-                    'journal_id': journal_id,
+                    'journal_id': journal_id,  # the instance_id will be the instance of this journal i.e. the current one
                     'document_date': document_date,
                     'date': w.date,
                     'period_id': period_id,
@@ -106,12 +108,13 @@ class msf_doc_import_accounting(osv.osv_memory):
                     # Create analytic distribution
                     if l.account_id.is_analytic_addicted:
                         distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
+                        curr_date = currency_date.get_date(self, cr, l.document_date, l.date)
                         common_vals = {
                             'distribution_id': distrib_id,
                             'currency_id': currency_id,
                             'percentage': 100.0,
                             'date': l.date,
-                            'source_date': l.date,
+                            'source_date': curr_date,
                             'destination_id': l.destination_id.id,
                         }
                         common_vals.update({'analytic_id': l.cost_center_id.id,})
@@ -127,7 +130,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'period_id': period_id,
                         'document_date': l.document_date,
                         'date': l.date,
-                        'journal_id': journal_id,
+                        'journal_id': journal_id,  # the instance_id will be the instance of this journal i.e. the current one
                         'debit_currency': l.debit,
                         'credit_currency': l.credit,
                         'currency_id': currency_id,
@@ -184,7 +187,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         created = 0
         processed = 0
         errors = []
-        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id or False
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id or False
 
         current_line_num = None
         try:
@@ -229,7 +232,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                 self.write(cr, uid, [wiz.id], {'message': _('Reading headers…'), 'progression': 5.00})
                 # Use the first row to find which column to use
                 cols = {}
-                col_names = ['Journal Code', 'Description', 'Reference', 'Document Date', 'Posting Date', 'Period', 'G/L Account', 'Partner', 'Employee', 'Journal', 'Destination', 'Cost Centre', 'Funding Pool', 'Booking Debit', 'Booking Credit', 'Booking Currency']
+                col_names = ['Proprietary Instance', 'Journal Code', 'Description', 'Reference', 'Document Date', 'Posting Date', 'Period',
+                             'G/L Account', 'Partner', 'Employee', 'Journal', 'Destination', 'Cost Centre', 'Funding Pool', 'Booking Debit',
+                             'Booking Credit', 'Booking Currency']
                 for num, r in enumerate(rows):
                     header = [x and x.data for x in r.iter_cells()]
                     for el in col_names:
@@ -278,6 +283,10 @@ class msf_doc_import_accounting(osv.osv_memory):
 
                     self._format_special_char(line)
 
+                    file_prop_inst = line[cols['Proprietary Instance']] or ''
+                    if current_instance and current_instance.code != file_prop_inst.strip():
+                        errors.append(_('Line %s. The Proprietary Instance must be the current instance %s.') % (current_line_num, current_instance.code))
+                        continue
                     # Check document date
                     if not line[cols['Document Date']]:
                         errors.append(_('Line %s. No document date specified!') % (current_line_num,))
@@ -341,6 +350,11 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_('Line %s. Period is missing.') % (current_line_num))
                         continue
                     period_name = line[cols['Period']]
+                    if not isinstance(period_name, basestring):
+                        period_name = '%s' % period_name
+                    if not period_obj.search_exist(cr, uid, [('name', '=', period_name)], context=context):
+                        errors.append(_("Line %s. The period %s doesn't exist.") % (current_line_num, period_name,))
+                        continue
                     if not (booking_curr, period_name, r_document_date) in money:
                         money[(booking_curr, period_name, r_document_date)] = {}
                     if not 'debit' in money[(booking_curr, period_name, r_document_date)]:
@@ -355,13 +369,13 @@ class msf_doc_import_accounting(osv.osv_memory):
                         money[(booking_curr, period_name, r_document_date)]['credit'] += book_credit
                         r_credit = book_credit
 
-                    # Check which journal it is to be posted to: should be of type OD, MIG or INT
+                    # Check the journal code which must match with one of the journal types listed in ACCOUNTING_IMPORT_JOURNALS
                     if not line[cols['Journal Code']]:
                         errors.append(_('Line %s. No Journal Code specified') % (current_line_num,))
                         continue
                     else:
                         # check for a valid journal code
-                        aj_ids = aj_obj.search(cr, uid, [('code', '=', line[cols['Journal Code']]), ('instance_id', '=', current_instance)])
+                        aj_ids = aj_obj.search(cr, uid, [('code', '=', line[cols['Journal Code']]), ('instance_id', '=', current_instance.id)])
                         if not aj_ids:
                             errors.append(_('Line %s. Journal Code not found: %s.') % (current_line_num, line[cols['Journal Code']]))
                             continue
@@ -410,7 +424,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         else:
                             r_employee = tp_ids[0]
                     if line[cols['Journal']]:
-                        tp_ids = self.pool.get('account.journal').search(cr, uid, ['|', ('name', '=', line[cols['Journal']]), ('code', '=', line[cols['Journal']]), ('instance_id', '=', current_instance)])
+                        tp_ids = self.pool.get('account.journal').search(cr, uid, ['|', ('name', '=', line[cols['Journal']]), ('code', '=', line[cols['Journal']]), ('instance_id', '=', current_instance.id)])
                         if not tp_ids:
                             tp_label = _('Journal')
                             tp_content = line[cols['Journal']]

@@ -28,7 +28,7 @@ class ir_sequence_type(osv.osv):
     _order = 'name'
     _columns = {
         'name': fields.char('Name',size=64, required=True),
-        'code': fields.char('Code',size=32, required=True),
+        'code': fields.char('Code',size=32, required=True, select=1),
     }
 ir_sequence_type()
 
@@ -83,7 +83,7 @@ class ir_sequence(osv.osv):
 
     _columns = {
         'name': fields.char('Name',size=64, required=True),
-        'code': fields.char('Code',size=64, required=True),
+        'code': fields.char('Code',size=64, required=True, select=1),
         'active': fields.boolean('Active'),
         'prefix': fields.char('Prefix',size=64, help="Prefix value of the record for the sequence"),
         'suffix': fields.char('Suffix',size=64, help="Suffix value of the record for the sequence"),

@@ -38,6 +38,7 @@ class message(osv.osv):
         'destination': fields.many2one('sync.server.entity', string="Destination Instance", select=True),
         'source': fields.many2one('sync.server.entity', string="Source Instance", select=True),
         'sequence': fields.integer('Sequence', required=True, select=True),
+        'client_db_id': fields.integer('DB Id of client msg', select=1),
     }
 
     _order = 'sequence asc'
@@ -65,10 +66,14 @@ class message(osv.osv):
         """
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pushing messages...'))
 
+        duplicates = []
         for data in package:
             destination = self._get_destination(cr, uid, data['dest'], context=context)
             if not destination:
                 sync_log(self, 'destination %s does not exist' % data['dest'])
+                continue
+            if data.get('client_db_id') and self.search_exist(cr, uid, [('client_db_id', '=', data['client_db_id']), ('source', '=', entity.id)]):
+                duplicates.append('%s'%data['client_db_id'])
                 continue
             self.create(cr, uid, {
                 'identifier': data['id'],
@@ -76,7 +81,11 @@ class message(osv.osv):
                 'arguments': data['args'],
                 'destination': destination,
                 'source': entity.id,
+                'client_db_id': data.get('client_db_id'),
             }, context=context)
+
+        if duplicates:
+            self._logger.info("::::::::[%s] messages duplicated ignored: %s" % (entity.name, ','.join(duplicates)))
 
         self._logger.info("::::::::[%s] Message push :: Number of message pushed: %s" % (entity.name, len(package)))
         return (True, "Message received")

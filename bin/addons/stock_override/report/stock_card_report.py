@@ -31,12 +31,23 @@ class stock_card_report(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'parse_origin': self._parse_origin,
+            'parseDateXls': self._parse_date_xls,
         })
 
     def _parse_origin(self, origin):
         if origin:
             return origin.replace(';', '; ').replace(':', ': ')  # force word wrap
         return ''
+
+    def _parse_date_xls(self, dt_str, is_datetime=True):
+        if not dt_str or dt_str == 'False':
+            return ''
+        if is_datetime:
+            dt_str = dt_str[0:10] if len(dt_str) >= 10 else ''
+        if dt_str:
+            dt_str += 'T00:00:00.000'
+        return dt_str
+
 
 report_sxw.report_sxw('report.stock.card.report','stock.card.wizard','addons/stock_override/report/stock_card_report.rml',parser=stock_card_report, header=False)
 
@@ -66,7 +77,8 @@ class stock_card_report_xls(WebKitParser):
         a = super(stock_card_report_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
-stock_card_report_xls('report.stock.card.report.xls','stock.card.wizard','addons/stock_override/report/stock_card_report_xls.mako')
+
+stock_card_report_xls('report.stock.card.report.xls','stock.card.wizard','addons/stock_override/report/stock_card_report_xls.mako', parser=stock_card_report, header=False)
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

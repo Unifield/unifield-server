@@ -420,6 +420,8 @@ class msf_instance(osv.osv):
                                     sibling_target_ids += [x.id for x in sibling.target_cost_center_ids]
                             self.pool.get('account.target.costcenter').synchronize(cr, uid, sibling_target_ids, context=context)
 
+                    if instance.level == 'project' and instance.parent_id:
+                        self.pool.get('sync.trigger.something.target.lower').create(cr, uid, {'name': 'sync_fp', 'destination': instance.parent_id.instance}, context={})
         return super(msf_instance, self).write(cr, uid, ids, vals, context=context)
 
 msf_instance()
@@ -616,6 +618,9 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        """
+            deprecated method: kept only to manage in-pipe updates during UF14.0 -> UF15.0
+        """
         if not ids:
             return True
         if context is None:
@@ -722,6 +727,8 @@ class product_product(osv.osv):
 
     # UF-2254: Treat the case of product with empty or XXX for default_code
     def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         if not ids:
             return True
         res = super(product_product, self).write(cr, uid, ids, vals, context=context)

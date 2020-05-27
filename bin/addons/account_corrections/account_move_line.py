@@ -26,6 +26,8 @@ from osv import fields
 from tools.translate import _
 from time import strftime
 from tools.misc import flatten
+from base import currency_date
+
 
 class account_move_line(osv.osv):
     _name = 'account.move.line'
@@ -446,19 +448,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
         ana_j_obj = self.pool.get('account.analytic.journal')
         aal_obj = self.pool.get('account.analytic.line')
         # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                            ('is_current_instance', '=', True)], order='id', limit=1, context=context)
-        j_corr_id = j_corr_ids and j_corr_ids[0] or False
-        j_ana_corr_ids = ana_j_obj.search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)],
-                                          order='id', limit=1, context=context)
-        j_ana_corr_id = j_ana_corr_ids and j_ana_corr_ids[0] or False
+        j_corr_id = j_obj.get_correction_journal(cr, uid, context=context)
+        j_ana_corr_id = ana_j_obj.get_correction_analytic_journal(cr, uid, context=context)
         # Search extra-accounting journal
-        j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
-                                             ('is_current_instance', '=', True)], order='id', limit=1)
-        j_extra_id = j_extra_ids and j_extra_ids[0] or False
-        j_ana_extra_ids = ana_j_obj.search(cr, uid, [('type', '=', 'extra'), ('is_current_instance', '=', True)],
-                                           order='id', limit=1, context=context)
-        j_ana_extra_id = j_ana_extra_ids and j_ana_extra_ids[0] or False
+        j_extra_id = j_obj.get_correction_journal(cr, uid, corr_type='extra', context=context)
+        j_ana_extra_id = ana_j_obj.get_correction_analytic_journal(cr, uid, corr_type='extra', context=context)
 
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context,
@@ -543,13 +537,14 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     # update amount on new distribution
                     ana_obj.update_distribution_line_amount(cr, uid, new_distrib_id, (-1 * (ml.debit - ml.credit)), context=context)
                 new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id, 'date': date, 'document_date': ml.document_date, 'period_id': period_ids[0]}, context=context)
+                curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
                 vals.update({
                     'name': name,
                     'debit': ml.credit,
                     'credit': ml.debit,
                     'amount_currency': amt,
                     'reversal_line_id': ml.id,
-                    'source_date': ml.source_date or ml.date,
+                    'source_date': curr_date,
                     'reversal': True,
                     'reference': ml.move_id and ml.move_id.name or '',
                     'ref': ml.move_id and ml.move_id.name or '',
@@ -659,14 +654,13 @@ receivable, item have not been corrected, item have not been reversed and accoun
                                                               new_account_id, context=context)
 
         # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                            ('is_current_instance', '=', True)], order='id', limit=1, context=context)
-        j_corr_id = j_corr_ids and j_corr_ids[0] or False
+        j_corr_id = j_obj.get_correction_journal(cr, uid, context=context)
 
         # Search extra-accounting journal
-        j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
-                                             ('is_current_instance', '=', True)], order='id', limit=1)
-        j_extra_id = j_extra_ids and j_extra_ids[0] or False
+        j_extra_id = j_obj.get_correction_journal(cr, uid, corr_type='extra', context=context)
+
+        # Search for the "Correction HQ" journal
+        hq_corr_journal_id = j_obj.get_correction_journal(cr, uid, corr_type='hq', context=context)
 
         # Search attached period
         period_obj = self.pool.get('account.period')
@@ -715,6 +709,13 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
                 if new_account.type_for_register != 'donation':
                     raise osv.except_osv(_('Error'), _('You come from a donation account. And new one is not a Donation account. You should give a Donation account!'))
+
+            # Correction: of an HQ entry, or of a correction of an HQ entry
+            if ml.journal_id.type in ('hq', 'correction_hq'):
+                journal_id = hq_corr_journal_id
+                if not journal_id:
+                    raise osv.except_osv(_('Error'), _('No "correction HQ" journal found!'))
+
             if not journal_id:
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
 
@@ -746,6 +747,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Do the reverse
             name = self.join_without_redundancy(ml.name, 'REV')
             amt = -1 * ml.amount_currency
+            curr_date = currency_date.get_date(self, cr, ml.document_date, ml.date, source_date=ml.source_date)
             vals.update({
                 'debit': ml.credit,
                 'credit': ml.debit,
@@ -754,7 +756,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'name': name,
                 'reversal_line_id': ml.id,
                 'account_id': ml.account_id.id,
-                'source_date': ml.source_date or ml.date,
+                'source_date': curr_date,
                 'reversal': True,
                 'document_date': ml.document_date,
                 'reference': ml.move_id and ml.move_id.name or '',
@@ -768,7 +770,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'journal_id': journal_id,
                 'corrected_line_id': ml.id,
                 'account_id': new_account_id,
-                'source_date': ml.source_date or ml.date,
+                'source_date': curr_date,
                 'have_an_historic': True,
                 'document_date': ml.document_date,
                 'reference': ml.move_id and ml.move_id.name or '',

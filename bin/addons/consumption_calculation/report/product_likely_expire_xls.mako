@@ -95,7 +95,7 @@ if cols < 0:
 % endfor
 </Row>
 <Row>
-<Cell ss:StyleID="line" ><Data ss:Type="String">${(o.location_id and objects[0].location_id.name or '')|x}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(o.location_id and objects[0].location_id.name or (o.segment_id and o.segment_id.local_location_ids and ', '.join([x.name for x in o.segment_id.local_location_ids])) or '')|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${(getReportPeriod(o) or '')|x}</Data></Cell>
 <Cell ss:StyleID="line" ss:MergeAcross="4"><Data ss:Type="String">${(getReportConsumptionType(o) or '')|x}</Data></Cell>
 % for n in range(cols):

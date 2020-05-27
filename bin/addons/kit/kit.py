@@ -231,6 +231,7 @@ class composition_kit(osv.osv):
                           'item_exp': item_v.item_exp, # is set to False
                           'item_kit_id': obj.id,
                           'item_description': item_v.item_description,
+                          'comment': item_v.comment,
                           }
                 item_obj.create(cr, uid, values, context=context)
             # we display the composition list view form
@@ -549,12 +550,12 @@ class composition_kit(osv.osv):
         res = []
 
         for obj in self.browse(cr, uid, ids, context=context):
+            version = obj.composition_version or 'no_version'
             if obj.composition_type == 'theoretical':
                 date = datetime.strptime(obj.composition_creation_date, db_date_format)
-                version = obj.composition_version or 'no_version'
                 name = version + ' - ' + date.strftime(date_format)
             else:
-                name = obj.composition_combined_ref_lot
+                name = obj.composition_product_id.default_code + ' - ' + version
 
             res += [(obj.id, name)]
         return res
@@ -1120,9 +1121,11 @@ class composition_item(osv.osv):
                 'item_asset_id': fields.many2one('product.asset', string='Asset'),
                 'item_lot': fields.char(string='Batch Nb', size=1024),
                 'item_exp': fields.date(string='Expiry Date'),
-                'item_kit_id': fields.many2one('composition.kit', string='Kit', ondelete='cascade', required=True, readonly=True),
+                'item_kit_id': fields.many2one('composition.kit', string='Kit/Version', ondelete='cascade', required=True, readonly=True),
                 'item_description': fields.text(string='Item Description'),
                 'item_stock_move_id': fields.many2one('stock.move', string='Kitting Order Stock Move', readonly=True, help='This field represents the stock move corresponding to this item for Kit production.'),
+                'item_kit_name': fields.related('item_kit_id', 'composition_product_id', type='many2one', relation='product.product', string="Kit Product Code", store=True, readonly=True),
+                'item_kit_batch': fields.related('item_kit_id', 'composition_lot_id', type='many2one', relation='stock.production.lot', string="Kit/BN", store=True, readonly=True),
                 # functions
                 'name': fields.function(_vals_get, method=True, type='char', size=1024, string='Name', multi='get_vals',
                                         store= {'composition.item': (lambda self, cr, uid, ids, c=None: ids, ['item_product_id'], 10),}),
@@ -1139,7 +1142,8 @@ class composition_item(osv.osv):
                 'hidden_batch_management_mandatory': fields.function(_vals_get, method=True, type='boolean', string='B.Num', multi='get_vals', store=False, readonly=True),
                 'hidden_asset_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Asset', multi='get_vals', store=False, readonly=True),
                 'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
-                'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
+                'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
+                'comment': fields.char(size=256, string='Comment'),
                 }
 
     _defaults = {'hidden_batch_management_mandatory': False,
@@ -1199,11 +1203,11 @@ class product_product(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for obj in self.read(cr, uid, ids, ['type', 'subtype', 'perishable', 'batch_management'], context=context):
+        for obj in self.read(cr, uid, ids, ['type', 'subtype', 'perishable', 'batch_management', 'default_code'], context=context):
             # kit
             if obj['type'] == 'product' and obj['subtype'] == 'kit':
                 if obj['perishable'] and not obj['batch_management']:
-                    raise osv.except_osv(_('Warning !'), _('The Kit product cannot be Expiry Date Mandatory only.'))
+                    raise osv.except_osv(_('Warning !'), _('The Kit product %s cannot be Expiry Date Mandatory only.') % (obj['default_code']))
 
         return True
 
@@ -1397,6 +1401,7 @@ class stock_location(osv.osv):
         # do we want the child location
         stock_context = dict(context, compute_child=consider_child_locations)
         stock_context['uom'] = uom_id
+        stock_context['location'] = ids
         # we check for the available qty (in:done, out: assigned, done)
         return {'total': self.pool.get('product.product').read(cr, uid, product_id, ['qty_allocable'], context=stock_context).get('qty_allocable', 0)}
 
@@ -1561,10 +1566,10 @@ class purchase_order_line(osv.osv):
         model = 'kit.selection'
         step = 'default'
         wiz_obj = self.pool.get('wizard')
-        # this purchase order line replacement function can only be used when the po is in state ('confirmed', 'Validated'),
+        # this purchase order line replacement function can only be used when the po is in state ('draft', 'validated', 'validated_n'),
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.po_state_stored != 'confirmed':
-                raise osv.except_osv(_('Warning !'), _('Purchase order line kit replacement with components function is only available for Validated state.'))
+            if obj.state not in ('draft', 'validated', 'validated_n'):
+                raise osv.except_osv(_('Warning !'), _('Purchase order line kit replacement with components function is only available for Draft and Validated state.'))
         # open the selected wizard
         data = self.read(cr, uid, ids, ['product_id'], context=context)[0]
         product_id = data['product_id'][0]
