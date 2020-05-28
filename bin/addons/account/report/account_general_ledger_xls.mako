@@ -366,7 +366,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 % for line in lines(o, initial_balance_mode=False):
 <Row>
 <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String"></Data>
+    <Data ss:Type="String">${(o.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['move'] or '' or '')|x}</Data>
