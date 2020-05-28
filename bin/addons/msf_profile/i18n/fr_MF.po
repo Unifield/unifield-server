@@ -110320,3 +110320,8 @@ msgstr "Délai Externe (jours) :"
 msgid "Handling Lead Time (days) :"
 msgstr "Délai de traitement (jours) :"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:470
+#, python-format
+msgid "Line %s. The donation accounts are not compatible with the journal type %s."
+msgstr "Ligne %s. Les comptes de donation ne sont pas compatibles avec le type de journal %s."
