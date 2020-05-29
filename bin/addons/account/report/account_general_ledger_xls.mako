@@ -286,7 +286,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Booking Balance</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Balance ${get_output_currency_code(data)}</Data></Cell>
 % if get_show_move_lines():
-    <Cell ss:StyleID="ssH"><Data ss:Type="String">Reconcile Number</Data></Cell>
+    <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Reconcile Number')}</Data></Cell>
 % endif
 <Cell><Data ss:Type="String"></Data></Cell>
 % if not get_show_move_lines():
