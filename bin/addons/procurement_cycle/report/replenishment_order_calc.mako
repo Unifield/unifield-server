@@ -386,6 +386,7 @@
    <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- qty lacking date -->
    % endif
    <Column ss:AutoFitWidth="0" ss:Width="50" /> <!-- loan -->
+   <Column ss:AutoFitWidth="0" ss:Width="50" /> <!-- donation -->
     % if objects[0].rule == 'cycle':
    <Column ss:AutoFitWidth="0" ss:Width="75.75" /> <!-- expirty cons -->
     % endif
@@ -497,10 +498,11 @@
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Reserved Stock Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Projected Stock Level')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % if objects[0].rule == 'cycle':
-        <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Qty Lacking Before Next Eta')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+        <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Qty Lacking Before Next RDD')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
         <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Qty Lacking Needed By')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % endif
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Open Loan')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Donations Pending')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % if objects[0].rule == 'cycle':
         <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Expired Qty Before Cons')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % else:
@@ -546,6 +548,7 @@
         </Cell>
     % endif
     <Cell ss:StyleID="s97"><Data ss:Type="String">${prod.open_loan and _('Yes') or _('No')}</Data></Cell>
+    <Cell ss:StyleID="s97"><Data ss:Type="String">${prod.open_donation and _('Yes') or _('No')}</Data></Cell>
     % if objects[0].rule == 'cycle':
         <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.expired_qty_before_cons}</Data></Cell>
     % else:

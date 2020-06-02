@@ -1101,8 +1101,8 @@
         % endif
     </Cell>
     <Cell ss:StyleID="s141">
-        % if line.projected_stock_qty and line.rule != 'cycle':
-            <Data ss:Type="Number">${line.projected_stock_qty}</Data>
+        % if line.projected_stock_qty_amc and (line.rule == 'cycle' or not line.segment_ref_name):
+            <Data ss:Type="Number">${line.projected_stock_qty_amc}</Data>
         % endif
     </Cell>
     <Cell ss:StyleID="s141">
