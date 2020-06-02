@@ -373,6 +373,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if self.init_balance:
                 # US-822: move lines for period 0 IB journal
                 sql_sort = 'l.move_id'
+                if self.sortby == 'sort_currency':  # also sort by currency in case the related option is selected
+                    sql_sort = 'c.name, l.move_id'
                 sql = """
                     SELECT l.id AS lid, l.date AS ldate, j.code AS lcode, l.currency_id,
                     l.amount_currency,l.ref AS lref, l.name AS lname,
