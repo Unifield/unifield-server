@@ -503,7 +503,13 @@
         % endif
     </Cell>
     <Cell ss:StyleID="s97" ss:Formula="=RC[-1]-RC[-2]"><Data ss:Type="Number">${prod.nb_days}</Data></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.qty_missed}</Data></Cell>
+    <Cell ss:StyleID="s97">
+    % if prod.qty_missed is False:
+        <Data ss:Type="String" />
+    % else:
+        <Data ss:Type="Number">${prod.qty_missed}</Data>
+    % endif
+    </Cell>
 
     <Cell ss:StyleID="s96"><Data ss:Type="String">${(prod.substitute_1_product_id and prod.substitute_1_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s96"><Data ss:Type="String">${(prod.substitute_1_product_id and prod.substitute_1_product_id.name or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>

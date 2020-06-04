@@ -1123,7 +1123,7 @@ class replenishment_segment(osv.osv):
                         'rr_fmc_avg': False if seg.rule !='cycle' else total_month and total_fmc/total_month,
                         'rr_amc': line.rr_amc,
                         'total_expired_qty': sum_line.get(line.id, {}).get('total_expiry_nocons_qty', 0),
-                        'unit_of_supply_amc': False if seg.rule !='cycle' else line.rr_amc and (round(sum_line.get(line.id, {}).get('real_stock',0)) - round(sum_line.get(line.id, {}).get('expired_before_rdd',0))) * coeff / line.rr_amc,
+                        'unit_of_supply_amc': False if seg.rule !='cycle' and not seg.hidden else line.rr_amc and (round(sum_line.get(line.id, {}).get('real_stock',0)) - round(sum_line.get(line.id, {}).get('expired_before_rdd',0))) * coeff / line.rr_amc,
                         'unit_of_supply_fmc': False if seg.rule !='cycle' else month_of_supply * coeff,
                         'date_preparing': seg.date_preparing,
                         'date_next_order_validated': seg.date_next_order_validated,
@@ -1157,9 +1157,9 @@ class replenishment_segment(osv.osv):
                         line_data['warning_html'] = '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html("\n".join(warnings)), "<br>".join(warnings_html))
                         line_data['warning'] = "\n".join(warnings)
 
-                    if seg.rule == 'cycle':
+                    if seg.rule == 'cycle' or seg.hidden:
                         line_data.update({
-                            'projected_stock_qty': round(pas),
+                            'projected_stock_qty': False if seg.hidden else round(pas),
                             'projected_stock_qty_amc': max(0, sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0) + line.pipeline_before_rdd - line.rr_amc*seg.projected_view),
                         })
                     else:
@@ -2179,6 +2179,13 @@ class replenishment_segment_line_amc(osv.osv):
             amc_by_month = {}
             if not segment.remote_location_ids:
                 if gen_inv_review:
+                    # trigger sync
+                    cr.execute('''
+                        update ir_model_data set last_modification=NOW() where model='replenishment.segment.line.amc.detailed.amc' and module='sd' and res_id in (
+                            select id from replenishment_segment_line_amc_detailed_amc where segment_line_id in
+                            (select seg_line.id from replenishment_segment_line seg_line where seg_line.segment_id = %s)
+                        )
+                    ''', (segment.id, ))
                     cr.execute('''
                         delete from replenishment_segment_line_amc_detailed_amc where segment_line_id in
                             (select seg_line.id from replenishment_segment_line seg_line where seg_line.segment_id = %s) ''', (segment.id, )
@@ -2205,7 +2212,6 @@ class replenishment_segment_line_amc(osv.osv):
                             'total_expiry_nocons_qty': 0,
                             'sleeping_qty': 0,
                         })
-
                         for month in amc_by_month.get(prod_id, {}):
                             amc_details_obj.create(cr, uid, {'segment_line_id': lines[prod_id], 'month': '%s-01' % (month,) , 'amc': amc_by_month[prod_id][month]}, context=context)
 
@@ -2225,6 +2231,11 @@ class replenishment_segment_line_amc(osv.osv):
                 amc_data_to_update = {}
                 if gen_inv_review:
                     last_gen_data['review_date'] = datetime_now
+                    # trigger sync
+                    cr.execute(''' update ir_model_data set last_modification=NOW() where model='replenishment.segment.line.amc.month_exp' and module='sd' and res_id in (
+                        select id from  replenishment_segment_line_amc_month_exp where line_amc_id in
+                            (select amc.id from replenishment_segment_line_amc amc, replenishment_segment_line seg_line where seg_line.id = amc.segment_line_id and  seg_line.segment_id = %s) 
+                    )''', (segment.id, ))
                     cr.execute('''
                         delete from replenishment_segment_line_amc_month_exp where line_amc_id in
                             (select amc.id from replenishment_segment_line_amc amc, replenishment_segment_line seg_line where seg_line.id = amc.segment_line_id and  seg_line.segment_id = %s) ''', (segment.id, )
@@ -2418,11 +2429,11 @@ class replenishment_order_calc(osv.osv):
             existing_line[line.product_id.default_code] = line.id
 
         if calc.rule == 'cycle':
-            qty_col = 13
-            comment_col = 16
+            qty_col = 14
+            comment_col = 17
         elif calc.rule in ('auto', 'minmax'):
-            qty_col = 11
-            comment_col = 14
+            qty_col = 12
+            comment_col = 15
         idx = -1
 
         error = []

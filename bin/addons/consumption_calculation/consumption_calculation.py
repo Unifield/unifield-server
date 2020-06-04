@@ -2177,7 +2177,7 @@ class product_product(osv.osv):
             total_age = (tod - fromd).days + 1
             while fromd < tod:
                 amc_by_month.setdefault(line.product_id.id, {}).setdefault(fromd.strftime('%Y-%m'), 0)
-                amc_by_month[line.product_id.id][fromd.strftime('%Y-%m')] += consumed_qty/float(total_age) * (fromd+relativedelta(months=1)-fromd).days
+                amc_by_month[line.product_id.id][fromd.strftime('%Y-%m')] += consumed_qty/float(total_age) * (min(tod+relativedelta(days=1), fromd+relativedelta(months=1))-fromd).days
                 fromd += relativedelta(months=1)
         if consumed_qty:
             result = self.pool.get('product.uom')._compute_qty(cr, uid,

@@ -564,6 +564,7 @@
                                     <field name="qty_lacking" invisible="context.get('rule')!='cycle'"/>
                                     <field name="qty_lacking_needed_by" invisible="context.get('rule')!='cycle'"/>
                                     <field name="open_loan" />
+                                    <field name="open_donation" />
                                     <field name="expired_qty_before_cons" invisible="context.get('rule')!='cycle'"/>
                                     <field name="expired_qty_before_eta" invisible="context.get('rule')=='cycle'"/>
                                     <field name="proposed_order_qty" />

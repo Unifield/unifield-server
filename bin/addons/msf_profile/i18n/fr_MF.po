@@ -108217,8 +108217,8 @@ msgstr "Qté à commander proposée"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:417
-msgid "Qty Lacking Before Next Eta"
-msgstr "Qté manquante avant la prochaine TAE"
+msgid "Qty Lacking Before Next RDD"
+msgstr "Qté manquante avant la prochaine DLS"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:418
@@ -109872,6 +109872,11 @@ msgstr "Donations en cours"
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:947
 msgid "Donations pending (Yes/No)"
 msgstr "Donations en cours (Oui/Non)"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:947
+msgid "Donations Pending"
+msgstr "Donations en cours"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:953
