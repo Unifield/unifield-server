@@ -550,5 +550,9 @@
         <record id="us_7533_fix_int_previous_chained_pick_id" model="patch.scripts">
             <field name="method">us_7533_fix_int_previous_chained_pick_id</field>
         </record>
+
+        <record id="us_7576_sync_msg_from_itself" model="patch.scripts">
+            <field name="method">sync_msg_from_itself</field>
+        </record>
     </data>
 </openerp>
