@@ -439,6 +439,7 @@ class product_product(osv.osv):
         location_id = False
         filter_qty = False
         filter_in_any_product_list = False
+        in_product_list_id = False
         for x in domain:
             if x[0] == 'location_id':
                 location_id = x[2]
@@ -448,6 +449,8 @@ class product_product(osv.osv):
 
             elif x[0] == 'in_any_product_list':
                 filter_in_any_product_list = True
+            elif x[0] == 'in_product_list_id':
+                in_product_list_id = int(x[2])
             else:
                 new_dom.append(x)
 
@@ -474,6 +477,11 @@ class product_product(osv.osv):
         if filter_in_any_product_list:
             ret.tables.append('"product_list_line"')
             ret.joins['"product_product"'] = [('"product_list_line"', 'id', 'name', 'INNER JOIN')]
+        elif in_product_list_id:
+            ret.tables.append('"product_list_line"')
+            ret.joins['"product_product"'] = [('"product_list_line"', 'id', 'name', 'INNER JOIN')]
+            ret.where_clause.append(' "product_list_line"."list_id" = %s ')
+            ret.where_clause_params.append(in_product_list_id)
         return ret
 
     def view_header_get(self, cr, uid, view_id, view_type, context=None):
