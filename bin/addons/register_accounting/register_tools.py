@@ -303,7 +303,7 @@ def previous_register_is_closed(self, cr, uid, ids, context=None):
     for reg in self.pool.get('account.bank.statement').browse(cr, uid, ids, context=context):
         # if no previous register (case where register is the first register) we don't need to close non-existent registers
         if reg.prev_reg_id:
-            if reg.prev_reg_id.state not in ['partial_close', 'confirm']:
+            if reg.prev_reg_id.state != 'confirm':
                 raise osv.except_osv(_('Error'),
                                      _('The previous register "%s" for period "%s" has not been closed properly.') %
                                      (reg.prev_reg_id.name, reg.prev_reg_id.period_id.name))

@@ -105,6 +105,8 @@ class configmanager(object):
             'osv_memory_age_limit': 1, # hours
             'additional_xml': False,
             'create_db_dir_for_attachment': True,
+            'sync_user_login': False,
+            'sync_user_password': False,
         }
 
         self.blacklist_for_save = set(["publisher_warranty_url", "load_language", "netrpc", "netrpc_gzip", "netrpc_interface", "netrpc_port", "xmlrpcs_port", "xmlrpcs_interface"])

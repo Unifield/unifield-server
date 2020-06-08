@@ -405,7 +405,7 @@ class procurement_request(osv.osv):
 
         context.update({'active_id': ids[0], 'to_update_ir': True})
         ir = self.browse(cr, uid, ids[0], fields_to_fetch=['order_line', 'state'], context=context)
-        if ir.state not in ['draft', 'draft_p']:
+        if ir.state != 'draft':
             raise osv.except_osv(_('Warning'), _('Importing from IR Excel template is only allowed on an IR which is in Draft state'))
         import_ids = import_obj.search(cr, uid, [('order_id', '=', ids[0])], context=context)
         import_obj.unlink(cr, uid, import_ids, context=context)

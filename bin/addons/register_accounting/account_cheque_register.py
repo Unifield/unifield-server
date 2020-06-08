@@ -93,14 +93,12 @@ class account_cheque_register(osv.osv):
         'display_type': fields.selection([('not_reconciled', 'Outstanding cheques only'), ('all', 'All cheques')], \
                                          string="Display type", required=True, states={'draft': [('readonly', True)]}),
         'line_ids': one2many_register('account.bank.statement.line', 'statement_id', 'Statement lines', \
-                                      states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft': [('readonly', True)]}),
+                                      states={'confirm': [('readonly', True)], 'draft': [('readonly', True)]}),
     }
 
     _defaults = {
         'display_type': 'all',
     }
-
-    _order = 'state, period_id, instance_id, journal_id'
 
     def button_confirm_cheque(self, cr, uid, ids, context=None):
         """

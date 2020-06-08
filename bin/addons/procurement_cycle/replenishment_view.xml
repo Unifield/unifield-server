@@ -1,0 +1,1030 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<openerp>
+    <data>
+
+        <record id="replenishment_location_config_form" model="ir.ui.view">
+            <field name="name">replenishment.location.config.form</field>
+            <field name="model">replenishment.location.config</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Location Configuration" hide_duplicate_button="1" noteditable="not is_current_instance">
+                    <field name="name" />
+                    <field name="description" />
+                    <field name="main_instance" />
+                    <field name="is_project" invisible="1" />
+                    <field name="is_current_instance" invisible="1" />
+                    <group colspan="2" col="4">
+                        <field name="synched" attrs="{'readonly': [('is_project', '=', True)]}" />
+                        <field name="active" />
+                    </group>
+                    <group colspan="2" col="2">
+                        <separator string="Current instance locations" colspan="2" />
+                        <field name="local_location_ids" nolabel="1">
+                        <tree hide_new_button="0" hide_edit_button="1">
+                                <field name="complete_name" />
+                                <field name="usage" />
+                                <field name="location_category" />
+                            </tree>
+                        </field>
+                    </group>
+                    <group colspan="2" col="2" attrs="{'invisible': [('synched', '=', False)]}">
+                        <separator string="Other instance locations" colspan="2" />
+                        <field name="remote_location_ids" nolabel="1">
+                            <tree hide_edit_button="1">
+                                <field name="full_name" string="Location Name"/>
+                            </tree>
+                        </field>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="replenishment_location_config_tree" model="ir.ui.view">
+            <field name="name">replenishment.location.config.tree</field>
+            <field name="model">replenishment.location.config</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Location Configuration" colors="red:not review_active">
+                    <field name="name" />
+                    <field name="description" />
+                    <field name="synched" />
+                    <field name="main_instance" />
+                    <field name="active" />
+                    <field name="review_active" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_location_config_search" model="ir.ui.view">
+            <field name="name">replenishment.location.config.search</field>
+            <field name="model">replenishment.location.config</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Location Configuration">
+                    <filter name="active" string="Active" domain="[('active', '=', True)]" icon="terp-check" />
+                    <filter name="inactive" string="Inactive" domain="[('active', '=', False)]" icon="gtk-dialog-error"/>
+                    <separator orientation="vertical"/>
+                    <field name="name" />
+                    <field name="description" />
+                    <field name="synched" class="small_filters"/>
+                    <field name="main_instance" />
+                    <field name="review_active" class="small_filters"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="replenishment_location_config_action" model="ir.actions.act_window">
+            <field name="res_model">replenishment.location.config</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('is_current_instance', '=', True)]</field>
+        </record>
+
+        <menuitem id="replenishment_configuration" sequence="5" parent="stock_schedule.stock_automatic_procurements_menu" name="Configuration" />
+
+        <menuitem id="replenishment_location_config_menu"
+            action="replenishment_location_config_action"
+            sequence="10"
+            name="Location Config"
+            parent="replenishment_configuration" />
+
+
+        <record id="replenishment_review_config_form" model="ir.ui.view">
+            <field name="name">replenishment.review.config.form</field>
+            <field name="model">replenishment.location.config</field>
+            <field name="type">form</field>
+            <field name="priority" eval="50" />
+            <field name="arch" type="xml">
+                <form string="Inventory Review Configuration" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                    <field name="name" readonly="1" />
+                    <field name="description" readonly="1" />
+                    <field name="frequence_name" />
+                    <field name="next_scheduler" />
+                    <newline />
+                    <button name="choose_change_frequence" type="object" string="Change/Choose Frequency" icon="terp-go-today" colspan="2" />
+                    <group colspan="2" col="4">
+                        <field name="review_active"   />
+                        <field name="include_product" />
+                    </group>
+                    <field name="projected_view" required="1" />
+                    <field name="rr_amc" required="1" />
+                    <field name="sleeping" required="1" />
+                    <field name="time_unit" required="1" />
+                    <field name="alert_threshold_deviation" required="1" />
+                    <newline />
+                    <group colspan="2">
+                        <button name="force_generate_inventory_review" string="Generate Inventory Review" type="object" icon="gtk-execute" />
+                        <button name="inventory_review" string="Go to Inventory Review" type="object" icon="gtk-info" />
+                    </group>
+
+                    <group colspan="4" attrs="{'invisible':[('last_review_error', '=', False)]}">
+                        <separator colspan="4" string="Review Error" />
+                        <field name="last_review_error" colspan="4" nolabel="1"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="replenishment_review_config_tree" model="ir.ui.view">
+            <field name="name">replenishment.review.config.tree</field>
+            <field name="model">replenishment.location.config</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="50" />
+            <field name="arch" type="xml">
+                <tree string="Inventory Review Configuration" hide_new_button="1" hide_delete_button="1">
+                    <field name="name" />
+                    <field name="description" />
+                    <field name="review_active" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_review_config_search" model="ir.ui.view">
+            <field name="name">replenishment.review.config.search</field>
+            <field name="model">replenishment.location.config</field>
+            <field name="type">search</field>
+            <field name="priority" eval="50" />
+            <field name="arch" type="xml">
+                <search string="Inventory Review Configuration">
+                    <field name="name" />
+                    <field name="description" />
+                    <field name="review_active" class="small_filters" />
+                    <field name="active" class="small_filters" />
+                </search>
+            </field>
+        </record>
+
+        <record id="replenishment_review_config_action" model="ir.actions.act_window">
+            <field name="res_model">replenishment.location.config</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('is_current_instance', '=', True)]</field>
+            <field name="search_view_id" ref="replenishment_review_config_search" />
+        </record>
+        <record id="replenishment_review_config_action_tree" model="ir.actions.act_window.view">
+            <field eval="1" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="replenishment_review_config_tree"/>
+            <field name="act_window_id" ref="replenishment_review_config_action"/>
+        </record>
+        <record id="replenishment_review_config_action_form" model="ir.actions.act_window.view">
+            <field eval="2" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="replenishment_review_config_form"/>
+            <field name="act_window_id" ref="replenishment_review_config_action"/>
+        </record>
+
+        <menuitem id="replenishment_review_config_menu"
+            action="replenishment_review_config_action"
+            sequence="20"
+            name="Inventory Review Config"
+            parent="replenishment_configuration" />
+
+
+        <record id="replenishment_segment_form" model="ir.ui.view">
+            <field name="name">replenishment.segment.form</field>
+            <field name="model">replenishment.segment</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Replenishment Segment" hide_duplicate_button="1" hide_delete_button="1" noteditable="not is_current_instance" force_string="1">
+                    <field name="safety_and_buffer_warn" invisible="1" />
+                    <field name="active" invisible="1" readonly="1" />
+                    <field name="review_active" invisible="1" readonly="1" />
+                    <html colspan="4">
+                        <p id="safety_and_buffer" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                            <translate>Product line has Safety Stock AND Buffer value: Warning could be duplicate!</translate>
+                        </p>
+                        <p id="active_warn" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                            <translate>Warning: location config is inactive</translate>
+                        </p>
+                        <p id="review_active_warn" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                            <translate>Warning: Inventory Review Configuration is inactive</translate>
+                        </p>
+                        <script language="javascript">
+                            var safety_and_buffer = $('#safety_and_buffer_warn').val();
+                            if (safety_and_buffer == "1") {
+                                msg_dom = $('#safety_and_buffer');
+                                msg_dom.show();
+                            }
+                            var active_warn = $('#active').val();
+                            if (active_warn != "1") {
+                                msg_dom = $('#active_warn');
+                                msg_dom.show();
+                            }
+                            var review_active_warn = $('#review_active').val();
+                            var config_id = $('#location_config_id').attr('value');
+                            if (review_active_warn != "1" &amp;&amp; config_id) {
+                                msg_dom = $('#review_active_warn');
+                                msg_dom.show();
+                            }
+
+                            new ListView('line_ids').after_reload = function() {
+                                var has_filter = $('#line_ids\\/_terp_domain').val();
+                                var nb_lines = $('#line_ids\\/_terp_count').val();
+                                if (has_filter != '[]' || nb_lines != "0") {
+                                    $("#rule option:not(:selected)").attr("disabled", "disabled");
+                                } else {
+                                    $("#rule option:not(:selected)").removeAttr("disabled");
+                                }
+                            };
+                        </script>
+
+                    </html>
+                    <field name="name_seg" />
+                    <field name="description_seg" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                    <field name="location_config_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('is_current_instance', '=', True)]" on_change="change_location_config_id(location_config_id, ir_requesting_location)"/>
+                    <notebook colspan="4">
+                        <page string="Parameters">
+                            <html colspan="4">
+                             <table id="rr-chrono" width="100%%">
+                                    <tr>
+                                        <td colspan="8" class="tlt"><translate>Total Lead Time (days) :</translate><field name="total_lt" nolabel="1"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="4" class="ilt"><translate>Internal Lead Time (days) :</translate><field name="internal_lt" nolabel="1" /></td>
+                                        <td colspan="4" class="elt"><translate>External Lead Time (days) :</translate><field name="external_lt" nolabel="1" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="oclt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="order_creation_lt"><translate>Order Creation Lead Time (days) :</translate><field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1"/></td>
+                                        <td class="ovlt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="order_validation_lt"><translate>Order Validation Lead Time (days) :</translate><field name="order_validation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
+                                        <td class="slt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="supplier_lt"><translate>Supplier Lead Time (days) :</translate><field name="supplier_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
+                                        <td class="hlt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="handling_lt"><translate>Handling Lead Time (days) :</translate><field name="handling_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
+                                    </tr>
+                                </table>
+                             </html>
+
+
+                            <group colspan="4" col="6">
+                                <group colspan="2" col="2">
+                                    <field name="rule" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('have_product', '=', True)]}" />
+                                    <field name="have_product" invisible="1" />
+                                    <field name="rule_alert" />
+                                    <field name="product_list_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                </group>
+
+                                <group colspan="2" col="2">
+                                    <field name="previous_order_rdd" />
+                                    <field name="date_preparing" />
+                                    <field name="date_next_order_validated" />
+                                    <field name="date_next_order_received" />
+                                    <label colspan="2" />
+                                    <field name="date_next_order_received_modified" attrs="{'readonly': [('state', '!=', 'draft')]}"  on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
+
+                                </group>
+
+                                <group colspan="2" col="2">
+                                    <field name="order_coverage" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft')]}" on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
+                                    <field name="safety_stock" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft'), ('rule', '=', 'cycle')], 'invisible': [('rule', '!=', 'cycle')]}"/>
+                                </group>
+                            </group>
+
+                        <group colspan="4" col="8" name="import" string="Multiple line management" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                            <field name="file_to_import" colspan="2" />
+                            <button name="import_lines" string="Import Lines" type="object" colspan="3" icon="gtk-dnd" />
+                            <button name="delete_multiple_lines" type="object" icon="gtk-remove" string="Delete selected lines" colspan="3" confirm="Do you want to delete these %%(number_selected)s line(s) ?"/>
+                            <button name="add_multiple_lines" type="object" icon="gtk-add" string="Add multiple products" colspan="8" />
+                        </group>
+                            <field name="line_ids" colspan="4" nolabel="1" default_get="rule=rule" scroll="1" attrs="{'readonly': [('state', '!=', 'draft')]}" o2m_selectable="2">
+                                <tree editable="top" editable_style="new" colors="red: not status or (display_paired_icon and not status_tooltip)">
+                                    <field name="product_id" filter_selector="1" />
+                                    <field name="product_description" displayon="noteditable" filter_selector="1" />
+                                    <field name="uom_id" invisible="1" />
+                                    <field name="in_main_list" filter_selector="1" />
+                                    <field name="status" filter_selector="1" tooltip="status_tooltip"/>
+                                    <field name="status_tooltip" invisible="1" />
+                                    <field name="display_paired_icon" invisible="1" />
+                                    <button name="set_paired_product" string="Set Paired Product" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('display_paired_icon', '=', False)]}" type="object" icon="gtk-convert" />
+                                    <field name="real_stock" />
+                                    <field name="rr_amc" />
+                                    <field name="min_qty" invisible="context.get('rule')!='minmax'"/>
+                                    <field name="max_qty" invisible="context.get('rule')!='minmax'"/>
+                                    <field name="auto_qty" invisible="context.get('rule')!='auto'"/>
+                                    <field name="buffer_qty" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="rr_fmc_1" invisible="context.get('rule')!='cycle'" nolabel="1"/>
+                                    <field name="rr_fmc_from_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('from', '1', rr_fmc_from_1)"  nolabel="1"/>
+                                    <field name="rr_fmc_to_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('to', '1', rr_fmc_to_1)" nolabel="1"/>
+                                    <field name="rr_fmc_2" invisible="context.get('rule')!='cycle'"  nolabel="1"/>
+                                    <field name="rr_fmc_from_2" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_2', '!=', False)]}" on_change="change_fmc('from', '2', rr_fmc_from_2)" nolabel="1"/>
+                                    <field name="rr_fmc_to_2" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_2', '!=', False)]}" on_change="change_fmc('to', '2', rr_fmc_to_2)" nolabel="1"/>
+                                    <field name="rr_fmc_3" invisible="context.get('rule')!='cycle'" nolabel="1"/>
+                                    <field name="rr_fmc_from_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('from', '3', rr_fmc_from_3)" nolabel="1"/>
+                                    <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('to', '3', rr_fmc_to_3)" nolabel="1"/>
+                                    <field name= "list_fmc" invisible="context.get('rule')!='cycle'" displayon="notedition"/>
+                                    <button name="openform" special="openform" string="Edit 12 FMC" invisible="context.get('rule')!='cycle'" attrs="{'invisible': [('state', '!=', 'draft')]}"  icon="terp-go-week" />
+                                    <field name="warning_html" widget="html_text" displayon="noteditable"/>
+
+                                </tree>
+                                <form>
+                                    <field name="product_id" filter_selector="1" />
+                                    <field name="product_description" displayon="noteditable" filter_selector="1" />
+                                    <field name="uom_id" invisible="1" />
+                                    <field name="in_main_list" filter_selector="1" />
+                                    <field name="status" filter_selector="1" />
+                                    <field name="min_qty" invisible="context.get('rule')!='minmax'"/>
+                                    <field name="max_qty" invisible="context.get('rule')!='minmax'"/>
+                                    <field name="auto_qty" invisible="context.get('rule')!='auto'"/>
+                                    <field name="buffer_qty" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="real_stock" />
+                                    <field name="rr_amc" />
+                                    <group colspan="4" col="4">
+                                    <separator string="FMC" colspan="2" />
+                                    <separator string="From" colspan="1" />
+                                    <separator string="To" colspan="1" />
+
+                                    <field name="rr_fmc_1" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('from', '1', rr_fmc_from_1)"  nolabel="1"/>
+                                    <field name="rr_fmc_to_1" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_1', '!=', False)]}" on_change="change_fmc('to', '1', rr_fmc_to_1)" nolabel="1"/>
+                                    <field name="rr_fmc_2" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_2" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_2', '!=', False)]}" on_change="change_fmc('from', '2', rr_fmc_from_2)" nolabel="1"/>
+                                    <field name="rr_fmc_to_2" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_2', '!=', False)]}" on_change="change_fmc('to', '2', rr_fmc_to_2)" nolabel="1"/>
+                                    <field name="rr_fmc_3" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('from', '3', rr_fmc_from_3)" nolabel="1"/>
+                                    <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('to', '3', rr_fmc_to_3)" nolabel="1"/>
+                                    <field name="rr_fmc_4" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_4" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_4', '!=', False)]}" on_change="change_fmc('from', '4', rr_fmc_from_4)" nolabel="1"/>
+                                    <field name="rr_fmc_to_4" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_4', '!=', False)]}" on_change="change_fmc('to', '4', rr_fmc_to_4)" nolabel="1"/>
+                                    <field name="rr_fmc_5" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_5" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_5', '!=', False)]}" on_change="change_fmc('from', '5', rr_fmc_from_5)" nolabel="1"/>
+                                    <field name="rr_fmc_to_5" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_5', '!=', False)]}" on_change="change_fmc('to', '5', rr_fmc_to_5)" nolabel="1"/>
+                                    <field name="rr_fmc_6" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_6" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_6', '!=', False)]}" on_change="change_fmc('from', '6', rr_fmc_from_6)" nolabel="1"/>
+                                    <field name="rr_fmc_to_6" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_6', '!=', False)]}" on_change="change_fmc('to', '6', rr_fmc_to_6)" nolabel="1"/>
+                                    <field name="rr_fmc_7" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_7" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_7', '!=', False)]}" on_change="change_fmc('from', '7', rr_fmc_from_7)" nolabel="1"/>
+                                    <field name="rr_fmc_to_7" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_7', '!=', False)]}" on_change="change_fmc('to', '7', rr_fmc_to_7)" nolabel="1"/>
+                                    <field name="rr_fmc_8" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_8" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_8', '!=', False)]}" on_change="change_fmc('from', '8', rr_fmc_from_8)" nolabel="1"/>
+                                    <field name="rr_fmc_to_8" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_8', '!=', False)]}" on_change="change_fmc('to', '8', rr_fmc_to_8)" nolabel="1"/>
+                                    <field name="rr_fmc_9" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_9" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_9', '!=', False)]}" on_change="change_fmc('from', '9', rr_fmc_from_9)" nolabel="1"/>
+                                    <field name="rr_fmc_to_9" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_9', '!=', False)]}" on_change="change_fmc('to', '9', rr_fmc_to_9)" nolabel="1"/>
+                                    <field name="rr_fmc_10" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_10" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_10', '!=', False)]}" on_change="change_fmc('from', '10', rr_fmc_from_10)" nolabel="1"/>
+                                    <field name="rr_fmc_to_10" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_10', '!=', False)]}" on_change="change_fmc('to', '10', rr_fmc_to_10)" nolabel="1"/>
+                                    <field name="rr_fmc_11" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_11" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_11', '!=', False)]}" on_change="change_fmc('from', '11', rr_fmc_from_11)" nolabel="1"/>
+                                    <field name="rr_fmc_to_11" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_11', '!=', False)]}" on_change="change_fmc('to', '11', rr_fmc_to_11)" nolabel="1"/>
+                                    <field name="rr_fmc_12" invisible="context.get('rule')!='cycle'" />
+                                    <field name="rr_fmc_from_12" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_12', '!=', False)]}" on_change="change_fmc('from', '12', rr_fmc_from_12)" nolabel="1"/>
+                                    <field name="rr_fmc_to_12" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_12', '!=', False)]}" on_change="change_fmc('to', '12', rr_fmc_to_12)" nolabel="1"/>
+                                    </group>
+                                </form>
+                            </field>
+
+
+                        </page>
+
+                        <page string="Location Information">
+                            <field name="is_current_instance" invisible="1" />
+                            <group colspan="4" col="14">
+                                <field name="description" readonly="1" string="Location Config Description" colspan="4"/>
+                                <field name="main_instance" readonly="1" colspan="4"/>
+                                <group colspan="4" col="2">
+                                    <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('ir_requesting_location_rdo', '!=', False)]}" required="1"/>
+                                    <field name="ir_requesting_location_rdo" attrs="{'invisible': ['|', ('ir_requesting_location_rdo', '=', False), ('_terp_editable', '=', 'False')]}" />
+                                </group>
+                                <field name="rr_amc" readonly="1" colspan="2"/>
+                            </group>
+
+
+                            <group colspan="4" col="6">
+                                <field name="local_location_ids" colspan="2" nolabel="1" readonly="1">
+                                    <tree min_rows="10">
+                                        <field name="complete_name" string="Current Instance Locations"/>
+                                    </tree>
+                                </field>
+
+                                <field name="remote_location_ids" colspan="2" nolabel="1" readonly="1">
+                                    <tree min_rows="10">
+                                        <field name="full_name" string="Other Instance Locations"/>
+                                    </tree>
+                                </field>
+
+                                <group colspan="2" col="2">
+                                    <field name="last_generation" nolabel="1" colspan="2">
+                                        <tree string="Generation Date" min_rows="10">
+                                            <field name="instance_id" />
+                                            <field name="amc_date" />
+                                            <field name="full_date" />
+                                            <field name="review_date" />
+                                        </tree>
+                                    </field>
+                                </group>
+                            </group>
+                            <group colspan="2" col="2">
+                                <separator string="AMC Locations" colspan="2" />
+                                <field name="amc_location_txt" nolabel="1" colspan="2" />
+                            </group>
+                        </page>
+                    </notebook>
+                    <group colspan="4">
+                        <field name="state" />
+                        <field name="has_inprogress_cal" invisible="1" />
+                        <group colspan="2">
+                            <button name="trigger_compute_segment_data" string="Compute Data" type="object" icon="gtk-execute" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}" force_editable="1"/>
+                            <button name="completed" string="Completed" type="object" icon="terp-check" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                            <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', 'not in', ['complete', 'archived', 'cancel'])]}" icon="gtk-go-back" />
+                            <button name="generate_order_calc" string="Generate Order Calc" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': [('state', '!=', 'complete')]}"/>
+                            <button name="set_as_archived" string="Archive" type="object" attrs="{'invisible':[('state', 'in', ['cancel', 'archived'])]}" icon="terp-locked" />
+                            <button name="set_as_cancel" string="Cancel" type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', True)]}" icon="gtk-cancel" />
+                            <button name="set_as_cancel_and_cancel_order" string="Cancel Segment and Order Calc." type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', False)]}" icon="gtk-cancel" confirm="This will cancel the Segment and the in-progess Order Calc. Do you confirm ?"/>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="replenishment_segment_tree" model="ir.ui.view">
+            <field name="name">replenishment.segment.tree</field>
+            <field name="model">replenishment.segment</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Replenishment Segments" hide_delete_button="1">
+                    <field name="name_seg" />
+                    <field name="description_seg" />
+                    <field name="line_ids" />
+                    <field name="location_config_id" />
+                    <field name="description" string="Loc config description"/>
+                    <field name="rule" string="Replenishment Rule"/>
+                    <field name="product_list_id" />
+                    <field name="date_preparing" />
+                    <field name="date_next_order_validated" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_segment_search" model="ir.ui.view">
+            <field name="name">replenishment.segment.search</field>
+            <field name="model">replenishment.segment</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Replenishment Segments">
+                    <filter string="Current Instance" name="current_instance" icon="terp-stage" domain="[('is_current_instance', '=', True)]"/>
+                    <separator orientation="vertical"/>
+                    <filter string="Draft" domain="[('state', '=', 'draft')]" icon="terp-document-new"/>
+                    <filter string="Complete" domain="[('state', '=', 'complete')]" icon="terp-check"/>
+                    <filter string="Archived" domain="[('state', '=', 'archived')]" icon="terp-locked"/>
+                    <filter string="Cancelled" domain="[('state', '=', 'cancel')]" icon="gtk-cancel"/>
+                    <separator orientation="vertical" />
+
+                    <field name="name_seg" />
+                    <field name="description_seg" />
+                    <field name="line_ids" />
+                    <field name="location_config_id" />
+                    <field name="rule" string="Replenishment Rule" />
+                    <field name="product_list_id" />
+                </search>
+            </field>
+        </record>
+
+        <record id="replenishment_segment_action" model="ir.actions.act_window">
+            <field name="res_model">replenishment.segment</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('hidden', '=', False)]</field>
+            <field name="context">{'search_default_current_instance': True}</field>
+        </record>
+
+        <menuitem id="replenishment_segment_menu"
+            action="replenishment_segment_action"
+            sequence="40"
+            name="Replenishment Segment"
+            parent="replenishment_configuration" />
+
+
+        <act_window id="action_from_segment_to_order_calc"
+            name="Order Calc."
+            src_model="replenishment.segment"
+            res_model="replenishment.order_calc"
+            domain="[('segment_id', '=', active_id)]"
+            />
+
+        <act_window id="action_from_location_config_to_order_calc"
+            name="Order Calc."
+            src_model="replenishment.location.config"
+            res_model="replenishment.order_calc"
+            domain="[('location_config_id', '=', active_id)]"
+            context="{'search_view': False}"
+            />
+
+        <act_window id="action_from_location_config_to_segment"
+            name="Replenishment Segments"
+            src_model="replenishment.location.config"
+            res_model="replenishment.segment"
+            domain="[('location_config_id', '=', active_id), ('hidden', '=', False)]"
+            context="{'search_view': False}"
+            />
+
+        <record id="replenishment_order_calc_form" model="ir.ui.view">
+            <field name="name">replenishment.order_calc.form</field>
+            <field name="model">replenishment.order_calc</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Order Calculation" hide_duplicate_button="1" hide_new_button="1" hide_delete_button="1" force_string="1">
+                    <field name="name" />
+                    <field name="segment_id" />
+                    <field name="description_seg" />
+                    <notebook colspan="4">
+                        <page string="Parameters">
+                            <group colspan="4" col="6">
+                                <group colspan="2" col="2">
+                                    <field name="rule" />
+                                    <field name="rule_alert" />
+                                    <field name="total_lt" />
+                                </group>
+                                <group colspan="2" col="2">
+                                    <field name="new_order_reception_date" />
+                                    <field name="generation_date" />
+                                    <field name="next_generation_date" />
+                                </group>
+                                <group colspan="2" col="2">
+                                    <field name="ir_generation_date" />
+                                    <field name="ir_id" />
+                                </group>
+                            </group>
+                            <group colspan="4" name="import" string="Import Lines" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                                <field name="file_to_import" colspan="2" />
+                                <button name="import_lines" string="Import Lines" type="object" colspan="2" icon="gtk-save" />
+                            </group>
+                            <field name="order_calc_line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" default_get="rule=rule" scroll="1">
+                                <tree editable="top" editable_style="new" colors="red:expired_qty_before_cons or (status!='new' and qty_lacking) or not valid_rr_fmc;orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc" hide_new_button="0" hide_delete_button="1">
+                                    <field name="product_id" filter_selector="1" />
+                                    <field name="product_description" displayon="noteditable" filter_selector="1" />
+                                    <field name="uom_id" invisible="1" />
+                                    <field name="status" invisible="1" />
+                                    <field name="in_main_list" filter_selector="1" />
+                                    <field name="valid_rr_fmc" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="real_stock" />
+                                    <field name="pipeline_qty" />
+                                    <field name="eta_for_next_pipeline" />
+                                    <field name="reserved_stock_qty" />
+                                    <field name="projected_stock_qty" />
+                                    <field name="qty_lacking" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="qty_lacking_needed_by" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="open_loan" />
+                                    <field name="open_donation" />
+                                    <field name="expired_qty_before_cons" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="expired_qty_before_eta" invisible="context.get('rule')=='cycle'"/>
+                                    <field name="proposed_order_qty" />
+                                    <field name="agreed_order_qty" />
+                                    <field name="cost_price" />
+                                    <field name="line_value" />
+                                    <field name="order_qty_comment" />
+                                    <field name="warning_html" invisible="context.get('rule')=='auto'" widget="html_text"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Location Information">
+                            <group colspan="4" col="6">
+                                <field name="instance_id" />
+                                <field name="location_config_id" />
+                                <field name="location_config_description" />
+                            </group>
+                                <field name="local_location_ids" nolabel="1" colspan="2">
+                                    <tree>
+                                        <field name="complete_name" string="Current Instance Locations"/>
+                                    </tree>
+                                </field>
+
+                                <field name="remote_location_ids" nolabel="1">
+                                    <tree>
+                                        <field name="full_name" string="Other Instance Locations"/>
+                                    </tree>
+                                </field>
+                        </page>
+                    </notebook>
+                    <field name="state" />
+                    <group colspan="2" col="6">
+                        <field name="total_value" colspan="4"/>
+                        <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
+                    </group>
+                    <label colspan="2" />
+                    <group colspan="2">
+                    <button name="cancel" string="Cancel" type="object"  attrs="{'invisible':[('state', 'not in', ['draft', 'validated'])]}" icon="gtk-cancel" />
+                    <button name="validated" string="Validate" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" icon="terp-check" />
+                    <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', '!=', 'validated')]}" icon="gtk-go-back" />
+                    <button name="generate_ir" string="Generate Requisition &amp; Close" type="object" attrs="{'invisible':[('state', '!=', 'validated')]}" icon="gtk-convert"/>
+                    </group>
+
+                </form>
+            </field>
+        </record>
+
+        <record id="replenishment_order_calc_tree" model="ir.ui.view">
+            <field name="name">replenishment.order_calc.tree</field>
+            <field name="model">replenishment.order_calc</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Order Calculations" hide_new_button="1" hide_delete_button="1" colors="red: state in ('draft', 'validated') and next_generation_date &lt; current_date;grey: state in ('closed', 'cancel')">
+                    <field name="name" />
+                    <field name="segment_id" />
+                    <field name="description_seg" />
+                    <field name="location_config_id" />
+                    <field name="rule" />
+                    <field name="order_calc_line_ids" />
+                    <field name="generation_date" />
+                    <field name="next_generation_date" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_order_calc_search" model="ir.ui.view">
+            <field name="name">replenishment.order_calc.search</field>
+            <field name="model">replenishment.order_calc</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Order Calculations">
+                    <filter string="Draft" domain="[('state', '=', 'draft')]" icon="terp-document-new"/>
+                    <filter string="Validated" domain="[('state', '=', 'validated')]" icon="gtk-ok"/>
+                    <filter string="Closed" domain="[('state', '=', 'closed')]" icon="gtk-close"/>
+                    <filter string="Cancelled" domain="[('state', '=', 'cancel')]" icon="gtk-cancel"/>
+                    <separator orientation="vertical"/>
+                    <field name="name" />
+                    <field name="segment_id" />
+                    <field name="description_seg" />
+                    <field name="rule" class="small_filters" string="Replenishment Rule"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="replenishment_order_calc_action" model="ir.actions.act_window">
+            <field name="res_model">replenishment.order_calc</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="replenishment_order_calc_menu"
+            action="replenishment_order_calc_action"
+            sequence="45"
+            name="Order Calculation"
+            parent="stock_schedule.stock_automatic_procurements_menu" />
+
+    <!-- inventory review -->
+        <record id="replenishment_inventory_review_form" model="ir.ui.view">
+            <field name="name">replenishment.inventory.review.form</field>
+            <field name="model">replenishment.inventory.review</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Inventory Review" hide_duplicate_button="1" hide_new_button="1" hide_delete_button="1" force_string="1">
+                    <field name="location_config_id" />
+                    <field name="frequence_name" />
+                    <field name="generation_date" />
+                    <field name="projected_view" />
+                    <field name="amc_first_date" />
+                    <field name="amc_last_date" />
+                    <field name="final_date_projection" />
+                    <field name="sleeping" />
+                    <field name="time_unit" />
+                    <newline />
+                    <group colspan="4">
+                        <button colspan="1" name="pipeline" string="Pipeline" type="object" icon="icons/pipe.png"/>
+                        <button colspan="1" name="stock_by_location" string="Stock By Location" type="object" icon="gtk-indent"/>
+                    </group>
+                    <field name="line_ids" colspan="4" nolabel="1" o2m_selectable="2" scroll="1">
+                        <tree colors="red:expired_qty_before_cons or (status!='new' and qty_lacking) or (not valid_rr_fmc and segment_ref_name);orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc">
+                            <field name="product_id" filter_selector="1" />
+                            <field name="product_description" filter_selector="1" />
+                            <field name="uom_id" invisible="1" />
+                            <field name="status" invisible="1" />
+                            <field name="primay_product_list" filter_selector="1" />
+                            <field name="segment_ref_name" />
+                            <field name="projected_stock_qty_amc" />
+                            <field name="rr_fmc_avg" />
+                            <field name="rr_amc" />
+                            <field name="valid_rr_fmc" />
+                            <field name="real_stock" />
+                            <field name="pipeline_qty" />
+                            <field name="reserved_stock_qty" />
+                            <field name="expired_qty_before_cons" />
+                            <field name="total_expired_qty" />
+                            <field name="projected_stock_qty" />
+                            <field name="unit_of_supply_amc" string=" of supply (RR-AMC)"/>
+                            <field name="unit_of_supply_fmc" string=" of supply (RR-FMC)"/>
+                            <field name="warning_html" widget="html_text"/>
+                            <field name="open_loan" />
+                            <field name="qty_lacking" />
+                            <field name="qty_lacking_needed_by" />
+                            <field name="eta_for_next_pipeline" />
+                            <field name="date_preparing" />
+                            <field name="date_next_order_validated" />
+                            <field name="date_next_order_rdd" />
+                        </tree>
+                        <form>
+                            <field name="product_id"/>
+                            <field name="product_description"/>
+                            <field name="uom_id" invisible="1" />
+                            <field name="status" invisible="1" />
+                            <field name="primay_product_list" />
+                            <field name="segment_ref_name" />
+                            <field name="rr_fmc_avg" />
+                            <field name="rr_amc" />
+                            <field name="valid_rr_fmc" />
+                            <field name="real_stock" />
+                            <field name="pipeline_qty" />
+                            <field name="reserved_stock_qty" />
+                            <field name="expired_qty_before_cons" />
+                            <field name="total_expired_qty" />
+                            <field name="projected_stock_qty" />
+                            <field name="unit_of_supply_amc" />
+                            <field name="unit_of_supply_fmc" />
+                            <field name="warning" />
+                            <field name="open_loan" />
+                            <field name="qty_lacking" />
+                            <field name="qty_lacking_needed_by" />
+                            <field name="eta_for_next_pipeline" />
+                            <field name="date_preparing" />
+                            <field name="date_next_order_validated" />
+                            <field name="date_next_order_rdd" />
+                            <field name="min_qty" />
+                            <field name="max_qty" />
+                            <field name="auto_qty" />
+                            <field name="buffer_qty" />
+                            <field name="safety_stock" />
+                            <field name="internal_lt" />
+                            <field name="external_lt" />
+                            <field name="total_lt" />
+                            <field name="order_coverage" />
+                            <field name="std_dev_hmc"  />
+                            <field name="coef_var_hmc" />
+                            <field name="std_dev_hmc_fmc"  />
+                            <field name="coef_var_hmc_fmc"  />
+                            <field name="rule"  invisible="1"/>
+                            <field name="pas_ids" attrs="{'invisible': [('rule', '!=', 'cycle')]}">
+                                <tree>
+                                    <field name="date" />
+                                    <field name="rr_fmc" />
+                                    <field name="projected" />
+                                </tree>
+                            </field>
+                            <field name="detail_ids" context="{'review_line_id': active_id}" nolabel="1" colspan="4" attrs="{'invisible': [('rule', '!=', 'cycle')]}"/>
+                            <field name="detail_exp_nocons" nolabel="1" colspan="4" attrs="{'invisible': [('rule', '=', 'cycle')]}">
+                                <tree string="Exp before ETA">
+                                    <field name="instance_id" />
+                                    <field name="stock_qty" />
+                                    <field name="batch_number" />
+                                    <field name="life_date" />
+                                    <field name="exp_qty" />
+                                </tree>
+                            </field>
+                        </form>
+                    </field>
+                    <field name="state" />
+                    <html>
+                        <script type="text/javascript">
+                        set_label = function() {
+                            if  ($('#_terp_editable').val() == 'True') {
+                                var unit = $('#time_unit option:selected ').html();
+                            } else {
+                                var unit = $('#time_unit').html();
+                            }
+                            var amc_field = $('#grid-data-column\\/line_ids\\/unit_of_supply_amc');
+                            amc_field.html(unit+' '+amc_field.html());
+                            var fmc_field = $('#grid-data-column\\/line_ids\\/unit_of_supply_fmc')
+                            fmc_field.html(unit+' '+fmc_field.html());
+                        }
+                        new ListView('line_ids').after_reload = set_label;
+                        set_label();
+                        </script>
+                    </html>
+                </form>
+            </field>
+        </record>
+
+        <record id="replenishment_inventory_review_tree" model="ir.ui.view">
+            <field name="name">replenishment.inventory.review.tree</field>
+            <field name="model">replenishment.inventory.review</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Inventory Reviews" hide_new_button="1" hide_delete_button="1">
+                    <field name="location_config_id" />
+                    <field name="generation_date" />
+                    <field name="amc_first_date" />
+                    <field name="amc_last_date" />
+                    <field name="projected_view" />
+                    <field name="final_date_projection" />
+                    <field name="line_ids" />
+                    <field name="frequence_name" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_inventory_review_search" model="ir.ui.view">
+            <field name="name">replenishment.inventory.review.search</field>
+            <field name="model">replenishment.inventory.review</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Inventory Reviews">
+                    <field name="location_config_id" />
+                    <field name="generation_date" />
+                </search>
+            </field>
+        </record>
+
+        <record id="replenishment_inventory_review_action" model="ir.actions.act_window">
+            <field name="res_model">replenishment.inventory.review</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="replenishment_inventory_review_menu"
+            action="replenishment_inventory_review_action"
+            sequence="55"
+            name="Inventory Review"
+            parent="stock_schedule.stock_automatic_procurements_menu" />
+
+        <record id="replenishment_inventory_review_line_stock_tree" model="ir.ui.view">
+            <field name="name">replenishment.inventory.review.line.stock.tree</field>
+            <field name="model">replenishment.inventory.review.line.stock</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Inventory Review Line Details">
+                    <field name="instance_id" />
+                    <field name="qty" />
+                    <field name="local_instance" invisible="1" />
+                    <field name="total_exp"  />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_product_list_tree" model="ir.ui.view">
+            <field name="name">replenishment.product.list.tree</field>
+            <field name="model">replenishment.product.list</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Product List Consistency Report" hide_new_button="1" hide_delete_button="1" hide_edit_button="1" notselectable="1">
+                    <field name="product_id" />
+                    <field name="name_seg" not_sortable="1"/>
+                    <field name="description_seg" not_sortable="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_product_list_from" model="ir.ui.view">
+            <field name="name">replenishment.product.list.form</field>
+            <field name="model">replenishment.product.list</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Product List Consistency Report" hide_new_button="1" hide_duplicate_button="1">
+                    <field name="default_code" />
+                    <field name="product_description" />
+                    <field name="name_seg" />
+                    <field name="description_seg" />
+                </form>
+            </field>
+        </record>
+
+        <record id="replenishment_product_list_search" model="ir.ui.view">
+            <field name="name">replenishment.product.list.search</field>
+            <field name="model">replenishment.product.list</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Product List Consistency Report">
+                    <filter string="Segmented" name="segmented" icon="terp-check" domain="[('segment_id', '!=', False)]"/>
+                    <filter string="Not Segmented" name="not_segemented" icon="gtk-cancel" domain="[('segment_id', '=', False)]"/>
+                    <separator orientation="vertical"/>
+                    <field name="default_code" />
+                    <field name="product_id" />
+                    <field name="name_seg" />
+                    <field name="description_seg" />
+                    <field name="list_ids" />
+                    <newline />
+                    <filter string="Group by Product" name="group_product" icon="terp-accessories-archiver" context="{'group_by':'product_id'}" />
+                </search>
+            </field>
+        </record>
+
+        <record id="replenishment_product_list_action" model="ir.actions.act_window">
+            <field name="name">Product List Consistency Report</field>
+            <field name="res_model">replenishment.product.list</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'search_default_group_product': 1}</field>
+        </record>
+
+        <menuitem id="replenishment_product_list_menu"
+            action="replenishment_product_list_action"
+            sequence="100"
+            parent="replenishment_configuration" />
+
+
+        <record id="product_stock_out_form" model="ir.ui.view">
+            <field name="name">product.stock_out.form</field>
+            <field name="model">product.stock_out</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Stock Out" hide_duplicate_button="1" hide_new_button="1" hide_delete_button="1" force_string="1">
+                    <field name="warning" invisible="1" />
+                     <html colspan="4">
+                     <p id="active_warn" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                            <translate>As this location is not the lowest level (consumption level) of your Location config the RR-AMC will not be adjusted based on this stock out entry. If you need this to be considered please create a stock out entry at the consumption level for this to be considered.</translate>
+                        </p>
+                        <script language="javascript">
+                            var active_warn = $('#warning').val();
+                            if (active_warn == "1") {
+                                msg_dom = $('#active_warn');
+                                msg_dom.show();
+                            }
+                        </script>
+                    </html>
+                    <field name="name" />
+                    <newline />
+                    <field name="location_id" attrs="{'readonly':[('state', '!=', 'draft')]}" />
+                    <group colspan="4" col="8" name="import" string="Import" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                        <field name="file_to_import" colspan="2" />
+                        <button name="import_lines" string="Import Lines" type="object" colspan="3" icon="gtk-dnd" />
+                    </group>
+                    <field name="line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" scroll="1">
+                        <tree editable="top" editable_style="new">
+                            <field name="line_number"  />
+                            <field name="product_code" displayon="noteditable" />
+                            <field name="product_description" displayon="noteditable" />
+                            <field name="product_id" displayon="editable" filter_selector="1" domain="[('id', 'not in', [substitute_1_product_id,, substitute_2_product_id, substitute_3_product_id])]"/>
+                            <field name="uom_id" invisible="1" />
+                            <field name="from_date" on_change="change_date(from_date, to_date)" />
+                            <field name="to_date" on_change="change_date(from_date, to_date)"/>
+                            <field name="nb_days" />
+                            <field name="qty_missed" />
+                            <field name="substitute_1_product_code" displayon="noteditable" />
+                            <field name="substitute_1_product_description" displayon="noteditable" />
+                            <field name="substitute_1_product_id" displayon="editable" domain="[('id', 'not in', [product_id, substitute_2_product_id, substitute_3_product_id])]"/>
+                            <field name="substitute_1_uom_id" invisible="1" />
+                            <field name="substitute_1_qty" />
+
+                            <field name="substitute_2_product_code" displayon="noteditable" />
+                            <field name="substitute_2_product_description" displayon="noteditable" />
+                            <field name="substitute_2_product_id" displayon="editable" domain="[('id', 'not in', [product_id, substitute_1_product_id, substitute_3_product_id])]"/>
+                            <field name="substitute_2_uom_id" invisible="1" />
+                            <field name="substitute_2_qty" />
+
+                            <field name="substitute_3_product_code" displayon="noteditable" />
+                            <field name="substitute_3_product_description" displayon="noteditable" />
+                            <field name="substitute_3_product_id" displayon="editable" domain="[('id', 'not in', [product_id, substitute_1_product_id, substitute_2_product_id])]"/>
+                            <field name="substitute_3_uom_id" invisible="1" />
+                            <field name="substitute_3_qty" />
+                        </tree>
+                    </field>
+                    <group colspan="4" col="10">
+                        <field name="state" />
+                        <field name="adjusted_amc" attrs="{'invisible': [('state', '!=', 'closed')]}" />
+                        <button name="set_as_cancelled" string="Cancel" type="object"  attrs="{'invisible':[('state', 'in', ['cancelled', 'closed'])]}" icon="gtk-cancel" />
+                        <button name="set_as_validated" string="Validate" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" icon="terp-check" />
+                        <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', '=', 'draft')]}" icon="gtk-go-back" />
+                        <button name="apply_set_closed" string="Close &amp; Adjust RR-AMC" type="object" attrs="{'invisible':[('state', '!=', 'validated')]}" icon="gtk-convert"/>
+                        <button name="set_closed" string="Close only" type="object" attrs="{'invisible':[('state', '!=', 'validated')]}" icon="gtk-close"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="product_stock_out_tree" model="ir.ui.view">
+            <field name="name">product.stock_out.tree</field>
+            <field name="model">product.stock_out</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Stock Outs" hide_delete_button="1" colors="grey: state in ('closed', 'cancelled')">
+                    <field name="name" />
+                    <field name="location_id" />
+                    <field name="line_ids" />
+                    <field name="adjusted_amc" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="product_stock_out_search" model="ir.ui.view">
+            <field name="name">product.stock_out.search</field>
+            <field name="model">product.stock_out</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Stock Outs">
+                    <filter string="Draft" domain="[('state', '=', 'draft')]" icon="terp-document-new"/>
+                    <filter string="Validated" domain="[('state', '=', 'validated')]" icon="gtk-ok"/>
+                    <filter string="Closed" domain="[('state', '=', 'closed')]" icon="gtk-close"/>
+                    <filter string="Cancelled" domain="[('state', '=', 'cancel')]" icon="gtk-cancel"/>
+                    <separator orientation="vertical"/>
+                    <filter string="RR-AMC Adjusted" domain="[('adjusted_amc', '=', True)]" icon="gtk-add"/>
+                    <separator orientation="vertical"/>
+                    <field name="name" />
+                    <field name="location_id" />
+                </search>
+            </field>
+        </record>
+
+        <record id="product_stock_out_action" model="ir.actions.act_window">
+            <field name="res_model">product.stock_out</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="product_stock_out_menu"
+            action="product_stock_out_action"
+            sequence="145"
+            name="Stock outs"
+            parent="stock.menu_stock_inventory_control" />
+
+    </data>
+</openerp>

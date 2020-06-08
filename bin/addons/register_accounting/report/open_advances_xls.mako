@@ -127,6 +127,7 @@
 <Column ss:Width="76.5"/>
 <Column ss:Width="79.5"/>
 <Column ss:Width="55.0"/>
+<Column ss:Width="75.0"/>
 
 		<Row>
 		    <Cell ss:StyleID="s25" ><Data ss:Type="String">${_('OPEN ADVANCES')}</Data></Cell>
@@ -156,6 +157,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Functional Debit')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Functional Credit')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Functional Currency')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Status')}</Data></Cell>
     </Row>
     % for line in getLines(o):
 
@@ -188,6 +190,8 @@
         <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.first_move_line_id and line.first_move_line_id.debit or 0.00)|x}</Data></Cell>
 
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.company_id and line.company_id.currency_id and line.company_id.currency_id.name or '')|x}</Data></Cell>
+
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.state and getSel(line, 'state') or '')|x}</Data></Cell>
     </Row>
 
     % endfor

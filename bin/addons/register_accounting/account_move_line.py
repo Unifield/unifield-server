@@ -249,7 +249,7 @@ class account_move_line(osv.osv):
         'supplier_invoice_ref': fields.related('invoice', 'name', type='char', size=64, string="Supplier inv.ref.", store=False),
         'imported_invoice_line_ids': fields.many2many('account.bank.statement.line', 'imported_invoice', 'move_line_id', 'st_line_id',
                                                       string="Imported Invoices", required=False, readonly=True),
-        'from_import_invoice_ml_id': fields.many2one('account.move.line', 'From import invoice',
+        'from_import_invoice_ml_id': fields.many2one('account.move.line', 'From import invoice', select=1,
                                                      help="Move line that have been used for an Pending Payments Wizard in order to generate the present move line"),
         'is_cheque': fields.function(_get_fake, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?",
                                      help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
@@ -301,7 +301,7 @@ class account_move_line(osv.osv):
                 view = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
                 if view:
                     view_id = view[1]
-        result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        result = super(account_move_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'search' and 'from' in context:
             if context.get('from') == 'wizard_import_invoice' or context.get('from') == 'wizard_import_cheque':
                 search = etree.fromstring(result['arch'])

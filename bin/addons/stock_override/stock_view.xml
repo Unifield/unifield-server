@@ -613,7 +613,7 @@
                                     confirm="Warning, you are going to Cancel!"
                                     />
                                 <field name="from_wkf_sourcing" invisible="1" />
-                                <button name="enter_reason"
+                                <button name="enter_reason_cr"
                                     states="assigned,confirmed,draft,shipped,updated"
                                     attrs="{'invisible': ['|', '|', ('state', 'not in', ['assigned', 'confirmed', 'draft', 'shipped', 'updated']), ('progress_memory_not_done', '!=', False), ('from_wkf_sourcing', '=', False)]}"
                                     string="Cancel &amp; Resource"
@@ -661,7 +661,7 @@
             <field name="arch" type="xml">
                 <search string="Stock Moves">
                     <group col="14" colspan="4">
-                        <filter icon="terp-go-today" string="Today" domain="[('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders processed Today or planned for Today"/>
+                        <filter icon="terp-go-today" string="Today" domain="['&amp;', ('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders processed Today or planned for Today"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state','=','done')]" help="Stock moves that have been processed"/>
                         <filter icon="terp-stock" string="Future" name="future" domain="[('state','in',('assigned','confirmed','waiting'))]" help="Stock moves that are Confirmed, Available or Waiting"/>
@@ -902,19 +902,19 @@
                                 <button name="set_delivered"
                                         icon="gtk-apply"
                                         type="object"
-                                        string="Confirm Delivery"
+                                        string="Confirm Reception"
                                         attrs="{'invisible': ['|', '|', '|', '|',
                                                               ('type', '!=', 'out'), ('subtype', '!=', 'standard'),
                                                               ('state', '!=', 'done'),
                                                               ('partner_type', 'not in', ['internal', 'intermission', 'section']),
                                                               ('is_company', '=', True),
                                                               ]}"
-                                        confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"
+                                        confirm="Synchronization engine should confirm the reception once recorded on the receiving instance, do you want to continue?"
                                 />
                                 <button name="set_delivered"
                                         icon="gtk-apply"
                                         type="object"
-                                        string="Confirm Delivery"
+                                        string="Confirm Reception"
                                         attrs="{'invisible': ['|', '|', '|',
                                                               ('type', '!=', 'out'), ('subtype', '!=', 'standard'),
                                                               ('state', '!=', 'done'),

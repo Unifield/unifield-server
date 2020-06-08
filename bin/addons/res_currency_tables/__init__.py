@@ -19,8 +19,6 @@
 #
 ##############################################################################
 
-import res_currency_table
-import res_currency
 import wizard
 import report
 

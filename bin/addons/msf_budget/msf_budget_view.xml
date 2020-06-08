@@ -31,6 +31,7 @@
                    <group col="20" colspan="4">
                        <filter string="Draft" icon="terp-document-new" domain="[('state','=','draft')]" help="Draft Budgets"/>
                        <filter name="validated" string="Validated" icon="terp-camera_test" domain="[('state','=','valid')]" help="Validated Budgets" />
+                       <filter name="Done" string="Done" icon="terp-dialog-close" domain="[('state','=','done')]" />
                        <separator orientation="vertical"/>
                        <filter name='hq' string="HQ" domain="[('instance_type', '=', 'section')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a HQ instance." icon="terp-go-home"/>
                        <filter name='coordo' string="Coordo" domain="[('instance_type', '=', 'coordo')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a Coordo instance." icon="terp-go-home"/>
@@ -277,8 +278,10 @@
             <field name="field_parent">child_complete_ids</field>
             <field name="priority" eval="16"/>
             <field name="arch" type="xml">
-                <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts"
-                 toolbar="1" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
+                <tree colors="red:(date and date&lt;=current_date or dest_without_cc==True)"
+                      string="Analytic Accounts"
+                      toolbar="1" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
+                    <field name="dest_without_cc" invisible="1"/>
                     <field name="name"/>
                     <field name="code"/>
                     <field name="description"/>
