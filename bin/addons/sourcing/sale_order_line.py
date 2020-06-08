@@ -1688,6 +1688,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                                                                  sourcing_line.supplier.id, {'uom': sourcing_line.product_uom.id})
                             if price_dict[sourcing_line.supplier.property_product_pricelist_purchase.id]:
                                 price = price_dict[sourcing_line.supplier.property_product_pricelist_purchase.id]
+                        elif not sourcing_line.product_id and sourcing_line.comment:
+                            price = sourcing_line.price_unit or 0.0
 
                         if not price:
                             price = sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0
