@@ -4856,6 +4856,7 @@ class orm(orm_template):
                     translatable = order_column.translate
                     trans_table = self._table
                     trans_obj_name = self._name
+                    trans_classic_read = order_column._classic_read
 
                     if order_column._classic_read:
                         inner_clause = '"%s"."%s"' % (self._table, order_field)
@@ -4867,18 +4868,20 @@ class orm(orm_template):
 
                             if pool_sub_obj._columns.get(subfield):
                                 translatable =  pool_sub_obj._columns[subfield].translate
+                                trans_classic_read = pool_sub_obj._columns[subfield]._classic_read
                                 if translatable:
                                     trans_table = pool_sub_obj._columns[subfield]._table
                                     trans_obj_name = pool_sub_obj._name
                             elif pool_sub_obj._inherit_fields.get(subfield):
                                 translatable =  pool_sub_obj._inherit_fields[subfield][2].translate
+                                trans_classic_read = pool_sub_obj._inherit_fields[subfield][2]._classic_read
                                 if translatable:
                                     trans_table = self.pool.get(pool_sub_obj._inherit_fields[subfield][0])._table
                                     trans_obj_name = pool_sub_obj._inherit_fields[subfield][0]
                     else:
                         continue # ignore non-readable or "non-joinable" fields
 
-                    if translatable and order_column._classic_read:
+                    if translatable and trans_classic_read:
                         translation += 1
                         trans_name = '"ir_translation%s"' % translation
                         init_field = '"%s"."%s"' % (self._table, order_field)
