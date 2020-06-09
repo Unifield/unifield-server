@@ -110325,3 +110325,14 @@ msgstr "Délai Externe (jours) :"
 msgid "Handling Lead Time (days) :"
 msgstr "Délai de traitement (jours) :"
 
+#. module: sale
+#: code:addons/sale/sale_workflow.py:746
+#, python-format
+msgid "You can not validate a Regular FO with an Inter-section Customer if it was not created by sync."
+msgstr "Vous ne pouvez pas valider une CdT Normale qui a un Client Inter-section si elle n'a pas été créée par synchro."
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:584
+#, python-format
+msgid "You can not validate a line of a Regular FO with an Inter-section Customer if it was not created by sync."
+msgstr "Vous ne pouvez pas valider une ligne de CdT Normale qui a un Client Inter-section si elle n'a pas été créée par synchro."
