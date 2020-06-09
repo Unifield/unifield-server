@@ -294,7 +294,7 @@ class purchase_order(osv.osv):
 
         import_success = False
         # Reset part of the context updated in the PO import
-        context.update({'line_number_to_confirm': [], 'ext_ref_to_confirm': [], 'job_comment': []})
+        context.update({'line_ids_to_confirm': [], 'job_comment': []})
         try:
             # get filetype
             filetype = self.pool.get('stock.picking').get_import_filetype(cr, uid, file_path, context=context)
@@ -336,35 +336,37 @@ class purchase_order(osv.osv):
 
         context.update({'auto_import_confirm_pol': True})
         # Reset part of the context updated in the PO import
-        context.update({'line_number_to_confirm': [], 'ext_ref_to_confirm': [], 'job_comment': []})
+        context.update({'line_ids_to_confirm': [], 'job_comment': []})
         res = self.auto_import_purchase_order(cr, uid, file_path, context=context)
         context['rejected_confirmation'] = 0
+
+        pol_obj = self.pool.get('purchase.order.line')
         if context.get('po_id'):
-            po = self.browse(cr, uid, context['po_id'], context=context)
+            pol_ids_to_confirm = pol_obj.search(cr, uid, [('order_id', 'in', context['po_id']), ('id', 'in', context['line_ids_to_confirm'])], context=context)
             nb_pol_confirmed = 0
             nb_pol_total = 0
-            for pol in po.order_line:
+            po_name = ''
+            for pol in pol_obj.browse(cr, uid, pol_ids_to_confirm, fields_to_fetch=['order_id', 'line_number'], context=context):
                 nb_pol_total += 1
-                if pol.line_number in context.get('line_number_to_confirm', []) or \
-                        (pol.external_ref and pol.external_ref in context.get('ext_ref_to_confirm', [])):
-                    try:
-                        self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
-                        cr.commit()
-                        nb_pol_confirmed += 1
-                    except:
-                        context['rejected_confirmation'] += 1
-                        cr.rollback()
-                        self.infolog(cr, uid, _('%s :: not able to confirm line #%s') % (po.name, pol.line_number))
-                        job_comment = context.get('job_comment', [])
-                        job_comment.append({
-                            'res_model': 'purchase.order',
-                            'res_id': po.id,
-                            'msg': _('%s line #%s cannot be confirmed') % (po.name, pol.line_number),
-                        })
-                        context['job_comment'] = job_comment
+                try:
+                    self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
+                    cr.commit()
+                    nb_pol_confirmed += 1
+                    po_name = pol.order_id.name
+                except:
+                    context['rejected_confirmation'] += 1
+                    cr.rollback()
+                    self.infolog(cr, uid, _('%s :: not able to confirm line #%s') % (pol.order_id.name, pol.line_number))
+                    job_comment = context.get('job_comment', [])
+                    job_comment.append({
+                        'res_model': 'purchase.order',
+                        'res_id': pol.order_id.id,
+                        'msg': _('%s line #%s cannot be confirmed') % (pol.order_id.name, pol.line_number),
+                    })
+                    context['job_comment'] = job_comment
 
             if nb_pol_confirmed:
-                self.log(cr, uid, po.id, _('%s: %s out of %s lines have been confirmed') % (po.name, nb_pol_confirmed, nb_pol_total))
+                self.log(cr, uid, context['po_id'], _('%s: %s out of %s lines have been confirmed') % (po_name, nb_pol_confirmed, nb_pol_total))
 
         return res
 

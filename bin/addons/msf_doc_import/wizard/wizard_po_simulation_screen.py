@@ -364,6 +364,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                 'in_ext_ref': line.external_ref,
                 'simu_id': imp_id,
                 'imp_origin': line.origin,
+                'type_change': 'ignore',
             }, context=context)
 
         return True
@@ -668,12 +669,12 @@ class wizard_import_po_simulation_screen(osv.osv):
         #cr = dbname
         try:
             wl_obj = self.pool.get('wizard.import.po.simulation.screen.line')
-            prod_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
 
 
             # Declare global variables (need this explicit declaration to clear
             # them at the end of the treatment)
+
+            # TODO ?? manage UOM, PRODUCT cache
             global PRODUCT_CODE_ID
             global UOM_NAME_ID
             global SIMU_LINES
@@ -701,6 +702,12 @@ class wizard_import_po_simulation_screen(osv.osv):
                     nb_file_header_lines += 2
                     first_line_index += 2
 
+                SIMU_LINES.setdefault(wiz.id, {})
+                SIMU_LINES[wiz.id].setdefault('line_ids', [])
+                SIMU_LINES[wiz.id].setdefault('ext_ref', {})
+                LN_BY_EXT_REF.setdefault(wiz.id, {})
+                EXT_REF_BY_LN.setdefault(wiz.id, {})
+
                 for line in wiz.simu_line_ids:
                     # 1st step : simu_line_ids contain a copy of po line
                     # Put data in cache
@@ -716,8 +723,6 @@ class wizard_import_po_simulation_screen(osv.osv):
                     l_prod = line.in_product_id and line.in_product_id.id or False
                     l_uom = line.in_uom and line.in_uom.id or False
                     # By simulation screen
-                    SIMU_LINES.setdefault(wiz.id, {})
-                    SIMU_LINES[wiz.id].setdefault('line_ids', [])
                     SIMU_LINES[wiz.id]['line_ids'].append(line.id)
                     # By line number
                     SIMU_LINES[wiz.id].setdefault(l_num, {})
@@ -735,13 +740,14 @@ class wizard_import_po_simulation_screen(osv.osv):
                     SIMU_LINES[wiz.id][l_num][l_prod][l_uom].setdefault(line.in_qty, [])
                     SIMU_LINES[wiz.id][l_num][l_prod][l_uom][line.in_qty].append(line.id)
 
-                    LN_BY_EXT_REF.setdefault(wiz.id, {})
-                    EXT_REF_BY_LN.setdefault(wiz.id, {})
+
+                    SIMU_LINES[wiz.id][l_num].setdefault(line.in_ext_ref or False, []).append(line.id)
                     if line.in_ext_ref:
-                        LN_BY_EXT_REF[wiz.id].setdefault(tools.ustr(line.in_ext_ref), [])
-                        EXT_REF_BY_LN[wiz.id].setdefault(l_num, [])
-                        LN_BY_EXT_REF[wiz.id][line.in_ext_ref].append(l_num)
-                        EXT_REF_BY_LN[wiz.id][l_num].append(tools.ustr(line.in_ext_ref))
+                        LN_BY_EXT_REF[wiz.id].setdefault(tools.ustr(line.in_ext_ref), []).append(l_num)
+                        EXT_REF_BY_LN[wiz.id].setdefault(l_num, []).append(tools.ustr(line.in_ext_ref))
+
+                        SIMU_LINES[wiz.id]['ext_ref'].setdefault(line.in_ext_ref, []).append(line.id)
+
 
                 # Variables
                 lines_to_ignored = []   # Bad formatting lines
@@ -941,15 +947,19 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                 The header values have been imported, start the importation of
                 lines
                 '''
-                file_lines = {}
-                file_po_lines = {}
-                new_po_lines = []
-                not_ok_file_lines = {}
+
+                found_wiz_lines = {}
                 # Loop on lines
                 for x in xrange(first_line_index+1, len(values)+1):
 
+                    nb_treated_lines += 1
+                    percent_completed = int(float(nb_treated_lines) / float(nb_file_lines) * 100)
+                    self.write(cr, uid, [wiz.id], {'nb_treated_lines': nb_treated_lines,
+                                                   'percent_completed': percent_completed}, context=context)
+
+
+
                     # Check mandatory fields
-                    not_ok = False
                     file_line_error = []
                     line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
                     for manda_field in LINES_COLUMNS:
@@ -961,7 +971,6 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                             except:
                                 values[x][4] = 0
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
-                            not_ok = True
                             if manda_field[0] == 4:  # Product Qty
                                 err1 = _('You can not have an order line with a negative or zero quantity. Updated quantity is ignored')
                             else:
@@ -976,247 +985,142 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
 
                     ext_ref = values.get(x, ['', ''])[1] and tools.ustr(values.get(x, ['', ''])[1])
 
-                    if context.get('auto_import_confirm_pol'):
-                        delivery_confirmed_date = values.get(x, [None]*12)[11]
-                        if delivery_confirmed_date:
-                            if line_number:
-                                context['line_number_to_confirm'] = context.get('line_number_to_confirm', []) + [line_number]
-                            elif ext_ref:
-                                context['ext_ref_to_confirm'] = context.get('ext_ref_to_confirm', []) + [ext_ref]
+
+                    is_delete_line = values[x][15].strip() == '[DELETE]'
 
                     if not line_number and not ext_ref:
-                        not_ok = True
+                        # error 0
                         err1 = _('The line must have either the line number or the external ref. set')
                         file_line_error.append(err1)
+                        continue
 
-                    if line_number and ext_ref and (ext_ref not in LN_BY_EXT_REF[wiz.id].keys() or line_number not in LN_BY_EXT_REF[wiz.id][ext_ref]):
-                        not_ok = True
-                        err1 = _('The line cannot have both Line no. and Ext. Ref')
+                    if line_number and ext_ref and line_number not in SIMU_LINES[wiz.id]:
+                        # error 1
+                        err1 = _('Combination of line number %s and ext ref %s not consistent') % (line_number, ext_ref)
+                        file_line_error.append(err1)
                         err = _('Line %s of the PO: %s') % (line_number, err1)
                         values_line_errors.append(err)
+                        continue
+
+                    if line_number and not ext_ref and line_number not in SIMU_LINES[wiz.id]:
+                        # warning error 2
+                        values_line_warnings.append(_('Line %s of the PO: %s') % (line_number, _('Cannot find line. Ignored')))
+                        continue
+
+                    if is_delete_line and line_number and ext_ref and ext_ref not in EXT_REF_BY_LN[wiz.id].get(line_number, []):
+                        # error 3
+                        err1 = _('Combination of line number %s and ext ref %s not consistent') % (line_number, ext_ref)
                         file_line_error.append(err1)
+                        err = _('Line %s of the PO: %s') % (line_number, err1)
+                        values_line_errors.append(err)
+                        continue
 
-                    if not line_number and ext_ref and ext_ref in LN_BY_EXT_REF[wiz.id].keys():
-                        line_number = LN_BY_EXT_REF[wiz.id][ext_ref][0]
+                    if not is_delete_line and line_number and ext_ref and ext_ref not in  EXT_REF_BY_LN[wiz.id].get(line_number, []) and ext_ref in LN_BY_EXT_REF[wiz.id]:
+                        # error 4
+                        err1 = _('Combination of line number %s and ext ref %s not consistent') % (line_number, ext_ref)
+                        file_line_error.append(err1)
+                        err = _('Line %s of the PO: %s') % (line_number, err1)
+                        values_line_errors.append(err)
+                        continue
 
-                    if not ext_ref and line_number and line_number in EXT_REF_BY_LN[wiz.id].keys():
-                        ext_ref = EXT_REF_BY_LN[wiz.id][line_number][0]
+                    to_delete = False
+                    to_update = False
+                    to_split = False
+                    to_create = False
+                    type_of_change = ''
+                    print 'line_number', line_number, 'ext', ext_ref
+                    if is_delete_line:
+                        if line_number:
+                            if ext_ref:
+                                # UC 4
+                                to_delete += SIMU_LINES[wiz.id][line_number][ext_ref]
+                            else:
+                                # UC 6
+                                to_delete += SIMU_LINES[wiz.id][line_number]['line_ids']
+                        elif ext_ref:
+                            # UC10
+                            to_delete += SIMU_LINES[wiz.id]['ext_ref'].get(ext_ref, [])
 
+                    else:
+                        if line_number and ext_ref:
+                            if ext_ref not in SIMU_LINES[wiz.id]['ext_ref'] and SIMU_LINES[wiz.id][line_number].get(False):
+                                # UC 1
+                                for line_id in SIMU_LINES[wiz.id][line_number].get(False):
+                                    if line_id not in found_wiz_lines:
+                                        to_update = line_id
+                                        break
+                                if not to_update:
+                                    err1 = _('Combination of line number %s and ext ref %s not consistent, lines already found if file') % (line_number, ext_ref)
+                                    file_line_error.append(err1)
+                                    err = _('Line %s of the PO: %s') % (line_number, err1)
+                                    values_line_errors.append(err)
+                                    continue
 
-                    # Get values
-                    product_id = False
-                    uom_id = False
+                            elif SIMU_LINES[wiz.id][line_number].get(ext_ref):
+                                # UC 2
+                                to_update = SIMU_LINES[wiz.id][line_number].get(ext_ref)
+                            elif ext_ref not in SIMU_LINES[wiz.id]['ext_ref'] and not SIMU_LINES[wiz.id][line_number].get(False):
+                                # UC 3
+                                to_split = SIMU_LINES[wiz.id][line_number]['line_ids'][0]
 
-                    vals = values.get(x, [])
-                    # Product
-                    if vals[2]:
-                        product_id = PRODUCT_CODE_ID.get(vals[2], False)
-                    if not product_id and vals[2]:
-                        prod_ids = prod_obj.search(cr, uid, [('default_code', '=', vals[2])], context=context)
-                        if prod_ids:
-                            product_id = prod_ids[0]
-                            PRODUCT_CODE_ID.setdefault(vals[2], product_id)
-                    # UoM
-                    if vals[5]:
-                        uom_id = UOM_NAME_ID.get(vals[5], False)
-                        if not uom_id:
-                            uom_ids = uom_obj.search(cr, uid, [('name', '=', vals[5])], context=context)
-                            if uom_ids:
-                                uom_id = uom_ids[0]
-                                UOM_NAME_ID.setdefault(vals[5], uom_id)
-                    # Qty
-                    qty = 0
-                    if vals[4]:
-                        qty = vals[4]
+                        elif line_number and not ext_ref:
+                            if SIMU_LINES[wiz.id][line_number]['line_ids']:
+                                # UC 5
+                                for line_id in SIMU_LINES[wiz.id][line_number]['line_ids']:
+                                    if line_id not in found_wiz_lines:
+                                        to_update = line_id
+                                        break
+                                if not to_update:
+                                    # UC 7
+                                    to_split = SIMU_LINES[wiz.id][line_number]['line_ids'][0]
 
-                    # AD on line
-                    file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref, vals[20:])
-
-                    # If error(s)
-                    if not_ok:
-                        not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
-
-                '''
-                Get the best matching line :
-                    1/ Within lines with same line number, same product, same UoM and same qty
-                    2/ Within lines with same line number, same product and same UoM
-                    3/ Within lines with same line number and same product
-                    4/ Within lines with same line number
-
-                If a matching line is found in one of these cases, keep the link between the
-                file line and the simulation screen line.
-                '''
-                to_del = []
-
-                # file_lines is dict
-                #  key is the excel line number
-                #  values: import line_number fl[0], import product_id fl[1], import uom_id fl[2], import qty fl[3], import ext_ref, import AD
-                for x, fl in sorted(file_lines.iteritems()):
-                    # Search lines with same line number, same product, same UoM and same qty
-                    matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
-                    tmp_wl_ids = matching_lines.get(fl[1], {}).get(fl[2], {}).get(fl[3], [])
-                    for l in tmp_wl_ids:
-                        if l not in file_po_lines:
-                            file_po_lines[l] = [(x, 'match', fl[0])]
-                            to_del.append(x)
-                            break
-
-                # Clear the dict
-                for x in to_del:
-                    del file_lines[x]
-                to_del = []
-
-                for x, fl in file_lines.iteritems():
-                    # Search lines with same line number, same product, same UoM
-                    matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
-                    tmp_wl_ids = matching_lines.get(fl[1], {}).get(fl[2], {}).get('line_ids', [])
-                    match = False
-                    for l in tmp_wl_ids:
-                        if l not in file_po_lines:
-                            file_po_lines[l] = [(x, 'match', fl[0])]
-                            to_del.append(x)
-                            match = True
-                            break
-                    if tmp_wl_ids and not match:
-                        file_po_lines[l].append((x, 'split', fl[0]))
-                        to_del.append(x)
-                # Clear the dict
-                for x in to_del:
-                    del file_lines[x]
-                to_del = []
+                        elif not line_number and ext_ref:
+                            if ext_ref in SIMU_LINES[wiz.id]['ext_ref']:
+                                for line_id in SIMU_LINES[wiz.id]['ext_ref']:
+                                    if line_id not in found_wiz_lines:
+                                        # UC9
+                                        to_update = line_id
+                            else:
+                                # UC 8
+                                to_create = True
 
 
-                for x, fl in file_lines.iteritems():
-                    # Search lines with same line_number, same product
-                    matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
-                    tmp_wl_ids = matching_lines.get(fl[1], {}).get('line_ids', [])
-                    match = False
-                    for l in tmp_wl_ids:
-                        if l not in file_po_lines:
-                            file_po_lines[l] = [(x, 'match', fl[0])]
-                            to_del.append(x)
-                            match = True
-                            break
-                    if tmp_wl_ids and not match:
-                        file_po_lines[l].append((x, 'split', fl[0]))
-                        to_del.append(x)
-                # Clear the dict
-                for x in to_del:
-                    del file_lines[x]
-                to_del = []
-
-                for x, fl in file_lines.iteritems():
-                    # Search lines with same line number
-                    matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
-                    tmp_wl_ids = matching_lines.get('line_ids', [])
-                    match = False
-                    for l in tmp_wl_ids:
-                        if l not in file_po_lines:
-                            file_po_lines[l] = [(x, 'match', fl[0])]
-                            to_del.append(x)
-                            match = True
-                            break
-                    if tmp_wl_ids and not match:
-                        file_po_lines[l].append((x, 'split', fl[0]))
-                        to_del.append(x)
-                # Clear the dict
-                for x in to_del:
-                    del file_lines[x]
-                to_del = []
-
-                # new line to create
-                for x in file_lines.keys():
-                    new_po_lines.append(x)
-
-                # Split the simu. screen line or/and update the values according
-                # to linked file line.
-                # file_po_lines is a dict
-                #   key: simu_line_id
-                #   values: [( excel line number, type: match or split, line_number )] : 1st item is the match line, other are split
-
-                for po_line, file_lines in file_po_lines.iteritems():
-                    if po_line in SIMU_LINES[wiz.id]['line_ids']:
-                        # to manage deletion
-                        index_po_line = SIMU_LINES[wiz.id]['line_ids'].index(po_line)
-                        SIMU_LINES[wiz.id]['line_ids'].pop(index_po_line)
-
-                    for file_line in file_lines:
-                        nb_treated_lines += 1
-                        percent_completed = int(float(nb_treated_lines) / float(nb_file_lines) * 100)
-                        self.write(cr, uid, [wiz.id], {'nb_treated_lines': nb_treated_lines,
-                                                       'percent_completed': percent_completed}, context=context)
-                        vals = values.get(file_line[0], [])
-                        if file_line[1] == 'match':
-                            err_msg, warn_msg = wl_obj.import_line(cr, uid, po_line, vals, cc_cache, 'match', context=context)
-                            if file_line[0] in not_ok_file_lines:
-                                wl_obj.write(cr, uid, [po_line], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
-                        elif file_line[1] == 'split':
-                            new_wl_id = wl_obj.copy(cr, uid, po_line,
+                        if to_split:
+                            print 'split', to_split
+                            new_wl_id = wl_obj.copy(cr, uid, to_split,
                                                     {'type_change': 'split',
-                                                     'chg_text': _('Split\nQTY'),
-                                                     'parent_line_id': po_line,
+                                                     'parent_line_id': to_split,
                                                      'imp_dcd': False,
                                                      'error_msg': False,
                                                      'info_msg': False,
                                                      'po_line_id': False}, context=context)
-                            err_msg1, warn_msg1 = wl_obj.import_line(cr, uid, new_wl_id, vals, cc_cache, 'split', context=context)
-                            err_msg += err_msg1
-                            warn_msg += warn_msg1
-                            if file_line[0] in not_ok_file_lines:
-                                wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
-                        # Commit modifications
-                        cr.commit()
-                    if err_msg:
-                        for err in err_msg:
-                            err = _('Line %s of the PO: %s') % (file_line[2], err)
-                            values_line_errors.append(err)
-                    if not err_msg and warn_msg:
-                        for warn in warn_msg:
-                            warn = _('Line %s of the PO: %s') % (file_line[2], warn)
-                            values_line_warnings.append(warn)
+                            type_of_change = 'split'
+                            wiz_line_ids = new_wl_id
+                        elif to_create:
+                            print 'create'
+                            new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new', 'simu_id': wiz.id}, context=context)
+                            type_of_change = 'new'
+                            wiz_line_ids = new_wl_id
+                        elif to_update:
+                            print 'upd', to_update
+                            type_of_change = 'match'
+                            wiz_line_ids = to_update
+                        elif to_delete:
+                            print 'dele', to_delete
+                            type_of_change = 'delete'
+                            wiz_line_ids = to_delete
 
+                        if isinstance(wiz_line_ids, (int, long)):
+                            found_wiz_lines[wiz_line_ids] = True
+                        else:
+                            for line_id in wiz_line_ids:
+                                found_wiz_lines[line_id] = True
 
-                # Create new lines
-                for po_line in new_po_lines:
-                    nb_treated_lines += 1
-                    percent_completed = int(float(nb_treated_lines) / float(nb_file_lines) * 100)
-                    self.write(cr, uid, [wiz.id], {'nb_treated_lines': nb_treated_lines,
-                                                   'percent_completed': percent_completed}, context=context)
-                    if po_line in SIMU_LINES[wiz.id]['line_ids']:
-                        index_po_line = SIMU_LINES[wiz.id]['line_ids'].index(po_line)
-                        SIMU_LINES[wiz.id]['line_ids'].pop(index_po_line)
-                    vals = values.get(po_line, [])
-                    new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new',
-                                                        'in_line_number': values.get(po_line, [])[0] and int(values.get(po_line, [])[0]) or False,
-                                                        'in_ext_ref': values.get(po_line, [])[1] or False,
-                                                        'simu_id': wiz.id}, context=context)
-                    err_msg, warn_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, cc_cache, 'new', context=context)
-                    if po_line in not_ok_file_lines:
-                        wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[po_line]}, context=context)
-
-                    line_n = vals[0] or False
-                    if err_msg:
-                        for err in err_msg:
-                            if line_n:
-                                err = _('Line %s of the PO: %s') % (line_n, err)
-                            else:
-                                err = _('Line %s of the file: %s') % (po_line, err)
-                            values_line_errors.append(err)
-                    if not err_msg and warn_msg:
-                        for warn in warn_msg:
-                            if line_n:
-                                warn = _('Line %s of the PO: %s') % (line_n, warn)
-                            else:
-                                warn = _('Line %s of the file: %s') % (po_line, warn)
-                            values_line_warnings.append(warn)
-                    # Commit modifications
-                    cr.commit()
-
-                # Lines to delete
-                for po_line in SIMU_LINES[wiz.id]['line_ids']:
-                    line_data = wl_obj.read(cr, uid, [po_line], ['type_change', 'in_uom'], context=context)[0]
-                    if line_data['type_change'] != 'del':
-                        wl_obj.write(cr, uid, po_line, {'type_change': 'ignore', 'imp_uom': line_data['in_uom']}, context=context)
+                        err_msg, warn_msg = wl_obj.import_line(cr, uid, wiz_line_ids, values[x], cc_cache, type_of_change, context=context)
+                        if err_msg:
+                            values_line_errors += err_msg
+                        if warn_msg:
+                            values_line_warnings += warn_msg
 
                 '''
                 We generate the message which will be displayed on the simulation
@@ -1386,38 +1290,28 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        delete_line_ids = self.search(cr, uid, [
-            ('imp_comment', '=', '[DELETE]')
-        ], context=context)
-        delete_line_numbers = set()
-        for x in self.read(cr, uid, delete_line_ids, ['in_line_number'], context=context):
-            if x['in_line_number']:
-                delete_line_numbers.add(x['in_line_number'])
 
         res = {}
         chg_dict = dict(self.fields_get(cr, uid, ['type_change'], context=context).get('type_change', {}).get('selection', []))
         for line in self.browse(cr, uid, ids, context=context):
-            chg = ''
-            if line.type_change in ('warning', 'del', 'ignore'):
-                chg = chg_dict.get(line.type_change) or ''
-            elif line.chg_text:
-                chg = line.chg_text
-            elif line.type_change:
-                chg = chg_dict.get(line.type_change) or ''
-            res[line.id] = {'in_product_id': False,
-                            'in_nomen': False,
-                            'in_comment': False,
-                            'in_qty': 0.00,
-                            'in_uom': False,
-                            'in_drd': False,
-                            'in_dcd': False,
-                            'in_price': 0.00,
-                            'in_currency': False,
-                            'in_ext_ref': False,
-                            'imp_discrepancy': 0.00,
-                            'change_ok': False,
-                            'chg_text': chg
-                            }
+            res[line.id] = {
+                'in_product_id': False,
+                'in_nomen': False,
+                'in_comment': False,
+                'in_qty': 0.00,
+                'in_uom': False,
+                'in_drd': False,
+                'in_dcd': False,
+                'in_price': 0.00,
+                'in_currency': False,
+                'in_ext_ref': False,
+                'imp_discrepancy': 0.00,
+                'change_ok': False,
+            }
+            chg = []
+            if line.type_change != 'match':
+                chg.append(chg_dict.get(line.type_change))
+
             if line.po_line_id:
                 l = line.po_line_id
                 res[line.id]['in_product_id'] = l.product_id and l.product_id.id or False
@@ -1430,7 +1324,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 res[line.id]['in_price'] = l.price_unit
                 res[line.id]['in_currency'] = l.currency_id and l.currency_id.id or False
                 res[line.id]['in_ext_ref'] = l.external_ref or False
-                if line.type_change != '':
+                if line.type_change not in ('warning', 'del', 'ignore'):
                     if line.imp_qty and line.imp_price:
                         disc = (line.imp_qty*line.imp_price)-(line.in_qty*line.in_price)
                         res[line.id]['imp_discrepancy'] = disc
@@ -1440,38 +1334,38 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             not res[line.id]['in_product_id'] and line.imp_product_id or \
                             res[line.id]['in_product_id'] != line.imp_product_id.id:
                         prod_change = True
-                        if not line.chg_text and line.imp_product_id or (not line.imp_product_id and line.in_comment):
-                            res[line.id]['chg_text'] += _('\nPROD')
+                        if line.imp_product_id or (not line.imp_product_id and line.in_comment):
+                            chg.append(_('PROD'))
                     qty_change = not(res[line.id]['in_qty'] == line.imp_qty)
-                    if not line.chg_text and (line.imp_product_id or (not line.imp_product_id and line.in_comment)) \
+                    if (line.imp_product_id or (not line.imp_product_id and line.in_comment)) \
                             and qty_change:
-                        res[line.id]['chg_text'] += _('\nQTY')
+                        chg.append(_('QTY'))
                     price_change = not(res[line.id]['in_price'] == line.imp_price)
-                    if not line.chg_text and (line.imp_product_id or (not line.imp_product_id and line.in_comment)) \
+                    if (line.imp_product_id or (not line.imp_product_id and line.in_comment)) \
                             and price_change:
-                        res[line.id]['chg_text'] += _('\nPRICE')
-                    if not line.chg_text and line.ad_info:
-                        res[line.id]['chg_text'] += _('\nAD')
+                        chg.append(_('PRICE'))
+                    if line.ad_info:
+                        chg.append(_('AD'))
+
+                    if line.imp_external_ref != l.external_ref:
+                        print line.imp_external_ref, l.external_ref
+                        chg.append(_('ExtRef'))
                     drd_change = not(res[line.id]['in_drd'] == line.imp_drd)
                     dcd_change = not(res[line.id]['in_dcd'] == line.imp_dcd)
-                    to_delete = line.imp_comment == '[DELETE]'
-                    if to_delete:
-                        delete_line_numbers.add(line.in_line_number)
 
-                    if line.simu_id.state != 'draft' and (prod_change or qty_change or price_change or drd_change or dcd_change or to_delete or line.ad_info):
+                    if line.simu_id.state != 'draft' and (prod_change or qty_change or price_change or drd_change or dcd_change or line.ad_info):
                         res[line.id]['change_ok'] = True
                 elif line.type_change == 'del':
-                    res[line.id]['imp_discrepancy'] = -(line.in_qty*line.in_price)
+                    res[line.id]['imp_discrepancy'] = -(l.in_qty*l.in_price)
+                    res[line.id]['change_ok'] = True
             else:
                 if line.ad_info:
-                    res[line.id]['chg_text'] = "%s%s" % (line.chg_text, _("\nAD"))
+                    chg.append(_("AD"))
                 res[line.id]['imp_discrepancy'] = line.imp_qty*line.imp_price
                 if line.imp_uom:
                     res[line.id]['in_uom'] = line.imp_uom.id
 
-            if line.type_change in ('warning', 'del', 'ignore'):
-                res[line.id]['chg_text'] = chg_dict.get(line.type_change) or ''
-
+            res[line.id]['chg_text'] = "\n".join(chg)
         return res
 
     def _get_str_line_number(self, cr, uid, ids, field_name, args, context=None):
@@ -1536,7 +1430,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                        store={'wizard.import.po.simulation.screen.line': (lambda self, cr, uid, ids, c={}: ids, ['in_line_number'], 20),}),
         'in_ext_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'type_change': fields.selection([('', ''), ('error', 'Error'), ('new', 'New'),
-                                         ('split', 'Split'), ('del', 'Del'),
+                                         ('split', 'Split'), ('del', 'Del'), ('match', 'Match'),
                                          ('ignore', 'Ignore'), ('warning', 'Warning')],
                                         string='Change type', readonly=True),
         'imp_product_id': fields.many2one('product.product', string='Product',
@@ -1589,10 +1483,13 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
         return True
 
-    def import_line(self, cr, uid, ids, values, cc_cache, import_type=False, context=None):
+    def import_line(self, cr, uid, ids, values, cc_cache, import_type, context=None):
         '''
         Write the line with the values
         '''
+
+        assert import_type in ('match', 'split', 'new', 'delete')
+
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         sale_obj = self.pool.get('sale.order')
@@ -1616,43 +1513,19 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 continue
 
             if line.po_line_id.state in ('confirmed', 'done'):
-                write_vals['type_change'] = 'warning'
-                warnings.append(_('PO line has been confirmed and consequently is not editable'))
+                self.write(cr, uid, [line.id], {'type_change': 'warning', 'error_msg': _('PO line has been confirmed and consequently is not editable')}, context=context)
+                continue
+
+            if import_type == 'delete':
+                if line.po_line_id.state not in ('validated', 'validated_n'):
+                    self.write(cr, uid, [line.id], {'type_change': 'ignore'}, context=context)
+                    continue
+                else:
+                    self.write(cr, uid, [line.id], {'type_change': 'del'}, context=context)
+                    continue
 
             # External Ref.
-            write_vals['imp_external_ref'] = values[1]
-            pol_ids = None
-            if line.in_line_number:
-                pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', line.simu_id.order_id.id), ('line_number', '=', line.in_line_number)], context=context)
-                if not pol_ids and not (write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]'):
-                    warnings.append(_('Line no is not consistent with validated PO.'))
-                    write_vals['in_line_number'] = False
-                    write_vals['type_change'] = 'warning'
-
-            if write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]':
-                if not pol_ids:
-                    write_vals['type_change'] = 'warning'
-                    if line.in_line_number:
-                        warnings.append(_('The import file is inconsistent. Line no. %s is not existing or was previously deleted') % line.in_line_number)
-                    else:
-                        warnings.append(_('The import file is inconsistent. The matching line is not existing or was previously deleted'))
-                else:
-                    if line.po_line_id.state in ('validated', 'validated_n'):
-                        write_vals['type_change'] = 'del'
-                        if line.in_line_number:
-                            to_delete = self.search(cr, uid, [
-                                ('simu_id', '=', line.simu_id.id),
-                                ('in_line_number', '=', line.in_line_number),
-                            ], context=context)
-                            self.write(cr, uid, to_delete, {'type_change': 'del'}, context=context)
-                    else:
-                        write_vals['type_change'] = 'ignore'
-
-            if not line.in_line_number and not write_vals.get('imp_external_ref'):
-                errors.append(_('The line should have a Line no. or an Ext Ref.'))
-                write_vals['in_line_number'] = False
-                write_vals['imp_external_ref'] = False
-                write_vals['type_change'] = 'error'
+            write_vals['imp_external_ref'] = values[1] or False
 
             # Product
             if (values[2] and values[2] == line.in_product_id.default_code):
@@ -1885,6 +1758,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 if not err_msg and warnings:
                     err_msg = ' - '.join(warnings)
                 write_vals['error_msg'] = err_msg
+            else:
+                write_vals['type_change'] = import_type
+
 
             self.write(cr, uid, [line.id], write_vals, context=context)
 
@@ -1945,6 +1821,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 'price_unit': line.imp_price,
                 'product_qty': line.imp_qty,
             }
+
+            has_delivery = False
             if line.imp_drd:
                 line_vals['date_planned'] = line.imp_drd
             if line.imp_project_ref:
@@ -1956,6 +1834,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             if line.imp_external_ref:
                 line_vals['external_ref'] = line.imp_external_ref
             if line.imp_dcd:
+                has_delivery = True
                 line_vals['confirmed_delivery_date'] = line.imp_dcd
             if line.imp_stock_take_date:
                 line_vals['stock_take_date'] = line.imp_stock_take_date,
@@ -1990,7 +1869,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
                         new_po_line_id = split_obj.split_line(cr, uid, split_id,
                                                               context=context)
+
+                        if context.get('auto_import_confirm_pol') and has_delivery:
+                            context['line_ids_to_confirm'] = context.get('line_ids_to_confirm', []) + [new_po_line_id]
+
                         context['from_simu_screen'] = False
+
                     if not new_product_split and not new_po_line_id:
                         continue  # split line has failed or case not to be done
 
@@ -2016,6 +1900,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         wf_service.trg_validate(uid, 'purchase.order.line', split_line_id, 'validated', cr)
                         if line.parent_line_id.po_line_id.linked_sol_id:
                             line_obj.update_fo_lines(cr, uid, line.parent_line_id.po_line_id.id, context=context)
+                        if context.get('auto_import_confirm_pol') and has_delivery:
+                            context['line_ids_to_confirm'] = context.get('line_ids_to_confirm', []) + [split_line_id]
                     else:
                         if line.imp_dcd:
                             line_vals['esc_confirmed'] = line.esc_conf
@@ -2058,6 +1944,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     'msg': _('%s: New line #%s created.') % (line.simu_id.order_id.name, new_line_numb),
                 })
                 context['job_comment'] = job_comment
+                if context.get('auto_import_confirm_pol') and has_delivery:
+                    context['line_ids_to_confirm'] = context.get('line_ids_to_confirm', []) + [new_line_id]
             elif line.po_line_id:
                 if line.esc_conf:
                     line_vals['esc_confirmed'] = line.esc_conf
@@ -2065,6 +1953,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals['stock_take_date'] = line.simu_id.order_id.stock_take_date
 
                 line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
+                if context.get('auto_import_confirm_pol') and has_delivery:
+                    context['line_ids_to_confirm'] = context.get('line_ids_to_confirm', []) + [line.po_line_id.id]
             simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
             cr.commit()
 
