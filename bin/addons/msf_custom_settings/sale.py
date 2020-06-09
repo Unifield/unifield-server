@@ -40,11 +40,12 @@ class sale_order(osv.osv):
             # Check that partner correspond
             if partner_id:
                 partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
-                if partner and partner.partner_type not in ['internal', 'intermission', 'section', 'external']:
-                    return {'warning': {'title': _('Error'), 'message': msg}}
+                current_type = self.browse(cr, uid, id[0], fields_to_fetch=['order_type'], context=context).order_type
+                if partner and (partner.partner_type not in ['internal', 'intermission', 'section', 'external'] or
+                        (partner.partner_type == 'section' and order_type == 'regular')):
+                    return {'value': {'order_type': current_type}, 'warning': {'title': _('Error'), 'message': msg}}
         else:
             pass
-
 
         if partner_id and order_type:
             res.update({'value': {'order_policy': 'picking'}})

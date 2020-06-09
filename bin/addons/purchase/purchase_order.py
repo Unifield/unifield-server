@@ -1907,7 +1907,6 @@ class purchase_order(osv.osv):
         fiscal_position = part.property_account_position and part.property_account_position.id or False
         res = {'value':{'partner_address_id': addr['default'], 'pricelist_id': pricelist, 'fiscal_position': fiscal_position}}
 
-
         partner_obj = self.pool.get('res.partner')
         product_obj = self.pool.get('product.product')
         partner = partner_obj.read(cr, uid, part.id, ['partner_type'])
@@ -1922,24 +1921,7 @@ class purchase_order(osv.osv):
                             return res
         if partner['partner_type'] in ('internal', 'esc'):
             res['value']['invoice_method'] = 'manual'
-        elif ids and partner['partner_type'] == 'intermission':
-            try:
-                intermission = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                                                                   'analytic_account_project_intermission')[1]
-            except ValueError:
-                intermission = 0
-            cr.execute('''select po.id from purchase_order po
-                left join purchase_order_line pol on pol.order_id = po.id
-                left join cost_center_distribution_line cl1 on cl1.distribution_id = po.analytic_distribution_id
-                left join cost_center_distribution_line cl2 on cl2.distribution_id = pol.analytic_distribution_id
-                where po.id in %s and (cl1.analytic_id!=%s or cl2.analytic_id!=%s)''', (tuple(ids), intermission, intermission))
-            if cr.rowcount > 0:
-                res.setdefault('warning', {})
-                msg = _('You set an intermission partner, at validation Cost Centers will be changed to intermission.')
-                if res.get('warning', {}).get('message'):
-                    res['warning']['message'] += msg
-                else:
-                    res['warning'] = {'title': _('Warning'), 'message': msg}
+
         res = common_onchange_partner_id(self, cr, uid, ids, part=part.id, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         # reset confirmed date
         res.setdefault('value', {}).update({'delivery_confirmed_date': False})
