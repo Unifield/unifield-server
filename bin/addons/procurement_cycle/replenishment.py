@@ -904,11 +904,13 @@ class replenishment_segment(osv.osv):
                                                     ndays = (x - new_begin).days + 1
                                                     qty = num_fmc/30.44*ndays
                                                     pas_full -= qty
-                                                    if pas_full < 0 and date_before_rdd:
-                                                        qty_lacking += pas_full
-
-                                                    # new available qty is the qty in the pipe
-                                                    pas_full = pipe_data[x]
+                                                    if pas_full < 0:
+                                                        if date_before_rdd:
+                                                            qty_lacking += pas_full
+                                                        # new available qty is the qty in the pipe
+                                                        pas_full = pipe_data[x]
+                                                    else:
+                                                        pas_full += pipe_data[x]
                                                     new_begin = pipe_date.pop(0)
                                                 else:
                                                     break
