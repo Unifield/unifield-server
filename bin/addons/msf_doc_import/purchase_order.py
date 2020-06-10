@@ -342,7 +342,7 @@ class purchase_order(osv.osv):
 
         pol_obj = self.pool.get('purchase.order.line')
         if context.get('po_id'):
-            pol_ids_to_confirm = pol_obj.search(cr, uid, [('order_id', 'in', context['po_id']), ('id', 'in', context['line_ids_to_confirm'])], context=context)
+            pol_ids_to_confirm = pol_obj.search(cr, uid, [('order_id', '=', context['po_id']), ('id', 'in', context['line_ids_to_confirm'])], context=context)
             nb_pol_confirmed = 0
             nb_pol_total = 0
             po_name = ''
