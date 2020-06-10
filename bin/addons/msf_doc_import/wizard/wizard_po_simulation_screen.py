@@ -1035,13 +1035,13 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                         if line_number:
                             if ext_ref:
                                 # UC 4
-                                to_delete = SIMU_LINES[wiz.id][line_number][ext_ref]
+                                to_delete = self.best_matching_lines(cr, uid, [lx for lx in SIMU_LINES[wiz.id][line_number][ext_ref] if lx not in found_wiz_lines], values[x][2], values[x][4], context)
                             else:
-                                # UC 6
+                                # UC 6: multiple deletion
                                 to_delete = SIMU_LINES[wiz.id][line_number]['line_ids']
                         elif ext_ref:
                             # UC10
-                            to_delete = SIMU_LINES[wiz.id]['ext_ref'].get(ext_ref, [])
+                            to_delete = self.best_matching_lines(cr, uid, [lx for lx in SIMU_LINES[wiz.id]['ext_ref'].get(ext_ref, []) if lx not in found_wiz_lines], values[x][2], values[x][4], context)
 
 
                     else:
