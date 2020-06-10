@@ -963,8 +963,11 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
 
 
                     # Check mandatory fields
-                    file_line_error = []
-                    line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
+                    try:
+                        line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
+                    except:
+                        line_number = False
+
                     for manda_field in LINES_COLUMNS:
                         if manda_field[0] == 4: #product qty
                             try:
@@ -984,7 +987,6 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                                 err = _('Line ref %s of the PO: %s') % (values.get(x, ['', ''])[1], err1)
 
                             values_line_errors.append(err)
-                            file_line_error.append(err1)
 
                     ext_ref = values.get(x, ['', ''])[1] and tools.ustr(values.get(x, ['', ''])[1])
 
@@ -994,15 +996,13 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                     if not line_number and not ext_ref:
                         # error 0
                         err1 = _('The line must have either the line number or the external ref. set')
-                        file_line_error.append(err1)
+                        values_line_errors.append(err1)
                         continue
 
                     if line_number and ext_ref and line_number not in SIMU_LINES[wiz.id]:
                         # error 1
                         err1 = _('Combination of line number %s and ext ref %s not consistent') % (line_number, ext_ref)
-                        file_line_error.append(err1)
-                        err = _('Line %s of the PO: %s') % (line_number, err1)
-                        values_line_errors.append(err)
+                        values_line_errors.append(_('Line %s of the PO: %s') % (line_number, err1))
                         continue
 
                     if line_number and not ext_ref and line_number not in SIMU_LINES[wiz.id]:
@@ -1013,17 +1013,13 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                     if is_delete_line and line_number and ext_ref and ext_ref not in EXT_REF_BY_LN[wiz.id].get(line_number, []):
                         # error 3
                         err1 = _('Combination of line number %s and ext ref %s not consistent') % (line_number, ext_ref)
-                        file_line_error.append(err1)
-                        err = _('Line %s of the PO: %s') % (line_number, err1)
-                        values_line_errors.append(err)
+                        values_line_errors.append(_('Line %s of the PO: %s') % (line_number, err1))
                         continue
 
                     if not is_delete_line and line_number and ext_ref and ext_ref not in  EXT_REF_BY_LN[wiz.id].get(line_number, []) and ext_ref in LN_BY_EXT_REF[wiz.id]:
                         # error 4
                         err1 = _('Combination of line number %s and ext ref %s not consistent') % (line_number, ext_ref)
-                        file_line_error.append(err1)
-                        err = _('Line %s of the PO: %s') % (line_number, err1)
-                        values_line_errors.append(err)
+                        values_line_errors.append( _('Line %s of the PO: %s') % (line_number, err1))
                         continue
 
                     to_delete = False
@@ -1095,10 +1091,8 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                         type_of_change = 'delete'
                         wiz_line_ids = to_delete
                     else:
-                        err1 = _('Combination of line number %s and ext ref %s not consistent, lines already found if file') % (line_number, ext_ref)
-                        file_line_error.append(err1)
-                        err = _('Line %s of the PO: %s') % (line_number, err1)
-                        values_line_errors.append(err)
+                        err1 = _('Combination of line number %s and ext ref %s not consistent or line duplicated in file') % (line_number, ext_ref)
+                        values_line_errors.append(_('Line %s of the PO: %s') % (line_number, err1))
                         continue
 
                     if isinstance(wiz_line_ids, (int, long)):
@@ -1108,10 +1102,21 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                             found_wiz_lines[line_id] = True
 
                     err_msg, warn_msg = wl_obj.import_line(cr, uid, wiz_line_ids, values[x], cc_cache, type_of_change, context=context)
+                    locate_error = []
+                    if err_msg or warn_msg:
+                        if line_number:
+                            locate_error.append(_('Line %s of the PO') % line_number)
+                        if ext_ref:
+                            locate_error.append(_('ExtRef %s') % ext_ref)
+                        if wiz.filetype == 'excel':
+                            locate_error.append(_('Line %s of the file') % x)
+                        else:
+                            locate_error.append(_('Record node #%s') % nb_treated_lines)
+
                     if err_msg:
-                        values_line_errors += err_msg
+                        values_line_errors.append('%s: %s' % (', '.join(locate_error), ' '.join(err_msg)))
                     if warn_msg:
-                        values_line_warnings += warn_msg
+                        values_line_warnings.append('%s: %s' % (', '.join(locate_error), ' '.join(warn_msg)))
 
                 '''
                 We generate the message which will be displayed on the simulation
