@@ -1035,13 +1035,13 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                         if line_number:
                             if ext_ref:
                                 # UC 4
-                                to_delete += SIMU_LINES[wiz.id][line_number][ext_ref]
+                                to_delete = SIMU_LINES[wiz.id][line_number][ext_ref]
                             else:
                                 # UC 6
-                                to_delete += SIMU_LINES[wiz.id][line_number]['line_ids']
+                                to_delete = SIMU_LINES[wiz.id][line_number]['line_ids']
                         elif ext_ref:
                             # UC10
-                            to_delete += SIMU_LINES[wiz.id]['ext_ref'].get(ext_ref, [])
+                            to_delete = SIMU_LINES[wiz.id]['ext_ref'].get(ext_ref, [])
 
 
                     else:
@@ -1073,45 +1073,45 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                                 to_create = True
 
 
-                        if to_split:
-                            new_wl_id = wl_obj.copy(cr, uid, to_split,
-                                                    {'type_change': 'split',
-                                                     'parent_line_id': to_split,
-                                                     'imp_dcd': False,
-                                                     'error_msg': False,
-                                                     'info_msg': False,
-                                                     'in_ext_ref': False,
-                                                     'po_line_id': False}, context=context)
-                            type_of_change = 'split'
-                            wiz_line_ids = new_wl_id
-                        elif to_create:
-                            new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new', 'simu_id': wiz.id}, context=context)
-                            type_of_change = 'new'
-                            wiz_line_ids = new_wl_id
-                        elif to_update:
-                            type_of_change = 'match'
-                            wiz_line_ids = to_update
-                        elif to_delete:
-                            type_of_change = 'delete'
-                            wiz_line_ids = to_delete
-                        else:
-                            err1 = _('Combination of line number %s and ext ref %s not consistent, lines already found if file') % (line_number, ext_ref)
-                            file_line_error.append(err1)
-                            err = _('Line %s of the PO: %s') % (line_number, err1)
-                            values_line_errors.append(err)
-                            continue
+                    if to_split:
+                        new_wl_id = wl_obj.copy(cr, uid, to_split,
+                                                {'type_change': 'split',
+                                                 'parent_line_id': to_split,
+                                                 'imp_dcd': False,
+                                                 'error_msg': False,
+                                                 'info_msg': False,
+                                                 'in_ext_ref': False,
+                                                 'po_line_id': False}, context=context)
+                        type_of_change = 'split'
+                        wiz_line_ids = new_wl_id
+                    elif to_create:
+                        new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new', 'simu_id': wiz.id}, context=context)
+                        type_of_change = 'new'
+                        wiz_line_ids = new_wl_id
+                    elif to_update:
+                        type_of_change = 'match'
+                        wiz_line_ids = to_update
+                    elif to_delete:
+                        type_of_change = 'delete'
+                        wiz_line_ids = to_delete
+                    else:
+                        err1 = _('Combination of line number %s and ext ref %s not consistent, lines already found if file') % (line_number, ext_ref)
+                        file_line_error.append(err1)
+                        err = _('Line %s of the PO: %s') % (line_number, err1)
+                        values_line_errors.append(err)
+                        continue
 
-                        if isinstance(wiz_line_ids, (int, long)):
-                            found_wiz_lines[wiz_line_ids] = True
-                        else:
-                            for line_id in wiz_line_ids:
-                                found_wiz_lines[line_id] = True
+                    if isinstance(wiz_line_ids, (int, long)):
+                        found_wiz_lines[wiz_line_ids] = True
+                    else:
+                        for line_id in wiz_line_ids:
+                            found_wiz_lines[line_id] = True
 
-                        err_msg, warn_msg = wl_obj.import_line(cr, uid, wiz_line_ids, values[x], cc_cache, type_of_change, context=context)
-                        if err_msg:
-                            values_line_errors += err_msg
-                        if warn_msg:
-                            values_line_warnings += warn_msg
+                    err_msg, warn_msg = wl_obj.import_line(cr, uid, wiz_line_ids, values[x], cc_cache, type_of_change, context=context)
+                    if err_msg:
+                        values_line_errors += err_msg
+                    if warn_msg:
+                        values_line_warnings += warn_msg
 
                 '''
                 We generate the message which will be displayed on the simulation
