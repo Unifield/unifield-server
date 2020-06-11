@@ -110325,3 +110325,8 @@ msgstr "Délai Externe (jours) :"
 msgid "Handling Lead Time (days) :"
 msgstr "Délai de traitement (jours) :"
 
+#. module: stock
+#: code:addons/stock/stock.py:1813
+#, python-format
+msgid "is dispatched."
+msgstr "est expédié."
