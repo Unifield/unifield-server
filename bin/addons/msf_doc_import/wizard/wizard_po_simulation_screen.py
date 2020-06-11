@@ -365,7 +365,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                 'simu_id': imp_id,
                 'imp_origin': line.origin,
                 'type_change': 'ignore',
-                'imp_uom': line.uom_id and line.uom_id.id,
+                'imp_uom': line.product_uom and line.product_uom.id,
             }, context=context)
 
         return True
