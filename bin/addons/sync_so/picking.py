@@ -525,7 +525,7 @@ class stock_picking(osv.osv):
                     self._add_to_shipped_moves(already_shipped_moves, move_id, data['quantity'])
 
             # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as in_id
-            new_picking = self.do_incoming_shipment(cr, uid, in_processor, context)
+            new_picking = self.do_incoming_shipment(cr, uid, in_processor, shipment_ref=shipment_ref, context=context)
 
             # Set the backorder reference to the IN !!!! THIS NEEDS TO BE CHECKED WITH SUPPLY PM!
             if new_picking != in_id:
