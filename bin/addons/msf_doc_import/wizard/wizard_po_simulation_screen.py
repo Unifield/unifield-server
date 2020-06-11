@@ -365,6 +365,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                 'simu_id': imp_id,
                 'imp_origin': line.origin,
                 'type_change': 'ignore',
+                'imp_uom': line.uom_id and line.uom_id.id,
             }, context=context)
 
         return True
@@ -991,7 +992,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_type, possible_
                     ext_ref = values.get(x, ['', ''])[1] and tools.ustr(values.get(x, ['', ''])[1])
 
 
-                    is_delete_line = values[x][15].strip() == '[DELETE]'
+                    is_delete_line = values[x][15] and values[x][15].strip() == '[DELETE]'
 
                     if not line_number and not ext_ref:
                         # error 0
@@ -1301,7 +1302,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 'in_dcd': False,
                 'in_price': 0.00,
                 'in_currency': False,
-                'in_ext_ref': False,
                 'imp_discrepancy': 0.00,
                 'change_ok': False,
             }
@@ -1344,8 +1344,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     if line.ad_info:
                         chg.append(_('AD'))
 
-                    if line.imp_external_ref != l.external_ref:
-                        chg.append(_('ExtRef'))
+                    #if line.imp_external_ref != l.external_ref:
+                    #    chg.append(_('ExtRef'))
                     drd_change = not(res[line.id]['in_drd'] == line.imp_drd)
                     dcd_change = not(res[line.id]['in_dcd'] == line.imp_dcd)
 
@@ -1357,8 +1357,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             else:
                 if line.ad_info:
                     chg.append(_("AD"))
-                if line.imp_external_ref:
-                    chg.append(_('ExtRef'))
+                #if line.imp_external_ref:
+                #    chg.append(_('ExtRef'))
                 res[line.id]['imp_discrepancy'] = line.imp_qty*line.imp_price
                 if line.imp_uom:
                     res[line.id]['in_uom'] = line.imp_uom.id
