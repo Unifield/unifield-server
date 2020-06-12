@@ -189,10 +189,10 @@ if (auto_field && auto_field.val()){
 </%def>
 
 <div class="box-a list-a">
-% if any([field != 'button' and field_attrs.get('filter_selector') for field, field_attrs in headers]):
+% if any([field != 'button' and field_attrs.get('filter_selector') for field, field_attrs in headers+hiddens]):
 <div class="o2m_filter_block">
     <table id="${name}_o2m_filter" class="o2m_header_filter"><tr>
-        % for (field, field_attrs) in headers:
+        % for (field, field_attrs) in headers+hiddens:
             % if field != 'button' and field_attrs.get('filter_selector'):
                <% has_filter = True %>
                 <td> ${field_attrs['string']|br}:
