@@ -132,6 +132,7 @@ SELECT res_id, touched
     FROM ir_model_data
     WHERE module = 'sd' AND
           model = %s AND
+          COALESCE(touched, '') != '[]' AND
           """+add_sql+"""
           ("""+field+""" < last_modification OR """+field+""" IS NULL)""",
                        sql_params) # not_a_user_entry
@@ -267,6 +268,7 @@ SELECT res_id, touched
             'account.bank.statement': ['line_ids'],
             'res.currency': ['rate_ids'],
             'product.list': [],
+            'account.move.reconcile': ['line_id', 'line_partial_ids'],
         }
 
         _previous_calls = _previous_calls or []
@@ -324,10 +326,15 @@ SELECT res_id, touched
                 whole_fields+['id'])
             # handle one2many
             o2m_fields = filter_o2m(whole_fields)
+
             # handle one2many (because orm don't call write() on them)
             for field, column in o2m_fields:
                 for next_rec in current_values.values():
-                    if column._obj == self._name: continue
+                    if column._obj == self._name:
+                        continue
+                    if self._name in write_skip_o2m and field in write_skip_o2m[self._name]:
+                        continue
+
                     self.pool.get(column._obj).touch(
                         cr, uid, next_rec[field],
                         None, data_base_values,
@@ -638,7 +645,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
 """, [self._name, ids])
         return True
 
-    def search_deleted(self, cr, user, module=None, res_ids=None, context=None):
+    def search_deleted(self, cr, user, module=None, res_ids=None, context=None, for_sync=False):
         """
         Search for deleted entries in the table. It search for xmlids that are linked to not existing records. Beware that the domain applies to the ir.model.data
 
@@ -657,6 +664,8 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
         if module:
             sql_add = ' AND d.module=%(module)s '
             sql_params['module'] = module
+        if for_sync:
+            sql_add += ' AND (d.sync_date < d.last_modification OR d.sync_date IS NULL) '
         if res_ids:
             sql_add += ' AND d.res_id in %(res_ids)s '
             sql_params['res_ids'] = tuple(res_ids)

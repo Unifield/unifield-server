@@ -75,7 +75,7 @@ class register_reopen(osv.osv_memory):
                     raise osv.except_osv(_('Warning'), _('The period \'%s\' of this register is already \'%s\', the register cannot be reopen!') % (period.name, period.state))
 
                 # re-open case
-                cashbox.write({'state': 'open', 'closing_balance_frozen': False})
+                cashbox.write({'state': 'open'})
                 return { 'type': 'ir.actions.act_window_close', 'res_id': w_id}
             # Write-off choice have been disabled since UTP-209
             else:

@@ -4,7 +4,6 @@
 #
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -28,7 +27,6 @@ from tempfile import NamedTemporaryFile
 import csv
 from tools.translate import _
 import time
-#import locale
 from account_override import ACCOUNT_RESTRICTED_AREA
 from tools.misc import ustr
 
@@ -178,6 +176,9 @@ class hq_entries_import_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('Cost Center "%s" doesn\'t exist!') % (cost_center,))
             cc_id = cc_id[0]
             if cc_id:
+                # check that the CC or its parent is targeted to an instance
+                if not hq_obj.get_target_id(cr, uid, cc_id, context=context):
+                    raise osv.except_osv(_('Error'), _('The Cost Center "%s" (or its parent) must be "targeted" to a Proprietary Instance.') % (cost_center,))
                 aa_check_ids.append(cc_id)
 
         vals.update({'destination_id_first_value': destination_id, 'destination_id': destination_id, 'cost_center_id': cc_id, 'analytic_id': fp_id, 'cost_center_id_first_value': cc_id, 'analytic_id_first_value': fp_id, 'free_1_id': free1_id, 'free_2_id': free2_id,})

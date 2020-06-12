@@ -66,7 +66,7 @@ PACK_HEADER = [
     (_('Qty of parcels*'), 'parcel_qty', '', ''),
     (_('From parcel*'), 'parcel_from', 'mandatory', 'int'),
     (_('To parcel*'), 'parcel_to', 'mandatory', 'int'),
-    (_('Weight*'), 'total_weight', 'mandatory', 'float'),
+    (_('Weight*'), 'total_weight', '', 'float'),
     (_('Volume'), 'total_volume', '', 'float'),
     (_('Height'), 'total_height', '', 'float', 10),
     (_('Length'), 'total_length', '', 'float', 10),
@@ -102,7 +102,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                             'backorder_id': simu.picking_id.backorder_id and simu.picking_id.backorder_id.id or False,
                             'header_notes': simu.picking_id.note,
                             'freight_number': simu.picking_id.shipment_ref,
-                            'transport_mode': simu.picking_id and simu.picking_id.purchase_id and simu.picking_id.purchase_id.transport_type or False}
+                            'transport_type': simu.picking_id and simu.picking_id.purchase_id and simu.picking_id.purchase_id.transport_type or False}
 
         return res
 
@@ -147,14 +147,14 @@ class wizard_import_in_simulation_screen(osv.osv):
                                         readonly=True, type='text', multi='related'),
         'freight_number': fields.function(_get_related_values, method=True, string='Freight number',
                                           readonly=True, type='char', size=128, multi='related'),
-        'transport_mode': fields.function(_get_related_values, method=True, string='Transport mode',
+        'transport_type': fields.function(_get_related_values, method=True, string='Transport mode',
                                           readonly=True, type='selection', selection=TRANSPORT_TYPE, multi='related'),
         # Import fields
         'imp_notes': fields.text(string='Notes', readonly=True),
         'message_esc': fields.text(string='Message ESC', readonly=True),
         'imp_origin': fields.char(size=128, string='Origin', readonly=True),
         'imp_freight_number': fields.char(size=128, string='Freight number', readonly=True),
-        'imp_transport_mode': fields.char(string='Transport mode', size=128, readonly=True),
+        'imp_transport_type': fields.char(string='Transport mode', size=128, readonly=True),
         # Lines
         'line_ids': fields.one2many('wizard.import.in.line.simulation.screen', 'simu_id', string='Stock moves'),
         'with_pack': fields.boolean('With Pack Info'),
@@ -664,8 +664,8 @@ Nothing has been imported because of %s. See below:
                 header_values['imp_origin'] = wiz.origin
 
                 # Line 5: Transport mode
-                transport_mode = values.get(5, ['', ''])[1]
-                header_values['imp_transport_mode'] = transport_mode
+                transport_type = values.get(5, ['', ''])[1]
+                header_values['imp_transport_type'] = transport_type
 
                 # Line 6: Notes
                 imp_notes = values.get(6, ['', ''])[1]
@@ -831,7 +831,7 @@ Nothing has been imported because of %s. See below:
                         if pack_errors_ids:
                             pack_error_string = dict(PACK_INTEGRITY_STATUS_SELECTION)
                             for pack_error in pack_info_obj.browse(cr, uid, pack_errors_ids, context=context):
-                                values_header_errors.append("Packing List %s, Pack from parcel %s, to parcel %s, integrity error %s" % (pack_error.packing_list or '-', pack_error.parcel_from, pack_error.parcel_to, pack_error_string.get(pack_error.integrity_status)))
+                                values_header_errors.append(_("Packing List %s, Pack from parcel %s, to parcel %s, integrity error %s") % (pack_error.packing_list or '-', pack_error.parcel_from, pack_error.parcel_to, _(pack_error_string.get(pack_error.integrity_status))))
 
 
                     rounding_text = ""
@@ -963,7 +963,7 @@ Nothing has been imported because of %s. See below:
 
                         if err_msg:
                             for err in err_msg:
-                                err = 'Line %s of the Excel file: %s' % (file_line[0], err)
+                                err = _('Line %s of the Excel file: %s') % (file_line[0], err)
                                 values_line_errors.append(err)
 
 
@@ -986,7 +986,7 @@ Nothing has been imported because of %s. See below:
 
                     if err_msg:
                         for err in err_msg:
-                            err = 'Line %s of the Excel file: %s' % (in_line, err)
+                            err = _('Line %s of the Excel file: %s') % (in_line, err)
                             values_line_errors.append(err)
                     # Commit modifications
                     cr.commit()
@@ -1007,13 +1007,13 @@ Nothing has been imported because of %s. See below:
                 if len(values_header_errors):
                     import_error_ok = True
                     can_be_imported = False
-                    message += '\n## Error on header values ##\n\n'
+                    message += '\n## %s ##\n\n' % (_('Error on header values'),)
                     for err in values_header_errors:
                         message += '%s\n' % err
 
                 if len(values_line_errors):
                     import_error_ok = True
-                    message += '\n## Error on line values ##\n\n'
+                    message += '\n## %s ##\n\n' % (_('Error on line values'),)
                     for err in values_line_errors:
                         message += '%s\n' % err
                     if wiz.with_pack:
@@ -1117,9 +1117,10 @@ Nothing has been imported because of %s. See below:
 
         context['from_simu_screen'] = True
 
-        if simu_id.with_pack:
+        if simu_id.with_pack or context.get('do_not_import_with_thread'):
             cr.commit()
             if context.get('do_not_import_with_thread'):
+                # Auto VI IN import: do not process IN
                 self._import_with_thread(cr, uid, [partial_id], simu_id.id, context=context)
             else:
                 new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context))

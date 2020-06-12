@@ -37,7 +37,9 @@ class account_analytic_journal(osv.osv):
         """
         return [
             ('cash','Cash'),
-            ('correction', 'Correction'),
+            ('correction', 'Correction Auto'),
+            ('correction_hq', 'Correction HQ'),
+            ('correction_manual', 'Correction Manual'),
             ('cur_adj', 'Currency Adjustment'),
             ('engagement', 'Engagement'),
             ('general','General'),
@@ -120,7 +122,11 @@ class account_analytic_journal(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
+        user_obj = self.pool.get('res.users')
         self._check_code_duplication(cr, uid, vals, context=context)
+        if 'instance_id' not in vals:
+            # Prop. instance by default at creation time is the current one: add it in vals to make it appear in the Track Changes
+            vals['instance_id'] = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id.instance_id.id
         return super(account_analytic_journal, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):

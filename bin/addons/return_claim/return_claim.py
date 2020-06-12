@@ -151,9 +151,9 @@ class return_claim(osv.osv):
             ids = [ids]
 
         # objects
-        fields_tools = self.pool.get('fields.tools')
         # we test if new event are allowed
         data = self.allow_new_event(cr, uid, ids, context=context)
+        fields_tools = self.pool.get('fields.tools')
         if not all(x['allow'] for x in data.values()):
             # we get an event type and new event are not allowed, the specified type does not allow further events
             event_type_name = [x['last_type'][1] for x in data.values() if (not x['allow'] and x['last_type'])]
@@ -261,7 +261,7 @@ class return_claim(osv.osv):
                 ('origin', 'like', claim.picking_id_return_claim.origin),
             ]
             original_in_id = pick_obj.search(cr, uid, in_domain, order='id asc', limit=1, context=context)[0]
-            original_in = pick_obj.browse(cr, uid, original_in_id, fields_to_fetch=['name', 'partner_id'], context=context)
+            original_in = pick_obj.browse(cr, uid, original_in_id, fields_to_fetch=['name', 'partner_id', 'origin', 'purchase_id'], context=context)
 
             # Creating the new Claim
             current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
@@ -383,6 +383,8 @@ class return_claim(osv.osv):
                         'location_id': context['common']['input_id'],
                         'location_dest_id': loc_obj.chained_location_get(cr, uid, stock_loc, product=x.product_id_claim_product_line)[0].id,
                         'reason_type_id': context['common']['rt_goods_replacement'],
+                        'prodlot_id':  x.lot_id_claim_product_line and x.lot_id_claim_product_line.id or False,
+                        'expired_date': x.expiry_date_claim_product_line,
                     }) for x in claim.product_line_ids_return_claim],
                 }
                 # creation of the new IN
@@ -1010,6 +1012,7 @@ class return_claim(osv.osv):
         Synchronisation method for claims customer->supplier
         - create counterpart claims for validated claims
         '''
+        claim_line_obj = self.pool.get('claim.product.line')
         warehouse_obj = self.pool.get('stock.warehouse')
         event_obj = self.pool.get('claim.event')
         sale_obj = self.pool.get('sale.order')
@@ -1017,6 +1020,7 @@ class return_claim(osv.osv):
         curr_obj = self.pool.get('res.currency')
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
+        lot_obj = self.pool.get('stock.production.lot')
 
         if context is None:
             context = {}
@@ -1066,17 +1070,6 @@ class return_claim(osv.osv):
             'processor_origin': claim_info.processor_origin,
             'creation_date_return_claim': claim_info.creation_date_return_claim,
             'picking_id_return_claim': origin_pick_id,
-            'product_line_ids_return_claim':
-                [(0, 0, {
-                    'qty_claim_product_line': x.qty_claim_product_line,
-                    'price_unit_claim_product_line': x.price_unit_claim_product_line,
-                    'price_currency_claim_product_line': curr_obj.search(cr, uid, [('name', '=', x.price_currency_claim_product_line.name)], context=context)[0],
-                    'product_id_claim_product_line': product_obj.search(cr, uid, [('name', '=', x.product_id_claim_product_line.name)], context=context)[0],
-                    'uom_id_claim_product_line': uom_obj.search(cr, uid, [('name', '=', x.uom_id_claim_product_line.name)], context=context)[0],
-                    'type_check': x.type_check,
-                    'expiry_date_claim_product_line': x.expiry_date_claim_product_line,
-                    'src_location_id_claim_product_line': location_id,
-                }) for x in product_line_data],
         })
 
         claim_id = self.check_existing_claim(cr, uid, source, claim_data)
@@ -1094,6 +1087,26 @@ class return_claim(osv.osv):
                 'state': 'done',  # the event must not be processed again
             })
             event_obj.create(cr, uid, event_values, context=context)
+
+        # Create lines
+        for x in product_line_data:
+            prod_id = product_obj.search(cr, uid, [('name', '=', x.product_id_claim_product_line.name)], context=context)[0]
+            line_data = {
+                'claim_id_claim_product_line': claim_id,
+                'qty_claim_product_line': x.qty_claim_product_line,
+                'price_unit_claim_product_line': x.price_unit_claim_product_line,
+                'price_currency_claim_product_line': curr_obj.search(cr, uid, [('name', '=', x.price_currency_claim_product_line.name)],
+                                                                     context=context)[0],
+                'product_id_claim_product_line': prod_id,
+                'uom_id_claim_product_line': uom_obj.search(cr, uid, [('name', '=', x.uom_id_claim_product_line.name)], context=context)[0],
+                'type_check': x.type_check,
+                'lot_id_claim_product_line': x.lot_id_claim_product_line and lot_obj.get_or_create_prodlot(
+                    cr, uid, x.lot_id_claim_product_line.name, x.expiry_date_claim_product_line, prod_id,
+                    context=context),
+                'expiry_date_claim_product_line': x.expiry_date_claim_product_line,
+                'src_location_id_claim_product_line': location_id,
+            }
+            claim_line_obj.create(cr, uid, line_data, context=context)
 
         name = self.browse(cr, uid, claim_id, context=context).name
         message = _('The claim %s is created by sync and linked to the claim %s by Push Flow at %s.') % (name, claim_info.name, source)
@@ -1750,7 +1763,6 @@ class claim_event(osv.osv):
         '''
         context = context.copy()
         context.update({'from_claim': True, 'keep_prodlot': True})
-
         # objects
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
@@ -1764,7 +1776,7 @@ class claim_event(osv.osv):
         event_picking = pick_obj.browse(cr, uid, event_picking_id, context=context)
         # We cancel the lines of the OUT linked to the IN/INT lines processed
         # if the linked PO lines has an IR whose Location Requestor is ExtCU
-        self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, context=context)
+        #self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, context=context)
         # we copy the picking
         in_values = {
             'reason_type_id': context['common']['rt_goods_replacement'],
@@ -1840,7 +1852,6 @@ class claim_event(osv.osv):
         """
         # Objects
         claim_obj = self.pool.get('return.claim')
-        fields_tools = self.pool.get('fields.tools')
         data_tools = self.pool.get('data.tools')
         pick_obj = self.pool.get('stock.picking')
 
@@ -1971,14 +1982,11 @@ class claim_event(osv.osv):
         log_msgs = []
         base_func = '_do_process_'
         # Reload browse_record values to get last updated values
+        event_type_dict = dict(self.fields_get(cr, uid, ['type_claim_event'], context=context).get('type_claim_event', {}).get('selection', []))
         for event in self.browse(cr, uid, ids, context=context):
             getattr(self, base_func + event.type_claim_event)(cr, uid, event, context=context)
             # Log process message
-            event_type_name = fields_tools.get_selection_name(cr, uid,
-                                                              object=self,
-                                                              field='type_claim_event',
-                                                              key=event.type_claim_event,
-                                                              context=context)
+            event_type_name = event_type_dict.get(event.type_claim_event, event.type_claim_event)
             # Cancel created INT backorder in case of claim from scratch
             if not event.from_picking_wizard_claim_event and event.event_picking_id_claim_event.type == 'internal' \
                     and event.type_claim_event in ('return', 'surplus'):
@@ -2203,20 +2211,18 @@ class claim_product_line(osv.osv):
             result.setdefault('value', {}).update({'qty_claim_product_line': 0.0, 'hidden_stock_available_claim_product_line': 0.0})
             return result
 
-        # objects
-        loc_obj = self.pool.get('stock.location')
         prod_obj = self.pool.get('product.product')
         # corresponding product object
-        product_obj = prod_obj.browse(cr, uid, product_id, context=context)
+        ctx = context.copy()
+        if uom_id:
+            ctx['uom'] = uom_id
+        if prodlot_id:
+            ctx['prodlot_id'] = prodlot_id
+        ctx['location'] = location_id
+        product_obj = prod_obj.browse(cr, uid, product_id, fields_to_fetch=['qty_allocable'], context=ctx)
         # uom from product is taken by default if needed
         uom_id = uom_id or product_obj.uom_id.id
-        res = loc_obj.compute_availability(cr, uid, [location_id], False, product_id, uom_id, context=context)
-        if prodlot_id:
-            # if a lot is specified, we take this specific qty info - the lot may not be available in this specific location
-            qty = res[location_id].get(prodlot_id, False) and res[location_id][prodlot_id]['total'] or 0.0
-        else:
-            # otherwise we take total according to the location
-            qty = res[location_id]['total']
+        qty = product_obj.qty_allocable
         # update the result
         result.setdefault('value', {}).update({'qty_claim_product_line': qty,
                                                'uom_id_claim_product_line': uom_id,
@@ -2328,8 +2334,6 @@ class claim_product_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # objects
-        loc_obj = self.pool.get('stock.location')
         # results
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
@@ -2349,18 +2353,14 @@ class claim_product_line(osv.osv):
             kit_check = obj.product_id_claim_product_line.type == 'product' and obj.product_id_claim_product_line.subtype == 'kit'
             result[obj.id].update({'hidden_kit_claim_product_line': kit_check})
             # product availability
-            data = loc_obj.compute_availability(cr, uid, ids=obj.src_location_id_claim_product_line.id, consider_child_locations=False, product_id=obj.product_id_claim_product_line.id, uom_id=obj.uom_id_claim_product_line.id, context=context)
-            # if we get a production lot, we take the available quantity corresponding to this lot
-            location_id = obj.src_location_id_claim_product_line.id
-            prodlot_id = obj.lot_id_claim_product_line.id
-            # if the product has a production lot and the production lot exist in the specified location, we take corresponding stock
-            available_qty = 0.0
-            if prodlot_id and prodlot_id in data[location_id]:
-                available_qty = data[location_id][prodlot_id]['total']
-            else:
-                # otherwise we take the total quantity for the selected location - no lot for this product
-                available_qty = data[location_id]['total']
-            result[obj.id].update({'hidden_stock_available_claim_product_line': available_qty})
+            ctx = context.copy()
+            ctx['uom'] = obj.uom_id_claim_product_line.id
+            ctx['location'] = obj.src_location_id_claim_product_line.id
+            ctx['compute_child'] = False
+            if obj.lot_id_claim_product_line:
+                ctx['prodlot_id'] = obj.lot_id_claim_product_line.id
+            prod = self.pool.get('product.product').browse(cr, uid, obj.product_id_claim_product_line.id, fields_to_fetch=['qty_allocable'], context=ctx)
+            result[obj.id].update({'hidden_stock_available_claim_product_line': prod.qty_allocable})
 
         return result
 

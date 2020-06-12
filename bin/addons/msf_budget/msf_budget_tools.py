@@ -22,6 +22,8 @@
 from osv import osv
 import datetime
 from tools.translate import _
+from base import currency_date
+
 
 class msf_budget_tools(osv.osv):
     _name = "msf.budget.tools"
@@ -247,18 +249,6 @@ class msf_budget_tools(osv.osv):
     def _get_cost_center_ids(self, cr, uid, browse_cost_center):
         return self.pool.get('account.analytic.account').search(cr, uid, [('parent_id', 'child_of', browse_cost_center.id)])
 
-    def _create_account_destination_domain(self, account_destination_list):
-        if len(account_destination_list) == 0:
-            return ['&',
-                    ('general_account_id', 'in', []),
-                    ('destination_id', 'in', [])]
-        elif len(account_destination_list) == 1:
-            return ['&',
-                    ('general_account_id', '=', account_destination_list[0][0]),
-                    ('destination_id', '=', account_destination_list[0][1])]
-        else:
-            return ['|'] + self._create_account_destination_domain([account_destination_list[0]]) + self._create_account_destination_domain(account_destination_list[1:])
-
     def _get_actual_amounts(self, cr, uid, output_currency_id, domain=[], context=None):
         # Input: domain for the selection of analytic lines (cost center, date, etc...)
         # Output: a dict of list {(general_account_id, destination_id): [jan_actual, feb_actual,...]}
@@ -279,7 +269,21 @@ class msf_budget_tools(osv.osv):
             res[account_id, destination_id] = [0] * 12
 
         # fill search domain (one search for all analytic lines)
-        domain += self._create_account_destination_domain(account_destination_ids)
+        account_dest_combinations = {}
+        # create a dict with key = account, and value = list of the related possible destinations
+        for acc_dest_id in account_destination_ids:
+            if acc_dest_id[0] not in account_dest_combinations:
+                account_dest_combinations[acc_dest_id[0]] = []
+            account_dest_combinations[acc_dest_id[0]].append(acc_dest_id[1])
+        i = 0
+        for acc in account_dest_combinations:
+            i += 1
+            if i < len(account_dest_combinations):
+                # don't add the "or" at least iteration
+                domain.append('|')
+            domain.append('&')
+            domain.append(('general_account_id', '=', acc))
+            domain.append(('destination_id', 'in', account_dest_combinations[acc]))
 
         # Analytic domain is now done; lines are retrieved and added
         analytic_line_obj = self.pool.get('account.analytic.line')
@@ -299,7 +303,8 @@ class msf_budget_tools(osv.osv):
         # parse each line and add it to the right array
         analytic_line_count = 0
         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
-            date_context = {'date': analytic_line.source_date or analytic_line.date,
+            curr_date = currency_date.get_date(self, cr, analytic_line.document_date, analytic_line.date, source_date=analytic_line.source_date)
+            date_context = {'currency_date': curr_date,
                             'currency_table_id': currency_table}
             actual_amount = self.pool.get('res.currency').compute(cr,
                                                                   uid,

@@ -48,8 +48,9 @@ class integrity_finance(report_sxw.rml_parse):
                 AND l.reconcile_id IN 
                 (
                     SELECT DISTINCT (reconcile_id)
-                    FROM account_move_line
-                    WHERE reconcile_id IS NOT NULL
+                    FROM account_move m, account_move_line l
+                    WHERE l.move_id = m.id
+                    AND l.reconcile_id IS NOT NULL
                     %s
                 )
             """
@@ -58,7 +59,7 @@ class integrity_finance(report_sxw.rml_parse):
             if instance_ids:
                 self.sql_additional += " AND l.instance_id IN %s "
                 self.sql_params.append(tuple(instance_ids,))
-                self.sql_rec_additional += " AND instance_id IN %s "
+                self.sql_rec_additional += " AND l.instance_id IN %s "
                 self.sql_rec_params.append(tuple(instance_ids,))
             # FY
             fiscalyear_id = data['form'].get('fiscalyear_id', False)
@@ -66,10 +67,18 @@ class integrity_finance(report_sxw.rml_parse):
                 self.sql_additional += " AND l.period_id IN (SELECT id FROM account_period WHERE fiscalyear_id = %s) "
                 self.sql_params.append(fiscalyear_id)
                 fiscalyear = fy_obj.browse(self.cr, self.uid, fiscalyear_id, fields_to_fetch=['date_start', 'date_stop'], context=data.get('context', {}))
-                self.sql_rec_additional += " AND reconcile_date >= %s AND reconcile_date <= %s "
+                self.sql_rec_additional += " AND l.reconcile_date >= %s AND l.reconcile_date <= %s "
                 self.sql_rec_params.append(fiscalyear.date_start)
                 self.sql_rec_params.append(fiscalyear.date_stop)
             wiz_filter = data['form'].get('filter', '')
+            # entry status
+            move_state = data['form'].get('move_state', '')
+            if move_state:
+                self.sql_additional += " AND m.state = %s "
+                self.sql_params.append(move_state)
+                # note: JE should always be posted for rec. queries (check kept as this report is used to spot inconsistencies...)
+                self.sql_rec_additional += " AND m.state = %s "
+                self.sql_rec_params.append(move_state)
             # periods
             if wiz_filter == 'filter_period':
                 period_from = data['form'].get('period_from', False)
@@ -84,7 +93,7 @@ class integrity_finance(report_sxw.rml_parse):
                     self.sql_params.append(tuple(period_ids,))
                     per_from = period_obj.browse(self.cr, self.uid, period_from, fields_to_fetch=['date_start'], context=data.get('context', {}))
                     per_to = period_obj.browse(self.cr, self.uid, period_to, fields_to_fetch=['date_stop'], context=data.get('context', {}))
-                    self.sql_rec_additional += " AND reconcile_date >= %s AND reconcile_date <= %s "
+                    self.sql_rec_additional += " AND l.reconcile_date >= %s AND l.reconcile_date <= %s "
                     self.sql_rec_params.append(per_from.date_start)
                     self.sql_rec_params.append(per_to.date_stop)
             # dates
@@ -103,7 +112,7 @@ class integrity_finance(report_sxw.rml_parse):
                     self.sql_params.append(date_from)
                     self.sql_params.append(date_to)
                     # reconciliation dates
-                    self.sql_rec_additional += " AND reconcile_date >= %s AND reconcile_date <= %s "
+                    self.sql_rec_additional += " AND l.reconcile_date >= %s AND l.reconcile_date <= %s "
                     self.sql_rec_params.append(date_from)
                     self.sql_rec_params.append(date_to)
             # LAST STEP: if the request additional parts aren't empty: add the related subrequests

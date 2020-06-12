@@ -35,7 +35,7 @@ class manage_expired_stock(osv.osv):
             string='Location',
             help="The requested Location",
             required=True,
-            domain=[('destruction_location', '=', False), ('usage', '!=', 'view')],
+            domain=[('destruction_location', '=', False), ('usage', '!=', 'view'), ('usage', '=', 'internal')],
         ),
         'dest_loc_id': fields.many2one(
             'stock.location',

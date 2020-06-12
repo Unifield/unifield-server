@@ -136,6 +136,7 @@
                             <newline/>
                             <field name="object" width="200" readonly="1"/>
                             <field name="ignore"/>
+                            <field name="import_name"/>
                             <field name="file" colspan="4"/>
                         </group>
                         <group colspan="8" col="8">

@@ -62,14 +62,14 @@ class graph(object):
                     list_node.append(node)
 
             for edge in self.edge_wt:
-                 if edge not in self.tree_edges:
+                if edge not in self.tree_edges:
                     list_edge.append(edge)
 
             slack = 100
 
             for edge in list_edge:
                 if ((self.reachable_nodes.__contains__(edge[0]) and edge[1] not in self.reachable_nodes) or
-                    (self.reachable_nodes.__contains__(edge[1]) and  edge[0] not in self.reachable_nodes)):
+                        (self.reachable_nodes.__contains__(edge[1]) and  edge[0] not in self.reachable_nodes)):
                     if(slack>self.edge_wt[edge]-1):
                         slack = self.edge_wt[edge]-1
                         new_edge = edge
@@ -532,7 +532,7 @@ class graph(object):
                 for node in self.levels[level]:
                     self.result[node]['y'] += min_order
 
-            if roots:
+            if roots and self.tree_list[self.start]:
                 roots.append(self.start)
                 one_level_el = self.tree_list[self.start][0][1]
                 base = self.result[one_level_el]['y']# * 2 / (index + 2)
@@ -568,7 +568,6 @@ class graph(object):
         for node in self.nodes:
             if not self.partial_order.get(node):
                 rem_nodes.append(node)
-        cnt = 0
         while True:
             if len(rem_nodes)==1:
                 self.start_nodes.append(rem_nodes[0])
@@ -679,7 +678,7 @@ class graph(object):
         if self.nodes:
             if self.start_nodes:
                 #add dummy edges to the nodes which does not have any incoming edges
-                tree = self.make_acyclic(None, self.start_nodes[0], 0, [])
+                self.make_acyclic(None, self.start_nodes[0], 0, [])
 
                 for node in self.no_ancester:
                     for sec_node in self.transitions.get(node, []):
@@ -688,7 +687,7 @@ class graph(object):
                             break
 
                 self.partial_order = {}
-                tree = self.make_acyclic(None, self.start_nodes[0], 0, [])
+                self.make_acyclic(None, self.start_nodes[0], 0, [])
 
 
             # if graph is disconnected or no start-node is given
@@ -717,7 +716,7 @@ class graph(object):
         """Computes actual co-ordiantes of the nodes
         """
 
-            #for flat edges ie. source an destination nodes are on the same rank
+        #for flat edges ie. source an destination nodes are on the same rank
         for src in self.transitions:
             for des in self.transitions[src]:
                 if (self.result[des]['x'] - self.result[src]['x'] == 0):

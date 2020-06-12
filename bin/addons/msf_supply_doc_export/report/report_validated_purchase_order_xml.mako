@@ -12,7 +12,11 @@
         % endif
         <field name="partner_ref">${o.partner_ref or ''|x}</field>
         <field name="details">${o.details or ''|x}</field>
-        <field name="stock_take_date">${o.stock_take_date or ''|x}</field>
+        % if o.stock_take_date and o.stock_take_date not in (False, 'False'):
+        <field name="stock_take_date">${o.stock_take_date|n}</field>
+        % else:
+        <field name="stock_take_date"></field>
+        % endif
         % if o.delivery_requested_date and o.delivery_requested_date not in (False, 'False'):
         <field name="delivery_requested_date">${o.delivery_requested_date or ''|n}</field>
         % else:
@@ -76,8 +80,16 @@
                     <field name="currency_id" key="name">
                         <field name="name">${l.currency_id and l.currency_id.name or ''|x}</field>
                     </field>
-                    <field name="origin">${l.origin or ''|x}</field>
-                    <field name="stock_take_date">${l.stock_take_date or ''|x}</field>
+                    % if l.instance_sync_order_ref and l.origin:
+                    <field name="origin">${l.origin + ':' + l.instance_sync_order_ref.name|x}</field>
+                    % else:
+                    <field name="origin">${l.origin and (l.linked_sol_id and l.linked_sol_id.ir_name_from_sync and l.origin + ':' + l.linked_sol_id.ir_name_from_sync or l.origin) or ''|x}</field>
+                    % endif
+                    % if l.stock_take_date and l.stock_take_date not in (False, 'False'):
+                    <field name="stock_take_date">${l.stock_take_date|n}</field>
+                    % else:
+                    <field name="stock_take_date"></field>
+                    % endif
                     % if l.date_planned and l.date_planned not in (False, 'False'):
                     <field name="date_planned">${l.date_planned|n}</field>
                     % else:

@@ -215,6 +215,18 @@ location will be shown.""",
 
         return True
 
+    def onchange_product_list(self, cr, uid, ids, product_list_id):
+        """
+        Change the product when change the prodlot
+        """
+        if product_list_id:
+            return {
+                'value': {
+                    'display_0': False,
+                    'in_last_x_months': False,
+                },
+            }
+
     def onchange_prodlot(self, cr, uid, ids, prodlot_id):
         """
         Change the product when change the prodlot
@@ -300,7 +312,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         values = {'state': 'done'}
         cond = ['state=%(state)s']
 
-        having = "having sum(product_qty) != 0"
+        having = "having round(sum(product_qty), 6) != 0"
         full_prod_list = []
 
         cond.append('location_id in %(location_ids)s')
@@ -391,12 +403,12 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
 
         cost_price_at_date = {}
         if report.stock_level_date and product_ids_to_fetch:
-            self.cr.execute("""select distinct on (product_id) product_id, new_standard_price
+            self.cr.execute("""select distinct on (product_id) product_id, old_standard_price
                 from standard_price_track_changes
                 where
                     product_id in %s and
-                    create_date <= %s
-                order by product_id, create_date desc""", (tuple(product_ids_to_fetch), values['stock_level_date']))
+                    create_date >= %s
+                order by product_id, create_date asc""", (tuple(product_ids_to_fetch), values['stock_level_date']))
 
             for x in self.cr.fetchall():
                 cost_price_at_date[x[0]] = x[1]
@@ -423,31 +435,32 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         for product_id in res:
             product_code = product_data[product_id].default_code
             cost_price = cost_price_at_date.get(product_id, product_data[product_id].standard_price)
+            rounded_qty = round(res[product_id]['sum_qty'], 6)
             final_result[product_code] = {
-                'sum_qty': res[product_id]['sum_qty'],
+                'sum_qty': rounded_qty,
                 'product_code': product_code,
                 'product_name': product_data[product_id].name,
                 'uom': product_data[product_id].uom_id.name,
-                'sum_value':  cost_price * res[product_id]['sum_qty'],
+                'sum_value':  cost_price * rounded_qty,
                 'with_product_list': with_zero,
                 'lines': {},
             }
             total_value += final_result[product_code]['sum_value']
-            if res[product_id]['sum_qty'] > 0:
+            if rounded_qty > 0:
                 nb_items += 1
             for batch_id in res[product_id]['lines']:
+                rounded_batch_qty = round(res[product_id]['lines'][batch_id]['qty'], 6)
                 final_result[product_code]['lines'][batch_id] = {
                     'batch': bn_data.get(batch_id, ''),
                     'expiry_date': res[product_id]['lines'][batch_id]['expiry_date'],
-                    'qty': res[product_id]['lines'][batch_id]['qty'],
-                    'value': cost_price * res[product_id]['lines'][batch_id]['qty'],
-                    'location_ids': res[product_id]['lines'][batch_id]['location_ids'],
+                    'qty': rounded_batch_qty,
+                    'value': cost_price * rounded_batch_qty,
+                    'location_ids': dict([(x, round(y, 6)) for x, y in res[product_id]['lines'][batch_id]['location_ids'].iteritems()]),
                 }
 
         fres = []
         for k in sorted(final_result.keys()):
             fres.append(final_result[k])
-
         return total_value, nb_items, fres
 
 

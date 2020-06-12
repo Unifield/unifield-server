@@ -76,16 +76,173 @@ class BackupConfig(osv.osv):
         'backup_date': fields.function(_get_bck_info, type='datetime', string='Last Backup Date', method=True, multi='cloud'),
         'backup_path': fields.function(_get_bck_info, type='char', string='Last Backup', method=True, multi='cloud'),
         'backup_size': fields.function(_get_bck_info, type='float', string='Backup Size', method=True, multi='cloud'),
+
+        'wal_directory': fields.char('Local Path to WAL Archive Dir', help='Must be set in postgresql.conf', size=256),
+        'remote_user': fields.char('Remote User', help='Keep empty to use default value', size=256),
+        'remote_host': fields.char('Remote Host', help='Keep empty to use default value', size=256),
+        'ssh_config_dir': fields.char('Local Path to ssh config dir', size=512),
+
+        'basebackup_date': fields.datetime('Date of base backup', readonly=1),
+        'basebackup_error': fields.text('Base backup error', readonly=1),
+        'rsync_date': fields.datetime('Date of last rsync', readonly=1),
+        'rsync_error': fields.text('Rsync error', readonly=1),
+        'help_wal': fields.function(tools.misc.get_fake, type='boolean', string='Display steps to set Continuous Backup', method=True),
+        'backup_type': fields.selection([('cont_back', 'Continuous Backup'), ('sharepoint', 'Direct push to Sharepoint')], 'Backup Type', required=True),
     }
 
     _defaults = {
+        'backup_type': 'sharepoint',
         'name' : 'c:\\backup\\',
         'beforemanualsync' : True,
         'beforeautomaticsync' : True,
         'aftermanualsync' : True,
         'afterautomaticsync' : True,
         'beforepatching': True,
+        'ssh_config_dir': 'C:\\Program Files (x86)\\msf\\SSH_CONFIG',
     }
+
+    def _activate_push_cron(self, cr, uid, ids, context=None):
+        ir_cron = self.pool.get('ir.cron')
+
+        for bck in self.read(cr, uid, ids, ['backup_type'], context=context):
+            od_active =  bck['backup_type'] == 'sharepoint'
+
+        od_task = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_instance', 'ir_cron_remote_backup')
+        if not ir_cron.search(cr, uid, [('id', '=', od_task[1]), ('active', '=', od_active)]):
+            ir_cron.write(cr, uid, od_task[1], {'active': od_active})
+
+        wal_task = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'ir_cron_wal')
+        if not ir_cron.search(cr, uid, [('id', '=', wal_task[1]), ('active', '=', not od_active)]):
+            ir_cron.write(cr, uid, wal_task[1], {'active': not od_active})
+
+        return True
+
+    _constraints = [
+        (_activate_push_cron, '', [])
+    ]
+
+    def button_basebackup(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'basebackup_error': _('In progress')}, context=context)
+        new_thread = threading.Thread(
+            target=self.generate_basebackup_bg,
+            args=(cr, uid, ids, context)
+        )
+        new_thread.start()
+        return True
+
+    def generate_basebackup_bg(self, old_cr, uid, ids, context=None, new_cr=True):
+        try:
+            if context is None:
+                context = {}
+            ctx_no_write = context.copy()
+            ctx_no_write['no_write_access'] = True
+            if new_cr:
+                cr = pooler.get_db(old_cr.dbname).cursor()
+            else:
+                cr = old_cr
+            bk = self.browse(cr, uid, ids[0], context)
+            if bk.backup_type != 'cont_back':
+                raise Exception(_('Continuous Backup is disabled'))
+            if not bk.wal_directory:
+                raise Exception(_('"Path to WAL Dir" is empty'))
+            if not os.path.isdir(bk.wal_directory):
+                raise Exception(_('%s not found') % (bk.wal_directory,))
+
+
+            tools.misc.pg_basebackup(cr.dbname, bk.wal_directory)
+            self.write(cr, uid, [bk.id], {'basebackup_date': time.strftime('%Y-%m-%d %H:%M:%S'), 'basebackup_error': False}, context=ctx_no_write)
+            return True
+        except Exception, e:
+            cr.rollback()
+            import traceback, sys
+            tb_s = reduce(lambda x, y: x+y, traceback.format_exception(*sys.exc_info()))
+            self.write(cr, uid, [ids[0]], {'basebackup_error': '%s\n\n%s' % (tools.ustr(e.message), tools.ustr(tb_s))}, context=ctx_no_write)
+            cr.commit()
+            raise e
+
+        finally:
+            if new_cr:
+                cr.commit()
+                cr.close(True)
+
+    def sent_continuous_backup_bg(self, cr, uid, context=None):
+        new_thread = threading.Thread(
+            target=self.sent_continuous_backup,
+            args=(cr, uid, context)
+        )
+        new_thread.start()
+        return True
+
+    def sent_continuous_backup(self, old_cr, uid, context=None):
+        try:
+            if context is None:
+                context = {}
+            cr = pooler.get_db(old_cr.dbname).cursor()
+            ids = self.search(cr, uid, [], context=context)
+            bk = self.read(cr, uid, ids[0], ['backup_type', 'basebackup_date'], context=context)
+            if bk['backup_type'] != 'cont_back':
+                self._logger.info(_('Continuous backup disabled'))
+                return True
+            if not bk['basebackup_date']:
+                if context.get('sync_type'):
+                    self._logger.info('Base Backup disabled after sync')
+                    return True
+                self.generate_basebackup_bg(cr, uid, ids, context=context, new_cr=False)
+            self.sent_to_remote_bg(cr, uid, ids, context=context, new_cr=False)
+            return True
+
+        except Exception:
+            cr.rollback()
+            raise
+        finally:
+            cr.commit()
+            cr.close(True)
+
+    def button_rsync(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'rsync_error': _('In progress')}, context=context)
+        new_thread = threading.Thread(
+            target=self.sent_to_remote_bg,
+            args=(cr, uid, ids, context)
+        )
+        new_thread.start()
+        return True
+
+    def sent_to_remote_bg(self, old_cr, uid, ids, context=None, new_cr=True):
+        try:
+            if context is None:
+                context = {}
+            ctx_no_write = context.copy()
+            ctx_no_write['no_write_access'] = True
+            if new_cr:
+                cr = pooler.get_db(old_cr.dbname).cursor()
+            else:
+                cr = old_cr
+
+            if not tools.config.get('send_to_onedrive') and not tools.misc.use_prod_sync(cr, uid, self.pool):
+                raise Exception(_('Only production instances are allowed !'))
+
+            dbname = cr.dbname
+            bk = self.browse(cr, uid, ids[0], context)
+            if bk.backup_type != 'cont_back':
+                raise Exception('Continuous Backup is disabled')
+            if not bk.wal_directory:
+                raise Exception('"Path to WAL Dir" is empty')
+            tools.misc.force_wal_generation(cr, bk.wal_directory)
+            tools.misc.sent_to_remote(bk.wal_directory, config_dir=bk.ssh_config_dir, remote_user=bk.remote_user, remote_host=bk.remote_host, remote_dir=dbname)
+            self.write(cr, uid, [bk.id], {'rsync_date': time.strftime('%Y-%m-%d %H:%M:%S'), 'rsync_error': False}, context=ctx_no_write)
+            return True
+        except Exception, e:
+            cr.rollback()
+            import traceback, sys
+            tb_s = reduce(lambda x, y: x+y, traceback.format_exception(*sys.exc_info()))
+            self.write(cr, uid, [ids[0]], {'rsync_error': '%s\n\n%s' % (tools.ustr(e.message), tools.ustr(tb_s))}, context=ctx_no_write)
+            cr.commit()
+            raise e
+        finally:
+            if new_cr:
+                cr.commit()
+                cr.close(True)
+
 
     def _send_to_cloud_bg(self, cr, uid, wiz_id, context=None):
         new_cr = pooler.get_db(cr.dbname).cursor()
@@ -174,6 +331,8 @@ class BackupConfig(osv.osv):
         elif state.startswith('after'):
             suffix = '-A'
 
+        if state.startswith('after'):
+            self.sent_continuous_backup_bg(cr, uid, context)
         if bkp_ids:
             if logger:
                 logger.append("Database %s backup started.." % state)
@@ -266,7 +425,7 @@ class ir_cron(osv.osv):
             ids = [ids]
         toret = super(ir_cron, self).write(cr, uid, ids, vals, context=context)
         crons = self.browse(cr, uid, ids, context=context)
-        if crons and crons[0] and crons[0].model=='backup.config':
+        if crons and crons[0] and crons[0].model=='backup.config' and crons[0].function == 'scheduled_backups':
             #Find the scheduled action
             bkp_model = self.pool.get('backup.config')
             bkp_ids = bkp_model.search(cr, uid, (['|', ('scheduledbackup', '=', True), ('scheduledbackup', '=', False)]), context=context)

@@ -173,7 +173,7 @@
                 <td>
                     <blockTable colWidths="100.0,200.0" style="HeaderInfos2">
                     <tr>
-                    <td><para style="HeaderInfosTitle">Requester Ref:</para></td><td><parawrap style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.client_order_ref or '' ]]</parawrap></td>
+                    <td><para style="HeaderInfosTitle">Requester Ref:</para></td><td><parawrap style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.client_order_ref and pt.sale_id.short_client_ref or '' ]]</parawrap></td>
                     </tr>
                     <tr>
                     <td><para style="HeaderInfosTitle">Our Ref:</para></td><td><para style="HeaderInfosTitle">[[ pt.sale_id and pt.sale_id.name or '' ]]</para></td>

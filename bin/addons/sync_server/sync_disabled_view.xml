@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    <record model="ir.ui.view" id="sync_server_disabled_tree_view">
+      <field name="name">sync.server.disabled.tree</field>
+      <field name="model">sync.server.disabled</field>
+      <field name="type">tree</field>
+      <field name="arch" type="xml">
+        <tree string="Disable Sync" hide_new_button="1" hide_delete_button="1" >
+          <field name="activate"/>
+          <field name="from_date"/>
+          <field name="to_date"/>
+        </tree>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="sync_server_disabled_form_view">
+      <field name="name">sync.server.disabled.form</field>
+      <field name="model">sync.server.disabled</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form string="Disable Sync" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+            <field name="activate"/>
+            <newline />
+            <field name="from_date" attrs="{'required': [('activate', '=', True)]}"/>
+            <field name="to_date" attrs="{'required': [('activate', '=', True)]}"/>
+            <newline />
+            <field name="message" nolabel="1" colspan="4" widget="full_text"/>
+        </form>
+      </field>
+    </record>
+
+    <record model="ir.actions.server" id="sync_server_disabled_actions_server">
+            <field name="code">
+res = obj.pool.get('sync.server.disabled').get_or_create(cr, uid, context)
+action = {
+'res_model' : 'sync.server.disabled',
+'view_type' : 'form',
+'view_mode' : 'form,tree',
+'type': 'ir.actions.act_window',
+'res_id' : res,
+}</field>
+            <field eval="5" name="sequence"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_sync_server_disabled"/>
+            <field name="condition">True</field>
+            <field name="name">Disable Sync</field>
+        </record>
+
+
+        <record model="ir.ui.menu" id="sync_server_disabled_menu">
+            <field name="name">Disable Sync</field>
+            <field name="parent_id" ref="sync_server.sync_menu"/>
+            <field name="sequence">95</field>
+        </record>
+
+        <record model="ir.values" id="sync_server_disabled_menu_action">
+            <field name="name">Disable Sync</field>
+            <field name="key2">tree_but_open</field>
+            <field eval="1" name="object"/>
+            <field name="value" eval="'ir.actions.server,%s' % ref('sync_server_disabled_actions_server')" />
+            <field name="key">action</field>
+            <field name="model">ir.ui.menu</field>
+            <field eval="ref('sync_server_disabled_menu')" name="res_id"/>
+        </record>
+
+    </data>
+</openerp>
+

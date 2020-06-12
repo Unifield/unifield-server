@@ -58,7 +58,7 @@
         <tr>
           <td>
             <para>Register name: <b>[[ o.name ]]</b></para>
-            <para>Responsible: [[ o.user_id and o.user_id.name or '' ]]</para>
+            <para>Responsible: [[ o.responsible_ids and ', '.join([resp.name for resp in o.responsible_ids]) or '' ]]</para>
           </td>
           <td>
             <para>Bank journal code: <b>[[ o.journal_id and o.journal_id.code or '' ]]</b></para>

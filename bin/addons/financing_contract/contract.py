@@ -21,7 +21,10 @@
 import datetime
 from osv import fields, osv
 from tools.translate import _
-import netsvc
+
+CONTRACT_CODE_LENGTH = 24
+CONTRACT_NAME_LENGTH = 64
+
 
 class financing_contract_funding_pool_line(osv.osv):
     _name = "financing.contract.funding.pool.line"
@@ -131,6 +134,19 @@ class financing_contract_contract(osv.osv):
         # utp-1030/7: check grant amount when going on in workflow
         return self._check_grant_amount_proxy(cr, uid, ids,
                                               'contract_open', context=context)
+
+    def contract_reopen_proxy(self, cr, uid, ids, context=None):
+        """
+        Sets the contract state from Soft-Closed BACK to Open (no check needed)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        for contract in self.read(cr, uid, ids, ['state'], context=context):
+            if contract.get('state', '') == 'soft_closed':
+                self.write(cr, uid, contract['id'], {'state': 'open'}, context=context)
+        return True
 
     def contract_open(self, cr, uid, ids, *args):
         self.write(cr, uid, ids, {
@@ -298,8 +314,8 @@ class financing_contract_contract(osv.osv):
         return dict((id, instance_level) for id in ids)
 
     _columns = {
-        'name': fields.char('Financing contract name', size=64, required=True),
-        'code': fields.char('Financing contract code', size=16, required=True),
+        'name': fields.char('Financing contract name', size=CONTRACT_NAME_LENGTH, required=True),
+        'code': fields.char('Financing contract code', size=CONTRACT_CODE_LENGTH, required=True),
         'donor_id': fields.many2one('financing.contract.donor', 'Donor', required=True, domain="[('active', '=', True)]"),
         'donor_grant_reference': fields.char('Donor grant reference', size=64),
         'hq_grant_reference': fields.char('HQ grant reference', size=64),
@@ -344,11 +360,14 @@ class financing_contract_contract(osv.osv):
 
     def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         contract = self.browse(cr, uid, id, context=context)
+        code = contract['code'] or ''
+        name = contract['name'] or ''
         if not default:
             default = {}
         default = default.copy()
-        default['code'] = (contract['code'] or '') + '(copy)'
-        default['name'] = (contract['name'] or '') + '(copy)'
+        suffix = "(copy)"
+        default['code'] = "%s%s" % (code[:CONTRACT_CODE_LENGTH - len(suffix)], suffix)
+        default['name'] = "%s%s" % (name[:CONTRACT_NAME_LENGTH - len(suffix)], suffix)
         # Copy lines manually but remove CCs and FPs
         default['funding_pool_ids'] = []
         default['cost_center_ids'] = []
@@ -517,59 +536,6 @@ class financing_contract_contract(osv.osv):
             'context': context
         }
 
-    def menu_allocated_expense_report(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        wiz_obj = self.pool.get('wizard.expense.report')
-        wiz_id = wiz_obj.create(cr, uid, {'reporting_type': 'allocated',
-                                          'filename': 'allocated_expenses.csv',
-                                          'contract_id': ids[0]}, context=context)
-        # we open a wizard
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.expense.report',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_id': [wiz_id],
-            'context': context,
-        }
-
-    def menu_project_expense_report(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-
-        wiz_obj = self.pool.get('wizard.expense.report')
-        wiz_id = wiz_obj.create(cr, uid, {'reporting_type': 'project',
-                                          'filename': 'project_expenses.csv',
-                                          'contract_id': ids[0]}, context=context)
-        # we open a wizard
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.expense.report',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_id': [wiz_id],
-            'context': context,
-        }
-
-    def menu_csv_interactive_report(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        wiz_obj = self.pool.get('wizard.interactive.report')
-        wiz_id = wiz_obj.create(cr, uid, {'filename': 'interactive_report.csv',
-                                          'contract_id': ids[0]}, context=context)
-        # we open a wizard
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.interactive.report',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_id': [wiz_id],
-            'context': context,
-        }
 
     def allocated_expenses_report(self, cr, uid, ids, context=None):
         """
@@ -628,6 +594,8 @@ class financing_contract_contract(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if context is None:
             context = {}
 
@@ -716,6 +684,26 @@ class financing_contract_contract(osv.osv):
 
         return res
 
+    def change_contract_state(self, cr, uid, ids, signal, context=None):
+        """
+        Changes the contract state:
+        - from Draft to Open (signal contract_open)
+        - from Open to Soft-closed (signal contract_soft_closed)
+        - from Soft-closed to Hard-closed (signal contract_hard_closed)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        for contract in self.read(cr, uid, ids, ['state'], context=context):
+            state = contract.get('state', '')
+            if state == 'draft' and signal == 'contract_open':
+                self.contract_open(cr, uid, contract['id'])
+            elif state == 'open' and signal == 'contract_soft_closed':
+                self.contract_soft_closed(cr, uid, contract['id'])
+            elif state == 'soft_closed' and signal == 'contract_hard_closed':
+                self.contract_hard_closed(cr, uid, contract['id'])
+
     def _check_grant_amount_proxy(self, cr, uid, ids, signal, context=None):
         if isinstance(ids, (long, int)):
             ids = [ids]
@@ -723,9 +711,7 @@ class financing_contract_contract(osv.osv):
                                                 context=context)
         if check_action:
             return check_action
-        wf_service = netsvc.LocalService("workflow")
-        for id in ids:
-            wf_service.trg_validate(uid, self._name, id, signal, cr)
+        self.change_contract_state(cr, uid, ids, signal, context=context)
         return True
 
     def _check_grant_amount(self, cr, uid, ids, signal, context=None):

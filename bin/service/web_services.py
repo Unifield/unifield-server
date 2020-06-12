@@ -58,7 +58,7 @@ def _check_db_name(name):
     if name and isinstance(name, basestring):
         # allow char, number, _ and -
         if not re.match('^[a-zA-Z][a-zA-Z0-9_-]+$', name):
-            raise _("You must avoid all accents, space or special characters.")
+            raise Exception(_("You must avoid all accents, space or special characters."))
 
 def export_csv(fields, result, result_file_path):
     try:
@@ -87,7 +87,7 @@ def check_tz():
     try:
         cr.execute('select now() - %s', (datetime.datetime.now(),))
         now = cr.fetchone()[0]
-        if abs(now) >= datetime.timedelta(hours=1):
+        if abs(now) >= datetime.timedelta(minutes=10):
             return _('Time zones of UniField server and PostgreSQL server differ. Please check the computer configuration.')
     finally:
         cr.close()
@@ -123,7 +123,7 @@ class db(netsvc.ExportService):
             security.check_super(passwd)
         elif method in [ 'db_exist', 'list', 'list_lang', 'server_version',
                          'check_timezone', 'connected_to_prod_sync_server',
-                         'check_super_password_validity',
+                         'check_super_password_validity', 'check_password_validity',
                          'creation_get_resume_progress']:
             # params = params
             # No security check for these methods
@@ -233,6 +233,7 @@ class db(netsvc.ExportService):
                                          args=(cr, pool, 1, creation_id))
         create_thread.start()
         create_thread.join(1)
+        return True
 
     def exp_creation_get_resume_progress(self, db_name):
         db, pool = pooler.get_db_and_pool(db_name)
@@ -264,6 +265,13 @@ class db(netsvc.ExportService):
     def exp_check_super_password_validity(self, password):
         try:
             security.check_super_password_validity(password)
+        except Exception as e:
+            return str(e)
+        return True
+
+    def exp_check_password_validity(self, login, password):
+        try:
+            security.check_password_validity(None, None, None, None, password, password, login)
         except Exception as e:
             return str(e)
         return True
@@ -921,7 +929,6 @@ class report_spool(netsvc.ExportService):
 
     def exp_export(self, db_name, uid, fields, domain, model, fields_name,
                    group_by=None, export_format='csv', ids=None, context=None):
-        _check_db_name(db_name)
         res = {'result': None}
         db, pool = pooler.get_db_and_pool(db_name)
         cr = db.cursor()
@@ -961,6 +968,7 @@ class report_spool(netsvc.ExportService):
             'exception': None,
             'format': export_format,
             'filename': title,
+            'psql_pid': cr._cnx.get_backend_pid(),
         }
 
         bg_obj = pool.get('memory.background.report')
@@ -1067,8 +1075,6 @@ class report_spool(netsvc.ExportService):
         if not context:
             context={}
 
-        _check_db_name(db_name)
-
         self.id_protect.acquire()
         self.id += 1
         id = self.id
@@ -1078,11 +1084,14 @@ class report_spool(netsvc.ExportService):
 
         def go(id, uid, ids, datas, context):
             cr = pooler.get_db(db_name).cursor()
+            self._reports[id]['psql_pid'] = cr._cnx.get_backend_pid()
             import traceback
             import sys
             try:
                 obj = netsvc.LocalService('report.'+object)
                 bg_obj = pooler.get_pool(cr.dbname).get('memory.background.report')
+                if context.get('background_id'):
+                    context['pathit'] = True
                 (result, format) = obj.create(cr, uid, ids, datas, context)
                 if not result:
                     tb = sys.exc_info()
@@ -1099,16 +1108,16 @@ class report_spool(netsvc.ExportService):
                 self._reports[id]['format'] = format
                 self._reports[id]['state'] = True
             except Exception, exception:
-
-                tb = sys.exc_info()
-                tb_s = "".join(traceback.format_exception(*tb))
-                logger = netsvc.Logger()
-                logger.notifyChannel('web-services', netsvc.LOG_ERROR,
-                                     'Exception: %s\n%s' % (tools.ustr(exception), tb_s))
-                if hasattr(exception, 'name') and hasattr(exception, 'value'):
-                    self._reports[id]['exception'] = ExceptionWithTraceback(tools.ustr(exception.name), tools.ustr(exception.value))
-                else:
-                    self._reports[id]['exception'] = ExceptionWithTraceback(tools.exception_to_unicode(exception), tb)
+                if not self._reports[id].get('killed'):
+                    tb = sys.exc_info()
+                    tb_s = "".join(traceback.format_exception(*tb))
+                    logger = netsvc.Logger()
+                    logger.notifyChannel('web-services', netsvc.LOG_ERROR,
+                                         'Exception: %s\n%s' % (tools.ustr(exception), tb_s))
+                    if hasattr(exception, 'name') and hasattr(exception, 'value'):
+                        self._reports[id]['exception'] = ExceptionWithTraceback(tools.ustr(exception.name), tools.ustr(exception.value))
+                    else:
+                        self._reports[id]['exception'] = ExceptionWithTraceback(tools.exception_to_unicode(exception), tb)
                 self._reports[id]['state'] = True
             finally:
                 cr.commit()

@@ -17,7 +17,7 @@
     <stylesheet>
 
         <blockTableStyle id="TitleTable">
-            <blockAlignment value="CENTRE"/>
+            <blockAlignment value="CENTER"/>
             <blockValign value="MIDDLE"/>
             <lineStyle kind="OUTLINE" colorName="black" />
         </blockTableStyle>
@@ -51,9 +51,8 @@
 
     <story>
 
-    [[ setLang('en_US') ]]
 
-        <blockTable colWidths="310.0,132.0,310.0" style="TitleTable">
+        <blockTable colWidths="285.0,182.0,285.0" style="TitleTable">
             <tr>
                 <td>
                     <para style="Title"> </para>
@@ -71,7 +70,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="112.0,250.0,410.0" style="DocInfo">
+        <blockTable colWidths="112.0,350.0,310.0" style="DocInfo">
             <tr>
                 <td>
                     <para style="TextInfoBold">Report date : </para>
@@ -88,7 +87,7 @@
                     <para style="TextInfoBold">Location : </para>
                 </td>
                 <td>
-                    <para style="TextInfo">[[ objects[0].location_id and objects[0].location_id.name or '' ]]</para>
+                    <para style="TextInfo">[[ objects[0].location_id and objects[0].location_id.name or (objects[0].segment_id and objects[0].segment_id.local_location_ids and ', '.join([x.name for x in objects[0].segment_id.local_location_ids])) or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInfo"> </para>

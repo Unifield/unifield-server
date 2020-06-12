@@ -69,14 +69,14 @@
     ## Changed Article
     <Column ss:AutoFitWidth="1" ss:Width="80" />
     ## Comment
-    <Column ss:AutoFitWidth="1" ss:Width="100" />
+    <Column ss:AutoFitWidth="1" ss:Width="250" />
     ## Src. Location
     <Column ss:AutoFitWidth="1" ss:Width="80" />
     ## Qty in Stock
     <Column ss:AutoFitWidth="1" ss:Width="60" />
-    ## Qty to Pick
+    ## Qty
     <Column ss:AutoFitWidth="1" ss:Width="60" />
-    ## Qty Picked
+    ## Qty to Process
     <Column ss:AutoFitWidth="1" ss:Width="60" />
     ## Batch
     <Column ss:AutoFitWidth="1" ss:Width="60" />
@@ -153,8 +153,8 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Src. Location')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty in Stock')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty to Pick')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty Picked')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Qty to Process')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Date')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('KC')}</Data></Cell>
@@ -169,11 +169,15 @@
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.sale_line_id and move.sale_line_id.product_id != move.product_id and '[%s] %s' % (move.product_id.default_code, move.product_id.name) or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.comment or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.location_id.name or '' | x}</Data></Cell>
-          <Cell ss:StyleID="line" ><Data ss:Type="String">${formatLang(getStock(m) or 0.00) | x}</Data></Cell>
+          <Cell ss:StyleID="line" ><Data ss:Type="Number">${getStock(move) or 0.00}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="Number">${move.product_qty or 0.00 | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${0 | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.prodlot_id and move.prodlot_id.name or '' | x}</Data></Cell>
-          <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${move.expired_date or '' | n}T00:00:00.000</Data></Cell>
+          % if move.expired_date and isDate(move.expired_date):
+            <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${move.expired_date or '' | n}T00:00:00.000</Data></Cell>
+          % else:
+            <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+          % endif
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.kc_check and _('Yes') or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.dg_check and _('Yes') or '' | x}</Data></Cell>
           <Cell ss:StyleID="line" ><Data ss:Type="String">${move.np_check and _('Yes') or '' | x}</Data></Cell>

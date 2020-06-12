@@ -24,6 +24,7 @@ from osv import fields
 from mx.DateTime import DateFrom, RelativeDateTime
 from lxml import etree
 from tools.translate import _
+from tools.misc import to_xml
 import logging
 
 import time
@@ -33,6 +34,7 @@ HIST_STATUS = [('draft', 'Draft'), ('in_progress', 'In Progress'), ('ready', 'Re
 class product_history_consumption(osv.osv):
     _name = 'product.history.consumption'
     _rec_name = 'location_id'
+    _order = 'id desc'
 
     def _get_status(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -475,9 +477,9 @@ class product_product(osv.osv):
         res = super(product_product, self).fields_view_get(cr, uid, view_id, view_type, context=ctx, toolbar=toolbar, submenu=submenu)
 
         if context.get('history_cons', False) and view_type == 'tree':
-            line_view = """<tree string="Historical consumption" hide_new_button="1">
+            line_view = """<tree string="%s" hide_new_button="1">
                    <field name="default_code"/>
-                   <field name="name" />"""
+                   <field name="name" />""" % (to_xml(_('Historical consumption')),)
 
             if context.get('amc', False):
                 line_view += """<field name="average" />"""
@@ -512,7 +514,7 @@ class product_product(osv.osv):
             xml_view.insert(0, separator_node)
             product_ids = self.pool.get('product.history.consumption').get_data(cr, uid, [context.get('obj_id')], context=context)[0]
             product_ids = self.pool.get('product.product').search(cr, uid, [('id', 'in', product_ids), ('average', '>', 0)], context=context)
-            new_filter = """<filter string="Av.%s &gt; 0" name="average" icon="terp-accessories-archiver-minus" domain="[('id', 'in', %s)]" />""" % (context.get('amc', 'AMC'), product_ids)
+            new_filter = """<filter string="%s%s &gt; 0" name="average" icon="terp-accessories-archiver-minus" domain="[('id', 'in', %s)]" />""" % (_('Av.'), _(context.get('amc', 'AMC')), product_ids)
             # generate new xml form$
             filter_node = etree.fromstring(new_filter)
             xml_view.insert(0, filter_node)
@@ -539,7 +541,7 @@ class product_product(osv.osv):
                 res.update({'average': {'digits': (16,2),
                                         'selectable': True,
                                         'type': 'float',
-                                        'string': 'Av. %s' %context.get('amc')}})
+                                        'string': _('Av. %s') % _(context.get('amc','AMC'))}})
 
         return res
 
@@ -588,7 +590,8 @@ class product_product(osv.osv):
                         if cons_id:
                             consumption = cons_prod_obj.browse(cr, uid, cons_id[0], context=context).value
                         else:
-                            consumption = self.pool.get('product.product').compute_amc(cr, uid, r['id'], context=cons_context) or 0.00
+                            # TODO TEST JFB
+                            consumption = self.pool.get('product.product').compute_amc(cr, uid, r['id'], context=cons_context)[r['id']] or 0.00
                             cons_prod_obj.create(cr, uid, {'name': field_name,
                                                            'product_id': r['id'],
                                                            'consumption_id': obj_id,

@@ -90,7 +90,7 @@ class procurement_request(osv.osv):
     _columns = {
         'date_order': fields.date('Ordered Date', required=True, readonly=False, select=True, states={}),
         'location_requestor_id': fields.many2one('stock.location', string='Location Requestor', ondelete="cascade",
-                                                 domain=[('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], help='You can only select an internal location'),
+                                                 domain=[('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], help='The location where the products will be delivered to'),
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
@@ -106,7 +106,7 @@ class procurement_request(osv.osv):
         'purchase_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Purchase Total', help="The amount of lines sourced on order", multi='by_type'),
         'stock_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total', help="The amount of lines sourced from stock", multi='by_type'),
         'proc_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total', help="The amount of lines sourced from stock", multi='by_type'),
-        'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True),
+        'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True, sort_column='id'),
         'is_ir_from_po_cancel': fields.boolean('Is IR from a PO cancelled', invisible=True),  # UFTP-82: flagging we are in an IR and its PO is cancelled
     }
 
@@ -405,7 +405,7 @@ class procurement_request(osv.osv):
 
         context.update({'active_id': ids[0], 'to_update_ir': True})
         ir = self.browse(cr, uid, ids[0], fields_to_fetch=['order_line', 'state'], context=context)
-        if ir.state not in ['draft', 'draft_p']:
+        if ir.state != 'draft':
             raise osv.except_osv(_('Warning'), _('Importing from IR Excel template is only allowed on an IR which is in Draft state'))
         import_ids = import_obj.search(cr, uid, [('order_id', '=', ids[0])], context=context)
         import_obj.unlink(cr, uid, import_ids, context=context)
@@ -679,7 +679,11 @@ class procurement_request_line(osv.osv):
         product_obj = self.pool.get('product.product')
         if product_id and type != 'make_to_stock':
             product = product_obj.browse(cr, uid, product_id, context=context)
-            v.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
+            if product.seller_ids and (product.seller_ids[0].name.supplier or product.seller_ids[0].name.manufacturer or
+                                       product.seller_ids[0].name.transporter):
+                v.update({'supplier': product.seller_ids[0].name.id})
+            else:
+                v.update({'supplier': False})
         elif product_id and type == 'make_to_stock':
             v.update({'supplier': False})
             product = product_obj.browse(cr, uid, product_id, context=context)
@@ -714,5 +718,16 @@ class procurement_request_line(osv.osv):
 
 procurement_request_line()
 
+class procurement_request_sourcing_document(osv.osv):
+    """ Backward compatibility: do not change object's sdref """
+
+    _name = 'procurement.request.sourcing.document'
+    _table = 'procurement_request_sourcing_document2'
+    _auto = False
+    _columns = {
+        'order_id': fields.many2one('sale.order', string='Internal request'),
+    }
+
+procurement_request_sourcing_document()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

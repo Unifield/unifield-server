@@ -73,11 +73,16 @@ class account_period(osv.osv):
         sub_line_obj = self.pool.get('account.subscription.line')
         curr_obj = self.pool.get('res.currency')
         curr_rate_obj = self.pool.get('res.currency.rate')
+        user_obj = self.pool.get('res.users')
+        journal_obj = self.pool.get('account.journal')
+        move_line_obj = self.pool.get('account.move.line')
 
         # previous state of the period
         ap_dict = self.read(cr, uid, ids, ['state'])[0]
         previous_state = ap_dict['state']
 
+        company = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
+        level = company.instance_id and company.instance_id.level or ''
 
         # Ticket utp913 set state_sync_flag for conditional sync of state
         # 'none' : no update to the state field via a sync (data is still sent but not updated in target instance)
@@ -85,8 +90,6 @@ class account_period(osv.osv):
         # note that 'draft' = 'Open' and 'created' = 'Draft' ... see ACCOUNT_PERIOD_STATE_SELECTION in init
 
         if context.get('sync_update_execution') is None:
-            user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-            level = user.company_id.instance_id.level
 
             if level == 'section': # section = HQ
                 if previous_state == 'created' and context['state'] == 'draft':
@@ -183,7 +186,7 @@ class account_period(osv.osv):
                               "All next periods must be at a lower state."))
             # / Check state consistency
 
-            if period.state == 'draft':
+            if period.state == 'draft':  # Open
                 # check if there are draft payroll entries in the period. Ticket uftp-89
                 if context['state'] == 'field-closed':
                     hr_payroll_msf_obj = self.pool.get('hr.payroll.msf')
@@ -192,6 +195,16 @@ class account_period(osv.osv):
                         raise osv.except_osv(_('Error !'), _('There are outstanding payroll entries in this period; you must validate them to field-close this period.'))
                     # UFTP-351: Check that no Journal Entries are Unposted for this period
                     self.check_unposted_entries(cr, uid, period.id, context=context)
+
+                    # check that the reval has been processed in coordo IF a revaluation account has been set in the Company form
+                    if level == 'coordo' and not period.special and company.revaluation_default_account:
+                        reval_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'revaluation'), ('is_current_instance', '=', True)], context=context)
+                        if not reval_journal_ids:
+                            raise osv.except_osv(_('Warning'), _('Impossible to check the revaluation entries of the period: '
+                                                                 'Revaluation Journal not found.'))
+                        move_line_dom = [('journal_id', 'in', reval_journal_ids), ('period_id', '=', period.id)]
+                        if not move_line_obj.search_exist(cr, uid, move_line_dom, context=context):
+                            raise osv.except_osv(_('Warning'), _('You should run the month-end revaluation before closing the period.'))
 
                 # first verify that all existent registers for this period are closed
                 reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
@@ -242,7 +255,7 @@ class account_period(osv.osv):
                 WHERE period_id = %s"""
                 cr.execute(sql, (period.id,))
                 res = [x[0] for x in cr.fetchall()]
-                comp_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+                comp_curr_id = company.currency_id.id
                 # for each currency do a verification about fx rate
                 for period_id in res:
                     # search for company currency_id if ID is None
@@ -278,11 +291,8 @@ class account_period(osv.osv):
                 self.check_unposted_entries(cr, uid, period.id, context=context)
 
         # check if unposted move lines are linked to this period
-        move_line_obj = self.pool.get('account.move.line')
-        move_lines = move_line_obj.search(cr, uid, [('period_id', 'in', ids)])
-        for move_line in move_line_obj.browse(cr, uid, move_lines):
-            if move_line.state != 'valid':
-                raise osv.except_osv(_('Error !'), _('You cannot close a period containing unbalanced move lines!'))
+        if move_line_obj.search_exist(cr, uid, [('period_id', 'in', ids), ('state', '!=', 'valid')]):
+            raise osv.except_osv(_('Error !'), _('You cannot close a period containing unbalanced move lines!'))
 
         # otherwise, change the period's and journal period's states
         if context['state']:
@@ -350,7 +360,7 @@ class account_period(osv.osv):
         'is_system': fields.function(_get_is_system, fnct_search=_get_search_is_system, method=True, type='boolean', string="System period ?", readonly=True),
     }
 
-    _order = 'date_start, number'
+    _order = 'date_start DESC, number DESC'
 
     def create(self, cr, uid, vals, context=None):
         if not context:

@@ -12,9 +12,16 @@
                     <field name="sourcing_trace_ok" invisible="1" />
                     <group colspan="6" attrs="{'invisible': [('state', 'not in', ['validated', 'validated_p'])]}">
                         <html>
-                            <p style="text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
-                               WARNING: This document has already been validated, are you sure you wish to modify after validation?
+                            <p id="message_ir_validated" style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                               <translate>WARNING: This document has already been validated, are you sure you wish to modify after validation?</translate>
                             </p>
+                            <script language="javascript">
+                                var editable = $('#_terp_editable').val();
+                                if (editable == "True") {
+                                    msg_dom = $('#message_ir_validated');
+                                    msg_dom.show();
+                                }
+                            </script>
                         </html>
                     </group>
                     <group col="6" colspan="6" name="header">
@@ -120,8 +127,8 @@
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />
-                                <button name="ask_resource_lines" type="object" icon="gtk-cancel" string="Cancel" states="draft,draft_p,validated,validated_p" context="{'noraise': True}" />
-                                <button name="validate_ir_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" />
+                                <button name="ask_resource_lines" type="object" icon="gtk-cancel" string="Cancel document" states="draft,draft_p,validated,validated_p" context="{'noraise': True}" help="all the lines will be Cancelled where this status change is feasible" />
+                                <button name="validate_ir_lines" type="object" string="Validate document" icon="terp-check" states="draft,draft_p" help="all the lines will be Validated where this status change is feasible" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">
@@ -168,9 +175,11 @@
                 <search string="Internal Requests">
                     <group string="Filters" expand="1">
                         <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', 'in', ['draft','draft_p'])]" />
-                        <filter name="state_valid" string="Validated" icon="terp-camera_test" domain="[('state', 'in', ['validated','validated_p'])]" />
-                        <filter name="state_proc_progress" string="Confirmed" icon="terp-stage" domain="[('state', 'in', ('confirmed', 'confirmed_p'))]" />
+                        <filter name="state_valid" string="Validated" icon="terp-check" domain="[('state', 'in', ['validated','validated_p'])]" />
+                        <filter name="sourced" string="Sourced" icon="gtk-paste-v" domain="[('state','in',['sourced','sourced_p'])]" />
+                        <filter name="state_proc_progress" string="Confirmed" icon="terp-camera_test" domain="[('state', 'in', ('confirmed', 'confirmed_p'))]" />
                         <filter name="state_done" string="Closed" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
+                        <filter name="cancelled" string="Cancelled" icon="gtk-cancel" domain="[('state', '=', 'cancel')]" />
                         <separator orientation="vertical" />
                         <field name="name" />
                         <field name="origin" />

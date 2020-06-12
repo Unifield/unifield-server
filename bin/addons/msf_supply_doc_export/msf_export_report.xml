@@ -10,6 +10,7 @@
             file="msf_supply_doc_export/report/report_purchase_order_xls.mako"
             report_type="webkit"
             header="False"
+            view_ids="purchase.purchase_order_form,purchase.purchase_order_tree"
             auto="False"
             menu="True"
             />
@@ -38,21 +39,11 @@
             menu="False"
             />
 
-        <report
-            id="report_request_for_quotation_xls"
-            string="Request For Quotation Excel Export"
-            model="purchase.order"
-            name="request.for.quotation_xls"
-            file="msf_supply_doc_export/report/report_request_for_quotation_xls.mako"
-            report_type="webkit"
-            header="False"
-            auto="False"
-            menu="True"
-         />
     <!-- FIELD ORDER == INTERNAL REQUEST== SALE ORDER they are the same object-->
         <report
             id="report_sale_order_xls"
             string="Field Order Excel Export"
+            view_ids="sale.view_order_form,sale.view_order_tree"
             model="sale.order"
             name="sale.order_xls"
             file="msf_supply_doc_export/report/report_sale_order_xls.mako"
@@ -65,6 +56,7 @@
         <report
             id="report_internal_request_xls"
             string="Internal Request Excel Export"
+            view_ids="procurement_request.procurement_request_tree_view,procurement_request.procurement_request_form_view"
             model="sale.order"
             name="internal.request_xls"
             file="msf_supply_doc_export/report/report_internal_request_xls.mako"
@@ -77,6 +69,7 @@
         <report
             id="internal_request_export"
             string="Export to IR Excel template"
+            view_ids="procurement_request.procurement_request_tree_view,procurement_request.procurement_request_form_view"
             model="sale.order"
             name="internal_request_export"
             file="msf_supply_doc_export/report/internal_request_export_xls.mako"
@@ -183,6 +176,7 @@
         <report
            id="report_internal_move_xls"
            string="Internal Move Excel Export"
+           view_ids="stock.vpicktree,stock.view_picking_form"
            model="stock.picking"
            name="internal.move.xls"
            file="msf_supply_doc_export/report/report_internal_move_xls.mako"

@@ -54,9 +54,8 @@ class wizard_closing_cashbox(osv.osv_memory):
                 # compare the selected balances
                 equivalent = abs(balcal - bal) < 10**-4
                 if not equivalent:
-                    # verify that no other lines should be created
-                    res_id = st_obj.write(cr, uid, [w_id], {'state' : 'partial_close'})
-                    return { 'type' : 'ir.actions.act_window_close', 'active_id' : res_id }
+                    raise osv.except_osv(_('Warning'),
+                                         _('Theoretical Balance is not equal to the Cashbox Balance.'))
                 else:
                     # @@@override@account.account_bank_statement.button_confirm_bank()
                     obj_seq = self.pool.get('ir.sequence')

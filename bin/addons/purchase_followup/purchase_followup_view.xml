@@ -13,6 +13,7 @@
             <field name="key2">client_action_multi</field>
             <field name="model">purchase.order</field>
             <field name="name">Order Follow Up</field>
+            <field name="view_ids" ref="purchase.purchase_order_form,purchase.purchase_order_tree" />
             <field eval="'ir.actions.server,%d'%action_purchase_order_follow_up" name="value"/>
             <field eval="True" name="object"/>
         </record>

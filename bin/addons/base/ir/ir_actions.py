@@ -133,6 +133,7 @@ class report_xml(osv.osv):
         'report_sxw_content': fields.function(_report_content, fnct_inv=_report_content_inv, method=True, type='binary', string='SXW content',),
         'report_rml_content': fields.function(_report_content, fnct_inv=_report_content_inv, method=True, type='binary', string='RML content'),
         'run_in_background': fields.boolean('Run report in bg'),
+        'update_title': fields.boolean('Update title with form name'),
 
     }
     _defaults = {
@@ -144,6 +145,7 @@ class report_xml(osv.osv):
         'report_type': lambda *a: 'pdf',
         'attachment': lambda *a: False,
         'run_in_background': False,
+        'update_title': False,
     }
 
 report_xml()
@@ -300,7 +302,7 @@ class act_window(osv.osv):
         'auto_refresh': fields.integer('Auto-Refresh',
                                        help='Auto refresh the view after X seconds'),
         'groups_id': fields.many2many('res.groups', 'ir_act_window_group_rel',
-                                      'act_id', 'gid', 'Groups'),
+                                      'act_id', 'gid', 'Groups', order_by='name'),
         'search_view_id': fields.many2one('ir.ui.view', 'Search View Ref.'),
         'filter': fields.boolean('Filter'),
         'auto_search':fields.boolean('Auto Search'),
@@ -336,6 +338,7 @@ class act_window(osv.osv):
         'auto_search':lambda *a: True,
         'multi': False,
         'sidebar_open': lambda *a: False,
+        'name': '',
     }
 
     def for_xml_id(self, cr, uid, module, xml_id, context=None):

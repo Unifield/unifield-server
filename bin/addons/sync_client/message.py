@@ -111,7 +111,7 @@ class local_message_rule(osv.osv):
             return self.browse(cr, uid, rules, context=context)[0]
         return False
 
-    def _manual_create_sync_message(self, cr, real_uid, model_name, res_id, return_info, rule_method, logger, check_identifier=True, context=None):
+    def _manual_create_sync_message(self, cr, real_uid, model_name, res_id, return_info, rule_method, logger, check_identifier=True, context=None, extra_arg=None, force_domain=False):
         if context is None:
             context ={}
         if True:
@@ -125,13 +125,15 @@ class local_message_rule(osv.osv):
                 return
 
             model_obj = self.pool.get(model_name)
-            if res_id not in model_obj.search(cr, uid, eval(rule.domain), order='NO_ORDER', context=context):
+            if not force_domain and res_id not in model_obj.search(cr, uid, eval(rule.domain), order='NO_ORDER', context=context):
                 return
 
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")
             partner = model_obj.browse(cr, uid, res_id)[rule.destination_name]
             partner_name = partner.name
             arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, destination=partner, context=context)
+            if extra_arg:
+                arguments[0].update(extra_arg)
             sale_name = ''
             if 'name' in arguments[0]:
                 sale_name = arguments[0]['name']
@@ -153,7 +155,8 @@ class local_message_rule(osv.osv):
                 'generate_message' : True,
             }
             msg_to_send_obj.create(cr, uid, data, context=context)
-            logger.info("A manual message for the method: %s, created for the object: %s " % (rule_method, sale_name))
+            if logger:
+                logger.info("A manual message for the method: %s, created for the object: %s " % (rule_method, sale_name))
             if at is None:
                 del context['active_test']
             else:
@@ -266,13 +269,6 @@ class message_to_send(osv.osv):
 
         generated_ids = []
         for id in obj_ids:
-            # US-1467: Check if this fo has any line, if not just ignore it and show a warning message in log file!
-            if 'normal_fo_create_po' in rule.remote_call and args[id] and args[id][0]:
-                if len(args[id][0].get('order_line')) == 0:
-                    self._logger.warn("::::WARNING: The FO %s (state: %s) has no line! Cannot be synced!" % (args[id][0].get('name'), args[id][0].get('state')))
-                    ignored_ids.append(id)
-                    continue
-
             for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
                 # UF-2531: allow this when creating usb msg for the INT from scratch from RW to CP
                 if destination is False:
@@ -330,6 +326,7 @@ class message_to_send(osv.osv):
                 'call' : message.remote_call,
                 'dest' : message.destination_name,
                 'args' : message.arguments,
+                'client_db_id': message.id,
             })
             msg_ids.append(message.id)
 
@@ -366,11 +363,6 @@ class message_received(osv.osv):
         'manually_ran': fields.boolean('Has been manually tried', readonly=True),
         'manually_set_run_date': fields.datetime('Manually to run Date', readonly=True),
         'sync_id': fields.integer('Sync server seq. id', required=True, select=1),
-    }
-
-    _defaults = {
-        'manually_ran': False,
-        'manually_set_run_date': False,
     }
 
     _sql_constraints = [

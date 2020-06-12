@@ -33,7 +33,7 @@
                         <field name="is_allocatable" invisible="1"/>
                     </xpath>
                     <xpath expr="//tree[@string='Invoice lines']" position="attributes">
-                        <attribute name="colors">red:analytic_distribution_state == 'invalid' or inactive_product == True;black:analytic_distribution_state in ('none','valid') and inactive_product == False</attribute>
+                        <attribute name="colors">red:analytic_distribution_state in ('invalid', 'invalid_small_amount') or inactive_product == True;black:analytic_distribution_state in ('none','valid') and inactive_product == False</attribute>
                     </xpath>
                     <xpath expr="//tree[@string='Invoice lines']/field[@name='product_id']" position="before">
                         <field name="is_corrected" invisible="1"/>
@@ -76,7 +76,8 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree" position="replace">
-                        <tree string="Invoice Line" colors="red:inactive_product == True or analytic_distribution_state in ('invalid');blue:inactive_product == False and analytic_distribution_state in ('valid');black:inactive_product == False and analytic_distribution_state in ('none')">
+                        <tree string="Invoice Line"
+                              colors="red:inactive_product == True or analytic_distribution_state in ('invalid', 'invalid_small_amount');blue:inactive_product == False and analytic_distribution_state in ('valid');black:inactive_product == False and analytic_distribution_state in ('none')">
                             <field name="name"/>
                             <field name="inactive_product" invisible="1" />
                             <field name="account_id" domain="[('restricted_area', '=', 'invoice_lines')]"/>
@@ -120,10 +121,16 @@
                     <xpath expr="//separator[@string='Taxes']" position="replace" />
                     <xpath expr="//field[@name='invoice_line_tax_id']" position="replace">
                         <field name="vat_ok" invisible="1" />
+                        <field name="synced" invisible="1" />
                         <group colspan="4" col="4" attrs="{'invisible': [('vat_ok', '=', False)]}">
                             <separator colspan="4" string="Taxes"/>
-                            <field colspan="4" name="invoice_line_tax_id" context="{'type':parent.type}" domain="[('parent_id','=',False),('company_id', '=', parent.company_id)]"
-                                nolabel="1"/>
+                            <field colspan="4"
+                                   name="invoice_line_tax_id"
+                                   context="{'type': parent.type}"
+                                   domain="[('parent_id', '=', False), ('company_id', '=', parent.company_id)]"
+                                   nolabel="1"
+                                   attrs="{'readonly': [('invoice_type', '=', 'in_invoice'), ('synced', '=', True)]}"
+                            />
                         </group>
                     </xpath>
                 </data>

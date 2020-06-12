@@ -371,8 +371,11 @@
                 <data>
                     <field name="parent_id" position="before">
                         <field name="current_instance_type" invisible="1"/>
+                        <field name="is_pf" invisible="1"/>
                         <field name="instance_id" domain="[('level', '=', 'coordo')]"
-                               attrs="{'required': [('category', '=', 'FUNDING'), ('current_instance_type', '=', 'section')], 'invisible': [('category', '!=', 'FUNDING')], 'readonly': [('current_instance_type', '!=', 'section')]}"/>
+                               attrs="{'required': [('category', '=', 'FUNDING'), ('current_instance_type', '=', 'section'), ('is_pf', '=', False)],
+                                       'invisible': [('category', '!=', 'FUNDING')],
+                                       'readonly': ['|', ('current_instance_type', '!=', 'section'), ('is_pf', '=', True)]}"/>
                     </field>
                 </data>
             </field>

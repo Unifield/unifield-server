@@ -52,15 +52,19 @@ NEW_COLUMNS_HEADER = [
     ('Delivery Confirmed Date', 'date'),('Origin', 'string'), ('Comment', 'string'), ('Notes', 'string'), ('Supplier Reference', 'string'), ('Incoterm', 'string')]
 
 #Important NOTE: I didn't set the fields of type date with the attribute 'date' (2nd part of the tuple) because for Excel, when a date is empty, the field becomes '1899-30-12' as default. So I set 'string' instead for the fields date.
+RFQ_COLUMNS_HEADER_FOR_IMPORT = [
+    (_('Line Number'), 'number'), (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Price'), 'number'),
+    (_('Delivery Request Date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string'), (_('Justification Code'), 'string'), (_('Justification Coordination'), 'string'), (_('HQ Remarks'), 'string'), (_('Justification Y/N'), 'string'), (_('State'), 'string')
+]
+RFQ_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in RFQ_COLUMNS_HEADER_FOR_IMPORT]
 
 PO_COLUMNS_HEADER_FOR_IMPORT=[
-    (_('Line Number'), 'number'), (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Price'), 'number'),
-    (_('Delivery Request Date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string'), (_('Justification Code'), 'string'), (_('Justification Coordination'), 'string'), (_('HQ Remarks'), 'string'), (_('Justification Y/N'), 'string'), (_('state'), 'string')]
+    (_('Line Number'), 'number'), (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Price'), 'number'), (_('Delivery Request Date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string'), (_('Justification Code'), 'string'), (_('Justification Coordination'), 'string'), (_('HQ Remarks'), 'string'), (_('Justification Y/N'), 'string'), (_('Cold chain type'), 'string'), (_('Dangerous Good Type'), 'string'), (_('Controlled Substance Type'), 'string'), (_('State'), 'string')]
 PO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in PO_COLUMNS_HEADER_FOR_IMPORT]
 
 FO_COLUMNS_HEADER_FOR_IMPORT=[
     (_('fo_import_product_code'), 'string'), (_('fo_import_product_description'), 'string'), (_('fo_import_qty'), 'number'), (_('fo_import_uom'), 'string'),
-    (_('fo_import_price'), 'number'), (_('fo_import_drd'), 'date'), (_('fo_import_currency'), 'string'), (_('fo_import_comment'), 'string'), (_('state'), 'string')]
+    (_('fo_import_price'), 'number'), (_('fo_import_drd'), 'date'), (_('fo_import_currency'), 'string'), (_('fo_import_comment'), 'string'), (_('State'), 'string')]
 FO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in FO_COLUMNS_HEADER_FOR_IMPORT]
 
 INT_COLUMNS_HEADER_FOR_IMPORT = [
@@ -80,7 +84,7 @@ OUT_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in OUT_COLUMNS_HEADER_FOR_IMPORT]
 
 IR_COLUMNS_HEADER_FOR_IMPORT=[
     (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('Cost Price'), 'number'), (_('UoM'), 'string'),
-    (_('Currency'), 'string'), (_('Comment'), 'string'), (_('Status'), 'string')]
+    (_('Currency'), 'string'), (_('Comment'), 'string'), (_('State'), 'string')]
 IR_COLUMNS_FOR_IMPORT = [x for (x, y) in IR_COLUMNS_HEADER_FOR_IMPORT]
 
 TENDER_COLUMNS_HEADER_FOR_IMPORT=[
@@ -107,6 +111,10 @@ STOCK_WAREHOUSE_ORDERPOINT_LINE_COLUMNS_FOR_IMPORT = [x for (x,y) in STOCK_WAREH
 PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT = [
     (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Comment'), 'string')]
 PRODUCT_LIST_COLUMNS_FOR_IMPORT = [x for (x,y) in PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT]
+
+COLUMNS_HEADER_FOR_PRODUCT_LINE_IMPORT = [
+    (_('Product Code'), 'string')]
+COLUMNS_FOR_PRODUCT_LINE_IMPORT = [x for (x, y) in COLUMNS_HEADER_FOR_PRODUCT_LINE_IMPORT]
 
 ACCOUNT_INVOICE_COLUMNS_HEADER_FOR_IMPORT = [
     ('Description', 'string'), ('Account', 'string'), ('Quantity', 'number'), ('Unit Price', 'number'), ('Destination', 'string'), ('Cost Center', 'string'), ('Funding Pool', 'string')]
@@ -148,11 +156,8 @@ import wizard_import_picking_line
 import wiz_common_import
 import wizard_import_tender_line
 import wizard_delete_lines
-import wizard_import_auto_supply_line
-import wizard_import_order_cycle_line
-import wizard_import_threshold_value_line
-import wizard_import_stock_warehouse_order_point_line
 import wizard_import_product_list
+import wizard_import_product_line
 import wizard_import_supplier_catalogue
 import wizard_po_simulation_screen
 import wizard_in_simulation_screen

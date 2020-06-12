@@ -28,7 +28,7 @@ class ir_sequence_type(osv.osv):
     _order = 'name'
     _columns = {
         'name': fields.char('Name',size=64, required=True),
-        'code': fields.char('Code',size=32, required=True),
+        'code': fields.char('Code',size=32, required=True, select=1),
     }
 ir_sequence_type()
 
@@ -46,11 +46,22 @@ class ir_sequence(osv.osv):
             else:
                 # currval can't be used as it returns the value
                 # most recently obtained by nextval for this sequence in the current session
-                cr.execute("select last_value, is_called, increment_by from ir_sequence_%03d" % seq['id'])  # not_a_user_entry
-                data = cr.fetchone()
-                ret[seq['id']] = data[0]
-                if data[1]:
-                    ret[seq['id']] += data[2]
+                if not cr.table_exists('pg_sequences'):
+                    cr.execute("select last_value, is_called, increment_by from ir_sequence_%03d" % seq['id'])  # not_a_user_entry
+                    data = cr.fetchone()
+                    ret[seq['id']] = data[0]
+                    if data[1]:
+                        ret[seq['id']] += data[2]
+                else:
+                    cr.execute("select last_value, is_called from ir_sequence_%03d" % seq['id'])  # not_a_user_entry
+                    data = cr.fetchone()
+                    ret[seq['id']] = data[0]
+                    if data[1]:
+                        cr.execute("select increment_by from pg_sequences where sequencename=%s", ("ir_sequence_%03d" % seq['id'],))
+                        d2 = cr.fetchone()
+                        ret[seq['id']] += d2[0]
+
+
         return ret
 
     def _check_sequence_type_existence(self, cr, uid, ids, context=None):
@@ -72,7 +83,7 @@ class ir_sequence(osv.osv):
 
     _columns = {
         'name': fields.char('Name',size=64, required=True),
-        'code': fields.char('Code',size=64, required=True),
+        'code': fields.char('Code',size=64, required=True, select=1),
         'active': fields.boolean('Active'),
         'prefix': fields.char('Prefix',size=64, help="Prefix value of the record for the sequence"),
         'suffix': fields.char('Suffix',size=64, help="Suffix value of the record for the sequence"),

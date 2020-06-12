@@ -42,6 +42,7 @@ class hr_payroll(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        ad_obj = self.pool.get('analytic.distribution')
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
@@ -57,6 +58,7 @@ class hr_payroll(osv.osv):
         # E/ DEST in list of available DEST in ACCOUNT
         # F/ Check posting date with cost center and destination if exists
         # G/ Check document date with funding pool
+        # H/ Check Cost Center / Destination compatibility
         ## CASES where FP is filled in (or not) and/or DEST is filled in (or not).
         ## CC is mandatory, so always available:
         # 1/ no FP, no DEST => Distro = valid
@@ -124,6 +126,11 @@ class hr_payroll(osv.osv):
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
                     continue
+            # H check
+            if line.destination_id and line.cost_center_id and \
+                    not ad_obj.check_dest_cc_compatibility(cr, uid, line.destination_id.id, line.cost_center_id.id, context=context):
+                res[line.id] = 'invalid'
+                continue
         return res
 
     def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -381,33 +388,4 @@ class hr_payroll(osv.osv):
 hr_payroll()
 
 
-class ir_values(osv.osv):
-    _name = 'ir.values'
-    _inherit = 'ir.values'
-
-    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True, view_id=False):
-        """
-        Make the entries in the "Actions" menu depend on the view (Expense lines view or B/S lines view)
-        """
-        if context is None:
-            context = {}
-        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req, view_id=view_id)
-        if key == 'action' and key2 == 'client_action_multi' and 'hr.payroll.msf' in [x[0] for x in models]:
-            new_act = []
-            for v in values:
-                if v[1] in ['action_payroll_deletion', 'action_payment_orders']:
-                    # for all Payroll views
-                    new_act.append(v)
-                elif context.get('payroll_bs_lines'):
-                    if v[1] == 'action_payroll_validation':
-                        # for the B/S lines view
-                        new_act.append(v)
-                else:
-                    if v[1] in ['action_payroll_analytic_reallocation', 'action_move_to_payroll_bs_lines']:
-                        # for the expense lines view
-                        new_act.append(v)
-            values = new_act
-        return values
-
-ir_values()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

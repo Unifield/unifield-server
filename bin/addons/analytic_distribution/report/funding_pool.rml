@@ -62,13 +62,7 @@
     <blockTableStyle id="Table4">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
-      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,0" stop="0,0"/>
-      <lineStyle kind="LINEBELOW" colorName="#000000" start="1,0" stop="1,0"/>
-      <lineStyle kind="LINEBELOW" colorName="#000000" start="2,0" stop="2,0"/>
-      <lineStyle kind="LINEBELOW" colorName="#000000" start="3,0" stop="3,0"/>
-      <lineStyle kind="LINEBELOW" colorName="#000000" start="4,0" stop="4,0"/>
-      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,0" stop="5,0"/>
-      <lineStyle kind="LINEBELOW" colorName="#000000" start="6,0" stop="6,0"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,0" stop="-1,0"/>
     </blockTableStyle>
     <blockTableStyle id="Table5">
       <blockAlignment value="LEFT"/>
@@ -202,22 +196,22 @@
     </para>
     <para style="P6">Cost centers:</para>
 
-    <blockTable colWidths="260.0,258.0" style="Table11" repeatRows="1">
+    <blockTable colWidths="260.0,260.0" style="Table11" repeatRows="1">
       <tr>
         <td>
-          <para style="P2" alignment="LEFT">Cost center name</para>
+          <para style="P8">Cost center code</para>
         </td>
         <td>
-          <para style="P2" alignment="LEFT">Cost center code</para>
+          <para style="P8">Cost center name</para>
         </td>
       </tr>
         <tr>
       <para style="P17">[[repeatIn(o.cost_center_ids,'line')]]</para>
           <td>
-            <para style="P3" alignment="LEFT">[[ line.name ]]</para>
+            <para style="P7">[[ line.code or '' ]]</para>
           </td>
           <td>
-            <para style="P3" alignment="LEFT">[[ line.code ]]</para>
+            <para style="P7">[[ line.name or '' ]]</para>
           </td>
         </tr>
       </blockTable>
@@ -228,31 +222,37 @@
     <para style="P8">
       <font color="white"> </font>
     </para>
-    <para style="P6">Accounts:</para>
+    <para style="P6">Account/Destination:</para>
 
-    <!-- Seems that its not possible to change colWidths regarding a condition.
-         Cf. https://www.odoo.com/forum/help-1/question/reportlab-conditional-table-header-15143
-         Previous colWidths: colWidths="40.0,260.0,55.0,55.0,55.0,55.0"
-    -->
-    <blockTable repeatRows="1" style="Table4">
+    <blockTable repeatRows="1" style="Table4" colWidths="95.0,165.0,95.0,165.0">
       <tr>
         <td>
-        [[repeatIn(getDest(),'dest_data','td')]]
-          <para style="P24" alignment="CENTER">[[ dest_data[0] ]]</para>
+          <para style="P8">Account code</para>
+        </td>
+        <td>
+          <para style="P8">Account name</para>
+        </td>
+        <td>
+          <para style="P8">Destination code</para>
+        </td>
+        <td>
+          <para style="P8">Destination name</para>
         </td>
       </tr>
 
       <tr>
       [[repeatIn(o.tuple_destination_summary,'line')]]
         <td>
-          <para style="P16" alignment="LEFT">[[ line.account_id and line.account_id.code ]]</para>
+          <para style="P7">[[ line.account_id and line.account_id.code or '' ]]</para>
         </td>
         <td>
-          <para style="P11" alignment="LEFT">[[ line.account_id and line.account_id.name ]]</para>
+          <para style="P7">[[ line.account_id and line.account_id.name or '' ]]</para>
         </td>
         <td>
-        [[repeatIn(getDest()[2:],'dest_data','td')]]
-          <para style="P28" alignment="CENTER">[[ getBoolDest(line,'dest_'+ str(dest_data[1])) ]]</para>
+          <para style="P7">[[ line.destination_id and line.destination_id.code or '' ]]</para>
+        </td>
+        <td>
+          <para style="P7">[[ line.destination_id and line.destination_id.name or '' ]]</para>
         </td>
       </tr>
     </blockTable>

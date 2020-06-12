@@ -155,7 +155,9 @@ class wizard_import_invoice(osv.osv_memory):
                 already.append(inv.id)
 
         ordered_lines = {}
+        employees = set()
         for line in wizard.line_ids:
+            employees.add(line.employee_id and line.employee_id.id or False)
             if line.id in already:
                 raise osv.except_osv(_('Warning'), _('This invoice: %s %s has already been added. Please choose another invoice.')%(line.name, line.amount_currency))
             if group:
@@ -167,6 +169,10 @@ class wizard_import_invoice(osv.osv_memory):
                 ordered_lines[key] = [line]
             elif line not in ordered_lines[key]:
                 ordered_lines[key].append(line)
+
+        # all lines must be either not linked to an employee, or linked to the same employee
+        if group and len(employees) > 1:
+            raise osv.except_osv(_('Warning'), _("You can't group these lines together as they aren't all linked to the same employee."))
 
         # For each partner, do an account_move with all lines => lines merge
         new_lines = []
@@ -251,6 +257,11 @@ class wizard_import_invoice(osv.osv_memory):
                 if not ref or ref == 'false':
                     if line.line_ids and line.line_ids[0].move_id:
                         ref = line.line_ids[0].move_id.name
+                # get all the account invoices imported, even partially
+                invoice_ids = []
+                for aml in line.line_ids:
+                    if aml.invoice:
+                        invoice_ids.append(aml.invoice.id)
                 register_vals = {
                     'name': '%s Imported Invoice(s)%s' % (line.number_invoices, partial or ''),
                     'ref': ref or '',
@@ -262,6 +273,7 @@ class wizard_import_invoice(osv.osv_memory):
                     'employee_id': line.employee_id.id,
                     'amount': line.amount_currency < 0 and -line.amount or line.amount,
                     'imported_invoice_line_ids': [(4, x.id) for x in line.line_ids],
+                    'imported_account_invoice_ids': [(4, inv_id) for inv_id in invoice_ids],
                 }
 
                 # if we come from cheque, add a column for that
