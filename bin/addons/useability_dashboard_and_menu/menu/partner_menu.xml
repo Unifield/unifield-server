@@ -53,7 +53,8 @@
             <field name="res_model">res.partner</field>
             <field name="view_type">form</field>
             <field name="search_view_id" ref="base.view_res_partner_filter"/>
-            <field name="context">{"search_default_manufacturer":1, 'show_button_show_inactive':1, 'search_default_active': 1, 'active_test': 0}</field>
+            <field name="domain">[('active', 'in', ['t', 'f'])]</field>
+            <field name="context">{"search_default_manufacturer":1, 'show_button_show_inactive':1, 'search_default_active': 1}</field>
             <field name="help">You see here Other/Manufacturer who can be both Customer and Supplier.</field>
         </record>
         
