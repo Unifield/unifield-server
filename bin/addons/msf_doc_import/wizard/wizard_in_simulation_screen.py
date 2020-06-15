@@ -245,7 +245,7 @@ class wizard_import_in_simulation_screen(osv.osv):
             'context': context,
         }
 
-    def launch_import(self, cr, uid, ids, context=None):
+    def launch_import(self, cr, uid, ids, context=None, with_ppl=False):
         '''
         '''
         if context is None:
@@ -254,10 +254,10 @@ class wizard_import_in_simulation_screen(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        return self._import(cr, uid, ids, context=context)
+        return self._import(cr, uid, ids, context=context, with_ppl=with_ppl)
 
     def launch_import_pack(self, cr, uid, ids, context=None):
-        return self.launch_import(cr, uid, ids, context)
+        return self.launch_import(cr, uid, ids, context, with_ppl=True)
 
     def populate(self, cr, uid, import_id, picking_id, context=None):
         if context is None:
@@ -1048,7 +1048,7 @@ Nothing has been imported because of %s. See below:
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def _import_with_thread(self, cr, uid, partial_id, simu_id, context=None):
+    def _import_with_thread(self, cr, uid, partial_id, simu_id, context=None, with_ppl=False):
         inc_proc_obj = self.pool.get('stock.incoming.processor')
         in_proc_obj = self.pool.get('stock.move.in.processor')
         picking_obj = self.pool.get('stock.picking')
@@ -1062,7 +1062,7 @@ Nothing has been imported because of %s. See below:
                         prodlot_id = self.pool.get('stock.production.lot')._get_prodlot_from_expiry_date(new_cr, uid, line.expiry_date, line.product_id.id, context=context)
                         in_proc_obj.write(new_cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
 
-            new_picking = picking_obj.do_incoming_shipment(new_cr, uid, partial_id, context=context)
+            new_picking = picking_obj.do_incoming_shipment(new_cr, uid, partial_id, context=context, with_ppl=with_ppl)
             if isinstance(new_picking, (int,long)):
                 context['new_picking'] = new_picking
             new_cr.commit()
@@ -1086,7 +1086,7 @@ Nothing has been imported because of %s. See below:
         return True
 
 
-    def _import(self, cr, uid, ids, context=None):
+    def _import(self, cr, uid, ids, context=None, with_ppl=False):
         '''
         Create memeory moves and return to the standard incoming processing wizard
         '''
@@ -1121,9 +1121,9 @@ Nothing has been imported because of %s. See below:
             cr.commit()
             if context.get('do_not_import_with_thread'):
                 # Auto VI IN import: do not process IN
-                self._import_with_thread(cr, uid, [partial_id], simu_id.id, context=context)
+                self._import_with_thread(cr, uid, [partial_id], simu_id.id, context=context, with_ppl=with_ppl)
             else:
-                new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context))
+                new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context, with_ppl))
                 new_thread.start()
                 new_thread.join(20)
                 if new_thread.isAlive():

@@ -155,31 +155,35 @@ class stock_picking(osv.osv):
         dpo_line_id = data.get('dpo_line_id', False)
 
         # build a dic which can be used directly to update the stock move
-        result = {'line_number': data['line_number'],
-                  'product_id': product_id,
-                  'product_uom': uom_id,
-                  'product_uos': uom_id,
-                  'uom_id': uom_id,
-                  'date': data['date'],
-                  'date_expected': data['date_expected'],
-                  'state': state,
+        result = {
+            'line_number': data['line_number'],
+            'product_id': product_id,
+            'product_uom': uom_id,
+            'product_uos': uom_id,
+            'uom_id': uom_id,
+            'date': data['date'],
+            'date_expected': data['date_expected'],
+            'state': state,
 
-                  'original_qty_partial': data['original_qty_partial'],  # UTP-972
+            'original_qty_partial': data['original_qty_partial'],  # UTP-972
 
-                  'prodlot_id': batch_id,
-                  'expired_date': expired_date,
+            'prodlot_id': batch_id,
+            'expired_date': expired_date,
 
-                  'dpo_line_id': dpo_line_id,
-                  'sync_dpo': dpo_line_id and True or False,
+            'dpo_line_id': dpo_line_id,
+            'sync_dpo': dpo_line_id and True or False,
 
-                  'asset_id': asset_id,
-                  'change_reason': data['change_reason'] or None,
-                  'name': data['name'],
-                  'quantity': data['product_qty'] or 0.0,
-                  'note': data['note'],
-                  'comment': data.get('comment'),
-                  'sale_line_id': data.get('sale_line_id', False) and data['sale_line_id'].get('id', False) or False,
-                  }
+            'asset_id': asset_id,
+            'change_reason': data['change_reason'] or None,
+            'name': data['name'],
+            'quantity': data['product_qty'] or 0.0,
+            'note': data['note'],
+            'comment': data.get('comment'),
+            'sale_line_id': data.get('sale_line_id', False) and data['sale_line_id'].get('id', False) or False,
+
+        }
+        for k in ['from_pack', 'to_pack', 'weight', 'height', 'length', 'width']:
+            result[k] = data.get(k)
         return result
 
     def package_data_update_in(self, cr, uid, source, out_info, context=None):
@@ -295,6 +299,7 @@ class stock_picking(osv.osv):
                 if po_ids:
                     po_id = po_ids[0]
 
+
         if not po_id and not pick_dict.get('claim', False):
             # UF-1830: Check if the PO exist, if not, and in restore mode, send a warning and create a message to remove the ref on the partner document
             if context.get('restore_flag'):
@@ -362,6 +367,9 @@ class stock_picking(osv.osv):
 
             in_id = self.create(cr, uid, in_claim_dict, context=context)
 
+        pack_info_obj = self.pool.get('wizard.import.in.pack.simulation.screen')
+        pack_info_created = {}
+
         if in_id:
             in_name = self.read(cr, uid, in_id, ['name'], context=context)['name']
             in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
@@ -377,6 +385,19 @@ class stock_picking(osv.osv):
                 already_shipped_moves = []
                 # get the corresponding picking line ids
                 for data in line_data['data']:
+                    if data.get('from_pack') and data.get('to_pack'):
+                        pack_key = '%s-%s' % (data.get('from_pack'), data.get('to_pack'))
+                        if pack_key not in pack_info_created:
+                            pack_info_created[pack_key] = pack_info_obj.create(cr, uid, {
+                                'parcel_from': data['from_pack'],
+                                'parcel_to': data['to_pack'],
+                                'total_weight': data['weight'],
+                                'total_height': data['height'],
+                                'total_length': data['length'],
+                                'total_width': data['width'],
+                                'packing_list': pick_dict.get('packing_list', ''),
+                            })
+                        data['pack_info_id'] = pack_info_created[pack_key]
                     ln = data.get('line_number')
                     # UF-2148: if the line contains 0 qty, just ignore it!
                     qty = data.get('quantity', 0)

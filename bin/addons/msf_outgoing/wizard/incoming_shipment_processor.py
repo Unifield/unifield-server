@@ -125,10 +125,11 @@ class stock_incoming_processor(osv.osv):
             context = {}
 
         res = {}
-        for wiz in self.browse(cr, uid, ids, context=context):
+        for wiz in self.browse(cr, uid, ids, fields_to_fetch=['linked_to_out', 'picking_id'], context=context):
             res[wiz.id] = False
-            if wiz.picking_id and wiz.picking_id.state == 'updated' and wiz.linked_to_out:
-                res[wiz.id] = True
+            if wiz.picking_id and wiz.linked_to_out:
+                if not self.pool.get('stock.move.in.processor').search_exist(cr, uid, [('wizard_id', '=', wiz.id),('pack_info_id', '=', False)], context=context):
+                    res[wiz.id] = True
 
         return res
 
@@ -157,7 +158,6 @@ class stock_incoming_processor(osv.osv):
                     break
 
         return res
-
 
     _columns = {
         'move_ids': fields.one2many(
@@ -220,6 +220,8 @@ class stock_incoming_processor(osv.osv):
         ),
         'display_process_to_ship_button': fields.function(_get_display_process_to_ship_button, method=True, type='boolean', string='Process to ship'),
         'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
+        'fields_as_ro': fields.boolean('Set Cost/Split .. as RO', internal=True),
+        'sequence_issue': fields.boolean('Issue with To ship'),
     }
 
     _defaults = {
@@ -634,7 +636,8 @@ class stock_incoming_processor(osv.osv):
                 'filetype': self.pool.get('stock.picking').get_import_filetype(cr, uid, file_attached['name'], context=context),
             }, context=context)
             self.pool.get('wizard.import.in.simulation.screen').launch_simulate(cr, uid, data['res_id'], context=context)
-            self.pool.get('wizard.import.in.simulation.screen').launch_import_pack(cr, uid, data['res_id'], context=context)
+            # the following line process the IN but display the simu screen
+            #self.pool.get('wizard.import.in.simulation.screen').launch_import_pack(cr, uid, data['res_id'], context=context)
         return data
 
 
@@ -657,11 +660,6 @@ class stock_incoming_processor(osv.osv):
                 if num_of_packs:
                     if not self.pool.get('ppl.processor')._check_rounding(cr, uid, move.uom_id, num_of_packs, move.quantity, context=context):
                         rounding_issues.append(move.line_number)
-            if move.integrity_status and move.integrity_status != 'empty':
-                raise osv.except_osv(
-                    _('Error'),
-                    _('Please correct red lines before processing')
-                )
 
         if not total_qty:
             raise osv.except_osv(
@@ -735,6 +733,8 @@ class stock_incoming_processor(osv.osv):
 
         if not sequence_ok:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_incoming_processor_form_view')[1]
+            self.write(cr, uid, ids, {'sequence_issue': True}, context=context)
+
             return {
                 'name': _('Products to Process'),
                 'type': 'ir.actions.act_window',
@@ -765,7 +765,8 @@ class stock_incoming_processor(osv.osv):
                 'context': context,
             }
 
-        return self.do_process_to_ship(cr, uid, ids, context=context)
+        self.pool.get('stock.picking').do_incoming_shipment(cr, uid, ids, context=context, with_ppl=True)
+        return {'type': 'ir.actions.act_window_close'}
 
 
     def do_process_to_ship(self, cr, uid, ids, context=None):
@@ -957,6 +958,31 @@ class stock_move_in_processor(osv.osv):
             sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"  # not_a_user_entry
             cr.execute(sql, (value, ml_id))
         return True
+
+    def _get_pack_info(self, cr, uid, ids, field_name, args, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for wiz in self.browse(cr, uid, ids, fields_to_fetch=['from_pack', 'to_pack'], context=context):
+            if wiz['from_pack']:
+                res[wiz.id] = '%s-%s' % (wiz['from_pack'], wiz['to_pack'])
+            else:
+                res[wiz.id] = False
+        return res
+
+    def _search_pack_info(self, cr, uid, obj, name, args, context):
+        dom = []
+        for arg in args:
+            if arg[2]:
+                d_p = arg[2].split('-')
+                if d_p and d_p[0] and d_p[0].strip():
+                    dom = [('from_pack', '=', d_p[0].strip())]
+                if d_p and len(d_p)>1 and d_p[1] and d_p[1].strip():
+                    dom.append(('to_pack', '=', d_p[1].strip()))
+        return dom
 
     _columns = {
         # Parent wizard
@@ -1186,8 +1212,8 @@ class stock_move_in_processor(osv.osv):
         'pack_info_id': fields.many2one('wizard.import.in.pack.simulation.screen', 'Pack Info'),
         'from_pack': fields.integer(string='From p.'),
         'to_pack': fields.integer(string='To p.'),
-        'weight': fields.float('Weight', digits=(16,2)),
-        'volume': fields.float('Volume', digits=(16,2)),
+        'weight': fields.float('Total Weight', digits=(16,2)),
+        'volume': fields.float('Total Volume', digits=(16,2)),
         'height': fields.float('Height', digits=(16,2)),
         'length': fields.float('Length', digits=(16,2)),
         'width': fields.float('Width', digits=(16,2)),
@@ -1195,6 +1221,7 @@ class stock_move_in_processor(osv.osv):
         'packing_list': fields.char('Supplier Packing List', size=30),
         'sequence_issue': fields.selection(PACK_INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
         'split_move_ok': fields.boolean(string='Is split move ?'),
+        'filter_pack': fields.function(_get_pack_info, method=True, type='char', string='Pack', fnct_search=_search_pack_info),
     }
 
 
@@ -1223,7 +1250,6 @@ class stock_move_in_processor(osv.osv):
                 vals['cost'] = price
             if not vals.get('currency', False):
                 vals['currency'] = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
-
         return super(stock_move_in_processor, self).create(cr, uid, vals, context=context)
 
 

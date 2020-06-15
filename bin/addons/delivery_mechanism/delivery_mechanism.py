@@ -711,7 +711,7 @@ class stock_picking(osv.osv):
 
         return res
 
-    def do_incoming_shipment(self, cr, uid, wizard_ids, shipment_ref=False, context=None):
+    def do_incoming_shipment(self, cr, uid, wizard_ids, shipment_ref=False, context=None, with_ppl=False):
         """
         Take the data in wizard_ids and lines of stock.incoming.processor and
         do the split of stock.move according to the data.
@@ -804,7 +804,7 @@ class stock_picking(osv.osv):
                 line = False
                 for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
-                    if context.get('do_not_process_incoming') and line.pack_info_id:
+                    if (sync_in or context.get('do_not_process_incoming')) and line.pack_info_id:
                         # we are processing auto import IN, we must register pack_info data
                         values['pack_info_id'] = line.pack_info_id.id
 
@@ -853,7 +853,7 @@ class stock_picking(osv.osv):
                     if out_values.get('location_dest_id', False):
                         out_values.pop('location_dest_id')
 
-                    if line.pack_info_id:
+                    if with_ppl and line.pack_info_id:
                         all_pack_info[line.pack_info_id.id] = True
                     remaining_out_qty = line.quantity
                     out_move = None
