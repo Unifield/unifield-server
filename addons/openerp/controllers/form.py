@@ -708,6 +708,8 @@ class Form(SecuredController):
         if params.button.selected_ids:
             s_ids = params.button.selected_ids if isinstance(params.button.selected_ids, list) else [params.button.selected_ids]
             ctx['button_selected_ids'] = s_ids
+        if params.button.selected_domain:
+            ctx['selected_domain'] = params.button.selected_domain
         return model, id, ids, ctx
 
     def button_action(self, params):

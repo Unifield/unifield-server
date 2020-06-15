@@ -690,7 +690,7 @@ class Hidden(TinyInputWidget):
 class Button(TinyInputWidget):
 
     template = "/openerp/widgets/form/templates/button.mako"
-    params = ["btype", "id", "confirm", "icon", "target", "context", "default_focus"]
+    params = ["btype", "id", "confirm", "icon", "target", "context", "default_focus", "set_ids"]
 
     visible = True
     def __init__(self, **attrs):
@@ -702,6 +702,7 @@ class Button(TinyInputWidget):
         self.context = attrs.get("context", {})
         self.nolabel = True
         self.target = ''
+        self.set_ids = attrs.get('set_ids')
         if self.icon:
             self.icon = icons.get_icon(self.icon)
         self.default_focus = attrs.get('default_focus', 0)
