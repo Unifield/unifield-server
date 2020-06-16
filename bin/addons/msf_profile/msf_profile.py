@@ -73,7 +73,7 @@ class patch_scripts(osv.osv):
                 WHERE model = 'res.partner'
                 AND run = 'f'
                 AND (log LIKE '%Key/value ''en_US'' not found in selection field ''lang''%'
-                     OR log LIKE 'Cannot execute due to previous not run on the same record/rule.')
+                     OR log = 'Cannot execute due to previous not run on the same record/rule.')
                 AND values LIKE '%u''en_US''%';
             """
             cr.execute(not_run_sql)
