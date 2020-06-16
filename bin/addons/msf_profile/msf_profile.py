@@ -57,29 +57,28 @@ class patch_scripts(osv.osv):
         """
         Inactivates en_US and replaces it by en_MF for users, partners and related not runs
         """
-        if self.pool.get('sync_client.version'):
-            lang_sql = "UPDATE res_lang SET active = 'f' WHERE code='en_US';"
-            cr.execute(lang_sql)
-            partner_sql = "UPDATE res_partner SET lang='en_MF' WHERE lang='en_US';"
-            cr.execute(partner_sql)
-            partner_count = cr.rowcount
-            user_sql = "UPDATE res_users SET context_lang='en_MF' WHERE context_lang='en_US';"
-            cr.execute(user_sql)
-            user_count = cr.rowcount
-            # not runs are checked only on partners as the lang. isn't synched for users
-            not_run_sql = """
-                UPDATE sync_client_update_received
-                SET values = REPLACE(values, 'u''en_US''', 'u''en_MF''')
-                WHERE model = 'res.partner'
-                AND run = 'f'
-                AND (log LIKE '%Key/value ''en_US'' not found in selection field ''lang''%'
-                     OR log = 'Cannot execute due to previous not run on the same record/rule.')
-                AND values LIKE '%u''en_US''%';
-            """
-            cr.execute(not_run_sql)
-            not_run_count = cr.rowcount
-            self._logger.warn('English replaced by MSF English for %s partner(s), %s user(s) and %s not run update(s).' %
-                              (partner_count, user_count, not_run_count))
+        lang_sql = "UPDATE res_lang SET active = 'f' WHERE code='en_US';"
+        cr.execute(lang_sql)
+        partner_sql = "UPDATE res_partner SET lang='en_MF' WHERE lang='en_US';"
+        cr.execute(partner_sql)
+        partner_count = cr.rowcount
+        user_sql = "UPDATE res_users SET context_lang='en_MF' WHERE context_lang='en_US';"
+        cr.execute(user_sql)
+        user_count = cr.rowcount
+        # not runs are checked only on partners as the lang. isn't synched for users
+        not_run_sql = """
+            UPDATE sync_client_update_received
+            SET values = REPLACE(values, 'u''en_US''', 'u''en_MF''')
+            WHERE model = 'res.partner'
+            AND run = 'f'
+            AND (log LIKE '%Key/value ''en_US'' not found in selection field ''lang''%'
+                 OR log = 'Cannot execute due to previous not run on the same record/rule.')
+            AND values LIKE '%u''en_US''%';
+        """
+        cr.execute(not_run_sql)
+        not_run_count = cr.rowcount
+        self._logger.warn('English replaced by MSF English for %s partner(s), %s user(s) and %s not run update(s).' %
+                          (partner_count, user_count, not_run_count))
 
 
     # UF17.0
