@@ -110325,3 +110325,8 @@ msgstr "Délai Externe (jours) :"
 msgid "Handling Lead Time (days) :"
 msgstr "Délai de traitement (jours) :"
 
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:495
+#, python-format
+msgid "Line %s. The journal third party used for the internal transfer must be different from the journal of the register."
+msgstr "Ligne %s. Le tiers de type journal utilisé pour le transfert interne doit être différent du journal du registre."
