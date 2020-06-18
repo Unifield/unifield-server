@@ -1156,18 +1156,35 @@ class wizard_import_in_pack_simulation_screen(osv.osv):
     _name = 'wizard.import.in.pack.simulation.screen'
     _rec_name = 'parcel_from'
 
+    def _get_real_total(self, cr, uid, ids, f, a, context=None):
+        res = {}
+        for pack in self.browse(cr, uid, ids, context=context):
+            res[pack.id] = {'real_total_volume': False, 'real_total_weight': False}
+
+            if pack.parcel_to and pack.parcel_from:
+                nb_pack = pack.parcel_to - pack.parcel_from + 1
+                if pack.total_weight:
+                    res[pack.id]['real_total_weight'] = int(round(nb_pack * pack.total_weight, 0))
+                if pack.total_height and pack.total_length and pack.total_width:
+                    res[pack.id]['real_total_volume'] = int(round(pack.total_height * pack.total_length * pack.total_width * nb_pack / 1000, 0))
+        return res
+
     _columns = {
         'wizard_id': fields.many2one('wizard.import.in.simulation.screen', 'Simu Wizard'),
-        'parcel_from': fields.integer('Parcel From'),
-        'parcel_to': fields.integer('Parcel To'),
-        'parcel_qty': fields.integer('Parcel Qty'),
-        'total_weight': fields.float('Weight', digits=(16,2)),
-        'total_volume': fields.float('Volume', digits=(16,2)),
-        'total_height': fields.float('Height', digits=(16,2)),
-        'total_length': fields.float('Length', digits=(16,2)),
-        'total_width': fields.float('Width', digits=(16,2)),
+        'parcel_from': fields.integer_null('Parcel From'),
+        'parcel_to': fields.integer_null('Parcel To'),
+        'parcel_qty': fields.integer_null('Parcel Qty'),
+        # on IN VI import file the fields are named total_xxx but the figures are p.p
+        'total_weight': fields.float_null('Weight', digits=(16,2)),
+        'total_volume': fields.float_null('Volume', digits=(16,2)),
+        'total_height': fields.float_null('Height', digits=(16,2)),
+        'total_length': fields.float_null('Length', digits=(16,2)),
+        'total_width': fields.float_null('Width', digits=(16,2)),
         'packing_list': fields.char('Supplier Packing List', size=30),
+        'ppl_name': fields.char('Supplier Packing List', size=128),
         'integrity_status': fields.selection(string='Integrity Status', selection=PACK_INTEGRITY_STATUS_SELECTION, readonly=True),
+        'real_total_volume': fields.function(_get_real_total, method=True, type='integer_null', string='Total volume for all packs', multi='real_total'),
+        'real_total_weight': fields.function(_get_real_total, method=True, type='integer_null', string='Total weight for all packs', multi='real_total'),
     }
 
     _defaults = {

@@ -157,8 +157,10 @@ class _dttime_format(str, _format):
 
 _fields_process = {
     'float': _float_format,
+    'float_null': _float_format,
     'date': _date_format,
     'integer': _int_format,
+    'integer_null': _int_format,
     'datetime' : _dttime_format
 }
 

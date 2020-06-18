@@ -99,7 +99,7 @@
                         <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" attrs="{'invisible': [('location_dest_active_ok', '!=', True)]}" />
                         <button name="do_incoming_shipment" type="object" string="Process" icon="gtk-go-forward" attrs="{'invisible': [('location_dest_active_ok', '!=', False)]}"
                             confirm="Warning the final destination location of these goods is no longer active, IN will be processed as normal but please check and process the Internal move created after manually. Continue ?" />
-                        <button name="process_to_ship" attrs="{'invisible': [('display_process_to_ship_button', '!=', True)]}" type="object" string="Process to ship" icon="gtk-goto-last" />
+                        <button name="process_to_ship" attrs="{'invisible': ['|', ('display_process_to_ship_button', '!=', True), ('register_a_claim', '=', True)]}" type="object" string="Process to ship" icon="gtk-goto-last" />
                     </group>
                 </form>
             </field>
@@ -182,8 +182,9 @@
                     <field name="from_pack" readonly="1" />
                     <field name="to_pack" readonly="1" />
                     <field name="filter_pack" filter_selector="1" invisible="1" />
-                    <field name="volume" readonly="1" />
-                    <field name="weight" readonly="1" />
+                    <field name="total_volume" readonly="1" />
+                    <field name="total_weight" readonly="1" />
+                    <field name="ppl_name" readonly="1" filter_selector="1" />
                     <field name="packing_list" readonly="1" filter_selector="1" />
                     <button name="open_split_wizard"
                         type="object"

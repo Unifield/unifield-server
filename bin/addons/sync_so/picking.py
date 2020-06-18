@@ -27,6 +27,7 @@ import time
 
 from sync_common import xmlid_to_sdref
 from sync_client import get_sale_purchase_logger
+from sync_client.message import dict_to_obj
 
 from tools.translate import _
 
@@ -186,41 +187,47 @@ class stock_picking(osv.osv):
             result[k] = data.get(k)
         return result
 
-    def package_data_update_in(self, cr, uid, source, out_info, context=None):
+    def package_data_update_in(self, cr, uid, source, pick_dict, context=None):
         '''
         package the data to get info concerning already processed or not
         '''
         result = {}
-        if out_info.get('move_lines', False):
-            for line in out_info['move_lines']:
-                # Don't get the returned pack lines
-                if line.get('location_dest_id', {}).get('usage', 'customer') == 'customer':
-                    # aggregate according to line number
-                    line_dic = result.setdefault(line.get('line_number'), {})
-                    # set the data
-                    line_dic.setdefault('data', []).append(self.format_data(cr, uid, line, source, context=context))
-                    # set the flag to know if the data has already been processed (partially or completely) in Out side
-                    line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move']})
+        for out_info_dict_to_obj in pick_dict:
+            out_info = out_info_dict_to_obj.to_dict()
+            if out_info.get('move_lines', False):
+                for line in out_info['move_lines']:
+                    # Don't get the returned pack lines
+                    if line.get('location_dest_id', {}).get('usage', 'customer') == 'customer':
+                        # aggregate according to line number
+                        line_dic = result.setdefault(line.get('line_number'), {})
+                        # set the data
+                        line_dic.setdefault('data', []).append(self.format_data(cr, uid, line, source, context=context))
+                        # set the flag to know if the data has already been processed (partially or completely) in Out side
+                        line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move'], 'packing_list': out_info.get('packing_list'), 'ppl_name': out_info.get('previous_step_id') and out_info.get['previous_step_id'].get('name') or out_info.get('name')})
 
 
         return result
 
-    def picking_data_update_in(self, cr, uid, source, out_info, context=None):
+    def picking_data_update_in(self, cr, uid, source, pick_info, context=None):
         '''
         If data come from a stock move (DPO), re-arrange data to match with partial_shipped_fo_updates_in_po method
         '''
-        result = {}
+        result = []
 
-        for key in out_info.keys():
-            if key != 'move_lines':
-                result[key] = out_info.get(key)
+        for data in pick_info:
+            out_info = data.to_dict()
+            res = {}
+            for key in out_info.keys():
+                if key != 'move_lines':
+                    res[key] = out_info.get(key)
 
-        if out_info.get('subtype', False) in ('standard', 'picking') and out_info.get('move_lines', False):
-            for line in out_info['move_lines']:
-                # Don't get the lines without dpo_line_id
-                if line.get('dpo_line_id', False):
-                    result.setdefault('move_lines', [])
-                    result['move_lines'].append(line)
+            if out_info.get('subtype', False) in ('standard', 'picking') and out_info.get('move_lines', False):
+                for line in out_info['move_lines']:
+                    # Don't get the lines without dpo_line_id
+                    if line.get('dpo_line_id', False):
+                        res.setdefault('move_lines', [])
+                        res['move_lines'].append(line)
+            result.append(dict_to_obj(res))
 
         return result
 
@@ -245,12 +252,14 @@ class stock_picking(osv.osv):
         if not found:
             already_shipped_moves.append({move_id: quantity})
 
-    def partial_shipped_fo_updates_in_po(self, cr, uid, source, out_info, context=None):
+    def partial_shipped_fo_updates_in_po(self, cr, uid, source, *pick_info, **kwargs):
         '''
         ' This sync method is used for updating the IN of Project side when the OUT/PICK at Coordo side became done.
         ' In partial shipment/OUT, when the last shipment/OUT is made, the original IN will become Available Shipped, no new IN will
         ' be created, as the whole quantiy of the IN is delivered (but not yet received at Project side)
         '''
+
+        context = kwargs.get('context')
         move_proc = self.pool.get('stock.move.in.processor')
         if context is None:
             context = {}
@@ -260,13 +269,13 @@ class stock_picking(osv.osv):
         # Load common data (mainly for reason type) into context
         self.pool.get('data.tools').load_common_data(cr, uid, [], context=context)
 
-        if not isinstance(out_info, dict):
-            pick_dict = out_info.to_dict()
-        else:
-            pick_dict = out_info
+        #if not isinstance(out_info, dict):
+        #    pick_dict = out_info.to_dict()
+        #else:
+        #    pick_dict = out_info
 
         if context.get('for_dpo'):
-            pick_dict = self.picking_data_update_in(cr, uid, source, pick_dict, context=context)
+            self.picking_data_update_in(cr, uid, source, pick_info, context=context)
             #US-1352: Reset this flag immediately, otherwise it will impact on other normal shipments!
             context.update({'for_dpo': False})
 
@@ -279,8 +288,9 @@ class stock_picking(osv.osv):
         warehouse_obj = self.pool.get('stock.warehouse')
 
         # package data
-        pack_data = self.package_data_update_in(cr, uid, source, pick_dict, context=context)
+        pack_data = self.package_data_update_in(cr, uid, source, pick_info, context=context)
         # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
+        pick_dict = pick_info[0].to_dict()
         so_ref = source + "." + pick_dict['origin']
         po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
         # prepare the shipment/OUT reference to update to IN
@@ -386,7 +396,7 @@ class stock_picking(osv.osv):
                 # get the corresponding picking line ids
                 for data in line_data['data']:
                     if data.get('from_pack') and data.get('to_pack'):
-                        pack_key = '%s-%s' % (data.get('from_pack'), data.get('to_pack'))
+                        pack_key = '%s-%s-%s' % (data.get('from_pack'), data.get('to_pack'), line_data.get('ppl_name'))
                         if pack_key not in pack_info_created:
                             pack_info_created[pack_key] = pack_info_obj.create(cr, uid, {
                                 'parcel_from': data['from_pack'],
@@ -395,7 +405,8 @@ class stock_picking(osv.osv):
                                 'total_height': data['height'],
                                 'total_length': data['length'],
                                 'total_width': data['width'],
-                                'packing_list': pick_dict.get('packing_list', ''),
+                                'packing_list': line_data.get('packing_list'),
+                                'ppl_name': line_data.get('ppl_name'),
                             })
                         data['pack_info_id'] = pack_info_created[pack_key]
                     ln = data.get('line_number')

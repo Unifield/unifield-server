@@ -804,7 +804,9 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
         """
         rule_dest_field = rule.destination_name
         fields = eval(rule.arguments)
-        res =  self.export_data_json(cr, uid, [res_id], fields, destination=destination, rule_dest_field=rule_dest_field, context=context)
+        if isinstance(res_id, (int, long)):
+            res_id = [res_id]
+        res =  self.export_data_json(cr, uid, res_id, fields, destination=destination, rule_dest_field=rule_dest_field, context=context)
         return res['datas']
 
     def export_data_json(self, cr, uid, ids, fields_to_export, destination=False, rule_dest_field=False, context=None):

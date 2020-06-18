@@ -852,6 +852,7 @@ class stock_move_in_processor(osv.osv):
     _name = 'stock.move.in.processor'
     _inherit = 'stock.move.processor'
     _description = 'Wizard lines for incoming shipment processing'
+    _order = 'line_number, from_pack, id'
 
     def _get_move_info(self, cr, uid, ids, field_name, args, context=None):
         return super(stock_move_in_processor, self)._get_move_info(cr, uid, ids, field_name, args, context=context)
@@ -1210,15 +1211,18 @@ class stock_move_in_processor(osv.osv):
             help="Ticked if the product is a Controlled Substance",
         ),
         'pack_info_id': fields.many2one('wizard.import.in.pack.simulation.screen', 'Pack Info'),
-        'from_pack': fields.integer(string='From p.'),
-        'to_pack': fields.integer(string='To p.'),
-        'weight': fields.float('Total Weight', digits=(16,2)),
-        'volume': fields.float('Total Volume', digits=(16,2)),
-        'height': fields.float('Height', digits=(16,2)),
-        'length': fields.float('Length', digits=(16,2)),
-        'width': fields.float('Width', digits=(16,2)),
+        'from_pack': fields.integer_null(string='From p.'),
+        'to_pack': fields.integer_null(string='To p.'),
+        'weight': fields.float_null('Weight', digits=(16,2)),
+        'volume': fields.float_null('Volume', digits=(16,2)),
+        'height': fields.float_null('Height', digits=(16,2)),
+        'total_volume': fields.float_null(u'Total Volume [dm³]', digits=(16,0)),
+        'total_weight': fields.float_null(u'Total Weight [kg]', digits=(16,0)),
+        'length': fields.float_null('Length', digits=(16,2)),
+        'width': fields.float_null('Width', digits=(16,2)),
         'pack_id': fields.many2one('in.family.processor', string='Pack', ondelete='set null'),
         'packing_list': fields.char('Supplier Packing List', size=30),
+        'ppl_name': fields.char('Packing List', size=128),
         'sequence_issue': fields.selection(PACK_INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
         'split_move_ok': fields.boolean(string='Is split move ?'),
         'filter_pack': fields.function(_get_pack_info, method=True, type='char', string='Pack', fnct_search=_search_pack_info),

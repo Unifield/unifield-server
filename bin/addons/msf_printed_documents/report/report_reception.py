@@ -32,7 +32,7 @@ class report_reception(report_sxw.rml_parse):
             'time': time,
             'getState': self.getState,
             'enumerate': enumerate,
-            'get_lines': self.get_lines,
+            'get_lines_by_packing': self.get_lines_by_packing,
             'getDateCreation': self.getDateCreation,
             'getNbItem': self.getNbItem,
             'check': self.check,
@@ -224,9 +224,12 @@ class report_reception(report_sxw.rml_parse):
             actual_receipt_date = time.strftime('%d/%m/%Y', ard_min)
         return actual_receipt_date
 
-    def get_lines(self, o):
-        return o.move_lines
+    def get_lines_by_packing(self, o):
+        pack_info = {}
+        for line in o.move_lines:
+            pack_info.setdefault(line.pack_info_id or False, []).append(line)
 
+        return sorted(pack_info.items(), key=lambda x: x[0] and (x[0].ppl_name, x[0].packing_list, x[0].parcel_from))
 report_sxw.report_sxw('report.msf.report_reception_in', 'stock.picking', 'addons/msf_printed_documents/report/report_reception.rml', parser=report_reception, header=False)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
