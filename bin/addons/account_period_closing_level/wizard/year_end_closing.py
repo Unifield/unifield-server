@@ -44,16 +44,8 @@ class wizard_account_year_end_closing(osv.osv_memory):
         'fy_id': fields.many2one('account.fiscalyear', "Fiscal Year",
             required=True,
             domain=[('state', 'in', ('draft', 'mission-closed'))]),
-        'has_move_regular_bs_to_0': fields.boolean(
-            "Move regular B/S account to 0"),
-        'has_book_pl_results': fields.boolean("Book the P&L results"),
         'instance_level': fields.function(_get_instance_level, type='char',
             method=True, string='Instance level'),
-    }
-
-    _defaults = {
-        'has_move_regular_bs_to_0': False,
-        'has_book_pl_results': False,
     }
 
     def default_get(self, cr, uid, vals, context=None):
@@ -74,10 +66,11 @@ class wizard_account_year_end_closing(osv.osv_memory):
         if isinstance(ids, (int, long, )):
             ids = [ids]
         rec = self.browse(cr, uid, ids[0], context=context)
+        company = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
         self.pool.get('account.year.end.closing').process_closing(cr, uid,
             rec.fy_id,
-            has_move_regular_bs_to_0=rec.has_move_regular_bs_to_0,
-            has_book_pl_results=rec.has_book_pl_results,
+            has_move_regular_bs_to_0=company.has_move_regular_bs_to_0,
+            has_book_pl_results=company.has_book_pl_results,
             context=context)
         return {'type': 'ir.actions.act_window_close', 'context': context}
 
