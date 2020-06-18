@@ -98,14 +98,14 @@ class report_reception(report_sxw.rml_parse):
         val = 0
         if line.state in ('assigned', 'confirmed', 'done'):
             val = line.product_qty
-        return "{0:.2f}".format(val)
+        return val
 
     def getQtyBO(self,line,o):
         bo_qty = 0
         if line.state in ('assigned', 'shipped', 'confirmed'):
             bo_qty = line.product_qty
 
-        return "{0:.2f}".format(bo_qty)
+        return bo_qty
 
     def getQtyIS(self, line, o):
         # Amount received in this IN only
@@ -119,7 +119,7 @@ class report_reception(report_sxw.rml_parse):
 
         if val == 0:
             return ' ' # display blank instead 0
-        return "{0:.2f}".format(val)
+        return val
 
 
     def getProject(self,o):

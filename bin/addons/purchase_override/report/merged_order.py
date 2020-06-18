@@ -84,6 +84,7 @@ class merged_order(report_sxw.rml_parse):
                     'product_uom': line.product_uom.name,
                     'quantity': line.product_qty,
                     'comment': line.comment or '',
+                    'product_uom_rounding': line.product_uom.rounding,
                 }
             else:
                 all_prod[key]['price_unit'] = ((all_prod[key]['price_unit'] * all_prod[key]['quantity']) + (line.product_qty*line.price_unit)) / (line.product_qty+all_prod[key]['quantity'])
