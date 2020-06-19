@@ -551,8 +551,13 @@
             <field name="method">us_7533_fix_int_previous_chained_pick_id</field>
         </record>
 
+        <!-- UF18.0 -->
         <record id="us_7576_sync_msg_from_itself" model="patch.scripts">
             <field name="method">sync_msg_from_itself</field>
+        </record>
+
+        <record id="us_7412_set_fy_closure_settings" model="patch.scripts">
+            <field name="method">us_7412_set_fy_closure_settings</field>
         </record>
     </data>
 </openerp>
