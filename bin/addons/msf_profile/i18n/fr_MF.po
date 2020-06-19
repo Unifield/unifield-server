@@ -72286,8 +72286,7 @@ msgstr "Ticked if the product is a Dangerous Good"
 msgid "PO state"
 msgstr "PO state"
 
-#. modules: base, account_period_closing_level, finance, msf_currency_revaluation
-#: field:wizard.account.year.end.closing,instance_level:0
+#. modules: base, finance, msf_currency_revaluation
 #: field:res.config.users,instance_level:0
 #: field:res.users,instance_level:0
 #: field:cash.request.commitment,instance_level:0

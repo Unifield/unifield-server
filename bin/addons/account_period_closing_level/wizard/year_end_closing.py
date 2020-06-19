@@ -26,26 +26,10 @@ from tools.translate import _
 class wizard_account_year_end_closing(osv.osv_memory):
     _name="wizard.account.year.end.closing"
 
-    def _get_instance_level(self, cr, uid, ids, field_names, args,
-        context=None):
-        res = {}
-        if not ids:
-            return res
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        level = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0].company_id.instance_id.level
-        for id in ids:
-            res[id] = level
-        return res
-
     _columns = {
         'fy_id': fields.many2one('account.fiscalyear', "Fiscal Year",
             required=True,
             domain=[('state', 'in', ('draft', 'mission-closed'))]),
-        'instance_level': fields.function(_get_instance_level, type='char',
-            method=True, string='Instance level'),
     }
 
     def default_get(self, cr, uid, vals, context=None):
@@ -53,13 +37,11 @@ class wizard_account_year_end_closing(osv.osv_memory):
         fy_id = context and context.get('fy_id', False) or False
         fy_rec = fy_id and self.pool.get('account.fiscalyear').browse(cr, uid,
             fy_id, context=context) or False
-        level = ayec_obj.check_before_closing_process(cr, uid, fy_rec,
-            context=context)
+        ayec_obj.check_before_closing_process(cr, uid, fy_rec, context=context)
 
         res = super(wizard_account_year_end_closing, self).default_get(cr, uid,
             vals, context=context)
         res['fy_id'] = fy_id
-        res['instance_level'] = level
         return res
 
     def btn_close_fy(self, cr, uid, ids, context=None):
