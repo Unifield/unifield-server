@@ -203,7 +203,7 @@ class stock_picking(osv.osv):
                         # set the data
                         line_dic.setdefault('data', []).append(self.format_data(cr, uid, line, source, context=context))
                         # set the flag to know if the data has already been processed (partially or completely) in Out side
-                        line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move'], 'packing_list': out_info.get('packing_list'), 'ppl_name': out_info.get('previous_step_id') and out_info.get['previous_step_id'].get('name') or out_info.get('name')})
+                        line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move'], 'packing_list': out_info.get('packing_list'), 'ppl_name': out_info.get('previous_step_id') and out_info.get('previous_step_id').get('name') or out_info.get('name')})
 
 
         return result
