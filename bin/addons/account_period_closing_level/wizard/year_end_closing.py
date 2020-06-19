@@ -67,10 +67,16 @@ class wizard_account_year_end_closing(osv.osv_memory):
             ids = [ids]
         rec = self.browse(cr, uid, ids[0], context=context)
         company = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
+        if company.instance_id and company.instance_id.level == 'coordo':
+            has_move_regular_bs_to_0 = company.has_move_regular_bs_to_0
+            has_book_pl_results = company.has_book_pl_results
+        else:
+            has_move_regular_bs_to_0 = False
+            has_book_pl_results = False
         self.pool.get('account.year.end.closing').process_closing(cr, uid,
             rec.fy_id,
-            has_move_regular_bs_to_0=company.has_move_regular_bs_to_0,
-            has_book_pl_results=company.has_book_pl_results,
+            has_move_regular_bs_to_0=has_move_regular_bs_to_0,
+            has_book_pl_results=has_book_pl_results,
             context=context)
         return {'type': 'ir.actions.act_window_close', 'context': context}
 
