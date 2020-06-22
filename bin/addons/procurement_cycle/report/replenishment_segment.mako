@@ -413,7 +413,9 @@
         <% styles = ['s143', 's149'] %>
         % for fmc in range(1, 13):
         <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('RR FMC %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-        <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('From %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+        % if fmc == 1:
+            <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('From %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+        % endif
         <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('To %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
         <% i = 1 - i %>
         % endfor
@@ -455,24 +457,26 @@
                 <Data ss:Type="Number">${getattr(prod, 'rr_fmc_%d'%fmc) or ''}</Data>
             % endif
             </Cell>
-        <% from_date = getattr(prod, 'rr_fmc_from_%d'%fmc) %>
-        <Cell ss:StyleID="${styles[i][1]}">
-         % if isDate(from_date):
-            <Data ss:Type="DateTime">${from_date|n}T00:00:00.000</Data>
-        % else:
-            <Data ss:Type="String"></Data>
-        % endif
-        </Cell>
+            % if fmc == 1:
+                <% from_date = getattr(prod, 'rr_fmc_from_%d'%fmc) %>
+                <Cell ss:StyleID="${styles[i][1]}">
+                 % if isDate(from_date):
+                    <Data ss:Type="DateTime">${from_date|n}T00:00:00.000</Data>
+                % else:
+                    <Data ss:Type="String"></Data>
+                % endif
+                </Cell>
+            % endif
 
-        <% to_date = getattr(prod, 'rr_fmc_to_%d'%fmc) %>
-        <Cell ss:StyleID="${styles[i][1]}">
-         % if isDate(to_date):
-            <Data ss:Type="DateTime">${to_date|n}T00:00:00.000</Data>
-        % else:
-            <Data ss:Type="String"></Data>
-        % endif
-        </Cell>
-        <% i = 1 - i %>
+            <% to_date = getattr(prod, 'rr_fmc_to_%d'%fmc) %>
+            <Cell ss:StyleID="${styles[i][1]}">
+             % if isDate(to_date):
+                <Data ss:Type="DateTime">${to_date|n}T00:00:00.000</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
+            </Cell>
+            <% i = 1 - i %>
         % endfor
     % endif
    </Row>
