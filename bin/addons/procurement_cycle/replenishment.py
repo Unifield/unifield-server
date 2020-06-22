@@ -1039,7 +1039,7 @@ class replenishment_segment(osv.osv):
                         proposed_order_qty = max(0, total_fmc_oc + ss_stock + line.buffer_qty + sum_line.get(line.id, {}).get('expired_rdd_oc',0) - pas - line.pipeline_between_rdd_oc)
 
                 elif seg.rule == 'minmax':
-                    valid_line = line.min_qty is not False and line.max_qty is not False
+                    valid_line = bool(line.min_qty) and bool(line.max_qty)
                     if line.status == 'phasingout':
                         proposed_order_qty = 0
                         qty_lacking = False
@@ -1057,7 +1057,7 @@ class replenishment_segment(osv.osv):
                                 warnings.append(wmsg)
                                 warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('Insufficient'))))
                 else:
-                    valid_line = line.auto_qty is not False
+                    valid_line = bool(line.auto_qty)
                     proposed_order_qty = line.auto_qty
 
                 if not valid_rr_fmc:
@@ -1843,9 +1843,9 @@ class replenishment_segment_line(osv.osv):
         'status_tooltip': fields.function(_get_status_tooltip, type='char', method=True, string='Paired product'),
         'display_paired_icon': fields.function(_get_display_paired_icon, type='boolean', method=True, string='Display paired icon'),
         'status': fields.selection(life_cycle_status, string='RR Lifecycle'),
-        'min_qty': fields.float_null('Min Qty', related_uom='uom_id'),
-        'max_qty': fields.float_null('Max Qty', related_uom='uom_id'),
-        'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id'),
+        'min_qty': fields.float('Min Qty', related_uom='uom_id'),
+        'max_qty': fields.float('Max Qty', related_uom='uom_id'),
+        'auto_qty': fields.float('Auto. Supply Qty', related_uom='uom_id'),
         'buffer_qty': fields.float_null('Buffer Qty', related_uom='uom_id'),
         'real_stock': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='Real Stock', multi='get_stock_amc'),
         'pipeline_before_rdd': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline Before RDD', multi='get_pipeline_before'),
