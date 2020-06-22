@@ -1089,7 +1089,7 @@ class replenishment_segment(osv.osv):
                     'pipeline_qty': round(line.pipeline_before_rdd or 0),
                     'eta_for_next_pipeline': prod_eta.get(line.product_id.id, False),
                     'reserved_stock_qty': sum_line.get(line.id, {}).get('reserved_stock_qty'),
-                    'qty_lacking': False if seg.rule !='cycle' else round(qty_lacking),
+                    'qty_lacking': False if seg.rule not in ('cycle', 'minmax') else round(qty_lacking),
                     'qty_lacking_needed_by': qty_lacking_needed_by and qty_lacking_needed_by.strftime('%Y-%m-%d') or False,
                     'expired_qty_before_cons': False if seg.rule !='cycle' else round(sum_line.get(line.id, {}).get('expired_before_rdd',0)),
                     'expired_qty_before_eta': round(sum_line.get(line.id, {}).get('expired_qty_before_eta',0)),

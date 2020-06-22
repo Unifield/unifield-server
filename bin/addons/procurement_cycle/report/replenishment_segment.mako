@@ -538,7 +538,7 @@
     <Range>R9C4:R${len(objects[0].line_ids)+9}C4</Range>
     <Type>List</Type>
     <CellRangeList/>
-    <Value>&quot;${_('Active')|x},${_('New')|x},${_('Replaced')|x},${_('Replacing')|x}&quot;</Value>
+    <Value>&quot;${_('Active')|x},${_('New')|x},${_('Replaced')|x},${_('Replacing')|x},${_('Phasing Out')|x},${_('Active-Replacing')|x}&quot;</Value>
   </DataValidation>
 
  </Worksheet>
