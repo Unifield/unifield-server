@@ -265,7 +265,7 @@ class message_to_send(osv.osv):
 
 
         if obj_ids and rule.model == 'stock.picking' and rule.remote_call in ('stock.picking.partial_shipped_fo_updates_in_po', 'stock.picking.partial_shippped_dpo_updates_in_po'):
-            cr.execute("select array_agg(id) from stock_picking where id in %s group by subtype, partner_id, origin, claim", (tuple(obj_ids),))
+            cr.execute("select array_agg(id) from stock_picking where id in %s group by subtype, partner_id, origin, claim, coalesce(shipment_id, picking_id)", (tuple(obj_ids),))
             for picks in cr.fetchall():
                 arg = self.pool.get('stock.picking').get_message_arguments(cr, uid, picks[0], rule, context=context)
                 first_id = picks[0][0]
