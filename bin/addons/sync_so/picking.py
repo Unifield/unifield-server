@@ -203,7 +203,8 @@ class stock_picking(osv.osv):
                         # set the data
                         line_dic.setdefault('data', []).append(self.format_data(cr, uid, line, source, context=context))
                         # set the flag to know if the data has already been processed (partially or completely) in Out side
-                        line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move'], 'packing_list': out_info.get('packing_list'), 'ppl_name': out_info.get('previous_step_id') and out_info.get('previous_step_id').get('name') or out_info.get('name')})
+                        line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move']})
+                        line_dic['data'][-1].update({'packing_list': out_info.get('packing_list'), 'ppl_name': out_info.get('previous_step_id') and out_info.get('previous_step_id').get('name') or out_info.get('name')})
 
 
         return result
@@ -396,7 +397,7 @@ class stock_picking(osv.osv):
                 # get the corresponding picking line ids
                 for data in line_data['data']:
                     if data.get('from_pack') and data.get('to_pack'):
-                        pack_key = '%s-%s-%s' % (data.get('from_pack'), data.get('to_pack'), line_data.get('ppl_name'))
+                        pack_key = '%s-%s-%s' % (data.get('from_pack'), data.get('to_pack'), data.get('ppl_name'))
                         if pack_key not in pack_info_created:
                             pack_info_created[pack_key] = pack_info_obj.create(cr, uid, {
                                 'parcel_from': data['from_pack'],
@@ -405,8 +406,8 @@ class stock_picking(osv.osv):
                                 'total_height': data['height'],
                                 'total_length': data['length'],
                                 'total_width': data['width'],
-                                'packing_list': line_data.get('packing_list'),
-                                'ppl_name': line_data.get('ppl_name'),
+                                'packing_list': data.get('packing_list'),
+                                'ppl_name': data.get('ppl_name'),
                             })
                         data['pack_info_id'] = pack_info_created[pack_key]
                     ln = data.get('line_number')
