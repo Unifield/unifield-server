@@ -1162,12 +1162,6 @@ class stock_picking(osv.osv):
                     wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                     # Then we finish the good picking
                     if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
-                        if wizard.claim_replacement_picking_expected:
-                            move_ids = move_obj.search(cr, uid, [('picking_id', '=', backorder_id)])
-                            for move in move_obj.browse(cr, uid, move_ids, context=context):
-                                if move.purchase_line_id:
-                                    new_qty = move.purchase_line_id.product_qty - move.product_qty
-                                    self.pool.get('purchase.order.line').write(cr, uid, [move.purchase_line_id.id], {'product_qty': new_qty}, context=context)
                         # To cancel the created INT
                         self.action_move(cr, uid, [backorder_id], return_goods=True, context=context)
                         # check the OUT availability
@@ -1214,15 +1208,6 @@ class stock_picking(osv.osv):
                         self.action_cancel(cr, uid, [picking_id], context=context)
                     else:
                         if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
-                            if wizard.claim_replacement_picking_expected:
-                                move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking_id)])
-                                for move in move_obj.browse(cr, uid, move_ids, context=context):
-                                    if move.purchase_line_id:
-                                        new_qty = move.purchase_line_id.product_qty - move.product_qty
-                                        if new_qty:
-                                            self.pool.get('purchase.order.line').write(cr, uid, [move.purchase_line_id.id], {'product_qty': new_qty}, context=context)
-                                        else:
-                                            wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'cancel', cr)
                             # To cancel the created INT
                             self.action_move(cr, uid, [picking_id], return_goods=True, context=context)
                             # check the OUT availability

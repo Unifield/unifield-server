@@ -1091,6 +1091,10 @@ class stock_picking(osv.osv):
                 original_sol_analytic_distrib_id = sol_obj.browse(cr, uid, original_sol_id[0],
                                                                   fields_to_fetch=['analytic_distribution_id'],
                                                                   context=context).analytic_distribution_id.id
+            else:
+                original_sol_analytic_distrib_id = sp_com_obj.get_analytic_distribution_id(cr, uid, line.purchase_line_id.to_dict(), context)
+
+
             fo_line_data = {
                 'order_id': fo_id,
                 'name': line.name,
@@ -1105,6 +1109,7 @@ class stock_picking(osv.osv):
                 'date_planned': po_info.delivery_requested_date,
                 'stock_take_date': po_info.stock_take_date,
                 'analytic_distribution_id': original_sol_analytic_distrib_id or po_analytic_distrib or False,
+                'sync_linked_pol': line.purchase_line_id.sync_local_id,
             }
             sol_obj.create(cr, uid, fo_line_data, context=context)
 

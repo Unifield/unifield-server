@@ -288,6 +288,7 @@ class return_claim(osv.osv):
             new_claim_name = self.browse(cr, uid, new_claim_id, fields_to_fetch=["name"], context=context).name
             address = address_obj.search(cr, uid, [('partner_id', '=', original_in.partner_id.id)], context=context)[0] or False
             inv_status = original_in.partner_id.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
+            print '4444'
             name_suffix = '-missing' if is_from_missing else '-replacement'
             in_values = {
                 'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in') + name_suffix,
@@ -1296,6 +1297,7 @@ class claim_event(osv.osv):
             inv_status = claim.partner_id_return_claim.partner_type in ['internal',
                                                                         'intermission'] and 'none' or '2binvoiced'
             # we copy the event return picking
+            print '555'
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in') + '-replacement'
             replacement_id = pick_obj.copy(cr, uid, event_picking.id, ({'name': new_name}),
                                            context=dict(context, keepLineNumber=True))
@@ -1392,6 +1394,8 @@ class claim_event(osv.osv):
             inv_status = claim.partner_id_return_claim.partner_type in ['internal',
                                                                         'intermission'] and 'none' or '2binvoiced'
             # we copy the event return picking
+
+            print '1111'
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in') + '-replacement'
             replacement_id = pick_obj.copy(cr, uid, event_picking.id, ({'name': new_name}),
                                            context=dict(context, keepLineNumber=True))
@@ -1492,6 +1496,7 @@ class claim_event(osv.osv):
             inv_status = claim.partner_id_return_claim.partner_type in ['internal',
                                                                         'intermission'] and 'none' or '2binvoiced'
             # we copy the event return picking
+            print '222'
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in') + '-replacement'
             replacement_id = pick_obj.copy(cr, uid, event_picking.id, ({'name': new_name}),
                                            context=dict(context, keepLineNumber=True))
@@ -1628,6 +1633,7 @@ class claim_event(osv.osv):
         # do we need replacement?
         if obj.replacement_picking_expected_claim_event:
             # we copy the event return picking
+            print '333'
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in') + '-replacement'
             replacement_id = pick_obj.copy(cr, uid, obj.event_picking_id_claim_event.id, ({'name': new_name}),
                                            context=dict(context, keepLineNumber=True))
@@ -1666,6 +1672,24 @@ class claim_event(osv.osv):
             for i, move_id in enumerate(replacement_move_ids):
                 replacement_move_values_with_more = replacement_move_values
                 # set the same line number as the original move
+                if obj.event_picking_id_claim_event.move_lines[i].purchase_line_id:
+                    remaining_po_qty =  obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.product_qty - obj.event_picking_id_claim_event.move_lines[i].product_qty
+                    if remaining_po_qty <= 0.001:
+                        # full qty expected, do not cancel the PO line with the IN cancellation
+                        replacement_move_values_with_more.update({'purchase_line_id': obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.id})
+                    else:
+                        # TODO IR line to sync TODO
+                        self.pool.get('purchase.order.line').write(cr, uid, [obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.id], {'product_qty': remaining_po_qty}, context=context)
+                        new_ctx = context.copy()
+                        new_ctx.update({'keepLineNumber': 'True'})
+                        analytic_distribution_id = False
+                        if obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.analytic_distribution_id:
+                            analytic_distribution_id = self.pool.get('analytic.distribution').copy(cr, uid, obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.analytic_distribution_id.id, {}, context=context)
+                        new_pol = self.pool.get('purchase.order.line').copy(cr, uid, obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.id, {'product_qty': obj.event_picking_id_claim_event.move_lines[i].product_qty, 'analytic_distribution_id': analytic_distribution_id, 'from_synchro_return_goods': True}, context=new_ctx)
+                        replacement_move_values_with_more.update({'purchase_line_id': new_pol})
+
+                    move_obj.write(cr, uid, obj.event_picking_id_claim_event.move_lines[i].id, {'purchase_line_id': False}, context=context)
+
                 replacement_move_values_with_more.update({'line_number': event_moves[i].line_number})
                 # update destination to cross docking if the original move goes to cross docking
                 if obj.event_picking_id_claim_event.move_lines[i].location_dest_id.id == context['common']['cross_docking']:
