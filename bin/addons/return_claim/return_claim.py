@@ -1586,10 +1586,10 @@ class claim_event(osv.osv):
         claim_type = claim.type_return_claim
         # We cancel the lines of the OUT linked to the IN/INT lines processed
         # if the linked PO lines has an IR whose Location Requestor is ExtCU
-        if obj.event_picking_id_claim_event.type == 'in':
-            self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, context=context)
-        else:
-            self._cancel_out_line_linked_to_extcu_ir(cr, uid, obj.event_picking_id_claim_event, context=context)
+        #if obj.event_picking_id_claim_event.type == 'in':
+        #    self._cancel_out_line_linked_to_extcu_ir(cr, uid, origin_picking, context=context)
+        #else:
+        #    self._cancel_out_line_linked_to_extcu_ir(cr, uid, obj.event_picking_id_claim_event, context=context)
         # don't generate financial documents if the claim is linked to an internal or intermission partner
         inv_status = claim.partner_id_return_claim.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
         # get the picking values and move values according to claim type
@@ -1678,14 +1678,34 @@ class claim_event(osv.osv):
                         # full qty expected, do not cancel the PO line with the IN cancellation
                         replacement_move_values_with_more.update({'purchase_line_id': obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.id})
                     else:
+                        split_obj = self.pool.get('split.purchase.order.line.wizard')
+
                         # TODO IR line to sync TODO
+                        new_ctx = context.copy()
+                        new_ctx['return_new_line_id'] = True
+                        split_id = split_obj.create(cr, uid, {
+                            'purchase_line_id': obj.event_picking_id_claim_event.move_lines[i].purchase_line_id,
+                            'original_qty': obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.product_qty,
+                            'new_line_qty': obj.event_picking_id_claim_event.move_lines[i].product_qty
+                        }, context=new_ctx)
+                        new_pol = split_obj.split_line(cr, uid, split_id, context=new_ctx, for_claim=True)
+
+                        """
                         self.pool.get('purchase.order.line').write(cr, uid, [obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.id], {'product_qty': remaining_po_qty}, context=context)
                         new_ctx = context.copy()
                         new_ctx.update({'keepLineNumber': 'True'})
                         analytic_distribution_id = False
                         if obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.analytic_distribution_id:
                             analytic_distribution_id = self.pool.get('analytic.distribution').copy(cr, uid, obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.analytic_distribution_id.id, {}, context=context)
-                        new_pol = self.pool.get('purchase.order.line').copy(cr, uid, obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.id, {'product_qty': obj.event_picking_id_claim_event.move_lines[i].product_qty, 'analytic_distribution_id': analytic_distribution_id, 'from_synchro_return_goods': True}, context=new_ctx)
+
+                        new_pol = self.pool.get('purchase.order.line').copy(cr, uid, obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.id, {
+                                'product_qty': obj.event_picking_id_claim_event.move_lines[i].product_qty,
+                                'analytic_distribution_id': analytic_distribution_id,
+                                'from_synchro_return_goods': True,
+                                'sale_order_line_id': obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.sale_order_line_id and obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.sale_order_line_id.id or False,
+                                'linked_sol_id': obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.linked_sol_id and obj.event_picking_id_claim_event.move_lines[i].purchase_line_id.linked_sol_id.id or False,
+                            }, context=new_ctx)
+                        """
                         replacement_move_values_with_more.update({'purchase_line_id': new_pol})
 
                     move_obj.write(cr, uid, obj.event_picking_id_claim_event.move_lines[i].id, {'purchase_line_id': False}, context=context)
