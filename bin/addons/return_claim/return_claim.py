@@ -288,7 +288,6 @@ class return_claim(osv.osv):
             new_claim_name = self.browse(cr, uid, new_claim_id, fields_to_fetch=["name"], context=context).name
             address = address_obj.search(cr, uid, [('partner_id', '=', original_in.partner_id.id)], context=context)[0] or False
             inv_status = original_in.partner_id.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
-            print '4444'
             name_suffix = '-missing' if is_from_missing else '-replacement'
             in_values = {
                 'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in') + name_suffix,
