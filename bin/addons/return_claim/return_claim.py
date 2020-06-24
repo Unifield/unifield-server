@@ -1792,7 +1792,7 @@ class claim_event(osv.osv):
                     'event_picking_id_claim_event': new_event_picking_id,
                 }, context=context)
 
-        claim_ids = set()
+        claim_dict_write = {}
         log_msgs = []
         base_func = '_do_process_'
         # Reload browse_record values to get last updated values
@@ -1808,7 +1808,9 @@ class claim_event(osv.osv):
                 netsvc.LocalService("workflow").trg_validate(uid, 'stock.picking', event.event_picking_id_claim_event.id,
                                                              'button_cancel', cr)
             log_msgs.append((event.id, _('%s Event %s has been processed.') % (event_type_name, event.name)))
-            claim_ids.add(event.return_claim_id_claim_event.id)
+            claim_dict_write[event.return_claim_id_claim_event.id] = {}
+            if not event.return_claim_id_claim_event.po_id_return_claim and event.return_claim_id_claim_event.picking_id_return_claim.purchase_id:
+                claim_dict_write[event.return_claim_id_claim_event.id] = {'po_id_return_claim': event.return_claim_id_claim_event.picking_id_return_claim.purchase_id.id}
 
         # Update events
         self.write(cr, uid, ids, {
@@ -1820,9 +1822,9 @@ class claim_event(osv.osv):
             self.log(cr, uid, log_msg[0], log_msg[1])
 
         # Update claims
-        claim_obj.write(cr, uid, list(claim_ids), {
-            'state': 'in_progress',
-        })
+        for claim_id in claim_dict_write:
+            claim_dict_write[claim_id]['state'] = 'in_progress'
+            claim_obj.write(cr, uid, claim_id, claim_dict_write[claim_id], claim_dict_write)
 
         return True
 
