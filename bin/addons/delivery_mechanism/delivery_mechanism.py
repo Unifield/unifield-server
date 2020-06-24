@@ -759,7 +759,7 @@ class stock_picking(osv.osv):
         all_pack_info = {}
 
         for wizard in inc_proc_obj.browse(cr, uid, wizard_ids, context=context):
-            if wizard.register_a_claim and wizard.claim_type in ['return']:
+            if wizard.register_a_claim and wizard.claim_type in ['return', 'missing']:
                 in_out_updated = False
             picking_id = wizard.picking_id.id
             picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines',
