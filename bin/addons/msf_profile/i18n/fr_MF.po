@@ -108041,7 +108041,7 @@ msgstr "Couverture de la Commande (mois)"
 #. module: procurement_cycle
 #: field:replenishment.segment,order_creation_lt:0
 msgid "Order Creation Lead Time (days)"
-msgstr "Délai de création de commande (jours)"
+msgstr "Délai de Création de Commande (jours)"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:428
@@ -110297,7 +110297,7 @@ msgstr "Délai de Validation de la Commande (jours) :"
 #. module: procurement_cycle
 #: view:replenishment.segment:0
 msgid "Order Creation Lead Time (days) :"
-msgstr "Délai de création de commande (jours) :"
+msgstr "Délai de Création de Commande (jours) :"
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
@@ -110322,7 +110322,7 @@ msgstr "Délai Externe (jours) :"
 #. module: procurement_cycle
 #: view:replenishment.segment:0
 msgid "Handling Lead Time (days) :"
-msgstr "Délai de traitement (jours) :"
+msgstr "Délai de Manutention (jours) :"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_register_import.py:495
