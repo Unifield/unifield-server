@@ -52,6 +52,23 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF17.1
+    def us_7593_inactivate_en_US(self, cr, uid, *a, **b):
+        """
+        Inactivates en_US and replaces it by en_MF for users, partners and related not runs
+        """
+        lang_sql = "UPDATE res_lang SET active = 'f' WHERE code='en_US';"
+        cr.execute(lang_sql)
+        partner_sql = "UPDATE res_partner SET lang='en_MF' WHERE lang='en_US';"
+        cr.execute(partner_sql)
+        partner_count = cr.rowcount
+        user_sql = "UPDATE res_users SET context_lang='en_MF' WHERE context_lang='en_US';"
+        cr.execute(user_sql)
+        user_count = cr.rowcount
+        self._logger.warn('English replaced by MSF English for %s partner(s) and %s user(s).' %
+                          (partner_count, user_count))
+
+
     # UF17.0
     def recursive_fix_int_previous_chained_pick(self, cr, uid, to_fix_pick_id, prev_chain_pick_id, context=None):
         if context is None:

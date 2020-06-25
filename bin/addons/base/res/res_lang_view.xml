@@ -123,6 +123,7 @@
             <field name="name">Languages</field>
             <field name="res_model">res.lang</field>
             <field name="view_type">form</field>
+            <field name="domain">[('code', '!=', 'en_US')]</field>
             <field name="context">{'active_test': False}</field>
             <field name="search_view_id" ref="res_lang_search"/>
         </record>

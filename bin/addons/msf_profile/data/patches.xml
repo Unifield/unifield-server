@@ -550,5 +550,10 @@
         <record id="us_7533_fix_int_previous_chained_pick_id" model="patch.scripts">
             <field name="method">us_7533_fix_int_previous_chained_pick_id</field>
         </record>
+
+        <!-- UF17.1 -->
+        <record id="us_7593_inactivate_en_US" model="patch.scripts">
+            <field name="method">us_7593_inactivate_en_US</field>
+        </record>
     </data>
 </openerp>
