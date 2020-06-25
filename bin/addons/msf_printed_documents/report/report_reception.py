@@ -208,24 +208,16 @@ class report_reception(report_sxw.rml_parse):
     def getExpDate(self, line):
         return time.strftime('%d/%m/%Y', time.strptime(line.prodlot_id.life_date,'%Y-%m-%d'))
 
-
-    def getActualReceiptDate(self,o):
+    def getActualReceiptDate(self, o):
         if o.state != 'done':
             actual_receipt_date = ''
-        elif not o.move_lines:
-            ard = time.strptime(o.date, '%Y-%m-%d %H:%M:%S')
-            actual_receipt_date = time.strftime('%d/%m/%Y', ard)
         else:
-            ard_min = time.strptime(o.move_lines[0].date, '%Y-%m-%d %H:%M:%S')
-            for move in o.move_lines:
-                move_ard = time.strptime(move.date, '%Y-%m-%d %H:%M:%S')
-                if move_ard < ard_min:
-                    ard_min = move_ard
-            actual_receipt_date = time.strftime('%d/%m/%Y', ard_min)
+            actual_receipt_date = time.strftime('%d/%m/%Y', time.strptime(o.date_done, '%Y-%m-%d %H:%M:%S'))
         return actual_receipt_date
 
     def get_lines(self, o):
         return o.move_lines
+
 
 report_sxw.report_sxw('report.msf.report_reception_in', 'stock.picking', 'addons/msf_printed_documents/report/report_reception.rml', parser=report_reception, header=False)
 
