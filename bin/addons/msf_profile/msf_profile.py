@@ -62,6 +62,23 @@ class patch_scripts(osv.osv):
         return True
 
 
+    def us_6544_no_sync_on_forced_out(self, cr, uid, *a, **b):
+        # already forced OUT as delivred must no generate sync msg to prevent NR at reception
+
+        cr.execute('''
+            update ir_model_data set sync_date=NOW() where id in (
+                select d.id from
+                    stock_picking p
+                    left join ir_model_data d on d.model='stock.picking' and d.res_id=p.id and d.module='sd'
+                where
+                    p.type='out' and
+                    p.subtype='standard' and
+                    p.state='delivered' and
+                    (d.sync_date is null or d.sync_date < d.last_modification)
+        )''')
+        self._logger.warn('Prevent NR on forced delivered OUT (%s)' % (cr.rowcount,))
+        return True
+
     # UF17.0
     def recursive_fix_int_previous_chained_pick(self, cr, uid, to_fix_pick_id, prev_chain_pick_id, context=None):
         if context is None:
