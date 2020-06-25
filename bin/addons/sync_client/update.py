@@ -932,6 +932,10 @@ class update_received(osv.osv,fv_formatter):
             return not ir_model_data_obj.is_deleted(cr, uid, module, xmlid, context=context)
 
         for i, field, value in zip(range(len(fields)), fields, values):
+            # replace English by MSF English for the updates on partners where English had been selected at some point
+            # (so that the initial synchro on new instances isn't blocked)
+            if update.model == 'res.partner' and field == 'lang' and value == 'en_US':
+                values[i] = u'en_MF'
             if '/id' not in field: continue
             if not value: continue
             res_val = []
