@@ -330,7 +330,6 @@
                     <field name="name" select="1" default_focus="1"/>
                     <field name="code" select="1" attrs="{'readonly': [('has_ajis', '=', True)]}"/>
                     <field name="type" select="2" attrs="{'readonly': [('has_ajis', '=', True)]}"/>
-                    <field name="active" select="2"/>
                     <field name="company_id" groups="base.group_multi_company" widget="selection"/>
                 </form>
             </field>
