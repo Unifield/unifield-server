@@ -110329,3 +110329,10 @@ msgstr "Délai de Manutention (jours) :"
 #, python-format
 msgid "Line %s. The journal third party used for the internal transfer must be different from the journal of the register."
 msgstr "Ligne %s. Le tiers de type journal utilisé pour le transfert interne doit être différent du journal du registre."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:470
+#, python-format
+msgid "Line %s. The donation accounts are not compatible with the journal type %s."
+msgstr "Ligne %s. Les comptes de donation ne sont pas compatibles avec le type de journal %s."
+

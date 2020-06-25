@@ -370,6 +370,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         r_credit = book_credit
 
                     # Check the journal code which must match with one of the journal types listed in ACCOUNTING_IMPORT_JOURNALS
+                    journal_type = ''
                     if not line[cols['Journal Code']]:
                         errors.append(_('Line %s. No Journal Code specified') % (current_line_num,))
                         continue
@@ -381,7 +382,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                             continue
                         else:
                             aj_data = aj_obj.read(cr, uid, aj_ids, ['type'])[0]
-                            if aj_data.get('type', False) is False or aj_data.get('type', False) not in ACCOUNTING_IMPORT_JOURNALS:
+                            journal_type = aj_data.get('type', False)
+                            if journal_type is False or journal_type not in ACCOUNTING_IMPORT_JOURNALS:
                                 journal_list = ', '.join([x[1] for x in aj_obj.get_journal_type(cr, uid) if x[0] in ACCOUNTING_IMPORT_JOURNALS])
                                 errors.append(_('Line %s. Import of entries only allowed on the following journal(s): %s') % (current_line_num, journal_list))
                                 continue
@@ -460,6 +462,13 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if account.is_not_hq_correctible:
                         errors.append(_("Line %s. The account \"%s - %s\" cannot be used because it is set as "
                                         "\"Prevent correction on account codes\".") % (current_line_num, account.code, account.name,))
+                        continue
+
+                    if account.type_for_register == 'donation' and journal_type != 'extra':
+                        jtype_value = journal_type and \
+                            dict(aj_obj.fields_get(cr, uid, context=context)['type']['selection']).get(journal_type) or ''
+                        errors.append(_('Line %s. The donation accounts are not compatible with the journal type %s.') %
+                                      (current_line_num, jtype_value))
                         continue
 
                     # Check analytic axis only if G/L account is analytic-a-holic
