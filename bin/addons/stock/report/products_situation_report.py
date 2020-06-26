@@ -131,10 +131,12 @@ class products_situation_report(osv.osv_memory):
                 prod_domain.append(('dangerous_goods', '=', report.dangerous_goods))
 
             if report.perishable:
-                prod_domain.append(('perishable', '=', report.perishable))
+                perishable = report.perishable == 'True' and True or report.perishable == 'False' and False or ''
+                prod_domain.append(('perishable', '=', perishable))
 
             if report.batch_management:
-                prod_domain.append(('batch_management', '=', report.batch_management))
+                batch_management = report.batch_management == 'True' and True or report.batch_management == 'False' and False or ''
+                prod_domain.append(('batch_management', '=', batch_management))
 
             prod_ids = prod_obj.search(cr, uid, prod_domain, order='default_code', context=context)
 
