@@ -102759,7 +102759,7 @@ msgstr "\n"
 #: code:addons/msf_doc_import/wizard/wizard_import_product_line.py:169
 #, python-format
 msgid "Product %s doesn't have the expected Product Creator \"ITC\", \"ESC\" or \"HQ\". "
-msgstr "Le Produit %s n'a pas le Créateur Produit attendu \"ITC\", \"ESC\" or \"HQ\". "
+msgstr "Le Produit %s n'a pas le Créateur Produit attendu \"ITC\", \"ESC\" ou \"HQ\". "
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_product_line.py:254
