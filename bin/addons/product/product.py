@@ -602,15 +602,14 @@ class product_product(osv.osv):
         instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
         prod_creator = []
         if instance_level == 'section':
+            # ITC, ESC, HQ
+            prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_1')[1])
+            prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_2')[1])
+            prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1])
             if check_edbn:
-                # ITC, ESC, HQ, Local, ED
-                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_1')[1])
-                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_2')[1])
-                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1])
+                # Local, ED
                 prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1])
                 prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1])
-            else:
-                prod_creator = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]]
         elif instance_level == 'coordo':
             prod_creator = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]]
         return prod_creator
