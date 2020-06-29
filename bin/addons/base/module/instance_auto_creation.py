@@ -700,6 +700,9 @@ class instance_auto_creation(osv.osv):
                 'debit_account_pl_positive': 'ye_pl_pos_debit_account',
                 'credit_account_pl_negative': 'ye_pl_ne_credit_account',
                 'debit_account_pl_negative': 'ye_pl_ne_debit_account',
+                'default_cheque_account': ['cheque_debit_account_id', 'cheque_credit_account_id'],
+                'default_bank_account': ['bank_debit_account_id', 'bank_credit_account_id'],
+                'default_cash_account': ['cash_debit_account_id', 'cash_credit_account_id'],
             }
 
             for config_file_prop, unifield_prop in account_property_dict.items():
@@ -707,7 +710,10 @@ class instance_auto_creation(osv.osv):
                 account_id = account_obj.search(cr, uid, [('code', '=', account)])
                 account_id = account_id and account_id[0] or False
                 if account_id:
-                    vals[unifield_prop] = account_id
+                    if isinstance(unifield_prop, basestring):
+                        unifield_prop = [unifield_prop]
+                    for uf_prop in unifield_prop:
+                        vals[uf_prop] = account_id
 
             company_obj.write(cr, uid, company_id, vals)
 
