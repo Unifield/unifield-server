@@ -64,22 +64,62 @@ class patch_scripts(osv.osv):
 
     def us_6544_no_sync_on_forced_out(self, cr, uid, *a, **b):
         # already forced OUT as delivred must no generate sync msg to prevent NR at reception
-
-        cr.execute('''
-            update ir_model_data set sync_date=NOW() where id in (
-                select d.id from
-                    stock_picking p
-                    left join ir_model_data d on d.model='stock.picking' and d.res_id=p.id and d.module='sd'
-                where
-                    p.type='out' and
-                    p.subtype='standard' and
-                    p.state='delivered' and
-                    (d.sync_date is null or d.sync_date < d.last_modification)
-        )''')
-        self._logger.warn('Prevent NR on forced delivered OUT (%s)' % (cr.rowcount,))
+        if self.pool.get('sync_client.version'):
+            cr.execute('''
+                update ir_model_data set sync_date=NOW() where id in (
+                    select d.id from
+                        stock_picking p
+                        left join ir_model_data d on d.model='stock.picking' and d.res_id=p.id and d.module='sd'
+                    where
+                        p.type='out' and
+                        p.subtype='standard' and
+                        p.state='delivered' and
+                        (d.sync_date is null or d.sync_date < d.last_modification)
+            )''')
+            self._logger.warn('Prevent NR on forced delivered OUT (%s)' % (cr.rowcount,))
         return True
 
     # UF17.1
+    def us_7631_set_default_liquidity_accounts(self, cr, uid, *a, **b):
+        if self.pool.get('sync_client.version') and self.pool.get('sync.client.entity'):
+            oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1"
+            cr.execute(oc_sql)
+            oc = cr.fetchone()[0]
+            if not oc:
+                return False
+
+            to_write = {}
+            account_obj = self.pool.get('account.account')
+
+            # cash
+            ids_10100 = account_obj.search(cr, uid, [('code', '=', '10100')])
+            if ids_10100:
+                to_write.update({'cash_debit_account_id': ids_10100[0], 'cash_credit_account_id': ids_10100[0]})
+
+
+            # bank
+            ids_10200 = account_obj.search(cr, uid, [('code', '=', '10200')])
+            if ids_10200:
+                to_write.update({'bank_debit_account_id': ids_10200[0], 'bank_credit_account_id': ids_10200[0]})
+
+
+            # cheque
+            if oc == 'oca':
+                cheque_code = '15630'
+            else:
+                cheque_code = '10210'
+
+            ids_cheque = account_obj.search(cr, uid, [('code', '=', cheque_code)])
+            if ids_cheque:
+                to_write.update({'cheque_debit_account_id': ids_cheque[0], 'cheque_credit_account_id': ids_cheque[0]})
+
+            if to_write:
+                company_id = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.id
+                self.pool.get('res.company').write(cr, uid, company_id, to_write)
+                self._logger.warn('Liquidity journals set on company form')
+
+            return True
+
     def us_7593_inactivate_en_US(self, cr, uid, *a, **b):
         """
         Inactivates en_US and replaces it by en_MF for users, partners and related not runs
