@@ -11816,11 +11816,6 @@ msgstr "Si vous cochez cette case, vos traductions personnalisées seront écras
 msgid "Group By"
 msgstr "Grouper par"
 
-#. module: account
-#: selection:account.report.general.ledger,sortby:0
-msgid "Journal & Partner"
-msgstr "Journal et Partenaire"
-
 #. module: account_mcdb
 #: selection:account.mcdb,currency_choice:0
 msgid "Functional"
@@ -12112,7 +12107,7 @@ msgstr "Aucun taux de change n'a été fixé pour la devise '%s' pour la date '%
 
 #. module: account
 #: field:account.report.general.ledger,sortby:0
-msgid "Sort By"
+msgid "Sort by"
 msgstr "Trier par"
 
 #. module: product
@@ -37163,7 +37158,6 @@ msgstr "Sur Plusieurs Documents"
 #: selection:account.pl.report,filter:0
 #: selection:account.print.journal,filter:0
 #: selection:account.print.journal,sort_selection:0
-#: selection:account.report.general.ledger,sortby:0
 #: field:account.subscription.generate,date:0
 #: field:account.subscription.line,date:0
 #: report:account.tax.code.entries:0
@@ -65008,6 +65002,7 @@ msgstr "PO line to confirm"
 #: selection:integrity.finance.wizard,filter:0
 #: code:addons/account_override/res_company.py:40
 #: report:addons/account/report/export_invoice.mako:108
+#: selection:account.report.general.ledger,sortby:0
 #, python-format
 msgid "Posting Date"
 msgstr "Date de Comptabilisation"
@@ -78028,6 +78023,7 @@ msgstr "Importation échouée Ecritures HQ"
 #: report:account.general.ledger_landscape:0
 #: report:account.general.ledger_landscape_tb:0
 #: report:addons/account/report/account_general_ledger_xls.mako:247
+#: selection:account.report.general.ledger,sortby:0
 #, python-format
 msgid "Third Party"
 msgstr "Tiers"
@@ -92901,6 +92897,7 @@ msgstr "America/Anguilla"
 #: report:addons/stock/report/stock_delivery_report_xls.mako:221
 #: report:addons/account/report/export_invoice.mako:96
 #: report:msf.purchase.quotation:0
+#: selection:account.report.general.ledger,sortby:0
 #, python-format
 msgid "Currency"
 msgstr "Devise"
@@ -100630,6 +100627,8 @@ msgstr "Information liée"
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
 #: report:addons/account/report/account_partner_ledger.mako:310
+#: selection:account.report.general.ledger,sortby:0
+#: report:addons/account/report/account_general_ledger_xls.mako:289
 msgid "Reconcile Number"
 msgstr "Numéro de lettrage"
 
@@ -108042,7 +108041,7 @@ msgstr "Couverture de la Commande (mois)"
 #. module: procurement_cycle
 #: field:replenishment.segment,order_creation_lt:0
 msgid "Order Creation Lead Time (days)"
-msgstr "Délai de création de commande (jours)"
+msgstr "Délai de Création de Commande (jours)"
 
 #. module: procurement_cycle
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:428
@@ -110298,7 +110297,7 @@ msgstr "Délai de Validation de la Commande (jours) :"
 #. module: procurement_cycle
 #: view:replenishment.segment:0
 msgid "Order Creation Lead Time (days) :"
-msgstr "Délai de création de commande (jours) :"
+msgstr "Délai de Création de Commande (jours) :"
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
@@ -110323,5 +110322,17 @@ msgstr "Délai Externe (jours) :"
 #. module: procurement_cycle
 #: view:replenishment.segment:0
 msgid "Handling Lead Time (days) :"
-msgstr "Délai de traitement (jours) :"
+msgstr "Délai de Manutention (jours) :"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:495
+#, python-format
+msgid "Line %s. The journal third party used for the internal transfer must be different from the journal of the register."
+msgstr "Ligne %s. Le tiers de type journal utilisé pour le transfert interne doit être différent du journal du registre."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:470
+#, python-format
+msgid "Line %s. The donation accounts are not compatible with the journal type %s."
+msgstr "Ligne %s. Les comptes de donation ne sont pas compatibles avec le type de journal %s."
 

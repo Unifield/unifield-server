@@ -52,6 +52,50 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF18.0
+    def sync_msg_from_itself(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        cr.execute(''' update sync_client_message_received set run='t', manually_ran='t', log='Set manually to run without execution', manually_set_run_date=now() where run='f' and source=%s ''', (instance.instance, ))
+        self._logger.warn('Set %s self sync messages as Run' % (cr.rowcount,))
+        return True
+
+
+    def us_6544_no_sync_on_forced_out(self, cr, uid, *a, **b):
+        # already forced OUT as delivred must no generate sync msg to prevent NR at reception
+
+        cr.execute('''
+            update ir_model_data set sync_date=NOW() where id in (
+                select d.id from
+                    stock_picking p
+                    left join ir_model_data d on d.model='stock.picking' and d.res_id=p.id and d.module='sd'
+                where
+                    p.type='out' and
+                    p.subtype='standard' and
+                    p.state='delivered' and
+                    (d.sync_date is null or d.sync_date < d.last_modification)
+        )''')
+        self._logger.warn('Prevent NR on forced delivered OUT (%s)' % (cr.rowcount,))
+        return True
+
+    # UF17.1
+    def us_7593_inactivate_en_US(self, cr, uid, *a, **b):
+        """
+        Inactivates en_US and replaces it by en_MF for users, partners and related not runs
+        """
+        lang_sql = "UPDATE res_lang SET active = 'f' WHERE code='en_US';"
+        cr.execute(lang_sql)
+        partner_sql = "UPDATE res_partner SET lang='en_MF' WHERE lang='en_US';"
+        cr.execute(partner_sql)
+        partner_count = cr.rowcount
+        user_sql = "UPDATE res_users SET context_lang='en_MF' WHERE context_lang='en_US';"
+        cr.execute(user_sql)
+        user_count = cr.rowcount
+        self._logger.warn('English replaced by MSF English for %s partner(s) and %s user(s).' %
+                          (partner_count, user_count))
+
+
     # UF17.0
     def recursive_fix_int_previous_chained_pick(self, cr, uid, to_fix_pick_id, prev_chain_pick_id, context=None):
         if context is None:

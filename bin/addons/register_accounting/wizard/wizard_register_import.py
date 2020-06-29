@@ -491,6 +491,10 @@ class wizard_register_import(osv.osv_memory):
                                         if tp_journal.currency.id != register_currency:
                                             errors.append(_('Line %s. A Transfer Same Journal must have the same currency as the register.') % (current_line_num,))
                                             continue
+                                        if tp_journal.id == wiz.register_id.journal_id.id:
+                                            errors.append(_('Line %s. The journal third party used for the internal transfer '
+                                                            'must be different from the journal of the register.') % (current_line_num,))
+                                            continue
                             # Type DP ==> PARTNER required
                             elif type_for_register == 'down_payment':
                                 tp_ids = partner_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
