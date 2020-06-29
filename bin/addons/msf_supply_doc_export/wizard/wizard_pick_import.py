@@ -281,13 +281,14 @@ class wizard_pick_import(osv.osv_memory):
                     qty_per_line[line_data['item']] = line_data['qty']
 
                 product = self.get_product(cr, uid, ids, line_data, context=context)
-                self.checks_on_batch(cr, uid, ids, product, line_data, context=context)
-                to_write.update({
-                    'move_id': self.get_matching_move(cr, uid, ids, line_data, product.id, wiz.picking_id.id, treated_lines, context=context)
-                })
-                if not to_write.get('move_id'):
+                move_id = self.get_matching_move(cr, uid, ids, line_data, product.id, wiz.picking_id.id, treated_lines, context=context)
+                if not move_id:
                     continue
                 else:
+                    self.checks_on_batch(cr, uid, ids, product, line_data, context=context)
+                    to_write.update({
+                        'move_id': move_id,
+                    })
                     if line_data['qty_to_process'] > line_data['qty']:
                         raise osv.except_osv(
                             _('Error'),
