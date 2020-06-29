@@ -555,5 +555,10 @@
         <record id="us_7593_inactivate_en_US" model="patch.scripts">
             <field name="method">us_7593_inactivate_en_US</field>
         </record>
+
+        <record id="us_7631_set_default_liquidity_accounts" model="patch.scripts">
+            <field name="method">us_7631_set_default_liquidity_accounts</field>
+        </record>
+
     </data>
 </openerp>
