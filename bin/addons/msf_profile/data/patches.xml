@@ -551,8 +551,23 @@
             <field name="method">us_7533_fix_int_previous_chained_pick_id</field>
         </record>
 
+        <!-- UF17.1 -->
+        <record id="us_7593_inactivate_en_US" model="patch.scripts">
+            <field name="method">us_7593_inactivate_en_US</field>
+        </record>
+
+        <record id="us_7631_set_default_liquidity_accounts" model="patch.scripts">
+            <field name="method">us_7631_set_default_liquidity_accounts</field>
+        </record>
+
+        <!-- UF18.0 -->
         <record id="us_7576_sync_msg_from_itself" model="patch.scripts">
             <field name="method">sync_msg_from_itself</field>
         </record>
+
+        <record id="us_6544_no_sync_on_forced_out" model="patch.scripts">
+            <field name="method">us_6544_no_sync_on_forced_out</field>
+        </record>
+
     </data>
 </openerp>

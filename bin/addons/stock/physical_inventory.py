@@ -816,6 +816,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                 cs_to_reset.append(line_ids[0])
                 counting_sheet_lines.append((1, line_ids[0], data))
             elif quantity is not None:
+                data['line_no'] = False
                 counting_sheet_lines.append((0, 0, data))
 
         # endfor
@@ -870,6 +871,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
         product_obj = self.pool.get('product.product')
         reason_type_obj = self.pool.get('stock.reason.type')
         discrepancy_obj = self.pool.get('physical.inventory.discrepancy')
+        ids_seen = {}
 
         for row_index, row in enumerate(discrepancy_report_file.getRows()):
             if row_index < 10:
@@ -917,18 +919,34 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
 
             comment = row.cells[19].data
 
+            line_id = False
             line_ids = discrepancy_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no)])
-            if line_ids:
-                line_no = line_ids[0]
-            else:
+            if len(line_ids) == 1:
+                line_id = line_ids[0]
+            elif len(line_ids) > 1:
+                line_ids = discrepancy_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no), ('product_id', '=', product_id)])
+                if len(line_ids) == 1:
+                    line_id = line_ids[0]
+                else:
+                    bn = row.cells[9].data or False
+                    line_ids = discrepancy_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no), ('product_id', '=', product_id), ('batch_number', '=', bn), ('ignored', '=', False)], order='id')
+                    if len(line_ids) == 1:
+                        line_id = line_ids[0]
+                    else:
+                        # pre-requisite: order of lines in the xls file is the same as in screen (don't want to block already created PI)
+                        for l_id in line_ids:
+                            if l_id not in ids_seen:
+                                line_id = l_id
+                                ids_seen[line_id] = True
+                                break
+            if not line_id:
                 add_error(_('Unknown line no %s') % line_no, row_index, 0)
-                line_no = False
-
-            if inventory_rec.state == 'confirmed':
-                disc_line = (1, line_no, {'comment': comment})
             else:
-                disc_line = (1, line_no, {'reason_type_id': adjustment_type, 'comment': comment})
-            discrepancy_report_lines.append(disc_line)
+                if inventory_rec.state == 'confirmed':
+                    disc_line = (1, line_id, {'comment': comment})
+                else:
+                    disc_line = (1, line_id, {'reason_type_id': adjustment_type, 'comment': comment})
+                discrepancy_report_lines.append(disc_line)
         # endfor
 
         context['import_in_progress'] = True
