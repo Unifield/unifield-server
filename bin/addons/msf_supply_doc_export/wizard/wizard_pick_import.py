@@ -274,17 +274,18 @@ class wizard_pick_import(osv.osv_memory):
             line_data = self.normalize_data(cr, uid, line_data)
             if line_data['qty']:
                 to_write = {}
-                # Save qties by line
-                if qty_per_line.get(line_data['item']):
-                    qty_per_line[line_data['item']] += line_data['qty']
-                else:
-                    qty_per_line[line_data['item']] = line_data['qty']
 
                 product = self.get_product(cr, uid, ids, line_data, context=context)
                 move_id = self.get_matching_move(cr, uid, ids, line_data, product.id, wiz.picking_id.id, treated_lines, context=context)
                 if not move_id:
                     continue
                 else:
+                    # Save qties by line
+                    if qty_per_line.get(line_data['item']):
+                        qty_per_line[line_data['item']] += line_data['qty']
+                    else:
+                        qty_per_line[line_data['item']] = line_data['qty']
+                        
                     self.checks_on_batch(cr, uid, ids, product, line_data, context=context)
                     to_write.update({
                         'move_id': move_id,
@@ -335,7 +336,7 @@ class wizard_pick_import(osv.osv_memory):
         cr.execute("""
             SELECT m.line_number, p.default_code, SUM(product_qty) 
             FROM stock_move m, product_product p
-            WHERE m.product_id = p.id AND m.picking_id = %s AND m.state IN ('confirmed', 'assigned') 
+            WHERE m.product_id = p.id AND m.picking_id = %s AND m.state = 'assigned' 
             GROUP BY m.line_number, p.default_code
         """, (wiz.picking_id.id,))
         for prod in cr.fetchall():
