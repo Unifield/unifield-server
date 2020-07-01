@@ -11209,7 +11209,7 @@ msgstr "Lignes analytiques"
 msgid "Line %s. You cannot only add partner or employee or journal."
 msgstr "Line %s. You cannot only add partner or employee or journal."
 
-#. modules: purchase, account, base, useability_dashboard_and_menu, msf_partner
+#. modules: purchase, account, base, useability_dashboard_and_menu, msf_partner, reason_types_moves, stock
 #: model:ir.ui.menu,name:account.menu_account_customer
 #: model:ir.ui.menu,name:account.menu_finance_receivables
 #: model:ir.actions.act_window,name:base.action_partner_customer_form
@@ -11220,6 +11220,8 @@ msgstr "Line %s. You cannot only add partner or employee or journal."
 #: field:purchase.order,dest_partner_ids:0
 #: field:purchase.order,dest_partner_names:0
 #: model:ir.ui.menu,name:useability_dashboard_and_menu.menu_customer
+#: field:stock.picking,po_customers_ids:0
+#: field:stock.picking,po_customers:0
 msgid "Customers"
 msgstr "Clients"
 
@@ -25197,9 +25199,10 @@ msgstr "Éléments supplémentaires"
 msgid "Update or create ?"
 msgstr "Mettre à jour ou créer ?"
 
-#. module: purchase
+#. module: purchase, stock
 #: field:purchase.order,customer_ref:0
 #: field:purchase.order,short_customer_ref:0
+#: field:stock.picking,po_customers_ref:0
 msgid "Customer Ref."
 msgstr "Ref. Client"
 

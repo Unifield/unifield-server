@@ -872,6 +872,7 @@ class stock_picking(osv.osv):
         'is_subpick': fields.boolean('Main or Sub PT'),
         'destinations_list': fields.function(_get_destinations_list, method=True, type='char', size=512, string='Destination Location', store=False),
         'po_customers_ref': fields.function(_get_po_infos, method=True, string='Customer Ref.', store=False, type='char', size=256, multi='po_infos'),
+        'po_customers_ids': fields.related('purchase_id', 'dest_partner_ids', type='many2many', string='Customers'),
         'po_customers': fields.function(_get_po_infos, method=True, string='Customers', store=False, type='char', size=256, multi='po_infos'),
     }
 

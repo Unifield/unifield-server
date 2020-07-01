@@ -283,20 +283,6 @@ class purchase_order(osv.osv):
             res[po_r['id']] = names
         return res
 
-    def _search_dest_partner_names(self, cr, uid, obj, name, args, context):
-        """
-        Search for a Customer
-        """
-        if context is None:
-            context = {}
-        if not args:
-            return []
-        if args[0][2]:
-            dest_partner_ids = self.pool.get('res.partner').search(cr, uid, [('customer', '=', True),
-                                                                             ('name', 'ilike', args[0][2])], context=context)
-            return [('dest_partner_ids', 'in', dest_partner_ids)]
-        return []
-
     def _get_project_ref(self, cr, uid, ids, field_name, args, context=None):
         '''
         Get the name of the POs at project side
@@ -768,7 +754,7 @@ class purchase_order(osv.osv):
         'fnct_project_ref': fields.function(_get_project_ref, method=True, string='Project Ref.',
                                             type='char', size=256, store=False, multi='so_info'),
         'dest_partner_ids': fields.many2many('res.partner', 'res_partner_purchase_order_rel', 'purchase_order_id', 'partner_id', 'Customers'),  # uf-2223
-        'dest_partner_names': fields.function(_get_dest_partner_names, type='char', size=256, fnct_search=_search_dest_partner_names, string='Customers', method=True),  # uf-2223
+        'dest_partner_names': fields.function(_get_dest_partner_names, type='char', size=256, string='Customers', method=True),  # uf-2223
         'split_po': fields.boolean('Created by split PO', readonly=True),
         'sourced_references': fields.function(_get_project_ref, method=True, string='Sourced references', type='text', store=False, multi='so_info'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
