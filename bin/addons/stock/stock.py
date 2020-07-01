@@ -803,6 +803,22 @@ class stock_picking(osv.osv):
 
         return res
 
+    def _get_po_infos(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Retrieve infos from the linked PO if there's one
+        '''
+        res = {}
+        for pick in self.browse(cr, uid, ids, fields_to_fetch=['purchase_id'], context=context):
+            if pick.purchase_id:
+                res[pick.id] = {
+                    'po_customers_ref': pick.purchase_id.short_customer_ref,
+                    'po_customers': pick.purchase_id.dest_partner_names,
+                }
+            else:
+                res[pick.id] = {'po_customers_ref': '', 'po_customers': ''}
+
+        return res
+
     _columns = {
         'object_name': fields.function(_get_object_name, type='char', method=True, string='Title'),
         'name': fields.char('Reference', size=64, select=True),
@@ -855,6 +871,8 @@ class stock_picking(osv.osv):
         'packing_list': fields.char('Supplier Packing List', size=30),
         'is_subpick': fields.boolean('Main or Sub PT'),
         'destinations_list': fields.function(_get_destinations_list, method=True, type='char', size=512, string='Destination Location', store=False),
+        'po_customers_ref': fields.function(_get_po_infos, method=True, string='Customer Ref.', store=False, type='char', size=256, multi='po_infos'),
+        'po_customers': fields.function(_get_po_infos, method=True, string='Customers', store=False, type='char', size=256, multi='po_infos'),
     }
 
     _defaults = {

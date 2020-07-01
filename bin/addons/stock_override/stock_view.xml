@@ -450,12 +450,13 @@
                             <field name="ext_cu" on_change="on_change_ext_cu(ext_cu)" attrs="{'readonly': ['|', '|', '|', ('partner_id2', '!=', False), ('sale_id', '!=', False), ('purchase_id', '!=', False), ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" domain="[('location_category', '=', 'consumption_unit'), ('usage', 'in', ('customer', 'supplier'))]" />
                             <field name="address_id" invisible="1" />
                             <field name="backorder_id" readonly="1"/>
+                            <field name="po_customers_ref"/>
                             <field name="reason_type_id" widget="selection"
                                    domain="[('incoming_ok', '=', True)]"
                                    attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-                            <field name="order_category"/>
+                            <field name="po_customers"/>
                             <field name="change_reason"/>
-                            <field name="claim" readonly="1"/>
+                            <field name="order_category"/>
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" string="Creation Date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
@@ -464,7 +465,6 @@
                             <field name="min_date_manually" invisible="1" />
                             <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                             <field name="shipment_ref" />
-                            <field name="claim_name" readonly="1" attrs="{'invisible': [('claim', '=', False)]}"/>
                             <field name="physical_reception_date" />
                         </group>
                     </group>
@@ -638,10 +638,14 @@
                             </group>
                         </page>
                         <page string="Additional Info">
-                            <field name="fake_type" readonly="1" />
-                            <field name="type" invisible="1" />
-                            <field name="attach_cert" readonly="1" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
-                            <field name="company_id" widget="selection" invisible="1"/>
+                            <group col="6" colspan="2">
+                                <field name="fake_type" readonly="1" />
+                                <field name="type" invisible="1" />
+                                <field name="attach_cert" readonly="1" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
+                                <field name="company_id" widget="selection" invisible="1"/>
+                                <field name="claim" readonly="1"/>
+                                <field name="claim_name" readonly="1" attrs="{'invisible': [('claim', '=', False)]}"/>
+                            </group>
                         </page>
                         <page string="Notes">
                             <field name="last_imported_filename" invisible="0" readonly="1" />
@@ -705,19 +709,6 @@
             	<xpath expr="/search//field[@name='company_id']" position="replace">
             		<field name="state" />
             	</xpath>
-            </field>
-        </record>
-        
-
-        <record id="purchase.stock_picking_in_inherit_purchase" model="ir.ui.view">
-            <field name="name">Incoming Picking Inherited</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_in_form"/>
-            <field name="arch" type="xml">
-                <field name="backorder_id" position="after">
-                    <field name="purchase_id" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                </field>
             </field>
         </record>
 
