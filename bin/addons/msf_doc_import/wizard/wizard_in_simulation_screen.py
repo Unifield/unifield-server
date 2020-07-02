@@ -1567,7 +1567,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             if write_vals['integrity_status'] != 'empty' or len(errors) > 0:
                 write_vals['type_change'] = 'error'
                 if write_vals['integrity_status'] != 'empty' and write_vals.get('imp_product_qty'):
-                    errors.append(_('IN-line %s Wrong BN attributes') % (line.line_number,))
+                    errors.append(_('IN-line %s Wrong BN/ED attributes') % (line.line_number,))
 
             if line.type_change == 'new':
                 write_vals['type_change'] = 'error'
