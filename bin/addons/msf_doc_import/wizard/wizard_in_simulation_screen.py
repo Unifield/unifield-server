@@ -1034,6 +1034,7 @@ Nothing has been imported because of %s. See below:
             cr.close(True)
 
         except Exception, e:
+            cr.rollback()
             logging.getLogger('in.simulation simulate').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e, 'state': 'error'}, context=context)
             cr.commit()
@@ -1512,7 +1513,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             # Batch number :: data initialisation
             batch_value = values.get('prodlot_id')
-            exp_value = values.get('expired_date')
+            exp_value = values.get('expired_date') or False
             lot_check = line.lot_check
             exp_check = line.exp_check
             if product:
@@ -1523,7 +1524,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if not exp_value:
                     errors.append(_('Incorrect date value for field \'Expired date\''))
 
-            if lot_check: # product is BN mandatory
+            if lot_check: # product is BN mandatory
                 if batch_value and exp_value:
                     write_vals.update({
                         'imp_batch_name': tools.ustr(batch_value),
@@ -1565,6 +1566,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             write_vals['integrity_status'] = self.check_integrity_status(cr, uid, write_vals, warnings=warnings, context=context)
             if write_vals['integrity_status'] != 'empty' or len(errors) > 0:
                 write_vals['type_change'] = 'error'
+                if write_vals['integrity_status'] != 'empty' and write_vals.get('imp_product_qty'):
+                    errors.append(_('IN-line %s Wrong BN attributes') % (line.line_number,))
 
             if line.type_change == 'new':
                 write_vals['type_change'] = 'error'
