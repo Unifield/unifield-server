@@ -495,10 +495,10 @@ class real_average_consumption(osv.osv):
         if context is None:
             context = {}
         rac = self.browse(cr, uid, ids[0], context=context)
-        header_columns = [(_('Product Code'), 'string'), (_('Product Description'),'string'),(_('Product UoM'), 'string'), (_('Batch Number'),'string'), (_('Expiry Date'), 'string'), (_('Asset'), 'string'), (_('Consumed Qty'),'string'), (_('Remark'), 'string')]
+        header_columns = [(_('Product Code'), 'string'), (_('Product Description'),'string'),(_('Product UoM'), 'string'), (_('Indicative Stock'), 'string'), (_('Batch Number'),'string'), (_('Expiry Date'), 'string'), (_('Asset'), 'string'), (_('Consumed Qty'),'string'), (_('Remark'), 'string')]
         list_of_lines = []
         for line in rac.line_ids:
-            list_of_lines.append([line.product_id.default_code, line.product_id.name, line.uom_id.name, line.prodlot_id and line.prodlot_id.name,
+            list_of_lines.append([line.product_id.default_code, line.product_id.name, line.uom_id.name, line.product_qty, line.prodlot_id and line.prodlot_id.name,
                                   line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '', line.asset_id and line.asset_id.name, line.consumed_qty, line.remark or ''])
         instanciate_class = SpreadsheetCreator('RAC', header_columns, list_of_lines)
         file = base64.encodestring(instanciate_class.get_xml(default_filters=['decode.utf8']))
@@ -544,13 +544,16 @@ class real_average_consumption(osv.osv):
                 ], context=context)
                 batch_mandatory = product['batch_management']
                 date_mandatory = product['perishable']
-                values = {'product_id': product['product_id'],
-                          'uom_id': product['uom_id'],
-                          'batch_mandatory': batch_mandatory,
-                          'date_mandatory': date_mandatory,
-                          'expiry_date': product['expired_date'],
-                          'prodlot_id': product['prodlot_id'],
-                          'rac_id': report.id,}
+                values = {
+                    'product_id': product['product_id'],
+                    'uom_id': product['uom_id'],
+                    'batch_mandatory': batch_mandatory,
+                    'date_mandatory': date_mandatory,
+                    'expiry_date': product['expired_date'],
+                    'prodlot_id': product['prodlot_id'],
+                    'rac_id': report.id,
+                    'consumed_qty': 0.00,
+                }
 
                 v = self.pool.get('real.average.consumption.line').product_onchange(cr, uid, [], product['product_id'], report.cons_location_id.id,
                                                                                     product['uom_id'], product['prodlot_id'], context=context)['value']
@@ -567,8 +570,7 @@ class real_average_consumption(osv.osv):
                     values.update({'product_qty':product_qty[product['prodlot_id']]})
                 if rm_line_ids:
                     self.pool.get('real.average.consumption.line').write(cr, uid, rm_line_ids, values, context=context)
-                elif values.get('product_qty', 0.00) > 0.00:
-                    values.update({'consumed_qty': values.get('product_qty', 0.00)})
+                else:
                     self.pool.get('real.average.consumption.line').create(cr, uid, values, context=context)
 
         self.write(cr, uid, ids, {'created_ok': False})
@@ -767,7 +769,7 @@ class real_average_consumption_line(osv.osv):
             date_mandatory = obj.product_id.perishable
             asset_mandatory = _get_asset_mandatory(obj.product_id)
 
-            if batch_mandatory and obj.consumed_qty != 0.00:
+            if batch_mandatory:
                 if not obj.prodlot_id:
                     if not noraise:
                         raise osv.except_osv(_('Error'),
@@ -779,11 +781,11 @@ class real_average_consumption_line(osv.osv):
                     prodlot_id = obj.prodlot_id.id
                     expiry_date = obj.prodlot_id.life_date
 
-            if date_mandatory and not batch_mandatory and obj.consumed_qty != 0.00:
+            if date_mandatory and not batch_mandatory:
                 prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
                                                                                   ('type', '=', 'internal'),
                                                                                   ('product_id', '=', obj.product_id.id)], context=context)
-                expiry_date = obj.expiry_date or None # None because else it is False and a date can't have a boolean value
+                expiry_date = obj.expiry_date or None  # None because else it is False and a date can't have a boolean value
                 if not prod_ids:
                     if not noraise:
                         raise osv.except_osv(_('Error'),
@@ -795,7 +797,7 @@ class real_average_consumption_line(osv.osv):
                 else:
                     prodlot_id = prod_ids[0]
 
-            if asset_mandatory and obj.consumed_qty != 0.00:
+            if asset_mandatory:
                 if not obj.asset_id:
                     if not noraise:
                         raise osv.except_osv(_('Error'),
@@ -820,7 +822,7 @@ class real_average_consumption_line(osv.osv):
             #recursion: can't use write
             cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, asset_mandatory=%s, prodlot_id=%s, expiry_date=%s, asset_id=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, asset_mandatory, prodlot_id, expiry_date, asset_id, obj.id))  # not_a_user_entry
 
-        self._unique_lot_poduct(cr, uid, ids)
+        self._unique_product(cr, uid, ids, context=context)
 
         return True
 
@@ -875,34 +877,35 @@ class real_average_consumption_line(osv.osv):
         'inactive_error': lambda *a: '',
     }
 
-
-    def _unique_lot_poduct(self, cr, uid, ids, context=None):
+    def _unique_product(self, cr, uid, ids, context=None):
         if not ids:
             return True
         cr.execute('''
             select product.default_code, bn.name, bn.id, rac.id, rac.name
                 from real_average_consumption rac
-                inner join real_average_consumption_line line on line.rac_id = rac.id
-                inner join product_product product on product.id = line.product_id
-                inner join stock_production_lot bn on bn.id = line.prodlot_id
+                left join real_average_consumption_line line on line.rac_id = rac.id
+                left join product_product product on product.id = line.product_id
+                left join stock_production_lot bn on bn.id = line.prodlot_id
             where
                 rac.state = 'draft' and
-                (rac.id, line.product_id, line.prodlot_id) in (select rac_id, product_id, prodlot_id from real_average_consumption_line where id in %s)
+                 ((rac.id, line.product_id, line.prodlot_id) in (select rac_id, product_id, prodlot_id from real_average_consumption_line where id in %s)
+                    or
+                 (rac.id, line.product_id) in (select rac_id, product_id from real_average_consumption_line where id in %s and prodlot_id is NULL))
             group by
                 product.default_code, bn.name, bn.id, rac.id, rac.name
             having count(*) > 1
-        ''', (tuple(ids), ))
+        ''', (tuple(ids), tuple(ids)))
         error = []
         for x in cr.fetchall():
-            error.append('%s: %s %s' % (x[4], x[0], x[1]))
+            error.append('%s: %s%s' % (x[4], x[0], x[1] and ' ' + x[1] or ''))
             if len(error) > 5:
                 error.append('...')
                 break
         if error:
-            raise osv.except_osv(_('Error'), _('The couple product, batch number has to be unique:\n%s') % "\n".join(error))
+            raise osv.except_osv(_('Error'), _('Each product or couple product plus batch number has to be unique:\n%s')
+                                 % "\n".join(error))
 
         return True
-
 
     def create(self, cr, uid, vals=None, context=None):
         '''
