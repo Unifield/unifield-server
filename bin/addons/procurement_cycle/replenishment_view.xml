@@ -681,7 +681,8 @@
                     <field name="time_unit" />
                     <newline />
                     <group colspan="4">
-                        <button colspan="1" name="pipeline" string="Pipeline" type="object" icon="icons/pipe.png"/>
+                        <button colspan="1" name="pipeline" string="Pipeline (Stock Moves)" type="object" icon="icons/pipe.png"/>
+                        <button colspan="1" name="pipeline_po" string="Pipeline (PO)" type="object" icon="icons/pipe.png"/>
                         <button colspan="1" name="stock_by_location" string="Stock By Location" type="object" icon="gtk-indent"/>
                     </group>
                     <field name="line_ids" colspan="4" nolabel="1" o2m_selectable="2" scroll="1">

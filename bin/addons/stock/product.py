@@ -426,6 +426,44 @@ class product_product(osv.osv):
                         res['fields']['qty_available']['string'] = _('Produced Qty')
         return res
 
+    def get_pipeline_from_po(self, cr, uid, ids, from_date=False, to_date=False, location_ids=False, context=None):
+        '''
+            ids: product_ids
+
+            return the pipeline from validated(-p) purchase order line
+        '''
+
+        params = []
+        query = ''
+        if location_ids:
+            query += ' and location_dest_id in %s '
+            if isinstance(location_ids, (int, long)):
+                params.append((location_ids, ))
+            else:
+                params.append(tuple(location_ids))
+
+        if from_date:
+            query += ' and coalesce(confirmed_delivery_date, date_planned) > %s '
+            params.append(from_date)
+
+        if to_date:
+            query += ' and coalesce(confirmed_delivery_date, date_planned) <= %s '
+            params.append(to_date)
+
+
+        cr.execute('''
+            select
+                pol.product_id, sum(pol.product_qty)
+            from
+                purchase_order_line pol
+            where
+                pol.product_id in %s and
+                pol.state in ('validated', 'validated_n')
+                ''' + query + '''
+                group by pol.product_id''',
+                   [tuple(ids)]+params)  # not_a_user_entry
+        return dict(cr.fetchall())
+
 product_product()
 
 class product_template(osv.osv):

@@ -2117,13 +2117,16 @@ class orm_template(object):
         '''
         return self.search(cr, user, args, offset, limit, order, context, count)
 
-    def search_exist(self, cr, user, args, context=None):
+    def search_exists(self, cr, user, args, context=None):
         """
         return True if there is at least one element matching the criterions,
         False otherwise.
         """
         return bool(self.search(cr, user, args, context=context,
                                 limit=1, order='NO_ORDER'))
+
+    def search_exist(self, cr, user, args, context=None):
+        return self.search_exists(cr, user, args, context=context)
 
     def search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
         """

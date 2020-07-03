@@ -210,9 +210,9 @@ class purchase_order(osv.osv):
         if not po_name:
             raise osv.except_osv(_('Error'), _('No PO name found in the given import file'))
 
-        po_id = self.search(cr, uid, [('name', '=', po_name), ('state', 'in', ['validated', 'validated_p'])], context=context)
+        po_id = self.search(cr, uid, [('name', '=', po_name), ('state', 'in', ['validated', 'validated_p', 'confirmed', 'confirmed_p'])], context=context)
         if not po_id:
-            raise osv.except_osv(_('Error'), _('No validated PO found with the name %s') % po_name)
+            raise osv.except_osv(_('Error'), _('No available PO found with the name %s') % po_name)
 
         return po_id[0]
 
@@ -348,9 +348,10 @@ class purchase_order(osv.osv):
                 if pol.line_number in context.get('line_number_to_confirm', []) or \
                         (pol.external_ref and pol.external_ref in context.get('ext_ref_to_confirm', [])):
                     try:
-                        self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
-                        cr.commit()
-                        nb_pol_confirmed += 1
+                        if pol.state not in ['confirmed', 'done', 'cancel', 'cancel_r']:
+                            self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
+                            cr.commit()
+                            nb_pol_confirmed += 1
                     except:
                         context['rejected_confirmation'] += 1
                         cr.rollback()

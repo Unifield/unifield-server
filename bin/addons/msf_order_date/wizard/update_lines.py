@@ -53,6 +53,10 @@ class update_lines(osv.osv_memory):
 
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             delivery_requested_date = obj.delivery_requested_date
+            if type == 'purchase.order' and obj.state != 'draft':
+                delivery_requested_date = obj.delivery_requested_date_modified
+                if not delivery_requested_date:
+                    raise osv.except_osv(_('Warning'), _('Please fill the "Delivery Requested Date (modified)" field.'))
             delivery_confirmed_date = obj.delivery_confirmed_date
             stock_take_date = obj.stock_take_date
 
@@ -153,13 +157,17 @@ class update_lines(osv.osv_memory):
         # working objects
         obj_ids = context.get('active_ids', [])
 
+        ftf = ['delivery_requested_date']
         if obj_type == 'purchase.order':
             line_obj = self.pool.get('purchase.order.line')
+            ftf += ['state', 'delivery_requested_date_modified']
         else:
             line_obj = self.pool.get('sale.order.line')
 
-        for obj in obj_obj.browse(cr, uid, obj_ids, fields_to_fetch=['delivery_requested_date'], context=context):
+        for obj in obj_obj.browse(cr, uid, obj_ids, fields_to_fetch=ftf, context=context):
             requested_date = obj.delivery_requested_date
+            if obj_type == 'purchase.order' and obj.state != 'draft':
+                requested_date = obj.delivery_requested_date_modified
             dom = [('order_id', '=', obj.id), ('state', 'in',['draft', 'validated', 'validated_n'])]
             if selected and context.get('button_selected_ids'):
                 dom += [('id', 'in', context['button_selected_ids'])]

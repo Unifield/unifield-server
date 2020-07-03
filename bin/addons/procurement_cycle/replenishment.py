@@ -694,15 +694,28 @@ class replenishment_segment(osv.osv):
 
             loc_ids = [x.id for x in seg.local_location_ids]
             cr.execute('''
-                select l.product_id, min(m.date) from stock_move m, stock_picking p, replenishment_segment_line l
+              select prod_id, min(date) from (
+                  select pol.product_id as prod_id, min(coalesce(pol.confirmed_delivery_date, pol.date_planned)) as date
+                        from
+                          purchase_order_line pol, replenishment_segment_line l
+                        where
+                          l.product_id = pol.product_id and
+                          l.segment_id = %(seg_id)s and
+                          pol.state in ('validated', 'validated_n') and
+                          location_dest_id in %(location_id)s
+                        group by pol.product_id
+                UNION
+                    select l.product_id as prod_id, min(m.date) as date from stock_move m, stock_picking p, replenishment_segment_line l
                     where
                         m.picking_id = p.id and
                         m.state in ('assigned', 'confirmed') and
-                        m.location_dest_id in %s and
+                        m.location_dest_id in %(location_id)s and
                         l.product_id = m.product_id and
-                        l.segment_id = %s
+                        l.segment_id = %(seg_id)s
                     group by l.product_id
-                    ''', (tuple(loc_ids), seg.id)
+                ) x
+                group by prod_id
+                    ''', {'location_id': tuple(loc_ids), 'seg_id': seg.id}
                        )
             prod_eta = {}
             for x in cr.fetchall():
@@ -825,15 +838,29 @@ class replenishment_segment(osv.osv):
                 if seg.rule == 'cycle':
 
                     cr.execute('''
-                        select m.date, sum(product_qty) from stock_move m, stock_picking p
+                    select date, sum(qty) from (
+                        select coalesce(pol.confirmed_delivery_date, pol.date_planned) as date, sum(pol.product_qty) as qty
+                        from
+                          purchase_order_line pol
+                        where
+                          pol.product_id=%(product_id)s and
+                          pol.state in ('validated', 'validated_n') and
+                          location_dest_id in %(location_id)s and
+                          coalesce(pol.confirmed_delivery_date, pol.date_planned) <= %(date)s
+                        group by coalesce(pol.confirmed_delivery_date, pol.date_planned)
+                        UNION
+
+                        select date(m.date) as date, sum(product_qty) as product_qty from stock_move m, stock_picking p
                             where
                                 m.picking_id = p.id and
                                 m.state in ('assigned', 'confirmed') and
-                                m.location_dest_id in %s and
-                                m.product_id = %s and
-                                m.date <= %s
-                            group by m.date
-                            ''', (tuple(loc_ids), line.product_id.id, oc)
+                                m.location_dest_id in %(location_id)s and
+                                m.product_id = %(product_id)s and
+                                m.date <= %(date)s
+                            group by date(m.date)
+                        ) x
+                    group by date
+                            ''', {'location_id': tuple(loc_ids), 'product_id': line.product_id.id, 'date': oc}
                                )
                     pipe_data = {}
                     for x in cr.fetchall():
@@ -1749,13 +1776,19 @@ class replenishment_segment_line(osv.osv):
 
         prod_obj = self.pool.get('product.product')
         for seg_id in segment:
-            # TODO JFB RR: compute_child ?
-            for prod_id in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['incoming_qty'], context={'to_date': segment[seg_id]['to_date_rdd'], 'location': segment[seg_id]['location_ids']}):
-                ret[segment[seg_id]['prod_seg_line'][prod_id.id]]['pipeline_before_rdd'] =  prod_id.incoming_qty
+            # compute_child ?
+            if 'pipeline_before_rdd' in field_name:
+                for prod_id in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['incoming_qty'], context={'to_date': segment[seg_id]['to_date_rdd'], 'location': segment[seg_id]['location_ids']}):
+                    ret[segment[seg_id]['prod_seg_line'][prod_id.id]]['pipeline_before_rdd'] =  prod_id.incoming_qty
 
-            if not inv_review:
+                for prod_id, qty in prod_obj.get_pipeline_from_po(cr, uid, segment[seg_id]['prod_seg_line'].keys(), to_date=segment[seg_id]['to_date_rdd'], location_ids=segment[seg_id]['location_ids']).iteritems():
+                    ret[segment[seg_id]['prod_seg_line'][prod_id]]['pipeline_before_rdd'] += qty
+
+            if not inv_review and 'pipeline_between_rdd_oc' in field_name:
                 for prod_id in prod_obj.browse(cr, uid, segment[seg_id]['prod_seg_line'].keys(), fields_to_fetch=['incoming_qty'], context={'from_strict_date': segment[seg_id]['to_date_rdd'], 'to_date': segment[seg_id]['to_date_oc'], 'location': segment[seg_id]['location_ids']}):
                     ret[segment[seg_id]['prod_seg_line'][prod_id.id]]['pipeline_between_rdd_oc'] = prod_id.incoming_qty
+                    for prod_id, qty in prod_obj.get_pipeline_from_po(cr, uid, segment[seg_id]['prod_seg_line'].keys(), from_date=segment[seg_id]['to_date_rdd'], to_date=segment[seg_id]['to_date_oc'], location_ids=segment[seg_id]['location_ids']).iteritems():
+                        ret[segment[seg_id]['prod_seg_line'][prod_id]]['pipeline_between_rdd_oc'] += qty
 
         return ret
 
@@ -2676,15 +2709,31 @@ class replenishment_inventory_review(osv.osv):
             'inv_review': inv_review,
         }
 
+    def pipeline_po(self, cr, uid, ids, context=None):
+        data = self._selected_data(cr, uid, ids, context=context)
+
+        product_ids = [x.id for x in data['products']]
+        product_code = [x.default_code for x in data['products']]
+
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'purchase.purchase_line_pipeline_action', ['tree'], new_tab=True, context=context)
+        res['domain'] = ['&', '&', ('location_dest_id', 'in', data['location_ids']), ('state', 'in', ['validated', 'validated_p']), ('product_id', 'in', product_ids)]
+        res['name'] = _('Pipeline %s: %s') % (data['inv_review'].location_config_id.name, ', '.join(product_code))
+        res['nodestroy'] = True
+        res['target'] = 'new'
+        return res
+
     def pipeline(self, cr, uid, ids, context=None):
         data = self._selected_data(cr, uid, ids, context=context)
 
         product_ids = [x.id for x in data['products']]
         product_code = [x.default_code for x in data['products']]
 
-        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_move_form3', ['tree', 'form'], new_tab=True, context=context)
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_move_form3', ['tree', 'form'], context=context)
         res['domain'] = ['&', '&', ('location_dest_id', 'in', data['location_ids']), ('state', 'in', ['confirmed', 'assigned']), ('product_id', 'in', product_ids)]
         res['name'] = _('Pipeline %s: %s') % (data['inv_review'].location_config_id.name, ', '.join(product_code))
+        res['nodestroy'] = True
+        res['target'] = 'new'
         return res
 
     def stock_by_location(self, cr, uid, ids, context=None):
