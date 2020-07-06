@@ -110325,3 +110325,8 @@ msgstr "Délai Externe (jours) :"
 msgid "Handling Lead Time (days) :"
 msgstr "Délai de traitement (jours) :"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1570
+#, python-format
+msgid "IN-line %s Wrong BN/ED attributes"
+msgstr "Ligne du IN %s: Mauvais attributs NL/DE"
