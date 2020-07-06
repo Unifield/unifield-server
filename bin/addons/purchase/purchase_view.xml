@@ -1029,6 +1029,7 @@
                     <field name="date_planned" widget="date" />
                     <field name="confirmed_delivery_date" widget="date" />
                     <field name="state" />
+                    <button type="object" name="open_po_form" icon="terp-gtk-jump-to-ltr" string="View PO" />
                 </tree>
             </field>
         </record>

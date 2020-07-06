@@ -2110,6 +2110,14 @@ class purchase_order_line(osv.osv):
 
         return dest
 
+    def open_po_form(self, cr, uid, ids, context=None):
+        pol = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context)
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'purchase.purchase_form_action', ['form', 'tree'], new_tab=True, context=context)
+        res['keep_open'] = True
+        res['res_id'] = pol.order_id.id
+        return res
+
 purchase_order_line()
 
 
