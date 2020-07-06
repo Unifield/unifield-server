@@ -388,7 +388,7 @@ class replenishment_location_config(osv.osv):
                 for prod in cr.fetchall():
                     self.pool.get('replenishment.segment.line').create(cr, uid, {'state': 'active', 'product_id': prod[0], 'segment_id': hidden_seg}, context=context)
 
-                # in pipe at coo / only project
+                # move in pipe at coo / only project
                 cr.execute('''
                     select move.product_id from
                         stock_move move, stock_picking p
@@ -406,6 +406,27 @@ class replenishment_location_config(osv.osv):
 
                         )
                     group by move.product_id
+                ''', (tuple(amc_location_ids), loc_config.id))
+
+                for prod in cr.fetchall():
+                    self.pool.get('replenishment.segment.line').create(cr, uid, {'state': 'active', 'product_id': prod[0], 'segment_id': hidden_seg}, context=context)
+
+                # PO lines
+                cr.execute('''
+                    select pol.product_id from
+                        purchase_order_line pol
+                    where
+                        pol.location_dest_id in %s and
+                        pol.state in ('validated','validated_n') and
+                        pol.product_id not in (
+                              select
+                                seg_line.product_id
+                            from replenishment_segment_line seg_line, replenishment_segment seg
+                            where
+                                seg.state in ('draft', 'complete') and seg_line.segment_id = seg.id and seg.location_config_id = %s
+
+                        )
+                    group by pol.product_id
                 ''', (tuple(amc_location_ids), loc_config.id))
 
                 for prod in cr.fetchall():
@@ -1832,6 +1853,7 @@ class replenishment_segment_line(osv.osv):
             ret[_id] = {'warning': False, 'warning_html': ''}
 
 
+        # has stock for new prod ?
         new_ids = self.search(cr, uid, [('id', 'in', ids), ('status', '=', 'new')], context=context)
         if new_ids:
             for line in self.browse(cr, uid, new_ids, fields_to_fetch=['real_stock'], context=context):
@@ -1842,18 +1864,31 @@ class replenishment_segment_line(osv.osv):
                         'warning_html': '<img src="/openerp/static/images/stock/gtk-dialog-warning.png" title="%s" class="warning"/> <div>%s</div> ' % (misc.escape_html(warn), _('New?'))
                     }
 
+
+        # has pipe for replaced, phasingout statuses ?
         cr.execute('''
-            select line.id, line.status from
+          select l_id, l_status from (
+            select line.id as l_id, line.status as l_status from
+                purchase_order_line pol, replenishment_segment_line line
+            where
+                pol.product_id = line.product_id and
+                line.id in %(ids)s and
+                pol.state in ('validated', 'validated_n') and
+                line.status in ('replaced', 'phasingout')
+            UNION
+            select line.id as l_id, line.status as l_status from
                 stock_move m, stock_picking p, replenishment_segment_line line
             where
                 m.picking_id = p.id and
                 m.product_id = line.product_id and
-                line.id in %s and
+                line.id in %(ids)s and
                 (p.type = 'in' or p.type = 'internal' and p.subtype = 'sysint') and
                 m.state in ('confirmed','waiting','assigned') and
                 line.status in ('replaced', 'phasingout')
             group by line.id
-        ''', (tuple(ids), ))
+            ) x group by l_id, l_status
+        ''', {'ids': tuple(ids)})
+
         for line in cr.fetchall():
             warn = _('Product has pipeline - check status!')
             if line[1] == 'replaced':

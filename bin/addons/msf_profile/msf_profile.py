@@ -53,6 +53,88 @@ class patch_scripts(osv.osv):
     }
 
     # uf18.0
+    def us_7646_dest_loc_on_pol(self, cr, uid, *a, **b):
+        data_obj = self.pool.get('ir.model.data')
+        try:
+            service_id = self.pool.get('stock.location').get_service_location(cr, uid)
+            conso_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+            log_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
+            med_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
+            cross_dock_id =  data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        except:
+            return True
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s where id in (
+            select pol.id
+            from purchase_order_line pol, purchase_order po, product_product prod, product_template tmpl
+            where
+                pol.order_id = po.id and
+                pol.product_id = prod.id and
+                tmpl.id = prod.product_tmpl_id and
+                tmpl.type = 'service_recep' and
+                coalesce(po.cross_docking_ok, 'f') = 'f' and
+                pol.state in ('validated', 'validated_p')
+            ) ''', (service_id,))
+        self._logger.warn('POL loc_dest service on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s where id in (
+            select pol.id
+            from purchase_order_line pol, purchase_order po, product_product prod, product_template tmpl
+            where
+                pol.order_id = po.id and
+                pol.product_id = prod.id and
+                tmpl.id = prod.product_tmpl_id and
+                tmpl.type = 'consu' and
+                pol.state in ('validated', 'validated_p')
+            ) ''', (conso_id,))
+        self._logger.warn('POL loc_dest conso on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = so.location_requestor_id
+                        from sale_order so, sale_order_line sol, stock_location loc, product_product prod, product_template tmpl
+                        where
+                            so.id = sol.order_id and
+                            loc.id = so.location_requestor_id and
+                            loc.usage != 'customer' and
+                            so.procurement_request = 't' and
+                            purchase_order_line.linked_sol_id = sol.id and
+                            purchase_order_line.product_id = prod.id and
+                            tmpl.id = prod.product_tmpl_id and
+                            tmpl.type != 'consu' and
+                            purchase_order_line.state in ('validated', 'validated_p') ''', (conso_id,))
+        self._logger.warn('POL loc_dest IR on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s from purchase_order po
+                        where
+                            po.id = purchase_order_line.order_id and
+                            purchase_order_line.state in ('validated', 'validated_p') and
+                            coalesce(po.cross_docking_ok, 'f') = 't' and
+                            location_dest_id is NULL ''', (cross_dock_id,))
+        self._logger.warn('POL loc_dest Cross Dock on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s
+                    from product_product prod, product_template tmpl, product_nomenclature nom
+                    where
+                        purchase_order_line.product_id = prod.id and
+                        tmpl.nomen_manda_0 = nom.id and
+                        nom.name = 'MED' and
+                        tmpl.id = prod.product_tmpl_id and
+                        location_dest_id is NULL and
+                        purchase_order_line.state in ('validated', 'validated_p') ''', (med_id,))
+        self._logger.warn('POL loc_dest MED on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s
+                    from product_product prod, product_template tmpl, product_nomenclature nom
+                    where
+                        purchase_order_line.product_id = prod.id and
+                        tmpl.nomen_manda_0 = nom.id and
+                        nom.name = 'LOG' and
+                        tmpl.id = prod.product_tmpl_id and
+                        location_dest_id is NULL and
+                        purchase_order_line.state in ('validated', 'validated_p') ''', (log_id,))
+        self._logger.warn('POL loc_dest LOG on %s lines' % (cr.rowcount,))
+        return True
+
+
     def sync_msg_from_itself(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
         if not instance:

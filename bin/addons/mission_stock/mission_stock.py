@@ -934,13 +934,26 @@ class stock_mission_report(osv.osv):
 
         for report_id in report_ids:
             # In-Pipe moves
-            cr.execute('''SELECT m.product_id, sum(m.product_qty), m.product_uom, p.name
-                          FROM stock_move m
-                              LEFT JOIN stock_picking s ON m.picking_id = s.id
-                              LEFT JOIN res_partner p ON s.partner_id2 = p.id
-                          WHERE s.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')
-                          GROUP BY m.product_id, m.product_uom, p.name
-                          ORDER BY m.product_id''')
+            cr.execute('''
+              SELECT product_id, sum(product_qty), uom_id, p_name
+              FROM (
+                SELECT pol.product_id as product_id, sum(pol.product_qty) as product_qty, pol.product_uom as uom_id, p.name as p_name
+                    FROM purchase_order_line pol, purchase_order po, res_partner p
+                WHERE
+                    pol.state in ('validated', 'validated_n') and
+                    po.id = pol.order_id and
+                    po.partner_id = p.id
+                GROUP BY pol.product_id, pol.product_uom, p.name
+                UNION
+                SELECT m.product_id as product_id, sum(m.product_qty) as product_qty, m.product_uom as uom_id, p.name as p_name
+                    FROM stock_move m
+                    LEFT JOIN stock_picking s ON m.picking_id = s.id
+                    LEFT JOIN res_partner p ON s.partner_id2 = p.id
+                  WHERE
+                    s.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')
+                  GROUP BY m.product_id, m.product_uom, p.name
+                ) x GROUP BY product_id, product_qty, uom_id, p_name
+                  ORDER BY product_id''')
 
             in_pipe_moves = cr.fetchall()
             current_product = None
