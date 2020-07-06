@@ -498,7 +498,7 @@ class real_average_consumption(osv.osv):
         header_columns = [(_('Product Code'), 'string'), (_('Product Description'),'string'),(_('Product UoM'), 'string'), (_('Indicative Stock'), 'string'), (_('Batch Number'),'string'), (_('Expiry Date'), 'string'), (_('Asset'), 'string'), (_('Consumed Qty'),'string'), (_('Remark'), 'string')]
         list_of_lines = []
         for line in rac.line_ids:
-            list_of_lines.append([line.product_id.default_code, line.product_id.name, line.uom_id.name, line.product_qty, line.prodlot_id and line.prodlot_id.name,
+            list_of_lines.append([line.product_id.default_code, line.product_id.name, line.uom_id.name, line.product_qty or 0, line.prodlot_id and line.prodlot_id.name,
                                   line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '', line.asset_id and line.asset_id.name, line.consumed_qty, line.remark or ''])
         instanciate_class = SpreadsheetCreator('RAC', header_columns, list_of_lines)
         file = base64.encodestring(instanciate_class.get_xml(default_filters=['decode.utf8']))
