@@ -110336,3 +110336,8 @@ msgstr "Ligne %s. Le tiers de type journal utilisé pour le transfert interne do
 msgid "Line %s. The donation accounts are not compatible with the journal type %s."
 msgstr "Ligne %s. Les comptes de donation ne sont pas compatibles avec le type de journal %s."
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1570
+#, python-format
+msgid "IN-line %s Wrong BN/ED attributes"
+msgstr "Ligne du IN %s: Mauvais attributs NL/DE"

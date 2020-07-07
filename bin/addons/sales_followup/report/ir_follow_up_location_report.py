@@ -331,7 +331,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             # Put the backorderd qty on the first line
             if not lines:
                 continue
-            if bo_qty and bo_qty > 0 and not first_line and line.order_id.state not in ('cancel', 'done'):
+            if bo_qty and bo_qty > 0 and not first_line and line.state not in ('cancel', 'cancel_r', 'done'):
                 lines.append({
                     'po_name': po_name,
                     'cdd': cdd,
