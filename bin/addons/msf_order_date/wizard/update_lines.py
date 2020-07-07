@@ -55,8 +55,6 @@ class update_lines(osv.osv_memory):
             delivery_requested_date = obj.delivery_requested_date
             if type == 'purchase.order' and obj.state != 'draft':
                 delivery_requested_date = obj.delivery_requested_date_modified
-                if 'delivery_requested_date' in fields and not delivery_requested_date:
-                    raise osv.except_osv(_('Warning'), _('Please fill the "Delivery Requested Date (modified)" field.'))
             delivery_confirmed_date = obj.delivery_confirmed_date
             stock_take_date = obj.stock_take_date
 

@@ -1360,6 +1360,8 @@ class purchase_order(osv.osv):
             context = {}
         # field name
         field_name = context.get('field_name', False)
+        if field_name == 'requested' and self.search_exists(cr, uid, [('id', 'in', ids), ('delivery_requested_date_modified', '=', False), ('state', '!=', 'draft')], context=context):
+            raise osv.except_osv(_('Warning'), _('Please fill the "Delivery Requested Date (modified)" field.'))
         assert field_name, 'The button is not correctly set.'
         # data
         data = getattr(self, field_name + '_data')(cr, uid, ids, context=context)
