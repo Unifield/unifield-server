@@ -881,23 +881,23 @@ class real_average_consumption_line(osv.osv):
         if not ids:
             return True
         cr.execute('''
-            select product.default_code, bn.name, bn.id, rac.id, rac.name
+            select product.default_code, bn.name, bn.id, bn.life_date, rac.id, rac.name
                 from real_average_consumption rac
                 left join real_average_consumption_line line on line.rac_id = rac.id
                 left join product_product product on product.id = line.product_id
                 left join stock_production_lot bn on bn.id = line.prodlot_id
             where
                 rac.state = 'draft' and
-                 ((rac.id, line.product_id, line.prodlot_id) in (select rac_id, product_id, prodlot_id from real_average_consumption_line where id in %s)
+                ((rac.id, line.product_id, line.prodlot_id, line.expiry_date) in (select rac_id, product_id, prodlot_id, expiry_date from real_average_consumption_line where id in %s)
                     or
-                 (rac.id, line.product_id) in (select rac_id, product_id from real_average_consumption_line where id in %s and prodlot_id is NULL))
+                (rac.id, line.product_id) in (select rac_id, product_id from real_average_consumption_line where id in %s and prodlot_id is NULL))
             group by
                 product.default_code, bn.name, bn.id, rac.id, rac.name
             having count(*) > 1
         ''', (tuple(ids), tuple(ids)))
         error = []
         for x in cr.fetchall():
-            error.append('%s: %s%s' % (x[4], x[0], x[1] and ' ' + x[1] or ''))
+            error.append('%s: %s %s' % (x[5], x[0], x[1] or ''))
             if len(error) > 5:
                 error.append('...')
                 break

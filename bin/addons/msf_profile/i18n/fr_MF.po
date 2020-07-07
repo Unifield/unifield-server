@@ -63154,14 +63154,6 @@ msgstr "EST5EDT"
 msgid "If so, claim reference :"
 msgstr "Si oui, référence de la réclamation :"
 
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:169
-#, python-format
-msgid "Line %s of the imported file: the Expiry Date does not match with any batch number of the product.\n"
-""
-msgstr "Ligne %s du fichier importé: la Date d'Expiration ne correspond à aucun numéro de lot du produit.\n"
-""
-
 #. module: analytic_distribution
 #: field:account.destination.link,destination_id:0
 msgid "Analytical Destination Account"
@@ -67465,9 +67457,9 @@ msgstr "America/Montserrat"
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:156
 #, python-format
-msgid "Line %s of the imported file: Batch Number required.\n"
+msgid "Line %s of the imported file: Batch Number and Expiry Date required.\n"
 ""
-msgstr "Line %s of the imported file: Batch Number required.\n"
+msgstr "Ligne %s du fichier importé: le Numéro de Lot et la Date d'Expiration sont obligatoires.\n"
 ""
 
 #. module: stock
@@ -75951,12 +75943,6 @@ msgstr "Livre les lieux disponibles comme lieu de destination d'un envoi entrant
 msgid "Load Official Translation"
 msgstr "Charger une traduction officielle"
 
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:175
-#, python-format
-msgid "Line %s of the imported file: Expiry Date has been changed to %s which is the system BN date (was wrong in the file)"
-msgstr "Line %s of the imported file: Expiry Date has been changed to %s which is the system BN date (was wrong in the file)"
-
 #. module: sale
 #: help:res.company,security_lead:0
 msgid "This is the days added to what you promise to customers for security purpose"
@@ -77174,14 +77160,14 @@ msgid "\n"
 "\n"
 "        The file should be in XML 2003 format.\n"
 "        The columns should be in this order :\n"
-"           Product Code ; Product Description ; UoM ; Indicative Stock ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark\n"
+"           Product Code ; Product Description ; UoM ; Indicative Stock (ignored) ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark\n"
 "        "
 msgstr "\n"
 "        IMPORTANT : La première ligne sera ignorée par la système.\n"
 "        \n"
 "        Les fichier doit être au format XML 2003.\n"
 "        Les colonnes doivent être dans cet ordre :\n"
-"           Code Produit ;  Description Produit ; UdM du Produit ; Qté Indicative en Stock ; Numéro de Lot ;  Date d'Expiration (DD/MM/YYYY) (ignorée si un lot est indiqué);  Actif ; Qté Consommée ; Remarque\n"
+"           Code Produit ;  Description Produit ; UdM du Produit ; Qté Indicative en Stock (ignorée) ; Numéro de Lot ;  Date d'Expiration (DD/MM/YYYY) (ignorée si un lot est indiqué);  Actif ; Qté Consommée ; Remarque\n"
 "        "
 
 #. module: msf_outgoing
@@ -86255,9 +86241,9 @@ msgstr "Vérification Cachée des Expirés "
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:160
 #, python-format
-msgid "Line %s of the imported file: Batch Number [%s] not found.\n"
+msgid "Line %s of the imported file: Batch Number [%s] with the Expiry Date [%s] not found.\n"
 ""
-msgstr "Ligne %s du fichier importé: Lot [%s] non trouvé.\n"
+msgstr "Ligne %s du fichier importé: Lot [%s] avec la Date d'Expiration [%s] non trouvé.\n"
 ""
 
 #. module: account
