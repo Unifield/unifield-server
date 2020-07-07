@@ -226,14 +226,13 @@ class account_move_line_reconcile(osv.osv_memory):
             different_currencies = True
             debit = fdebit
             credit = fcredit
-        # For salaries, behaviour is the same as total_change: we use functional debit/credit
-        if account_id == salary_account_id or (currency_id and currency2_id and not transfer_with_change):
+        if currency_id and currency2_id and not transfer_with_change:
             if abs(fdebit - fcredit) <= 10**-3:
                 state = 'total'
             else:
                 state = 'partial'
                 # UF-2050: Do not allow partial reconciliation of entries in different currencies. We ALWAYS do total reconciliation
-                if different_currencies and not transfer_with_change:
+                if different_currencies:
                     state = 'total'
         return {'trans_nbr': count, 'account_id': account_id, 'credit': credit, 'debit': debit, 'writeoff': debit - credit, 'state': state, 'different_currencies': different_currencies}
 
