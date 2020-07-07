@@ -817,8 +817,6 @@ class real_average_consumption_line(osv.osv):
                 elif context.get('import_in_progress'):
                     error_message.append(_("Line %s of the imported file: Qty Consumed (%s) can't be greater than the Indicative Stock (%s)") % (context.get('line_num', False), obj.consumed_qty, product_qty))
                     context.update({'error_message': error_message})
-                    # uf-1344 "quantity NOT in stock with this ED => line should be in red, no batch picked up"
-                    prodlot_id = None
             #recursion: can't use write
             cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, asset_mandatory=%s, prodlot_id=%s, expiry_date=%s, asset_id=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, asset_mandatory, prodlot_id, expiry_date, asset_id, obj.id))  # not_a_user_entry
 
@@ -888,13 +886,11 @@ class real_average_consumption_line(osv.osv):
                 left join stock_production_lot bn on bn.id = line.prodlot_id
             where
                 rac.state = 'draft' and
-                ((rac.id, line.product_id, line.prodlot_id, line.expiry_date) in (select rac_id, product_id, prodlot_id, expiry_date from real_average_consumption_line where id in %s)
-                    or
-                (rac.id, line.product_id) in (select rac_id, product_id from real_average_consumption_line where id in %s and prodlot_id is NULL))
+                (rac.id, line.product_id, coalesce(line.prodlot_id,0)) in (select rac_id, product_id, coalesce(prodlot_id, 0) from real_average_consumption_line where id in %s)
             group by
                 product.default_code, bn.name, bn.id, rac.id, rac.name
             having count(*) > 1
-        ''', (tuple(ids), tuple(ids)))
+        ''', (tuple(ids), ))
         error = []
         for x in cr.fetchall():
             error.append('%s: %s %s' % (x[5], x[0], x[1] or ''))
