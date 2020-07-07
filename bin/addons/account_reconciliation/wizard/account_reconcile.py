@@ -226,9 +226,8 @@ class account_move_line_reconcile(osv.osv_memory):
             different_currencies = True
             debit = fdebit
             credit = fcredit
-            if abs(fdebit - fcredit) <= 10**-3:
-                # UF-2050: Do not allow partial reconciliation of entries in different currencies. We ALWAYS do total reconciliation
-                state = 'total'
+            # UF-2050: Do not allow partial reconciliation of entries in different currencies. We ALWAYS do total reconciliation
+            state = 'total'
         return {'trans_nbr': count, 'account_id': account_id, 'credit': credit, 'debit': debit, 'writeoff': debit - credit, 'state': state, 'different_currencies': different_currencies}
 
     def total_reconcile(self, cr, uid, ids, context=None):
