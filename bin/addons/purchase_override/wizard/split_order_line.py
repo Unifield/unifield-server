@@ -127,6 +127,9 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 if new_sol and split.purchase_line_id.state != 'draft':
                     wf_service.trg_validate(uid, 'sale.order.line', new_sol, 'sourced_v', cr)
 
+            if for_claim and split.purchase_line_id.state == 'confirmed':
+                wf_service.trg_validate(uid, 'purchase.order.line', new_line_id, 'confirmed', cr)
+
             if context.get('from_simu_screen') or context.get('return_new_line_id'):
                 return new_line_id
 

@@ -1467,7 +1467,6 @@ class claim_event(osv.osv):
         split_obj = self.pool.get('split.purchase.order.line.wizard')
         move_obj = self.pool.get('stock.move')
         picking_tools = self.pool.get('picking.tools')
-
         claim = event.return_claim_id_claim_event
         origin_picking = claim.picking_id_return_claim
         inv_status = claim.partner_id_return_claim.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
@@ -1510,6 +1509,7 @@ class claim_event(osv.osv):
         event_moves = [move for move in event_picking.move_lines]
         for i, move_id in enumerate(replacement_move_ids):
             replacement_move_values_with_more = replacement_move_values.copy()
+            check_po_line_to_close = False
             # set the same line number as the original move
             if event.event_picking_id_claim_event.move_lines[i].purchase_line_id:
                 if event.event_picking_id_claim_event.move_lines[i].purchase_line_id.order_id.state != 'done':
@@ -1521,12 +1521,12 @@ class claim_event(osv.osv):
                         new_ctx = context.copy()
                         new_ctx['return_new_line_id'] = True
                         split_id = split_obj.create(cr, uid, {
-                            'purchase_line_id': event.event_picking_id_claim_event.move_lines[i].purchase_line_id,
+                            'purchase_line_id': event.event_picking_id_claim_event.move_lines[i].purchase_line_id.id,
                             'original_qty': event.event_picking_id_claim_event.move_lines[i].purchase_line_id.product_qty,
                             'new_line_qty': event.event_picking_id_claim_event.move_lines[i].product_qty
                         }, context=new_ctx)
                         new_pol = split_obj.split_line(cr, uid, split_id, context=new_ctx, for_claim=True)
-
+                        check_po_line_to_close = event.event_picking_id_claim_event.move_lines[i].purchase_line_id.id,
                         replacement_move_values_with_more.update({'purchase_line_id': new_pol})
 
                 move_obj.write(cr, uid, event.event_picking_id_claim_event.move_lines[i].id, {'purchase_line_id': False}, context=context)
@@ -1539,6 +1539,10 @@ class claim_event(osv.osv):
                 })
             # get the move values according to claim type
             move_obj.write(cr, uid, move_id, replacement_move_values_with_more, context=context)
+            if check_po_line_to_close and not move_obj.search_exist(cr, uid, [('purchase_line_id', '=', check_po_line_to_close), ('type', '=', 'in'), ('state', 'not in', ['cancel', 'cancel_r', 'done'])], context=context):
+                # IN linked to split pol has been fully processed: close the pol
+                netsvc.LocalService("workflow").trg_validate(uid, 'purchase.order.line', check_po_line_to_close, 'done', cr)
+
         # confirm and check availability of replacement picking
         picking_tools.confirm(cr, uid, replacement_id, context=context)
         picking_tools.check_assign(cr, uid, replacement_id, context=context)

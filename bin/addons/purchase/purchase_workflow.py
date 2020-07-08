@@ -217,7 +217,7 @@ class purchase_order_line(osv.osv):
                         ('type', '=', 'out'),
                         ('state', 'in', ['assigned', 'confirmed'])],
                         context=context)
-                    if len(linked_out_moves) > 1:
+                    if linked_out_moves:
                         # try first confirmed OUT, if not found link assigned OUT
                         out_to_update = False
                         for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
