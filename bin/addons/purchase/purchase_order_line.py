@@ -1403,7 +1403,11 @@ class purchase_order_line(osv.osv):
                     new_po_origin = '%s:%s' % (po_obj.origin, origin)
                 else:
                     new_po_origin = origin
-                self.pool.get('purchase.order').write(cr, uid, [po_obj.id], {'origin': new_po_origin}, context=context)
+                to_write = {'origin': new_po_origin}
+                so_data = self.pool.get('sale.order').browse(cr, uid, so_ids[0], fields_to_fetch=['partner_id', 'procurement_request'], context=context)
+                if not so_data.procurement_request:
+                    to_write['dest_partner_ids'] = [(4, so_data.partner_id.id)]
+                self.pool.get('purchase.order').write(cr, uid, [po_obj.id], to_write, context=context)
             return {'link_so_id': so_ids[0]}
         return {}
 
