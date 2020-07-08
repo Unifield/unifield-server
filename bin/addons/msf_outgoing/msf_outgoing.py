@@ -1995,7 +1995,7 @@ class stock_picking(osv.osv):
         default.update(rw_sdref_counterpart=False)
 
         if context.get('from_button'):
-            default.update(purchase_id=False)
+            default.update(purchase_id=False, customers=False, customer_ref=False)
         if not context.get('wkf_copy'):
             context['not_workflow'] = True
         result = super(stock_picking, self).copy_data(cr, uid, copy_id, default=default, context=context)

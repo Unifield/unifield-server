@@ -48,6 +48,33 @@ class purchase_order(osv.osv):
     _description = "Purchase Order"
     _order = "id desc"
 
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        '''
+            overwrite to allow search on customer and self instance
+
+        '''
+        new_dom = []
+        dest_partner_names = False
+        for x in domain:
+            if x[0] == 'dest_partner_names':
+                dest_partner_names = x[2]
+            else:
+                new_dom.append(x)
+
+        ret = super(purchase_order, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if dest_partner_names:
+            ret.tables.append('"res_partner_purchase_order_rel"')
+            ret.joins['"purchase_order"'] = [('"res_partner_purchase_order_rel"', 'id', 'purchase_order_id', 'LEFT JOIN')]
+            ret.tables.append('"res_partner"')
+            ret.joins['"res_partner_purchase_order_rel"'] = [('"res_partner"', 'partner_id', 'id', 'LEFT JOIN')]
+            if self.pool.get('sync.client.entity').search_exist(cr, uid, [('name', 'ilike', dest_partner_names)], context=context):
+                ret.where_clause.append(' ("res_partner"."name" ilike %s OR "res_partner_purchase_order_rel".partner_id IS NULL) ')
+            else:
+                ret.where_clause.append(' "res_partner"."name" ilike %s ')
+            ret.where_clause_params.append('%%%s%%'%dest_partner_names)
+            ret.having = ' GROUP BY "purchase_order"."id" '
+        return ret
+
 
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
@@ -278,6 +305,8 @@ class purchase_order(osv.osv):
                 if name_tuples:
                     names_list = [nt[1] for nt in name_tuples]
                     names = "; ".join(names_list)
+            else:
+                names = self.pool.get('res.company')._get_instance_record(cr, uid).instance
             res[po_r['id']] = names
         return res
 

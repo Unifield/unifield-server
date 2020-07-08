@@ -53,6 +53,43 @@ class patch_scripts(osv.osv):
     }
 
     # UF18.0
+    def us_6453_set_ref_on_in(self, cr, uid, *a, **b):
+        if self.pool.get('sync.client.entity'):
+            cr.execute('''
+            update stock_picking set customer_ref=x.ref, customers=x.cust from (
+                select
+                    p.id,
+                    string_agg(distinct(regexp_replace(so.client_order_ref,'^.*\.', '')),';') as ref,
+                    string_agg(distinct(part.name), ';') as cust
+                from
+                    stock_picking p,
+                    sale_order so,
+                    sale_order_line sol,
+                    purchase_order_line pol,
+                    purchase_order po,
+                    res_partner part
+                where
+                    p.type='in' and
+                    p.purchase_id=po.id and
+                    pol.order_id=po.id and
+                    pol.linked_sol_id=sol.id and
+                    sol.order_id=so.id and
+                    part.id = so.partner_id
+                group by p.id
+                ) as x
+            where x.id=stock_picking.id and type='in'
+            ''')
+
+            cr.execute("SELECT name FROM sync_client_entity LIMIT 1")
+            inst_name = cr.fetchone()[0]
+            if not inst_name:
+                return False
+
+            cr.execute("update stock_picking set customers=%s where customers is null and type='in'", (inst_name, ))
+
+        return True
+
+
     def sync_msg_from_itself(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
         if not instance:

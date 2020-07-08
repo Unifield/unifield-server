@@ -855,6 +855,8 @@ class stock_picking(osv.osv):
         'packing_list': fields.char('Supplier Packing List', size=30),
         'is_subpick': fields.boolean('Main or Sub PT'),
         'destinations_list': fields.function(_get_destinations_list, method=True, type='char', size=512, string='Destination Location', store=False),
+        'customers': fields.char('Customers', size=1026),
+        'customer_ref': fields.char('Customer Ref.', size=1026),
     }
 
     _defaults = {
