@@ -159,15 +159,12 @@ class wizard_import_product_line(osv.osv_memory):
                                         product_ids.append(prod.id)
                                     else:
                                         if instance_level == 'section':
-                                            if prod.international_status.code in ['itc', 'esc']:
-                                                product_ids.append(prod.id)
+                                            if wiz_browse.product_mass_upd_id.type_of_ed_bn:
+                                                error_list_line.append(_('Product %s doesn\'t have the expected Product Creator. ')
+                                                                       % (row[0].data,))
                                             else:
-                                                if wiz_browse.product_mass_upd_id.type_of_ed_bn:
-                                                    error_list_line.append(_('Product %s doesn\'t have the expected Product Creator. ')
-                                                                           % (row[0].data,))
-                                                else:
-                                                    error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "ITC", "ESC" or "HQ". ')
-                                                                           % (row[0].data,))
+                                                error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "ITC", "ESC" or "HQ". ')
+                                                                       % (row[0].data,))
                                         elif instance_level == 'coordo':
                                             error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "Local". ')
                                                                    % (row[0].data,))

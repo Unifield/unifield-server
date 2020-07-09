@@ -339,8 +339,7 @@ class product_mass_update(osv.osv):
                     p_suppinfo_obj.create(cr, uid, {'product_id': prod.product_tmpl_id.id, 'name': p_mass_upd.seller_id.id, 'sequence': 0}, context=context)
                 if p_mass_upd.active_product:
                     if not prod.active and p_mass_upd.active_product == 'yes':
-                        if (instance_level in ['project', 'coordo'] and prod.standard_ok == 'non_standard_local') or \
-                                (instance_level == 'section' and prod.international_status.code in ['itc', 'esc']):
+                        if instance_level in ['project', 'coordo'] and prod.standard_ok == 'non_standard_local':
                             not_activated.append(prod.id)
                         else:
                             prod_obj.reactivate_product(cr, uid, [prod.id], context=context)
