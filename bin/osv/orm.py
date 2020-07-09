@@ -5094,6 +5094,9 @@ class orm(orm_template):
             trans_obj.create(cr, uid, record, context=context)
 
 
+    def copy_web(self, cr, uid, id, default=None, context=None):
+        return self.copy(cr, uid, id, default=None, context=None)
+
     def copy(self, cr, uid, id, default=None, context=None):
         """
         Duplicate record with given id updating it with default values
