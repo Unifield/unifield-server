@@ -737,6 +737,10 @@ class stock_picking(osv.osv):
         return res
 
     def create(self, cr, user, vals, context=None):
+        if vals.get('type') == 'in' and not vals.get('customers'):
+            # manual creation
+            vals['customers'] = self.pool.get('res.company')._get_instance_record(cr, user).instance
+
         if vals.get('type', False) and vals['type'] == 'in' \
                 and not vals.get('from_wkf', False) and not vals.get('from_wkf_sourcing', False):
             reason_type = self.pool.get('stock.reason.type').browse(cr, user, vals.get('reason_type_id', False), context=context)
@@ -912,6 +916,12 @@ class stock_picking(osv.osv):
         res = kwargs.get('res')
         assert res is not None, 'missing res'
         return res and not context.get('keep_prodlot', False)
+
+    def copy_web(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        default.update({'customers': False, 'customer_ref': False})
+        return self.copy(cr, uid, id, default=default, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
