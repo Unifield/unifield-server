@@ -5095,7 +5095,7 @@ class orm(orm_template):
 
 
     def copy_web(self, cr, uid, id, default=None, context=None):
-        return self.copy(cr, uid, id, default=None, context=None)
+        return self.copy(cr, uid, id, default, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):
         """
