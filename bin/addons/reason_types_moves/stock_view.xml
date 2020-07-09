@@ -151,6 +151,7 @@
                         <field name="name" string="Reference" />
                         <field name="partner_id"/>
                         <field name="origin"/>
+                            <field name="purchase_id" />
                         <field name="customers" />
                         <field name="order_category" />
                         <field name="reason_type_id" widget="selection" domain="[('incoming_ok', '=', True)]" />
@@ -186,6 +187,7 @@
                     <field name="partner_id" />
                     <field name="backorder_id" />
                     <field name="origin"/>
+                        <field name="purchase_id" />
                     <field name="customer_ref" />
                     <field name="customers" />
                     <field name="order_category" />
