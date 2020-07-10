@@ -49,6 +49,8 @@ class validate_account_move_lines(osv.osv_memory):
     def validate_move_lines(self, cr, uid, ids, context=None):
         obj_move_line = self.pool.get('account.move.line')
         obj_move = self.pool.get('account.move')
+        obj_subscription_line = self.pool.get('account.subscription.line')
+        obj_recurring_plan = self.pool.get('account.subscription')
         move_ids = []
         if context is None:
             context = {}
@@ -60,6 +62,14 @@ class validate_account_move_lines(osv.osv_memory):
         if not move_ids:
             raise osv.except_osv(_('Warning'), _('Selected Entry Lines does not have any account move enties in draft state'))
         obj_move.button_validate(cr, uid, move_ids, context)
+        # update the state of the related Recurring Plans if any
+        sub_line_ids = obj_subscription_line.search(cr, uid, [('move_id', 'in', move_ids)], context=context)
+        if sub_line_ids:
+            recurring_plans = set()
+            for sub_line in obj_subscription_line.browse(cr, uid, sub_line_ids, fields_to_fetch=['subscription_id'], context=context):
+                recurring_plans.add(sub_line.subscription_id.id)
+            for recurring_plan_id in recurring_plans:
+                obj_recurring_plan.update_plan_state(cr, uid, recurring_plan_id, context=context)
         return {'type': 'ir.actions.act_window_close'}
 validate_account_move_lines()
 

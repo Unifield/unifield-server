@@ -38139,11 +38139,6 @@ msgstr "La période '%s' n'est pas ouverte ! Pas d'écriture comptable créée."
 msgid "Reservation Destination"
 msgstr "Destination de la Réservation"
 
-#. module: account
-#: view:account.subscription:0
-msgid "Remove Lines"
-msgstr "Supprimer des lignes"
-
 #. module: base
 #: help:ir.cron,function:0
 msgid "Name of the method to be called on the object when this scheduler is executed."

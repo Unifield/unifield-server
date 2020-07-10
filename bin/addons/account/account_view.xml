@@ -1953,8 +1953,7 @@
                         <button name="delete_unposted" type="object" icon="terp-gtk-stop"
                                 string="Delete Unposted Entries"
                                 attrs="{'readonly': [('has_unposted_entries', '=', False)]}"/>
-                        <button name="compute" states="draft" string="Compute" type="object" icon="terp-stock_format-scientific"/>
-                        <button name="remove_line" states="running" string="Remove Lines" type="object" icon="gtk-remove"/>
+                        <button name="compute" states="draft,running" string="Compute" type="object" icon="terp-stock_format-scientific"/>
                     </group>
                 </form>
             </field>

@@ -2377,19 +2377,29 @@ class account_subscription(osv.osv):
         'state': 'draft',
     }
 
-    def check(self, cr, uid, ids, context=None):
-        todone = []
-        for sub in self.browse(cr, uid, ids, context=context):
-            ok = True
-            for line in sub.lines_id:
-                if not line.move_id.id:
-                    ok = False
+    def update_plan_state(self, cr, uid, subscription_id, context=None):
+        """
+        Updates the Recurring Plan state with the following rules:
+        - no lines computed = Draft
+        - lines computed but not all lines posted = Running
+        - all lines posted = Done
+        """
+        if context is None:
+            context = {}
+        sub = self.browse(cr, uid, subscription_id, fields_to_fetch=['lines_id'], context=context)
+        if not sub.lines_id:
+            state = 'draft'
+        else:
+            running = False
+            for sub_line in sub.lines_id:
+                if not sub_line.move_id or sub_line.move_id.state != 'posted':
+                    running = True
                     break
-            if ok:
-                todone.append(sub.id)
-        if todone:
-            self.write(cr, uid, todone, {'state':'done'})
-        return False
+            if running:
+                state = 'running'
+            else:
+                state = 'done'
+        self.write(cr, uid, subscription_id, {'state': state}, context=context)
 
     def remove_line(self, cr, uid, ids, context=None):
         toremove = []
@@ -2399,7 +2409,6 @@ class account_subscription(osv.osv):
                     toremove.append(line.id)
         if toremove:
             self.pool.get('account.subscription.line').unlink(cr, uid, toremove)
-        self.write(cr, uid, ids, {'state':'draft'})
         return False
 
     def delete_unposted(self, cr, uid, ids, context=None):
@@ -2407,29 +2416,16 @@ class account_subscription(osv.osv):
         This method:
         - searches for the unposted Journal Entries linked to the account subscription(s)
         - deletes the unposted JEs, and the related JIs and AJIs
-        - deletes all the Subscription Lines not linked to a Posted JE
-        - triggers the "Compute" method on the subscription(s) to get the correct lines and state
         """
         if context is None:
             context = {}
-        subline_obj = self.pool.get('account.subscription.line')
         je_obj = self.pool.get('account.move')
-        subline_to_delete_ids = []
         je_to_delete_ids = []
         for sub in self.browse(cr, uid, ids, fields_to_fetch=['lines_id'], context=context):
             for subline in sub.lines_id:
-                if not subline.move_id:
-                    # also deletes the sub. lines without JE (covers the case where frequency has been modified
-                    # => avoids having inconsistent lines at the end of the process)
-                    subline_to_delete_ids.append(subline.id)
-                elif subline.move_id.state == 'draft':  # draft = Unposted state
-                    subline_to_delete_ids.append(subline.id)
+                if subline.move_id.state == 'draft':  # draft = Unposted state
                     je_to_delete_ids.append(subline.move_id.id)
-        subline_obj.unlink(cr, uid, subline_to_delete_ids, context=context)
         je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
-        # retrigger the creation of the subscription lines "to be generated"
-        # and recompute the state of the subscription accordingly (= "Running" if lines have been generated)
-        self.compute(cr, uid, ids, context=context)
         return True
 
     def get_dates_to_create(self, cr, uid, subscription_id, context=None):
@@ -2460,6 +2456,9 @@ class account_subscription(osv.osv):
         if context is None:
             context = {}
         for sub in self.browse(cr, uid, ids, context=context):
+            if sub.state == 'running':
+                # first remove existing unposted lines
+                self.remove_line(cr, uid, ids, context=context)
             if sub.model_id and sub.model_id.has_any_bad_ad_line_exp_in:
                 # UFTP-103: block compute if recurring model has line with
                 # expense/income accounts with invalid AD
@@ -2474,10 +2473,7 @@ class account_subscription(osv.osv):
                     'date': date_sub,
                     'subscription_id': sub.id,
                 })
-            if dates_to_create:
-                self.write(cr, uid, sub.id, {'state': 'running'}, context=context)
-            else:  # all the subscription lines were already created => the account subscription can be marked as "Done"
-                self.write(cr, uid, sub.id, {'state': 'done'}, context=context)
+            self.update_plan_state(cr, uid, sub.id, context=context)
         return True
 account_subscription()
 
@@ -2492,7 +2488,6 @@ class account_subscription_line(osv.osv):
     _order = 'date, id'
 
     def move_create(self, cr, uid, ids, context=None):
-        tocheck = {}
         all_moves = []
         obj_model = self.pool.get('account.model')
         for line in self.browse(cr, uid, ids, context=context):
@@ -2500,11 +2495,8 @@ class account_subscription_line(osv.osv):
                 'date': line.date,
             }
             move_ids = obj_model.generate(cr, uid, [line.subscription_id.model_id.id], datas, context)
-            tocheck[line.subscription_id.id] = True
             self.write(cr, uid, [line.id], {'move_id':move_ids[0]})
             all_moves.extend(move_ids)
-        if tocheck:
-            self.pool.get('account.subscription').check(cr, uid, tocheck.keys(), context)
         return all_moves
 
     _rec_name = 'date'
