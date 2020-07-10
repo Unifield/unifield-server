@@ -20,7 +20,7 @@ from base64 import decodestring
 from cStringIO import StringIO
 import hashlib
 import threading
-
+import requests
 
 class version(osv.osv):
 
@@ -340,3 +340,92 @@ class sync_server_user_rights_add_file(osv.osv_memory):
         return True
 
 sync_server_user_rights_add_file()
+
+class res_groups_instances(osv.osv):
+    _name = 'res.groups.instances'
+    _description = 'Instances Groups'
+    _order = 'name'
+    _columns = {
+        'name': fields.char('Name', size=256),
+    }
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        if context and context.get('hide'):
+            print context.get('hide')
+            if isinstance(context['hide'], list) and isinstance(context['hide'][0], tuple) and len(context['hide'][0]) == 3 and context['hide'][0][2]:
+                args.append(('id', 'not in', context['hide'][0][2]))
+        print args
+        return super(res_groups_instances, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
+res_groups_instances()
+
+class sync_server_survey(osv.osv):
+    _name = 'sync_server.survey'
+    _descirption = 'Survey'
+    _order = 'start_date desc'
+
+    def _search_date_filter(self, cr, uid, obj, name, args, context=None):
+        dom = []
+        for arg in args:
+            curr_date = time.strftime('%Y-%m-%d %H:%M:%S')
+            if arg[2] == 'current':
+                dom = ['&', ('start_date','<=', curr_date), ('end_date', '>=', curr_date)]
+            elif arg[2] == 'future':
+                dom = [('start_date', '>=', curr_date)]
+        return dom
+
+    _columns = {
+        'name': fields.char('Name', size=1024, required=1),
+        'profile': fields.char('Profile Name', size=1024, required=1),
+        'start_date': fields.datetime('Date Start', required=1),
+        'end_date': fields.datetime('Date End', required=1),
+        'url_en': fields.char('English URL', size=1024, required=1),
+        'url_fr': fields.char('French URL', size=1024, required=1),
+        'included_group_ids': fields.many2many('res.groups.instances', 'suvey_group_included_rel', 'survey_id', 'group_id', 'Included Groups'),
+        'excluded_group_ids': fields.many2many('res.groups.instances', 'suvey_group_excluded_rel', 'survey_id', 'group_id', 'Excluded Groups'),
+        'activated': fields.boolean('Synced'),
+        'date_filter': fields.function(tools.misc.get_fake, type='char', string='Filter on dates', method=True, fnct_search=_search_date_filter),
+        'active': fields.boolean('Active'),
+        #'included_groups': fields.text('Included Groups'),
+        #'excluded_groups': fields.text('Excluded Groups'),
+        #'included_groups_ids': fields.function(_get_groups_id, string='Included Groups', method=1, type='many2many', multi='_get_group'),
+        #'excluded_groups_ids': fields.function(_get_groups_id, string='Included Groups', method=1, type='many2many', multi='_get_group'),
+    }
+
+    _defaults = {
+        'activated': False,
+        'active': True,
+    }
+    _sql_constraints = [
+        ('check_dates', 'check (start_date < end_date)', 'Date Start must be before Date End')
+    ]
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+
+        if 'activated' not in default:
+            default['activated'] = False
+
+        return super(sync_server_survey, self).copy(cr, uid, id, default, context)
+
+    def activate(self, cr, uid, ids, context=None):
+        for x in self.read(cr, uid, ids, ['url_en', 'url_fr'], context=context):
+            for url in ['url_en', 'url_fr']:
+                try:
+                    r = requests.get(x[url])
+                    if r.status_code != 200:
+                        raise osv.except_osv(_('Error'), _('Unable to get %s, status code: %s') % (url, r.status_code))
+                except requests.RequestException, e:
+                    raise osv.except_osv(_('Error'), _('Unable to get %s, error: %s') % (url, tools.ustr(e)))
+        self.write(cr, uid, ids, {'activated': True}, context=context)
+        return True
+
+    def deactivate(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'activated': False}, context=context)
+        return True
+
+    def unlink(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'active': False}, context=context)
+        return True
+
+sync_server_survey()
