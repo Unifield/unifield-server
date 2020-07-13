@@ -2361,7 +2361,8 @@ class account_subscription(osv.osv):
 
         'date_start': fields.date('Start Date', required=True),
         'period_total': fields.integer('Number of Periods', required=True),
-        'period_nbr': fields.integer('Period', required=True),
+        'period_nbr': fields.integer('Repeat', required=True,
+                                     help="This field will determine how often entries will be generated: if the period type is 'month' and the repeat '2' then entries will be generated every 2 months"),
         'period_type': fields.selection([('day','days'),('month','month'),('year','year')], 'Period Type', required=True),
         'state': fields.selection([('draft','Draft'),('running','Running'),('done','Done')], 'State', required=True, readonly=True),
 
@@ -2372,12 +2373,41 @@ class account_subscription(osv.osv):
     _defaults = {
         'date_start': lambda *a: time.strftime('%Y-%m-%d'),
         'period_type': 'month',
-        'period_total': 12,
+        'period_total': 0,
         'period_nbr': 1,
         'state': 'draft',
     }
 
     _order = 'date_start desc, id desc'
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if 'period_nbr' in vals and vals['period_nbr'] < 1:
+            raise osv.except_osv(_('Warning'), _('The value in the field "Repeat" must be greater than 0!'))
+        return super(account_subscription, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
+        if context is None:
+            context = {}
+        if 'period_nbr' in vals and vals['period_nbr'] < 1:
+            raise osv.except_osv(_('Warning'), _('The value in the field "Repeat" must be greater than 0!'))
+        return super(account_subscription, self).write(cr, uid, ids, vals, context)
+
+    def copy(self, cr, uid, acc_sub_id, default=None, context=None):
+        """
+        Account Subscription duplication: don't copy the link with subscription lines
+        """
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        default.update({
+            'lines_id': [],
+        })
+        return super(account_subscription, self).copy(cr, uid, acc_sub_id, default, context=context)
 
     def update_plan_state(self, cr, uid, subscription_id, context=None):
         """

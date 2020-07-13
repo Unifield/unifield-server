@@ -23927,7 +23927,7 @@ msgstr "De brouillon à demande de Devis."
 #. module: account
 #: field:account.subscription,period_nbr:0
 msgid "Repeat"
-msgstr "Repeat"
+msgstr "Répéter"
 
 #. module: sourcing
 #: code:addons/sourcing/sale_order_line.py:905
@@ -76421,7 +76421,7 @@ msgstr "Ou téléchargez le modèle: "
 #. module: account
 #: help:account.subscription,period_nbr:0
 msgid "This field will determine how often entries will be generated: if the period type is 'month' and the repeat '2' then entries will be generated every 2 months"
-msgstr "This field will determine how often entries will be generated: if the period type is 'month' and the repeat '2' then entries will be generated every 2 months"
+msgstr "Ce champ déterminera la fréquence à laquelle les écritures seront générées : si le type de période est 'mois' et Répéter est '2', alors les écritures seront générées tous les 2 mois."
 
 #. module: sync_client
 #: selection:sync.client.log_sale_purchase,action_type:0
