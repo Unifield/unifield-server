@@ -2377,6 +2377,8 @@ class account_subscription(osv.osv):
         'state': 'draft',
     }
 
+    _order = 'date_start desc, id desc'
+
     def update_plan_state(self, cr, uid, subscription_id, context=None):
         """
         Updates the Recurring Plan state with the following rules:
