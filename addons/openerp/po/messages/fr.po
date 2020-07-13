@@ -1830,3 +1830,23 @@ msgstr "Télécharger le rapport"
 msgid "In Progress"
 msgstr "En cours"
 
+#: controllers/templates/preferences/index.mako:191
+msgid "We welcome your feedback."
+msgstr "Nous apprécions vos remarques"
+
+#: controllers/templates/preferences/index.mako:191
+msgid "Help us improve your experience by taking our short survey."
+msgstr "Aidez-nous à améliorer votre expérience en répondant à notre court sondage."
+
+#: controllers/templates/preferences/index.mako:201
+msgid "Go to survey"
+msgstr "Répondre au sondage"
+
+#: controllers/templates/preferences/index.mako:202
+msgid "Answer Later"
+msgstr "Plus tard"
+
+#: controllers/templates/preferences/index.mako:207
+msgid "Do not ask me again"
+msgstr "Ne plus demander"
+

@@ -26,7 +26,7 @@ from openerp.utils import rpc, cache, TinyDict
 
 from openobject.tools import url, expose, redirect
 from openobject.tools.ast import literal_eval
-
+import json
 _MAXIMUM_NUMBER_WELCOME_MESSAGES = 3
 
 def _cp_on_error():
@@ -53,7 +53,13 @@ class Root(SecuredController):
             if read_result['action_id']:
                 next = '/openerp/home'
 
-        return self.menu(next=next)
+        if rpc.session.has_logged:
+            rpc.session.has_logged = False
+            from_login = True
+        else:
+            from_login = False
+
+        return self.menu(next=next, from_login=from_login)
 
     @expose()
     def home(self):
@@ -93,7 +99,7 @@ class Root(SecuredController):
     """ % (url("/openerp/static/images/loading.gif"))
 
     @expose(template="/openerp/controllers/templates/index.mako")
-    def menu(self, active=None, next=None):
+    def menu(self, active=None, next=None, from_login=False):
         from openerp.widgets import tree_view
         if next == '/openerp/pref/update_password':
             # in case the password must be changed, do not do others operations
@@ -168,10 +174,17 @@ class Root(SecuredController):
             widgets=None
             display_shortcut = False
 
-
-
+        main_survey = False
+        other_surveys = []
+        if from_login:
+            surveys = rpc.RPCProxy('sync_client.survey').get_surveys()
+            if surveys:
+                main_survey = surveys[0]
+            if len(surveys) > 1:
+                other_surveys = surveys[1:]
         return dict(parents=parents, tools=tools, load_content=(next and next or ''),
-                    welcome_messages=rpc.RPCProxy('publisher_warranty.contract').get_last_user_messages(_MAXIMUM_NUMBER_WELCOME_MESSAGES),
+                    survey=main_survey,
+                    other_surveys=json.dumps(other_surveys),
                     show_close_btn=rpc.session.uid == 1,
                     widgets=widgets,
                     display_shortcut=display_shortcut)
@@ -181,6 +194,7 @@ class Root(SecuredController):
         target = kw.get('target') or '/'
         if target.startswith('/openerp/do_login'):
             target = '/'
+        rpc.session.has_logged = True
         raise redirect(target)
 
     @expose(allow_json=True)
@@ -257,5 +271,8 @@ class Root(SecuredController):
             error = e
         return dict(error=error)
 
-
+    @expose(allow_json=True)
+    def survey_answer(self, answer, survey_id, stat_id):
+        rpc.RPCProxy('sync_client.survey.user').save_answer(answer, survey_id, stat_id)
+        return True
 # vim: ts=4 sts=4 sw=4 si et

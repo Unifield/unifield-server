@@ -138,3 +138,44 @@ div.contextmenu span.disabled {
     color: #C0C0C0;
 }
 
+#survey {
+  background-color: #5c5cff;
+  color: #ffffff;
+  font-size:20px;
+  text-align: center;
+  height: 250px;
+  display: none;
+}
+
+#survey_title {
+  font-size:35px;
+  margin-bottom: 35px;
+}
+
+#survey .column {
+  float: left;
+  width: 33.33%;
+  text-align: center;
+}
+
+#survey .survey_button {
+  text-align: center;
+  background-color: white;
+  color: #5c5cff;
+  margin: 5px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+#survey .row {
+    padding-top:25px;
+}
+/* Clear floats after the columns */
+#survey .row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+#survey_name {
+    font-weight: bold;
+}

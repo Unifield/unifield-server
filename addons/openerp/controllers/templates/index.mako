@@ -170,12 +170,13 @@
                     </td>
                 </tr>
             % endif
+            <% user_locale = cp.locale().language %>
             <tr>
                 <td id="footer_section" colspan="4">
                     <div class="footer-a">
                         <p class="one">
                             <span>${rpc.session.protocol}://${_("%(user)s", user=rpc.session.loginname)}@${rpc.session.host}:${rpc.session.port}</span>
-                            <span>${cp.locale()}</span>
+                            <span>${user_locale}</span>
                         </p>
                         <p class="powered">${_("Powered by %(openerp)s ",
                                             openerp="""<a target="_blank" href="http://www.openerp.com/">openerp.com</a>""")|n}</p>
@@ -184,5 +185,85 @@
             </tr>
         </table>
     </div>
+
+
+    % if survey:
+        <div id="survey">
+                <div id="survey_title">${_('We welcome your feedback.')}</div>
+                <div>${_('Help us improve your experience by taking our short survey.')}</div>
+                <div id="survey_name">
+                % if user_locale == 'fr' and survey.get('name_fr'):
+                    ${survey.get('name_fr')}
+                % else:
+                    ${survey.get('name')}
+                % endif
+                </div>
+                 <div class="row">
+                  <div class="column"><div class="survey_button" onclick="click_answer('goto')">${_('Go to survey')}</div></div>
+                  <div class="column"><div class="survey_button" onclick="click_answer('later')">${_('Answer Later')}</div></div>
+                  <div class="column"><div class="survey_button" id="button_never"
+                    % if survey['nb_displayed'] > 2:
+                        style="display: hidden"
+                    % endif
+                  onclick="click_answer('never')">${_('Do not ask me again')}</div></div>
+                </div>
+        </div>
+        <script type="text/javascript">
+            % if user_locale == 'fr' and survey.get('url_fr'):
+                var survey_url = "${survey.get('url_fr')}";
+            % else:
+                var survey_url = "${survey.get('url_en')}";
+            % endif
+            var survey_stat_id = ${survey['stat_id']};
+            var survey_id = ${survey['id']};
+            var survey_index = 0;
+
+            jQuery('#survey').fancybox({'modal': true, 'height': 250, 'width': 700, 'scrolling': 'no', 'autoDimensions': false, 'autoScale': false});
+
+            jQuery(document).ready(function() {
+                jQuery('#survey').trigger('click');
+                jQuery('#survey').show();
+                jQuery('#survey').unbind('click.fb');
+            })
+
+
+            function click_answer(answer) {
+                if (answer == 'goto') {
+                    window.open(survey_url,'_blank');
+                }
+                jQuery.post('/openerp/survey_answer', {'answer': answer, 'survey_id': survey_id, 'stat_id': survey_stat_id});
+                next_survey = false;
+                % if len(other_surveys):
+                    var other_surveys = ${other_surveys|n};
+                    if (other_surveys.length > survey_index) {
+                        jQuery('#survey').hide();
+                        next_survey = other_surveys[survey_index];
+                        % if user_locale == 'fr':
+                            survey_url = next_survey.url_fr||next_survey.url_en;
+                            survey_name = next_survey.name_fr||next_survey.name;
+                        % else:
+                            survey_url = next_survey.url_en;
+                            survey_name = next_survey.name;
+                        % endif
+                        survey_stat_id = next_survey.stat_id;
+                        survey_id = next_survey.id;
+                        $('#survey_name').html(survey_name);
+                        if (next_survey.nb_displayed > 2) {
+                            $('#button_never').show();
+                        } else {
+                            $('#button_never').hide();
+                        }
+                        survey_index += 1;
+                        setTimeout(function(){jQuery('#survey').show()}, 450);
+                    }
+                % endif
+
+                if (!next_survey) {
+                    jQuery('#survey').hide();
+                    jQuery.fancybox.close();
+                }
+            }
+        </script>
+    % endif
 </%def>
 
