@@ -66,10 +66,11 @@ class account_subscription_generate(osv.osv_memory):
                         raise osv.except_osv(_('Warning'), _('The entry is not balanced for the Recurring Model %s!') % (acc_model.name))
             moves = self.pool.get('account.subscription.line').move_create(cr, uid, line_ids, context=context)
             moves_created.extend(moves)
-        result = mod_obj.get_object_reference(cr, uid, 'account', 'action_move_line_form')
+        result = mod_obj.get_object_reference(cr, uid, 'account_subscription', 'act_account_subscription_to_account_move_line_open')
         id = result and result[1] or False
         result = act_obj.read(cr, uid, [id], context=context)[0]
-        result['domain'] = str([('id','in',moves_created)])
+        # restrict display to Draft lines so that they automatically disappear from the list once the user posts them
+        result['domain'] = str([('move_id', 'in', moves_created), ('move_state', '=', 'draft')])
         return result
 
 account_subscription_generate()
