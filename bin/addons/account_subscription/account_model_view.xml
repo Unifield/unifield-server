@@ -162,7 +162,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="14"/>
             <field name="arch" type="xml">
-                <tree string="Recurring Plans To Validate" min_rows="100"
+                <tree string="Recurring Entries To Post" min_rows="100"
                       hide_new_button="1" hide_delete_button="1" hide_edit_button="1"
                       colors="red:analytic_distribution_state not in ('valid')">
                     <field name="instance_id"/>
@@ -211,7 +211,7 @@
 
         <act_window
             id="act_account_subscription_to_account_move_line_open"
-            name="Recurring Plans To Validate"
+            name="Recurring Entries To Post"
             domain="[('move_id.state','=','draft'), ('is_recurring', '=', True)]"
             context="{'from_recurring_entries': True}"
             res_model="account.move.line"

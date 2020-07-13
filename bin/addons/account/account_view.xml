@@ -1885,7 +1885,7 @@
             <field name="model">account.subscription</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="blue:state in ('draft');gray:state in ('done');black:state in ('running')" string="Entry Subscription">
+                <tree colors="blue:state in ('draft');gray:state in ('done');black:state in ('running')" string="Recurring Plan">
                     <field name="name"/>
                     <field name="model_id"/>
                     <field name="ref"/>
@@ -1900,7 +1900,7 @@
             <field name="model">account.subscription</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Entry Subscription">
+                <search string="Recurring Plan">
                     <group col="8" colspan="4">
                         <filter icon="terp-document-new" string="Draft" name="draft" domain="[('state','=','draft')]" help="Draft Subscription"/>
                         <filter icon="terp-camera_test" string="Running" name="running" domain="[('state','=','running')]" help="Running Subscription"/>
@@ -1959,16 +1959,16 @@
             </field>
         </record>
         <record id="action_subscription_form" model="ir.actions.act_window">
-            <field name="name">Recurring Lines</field>
+            <field name="name">Recurring Plan</field>
             <field name="res_model">account.subscription</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_subscription_search"/>
             <field name="context">{'search_default_running': 1}</field>
-            <field name="help">A recurring entry is a miscellaneous entry that occurs on a recurrent basis from a specific date, i.e. corresponding to the signature of a contract or an agreement with a customer or a supplier. With Define Recurring Entries, you can create such entries to automate the postings in the system.</field>
+            <field name="help">A recurring plan is a miscellaneous entry that occurs on a recurrent basis from a specific date, i.e. corresponding to the signature of a contract or an agreement with a customer or a supplier. With Recurring Plan, you can create such entries to automate the postings in the system.</field>
         </record>
         <menuitem
-            name="Define Recurring Entries" action="action_subscription_form"
+            name="Recurring Plan" action="action_subscription_form"
             groups="base.group_extended"
             id="menu_action_subscription_form" sequence="1"
             parent="account.menu_finance_recurrent_entries"/>

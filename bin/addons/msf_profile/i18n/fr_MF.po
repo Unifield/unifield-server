@@ -10064,11 +10064,6 @@ msgstr "Pas de rapport trouvé  sur l'historique des consommations !"
 msgid "Funding pools:"
 msgstr "Funding pools:"
 
-#. module: account
-#: view:account.subscription:0
-msgid "Entry Subscription"
-msgstr "Ecriture de souscription"
-
 #. modules: account, account_period_closing_level
 #: model:ir.actions.act_window,help:account.action_account_period_tree
 #: model:ir.actions.act_window,help:account_period_closing_level.action_account_period_closing_level_tree
@@ -44393,8 +44388,8 @@ msgstr "Validé"
 
 #. module: account
 #: model:ir.actions.act_window,help:account.action_subscription_form
-msgid "A recurring entry is a miscellaneous entry that occurs on a recurrent basis from a specific date, i.e. corresponding to the signature of a contract or an agreement with a customer or a supplier. With Define Recurring Entries, you can create such entries to automate the postings in the system."
-msgstr "Une écriture périodique est une écriture qui est configurée par le biais de la fonctionnalité Définir Ecritures Périodiques. Ceci vous permet d'enregistrer une écriture à partir d'une date spécifique. Cette écriture sera reproduite automatiquement dans votre comptabilité et à une fréquence définie. Vous pouvez utiliser cette fonctionnalité par exemple pour étaler la charge d'un loyer sur plusieurs mensualités. "
+msgid "A recurring plan is a miscellaneous entry that occurs on a recurrent basis from a specific date, i.e. corresponding to the signature of a contract or an agreement with a customer or a supplier. With Recurring Plan, you can create such entries to automate the postings in the system."
+msgstr "Un plan d'écritures périodiques est une écriture qui est configurée par le biais de la fonctionnalité Plan d'Ecritures Périodiques. Ceci vous permet d'enregistrer une écriture à partir d'une date spécifique. Cette écriture sera reproduite automatiquement dans votre comptabilité et à une fréquence définie. Vous pouvez utiliser cette fonctionnalité par exemple pour étaler la charge d'un loyer sur plusieurs mensualités."
 
 #. modules: account, finance
 #: view:account.bank.statement:0
@@ -62608,8 +62603,8 @@ msgstr "Vous ne pouvez pas créer un numéro de lot pour un produit dont le num�
 #. module: account_subscription
 #: model:ir.actions.act_window,name:account_subscription.act_account_subscription_to_account_move_line_open
 #: view:account.move.line:0
-msgid "Recurring Entries To Validate"
-msgstr "Entrées récurrentes à valider"
+msgid "Recurring Entries To Post"
+msgstr "Lignes Périodiques à Poster"
 
 #. module: product
 #: view:product.product:0
@@ -85148,11 +85143,6 @@ msgstr "Financing Contract List - pdf"
 msgid "Qty Balance"
 msgstr "Bilan des Qtés"
 
-#. module: account
-#: model:ir.actions.act_window,name:account.action_subscription_form
-msgid "Recurring Lines"
-msgstr "Lignes périodiques"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:54
 #, python-format
@@ -94297,8 +94287,10 @@ msgstr "wizard.register.import.errors"
 
 #. module: account
 #: model:ir.ui.menu,name:account.menu_action_subscription_form
-msgid "Define Recurring Entries"
-msgstr "Définir des Ecritures Périodiques"
+#: model:ir.actions.act_window,name:account.action_subscription_form
+#: view:account.subscription:0
+msgid "Recurring Plan"
+msgstr "Plan d'Ecritures Périodiques"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:628
