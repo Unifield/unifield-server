@@ -30361,8 +30361,8 @@ msgstr "Analytic lines linked to the given register line(s). Correction(s) inclu
 
 #. module: account
 #: view:account.subscription.generate:0
-msgid "Automatically generate entries based on what has been entered in the  system before a specific date."
-msgstr "Génère automatiquement des écritures en se basant sur ce qui a été enregistré dans le système avant une date spécifique"
+msgid "Automatically generate entries based on what has been entered in the system until a specific date."
+msgstr "Génère automatiquement des écritures en se basant sur ce qui a été enregistré dans le système jusqu'à une date spécifique"
 
 #. module: base
 #: model:res.currency,currency_name:base.DZD
@@ -62757,8 +62757,8 @@ msgstr "Nom de la Vue"
 
 #. module: account
 #: view:account.subscription.generate:0
-msgid "Generate Entries before:"
-msgstr "Générer les Ecritures avant :"
+msgid "Generate Entries until:"
+msgstr "Générer les Ecritures jusqu'au :"
 
 #. modules: account, msf_instance
 #: field:account.invoice.refund,journal_id:0
