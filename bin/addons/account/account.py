@@ -2524,6 +2524,7 @@ class account_subscription_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             datas = {
                 'date': line.date,
+                'ref': line.subscription_id.ref or '',
             }
             move_ids = obj_model.generate(cr, uid, [line.subscription_id.model_id.id], datas, context)
             self.write(cr, uid, [line.id], {'move_id':move_ids[0]})

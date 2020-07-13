@@ -315,8 +315,9 @@ class account_model(osv.osv):
             except Exception:
                 raise osv.except_osv(_('Error'), _('The name of the Recurring Model used is incorrect: %s\n'
                                                    'You can find a list of the formatted strings usable on the Recurring Model form.') % model.name)
+            ref = datas.get('ref', '') or entry['name']
             move_id = account_move_obj.create(cr, uid, {
-                'ref': entry['name'],
+                'ref': ref,
                 'period_id': period_id,
                 'journal_id': model.journal_id.id,
                 'date': context.get('date',time.strftime('%Y-%m-%d'))
@@ -327,6 +328,7 @@ class account_model(osv.osv):
                     'move_id': move_id,
                     'journal_id': model.journal_id.id,
                     'period_id': period_id,
+                    'reference': ref,
                 }
                 if line.account_id.is_analytic_addicted:
                     if line.analytic_distribution_state == 'invalid':
