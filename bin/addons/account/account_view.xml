@@ -1924,7 +1924,7 @@
             <field name="model">account.subscription</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Recurring">
+                <form string="Recurring" noteditable="state=='done'">
                     <group col="6" colspan="4">
                         <field name="name" select="1"/>
                         <field name="model_id"/>
