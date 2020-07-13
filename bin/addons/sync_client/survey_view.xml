@@ -55,10 +55,18 @@
                     <field name="url_en" widget="url" readonly="1" colspan="4" />
                     <field name="url_fr" widget="url" readonly="1" colspan="4" />
                     <newline />
-                    <separator string="Included Groups" colspan="2"/>
-                    <separator string="Excluded Groups" colspan="2"/>
-                    <field name="included_group_ids" readonly="1" nolabel="1" colspan="2"/>
-                    <field name="excluded_group_ids" readonly="1" nolabel="1" colspan="2"/>
+                    <field name="included_group_ids" readonly="1" nolabel="1" colspan="2">
+                        <tree string="Included Groups">
+                            <field name="name" />
+                            <field name="users" />
+                        </tree>
+                    </field>
+                    <field name="excluded_group_ids" readonly="1" nolabel="1" colspan="2">
+                        <tree string="Excluded Groups">
+                            <field name="name" />
+                            <field name="users" />
+                        </tree>
+                    </field>
 
                     <field name="stat_by_users" nolabel="1" colspan="4" readonly="1">
                         <tree>
