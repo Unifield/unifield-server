@@ -351,53 +351,46 @@ class res_groups_instances(osv.osv):
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         if context and context.get('hide'):
-            print context.get('hide')
             if isinstance(context['hide'], list) and isinstance(context['hide'][0], tuple) and len(context['hide'][0]) == 3 and context['hide'][0][2]:
                 args.append(('id', 'not in', context['hide'][0][2]))
-        print args
         return super(res_groups_instances, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
+
 res_groups_instances()
 
 class sync_server_survey(osv.osv):
+    _inherit = 'survey.common'
     _name = 'sync_server.survey'
-    _descirption = 'Survey'
+    _description = 'Survey'
     _order = 'start_date desc'
+    _auto = True
 
-    def _search_date_filter(self, cr, uid, obj, name, args, context=None):
-        dom = []
-        for arg in args:
-            curr_date = time.strftime('%Y-%m-%d %H:%M:%S')
-            if arg[2] == 'current':
-                dom = ['&', ('start_date','<=', curr_date), ('end_date', '>=', curr_date)]
-            elif arg[2] == 'future':
-                dom = [('start_date', '>=', curr_date)]
-        return dom
+    def _get_group(self, cr, uid, ids, name, args, context=None):
+        ret = {}
+        for survey in self.browse(cr, uid, ids, fields_to_fetch=['included_group_ids', 'excluded_group_ids'], context=context):
+            ret[survey.id] = {
+                'included_group_txt': ','.join([x.name for x in survey.included_group_ids]),
+                'excluded_group_txt': ','.join([x.name for x in survey.excluded_group_ids]),
+            }
+        return ret
 
     _columns = {
-        'name': fields.char('Name', size=1024, required=1),
-        'profile': fields.char('Profile Name', size=1024, required=1),
-        'start_date': fields.datetime('Date Start', required=1),
-        'end_date': fields.datetime('Date End', required=1),
-        'url_en': fields.char('English URL', size=1024, required=1),
-        'url_fr': fields.char('French URL', size=1024, required=1),
-        'included_group_ids': fields.many2many('res.groups.instances', 'suvey_group_included_rel', 'survey_id', 'group_id', 'Included Groups'),
-        'excluded_group_ids': fields.many2many('res.groups.instances', 'suvey_group_excluded_rel', 'survey_id', 'group_id', 'Excluded Groups'),
+        'included_group_ids': fields.many2many('res.groups.instances', 'server_survey_group_included_rel', 'survey_id', 'group_id', 'Included Groups'),
+        'excluded_group_ids': fields.many2many('res.groups.instances', 'server_survey_group_excluded_rel', 'survey_id', 'group_id', 'Excluded Groups'),
         'activated': fields.boolean('Synced'),
-        'date_filter': fields.function(tools.misc.get_fake, type='char', string='Filter on dates', method=True, fnct_search=_search_date_filter),
-        'active': fields.boolean('Active'),
-        #'included_groups': fields.text('Included Groups'),
-        #'excluded_groups': fields.text('Excluded Groups'),
-        #'included_groups_ids': fields.function(_get_groups_id, string='Included Groups', method=1, type='many2many', multi='_get_group'),
-        #'excluded_groups_ids': fields.function(_get_groups_id, string='Included Groups', method=1, type='many2many', multi='_get_group'),
+        'included_group_txt': fields.function(_get_group, method=True, string='Text List included', type='char', multi='_group'),
+        'excluded_group_txt': fields.function(_get_group, method=True, string='Text List excluded', type='char', multi='_group'),
     }
 
     _defaults = {
         'activated': False,
-        'active': True,
     }
     _sql_constraints = [
         ('check_dates', 'check (start_date < end_date)', 'Date Start must be before Date End')
     ]
+
+    def write(self, cr, uid, ids, vals, context=None):
+        vals['server_write_date'] = time.strftime('%Y-%m-%d %H:%M:%S')
+        return super(sync_server_survey, self).write(cr, uid, ids, vals, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
