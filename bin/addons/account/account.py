@@ -2380,21 +2380,20 @@ class account_subscription(osv.osv):
 
     _order = 'date_start desc, id desc'
 
-    def create(self, cr, uid, vals, context=None):
+    def _check_repeat_value(self, cr, uid, ids, context=None):
+        """
+        Prevents negative frequency
+        """
         if context is None:
             context = {}
-        if 'period_nbr' in vals and vals['period_nbr'] < 1:
-            raise osv.except_osv(_('Warning'), _('The value in the field "Repeat" must be greater than 0!'))
-        return super(account_subscription, self).create(cr, uid, vals, context)
+        for plan in self.read(cr, uid, ids, ['period_nbr'], context=context):
+            if plan['period_nbr'] < 1:
+                return False
+        return True
 
-    def write(self, cr, uid, ids, vals, context=None):
-        if not ids:
-            return True
-        if context is None:
-            context = {}
-        if 'period_nbr' in vals and vals['period_nbr'] < 1:
-            raise osv.except_osv(_('Warning'), _('The value in the field "Repeat" must be greater than 0!'))
-        return super(account_subscription, self).write(cr, uid, ids, vals, context)
+    _constraints = [
+        (_check_repeat_value, 'The value in the field "Repeat" must be greater than 0!', ['period_nbr']),
+    ]
 
     def copy(self, cr, uid, acc_sub_id, default=None, context=None):
         """
