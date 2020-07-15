@@ -1906,8 +1906,8 @@
             <field name="arch" type="xml">
                 <search string="Recurring Plan">
                     <group col="8" colspan="4">
-                        <filter icon="terp-document-new" string="Draft" name="draft" domain="[('state','=','draft')]" help="Draft Subscription"/>
-                        <filter icon="terp-camera_test" string="Running" name="running" domain="[('state','=','running')]" help="Running Subscription"/>
+                        <filter icon="terp-document-new" string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                        <filter icon="terp-camera_test" string="Running" name="running" domain="[('state', '=', 'running')]"/>
                         <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state','=','done')]" />
                         <separator orientation="vertical"/>
                         <field name="name"/>

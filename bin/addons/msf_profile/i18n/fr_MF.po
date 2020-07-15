@@ -33538,11 +33538,6 @@ msgstr "Vous ne pouvez pas clôturer une période dont des lignes d'écriture ne
 msgid "used in statement reconciliation domain, but shouldn't be used elswhere."
 msgstr "utilisé dans le domaine du lettrage de relevés, mais ne devrait pas être utilisé ailleurs"
 
-#. module: account
-#: view:account.subscription:0
-msgid "Draft Subscription"
-msgstr "Draft Subscription"
-
 #. module: base
 #: view:partner.wizard.ean.check:0
 msgid "Correct EAN13"
@@ -50458,11 +50453,6 @@ msgstr "Importer les Lignes"
 #: field:audittrail.log.sequence,sequence:0
 msgid "Logs Sequence"
 msgstr "Journaux de bord - Sequence"
-
-#. module: account
-#: view:account.subscription:0
-msgid "Running Subscription"
-msgstr "Running Subscription"
 
 #. modules: base,  msf_currency_revaluation
 #: code:addons/msf_currency_revaluation/res_currency.py:40
