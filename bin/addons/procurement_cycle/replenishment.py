@@ -1339,163 +1339,174 @@ class replenishment_segment(osv.osv):
 
         product_obj = self.pool.get('product.product')
         seg_line_obj = self.pool.get('replenishment.segment.line')
+        wizard_obj = self.pool.get('physical.inventory.import.wizard')
 
         seg = self.browse(cr, uid, ids[0],  context=context)
         if not seg.file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
-        file_data = SpreadsheetXML(xmlstring=base64.decodestring(seg.file_to_import))
 
-        existing_line = {}
-        for line in seg.line_ids:
-            existing_line[line.product_id.default_code] =line.id
+        try:
+            file_data = SpreadsheetXML(xmlstring=base64.decodestring(seg.file_to_import))
 
-        idx = -1
+            existing_line = {}
+            for line in seg.line_ids:
+                existing_line[line.product_id.default_code] = line.id
 
-        status = dict([(x[1], x[0]) for x in life_cycle_status])
-        error = []
-        code_created = {}
-        created = 0
-        updated = 0
-        ignored = 0
-        for row in file_data.getRows():
-            idx += 1
-            if idx < 8:
-                # header
-                continue
-            line_error = []
-            prod_code = row.cells[0].data
-            if not prod_code:
-                continue
-            prod_code = prod_code.strip()
+            idx = -1
 
-            cells_nb = len(row.cells)
+            status = dict([(x[1], x[0]) for x in life_cycle_status])
+            error = []
+            code_created = {}
+            created = 0
+            updated = 0
+            ignored = 0
+            for row in file_data.getRows():
+                idx += 1
+                if idx < 8:
+                    # header
+                    continue
 
-            data_towrite = {
-                'status': cells_nb > 3 and status.get(row.cells[3].data and row.cells[3].data.strip()),
-                'replacing_product_id': False,
-                'replaced_product_id': False,
-                'buffer_qty': False,
-                'min_qty': 0,
-                'max_qty': 0,
-                'auto_qty': 0
-            }
-            for fmc in range(1, 13):
-                data_towrite.update({
-                    'rr_fmc_%d' % fmc: False,
-                    'rr_fmc_from_%d' % fmc: False,
-                    'rr_fmc_to_%d' % fmc: False,
-                })
+                if not len(row.cells):
+                    # empty line
+                    continue
 
+                line_error = []
+                prod_code = row.cells[0].data
+                if not prod_code:
+                    continue
+                prod_code = prod_code.strip()
 
-            col_replacing = 4
-            col_replaced = 5
-            col_buffer_min_qty = 8
-            col_first_fmc = 9
+                cells_nb = len(row.cells)
 
-            if cells_nb > col_replacing and row.cells[col_replacing].data and row.cells[col_replacing].data.strip():
-                if data_towrite['status'] not in  ('replaced', 'phasingout'):
-                    line_error.append(_('Line %d: you can not set a Replacing product on this line, please change the satus or remove the replacing product') % (idx+1, ))
-                else:
-                    replacing_id = product_obj.search(cr, uid, [('default_code', '=ilike', row.cells[col_replacing].data.strip())], context=context)
-                    if not replacing_id:
-                        line_error.append(_('Line %d: replacing product code %s not found') % (idx+1, row.cells[col_replacing].data))
-                    else:
-                        data_towrite['replacing_product_id'] = replacing_id[0]
-            elif data_towrite['status'] == 'replaced' and not data_towrite['replacing_product_id']:
-                line_error.append(_('Line %d: replacing product must be set !') % (idx+1, ))
-
-            if cells_nb > col_replaced and row.cells[col_replaced].data and row.cells[col_replaced].data.strip():
-                if data_towrite['status'] not in  ('replacing', 'activereplacing'):
-                    line_error.append(_('Line %d: you can not set a Replaced product on this line, please change the satus or remove the replaced product') % (idx+1, ))
-                else:
-                    replaced_id = product_obj.search(cr, uid, [('default_code', '=ilike', row.cells[col_replaced].data.strip())], context=context)
-                    if not replaced_id:
-                        line_error.append(_('Line %d: replaced product code %s not found') % (idx+1, row.cells[col_replaced].data))
-                    else:
-                        data_towrite['replaced_product_id'] = replaced_id[0]
-            elif data_towrite['status'] in ('replacing', 'activereplacing') and not data_towrite['replaced_product_id']:
-                line_error.append(_('Line %d: replaced product must be set !') % (idx+1, ))
-
-
-            if cells_nb > col_buffer_min_qty and seg.rule == 'cycle':
-                if row.cells[col_buffer_min_qty].data and not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float)):
-                    line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
-                else:
-                    data_towrite['buffer_qty'] = row.cells[col_buffer_min_qty].data
+                data_towrite = {
+                    'status': cells_nb > 3 and status.get(row.cells[3].data and row.cells[3].data.strip()),
+                    'replacing_product_id': False,
+                    'replaced_product_id': False,
+                    'buffer_qty': False,
+                    'min_qty': 0,
+                    'max_qty': 0,
+                    'auto_qty': 0
+                }
                 for fmc in range(1, 13):
-                    if cells_nb - 1 >=  col_first_fmc and row.cells[col_first_fmc].data:
-                        from_data = False
-                        fmc_data = row.cells[col_first_fmc].data
-                        if fmc == 1:
-                            if cells_nb - 1 < col_first_fmc+1:
-                                line_error.append(_('Line %d: FMC FROM %d, date expected') % (idx+1, fmc))
-                                continue
-                            if not row.cells[col_first_fmc+1].type == 'datetime':
-                                line_error.append(_('Line %d: FMC FROM %d, date is not valid, found %s') % (idx+1, fmc, row.cells[col_first_fmc+1].data))
-                                continue
-                            from_data = row.cells[col_first_fmc+1].data.strftime('%Y-%m-%d')
-                            col_first_fmc += 1
-
-                        if cells_nb - 1 < col_first_fmc+1:
-                            line_error.append(_('Line %d: FMC TO %d, date expected') % (idx+1, fmc))
-                            continue
-                        if not row.cells[col_first_fmc+1].data or row.cells[col_first_fmc+1].type != 'datetime':
-                            line_error.append(_('Line %d: FMC TO %d, date is not valid, found %s') % (idx+1, fmc, row.cells[col_first_fmc+1].data))
-                            continue
-                        if not isinstance(fmc_data, (int, long, float)):
-                            line_error.append(_('Line %d: FMC %d, number expected, found %s') % (idx+1, fmc, fmc_data))
-                            continue
-                        data_towrite.update({
-                            'rr_fmc_%d' % fmc: fmc_data,
-                            'rr_fmc_from_%d' % fmc:from_data,
-                            'rr_fmc_to_%d' % fmc: row.cells[col_first_fmc+1].data.strftime('%Y-%m-%d'),
-                        })
-                    col_first_fmc += 2
-            elif cells_nb > col_buffer_min_qty and seg.rule == 'minmax':
-                if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float)):
-                    line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
-                elif not row.cells[col_buffer_min_qty+1] or not isinstance(row.cells[col_buffer_min_qty+1].data, (int, long, float)):
-                    line_error.append(_('Line %d: Max Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty+1].data))
-                elif row.cells[col_buffer_min_qty+1].data < row.cells[col_buffer_min_qty].data:
-                    line_error.append(_('Line %d: Max Qty (%s) must be larger than Min Qty (%s)') % (idx+1, row.cells[col_buffer_min_qty+1].data, row.cells[col_buffer_min_qty].data))
-                else:
                     data_towrite.update({
-                        'min_qty': row.cells[col_buffer_min_qty].data,
-                        'max_qty': row.cells[col_buffer_min_qty+1].data,
+                        'rr_fmc_%d' % fmc: False,
+                        'rr_fmc_from_%d' % fmc: False,
+                        'rr_fmc_to_%d' % fmc: False,
                     })
-            elif cells_nb > col_buffer_min_qty:
-                if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float)):
-                    line_error.append(_('Line %d: Auto Supply Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
+
+
+                col_replacing = 4
+                col_replaced = 5
+                col_buffer_min_qty = 8
+                col_first_fmc = 9
+
+                if cells_nb > col_replacing and row.cells[col_replacing].data and row.cells[col_replacing].data.strip():
+                    if data_towrite['status'] not in  ('replaced', 'phasingout'):
+                        line_error.append(_('Line %d: you can not set a Replacing product on this line, please change the satus or remove the replacing product') % (idx+1, ))
+                    else:
+                        replacing_id = product_obj.search(cr, uid, [('default_code', '=ilike', row.cells[col_replacing].data.strip())], context=context)
+                        if not replacing_id:
+                            line_error.append(_('Line %d: replacing product code %s not found') % (idx+1, row.cells[col_replacing].data))
+                        else:
+                            data_towrite['replacing_product_id'] = replacing_id[0]
+                elif data_towrite['status'] == 'replaced' and not data_towrite['replacing_product_id']:
+                    line_error.append(_('Line %d: replacing product must be set !') % (idx+1, ))
+
+                if cells_nb > col_replaced and row.cells[col_replaced].data and row.cells[col_replaced].data.strip():
+                    if data_towrite['status'] not in  ('replacing', 'activereplacing'):
+                        line_error.append(_('Line %d: you can not set a Replaced product on this line, please change the satus or remove the replaced product') % (idx+1, ))
+                    else:
+                        replaced_id = product_obj.search(cr, uid, [('default_code', '=ilike', row.cells[col_replaced].data.strip())], context=context)
+                        if not replaced_id:
+                            line_error.append(_('Line %d: replaced product code %s not found') % (idx+1, row.cells[col_replaced].data))
+                        else:
+                            data_towrite['replaced_product_id'] = replaced_id[0]
+                elif data_towrite['status'] in ('replacing', 'activereplacing') and not data_towrite['replaced_product_id']:
+                    line_error.append(_('Line %d: replaced product must be set !') % (idx+1, ))
+
+
+                if cells_nb > col_buffer_min_qty and seg.rule == 'cycle':
+                    if row.cells[col_buffer_min_qty].data and not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float)):
+                        line_error.append(_('Line %d: Buffer Qty must be a number, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
+                    else:
+                        data_towrite['buffer_qty'] = row.cells[col_buffer_min_qty].data
+                    for fmc in range(1, 13):
+                        if cells_nb - 1 >=  col_first_fmc and row.cells[col_first_fmc].data:
+                            from_data = False
+                            fmc_data = row.cells[col_first_fmc].data
+                            if fmc == 1:
+                                if cells_nb - 1 < col_first_fmc+1:
+                                    line_error.append(_('Line %d: FMC FROM %d, date expected') % (idx+1, fmc))
+                                    continue
+                                if not row.cells[col_first_fmc+1].type == 'datetime':
+                                    line_error.append(_('Line %d: FMC FROM %d, date is not valid, found %s') % (idx+1, fmc, row.cells[col_first_fmc+1].data))
+                                    continue
+                                from_data = row.cells[col_first_fmc+1].data.strftime('%Y-%m-%d')
+                                col_first_fmc += 1
+
+                            if cells_nb - 1 < col_first_fmc+1:
+                                line_error.append(_('Line %d: FMC TO %d, date expected') % (idx+1, fmc))
+                                continue
+                            if not row.cells[col_first_fmc+1].data or row.cells[col_first_fmc+1].type != 'datetime':
+                                line_error.append(_('Line %d: FMC TO %d, date is not valid, found %s') % (idx+1, fmc, row.cells[col_first_fmc+1].data))
+                                continue
+                            if not isinstance(fmc_data, (int, long, float)):
+                                line_error.append(_('Line %d: FMC %d, number expected, found %s') % (idx+1, fmc, fmc_data))
+                                continue
+                            data_towrite.update({
+                                'rr_fmc_%d' % fmc: fmc_data,
+                                'rr_fmc_from_%d' % fmc:from_data,
+                                'rr_fmc_to_%d' % fmc: row.cells[col_first_fmc+1].data.strftime('%Y-%m-%d'),
+                            })
+                        col_first_fmc += 2
+                elif cells_nb > col_buffer_min_qty and seg.rule == 'minmax':
+                    if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float)):
+                        line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
+                    elif not row.cells[col_buffer_min_qty+1] or not isinstance(row.cells[col_buffer_min_qty+1].data, (int, long, float)):
+                        line_error.append(_('Line %d: Max Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty+1].data))
+                    elif row.cells[col_buffer_min_qty+1].data < row.cells[col_buffer_min_qty].data:
+                        line_error.append(_('Line %d: Max Qty (%s) must be larger than Min Qty (%s)') % (idx+1, row.cells[col_buffer_min_qty+1].data, row.cells[col_buffer_min_qty].data))
+                    else:
+                        data_towrite.update({
+                            'min_qty': row.cells[col_buffer_min_qty].data,
+                            'max_qty': row.cells[col_buffer_min_qty+1].data,
+                        })
+                elif cells_nb > col_buffer_min_qty:
+                    if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float)):
+                        line_error.append(_('Line %d: Auto Supply Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
+                    else:
+                        data_towrite['auto_qty'] = row.cells[col_buffer_min_qty].data
+
+                if prod_code not in existing_line:
+                    prod_id = product_obj.search(cr, uid, [('default_code', '=ilike', prod_code)], context=context)
+                    if not prod_id:
+                        line_error.append(_('Line %d: product code %s not found') % (idx+1, prod_code))
+                    else:
+                        if prod_id[0] in code_created:
+                            line_error.append(_('Line %d: product code %s already defined in the file') % (idx+1, prod_code))
+
+                        code_created[prod_id[0]] = True
+                        data_towrite['product_id'] = prod_id[0]
+                        data_towrite['segment_id'] = seg.id
                 else:
-                    data_towrite['auto_qty'] = row.cells[col_buffer_min_qty].data
+                    line_id = existing_line[prod_code]
 
-            if prod_code not in existing_line:
-                prod_id = product_obj.search(cr, uid, [('default_code', '=ilike', prod_code)], context=context)
-                if not prod_id:
-                    line_error.append(_('Line %d: product code %s not found') % (idx+1, prod_code))
+                if line_error:
+                    error += line_error
+                    ignored += 1
+                    continue
+                if 'product_id' in data_towrite:
+                    seg_line_obj.create(cr, uid, data_towrite, context=context)
+                    created += 1
                 else:
-                    if prod_id[0] in code_created:
-                        line_error.append(_('Line %d: product code %s already defined in the file') % (idx+1, prod_code))
+                    seg_line_obj.write(cr, uid, line_id, data_towrite, context=context)
+                    updated += 1
 
-                    code_created[prod_id[0]] = True
-                    data_towrite['product_id'] = prod_id[0]
-                    data_towrite['segment_id'] = seg.id
-            else:
-                line_id = existing_line[prod_code]
-
-            if line_error:
-                error += line_error
-                ignored += 1
-                continue
-            if 'product_id' in data_towrite:
-                seg_line_obj.create(cr, uid, data_towrite, context=context)
-                created += 1
-            else:
-                seg_line_obj.write(cr, uid, line_id, data_towrite, context=context)
-                updated += 1
+        except Exception, e:
+            cr.rollback()
+            return wizard_obj.message_box_noclose(cr, uid, title=_('Importation errors'), message=_("Unexpected error during import:\n%s") % (misc.get_traceback(e), ))
 
         self.write(cr, uid, seg.id, {'file_to_import': False}, context=context)
-        wizard_obj = self.pool.get('physical.inventory.import.wizard')
         if error:
             error.insert(0, _('%d line(s) created, %d line(s) updated, %d line(s) in error') % (created, updated, ignored))
             return wizard_obj.message_box_noclose(cr, uid, title=_('Importation errors'), message='\n'.join(error))
@@ -2560,6 +2571,9 @@ class replenishment_order_calc(osv.osv):
             idx += 1
             if idx < 8:
                 # header
+                continue
+
+            if not len(row.cells):
                 continue
 
             prod_code = row.cells[0].data
