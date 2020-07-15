@@ -149,6 +149,7 @@ div.contextmenu span.disabled {
 
 #survey_title {
   font-size:35px;
+  padding-top: 10px;
   margin-bottom: 35px;
 }
 
@@ -166,6 +167,12 @@ div.contextmenu span.disabled {
   cursor: pointer;
   border-radius: 3px;
 }
+
+#survey .survey_button:hover {
+    background-color: #00A3FF;
+    color: white;
+}
+
 #survey .row {
     padding-top:25px;
 }
@@ -178,4 +185,5 @@ div.contextmenu span.disabled {
 
 #survey_name {
     font-weight: bold;
+    margin-top: 5px;
 }
