@@ -1715,6 +1715,7 @@
                     <field name="name"/>
                     <field name="journal_id"/>
                     <field name="company_id" groups="base.group_multi_company"/>
+                    <field name="state"/>
                 </tree>
             </field>
         </record>
@@ -1729,6 +1730,9 @@
                     <filter string="Sale" icon="terp-camera_test" domain="[('journal_id.type', '=', 'sale')]"/>
                     <filter string="Purchase" icon="terp-purchase" domain="[('journal_id.type', '=', 'purchase')]"/>
                     <separator orientation="vertical"/>
+                      <filter icon="terp-document-new" string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                      <filter icon="terp-camera_test" string="Running" name="running" domain="[('state', '=', 'running')]"/>
+                      <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state', '=', 'done')]" />
                       <field name="name"/>
                       <field name="journal_id" widget="selection"/>
                       <field name="company_id" widget="selection" groups="base.group_multi_company"/>

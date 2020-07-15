@@ -253,6 +253,41 @@ class account_model(osv.osv):
                     break
         return res
 
+    def _get_model_state(self, cr, uid, ids, name, args, context=None):
+        """
+        A model is:
+        - in Done state if it is used in a least one Done Recurring Plan,
+        - in Running state if it is used in a least one Running Recurring Plan,
+        - in Draft state otherwise.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        recurring_plan_obj = self.pool.get('account.subscription')
+        for model_id in ids:
+            if recurring_plan_obj.search_exist(cr, uid, [('model_id', '=', model_id), ('state', '=', 'done')], context=context):
+                state = 'done'
+            elif recurring_plan_obj.search_exist(cr, uid, [('model_id', '=', model_id), ('state', '=', 'running')], context=context):
+                state = 'running'
+            else:
+                state = 'draft'
+            res[model_id] = state
+        return res
+
+    def _get_models_to_check(self, cr, uid, recurring_plan_ids, context=None):
+        """
+        Returns the list of Recurring Models for which the state should be checked and updated if necessary
+        """
+        if context is None:
+            context = {}
+        res = set()
+        recurring_plan_obj = self.pool.get('account.subscription')
+        for rec_plan in recurring_plan_obj.browse(cr, uid, recurring_plan_ids, fields_to_fetch=['model_id'], context=context):
+            res.add(rec_plan.model_id.id)
+        return list(res)
+
     _columns = {
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -260,11 +295,17 @@ class account_model(osv.osv):
                                                       method=True, type='boolean',
                                                       string='Has bad analytic distribution on expense/income lines',
                                                       help='There is lines with expense or income accounts with invalid analytic distribution or using header AD that is not defined or not compatible.'),  # UFTP-103
+        'state': fields.function(_get_model_state, method=True, type='selection', string="State",
+                                 selection=[('draft', 'Draft'), ('running', 'Running'), ('done', 'Done')],
+                                 store={
+                                     'account.subscription': (_get_models_to_check, ['state'], 10),
+                                 }),
     }
 
     _defaults = {
         'currency_id': lambda self, cr, uid, context: self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id,
         'has_any_bad_ad_line_exp_in': False,
+        'state': lambda *a: 'draft',
     }
 
     # @@@override@account.account_model.generate()
