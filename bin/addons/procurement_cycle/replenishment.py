@@ -2711,9 +2711,9 @@ class replenishment_order_calc_line(osv.osv):
         'order_qty_comment': fields.char('Order Qty Comment', size=512),
         'warning': fields.text('Warning', readonly='1'),
         'warning_html': fields.text('Warning', readonly='1'),
-        'buffer_qty': fields.float_null('Buffer Qty', related_uom='uom_id'),
-        'auto_qty': fields.float('Auto. Supply Qty', related_uom='uom_id'),
-        'min_max': fields.char('Min/Max', size=128),
+        'buffer_qty': fields.float_null('Buffer Qty', related_uom='uom_id', readonly=1),
+        'auto_qty': fields.float('Auto. Supply Qty', related_uom='uom_id', readonly=1),
+        'min_max': fields.char('Min/Max', size=128, readonly=1),
     }
 
 replenishment_order_calc_line()
