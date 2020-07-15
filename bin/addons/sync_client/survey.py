@@ -73,7 +73,7 @@ class sync_client_survey(osv.osv):
                 survey.end_date > NOW() AND
                 survey.active='t'
             group by stat.last_choice, stat.id, stat.last_displayed, stat.nb_displayed, survey.name, survey.name_fr, survey.url_en, survey.url_fr, survey.id
-            having array_agg(included.group_id) <@ array_agg(groups.gid) AND not(array_agg(excluded.group_id)&&array_agg(groups.gid))
+            having array_remove(array_agg(included.group_id), NULL) <@ array_agg(groups.gid) AND not(array_agg(excluded.group_id)&&array_agg(groups.gid))
         ''', {'user_id': uid}
         )
 
