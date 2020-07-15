@@ -1088,7 +1088,7 @@ class replenishment_segment(osv.osv):
 
                 elif seg.rule == 'minmax':
                     valid_line = bool(line.min_qty) and bool(line.max_qty)
-                    if line.status == 'phasingout':
+                    if line.status in ('phasingout', 'replaced'):
                         proposed_order_qty = 0
                         qty_lacking = False
                     else:
@@ -1106,7 +1106,10 @@ class replenishment_segment(osv.osv):
                                 warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('Insufficient'))))
                 else:
                     valid_line = bool(line.auto_qty)
-                    proposed_order_qty = line.auto_qty
+                    if line.status in ('phasingout', 'replaced'):
+                        proposed_order_qty = 0
+                    else:
+                        proposed_order_qty = line.auto_qty
 
                 if not valid_rr_fmc:
                     wmsg = _('Invalid FMC')
