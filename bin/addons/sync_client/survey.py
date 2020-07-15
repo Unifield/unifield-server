@@ -54,6 +54,9 @@ class sync_client_survey(osv.osv):
 
     def _get_users(self, cr, uid, ids, fields, args, context=None):
         res = {}
+        for _id in ids:
+            res[_id] = []
+
         cr.execute('''
             select
                 survey.id, u.id
