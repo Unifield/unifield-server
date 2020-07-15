@@ -41,7 +41,7 @@ class survey_common(osv.osv):
     def get_last_write(self, cr, uid):
         cr.execute('select max(server_write_date) from %s' % (self._table, )) # not_a_user_entry
         r = cr.fetchone()
-        return r and r[0]
+        return r and r[0] or False
 
 survey_common()
 
