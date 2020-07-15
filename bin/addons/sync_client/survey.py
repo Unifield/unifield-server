@@ -52,11 +52,33 @@ class sync_client_survey(osv.osv):
     _order = 'start_date desc'
     _auto = True
 
+    def _get_users(self, cr, uid, ids, fields, args, context=None):
+        res = {}
+        cr.execute('''
+            select
+                survey.id, u.id
+            from
+                res_users u
+                inner join res_groups_users_rel rel on rel.uid=u.id
+                left join sync_client_survey survey on survey.id in  %(survey_ids)s
+                left join client_survey_group_included_rel included on survey.id = included.survey_id
+                left join client_survey_group_excluded_rel excluded on survey.id = excluded.survey_id
+            where
+                u.active='t'
+            group by u.id, survey.id
+            having(array_agg(rel.gid) @> array_remove(array_agg(included.group_id), NULL) and not(array_agg(excluded.group_id)&&array_agg(rel.gid)))
+        ''', {'survey_ids': tuple(ids)})
+
+        for rel in cr.fetchall():
+            res.setdefault(rel[0], []).append(rel[1])
+        return res
+
     _columns = {
         'included_group_ids': fields.many2many('res.groups', 'client_survey_group_included_rel', 'survey_id', 'group_id', 'Included Groups'),
         'excluded_group_ids': fields.many2many('res.groups', 'client_survey_group_excluded_rel', 'survey_id', 'group_id', 'Excluded Groups'),
         'sync_server_id': fields.integer('Sync Server ID', select=1),
         'stat_by_users': fields.one2many('sync_client.survey.user', 'survey_id', 'Stats'),
+        'users': fields.function(_get_users, method=1, type='one2many', relation='res.users', string='Matching Users'),
     }
 
     def get_surveys(self, cr, uid, context=None):
