@@ -28658,16 +28658,17 @@ msgstr "America/Merida"
 msgid "Asia/Vladivostok"
 msgstr "Asia/Vladivostok"
 
-#. module: account, sync_client
+#. module: account
 #: selection:account.aged.trial.balance,direction_selection:0
 #: view:sync_client.survey:0
 msgid "Future"
 msgstr "Contrat à terme"
 
-#. modules: stock_override, stock
+#. modules: stock_override, stock, sync_client
 #: view:report.stock.inventory:0
 #: view:stock.move:0
 #: view:stock.move:0
+#: view:sync_client.survey:0
 msgid "Future"
 msgstr "Futur"
 
@@ -91122,7 +91123,7 @@ msgstr "Plus grand que l'UdM de référence"
 #: field:res.config.users,login:0
 #: field:res.users,login:0
 msgid "Login"
-msgstr "Ouverture de session"
+msgstr "Identifiant"
 
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
