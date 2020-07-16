@@ -9,7 +9,7 @@
             <field name="inherit_id" ref="account.view_model_form"/>
             <field name="arch" type="xml">
                 <form string="Journal Entry Model" position="replace">
-                    <form string="Journal Entry Model">
+                    <form string="Recurring Models" noteditable="state=='done'">
                        <group><html>
                             <p id="para_has_any_bad_ad_line_exp_in"
                             style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">

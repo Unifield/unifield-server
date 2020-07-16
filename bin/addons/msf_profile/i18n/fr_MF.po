@@ -13616,9 +13616,10 @@ msgstr "Gestion de Projets"
 msgid "Invoice Control"
 msgstr "Contrôle Facture"
 
-#. module: account
+#. modules: account, account_subscription
 #: model:ir.actions.act_window,name:account.action_model_form
 #: model:ir.ui.menu,name:account.menu_action_model_form
+#: view:account.model:0
 msgid "Recurring Models"
 msgstr "Modèles périodiques"
 
