@@ -53,6 +53,27 @@ class patch_scripts(osv.osv):
     }
 
     # UF18.0
+    def us_7412_set_fy_closure_settings(self, cr, uid, *a, **b):
+        """
+        Sets the Fiscal Year Closure options depending on the OC.
+        """
+        if self.pool.get('sync.client.entity') and not self.pool.get('sync.server.update'):
+            oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1;"
+            cr.execute(oc_sql)
+            oc = cr.fetchone()[0]
+            has_move_regular_bs_to_0 = False
+            has_book_pl_results = False
+            if oc == 'ocg':
+                has_move_regular_bs_to_0 = True
+            elif oc == 'ocb':
+                has_move_regular_bs_to_0 = True
+                has_book_pl_results = True
+            update_company = """
+                             UPDATE res_company
+                             SET has_move_regular_bs_to_0 = %s, has_book_pl_results = %s;
+                             """
+            cr.execute(update_company, (has_move_regular_bs_to_0, has_book_pl_results))
+
     def sync_msg_from_itself(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
         if not instance:

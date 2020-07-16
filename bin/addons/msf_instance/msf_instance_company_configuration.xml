@@ -78,11 +78,14 @@
                         <separator colspan="4" string="B/S Move to 0 accounts"/>
                         <field name="ye_pl_cp_for_bs_debit_bal_account" />
                         <field name="ye_pl_cp_for_bs_credit_bal_account" />
-                        <separator colspan="4" string="P&amp;L result accounts"/>
+                        <separator colspan="4" string="Fiscal Year Closure"/>
                         <field name="ye_pl_pos_credit_account" />
                         <field name="ye_pl_ne_credit_account" />
                         <field name="ye_pl_pos_debit_account" />
                         <field name="ye_pl_ne_debit_account" />
+                        <field name="has_move_regular_bs_to_0"/>
+                        <newline/>
+                        <field name="has_book_pl_results"/>
 
                         <!-- Functional amount computation settings - for information purpose only -->
                         <separator string="Computation in functional currency" colspan="4"/>
