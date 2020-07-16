@@ -288,6 +288,22 @@ class account_model(osv.osv):
             res.add(rec_plan.model_id.id)
         return list(res)
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Prevents deletion in case the model has been selected into a Recurring Plan
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        recurring_plan_obj = self.pool.get('account.subscription')
+        recurring_plan_ids = recurring_plan_obj.search(cr, uid, [('model_id', 'in', ids)], context=context)
+        if recurring_plan_ids:
+            plan_names = [p.name for p in recurring_plan_obj.browse(cr, uid, recurring_plan_ids, fields_to_fetch=['name'], context=context)]
+            raise osv.except_osv(_('Warning'), _('You cannot delete a model which is used in the following plan(s): %s') %
+                                 (', '.join(plan_names),))
+        return super(account_model, self).unlink(cr, uid, ids, context=context)
+
     _columns = {
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),

@@ -110319,3 +110319,9 @@ msgstr "Ligne %s. Les comptes de donation ne sont pas compatibles avec le type d
 #, python-format
 msgid "IN-line %s Wrong BN/ED attributes"
 msgstr "Ligne du IN %s: Mauvais attributs NL/DE"
+
+#. module: account_subscription
+#: code:addons/account_subscription/account_model.py:303
+#, python-format
+msgid "You cannot delete a model which is used in the following plan(s): %s"
+msgstr "Vous ne pouvez pas supprimer un modèle qui est utilisé dans le(s) plan(s) suivant(s) : %s"
