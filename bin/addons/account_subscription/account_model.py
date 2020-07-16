@@ -298,7 +298,7 @@ class account_model(osv.osv):
         'state': fields.function(_get_model_state, method=True, type='selection', string="State",
                                  selection=[('draft', 'Draft'), ('running', 'Running'), ('done', 'Done')],
                                  store={
-                                     'account.subscription': (_get_models_to_check, ['state'], 10),
+                                     'account.subscription': (_get_models_to_check, ['model_id', 'state'], 10),
                                  }),
     }
 

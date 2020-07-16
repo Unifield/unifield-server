@@ -2408,6 +2408,31 @@ class account_subscription(osv.osv):
         })
         return super(account_subscription, self).copy(cr, uid, acc_sub_id, default, context=context)
 
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Edition of the Recurring Plans. If the model has been changed, triggers the recomputation of the state of the previous model used.
+
+        UC: use the model X in one plan. Compute Rec. entries => the plans and models are Running.
+        Select another model in the plan => model X must be set back to Draft.
+        """
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        rec_model_obj = self.pool.get('account.model')
+        models_to_check = set()
+        for rec_plan in self.browse(cr, uid, ids, fields_to_fetch=['model_id'], context=context):
+            previous_model_id = rec_plan.model_id.id
+            if vals.get('model_id') and vals['model_id'] != previous_model_id:
+                models_to_check.add(previous_model_id)
+        res = super(account_subscription, self).write(cr, uid, ids, vals, context=context)
+        if models_to_check:
+            # check model states after the plan states have been updated
+            rec_model_obj._store_set_values(cr, uid, list(models_to_check), ['state'], context)
+        return res
+
     def update_plan_state(self, cr, uid, subscription_id, context=None):
         """
         Updates the Recurring Plan state with the following rules:
