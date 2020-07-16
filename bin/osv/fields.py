@@ -554,20 +554,16 @@ class one2many(_column):
             elif act[0] == 5:
                 cr.execute('update '+_table+' set '+self._fields_id+'=null where '+self._fields_id+'=%s', (id,))  # not_a_user_entry
             elif act[0] == 6:
-                if self._obj == 'account.move.line' and self._fields_id == 'reconcile_id':
-                    # FXA may be created during write on account.move.line
-                    # but reconcile_id on the FXA must not be deleted by the last line ({self._fields_id:False})
-                    ids2 = act[2] or [0]
-                    cr.execute('select id from '+_table+' where '+self._fields_id+'=%s and id <> ALL (%s)', (id,ids2))  # not_a_user_entry
-                    ids3 = map(lambda x:x[0], cr.fetchall())
-                    obj.write(cr, user, act[2], {self._fields_id:id}, context=context or {})
-                    obj.write(cr, user, ids3, {self._fields_id:False}, context=context or {})
-                else:
-                    obj.write(cr, user, act[2], {self._fields_id:id}, context=context or {})
-                    ids2 = act[2] or [0]
-                    cr.execute('select id from '+_table+' where '+self._fields_id+'=%s and id <> ALL (%s)', (id,ids2))  # not_a_user_entry
-                    ids3 = map(lambda x:x[0], cr.fetchall())
-                    obj.write(cr, user, ids3, {self._fields_id:False}, context=context or {})
+                obj.write(cr, user, act[2], {self._fields_id:id}, context=context or {})
+                ids2 = act[2] or [0]
+                cr.execute('select id from '+_table+' where '+self._fields_id+'=%s and id <> ALL (%s)', (id,ids2))  # not_a_user_entry
+                ids3 = map(lambda x:x[0], cr.fetchall())
+                obj.write(cr, user, ids3, {self._fields_id:False}, context=context or {})
+            elif act[0] == 7:
+                # same a (4, id1), (4, id2), (4, id3) ... but with a single SQL query
+                if isinstance(act[1], (int, long)):
+                    act[1] = [act[1]]
+                cr.execute('update '+_table+' set '+self._fields_id+'=%s where id in %s', (id, tuple(act[1])))  # not_a_user_entry
 
         return result
 
