@@ -1929,19 +1929,19 @@
             <field name="model">account.subscription</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Recurring Plan" noteditable="state=='done'">
-                    <group col="6" colspan="4">
+                <form string="Recurring Plan">
+                    <group col="6" colspan="4" attrs="{'readonly': [('state', '=', 'done')]}">
                         <field name="name" select="1"/>
                         <field name="model_id"/>
                         <field name="ref" select="1"/>
                     </group>
-                    <group col="2" colspan="2">
+                    <group col="2" colspan="2" attrs="{'readonly': [('state', '=', 'done')]}">
                         <separator colspan="4" string="Starts on"/>
                         <field name="date_start" select="1"/>
                         <field name="period_total"/>
                     </group>
 
-                    <group col="2" colspan="2">
+                    <group col="2" colspan="2" attrs="{'readonly': [('state', '=', 'done')]}">
                         <separator colspan="4" string="Valid Up to"/>
                         <field name="period_nbr"/>
                         <field name="period_type"/>
@@ -1950,7 +1950,8 @@
                     <group col="2" colspan="2">
                     </group>
                     <separator colspan="4" string="Subscription Lines"/>
-                    <field colspan="4" name="lines_id" widget="one2many_list" nolabel="1"/>
+                    <field colspan="4" name="lines_id" widget="one2many_list" nolabel="1"
+                           attrs="{'readonly': [('state', '=', 'done')]}"/>
 
                     <group col="6" colspan="4">
                         <field name="state"/>
