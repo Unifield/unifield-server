@@ -2398,13 +2398,18 @@ class account_subscription(osv.osv):
     def copy(self, cr, uid, acc_sub_id, default=None, context=None):
         """
         Account Subscription duplication: don't copy the link with subscription lines
+        and add " (copy)" after the name
         """
         if context is None:
             context = {}
+        suffix = ' (copy)'
+        sub_copied = self.read(cr, uid, acc_sub_id, ['name'], context=context)
+        name = '%s%s' % (sub_copied['name'][:64 - len(suffix)], suffix)
         if default is None:
             default = {}
         default.update({
             'lines_id': [],
+            'name': name,
         })
         return super(account_subscription, self).copy(cr, uid, acc_sub_id, default, context=context)
 

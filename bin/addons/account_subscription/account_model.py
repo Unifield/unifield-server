@@ -497,5 +497,22 @@ class account_model(osv.osv):
         recurring_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
         return True
 
+    def copy(self, cr, uid, model_id, default=None, context=None):
+        """
+        Recurring Model duplication: add " (copy)" after the name
+        """
+        if context is None:
+            context = {}
+        suffix = ' (copy)'
+        model_copied = self.read(cr, uid, model_id, ['name'], context=context)
+        name = '%s%s' % (model_copied['name'][:64 - len(suffix)], suffix)
+        if default is None:
+            default = {}
+        default.update({
+            'name': name,
+        })
+        return super(account_model, self).copy(cr, uid, model_id, default, context=context)
+
+
 account_model()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
