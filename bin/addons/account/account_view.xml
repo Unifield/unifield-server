@@ -1711,7 +1711,7 @@
             <field name="model">account.model</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Journal Entry Model">
+                <tree string="Journal Entry Model" colors="grey:state=='done';black:state in ('draft', 'running')">
                     <field name="name"/>
                     <field name="journal_id"/>
                     <field name="company_id" groups="base.group_multi_company"/>
