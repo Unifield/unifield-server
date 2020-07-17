@@ -93,6 +93,14 @@ class patch_scripts(osv.osv):
 
             return True
 
+    def sync_msg_from_itself(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        cr.execute(''' update sync_client_message_received set run='t', manually_ran='t', log='Set manually to run without execution', manually_set_run_date=now() where run='f' and source=%s ''', (instance.instance, ))
+        self._logger.warn('Set %s self sync messages as Run' % (cr.rowcount,))
+        return True
+
     def us_7593_inactivate_en_US(self, cr, uid, *a, **b):
         """
         Inactivates en_US and replaces it by en_MF for users, partners and related not runs
@@ -107,7 +115,6 @@ class patch_scripts(osv.osv):
         user_count = cr.rowcount
         self._logger.warn('English replaced by MSF English for %s partner(s) and %s user(s).' %
                           (partner_count, user_count))
-
 
     # UF17.0
     def recursive_fix_int_previous_chained_pick(self, cr, uid, to_fix_pick_id, prev_chain_pick_id, context=None):

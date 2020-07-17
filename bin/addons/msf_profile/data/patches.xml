@@ -560,5 +560,8 @@
             <field name="method">us_7631_set_default_liquidity_accounts</field>
         </record>
 
+        <record id="us_7576_sync_msg_from_itself" model="patch.scripts">
+            <field name="method">sync_msg_from_itself</field>
+        </record>
     </data>
 </openerp>
