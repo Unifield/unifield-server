@@ -2462,6 +2462,19 @@ class account_subscription(osv.osv):
             rec_model_obj._store_set_values(cr, uid, list(models_to_check), ['state'], context)
         return res
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Prevents deletion in case the subscription lines have already been computed
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        sub_lines_obj = self.pool.get('account.subscription.line')
+        if sub_lines_obj.search_exist(cr, uid, [('subscription_id', 'in', ids)], context=context):
+            raise osv.except_osv(_('Warning'), _('You cannot delete a Recurring Plan if Subscription lines have already been computed.'))
+        return super(account_subscription, self).unlink(cr, uid, ids, context=context)
+
     def update_plan_state(self, cr, uid, subscription_id, context=None):
         """
         Updates the Recurring Plan state with the following rules:

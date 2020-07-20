@@ -110322,6 +110322,12 @@ msgid "IN-line %s Wrong BN/ED attributes"
 msgstr "Ligne du IN %s: Mauvais attributs NL/DE"
 
 #. module: account
+#: code:addons/account/account.py:2475
+#, python-format
+msgid "You cannot delete a Recurring Plan if Subscription lines have already been computed."
+msgstr "Vous ne pouvez pas supprimer un Plan d'Ecritures Périodiques si les lignes d'Abonnement ont déjà été calculées."
+
+#. module: account
 #: field:account.subscription,frozen_model:0
 msgid "Frozen model"
 msgstr "Modèle figé"
