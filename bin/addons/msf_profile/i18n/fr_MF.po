@@ -110320,6 +110320,11 @@ msgstr "Ligne %s. Les comptes de donation ne sont pas compatibles avec le type d
 msgid "IN-line %s Wrong BN/ED attributes"
 msgstr "Ligne du IN %s: Mauvais attributs NL/DE"
 
+#. module: account
+#: field:account.subscription,frozen_model:0
+msgid "Frozen model"
+msgstr "Modèle figé"
+
 #. module: account_subscription
 #: code:addons/account_subscription/account_model.py:303
 #, python-format

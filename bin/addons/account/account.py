@@ -2354,6 +2354,29 @@ class account_subscription(osv.osv):
                     break
         return res
 
+    def _is_frozen_model(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns True for the Recurring Plans for which the model field should be frozen, i.e. readonly:
+        - if journal entries have been generated, posted or not
+        - if the model already selected is in Done state (note that Done models aren't selectable, so the model would
+          have been selected BEFORE it becomes Done).
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for plan in self.browse(cr, uid, ids, fields_to_fetch=['model_id', 'lines_id'], context=context):
+            res[plan.id] = False
+            if plan.model_id.state == 'done':
+                res[plan.id] = True
+            else:
+                for line in plan.lines_id:
+                    if line.move_id:
+                        res[plan.id] = True
+                        break
+        return res
+
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         'ref': fields.char('Reference', size=16),
@@ -2369,6 +2392,7 @@ class account_subscription(osv.osv):
         'lines_id': fields.one2many('account.subscription.line', 'subscription_id', 'Subscription Lines'),
         'has_unposted_entries': fields.function(_get_has_unposted_entries, method=True, type='boolean',
                                                 store=False, string='Has unposted entries'),
+        'frozen_model': fields.function(_is_frozen_model, method=True, type='boolean', store=False, string='Frozen model'),
     }
     _defaults = {
         'date_start': lambda *a: time.strftime('%Y-%m-%d'),
