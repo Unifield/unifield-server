@@ -316,6 +316,7 @@ class account_model(osv.osv):
                                  store={
                                      'account.subscription': (_get_models_to_check, ['model_id', 'state'], 10),
                                  }),
+        'create_date': fields.date('Creation date', readonly=True),  # overwrites the standard create_date so it can be displayed in the views
     }
 
     _defaults = {
@@ -323,6 +324,8 @@ class account_model(osv.osv):
         'has_any_bad_ad_line_exp_in': False,
         'state': lambda *a: 'draft',
     }
+
+    _order = 'create_date DESC, id DESC'
 
     # @@@override@account.account_model.generate()
     def generate(self, cr, uid, ids, datas={}, context=None):

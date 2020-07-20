@@ -38575,7 +38575,7 @@ msgstr "Est-ce une zone optionnelle?"
 msgid "Is inactive for destination given in context"
 msgstr "Is inactive for destination given in context"
 
-#. modules: sales_followup, account, documents_done, consumption_calculation, sale, specific_rules, transport_mgmt, account_override, purchase_allocation_report, product_list, tender_flow, msf_doc_import, stock, product_attributes, purchase_override, purchase
+#. modules: sales_followup, account, documents_done, consumption_calculation, sale, specific_rules, transport_mgmt, account_override, purchase_allocation_report, product_list, tender_flow, msf_doc_import, stock, product_attributes, purchase_override, purchase, account_subscription
 #: field:account.move.line,date_created:0
 #: field:account.move.reconcile,create_date:0
 #: report:allocation.invoices.report:0
@@ -38602,6 +38602,7 @@ msgstr "Is inactive for destination given in context"
 #: field:internal.request.import,in_creation_date:0
 #: field:purchase.order.line,create_date:0
 #: field:internal.request.import,in_creation_date:0
+#: field:account.model,create_date:0
 #, python-format
 msgid "Creation date"
 msgstr "Date de création"
