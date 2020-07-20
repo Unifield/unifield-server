@@ -110337,3 +110337,15 @@ msgstr "Modèle figé"
 #, python-format
 msgid "You cannot delete a model which is used in the following plan(s): %s"
 msgstr "Vous ne pouvez pas supprimer un modèle qui est utilisé dans le(s) plan(s) suivant(s) : %s"
+
+#. modules: account, account_subscription
+#: constraint:account.model:0
+#: constraint:account.model:0
+msgid "It is not possible to have several Recurring Models with the same name."
+msgstr "Il n'est pas possible d'avoir plusieurs Modèles périodiques portant le même nom."
+
+#. modules: account, account_subscription
+#: constraint:account.subscription:0
+#: constraint:account.subscription:0
+msgid "It is not possible to have several Recurring Plans with the same name."
+msgstr "Il n'est pas possible d'avoir plusieurs Plans d'Ecritures Périodiques portant le même nom."

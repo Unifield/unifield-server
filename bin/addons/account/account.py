@@ -2415,8 +2415,20 @@ class account_subscription(osv.osv):
                 return False
         return True
 
+    def _check_plan_name_unicity(self, cr, uid, ids, context=None):
+        """
+        Prevents having 2 rec. plans using the same name
+        """
+        if context is None:
+            context = {}
+        for plan in self.read(cr, uid, ids, ['name'], context=context):
+            if self.search_exist(cr, uid, [('name', '=', plan['name']), ('id', '!=', plan['id'])], context=context):
+                return False
+        return True
+
     _constraints = [
         (_check_repeat_value, 'The value in the field "Repeat" must be greater than 0!', ['period_nbr']),
+        (_check_plan_name_unicity, 'It is not possible to have several Recurring Plans with the same name.', ['name']),
     ]
 
     def copy(self, cr, uid, acc_sub_id, default=None, context=None):

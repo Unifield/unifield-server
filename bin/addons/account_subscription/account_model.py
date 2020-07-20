@@ -327,6 +327,21 @@ class account_model(osv.osv):
 
     _order = 'create_date DESC, id DESC'
 
+    def _check_model_name_unicity(self, cr, uid, ids, context=None):
+        """
+        Prevents having 2 models using the same name
+        """
+        if context is None:
+            context = {}
+        for model in self.read(cr, uid, ids, ['name'], context=context):
+            if self.search_exist(cr, uid, [('name', '=', model['name']), ('id', '!=', model['id'])], context=context):
+                return False
+        return True
+
+    _constraints = [
+        (_check_model_name_unicity, 'It is not possible to have several Recurring Models with the same name.', ['name']),
+    ]
+
     # @@@override@account.account_model.generate()
     def generate(self, cr, uid, ids, datas={}, context=None):
         move_ids = []
