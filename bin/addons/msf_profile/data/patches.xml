@@ -569,5 +569,9 @@
             <field name="method">us_6544_no_sync_on_forced_out</field>
         </record>
 
+        <record id="us_7412_set_fy_closure_settings" model="patch.scripts">
+            <field name="method">us_7412_set_fy_closure_settings</field>
+        </record>
+
     </data>
 </openerp>

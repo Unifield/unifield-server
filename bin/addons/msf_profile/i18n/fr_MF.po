@@ -5655,8 +5655,8 @@ msgstr "Entrées Siège Défractionner"
 
 #. module: msf_instance
 #: view:res.company:0
-msgid "P&L result accounts"
-msgstr "Comptes de revenu et dépense "
+msgid "Fiscal Year Closure"
+msgstr "Fermeture d'Exercice Comptable"
 
 #. module: account
 #: model:ir.actions.act_window,help:account.action_account_tax_chart
@@ -48182,8 +48182,8 @@ msgstr "The claim %s is created by sync and linked to the claim %s by Push Flow 
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_year_end_closing.py:658
 #, python-format
-msgid "B/S Regular Equity result accounts credit/debit not set in company settings 'P&L result accounts'"
-msgstr "B/S Regular Equity result accounts credit/debit not set in company settings 'P&L result accounts'"
+msgid "Accounts not set in company settings \"Fiscal Year Closure\" (B/S accounts)"
+msgstr "Comptes non définis dans la section \"Fermeture d'Exercice Comptable\" de la configuration de la société (Comptes de Bilan)"
 
 #. module: base
 #: model:res.partner.title,name:base.res_partner_title_sir
@@ -56981,8 +56981,8 @@ msgstr "Inconnu"
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_year_end_closing.py:519
 #, python-format
-msgid "Accounts not set in company settings 'P&L result accounts'"
-msgstr "Accounts not set in company settings 'P&L result accounts'"
+msgid "Accounts not set in company settings \"Fiscal Year Closure\""
+msgstr "Comptes non définis dans la section \"Fermeture d'Exercice Comptable\" de la configuration de la société"
 
 #. module: mission_stock
 #: field:stock.mission.report.line,cu_qty:0
@@ -66044,10 +66044,10 @@ msgstr "Plage de Planification (en jours)"
 msgid "Can not create the module file: %s !"
 msgstr "Impossible de créer le fichier du module: %s !"
 
-#. module: account_period_closing_level
-#: field:wizard.account.year.end.closing,has_move_regular_bs_to_0:0
+#. module: account_override
+#: field:res.company,has_move_regular_bs_to_0:0
 msgid "Move regular B/S account to 0"
-msgstr "Move regular B/S account to 0"
+msgstr "Passer les comptes de bilan \"regular\" à 0"
 
 #. module: base
 #: view:ir.actions.server:0
@@ -69543,10 +69543,10 @@ msgstr "Délai de Produits Sortants"
 msgid "Properties composition"
 msgstr "Combinaison de Propriétés"
 
-#. module: account_period_closing_level
-#: field:wizard.account.year.end.closing,has_book_pl_results:0
+#. module: account_override
+#: field:res.company,has_book_pl_results:0
 msgid "Book the P&L results"
-msgstr "Book the P&L results"
+msgstr "Passer l'écriture du compte de résultat"
 
 #. module: product_attributes
 #: field:product.product,options_ids_inv:0
@@ -72266,8 +72266,7 @@ msgstr "Ticked if the product is a Dangerous Good"
 msgid "PO state"
 msgstr "PO state"
 
-#. modules: base, account_period_closing_level, finance, msf_currency_revaluation
-#: field:wizard.account.year.end.closing,instance_level:0
+#. modules: base, finance, msf_currency_revaluation
 #: field:res.config.users,instance_level:0
 #: field:res.users,instance_level:0
 #: field:cash.request.commitment,instance_level:0
@@ -94190,8 +94189,8 @@ msgstr "Compte- Livre des Tiers"
 
 #. module: account_period_closing_level
 #: view:wizard.account.year.end.closing:0
-msgid "Are you sure to close the selected fiscal year ? If yes do you confirm selected options ?"
-msgstr "Etes-vous sûr de vouloir clôturer cet exercice comptable ? Si oui, confirmez-vous les options sélectionnées ?"
+msgid "Are you sure you want to close the selected fiscal year?"
+msgstr "Etes-vous sûr de vouloir clôturer cet exercice comptable ?"
 
 #. module: procurement
 #: view:stock.warehouse.orderpoint:0
