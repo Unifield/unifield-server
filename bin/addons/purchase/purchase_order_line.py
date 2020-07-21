@@ -2106,6 +2106,11 @@ class purchase_order_line(osv.osv):
 
         chained = self.pool.get('stock.location').chained_location_get(cr, uid, pol_obj.order_id.location_id, product=pol_obj.product_id, context=context)
         if chained:
+            if chained[0].chained_location_type == 'nomenclature':
+                # 1st round : Input > Stock, 2nd round Stock -> MED/LOG
+                chained2 = self.pool.get('stock.location').chained_location_get(cr, uid, chained[0], product=pol_obj.product_id, context=context)
+                if chained2:
+                    return chained2[0].id
             return chained[0].id
 
         return dest
