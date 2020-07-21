@@ -407,7 +407,7 @@ class account_model(osv.osv):
                 }
                 if line.account_id.is_analytic_addicted:
                     if line.analytic_distribution_state == 'invalid':
-                        raise osv.except_osv(_('Invalid Analytic Distribution !'),_("Please define a valid analytic distribution for the recurring model '%s'!") % (line.name))
+                        raise osv.except_osv(_('Invalid Analytic Distribution !'),_("Please define a valid analytic distribution for the recurring model '%s'!") % (line.model_id.name))
                     if not model.journal_id.analytic_journal_id:
                         raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (model.journal_id.name,))
                     if line.analytic_distribution_id:
