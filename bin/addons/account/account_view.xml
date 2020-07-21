@@ -1735,8 +1735,7 @@
                       <filter icon="terp-camera_test" string="Running" name="running" domain="[('state', '=', 'running')]"/>
                       <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state', '=', 'done')]" />
                       <field name="name"/>
-                      <field name="journal_id" widget="selection"/>
-                      <field name="company_id" widget="selection" groups="base.group_multi_company"/>
+                      <field name="journal_id" domain="[('type', '=', 'purchase'), ('is_current_instance', '=', True)]"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">
