@@ -100,6 +100,17 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     return True
         return False
 
+    def in_line_data_expected_date(self, po_id, prod_id):
+        '''
+         Get data from the IN moves' linked to the PO
+        '''
+        self.cr.execute('''
+            SELECT m.date_expected FROM stock_move m, stock_picking p
+            WHERE m.picking_id = p.id AND p.purchase_id = %s AND m.product_id = %s AND p.type = 'in'
+        ''', (po_id, prod_id))
+
+        return self.cr.fetchone()
+
     def _get_lines(self, order_id, grouped=False, only_bo=False):
         '''
         Get all lines with OUT/PICK for an order
@@ -131,10 +142,14 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             if linked_pol:
                 linked_pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, linked_pol)[0]
                 po_name = linked_pol.order_id.name
-                cdd = linked_pol.order_id.delivery_confirmed_date
+                cdd = linked_pol.confirmed_delivery_date
                 supplier_name = linked_pol.order_id.partner_id.name
-            if not cdd and line.order_id.delivery_confirmed_date:
-                cdd = line.order_id.delivery_confirmed_date
+                if line.product_id:
+                    in_data = self.in_line_data_expected_date(linked_pol.order_id.id, line.product_id.id)
+                    if in_data:
+                        cdd = in_data[0][:10]
+            if not cdd and (line.confirmed_delivery_date or line.order_id.delivery_confirmed_date):
+                cdd = line.confirmed_delivery_date or line.order_id.delivery_confirmed_date
 
             data = {
                 'state': line.state,

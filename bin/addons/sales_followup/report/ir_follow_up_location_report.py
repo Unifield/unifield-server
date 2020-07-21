@@ -117,7 +117,10 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     return True
         return False
 
-    def cancel_in_line(self, po_id, prod_id):
+    def in_line_data(self, po_id, prod_id):
+        res = []
+
+        # Get data for cancel IN line
         self.cr.execute('''select
                                 move.product_uom,
                                 move.product_qty
@@ -129,7 +132,16 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 pick.state = 'cancel'
                         ''', (po_id, prod_id)
                         )
-        return self.cr.fetchall()
+        res.append(self.cr.fetchall())
+
+        # Get data from the IN moves' linked to the PO
+        self.cr.execute('''
+            SELECT m.date_expected FROM stock_move m, stock_picking p
+            WHERE m.picking_id = p.id AND p.purchase_id = %s AND m.product_id = %s AND p.type = 'in'
+        ''', (po_id, prod_id))
+        res.append(self.cr.fetchone())
+
+        return res
 
     def _get_lines(self, order_id, only_bo=False):
         '''
@@ -153,15 +165,20 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             cdd = False
             from_stock = line.type == 'make_to_stock'
             cancel_in_moves = []
+            moves_domain = [('sale_line_id', '=', line.id)]
             linked_pol = self.pool.get('purchase.order.line').search(self.cr, self.uid, [('linked_sol_id', '=', line.id)])
             if linked_pol:
                 linked_pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, linked_pol)[0]
                 po_name = linked_pol.order_id.name
-                cdd = linked_pol.order_id.delivery_confirmed_date
+                cdd = linked_pol.confirmed_delivery_date
                 if line.product_id:
-                    cancel_in_moves = self.cancel_in_line(linked_pol.order_id.id, line.product_id.id)
-            if not cdd and line.order_id.delivery_confirmed_date:
-                cdd = line.order_id.delivery_confirmed_date
+                    in_data = self.in_line_data(linked_pol.order_id.id, line.product_id.id)
+                    cancel_in_moves = in_data[0]
+                    if in_data[1]:
+                        cdd = in_data[1][0][:10]
+                moves_domain = ['|', ('sale_line_id', '=', line.id), ('purchase_line_id', '=', linked_pol.id)]
+            if not cdd and (line.confirmed_delivery_date or line.order_id.delivery_confirmed_date):
+                cdd = line.confirmed_delivery_date or line.order_id.delivery_confirmed_date
 
             # cancel IN at line level: qty on IR line is adjusted
             # cancel all IN: qty on IR is untouched
@@ -174,6 +191,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     line.product_uom.id,
                 )
 
+            all_moves = self.pool.get('stock.move').search(self.cr, self.uid, moves_domain)
             if len(line.move_ids) > 0:
                 for move in sorted(line.move_ids, cmp=lambda x, y: cmp(sort_state.get(x.state, 0), sort_state.get(y.state, 0)) or cmp(x.id, y.id)):
                     data = {

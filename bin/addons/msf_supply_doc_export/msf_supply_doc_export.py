@@ -635,8 +635,8 @@ class po_follow_up_mixin(object):
         if len(po_line_ids):
             self.cr.execute("""
                 SELECT pl.id, pl.state, pl.line_number, adl.id, ppr.id, ppr.default_code, COALESCE(tr.value, pt.name), 
-                    uom.id, uom.name, pl.confirmed_delivery_date, pl.date_planned, pl.product_qty, pl.price_unit, 
-                    pl.linked_sol_id, spar.name, so.client_order_ref, pl.origin
+                    uom.id, uom.name, COALESCE(mo.date_expected, pl.confirmed_delivery_date), pl.date_planned, 
+                    pl.product_qty, pl.price_unit, pl.linked_sol_id, spar.name, so.client_order_ref, pl.origin
                 FROM purchase_order_line pl
                     LEFT JOIN analytic_distribution adl ON pl.analytic_distribution_id = adl.id
                     LEFT JOIN product_product ppr ON pl.product_id = ppr.id
@@ -646,6 +646,7 @@ class po_follow_up_mixin(object):
                     LEFT JOIN sale_order_line sol ON pl.linked_sol_id = sol.id
                     LEFT JOIN sale_order so ON sol.order_id = so.id
                     LEFT JOIN res_partner spar ON so.partner_id = spar.id
+                    LEFT JOIN stock_move mo ON pl.id = mo.purchase_line_id AND mo.type = 'in' AND mo.subtype = 'single'
                 WHERE pl.id IN %s
                 ORDER BY pl.line_number, pl.id
             """, (self.localcontext.get('lang', 'en_MF'), tuple(po_line_ids)))

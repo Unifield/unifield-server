@@ -261,4 +261,5 @@ class ir_followup_location_wizard(osv.osv_memory):
 
         return res
 
+
 ir_followup_location_wizard()
