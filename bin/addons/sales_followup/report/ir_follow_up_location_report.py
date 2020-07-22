@@ -134,12 +134,13 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         )
         res.append(self.cr.fetchall())
 
-        # Get data from the IN moves' linked to the PO
+        # Get expected dates from the IN moves' linked to the PO
         self.cr.execute('''
-            SELECT m.date_expected FROM stock_move m, stock_picking p
+            SELECT DISTINCT(m.date_expected) FROM stock_move m, stock_picking p
             WHERE m.picking_id = p.id AND p.purchase_id = %s AND m.product_id = %s AND p.type = 'in'
+            ORDER BY m.date_expected
         ''', (po_id, prod_id))
-        res.append(self.cr.fetchone())
+        res.append([data[0] for data in self.cr.fetchall()])
 
         return res
 
@@ -147,13 +148,16 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
         '''
         Get all lines for an order
         '''
+        sol_obj = self.pool.get('sale.order.line')
+        pol_obj = self.pool.get('purchase.order.line')
+        uom_obj = self.pool.get('product.uom')
         keys = []
 
         if not isinstance(order_id, int):
             order_id = order_id.id
 
         sort_state = {'cancel': 1}
-        line_state_display_dict = dict(self.pool.get('sale.order.line').fields_get(self.cr, self.uid, ['state_to_display'], context=self.localcontext).get('state_to_display', {}).get('selection', []))
+        line_state_display_dict = dict(sol_obj.fields_get(self.cr, self.uid, ['state_to_display'], context=self.localcontext).get('state_to_display', {}).get('selection', []))
 
         for line in self._get_order_line(order_id):
             lines = []
@@ -162,36 +166,35 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             m_index = 0
             bo_qty = line.product_uom_qty
             po_name = '-'
+
             cdd = False
+            if self.datas.get('is_rml') or self.localcontext.get('lang', False) == 'fr_MF':
+                date_format = '%d/%m/%Y'
+            else:
+                date_format = '%d-%b-%Y'
+
             from_stock = line.type == 'make_to_stock'
             cancel_in_moves = []
-            moves_domain = [('sale_line_id', '=', line.id)]
-            linked_pol = self.pool.get('purchase.order.line').search(self.cr, self.uid, [('linked_sol_id', '=', line.id)])
+            linked_pol = pol_obj.search(self.cr, self.uid, [('linked_sol_id', '=', line.id)])
             if linked_pol:
-                linked_pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, linked_pol)[0]
+                linked_pol = pol_obj.browse(self.cr, self.uid, linked_pol)[0]
                 po_name = linked_pol.order_id.name
                 cdd = linked_pol.confirmed_delivery_date
                 if line.product_id:
                     in_data = self.in_line_data(linked_pol.order_id.id, line.product_id.id)
                     cancel_in_moves = in_data[0]
-                    if in_data[1]:
+                    if len(in_data[1]) > 1:
+                        cdd = ', '.join([datetime.strptime(exp_date[:10], '%Y-%m-%d').strftime(date_format) for exp_date in in_data[1]])
+                    elif len(in_data[1]) == 1:
                         cdd = in_data[1][0][:10]
-                moves_domain = ['|', ('sale_line_id', '=', line.id), ('purchase_line_id', '=', linked_pol.id)]
             if not cdd and (line.confirmed_delivery_date or line.order_id.delivery_confirmed_date):
                 cdd = line.confirmed_delivery_date or line.order_id.delivery_confirmed_date
 
             # cancel IN at line level: qty on IR line is adjusted
             # cancel all IN: qty on IR is untouched
             for cancel_in in cancel_in_moves:
-                bo_qty -= self.pool.get('product.uom')._compute_qty(
-                    self.cr,
-                    self.uid,
-                    cancel_in[0],
-                    cancel_in[1],
-                    line.product_uom.id,
-                )
+                bo_qty -= uom_obj._compute_qty(self.cr, self.uid, cancel_in[0], cancel_in[1], line.product_uom.id)
 
-            all_moves = self.pool.get('stock.move').search(self.cr, self.uid, moves_domain)
             if len(line.move_ids) > 0:
                 for move in sorted(line.move_ids, cmp=lambda x, y: cmp(sort_state.get(x.state, 0), sort_state.get(y.state, 0)) or cmp(x.id, y.id)):
                     data = {

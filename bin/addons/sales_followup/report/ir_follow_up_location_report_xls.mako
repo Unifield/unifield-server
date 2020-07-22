@@ -95,7 +95,7 @@
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
     <Style ss:ID="line_left_date">
-        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
         <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -106,7 +106,7 @@
         <Font ss:Size="8" ss:Color="#0000FF"/>
     </Style>
     <Style ss:ID="line_left_date_fr">
-        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
         <NumberFormat ss:Format="Short Date" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -160,7 +160,7 @@
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
     <Style ss:ID="line_left_date_grey">
-        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
         <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -171,7 +171,7 @@
         <Font ss:Size="8" ss:Color="#747474"/>
     </Style>
     <Style ss:ID="line_left_date_grey_fr">
-        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
         <NumberFormat ss:Format="Short Date" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -226,7 +226,7 @@
         ## Qty to deliver
         <Column ss:AutoFitWidth="1" ss:Width="50.5" />
         ## CDD
-        <Column ss:AutoFitWidth="1" ss:Width="55.75" />
+        <Column ss:AutoFitWidth="1" ss:Width="107.25" />
         ## RTS Date
         <Column ss:AutoFitWidth="1" ss:Width="50" />
 
@@ -383,11 +383,15 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivery_order', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">-</Data></Cell>
-                    % if line.get('cdd') and isDate(line['cdd']):
-                        % if getLang() == 'fr_MF':
-                        <Cell ss:StyleID="line_left_date_grey_fr"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                    % if line.get('cdd'):
+                        % if isDate(line['cdd']):
+                            % if getLang() == 'fr_MF':
+                            <Cell ss:StyleID="line_left_date_grey_fr"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            % else:
+                            <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            % endif
                         % else:
-                        <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line['cdd']|x}</Data></Cell>
                         % endif
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
@@ -449,11 +453,15 @@
                     % else:
                     <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
                     % endif
-                    % if line.get('cdd') and isDate(line['cdd']):
-                        % if getLang() == 'fr_MF':
-                        <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                    % if line.get('cdd'):
+                        % if isDate(line['cdd']):
+                            % if getLang() == 'fr_MF':
+                            <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            % else:
+                            <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            % endif
                         % else:
-                        <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['cdd']|x}</Data></Cell>
                         % endif
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>

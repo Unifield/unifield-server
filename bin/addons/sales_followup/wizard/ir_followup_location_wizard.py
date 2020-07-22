@@ -224,7 +224,7 @@ class ir_followup_location_wizard(osv.osv_memory):
         context['background_id'] = background_id
         context['background_time'] = 20
 
-        data = {'ids': ids, 'context': context}
+        data = {'ids': ids, 'context': context, 'is_rml': True}
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'ir.follow.up.location.report_pdf',
