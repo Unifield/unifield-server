@@ -793,7 +793,7 @@ class po_follow_up_mixin(object):
                     other_product.append(inl)
 
             first_line = True
-            cdd = line[9] and datetime.strftime(line[9][0] or line[9][1], '%Y-%m-%d') or False
+            cdd = line[9] and line[9] != [None] and datetime.strftime(line[9][0] or line[9][1], '%Y-%m-%d') or False
             # Display information of the initial reception
             if not same_product_same_uom:
                 report_line = {
