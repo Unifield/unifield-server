@@ -110,7 +110,8 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Journal Entry Model Line" editable="bottom"
-                    colors="red: exp_in_ad_state in ('no_header', 'bad_header', 'invalid', 'invalid_small_amount')">
+                      colors="red: exp_in_ad_state in ('no_header', 'bad_header', 'invalid', 'invalid_small_amount');blue:not is_balanced and exp_in_ad_state not in ('no_header', 'bad_header', 'invalid', 'invalid_small_amount')">
+                    <field name="is_balanced" invisible="1"/>
                     <field name="sequence" readonly="1"/>
                     <field name="name"/>
                     <field name="account_id" domain="[('restricted_area', '=', 'recurring_lines')]"/>

@@ -133,6 +133,7 @@ class account_model_line(osv.osv):
                                            selection=[('no_exp_in', 'Not expense/income'), ('no_header', 'No header'),
                                                       ('valid', 'Valid'), ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
                                            string='Expense/income line status'),  # UFTP-103
+        'is_balanced': fields.related('model_id', 'is_balanced', type='boolean', string='Is balanced', readonly=True, store=False),
     }
 
     _defaults = {
@@ -304,6 +305,24 @@ class account_model(osv.osv):
                                  (', '.join(plan_names),))
         return super(account_model, self).unlink(cr, uid, ids, context=context)
 
+    def _get_is_balanced(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns True for the models for which the total of the lines is zero
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for model in self.browse(cr, uid, ids, fields_to_fetch=['lines_id'], context=context):
+            debit = sum([l.debit or 0.0 for l in model.lines_id]) or 0.0
+            credit = sum([l.credit or 0.0 for l in model.lines_id]) or 0.0
+            if abs(debit - credit) <= 10**-3:
+                res[model.id] = True
+            else:
+                res[model.id] = False
+        return res
+
     _columns = {
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -316,6 +335,7 @@ class account_model(osv.osv):
                                  store={
                                      'account.subscription': (_get_models_to_check, ['model_id', 'state'], 10),
                                  }),
+        'is_balanced': fields.function(_get_is_balanced, method=True, type='boolean', string="Is balanced", readonly=True, store=False),
         'create_date': fields.date('Creation date', readonly=True),  # overwrites the standard create_date so it can be displayed in the views
         'recurring_plan_ids': fields.one2many('account.subscription', 'model_id', string='Recurring Plans', readonly=True),
     }

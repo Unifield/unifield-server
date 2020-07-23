@@ -110356,6 +110356,12 @@ msgid "It is not possible to have several Recurring Plans with the same name."
 msgstr "Il n'est pas possible d'avoir plusieurs Plans d'Ecritures Périodiques portant le même nom."
 
 #. module: account_subscription
+#: field:account.model,is_balanced:0
+#: field:account.model.line,is_balanced:0
+msgid "Is balanced"
+msgstr "Est équilibré"
+
+#. module: account_subscription
 #: view:account.model:0
 msgid "Plan names"
 msgstr "Nom des plans"
