@@ -43207,6 +43207,7 @@ msgstr "REGISTRE DE CHÈQUE"
 #. modules: account, finance
 #: view:account.move:0
 #: view:cash.request:0
+#: view:account.model.line:0
 msgid "Total Debit"
 msgstr "Total Débit"
 
@@ -66564,6 +66565,7 @@ msgstr "UdM attendue en réception"
 #. modules: account, finance
 #: view:account.move:0
 #: view:cash.request:0
+#: view:account.model.line:0
 msgid "Total Credit"
 msgstr "Total Crédit"
 
