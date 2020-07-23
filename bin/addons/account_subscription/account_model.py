@@ -317,6 +317,7 @@ class account_model(osv.osv):
                                      'account.subscription': (_get_models_to_check, ['model_id', 'state'], 10),
                                  }),
         'create_date': fields.date('Creation date', readonly=True),  # overwrites the standard create_date so it can be displayed in the views
+        'recurring_plan_ids': fields.one2many('account.subscription', 'model_id', string='Recurring Plans', readonly=True),
     }
 
     _defaults = {

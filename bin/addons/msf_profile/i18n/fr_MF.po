@@ -39207,7 +39207,7 @@ msgstr "Transbordement - Valeur."
 msgid "RfQs"
 msgstr "DdD"
 
-#. modules: account, sync_client, product_asset, base, msf_audittrail, board, object_query, msf_profile, msf_field_access_rights, msf_button_access_rights,msf_tools
+#. modules: account, sync_client, product_asset, base, msf_audittrail, board, object_query, msf_profile, msf_field_access_rights, msf_button_access_rights, msf_tools, account_subscription
 #: field:account.model.line,model_id:0
 #: view:account.subscription:0
 #: field:account.subscription,model_id:0
@@ -39236,6 +39236,7 @@ msgstr "DdD"
 #: field:automated.import.function,model_id:0
 #: field:sync.client.log_sale_purchase,model:0
 #: field:sync.client.log_sale_purchase,model_id:0
+#: view:account.model:0
 msgid "Model"
 msgstr "Modèle"
 
@@ -94283,6 +94284,11 @@ msgstr "wizard.register.import.errors"
 msgid "Recurring Plan"
 msgstr "Plan d'Ecritures Périodiques"
 
+#. module: account_subscription
+#: field:account.model,recurring_plan_ids:0
+msgid "Recurring Plans"
+msgstr "Plans d'Ecritures Périodiques"
+
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:628
 #, python-format
@@ -110348,3 +110354,18 @@ msgstr "Il n'est pas possible d'avoir plusieurs Modèles périodiques portant le
 #: constraint:account.subscription:0
 msgid "It is not possible to have several Recurring Plans with the same name."
 msgstr "Il n'est pas possible d'avoir plusieurs Plans d'Ecritures Périodiques portant le même nom."
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Plan names"
+msgstr "Nom des plans"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Plan status"
+msgstr "Statut des plans"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Related plans"
+msgstr "Plans associés"
