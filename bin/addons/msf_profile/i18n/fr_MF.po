@@ -110340,3 +110340,8 @@ msgstr "Ligne %s. Les comptes de donation ne sont pas compatibles avec le type d
 #, python-format
 msgid "IN-line %s Wrong BN/ED attributes"
 msgstr "Ligne du IN %s: Mauvais attributs NL/DE"
+
+#. module: product
+#: view:product.product:0
+msgid "Merge product"
+msgstr "Fusion produit"
