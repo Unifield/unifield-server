@@ -97,10 +97,11 @@
                             </field>
                         </page>
                     </notebook>
-                    <group colspan="4">
-                        <field name="state" colspan="2" />
-                        <button name="cancel_update" string="Delete Update" icon="gtk-cancel" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
-                        <button name="launch_update" string="Apply Update" icon="gtk-go-forward" colspan="1" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <group colspan="4" col="4">
+                        <field name="state" />
+                        <button name="delete_update" string="Delete Update" icon="gtk-del" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <button name="cancel_update" string="Cancel Update" icon="gtk-cancel" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <button name="launch_update" string="Apply Update" icon="gtk-go-forward" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     </group>
                 </form>
             </field>
@@ -111,7 +112,7 @@
             <field name="model">product.mass.update</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Product Mass Update" noteditable="state!='draft'" hide_delete_button="1" colors="blue:state in ('draft');red:state in ('error')">
+                <tree string="Product Mass Update" noteditable="state!='draft'" hide_delete_button="1" colors="blue:state in ('draft');red:state in ('error');grey:state in ('cancel')">
                     <field name="name"/>
                     <field name="product_ids"/>
                     <field name="date_done"/>

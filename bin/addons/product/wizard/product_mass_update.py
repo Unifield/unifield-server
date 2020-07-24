@@ -38,7 +38,7 @@ class product_mass_update(osv.osv):
 
     _columns = {
         'name': fields.char(size=64, string='Update Reference'),
-        'state': fields.selection(selection=[('draft', 'Draft'), ('in_progress', 'In Progress'), ('error', 'Error'), ('done', 'Done')], string='Status', readonly=True),
+        'state': fields.selection(selection=[('draft', 'Draft'), ('in_progress', 'In Progress'), ('error', 'Error'), ('done', 'Done'), ('cancel', 'Cancel')], string='Status', readonly=True),
         'date_done': fields.datetime(string='Date of the update', readonly=True),
         'user_id': fields.many2one('res.users', string='User who Updated', readonly=True),
         'import_in_progress': fields.boolean(string='Import in progress'),
@@ -171,7 +171,7 @@ class product_mass_update(osv.osv):
             return {'value': {'property_account_expense': False}}
         return {'value': {}}
 
-    def cancel_update(self, cr, uid, ids, context=None):
+    def delete_update(self, cr, uid, ids, context=None):
         '''
         Delete the current Product Mass Update
         '''
@@ -187,6 +187,17 @@ class product_mass_update(osv.osv):
             'view_mode': 'tree,form',
             'target': 'crush',
         }
+
+    def cancel_update(self, cr, uid, ids, context=None):
+        '''
+        Cancel the current Product Mass Update
+        '''
+        if context is None:
+            context = {}
+
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+
+        return True
 
     def dummy(self, cr, uid, ids, context=None):
         """
