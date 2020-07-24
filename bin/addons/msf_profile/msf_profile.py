@@ -74,14 +74,6 @@ class patch_scripts(osv.osv):
                              """
             cr.execute(update_company, (has_move_regular_bs_to_0, has_book_pl_results))
 
-    def sync_msg_from_itself(self, cr, uid, *a, **b):
-        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
-        if not instance:
-            return True
-        cr.execute(''' update sync_client_message_received set run='t', manually_ran='t', log='Set manually to run without execution', manually_set_run_date=now() where run='f' and source=%s ''', (instance.instance, ))
-        self._logger.warn('Set %s self sync messages as Run' % (cr.rowcount,))
-        return True
-
 
     def us_6544_no_sync_on_forced_out(self, cr, uid, *a, **b):
         # already forced OUT as delivred must no generate sync msg to prevent NR at reception
@@ -140,6 +132,14 @@ class patch_scripts(osv.osv):
                 self._logger.warn('Liquidity journals set on company form')
 
             return True
+
+    def sync_msg_from_itself(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        cr.execute(''' update sync_client_message_received set run='t', manually_ran='t', log='Set manually to run without execution', manually_set_run_date=now() where run='f' and source=%s ''', (instance.instance, ))
+        self._logger.warn('Set %s self sync messages as Run' % (cr.rowcount,))
+        return True
 
     def us_7593_inactivate_en_US(self, cr, uid, *a, **b):
         """
