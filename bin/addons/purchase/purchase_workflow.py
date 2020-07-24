@@ -173,6 +173,7 @@ class purchase_order_line(osv.osv):
                 'nomen_sub_4': pol.nomen_sub_4 and pol.nomen_sub_4.id or False,
                 'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
                 'stock_take_date': line_stock_take,
+                'date_planned': pol.date_planned,
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
                 'type': 'make_to_order',
                 'is_line_split': pol.is_line_split,
@@ -343,7 +344,7 @@ class purchase_order_line(osv.osv):
                 'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
                 'confirmed_delivery_date': line_confirmed,
                 'stock_take_date': line_stock_take,
-                'date_planned': (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d'),
+                'date_planned': pol.date_planned or (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d'),
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
                 'set_as_sourced_n': True,
             }
