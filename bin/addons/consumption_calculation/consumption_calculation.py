@@ -570,7 +570,7 @@ class real_average_consumption(osv.osv):
                     values.update({'product_qty':product_qty[product['prodlot_id']]})
                 if rm_line_ids:
                     self.pool.get('real.average.consumption.line').write(cr, uid, rm_line_ids, values, context=context)
-                else:
+                elif values.get('product_qty', 0.00) > 0.00:
                     self.pool.get('real.average.consumption.line').create(cr, uid, values, context=context)
 
         self.write(cr, uid, ids, {'created_ok': False})
