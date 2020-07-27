@@ -828,7 +828,7 @@ class account_fiscalyear(osv.osv):
         'state': 'draft',
         'company_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.id,
     }
-    _order = "date_start"
+    _order = "date_start DESC"
 
     def _check_fiscal_year(self, cr, uid, ids, context=None):
         current_fiscal_yr = self.browse(cr, uid, ids, context=context)[0]
@@ -920,7 +920,6 @@ class account_period(osv.osv):
     _defaults = {
         'state': 'draft',
     }
-    _order = "date_start"
 
     def _check_duration(self,cr,uid,ids,context=None):
         obj_period = self.browse(cr, uid, ids[0], context=context)
@@ -951,7 +950,7 @@ class account_period(osv.osv):
     ]
 
     def next(self, cr, uid, period, step, context=None):
-        ids = self.search(cr, uid, [('date_start','>',period.date_start)])
+        ids = self.search(cr, uid, [('date_start','>',period.date_start)], order='date_start, number')
         if len(ids)>=step:
             return ids[step-1]
         return False
@@ -1709,7 +1708,7 @@ class account_move_reconcile(osv.osv):
     _name = "account.move.reconcile"
     _description = "Account Reconciliation"
     _columns = {
-        'name': fields.char('Name', size=64, required=True),
+        'name': fields.char('Name', size=64, required=True, select=1),
         'type': fields.char('Type', size=16, required=True),
         'line_id': fields.one2many('account.move.line', 'reconcile_id', 'Entry Lines'),
         'line_partial_ids': fields.one2many('account.move.line', 'reconcile_partial_id', 'Partial Entry lines'),
@@ -1894,6 +1893,7 @@ class account_tax(osv.osv):
 
     _name = 'account.tax'
     _description = 'Tax'
+    _trace = True
     _columns = {
         'name': fields.char('Tax Name', size=64, required=True, translate=True, help="This name will be displayed on reports"),
         'sequence': fields.integer('Sequence', required=True, help="The sequence field is used to order the tax lines from the lowest sequences to the higher ones. The order is important if you have a tax with several tax children. In this case, the evaluation order is important."),

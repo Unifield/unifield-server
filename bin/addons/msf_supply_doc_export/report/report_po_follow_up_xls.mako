@@ -221,7 +221,7 @@
     </Row>
     
 % for o in objects:
-  % for line in getPOLines(o.id):
+  % for line in getPOLines(getRunParms()['export_format'], o.id):
     % if (getRunParms()['pending_only_ok'] and float(line['qty_backordered']) > 0) or not getRunParms()['pending_only_ok']: 
     <Row ss:AutoFitHeight="1">
       <Cell ss:StyleID="${getLineStyle(line)|x}"><Data ss:Type="String">${(line['order_ref'])|x}</Data></Cell>

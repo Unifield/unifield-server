@@ -1576,7 +1576,8 @@
             <field name="arch" type="xml">
                 <form string="Scheduled Actions">
                     <field name="name"/>
-                    <field name="active"/>
+                    <field name="active" attrs="{'readonly': [('manual_activation', '=', False)]}"/>
+                    <field name="manual_activation" invisible="1" />
                     <field name="user_id" />
                     <field name="priority" />
                     <notebook colspan="4">

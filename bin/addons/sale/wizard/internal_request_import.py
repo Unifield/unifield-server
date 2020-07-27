@@ -166,14 +166,14 @@ class internal_request_import(osv.osv):
     <p>%s</p>
     <p>%s</p>
     </span>
-                                ''' % (line_n, line.line_message, escape_html(line.data_summary))
+                                ''' % (line_n, escape_html(line.line_message), escape_html(line.data_summary))
                             else:
                                 line_n = _('Line %s') % (line.line_number,)
                                 line_err_data += '''
     <p><u>%s</u></p>
     <p>%s</p>
     <p>%s</p>
-                                ''' % (line_n, line.line_message, escape_html(line.data_summary))
+                                ''' % (line_n, escape_html(line.line_message), escape_html(line.data_summary))
                     if header_err_data:
                         info_msg += '''
     <br/>
@@ -721,6 +721,7 @@ class internal_request_import(osv.osv):
                         'ir_import_id': ir_imp.id,
                     })
 
+                    ir_imp_l_ids_to_write = []  # Fetch the ids of lines to modify if any
                     if not duplicate_line and ir_line_numbers and line_data.get('imp_line_number') \
                             and line_data['imp_line_number'] in ir_line_numbers:
                         l_ids = ir_imp_l_obj.search(cr, uid, [('ir_import_id', '=', ir_imp.id),
@@ -731,9 +732,7 @@ class internal_request_import(osv.osv):
                                 ignored_line = True
                                 ignored.append(str(line_data['imp_line_number']))
                             else:
-                                ir_imp_l_obj.write(cr, uid, [ir_imp_l.id], line_data, context=context)
-                    else:
-                        ir_imp_l_obj.create(cr, uid, line_data, context=context)
+                                ir_imp_l_ids_to_write.append(ir_imp_l.id)
 
                     if len(line_errors) and not ignored_line:  # Add the errors if the line is not cancelled
                         if red:
@@ -744,6 +743,13 @@ class internal_request_import(osv.osv):
                         err_line_obj.create(cr, uid, {'ir_import_id': ir_imp.id, 'red': red, 'line_message': line_errors,
                                                       'line_number': x - first_line_index, 'data_summary': line_recap},
                                             context=context)
+
+                    if not duplicate_line and ir_line_numbers and line_data.get('imp_line_number') \
+                            and line_data['imp_line_number'] in ir_line_numbers:
+                        if ir_imp_l_ids_to_write and not ignored_line:  # No modification on ignored lines
+                            ir_imp_l_obj.write(cr, uid, ir_imp_l_ids_to_write, line_data, context=context)
+                    else:
+                        ir_imp_l_obj.create(cr, uid, line_data, context=context)
 
                     nb_treated_lines += 1
 
@@ -756,6 +762,8 @@ class internal_request_import(osv.osv):
                     nb_imp_lines = 0
                     nb_error_lines = nb_treated_lines
                     nb_treated_lines_by_nomen = 0
+                else:
+                    nb_imp_lines -= len(ignored)
 
                 message = _('''
 <p>Importation completed in %s second(s)!</p>
@@ -763,7 +771,7 @@ class internal_request_import(osv.osv):
 <p># of lines imported : %s</p>
 <p># of lines not imported : %s</p>
 <p># of lines imported as line by nomenclature : %s</p>
-                ''') % (str(round(time.time() - start_time, 1)), nb_treated_lines, nb_imp_lines - len(ignored),
+                ''') % (str(round(time.time() - start_time, 1)), nb_treated_lines, nb_imp_lines,
                         nb_error_lines, nb_treated_lines_by_nomen)
                 if ignored:
                     message += _('''

@@ -57,6 +57,7 @@ OBJ_TO_RECREATE = [
     'account.journal',
     'account.mcdb',
     'wizard.template',
+    'account.analytic.account',
 ]
 
 
@@ -245,9 +246,8 @@ class update_to_send(osv.osv,fv_formatter):
             if not rule.can_delete:
                 return 0
 
-            ids_to_delete = self.need_to_push(cr, uid,
-                                              self.search_deleted(cr, uid, module='sd', context=context),
-                                              context=context)
+            ids_to_delete = self.search_deleted(cr, uid, module='sd', context=context, for_sync=True)
+
             if not ids_to_delete:
                 return 0
 
@@ -932,6 +932,10 @@ class update_received(osv.osv,fv_formatter):
             return not ir_model_data_obj.is_deleted(cr, uid, module, xmlid, context=context)
 
         for i, field, value in zip(range(len(fields)), fields, values):
+            # replace English by MSF English for the updates on partners where English had been selected at some point
+            # (so that the initial synchro on new instances isn't blocked)
+            if update.model == 'res.partner' and field == 'lang' and value == 'en_US':
+                values[i] = u'en_MF'
             if '/id' not in field: continue
             if not value: continue
             res_val = []

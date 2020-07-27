@@ -152,7 +152,7 @@ class wizard_import_product_line(osv.osv_memory):
                             # Cell 0: Product
                             if row[0]:
                                 prod_ids = product_obj.search(cr, uid, [('default_code', '=ilike', row[0].data),
-                                                                        ('active', 'in', ['t', 'f'])], context=context)
+                                                                        ('active', 'in', ['t', 'f']), ('replaced_by_product_id', '=', False)], context=context)
                                 if prod_ids and prod_ids[0] not in product_ids:
                                     prod = product_obj.browse(cr, uid, prod_ids[0], fields_to_fetch=['international_status'], context=context)
                                     if prod_creator_id and prod.international_status.id in prod_creator_id:

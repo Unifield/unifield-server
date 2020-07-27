@@ -571,7 +571,7 @@ def trans_parse_view(de):
     if de.get("filter_selector"):
         try:
             eval_filter = safe_eval(de.get('filter_selector'))
-            if eval_filter:
+            if eval_filter and isinstance(eval_filter, list):
                 for x in eval_filter:
                     res.append(x[0].encode("utf8"))
         except Exception:

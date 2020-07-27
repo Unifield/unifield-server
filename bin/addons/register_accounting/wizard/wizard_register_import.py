@@ -22,6 +22,7 @@
 #
 ##############################################################################
 
+import tools
 from osv import osv
 from osv import fields
 from tools.translate import _
@@ -169,7 +170,7 @@ class wizard_register_import(osv.osv_memory):
                     'partner_type_mandatory': l.get('partner_type_mandatory', False),
                 }
                 if cheque_number:
-                    vals['cheque_number'] = str(cheque_number)
+                    vals['cheque_number'] = tools.ustr(cheque_number)
                 else:
                     vals['cheque_number'] = ''
                 absl_id = absl_obj.create(cr, uid, vals, context)
@@ -232,6 +233,7 @@ class wizard_register_import(osv.osv_memory):
         # Some checks
         if not context:
             context = {}
+        context.update({'from_regline_import': True})
 
         # Prepare some values
         cr = pooler.get_db(dbname).cursor()
@@ -266,7 +268,7 @@ class wizard_register_import(osv.osv_memory):
                 fileobj = NamedTemporaryFile('w+b', delete=False)
                 fileobj.write(decodestring(wiz.file))
                 fileobj.close()
-                content = SpreadsheetXML(xmlfile=fileobj.name)
+                content = SpreadsheetXML(xmlfile=fileobj.name, context=context)
                 if not content:
                     raise osv.except_osv(_('Warning'), _('No content.'))
                 # Update wizard
@@ -376,6 +378,7 @@ class wizard_register_import(osv.osv_memory):
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
                     # utp1043 pad the line with False if some trailing columns missing. Occurs on Excel 2003
                     line.extend([False for i in range(len(cols) - len(line))])
+                    self.pool.get('msf.doc.import.accounting')._format_special_char(line)
                     # Bypass this line if NO debit AND NO credit
                     try:
                         bd = line[cols['amount_in']]
@@ -471,7 +474,8 @@ class wizard_register_import(osv.osv_memory):
                         if line[cols['third_party']]:
                             # Type Operational Advance ==> EMPLOYEE required
                             if type_for_register == 'advance':
-                                tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
+                                tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])],
+                                                             order='active desc, id', limit=1, context=context)
                                 partner_type = 'employee'
                             # Type Internal transfer ==> JOURNAL required
                             elif type_for_register in ['transfer', 'transfer_same']:
@@ -487,6 +491,10 @@ class wizard_register_import(osv.osv_memory):
                                         if tp_journal.currency.id != register_currency:
                                             errors.append(_('Line %s. A Transfer Same Journal must have the same currency as the register.') % (current_line_num,))
                                             continue
+                                        if tp_journal.id == wiz.register_id.journal_id.id:
+                                            errors.append(_('Line %s. The journal third party used for the internal transfer '
+                                                            'must be different from the journal of the register.') % (current_line_num,))
+                                            continue
                             # Type DP ==> PARTNER required
                             elif type_for_register == 'down_payment':
                                 tp_ids = partner_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
@@ -497,7 +505,8 @@ class wizard_register_import(osv.osv_memory):
                                 if tp_ids:
                                     partner_type = 'partner'
                                 else:
-                                    tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
+                                    tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])],
+                                                                 order='active desc, id', limit=1, context=context)
                                     partner_type = 'employee'
                         # Any type for Spec. Treatment listed above ==> EMPTY partner NOT allowed
                         if not tp_ids:
@@ -512,7 +521,8 @@ class wizard_register_import(osv.osv_memory):
                         tp_ids = partner_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
                         partner_type = 'partner'
                         if not tp_ids:
-                            tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
+                            tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])],
+                                                         order='active desc, id', limit=1, context=context)
                             partner_type = 'employee'
                         if not tp_ids:
                             errors.append(_('Line %s. Third party not found: %s') % (current_line_num, line[cols['third_party']],))

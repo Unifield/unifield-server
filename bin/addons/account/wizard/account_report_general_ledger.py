@@ -41,7 +41,10 @@ class account_report_general_ledger(osv.osv_memory):
                                           help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
         'is_initial_balance_available': fields.function(_get_fake, method=True, type='boolean', string="Is initial balance filter available ?"),
         'amount_currency': fields.boolean("With Currency", help="It adds the currency column if the currency is different then the company currency"),
-        'sortby': fields.selection([('sort_date', 'Date'), ('sort_journal_partner', 'Journal & Partner')], 'Sort By', required=True),
+        'sortby': fields.selection([('sort_date', 'Posting Date'),
+                                    ('sort_third_party', 'Third Party'),
+                                    ('sort_currency', 'Currency'),
+                                    ('sort_reconcile', 'Reconcile Number')], 'Sort by', required=True),
         'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
         #'export_format': fields.selection([('xls', 'Excel'), ('csv', 'CSV'), ('pdf', 'PDF')], string="Export format", required=True),
@@ -196,7 +199,7 @@ class account_report_general_ledger(osv.osv_memory):
 
         if data['form']['export_format'] \
            and data['form']['export_format'] == 'xls':
-            return { 
+            return {
                 'type': 'ir.actions.report.xml',
                 'report_name': 'account.general.ledger_xls',
                 'datas': data,
