@@ -73,7 +73,7 @@ class patch_scripts(osv.osv):
                 tmpl.id = prod.product_tmpl_id and
                 tmpl.type = 'service_recep' and
                 coalesce(po.cross_docking_ok, 'f') = 'f' and
-                pol.state in ('validated', 'validated_p')
+                pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
             ) ''', (service_id,))
         self._logger.warn('POL loc_dest service on %s lines' % (cr.rowcount,))
 
@@ -85,7 +85,7 @@ class patch_scripts(osv.osv):
                 pol.product_id = prod.id and
                 tmpl.id = prod.product_tmpl_id and
                 tmpl.type = 'consu' and
-                pol.state in ('validated', 'validated_p')
+                pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
             ) ''', (conso_id,))
         self._logger.warn('POL loc_dest conso on %s lines' % (cr.rowcount,))
 
@@ -100,13 +100,13 @@ class patch_scripts(osv.osv):
                             purchase_order_line.product_id = prod.id and
                             tmpl.id = prod.product_tmpl_id and
                             tmpl.type != 'consu' and
-                            purchase_order_line.state in ('validated', 'validated_p') ''', (conso_id,))
+                            purchase_order_line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') ''', (conso_id,))
         self._logger.warn('POL loc_dest IR on %s lines' % (cr.rowcount,))
 
         cr.execute('''update purchase_order_line set location_dest_id = %s from purchase_order po
                         where
                             po.id = purchase_order_line.order_id and
-                            purchase_order_line.state in ('validated', 'validated_p') and
+                            purchase_order_line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
                             coalesce(po.cross_docking_ok, 'f') = 't' and
                             location_dest_id is NULL ''', (cross_dock_id,))
         self._logger.warn('POL loc_dest Cross Dock on %s lines' % (cr.rowcount,))
@@ -119,7 +119,7 @@ class patch_scripts(osv.osv):
                         nom.name = 'MED' and
                         tmpl.id = prod.product_tmpl_id and
                         location_dest_id is NULL and
-                        purchase_order_line.state in ('validated', 'validated_p') ''', (med_id,))
+                        purchase_order_line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') ''', (med_id,))
         self._logger.warn('POL loc_dest MED on %s lines' % (cr.rowcount,))
 
         cr.execute('''update purchase_order_line set location_dest_id = %s
@@ -130,7 +130,7 @@ class patch_scripts(osv.osv):
                         nom.name = 'LOG' and
                         tmpl.id = prod.product_tmpl_id and
                         location_dest_id is NULL and
-                        purchase_order_line.state in ('validated', 'validated_p') ''', (log_id,))
+                        purchase_order_line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') ''', (log_id,))
         self._logger.warn('POL loc_dest LOG on %s lines' % (cr.rowcount,))
         return True
 

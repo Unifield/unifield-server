@@ -458,7 +458,7 @@ class product_product(osv.osv):
                 purchase_order_line pol
             where
                 pol.product_id in %s and
-                pol.state in ('validated', 'validated_n')
+                pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
                 ''' + query + '''
                 group by pol.product_id''',
                    [tuple(ids)]+params)  # not_a_user_entry

@@ -454,7 +454,7 @@ class weekly_forecast_report(osv.osv):
                         select product_id from (
                             select product_id from report_stock_inventory where location_id in %(loc)s and product_id in %(p_id)s and state !='cancel' group by product_id
                         UNION
-                            select product_id from purchase_order_line where location_dest_id in %(loc)s and product_id in %(p_id)s and state in ('validated', 'validated_p') group by product_id
+                            select product_id from purchase_order_line where location_dest_id in %(loc)s and product_id in %(p_id)s and state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') group by product_id
                     ) x group by product_id """, {'loc': tuple(loc_asked_by_user), 'p_id': tuple(product_ids)} )
                     product_ids = []
                     for row in new_cr.dictfetchall():
@@ -809,7 +809,7 @@ class weekly_forecast_report(osv.osv):
             WHERE
                pol.location_dest_id IN %(location_ids)s AND
                pol.product_id IN %(product_ids)s  AND
-               pol.state IN ('validated', 'validated_p') AND
+               pol.state IN ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') AND
                coalesce(pol.confirmed_delivery_date, pol.date_planned) <= %(max_date)s
             GROUP BY pol.product_id, coalesce(pol.confirmed_delivery_date, pol.date_planned)
         UNION

@@ -417,7 +417,7 @@ class replenishment_location_config(osv.osv):
                         purchase_order_line pol
                     where
                         pol.location_dest_id in %s and
-                        pol.state in ('validated','validated_n') and
+                        pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
                         pol.product_id not in (
                               select
                                 seg_line.product_id
@@ -722,7 +722,7 @@ class replenishment_segment(osv.osv):
                         where
                           l.product_id = pol.product_id and
                           l.segment_id = %(seg_id)s and
-                          pol.state in ('validated', 'validated_n') and
+                          pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
                           location_dest_id in %(location_id)s
                         group by pol.product_id
                 UNION
@@ -865,7 +865,7 @@ class replenishment_segment(osv.osv):
                           purchase_order_line pol
                         where
                           pol.product_id=%(product_id)s and
-                          pol.state in ('validated', 'validated_n') and
+                          pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
                           location_dest_id in %(location_id)s and
                           coalesce(pol.confirmed_delivery_date, pol.date_planned) <= %(date)s
                         group by coalesce(pol.confirmed_delivery_date, pol.date_planned)
@@ -1887,7 +1887,7 @@ class replenishment_segment_line(osv.osv):
             where
                 pol.product_id = line.product_id and
                 line.id in %(ids)s and
-                pol.state in ('validated', 'validated_n') and
+                pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
                 line.status in ('replaced', 'phasingout')
             UNION
             select line.id as l_id, line.status as l_status from
@@ -2769,7 +2769,7 @@ class replenishment_inventory_review(osv.osv):
 
 
         res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'purchase.purchase_line_pipeline_action', ['tree'], new_tab=True, context=context)
-        res['domain'] = ['&', '&', ('location_dest_id', 'in', data['location_ids']), ('state', 'in', ['validated', 'validated_p']), ('product_id', 'in', product_ids)]
+        res['domain'] = ['&', '&', ('location_dest_id', 'in', data['location_ids']), ('state', 'in', ['validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n']), ('product_id', 'in', product_ids)]
         res['name'] = _('Pipeline %s: %s') % (data['inv_review'].location_config_id.name, ', '.join(product_code))
         res['nodestroy'] = True
         res['target'] = 'new'

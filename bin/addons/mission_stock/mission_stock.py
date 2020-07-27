@@ -940,7 +940,7 @@ class stock_mission_report(osv.osv):
                 SELECT pol.product_id as product_id, sum(pol.product_qty) as product_qty, pol.product_uom as uom_id, p.name as p_name
                     FROM purchase_order_line pol, purchase_order po, res_partner p
                 WHERE
-                    pol.state in ('validated', 'validated_n') and
+                    pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
                     po.id = pol.order_id and
                     po.partner_id = p.id
                 GROUP BY pol.product_id, pol.product_uom, p.name

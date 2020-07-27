@@ -1347,7 +1347,7 @@ class purchase_order_line(osv.osv):
                     _('You can not have an order line with a negative or zero quantity')
                 )
 
-            if 'product_id' in vals and line.state in ('validated', 'validated_n') and line.product_id.id != vals.get('product'):
+            if 'product_id' in vals and line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and line.product_id.id != vals.get('product'):
                 check_location_dest_ids.append(line.id)
 
             # try to fill "link_so_id":
