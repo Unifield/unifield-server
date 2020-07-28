@@ -110350,4 +110350,9 @@ msgstr "Fusion produit"
 #. module: analytic_override
 #: field:account.analytic.account,top_cc_instance_ids:0
 msgid "Instances having the CC as Top CC"
-msgstr "Instances ayant le CC comme CC principal"
+msgstr "Instances ayant le CC comme CC Principal"
+
+#. module: analytic_override
+#: field:account.analytic.account,is_target_instance_ids:0
+msgid "Instances having the CC as Target CC"
+msgstr "Instances ayant le CC comme CC Cible"
