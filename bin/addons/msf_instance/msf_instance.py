@@ -75,31 +75,6 @@ class msf_instance(osv.osv):
                     res[instance.get('id')] = parent_cost_centers[0]
         return res
 
-    def _search_top_cost_center_id(self, cr, uid, obj, name, args, context):
-        """
-        Returns a domain with the instances having the selected CC as "Top CC"
-        """
-        if not args:
-            return []
-        if args[0][1] != '=' or not args[0][2] or not isinstance(args[0][2], int):
-            raise osv.except_osv(_('Error'), _('Filter not implemented.'))
-        if context is None:
-            context = {}
-        instance_list = []
-        acc_target_cc_obj = self.pool.get('account.target.costcenter')
-        analytic_acc_obj = self.pool.get('account.analytic.account')
-        analytic_acc = analytic_acc_obj.browse(cr, uid, args[0][2], fields_to_fetch=[('category', 'type', 'parent_id')], context=context)
-        if analytic_acc.category == 'OC':  # restrict to Cost Centers only
-            for target_cc_id in acc_target_cc_obj.search(cr, uid,
-                                                         [('cost_center_id', '=', analytic_acc.id), ('is_top_cost_center', '=', True)],
-                                                         context=context):
-                target_cc = acc_target_cc_obj.browse(cr, uid, target_cc_id, fields_to_fetch=['instance_id'], context=context)
-                instance_list.append(target_cc.instance_id.id)
-            if analytic_acc.type == 'view' and not analytic_acc.parent_id:  # parent of all CC
-                hq_instance_id = self.search(cr, uid, [('level', '=', 'section')], limit=1, context=context)
-                instance_list.append(hq_instance_id)
-        return [('id', 'in', instance_list)]
-
     def _get_po_fo_cost_center(self, cr, uid, ids, fields, arg, context=None):
         if not context:
             context = {}
@@ -208,9 +183,7 @@ class msf_instance(osv.osv):
         'move_prefix': fields.char('Account move prefix', size=5, required=True),
         'reconcile_prefix': fields.char('Reconcilation prefix', size=5, required=True),
         'current_instance_level': fields.function(_get_current_instance_level, method=True, store=False, string="Current Instance Level", type="char", readonly="True"),
-        'top_cost_center_id': fields.function(_get_top_cost_center, method=True, store=False,
-                                              string="Top cost centre for budget consolidation", type="many2one",
-                                              relation="account.analytic.account", readonly="True", fnct_search=_search_top_cost_center_id),
+        'top_cost_center_id': fields.function(_get_top_cost_center, method=True, store=False, string="Top cost centre for budget consolidation", type="many2one", relation="account.analytic.account", readonly="True"),
         'po_fo_cost_center_id': fields.function(_get_po_fo_cost_center, method=True, store=False, string="Cost centre picked for PO/FO reference", type="many2one", relation="account.analytic.account", readonly="True"),
         'instance_identifier': fields.char('Instance identifier', size=64, readonly=1),
         'instance_child_ids': fields.function(_get_instance_child_ids, method=True,
