@@ -304,9 +304,11 @@ class analytic_account(osv.osv):
             res[analytic_acc_id] = instance_obj.search(cr, uid, [('top_cost_center_id', '=', analytic_acc_id)], context=context)
         return res
 
-    def _get_is_target_instance_ids(self, cr, uid, ids, fields, arg, context=None):
+    def _get_cc_instance_ids(self, cr, uid, ids, fields, arg, context=None):
         """
-        Returns a dict. with key = id of the analytic account, and value = id of the instances using it as Target Cost Center
+        Computes the values for the fields:
+        - is_target_instance_ids = instances using the analytic account as Target Cost Center
+        - po_fo_cc_instance_ids = instances using the analytic account as Cost centre picked for PO/FO reference
         """
         if context is None:
             context = {}
@@ -315,14 +317,20 @@ class analytic_account(osv.osv):
         res = {}
         acc_target_cc_obj = self.pool.get('account.target.costcenter')
         for analytic_acc_id in ids:
-            instance_ids = []
-            target_cc_ids = acc_target_cc_obj.search(cr, uid,
-                                                     [('cost_center_id', '=', analytic_acc_id), ('is_target', '=', True)],
-                                                     context=context)
+            target_instance_ids = []
+            po_fo_instance_ids = []
+            target_cc_ids = acc_target_cc_obj.search(cr, uid, [('cost_center_id', '=', analytic_acc_id)], context=context)
             if target_cc_ids:
-                for target_cc in acc_target_cc_obj.browse(cr, uid, target_cc_ids, fields_to_fetch=['instance_id'], context=context):
-                    instance_ids.append(target_cc.instance_id.id)
-            res[analytic_acc_id] = instance_ids
+                field_list = ['instance_id', 'is_target', 'is_po_fo_cost_center']
+                for target_cc in acc_target_cc_obj.browse(cr, uid, target_cc_ids, fields_to_fetch=field_list, context=context):
+                    if target_cc.is_target:
+                        target_instance_ids.append(target_cc.instance_id.id)
+                    if target_cc.is_po_fo_cost_center:
+                        po_fo_instance_ids.append(target_cc.instance_id.id)
+            res[analytic_acc_id] = {
+                'is_target_instance_ids': target_instance_ids,
+                'po_fo_cc_instance_ids': po_fo_instance_ids,
+            }
         return res
 
     _columns = {
@@ -358,9 +366,12 @@ class analytic_account(osv.osv):
         'top_cc_instance_ids': fields.function(_get_top_cc_instance_ids, method=True, store=False, readonly=True,
                                                string="Instances having the CC as Top CC",
                                                type="one2many", relation="msf.instance"),
-        'is_target_instance_ids': fields.function(_get_is_target_instance_ids, method=True, store=False, readonly=True,
+        'is_target_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
                                                   string="Instances having the CC as Target CC",
-                                                  type="one2many", relation="msf.instance"),
+                                                  type="one2many", relation="msf.instance", multi="cc_instances"),
+        'po_fo_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                                 string="Instances having the CC as CC picked for PO/FO ref",
+                                                 type="one2many", relation="msf.instance", multi="cc_instances"),
     }
 
     _defaults ={
