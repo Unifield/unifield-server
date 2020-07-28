@@ -110361,3 +110361,8 @@ msgstr "Instances ayant le CC comme CC Cible"
 #: field:account.analytic.account,po_fo_cc_instance_ids:0
 msgid "Instances having the CC as CC picked for PO/FO ref"
 msgstr "Instances ayant le CC comme CC sélectionné pour PO/FO"
+
+#. module: analytic_override
+#: field:account.analytic.account,cc_missions:0
+msgid "Missions where the CC is added to"
+msgstr "Missions dans lesquelles le CC est ajouté"

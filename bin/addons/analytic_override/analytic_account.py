@@ -292,13 +292,14 @@ class analytic_account(osv.osv):
 
     def _get_cc_instance_ids(self, cr, uid, ids, fields, arg, context=None):
         """
-        Computes the values for fields.function fields, retrieving the instances using the analytic account...
-        ...as Top Cost Center => top_cc_instance_ids
-        ...as Target Cost Center => is_target_cc_instance_ids
-        ...as Cost centre picked for PO/FO reference => po_fo_cc_instance_ids
-
-        Note that those fields should theoretically always be linked to one single instance, but they are set as
-        one2many in order to be consistent with the type of fields used in the related object.
+        Computes the values for fields.function fields, retrieving:
+        - the instances using the analytic account...
+          ...as Top Cost Center => top_cc_instance_ids
+          ...as Target Cost Center => is_target_cc_instance_ids
+          ...as Cost centre picked for PO/FO reference => po_fo_cc_instance_ids
+          (Note that those fields should theoretically always be linked to one single instance,
+           but they are set as one2many in order to be consistent with the type of fields used in the related object.)
+        - the Missions where the Cost Center is added to => cc_missions
         """
         if context is None:
             context = {}
@@ -310,20 +311,28 @@ class analytic_account(osv.osv):
             top_instance_ids = []
             target_instance_ids = []
             po_fo_instance_ids = []
+            missions = set()
+            missions_str = ""
             target_cc_ids = acc_target_cc_obj.search(cr, uid, [('cost_center_id', '=', analytic_acc_id)], context=context)
             if target_cc_ids:
                 field_list = ['instance_id', 'is_target', 'is_po_fo_cost_center', 'is_top_cost_center']
                 for target_cc in acc_target_cc_obj.browse(cr, uid, target_cc_ids, fields_to_fetch=field_list, context=context):
+                    instance = target_cc.instance_id
+                    if instance.mission:
+                        missions.add(instance.mission)
                     if target_cc.is_top_cost_center:
-                        top_instance_ids.append(target_cc.instance_id.id)
+                        top_instance_ids.append(instance.id)
                     if target_cc.is_target:
-                        target_instance_ids.append(target_cc.instance_id.id)
+                        target_instance_ids.append(instance.id)
                     if target_cc.is_po_fo_cost_center:
-                        po_fo_instance_ids.append(target_cc.instance_id.id)
+                        po_fo_instance_ids.append(instance.id)
+            if missions:
+                missions_str = ", ".join(missions)
             res[analytic_acc_id] = {
                 'top_cc_instance_ids': top_instance_ids,
                 'is_target_cc_instance_ids': target_instance_ids,
                 'po_fo_cc_instance_ids': po_fo_instance_ids,
+                'cc_missions': missions_str,
             }
         return res
 
@@ -364,6 +373,9 @@ class analytic_account(osv.osv):
         'po_fo_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
                                                  string="Instances having the CC as CC picked for PO/FO ref",
                                                  type="one2many", relation="msf.instance", multi="cc_instances"),
+        'cc_missions': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                       string="Missions where the CC is added to",
+                                       type='char', multi="cc_instances"),
     }
 
     _defaults ={
