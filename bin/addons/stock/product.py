@@ -203,12 +203,6 @@ class product_product(osv.osv):
         if context.get('search_location'):
             context['location'] = context.get('search_location')
 
-        if context.get('warehouse', False):
-            lot_stock_id = stock_warehouse_obj.read(cr, uid, int(context['warehouse']),
-                                                    ['lot_stock_id'], context=context)['lot_stock_id']
-            if lot_stock_id:
-                context['location'] = lot_stock_id[0]
-
         if context.get('location', False):
             if type(context['location']) == type(1):
                 location_ids = [context['location']]
