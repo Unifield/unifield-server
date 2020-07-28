@@ -65506,9 +65506,10 @@ msgstr "Mise à jour du module"
 msgid "wizard.import.mapping"
 msgstr "wizard.import.mapping"
 
-#. modules: register_accounting, analytic_override
+#. modules: register_accounting, analytic_override, msf_instance
 #: code:addons/analytic_override/analytic_line.py:80
 #: code:addons/register_accounting/account_move_line.py:52
+#: code:addons/msf_instance/msf_instance.py:85
 #, python-format
 msgid "Filter not implemented."
 msgstr "Filtre pas mis en oeuvre"
@@ -110345,3 +110346,8 @@ msgstr "Ligne du IN %s: Mauvais attributs NL/DE"
 #: view:product.product:0
 msgid "Merge product"
 msgstr "Fusion produit"
+
+#. module: analytic_override
+#: field:account.analytic.account,top_cc_instance_ids:0
+msgid "Instances having the CC as Top CC"
+msgstr "Instances ayant le CC comme CC principal"

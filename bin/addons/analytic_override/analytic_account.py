@@ -290,6 +290,20 @@ class analytic_account(osv.osv):
                 dom.append(('id', 'in', compatible_dest_ids))
         return dom
 
+    def _get_top_cc_instance_ids(self, cr, uid, ids, fields, arg, context=None):
+        """
+        Returns a dict. with key = id of the analytic account, and value = id of the instances using it as Top Cost Center
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        instance_obj = self.pool.get('msf.instance')
+        for analytic_acc_id in ids:
+            res[analytic_acc_id] = instance_obj.search(cr, uid, [('top_cost_center_id', '=', analytic_acc_id)], context=context)
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
@@ -318,6 +332,9 @@ class analytic_account(osv.osv):
                                                        fnct_search=_search_dest_compatible_with_cc_ids),
         'dest_without_cc': fields.function(_get_dest_without_cc, type='boolean', method=True, store=False,
                                            string="Destination allowing no Cost Center",),
+        'top_cc_instance_ids': fields.function(_get_top_cc_instance_ids, method=True, store=False, readonly=True,
+                                               string="Instances having the CC as Top CC",
+                                               type="one2many", relation="msf.instance"),
     }
 
     _defaults ={
