@@ -110345,3 +110345,9 @@ msgstr "Ligne du IN %s: Mauvais attributs NL/DE"
 #: view:product.product:0
 msgid "Merge product"
 msgstr "Fusion produit"
+
+#. module: stock
+#: code:addons/stock/stock.py:1813
+#, python-format
+msgid "is dispatched."
+msgstr "est expédié."
