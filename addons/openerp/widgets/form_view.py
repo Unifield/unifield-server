@@ -72,7 +72,6 @@ class ViewForm(Form):
                 else:
                     key, op, value = element
                     search_param.append((key, op, value))
-
         cherrypy.request.custom_search_domain = []
         cherrypy.request.custom_filter_domain = []
 
