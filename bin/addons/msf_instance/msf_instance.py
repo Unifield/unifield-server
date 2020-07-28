@@ -164,6 +164,7 @@ class msf_instance(osv.osv):
                 res.append(arg)
         return res
 
+
     _columns = {
         'level': fields.selection([('section', 'Section'),
                                    ('coordo', 'Coordo'),
