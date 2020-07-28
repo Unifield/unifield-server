@@ -290,25 +290,15 @@ class analytic_account(osv.osv):
                 dom.append(('id', 'in', compatible_dest_ids))
         return dom
 
-    def _get_top_cc_instance_ids(self, cr, uid, ids, fields, arg, context=None):
-        """
-        Returns a dict. with key = id of the analytic account, and value = id of the instances using it as Top Cost Center
-        """
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = {}
-        instance_obj = self.pool.get('msf.instance')
-        for analytic_acc_id in ids:
-            res[analytic_acc_id] = instance_obj.search(cr, uid, [('top_cost_center_id', '=', analytic_acc_id)], context=context)
-        return res
-
     def _get_cc_instance_ids(self, cr, uid, ids, fields, arg, context=None):
         """
-        Computes the values for the fields:
-        - is_target_instance_ids = instances using the analytic account as Target Cost Center
-        - po_fo_cc_instance_ids = instances using the analytic account as Cost centre picked for PO/FO reference
+        Computes the values for fields.function fields, retrieving the instances using the analytic account...
+        ...as Top Cost Center => top_cc_instance_ids
+        ...as Target Cost Center => is_target_cc_instance_ids
+        ...as Cost centre picked for PO/FO reference => po_fo_cc_instance_ids
+
+        Note that those fields should theoretically always be linked to one single instance, but they are set as
+        one2many in order to be consistent with the type of fields used in the related object.
         """
         if context is None:
             context = {}
@@ -317,18 +307,22 @@ class analytic_account(osv.osv):
         res = {}
         acc_target_cc_obj = self.pool.get('account.target.costcenter')
         for analytic_acc_id in ids:
+            top_instance_ids = []
             target_instance_ids = []
             po_fo_instance_ids = []
             target_cc_ids = acc_target_cc_obj.search(cr, uid, [('cost_center_id', '=', analytic_acc_id)], context=context)
             if target_cc_ids:
-                field_list = ['instance_id', 'is_target', 'is_po_fo_cost_center']
+                field_list = ['instance_id', 'is_target', 'is_po_fo_cost_center', 'is_top_cost_center']
                 for target_cc in acc_target_cc_obj.browse(cr, uid, target_cc_ids, fields_to_fetch=field_list, context=context):
+                    if target_cc.is_top_cost_center:
+                        top_instance_ids.append(target_cc.instance_id.id)
                     if target_cc.is_target:
                         target_instance_ids.append(target_cc.instance_id.id)
                     if target_cc.is_po_fo_cost_center:
                         po_fo_instance_ids.append(target_cc.instance_id.id)
             res[analytic_acc_id] = {
-                'is_target_instance_ids': target_instance_ids,
+                'top_cc_instance_ids': top_instance_ids,
+                'is_target_cc_instance_ids': target_instance_ids,
                 'po_fo_cc_instance_ids': po_fo_instance_ids,
             }
         return res
@@ -361,14 +355,12 @@ class analytic_account(osv.osv):
                                                        fnct_search=_search_dest_compatible_with_cc_ids),
         'dest_without_cc': fields.function(_get_dest_without_cc, type='boolean', method=True, store=False,
                                            string="Destination allowing no Cost Center",),
-        # note: the following 3 fields should theoretically always return one instance, but they are set as one2many in
-        # order to be consistent with the type of fields used in the related object
-        'top_cc_instance_ids': fields.function(_get_top_cc_instance_ids, method=True, store=False, readonly=True,
+        'top_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
                                                string="Instances having the CC as Top CC",
-                                               type="one2many", relation="msf.instance"),
-        'is_target_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
-                                                  string="Instances having the CC as Target CC",
-                                                  type="one2many", relation="msf.instance", multi="cc_instances"),
+                                               type="one2many", relation="msf.instance", multi="cc_instances"),
+        'is_target_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                                     string="Instances having the CC as Target CC",
+                                                     type="one2many", relation="msf.instance", multi="cc_instances"),
         'po_fo_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
                                                  string="Instances having the CC as CC picked for PO/FO ref",
                                                  type="one2many", relation="msf.instance", multi="cc_instances"),
