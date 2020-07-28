@@ -828,6 +828,7 @@ class purchase_order(osv.osv):
         },
         ),
         'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
+        'delivery_requested_date_modified': fields.date(string='Delivery Requested Date (modified)'),
         'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
         'ready_to_ship_date': fields.date(string='Ready To Ship Date'),
         'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
@@ -1261,7 +1262,7 @@ class purchase_order(osv.osv):
             default = {}
         if context is None:
             context = {}
-        fields_to_reset = ['delivery_requested_date', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date']
+        fields_to_reset = ['delivery_requested_date', 'delivery_requested_date_modified', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date']
         to_del = []
         for ftr in fields_to_reset:
             if ftr not in default:
@@ -1359,6 +1360,8 @@ class purchase_order(osv.osv):
             context = {}
         # field name
         field_name = context.get('field_name', False)
+        if field_name == 'requested' and self.search_exists(cr, uid, [('id', 'in', ids), ('delivery_requested_date_modified', '=', False), ('state', '!=', 'draft')], context=context):
+            raise osv.except_osv(_('Warning'), _('Please fill the "Delivery Requested Date (modified)" field.'))
         assert field_name, 'The button is not correctly set.'
         # data
         data = getattr(self, field_name + '_data')(cr, uid, ids, context=context)
@@ -2259,7 +2262,6 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        data_obj = self.pool.get('ir.model.data')
 
         pol = self.ensure_object(cr, uid, 'purchase.order.line', pol)
         internal = self.ensure_object(cr, uid, 'stock.picking', internal_id)
@@ -2269,18 +2271,8 @@ class purchase_order(osv.osv):
         # compute source location:
         src_location = pol.order_id.location_id
 
-        # compute destination location:
-        dest = pol.order_id.location_id.id
-        if pol.product_id.type == 'service_recep' and not pol.order_id.cross_docking_ok:
-            # service with reception are directed to Service Location
-            dest = self.pool.get('stock.location').get_service_location(cr, uid)
-        elif pol.product_id.type == 'consu':
-            dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
-        elif pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage != 'customer':
-            dest = pol.linked_sol_id.order_id.location_requestor_id.id
-        elif self.pool.get('stock.location').chained_location_get(cr, uid, src_location, product=pol.product_id, context=context):
-            # if input location has a chained location then use it
-            dest = self.pool.get('stock.location').chained_location_get(cr, uid, src_location, product=pol.product_id, context=context)[0].id
+        # compute destination location
+        dest = self.pool.get('purchase.order.line').final_location_dest(cr, uid, pol, context=context)
 
         values = {
             'name': ''.join((pol.order_id.name, ': ', (pol.name or ''))),

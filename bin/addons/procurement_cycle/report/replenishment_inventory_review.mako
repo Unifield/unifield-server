@@ -911,6 +911,8 @@
    <Row ss:Height="75">
     <Cell ss:StyleID="s128"><Data ss:Type="String">${_('Product Code')|x}</Data></Cell>
     <Cell ss:StyleID="s128"><Data ss:Type="String">${_('Product Description')|x}</Data></Cell>
+    <Cell ss:StyleID="s128"><Data ss:Type="String">${_('RR Lifecycle')|x}</Data></Cell>
+    <Cell ss:StyleID="s128"><Data ss:Type="String">${_('Replaced/Replacing')|x}</Data></Cell>
     <Cell ss:StyleID="s128"><Data ss:Type="String">${_('Primary Product list')|x}</Data></Cell>
     <Cell ss:StyleID="s129red"><Data ss:Type="String">${_('Warnings Recap')|x}</Data></Cell>
     <Cell ss:StyleID="s129"><Data ss:Type="String">${_('Segment Ref/name')|x}</Data></Cell>
@@ -925,7 +927,7 @@
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Order coverage')|x} ${getSel(objects[0], 'time_unit')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('SS')|x} ${getSel(objects[0], 'time_unit')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Buffer (Qty)')|x}</Data></Cell>
-    <Cell ss:StyleID="s129"><Data ss:Type="String">${_('Valid RR-FMC(s)')|x}</Data></Cell>
+    <Cell ss:StyleID="s129"><Data ss:Type="String">${_('Valid')|x}</Data></Cell>
     <Cell ss:StyleID="s129"><Data ss:Type="String">${_('RR-FMC (average for period)')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('RR-AMC (average for AMC period)')|x}</Data></Cell>
 
@@ -965,6 +967,8 @@
    <Row ss:AutoFitHeight="0" ss:Height="24">
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.product_id.default_code|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.product_id.name|x}</Data></Cell>
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.segment_ref_name and getSel(line, 'status') or _('N/A')|x}</Data></Cell>
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.paired_product_id and line.paired_product_id.default_code or '')|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.primay_product_list or '')|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.warning or ''|xn}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.segment_ref_name or '')|x}</Data></Cell>
@@ -972,7 +976,7 @@
     <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.segment_ref_name and getSel(line, 'rule') or '')|x}</Data></Cell>
     % if line.rule == 'minmax':
         <Cell ss:StyleID="s140">
-            % if line.min_qty:
+            % if line.min_qty is not False:
                 <Data ss:Type="Number">${line.min_qty}</Data>
             % endif
         </Cell>
@@ -982,7 +986,7 @@
 
     % if line.rule == 'minmax':
         <Cell ss:StyleID="s140">
-            % if line.max_qty:
+            % if line.max_qty is not False:
                 <Data ss:Type="Number">${line.max_qty}</Data>
             % endif
         </Cell>
@@ -992,7 +996,7 @@
 
     % if line.rule == 'auto':
         <Cell ss:StyleID="s140">
-            % if line.auto_qty:
+            % if line.auto_qty is not False:
                 <Data ss:Type="Number">${line.auto_qty}</Data>
             % endif
         </Cell>
@@ -1036,11 +1040,7 @@
         <Cell ss:StyleID="irrel" />
     % endif
 
-    % if line.rule == 'cycle':
-        <Cell ss:StyleID="s141"><Data ss:Type="String">${line.valid_rr_fmc and _('Yes') or _('No') }</Data></Cell>
-    % else:
-        <Cell ss:StyleID="irrel" />
-    % endif
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.valid_rr_fmc and _('Yes') or _('No') }</Data></Cell>
 
     <Cell ss:StyleID="s141">
         % if line.rr_fmc_avg:

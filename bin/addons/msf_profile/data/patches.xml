@@ -565,6 +565,10 @@
         </record>
 
         <!-- UF18.0 -->
+        <record id="us_7646_dest_loc_on_pol" model="patch.scripts">
+            <field name="method">us_7646_dest_loc_on_pol</field>
+        </record>
+
         <record id="us_6544_no_sync_on_forced_out" model="patch.scripts">
             <field name="method">us_6544_no_sync_on_forced_out</field>
         </record>

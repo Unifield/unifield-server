@@ -1537,7 +1537,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'in_ext_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'type_change': fields.selection([('', ''), ('error', 'Error'), ('new', 'New'),
                                          ('split', 'Split'), ('del', 'Del'),
-                                         ('ignore', 'Ignore'), ('warning', 'Warning')],
+                                         ('ignore', 'Ignore'), ('warning', 'Warning'), ('cdd', 'CDD')],
                                         string='Change type', readonly=True),
         'imp_product_id': fields.many2one('product.product', string='Product',
                                           readonly=True),
@@ -1615,9 +1615,38 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 self.write(cr, uid, [line.id], {'type_change': 'ignore'}, context=context)
                 continue
 
-            if line.po_line_id.state in ('confirmed', 'done'):
+            if line.po_line_id.state == 'done':
                 write_vals['type_change'] = 'warning'
                 warnings.append(_('PO line has been confirmed and consequently is not editable'))
+
+            # Delivery Confirmed Date
+            dcd_value = values[11]
+            if dcd_value and type(dcd_value) == type(DateTime.now()):
+                write_vals['imp_dcd'] = dcd_value.strftime('%Y-%m-%d')
+            elif dcd_value and isinstance(dcd_value, str):
+                try:
+                    time.strptime(dcd_value, '%Y-%m-%d')
+                    write_vals['imp_dcd'] = dcd_value
+                except ValueError:
+                    err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
+                    errors.append(err_msg)
+                    write_vals['type_change'] = 'error'
+            elif dcd_value:
+                err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
+                errors.append(err_msg)
+                write_vals['type_change'] = 'error'
+
+            if line.po_line_id.state == 'confirmed':
+                if write_vals.get('imp_dcd') and write_vals.get('imp_dcd') != line.in_dcd:
+                    if self.pool.get('stock.move').search_exists(cr ,uid, [('purchase_line_id', '=', line.po_line_id.id), ('type', '=', 'in'), ('state', '=', 'done')], context=context):
+                        write_vals['type_change'] = 'warning'
+                        warnings.append(_("IN for line %s has been parially processed, CDD can't be changed") % (line.in_line_number,))
+                    else:
+                        write_vals['type_change'] = 'cdd'
+                if not write_vals.get('type_change'):
+                    write_vals['type_change'] = 'ignore'
+                self.write(cr, uid, [line.id], write_vals, context=context)
+                continue
 
             # External Ref.
             write_vals['imp_external_ref'] = values[1]
@@ -1840,22 +1869,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
 
-            # Delivery Confirmed Date
-            dcd_value = values[11]
-            if dcd_value and type(dcd_value) == type(DateTime.now()):
-                write_vals['imp_dcd'] = dcd_value.strftime('%Y-%m-%d')
-            elif dcd_value and isinstance(dcd_value, str):
-                try:
-                    time.strptime(dcd_value, '%Y-%m-%d')
-                    write_vals['imp_dcd'] = dcd_value
-                except ValueError:
-                    err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
-                    errors.append(err_msg)
-                    write_vals['type_change'] = 'error'
-            elif dcd_value:
-                err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
-                errors.append(err_msg)
-                write_vals['type_change'] = 'error'
 
             # ESC Confirmed
             if write_vals.get('imp_dcd') and line.simu_id.order_id.partner_type == 'esc':
@@ -1939,6 +1952,14 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 cr.commit()
                 continue
 
+            if line.type_change == 'cdd':
+                line_obj.write(cr, uid, [line.po_line_id.id], {'confirmed_delivery_date': line.imp_dcd}, context=context)
+                in_ids = self.pool.get('stock.move').search(cr ,uid, [('purchase_line_id', '=', line.po_line_id.id), ('type', '=', 'in'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
+                if in_ids:
+                    self.pool.get('stock.move').write(cr, uid, in_ids, {'date_expected': line.imp_dcd}, context=context)
+
+                cr.commit()
+                continue
             line_vals = {
                 'product_id': line.imp_product_id.id,
                 'product_uom': line.imp_uom.id,
