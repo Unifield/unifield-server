@@ -46,7 +46,7 @@
             var fields2 = [];
             forEach(options, function(o){
                 o.selected = true;
-                fields2 = fields2.concat('"' + o.text + '"');
+                fields2 = fields2.concat('"' + o.text.replace(/"/g, '\\"') + '"');
             });
             openobject.dom.get('_terp_fields2').value = '[' + fields2.join(',') + ']';
             form.submit();
@@ -123,7 +123,7 @@
 
             forEach(options, function(o){
                 o.selected = true;
-                fields2 = fields2.concat('"' + o.text + '"');
+                fields2 = fields2.concat('"' + o.text.replace(/"/g, '\\"') + '"');
             });
             openobject.dom.get('_terp_fields2').value = '[' + fields2.join(',') + ']';
         }
