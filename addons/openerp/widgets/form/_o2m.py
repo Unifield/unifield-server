@@ -212,6 +212,9 @@ class O2M(TinyInputWidget):
                 else:
                     sort_key_order = False
 
+                if current.context and not current.context.get('lang') and rpc.session.context and rpc.session.context.get('lang'):
+                    current.context['lang'] =  rpc.session.context['lang']
+
                 ids = rpc.RPCProxy(self.model).search(domain, current.offset, limit, sort_key_order, current.context)
                 id = ids[0] if ids else None
                 current.id = id
