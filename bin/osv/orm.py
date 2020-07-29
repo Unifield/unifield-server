@@ -234,7 +234,7 @@ class browse_record(object):
                             for result_line in field_values:
                                 result_line[field_name] = self._fields_process[field_column._type](result_line[field_name])
                                 if result_line[field_name]:
-                                    result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj)
+                                    result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj, result_line['id'])
 
             if not field_values:
                 # Where did those ids come from? Perhaps old entries in ir_model_dat?
