@@ -172,8 +172,8 @@ class stock_card_wizard(osv.osv_memory):
             domain.extend(['|',
                            ('location_id', '=', location_id),
                            ('location_dest_id', '=', location_id)])
-            inv_dom.append(('location_id', 'child_of', location_id))
-            pi_counting_dom.append(('inventory_id.location_id', 'child_of', location_id))
+            inv_dom.append(('location_id', '=', location_id))
+            pi_counting_dom.append(('inventory_id.location_id', '=', location_id))
         else:
             domain.extend(['|',
                            ('location_id.usage', 'in', location_usage),
