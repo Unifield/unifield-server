@@ -2462,7 +2462,7 @@ class account_subscription(osv.osv):
         models_to_check = set()
         for rec_plan in self.browse(cr, uid, ids, fields_to_fetch=['model_id'], context=context):
             previous_model_id = rec_plan.model_id.id
-            if vals.get('model_id') and vals['model_id'] != previous_model_id:
+            if 'model_id' in vals and vals['model_id'] != previous_model_id:
                 models_to_check.add(previous_model_id)
         res = super(account_subscription, self).write(cr, uid, ids, vals, context=context)
         if models_to_check:
@@ -2511,7 +2511,7 @@ class account_subscription(osv.osv):
         toremove = []
         for sub in self.browse(cr, uid, ids, context=context):
             for line in sub.lines_id:
-                if not line.move_id.id:
+                if not line.move_id:
                     toremove.append(line.id)
         if toremove:
             self.pool.get('account.subscription.line').unlink(cr, uid, toremove)
@@ -2529,7 +2529,7 @@ class account_subscription(osv.osv):
         je_to_delete_ids = []
         for sub in self.browse(cr, uid, ids, fields_to_fetch=['lines_id'], context=context):
             for subline in sub.lines_id:
-                if subline.move_id.state == 'draft':  # draft = Unposted state
+                if subline.move_id and subline.move_id.state == 'draft':  # draft = Unposted state
                     je_to_delete_ids.append(subline.move_id.id)
         je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
         return True
