@@ -352,10 +352,8 @@ class account_model(osv.osv):
         """
         Prevents having 2 models using the same name
         """
-        if context is None:
-            context = {}
-        for model in self.read(cr, uid, ids, ['name'], context=context):
-            if self.search_exist(cr, uid, [('name', '=', model['name']), ('id', '!=', model['id'])], context=context):
+        for model in self.read(cr, uid, ids, ['name']):
+            if self.search_exist(cr, uid, [('name', '=', model['name']), ('id', '!=', model['id'])]):
                 return False
         return True
 

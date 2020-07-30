@@ -2408,9 +2408,7 @@ class account_subscription(osv.osv):
         """
         Prevents negative frequency
         """
-        if context is None:
-            context = {}
-        for plan in self.read(cr, uid, ids, ['period_nbr'], context=context):
+        for plan in self.read(cr, uid, ids, ['period_nbr']):
             if plan['period_nbr'] < 1:
                 return False
         return True
@@ -2419,10 +2417,8 @@ class account_subscription(osv.osv):
         """
         Prevents having 2 rec. plans using the same name
         """
-        if context is None:
-            context = {}
-        for plan in self.read(cr, uid, ids, ['name'], context=context):
-            if self.search_exist(cr, uid, [('name', '=', plan['name']), ('id', '!=', plan['id'])], context=context):
+        for plan in self.read(cr, uid, ids, ['name']):
+            if self.search_exist(cr, uid, [('name', '=', plan['name']), ('id', '!=', plan['id'])]):
                 return False
         return True
 
