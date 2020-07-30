@@ -376,6 +376,7 @@
    <Column ss:AutoFitWidth="0" ss:Width="87.75"/> <!--prod code -->
    <Column ss:AutoFitWidth="0" ss:Width="210.75"/> <!--prod desc -->
    <Column ss:AutoFitWidth="0" ss:Width="63"/> <!-- in list -->
+   <Column ss:AutoFitWidth="0" ss:Width="66"/> <!-- buffer / minmax / auto qty -->
    <Column ss:AutoFitWidth="0" ss:Width="63"/> <!-- real stock -->
    <Column ss:AutoFitWidth="0" ss:Width="66"/> <!--pipeline -->
    <Column ss:AutoFitWidth="0" ss:Width="82.5" /> <!-- eta -->
@@ -492,6 +493,16 @@
     <Cell ss:StyleID="s89"><Data ss:Type="String">${_('Product code')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s89"><Data ss:Type="String">${_('Description')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s90"><Data ss:Type="String">${_('In prod. list')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s90">
+      % if objects[0].rule == 'cycle':
+        <Data ss:Type="String">${_('Buffer')|x}</Data>
+      % elif objects[0].rule == 'minmax':
+        <Data ss:Type="String">${_('Min / Max')|x}</Data>
+      % else:
+        <Data ss:Type="String">${_('Auto. Supply Qty')|x}</Data>
+      %endif
+    <NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s90"><Data ss:Type="String">${_('Valid')}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Real Stock')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Pipeline Qty')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Eta For next Pipeline')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
@@ -526,6 +537,25 @@
     <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.default_code|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.name|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.in_main_list and _('Yes') or _('No')}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s95">
+      % if objects[0].rule == 'cycle':
+        % if prod.buffer_qty is not False:
+            ><Data ss:Type="Number">${prod.buffer_qty}</Data>
+        % else:
+            <Data ss:Type="String"/>
+        % endif
+      % elif objects[0].rule == 'minmax':
+        <Data ss:Type="String">${prod.min_max}</Data>
+      % else:
+        % if prod.auto_qty is not False:
+            <Data ss:Type="Number">${prod.auto_qty}</Data>
+        % else:
+            <Data ss:Type="String"/>
+        % endif
+      %endif
+    <NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/>
+    </Cell>
+    <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.valid_rr_fmc and _('Yes') or _('No') }</Data></Cell>
     <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.real_stock}</Data></Cell>
     <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.pipeline_qty}</Data></Cell>
     <Cell ss:StyleID="s97d">

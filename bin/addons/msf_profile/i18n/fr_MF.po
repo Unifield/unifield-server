@@ -92433,7 +92433,8 @@ msgstr "Letton / latviešu valoda"
 msgid "Show all"
 msgstr "Tout afficher"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, stock
+#: view:stock.picking:0
 #: view:stock.picking:0
 msgid "Show all lines"
 msgstr "Toutes les lignes"
@@ -106496,6 +106497,16 @@ msgstr "Date d'Expédition"
 msgid "Functional total cost :"
 msgstr "Total Coût Fonctionnel :"
 
+#. module: stock
+#: view:stock.picking:0
+msgid "Show available lines"
+msgstr "Afficher les lignes disponibles"
+
+#. module: stock
+#: view:stock.picking:0
+msgid "Show cancelled lines"
+msgstr "Afficher les lignes annulées"
+
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:2629
 #, python-format
@@ -110377,3 +110388,14 @@ msgstr "Statut des plans"
 #: view:account.model:0
 msgid "Related plans"
 msgstr "Plans associés"
+
+#. module: product
+#: view:product.product:0
+msgid "Merge product"
+msgstr "Fusion produit"
+
+#. module: stock
+#: code:addons/stock/stock.py:1813
+#, python-format
+msgid "is dispatched."
+msgstr "est expédié."

@@ -481,6 +481,7 @@
                                 default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_in_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
                                 on_change="onchange_move()"
+                                filter_selector="[('Show available lines', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show all lines', []), ('Show cancelled lines', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 >
                                 <tree
                                     colors="grey:scrapped==True; red: inactive_product == True or to_correct_ok == True"

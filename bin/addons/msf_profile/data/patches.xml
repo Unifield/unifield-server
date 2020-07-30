@@ -560,9 +560,13 @@
             <field name="method">us_7631_set_default_liquidity_accounts</field>
         </record>
 
-        <!-- UF18.0 -->
         <record id="us_7576_sync_msg_from_itself" model="patch.scripts">
             <field name="method">sync_msg_from_itself</field>
+        </record>
+
+        <!-- UF18.0 -->
+        <record id="us_7646_dest_loc_on_pol" model="patch.scripts">
+            <field name="method">us_7646_dest_loc_on_pol</field>
         </record>
 
         <record id="us_6544_no_sync_on_forced_out" model="patch.scripts">
