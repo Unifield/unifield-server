@@ -313,27 +313,35 @@ class automated_import_job(osv.osv):
     def manual_process_import(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
+        data_obj = self.pool.get('ir.model.data')
+
         wiz = self.read(cr, uid, ids[0], ['import_id'], context)
 
         # Background import
-        # TODO: Fix the error display as it not shown from background
-        thread = threading.Thread(target=self.process_import, args=(cr.dbname, uid, wiz['import_id'][0], ids[0], None))
+        thread = threading.Thread(target=self.process_import, args=(cr, uid, wiz['import_id'][0], ids[0], None))
         thread.start()
-        return {'type': 'ir.actions.act_window_close'}
 
-    def process_import(self, dbname, uid, import_id, started_job_id=False, context=None):
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': ids[0],
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'context': context,
+        }
+
+    def process_import(self, cr, uid, import_id, started_job_id=False, context=None):
         """
         First, browse the source path, then select the oldest file and run import on this file.
         After the processing of import, generate a report and move the processed file to the
         processed folder.
-        :param dbname: Name of the database
+        :param cr: Cursor to the database
         :param uid: ID of the res.users that calls this method
         :param ids: List of ID of automated.import.job to process
         :param context: Context of the call
         :return: True
         """
         import_obj = self.pool.get('automated.import')
-        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -341,7 +349,7 @@ class automated_import_job(osv.osv):
         if isinstance(import_id, (int, long)):
             import_id = [import_id]
 
-        new_cr = pooler.get_db(dbname).cursor()
+        new_cr = pooler.get_db(cr.dbname).cursor()
 
         import_data = import_obj.browse(new_cr, uid, import_id[0], context=context)
         no_file = False
@@ -353,11 +361,13 @@ class automated_import_job(osv.osv):
             nb_processed = 0
             if started_job_id:
                 job_id = started_job_id
+                self.write(new_cr, uid, job_id, {'state': 'in_progress'}, context=context)
                 prev_job_id = False
             else:
                 prev_job_id = job_id
                 job_id = self.create(new_cr, uid, {'import_id': import_data.id, 'state': 'in_progress'}, context=context)
-                new_cr.commit() # keep trace of the job in case of error
+            new_cr.commit()  # keep trace of the job in case of error
+
             job = self.browse(new_cr, uid, job_id, context=context)
             started_job_id = False
             md5 = False
@@ -381,6 +391,7 @@ class automated_import_job(osv.osv):
                         msg = e
                     self.write(new_cr, uid, job_id, {'state': 'error', 'end_time': time.strftime('%Y-%m-%d %H:%M:%S'), 'start_time': start_time, 'comment': tools.ustr(msg)}, context=context)
                     new_cr.commit()
+                    new_cr.close(True)
                 raise
 
             try:
@@ -390,6 +401,7 @@ class automated_import_job(osv.osv):
             except osv.except_osv as e:
                 error = tools.ustr(e)
                 no_file = True
+                new_cr.close(True)
                 # In case of manual processing, raise the error
                 if job.file_to_import:
                     raise e
@@ -443,7 +455,7 @@ class automated_import_job(osv.osv):
                             'state': 'done' if no_file else 'error',
                         }, context=context)
                         continue
-                else: # file to import given
+                else:  # file to import given
                     no_file = True
                     if job.import_id.ftp_source_ok:
                         raise osv.except_osv(_('Error'), _('You cannot manually select a file to import if given source path is set on FTP server'))
@@ -455,16 +467,6 @@ class automated_import_job(osv.osv):
                     if job.file_sum != md5:
                         if self.search_exist(new_cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], context=context):
                             self.write(new_cr, uid, [job.id], {'file_sum': md5}, context=context)
-                            return {
-                                'type': 'ir.actions.act_window',
-                                'res_model': self._name,
-                                'res_id': job_id,
-                                'view_type': 'form',
-                                'view_mode': 'form,tree',
-                                'target': 'new',
-                                'view_id': [data_obj.get_object_reference(new_cr, uid, 'msf_tools', 'automated_import_job_file_view')[1]],
-                                'context': context,
-                            }
 
                     oldest_file = os.path.join(job.import_id.src_path, job.filename)
                     filename = job.filename
@@ -565,20 +567,12 @@ class automated_import_job(osv.osv):
                 if orig_file_name:
                     self.end_processing_filename(orig_file_name)
 
+        new_cr.commit()
+        new_cr.close(True)
+
         if 'row' in context:
             # causing LmF when running job manually
             context.pop('row')
-
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': self._name,
-            'res_id': job_id,
-            'view_type': 'form',
-            'view_mode': 'form,tree',
-            'target': 'current',
-            'context': context,
-        }
-
 
     def generate_file_report(self, cr, uid, job_brw, data_lines, headers, rejected=False, ftp_connec=None, sftp=None):
         """
