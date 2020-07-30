@@ -41,7 +41,7 @@ class account_invoice_sync(osv.osv):
             ('open', 'Open'),
             ('paid', 'Paid'),
             ('inv_close', 'Closed'),
-            ('cancel', 'Cancelled'),
+            ('cancel', 'Cancelled'),  # this state isn't synced anymore since US-7136
         ], string='Counterpart Invoice Status', readonly=True),
     }
 
@@ -269,6 +269,7 @@ class account_invoice_sync(osv.osv):
                 if po_ids:
                     po_id = po_ids[0]
             if po_id:
+                vals.update({'main_purchase_id': po_id})
                 po_fields = ['picking_ids', 'analytic_distribution_id', 'order_line', 'name']
                 po = po_obj.browse(cr, uid, po_id, fields_to_fetch=po_fields, context=context)
                 po_number = po.name
@@ -280,6 +281,8 @@ class account_invoice_sync(osv.osv):
                                                        limit=1, context=context)
                 if main_in_ids:
                     main_in = stock_picking_obj.browse(cr, uid, main_in_ids[0], fields_to_fetch=['name'], context=context)
+                    if main_in:
+                        vals.update({'picking_id': main_in.id})
                 # fill in the Analytic Distribution
                 # at header level if applicable
                 po_distrib = po.analytic_distribution_id

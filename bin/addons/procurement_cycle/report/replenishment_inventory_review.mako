@@ -300,6 +300,28 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
   </Style>
+  <Style ss:ID="s141p">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
+    <NumberFormat ss:Format="Percent"/>
+  </Style>
+  <Style ss:ID="s145n">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000" />
+   <NumberFormat ss:Format="Fixed"/>
+  </Style>
   <Style ss:ID="s145">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -889,6 +911,8 @@
    <Row ss:Height="75">
     <Cell ss:StyleID="s128"><Data ss:Type="String">${_('Product Code')|x}</Data></Cell>
     <Cell ss:StyleID="s128"><Data ss:Type="String">${_('Product Description')|x}</Data></Cell>
+    <Cell ss:StyleID="s128"><Data ss:Type="String">${_('RR Lifecycle')|x}</Data></Cell>
+    <Cell ss:StyleID="s128"><Data ss:Type="String">${_('Replaced/Replacing')|x}</Data></Cell>
     <Cell ss:StyleID="s128"><Data ss:Type="String">${_('Primary Product list')|x}</Data></Cell>
     <Cell ss:StyleID="s129red"><Data ss:Type="String">${_('Warnings Recap')|x}</Data></Cell>
     <Cell ss:StyleID="s129"><Data ss:Type="String">${_('Segment Ref/name')|x}</Data></Cell>
@@ -903,9 +927,17 @@
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Order coverage')|x} ${getSel(objects[0], 'time_unit')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('SS')|x} ${getSel(objects[0], 'time_unit')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Buffer (Qty)')|x}</Data></Cell>
-    <Cell ss:StyleID="s129"><Data ss:Type="String">${_('Valid RR-FMC(s)')|x}</Data></Cell>
+    <Cell ss:StyleID="s129"><Data ss:Type="String">${_('Valid')|x}</Data></Cell>
     <Cell ss:StyleID="s129"><Data ss:Type="String">${_('RR-FMC (average for period)')|x}</Data></Cell>
     <Cell ss:StyleID="s130"><Data ss:Type="String">${_('RR-AMC (average for AMC period)')|x}</Data></Cell>
+
+    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Standard Deviation HMC')|x}</Data></Cell>
+    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Coefficient of Variation of HMC')|x}</Data></Cell>
+    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Standard Deviation of HMC vs FMC')|x}</Data></Cell>
+    <Cell ss:StyleID="s130"><Data ss:Type="String">${_('Coefficient of Variant of HMC and FMC')|x}</Data></Cell>
+
+
+
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Real Stock in location(s)')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Pipeline Qty')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Reserved Stock Qty')|x}</Data></Cell>
@@ -914,12 +946,13 @@
     <Cell ss:StyleID="s132"><Data ss:Type="String">${_('Qty of Projected Expiries before consumption')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Qty expiring within period')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Open Loan on product (Yes/No)')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Donations pending (Yes/No)')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Sleeping stock Qty')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${getSel(objects[0], 'time_unit')|x} ${_('of supply (RR-AMC)')|x}</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">${getSel(objects[0], 'time_unit')|x} ${_('of supply (RR-FMC)')|x}</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Qty lacking before next ETA date')|x}</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">${_('Qty lacking before next RDD')|x}</Data></Cell>
     <Cell ss:StyleID="s133"><Data ss:Type="String">${_('Qty lacking needed by')|x}</Data></Cell>
-    <Cell ss:StyleID="s134"><Data ss:Type="String">${_('ETA date of next incoming delivery')|x}</Data></Cell>
+    <Cell ss:StyleID="s134"><Data ss:Type="String">${_('ETA date of next pipeline')|x}</Data></Cell>
     <Cell ss:StyleID="s133"><Data ss:Type="String">${_('Date to start preparing the next order')|x}</Data></Cell>
     <Cell ss:StyleID="s134"><Data ss:Type="String">${_('Next order to be generated/issued by date')|x}</Data></Cell>
     <Cell ss:StyleID="s134"><Data ss:Type="String">${_('RDD for next order')|x}</Data></Cell>
@@ -934,14 +967,16 @@
    <Row ss:AutoFitHeight="0" ss:Height="24">
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.product_id.default_code|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.product_id.name|x}</Data></Cell>
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.segment_ref_name and getSel(line, 'status') or _('N/A')|x}</Data></Cell>
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.paired_product_id and line.paired_product_id.default_code or '')|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.primay_product_list or '')|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.warning or ''|xn}</Data></Cell>
-    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.segment_ref_name|x}</Data></Cell>
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.segment_ref_name or '')|x}</Data></Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.rule=='cycle' and 'PAS' or '')|x}</Data></Cell>
-    <Cell ss:StyleID="s141"><Data ss:Type="String">${getSel(line, 'rule')|x}</Data></Cell>
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${(line.segment_ref_name and getSel(line, 'rule') or '')|x}</Data></Cell>
     % if line.rule == 'minmax':
         <Cell ss:StyleID="s140">
-            % if line.min_qty:
+            % if line.min_qty is not False:
                 <Data ss:Type="Number">${line.min_qty}</Data>
             % endif
         </Cell>
@@ -951,7 +986,7 @@
 
     % if line.rule == 'minmax':
         <Cell ss:StyleID="s140">
-            % if line.max_qty:
+            % if line.max_qty is not False:
                 <Data ss:Type="Number">${line.max_qty}</Data>
             % endif
         </Cell>
@@ -961,7 +996,7 @@
 
     % if line.rule == 'auto':
         <Cell ss:StyleID="s140">
-            % if line.auto_qty:
+            % if line.auto_qty is not False:
                 <Data ss:Type="Number">${line.auto_qty}</Data>
             % endif
         </Cell>
@@ -970,22 +1005,22 @@
     % endif
 
     <Cell ss:StyleID="s140">
-        % if line.internal_lt:
+        % if line.segment_ref_name and line.internal_lt:
             <Data ss:Type="Number">${line.internal_lt}</Data>
         % endif
     </Cell>
     <Cell ss:StyleID="s140">
-        % if line.external_lt:
+        % if line.segment_ref_name and line.external_lt:
             <Data ss:Type="Number">${line.external_lt}</Data>
         % endif
     </Cell>
     <Cell ss:StyleID="s140">
-        % if line.total_lt:
+        % if line.segment_ref_name and line.total_lt:
             <Data ss:Type="Number">${line.total_lt}</Data>
         % endif
     </Cell>
     <Cell ss:StyleID="s140">
-        % if line.order_coverage:
+        % if line.segment_ref_name and line.order_coverage:
             <Data ss:Type="Number">${line.order_coverage}</Data>
         % endif
     </Cell>
@@ -1005,22 +1040,46 @@
         <Cell ss:StyleID="irrel" />
     % endif
 
-    % if line.rule == 'cycle':
-        <Cell ss:StyleID="s141"><Data ss:Type="String">${line.valid_rr_fmc and _('Yes') or _('No') }</Data></Cell>
-    % else:
-        <Cell ss:StyleID="irrel" />
-    % endif
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.valid_rr_fmc and _('Yes') or _('No') }</Data></Cell>
 
     <Cell ss:StyleID="s141">
         % if line.rr_fmc_avg:
             <Data ss:Type="Number">${line.rr_fmc_avg}</Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s145">
+    <Cell ss:StyleID="s145n">
         % if line.rr_amc:
             <Data ss:Type="Number">${line.rr_amc}</Data>
         % endif
     </Cell>
+    
+    <Cell ss:StyleID="s145n">
+        % if line.std_dev_hmc:
+            <Data ss:Type="Number">${line.std_dev_hmc}</Data>
+        % endif
+    </Cell>
+    <Cell ss:StyleID="s141p">
+        % if line.coef_var_hmc:
+            <Data ss:Type="Number">${line.coef_var_hmc/100.}</Data>
+        % endif
+    </Cell>
+    % if line.rule == 'cycle':
+    <Cell ss:StyleID="s145n">
+        % if line.std_dev_hmc_fmc:
+            <Data ss:Type="Number">${line.std_dev_hmc_fmc}</Data>
+        % endif
+    </Cell>
+    <Cell ss:StyleID="s141p">
+        % if line.coef_var_hmc_fmc:
+            <Data ss:Type="Number">${line.coef_var_hmc_fmc/100.}</Data>
+        % endif
+    </Cell>
+    % else:
+        <Cell ss:StyleID="irrel" />
+        <Cell ss:StyleID="irrel" />
+    % endif
+
+
     <Cell ss:StyleID="s141">
         % if line.real_stock:
             <Data ss:Type="Number">${line.real_stock}</Data>
@@ -1042,8 +1101,8 @@
         % endif
     </Cell>
     <Cell ss:StyleID="s141">
-        % if line.projected_stock_qty and line.rule != 'cycle':
-            <Data ss:Type="Number">${line.projected_stock_qty}</Data>
+        % if line.projected_stock_qty_amc and (line.rule == 'cycle' or not line.segment_ref_name):
+            <Data ss:Type="Number">${line.projected_stock_qty_amc}</Data>
         % endif
     </Cell>
     <Cell ss:StyleID="s141">
@@ -1057,17 +1116,18 @@
         % endif
     </Cell>
     <Cell ss:StyleID="s141"><Data ss:Type="String">${line.open_loan and _('Yes') or _('No') }</Data></Cell>
+    <Cell ss:StyleID="s141"><Data ss:Type="String">${line.open_donation and _('Yes') or _('No') }</Data></Cell>
     <Cell ss:StyleID="s141">
         % if line.sleeping_qty:
             <Data ss:Type="Number">${line.sleeping_qty}</Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s141">
+    <Cell ss:StyleID="s145n">
         % if line.unit_of_supply_amc:
             <Data ss:Type="Number">${line.unit_of_supply_amc}</Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s146">
+    <Cell ss:StyleID="s145n">
         % if line.unit_of_supply_fmc:
             <Data ss:Type="Number">${line.unit_of_supply_fmc}</Data>
         % endif

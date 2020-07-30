@@ -219,12 +219,13 @@
       <font color="white"> </font>
     </para>
 
+    <!-- Note: STV is named "Invoice" on purpose (US-6741) -->
     <para style="terp_header">[[ o.is_debit_note == True and translate('Debit Note') or o.is_intermission and translate('Intermission Voucher OUT') or translate('Invoice') ]] [[ o.number ]]
     [[ ((o.type == 'out_invoice' and (o.state in ('open', 'paid', 'inv_close'))) or removeParentNode('para')) and '' ]]</para>
     <para style="terp_header">PRO-FORMA [[ ((o.type == 'out_invoice' and o.state == 'proforma2') or removeParentNode('para')) and '' ]]</para>
     <para style="terp_header">[[ o.is_debit_note == True and translate('Draft Debit Note') or o.is_intermission and translate('Draft Intermission Voucher OUT') or translate('Draft Invoice') ]]
     [[ ((o.type == 'out_invoice' and o.state == 'draft') or removeParentNode('para')) and '' ]]</para>
-    <para style="terp_header">[[ o.is_debit_note == True and translate('Cancelled Debit Note') or translate('Cancelled Invoice') ]] [[ o.number ]]
+    <para style="terp_header">[[ o.is_debit_note == True and translate('Cancelled Debit Note') or o.is_intermission and translate('Cancelled Intermission Voucher OUT') or translate('Cancelled Invoice') ]] [[ o.number or '' ]]
     [[ ((o.type == 'out_invoice' and o.state == 'cancel') or removeParentNode('para')) and '' ]]</para>
     <para style="terp_header">Refund [[ (o.type=='out_refund' or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
     <para style="terp_header">Supplier Refund [[ (o.type=='in_refund' or removeParentNode('para')) and '' ]] [[ o.number ]]</para>
@@ -239,7 +240,7 @@
     <blockTable colWidths="106,106,106,106,106" style="Table_Invoice_General_Header">
       <tr>
         <td>
-          <para style="terp_tblheader_General_Centre">[[ o.is_intermission and translate('I/MI voucher date') or translate('Document Date') ]]</para>
+          <para style="terp_tblheader_General_Centre">Document Date</para>
         </td>
         <td>
           <para style="terp_tblheader_General_Centre">Posting Date</para>

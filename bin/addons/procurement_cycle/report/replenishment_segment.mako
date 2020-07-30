@@ -204,6 +204,16 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
   </Style>
+  <Style ss:ID="s97n">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="Fixed"/>
+  </Style>
   <Style ss:ID="s97u">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
    <Borders>
@@ -385,6 +395,8 @@
     <Cell ss:StyleID="s89"><Data ss:Type="String">${_('Description')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s90"><Data ss:Type="String">${_('In prod. list')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s91"><Data ss:Type="String">${_('RR-Lifecycle')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s91"><Data ss:Type="String">${_('Replacing Product')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s91"><Data ss:Type="String">${_('Replaced Product')|x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s93"><Data ss:Type="String">${_('Real Stock')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s91"><Data ss:Type="String">${_('RR-AMC')|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
     % if objects[0].rule == 'cycle':
@@ -401,7 +413,9 @@
         <% styles = ['s143', 's149'] %>
         % for fmc in range(1, 13):
         <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('RR FMC %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
-        <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('From %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+        % if fmc == 1:
+            <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('From %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
+        % endif
         <Cell ss:StyleID="${styles[i]}"><Data ss:Type="String">${_('To %d')%fmc|x}</Data><NamedCell ss:Name="Print_Titles"/></Cell>
         <% i = 1 - i %>
         % endfor
@@ -414,8 +428,10 @@
     <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.name|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.in_main_list and _('Y') or _('N')}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s97u"><Data ss:Type="String">${getSel(prod, 'status')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s97u"><Data ss:Type="String">${(prod.replacing_product_id and prod.replacing_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s97u"><Data ss:Type="String">${(prod.replaced_product_id and prod.replaced_product_id.default_code or '')|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.real_stock}</Data></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.rr_amc}</Data></Cell>
+    <Cell ss:StyleID="s97n"><Data ss:Type="Number">${prod.rr_amc}</Data></Cell>
     % if objects[0].rule == 'cycle':
         <Cell ss:StyleID="s97u">
         % if prod.buffer_qty is not False:
@@ -441,24 +457,26 @@
                 <Data ss:Type="Number">${getattr(prod, 'rr_fmc_%d'%fmc) or ''}</Data>
             % endif
             </Cell>
-        <% from_date = getattr(prod, 'rr_fmc_from_%d'%fmc) %>
-        <Cell ss:StyleID="${styles[i][1]}">
-         % if isDate(from_date):
-            <Data ss:Type="DateTime">${from_date|n}T00:00:00.000</Data>
-        % else:
-            <Data ss:Type="String"></Data>
-        % endif
-        </Cell>
+            % if fmc == 1:
+                <% from_date = getattr(prod, 'rr_fmc_from_%d'%fmc) %>
+                <Cell ss:StyleID="${styles[i][1]}">
+                 % if isDate(from_date):
+                    <Data ss:Type="DateTime">${from_date|n}T00:00:00.000</Data>
+                % else:
+                    <Data ss:Type="String"></Data>
+                % endif
+                </Cell>
+            % endif
 
-        <% to_date = getattr(prod, 'rr_fmc_to_%d'%fmc) %>
-        <Cell ss:StyleID="${styles[i][1]}">
-         % if isDate(to_date):
-            <Data ss:Type="DateTime">${to_date|n}T00:00:00.000</Data>
-        % else:
-            <Data ss:Type="String"></Data>
-        % endif
-        </Cell>
-        <% i = 1 - i %>
+            <% to_date = getattr(prod, 'rr_fmc_to_%d'%fmc) %>
+            <Cell ss:StyleID="${styles[i][1]}">
+             % if isDate(to_date):
+                <Data ss:Type="DateTime">${to_date|n}T00:00:00.000</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
+            </Cell>
+            <% i = 1 - i %>
         % endfor
     % endif
    </Row>
@@ -520,7 +538,7 @@
     <Range>R9C4:R${len(objects[0].line_ids)+9}C4</Range>
     <Type>List</Type>
     <CellRangeList/>
-    <Value>&quot;${_('Active')|x},${_('New')|x}&quot;</Value>
+    <Value>&quot;${_('Active')|x},${_('New')|x},${_('Replaced')|x},${_('Replacing')|x},${_('Phasing Out')|x},${_('Active-Replacing')|x}&quot;</Value>
   </DataValidation>
 
  </Worksheet>

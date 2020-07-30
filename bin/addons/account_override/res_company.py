@@ -74,6 +74,13 @@ class res_company(osv.osv):
                                                  domain=ACCOUNT_RESTRICTED_AREA['journals']),
         'cash_credit_account_id': fields.many2one('account.account', 'Cash Default Credit Account',
                                                   domain=ACCOUNT_RESTRICTED_AREA['journals']),
+        'has_move_regular_bs_to_0': fields.boolean("Move regular B/S account to 0"),
+        'has_book_pl_results': fields.boolean("Book the P&L results"),
+    }
+
+    _defaults = {
+        'has_move_regular_bs_to_0': False,
+        'has_book_pl_results': False,
     }
 
 

@@ -2410,5 +2410,14 @@ class stock_move(osv.osv):
         return {
             'value': {'integrity_error': 'empty'}
         }
+
+    def open_in_form(self, cr, uid, ids, context=None):
+        move = self.browse(cr, uid, ids[0], fields_to_fetch=['picking_id', 'linked_incoming_move'], context=context)
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_picking_tree4', ['form', 'tree'], new_tab=True, context=context)
+        res['keep_open'] = True
+        res['res_id'] = move.linked_incoming_move and move.linked_incoming_move.picking_id.id or move.picking_id.id
+        return res
+
 stock_move()
 

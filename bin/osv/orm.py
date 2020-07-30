@@ -971,6 +971,7 @@ class orm_template(object):
 
                 # recursive call for getting children and returning [(0,0,{})] or [(1,ID,{})]
                 field_type = fields_def[field[len(prefix)]]['type']
+                with_null = fields_def[field[len(prefix)]].get('with_null')
                 if field_type not in ('one2many', 'many2one', 'many2many',
                                       'integer', 'boolean', 'float', 'selection',
                                       'reference'):
@@ -1082,7 +1083,10 @@ class orm_template(object):
                     else:
                         res = 0
 
-                row[field[len(prefix)]] = res or False
+                if with_null and not res and res is not None and res is not False:
+                    row[field[len(prefix)]] = res
+                else:
+                    row[field[len(prefix)]] = res or False
 
             result = (row, nbrmax, warning, data_res_id, xml_id)
             return result
@@ -2113,13 +2117,16 @@ class orm_template(object):
         '''
         return self.search(cr, user, args, offset, limit, order, context, count)
 
-    def search_exist(self, cr, user, args, context=None):
+    def search_exists(self, cr, user, args, context=None):
         """
         return True if there is at least one element matching the criterions,
         False otherwise.
         """
         return bool(self.search(cr, user, args, context=context,
                                 limit=1, order='NO_ORDER'))
+
+    def search_exist(self, cr, user, args, context=None):
+        return self.search_exists(cr, user, args, context=context)
 
     def search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
         """
@@ -2399,6 +2406,7 @@ class orm_memory(orm_template):
             return True
         tounlink = []
 
+        logger = logging.getLogger('memory.vacuum')
         # Age-based expiration
         if self._max_hours:
             max = time.time() - self._max_hours * 60 * 60
@@ -2406,13 +2414,18 @@ class orm_memory(orm_template):
                 if v['internal.date_access'] < max:
                     tounlink.append(k)
             self.unlink(cr, 1, tounlink)
+            if tounlink:
+                logger.info('delete %d %s based on age' % (len(tounlink), self._name))
 
         # Count-based expiration
         if self._max_count and len(self.datas) > self._max_count:
             # sort by access time to remove only the first/oldest ones in LRU fashion
             records = self.datas.items()
             records.sort(key=lambda x:x[1]['internal.date_access'])
-            self.unlink(cr, 1, [x[0] for x in records[:len(self.datas)-self._max_count]])
+            tounlink = [x[0] for x in records[:len(self.datas)-self._max_count]]
+            self.unlink(cr, 1, tounlink)
+            if tounlink:
+                logger.info('delete %d %s based on count' % (len(tounlink), self._name))
 
         return True
 

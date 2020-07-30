@@ -141,7 +141,7 @@ class account_bank_statement(osv.osv):
         'deleted_line_ids': fields.one2many('account.bank.statement.line.deleted', 'statement_id', 'Statement lines'),
         'move_line_ids': fields.one2many('account.move.line', 'statement_id',
                                          'Entry lines', states={'confirm':[('readonly',True)]}),
-        'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')),
+        'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('confirm', 'Closed')),
                                   readonly="True", string='State'),
         'currency': fields.function(_currency, method=True, string='Currency',
                                     type='many2one', relation='res.currency'),

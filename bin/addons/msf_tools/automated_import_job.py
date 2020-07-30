@@ -501,7 +501,7 @@ class automated_import_job(osv.osv):
                     self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (import_data.name, len(processed), nb_rejected))
 
                     if import_data.function_id.model_id.model == 'purchase.order':
-                        po_id = self.pool.get('purchase.order').get_po_id_from_file(cr, uid, oldest_file, context=context)
+                        po_id = context.get('po_id', False) or self.pool.get('purchase.order').get_po_id_from_file(cr, uid, oldest_file, context=context) or False
                         if po_id and (nb_processed or nb_rejected):
                             po_name = self.pool.get('purchase.order').read(cr, uid, po_id, ['name'], context=context)['name']
                             nb_total_pol = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', po_id)], count=True, context=context)

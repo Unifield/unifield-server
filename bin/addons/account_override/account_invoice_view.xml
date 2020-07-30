@@ -152,6 +152,7 @@
                     <xpath expr="/search/group[1]/filter[@name='unpaid']" position="after">
                         <filter name="paid" icon="terp-dolar" string="Paid" domain="[('state', '=', 'paid')]"/>
                         <filter name="closed" icon="terp-dialog-close" string="Closed" domain="[('state', '=', 'inv_close')]" />
+                        <filter name="cancel_state" icon="terp-gtk-stop" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
                         <separator orientation="vertical"/>
                             <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not')]"/>
                             <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
@@ -457,7 +458,7 @@
             <field name="priority">21</field>
             <field name="arch" type="xml">
                 <tree string="Intermission Voucher" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
-                    <field name="document_date" string="I/MI voucher date"/>
+                    <field name="document_date"/>
                     <field name="date_invoice"/>
                     <field name="number"/>
                     <field name="partner_id"/>
@@ -478,7 +479,7 @@
             <field name="type">form</field>
             <field name="priority">64</field>
             <field name="arch" type="xml">
-                <form string="Intermission Voucher">
+                <form string="Intermission Voucher" noteditable="state=='cancel'">
                     <group colspan="4" col="8">
                         <field name="fake_journal_id" domain="[('is_current_instance','=',True)]" />
                         <field name="journal_type" invisible="1"/>
@@ -508,7 +509,7 @@
                                                     '&amp;', ('type', '=', 'out_invoice'), ('from_supply', '=', True)]}"/>
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" string="Partner address"/>
                         <newline/>
-                        <field name="document_date" string="I/MI voucher date" />
+                        <field name="document_date"/>
                         <field name="date_invoice"/>
                         <newline/>
                         <group colspan="8" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
@@ -528,8 +529,12 @@
                             <field name="name" string="Reference"
                                    attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('from_supply', '=', True)]}"/>
                             <newline/>
-                            <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                                <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object"
+                            <group name="import" string=" Import Lines " colspan="4" col="4">
+                                <button name="import_invoice" string="Import Invoice" icon="gtk-execute" colspan="2" type="object"
+                                        attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                                <button name="export_invoice" string="Export Invoice" icon="gtk-execute" colspan="2" type="object"
+                                        force_editable="1"/>
+                                <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
                                         attrs="{'invisible': [('state', '!=', 'draft')],
                                                 'readonly': ['|',
                                                              ('from_supply', '=', True),
@@ -629,7 +634,24 @@
                                 <field name="amount_total"/>
                             </group>
                             <group col="6" colspan="4" states="draft">
-                                <label string=""/>
+
+                                <group attrs="{'invisible': [('type', '=', 'out_invoice')]}">
+                                    <!-- in IVI shift the "Validate button" right -->
+                                    <label string=""/>
+                                </group>
+
+                                <button string="Cancel document" name="invoice_cancel"
+                                        confirm="Do you really want to cancel this document?"
+                                        type="workflow" icon="gtk-cancel"
+                                        attrs="{'invisible': ['|', '|',
+                                                              ('state', '!=', 'draft'),
+                                                              ('type', '!=', 'out_invoice'),
+                                                              ('from_supply', '=', False)]}"/>
+
+                                <button name="button_split_invoice" type="object" string="Split Intermission Voucher OUT"
+                                        icon="gtk-cut"
+                                        attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}"/>
+
                                 <!-- add a confirmation step only for IVOs when "synced" isn't selected -->
                                 <button name="invoice_open" type="object" string="Validate"
                                         icon="gtk-go-forward"
@@ -728,8 +750,16 @@
                     <button name="button_reset_taxes" position="replace"/>
                     <button name="invoice_proforma2" position="replace"/>
                     <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='invoice_line']" position="before" >
-                        <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object"
+                        <group name="import" string=" Import Lines " colspan="4" col="4"
+                               attrs="{'invisible': [('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}">
+                            <button name="import_invoice" string="Import Invoice" icon="gtk-execute" colspan="2" type="object"
+                                    attrs="{'readonly': [('state', '!=', 'draft')],
+                                            'invisible': [('type', '!=', 'out_invoice')]}"/>
+                            <button name="export_invoice" string="Export Invoice" icon="gtk-execute" colspan="2" type="object"
+                                    attrs="{'invisible': [('type', '!=', 'out_invoice')]}"
+                                    force_editable="1"/>
+                            <newline/>
+                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
                                     attrs="{'invisible': [('state', '!=', 'draft')],
                                             'readonly': [('type', '=', 'out_invoice'),
                                                          ('from_supply', '=', True),
@@ -748,6 +778,20 @@
                         </group>
                         <field name="partner_type" invisible="1"/>
                         <group col="8" colspan="4">
+
+                            <button string="Cancel document" name="invoice_cancel"
+                                    type="workflow" icon="gtk-cancel"
+                                    confirm="Do you really want to cancel this document?"
+                                    attrs="{'invisible': ['|', '|',
+                                                          ('state', '!=', 'draft'),
+                                                          ('type', '!=', 'out_invoice'),
+                                                          ('from_supply', '=', False)]}"/>
+
+                            <button name="button_split_invoice" type="object" string="Split Stock Transfer Voucher"
+                                    icon="gtk-cut"
+                                    context="{'from_stv': True}"
+                                    attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('type', '!=', 'out_invoice')]}"/>
+
                             <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
                             <!-- add a confirmation step only for STV (not for Customer Refunds)
                                  when the partner type is compatible with a synchro but "synced" isn't ticked -->
@@ -890,7 +934,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]</field>
-            <field name="context">{'type':'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out'}</field>
+            <field name="context">{'type':'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
@@ -918,7 +962,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field name="view_id" ref="view_intermission_form"/>
             <field name="domain">[('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]</field>
-            <field name="context">{'type':'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in'}</field>
+            <field name="context">{'type':'in_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'in', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
         </record>
 
@@ -946,7 +990,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', False)]</field>
-            <field name="context">{'type':'out_invoice', 'journal_type': 'sale'}</field>
+            <field name="context">{'type':'out_invoice', 'journal_type': 'sale', 'from_inv_form': True}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
             <field name="help">With Customer Invoices you can create and manage sales invoices issued to your customers. OpenERP can also generate draft invoices automatically from sales orders or deliveries. You should only confirm them before sending them to your customers.</field>
         </record>

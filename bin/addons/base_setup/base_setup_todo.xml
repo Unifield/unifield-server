@@ -33,7 +33,6 @@
                     <field name="phone"/>
                     <field name="email"/>
                     <field name="account_no"/>
-                    <field name="currency" widget="selection"/>
                 </group>
                 <newline/>
                 <group colspan="2">

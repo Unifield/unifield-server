@@ -13,6 +13,7 @@ import sys
 import shutil
 from hashlib import md5
 from datetime import datetime
+import time
 from base64 import b64decode
 from StringIO import StringIO
 import logging
@@ -464,12 +465,26 @@ def do_prepare(cr, revision_ids):
             corrupt.append(rev)
         elif not (corrupt or missing):
             # Extract the Zip
+            delete_file = os.path.join(path, 'delete.txt')
+            tmp_del = False
+            if os.path.exists(delete_file):
+                tmp_del = os.path.join(path, 'delete-%s' % time.time())
+                os.rename(delete_file, tmp_del)
             f = StringIO(patch)
             try:
                 zip = ZipFile(f, 'r')
                 zip.extractall(path)
             finally:
                 f.close()
+            if tmp_del:
+                if os.path.exists(delete_file):
+                    with open(tmp_del, 'a') as prev:
+                        prev.write('\n')
+                        with open(delete_file) as newdel:
+                            prev.write(newdel.read())
+                    os.remove(delete_file)
+                os.rename(tmp_del, delete_file)
+
             # Store to list of updates
             new_revisions.append((rev.sum, ("%s %s" % (rev.date, rev.name))))
             if rev.state == 'not-installed':
