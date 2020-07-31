@@ -2531,7 +2531,8 @@ class account_subscription(osv.osv):
             for subline in sub.lines_id:
                 if subline.move_id and subline.move_id.state == 'draft':  # draft = Unposted state
                     je_to_delete_ids.append(subline.move_id.id)
-        je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
+        if je_to_delete_ids:
+            je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
         return True
 
     def get_dates_to_create(self, cr, uid, subscription_id, context=None):
