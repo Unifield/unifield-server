@@ -2568,7 +2568,7 @@ class account_subscription(osv.osv):
             context = {}
         for sub in self.browse(cr, uid, ids, context=context):
             if sub.state == 'running':
-                # first remove existing unposted lines
+                # first remove existing lines without JE
                 self.remove_line(cr, uid, ids, context=context)
             if sub.model_id and sub.model_id.has_any_bad_ad_line_exp_in:
                 # UFTP-103: block compute if recurring model has line with
