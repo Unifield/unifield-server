@@ -31,7 +31,7 @@ import sys
 import os
 import math
 import hashlib
-
+import time
 from random import random
 
 from psycopg2 import OperationalError
@@ -492,7 +492,7 @@ class Entity(osv.osv):
         'max_update' : fields.integer('Max Update Sequence', readonly=True),
         'message_to_send' : fields.function(_get_nb_message_send, method=True, string='Nb message to send', type='integer', readonly=True),
         'update_to_send' : fields.function(_get_nb_update_send, method=True, string='Nb update to send', type='integer', readonly=True),
-
+        'previous_hw': fields.char('Last HW successfully used', size=128, select=True),
         # used to determine which sync rules to use
         # UF-2531: moved this from the RW module to the general sync module
         'usb_instance_type': fields.selection((('',''),('central_platform','Central Platform'),('remote_warehouse','Remote Warehouse')), string='USB Instance Type'),
@@ -553,7 +553,8 @@ class Entity(osv.osv):
         else:
             rule_module = self.pool.get('sync.client.rule')
             model_field_name = 'model'
-        obj_ids = rule_module.search(cr, uid, [('active', '=', True)])
+        # TODO JFB RR: remove USB rules from sync / instances
+        obj_ids = rule_module.search(cr, uid, [('active', '=', True), ('type', '!=', 'USB')])
         for obj in rule_module.read(cr, uid, obj_ids, [model_field_name, 'included_fields']):
             if obj[model_field_name] not in model_field_dict:
                 model_field_dict[obj[model_field_name]] = set()
@@ -762,6 +763,8 @@ class Entity(osv.osv):
         res = proxy.get_model_to_sync(entity.identifier, self._hardware_id)
         if not res[0]:
             raise Exception, res[1]
+
+        entity.write({'previous_hw': self._hardware_id}, context=context)
         check_md5(res[2], res[1], _('method set_rules'))
         self.pool.get('sync.client.rule').save(cr, uid, res[1], context=context)
 
@@ -1248,31 +1251,71 @@ class Entity(osv.osv):
         self._logger.info("Start synchronization")
 
         version_instance_module = self.pool.get('sync.version.instance.monitor')
+        version_data = {}
         try:
             version = self.pool.get('backup.config').get_server_version(cr, uid, context=context)
             postgres_disk_space = version_instance_module._get_default_postgresql_disk_space(cr, uid)
             unifield_disk_space = version_instance_module._get_default_unifield_disk_space(cr, uid)
-            version_instance_module.create(cr, uid, {
+            version_data = {
                 'version': version,
                 'postgresql_disk_space': postgres_disk_space,
                 'unifield_disk_space': unifield_disk_space,
-            }, context=context)
+            }
+
 
         except Exception:
             cr.rollback()
             logging.getLogger('version.instance.monitor').exception('Cannot generate instance monitor data')
             # do not block sync
             pass
+
+        try:
+            # list VI jobs
+            job_details = []
+            nb_late = 0
+            now = time.strftime('%Y-%m-%d %H:%M:%S')
+
+            dt_format = '%d/%b/%Y %H:%M'
+            for auto_job in ['automated.export', 'automated.import']:
+                job_obj = self.pool.get(auto_job)
+                job_ids = job_obj.search(cr, uid, [('active', '=', True), ('cron_id', '!=', False)], context=context)
+                if job_ids:
+                    end_time_by_job = {}
+                    job_field = "%s_id" % auto_job.split('.')[-1]
+                    cr.execute("select "+job_field+", max(end_time) from "+auto_job.replace('.', '_')+"_job where "+job_field+" in %s and state in ('done', 'error') group by "+job_field, (tuple(job_ids), )) # not_a_user_entry
+                    for end in cr.fetchall():
+                        end_time_by_job[end[0]] = end[1] and time.strftime(dt_format, time.strptime(end[1], '%Y-%m-%d %H:%M:%S'))
+
+                    for job in job_obj.browse(cr, uid, job_ids, fields_to_fetch=['name', 'cron_id', 'last_exec'], context=context):
+                        if job.cron_id.nextcall < now:
+                            nb_late += 1
+                            job_name = '%s*' % job.name
+                        else:
+                            job_name = job.name
+
+                        job_details.append('%s: %s' % (job_name, end_time_by_job.get(job.id, 'never')))
+
+            version_data['nb_late_vi'] = nb_late
+            version_data['vi_details'] = "\n".join(job_details)
+            version_instance_module.create(cr, uid, version_data, context=context)
+        except Exception:
+            cr.rollback()
+            logging.getLogger('version.instance.monitor').exception('Cannot generate instance monitor data')
         self.check_user_rights(cr, uid, context=context)
         self.set_rules(cr, uid, context=context)
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
         self.push_update(cr, uid, context=context)
         self.push_message(cr, uid, context=context)
-        self._logger.info("Synchronization succesfully done")
+        nb_msg_not_run = self.pool.get('sync.client.message_received').search(cr, uid, [('run', '=', False)], count=True)
+        nb_data_not_run = self.pool.get('sync.client.update_received').search(cr, uid, [('run', '=', False)], count=True)
         if logger:
-            logger.info['nb_msg_not_run'] = self.pool.get('sync.client.message_received').search(cr, uid, [('run', '=', False)], count=True)
-            logger.info['nb_data_not_run'] = self.pool.get('sync.client.update_received').search(cr, uid, [('run', '=', False)], count=True)
+            logger.info['nb_msg_not_run'] = nb_msg_not_run
+            logger.info['nb_data_not_run'] = nb_data_not_run
+
+        self._logger.info('Not run updates : %d' % (nb_data_not_run, ))
+        self._logger.info('Not run messages : %d' % (nb_msg_not_run, ))
+        self._logger.info("Synchronization successfully done")
         return True
 
     @sync_process()
@@ -1324,19 +1367,19 @@ class Entity(osv.osv):
         if not connection_obj.is_connected:
             login, password = connection_obj._info_connection_from_config_file(cr)
             if login == -1 or not login or not password:
-                return "Not Connected"
+                return _("Not Connected")
 
         if self.is_syncing():
             if self.aborting:
-                return "Aborting..."
-            return "Syncing..."
+                return _("Aborting...")
+            return _("Syncing...")
 
         monitor = self.pool.get("sync.monitor")
         last_log = monitor.last_status
         if last_log:
-            return "Last Sync: %s at %s, Not run upd: %s, Not run msg: %s" \
+            return _("Last Sync: %s at %s, Not run upd: %s, Not run msg: %s") \
                 % (_(monitor.status_dict[last_log[0]]), last_log[1], last_log[2], last_log[3])
-        return "Connected"
+        return _("Connected")
 
     def update_nb_shortcut_used(self, cr, uid, nb_shortcut_used, context=None):
         '''
@@ -1533,6 +1576,8 @@ class Connection(osv.osv):
 
         if date is None:
             date = datetime.today()
+        if isinstance(date, basestring):
+            date = datetime.strptime(date, '%Y-%m-%d %H:%M')
 
         if not hour_from:
             hour_from = connection.automatic_patching_hour_from

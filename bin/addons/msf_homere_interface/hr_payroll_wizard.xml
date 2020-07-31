@@ -108,13 +108,23 @@
             <field name="arch" type="xml">
                 <form string="Import Confirmation">
                     <field name="filename" attrs="{'invisible': [('filename', '=', False)]}"/>
+                    <field name="nberrors" invisible="1"/>
+                    <field name="from" invisible="1"/>
                     <group colspan="4" col="8">
                         <field name="total" attrs="{'invisible': [('state', 'in', ['none', 'payroll'])]}"/>
                         <field name="created" attrs="{'invisible': [('state', '=', 'none')]}"/>
                         <field name="updated" invisible="context.get('from', False) not in ['expat_employee_import', 'employee_import']"/>
                         <field name="rejected" invisible="context.get('from', False) != 'employee_import'"/>
                     </group>
-                    <field name="error_line_ids" nolabel="1" colspan="4" attrs="{'invisible': [('nberrors', '=', 0)]}">
+                    <group colspan="4" attrs="{'invisible': ['|', ('nberrors', '=', 0), ('from', '!=', 'employee_import')]}">
+                        <html>
+                            <p id="label_import_employee_fail"
+                               style="text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                                <translate>The import of the file failed!</translate>
+                            </p>
+                        </html>
+                    </group>
+                    <field name="error_line_ids" nolabel="1" colspan="4">
                         <tree string="Error List">
                             <field name="msg"/>
                         </tree>
@@ -194,7 +204,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Import Expats">
-                  <label string="This wizard will import an Expat employees file in XML Spreadsheet 2003 format. To generate this file, create a Speadsheet with 3 columns: 'Name' , 'Code' and 'Active'." colspan="4"/>
+                  <label string="This wizard will import an Expat employees file in XML Spreadsheet 2003 format. To generate this file, create a Spreadsheet with 4 columns: 'Name' , 'Code', 'Status' and 'Contract End Date' (optional)." colspan="4"/>
                     <newline/>
                     <field name="file" filename="filename"/>
                     <field name="filename" invisible="1"/>

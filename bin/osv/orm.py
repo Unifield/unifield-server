@@ -367,6 +367,7 @@ def get_pg_type(f):
     type_dict = {
         fields.boolean: 'bool',
         fields.integer: 'int4',
+        fields.integer_null: 'int4',
         fields.integer_big: 'int8',
         fields.text: 'text',
         fields.date: 'date',
@@ -458,7 +459,7 @@ class orm_template(object):
         """Override this method to do specific things when a view on the object is opened."""
         pass
 
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, count=False):
         raise NotImplementedError(_('The read_group method is not implemented on this object !'))
 
     def _field_create(self, cr, context=None):
@@ -713,7 +714,7 @@ class orm_template(object):
                                 break
                         done.append(fields2)
 
-                        if sync_context and cols and cols._type=='many2many' and len(fields[fpos])>(i+1) and (fields[fpos][i+1]=='id'):
+                        if sync_context and cols and cols._type in ('many2many', 'one2many') and len(fields[fpos])>(i+1) and (fields[fpos][i+1]=='id'):
                             data[fpos] = ','.join([_get_xml_id(self, cr, uid, x) for x in r])
                             break
 
@@ -809,7 +810,7 @@ class orm_template(object):
         processed, rejected, headers = import_obj._import(cr, uid, import_id, use_new_cursor=False, auto_import=True)
         return processed, rejected, headers
 
-    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=',', context=None):
+    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=',', context=None, with_commit=True):
         headers = []
         list_data = []
         with open(csv_file, 'r') as fcsv:
@@ -831,10 +832,12 @@ class orm_template(object):
                     rejected.append((i, d, res[2]))
                 else:
                     processed.append((i, d))
-                cr.commit()
+                if with_commit:
+                    cr.commit()
             except Exception as e:
                 rejected.append((i, d, tools.ustr(e)))
-                cr.commit()
+                if with_commit:
+                    cr.commit()
 
         return processed, rejected, headers
 
@@ -968,6 +971,7 @@ class orm_template(object):
 
                 # recursive call for getting children and returning [(0,0,{})] or [(1,ID,{})]
                 field_type = fields_def[field[len(prefix)]]['type']
+                with_null = fields_def[field[len(prefix)]].get('with_null')
                 if field_type not in ('one2many', 'many2one', 'many2many',
                                       'integer', 'boolean', 'float', 'selection',
                                       'reference'):
@@ -982,22 +986,35 @@ class orm_template(object):
                     if field[len(prefix)] in done:
                         continue
                     done[field[len(prefix)]] = True
-                    relation_obj = self.pool.get(fields_def[field[len(prefix)]]['relation'])
+                    relation = fields_def[field[len(prefix)]]['relation']
+                    relation_obj = self.pool.get(relation)
                     newfd = relation_obj.fields_get( cr, uid, context=context )
                     pos = position
                     res = []
                     first = 0
-                    while pos < len(datas):
-                        res2 = process_liness(self, datas, prefix + [field[len(prefix)]], current_module, relation_obj._name, newfd, pos, first)
-                        if not res2:
-                            break
-                        (newrow, pos, w2, data_res_id2, xml_id2) = res2
-                        nbrmax = max(nbrmax, pos)
-                        warning += w2
-                        first += 1
-                        if (not newrow) or not reduce(lambda x, y: x or y, newrow.values(), 0):
-                            break
-                        res.append( (data_res_id2 and 1 or 0, data_res_id2 or 0, newrow) )
+                    if context.get('sync_update_execution'):
+                        res2 = []
+                        if len(field) == len(prefix)+1:
+                            mode = False
+                        else:
+                            mode = field[len(prefix)+1]
+                        if value:
+                            for db_id in value.split(config.get('csv_internal_sep')) or []:
+                                res2.append( _get_id(relation, db_id, current_module, mode, context=context))
+                        res = [(6, 0, res2)]
+                    else:
+                        while pos < len(datas):
+                            res2 = process_liness(self, datas, prefix + [field[len(prefix)]], current_module, relation_obj._name, newfd, pos, first)
+                            print res2
+                            if not res2:
+                                break
+                            (newrow, pos, w2, data_res_id2, xml_id2) = res2
+                            nbrmax = max(nbrmax, pos)
+                            warning += w2
+                            first += 1
+                            if (not newrow) or not reduce(lambda x, y: x or y, newrow.values(), 0):
+                                break
+                            res.append( (data_res_id2 and 1 or 0, data_res_id2 or 0, newrow) )
 
                 elif field_type=='many2one':
                     relation = fields_def[field[len(prefix)]]['relation']
@@ -1066,7 +1083,10 @@ class orm_template(object):
                     else:
                         res = 0
 
-                row[field[len(prefix)]] = res or False
+                if with_null and not res and res is not None and res is not False:
+                    row[field[len(prefix)]] = res
+                else:
+                    row[field[len(prefix)]] = res or False
 
             result = (row, nbrmax, warning, data_res_id, xml_id)
             return result
@@ -1347,6 +1367,10 @@ class orm_template(object):
                 if allfields and f not in allfields:
                     continue
                 res[f] = {'type': field_col._type}
+                if hasattr(field_col, '_with_null') and field_col._with_null:
+                    res[f]['with_null'] = True
+                if hasattr(field_col, 'null_value') and field_col.null_value:
+                    res[f]['null_value'] = field_col.null_value
                 # This additional attributes for M2M and function field is added
                 # because we need to display tooltip with this additional information
                 # when client is started in debug mode.
@@ -1572,7 +1596,7 @@ class orm_template(object):
             if node.get('filter_selector'):
                 try:
                     filter_eval = eval(node.get('filter_selector'))
-                    if filter_eval:
+                    if filter_eval and isinstance(filter_eval, list):
                         trans_filter_eval = []
                         for x in filter_eval:
                             trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])
@@ -1750,6 +1774,7 @@ class orm_template(object):
         if context is None:
             context = {}
 
+        view_id_orig = view_id
         def encode(s):
             if isinstance(s, unicode):
                 return s.encode('utf8')
@@ -1856,6 +1881,7 @@ class orm_template(object):
         is_inherited_view = True
         sql_res = False
         parent_view_model = None
+        view_id_kept = False
         while is_inherited_view:
             view_ref = context.get(view_type + '_view_ref', False)
             if view_ref and not view_id:
@@ -1867,7 +1893,7 @@ class orm_template(object):
                         view_id = view_ref_res[0]
 
             if view_id:
-                query = "SELECT arch,name,field_parent,id,type,inherit_id,model FROM ir_ui_view WHERE id=%s"
+                query = "SELECT arch,name,field_parent,id,type,inherit_id,model, duplicate_view_id, title_field FROM ir_ui_view WHERE id=%s"
                 params = (view_id,)
                 if model:
                     query += " AND model = %s"
@@ -1875,7 +1901,7 @@ class orm_template(object):
                 cr.execute(query, params)
             else:
                 cr.execute('''SELECT
-                        arch,name,field_parent,id,type,inherit_id,model
+                        arch,name,field_parent,id,type,inherit_id,model, 'f', title_field
                     FROM
                         ir_ui_view
                     WHERE
@@ -1891,17 +1917,24 @@ class orm_template(object):
             view_id = is_inherited_view or sql_res[3]
             model = False
             parent_view_model = sql_res[6]
+            if sql_res[7] and view_id_orig:
+                view_id_kept = view_id_orig
+                is_inherited_view = True
+                view_id = sql_res[7]
+            # use view_id_orig only on 1st loop
+            view_id_orig = False
 
         # if a view was found
         if sql_res:
             result['type'] = sql_res[4]
-            result['view_id'] = sql_res[3]
+            result['view_id'] = view_id_kept or sql_res[3]
             result['arch'] = sql_res[0]
+            result['title_field'] = sql_res[8]
 
             # Reverse the search on models to apply view inheritance in a good way
             def _inherit_apply_rec(result, inherit_id):
                 # get all views which inherit from (ie modify) this view
-                cr.execute('select arch,id from ir_ui_view where inherit_id=%s and model = %s order by priority', (inherit_id, self._name))
+                cr.execute('select arch, id from ir_ui_view where inherit_id=%s and model = %s order by priority', (inherit_id, self._name))
                 sql_inherit = cr.fetchall()
                 for (inherit, id) in sql_inherit:
                     result = _inherit_apply(result, inherit, id)
@@ -1910,7 +1943,6 @@ class orm_template(object):
 
             inherit_result = etree.fromstring(encode(result['arch']))
             result['arch'] = _inherit_apply_rec(inherit_result, sql_res[3])
-
             result['name'] = sql_res[1]
             result['field_parent'] = sql_res[2] or False
         else:
@@ -1982,14 +2014,14 @@ class orm_template(object):
             ir_values_obj = self.pool.get('ir.values')
             resprint = ir_values_obj.get(cr, user, 'action',
                                          'client_print_multi', [(self._name, False)], False,
-                                         context, view_id=view_id)
+                                         context, view_id=view_id_kept or view_id)
             resaction = ir_values_obj.get(cr, user, 'action',
                                           'client_action_multi', [(self._name, False)], False,
-                                          context, view_id=view_id)
+                                          context, view_id=view_id_kept or view_id)
 
             resrelate = ir_values_obj.get(cr, user, 'action',
                                           'client_action_relate', [(self._name, False)], False,
-                                          context, view_id=view_id)
+                                          context, view_id=view_id_kept or view_id)
             resprint = map(clean, resprint)
             resaction = map(clean, resaction)
             resaction = filter(lambda x: not x.get('multi', False), resaction)
@@ -2085,13 +2117,16 @@ class orm_template(object):
         '''
         return self.search(cr, user, args, offset, limit, order, context, count)
 
-    def search_exist(self, cr, user, args, context=None):
+    def search_exists(self, cr, user, args, context=None):
         """
         return True if there is at least one element matching the criterions,
         False otherwise.
         """
         return bool(self.search(cr, user, args, context=context,
                                 limit=1, order='NO_ORDER'))
+
+    def search_exist(self, cr, user, args, context=None):
+        return self.search_exists(cr, user, args, context=context)
 
     def search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
         """
@@ -2371,6 +2406,7 @@ class orm_memory(orm_template):
             return True
         tounlink = []
 
+        logger = logging.getLogger('memory.vacuum')
         # Age-based expiration
         if self._max_hours:
             max = time.time() - self._max_hours * 60 * 60
@@ -2378,13 +2414,18 @@ class orm_memory(orm_template):
                 if v['internal.date_access'] < max:
                     tounlink.append(k)
             self.unlink(cr, 1, tounlink)
+            if tounlink:
+                logger.info('delete %d %s based on age' % (len(tounlink), self._name))
 
         # Count-based expiration
         if self._max_count and len(self.datas) > self._max_count:
             # sort by access time to remove only the first/oldest ones in LRU fashion
             records = self.datas.items()
             records.sort(key=lambda x:x[1]['internal.date_access'])
-            self.unlink(cr, 1, [x[0] for x in records[:len(self.datas)-self._max_count]])
+            tounlink = [x[0] for x in records[:len(self.datas)-self._max_count]]
+            self.unlink(cr, 1, tounlink)
+            if tounlink:
+                logger.info('delete %d %s based on count' % (len(tounlink), self._name))
 
         return True
 
@@ -2711,7 +2752,7 @@ class orm(orm_template):
     _protected = ['read', 'write', 'create', 'default_get', 'perm_read', 'unlink', 'fields_get', 'fields_view_get', 'search', 'name_get', 'distinct_field_get', 'name_search', 'copy', 'import_data', 'search_count', 'exists']
     __logger = logging.getLogger('orm')
     __schema = logging.getLogger('orm.schema')
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, count=False):
         """
         Get the list of records in list view grouped by the given ``groupby`` fields
 
@@ -2759,7 +2800,7 @@ class orm(orm_template):
             assert groupby_def and groupby_def._classic_write, "Fields in 'groupby' must be regular database-persisted fields (no function or related fields), or function fields with store=True"
 
         fget = self.fields_get(cr, uid, fields)
-        float_int_fields = filter(lambda x: fget[x]['type'] in ('float', 'integer'), fields)
+        float_int_fields = filter(lambda x: fget[x]['type'] in ('float', 'integer') or fget[x].get('group_operator'), fields)
         flist = ''
         group_count = group_by = groupby
         if groupby:
@@ -2797,11 +2838,33 @@ class orm(orm_template):
 
         from_clause, where_clause, where_clause_params = query.get_sql()
         where_clause = where_clause and ' WHERE ' + where_clause
+        if count:
+            cr.execute('SELECT count(%s) ' % (qualified_groupby_field,) + ' FROM ' + from_clause + where_clause, where_clause_params)  # not_a_user_entry
+            return cr.fetchone()[0]
+
+        limited_groupby = self._name == 'replenishment.product.list'
+
+        if limited_groupby and not limit:
+            limit = 20
+
         limit_str = limit and ' limit %d' % limit or ''
         offset_str = offset and ' offset %d' % offset or ''
         if len(groupby_list) < 2 and context.get('group_by_no_leaf'):
             group_count = '_'
-        cr.execute('SELECT min(%s.id) AS id, count(%s.id) AS %s_count' % (self._table, self._table, group_count) + (flist and ',') + flist + ' FROM ' + from_clause + where_clause + gb + limit_str + offset_str, where_clause_params)  # not_a_user_entry
+
+        query_orderby = ''
+        if limited_groupby:
+            if gb:
+                gb += ',default_code'
+            if orderby:
+                split_orderby = orderby.split(' ')
+                query_orderby = ' order by default_code '
+                if len(split_orderby) == 2 and split_orderby[1].strip().lower() in ['asc', 'desc']:
+                    query_orderby = '%s %s ' % (query_orderby, split_orderby[1])
+            else:
+                query_orderby = ' order by default_code '
+
+        cr.execute('SELECT min(%s.id) AS id, count(%s.id) AS %s_count' % (self._table, self._table, group_count) + (flist and ',') + flist + ' FROM ' + from_clause + where_clause + gb + query_orderby + limit_str + offset_str, where_clause_params)  # not_a_user_entry
         alldata = {}
         groupby = group_by
         for r in cr.dictfetchall():
@@ -2990,7 +3053,11 @@ class orm(orm_template):
         pass
 
     def _create_fk(self, cr, col_name, field_def, update=False):
-        ref = self.pool.get(field_def._obj)._table
+        try:
+            ref = self.pool.get(field_def._obj)._table
+        except:
+            print field_def._obj
+            raise
         # ir_actions is inherited so foreign key doesn't work on it
         if ref != 'ir_actions':
             to_create = True
@@ -3197,15 +3264,17 @@ class orm(orm_template):
                                 ('timestamp', 'date', 'date', '::date'),
                                 ('numeric', 'float', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                                 ('float8', 'float', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
+                                ('int4', 'integer_big', get_pg_type(f)[1], '::'+get_pg_type(f)[1]),
                             ]
-                            if f_pg_type == 'varchar' and f._type == 'char' and f_pg_size < f.size:
+
+                            if f_pg_type == 'varchar' and f._type in ('char', 'selection') and f_pg_size < f.size:
                                 cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO temp_change_size' % (self._table, k))  # not_a_user_entry
                                 cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" VARCHAR(%d)' % (self._table, k, f.size))  # not_a_user_entry
                                 cr.execute('UPDATE "%s" SET "%s"=temp_change_size::VARCHAR(%d)' % (self._table, k, f.size))  # not_a_user_entry
                                 cr.execute('ALTER TABLE "%s" DROP COLUMN temp_change_size CASCADE' % (self._table,))  # not_a_user_entry
                                 cr.commit()
-                                self.__schema.debug("Table '%s': column '%s' (type varchar) changed size from %s to %s",
-                                                    self._table, k, f_pg_size, f.size)
+                                self.__schema.warn("Table '%s': column '%s' (type varchar) changed size from %s to %s",
+                                                   self._table, k, f_pg_size, f.size)
                             for c in casts:
                                 if (f_pg_type==c[0]) and (f._type==c[1]):
                                     if f_pg_type != f_obj_type:
@@ -3215,8 +3284,8 @@ class orm(orm_template):
                                         cr.execute(('UPDATE "%s" SET "%s"=temp_change_size'+c[3]) % (self._table, k))  # not_a_user_entry
                                         cr.execute('ALTER TABLE "%s" DROP COLUMN temp_change_size CASCADE' % (self._table,))  # not_a_user_entry
                                         cr.commit()
-                                        self.__schema.debug("Table '%s': column '%s' changed type from %s to %s",
-                                                            self._table, k, c[0], c[1])
+                                        self.__schema.warn("Table '%s': column '%s' changed type from %s to %s",
+                                                           self._table, k, c[0], c[1])
                                     break
 
                             if f_pg_type != f_obj_type:
@@ -3236,8 +3305,8 @@ class orm(orm_template):
                                     cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO "%s"' % (self._table, k, newname))  # not_a_user_entry
                                     cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, get_pg_type(f)[1]))  # not_a_user_entry
                                     cr.execute("COMMENT ON COLUMN %s.%s IS '%s'" % (self._table, k, f.string.replace("'", "''")))  # not_a_user_entry
-                                    self.__schema.debug("Table '%s': column '%s' has changed type (DB=%s, def=%s), data moved to column %s !",
-                                                        self._table, k, f_pg_type, f._type, newname)
+                                    self.__schema.warn("Table '%s': column '%s' has changed type (DB=%s, def=%s), data moved to column %s !",
+                                                       self._table, k, f_pg_type, f._type, newname)
                                     to_migrate.append((newname, k))
 
                             # if the field is required and hasn't got a NOT NULL constraint
@@ -4114,7 +4183,7 @@ class orm(orm_template):
                     and vals[field]:
                 self._check_selection_field_value(cr, user, field, vals[field], context=context)
 
-        if self._log_access:
+        if self._log_access and not context.get('no_write_access'):
             upd0_append('write_uid=%s')
             upd0_append('write_date=now()')
 

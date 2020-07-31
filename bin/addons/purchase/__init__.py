@@ -48,6 +48,14 @@ PURCHASE_ORDER_LINE_STATE_SELECTION = [
     ('cancel_r', 'Cancelled-r'),
 ]
 
+PURCHASE_ORDER_LINE_DISPLAY_STATE_SELECTION = PURCHASE_ORDER_LINE_STATE_SELECTION + [
+    ('resourced_v', 'Resourced-v'),
+    ('resourced_pv', 'Resourced-pv'),
+    ('resourced_s', 'Resourced-s'),
+    ('resourced_c', 'Resourced-c'),
+    ('resourced_d', 'Resourced-d'),
+]
+
 PURCHASE_ORDER_STATE_SELECTION = [
     ('draft', 'Draft'),
     ('draft_p', 'Draft-p'),
@@ -80,6 +88,5 @@ import stock
 import wizard
 import report
 import company
-import procurement_order
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

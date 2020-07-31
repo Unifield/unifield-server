@@ -29,13 +29,24 @@ class account_invoice_refund(osv.osv_memory):
 
     _name = "account.invoice.refund"
     _description = "Invoice Refund"
+
+    def _get_filter_refund(self, cr, uid, context=None):
+        """
+        Returns the selectable Refund Types (no simple "Refund" in case of an IVO/IVI)
+        """
+        if context is None:
+            context = {}
+        if context.get('is_intermission', False):
+            return [('modify', 'Modify'), ('cancel', 'Cancel')]
+        return [('modify', 'Modify'), ('refund', 'Refund'), ('cancel', 'Cancel')]
+
     _columns = {
         'date': fields.date('Operation date', help='This date will be used as the invoice date for Refund Invoice and Period will be chosen accordingly!'),
         'period': fields.many2one('account.period', 'Force period'),
         'journal_id': fields.many2one('account.journal', 'Refund Journal', hide_default_menu=True,
                                       help='You can select here the journal to use for the refund invoice that will be created. If you leave that field empty, it will use the same journal as the current invoice.'),
         'description': fields.char('Description', size=128, required=True),
-        'filter_refund': fields.selection([('modify', 'Modify'), ('refund', 'Refund'), ('cancel', 'Cancel')], "Refund Type", required=True, help='Refund invoice base on this type. You can not Modify and Cancel if the invoice is already reconciled'),
+        'filter_refund': fields.selection(_get_filter_refund, "Refund Type", required=True, help='Refund invoice based on this type. You can not Modify and Cancel if the invoice is already reconciled'),
     }
 
     def _get_journal(self, cr, uid, context=None):
@@ -105,13 +116,13 @@ class account_invoice_refund(osv.osv_memory):
     def _get_reconcilable_amls(self, aml_list, to_reconcile_dict):
         """
         Fill in to_reconcile_dict with the aml from aml_list having a reconcilable account
-        (key = account id, value = list of aml ids)
+        key = tuple with (account id, partner_id, is_counterpart)
+        value = list of aml ids
         """
         for ml in aml_list:
             if ml.account_id.reconcile:
-                if ml.account_id.id not in to_reconcile_dict:
-                    to_reconcile_dict[ml.account_id.id] = []
-                to_reconcile_dict[ml.account_id.id].append(ml.id)
+                key = (ml.account_id.id, ml.partner_id and ml.partner_id.id or False, ml.is_counterpart)
+                to_reconcile_dict.setdefault(key, []).append(ml.id)
 
     def compute_refund(self, cr, uid, ids, mode='refund', context=None):
         """
@@ -144,8 +155,20 @@ class account_invoice_refund(osv.osv_memory):
             for inv in inv_obj.browse(cr, uid, invoice_ids, context=context):
                 if inv.state in ['draft', 'proforma2', 'cancel']:
                     raise osv.except_osv(_('Error !'), _('Can not %s draft/proforma/cancel invoice.') % (mode))
+                if mode in ('cancel', 'modify') and not inv.account_id.reconcile:
+                    raise osv.except_osv(_('Error !'), _("Cannot Cancel / Modify if the account can't be reconciled."))
                 if mode in ('cancel', 'modify') and inv_obj.has_one_line_reconciled(cr, uid, [inv.id], context=context):
-                    raise osv.except_osv(_('Error !'), _('Can not %s invoice which is already reconciled, invoice should be unreconciled first. You can only Refund this invoice') % (mode))
+                    if inv.is_intermission:
+                        # error specific to IVO/IVI for which there is no simple refund option
+                        raise osv.except_osv(_('Error !'), _('Cannot %s an Intermission Voucher which is already reconciled, it should be unreconciled first.') % _(mode))
+                    if inv.state == 'inv_close':
+                        raise osv.except_osv(_('Error !'), _('Can not %s invoice which is already reconciled, invoice should be unreconciled first.') % (mode))
+                    else:
+                        raise osv.except_osv(_('Error !'), _('Can not %s invoice which is already reconciled, invoice should be unreconciled first. You can only Refund this invoice') % (mode))
+
+                if mode == 'refund' and inv.state == 'inv_close':
+                    raise osv.except_osv(_('Error !'), _('It is not possible to refund a Closed invoice'))
+
                 if form['period']:
                     period = form['period']
                 else:
@@ -188,8 +211,14 @@ class account_invoice_refund(osv.osv_memory):
                 refund_id = self._hook_create_refund(cr, uid, [inv.id], date, period, description, journal_id, form, context=context)
                 del context['refund_mode']  # ignore it for the remaining process (in particular for the SI created in a refund modify...)
                 refund = inv_obj.browse(cr, uid, refund_id[0], context=context)
+                # for Intermission Vouchers OUT: at standard creation time there is no "check_total" entered manually,
+                # its value is always 0.0 => use the "amount_total" value for the IVI generated so it won't block at validation step
+                if inv.is_intermission and inv.type == 'out_invoice':
+                    check_total = inv.amount_total or 0.0
+                else:
+                    check_total = inv.check_total
                 inv_obj.write(cr, uid, [refund.id], {'date_due': date,
-                                                     'check_total': inv.check_total})
+                                                     'check_total': check_total})
 
                 created_inv.append(refund_id[0])
                 if mode in ('cancel', 'modify'):
@@ -206,14 +235,15 @@ class account_invoice_refund(osv.osv_memory):
                     self._get_reconcilable_amls(movelines, to_reconcile)
                     self._get_reconcilable_amls(refund.move_id.line_id, to_reconcile)
                     # reconcile the lines grouped by account
-                    for account_id in to_reconcile:
-                        account_m_line_obj.reconcile(cr, uid, to_reconcile[account_id],
+                    for account_id, partner_id, is_counterpart in to_reconcile:
+                        account_m_line_obj.reconcile(cr, uid, to_reconcile[(account_id, partner_id, is_counterpart)],
                                                      writeoff_period_id=period,
                                                      writeoff_journal_id = inv.journal_id.id,
                                                      writeoff_acc_id=account_id
                                                      )
                     if mode == 'modify':
                         invoice = inv_obj.read(cr, uid, inv.id, self._hook_fields_for_modify_refund(cr, uid), context=context)
+                        invoice.update({'refunded_invoice_id': invoice['id']})
                         del invoice['id']
                         invoice_lines = inv_line_obj.read(cr, uid, invoice['invoice_line'], context=context)
                         invoice_lines = inv_obj._refund_cleanup_lines(cr, uid, invoice_lines, is_account_inv_line=True, context=context)
@@ -230,6 +260,7 @@ class account_invoice_refund(osv.osv_memory):
                             'period_id': False,
                             'name': description,
                             'origin': source_doc,
+                            'is_intermission': inv.is_intermission,
                         })
                         for field in self._hook_fields_m2o_for_modify_refund(cr, uid):
                             invoice[field] = invoice[field] and invoice[field][0]
@@ -243,8 +274,7 @@ class account_invoice_refund(osv.osv_memory):
                     # Refund cancel/modify: set the invoice JI/AJIs as Corrected by the system so that they can't be
                     # corrected manually. This must be done at the end of the refund process to handle the right AJI ids
                     # get the list of move lines excluding invoice header
-                    ml_list = [ml.id for ml in movelines if not (ml.account_id.id == inv.account_id.id and
-                                                                 abs(abs(inv.amount_total) - abs(ml.amount_currency)) <= 10**-3)]
+                    ml_list = [ml.id for ml in movelines if not ml.is_counterpart]
                     account_m_line_obj.set_as_corrected(cr, uid, ml_list, manual=False, context=None)
                     # all JI lines of the SI and SR (including header) should be not corrigible, no matter if they
                     # are marked as corrected, reversed...
@@ -254,11 +284,19 @@ class account_invoice_refund(osv.osv_memory):
                     # write on JIs without recreating AJIs
                     account_m_line_obj.write(cr, uid, ji_ids, {'is_si_refund': True}, context=context, check=False, update_check=False)
 
-            if inv.type in ('out_invoice', 'out_refund'):
-                xml_id = 'action_invoice_tree3'
+            if context.get('is_intermission', False):
+                module = 'account_override'
+                if inv.type == 'in_invoice':
+                    xml_id = 'action_intermission_out'
+                else:
+                    xml_id = 'action_intermission_in'
             else:
-                xml_id = 'action_invoice_tree4'
-            result = mod_obj.get_object_reference(cr, uid, 'account', xml_id)
+                module = 'account'
+                if inv.type in ('out_invoice', 'out_refund'):
+                    xml_id = 'action_invoice_tree3'
+                else:
+                    xml_id = 'action_invoice_tree4'
+            result = mod_obj.get_object_reference(cr, uid, module, xml_id)
             id = result and result[1] or False
             result = act_obj.read(cr, uid, id, context=context)
             invoice_domain = eval(result['domain'])

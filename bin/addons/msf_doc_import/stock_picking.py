@@ -88,7 +88,7 @@ class stock_picking(osv.osv):
         in_id = self.pool.get('stock.picking').search(cr, uid, [
             ('purchase_id', '=', po_id[0]),
             ('type', '=', 'in'),
-            ('state', '=', 'assigned'),
+            ('state', 'in', ['assigned', 'shipped']),
         ], context=context)
         if not in_id:
             raise osv.except_osv(_('Error'), _('No available IN found for the given PO %s') % po_name)
@@ -204,18 +204,14 @@ class stock_picking(osv.osv):
         root = ET.fromstring(file_content)
         parcel_from = root.findall('.//field[@name="parcel_from"]')
         parcel_to = root.findall('.//field[@name="parcel_to"]')
-        total_weight = root.findall('.//field[@name="total_weight"]')
         if parcel_from:
             parcel_from = parcel_from[0].text or ''
             parcel_from = parcel_from.strip()
         if parcel_to:
             parcel_to = parcel_to[0].text or ''
             parcel_to = parcel_to.strip()
-        if total_weight:
-            total_weight = total_weight[0].text or ''
-            total_weight = total_weight.strip()
 
-        return parcel_from and parcel_to and total_weight and True or False
+        return parcel_from and parcel_to and True or False
 
 
     def auto_import_incoming_shipment(self, cr, uid, file_path, context=None):
@@ -310,7 +306,7 @@ class stock_picking(osv.osv):
 
         pick = self.browse(cr, uid, ids[0], context=context)
         if not pick.filetype:
-            raise osv.except_osv(_('Error'), _('You must select a file type before print the template'))
+            raise osv.except_osv(_('Error'), _('You must select a file type'))
 
         report_name = pick.filetype == 'excel' and 'incoming.shipment.xls' or 'incoming.shipment.xml'
 
@@ -366,6 +362,19 @@ class stock_picking(osv.osv):
                 'target': 'crush',
                 'context': context,
                 }
+
+    def export_ppl(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids,(int,long)):
+            ids = [ids]
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'pre.packing.excel.export',
+            'datas': {'ids': ids},
+            'context': context,
+        }
 
     def wizard_update_ppl_to_create_ship(self, cr, uid, ids, context=None):
         '''
@@ -428,19 +437,3 @@ class stock_picking(osv.osv):
 
 
 stock_picking()
-
-
-class stock_move(osv.osv):
-    _inherit = 'stock.move'
-
-    def write(self, cr, uid, ids, vals, context=None):
-        if not ids:
-            return True
-        vals.update({
-            'to_correct_ok': False,
-            'text_error': False,
-        })
-        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
-
-
-stock_move()

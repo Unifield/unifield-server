@@ -19,10 +19,11 @@
 #
 ##############################################################################
 
-from osv import osv
+from osv import osv, fields
 
 import time
 import tools
+import re
 
 from tools.translate import _
 from datetime import datetime
@@ -36,6 +37,9 @@ from cStringIO import StringIO
 from base64 import encodestring
 from tools import DEFAULT_SERVER_DATE_FORMAT, DEFAULT_SERVER_DATETIME_FORMAT
 import logging
+import threading
+import traceback
+import pooler
 from msf_doc_import.msf_import_export_conf import MODEL_DICT
 
 class lang(osv.osv):
@@ -325,6 +329,35 @@ class data_tools(osv.osv):
         context['common']['rt_internal_supply'] = rt_internal_supply
 
         return True
+
+    def truncate_list(self, item_list, limit=300, separator=', '):
+        """
+        Returns a string corresponding to the list of items in parameter, separated by the "separator".
+        If the string > "limit", cuts it and adds "..." at the end.
+        """
+        list_str = separator.join([item for item in item_list if item]) or ''
+        if len(list_str) > limit:
+            list_str = "%s%s" % (list_str[:limit-3], '...')
+        return list_str
+
+    def replace_line_breaks(self, string_to_format):
+        """
+        Modifies the string in parameter:
+        - replaces the line breaks by spaces if they are in the middle of the string
+        - removes the line breaks and the spaces at the beginning and at the end
+        """
+        return re.sub('[\r\n]', ' ', string_to_format or '').strip()
+
+    def replace_line_breaks_from_vals(self, vals, fields):
+        """
+        Updates the vals (dict) in param.
+        For each of the fields (list) in param which is found in vals, applies "replace_line_breaks" to its value.
+        """
+        for field in fields:
+            if vals.get(field):
+                vals.update({field: self.replace_line_breaks(vals[field])})
+        return True
+
 
 data_tools()
 
@@ -667,10 +700,19 @@ class ir_translation(osv.osv):
                 return prod[0]['product_tmpl_id'][0]
         return res_id
 
-    def _audit_product_name(self, cr, uid, ids, vals, context=None):
-        if context.get('sync_update_execution') and vals.get('name') == 'product.template,name' and vals.get('lang'):
-            templ_obj = self.pool.get('product.template')
-            audit_rule_ids = templ_obj.check_audit(cr, uid, 'write')
+    def _audit_translatable_fields(self, cr, uid, ids, vals, context=None):
+        """
+        Fills in the Track Changes for translatable fields at synchro time,
+        e.g. track the updates received on journal name in the Track Changes of the Journal object
+        """
+        fields = ['product.template,name', 'account.account,name', 'account.analytic.account,name',
+                  'account.journal,name', 'account.analytic.journal,name']
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and vals.get('name') in fields and vals.get('lang'):
+            obj_name = vals['name'].split(',')[0]
+            obj = self.pool.get(obj_name)
+            audit_rule_ids = obj.check_audit(cr, uid, 'write')
             if audit_rule_ids:
                 new_ctx = context.copy()
                 new_ctx['lang'] = vals['lang']
@@ -678,14 +720,14 @@ class ir_translation(osv.osv):
                 if not template_id and ids:
                     template_id = self.browse(cr, uid, ids[0], fields_to_fetch=['res_id'], context=new_ctx).res_id
                 if template_id:
-                    previous = templ_obj.read(cr, uid, [template_id], ['name'], context=new_ctx)[0]
+                    previous = obj.read(cr, uid, [template_id], ['name'], context=new_ctx)[0]
                     audit_obj = self.pool.get('audittrail.rule')
-                    audit_obj.audit_log(cr, uid, audit_rule_ids, templ_obj, template_id, 'write', previous, {template_id: {'name': vals['value']}} , context=context)
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, obj, template_id, 'write', previous, {template_id: {'name': vals['value']}} , context=context)
 
 
 
     def write(self, cr, uid, ids, vals, clear=False, context=None):
-        self._audit_product_name(cr, uid, ids, vals, context=context)
+        self._audit_translatable_fields(cr, uid, ids, vals, context=context)
         return super(ir_translation, self).write(cr, uid, ids, vals, clear=clear, context=context)
 
 
@@ -731,8 +773,8 @@ class ir_translation(osv.osv):
                 self.write(cr, uid, ids, vals, context=context)
                 return ids[0]
 
-        if context.get('sync_update_execution') and vals.get('res_id') and vals.get('name') == 'product.template,name' and vals.get('lang'):
-            self._audit_product_name(cr, uid, False, vals, context=context)
+        if context.get('sync_update_execution') and vals.get('res_id') and vals.get('lang'):
+            self._audit_translatable_fields(cr, uid, False, vals, context=context)
 
         return super(ir_translation, self).create(cr, uid, vals, clear=clear, context=context)
 
@@ -977,7 +1019,7 @@ class user_rights_tools(osv.osv_memory):
                 file_d.close()
                 self.pool.get('msf.import.export').import_xml(cr, uid, [wiz], raise_on_error=True, context=context)
                 if sync_server and model == 'msf_field_access_rights.field_access_rule_line':
-                    cr.execute("""select d.name from msf_field_access_rights_field_access_rule_line line
+                    cr.execute("""select coalesce(d.name, f.model || ' ' || f.name)  from msf_field_access_rights_field_access_rule_line line
                             left join ir_model_fields f on f.id = line.field
                             left join ir_model_data d on d.res_id = line.id and d.model='msf_field_access_rights.field_access_rule_line' and d.module!='sd'
                         where f.state='deprecated'
@@ -1044,3 +1086,105 @@ class user_rights_tools(osv.osv_memory):
         return ur
 
 user_rights_tools()
+
+class job_in_progress(osv.osv_memory):
+    _name = 'job.in_progress'
+    _columns = {
+        'res_id': fields.integer('Db Id'),
+        'model': fields.char('Object', size=256),
+        'name': fields.char('Name', size=256),
+        'total': fields.integer('Total to process'),
+        'nb_processed': fields.integer('Total processed'),
+        'state': fields.selection([('in-progress', 'In Progress'), ('done', 'Done'), ('error', 'Error')], 'State'),
+        'target_link': fields.text('Target'),
+        'error': fields.text('Error'),
+        'read': fields.boolean('Msg read by user'),
+        'src_name': fields.char('Src Name', size=256),
+        'target_name': fields.char('Target Name', size=256),
+    }
+
+    _defaults = {
+        'read': False,
+        'state': 'in-progress',
+    }
+
+    # force uid=1 to by pass osv_memory domain
+    def read(self, cr, uid, *a, **b):
+        return super(job_in_progress, self).read(cr, 1, *a, **b)
+
+    def search(self, cr, uid, *a, **b):
+        return super(job_in_progress, self).search(cr, 1, *a, **b)
+
+    def write(self, cr, uid, *a, **b):
+        return super(job_in_progress, self).write(cr, 1, *a, **b)
+
+    def _prepare_run_bg_job(self, cr, uid, src_ids, model, method_to_call, nb_lines, name, return_success=True, main_object_id=False, context=None):
+        assert len(src_ids) == 1, 'Can only process 1 object'
+
+        if not nb_lines:
+            raise osv.except_osv(_('Warning'), _('No line to process'))
+
+
+        object_id = src_ids[0]
+        if main_object_id:
+            object_id = main_object_id
+
+        if self.search(cr, 1, [('state', '=', 'in-progress'), ('model', '=', model), ('res_id', '=', object_id)]):
+            return True
+
+        src_name = self.pool.get(model).read(cr, uid, object_id, ['name']).get('name')
+
+        job_id = self.create(cr, uid, {'res_id': object_id, 'model': model, 'name': name, 'total': nb_lines, 'src_name': src_name})
+        th = threading.Thread(
+            target=self._run_bg_job,
+            args=(cr, uid, job_id,  method_to_call),
+            kwargs={'src_ids': src_ids, 'context': context}
+        )
+        th.start()
+        th.join(3)
+        if not th.isAlive():
+            job_data = self.pool.get('job.in_progress').read(cr, uid, job_id, ['target_link', 'state', 'error'])
+            self.unlink(cr, uid, [job_id])
+            if job_data['state'] == 'done':
+                return job_data.get('target_link') or return_success
+            else:
+                raise osv.except_osv(_('Warning'), job_data['error'])
+
+        return return_success
+
+
+    def _run_bg_job(self, cr, uid, job_id, method, src_ids, context=None):
+
+        new_cr = pooler.get_db(cr.dbname).cursor()
+        try:
+            res = False
+            process_error = False
+            res = method(new_cr, uid, src_ids, context, job_id=job_id)
+        except osv.except_osv, er:
+            new_cr.rollback()
+            if job_id:
+                process_error = True
+                self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'error', 'error': tools.ustr(er.value)})
+            raise
+
+        except Exception:
+            new_cr.rollback()
+            if job_id:
+                process_error = True
+                self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'error', 'error': tools.ustr(traceback.format_exc())})
+            raise
+
+        finally:
+            if job_id:
+                if not process_error:
+                    target_name = False
+                    if isinstance(res, bool):
+                        # if target is not a dict, do not display button
+                        res = False
+                    if res and res.get('res_id') and res.get('res_model'):
+                        target_name = self.pool.get(res['res_model']).read(new_cr, uid, res['res_id'], ['name']).get('name')
+
+                    self.pool.get('job.in_progress').write(new_cr, uid, [job_id], {'state': 'done', 'target_link': res, 'target_name': target_name})
+                new_cr.commit()
+                new_cr.close(True)
+job_in_progress()

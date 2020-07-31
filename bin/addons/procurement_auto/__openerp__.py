@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -38,10 +38,7 @@
     "init_xml": [
     ],
     'update_xml': [
-        'procurement_view.xml',
         'procurement_data.xml',
-        'security/ir.model.access.csv',
-        'wizard/schedulers_all_view.xml',
     ],
     'demo_xml': [
     ],

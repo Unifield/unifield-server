@@ -56,6 +56,7 @@ class standard_price_track_changes(osv.osv):
             string='Date',
             required=True,
             readonly=True,
+            select=1,
         ),
         'product_id': fields.many2one(
             'product.product',

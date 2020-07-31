@@ -46,6 +46,7 @@
             <field name="type">tree</field>
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
+                    <field name="is_percentage_amount_touched"/>
                     <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1'), ('state', '=', 'open')]" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
                     <field name="amount" sum="Total Amount"/>
@@ -59,6 +60,7 @@
             <field name="type">tree</field>
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
+                    <field name="is_percentage_amount_touched"/>
                     <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE2'), ('state', '=', 'open')]" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
                     <field name="amount" sum="Total Amount"/>
@@ -101,6 +103,22 @@
                             <label string="*: this action will copy the analytic distribution from the header to the line allowing then the user to make changes starting from the copied distribution." colspan="3" />
                         </group>
                     </group>
+                    <field name="invalid_small_amount"/>
+                    <group colspan="6" col="2">
+                        <html>
+                            <p id="label_invalid_small_amount"
+                               style="text-align:center; color: red; font-weight: bold; font-size: 1.1em;display:none">
+                                <translate>Make sure that there is only one Analytic Distribution line for the entries having a booking amount inferior or equal to 1.</translate>
+                            </p>
+
+                         <script language="javascript">
+                            var invalid_small_amount = $('#invalid_small_amount').val() || $('invalid_small_amount').text();
+                            if (invalid_small_amount) {
+                                $('#label_invalid_small_amount').show();
+                            }
+                        </script>
+                        </html>
+                    </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'cc')]}">
                         <separator string="Cost Center"/>
                         <field colspan="4" name="line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'from_purchase': purchase_id, 'from_sale_order': sale_order_id, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
@@ -130,27 +148,6 @@
                 </form>
             </field>
         </record>
-
-    <!-- Actions -->
-        <act_window id="action_mass_reallocation"
-            name="Mass reallocation"
-            res_model="mass.reallocation.wizard"
-            src_model="account.analytic.line"
-            key2="client_action_multi"
-            view_mode="form"
-            view_type="form"
-            context="{'analytic_account_from': context.get('analytic_account_from', False) }"
-            target="new"/>
-
-        <act_window id="action_mass_reallocation_search"
-            name="Mass reallocation - All search results"
-            res_model="mass.reallocation.wizard"
-            src_model="account.analytic.line"
-            key2="client_action_multi"
-            view_mode="form"
-            view_type="form"
-            context="{'all_search': True, 'search_domain': search_domain, 'analytic_account_from': context.get('analytic_account_from', False) }"
-            target="new"/>
 
     <!-- Mass reallocation wizard -->
         <record id="mass_reallocation_wizard_view" model="ir.ui.view">

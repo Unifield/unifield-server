@@ -48,7 +48,7 @@ class wizard_temp_posting(osv.osv_memory):
                 if st_line.get('state', False) == 'draft':
                     tochange.append(st_line.get('id'))
             real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
-            absl_obj.posting(cr, real_uid, tochange, 'temp')
+            absl_obj.posting(cr, real_uid, tochange, 'temp', context=context)
             return open_register_view(self, cr, real_uid, st_line.get('statement_id')[0])
         else:
             raise osv.except_osv(_('Warning'), _('You have to select some lines before using this wizard.'))

@@ -91,13 +91,13 @@
                         <html>
                             <div style="align: center">
                                 <p style="font-size:14px;align:center">
-                                    Your products likely to expire demand will be treated quickly.<br />
+                                    <translate>Your products likely to expire demand will be treated quickly.</translate><br />
                                 </p>
                                 <p style="font-size:14px;align:center">
-                                    Due to the volume of data, your demand cannot be shown immediatly.<br />
+                                    <translate>Due to the volume of data, your demand cannot be shown immediatly.</translate><br />
                                 </p>
                                 <p style="font-size:14px;align:center">
-                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / Expiry / Products likely to expire.<br />
+                                    <translate>When the report will be ready, you can access to it by the menu Warehouse / Reporting / Expiry / Products likely to expire.</translate><br />
                                 </p>
                             </div>
                         </html>
@@ -159,6 +159,7 @@
                     <field name="consumption_to" attrs="{'invisible': [('consumption_type', 'not in', ('amc','rac'))], 'required': [('consumption_type', 'in', ('amc','rac'))]}" on_change="period_change(consumption_from, consumption_to, consumption_type)" />
                     <separator colspan="4" string="Location" />
                     <field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'required': [('consumption_type', '=', 'rac')]}" />
+                    <field name="segment_id" readonly="1" attrs="{'invisible': [('segment_id', '=', False)]}"/>
                 <newline />
                 <field name="input_output_ok" attrs="{'invisible': [('location_id', '!=', False)]}" />
                     <separator colspan="4" string="Actions" />
@@ -178,13 +179,15 @@
                     <separator colspan="4" string="Location" />
                 <group colspan="2" col="2">
                         <field name="location_id" readonly="1" attrs="{'invisible': [('location_id', '=', False)]}"/>
+                        <field name="segment_id" readonly="1" attrs="{'invisible': [('segment_id', '=', False)]}"/>
                         <field name="msf_instance" readonly="1" attrs="{'invisible': [('location_id', '!=', False)]}"/>
                 </group>
                 <field name="input_output_ok" readonly="1" />
                     <separator colspan="4" string="Period of calculation" />
                     <field name="date_from" readonly="1" />
                     <field name="date_to" readonly="1" />
-                    <field name="consumption_type" colspan="4" readonly="1" />
+                    <field name="consumption_type" colspan="4" readonly="1" attrs="{'invisible': [('consumption_type', '=', 'amc')]}" />
+                    <field name="amc_consumption_text" colspan="4" readonly="1" attrs="{'invisible': [('consumption_type', '!=', 'amc')]}" />
                     <separator colspan="4" string="Expired products" />
                     <field colspan="4" nolabel="1" name="line_ids" mode="tree" readonly="1">
                         <tree string="Expired products">

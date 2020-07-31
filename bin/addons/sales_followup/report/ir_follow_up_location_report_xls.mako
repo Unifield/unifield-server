@@ -96,7 +96,7 @@
     </Style>
     <Style ss:ID="line_left_date">
         <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
-        <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@" />
+        <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -118,7 +118,7 @@
     </Style>
     <Style ss:ID="short_date">
         <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1" />
-        <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@" />
+        <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@" />
         <Font ss:Size="8" ss:Color="#0000FF" />
     </Style>
     <Style ss:ID="short_date_fr">
@@ -161,7 +161,7 @@
     </Style>
     <Style ss:ID="line_left_date_grey">
         <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
-        <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@" />
+        <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -185,7 +185,7 @@
 
 
 % for r in objects:
-<ss:Worksheet ss:Name="IR Follow Up per Location">
+<ss:Worksheet ss:Name="${_('IR Follow Up per Location')|x}">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Order ref
         <Column ss:AutoFitWidth="1" ss:Width="130.0" />
@@ -231,7 +231,7 @@
         <Column ss:AutoFitWidth="1" ss:Width="50" />
 
         <Row ss:Height="18">
-            <Cell ss:StyleID="big_header"><Data ss:Type="String">INTERNAL REQUEST FOLLOW-UP per LOCATION</Data><NamedCell ss:Name="Print_Area"/></Cell>
+            <Cell ss:StyleID="big_header"><Data ss:Type="String">${_('INTERNAL REQUEST FOLLOW-UP per LOCATION')|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
         </Row>
 
         <Row ss:Height="10"></Row>

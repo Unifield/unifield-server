@@ -214,7 +214,7 @@
         <%
         headers_list = [
             _('Code'),
-            _('Descrption'),
+            _('Description'),
             _('UoM'),
             _('Cost Price'),
             _('Product Creator'),

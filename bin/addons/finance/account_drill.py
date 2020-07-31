@@ -54,7 +54,7 @@ class AccountDrillNode(object):
     def get_currencies(self):
         if not self.data:
             return []
-        return [ c for c in self.data.keys() if c != '*' ]
+        return sorted([ c for c in self.data.keys() if c != '*' ])
 
     def output(self):
         """

@@ -94,7 +94,7 @@ def _open_image(filename, path=None):
                 fullpath = os.path.join(p, filename)
             else:
                 fullpath = filename
-            return file_open(fullpath)
+            return file_open(fullpath, mode='rb')
         except IOError:
             pass
     raise IOError("File %s cannot be found in image path" % filename)
@@ -129,7 +129,7 @@ class NumberedCanvas(canvas.Canvas):
                 key = key + 1
         self.setFont("Helvetica", 8)
         self.drawRightString((self._pagesize[0]-30), (self._pagesize[1]-40),
-                             "Page %(this)i of %(total)i" % {
+                             "Page %(this)i / %(total)i" % {
             'this': self._pageNumber+1,
             'total': self.pages.get(key,False),
         }

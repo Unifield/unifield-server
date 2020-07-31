@@ -501,7 +501,7 @@ class automated_import_job(osv.osv):
                     self.infolog(cr, uid, _('%s :: Import job done with %s records processed and %s rejected') % (import_data.name, len(processed), nb_rejected))
 
                     if import_data.function_id.model_id.model == 'purchase.order':
-                        po_id = self.pool.get('purchase.order').get_po_id_from_file(cr, uid, oldest_file, context=context)
+                        po_id = context.get('po_id', False) or self.pool.get('purchase.order').get_po_id_from_file(cr, uid, oldest_file, context=context) or False
                         if po_id and (nb_processed or nb_rejected):
                             po_name = self.pool.get('purchase.order').read(cr, uid, po_id, ['name'], context=context)['name']
                             nb_total_pol = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', po_id)], count=True, context=context)
@@ -622,12 +622,9 @@ class automated_import_job(osv.osv):
                 if not rep.startswith('2'):
                     raise osv.except_osv(_('Error'), _('Unable to write report on FTP server'))
         elif on_ftp and job_brw.import_id.ftp_protocol == 'sftp':
-            new_tmp_file_name = os.path.join(os.path.dirname(temp_path), filename)
-            os.rename(temp_path, new_tmp_file_name)
-            temp_path = new_tmp_file_name
             try:
                 with sftp.cd(job_brw.import_id.report_path):
-                    sftp.put(new_tmp_file_name, preserve_mtime=True)
+                    sftp.put(temp_path, filename, preserve_mtime=True)
             except:
                 raise osv.except_osv(_('Error'), _('Unable to write report on SFTP server'))
 

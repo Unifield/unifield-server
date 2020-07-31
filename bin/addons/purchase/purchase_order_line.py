@@ -9,6 +9,7 @@ from tools.translate import _
 import decimal_precision as dp
 from . import PURCHASE_ORDER_STATE_SELECTION
 from . import PURCHASE_ORDER_LINE_STATE_SELECTION
+from . import PURCHASE_ORDER_LINE_DISPLAY_STATE_SELECTION
 from . import ORDER_TYPES_SELECTION
 from msf_partner import PARTNER_TYPE
 from lxml import etree
@@ -156,9 +157,11 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         res = {}
-        for pol in self.browse(cr, uid, ids, context=context):
-            res[
-                pol.id] = pol.linked_sol_id and pol.linked_sol_id.order_id.client_order_ref or False
+        for pol in self.browse(cr, uid, ids, fields_to_fetch=['linked_sol_id'], context=context):
+            res[pol.id] = {
+                'customer_ref': pol.linked_sol_id and pol.linked_sol_id.order_id.client_order_ref or False,
+                'ir_name_for_sync': pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.name or '',
+            }
 
         return res
 
@@ -176,21 +179,21 @@ class purchase_order_line(osv.osv):
             # if PO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
             if (pol.resourced_original_line or pol.set_as_resourced) and pol.state not in ['done', 'cancel', 'cancel_r']:
                 if pol.state.startswith('validated'):
-                    res[pol.id] = 'Resourced-v'
+                    res[pol.id] = 'resourced_v'
                 elif pol.state.startswith('sourced'):
                     if pol.state == 'sourced_v':
-                        res[pol.id] = 'Resourced-pv'
+                        res[pol.id] = 'resourced_pv'
                     #elif pol.state == 'sourced_sy':
                     #    res[pol.id] = 'Resourced-sy'
                     else:
                         # debatable
-                        res[pol.id] = 'Resourced-s'
+                        res[pol.id] = 'resourced_s'
                 elif pol.state.startswith('confirmed'):
-                    res[pol.id] = 'Resourced-c'
+                    res[pol.id] = 'resourced_c'
                 else: # draft + unexpected PO line state
-                    res[pol.id] = 'Resourced-d'
+                    res[pol.id] = 'resourced_d'
             else: # state_to_display == state
-                res[pol.id] = self.pool.get('ir.model.fields').get_browse_selection(cr, uid, pol, 'state', context=context)
+                res[pol.id] = pol.state
 
         return res
 
@@ -481,7 +484,7 @@ class purchase_order_line(osv.osv):
         'soq_updated': fields.boolean(string='SoQ updated', readonly=True),
         'red_color': fields.boolean(string='Red color'),
         'customer_ref': fields.function(_get_customer_ref, method=True, type="text", store=False,
-                                        string="Customer ref."),
+                                        string="Customer ref.", multi='custo_ref_ir_name'),
         'name': fields.char('Description', size=256, required=True),
         'product_qty': fields.float('Quantity', required=True, digits=(16, 2), related_uom='product_uom'),
         'taxes_id': fields.many2many('account.tax', 'purchase_order_taxe', 'ord_id', 'tax_id', 'Taxes'),
@@ -491,6 +494,7 @@ class purchase_order_line(osv.osv):
         'move_ids': fields.one2many('stock.move', 'purchase_line_id', 'Reservation', readonly=True,
                                     ondelete='set null'),
         'move_dest_id': fields.many2one('stock.move', 'Reservation Destination', ondelete='set null', select=True),
+        'location_dest_id': fields.many2one('stock.location', 'Final Destination of move', ondelete='set null', select=True),
         'price_unit': fields.float('Unit Price', required=True,
                                    digits_compute=dp.get_precision('Purchase Price Computation')),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False,
@@ -508,7 +512,7 @@ class purchase_order_line(osv.osv):
                                        \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                                        \n* The \'Done\' state is set automatically when purchase order is set as done. \
                                        \n* The \'Cancelled\' state is set automatically when user cancel purchase order.'),
-        'state_to_display': fields.function(_get_state_to_display, string='State', type='text', method=True, readonly=True,
+        'state_to_display': fields.function(_get_state_to_display, string='State', type='selection', selection=PURCHASE_ORDER_LINE_DISPLAY_STATE_SELECTION, method=True, readonly=True,
                                             help=' * The \'Draft\' state is set automatically when purchase order in draft state. \
                \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                \n* The \'Done\' state is set automatically when purchase order is set as done. \
@@ -562,6 +566,7 @@ class purchase_order_line(osv.osv):
         'validation_date': fields.date('Validation Date', readonly=True),
         'confirmation_date': fields.date('Confirmation Date', readonly=True),
         'closed_date': fields.date('Closed Date', readonly=True),
+        'ir_name_for_sync': fields.function(_get_customer_ref, type='char', size=64, string='IR name to put on PO line after sync', multi='custo_ref_ir_name', method=1),
     }
 
     _defaults = {
@@ -589,7 +594,6 @@ class purchase_order_line(osv.osv):
         'cancelled_by_sync': False,
     }
 
-
     def _check_max_price(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -616,6 +620,34 @@ class purchase_order_line(osv.osv):
     _constraints = [
         (_check_max_price, _("The Total amount of the following lines is more than 28 digits. Please check that the Qty and Unit price are correct, the current values are not allowed"), ['price_unit', 'product_qty']),
     ]
+
+    def _check_stock_take_date(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # Do not prevent modification during synchro
+        if not context.get('from_vi_import') and not context.get('sync_update_execution') and not context.get('sync_message_execution'):
+            error_lines = []
+            linked_orders = []
+            for pol in self.browse(cr, uid, ids, context=context):
+                linked_order = pol.order_id.name
+                if linked_order not in linked_orders:
+                    linked_orders.append(linked_order)
+                if pol.state in ['draft', 'validated', 'validated_n'] and pol.stock_take_date and \
+                        pol.stock_take_date > pol.order_id.date_order:
+                    error_lines.append(str(pol.line_number))
+                if len(error_lines) >= 10:  # To not display too much
+                    break
+            if error_lines:
+                raise osv.except_osv(
+                    _('Error'), _('The Stock Take Date of the lines %s is not consistent! It should not be later than %s\'s creation date')
+                    % (', '.join(error_lines), linked_orders and ', '.join(linked_orders) or _('the PO'))
+                )
+
+        return True
 
     def _get_destination_ok(self, cr, uid, lines, context):
         dest_ok = False
@@ -683,8 +715,8 @@ class purchase_order_line(osv.osv):
                         'cost_center_lines': [(0, 0, {'destination_id': destination_id, 'analytic_id': intermission_cc , 'percentage':'100', 'currency_id': po.currency_id.id})]
                     })
                 else:
-                    raise osv.except_osv(_('Warning'),
-                                         _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
+                                         % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
 
             elif pol.analytic_distribution_state != 'valid':
                 id_ad = ad_obj.create(cr, uid, {})
@@ -714,6 +746,15 @@ class purchase_order_line(osv.osv):
                     'partner_type': pol.order_id.partner_id.partner_type,
                 })
 
+            # check that the analytic accounts are active. Done at the end to use the newest AD of the pol (to re-browse)
+            pol_ad = self.browse(cr, uid, pol.id, fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
+            ad = pol_ad or po.analytic_distribution_id or False
+            if ad:
+                if pol_ad:
+                    prefix = _("Analytic Distribution on line %s:\n") % pol.line_number
+                else:
+                    prefix = _("Analytic Distribution at header level:\n")
+                ad_obj.check_cc_distrib_active(cr, uid, ad, prefix=prefix, from_supply=True)
         return True
 
 
@@ -1179,6 +1220,9 @@ class purchase_order_line(osv.osv):
                                                    {'sync_order_line_db_id': name + "_" + str(po_line_id), },
                                                    context=context)
 
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, po_line_id, context=context)
+
         if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('linked_sol_id'):
             so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], context=context)
             for so_id in so_ids:
@@ -1230,11 +1274,16 @@ class purchase_order_line(osv.osv):
             if field not in default:
                 default[field] = False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False, 'esc_confirmed': False, 'created_by_sync': False, 'cancelled_by_sync': False, 'resourced_original_line': False, 'set_as_resourced': False})
+
+        if not context.get('split_line'):
+            default.update({'stock_take_date': False})
+            if 'location_dest_id' not in default:
+                default['location_dest_id'] = False
 
         # from RfQ line to PO line: grab the linked sol if has:
         if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):
-            default.update({'linked_sol_id': pol.linked_sol_id.id})
+            default.update({'linked_sol_id': pol.linked_sol_id and pol.linked_sol_id.id or False})
 
         if not context.get('keepDateAndDistrib'):
             if 'confirmed_delivery_date' not in default:
@@ -1287,6 +1336,7 @@ class purchase_order_line(osv.osv):
         if not 'soq_updated' in vals:
             vals['soq_updated'] = False
 
+        check_location_dest_ids = []
         for line in self.browse(cr, uid, ids, context=context):
             new_vals = vals.copy()
             # check qty
@@ -1296,6 +1346,9 @@ class purchase_order_line(osv.osv):
                     _('Error'),
                     _('You can not have an order line with a negative or zero quantity')
                 )
+
+            if 'product_id' in vals and line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and line.product_id.id != vals.get('product'):
+                check_location_dest_ids.append(line.id)
 
             # try to fill "link_so_id":
             if not line.link_so_id and not vals.get('link_so_id'):
@@ -1325,6 +1378,13 @@ class purchase_order_line(osv.osv):
                         'order_id': so_id,
                         'po_line_id': line.id,
                     }, context=context)
+
+        for line in self.browse(cr, uid, check_location_dest_ids, context=context):
+            super(purchase_order_line, self).write(cr, uid, [line.id], {'location_dest_id': self.final_location_dest(cr, uid, line, context=context)}, context=context)
+
+
+        if vals.get('stock_take_date'):
+            self._check_stock_take_date(cr, uid, ids, context=context)
 
         # Check the selected product UoM
         if not context.get('import_in_progress', False):
@@ -1802,7 +1862,8 @@ class purchase_order_line(osv.osv):
                 cc_lines = pol.order_id.analytic_distribution_id.cost_center_lines
 
             if not cc_lines:
-                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for %s on the line %s for the product %s! It must be added manually.')
+                                     % (pol.order_id.name, pol.line_number, pol.product_id and pol.product_id.default_code or pol.name or ''))
 
 
             commit_line_id = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', commitment_voucher_id), ('account_id', '=', expense_account)], context=context)
@@ -2007,6 +2068,61 @@ class purchase_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'invoiced': True}, context=context)
         self.pool.get('account.invoice').button_compute(cr, uid, inv_ids.values(), {'type':'in_invoice'}, set_total=True)
+
+
+    def update_date_expected(self, cr, uid, source, data, context=None):
+        line_info = data.to_dict()
+        stock_move = self.pool.get('stock.move')
+        if line_info.get('sync_local_id') and line_info.get('date_expected'):
+            pol_id = self.search(cr, uid, [('sync_linked_sol', '=', line_info['sync_local_id'])], limit=1, context=context)
+            if pol_id:
+                move_id = stock_move.search(cr, uid, [('purchase_line_id', '=', pol_id), ('type', '=', 'in'), ('state', '=', 'assigned')])
+                if move_id:
+                    stock_move.write(cr, uid, move_id[0], {'date_expected': line_info.get('date_expected')}, context=context)
+                    # to update Expected Receipt Date on picking
+                    picking_id = stock_move.browse(cr, uid, move_id[0], fields_to_fetch=['picking_id']).picking_id
+                    if picking_id:
+                        picking_id.write({}, context=context)
+        return True
+
+    def final_location_dest(self, cr, uid, pol_obj, fo_obj=False, context=None):
+        data_obj = self.pool.get('ir.model.data')
+
+        dest = pol_obj.order_id.location_id.id
+
+        if not pol_obj.product_id:
+            return dest
+
+        if pol_obj.product_id.type == 'service_recep' and not pol_obj.order_id.cross_docking_ok:
+            # service with reception are directed to Service Location
+            return self.pool.get('stock.location').get_service_location(cr, uid)
+
+        if pol_obj.product_id.type == 'consu':
+            return data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+
+        fo = fo_obj or pol_obj.linked_sol_id and pol_obj.linked_sol_id.order_id or False
+        if fo and fo.procurement_request and fo.location_requestor_id.usage != 'customer':
+            return fo.location_requestor_id.id
+
+        chained = self.pool.get('stock.location').chained_location_get(cr, uid, pol_obj.order_id.location_id, product=pol_obj.product_id, context=context)
+        if chained:
+            if chained[0].chained_location_type == 'nomenclature':
+                # 1st round : Input > Stock, 2nd round Stock -> MED/LOG
+                chained2 = self.pool.get('stock.location').chained_location_get(cr, uid, chained[0], product=pol_obj.product_id, context=context)
+                if chained2:
+                    return chained2[0].id
+            return chained[0].id
+
+        return dest
+
+    def open_po_form(self, cr, uid, ids, context=None):
+        pol = self.browse(cr, uid, ids[0], fields_to_fetch=['order_id'], context=context)
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'purchase.purchase_form_action', ['form', 'tree'], new_tab=True, context=context)
+        res['keep_open'] = True
+        res['res_id'] = pol.order_id.id
+        return res
+
 purchase_order_line()
 
 

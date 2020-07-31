@@ -46,7 +46,6 @@
 				    	                <field name="website"/>
 				    	                <field name="contact_name"/>
 				    	                <field name="account_no"/>
-				        	            <field name="currency" widget="selection" invisible="1"/>
 				            	    </page>
 				                	<page string="Ship to address">
 					                	<field name="ship_street" />

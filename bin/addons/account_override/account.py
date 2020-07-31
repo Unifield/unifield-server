@@ -4,7 +4,6 @@
 #
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -67,6 +66,7 @@ class account_account(osv.osv):
             cmp_date = context.get('date')
         for x in args:
             if x[0] == 'filter_active' and x[2] == True:
+                arg.append('&')
                 arg.append(('activation_date', '<=', cmp_date))
                 arg.append('|')
                 arg.append(('inactivation_date', '>', cmp_date))
@@ -246,20 +246,28 @@ class account_account(osv.osv):
         elif args == [('restricted_area', '=', 'intermission_header')]:
             if context_ivo or context.get('check_header_ivo'):
                 # HEADER of Intermission Voucher OUT:
-                # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash
+                # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash,
+                # or Payable/Payables (for refund UC)
                 # + prevent from using donation accounts
-                arg = [('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
-                       '|', '|', ('is_intermission_counterpart', '=', True),
-                       '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
-                       '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash'])]
+                arg = [
+                    ('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
+                    '|', '|', '|', ('is_intermission_counterpart', '=', True),
+                    '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
+                    '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash']),
+                    '&', ('user_type_code', '=', 'payables'), ('type', '=', 'payable')
+                ]
             elif context_ivi or context.get('check_header_ivi'):
                 # HEADER of Intermission Voucher IN:
                 # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Payable/Payables
+                # or Receivable/Receivables or Cash (for refund UC)
                 # + prevent from using donation accounts
-                arg = [('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
-                       '|', '|', ('is_intermission_counterpart', '=', True),
-                       '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
-                       '&', ('user_type_code', '=', 'payables'), ('type', '=', 'payable')]
+                arg = [
+                    ('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
+                    '|', '|', '|', ('is_intermission_counterpart', '=', True),
+                    '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
+                    '&', ('user_type_code', '=', 'payables'), ('type', '=', 'payable'),
+                    '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash']),
+                ]
         return arg
 
     def _get_fake_cash_domain(self, cr, uid, ids, field_name, arg, context=None):
@@ -359,7 +367,6 @@ class account_account(osv.osv):
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'activation_date': fields.date('Active from', required=True),
         'inactivation_date': fields.date('Inactive from'),
-        'note': fields.char('Note', size=160),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'),
                                                ('advance', 'Operational Advance'), ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation'), ('disregard_rec', 'Reconciliation - Disregard 3rd party')], string="Type for specific treatment", required=True,
                                               help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element
@@ -880,7 +887,9 @@ class account_move(osv.osv):
                                      domain="[('state', '=', 'draft')]", hide_default_menu=True),
         'journal_id': fields.many2one('account.journal', 'Journal',
                                       required=True, states={'posted':[('readonly',True)]},
-                                      domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj', 'system', 'extra']), ('instance_filter', '=', True)]",
+                                      domain="[('type', 'not in', "
+                                             " ['accrual', 'hq', 'inkind', 'cur_adj', 'system', 'extra', 'correction', 'correction_hq']),"
+                                             "('instance_filter', '=', True)]",
                                       hide_default_menu=True),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
@@ -1027,6 +1036,7 @@ class account_move(osv.osv):
         # Create a sequence for this new journal entry
         res_seq = self.create_sequence(cr, uid, vals, context)
         vals.update({'sequence_id': res_seq,})
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['manual_name', 'ref'])
         # Default behaviour (create)
         res = super(account_move, self).create(cr, uid, vals, context=context)
         self._check_document_date(cr, uid, res, context)
@@ -1138,6 +1148,7 @@ class account_move(osv.osv):
                     self.pool.get('account.move.line').write(cr, uid,
                                                              ml_id_list, ml_vals, context, False, False)
 
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['manual_name', 'ref'])
         res = super(account_move, self).write(cr, uid, ids, vals,
                                               context=context)
         if new_sequence_vals_by_move_id:
@@ -1180,11 +1191,13 @@ class account_move(osv.osv):
                 raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
-                if m.status == 'sys':
-                    raise osv.except_osv(_('Warning'), _('You are not able to approve a Journal Entry that comes from the system!'))
+                if m.status == 'sys' and not context.get('from_recurring_entries'):
+                    raise osv.except_osv(_('Warning'), _("You can't approve a Journal Entry that comes from the system!"))
                 # UFTP-105: Do not permit to validate a journal entry on a period that is not open
                 if m.period_id and m.period_id.state != 'draft':
                     raise osv.except_osv(_('Warning'), _('You cannot post entries in a non-opened period: %s') % (m.period_id.name))
+                if m.journal_id.type in ('correction', 'correction_hq'):
+                    raise osv.except_osv(_('Warning'), _('The journal %s is forbidden in manual entries.') % (m.journal_id.code))
                 prev_currency_id = False
                 for ml in m.line_id:
                     # Check that the currency and type of the (journal) third party is correct
@@ -1232,31 +1245,63 @@ class account_move(osv.osv):
         for m in self.browse(cr, uid, ids, fields_to_fetch=['manual_name', 'line_id'], context=context):
             if m.manual_name and m.line_id:
                 aml_obj.write(cr, uid, [ml.id for ml in m.line_id], {'name': m.manual_name}, context=context)
+        return True
 
-    def copy(self, cr, uid, a_id, default={}, context=None):
+    def copy(self, cr, uid, a_id, default=None, context=None):
         """
         Copy a manual journal entry
         """
         if not context:
             context = {}
+        if default is None:
+            default = {}
+
+        setup_obj = self.pool.get('unifield.setup.configuration')
+
         context.update({'omit_analytic_distribution': False})
         je = self.browse(cr, uid, [a_id], context=context)[0]
+
         if je.status == 'sys' or (je.journal_id and je.journal_id.type == 'migration'):
             raise osv.except_osv(_('Error'), _("You can only duplicate manual journal entries."))
+
+        if context.get('from_button') and je.period_id and je.period_id.state != 'draft':
+            # copy from web
+            period_obj = self.pool.get('account.period')
+            new_period = period_obj.search(cr, uid, [('date_start', '>', je.date), ('state', '=', 'draft'), ('special', '=', False)], order='date_start,number', limit=1, context=context)
+            if not new_period:
+                raise osv.except_osv(_('Error'), _("No open period found"))
+            period_id = new_period[0]
+            date_start = period_obj.read(cr, uid, period_id, ['date_start'], context=context)['date_start']
+            date_start_dt = datetime.datetime.strptime(date_start, '%Y-%m-%d')
+            post_date = (datetime.datetime.strptime(je.date, '%Y-%m-%d') + relativedelta(month=date_start_dt.month,year=date_start_dt.year)).strftime('%Y-%m-%d')
+            # doc. date is the original one except if doc and posting dates would be in different FY:
+            # if this is forbidden in the configuration, the doc. date will be 'FY-01-01'
+            if datetime.datetime.strptime(je.document_date, '%Y-%m-%d').year != date_start_dt.year and \
+                    not setup_obj.get_config(cr, uid).previous_fy_dates_allowed:
+                doc_date = '%s-01-01' % date_start_dt.year
+            else:
+                doc_date = je.document_date
+        else:
+            period_id = je.period_id and je.period_id.id or False
+            post_date = je.date
+            doc_date = je.document_date
+
         vals = {
             'line_id': [],
             'state': 'draft',
-            'document_date': je.document_date,
-            'date': je.date,
+            'document_date': doc_date,
+            'date': post_date,
+            'period_id': period_id,
             'name': '',
         }
         res = super(account_move, self).copy(cr, uid, a_id, vals, context=context)
         for line in je.line_id:
             line_default = {
+                'analytic_lines': [],
                 'move_id': res,
-                'document_date': je.document_date,
-                'date': je.date,
-                'period_id': je.period_id and je.period_id.id or False,
+                'document_date': doc_date,
+                'date': post_date,
+                'period_id': period_id,
                 'reconcile_id': False,
                 'reconcile_partial_id': False,
                 'reconcile_txt': False,
@@ -1340,7 +1385,7 @@ class account_move_reconcile(osv.osv):
             return ''
 
     _columns = {
-        'name': fields.char('Entry Sequence', size=64, required=True),
+        'name': fields.char('Entry Sequence', size=64, required=True, select=1),
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id',
                                                string="Statement lines", help="This field give all statement lines linked to this move."),
     }

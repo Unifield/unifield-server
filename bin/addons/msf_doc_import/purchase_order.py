@@ -30,6 +30,8 @@ import base64
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_doc_import.wizard import PO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_po_line_import
 from msf_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
+from msf_doc_import.wizard import RFQ_COLUMNS_HEADER_FOR_IMPORT
+from msf_doc_import.wizard import RFQ_LINE_COLUMNS_FOR_IMPORT
 from msf_doc_import import GENERIC_MESSAGE
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import xml.etree.ElementTree as ET
@@ -208,9 +210,9 @@ class purchase_order(osv.osv):
         if not po_name:
             raise osv.except_osv(_('Error'), _('No PO name found in the given import file'))
 
-        po_id = self.search(cr, uid, [('name', '=', po_name)], context=context)
+        po_id = self.search(cr, uid, [('name', '=', po_name), ('state', 'in', ['validated', 'validated_p', 'confirmed', 'confirmed_p'])], context=context)
         if not po_id:
-            raise osv.except_osv(_('Error'), _('No PO found with the name %s') % po_name)
+            raise osv.except_osv(_('Error'), _('No available PO found with the name %s') % po_name)
 
         return po_id[0]
 
@@ -291,6 +293,8 @@ class purchase_order(osv.osv):
             context = {}
 
         import_success = False
+        # Reset part of the context updated in the PO import
+        context.update({'line_number_to_confirm': [], 'ext_ref_to_confirm': [], 'job_comment': []})
         try:
             # get filetype
             filetype = self.pool.get('stock.picking').get_import_filetype(cr, uid, file_path, context=context)
@@ -331,6 +335,8 @@ class purchase_order(osv.osv):
             context = {}
 
         context.update({'auto_import_confirm_pol': True})
+        # Reset part of the context updated in the PO import
+        context.update({'line_number_to_confirm': [], 'ext_ref_to_confirm': [], 'job_comment': []})
         res = self.auto_import_purchase_order(cr, uid, file_path, context=context)
         context['rejected_confirmation'] = 0
         if context.get('po_id'):
@@ -342,9 +348,10 @@ class purchase_order(osv.osv):
                 if pol.line_number in context.get('line_number_to_confirm', []) or \
                         (pol.external_ref and pol.external_ref in context.get('ext_ref_to_confirm', [])):
                     try:
-                        self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
-                        cr.commit()
-                        nb_pol_confirmed += 1
+                        if pol.state not in ['confirmed', 'done', 'cancel', 'cancel_r']:
+                            self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
+                            cr.commit()
+                            nb_pol_confirmed += 1
                     except:
                         context['rejected_confirmation'] += 1
                         cr.rollback()
@@ -382,9 +389,12 @@ class purchase_order(osv.osv):
             msg = _('No PO to export !')
             self.infolog(cr, uid, msg)
             context.update({'po_not_found': True})
+            return [], [], ['PO id', 'PO name']
 
         processed, rejected = [], []
-        for index, po_id in enumerate(po_ids):
+        cr.execute('select id from purchase_order where id in %s for update skip locked', (tuple(po_ids),))
+        index = 0
+        for po_id, in cr.fetchall():
             # generate report:
             report_name = 'validated.purchase.order_xls' if export_wiz.export_format == 'excel' else 'validated.purchase.order_xml'
             datas = {'ids': [po_id]}
@@ -427,19 +437,18 @@ class purchase_order(osv.osv):
                 # create tmp file
                 tmp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
                 tmp_file.write(base64.decodestring(file_res['result']))
+                tmpname = tmp_file.name
                 tmp_file.close()
-                new_tmp_file_name = os.path.join(os.path.dirname(tmp_file.name), filename)
-                os.rename(tmp_file.name, new_tmp_file_name)
 
                 # transfer tmp file on SFTP server
                 try:
                     with sftp.cd(export_wiz.dest_path):
-                        sftp.put(new_tmp_file_name, preserve_mtime=True)
+                        sftp.put(tmpname, filename, preserve_mtime=True)
                 except:
                     raise osv.except_osv(_('Error'), _('Unable to write on SFTP server at location %s') % export_wiz.dest_path)
 
                 # now we can remove tmp file
-                os.remove(new_tmp_file_name)
+                os.remove(tmpname)
             else:
                 # write export in local file
                 with open(path_to_file, 'w') as fich:
@@ -448,6 +457,7 @@ class purchase_order(osv.osv):
             self.write(cr, uid, [po_id], {'auto_exported_ok': True}, context=context)
             processed.append((index, [po_id, po_name]))
             self.infolog(cr, uid, _('%s successfully exported') % po_name)
+            index += 1
 
         return processed, rejected, ['PO id', 'PO name']
 
@@ -617,8 +627,16 @@ class purchase_order(osv.osv):
         po = self.browse(cr, uid, [ids[0]], context=context)[0]
         columns = columns_for_po_line_import
         columns_header = [(_(f[0]), f[1]) for f in columns_header_for_po_line_import]
+
+        if po.rfq_ok:
+            columns = RFQ_LINE_COLUMNS_FOR_IMPORT
+            columns_header = [(_(f[0]), f[1]) for f in RFQ_COLUMNS_HEADER_FOR_IMPORT]
+            if po.state != 'rfq_sent':
+                columns = columns[1:]
+                columns_header = columns_header[1:]
+
         # if PO is not a RfQ, then we doesn't take in account the first column (Line Number):
-        if not po.rfq_ok or po.state != 'rfq_sent':
+        if not po.rfq_ok:
             columns = columns_for_po_line_import[1:]
             columns_header = columns_header[1:]
 
@@ -648,13 +666,8 @@ class purchase_order(osv.osv):
             ids = [ids]
         message = ''
         plural = ''
-        obj_data = self.pool.get('ir.model.data')
 
         for var in self.browse(cr, uid, ids, context=context):
-            # we check the supplier and the address
-            if var.partner_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'supplier_tbd')[1] \
-                    or var.partner_address_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'address_tbd')[1]:
-                raise osv.except_osv(_('Warning !'), _("\n You can't have a supplier or an address 'To Be Defined', please select a consistent supplier."))
             # we check the lines that need to be fixed
             if var.order_line:
                 for var in var.order_line:

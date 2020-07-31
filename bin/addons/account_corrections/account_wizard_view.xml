@@ -8,7 +8,7 @@
             <field name="model">wizard.journal.items.corrections.lines</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree hide_new_button="1" hide_delete_button="1" editable="bottom" colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')">
+                <tree hide_new_button="1" hide_delete_button="1" editable="bottom" colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid', 'invalid_small_amount');black:analytic_distribution_state in ('none')">
                     <field name="move_id"/>
                     <field name="ref"/>
                     <field name="date"/>

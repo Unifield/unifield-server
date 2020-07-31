@@ -143,7 +143,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if not percentage or not total_amount:
+        no_total_amount = not total_amount and total_amount not in (0, 0.0)
+        if not percentage or no_total_amount:
             return {}
         amount = abs((total_amount * percentage) / 100)
         return {'value': {'amount': amount, 'is_percentage_amount_touched': True}}
@@ -507,14 +508,16 @@ class analytic_distribution_wizard(osv.osv_memory):
             # verify purchase state
             if el.purchase_id and el.purchase_id.state not in ['draft', 'draft_p', 'validated_n', 'validated']:
                 res[el.id] = False
-            # verify purchase line state
-            if el.purchase_line_id and el.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
+            # verify purchase line state and allow modification if the line is created by sync and blocked at validated
+            if el.purchase_line_id and el.purchase_line_id.state not in ['draft', 'validated_n', 'validated'] and \
+                    not (not el.purchase_line_id.analytic_distribution_id and el.purchase_line_id.created_by_sync and
+                         el.purchase_line_id.state == 'sourced_v'):
                 res[el.id] = False
             # verify invoice state
-            if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
+            if el.invoice_id and el.invoice_id.state in ['open', 'paid', 'inv_close']:
                 res[el.id] = False
             # verify invoice line state
-            if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid']:
+            if el.invoice_line_id and el.invoice_line_id.invoice_id and el.invoice_line_id.invoice_id.state in ['open', 'paid', 'inv_close']:
                 res[el.id] = False
             # verify commitment state
             if el.commitment_id and el.commitment_id.state in ['done']:
@@ -729,6 +732,60 @@ class analytic_distribution_wizard(osv.osv_memory):
                                 self.pool.get(wiz_line_obj).create(cr, uid, vals, context=context)
             return True
 
+    def _get_invalid_small_amount(self, cr, uid, vals, context=None):
+        """
+        Returns the value of "invalid_small_amount" for the Analytic Distrib. of which vals is in param.
+        (invalid_small_amount is True when several AD lines are linked to a booking amount <= 1).
+
+        Check all tuples listed in the object_list. For each one:
+        0) object name
+        1) many2one field of the analytic.distribution.wizard which is linked to this object
+        2) name of the field of this object corresponding to its lines if any
+           (e.g. "invalid_small_amount" is True on an invoice IF it is True on one of its invoice lines)
+
+        """
+        object_list = [
+            ('account.invoice', 'invoice_id', 'invoice_line'),
+            ('account.invoice.line', 'invoice_line_id', False),
+            ('account.direct.invoice.wizard', 'account_direct_invoice_wizard_id', 'invoice_wizard_line'),
+            ('account.direct.invoice.wizard.line', 'account_direct_invoice_wizard_line_id', False),
+            ('wizard.account.invoice', 'direct_invoice_id', 'invoice_line'),
+            ('wizard.account.invoice.line', 'direct_invoice_line_id', False),
+            ('wizard.cash.return', 'cash_return_id', 'advance_line_ids'),
+            ('wizard.advance.line', 'cash_return_line_id', False),
+            ('account.move.line', 'move_line_id', False),
+            ('account.move', 'move_id', 'line_id'),
+            ('account.bank.statement.line', 'register_line_id', False),
+            ('account.model', 'model_id', 'lines_id'),
+            ('account.model.line', 'model_line_id', False),
+            ('msf.accrual.line', 'accrual_line_id', False),
+        ]
+        invalid_small_amount = False
+        if context is None:
+            context = {}
+        for obj_data in object_list:
+            obj_type, field_name, line_field = obj_data
+            if vals.get(field_name):
+                obj = self.pool.get(obj_type).browse(cr, uid, vals[field_name], context=context)
+                if not line_field:
+                    # AD at line level
+                    distrib_state = hasattr(obj, 'analytic_distribution_state') and getattr(obj, 'analytic_distribution_state') or ''
+                    invalid_small_amount = distrib_state == 'invalid_small_amount' or False
+                else:
+                    # AD at header level
+                    lines = hasattr(obj, line_field) and getattr(obj, line_field) or []
+                    for line in lines:
+                        # display the warning msg for the header only if no AD is defined directly at line level
+                        distrib_at_line_level = hasattr(line, 'analytic_distribution_id') \
+                            and getattr(line, 'analytic_distribution_id') or False
+                        line_distrib_state = hasattr(line, 'analytic_distribution_state') \
+                            and getattr(line, 'analytic_distribution_state') or ''
+                        if not distrib_at_line_level and line_distrib_state == 'invalid_small_amount':
+                            invalid_small_amount = True
+                            break
+                break  # AD wizard is linked to only one object, no need to check the other list items
+        return invalid_small_amount
+
     def create(self, cr, uid, vals, context=None):
         """
         Add distribution lines to the wizard
@@ -736,7 +793,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
-        # Prepare some values
+        vals.update({'invalid_small_amount': self._get_invalid_small_amount(cr, uid, vals, context=context)})
         res = super(analytic_distribution_wizard, self).create(cr, uid, vals, context=context)
         wiz = self.browse(cr, uid, [res], context=context)[0]
         if wiz.distribution_id:
@@ -761,13 +818,15 @@ class analytic_distribution_wizard(osv.osv_memory):
             if wiz.purchase_id and wiz.purchase_id.state not in ['draft', 'validated_n', 'validated', 'draft_p', 'validated_p']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that purchase from purchase line is in good state if necessary
-            if wiz.purchase_line_id and wiz.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
+            if wiz.purchase_line_id and wiz.purchase_line_id.state not in ['draft', 'validated_n', 'validated'] and\
+                    not (not wiz.purchase_line_id.analytic_distribution_id and wiz.purchase_line_id.created_by_sync and
+                         wiz.purchase_line_id.state == 'sourced_v'):
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice is in good state if necessary
-            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
+            if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid', 'inv_close']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice from invoice line is in good state if necessary
-            if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in ['open', 'paid']:
+            if wiz.invoice_line_id and wiz.invoice_line_id.invoice_id and wiz.invoice_line_id.invoice_id.state in ['open', 'paid', 'inv_close']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that commitment is in good state if necessary
             if wiz.commitment_id and wiz.commitment_id.state in ['done']:
@@ -978,22 +1037,20 @@ class analytic_distribution_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        distrib_obj = self.pool.get('analytic.distribution')
         for w in self.browse(cr, uid, ids):
             # UF-1678
             # For Cost center and destination analytic accounts, check is done on POSTING date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
             if w.distribution_id and w.posting_date:
                 # First we check cost center distribution line with CC (analytic_id) and destination (destination_id)
-                for cline in self.pool.get('cost.center.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.cost_center_lines], {'date': w.posting_date}):
-                    if not cline.analytic_id.filter_active:
-                        raise osv.except_osv(_('Error'), _('Cost center account %s is not active at this date: %s') % (cline.analytic_id.code or '', w.posting_date))
-                    if not cline.destination_id.filter_active:
-                        raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') % (cline.destination_id.code or '', w.posting_date))
+                distrib_obj.check_cc_distrib_active(cr, uid, w.distribution_id, w.posting_date)
                 # Then we check funding pool distribution line with CC (cost_center_id) and destination (destination_id)
                 for fpline in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.funding_pool_lines], {'date': w.posting_date}):
                     if not fpline.cost_center_id.filter_active:
                         raise osv.except_osv(_('Error'), _('Cost center %s is not active at this date: %s') % (fpline.cost_center_id.code or '', w.posting_date))
                     if not fpline.destination_id.filter_active:
-                        raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') % (fpline.destination_id.code or '', w.posting_date))
+                        raise osv.except_osv(_('Error'), _('Destination %s is either inactive at the date %s, or it allows no Cost Center.')
+                                             % (fpline.destination_id.code or '', w.posting_date))
             # UF-1678
             # For funding pool analytic account, check is done on DOCUMENT date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
             if w.distribution_id and w.document_date:

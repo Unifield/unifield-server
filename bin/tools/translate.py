@@ -381,8 +381,12 @@ class TinyPoFile(object):
 
             if tmp_tnrs and not fuzzy:
                 type, name, res_id = tmp_tnrs.pop(0)
+                code_found = type == 'code'
                 for t, n, r in tmp_tnrs:
-                    self.tnrs.append((t, n, r, source, trad))
+                    if not code_found or t != 'code':
+                        self.tnrs.append((t, n, r, source, trad))
+                        if t == 'code':
+                            code_found = True
 
         self.first = False
 
@@ -567,7 +571,7 @@ def trans_parse_view(de):
     if de.get("filter_selector"):
         try:
             eval_filter = safe_eval(de.get('filter_selector'))
-            if eval_filter:
+            if eval_filter and isinstance(eval_filter, list):
                 for x in eval_filter:
                     res.append(x[0].encode("utf8"))
         except Exception:
@@ -911,7 +915,11 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
     _to_translate.sort()
     # translate strings marked as to be translated
     for module, source, name, id, type in _to_translate:
-        trans = trans_obj._get_source(cr, uid, name, type, lang, source, only_translated_terms)
+        if type in ('code','sql_constraint'):
+            p_name = None
+        else:
+            p_name = name
+        trans = trans_obj._get_source(cr, uid, p_name, type, lang, source, only_translated_terms)
         if (only_translated_terms == 'y' and trans and trans != source) \
                 or (only_translated_terms == 'n' and (not trans or trans == source)) \
                 or not only_translated_terms:
@@ -919,13 +927,15 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
 
     return out
 
-def trans_load(cr, filename, lang, verbose=True, context=None):
+def trans_load(cr, filename, lang, verbose=True, context=None, delete_old=False):
     logger = logging.getLogger('i18n')
     try:
+        if delete_old:
+            cr.execute("update ir_translation set updated_by_modules='f' where lang=%s", (lang,))
         fileobj = open(filename,'r')
         logger.info("loading %s", filename)
         fileformat = os.path.splitext(filename)[-1][1:].lower()
-        r = trans_load_data(cr, fileobj, fileformat, lang, verbose=verbose, context=context)
+        r = trans_load_data(cr, fileobj, fileformat, lang, verbose=verbose, context=context, delete_old=delete_old)
         fileobj.close()
         return r
     except IOError:
@@ -933,7 +943,7 @@ def trans_load(cr, filename, lang, verbose=True, context=None):
             logger.error("couldn't read translation file %s", filename)
         return None
 
-def trans_load_data(cr, fileobj, fileformat, lang, lang_name=None, verbose=True, context=None):
+def trans_load_data(cr, fileobj, fileformat, lang, lang_name=None, verbose=True, context=None, delete_old=False):
     """Populates the ir_translation table. Fixing the res_ids so that they point
     correctly to ir_model_data is done in a separate step, using the
     'trans_update_res_ids' function below."""
@@ -1023,9 +1033,23 @@ def trans_load_data(cr, fileobj, fileformat, lang, lang_name=None, verbose=True,
                     # trans_obj.write(cr, uid, ids, {'value': dic['value']})
                     # bypass write method to speed up the update, the cache will be cleared after the import
                     clear_cache = True
-                    cr.execute('UPDATE ir_translation SET value=%s WHERE id in %s', (dic['value'], tuple(ids)))
+                    sql_add = ''
+                    if delete_old:
+                        sql_add = " ,updated_by_modules='t'"
+                    cr.execute('UPDATE ir_translation SET value=%s '+sql_add+' WHERE id in %s', (dic['value'], tuple(ids)))  # not_a_user_entry
             else:
+                if delete_old:
+                    dic['updated_by_modules'] = 't'
                 trans_obj.create(cr, uid, dic)
+
+        if delete_old:
+            if verbose:
+                logger.info("remove unused code and sql_constraint translations")
+            cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
+                select id from ir_translation where lang=%s and updated_by_modules='f' and type in ('code', 'sql_constraint')
+                )""", (lang,))
+            cr.execute("delete from ir_translation where lang=%s and updated_by_modules='f' and type in ('code', 'sql_constraint')", (lang,))
+            logger.info("Delete %d unused translations" % (cr.rowcount,))
         if clear_cache:
             tools.cache.clean_caches_for_db(cr.dbname)
             tools.read_cache.clean_caches_for_db(cr.dbname)

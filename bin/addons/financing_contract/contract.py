@@ -22,6 +22,10 @@ import datetime
 from osv import fields, osv
 from tools.translate import _
 
+CONTRACT_CODE_LENGTH = 24
+CONTRACT_NAME_LENGTH = 64
+
+
 class financing_contract_funding_pool_line(osv.osv):
     _name = "financing.contract.funding.pool.line"
     _description = "Funding pool line"
@@ -310,8 +314,8 @@ class financing_contract_contract(osv.osv):
         return dict((id, instance_level) for id in ids)
 
     _columns = {
-        'name': fields.char('Financing contract name', size=64, required=True),
-        'code': fields.char('Financing contract code', size=16, required=True),
+        'name': fields.char('Financing contract name', size=CONTRACT_NAME_LENGTH, required=True),
+        'code': fields.char('Financing contract code', size=CONTRACT_CODE_LENGTH, required=True),
         'donor_id': fields.many2one('financing.contract.donor', 'Donor', required=True, domain="[('active', '=', True)]"),
         'donor_grant_reference': fields.char('Donor grant reference', size=64),
         'hq_grant_reference': fields.char('HQ grant reference', size=64),
@@ -356,11 +360,14 @@ class financing_contract_contract(osv.osv):
 
     def copy(self, cr, uid, id, default=None, context=None, done_list=[], local=False):
         contract = self.browse(cr, uid, id, context=context)
+        code = contract['code'] or ''
+        name = contract['name'] or ''
         if not default:
             default = {}
         default = default.copy()
-        default['code'] = (contract['code'] or '') + '(copy)'
-        default['name'] = (contract['name'] or '') + '(copy)'
+        suffix = "(copy)"
+        default['code'] = "%s%s" % (code[:CONTRACT_CODE_LENGTH - len(suffix)], suffix)
+        default['name'] = "%s%s" % (name[:CONTRACT_NAME_LENGTH - len(suffix)], suffix)
         # Copy lines manually but remove CCs and FPs
         default['funding_pool_ids'] = []
         default['cost_center_ids'] = []
@@ -529,59 +536,6 @@ class financing_contract_contract(osv.osv):
             'context': context
         }
 
-    def menu_allocated_expense_report(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        wiz_obj = self.pool.get('wizard.expense.report')
-        wiz_id = wiz_obj.create(cr, uid, {'reporting_type': 'allocated',
-                                          'filename': 'allocated_expenses.csv',
-                                          'contract_id': ids[0]}, context=context)
-        # we open a wizard
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.expense.report',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_id': [wiz_id],
-            'context': context,
-        }
-
-    def menu_project_expense_report(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-
-        wiz_obj = self.pool.get('wizard.expense.report')
-        wiz_id = wiz_obj.create(cr, uid, {'reporting_type': 'project',
-                                          'filename': 'project_expenses.csv',
-                                          'contract_id': ids[0]}, context=context)
-        # we open a wizard
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.expense.report',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_id': [wiz_id],
-            'context': context,
-        }
-
-    def menu_csv_interactive_report(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        wiz_obj = self.pool.get('wizard.interactive.report')
-        wiz_id = wiz_obj.create(cr, uid, {'filename': 'interactive_report.csv',
-                                          'contract_id': ids[0]}, context=context)
-        # we open a wizard
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'wizard.interactive.report',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'target': 'new',
-            'res_id': [wiz_id],
-            'context': context,
-        }
 
     def allocated_expenses_report(self, cr, uid, ids, context=None):
         """

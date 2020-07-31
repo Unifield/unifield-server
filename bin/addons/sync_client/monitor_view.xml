@@ -47,18 +47,35 @@
                     <field name="sequence_number"/>
                     <field name="start"/>
                     <field name="end"/>
-                    <field name="data_pull"/>
-                    <field name="data_pull_receive" string="receive" />
-                    <field name="data_pull_execute" string="execute"/>
-                    <field name="msg_pull"/>
-                    <field name="msg_pull_receive" string="receive"/>
-                    <field name="msg_pull_execute" string="execute"/>
-                    <field name="data_push"/>
-                    <field name="data_push_create" string="create"/>
-                    <field name="data_push_send" string="send"/>
-                    <field name="msg_push"/>
-                    <field name="msg_push_create" string="create"/>
-                    <field name="msg_push_send" string="send"/>
+
+                    <field name="data_pull" tooltip="data_pull_enddate" />
+                    <field name="data_pull_enddate" invisible="1" />
+                    <field name="data_pull_receive" string="receive" tooltip="data_pull_receive_enddate" />
+                    <field name="data_pull_receive_enddate" invisible="1" />
+                    <field name="data_pull_execute" string="execute" tooltip="data_pull_execute_enddate" />
+                    <field name="data_pull_execute_enddate" invisible="1" />
+
+                    <field name="msg_pull" tooltip="msg_pull_enddate"/>
+                    <field name="msg_pull_enddate" invisible="1" />
+                    <field name="msg_pull_receive" string="receive" tooltip="msg_pull_receive_enddate"/>
+                    <field name="msg_pull_receive_enddate" invisible="1" />
+                    <field name="msg_pull_execute" string="execute" tooltip="msg_pull_execute_enddate"/>
+                    <field name="msg_pull_execute_enddate" invisible="1"/>
+
+                    <field name="data_push" tooltip="data_push_enddate"/>
+                    <field name="data_push_enddate" invisible="1" />
+                    <field name="data_push_create" string="create" tooltip="data_push_create_enddate"/>
+                    <field name="data_push_create_enddate" invisible="1" />
+                    <field name="data_push_send" string="send" tooltip="data_push_send_enddate" />
+                    <field name="data_push_send_enddate" invisible="1" />
+
+                    <field name="msg_push" tooltip="msg_push_enddate"/>
+                    <field name="msg_push_enddate" invisible="1" />
+                    <field name="msg_push_create" string="create" tooltip="msg_push_create_enddate" />
+                    <field name="msg_push_create_enddate" invisible="1" />
+                    <field name="msg_push_send" string="send" tooltip="msg_push_send_enddate" />
+                    <field name="msg_push_send_enddate" invisible="1" />
+
                     <field name="status" />
                     <field name="state"  />
                     <button name="interrupt" type="object" string="Interrupt"  icon="gtk-cancel"  states="syncing" />

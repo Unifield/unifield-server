@@ -113,8 +113,27 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssHeaderCenter">
+  <Alignment ss:Horizontal="Center" ss:Vertical="Top" ss:WrapText="1"/>
+  <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+  </Borders>
+</Style>
 <Style ss:ID="ssAccountLine">
 <Alignment ss:Bottom="Top" ss:WrapText="1"/>
+<Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
+<Style ss:ID="ssAccountLineRight">
+<Alignment ss:Bottom="Top" ss:WrapText="1" ss:Vertical="Center" ss:Horizontal="Right"/>
 <Font ss:Size="8"/>
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -192,18 +211,21 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="55" />
 <Column ss:AutoFitWidth="1" ss:Width="100" ss:Span="1" />
 <Column ss:AutoFitWidth="1" ss:Width="55" />
-<Column ss:Width="90" />
-<Column ss:Width="90" />
-<Column ss:Width="90" />
-<Column ss:Width="90" />
+<Column ss:Width="90" ss:Span="4" />
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Journals</Data></Cell>
-<Cell ss:StyleID="ssH" ss:MergeAcross="1"><Data ss:Type="String">Display</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Display</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Open Items at')}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Filter By ${(get_filter(data)!='No Filter' and get_filter(data) or '')|x}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Target Moves</Data></Cell>
-<Cell ss:StyleID="ssH" ss:MergeAcross="1"><Data ss:Type="String">Proprietary Instances</Data></Cell>
+% if get_show_move_lines():
+    <Cell ss:StyleID="ssH" ss:MergeAcross="2">
+% else:
+    <Cell ss:StyleID="ssH" ss:MergeAcross="1">
+% endif
+<Data ss:Type="String">Proprietary Instances</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
 </Row>
 % for a in objects:
@@ -217,8 +239,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(get_journals_str(data) or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssHeader" ss:MergeAcross="1">
+<Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${get_display_info(data)|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderCenter">
+    <Data ss:Type="String">${get_open_items_selection(data)|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(get_filter_info(data) or '')|x}</Data>
@@ -226,8 +251,12 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssHeader" ss:MergeAcross="1">
-    <Data ss:Type="String">${(get_prop_instances() or '')|x}</Data>
+% if get_show_move_lines():
+    <Cell ss:StyleID="ssHeader" ss:MergeAcross="2">
+% else:
+    <Cell ss:StyleID="ssHeader" ss:MergeAcross="1">
+% endif
+<Data ss:Type="String">${(get_prop_instances() or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${get_output_currency_code(data)}</Data>
@@ -256,6 +285,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Credit</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Booking Balance</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Balance ${get_output_currency_code(data)}</Data></Cell>
+% if get_show_move_lines():
+    <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Reconcile Number')}</Data></Cell>
+% endif
 <Cell><Data ss:Type="String"></Data></Cell>
 % if not get_show_move_lines():
 <Cell><Data ss:Type="String"></Data></Cell>
@@ -292,6 +324,9 @@ ccy_sub_total_style_right_suffix = 'Right'
 <Cell ss:StyleID="ssNumber${ac_style_suffix}">
     <Data ss:Type="Number">${o.data['*']['debit'] - o.data['*']['credit']}</Data>
 </Cell>
+% if get_show_move_lines():
+    <Cell ss:StyleID="ssBorder${ac_style_suffix}"><Data ss:Type="String"></Data></Cell>
+% endif
 </Row>
 % endif
 
@@ -320,6 +355,9 @@ ccy_sub_total_style_right_suffix = 'Right'
     <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
         <Data ss:Type="Number">${o.data[ccy]['debit'] - o.data[ccy]['credit']}</Data>
     </Cell>
+    % if get_show_move_lines():
+        <Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}"><Data ss:Type="String"></Data></Cell>
+    % endif
 </Row>
 % endfor
 % endif
@@ -347,13 +385,18 @@ ccy_sub_total_style_right_suffix = 'Right'
 <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
     <Data ss:Type="Number">${get_line_balance(line, booking=False)}</Data>
 </Cell>
+% if get_show_move_lines():
+    <Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
+        <Data ss:Type="String">${(line.get('reconcile_txt') or '')|x}</Data>
+    </Cell>
+% endif
 </Row>
 % endfor
 
 % for line in lines(o, initial_balance_mode=False):
 <Row>
-<Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String"></Data>
+<Cell ss:StyleID="ssAccountLineRight">
+    <Data ss:Type="String">${(o.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['move'] or '' or '')|x}</Data>
@@ -381,6 +424,9 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${get_line_balance(line, booking=False)}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String">${(line.get('reconcile_txt') or '')|x}</Data>
 </Cell>
 </Row>
 % endfor

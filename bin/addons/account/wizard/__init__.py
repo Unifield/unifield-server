@@ -53,8 +53,6 @@ import account_tax_chart
 import account_validate_account_move
 import account_use_model
 
-import account_state_open
-
 import account_report_print_journal
 import account_report_central_journal
 import account_report_general_journal
@@ -68,6 +66,7 @@ import account_report_profit_loss
 import account_report_liquidity_balance
 
 import free_allocation_wizard
+import account_invoice_import
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
 

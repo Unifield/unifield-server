@@ -770,7 +770,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     vals['related_sourcing_id'] = False
 
         if product and vals.get('type', False) == 'make_to_order' and not vals.get('supplier', False):
-            vals['supplier'] = product.seller_id and product.seller_id.id or False
+            vals['supplier'] = product.seller_id and (product.seller_id.supplier or product.seller_id.manufacturer or
+                                                      product.seller_id.transporter) and product.seller_id.id or False
 
         if product and product.type in ('consu', 'service', 'service_recep'):
             vals['type'] = 'make_to_order'
@@ -846,8 +847,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             line_ids = [line_ids]
 
         for line in self.browse(cr, uid, line_ids, context=context):
-            if line.type == 'make_to_order' and line.product_id \
-               and line.product_id.seller_id:
+            if line.type == 'make_to_order' and line.product_id and line.product_id.seller_id and \
+                    (line.product_id.seller_id.supplier or line.product_id.seller_id.manufacturer
+                     or line.product_id.seller_id.transporter):
                 self.write(cr, uid, [line.id], {
                     'supplier': line.product_id.seller_id.id,
                 }, context=context)
@@ -1624,7 +1626,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         if not po_loan:
                             po_loan = self.create_po_loan_for_goods_return(cr, uid, sourcing_line.id, context=context)
                             po = self.pool.get('purchase.order').browse(cr, uid, po_loan, context=context)
-                            self.pool.get('purchase.order').log(cr, uid, po_loan, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                            self.pool.get('purchase.order').log(cr, uid, po_loan, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
                             self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
 
                         # attach PO line:
@@ -1656,7 +1658,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             po_to_use = self.create_po_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                             # log new PO:
                             po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
-                            self.pool.get('purchase.order').log(cr, uid, po_to_use, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                            self.pool.get('purchase.order').log(cr, uid, po_to_use, _('The Purchase Order %s for supplier %s has been created.') % (po.name, po.partner_id.name))
                             self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
                         else:
                             po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id'], context=context)
@@ -1726,7 +1728,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             rfq_to_use = self.create_rfq_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                             # log new RfQ:
                             rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, context=context)
-                            self.pool.get('purchase.order').infolog(cr, uid, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
+                            self.pool.get('purchase.order').infolog(cr, uid, _('The Request for Quotation %s for supplier %s has been created.') % (rfq.name, rfq.partner_id.name))
                         else:
                             rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, fields_to_fetch=['pricelist_id'], context=context)
 
@@ -1781,7 +1783,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             tender_to_use = self.create_tender_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                             # log new tender:
                             tender = self.pool.get('tender').browse(cr, uid, tender_to_use, context=context)
-                            self.pool.get('tender').log(cr, uid, tender_to_use, 'The Tender %s has been created.' % (tender.name,))
+                            self.pool.get('tender').log(cr, uid, tender_to_use, _('The Tender %s has been created.') % (tender.name,))
                             self.pool.get('tender').infolog(cr, uid, 'The Tender %s has been created.' % (tender.name,))
                         # attach tender line:
                         proc_location_id = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'procurement')], context=context)
@@ -1920,7 +1922,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         """
         if not context:
             context = {}
-        wiz_obj = self.pool.get('procurement.purchase.compute.all')
         wf_service = netsvc.LocalService("workflow")
 
         if new_cursor:
@@ -1965,11 +1966,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 self.pool.get('sale.order.sourcing.progress').write(cr, uid, prog_ids, {
                     'error': misc.ustr(e),
                 }, context=context)
-
-        if run_scheduler:
-            # Run Auto POs creation scheduler
-            wiz_id = wiz_obj.create(cr, uid, {}, context=context)
-            wiz_obj.procure_calculation_purchase(cr, uid, wiz_id, context=context)
 
         if new_cursor:
             cr.commit()
@@ -2111,10 +2107,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             line = self.browse(cr, uid, ids[0])
 
         if product and type:
-            seller = product_obj.browse(cr, uid, product).seller_id
-            sellerId = (seller and seller.id) or False
-
             if l_type == 'make_to_order':
+                seller = product_obj.browse(cr, uid, product).seller_id
+                sellerId = (seller and (seller.supplier or seller.manufacturer or seller.transporter) and seller.id) or False
+
                 po_cft = 'po'
                 if line and \
                     ((line.product_id and line.product_id.type in ('service', 'service_recep')) or \
@@ -2247,7 +2243,9 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'title': _('Warning'),
                     'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type,
                 })
-            if l_type == 'make_to_order' and line.product_id and line.product_id.seller_id:
+            if l_type == 'make_to_order' and line.product_id and line.product_id.seller_id and \
+                    (line.product_id.seller_id.supplier or line.product_id.seller_id.manufacturer
+                     or line.product_id.seller_id.transporter):
                 value['supplier'] = line.product_id.seller_id.id
 
         if l_type == 'make_to_stock':
@@ -2383,10 +2381,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         return result
 
     def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None,
-                   context=None, orderby=False):
+                   context=None, orderby=False, count=False):
         res = super(sale_order_line, self).read_group(cr, uid, domain, fields,
                                                       groupby, offset=offset, limit=limit, context=context,
-                                                      orderby=orderby)
+                                                      orderby=orderby, count=count)
 
         if 'line_number' in fields:
             """

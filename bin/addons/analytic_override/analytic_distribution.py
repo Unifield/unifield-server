@@ -21,8 +21,11 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 from time import strftime
 import decimal_precision as dp
+from base import currency_date
+
 
 class analytic_distribution1(osv.osv):
     _name = "analytic.distribution"
@@ -154,8 +157,9 @@ class analytic_distribution1(osv.osv):
             res[distrib.id] = True
         return res
 
-    def create_analytic_lines(self, cr, uid, ids, name, date, amount, journal_id, currency_id, document_date=False, ref=False, source_date=False, general_account_id=False, \
-                              move_id=False, invoice_line_id=False, commitment_line_id=False, context=None):
+    def create_account_analytic_lines(self, cr, uid, ids, name, date, amount, journal_id, currency_id, document_date=False, ref=False,
+                                      source_date=False, general_account_id=False, move_id=False, invoice_line_id=False,
+                                      commitment_line_id=False, context=None):
         """
         Create analytic lines from given elements:
          - date
@@ -182,9 +186,10 @@ class analytic_distribution1(osv.osv):
             document_date = date
         # Prepare some values
         res = []
+        curr_date = currency_date.get_date(self, cr, document_date, date, source_date=source_date)
         vals = {
             'name': name,
-            'date': source_date or date,
+            'date': date,
             'document_date': document_date,
             'ref': ref or False,
             'journal_id': journal_id,
@@ -203,7 +208,7 @@ class analytic_distribution1(osv.osv):
             # create lines
             for distrib_lines in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]:
                 for distrib_line in distrib_lines:
-                    context.update({'date': source_date or date}) # for amount computing
+                    context.update({'currency_date': curr_date})  # for the computation of the fctal amount
                     anal_amount = (distrib_line.percentage * amount) / 100
                     vals.update({
                         'amount': -1 * self.pool.get('res.currency').compute(cr, uid, currency_id, company_currency,
@@ -231,7 +236,7 @@ class distribution_line(osv.osv):
     _columns = {
         'name': fields.char('Name', size=64),
         "distribution_id": fields.many2one('analytic.distribution', 'Associated Analytic Distribution', ondelete='cascade', select="1"),
-        "analytic_id": fields.many2one('account.analytic.account', 'Analytical Account'),
+        "analytic_id": fields.many2one('account.analytic.account', 'Analytical Account', ondelete='restrict'),
         "amount": fields.float('Amount', digits_compute=dp.get_precision('Account')),
         "percentage": fields.float('Percentage', digits=(16,4)),
         "currency_id": fields.many2one('res.currency', 'Currency', required=True),
@@ -274,7 +279,7 @@ class distribution_line(osv.osv):
 
         for line in self.browse(cr, uid, ids):
             amount_cur = round((move_line.credit_currency - move_line.debit_currency) * line.percentage / 100, 2)
-            ctx = {'date': source_date or date}
+            ctx = {'currency_date': currency_date.get_date(self, cr, document_date, date, source_date=source_date)}
             amount = self.pool.get('res.currency').compute(cr, uid, move_line.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
 
             # US-945: deduce real period id from date
@@ -283,6 +288,8 @@ class distribution_line(osv.osv):
             period_ids = self.pool.get('account.period').get_period_from_date(
                 cr, uid, date=date, context=context)
 
+            curr_date = currency_date.get_date(self, cr, move_line.document_date, move_line.date,
+                                               source_date=source_date or move_line.source_date)
             vals = {
                 'instance_id': instance_id,
                 'account_id': line.analytic_id.id,
@@ -293,7 +300,7 @@ class distribution_line(osv.osv):
                 'date': date,
                 # UFTP-361: source_date or source date from line or from line posting date if any
                 # for rev line must be the source date of the move line: posting date of reversed line
-                'source_date': source_date or move_line.source_date or move_line.date,
+                'source_date': curr_date,
                 'document_date': document_date,
                 'journal_id': move_line.journal_id and move_line.journal_id.analytic_journal_id and move_line.journal_id.analytic_journal_id.id or False,
                 'move_id': move_line.id,
@@ -319,26 +326,50 @@ class cost_center_distribution_line(osv.osv):
     _name = "cost.center.distribution.line"
     _inherit = "distribution.line"
     _columns = {
-        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True),
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True, ondelete='restrict'),
     }
 
 cost_center_distribution_line()
+
 
 class funding_pool_distribution_line(osv.osv):
     _name = "funding.pool.distribution.line"
     _inherit = "distribution.line"
     _columns = {
-        "cost_center_id": fields.many2one('account.analytic.account', 'Cost Center Account', required=True),
-        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True),
+        "cost_center_id": fields.many2one('account.analytic.account', 'Cost Center Account', required=True, ondelete='restrict'),
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=True, ondelete='restrict'),
     }
 
+    def _check_fp(self, cr, uid, ids, context=None):
+        """
+        Raises an error if no Funding Pool is linked to the FP distrib line(s)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for distrib_line in self.browse(cr, uid, ids, fields_to_fetch=['analytic_id'], context=context):
+            if not distrib_line.analytic_id:
+                raise osv.except_osv(_('Error'), _('Funding Pool not found.'))
+
+    def create(self, cr, uid, vals, context=None):
+        distrib_line_id = super(funding_pool_distribution_line, self).create(cr, uid, vals, context=context)
+        self._check_fp(cr, uid, distrib_line_id, context=context)
+        return distrib_line_id
+
+    def write(self, cr, uid, ids, vals, context=None):
+        res = super(funding_pool_distribution_line, self).write(cr, uid, ids, vals, context=context)
+        self._check_fp(cr, uid, ids, context=context)
+        return res
+
 funding_pool_distribution_line()
+
 
 class free_1_distribution_line(osv.osv):
     _name = "free.1.distribution.line"
     _inherit = "distribution.line"
     _columns = {
-        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=False),
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=False, ondelete='restrict'),
     }
 
 free_1_distribution_line()
@@ -347,7 +378,7 @@ class free_2_distribution_line(osv.osv):
     _name = "free.2.distribution.line"
     _inherit = "distribution.line"
     _columns = {
-        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=False),
+        "destination_id": fields.many2one('account.analytic.account', 'Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", required=False, ondelete='restrict'),
     }
 
 free_2_distribution_line()

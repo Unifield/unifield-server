@@ -8,6 +8,7 @@ from osv import osv
 from osv import fields
 from product_nomenclature.product_nomenclature import RANDOM_XMLID_CODE_PREFIX
 import time
+import netsvc
 
 # Note:
 #
@@ -419,6 +420,8 @@ class msf_instance(osv.osv):
                                     sibling_target_ids += [x.id for x in sibling.target_cost_center_ids]
                             self.pool.get('account.target.costcenter').synchronize(cr, uid, sibling_target_ids, context=context)
 
+                    if instance.level == 'project' and instance.parent_id:
+                        self.pool.get('sync.trigger.something.target.lower').create(cr, uid, {'name': 'sync_fp', 'destination': instance.parent_id.instance}, context={})
         return super(msf_instance, self).write(cr, uid, ids, vals, context=context)
 
 msf_instance()
@@ -615,19 +618,33 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        """
+            deprecated method: kept only to manage in-pipe updates during UF14.0 -> UF15.0
+        """
         if not ids:
             return True
         if context is None:
             context = {}
+
+        # if unreconcile linked to paid/close invoice, then reopen SI
+        invoice_reopen = []
+        if context.get('sync_update_execution') and 'reconcile_id' in vals and not vals['reconcile_id']:
+            move_lines = self.browse(cr, uid, ids, fields_to_fetch=['invoice', 'reconcile_id'], context=context)
+            invoice_reopen = [line.invoice.id for line in move_lines if line.reconcile_id and line.invoice and line.invoice.state in ['paid','inv_close']]
+
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         # Do workflow if line is coming from sync, is now reconciled and it has an unpaid invoice
         if context.get('sync_update_execution', False) and 'reconcile_id' in vals and vals['reconcile_id']:
             invoice_ids = []
-            line_list = self.browse(cr, uid, ids, context=context)
+            line_list = self.browse(cr, uid, ids, fields_to_fetch=['invoice'], context=context)
             invoice_ids = [line.invoice.id for line in line_list if
-                           line.invoice and line.invoice.state != 'paid']
+                           line.invoice and line.invoice.state not in ('paid','inv_close')]
             if self.pool.get('account.invoice').test_paid(cr, uid, invoice_ids):
                 self.pool.get('account.invoice').confirm_paid(cr, uid, invoice_ids)
+
+        if invoice_reopen:
+            netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', invoice_reopen, 'open_test', cr)
+
         return res
 
 account_move_line()
@@ -710,6 +727,8 @@ class product_product(osv.osv):
 
     # UF-2254: Treat the case of product with empty or XXX for default_code
     def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         if not ids:
             return True
         res = super(product_product, self).write(cr, uid, ids, vals, context=context)

@@ -337,7 +337,7 @@ form: module.record_id""" % (xml_id,)
 
         xml_id = rec.get('id','').encode('utf8')
         self._test_xml_id(xml_id)
-
+        res['update_title'] = rec.get('update_title', False)
         if rec.get('groups'):
             g_names = rec.get('groups','').split(',')
             groups_value = []
@@ -653,8 +653,7 @@ form: module.record_id""" % (xml_id,)
                 resw = cr.fetchone()
                 if (not values.get('name', False)) and resw:
                     values['name'] = resw[0]
-        if rec.get('sequence'):
-            values['sequence'] = int(rec.get('sequence'))
+        values['sequence'] = int(rec.get('sequence', 10))
         if rec.get('icon'):
             values['icon'] = str(rec.get('icon'))
         if rec.get('web_icon'):

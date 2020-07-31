@@ -184,6 +184,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         'percent_completed': fields.float(string='Percent completed',
                                           readonly=True),
         'import_error_ok': fields.boolean(string='Error at import'),
+        'import_warning_ok': fields.boolean(string='Warning at import'),
         # PO Header information
         'in_creation_date': fields.related('order_id', 'date_order',
                                            type='date',
@@ -198,7 +199,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                                        relation='res.partner.address',
                                        string='Destination Address',
                                        readonly=True),
-        'in_transport_mode': fields.related('order_id', 'transport_type',
+        'in_transport_type': fields.related('order_id', 'transport_type',
                                             type='selection',
                                             selection=TRANSPORT_TYPE,
                                             string='Transport mode',
@@ -238,7 +239,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         # Import fiels
         'imp_supplier_ref': fields.char(size=256, string='Supplier Ref',
                                         readonly=True),
-        'imp_transport_mode': fields.selection(selection=TRANSPORT_TYPE,
+        'imp_transport_type': fields.selection(selection=TRANSPORT_TYPE,
                                                string='Transport mode',
                                                readonly=True),
         'imp_ready_to_ship_date': fields.date(string='RTS Date',
@@ -362,6 +363,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                 'in_line_number': line.line_number,
                 'in_ext_ref': line.external_ref,
                 'simu_id': imp_id,
+                'imp_origin': line.origin,
             }, context=context)
 
         return True
@@ -469,6 +471,9 @@ class wizard_import_po_simulation_screen(osv.osv):
                 values[index] = [node.attrib['name'], node.text or '']
                 return index
 
+        field_parser = {
+            'product_qty': lambda a: float(a),
+        }
         for field in rec:
             ad_field = field.attrib['name'] in ad_field_names
             if field.attrib['name'] != 'order_line' and not ad_field:
@@ -506,7 +511,14 @@ class wizard_import_po_simulation_screen(osv.osv):
                         if ad_node.text:
                             values[index].append(ad_node.text or '')
                 elif not fl.getchildren():
-                    values[index].append(fl.text or '')
+                    if fl.attrib['name'] in field_parser:
+                        try:
+                            value = field_parser[fl.attrib['name']](fl.text)
+                        except:
+                            value = fl.text or ''
+                    else:
+                        value = fl.text or ''
+                    values[index].append(value)
                 else:
                     for sfl in fl:
                         values[index].append(sfl.text or '')
@@ -690,6 +702,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                     first_line_index += 2
 
                 for line in wiz.simu_line_ids:
+                    # 1st step : simu_line_ids contain a copy of po line
                     # Put data in cache
                     if line.in_product_id:
                         PRODUCT_CODE_ID.setdefault(line.in_product_id.default_code, line.in_product_id.id)
@@ -735,6 +748,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                 file_format_errors = []
                 values_header_errors = []
                 values_line_errors = []
+                values_line_warnings = []
                 message = ''
                 header_values = {}
 
@@ -803,10 +817,10 @@ information must be on at least %s columns. The line %s has %s columns') % (x, n
                     message = '''## IMPORT STOPPED ##
 
     LINE 1 OF THE IMPORTED FILE: THE ORDER REFERENCE \
-    IN THE FILE IS NOT THE SAME AS THE ORDER REFERENCE OF THE SIMULATION SCREEN.\
+IN THE FILE IS NOT THE SAME AS THE ORDER REFERENCE OF THE SIMULATION SCREEN. \
 
-    YOU SHOULD IMPORT A FILE THAT HAS THE SAME ORDER REFERENCE THAN THE SIMULATION\
-    SCREEN !'''
+    YOU SHOULD IMPORT A FILE THAT HAS THE SAME ORDER REFERENCE THAN THE SIMULATION \
+SCREEN !'''
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
                     res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
                     cr.commit()
@@ -838,17 +852,17 @@ information must be on at least %s columns. The line %s has %s columns') % (x, n
                 # Nothing to do
 
                 # Line 9: Transport mode
-                transport_mode = values.get(9, [])[1]
-                if transport_mode:
-                    transport_select = self.fields_get(cr, uid, ['imp_transport_mode'], context=context)
-                    for x in transport_select['imp_transport_mode']['selection']:
-                        if x[1] == transport_mode:
-                            header_values['imp_transport_mode'] = x[0]
+                transport_type = values.get(9, [])[1]
+                if transport_type:
+                    transport_select = self.fields_get(cr, uid, ['imp_transport_type'], context=context)
+                    for x in transport_select['imp_transport_type']['selection']:
+                        if x[1] == transport_type:
+                            header_values['imp_transport_type'] = x[0]
                             break
                     else:
-                        possible_mode = ', '.join(x[1] for x in transport_select['imp_transport_mode']['selection'] if x[1])
+                        possible_type = ', '.join(x[1] for x in transport_select['imp_transport_type']['selection'] if x[1])
                         err_msg = _('Line 9 of the file: The transport mode \'%s\' is not \
-a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_mode)
+a valid transport mode. Valid transport modes: %s') % (transport_type, possible_type)
                         values_header_errors.append(err_msg)
 
 
@@ -939,10 +953,24 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     file_line_error = []
                     line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
                     for manda_field in LINES_COLUMNS:
+                        if manda_field[0] == 4: #product qty
+                            try:
+                                values[x][4] = float(values[x][4])
+                                if values[x][4] < 0:
+                                    values[x][4] = 0
+                            except:
+                                values[x][4] = 0
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
                             not_ok = True
-                            err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
-                            err = _('Line %s of the PO: %s') % (line_number, err1)
+                            if manda_field[0] == 4:  # Product Qty
+                                err1 = _('You can not have an order line with a negative or zero quantity. Updated quantity is ignored')
+                            else:
+                                err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
+                            if line_number:
+                                err = _('Line %s of the PO: %s') % (line_number, err1)
+                            else:
+                                err = _('Line ref %s of the PO: %s') % (values.get(x, ['', ''])[1], err1)
+
                             values_line_errors.append(err)
                             file_line_error.append(err1)
 
@@ -959,8 +987,6 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     if not line_number and not ext_ref:
                         not_ok = True
                         err1 = _('The line must have either the line number or the external ref. set')
-                        err = _('Line %s of the file: %s') % (x, err1)
-                        values_line_errors.append(err)
                         file_line_error.append(err1)
 
                     if line_number and ext_ref and (ext_ref not in LN_BY_EXT_REF[wiz.id].keys() or line_number not in LN_BY_EXT_REF[wiz.id][ext_ref]):
@@ -976,16 +1002,10 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     if not ext_ref and line_number and line_number in EXT_REF_BY_LN[wiz.id].keys():
                         ext_ref = EXT_REF_BY_LN[wiz.id][line_number][0]
 
-                    if not_ok:
-                        not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
-
-#                    if not line_number and not ext_ref:
-#                        continue
 
                     # Get values
                     product_id = False
                     uom_id = False
-                    qty = 0.00
 
                     vals = values.get(x, [])
                     # Product
@@ -1005,11 +1025,16 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                                 uom_id = uom_ids[0]
                                 UOM_NAME_ID.setdefault(vals[5], uom_id)
                     # Qty
+                    qty = 0
                     if vals[4]:
-                        qty = float(vals[4])
+                        qty = vals[4]
 
                     # AD on line
                     file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref, vals[20:])
+
+                    # If error(s)
+                    if not_ok:
+                        not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
 
                 '''
                 Get the best matching line :
@@ -1022,38 +1047,37 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 file line and the simulation screen line.
                 '''
                 to_del = []
+
+                # file_lines is dict
+                #  key is the excel line number
+                #  values: import line_number fl[0], import product_id fl[1], import uom_id fl[2], import qty fl[3], import ext_ref, import AD
                 for x, fl in sorted(file_lines.iteritems()):
-                    # Search lines with same product, same UoM and same qty
+                    # Search lines with same line number, same product, same UoM and same qty
                     matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
                     tmp_wl_ids = matching_lines.get(fl[1], {}).get(fl[2], {}).get(fl[3], [])
-                    no_match = True
                     for l in tmp_wl_ids:
                         if l not in file_po_lines:
                             file_po_lines[l] = [(x, 'match', fl[0])]
                             to_del.append(x)
-                            no_match = False
                             break
-                    if tmp_wl_ids and no_match:
-                        file_po_lines[l].append((x, 'split', fl[0]))
-                        to_del.append(x)
+
                 # Clear the dict
                 for x in to_del:
                     del file_lines[x]
                 to_del = []
 
-
                 for x, fl in file_lines.iteritems():
-                    # Search lines with same product, same UoM
+                    # Search lines with same line number, same product, same UoM
                     matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
                     tmp_wl_ids = matching_lines.get(fl[1], {}).get(fl[2], {}).get('line_ids', [])
-                    no_match = True
+                    match = False
                     for l in tmp_wl_ids:
                         if l not in file_po_lines:
                             file_po_lines[l] = [(x, 'match', fl[0])]
                             to_del.append(x)
-                            no_match = False
+                            match = True
                             break
-                    if tmp_wl_ids and no_match:
+                    if tmp_wl_ids and not match:
                         file_po_lines[l].append((x, 'split', fl[0]))
                         to_del.append(x)
                 # Clear the dict
@@ -1061,18 +1085,19 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     del file_lines[x]
                 to_del = []
 
+
                 for x, fl in file_lines.iteritems():
-                    # Search lines with same product
+                    # Search lines with same line_number, same product
                     matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
                     tmp_wl_ids = matching_lines.get(fl[1], {}).get('line_ids', [])
-                    no_match = True
+                    match = False
                     for l in tmp_wl_ids:
                         if l not in file_po_lines:
                             file_po_lines[l] = [(x, 'match', fl[0])]
                             to_del.append(x)
-                            no_match = False
+                            match = True
                             break
-                    if tmp_wl_ids and no_match:
+                    if tmp_wl_ids and not match:
                         file_po_lines[l].append((x, 'split', fl[0]))
                         to_del.append(x)
                 # Clear the dict
@@ -1084,14 +1109,14 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     # Search lines with same line number
                     matching_lines = SIMU_LINES.get(wiz.id, {}).get(fl[0], {})
                     tmp_wl_ids = matching_lines.get('line_ids', [])
-                    no_match = True
+                    match = False
                     for l in tmp_wl_ids:
                         if l not in file_po_lines:
                             file_po_lines[l] = [(x, 'match', fl[0])]
                             to_del.append(x)
-                            no_match = False
+                            match = True
                             break
-                    if tmp_wl_ids and no_match:
+                    if tmp_wl_ids and not match:
                         file_po_lines[l].append((x, 'split', fl[0]))
                         to_del.append(x)
                 # Clear the dict
@@ -1099,17 +1124,22 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     del file_lines[x]
                 to_del = []
 
-                # For file lines with no simu. screen lines with same line number,
-                # create a new simu. screen line
+                # new line to create
                 for x in file_lines.keys():
                     new_po_lines.append(x)
 
                 # Split the simu. screen line or/and update the values according
                 # to linked file line.
+                # file_po_lines is a dict
+                #   key: simu_line_id
+                #   values: [( excel line number, type: match or split, line_number )] : 1st item is the match line, other are split
+
                 for po_line, file_lines in file_po_lines.iteritems():
                     if po_line in SIMU_LINES[wiz.id]['line_ids']:
+                        # to manage deletion
                         index_po_line = SIMU_LINES[wiz.id]['line_ids'].index(po_line)
                         SIMU_LINES[wiz.id]['line_ids'].pop(index_po_line)
+
                     for file_line in file_lines:
                         nb_treated_lines += 1
                         percent_completed = int(float(nb_treated_lines) / float(nb_file_lines) * 100)
@@ -1117,7 +1147,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                                                        'percent_completed': percent_completed}, context=context)
                         vals = values.get(file_line[0], [])
                         if file_line[1] == 'match':
-                            err_msg = wl_obj.import_line(cr, uid, po_line, vals, cc_cache, context=context)
+                            err_msg, warn_msg = wl_obj.import_line(cr, uid, po_line, vals, cc_cache, 'match', context=context)
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [po_line], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         elif file_line[1] == 'split':
@@ -1126,17 +1156,24 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                                                      'chg_text': _('Split\nQTY'),
                                                      'parent_line_id': po_line,
                                                      'imp_dcd': False,
+                                                     'error_msg': False,
+                                                     'info_msg': False,
                                                      'po_line_id': False}, context=context)
-                            err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, cc_cache, context=context)
+                            err_msg1, warn_msg1 = wl_obj.import_line(cr, uid, new_wl_id, vals, cc_cache, 'split', context=context)
+                            err_msg += err_msg1
+                            warn_msg += warn_msg1
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         # Commit modifications
                         cr.commit()
-
                     if err_msg:
                         for err in err_msg:
-                            err = 'Line %s of the PO: %s' % (file_line[2], err)
+                            err = _('Line %s of the PO: %s') % (file_line[2], err)
                             values_line_errors.append(err)
+                    if not err_msg and warn_msg:
+                        for warn in warn_msg:
+                            warn = _('Line %s of the PO: %s') % (file_line[2], warn)
+                            values_line_warnings.append(warn)
 
 
                 # Create new lines
@@ -1153,7 +1190,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                                                         'in_line_number': values.get(po_line, [])[0] and int(values.get(po_line, [])[0]) or False,
                                                         'in_ext_ref': values.get(po_line, [])[1] or False,
                                                         'simu_id': wiz.id}, context=context)
-                    err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, cc_cache, context=context)
+                    err_msg, warn_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, cc_cache, 'new', context=context)
                     if po_line in not_ok_file_lines:
                         wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[po_line]}, context=context)
 
@@ -1161,10 +1198,17 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     if err_msg:
                         for err in err_msg:
                             if line_n:
-                                err = 'Line %s of the PO: %s' % (line_n, err)
+                                err = _('Line %s of the PO: %s') % (line_n, err)
                             else:
-                                err = 'Line %s of the file: %s' % (po_line, err)
+                                err = _('Line %s of the file: %s') % (po_line, err)
                             values_line_errors.append(err)
+                    if not err_msg and warn_msg:
+                        for warn in warn_msg:
+                            if line_n:
+                                warn = _('Line %s of the PO: %s') % (line_n, warn)
+                            else:
+                                warn = _('Line %s of the file: %s') % (po_line, warn)
+                            values_line_warnings.append(warn)
                     # Commit modifications
                     cr.commit()
 
@@ -1176,27 +1220,35 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
                 '''
                 We generate the message which will be displayed on the simulation
-                screen. This message is a merge between all errors.
+                screen. This message is a merge between all errors and warnings.
                 '''
                 # Generate the message
                 import_error_ok = False
+                import_warning_ok = False
                 if len(values_header_errors):
                     import_error_ok = True
-                    message += '\n## Error on header values ##\n\n'
+                    message += '\n## %s ##\n\n' % (_('Error on header values'), )
                     for err in values_header_errors:
                         message += '%s\n' % err
 
                 if len(values_line_errors):
                     import_error_ok = True
-                    message += '\n## Error on line values ##\n\n'
+                    message += '\n## %s ##\n\n' % (_('Error on line values'), )
                     for err in values_line_errors:
                         message += '%s\n' % err
+
+                if len(values_line_warnings):
+                    import_warning_ok = True
+                    message += _('\n## Warning on line values ##\n\n')
+                    for warn in values_line_warnings:
+                        message += '%s\n' % warn
 
                 header_values.update({
                     'message': message,
                     'state': 'simu_done',
                     'percent_completed': 100.0,
                     'import_error_ok': import_error_ok,
+                    'import_warning_ok': import_warning_ok,
                 })
                 self.write(cr, uid, [wiz.id], header_values, context=context)
 
@@ -1254,13 +1306,16 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
             if new_thread.isAlive():
                 return self.go_to_simulation(cr, uid, ids, context=context)
             else:
-                return {'type': 'ir.actions.act_window',
-                        'res_model': 'purchase.order',
-                        'res_id': active_wiz.order_id.id,
-                        'view_type': 'form',
-                        'view_mode': 'form, tree',
-                        'target': 'crush',
-                        'context': context}
+                state = self.read(cr, uid, ids[0], ['state'], context=context)
+                if state['state'] != 'error':
+                    return {'type': 'ir.actions.act_window',
+                            'res_model': 'purchase.order',
+                            'res_id': active_wiz.order_id.id,
+                            'view_type': 'form',
+                            'view_mode': 'form, tree',
+                            'target': 'crush',
+                            'context': context}
+                return self.go_to_simulation(cr, uid, ids, context=context)
         else:
             self.run_import(cr.dbname, uid, ids, context)
             return True
@@ -1279,6 +1334,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
         cr = pooler.get_db(dbname).cursor()
 
+        context['from_vi_import'] = True
         try:
             for wiz in self.browse(cr, uid, ids, context=context):
                 w_vals = {'state': 'import_progress',}
@@ -1306,12 +1362,13 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
             cr.commit()
             cr.close(True)
         except Exception, e:
+            cr.rollback()
             logging.getLogger('po.simulation.run').warn('Exception', exc_info=True)
-            self.write(cr, uid, ids, {'message': e}, context=context)
+            self.write(cr, uid, ids, {'message': e, 'state': 'error'}, context=context)
             res = True
             cr.commit()
             cr.close(True)
-
+        context['from_vi_import'] = False
         return res
 
 wizard_import_po_simulation_screen()
@@ -1338,14 +1395,15 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 delete_line_numbers.add(x['in_line_number'])
 
         res = {}
+        chg_dict = dict(self.fields_get(cr, uid, ['type_change'], context=context).get('type_change', {}).get('selection', []))
         for line in self.browse(cr, uid, ids, context=context):
             chg = ''
             if line.type_change in ('warning', 'del', 'ignore'):
-                chg = dict(self._columns['type_change'].selection).get(line.type_change) or ''
+                chg = chg_dict.get(line.type_change) or ''
             elif line.chg_text:
                 chg = line.chg_text
             elif line.type_change:
-                chg = dict(self._columns['type_change'].selection).get(line.type_change) or ''
+                chg = chg_dict.get(line.type_change) or ''
             res[line.id] = {'in_product_id': False,
                             'in_nomen': False,
                             'in_comment': False,
@@ -1360,7 +1418,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'change_ok': False,
                             'chg_text': chg
                             }
-
             if line.po_line_id:
                 l = line.po_line_id
                 res[line.id]['in_product_id'] = l.product_id and l.product_id.id or False
@@ -1413,7 +1470,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     res[line.id]['in_uom'] = line.imp_uom.id
 
             if line.type_change in ('warning', 'del', 'ignore'):
-                res[line.id]['chg_text'] = dict(self._columns['type_change'].selection).get(line.type_change) or ''
+                res[line.id]['chg_text'] = chg_dict.get(line.type_change) or ''
 
         return res
 
@@ -1480,7 +1537,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'in_ext_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'type_change': fields.selection([('', ''), ('error', 'Error'), ('new', 'New'),
                                          ('split', 'Split'), ('del', 'Del'),
-                                         ('ignore', 'Ignore'), ('warning', 'Warning')],
+                                         ('ignore', 'Ignore'), ('warning', 'Warning'), ('cdd', 'CDD')],
                                         string='Change type', readonly=True),
         'imp_product_id': fields.many2one('product.product', string='Product',
                                           readonly=True),
@@ -1501,9 +1558,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'imp_external_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'imp_project_ref': fields.char(size=256, string='Project Ref.', readonly=True),
         'imp_origin': fields.char(size=256, string='Origin Ref.', readonly=True),
+        'imp_sync_order_ref': fields.many2one('sync.order.label', string='Order in sync. instance', readonly=True),
         'change_ok': fields.function(_get_line_info, method=True, multi='line',
                                      type='boolean', string='Change', store=False),
         'error_msg': fields.text(string='Error message', readonly=True),
+        'info_msg': fields.text(string='Message', readonly=True),
+        'ad_error': fields.char(string='Display warning on line', size=12, readonly=True),
         'parent_line_id': fields.many2one('wizard.import.po.simulation.screen.line',
                                           string='Parent line id',
                                           help='Use to split the good PO line',
@@ -1513,6 +1573,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'ad_info': fields.text(string='New AD', readonly=True),
     }
 
+    _defaults = {
+        'ad_error': '',
+    }
     def get_error_msg(self, cr, uid, ids, context=None):
         '''
         Display the error message
@@ -1522,33 +1585,68 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             if line.error_msg:
-                raise osv.except_osv(_('Warning'), line.error_msg)
+                raise osv.except_osv(_('Error'), line.error_msg)
 
         return True
 
-    def import_line(self, cr, uid, ids, values, cc_cache, context=None):
+    def import_line(self, cr, uid, ids, values, cc_cache, import_type=False, context=None):
         '''
         Write the line with the values
         '''
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         sale_obj = self.pool.get('sale.order')
+        sync_order_obj = self.pool.get('sync.order.label')
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         errors = []
+        warnings = []
 
         for line in self.browse(cr, uid, ids, context=context):
             write_vals = {}
+            info_msg = []
 
             # Comment
             write_vals['imp_comment'] = values[15] and values[15].strip()
 
-            if line.po_line_id.state in ('confirmed', 'done') or ( line.po_line_id.state in  ('cancel', 'cancel_r') and write_vals['imp_comment'] != '[DELETE]'):
-                write_vals['type_change'] = 'error'
-                errors.append(_('PO line has been confirmed or cancelled and consequently is not editable'))
+            if line.po_line_id.state in ['cancel', 'cancel_r']:
+                self.write(cr, uid, [line.id], {'type_change': 'ignore'}, context=context)
+                continue
 
+            if line.po_line_id.state == 'done':
+                write_vals['type_change'] = 'warning'
+                warnings.append(_('PO line has been confirmed and consequently is not editable'))
+
+            # Delivery Confirmed Date
+            dcd_value = values[11]
+            if dcd_value and type(dcd_value) == type(DateTime.now()):
+                write_vals['imp_dcd'] = dcd_value.strftime('%Y-%m-%d')
+            elif dcd_value and isinstance(dcd_value, str):
+                try:
+                    time.strptime(dcd_value, '%Y-%m-%d')
+                    write_vals['imp_dcd'] = dcd_value
+                except ValueError:
+                    err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
+                    errors.append(err_msg)
+                    write_vals['type_change'] = 'error'
+            elif dcd_value:
+                err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
+                errors.append(err_msg)
+                write_vals['type_change'] = 'error'
+
+            if line.po_line_id.state == 'confirmed':
+                if write_vals.get('imp_dcd') and write_vals.get('imp_dcd') != line.in_dcd:
+                    if self.pool.get('stock.move').search_exists(cr ,uid, [('purchase_line_id', '=', line.po_line_id.id), ('type', '=', 'in'), ('state', '=', 'done')], context=context):
+                        write_vals['type_change'] = 'warning'
+                        warnings.append(_("IN for line %s has been parially processed, CDD can't be changed") % (line.in_line_number,))
+                    else:
+                        write_vals['type_change'] = 'cdd'
+                if not write_vals.get('type_change'):
+                    write_vals['type_change'] = 'ignore'
+                self.write(cr, uid, [line.id], write_vals, context=context)
+                continue
 
             # External Ref.
             write_vals['imp_external_ref'] = values[1]
@@ -1556,17 +1654,17 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             if line.in_line_number:
                 pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', line.simu_id.order_id.id), ('line_number', '=', line.in_line_number)], context=context)
                 if not pol_ids and not (write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]'):
-                    errors.append(_('Line no is not consistent with validated PO.'))
+                    warnings.append(_('Line no is not consistent with validated PO.'))
                     write_vals['in_line_number'] = False
                     write_vals['type_change'] = 'warning'
 
-            if (write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]'):
+            if write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]':
                 if not pol_ids:
                     write_vals['type_change'] = 'warning'
                     if line.in_line_number:
-                        errors.append(_('The import file is inconsistent. Line no. %s is not existing or was previously deleted') % line.in_line_number)
+                        warnings.append(_('The import file is inconsistent. Line no. %s is not existing or was previously deleted') % line.in_line_number)
                     else:
-                        errors.append(_('The import file is inconsistent. The matching line is not existing or was previously deleted'))
+                        warnings.append(_('The import file is inconsistent. The matching line is not existing or was previously deleted'))
                 else:
                     if line.po_line_id.state in ('validated', 'validated_n'):
                         write_vals['type_change'] = 'del'
@@ -1612,17 +1710,19 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     existing_ad = False
                 errors_ad, ad_info = self.pool.get('wizard.import.po.simulation.screen').check_ad(cr, uid, values[20:], existing_ad, product_id=write_vals.get('imp_product_id'), po_type=line.simu_id.order_id.order_type,cc_cache=cc_cache, context=context)
                 if errors_ad:
-                    errors += errors_ad
+                    if not line.po_line_id.analytic_distribution_id or not existing_ad:
+                        errors += errors_ad
+                        write_vals['error_msg'] = _('Invalid AD in file')
+                        write_vals['ad_error'] = 'ok'
+                    else:
+                        warnings += errors_ad
                 elif ad_info:
                     write_vals['ad_info'] = ad_info
 
             # Qty
-            err_msg = _('Incorrect float value for field \'Product Qty\'')
-            try:
-                qty = float(values[4])
-                write_vals['imp_qty'] = qty
-            except Exception:
-                errors.append(err_msg)
+            if values[4]:
+                write_vals['imp_qty'] = float(values[4])
+            else:
                 write_vals['type_change'] = 'error'
                 write_vals['imp_qty'] = 0.00
 
@@ -1679,8 +1779,18 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['type_change'] = 'error'
 
             # Origin
-            origin = values[8]
-            if origin:
+            full_origin = values[8]
+            instance_sync_order_ref = False
+            if full_origin and ':' in full_origin:
+                origin = full_origin.split(':')[0]
+                instance_sync_order_ref = full_origin.split(':')[-1]
+            else:
+                origin = full_origin
+
+            if origin and import_type in ('match', 'split'):
+                if origin != line.imp_origin:
+                    info_msg.append(_('Origin in the imported file does not match the origin on the PO line. Imported Origin ignored'))
+            elif origin:
                 if line.simu_id.order_id.order_type not in ['loan', 'donation_exp', 'donation_st', 'in_kind']:
                     so_ids = sale_obj.search(cr, uid, [('name', '=', origin), ('procurement_request', 'in', ['t', 'f'])],
                                              limit=1, context=context)
@@ -1697,6 +1807,18 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             err_msg = _('\'Origin\' Document can\'t be Closed or Cancelled')
                             errors.append(err_msg)
                             write_vals['type_change'] = 'error'
+                        # To link the other instance's IR to the PO line
+                        if line.type_change in ['new', 'split'] and instance_sync_order_ref:
+                            sync_order_label_ids = sync_order_obj.\
+                                search(cr, uid, [('name', '=', instance_sync_order_ref),
+                                                 ('order_id.state', 'not in', ['done', 'cancel']),
+                                                 ('order_id', '=', so.id)], context=context)
+                            if sync_order_label_ids:
+                                write_vals['imp_sync_order_ref'] = sync_order_label_ids[0]
+                            else:
+                                err_msg = _('No Order in sync. instance with an open FO was found with the data in \'Origin\'')
+                                errors.append(err_msg)
+                                write_vals['type_change'] = 'error'
                     else:
                         err_msg = _('The FO reference in \'Origin\' is not consistent with this PO')
                         errors.append(err_msg)
@@ -1705,9 +1827,11 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     err_msg = _('A PO with a Loan, Donation before expiry, Standard donation or In Kind Donation Order Type can\'t have an Source Document in its lines')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
-            else:
-                if line.simu_id.order_id.po_from_fo:
-                    err_msg = _('The Origin is mandatory for a PO coming from a FO')
+            elif line.simu_id.order_id.po_from_fo or line.simu_id.order_id.po_from_ir:
+                if import_type == 'split':
+                    info_msg.append(_('Missing mandatory Origin. Origin of same number split line has been used.'))
+                elif import_type != 'match' or not line.imp_origin:
+                    err_msg = _('The Origin is mandatory for a PO coming from an FO/IR')
                     errors.append(err_msg)
                     write_vals['type_change'] = 'error'
 
@@ -1745,22 +1869,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
 
-            # Delivery Confirmed Date
-            dcd_value = values[11]
-            if dcd_value and type(dcd_value) == type(DateTime.now()):
-                write_vals['imp_dcd'] = dcd_value.strftime('%Y-%m-%d')
-            elif dcd_value and isinstance(dcd_value, str):
-                try:
-                    time.strptime(dcd_value, '%Y-%m-%d')
-                    write_vals['imp_dcd'] = dcd_value
-                except ValueError:
-                    err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
-                    errors.append(err_msg)
-                    write_vals['type_change'] = 'error'
-            elif dcd_value:
-                err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
-                errors.append(err_msg)
-                write_vals['type_change'] = 'error'
 
             # ESC Confirmed
             if write_vals.get('imp_dcd') and line.simu_id.order_id.partner_type == 'esc':
@@ -1774,20 +1882,26 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             # Message ESC2
             write_vals['imp_esc2'] = values[19]
 
+            write_vals['info_msg'] = False
+            if info_msg:
+                write_vals['info_msg'] = ' -'.join(info_msg)
+                warnings += info_msg
             if line.error_msg:
                 write_vals['type_change'] = 'error'
 
-            if write_vals.get('type_change') in ['error', 'warning']:
+            if write_vals.get('type_change') in ['warning', 'error']:
                 err_msg = line.error_msg or ''
                 for err in errors:
                     if err_msg:
                         err_msg += ' - '
                     err_msg += err
+                if not err_msg and warnings:
+                    err_msg = ' - '.join(warnings)
                 write_vals['error_msg'] = err_msg
 
             self.write(cr, uid, [line.id], write_vals, context=context)
 
-        return errors
+        return errors, warnings
 
     def update_po_line(self, cr, uid, ids, context=None):
         '''
@@ -1804,7 +1918,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
-
         nb_lines = float(len(ids))
         line_treated = 0.00
         percent_completed = 0.00
@@ -1814,16 +1927,24 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             percent_completed = int(float(line_treated) / float(nb_lines) * 100)
             if line.po_line_id and line.type_change != 'ignore' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
                 continue
-            if line.type_change in ('ignore', 'error'):
-                if line.type_change == 'error':
+
+            if line.type_change in ('ignore', 'error', 'warning'):
+                if line.type_change in  ['warning', 'error']:
                     job_comment = context.get('job_comment', [])
                     job_comment.append({
                         'res_model': 'purchase.order',
                         'res_id': line.simu_id.order_id.id,
-                        'msg': _('%s: error on line %s %s') % (line.simu_id.order_id.name, line.in_line_number or line.imp_external_ref, line.error_msg),
+                        'msg': _('%s: %s on line %s %s') % (line.simu_id.order_id.name, line.type_change, line.in_line_number or line.imp_external_ref, line.error_msg),
                     })
                     context['job_comment'] = job_comment
                 continue
+            elif line.info_msg:
+                # if we have a message that does not block the import of the line
+                context.setdefault('job_comment', []).append({
+                    'res_model': 'purchase.order',
+                    'res_id': line.simu_id.order_id.id,
+                    'msg': _('%s: info on line %s %s') % (line.simu_id.order_id.name, line.in_line_number or line.imp_external_ref, line.info_msg),
+                })
 
             if line.type_change == 'del' and line.po_line_id:
                 wf_service.trg_validate(uid, 'purchase.order.line', line.po_line_id.id, 'cancel', cr)
@@ -1831,6 +1952,14 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 cr.commit()
                 continue
 
+            if line.type_change == 'cdd':
+                line_obj.write(cr, uid, [line.po_line_id.id], {'confirmed_delivery_date': line.imp_dcd}, context=context)
+                in_ids = self.pool.get('stock.move').search(cr ,uid, [('purchase_line_id', '=', line.po_line_id.id), ('type', '=', 'in'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
+                if in_ids:
+                    self.pool.get('stock.move').write(cr, uid, in_ids, {'date_expected': line.imp_dcd}, context=context)
+
+                cr.commit()
+                continue
             line_vals = {
                 'product_id': line.imp_product_id.id,
                 'product_uom': line.imp_uom.id,
@@ -1843,6 +1972,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 line_vals['project_ref'] = line.imp_project_ref
             if line.imp_origin:
                 line_vals['origin'] = line.imp_origin
+            if line.imp_sync_order_ref:
+                line_vals.update({'instance_sync_order_ref': line.imp_sync_order_ref.id, 'display_sync_ref': True})
             if line.imp_external_ref:
                 line_vals['external_ref'] = line.imp_external_ref
             if line.imp_dcd:

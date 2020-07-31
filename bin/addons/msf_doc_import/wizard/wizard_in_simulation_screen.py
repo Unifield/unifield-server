@@ -66,7 +66,7 @@ PACK_HEADER = [
     (_('Qty of parcels*'), 'parcel_qty', '', ''),
     (_('From parcel*'), 'parcel_from', 'mandatory', 'int'),
     (_('To parcel*'), 'parcel_to', 'mandatory', 'int'),
-    (_('Weight*'), 'total_weight', 'mandatory', 'float'),
+    (_('Weight*'), 'total_weight', '', 'float'),
     (_('Volume'), 'total_volume', '', 'float'),
     (_('Height'), 'total_height', '', 'float', 10),
     (_('Length'), 'total_length', '', 'float', 10),
@@ -102,7 +102,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                             'backorder_id': simu.picking_id.backorder_id and simu.picking_id.backorder_id.id or False,
                             'header_notes': simu.picking_id.note,
                             'freight_number': simu.picking_id.shipment_ref,
-                            'transport_mode': simu.picking_id and simu.picking_id.purchase_id and simu.picking_id.purchase_id.transport_type or False}
+                            'transport_type': simu.picking_id and simu.picking_id.purchase_id and simu.picking_id.purchase_id.transport_type or False}
 
         return res
 
@@ -147,14 +147,14 @@ class wizard_import_in_simulation_screen(osv.osv):
                                         readonly=True, type='text', multi='related'),
         'freight_number': fields.function(_get_related_values, method=True, string='Freight number',
                                           readonly=True, type='char', size=128, multi='related'),
-        'transport_mode': fields.function(_get_related_values, method=True, string='Transport mode',
+        'transport_type': fields.function(_get_related_values, method=True, string='Transport mode',
                                           readonly=True, type='selection', selection=TRANSPORT_TYPE, multi='related'),
         # Import fields
         'imp_notes': fields.text(string='Notes', readonly=True),
         'message_esc': fields.text(string='Message ESC', readonly=True),
         'imp_origin': fields.char(size=128, string='Origin', readonly=True),
         'imp_freight_number': fields.char(size=128, string='Freight number', readonly=True),
-        'imp_transport_mode': fields.char(string='Transport mode', size=128, readonly=True),
+        'imp_transport_type': fields.char(string='Transport mode', size=128, readonly=True),
         # Lines
         'line_ids': fields.one2many('wizard.import.in.line.simulation.screen', 'simu_id', string='Stock moves'),
         'with_pack': fields.boolean('With Pack Info'),
@@ -664,8 +664,8 @@ Nothing has been imported because of %s. See below:
                 header_values['imp_origin'] = wiz.origin
 
                 # Line 5: Transport mode
-                transport_mode = values.get(5, ['', ''])[1]
-                header_values['imp_transport_mode'] = transport_mode
+                transport_type = values.get(5, ['', ''])[1]
+                header_values['imp_transport_type'] = transport_type
 
                 # Line 6: Notes
                 imp_notes = values.get(6, ['', ''])[1]
@@ -831,7 +831,7 @@ Nothing has been imported because of %s. See below:
                         if pack_errors_ids:
                             pack_error_string = dict(PACK_INTEGRITY_STATUS_SELECTION)
                             for pack_error in pack_info_obj.browse(cr, uid, pack_errors_ids, context=context):
-                                values_header_errors.append("Packing List %s, Pack from parcel %s, to parcel %s, integrity error %s" % (pack_error.packing_list or '-', pack_error.parcel_from, pack_error.parcel_to, pack_error_string.get(pack_error.integrity_status)))
+                                values_header_errors.append(_("Packing List %s, Pack from parcel %s, to parcel %s, integrity error %s") % (pack_error.packing_list or '-', pack_error.parcel_from, pack_error.parcel_to, _(pack_error_string.get(pack_error.integrity_status))))
 
 
                     rounding_text = ""
@@ -963,7 +963,7 @@ Nothing has been imported because of %s. See below:
 
                         if err_msg:
                             for err in err_msg:
-                                err = 'Line %s of the Excel file: %s' % (file_line[0], err)
+                                err = _('Line %s of the Excel file: %s') % (file_line[0], err)
                                 values_line_errors.append(err)
 
 
@@ -986,7 +986,7 @@ Nothing has been imported because of %s. See below:
 
                     if err_msg:
                         for err in err_msg:
-                            err = 'Line %s of the Excel file: %s' % (in_line, err)
+                            err = _('Line %s of the Excel file: %s') % (in_line, err)
                             values_line_errors.append(err)
                     # Commit modifications
                     cr.commit()
@@ -1007,13 +1007,13 @@ Nothing has been imported because of %s. See below:
                 if len(values_header_errors):
                     import_error_ok = True
                     can_be_imported = False
-                    message += '\n## Error on header values ##\n\n'
+                    message += '\n## %s ##\n\n' % (_('Error on header values'),)
                     for err in values_header_errors:
                         message += '%s\n' % err
 
                 if len(values_line_errors):
                     import_error_ok = True
-                    message += '\n## Error on line values ##\n\n'
+                    message += '\n## %s ##\n\n' % (_('Error on line values'),)
                     for err in values_line_errors:
                         message += '%s\n' % err
                     if wiz.with_pack:
@@ -1034,6 +1034,7 @@ Nothing has been imported because of %s. See below:
             cr.close(True)
 
         except Exception, e:
+            cr.rollback()
             logging.getLogger('in.simulation simulate').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e, 'state': 'error'}, context=context)
             cr.commit()
@@ -1512,7 +1513,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             # Batch number :: data initialisation
             batch_value = values.get('prodlot_id')
-            exp_value = values.get('expired_date')
+            exp_value = values.get('expired_date') or False
             lot_check = line.lot_check
             exp_check = line.exp_check
             if product:
@@ -1523,7 +1524,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if not exp_value:
                     errors.append(_('Incorrect date value for field \'Expired date\''))
 
-            if lot_check: # product is BN mandatory
+            if lot_check: # product is BN mandatory
                 if batch_value and exp_value:
                     write_vals.update({
                         'imp_batch_name': tools.ustr(batch_value),
@@ -1565,6 +1566,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             write_vals['integrity_status'] = self.check_integrity_status(cr, uid, write_vals, warnings=warnings, context=context)
             if write_vals['integrity_status'] != 'empty' or len(errors) > 0:
                 write_vals['type_change'] = 'error'
+                if write_vals['integrity_status'] != 'empty' and write_vals.get('imp_product_qty'):
+                    errors.append(_('IN-line %s Wrong BN/ED attributes') % (line.line_number,))
 
             if line.type_change == 'new':
                 write_vals['type_change'] = 'error'

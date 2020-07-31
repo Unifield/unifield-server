@@ -45,7 +45,7 @@
                     <separator colspan="4" string="Product" />
                     <field name="product_id" readonly="1" />
                     <group colspan="2" col="3">
-                        <field name="available_stock" readonly="1" />
+                        <field name="real_stock" readonly="1" />
                         <field name="uom_id" readonly="1" nolabel="1" />
                     </group>
                     <field name="perishable" invisible="1" />
@@ -60,6 +60,7 @@
                             <field name="date_done" />
                             <field name="doc_ref" />
                             <field name="origin" />
+                            <field name="partner_or_loc" />
                             <field name="qty_in" />
                             <field name="qty_out" />
                             <field name="balance" />

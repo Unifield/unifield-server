@@ -45,17 +45,9 @@ class freight_manifest(report_sxw.rml_parse):
             'getTotValue': self.getTotValue,
             'getTotKg': self.getTotKg,
             'getFonCur': self.getFonCur,
-            #addtional items
-            'get_additional_items': self.get_additional_items,
-            'getadditional_items_name': self.getadditional_items_name,
-            'getadditional_items_qty': self.getadditional_items_qty,
-            'getadditional_items_uom': self.getadditional_items_uom,
-            'getadditional_items_comment': self.getadditional_items_comment,
-            'getadditional_items_volume': self.getadditional_items_volume,
-            'getadditional_items_weight': self.getadditional_items_weight,
-            'getadditional_items_getTotKg': self.getadditional_items_getTotKg,
-            'getallTotKg': self.getallTotKg,
+            'get_total': self.get_total,
             'get_group_lines': self.get_group_lines,
+            'get_sum_additionnal': self.get_sum_additionnal,
         })
 
     def getFonCur(self,ligne):
@@ -162,33 +154,22 @@ class freight_manifest(report_sxw.rml_parse):
     def getEta(self, o):
         return time.strftime('%d/%m/%Y',time.strptime(o.planned_date_of_arrival,'%Y-%m-%d'))
 
-    def get_additional_items(self, o):
-        return o[0].additional_items_ids
+    def get_sum_additionnal(self, o):
+        nb = sum([x.nb_parcels or 0 for x in o[0].additional_items_ids])
+        self.parcetot += nb
 
-    def getadditional_items_name(self, line):
-        return line.name
+        weigth = sum([x.weight or 0 for x in o[0].additional_items_ids])
+        self.kgtot += weigth
 
-    def getadditional_items_qty(self, line):
-        return line.quantity
+        volume = sum([x.volume or 0 for x in o[0].additional_items_ids])/1000.0
+        self.voltot += volume
 
-    def getadditional_items_uom(self, line):
-        return line.uom.name
+        value = sum([x.value or 0 for x in o[0].additional_items_ids])
+        self.valtot += value
+        return [(nb, weigth, round(volume, 4), round(value, 2), self.cur)]
 
-    def getadditional_items_comment(self, line):
-        return line.comment
-
-    def getadditional_items_volume(self, line):
-        return line.volume / 1000.00
-
-    def getadditional_items_weight(self, line):
-        self.getadditional_items_kgtot += line.weight
-        return line.weight
-
-    def getadditional_items_getTotKg(self):
-        return self.getadditional_items_kgtot and self.getadditional_items_kgtot or '0.0'
-
-    def getallTotKg(self):
-        return self.formatLang(self.getadditional_items_kgtot + self.kgtot or 0.)
+    def get_total(self):
+        return [(self.parcetot, self.kgtot, round(self.voltot, 4), round(self.valtot, 2), self.cur)]
 
 report_sxw.report_sxw('report.msf.freight_manifest', 'shipment', 'addons/msf_printed_documents/report/freight_manifest.rml', parser=freight_manifest, header=False,)
 

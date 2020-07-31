@@ -8,7 +8,9 @@
             <field name="type">tree</field>
             <field eval="8" name="priority"/>
             <field name="arch" type="xml">
-                <tree toolbar="1" colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts">
+                <tree toolbar="1" colors="red:(date and date&lt;=current_date or dest_without_cc==True)"
+                      string="Analytic Accounts">
+                    <field name="dest_without_cc" invisible="1"/>
                     <field name="code"/>
                     <field name="complete_name"/>
                     <field name="quantity"/>
@@ -56,19 +58,16 @@
             <field name="field_parent">child_complete_ids</field>
             <field name="priority" eval="18"/>
             <field name="arch" type="xml">
-                <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic account" toolbar="1">
+                <tree colors="red:(date and date&lt;=current_date or dest_without_cc==True)"
+                      string="Analytic account" toolbar="1" expand_button="1" nolink="1">
+                    <field name="dest_without_cc" invisible="1"/>
                     <field name="name"/>
                     <field name="code"/>
-                    <field name="quantity"/>
-                    <field name="quantity_max"/>
-                    <field name="debit"/>
-                    <field name="credit"/>
-                    <field name="balance"/>
-                    <field name="currency_id" groups="base.group_extended"/>
-                    <field name="date" invisible="1"/>
-                    <field name="user_id" invisible="1"/>
-                    <field name="partner_id" invisible="1"/>
-                    <field name="parent_id" invisible="1"/>
+                    <field name="parent_id"/>
+                    <field name="category"/>
+                    <field name="type"/>
+                    <field name="date_start"/>
+                    <field name="date"/>
                 </tree>
             </field>
         </record>
@@ -176,24 +175,14 @@
                 </form>
             </field>
         </record>
+
+        <!-- see ./bin/addons/finance/account_analytic_line_view.xml -->
         <record id="view_account_analytic_line_tree" model="ir.ui.view">
             <field name="name">account.analytic.line.tree</field>
             <field name="model">account.analytic.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree editable="top" string="Analytic Entries">
-                    <field name="date"/>
-                    <field name="ref" invisible="context.get('to_invoice', False)"/>
-                    <field name="name"/>
-                    <field name="journal_id" invisible="context.get('to_invoice', False)"/>
-                    <field name="amount" sum="Total" invisible="context.get('to_invoice', False)"/>
-                    <field name="product_id" on_change="on_change_unit_amount(product_id, unit_amount, company_id, product_uom_id, journal_id)" invisible="not context.get('to_invoice', False)"/>
-                    <field name="unit_amount" on_change="on_change_unit_amount(product_id, unit_amount, company_id, product_uom_id)" sum="Total Quantity" invisible="not context.get('to_invoice', False)"/>
-                    <field name="product_uom_id" on_change="on_change_unit_amount(product_id, unit_amount, company_id, product_uom_id)" invisible="not context.get('to_invoice', False)"/>
-                    <field domain="[('type','=','normal')]" name="account_id"/>
-                    <field name="general_account_id" invisible="context.get('to_invoice', False)"/>
-                    <field name="user_id" invisible="1" />
-                </tree>
+                <tree />
             </field>
         </record>
 
@@ -294,36 +283,6 @@
             <field eval="True" name="object"/>
         </record>
 
-        <record id="account_analytic_line_extended_form" model="ir.ui.view">
-            <field name="name">account.analytic.line.extended_form</field>
-            <field name="model">account.analytic.line</field>
-            <field name="type">form</field>
-            <field name="priority" eval="18"/>
-            <field name="arch" type="xml">
-                <form string="Project line">
-                    <field name="name"/>
-                    <field name="account_id" groups="base.group_extended"/>
-                    <field name="date" on_change="on_change_unit_amount(product_id, unit_amount, company_id, product_uom_id)"/>
-                    <field name="journal_id"/>
-                    <field name="unit_amount" on_change="on_change_unit_amount(product_id, unit_amount, company_id, product_uom_id)"/>
-                    <field name="product_id" on_change="on_change_unit_amount(product_id, unit_amount, company_id, product_uom_id, journal_id)"/>
-                    <field name="product_uom_id" on_change="on_change_unit_amount(product_id, unit_amount, company_id, product_uom_id)"/>
-                    <field invisible="True" name="general_account_id"/>
-                    <field name="amount"/>
-                    <field name="currency_id" />
-                    <field name="amount_currency" />
-                    <field name="company_id" on_change="on_change_unit_amount(product_id, unit_amount, company_id, product_uom_id)"/>
-                </form>
-            </field>
-        </record>
-        <record id="action_account_analytic_account_line_extended_form" model="ir.actions.act_window">
-            <field name="name">account.analytic.line.extended</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">account.analytic.line</field>
-            <field name="view_type">form</field>
-            <field name="view_id" ref="account_analytic_line_extended_form"/>
-        </record>
-
         #
         # Analytic Journal
         #
@@ -371,7 +330,6 @@
                     <field name="name" select="1" default_focus="1"/>
                     <field name="code" select="1" attrs="{'readonly': [('has_ajis', '=', True)]}"/>
                     <field name="type" select="2" attrs="{'readonly': [('has_ajis', '=', True)]}"/>
-                    <field name="active" select="2"/>
                     <field name="company_id" groups="base.group_multi_company" widget="selection"/>
                 </form>
             </field>
