@@ -462,7 +462,7 @@ function buttonClicked(name, btype, model, id, sure, target, context, set_ids){
     };
 
     // if works as expected can be extended to other buttons
-    test_double = name == 'import_file' && btype == 'object' && model == 'initial.stock.inventory'
+    test_double = (name == 'import_file' && btype == 'object' && model == 'initial.stock.inventory') || ((name == 'copy_all' || name == 'uncopy_all')  && model == 'stock.incoming.processor')
     if (!context || context == "{}") {
         var act = get_form_action(btype == 'cancel' ? 'cancel' : 'save', params);
         submit_form(act, null, target, test_double);

@@ -293,7 +293,10 @@ jQuery(document).ready(function () {
                 $form.ajaxSubmit({
                     data: {'requested_with': 'XMLHttpRequest'},
                     success: doLoadingSuccess(jQuery('body')),
-                    error: loadingError()
+                    error: loadingError(),
+                    complete: function(res, status) {
+                        $form[0].issubmitted = false;
+                    },
                 });
                 return false;
             });
