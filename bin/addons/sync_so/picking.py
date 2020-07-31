@@ -486,7 +486,7 @@ class stock_picking(osv.osv):
                                 self._logger.info(message)
                                 raise Exception(message)
 
-                    move_id = False # REF-99: declare the variable before using it, otherwise if it go to else, then line 268 "if not move_id" -> problem!
+                    move_id = False
                     if move_ids and len(move_ids) == 1:  # if there is only one move, take it for process
                         move_id = move_ids[0]
                     else:  # if there are more than 1 moves, then pick the next one not existing in the partial_datas[in_id]

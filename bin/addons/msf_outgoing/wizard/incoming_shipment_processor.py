@@ -1248,6 +1248,15 @@ class stock_move_in_processor(osv.osv):
         if context is None:
             context = {}
 
+        if not vals.get('cost'):
+            # issue on IN processor from sync if new line created (because of a split in coordo)
+            # then the price_unit should not come from product standard_price but from the original stock.move (i.e: from POL)
+            # before this the unit price was temporary set to the standard_price, but changed on IN processing, this was too late
+            if vals.get('move_id'):
+                move_data = self.pool.get('stock.move').browse(cr, uid, vals['move_id'], fields_to_fetch=['price_unit', 'currency_id'], context=context)
+                vals['cost'] = move_data.price_unit
+                vals['currency'] = move_data.currency_id.id
+
         if vals.get('product_id', False):
             if not vals.get('cost', False):
                 price = product_obj.browse(cr, uid, vals['product_id'], context=context).standard_price
