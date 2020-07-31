@@ -52,6 +52,20 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF19.0
+    def us_2725_uf_write_date_on_products(self, cr, uid, *a, **b):
+        '''
+        Set the uf_write_date of products which don't have one to the date of creation
+        '''
+        prod_obj = self.pool.get('product.product')
+
+        cr.execute('''
+            UPDATE product_product SET uf_write_date = uf_create_date WHERE uf_write_date is NULL
+        ''')
+        self._logger.warn('The uf_write_date has been modified on %s products' % (cr.rowcount,))
+
+        return True
+
     # UF18.0
     def us_7412_set_fy_closure_settings(self, cr, uid, *a, **b):
         """
