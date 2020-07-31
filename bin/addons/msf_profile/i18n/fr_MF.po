@@ -110368,4 +110368,4 @@ msgstr "est expédié."
 #: code:addons/kit/kit.py:196
 #, python-format
 msgid "You can only re-activate a Closed Kit Composition."
-msgstr "Vous pouvez uniquement réactiver les Compositions de Kit Fermées."
+msgstr "Vous pouvez uniquement réactiver une Composition de Kit Cloturée."

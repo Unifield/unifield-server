@@ -182,8 +182,7 @@ class composition_kit(osv.osv):
 
     def reactivate_kit(self, cr, uid, ids, context=None):
         '''
-        button function
-        set the state to 'completed'
+        set the state of a Kit Composition List to 'completed'
         '''
         # Some verifications
         if context is None:
