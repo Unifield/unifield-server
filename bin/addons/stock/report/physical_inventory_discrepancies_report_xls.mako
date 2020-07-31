@@ -258,6 +258,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#0"/>
   </Style>
   <Style ss:ID="s43">
    <Borders>
