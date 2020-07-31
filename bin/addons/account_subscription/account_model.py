@@ -536,7 +536,7 @@ class account_model(osv.osv):
 
     def copy(self, cr, uid, model_id, default=None, context=None):
         """
-        Recurring Model duplication: add " (copy)" after the name
+        Recurring Model duplication: don't copy the link with the rec. plans, and add " (copy)" after the name
         """
         if context is None:
             context = {}
@@ -547,6 +547,7 @@ class account_model(osv.osv):
             default = {}
         default.update({
             'name': name,
+            'recurring_plan_ids': [],
         })
         return super(account_model, self).copy(cr, uid, model_id, default, context=context)
 
