@@ -20786,8 +20786,9 @@ msgstr "Etc/GMT-11"
 #: view:account.subscription:0
 #: view:account.model:0
 #: selection:account.model,state:0
+#: selection:account.subscription,state:0
 msgid "Done"
-msgstr "Cloturé"
+msgstr "Clôturé"
 
 #. module: delivery_mechanism
 #: code:addons/delivery_mechanism/delivery_mechanism.py:360
@@ -82762,7 +82763,6 @@ msgstr "Sélectionner un fournisseur"
 #. modules: delivery_mechanism, msf_budget, account, msf_outgoing, msf_homere_interface, sync_client, register_accounting, specific_rules, sale, sales_followup, base, stock, tender_flow, msf_tools, return_claim, msf_doc_import, analytic_distribution, finance, product
 #: selection:account.invoice.report,state:0
 #: selection:account.journal.period,state:0
-#: selection:account.subscription,state:0
 #: selection:report.invoice.created,state:0
 #: view:account.commitment:0
 #: selection:account.commitment,state:0
@@ -110399,3 +110399,9 @@ msgstr "Fusion produit"
 #, python-format
 msgid "is dispatched."
 msgstr "est expédié."
+
+#. module: account
+#: code:addons/account/account.py:2441
+#, python-format
+msgid "You cannot duplicate a Recurring Plan with a Done model."
+msgstr "Vous ne pouvez pas dupliquer un Plan d'Ecritures Périodiques utilisant un modèle Clôturé."

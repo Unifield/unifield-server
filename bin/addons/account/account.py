@@ -2429,14 +2429,18 @@ class account_subscription(osv.osv):
 
     def copy(self, cr, uid, acc_sub_id, default=None, context=None):
         """
-        Account Subscription duplication: don't copy the link with subscription lines
-        and add " (copy)" after the name
+        Account Subscription duplication:
+        - block the process if the model has been set to Done as it shouldn't be used in any plans created afterwards
+        - don't copy the link with subscription lines
+        - add " (copy)" after the name
         """
         if context is None:
             context = {}
+        sub_copied = self.browse(cr, uid, acc_sub_id, fields_to_fetch=['name', 'model_id'], context=context)
+        if sub_copied.model_id.state == 'done':
+            raise osv.except_osv(_('Warning'), _('You cannot duplicate a Recurring Plan with a Done model.'))
         suffix = ' (copy)'
-        sub_copied = self.read(cr, uid, acc_sub_id, ['name'], context=context)
-        name = '%s%s' % (sub_copied['name'][:64 - len(suffix)], suffix)
+        name = '%s%s' % (sub_copied.name[:64 - len(suffix)], suffix)
         if default is None:
             default = {}
         default.update({
