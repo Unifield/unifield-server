@@ -198,12 +198,7 @@ class account_period(osv.osv):
 
                     # check that the reval has been processed in coordo IF a revaluation account has been set in the Company form
                     if level == 'coordo' and not period.special and company.revaluation_default_account:
-                        reval_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'revaluation'), ('is_current_instance', '=', True)], context=context)
-                        if not reval_journal_ids:
-                            raise osv.except_osv(_('Warning'), _('Impossible to check the revaluation entries of the period: '
-                                                                 'Revaluation Journal not found.'))
-                        move_line_dom = [('journal_id', 'in', reval_journal_ids), ('period_id', '=', period.id)]
-                        if not move_line_obj.search_exist(cr, uid, move_line_dom, context=context):
+                        if not period.is_revaluated:
                             raise osv.except_osv(_('Warning'), _('You should run the month-end revaluation before closing the period.'))
 
                 # first verify that all existent registers for this period are closed
