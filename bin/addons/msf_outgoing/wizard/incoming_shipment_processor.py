@@ -256,7 +256,8 @@ class stock_incoming_processor(osv.osv):
             left join purchase_order_line pol on m.purchase_line_id = pol.id
             left join sale_order_line sol on sol.id = pol.linked_sol_id
             left join sale_order so on so.id = sol.order_id
-            where m.picking_id = %s and so.procurement_request = 'f' and coalesce(p.claim, 'f') = 'f'
+            left join stock_picking out on out.sale_id = so.id
+            where m.picking_id = %s and so.procurement_request = 'f' and coalesce(p.claim, 'f') = 'f' and out.type = 'out' and out.subtype = 'picking' and out.state = 'draft'
             group by so.id
             """, (vals.get('picking_id'), ))
         if cr.rowcount == 1:
@@ -627,6 +628,8 @@ class stock_incoming_processor(osv.osv):
     def launch_simulation_pack(self, cr, uid, ids, context=None):
         data = self.launch_simulation(cr, uid, ids, context)
         self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, data['res_id'], {'with_pack': True})
+
+
         data['name'] = _('Incoming shipment simulation screen (pick and pack mode)')
 
         file_attached = self.check_if_has_import_file_in_attachment(cr, uid, ids, context=context)
@@ -730,6 +733,25 @@ class stock_incoming_processor(osv.osv):
             ids = [ids]
 
         rounding_issues, sequence_ok = self.check_before_creating_pack_lines(cr, uid, ids, context=context)
+        cr.execute('''
+            select wiz_line.line_number, pol.linked_sol_id, sum(wiz_line.quantity)
+            from stock_move_in_processor wiz_line
+            left join stock_incoming_processor wiz on wiz.id = wiz_line.wizard_id
+            left join stock_move move_in on move_in.picking_id = wiz.picking_id and move_in.line_number = wiz_line.line_number
+            left join purchase_order_line pol on pol.id = move_in.purchase_line_id
+            where
+                wiz.id = %s
+            group by wiz_line.line_number, pol.linked_sol_id
+        ''', (ids[0],))
+        sol_id_to_wiz_line = {}
+        sol_id_sum = {}
+        for x in cr.fetchall():
+            sol_id_to_wiz_line[x[1]] = x[0]
+            sol_id_sum[x[1]] = x[2]
+
+        error_pick = self.pool.get('wizard.import.in.simulation.screen').error_pick_already_processed(cr, uid, sol_id_sum, sol_id_to_wiz_line, context)
+        if error_pick:
+            raise osv.except_osv(_('Error'), error_pick)
 
         if not sequence_ok:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_incoming_processor_form_view')[1]

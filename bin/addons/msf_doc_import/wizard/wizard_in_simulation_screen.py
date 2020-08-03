@@ -519,6 +519,50 @@ the date has a wrong format: %s') % (index+1, str(e)))
 
         return values, nb_line, error
 
+    def error_pick_already_processed(self, cr, uid, sol_id_sum, sol_id_to_wiz_line, context):
+        if not sol_id_sum:
+            return ''
+        cr.execute('''
+                select m.sale_line_id, sum(m.product_qty)
+                from stock_move m, stock_picking p
+                where
+                    m.picking_id = p.id and
+                    p.type = 'out' and
+                    p.subtype = 'picking' and
+                    p.state = 'draft' and
+                    m.state in ('assigned', 'confirmed') and
+                    m.sale_line_id in %s
+                group by
+                    m.sale_line_id
+            ''', (tuple(sol_id_sum.keys()),))
+        extra_qty = {}
+        for x in cr.fetchall():
+            if x[1] < sol_id_sum[x[0]]:
+                extra_qty[x[0]] = sol_id_sum[x[0]] -  x[1]
+
+        already_process = {}
+        if extra_qty:
+            cr.execute('''
+                    select m.sale_line_id, sum(m.product_qty)
+                    from stock_move m, stock_picking p
+                    where
+                        m.picking_id = p.id and
+                        p.type = 'out' and
+                        p.state not in  ('draft', 'cancel') and
+                        m.sale_line_id in %s
+                    group by
+                        m.sale_line_id
+                ''', (tuple(extra_qty.keys()),))
+            for x in cr.fetchall():
+                already_process[x[0]] = x[1]
+
+        if already_process:
+            details = []
+            for sol in self.pool.get('sale.order.line').browse(cr, uid, already_process.keys(), fields_to_fetch=['product_id'], context=context):
+                details.append('Line number: %s, [%s] %s' % (sol_id_to_wiz_line.get(sol.id),sol.product_id.default_code, sol.product_id.name))
+            return _('Warning the following product lines have already been processed in linked OUT/Pick document, so cannot be processed here. Please remove these lines before trying to processs the movement\n%s') % ("\n".join(details))
+        return ''
+
     # Simulation routing
     def simulate(self, dbname, uid, ids, context=None):
         '''
@@ -966,6 +1010,27 @@ Nothing has been imported because of %s. See below:
                                 err = _('Line %s of the Excel file: %s') % (file_line[0], err)
                                 values_line_errors.append(err)
 
+                if wiz.with_pack and not context.get('auto_import_ok'):
+                    # check if an out line has been forced
+                    cr.execute('''
+                        select wiz_line.line_number, pol.linked_sol_id, sum(wiz_line.product_qty)
+                        from wizard_import_in_line_simulation_screen wiz_line
+                        left join wizard_import_in_simulation_screen wiz on wiz.id = wiz_line.simu_id
+                        left join stock_move move_in on move_in.picking_id = wiz.picking_id and move_in.line_number = wiz_line.line_number
+                        left join purchase_order_line pol on pol.id = move_in.purchase_line_id
+                        where
+                            (wiz_line.type_change in ('', 'split') or wiz_line.type_change is NULL) and
+                            wiz.id = %s
+                        group by wiz_line.line_number, pol.linked_sol_id
+                    ''', (wiz.id,))
+                    sol_id_to_wiz_line = {}
+                    sol_id_sum = {}
+                    for x in cr.fetchall():
+                        sol_id_to_wiz_line[x[1]] = x[0]
+                        sol_id_sum[x[1]] = x[2]
+                    error_pick = self.error_pick_already_processed(cr, uid, sol_id_sum, sol_id_to_wiz_line, context)
+                    if error_pick:
+                        values_line_errors.append(error_pick)
 
                 # Create new lines
                 for in_line in new_in_lines:
