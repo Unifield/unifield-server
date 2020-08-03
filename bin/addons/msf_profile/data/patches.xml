@@ -577,5 +577,9 @@
             <field name="method">us_7412_set_fy_closure_settings</field>
         </record>
 
+        <record id="us_7448_set_revaluated_periods" model="patch.scripts">
+            <field name="method">us_7448_set_revaluated_periods</field>
+        </record>
+
     </data>
 </openerp>
