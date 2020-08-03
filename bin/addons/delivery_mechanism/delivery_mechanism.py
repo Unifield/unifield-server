@@ -983,7 +983,13 @@ class stock_picking(osv.osv):
                             processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
                         else:
                             # Just update the data of the initial out move
-                            processed_qty = lst_out_move is out_moves[-1] and uom_partial_qty - minus_qty or out_move.product_qty
+                            if lst_out_move is out_moves[-1]:
+                                processed_qty = uom_partial_qty - minus_qty
+                                if processed_qty <= 0:
+                                    processed_qty = out_move.product_qty
+                            else:
+                                processed_qty = out_move.product_qty
+
                             out_values.update({
                                 'product_qty': processed_qty,
                                 'product_uom': line.uom_id.id,
