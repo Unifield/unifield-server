@@ -110367,3 +110367,8 @@ msgstr "Fusion produit"
 #, python-format
 msgid "is dispatched."
 msgstr "est expédié."
+
+#. module: account_period_closing_level
+#: field:account.period,is_revaluated:0
+msgid "Revaluation run for the period"
+msgstr "Réévaluation lancée pour la période"

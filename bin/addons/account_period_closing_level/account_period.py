@@ -358,6 +358,7 @@ class account_period(osv.osv):
         'state_sync_flag': fields.char('Sync Flag', required=True, size=64, help='Flag for controlling sync actions on the period state.'),
         'payroll_ok': fields.function(_get_payroll_ok, method=True, type='boolean', store=False, string="Permit to know if payrolls are active", readonly=True),
         'is_system': fields.function(_get_is_system, fnct_search=_get_search_is_system, method=True, type='boolean', string="System period ?", readonly=True),
+        'is_revaluated': fields.boolean('Revaluation run for the period', readonly=True),  # field used at coordo level
     }
 
     _order = 'date_start DESC, number DESC'
@@ -428,6 +429,7 @@ class account_period(osv.osv):
         'field_process': lambda *a: False,
         'state_sync_flag': lambda *a: 'none',
         'is_system': False,
+        'is_revaluated': False,
     }
 
     def action_reopen_field(self, cr, uid, ids, context=None):
