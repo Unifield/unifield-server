@@ -987,6 +987,9 @@ class stock_picking(osv.osv):
                                 processed_qty = uom_partial_qty - minus_qty
                                 if processed_qty <= 0:
                                     processed_qty = out_move.product_qty
+                                elif context.get('auto_import_ok'):
+                                    # IN pre-processing : do not add extra qty in OUT, it will be added later on IN processing
+                                    processed_qty = out_move.product_qty
                             else:
                                 processed_qty = out_move.product_qty
 

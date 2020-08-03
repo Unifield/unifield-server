@@ -1013,7 +1013,7 @@ Nothing has been imported because of %s. See below:
                 if wiz.with_pack and not context.get('auto_import_ok'):
                     # check if an out line has been forced
                     cr.execute('''
-                        select wiz_line.line_number, pol.linked_sol_id, sum(wiz_line.product_qty)
+                        select wiz_line.line_number, pol.linked_sol_id, sum(wiz_line.imp_product_qty)
                         from wizard_import_in_line_simulation_screen wiz_line
                         left join wizard_import_in_simulation_screen wiz on wiz.id = wiz_line.simu_id
                         left join stock_move move_in on move_in.picking_id = wiz.picking_id and move_in.line_number = wiz_line.line_number
