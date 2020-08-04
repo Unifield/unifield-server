@@ -1619,7 +1619,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             if sourcing_line.state in ['validated', 'validated_p']:
                 if sourcing_line.type == 'make_to_stock':
                     self.check_location_integrity(cr, uid, [sourcing_line.id], context=context)
-
+                    so_line_data = {'confirmed_delivery_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}
                     if sourcing_line.order_id.order_type == 'loan' and not sourcing_line.order_id.is_a_counterpart:
                         # In case of loan, create the PO for later goods return:
                         po_loan = self.get_existing_po_loan_for_goods_return(cr, uid, sourcing_line.id, context=context)
@@ -1637,15 +1637,11 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'product_qty': sourcing_line.product_uom_qty,
                             'price_unit': sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price,
                             'partner_id': sourcing_line.order_partner_id.id,
-                            'origin': sourcing_line.order_id.name,
-                            'sale_order_line_id': sourcing_line.id,
-                            'link_so_id': sourcing_line.order_id.id,
-                            'linked_sol_id': sourcing_line.id,
                         }
-                        self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
-
+                        cp_po_line_id = self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
+                        so_line_data['counterpart_po_line_id'] = cp_po_line_id
                     # sourcing line: set delivery confirmed date to today:
-                    self.write(cr, uid, [sourcing_line.id], {'confirmed_delivery_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)
+                    self.write(cr, uid, [sourcing_line.id], so_line_data, context=context)
 
                     # update SO line with good state:
                     wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
