@@ -93362,7 +93362,7 @@ msgstr "Comptabilité Anglo-Saxonne"
 msgid "Additional Information"
 msgstr "Information Complémentaire"
 
-#. modules: account, register_accounting, account_mcdb, msf_homere_interface, msf_audittrail, account_corrections
+#. modules: account, register_accounting, account_mcdb, msf_homere_interface, msf_audittrail, account_corrections, account_subscription
 #: report:combined.journals.report.pdf:0
 #: report:addons/account_mcdb/report/combined_journals_report.mako:226
 #: field:hr.payroll.msf,partner_type:0
@@ -93380,6 +93380,7 @@ msgstr "Information Complémentaire"
 #: selection:account.journal.column,field:0
 #: field:account.bank.statement.line,partner_type2:0
 #: report:addons/register_accounting/report/fully_report_xls.mako:563
+#: view:account.move.line:0
 msgid "Third Parties"
 msgstr "Tiers"
 

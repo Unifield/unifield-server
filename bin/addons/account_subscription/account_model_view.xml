@@ -229,14 +229,47 @@
             </field>
         </record>
 
-        <act_window
-            id="act_account_subscription_to_account_move_line_open"
-            name="Recurring Entries To Post"
-            domain="[('move_id.state','=','draft'), ('is_recurring', '=', True)]"
-            context="{'from_recurring_entries': True}"
-            res_model="account.move.line"
-            src_model="account.subscription"
-            view_id="account_move_line_recurring_entries_to_validate"/>
+        <!-- Recurring Entries To Post Search View -->
+        <record id="view_recurring_entries_to_post_search" model="ir.ui.view">
+            <field name="name">recurring.entries.to.post.search</field>
+            <field name="model">account.move.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="25"/>
+            <field name="arch" type="xml">
+                <search>
+                    <group colspan="6" col="14">
+                        <field name="move_id"/>
+                        <field name="name"/>
+                        <field name="ref"/>
+                        <field name="document_date"/>
+                        <field name="date"/>
+                        <field name="period_id"/>
+                        <field name="account_id"/>
+                        <newline/>
+                        <!-- title matching with the tree view but only Partners are possible -->
+                        <field name="partner_id" string="Third Parties"/>
+                        <field name="debit_currency"/>
+                        <field name="credit_currency"/>
+                        <field name="currency_id"/>
+                        <field name="debit"/>
+                        <field name="credit"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Recurring Entries To Post Entry Menu -->
+        <record id="act_account_subscription_to_account_move_line_open" model="ir.actions.act_window">
+            <field name="name">Recurring Entries To Post</field>
+            <field name="res_model">account.move.line</field>
+            <field name="src_model">account.subscription</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="account_move_line_recurring_entries_to_validate"/>
+            <field name="context">{'from_recurring_entries': True}</field>
+            <field name="domain">[('move_id.state', '=', 'draft'), ('is_recurring', '=', True)]</field>
+            <field name="search_view_id" ref="view_recurring_entries_to_post_search"/>
+        </record>
 
     </data>
 </openerp>
