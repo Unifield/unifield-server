@@ -2156,12 +2156,6 @@ msgstr "La ligne %s du fichier Excel a été ajoutée aux fichiers des erreurs :
 msgid "My Instance"
 msgstr "Mon Instance"
 
-#. module: purchase
-#: code:addons/purchase/purchase_order.py:1752
-#, python-format
-msgid "You set an intermission partner, at validation Cost Centers will be changed to intermission."
-msgstr "You set an intermission partner, at validation Cost Centers will be changed to intermission."
-
 #. module: account_override
 #: report:addons/account_override/report/account_chart_export.mako:103
 msgid "Period from"
@@ -110369,3 +110363,9 @@ msgstr "Fusion produit"
 #, python-format
 msgid "is dispatched."
 msgstr "est expédié."
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:584
+#, python-format
+msgid "You can not validate a line of a Regular FO with an Inter-section Customer if it was not created by sync."
+msgstr "Vous ne pouvez pas valider une ligne de CdT Normale qui a un Client Inter-section si elle n'a pas été créée par synchro."

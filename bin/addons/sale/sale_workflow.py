@@ -575,6 +575,10 @@ class sale_order_line(osv.osv):
             if not sol.order_id.delivery_requested_date:
                 raise osv.except_osv(_('Warning !'),
                                      _('You can not validate the line without a Requested date.'))
+            if not sol.order_id.procurement_request and sol.order_id.partner_id.partner_type == 'section' and \
+                    sol.order_id.order_type == 'regular' and not sol.order_id.client_order_ref:
+                raise osv.except_osv(_('Warning !'),
+                                     _('You can not validate a line of a Regular FO with an Inter-section Customer if it was not created by sync.'))
             if not sol.product_uom \
                     or sol.product_uom.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]:
                 raise osv.except_osv(_('Error'),
