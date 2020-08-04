@@ -440,6 +440,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+   <NumberFormat ss:Format="#,##0.00"/>
   </Style>
   <Style ss:ID="s67" ss:Parent="s16">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
@@ -490,12 +491,14 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
   </Style>
   <Style ss:ID="s73">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
    </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <NumberFormat ss:Format="Short Date"/>
   </Style>
   <Style ss:ID="s78">
@@ -627,7 +630,7 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:Index="8" ss:StyleID="s20"><Data ss:Type="String">${_('Inventory date')|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="DateTime">${ to_excel(objects[0].date) }</Data><NamedCell
+    <Cell ss:StyleID="s73" ss:MergeAcross="1"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="DateTime">${ to_excel(objects[0].date) }</Data><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:Index="17" ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
@@ -902,16 +905,11 @@
    </Print>
    <Selected/>
    <DoNotDisplayGridlines/>
-   <SplitHorizontal>10</SplitHorizontal>
-   <TopRowBottomPane>10</TopRowBottomPane>
-   <ActivePane>2</ActivePane>
    <Panes>
     <Pane>
      <Number>3</Number>
-    </Pane>
-    <Pane>
-     <Number>2</Number>
-     <ActiveRow>0</ActiveRow>
+     <ActiveRow>2</ActiveRow>
+     <ActiveCol>3</ActiveCol>
     </Pane>
    </Panes>
    <ProtectObjects>False</ProtectObjects>
