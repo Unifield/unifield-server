@@ -135,7 +135,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
-   <NumberFormat ss:Format="0"/>
+   <NumberFormat ss:Format="#,##0"/>
   </Style>
   <Style ss:ID="s31">
    <Borders>
@@ -145,7 +145,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
-   <NumberFormat ss:Format="#0"/>
+   <NumberFormat ss:Format="#,##0"/>
   </Style>
   <Style ss:ID="s32">
    <Borders>
@@ -192,7 +192,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
-   <NumberFormat ss:Format="#0"/>
+   <NumberFormat ss:Format="#,##0"/>
   </Style>
   <Style ss:ID="s36dec">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -258,7 +258,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
-   <NumberFormat ss:Format="#0"/>
+   <NumberFormat ss:Format="#,##0"/>
   </Style>
   <Style ss:ID="s43">
    <Borders>
@@ -367,7 +367,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
-   <NumberFormat ss:Format="#0"/>
+   <NumberFormat ss:Format="#,##0"/>
   </Style>
   <Style ss:ID="s58dec">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
