@@ -72,13 +72,13 @@ class patch_scripts(osv.osv):
                     period_ids = period_obj.search(cr, uid, [('special', '=', False)])
                     for period in period_obj.browse(cr, uid, period_ids, fields_to_fetch=[('number', 'fiscalyear_id', 'name')]):
                         # domain taken from the check which was done until now at period closing time
-                        period_domain = [('journal_id', 'in', reval_journal_ids), ('period_id', '=', period.id)]
+                        aml_domain = [('journal_id', 'in', reval_journal_ids), ('period_id', '=', period.id)]
                         # additional check which was done at revaluation time
                         # for the January periods having a previous FY
                         if period.number == 1:
                             if fy_obj.search_exist(cr, uid, [('date_start', '<', period.fiscalyear_id.date_start)]):
-                                period_domain.append(('name', 'like', "Revaluation - %s" % (period.name,)))
-                        if aml_obj.search_exist(cr, uid, period_domain):
+                                aml_domain.append(('name', 'like', "Revaluation - %s" % (period.name,)))
+                        if aml_obj.search_exist(cr, uid, aml_domain):
                             revaluated_period_ids.append(period.id)
             if revaluated_period_ids:
                 update_period_sql = """
