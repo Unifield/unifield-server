@@ -20780,13 +20780,9 @@ msgstr "Is child of CoA"
 msgid "Etc/GMT-11"
 msgstr "Etc/GMT-11"
 
-#. modules: sales_followup, msf_tools, account, account_subscription
+#. modules: sales_followup, msf_tools
 #: selection:ir.followup.location.wizard,state:0
 #: selection:job.in_progress,state:0
-#: view:account.subscription:0
-#: view:account.model:0
-#: selection:account.model,state:0
-#: selection:account.subscription,state:0
 msgid "Done"
 msgstr "Clôturé"
 
@@ -82760,7 +82756,7 @@ msgstr "Les écritures de Paiement sont la deuxième partie du lettrage."
 msgid "Select a supplier"
 msgstr "Sélectionner un fournisseur"
 
-#. modules: delivery_mechanism, msf_budget, account, msf_outgoing, msf_homere_interface, sync_client, register_accounting, specific_rules, sale, sales_followup, base, stock, tender_flow, msf_tools, return_claim, msf_doc_import, analytic_distribution, finance, product
+#. modules: delivery_mechanism, msf_budget, account, msf_outgoing, msf_homere_interface, sync_client, register_accounting, specific_rules, sale, sales_followup, base, stock, tender_flow, msf_tools, return_claim, msf_doc_import, analytic_distribution, finance, product, account_subscription
 #: selection:account.invoice.report,state:0
 #: selection:account.journal.period,state:0
 #: selection:report.invoice.created,state:0
@@ -82827,6 +82823,10 @@ msgstr "Sélectionner un fournisseur"
 #: selection:wizard.import.product.line,state:0
 #: selection:product.mass.update,state:0
 #: selection:account.invoice.import,state:0
+#: view:account.subscription:0
+#: view:account.model:0
+#: selection:account.model,state:0
+#: selection:account.subscription,state:0
 #, python-format
 msgid "Done"
 msgstr "Terminé"
@@ -110404,4 +110404,4 @@ msgstr "est expédié."
 #: code:addons/account/account.py:2441
 #, python-format
 msgid "You cannot duplicate a Recurring Plan with a Done model."
-msgstr "Vous ne pouvez pas dupliquer un Plan d'Ecritures Périodiques utilisant un modèle Clôturé."
+msgstr "Vous ne pouvez pas dupliquer un Plan d'Ecritures Périodiques utilisant un modèle Terminé."
