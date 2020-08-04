@@ -583,16 +583,16 @@
                                 </td>
 
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyPO(line) ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ formatFloatDigitsToUom(getQtyPO(line), line.product_uom.rounding) ]]</para>
                                 </td>
                                 <td>
                                     <para style="TextInformation4" alignment="CENTER">[[ line.product_uom and line.product_uom.name or False ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyBO(line,objects[0]) ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ formatFloatDigitsToUom(getQtyBO(line,objects[0]), line.product_uom.rounding) ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyIS(line,objects[0]) ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ formatFloatDigitsToUom(getQtyIS(line,objects[0]), line.product_uom.rounding) ]]</para>
                                 </td>
                                 <td>
                                     <para style="TextInformation4" alignment="CENTER">[[ getBatch(line) ]]</para>

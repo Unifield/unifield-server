@@ -47,6 +47,7 @@ class tender(osv.osv):
         default.update({
             'internal_state': 'draft',  # UF-733: Reset the internal_state
             'supplier_info_updated': False,
+            'currency_id': False,
         })
         if not 'sale_order_id' in default:
             default['sale_order_id'] = False
@@ -140,6 +141,7 @@ class tender(osv.osv):
         'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
         'diff_nb_rfq_supplier': fields.function(_diff_nb_rfq_supplier, method=True, type="boolean", string="Compare the number of rfqs and the number of suppliers", store=False),
         'supplier_info_updated': fields.boolean(string="Did the Product's Suppliers have been updated", readonly=True, help="Flag to see if the 'Update Product's Suppliers' button has been used"),
+        'currency_id': fields.many2one('res.currency', 'Currency for Comparison', help="Currency to use while comparing RfQs"),
     }
 
     _defaults = {
@@ -836,6 +838,16 @@ class tender(osv.osv):
 
         return so_ids, all_po_ids, all_so_ids, all_sol_not_confirmed_ids
 
+    def change_currency(self, cr, uid, ids, context=None):
+        '''
+        Just reload the tender
+        '''
+        if not context:
+            context = {}
+
+        return True
+
+
 tender()
 
 
@@ -912,16 +924,10 @@ class tender_line(osv.osv):
             else:
                 result[line.id]['total_price'] = 0.0
 
-            result[line.id]['func_currency_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
             if line.purchase_order_line_id:
                 result[line.id]['currency_id'] = line.purchase_order_line_id.order_id.pricelist_id.currency_id.id
             else:
-                result[line.id]['currency_id'] = result[line.id]['func_currency_id']
-
-            result[line.id]['func_total_price'] = self.pool.get('res.currency').compute(cr, uid, result[line.id]['currency_id'],
-                                                                                        result[line.id]['func_currency_id'],
-                                                                                        result[line.id]['total_price'],
-                                                                                        round=True, context=context)
+                result[line.id]['currency_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
 
         return result
 
@@ -947,8 +953,6 @@ class tender_line(osv.osv):
         'delivery_confirmed_date': fields.related('purchase_order_line_id', 'confirmed_delivery_date', type="date", string="Delivery Confirmed Date", readonly=True),
         'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
         'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
-        'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
-        'func_currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Func. Cur.', multi='total'),
         'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
         'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="char", string="Related Line Number", readonly=True,),
         'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
@@ -1224,8 +1228,8 @@ class tender_line(osv.osv):
         for tender_line in self.browse(cr, uid, ids, context=context):
             # commom fields:
             pricelist = tender_line.supplier_id.property_product_pricelist_purchase.id,
-            if tender_line.currency_id:
-                price_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', tender_line.currency_id.id)], context=context)
+            if tender_line.purchase_order_line_id:
+                price_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', tender_line.purchase_order_line_id.currency_id.id)], context=context)
                 if price_ids:
                     pricelist = price_ids[0]
             tender = tender_line.tender_id

@@ -98,14 +98,14 @@ class report_reception(report_sxw.rml_parse):
         val = 0
         if line.state in ('assigned', 'confirmed', 'done'):
             val = line.product_qty
-        return "{0:.2f}".format(val)
+        return val
 
     def getQtyBO(self,line,o):
         bo_qty = 0
         if line.state in ('assigned', 'shipped', 'confirmed'):
             bo_qty = line.product_qty
 
-        return "{0:.2f}".format(bo_qty)
+        return bo_qty
 
     def getQtyIS(self, line, o):
         # Amount received in this IN only
@@ -119,7 +119,7 @@ class report_reception(report_sxw.rml_parse):
 
         if val == 0:
             return ' ' # display blank instead 0
-        return "{0:.2f}".format(val)
+        return val
 
 
     def getProject(self,o):
@@ -208,24 +208,16 @@ class report_reception(report_sxw.rml_parse):
     def getExpDate(self, line):
         return time.strftime('%d/%m/%Y', time.strptime(line.prodlot_id.life_date,'%Y-%m-%d'))
 
-
-    def getActualReceiptDate(self,o):
+    def getActualReceiptDate(self, o):
         if o.state != 'done':
             actual_receipt_date = ''
-        elif not o.move_lines:
-            ard = time.strptime(o.date, '%Y-%m-%d %H:%M:%S')
-            actual_receipt_date = time.strftime('%d/%m/%Y', ard)
         else:
-            ard_min = time.strptime(o.move_lines[0].date, '%Y-%m-%d %H:%M:%S')
-            for move in o.move_lines:
-                move_ard = time.strptime(move.date, '%Y-%m-%d %H:%M:%S')
-                if move_ard < ard_min:
-                    ard_min = move_ard
-            actual_receipt_date = time.strftime('%d/%m/%Y', ard_min)
+            actual_receipt_date = time.strftime('%d/%m/%Y', time.strptime(o.date_done, '%Y-%m-%d %H:%M:%S'))
         return actual_receipt_date
 
     def get_lines(self, o):
         return o.move_lines
+
 
 report_sxw.report_sxw('report.msf.report_reception_in', 'stock.picking', 'addons/msf_printed_documents/report/report_reception.rml', parser=report_reception, header=False)
 

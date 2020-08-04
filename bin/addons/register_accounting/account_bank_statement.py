@@ -495,7 +495,11 @@ class account_bank_statement(osv.osv):
         if not register:
             raise osv.except_osv(_('Error'), _('Please select a register first.'))
         context.update({'check_advance_reconciled': True})
-        domain = [('account_id.type_for_register', '=', 'advance'), ('state', '=', 'hard'), ('reconciled', '=', False), ('amount', '<=', 0.0), ('date', '<=', date)]
+        domain = [('account_id.type_for_register', '=', 'advance'),
+                  ('state', 'in', ['temp', 'hard']),
+                  ('reconciled', '=', False),
+                  ('amount', '<=', 0.0),
+                  ('date', '<=', date)]
         name = _('Open Advances')
         if register.journal_id and register.journal_id.currency:
             # prepare some values
@@ -700,18 +704,15 @@ The starting balance will be proposed automatically and the closing balance is t
             aml_ids = aml_obj.search(cr, uid, [('statement_id', 'in', register_ids),
                                                ('account_id', 'in', account_ids), ],
                                      order='date DESC', context=context)
-        aml_list = []
-        for aml in aml_obj.browse(cr, uid, aml_ids,
-                                  fields_to_fetch=['is_reconciled', 'reconcile_id', 'reconcile_partial_id'], context=context):
-            total_rec_ok = aml.reconcile_id and aml_obj.search_exist(cr, uid,
-                                                                     [('reconcile_id', '=', aml.reconcile_id.id),
-                                                                      ('date', '>', min_posting_date)], context=context)
-            partial_rec_ok = aml.reconcile_partial_id and aml_obj.search_exist(cr, uid,
-                                                                               [('reconcile_partial_id', '=', aml.reconcile_partial_id.id),
-                                                                                ('date', '>', min_posting_date)], context=context)
-            if not aml.is_reconciled or total_rec_ok or partial_rec_ok:
-                aml_list.append(aml.id)
-        return aml_list
+        if not aml_ids:
+            return []
+        cr.execute('''select l1.id from account_move_line l1
+                 left join account_move_line l2 on l2.date > %s and (l2.reconcile_id = l1.reconcile_id or l2.reconcile_partial_id = l1.reconcile_partial_id)
+                 where l1.id in %s
+                 group by l1.id
+                 having (l1.reconcile_id is null and l1.reconcile_partial_id is null) or count(l2) > 0
+                ''', (min_posting_date, tuple(aml_ids)))
+        return [x[0] for x in cr.fetchall()]
 
     def open_register(self, cr, uid, reg_id, cash_opening_balance=None, context=None):
         """
@@ -2072,6 +2073,17 @@ class account_bank_statement_line(osv.osv):
             if abs(regline.amount or 0.0) >= too_big_amount:
                 raise osv.except_osv(_('Error'), _('The amount of the register line "%s" is more than 10 digits.') % regline.name)
 
+    def _check_register_open(self, register, action, context=None):
+        """
+        If out-of-synchro and the register isn't in Open state, raises an error msg containing the "action" forbidden
+        """
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution'):
+            if register.state != 'open':
+                raise osv.except_osv(_('Warning'), _("You can't %s lines in the register %s (%s) as it isn't Open.") %
+                                     (_(action), register.name or '', register.period_id.name))
+
     def create(self, cr, uid, values, context=None):
         """
         Create a new account bank statement line with values
@@ -2089,9 +2101,13 @@ class account_bank_statement_line(osv.osv):
                                                                 values=values)
         self._check_cheque_number_uniticy(cr, uid, values.get('statement_id'),
                                           values.get('cheque_number'), context=context)
+        # remove useless spaces and line breaks in the description and ref
+        self.pool.get('data.tools').replace_line_breaks_from_vals(values, ['name', 'ref'])
 
         # Then create a new bank statement line
         absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
+        reg = self.browse(cr, uid, absl, context=context).statement_id
+        self._check_register_open(reg, "create", context)
         self._check_account_partner_compat(cr, uid, absl, context=context)
         return absl
 
@@ -2120,6 +2136,7 @@ class account_bank_statement_line(osv.osv):
                     self._check_cheque_number_uniticy(cr, uid,
                                                       line['statement_id'][0], values.get('cheque_number'),
                                                       context=context)
+        self.pool.get('data.tools').replace_line_breaks_from_vals(values, ['name', 'ref'])
         if (one_field and field_match) or skip_check:
             return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         # Prepare some values
@@ -2328,6 +2345,9 @@ class account_bank_statement_line(osv.osv):
 
         # browse all statement lines for creating move lines
         absls = self.browse(cr, 1, list(set(ids)), context=context)
+        # check the register state only once as it is the same for all lines
+        if absls:
+            self._check_register_open(absls[0].statement_id, "post", context)
         # handle the lines ordered by sequence_for_order so this order will be kept in the Entry Sequences generated
         for absl in sorted(absls, key=lambda x: x.sequence_for_order):
             if not context.get('from_wizard_di'):

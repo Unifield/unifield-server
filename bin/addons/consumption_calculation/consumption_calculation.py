@@ -820,6 +820,8 @@ class real_average_consumption_line(osv.osv):
             #recursion: can't use write
             cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, asset_mandatory=%s, prodlot_id=%s, expiry_date=%s, asset_id=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, asset_mandatory, prodlot_id, expiry_date, asset_id, obj.id))  # not_a_user_entry
 
+        self._unique_lot_poduct(cr, uid, ids)
+
         return True
 
     def _get_product(self, cr, uid, ids, context=None):
@@ -873,14 +875,34 @@ class real_average_consumption_line(osv.osv):
         'inactive_error': lambda *a: '',
     }
 
-# uf-1344 => need to pass the context so we use create and write instead
-#    _constraints = [
-#        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty']),
-#    ]
 
-    _sql_constraints = [
-        ('unique_lot_poduct', "unique(product_id, prodlot_id, rac_id)", 'The couple product, batch number has to be unique'),
-    ]
+    def _unique_lot_poduct(self, cr, uid, ids, context=None):
+        if not ids:
+            return True
+        cr.execute('''
+            select product.default_code, bn.name, bn.id, rac.id, rac.name
+                from real_average_consumption rac
+                inner join real_average_consumption_line line on line.rac_id = rac.id
+                inner join product_product product on product.id = line.product_id
+                inner join stock_production_lot bn on bn.id = line.prodlot_id
+            where
+                rac.state = 'draft' and
+                (rac.id, line.product_id, line.prodlot_id) in (select rac_id, product_id, prodlot_id from real_average_consumption_line where id in %s)
+            group by
+                product.default_code, bn.name, bn.id, rac.id, rac.name
+            having count(*) > 1
+        ''', (tuple(ids), ))
+        error = []
+        for x in cr.fetchall():
+            error.append('%s: %s %s' % (x[4], x[0], x[1]))
+            if len(error) > 5:
+                error.append('...')
+                break
+        if error:
+            raise osv.except_osv(_('Error'), _('The couple product, batch number has to be unique:\n%s') % "\n".join(error))
+
+        return True
+
 
     def create(self, cr, uid, vals=None, context=None):
         '''
@@ -1293,7 +1315,6 @@ class monthly_review_consumption(osv.osv):
                 amc_context.update({'to_date': to_date})
 
 
-            # TODO TEST JFB
             prod_amc = self.pool.get('product.product').compute_amc(cr, uid, product_ids, context=amc_context)
             for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already on the report
@@ -1674,7 +1695,6 @@ class monthly_review_consumption_line(osv.osv):
             to_date = (DateFrom(context.get('to_date')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
             context.update({'to_date': to_date})
 
-        # TODO TEST JFB
         amc = product_obj.compute_amc(cr, uid, product_id, context=context)[product_id]
         return {'value': {'amc': amc,
                           'fmc': amc,
@@ -1840,7 +1860,7 @@ class product_product(osv.osv):
 
         return domain
 
-    def compute_amc(self, cr, uid, ids, context=None):
+    def compute_amc(self, cr, uid, ids, context=None, compute_amc_by_month=False):
         '''
         Compute the Average Monthly Consumption with this formula :
             AMC = (sum(OUTGOING (except reason types Loan, Donation, Loss, Discrepancy))
@@ -1870,6 +1890,7 @@ class product_product(osv.osv):
         if context.get('to_date', False):
             to_date = context.get('to_date')
 
+        amc_by_month = {}
         get_object_reference = self.pool.get('ir.model.data').get_object_reference
 
         domain = self._get_domain_compute_amc(cr, uid, context)
@@ -1900,7 +1921,11 @@ class product_product(osv.osv):
             report_move_ids = []
             for line in racl_obj.browse(cr, uid, rcr_line_ids, context=context):
                 report_move_ids.append(line.move_id.id)
-                res[line.product_id.id] += self._get_period_consumption(cr, uid, line, from_date, to_date, context=context)
+                if compute_amc_by_month:
+                    res[line.product_id.id] += self._get_period_consumption(cr, uid, line, from_date, to_date, context=context, amc_by_month=amc_by_month)
+                else:
+                    res[line.product_id.id] += self._get_period_consumption(cr, uid, line, from_date, to_date, context=context)
+
             if report_move_ids:
                 domain.append(('id', 'not in', report_move_ids))
 
@@ -1933,10 +1958,20 @@ class product_product(osv.osv):
             replacement_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
 
         for move in move_result:
+            sign = False
             if move['reason_type_id'][0] in (return_id, return_good_id, replacement_id) and location_dict[move['location_id'][0]]['usage'] == 'customer':
-                res[move['product_id'][0]] -= uom_obj._compute_qty(cr, uid, move['product_uom'][0], move['product_qty'], product_dict[move['product_id'][0]]['uom_id'][0])
+                sign = -1
+
             elif location_dict[move['location_dest_id'][0]]['usage'] == 'customer':
-                res[move['product_id'][0]] = uom_obj._compute_qty(cr, uid, move['product_uom'][0], move['product_qty'], product_dict[move['product_id'][0]]['uom_id'][0])
+                sign = 1
+
+            if sign is not False:
+                qty = sign * uom_obj._compute_qty(cr, uid, move['product_uom'][0], move['product_qty'], product_dict[move['product_id'][0]]['uom_id'][0])
+                res[move['product_id'][0]] += qty
+                if compute_amc_by_month:
+                    period = strptime(move['date'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m')
+                    amc_by_month.setdefault(move['product_id'][0], {}).setdefault(period, 0)
+                    amc_by_month[move['product_id'][0]][period] += qty
 
             # Update the limit in time
             if not context.get('from_date') and (not from_date or move['date'] < from_date):
@@ -1964,12 +1999,60 @@ class product_product(osv.osv):
         if not nb_months:
             nb_months = 1
 
+        adjusted_qty = {}
+        adjusted_day = {}
+        if context.get('amc_location_ids'):
+            cr.execute('''
+                select line.product_id, line.from_date, line.to_date, line.qty_missed, substitute_1_product_id, substitute_1_qty, substitute_2_product_id, substitute_2_qty,substitute_3_product_id, substitute_3_qty
+                    from product_stock_out_line line, product_stock_out st
+                    where
+                        line.stock_out_id = st.id and
+                        st.state = 'closed' and
+                        st.adjusted_amc = 't' and
+                        ( line.product_id in %(product)s or substitute_1_product_id in %(product)s or substitute_2_product_id in %(product)s or substitute_3_product_id in %(product)s ) and
+                        st.location_id in %(location)s and
+                        (from_date, to_date) OVERLAPS (%(from)s, %(to)s)
+            ''', {'product': tuple(res.keys()), 'location': tuple(context.get('amc_location_ids')), 'from': from_date, 'to': to_date})
+
+            for x in cr.fetchall():
+                from_over = max(from_date, x[1])
+                to_over = min(to_date, x[2])
+                overlap_days = (strptime(to_over, '%Y-%m-%d') - strptime(from_over, '%Y-%m-%d')).days
+                if x[0] in res.keys():
+                    if  x[3] is None:
+                        # qty no set
+                        adjusted_day.setdefault(x[0], 0)
+                        adjusted_day[x[0]] -= overlap_days
+                    else:
+                        adjusted_qty.setdefault(x[0], 0)
+                        adjusted_qty[x[0]] += (x[3]/(strptime(x[2], '%Y-%m-%d') - strptime(x[1], '%Y-%m-%d')).days * overlap_days)
+                for idx in [4, 6, 8]:
+                    if x[idx] in res.keys() and x[idx+1]:
+                        adjusted_qty.setdefault(x[idx], 0)
+                        adjusted_qty[x[idx]] -= (x[idx+1]/(strptime(x[2], '%Y-%m-%d') - strptime(x[1], '%Y-%m-%d')).days * overlap_days)
+
+
+            nb_months = ((to_date_str-from_date_str).days + 1)/30.44
+
         for p_id in res:
+            p_nb_nb_months = nb_months
+            if p_id in adjusted_day:
+                p_nb_nb_months += adjusted_day[p_id]/30.44
+
+            if p_id in adjusted_qty:
+                res[p_id] += adjusted_qty[p_id]
+
             if p_id in product_dict:
                 prod_uom = product_dict[p_id]['uom_id'][0]
-                res[p_id] = uom_obj._compute_qty(cr, uid, prod_uom, res[p_id]/nb_months, prod_uom)
+                res[p_id] = uom_obj._compute_qty(cr, uid, prod_uom, res[p_id]/p_nb_nb_months, prod_uom)
             else:
-                res[p_id] = res[p_id]/nb_months
+                res[p_id] = res[p_id]/p_nb_nb_months
+
+        if compute_amc_by_month:
+            for p_id in amc_by_month:
+                for m in amc_by_month[p_id]:
+                    amc_by_month[p_id][m] = amc_by_month[p_id][m]
+            return res, amc_by_month
 
         return res
 
@@ -2042,11 +2125,10 @@ class product_product(osv.osv):
             'from_date': from_date,
             'to_date': to_date})
 
-        # TODO TEST JFB
         return self.compute_amc(cr, uid, ids, context=context)
 
 
-    def _get_period_consumption(self, cr, uid, line, from_date, to_date, context=None):
+    def _get_period_consumption(self, cr, uid, line, from_date, to_date, context=None, amc_by_month=None):
         '''
         Returns the average quantity of product in the period
         '''
@@ -2054,6 +2136,7 @@ class product_product(osv.osv):
         if context is None:
             context = {}
         from datetime import datetime
+        from dateutil.relativedelta import relativedelta
         report_from = datetime.strptime(line.rac_id.period_from, '%Y-%m-%d')
         report_to = datetime.strptime(line.rac_id.period_to, '%Y-%m-%d')
         dt_from_date = datetime.strptime(from_date, '%Y-%m-%d')
@@ -2066,7 +2149,7 @@ class product_product(osv.osv):
 
         # Case where the report is totally included in the period
         if line.rac_id.period_from >= from_date and line.rac_id.period_to <= to_date:
-            return line.consumed_qty
+            days_incl = report_nb_days
         # Case where the report started before the period and done after the period
         elif line.rac_id.period_from <= from_date and line.rac_id.period_to >= to_date:
             # Compute the # of days of the period
@@ -2086,7 +2169,16 @@ class product_product(osv.osv):
             days_incl = delta2.days +1
 
         # Compute the quantity consumed in the period for this line
-        consumed_qty = (line.consumed_qty/report_nb_days)*days_incl
+        consumed_qty = (line.consumed_qty/float(report_nb_days))*days_incl
+
+        if amc_by_month is not None:
+            fromd = max(report_from, dt_from_date)
+            tod = min(report_to, dt_to_date)
+            total_age = (tod - fromd).days + 1
+            while fromd < tod:
+                amc_by_month.setdefault(line.product_id.id, {}).setdefault(fromd.strftime('%Y-%m'), 0)
+                amc_by_month[line.product_id.id][fromd.strftime('%Y-%m')] += consumed_qty/float(total_age) * (min(tod+relativedelta(days=1), fromd+relativedelta(months=1))-fromd).days
+                fromd += relativedelta(months=1)
         if consumed_qty:
             result = self.pool.get('product.uom')._compute_qty(cr, uid,
                                                                line.uom_id.id, consumed_qty, line.uom_id.id)

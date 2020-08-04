@@ -1101,6 +1101,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         _('You must first cancel all invoices attached to this sales order.'))
             for r in self.read(cr, uid, ids, ['invoice_ids']):
                 for inv in r['invoice_ids']:
+                    # TODO: TEST JFB
                     wf_service.trg_validate(uid, 'account.invoice', inv, 'invoice_cancel', cr)
             sale_order_line_obj.write(cr, uid, [l.id for l in  sale.order_line],
                                       {'state': 'cancel'}, context=context)
@@ -2027,6 +2028,26 @@ class sale_order_line(osv.osv):
 
         return res
 
+    def _get_pol_external_ref(self, cr, uid, ids, name, arg, context=None):
+        '''
+        Get the linked PO line's External Reference if there is one
+        '''
+        if context is None:
+            context = {}
+
+        pol_obj = self.pool.get('purchase.order.line')
+        res = {}
+
+        for _id in ids:
+            linked_pol_ids = pol_obj.search(cr, uid, [('linked_sol_id', '=', _id)], context=context)
+            if linked_pol_ids:
+                res[_id] = pol_obj.browse(cr, uid, linked_pol_ids[0], fields_to_fetch=['external_ref'],
+                                          context=context).external_ref
+            else:
+                res[_id] = False
+
+        return res
+
     _max_value = 10**10
     _max_msg = _('The Total amount of the line is more than 10 digits. Please check that the Qty and Unit price are correct to avoid loss of exact information')
     _name = 'sale.order.line'
@@ -2111,6 +2132,7 @@ class sale_order_line(osv.osv):
         'cancelled_by_sync': fields.boolean(string='Cancelled by Synchronisation'),
         'ir_name_from_sync': fields.char(size=64, string='IR name to put on PO line after sync', invisible=True),
         'counterpart_po_line_id': fields.many2one('purchase.order.line', 'PO line counterpart'),
+        'pol_external_ref': fields.function(_get_pol_external_ref, method=True, type='char', size=256, string="Linked PO line's External Ref.", store=False),
     }
     _order = 'sequence, id desc'
     _defaults = {

@@ -1251,6 +1251,7 @@
                     <field name="ssl_check" invisible="True" widget="null_boolean" />
                     <field name="dg_check" widget="null_boolean" />
                     <field name="np_check" widget="null_boolean" />
+                    <button type="object" name="open_in_form" icon="terp-gtk-go-back-rtl" string="View IN" />
                 </tree>
             </field>
         </record>

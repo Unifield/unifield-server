@@ -63,7 +63,7 @@ from tools.safe_eval import safe_eval as eval
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
 from tools import SKIPPED_ELEMENT_TYPES, cache
 
-regex_order = re.compile('^(([a-z0-9_]+|"[a-z0-9_]+")( *desc| *asc)?( *, *|))+$', re.I)
+regex_order = re.compile('^(([a-z0-9_\.]+|"[a-z0-9_\.]+")( *desc| *asc)?( *, *|))+$', re.I)
 
 POSTGRES_CONFDELTYPES = {
     'RESTRICT': 'r',
@@ -234,7 +234,7 @@ class browse_record(object):
                             for result_line in field_values:
                                 result_line[field_name] = self._fields_process[field_column._type](result_line[field_name])
                                 if result_line[field_name]:
-                                    result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj)
+                                    result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj, result_line['id'])
 
             if not field_values:
                 # Where did those ids come from? Perhaps old entries in ir_model_dat?
@@ -459,7 +459,7 @@ class orm_template(object):
         """Override this method to do specific things when a view on the object is opened."""
         pass
 
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, count=False):
         raise NotImplementedError(_('The read_group method is not implemented on this object !'))
 
     def _field_create(self, cr, context=None):
@@ -971,6 +971,7 @@ class orm_template(object):
 
                 # recursive call for getting children and returning [(0,0,{})] or [(1,ID,{})]
                 field_type = fields_def[field[len(prefix)]]['type']
+                with_null = fields_def[field[len(prefix)]].get('with_null')
                 if field_type not in ('one2many', 'many2one', 'many2many',
                                       'integer', 'boolean', 'float', 'selection',
                                       'reference'):
@@ -1082,7 +1083,10 @@ class orm_template(object):
                     else:
                         res = 0
 
-                row[field[len(prefix)]] = res or False
+                if with_null and not res and res is not None and res is not False:
+                    row[field[len(prefix)]] = res
+                else:
+                    row[field[len(prefix)]] = res or False
 
             result = (row, nbrmax, warning, data_res_id, xml_id)
             return result
@@ -2113,13 +2117,16 @@ class orm_template(object):
         '''
         return self.search(cr, user, args, offset, limit, order, context, count)
 
-    def search_exist(self, cr, user, args, context=None):
+    def search_exists(self, cr, user, args, context=None):
         """
         return True if there is at least one element matching the criterions,
         False otherwise.
         """
         return bool(self.search(cr, user, args, context=context,
                                 limit=1, order='NO_ORDER'))
+
+    def search_exist(self, cr, user, args, context=None):
+        return self.search_exists(cr, user, args, context=context)
 
     def search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
         """
@@ -2399,6 +2406,7 @@ class orm_memory(orm_template):
             return True
         tounlink = []
 
+        logger = logging.getLogger('memory.vacuum')
         # Age-based expiration
         if self._max_hours:
             max = time.time() - self._max_hours * 60 * 60
@@ -2406,13 +2414,18 @@ class orm_memory(orm_template):
                 if v['internal.date_access'] < max:
                     tounlink.append(k)
             self.unlink(cr, 1, tounlink)
+            if tounlink:
+                logger.info('delete %d %s based on age' % (len(tounlink), self._name))
 
         # Count-based expiration
         if self._max_count and len(self.datas) > self._max_count:
             # sort by access time to remove only the first/oldest ones in LRU fashion
             records = self.datas.items()
             records.sort(key=lambda x:x[1]['internal.date_access'])
-            self.unlink(cr, 1, [x[0] for x in records[:len(self.datas)-self._max_count]])
+            tounlink = [x[0] for x in records[:len(self.datas)-self._max_count]]
+            self.unlink(cr, 1, tounlink)
+            if tounlink:
+                logger.info('delete %d %s based on count' % (len(tounlink), self._name))
 
         return True
 
@@ -2739,7 +2752,7 @@ class orm(orm_template):
     _protected = ['read', 'write', 'create', 'default_get', 'perm_read', 'unlink', 'fields_get', 'fields_view_get', 'search', 'name_get', 'distinct_field_get', 'name_search', 'copy', 'import_data', 'search_count', 'exists']
     __logger = logging.getLogger('orm')
     __schema = logging.getLogger('orm.schema')
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, count=False):
         """
         Get the list of records in list view grouped by the given ``groupby`` fields
 
@@ -2787,7 +2800,7 @@ class orm(orm_template):
             assert groupby_def and groupby_def._classic_write, "Fields in 'groupby' must be regular database-persisted fields (no function or related fields), or function fields with store=True"
 
         fget = self.fields_get(cr, uid, fields)
-        float_int_fields = filter(lambda x: fget[x]['type'] in ('float', 'integer'), fields)
+        float_int_fields = filter(lambda x: fget[x]['type'] in ('float', 'integer') or fget[x].get('group_operator'), fields)
         flist = ''
         group_count = group_by = groupby
         if groupby:
@@ -2825,11 +2838,33 @@ class orm(orm_template):
 
         from_clause, where_clause, where_clause_params = query.get_sql()
         where_clause = where_clause and ' WHERE ' + where_clause
+        if count:
+            cr.execute('SELECT count(%s) ' % (qualified_groupby_field,) + ' FROM ' + from_clause + where_clause, where_clause_params)  # not_a_user_entry
+            return cr.fetchone()[0]
+
+        limited_groupby = self._name == 'replenishment.product.list'
+
+        if limited_groupby and not limit:
+            limit = 20
+
         limit_str = limit and ' limit %d' % limit or ''
         offset_str = offset and ' offset %d' % offset or ''
         if len(groupby_list) < 2 and context.get('group_by_no_leaf'):
             group_count = '_'
-        cr.execute('SELECT min(%s.id) AS id, count(%s.id) AS %s_count' % (self._table, self._table, group_count) + (flist and ',') + flist + ' FROM ' + from_clause + where_clause + gb + limit_str + offset_str, where_clause_params)  # not_a_user_entry
+
+        query_orderby = ''
+        if limited_groupby:
+            if gb:
+                gb += ',default_code'
+            if orderby:
+                split_orderby = orderby.split(' ')
+                query_orderby = ' order by default_code '
+                if len(split_orderby) == 2 and split_orderby[1].strip().lower() in ['asc', 'desc']:
+                    query_orderby = '%s %s ' % (query_orderby, split_orderby[1])
+            else:
+                query_orderby = ' order by default_code '
+
+        cr.execute('SELECT min(%s.id) AS id, count(%s.id) AS %s_count' % (self._table, self._table, group_count) + (flist and ',') + flist + ' FROM ' + from_clause + where_clause + gb + query_orderby + limit_str + offset_str, where_clause_params)  # not_a_user_entry
         alldata = {}
         groupby = group_by
         for r in cr.dictfetchall():
@@ -4729,7 +4764,7 @@ class orm(orm_template):
             kwargs = dict(parent_model=inherited_model, child_object=self) #workaround for python2.5
             apply_rule(*rule_obj.domain_get(cr, uid, inherited_model, mode, context=context), **kwargs)
 
-    def _generate_m2o_order_by(self, order_field, query):
+    def _generate_m2o_order_by(self, order_field, query, subfield=False):
         """
         Add possibly missing JOIN to ``query`` and generate the ORDER BY clause for m2o fields,
         either native m2o fields or function/related fields that are stored, including
@@ -4754,7 +4789,19 @@ class orm(orm_template):
 
         # figure out the applicable order_by for the m2o
         dest_model = self.pool.get(order_field_column._obj)
-        if order_field_column.m2o_order:
+        if subfield:
+            src_table, src_field = qualified_field.replace('"','').split('.', 1)
+            query.join((src_table, dest_model._table, src_field, 'id'), outer=True)
+            m2o_order = subfield
+            model = dest_model._table
+
+            if subfield in dest_model._inherit_fields:
+                src_table, src_field = dest_model._inherits_join_calc(subfield, query).replace('"','').split('.', 1)
+                query.join((src_table, dest_model._table, src_field, 'id'), outer=True)
+                model = src_table
+            qualify = lambda field: '"%s"."%s"' % (model, field)
+            return map(qualify, m2o_order) if isinstance(m2o_order, list) else qualify(m2o_order)
+        elif order_field_column.m2o_order:
             m2o_order = order_field_column.m2o_order
         else:
             m2o_order = dest_model._order
@@ -4799,6 +4846,9 @@ class orm(orm_template):
                 translatable = False
                 order_split = order_part.strip().split(' ')
                 order_field = order_split[0].strip()
+                subfield = False
+                if '.' in order_field:
+                    order_field, subfield = order_field.split('.', 1)
                 order_direction = order_split[1].strip() if len(order_split) == 2 else ''
                 inner_clause = None
                 end_inner_clause = []
@@ -4807,21 +4857,42 @@ class orm(orm_template):
                 elif order_field in self._columns:
                     order_column = self._columns[order_field]
                     translatable = order_column.translate
-                    if translatable and order_column._classic_read:
+                    trans_table = self._table
+                    trans_obj_name = self._name
+                    trans_classic_read = order_column._classic_read
+
+                    if order_column._classic_read:
+                        inner_clause = '"%s"."%s"' % (self._table, order_field)
+                    elif order_column._type == 'many2one':
+                        inner_clause = self._generate_m2o_order_by(order_field, query, subfield)
+                        if subfield:
+                            pool_sub_obj = self.pool.get(order_column._obj)
+                            order_field = subfield
+
+                            if pool_sub_obj._columns.get(subfield):
+                                translatable =  pool_sub_obj._columns[subfield].translate
+                                trans_classic_read = pool_sub_obj._columns[subfield]._classic_read
+                                if translatable:
+                                    trans_table = pool_sub_obj._columns[subfield]._table
+                                    trans_obj_name = pool_sub_obj._name
+                            elif pool_sub_obj._inherit_fields.get(subfield):
+                                translatable =  pool_sub_obj._inherit_fields[subfield][2].translate
+                                trans_classic_read = pool_sub_obj._inherit_fields[subfield][2]._classic_read
+                                if translatable:
+                                    trans_table = self.pool.get(pool_sub_obj._inherit_fields[subfield][0])._table
+                                    trans_obj_name = pool_sub_obj._inherit_fields[subfield][0]
+                    else:
+                        continue # ignore non-readable or "non-joinable" fields
+
+                    if translatable and trans_classic_read:
                         translation += 1
                         trans_name = '"ir_translation%s"' % translation
                         init_field = '"%s"."%s"' % (self._table, order_field)
                         order_by_elements.append('COALESCE(%s."value", %s) %s' % (trans_name, init_field, order_direction))
                         left_join_clause = 'LEFT JOIN "ir_translation" %s' % trans_name
                         on_clause = 'ON %s.res_id = "%s".id AND %s.name = \'%s,%s\' AND %s.type = \'model\' AND %s.lang = \'%s\'' % (
-                            trans_name, self._table, trans_name, self._name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
+                            trans_name, trans_table, trans_name, trans_obj_name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
                         from_order_clause.append('%s %s' % (left_join_clause, on_clause))
-                    if order_column._classic_read:
-                        inner_clause = '"%s"."%s"' % (self._table, order_field)
-                    elif order_column._type == 'many2one':
-                        inner_clause = self._generate_m2o_order_by(order_field, query)
-                    else:
-                        continue # ignore non-readable or "non-joinable" fields
 
                 elif order_field in self._inherit_fields:
                     parent_obj = self.pool.get(self._inherit_fields[order_field][3])

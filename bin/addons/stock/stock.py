@@ -1792,10 +1792,12 @@ class stock_picking(osv.osv):
                 'ppl': _('Pre-Packing List')
             }
 
+            done_out = False
             if pick.type == 'out' and pick.subtype in sub_type:
                 doc_name = sub_type.get(pick.subtype)
             else:
                 doc_name = type_list.get(pick.type, _('Document'))
+                done_out = pick.state == 'done' and pick.type == 'out' and pick.subtype == 'standard'
             # modify the list of views
             message = ''.join((doc_name, " '", (pick.name or '?'), "' "))
             infolog_message = None
@@ -1809,11 +1811,12 @@ class stock_picking(osv.osv):
                 'cancel': _('is cancelled.'),
                 'done': _('is done.'),
                 'delivered': _('is delivered.'),
-                'draft':_('is in draft state.'),
+                'draft': _('is in draft state.'),
+                'dispatched': _('is dispatched.'),
             }
             state_list = self._hook_state_list(cr, uid, state_list=state_list, msg=msg)
             action_xmlid = self._hook_picking_get_view(cr, uid, ids, context=context, pick=pick)
-            message += state_list[pick.state]
+            message += done_out and state_list['dispatched'] or state_list[pick.state]
             if infolog_message:
                 infolog_message += state_list[pick.state]
             # modify the message to be displayed

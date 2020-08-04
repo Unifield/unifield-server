@@ -620,7 +620,7 @@
                         <para style="LinesBlue">[[ line['comment'] ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="RIGHT">[[ line['quantity'] or '0.00' ]]</para>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line['quantity'] and formatFloatDigitsToUom(line['quantity'], line['product_uom_rounding']) or '0.00' ]]</para>
                     </td>
                     <td>
                         <para style="LinesBlue" alignment="CENTER">[[ line['product_uom'] ]]</para>

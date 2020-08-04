@@ -31,7 +31,7 @@
                         <label colspan="4"> </label>
                     </group>
     				<separator colspan="4" string="Lines" />
-                    <field name="line_ids" colspan="4" nolabel="1" readonly="1" context="{'tender_id': tender_id}" mode="tree" />
+                    <field name="line_ids" colspan="4" nolabel="1" readonly="1" context="{'tender_id': tender_id}" mode="tree" o2m_selectable="2" />
                     <separator colspan="4" string="Notes" />
                     <field name="notes" nolabel="1" colspan="4" />
     				<separator colspan="4" />

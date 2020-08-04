@@ -513,5 +513,69 @@
             <field name="method">us_7181_add_oc_subscrpition_to_unidata_products</field>
         </record>
 
+        <!-- UF16.1 -->
+        <record id="remove_ir_actions_linked_to_deleted_modules" model="patch.scripts">
+            <field name="method">remove_ir_actions_linked_to_deleted_modules</field>
+        </record>
+
+        <record id="us_7025_7039_fix_nr_empty_ins" model="patch.scripts">
+            <field name="method">us_7025_7039_fix_nr_empty_ins</field>
+        </record>
+
+        <!-- UF17.0 -->
+        <record id="us_7221_reset_starting_balance" model="patch.scripts">
+            <field name="method">us_7221_reset_starting_balance</field>
+        </record>
+
+        <record id="us_7015_del_rac_line_sql" model="patch.scripts">
+            <field name="method">us_7015_del_rac_line_sql</field>
+        </record>
+
+        <record id="us_7236_remove_reg_wkf_and_partial_close_state" model="patch.scripts">
+            <field name="method">us_7236_remove_reg_wkf_and_partial_close_state</field>
+        </record>
+
+        <record id="us_7425_clean_period_not_run" model="patch.scripts">
+            <field name="method">us_7425_clean_period_not_run</field>
+        </record>
+
+        <record id="us_6513_rename_dispatch_to_shipment" model="patch.scripts">
+            <field name="method">us_6513_rename_dispatch_to_shipment</field>
+        </record>
+
+        <record id="us_6641_remove_duplicates_from_stock_mission" model="patch.scripts">
+            <field name="method">us_6641_remove_duplicates_from_stock_mission</field>
+        </record>
+
+        <record id="us_7533_fix_int_previous_chained_pick_id" model="patch.scripts">
+            <field name="method">us_7533_fix_int_previous_chained_pick_id</field>
+        </record>
+
+        <!-- UF17.1 -->
+        <record id="us_7593_inactivate_en_US" model="patch.scripts">
+            <field name="method">us_7593_inactivate_en_US</field>
+        </record>
+
+        <record id="us_7631_set_default_liquidity_accounts" model="patch.scripts">
+            <field name="method">us_7631_set_default_liquidity_accounts</field>
+        </record>
+
+        <record id="us_7576_sync_msg_from_itself" model="patch.scripts">
+            <field name="method">sync_msg_from_itself</field>
+        </record>
+
+        <!-- UF18.0 -->
+        <record id="us_7646_dest_loc_on_pol" model="patch.scripts">
+            <field name="method">us_7646_dest_loc_on_pol</field>
+        </record>
+
+        <record id="us_6544_no_sync_on_forced_out" model="patch.scripts">
+            <field name="method">us_6544_no_sync_on_forced_out</field>
+        </record>
+
+        <record id="us_7412_set_fy_closure_settings" model="patch.scripts">
+            <field name="method">us_7412_set_fy_closure_settings</field>
+        </record>
+
     </data>
 </openerp>

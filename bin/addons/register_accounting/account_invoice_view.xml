@@ -246,6 +246,7 @@
                     <field name="user_id" invisible="1"/>
                     <field name="date_due"/>
                     <field name="origin"/>
+                    <field name="line_count"/>
                     <field name="currency_id"/>
                     <field name="residual" sum="Residual Amount"/>
                     <field name="amount_untaxed" sum="Untaxed Amount" invisible="1"/>
@@ -316,8 +317,15 @@
                         <field name="supplier_reference"/>
                     </field>
                     <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='invoice_line']" position="before" >
-                        <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object"
+                        <group name="import" string=" Import Lines " colspan="4" col="4"
+                               attrs="{'invisible': [('state', '!=', 'draft'), ('type', '!=', 'in_invoice')]}">
+                            <button name="import_invoice" string="Import Invoice" icon="gtk-execute" colspan="2" type="object"
+                                    attrs="{'readonly': [('state', '!=', 'draft')],
+                                            'invisible': [('type', '!=', 'in_invoice')]}"/>
+                            <button name="export_invoice" string="Export Invoice" icon="gtk-execute" colspan="2" type="object"
+                                    attrs="{'invisible': [('type', '!=', 'in_invoice')]}"/>
+                            <newline/>
+                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object"
                                     attrs="{'invisible': [('state', '!=', 'draft')],
                                             'readonly': [('type', '=', 'in_invoice'), ('synced', '=', True)]}"/>
                         </group>

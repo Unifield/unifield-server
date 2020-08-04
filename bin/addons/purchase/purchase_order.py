@@ -57,6 +57,7 @@ class purchase_order(osv.osv):
                 'amount_untaxed': 0.0,
                 'amount_tax': 0.0,
                 'amount_total': 0.0,
+                'amount_total_tender_currency': 0.0,
             }
             val = val1 = 0.0
             cur = order.pricelist_id.currency_id
@@ -68,6 +69,12 @@ class purchase_order(osv.osv):
             res[order.id]['amount_tax']=cur_obj.round(cr, uid, cur.rounding, val)
             res[order.id]['amount_untaxed']=cur_obj.round(cr, uid, cur.rounding, val1)
             res[order.id]['amount_total']=res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
+            if order.tender_id and order.tender_id.currency_id \
+                    and order.tender_id.currency_id.id != order.pricelist_id.currency_id.id:
+                res[order.id]['amount_total_tender_currency'] = round(cur_obj.compute(cr, uid, cur.id, order.tender_id.currency_id.id,
+                                                                                      res[order.id]['amount_total'], round=False, context=context), 2)
+            else:
+                res[order.id]['amount_total_tender_currency'] = res[order.id]['amount_total']
         return res
 
     def _set_minimum_planned_date(self, cr, uid, ids, name, value, arg, context=None):
@@ -807,7 +814,10 @@ class purchase_order(osv.osv):
                 (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
                 (_get_order_state_changed, ['state'], 10),
             ]
-        }, multi="sums",help="The total amount"),
+        }, multi="sums", help="The total amount"),
+        'amount_total_tender_currency': fields.function(_amount_all, method=True, string='Total (Comparison Currency)',
+                                                        digits_compute= dp.get_precision('Purchase Price'), store=False,
+                                                        multi="sums", help="The total amount using the tender's currency for comparison"),
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position'),
         'create_uid':  fields.many2one('res.users', 'Responsible'),
         'company_id': fields.many2one('res.company','Company',required=True,select=1),
@@ -818,6 +828,7 @@ class purchase_order(osv.osv):
         },
         ),
         'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
+        'delivery_requested_date_modified': fields.date(string='Delivery Requested Date (modified)'),
         'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
         'ready_to_ship_date': fields.date(string='Ready To Ship Date'),
         'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
@@ -1251,7 +1262,7 @@ class purchase_order(osv.osv):
             default = {}
         if context is None:
             context = {}
-        fields_to_reset = ['delivery_requested_date', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date']
+        fields_to_reset = ['delivery_requested_date', 'delivery_requested_date_modified', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date']
         to_del = []
         for ftr in fields_to_reset:
             if ftr not in default:
@@ -1349,6 +1360,8 @@ class purchase_order(osv.osv):
             context = {}
         # field name
         field_name = context.get('field_name', False)
+        if field_name == 'requested' and self.search_exists(cr, uid, [('id', 'in', ids), ('delivery_requested_date_modified', '=', False), ('state', '!=', 'draft')], context=context):
+            raise osv.except_osv(_('Warning'), _('Please fill the "Delivery Requested Date (modified)" field.'))
         assert field_name, 'The button is not correctly set.'
         # data
         data = getattr(self, field_name + '_data')(cr, uid, ids, context=context)
@@ -2249,7 +2262,6 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        data_obj = self.pool.get('ir.model.data')
 
         pol = self.ensure_object(cr, uid, 'purchase.order.line', pol)
         internal = self.ensure_object(cr, uid, 'stock.picking', internal_id)
@@ -2259,18 +2271,8 @@ class purchase_order(osv.osv):
         # compute source location:
         src_location = pol.order_id.location_id
 
-        # compute destination location:
-        dest = pol.order_id.location_id.id
-        if pol.product_id.type == 'service_recep' and not pol.order_id.cross_docking_ok:
-            # service with reception are directed to Service Location
-            dest = self.pool.get('stock.location').get_service_location(cr, uid)
-        elif pol.product_id.type == 'consu':
-            dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
-        elif pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage != 'customer':
-            dest = pol.linked_sol_id.order_id.location_requestor_id.id
-        elif self.pool.get('stock.location').chained_location_get(cr, uid, src_location, product=pol.product_id, context=context):
-            # if input location has a chained location then use it
-            dest = self.pool.get('stock.location').chained_location_get(cr, uid, src_location, product=pol.product_id, context=context)[0].id
+        # compute destination location
+        dest = self.pool.get('purchase.order.line').final_location_dest(cr, uid, pol, context=context)
 
         values = {
             'name': ''.join((pol.order_id.name, ': ', (pol.name or ''))),

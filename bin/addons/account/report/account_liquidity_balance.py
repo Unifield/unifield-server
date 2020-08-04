@@ -86,9 +86,10 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
             LEFT JOIN account_journal j ON aml.journal_id = j.id 
             WHERE j.type = 'cheque'
             AND aml.date < %s
+            AND j.instance_id IN %s
             AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id);
         """
-        self.cr.execute(chq_starting_bal_sql, (date_from,))
+        self.cr.execute(chq_starting_bal_sql, (date_from, tuple(self.instance_ids)))
         chq_starting_bal_ids = [x for x, in self.cr.fetchall()]
         # get the day before the beginning date (cf the beginning date itself should be included in the Pending Chq computation)
         date_from_dt = datetime.strptime(date_from, "%Y-%m-%d")
@@ -102,9 +103,10 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
             LEFT JOIN account_journal j ON aml.journal_id = j.id 
             WHERE j.type = 'cheque'
             AND aml.date <= %s
+            AND j.instance_id IN %s
             AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id);
         """
-        self.cr.execute(chq_closing_bal_sql, (date_to, ))
+        self.cr.execute(chq_closing_bal_sql, (date_to, tuple(self.instance_ids)))
         chq_closing_bal_ids = [x for x, in self.cr.fetchall()]
         pending_chq_closing_bal_ids = reg_obj.get_pending_cheque_ids(self.cr, self.uid, [], [], date_to,
                                                                      aml_ids=chq_closing_bal_ids, context=self.context)

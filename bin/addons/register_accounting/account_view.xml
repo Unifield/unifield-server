@@ -16,7 +16,7 @@
                 <xpath expr="/form" position="replace">
                     <form string="Bank Statement" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                         <group col="6" colspan="4">
-                            <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'partial_close', 'confirm'))]}"/>
+                            <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'confirm'))]}"/>
                             <field name="journal_id" domain="[('type', '=', 'bank'),('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" select="1"/>
                             <newline/>
                             <field name="period_id" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
@@ -24,7 +24,7 @@
                             <field name="bank_account_number"/>
                             <newline/>
                             <field name="prev_reg_id" invisible="1"/>
-                            <field name="balance_start" attrs="{'readonly': ['|', ('prev_reg_id', '!=', False), ('closing_balance_frozen', '=', True)]}"/>
+                            <field name="balance_start" readonly="1"/>
                             <group col="3" colspan="4">
                                 <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}" string="Bank statement balance"/>
                                 <button name="button_confirm_closing_bank_balance" type="object" string="Confirm End-of-Month Balance" icon="gtk-apply"
@@ -207,7 +207,7 @@
                 <xpath expr="/form" position="replace">
                     <form string="Statement" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                         <group col="6" colspan="4">
-                            <field name="name" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'partial_close', 'confirm'))]}"/>
+                            <field name="name" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'confirm'))]}"/>
                             <field name="company_id" select="1" groups="base.group_multi_company" invisible="True"/>
                             <field name="journal_id" on_change="onchange_journal_id(journal_id)" domain="[('type','=','cash'),('is_current_instance','=',True)]" select="1"/>
                             <newline/>
@@ -340,18 +340,6 @@
                             <page string="CashBox">
                                 <field name="prev_reg_id" invisible="1"/>
                                 <group col="4" colspan="4">
-                                    <field name="starting_details_ids" nolabel="1" colspan="2" attrs="{'invisible':['|',('state','!=','draft'),('prev_reg_id','!=',False)], 'readonly':['|',('state','!=','draft'),('prev_reg_id','!=',False)]}">
-                                        <tree string="Starting Balance" editable="bottom">
-                                            <field name="pieces"/>
-                                            <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
-                                            <field name="subtotal" sum="Total"/>
-                                        </tree>
-                                        <form string="Starting Balance">
-                                            <field name="pieces"/>
-                                            <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
-                                            <field name="subtotal"/>
-                                        </form>
-                                    </field>
                                     <field name="closing_balance_frozen" invisible="1"/>
                                     <field name="ending_details_ids" nolabel="1" colspan="2" attrs="{'readonly':['|', ('state','!=','open'), ('closing_balance_frozen', '=', True)]}">
                                         <tree string = "Closing Balance" editable="bottom">
@@ -514,7 +502,8 @@
                 <search string="Register Lines">
                     <group col='10' colspan='4'>
                         <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new"/>
-                        <filter string="Temp" domain="[('state','=','temp')]" icon="terp-camera_test"/>
+                        <filter string="Temp" domain="[('state', '=', 'temp')]" icon="terp-gtk-jump-to-ltr"/>
+                        <filter string="Hard" domain="[('state', '=', 'hard')]" icon="terp-camera_test"/>
                         <separator orientation="vertical"/>
                         <field name="document_date" select='1'/>
                         <field name="date" select='1'/>
@@ -805,7 +794,7 @@
             <field name="arch" type="xml">
                 <form string="Cheque Register" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
                     <group col="7" colspan="4">
-                        <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'partial_close', 'confirm'))]}"/>
+                        <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', 'in', ('draft', 'open', 'confirm'))]}"/>
                         <field name="journal_id" domain="[('type', '=', 'cheque'),('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" select="1"/>
                         <newline/>
                         <field name="date" select="1" on_change="onchange_date(date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>

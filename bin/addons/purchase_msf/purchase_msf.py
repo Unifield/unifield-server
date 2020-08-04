@@ -20,6 +20,8 @@
 ##############################################################################
 
 from osv import osv, fields
+from tools.translate import _
+
 
 class purchase_order_line(osv.osv):
     '''
@@ -123,9 +125,22 @@ class purchase_order_line(osv.osv):
 
         return result
 
+    def _generate_order_by(self, order_spec, query, context=None):
+        if order_spec and 'supplier_code' in order_spec:
+            order_specs = order_spec.split(',')
+            if order_specs > 1 and not order_specs[1].strip().startswith('id'):
+                raise osv.except_osv(_('Warning !'), _("You can't combine order by supplier_code with other order fields"))
+            order_split = order_specs[0].split(' ')
+            direction = order_split[1].strip() if len(order_split) > 1 else ''
+            query.join([self._table, 'purchase_order', 'order_id', 'id'], outer=False)
+            join = ' left join "product_supplierinfo" on "product_supplierinfo".id = (select id from product_supplierinfo si where si.name="purchase_order"."partner_id" and si."product_id"="purchase_order_line"."product_id" order by sequence limit 1)'
+            return ' ORDER BY %s %s, "purchase_order_line"."id"' % ('"product_supplierinfo"."product_code"',direction), [join]
+
+        return super(purchase_order_line, self)._generate_order_by(order_spec, query, context=context)
+
     _columns = {'internal_code': fields.function(_getProductInfo, method=True, type='char', size=1024, string='Internal code', multi='get_vals',),
                 'internal_name': fields.function(_getProductInfo, method=True, type='char', size=1024, string='Internal name', multi='get_vals',),
-                'supplier_code': fields.function(_getProductInfo, method=True, type='char', size=1024, string='Supplier code', multi='get_vals',),
+                'supplier_code': fields.function(_getProductInfo, method=True, type='char', size=1024, string='Supplier code', multi='get_vals', sort_column='supplier_code'),
                 'supplier_name': fields.function(_getProductInfo, method=True, type='char', size=1024, string='Supplier name', multi='get_vals',),
                 # new colums to display product manufacturers linked to the purchase order supplier
                 'manufacturer_id': fields.function(_get_manufacturers, method=True, type='many2one', relation="res.partner", string="Manufacturer", store=False, multi="all"),
@@ -160,6 +175,8 @@ class product_product(osv.osv):
 
         if context.get('default_code_only'):
             fields_to_read = ['id', 'default_code']
+        elif context.get('default_description_only'):
+            fields_to_read = ['id', 'name']
         else:
             fields_to_read = ['id', 'name', 'default_code', 'variants']
         read_result = self.read(cr, user, ids,

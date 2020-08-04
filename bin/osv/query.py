@@ -86,7 +86,7 @@ class Query(object):
         (lhs, table, lhs_col, col) = connection
         lhs = _quote(lhs)
         table = _quote(table)
-        assert lhs in self.tables, "Left-hand-side table must already be part of the query!"
+        assert lhs in self.tables, "Left-hand-side (%s) table must already be part of the query! %s" % (lhs, self.tables)
         if table in self.tables:
             # already joined, must ignore (promotion to outer and multiple joins not supported yet)
             pass

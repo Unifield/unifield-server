@@ -122,6 +122,7 @@ class account_cash_statement(osv.osv):
                 'pieces': line.pieces,
                 'number': 0.0,
             }
+            # note: check on closing line duplicates will be skipped as the reg. is still in Draft state at this step
             cashbox_line_obj.create(cr, uid, vals, context=context)
         # Give a Cash Register Name with the following composition :
         #+ Cash Journal Name
@@ -219,7 +220,7 @@ class account_cash_statement(osv.osv):
 
     _columns = {
         'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines',
-                                    states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
+                                    states={'confirm': [('readonly', True)], 'draft': [('readonly', True)]}),
         'open_advance_amount': fields.float('Unrecorded Advances'),
         'unrecorded_expenses_amount': fields.float('Unrecorded expenses'),
         'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
