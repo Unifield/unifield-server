@@ -577,5 +577,9 @@
             <field name="method">us_7412_set_fy_closure_settings</field>
         </record>
 
+        <record id="us_6453_set_ref_on_in" model="patch.scripts">
+            <field name="method">us_6453_set_ref_on_in</field>
+        </record>
+
     </data>
 </openerp>
