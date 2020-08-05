@@ -243,8 +243,8 @@
                         <field name="ref"/>
                         <field name="document_date"/>
                         <field name="date"/>
-                        <field name="period_id"/>
-                        <field name="account_id"/>
+                        <field name="period_id" domain="[('special', '=', False), ('state', '=', 'draft')]"/>
+                        <field name="account_id" domain="[('restricted_area', '=', 'recurring_lines')]"/>
                         <newline/>
                         <!-- title matching with the tree view but only Partners are possible -->
                         <field name="partner_id" string="Third Parties"/>
