@@ -369,6 +369,7 @@ class account_model(osv.osv):
         account_move_line_obj = self.pool.get('account.move.line')
         pt_obj = self.pool.get('account.payment.term')
         ana_obj = self.pool.get('analytic.distribution')
+        period_obj = self.pool.get('account.period')
 
         if context is None:
             context = {}
@@ -376,13 +377,15 @@ class account_model(osv.osv):
         if datas.get('date', False):
             context.update({'date': datas['date']})
 
-        period_id = self.pool.get('account.period').find(cr, uid, dt=context.get('date', False))
-        if not period_id:
+        period_domain = [('date_start', '<=', context.get('date')), ('date_stop', '>=', context.get('date')), ('special', '=', False)]
+        period_ids = period_obj.search(cr, uid, period_domain, context=context)
+
+        if not period_ids:
             raise osv.except_osv(_('No period found !'), _('Unable to find a valid period !'))
-        period_id = period_id[0]
+        period_id = period_ids[0]
         # UFTP-105: Check that period is open. Otherwise raise an error
-        period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
-        if not period or period.state != 'draft':
+        period = period_obj.browse(cr, uid, period_id, fields_to_fetch=['state', 'name'], context=context)
+        if period.state != 'draft':
             raise osv.except_osv(_('Warning'), _('This period should be in open state: %s') % (period.name))
 
         for model in self.browse(cr, uid, ids, context=context):
