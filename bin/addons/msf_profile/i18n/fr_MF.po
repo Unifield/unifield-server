@@ -109235,6 +109235,11 @@ msgstr "Compte de Débit par défaut pour les Journaux de Liquidités"
 msgid "Cash Default Credit Account"
 msgstr "Compte de Crédit par défaut pour les Journaux de Liquidités"
 
+#. module: stock
+#: field:stock.production.lot,stock_location_id:0
+msgid "Location of Stock Level"
+msgstr "Zone du Niveau de Stock"
+
 #. module: account_override
 #: view:account.invoice:0
 #: code:addons/account_override/invoice.py:1274
