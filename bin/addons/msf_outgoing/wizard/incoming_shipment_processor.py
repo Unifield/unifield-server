@@ -250,25 +250,32 @@ class stock_incoming_processor(osv.osv):
         picking = picking_obj.browse(cr, uid, vals.get('picking_id'), context=context)
 
         cr.execute("""
-            select so.id, array_agg(distinct(out.name)) from
+            select so.id, array_agg(distinct(out.name)), count(distinct(so.procurement_request)) from
             stock_move m
             left join stock_picking p on m.picking_id = p.id
             left join purchase_order_line pol on m.purchase_line_id = pol.id
             left join sale_order_line sol on sol.id = pol.linked_sol_id
             left join sale_order so on so.id = sol.order_id
-            left join stock_picking out on out.sale_id = so.id
-            where m.picking_id = %s and so.procurement_request = 'f' and coalesce(p.claim, 'f') = 'f' and out.type = 'out' and (out.subtype = 'picking' and out.state='draft' or out.subtype = 'standard' and out.state in ('draft', 'confirmed', 'assigned'))
+            left join stock_picking out on out.sale_id = so.id and out.type = 'out' and (out.subtype = 'picking' and out.state='draft' or out.subtype = 'standard' and out.state in ('draft', 'confirmed', 'assigned'))
+            where
+                m.picking_id = %s and
+                coalesce(p.claim, 'f') = 'f'
             group by so.id
             """, (vals.get('picking_id'), ))
         if cr.rowcount == 1:
-            out_names = cr.fetchone()[1]
+            fetch_data = cr.fetchone()
+            if fetch_data[2] > 1:
+                # IN mixed with FO/IR
+                vals['linked_to_out'] = False
+
+            out_names = fetch_data[1]
             out_type = False
             for out_name in out_names:
-                if out_name.startswith('PICK/'):
-                    out_type = 'picking'
+                if out_name and out_name.startswith('OUT/'):
+                    out_type = out_name
                     break
             if not out_type:
-                out_type = out_names and out_names[0]
+                out_type = out_names and len(out_names) == 1 and out_names[0] and out_names[0].startswith('PICK/') and 'picking' or False
             vals['linked_to_out'] = out_type
         else:
             vals['linked_to_out'] = False
