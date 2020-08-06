@@ -2523,13 +2523,6 @@ msgstr "Importer des articles du Kit Théorique"
 msgid "Ticked if the product is a Short Shelf Life product"
 msgstr "Coché si le produit est à durée de conservation limitée"
 
-#. module: sourcing
-#: code:addons/sourcing/sale_order_line.py:898
-#, python-format
-msgid "For an Internal Request with a procurement method 'On Order' and without product,\n"
-"the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ESC' type."
-msgstr "Pour une Demande Interne avec une méthode d'approvisionnement `Sur Commande´ et sans produit, le fournisseur doit être soit de type 'Interne', 'Inter-section', 'Intermission ou 'ESC' ."
-
 #. module: account_hq_entries
 #: field:hq.entries,split_ids:0
 #: field:hq.entries.split,line_ids:0
@@ -36153,16 +36146,6 @@ msgstr "Date du Cloud"
 msgid "Original Currency"
 msgstr "Devise d'Origine"
 
-#. module: sourcing
-#: code:addons/sourcing/sale_order_line.py:1218
-#, python-format
-msgid "For an Internal Request with a procurement method 'On Order' and without product,\n"
-"                    the supplier must be either in 'Internal', 'Inter-Section', 'Intermission' or 'ESC' type.\n"
-"                    "
-msgstr "For an Internal Request with a procurement method 'On Order' and without product,\n"
-"                    the supplier must be either in 'Internal', 'Inter-Section', 'Intermission' or 'ESC' type.\n"
-"                    "
-
 #. module: hr
 #: help:hr.employee,parent_id:0
 msgid "It is linked with manager of Department"
@@ -37446,12 +37429,6 @@ msgstr "Macao"
 #: report:addons/account/report/invoice_excel_export.mako:71
 msgid "Subtotal"
 msgstr "Sous-total"
-
-#. module: sourcing
-#: code:addons/sourcing/sale_order_line.py:954
-#, python-format
-msgid "You can't Source to an 'External' partner if you don't have product."
-msgstr "You can't Source to an 'External' partner if you don't have product."
 
 #. module: sync_client
 #: field:backup.config,name:0
