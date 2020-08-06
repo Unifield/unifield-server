@@ -1658,7 +1658,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                 price = price_dict[sourcing_line.supplier.property_product_pricelist_purchase.id]
 
                         if not price:
-                            price = sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0
+                            if not sourcing_line.product_id and sourcing_line.comment:  # Product by nomenclature
+                                price = sourcing_line.price_unit or 0.0
+                            else:
+                                price = sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0
                             if price and company_currency_id != target_currency_id:
                                 price = self.pool.get('res.currency').compute(cr, uid, company_currency_id, target_currency_id, price, round=False, context=context)
 
