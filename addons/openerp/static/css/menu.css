@@ -154,8 +154,8 @@ div.contextmenu span.disabled {
 }
 
 #survey .column {
-  float: left;
-  width: 33.33%;
+  display: inline-block;
+  width: 32%;
   text-align: center;
 }
 

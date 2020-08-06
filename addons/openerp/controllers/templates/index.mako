@@ -201,11 +201,11 @@
                  <div class="row">
                   <div class="column"><div class="survey_button" onclick="click_answer('goto')">${_('Go to survey')}</div></div>
                   <div class="column"><div class="survey_button" onclick="click_answer('later')">${_('Answer Later')}</div></div>
-                  <div class="column"><div class="survey_button" id="button_never"
+                  <div class="column" id="button_never"
                     % if survey['nb_displayed'] < 3:
                         style="display: none"
                     % endif
-                  onclick="click_answer('never')">${_('Do not ask me again')}</div></div>
+		   ><div class="survey_button" onclick="click_answer('never')">${_('Do not ask me again')}</div></div>
                 </div>
         </div>
         <script type="text/javascript">
