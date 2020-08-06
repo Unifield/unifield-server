@@ -30129,6 +30129,9 @@ msgstr "Operator '%s' not suported"
 #: field:sync.client.register_entity,message:0
 #: selection:sync.client.register_entity,state:0
 #: field:account.invoice.import,message:0
+#: field:wizard.import.po.simulation.screen.line,info_msg:0
+#: field:wizard.import.ppl.to.create.ship,message:0
+#: field:wizard.import.product.line,message:0
 msgid "Message"
 msgstr "Message"
 
@@ -33547,6 +33550,7 @@ msgstr "EAN 13 Correcte"
 
 #. module: msf_outgoing
 #: model:process.transition,name:msf_outgoing.process_transition_draft_pick_picking_ppl
+#: model:process.transition,note:msf_outgoing.process_transition_draft_pick_picking_ppl
 msgid "From picking to ppl."
 msgstr "De Picking à  liste de pré-colis"
 
@@ -38529,6 +38533,9 @@ msgstr "base.report.sxw"
 #: selection:purchase.order,transport_mode:0
 #: selection:shipment.add.pack.processor,transport_type:0
 #: selection:international.transport.cost.report,transport_type:0
+#: selection:wizard.import.in.simulation.screen,transport_type:0
+#: selection:wizard.import.po.simulation.screen,imp_transport_type:0
+#: selection:wizard.import.po.simulation.screen,in_transport_type:0
 msgid "Sea"
 msgstr "Mer"
 
@@ -43305,6 +43312,8 @@ msgstr "Budget Mensuel (XLS)"
 #: field:wizard.import.batch,info_message:0
 #: view:internal.request.import:0
 #: view:account.invoice.import.errors:0
+#: view:wizard.import.ppl.to.create.ship:0
+#: view:wizard.import.product.line:0
 msgid "Information"
 msgstr "Informations"
 
@@ -65810,6 +65819,7 @@ msgstr "Achat - Devise par Défaut"
 #: field:wizard.import.po.line,import_error_ok:0
 #: field:wizard.import.tender.line,import_error_ok:0
 #: field:wizard.import.ppl.to.create.ship,import_error_ok:0
+#: field:wizard.import.product.line,import_error_ok:0
 msgid "Error at import"
 msgstr "Erreur lors de l'import"
 
@@ -69379,6 +69389,7 @@ msgstr "23e"
 #: view:wizard.import.stock.warehouse.orderpoint.line:0
 #: view:wizard.import.tender.line:0
 #: view:wizard.import.threshold.value.line:0
+#: view:wizard.import.product.line:0
 msgid "Import of lines"
 msgstr "Importation de lignes"
 
@@ -71808,9 +71819,10 @@ msgstr "Diviser le mouvement"
 msgid "No catalogue found !"
 msgstr "Catalogue pas trouvé !"
 
-#. module: purchase, purchase_override
+#. module: purchase, purchase_override, msf_doc_import
 #: field:purchase.order.merged.line,instance_sync_order_ref:0
 #: field:purchase.order.line,instance_sync_order_ref:0
+#: field:wizard.import.po.simulation.screen.line,imp_sync_order_ref:0
 msgid "Order in sync. instance"
 msgstr "Commande en instance sync."
 
@@ -73505,6 +73517,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/account_override/account.py:1256
 #: code:addons/account/wizard/account_invoice_import.py:0
 #: selection:account.invoice.import,state:0
+#: field:wizard.common.import.line,display_error:0
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -75877,6 +75890,7 @@ msgstr "Export to HQ system (OCA)"
 #: field:wizard.import.tender.line,filename_template:0
 #: field:wizard.import.threshold.value.line,filename_template:0
 #: field:wizard.import.ppl.to.create.ship,filename_template:0
+#: field:wizard.import.product.line,filename_template:0
 msgid "Templates"
 msgstr "Modèles"
 
@@ -81957,6 +81971,10 @@ msgstr "analytic.distribution"
 #: selection:shipment,transport_type:0
 #: selection:shipment.add.pack.processor,transport_type:0
 #: selection:international.transport.cost.report,transport_type:0
+#: selection:purchase.import.xml.line,transport_type:0
+#: selection:wizard.import.in.simulation.screen,transport_type:0
+#: selection:wizard.import.po.simulation.screen,imp_transport_type:0
+#: selection:wizard.import.po.simulation.screen,in_transport_type:0
 msgid "Road"
 msgstr "Route"
 
@@ -82113,6 +82131,7 @@ msgstr "You have to select a closed register!"
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:183
 #: model:ir.actions.report.xml,name:msf_outgoing.report_packing_list
 #: code:addons/stock/stock.py:1775
+#: field:stock.move.in.processor,ppl_name:0
 #, python-format
 msgid "Packing List"
 msgstr "Liste de Colisage"
@@ -83341,6 +83360,7 @@ msgstr "Maroc"
 #: field:report.stock.move,move:0
 #: field:stock.move.cancel.more.wizard,move_id:0
 #: field:change.dest.location,picking_id:0
+#: field:return.ppl.move.processor,move_id:0
 msgid "Move"
 msgstr "Transaction"
 
@@ -95492,6 +95512,7 @@ msgstr "Méthode d'Approvisionnement"
 #: selection:stock.move.processor,integrity_status:0
 #: selection:validate.move.processor,integrity_status:0
 #: code:addons/msf_outgoing/__init__.py:37
+#: selection:return.ppl.move.processor,integrity_status:0
 #, python-format
 msgid "Batch Number is Missing"
 msgstr "Numéro de lot manquant"
@@ -97323,6 +97344,7 @@ msgstr "Asia/Kuala_Lumpur"
 #: selection:product.ul,type:0
 #: field:stock.move,tracking_id:0
 #: field:report.stock.move,tracking_id:0
+#: field:stock.move.in.processor,filter_pack:0
 msgid "Pack"
 msgstr "Colis"
 
@@ -97758,6 +97780,8 @@ msgstr "À"
 #: selection:stock.move,integrity_error:0
 #: view:account.invoice.import:0
 #: code:addons/msf_outgoing/__init__.py:26
+#: view:wizard.common.import.line:0
+#: selection:stock.move.in.processor,sequence_issue:0
 msgid "Ok"
 msgstr "Ok"
 
@@ -101212,6 +101236,7 @@ msgstr "PL Fournisseur"
 #: field:stock.move.in.processor,packing_list:0
 #: field:stock.picking,packing_list:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:335
+#: field:wizard.import.in.pack.simulation.screen,ppl_name:0
 msgid "Supplier Packing List"
 msgstr "Liste Colisage Fournisseur"
 
@@ -106093,6 +106118,11 @@ msgstr "Estimation des coûts du transport : "
 #: selection:res.partner,transport_2:0
 #: selection:purchase.order,transport_type:0
 #: selection:international.transport.cost.report,transport_type:0
+#: selection:purchase.import.xml.line,transport_type:0
+#: selection:wizard.import.in.simulation.screen,transport_type:0
+#: selection:wizard.import.po.simulation.screen,imp_transport_type:0
+#: selection:wizard.import.po.simulation.screen,in_transport_type:0
+#: selection:shipment.add.pack.processor,transport_type:0
 msgid "Hand carry"
 msgstr "Transport en bagage à main"
 
@@ -110374,3 +110404,111 @@ msgstr "Écart Total"
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:843
 msgid "Total Discrepancy Value"
 msgstr "Valeur Totale des Écarts"
+
+#. module: msf_outgoing
+#: help:internal.move.processor,ordered_product_id:0
+#: help:outgoing.delivery.move.processor,ordered_product_id:0
+#: help:return.ppl.move.processor,ordered_product_id:0
+#: help:stock.move.in.processor,ordered_product_id:0
+#: help:stock.move.processor,ordered_product_id:0
+msgid "Expected product to receive"
+msgstr "Produit attendu en réception"
+
+#. modules: msf_doc_import, msf_outgoing
+#: selection:purchase.import.xml.line,transport_type:0
+#: selection:wizard.import.in.simulation.screen,transport_type:0
+#: selection:wizard.import.po.simulation.screen,imp_transport_type:0
+#: selection:wizard.import.po.simulation.screen,in_transport_type:0
+#: selection:return.pack.shipment.processor,transport_type:0
+#: selection:return.shipment.processor,transport_type:0
+#: selection:shipment,transport_type:0
+#: selection:shipment.add.pack.processor,transport_type:0
+msgid "Express"
+msgstr "Express"
+
+#. module: msf_outgoing
+#: field:check.ppl.integrity,incoming_processor_id:0
+msgid "IN processor"
+msgstr "Processeur IN"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_product_line.py:212
+#, python-format
+msgid "Import is limited to 500 products, %d lines ignored"
+msgstr "L'import est limité à 500 produits, %d lignes ignorées"
+
+#. module: msf_outgoing
+#: field:stock.incoming.processor,sequence_issue:0
+msgid "Issue with To ship"
+msgstr "Problème avec l'expédition"
+
+#. module: msf_outgoing
+#: help:return.ppl.processor,move_ids:0
+msgid "Lines of the PPL processor wizard"
+msgstr "Lignes du processeur LPC"
+
+#. module: msf_doc_import
+#: field:wizard.common.import.line,msg:0
+msgid "Msg"
+msgstr "Msg"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Original PICK"
+msgstr "Pick d'origine"
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "Please correct red lines before processing or do not process to ship"
+msgstr "Veuillez corriger les lignes en rouge ou ne pas traiter jusqu'à l'expédition"
+
+#. module: msf_outgoing
+#: field:shipment.add.pack.processor.line,wizard_id:0
+msgid "Processor"
+msgstr "Processeur"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_product_line.py:163
+#, python-format
+msgid "Product %s doesn't have the expected Product Creator. "
+msgstr "Le produit %s n'a pas le bon Créateur produit"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:650
+#: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:760
+#, python-format
+msgid "This type of import cannot be used because related PICK document has been converted to %s"
+msgstr "Ce type d'import ne peut être utilisé car le document de Picking lié a été converti en %s"
+
+#. module: msf_outgoing
+#: field:stock.move.in.processor,total_volume:0
+msgid "Total Volume [dm³]"
+msgstr "Volume Total [dm³]"
+
+#. module: msf_outgoing
+#: field:stock.move.in.processor,total_weight:0
+msgid "Total Weight [kg]"
+msgstr "Poids Total [kg]"
+
+#. module: msf_doc_import
+#: field:wizard.import.in.pack.simulation.screen,real_total_volume:0
+msgid "Total volume for all packs"
+msgstr "Volume total de tous les colis"
+
+#. module: msf_doc_import
+#: field:wizard.import.in.pack.simulation.screen,real_total_weight:0
+msgid "Total weight for all packs"
+msgstr "Poids total de tous les colis"
+
+#. module: msf_doc_import
+#: field:wizard.import.po.simulation.screen,import_warning_ok:0
+msgid "Warning at import"
+msgstr "Avertisssment lors de l'import"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:563
+#, python-format
+msgid "Warning the following product lines have already been processed in linked OUT/Pick document, so cannot be processed here. Please remove these lines before trying to processs the movement\n"
+"%s"
+msgstr "Attention les produits suivants ont déjà été traités dans les documents d'expédition OUT/Picking et ne peuvent plus être taités ici. Veuillez supprimer ces lignes avant de taiter le mouvement\n"
+"%s"

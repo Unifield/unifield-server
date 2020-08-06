@@ -144,6 +144,21 @@ class stock_picking_processor(osv.osv):
                 _('No wizard found !'),
             )
 
+        if self._name == 'stock.incoming.processor':
+            line_obj = self.pool.get('stock.move.in.processor')
+            dom = context.get('selected_domain', [])
+            if dom:
+                dom = ['&', ('wizard_id', '=', ids[0])] + dom
+            else:
+                dom = [('wizard_id', '=', ids[0])]
+            lines_ids = line_obj.search(cr, uid, dom, context=context)
+            for move in line_obj.browse(cr, uid, lines_ids, context=context):
+                line_obj.write(cr, uid, [move.id], {'quantity': move.ordered_quantity}, context=context)
+            return {
+                'type': 'ir.actions.refresh_o2m',
+                'o2m_refresh': 'move_ids'
+            }
+
         for wizard in self.browse(cr, uid, ids, context=context):
             for move in wizard.move_ids:
                 self.pool.get(move._name).write(cr, uid, [move.id], {'quantity': move.ordered_quantity}, context=context)
@@ -172,6 +187,21 @@ class stock_picking_processor(osv.osv):
                 _('Error'),
                 _('No wizard found !'),
             )
+
+        if self._name == 'stock.incoming.processor':
+            line_obj = self.pool.get('stock.move.in.processor')
+            dom = context.get('selected_domain', [])
+            if dom:
+                dom = ['&', ('wizard_id', '=', ids[0])] + dom
+            else:
+                dom = [('wizard_id', '=', ids[0])]
+            lines_ids = line_obj.search(cr, uid, dom, context=context)
+            for move in line_obj.browse(cr, uid, lines_ids, context=context):
+                line_obj.write(cr, uid, [move.id], {'quantity': 0}, context=context)
+            return {
+                'type': 'ir.actions.refresh_o2m',
+                'o2m_refresh': 'move_ids'
+            }
 
         for wizard in self.browse(cr, uid, ids, context=context):
             move_obj = wizard.move_ids[0]._name
@@ -218,13 +248,17 @@ class stock_picking_processor(osv.osv):
                         'from_pack': move.pack_info_id.parcel_from,
                         'to_pack': move.pack_info_id.parcel_to,
                         'weight': move.pack_info_id.total_weight,
+                        'total_weight': move.pack_info_id.real_total_weight,
                         'volume': move.pack_info_id.total_volume,
+                        'total_volume': move.pack_info_id.real_total_volume,
                         'height': move.pack_info_id.total_height,
                         'length': move.pack_info_id.total_length,
                         'width': move.pack_info_id.total_width,
                         'packing_list': move.pack_info_id.packing_list,
+                        'ppl_name': move.pack_info_id.ppl_name,
                         'cost': move.price_unit,
                         'currency': move.currency_id.id,
+                        'pack_info_id': move.pack_info_id.id,
                     })
                 line_obj.create(cr, uid, line_data, context=context)
 
@@ -1060,6 +1094,7 @@ class stock_move_processor(osv.osv):
             'nodestroy': True,
             'target': 'new',
             'res_id': split_wiz_id,
+            'keep_open': 1,
             'context': context,
         }
 
