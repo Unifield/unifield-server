@@ -521,7 +521,7 @@
                     <newline/>
                     <group col="10" colspan="4">
                         <field name="journal_id" widget="selection" select='1'/>
-                        <field name="period_id" select='1' string="Period"/>
+                        <field name="period_id" select='1' string="Period" domain="[('state', 'not in', ['done', 'created'])]"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">
