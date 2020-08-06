@@ -132,6 +132,35 @@ class sync_client_survey_user(osv.osv):
 
     def save_answer(self, cr, uid, answer, survey_id, stat_id, context=None):
         cr.execute('update sync_client_survey_user set last_displayed=now(), last_choice=%s where user_id=%s and survey_id=%s and id=%s', (answer, uid, survey_id, stat_id))
+
+        field = {'goto': 'go_to', 'never': 'do_not_ask', 'later': 'answer_later'}.get(answer)
+        if field:
+            self.pool.get('sync_client.survey.user.detailed').create(cr, 1, {
+                'survey_id': survey_id,
+                'user_id': uid,
+                field: True,
+            }, context=context)
         return True
 
 sync_client_survey_user()
+
+class sync_client_survey_user_detailed(osv.osv):
+    _name = 'sync_client.survey.user.detailed'
+    _description = 'Detailed Stat by users'
+    _columns = {
+        'survey_id': fields.many2one('sync_client.survey', 'Survey', select=1),
+        'user_id': fields.many2one('res.users', 'User', select=1),
+        'popup_date': fields.datetime('Popup Date', select=1),
+        'go_to': fields.boolean('Go to survey'),
+        'answer_later': fields.boolean('Answer later'),
+        'do_not_ask': fields.boolean('Do not ask me again '),
+    }
+
+    _defaults = {
+        'popup_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'go_to': False,
+        'answer_later': False,
+        'do_not_ask': False,
+    }
+
+sync_client_survey_user_detailed()

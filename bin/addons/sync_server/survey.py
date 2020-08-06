@@ -53,6 +53,19 @@ class sync_server_survey(osv.osv):
         ('check_dates', 'check (start_date < end_date)', 'Date Start must be before Date End')
     ]
 
+
+    def _one_included_if_active(self, cr, uid, ids, context=None):
+        active_ids = self.search(cr, uid, [('id', 'in', ids), ('activated', '=', True)], context=context)
+        if active_ids:
+            for survey in self.browse(cr, uid, active_ids, fields_to_fetch=['included_group_ids'], context=context):
+                if not survey.included_group_ids:
+                    return False
+        return True
+
+    _constraints = {
+        (_one_included_if_active, 'Please set at least one Included Group', [])
+    }
+
     def write(self, cr, uid, ids, vals, context=None):
         vals['server_write_date'] = time.strftime('%Y-%m-%d %H:%M:%S')
         return super(sync_server_survey, self).write(cr, uid, ids, vals, context=context)
@@ -67,7 +80,10 @@ class sync_server_survey(osv.osv):
         return super(sync_server_survey, self).copy(cr, uid, id, default, context)
 
     def activate(self, cr, uid, ids, context=None):
-        for x in self.read(cr, uid, ids, ['url_en', 'url_fr'], context=context):
+        for x in self.read(cr, uid, ids, ['url_en', 'url_fr', 'included_group_ids'], context=context):
+            if not x['included_group_ids']:
+                raise osv.except_osv(_('Error'), _('Please set at least one Included Group'))
+
             for url in ['url_en', 'url_fr']:
                 try:
                     r = requests.get(x[url])
