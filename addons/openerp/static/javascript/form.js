@@ -417,22 +417,37 @@ function pager_action(src){
     return relation ? new ListView(relation).go(action) : submit_form(action ? action : 'find');
 }
 
-function buttonClicked(name, btype, model, id, sure, target, context){
+function buttonClicked(name, btype, model, id, sure, target, context, set_ids){
 
     // to be able to get selected lines ids
     s_ids = [];
-    if (jQuery('[id="order_line"]').length > 0) {
-        s_ids = ListView('order_line').getSelectedRecords();
-    } else if (jQuery('[id="move_lines"]').length > 0){
-        s_ids = ListView('move_lines').getSelectedRecords();
-    } else if (model == 'shipment' && jQuery('[id="pack_family_memory_ids"]').length > 0){
-        s_ids = ListView('pack_family_memory_ids').getSelectedRecords();
-    }  else if (model =='replenishment.inventory.review' && jQuery('[id="line_ids"]').length > 0){
+    s_dom = [];
+    if (set_ids) {
+        if (jQuery('[id="' + set_ids + '"]').length > 0) {
+            if ($('#'+set_ids+'_check_all').length) {
+                // lines can be ticked
+                s_ids = ListView(set_ids).getSelectedRecords();
+
+            } else {
+                // no tickbox on lines, get the filter
+                s_dom = openobject.dom.get(set_ids + '/_terp_domain').value;
+            }
+        }
+    }
+    else {
+        if (jQuery('[id="order_line"]').length > 0) {
+            s_ids = ListView('order_line').getSelectedRecords();
+        } else if (jQuery('[id="move_lines"]').length > 0){
+            s_ids = ListView('move_lines').getSelectedRecords();
+        } else if (model == 'shipment' && jQuery('[id="pack_family_memory_ids"]').length > 0){
+            s_ids = ListView('pack_family_memory_ids').getSelectedRecords();
+        }  else if (model =='replenishment.inventory.review' && jQuery('[id="line_ids"]').length > 0){
+            s_ids = ListView('line_ids').getSelectedRecords();
+        } else if (model =='replenishment.segment' && jQuery('[id="line_ids"]').length > 0){
+            s_ids = ListView('line_ids').getSelectedRecords();
+        } else if (model =='wizard.compare.rfq' && jQuery('[id="line_ids"]').length > 0){
         s_ids = ListView('line_ids').getSelectedRecords();
-    } else if (model =='replenishment.segment' && jQuery('[id="line_ids"]').length > 0){
-        s_ids = ListView('line_ids').getSelectedRecords();
-    } else if (model =='wizard.compare.rfq' && jQuery('[id="line_ids"]').length > 0){
-        s_ids = ListView('line_ids').getSelectedRecords();
+        }
     }
 
     if (sure && !confirm(sure.replace('%(number_selected)s',s_ids.length))) {
@@ -444,11 +459,12 @@ function buttonClicked(name, btype, model, id, sure, target, context){
         '_terp_button/btype': btype,
         '_terp_button/model': model,
         '_terp_button/id': id,
-        '_terp_button/selected_ids': s_ids
+        '_terp_button/selected_ids': s_ids,
+        '_terp_button/selected_domain': s_dom,
     };
 
     // if works as expected can be extended to other buttons
-    test_double = name == 'import_file' && btype == 'object' && model == 'initial.stock.inventory'
+    test_double = (name == 'import_file' && btype == 'object' && model == 'initial.stock.inventory') || ((name == 'copy_all' || name == 'uncopy_all')  && model == 'stock.incoming.processor')
     if (!context || context == "{}") {
         var act = get_form_action(btype == 'cancel' ? 'cancel' : 'save', params);
         submit_form(act, null, target, test_double);

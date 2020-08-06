@@ -270,6 +270,9 @@ def execute_report(name, **data):
 def act_window_close(action=False, *args, **b):
     return close_popup(o2m_refresh=action.get('o2m_refresh'))
 
+def refresh_popupo2m(action=False, *args, **b):
+    return close_popup(o2m_refresh=action.get('o2m_refresh'), frompopup=True)
+
 def refresh_o2m(action=False, *a, **b):
     cherrypy.response.headers['Content-Type'] = 'text/javascript'
     import json
@@ -408,6 +411,7 @@ def act_url(action, data):
                               ))
 
 ACTIONS_BY_TYPE = {
+    'ir.actions.refresh_popupo2m': refresh_popupo2m,
     'ir.actions.refresh_o2m': refresh_o2m,
     'ir.actions.act_window_close': act_window_close,
     'ir.actions.act_window': act_window,
@@ -590,7 +594,7 @@ def execute_by_keyword(keyword, adds=None, **data):
 
 
 @tools.expose(template="/openerp/controllers/templates/closepopup.mako")
-def close_popup(reload=True, o2m_refresh=False):
+def close_popup(reload=True, o2m_refresh=False, frompopup=False):
     """ Closes an opened dialog box or popup.
 
     :param reload: whether the background view should be reloaded when closing the popup
@@ -603,7 +607,7 @@ def close_popup(reload=True, o2m_refresh=False):
     if getattr(cherrypy.request, 'params', []):
         if getattr(cherrypy.request.params, 'context', {}):
             active_id = cherrypy.request.params.context.get('active_id')
-    return {'reload': reload, 'active_id': active_id, 'o2m_refresh': o2m_refresh}
+    return {'reload': reload, 'active_id': active_id, 'o2m_refresh': o2m_refresh, 'frompopup': frompopup}
 
 @tools.expose(template="/openerp/controllers/templates/report.mako")
 def report_link(report_name, **kw):

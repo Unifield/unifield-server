@@ -12,7 +12,8 @@
     <script type="text/javascript" src="/openobject/static/javascript/openobject/openobject.dom.js"></script>
     <script type="text/javascript" src="/openobject/static/javascript/openobject/openobject.http.js"></script>
     <script type="text/javascript" src="/openobject/static/javascript/openobject/openobject.tools.js"></script>
-    
+     <script type="text/javascript" src="/openerp/static/javascript/openerp/openerp.ui.textarea.js"></script>
+
     <script type="text/javascript">    
         jQuery(document).ready(function(){
             if(!window.opener && window.top == window) {
@@ -21,10 +22,20 @@
             }
             var topWindow;
             if(window.top != window) {
+                % if frompopup:
+                if (jQuery(window).attr('frameElement')) {
+                    new window.top.frames[0].ListView('${o2m_refresh}').reload()
+                    setTimeout(function () {
+                      window.frameElement.close();
+                    });
+                   return;
+                }
+                % else:
                 topWindow = window.top;
                 setTimeout(function () {
                     topWindow.closeAction();
                 });
+                % endif
             } else {
                 topWindow = window.opener;
                 setTimeout(close);
