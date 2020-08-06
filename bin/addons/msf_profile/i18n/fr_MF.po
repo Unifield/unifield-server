@@ -13480,10 +13480,10 @@ msgstr "Prix d'Origine"
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:98
 #, python-format
-msgid "You should have exactly 8 columns in this order:\n"
-"Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Date, Consumed Quantity, Remark"
-msgstr "You should have exactly 8 columns in this order:\n"
-"Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Date, Consumed Quantity, Remark"
+msgid "You should have exactly 9 columns in this order:\n"
+"Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number, Asset, Expiry Date, Consumed Quantity, Remark"
+msgstr "Vous devriez avoir exactement 9 colonnes dans cet ordre:\n"
+"Code Produit*, Description du Produit*, UdM du Produit, Qté Indicative du Stock, Numéro de Lot, Actif, Date d'Expiration, Quantité Consommée, Remarque"
 
 #. module: sales_followup
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:182
@@ -34963,12 +34963,13 @@ msgstr "Utiliser un modèle"
 msgid "Earmarked - Actuals"
 msgstr "Earmarked - Actuals"
 
-#. modules: msf_doc_import, msf_custom_settings, consumption_calculation
-#: sql_constraint:real.average.consumption.line:0
-#: sql_constraint:real.average.consumption.line:0
-#: sql_constraint:real.average.consumption.line:0
-msgid "The couple product, batch number has to be unique"
-msgstr "Le couple produit, numéro de lot doit être unique"
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/consumption_calculation.py:905
+#, python-format
+msgid "Each product or couple product plus batch number has to be unique:\n"
+"%s"
+msgstr "Chaque produit ou couple produit plus numéro de lot doit être unique:\n"
+"%s"
 
 #. module: tender_flow
 #: field:procurement.order,rfq_line_id:0
@@ -37828,7 +37829,7 @@ msgstr "Exporter des lignes Consommations Moyennes Réelles (CMR) "
 #: code:addons/consumption_calculation/consumption_calculation.py:799
 #, python-format
 msgid "Line %s of the imported file: Qty Consumed (%s) can't be greater than the Indicative Stock (%s)"
-msgstr "Ligne %s du fichier: la qté consommée (%s) ne peut être supérieure à la qté indicative du stock (%s)"
+msgstr "Ligne %s du fichier: la qté consommée (%s) ne peut être supérieure à la Qté Indicative du Stock (%s)"
 
 #. module: base
 #: selection:ir.translation,lang:0
@@ -63131,14 +63132,6 @@ msgstr "EST5EDT"
 msgid "If so, claim reference :"
 msgstr "Si oui, référence de la réclamation :"
 
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:169
-#, python-format
-msgid "Line %s of the imported file: the Expiry Date does not match with any batch number of the product.\n"
-""
-msgstr "Ligne %s du fichier importé: la Date d'Expiration ne correspond à aucun numéro de lot du produit.\n"
-""
-
 #. module: analytic_distribution
 #: field:account.destination.link,destination_id:0
 msgid "Analytical Destination Account"
@@ -67443,9 +67436,9 @@ msgstr "America/Montserrat"
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:156
 #, python-format
-msgid "Line %s of the imported file: Batch Number required.\n"
+msgid "Line %s of the imported file: Batch Number and Expiry Date required.\n"
 ""
-msgstr "Line %s of the imported file: Batch Number required.\n"
+msgstr "Ligne %s du fichier importé: le Numéro de Lot et la Date d'Expiration sont obligatoires.\n"
 ""
 
 #. module: stock
@@ -75932,12 +75925,6 @@ msgstr "Livre les lieux disponibles comme lieu de destination d'un envoi entrant
 msgid "Load Official Translation"
 msgstr "Charger une traduction officielle"
 
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:175
-#, python-format
-msgid "Line %s of the imported file: Expiry Date has been changed to %s which is the system BN date (was wrong in the file)"
-msgstr "Line %s of the imported file: Expiry Date has been changed to %s which is the system BN date (was wrong in the file)"
-
 #. module: sale
 #: help:res.company,security_lead:0
 msgid "This is the days added to what you promise to customers for security purpose"
@@ -77155,14 +77142,14 @@ msgid "\n"
 "\n"
 "        The file should be in XML 2003 format.\n"
 "        The columns should be in this order :\n"
-"           Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark\n"
+"           Product Code ; Product Description ; UoM ; Indicative Stock (ignored) ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark\n"
 "        "
 msgstr "\n"
 "        IMPORTANT : La première ligne sera ignorée par la système.\n"
 "        \n"
 "        Les fichier doit être au format XML 2003.\n"
 "        Les colonnes doivent être dans cet ordre :\n"
-"           Code Produit ;  Description Produit ; UdM du Produit ; Numéro de Lot ;  Date d'Expiration (DD/MM/YYYY) (ignorée si un lot est indiqué);  Actif ; Qté Consommée ; Remarque\n"
+"           Code Produit ;  Description Produit ; UdM du Produit ; Qté Indicative en Stock (ignorée) ; Numéro de Lot ;  Date d'Expiration (DD/MM/YYYY) (ignorée si un lot est indiqué);  Actif ; Qté Consommée ; Remarque\n"
 "        "
 
 #. module: msf_outgoing
@@ -86242,9 +86229,9 @@ msgstr "Vérification Cachée des Expirés "
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:160
 #, python-format
-msgid "Line %s of the imported file: Batch Number [%s] not found.\n"
+msgid "Line %s of the imported file: Batch Number [%s] with the Expiry Date [%s] not found.\n"
 ""
-msgstr "Ligne %s du fichier importé: Lot [%s] non trouvé.\n"
+msgstr "Ligne %s du fichier importé: Lot [%s] avec la Date d'Expiration [%s] non trouvé.\n"
 ""
 
 #. module: account
@@ -88235,12 +88222,6 @@ msgstr "No revision has been applied yet."
 #: selection:base.language.export,only_translated_terms:0
 msgid "Only translated"
 msgstr "Only translated"
-
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:235
-#, python-format
-msgid "The line %s of the Excel file was ignored. The couple product (%s), batch number (%s) has to be unique."
-msgstr "The line %s of the Excel file was ignored. The couple product (%s), batch number (%s) has to be unique."
 
 #. module: account
 #: model:process.transition,note:account.process_transition_supplieranalyticcost0
@@ -110489,3 +110470,10 @@ msgid "Warning the following product lines have already been processed in linked
 "%s"
 msgstr "Attention les produits suivants ont déjà été traités dans les documents d'expédition OUT/Picking et ne peuvent plus être taités ici. Veuillez supprimer ces lignes avant de taiter le mouvement\n"
 "%s"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/consumption_calculation.py:498
+#: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:72
+#, python-format
+msgid "Indicative Stock"
+msgstr "Qté Indicative en Stock"
