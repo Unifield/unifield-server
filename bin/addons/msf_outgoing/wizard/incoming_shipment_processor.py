@@ -129,7 +129,7 @@ class stock_incoming_processor(osv.osv):
             res[wiz.id] = False
             if wiz.picking_id and wiz.linked_to_out:
                 if not self.pool.get('stock.move.in.processor').search_exist(cr, uid, [('wizard_id', '=', wiz.id),('pack_info_id', '=', False)], context=context):
-                    res[wiz.id] = True
+                    res[wiz.id] = wiz.linked_to_out
 
         return res
 
@@ -194,7 +194,7 @@ class stock_incoming_processor(osv.osv):
         ),
         'draft': fields.boolean('Draft'),
         'already_processed': fields.boolean('Already processed'),
-        'linked_to_out': fields.boolean('Is this IN linked to a single Pick (same FO) ?'),
+        'linked_to_out': fields.char('If the IN is linked to a single Pick (same FO) give the type of delivery doc (standard / picking)', size=16),
         'register_a_claim': fields.boolean(
             string='Register a Claim to Supplier',
         ),
@@ -218,7 +218,7 @@ class stock_incoming_processor(osv.osv):
         'claim_description': fields.text(
             string='Claim Description',
         ),
-        'display_process_to_ship_button': fields.function(_get_display_process_to_ship_button, method=True, type='boolean', string='Process to ship'),
+        'display_process_to_ship_button': fields.function(_get_display_process_to_ship_button, method=True, type='char', string='Process to ship'),
         'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
         'fields_as_ro': fields.boolean('Set Cost/Split .. as RO', internal=True),
         'sequence_issue': fields.boolean('Issue with To ship'),
@@ -250,18 +250,33 @@ class stock_incoming_processor(osv.osv):
         picking = picking_obj.browse(cr, uid, vals.get('picking_id'), context=context)
 
         cr.execute("""
-            select so.id from
+            select so.id, array_agg(distinct(out.name)), count(distinct(so.procurement_request)) from
             stock_move m
             left join stock_picking p on m.picking_id = p.id
             left join purchase_order_line pol on m.purchase_line_id = pol.id
             left join sale_order_line sol on sol.id = pol.linked_sol_id
             left join sale_order so on so.id = sol.order_id
-            left join stock_picking out on out.sale_id = so.id
-            where m.picking_id = %s and so.procurement_request = 'f' and coalesce(p.claim, 'f') = 'f' and out.type = 'out' and out.subtype = 'picking' and out.state = 'draft'
+            left join stock_picking out on out.sale_id = so.id and out.type = 'out' and (out.subtype = 'picking' and out.state='draft' or out.subtype = 'standard' and out.state in ('draft', 'confirmed', 'assigned'))
+            where
+                m.picking_id = %s and
+                coalesce(p.claim, 'f') = 'f'
             group by so.id
             """, (vals.get('picking_id'), ))
         if cr.rowcount == 1:
-            vals['linked_to_out'] = True
+            fetch_data = cr.fetchone()
+            if fetch_data[2] > 1:
+                # IN mixed with FO/IR
+                vals['linked_to_out'] = False
+
+            out_names = fetch_data[1]
+            out_type = False
+            for out_name in out_names:
+                if out_name and out_name.startswith('OUT/'):
+                    out_type = out_name
+                    break
+            if not out_type:
+                out_type = out_names and len(out_names) == 1 and out_names[0] and out_names[0].startswith('PICK/') and 'picking' or False
+            vals['linked_to_out'] = out_type
         else:
             vals['linked_to_out'] = False
 
@@ -626,6 +641,14 @@ class stock_incoming_processor(osv.osv):
 
 
     def launch_simulation_pack(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('auto_import_ok'):
+            out = self.read(cr, uid, ids[0], ['linked_to_out'], context=context)
+            if out['linked_to_out'] != 'picking':
+                raise osv.except_osv(_('Warning'), _('This type of import cannot be used because related PICK document has been converted to %s') % out['linked_to_out'])
+
         data = self.launch_simulation(cr, uid, ids, context)
         self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, data['res_id'], {'with_pack': True})
 
@@ -731,6 +754,10 @@ class stock_incoming_processor(osv.osv):
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
+
+        out = self.read(cr, uid, ids[0], ['linked_to_out'], context=context)
+        if out['linked_to_out'] != 'picking':
+            raise osv.except_osv(_('Warning'), _('This type of import cannot be used because related PICK document has been converted to %s') % out['linked_to_out'])
 
         rounding_issues, sequence_ok = self.check_before_creating_pack_lines(cr, uid, ids, context=context)
         cr.execute('''
