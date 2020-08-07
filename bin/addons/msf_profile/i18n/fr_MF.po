@@ -110521,3 +110521,23 @@ msgstr "Qté Indicative en Stock"
 #, python-format
 msgid "You cannot duplicate a Recurring Plan with a Done model."
 msgstr "Vous ne pouvez pas dupliquer un Plan d'Ecritures Périodiques utilisant un modèle Terminé."
+
+#. module: analytic_override
+#: field:account.analytic.account,top_cc_instance_ids:0
+msgid "Instances having the CC as Top CC"
+msgstr "Instances ayant le CC comme CC Principal"
+
+#. module: analytic_override
+#: field:account.analytic.account,is_target_cc_instance_ids:0
+msgid "Instances having the CC as Target CC"
+msgstr "Instances ayant le CC comme CC Cible"
+
+#. module: analytic_override
+#: field:account.analytic.account,po_fo_cc_instance_ids:0
+msgid "Instances having the CC as CC picked for PO/FO ref"
+msgstr "Instances ayant le CC comme CC sélectionné pour PO/FO"
+
+#. module: analytic_override
+#: field:account.analytic.account,cc_missions:0
+msgid "Missions where the CC is added to"
+msgstr "Missions dans lesquelles le CC est ajouté"
