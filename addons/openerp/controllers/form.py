@@ -735,7 +735,7 @@ class Form(SecuredController):
         model = params.model
 
         proxy = rpc.RPCProxy(model)
-        new_id = proxy.copy(id, {}, ctx)
+        new_id = proxy.copy_web(id, {}, ctx)
 
         if new_id:
             params.id = new_id
