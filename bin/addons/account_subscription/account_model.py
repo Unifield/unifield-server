@@ -354,7 +354,8 @@ class account_model(osv.osv):
         """
         for model in self.read(cr, uid, ids, ['name']):
             if self.search_exist(cr, uid, [('name', '=', model['name']), ('id', '!=', model['id'])]):
-                return False
+                raise osv.except_osv(_('Error'),
+                                     _('It is not possible to have several Recurring Models with the same name: %s.') % model['name'])
         return True
 
     _constraints = [
