@@ -53,6 +53,66 @@ class patch_scripts(osv.osv):
     }
 
     # UF18.0
+    def us_5216_update_recurring_object_state(self, cr, uid, *a, **b):
+        """
+        Updates the state of the Recurring Plans and Recurring Models with the new rules set in US-5216.
+        """
+        if not self.pool.get('sync.server.update'):
+            rec_plan_obj = self.pool.get('account.subscription')
+            rec_model_obj = self.pool.get('account.model')
+            # Recurring Plans
+            rec_plans = {
+                'draft': [],
+                'running': [],
+                'done': [],
+            }
+            rec_plan_ids = rec_plan_obj.search(cr, uid, [], order='NO_ORDER')
+            for rec_plan in rec_plan_obj.browse(cr, uid, rec_plan_ids, fields_to_fetch=['lines_id']):
+                if not rec_plan.lines_id:
+                    rec_plans['draft'].append(rec_plan.id)
+                else:
+                    running = False
+                    for sub_line in rec_plan.lines_id:
+                        if not sub_line.move_id or sub_line.move_id.state != 'posted':
+                            running = True
+                            break
+                    if running:
+                        rec_plans['running'].append(rec_plan.id)
+                    else:
+                        rec_plans['done'].append(rec_plan.id)
+            for plan_state in rec_plans:
+                if rec_plans[plan_state]:
+                    update_rec_plans = """
+                                       UPDATE account_subscription
+                                       SET state = %s
+                                       WHERE id IN %s;
+                                       """
+                    cr.execute(update_rec_plans, (plan_state, tuple(rec_plans[plan_state])))
+            # Recurring Models
+            rec_models = {
+                'draft': [],
+                'running': [],
+                'done': [],
+            }
+            rec_model_ids = rec_model_obj.search(cr, uid, [], order='NO_ORDER')
+            for model_id in rec_model_ids:
+                if rec_plan_obj.search_exist(cr, uid, [('model_id', '=', model_id), ('state', '=', 'done')]):
+                    state = 'done'
+                elif rec_plan_obj.search_exist(cr, uid, [('model_id', '=', model_id), ('state', '=', 'running')]):
+                    state = 'running'
+                else:
+                    state = 'draft'
+                rec_models[state].append(model_id)
+            for model_state in rec_models:
+                if rec_models[model_state]:
+                    update_rec_models = """
+                                        UPDATE account_model
+                                        SET state = %s
+                                        WHERE id IN %s;
+                                        """
+                    cr.execute(update_rec_models, (model_state, tuple(rec_models[model_state])))
+        return True
+
     def us_7412_set_fy_closure_settings(self, cr, uid, *a, **b):
         """
         Sets the Fiscal Year Closure options depending on the OC.

@@ -8429,7 +8429,7 @@ msgstr "Sous-type de Picking"
 msgid "Either there are no moves linked to the picking or Accounting Journals are misconfigured!"
 msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de mouvement connexe à ce prélèvement !"
 
-#. modules: tender_flow, financing_contract, msf_tools, account_override, purchase_allocation_report, register_accounting, mission_stock, msf_accrual, finance, sync_client, return_claim, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, stock_forecast, analytic, stock_override, msf_doc_import, analytic_distribution, msf_order_date, msf_homere_interface, consumption_calculation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_supply_doc_export, msf_budget, account_corrections, account, msf_outgoing, documents_done, sale, sales_followup, procurement, sourcing, purchase, msf_audittrail, stock, product, procurement_cycle
+#. modules: tender_flow, financing_contract, msf_tools, account_override, purchase_allocation_report, register_accounting, mission_stock, msf_accrual, finance, sync_client, return_claim, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, stock_forecast, analytic, stock_override, msf_doc_import, analytic_distribution, msf_order_date, msf_homere_interface, consumption_calculation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_supply_doc_export, msf_budget, account_corrections, account, msf_outgoing, documents_done, sale, sales_followup, procurement, sourcing, purchase, msf_audittrail, stock, product, procurement_cycle, account_subscription
 #: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:106
 #: selection:msf.instance.cloud,state:0
 #: field:ppl.processor,draft_step2:0
@@ -8602,6 +8602,8 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:replenishment.segment,state:0
 #: view:product.stock_out:0
 #: selection:product.stock_out,state:0
+#: selection:account.model,state:0
+#: view:account.model:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -10050,11 +10052,6 @@ msgstr "Pas de rapport trouvé  sur l'historique des consommations !"
 #: report:financing.contract:0
 msgid "Funding pools:"
 msgstr "Funding pools:"
-
-#. module: account
-#: view:account.subscription:0
-msgid "Entry Subscription"
-msgstr "Ecriture de souscription"
 
 #. modules: account, account_period_closing_level
 #: model:ir.actions.act_window,help:account.action_account_period_tree
@@ -13607,9 +13604,10 @@ msgstr "Gestion de Projets"
 msgid "Invoice Control"
 msgstr "Contrôle Facture"
 
-#. module: account
+#. modules: account, account_subscription
 #: model:ir.actions.act_window,name:account.action_model_form
 #: model:ir.ui.menu,name:account.menu_action_model_form
+#: view:account.model:0
 msgid "Recurring Models"
 msgstr "Modèles périodiques"
 
@@ -20770,12 +20768,11 @@ msgstr "Is child of CoA"
 msgid "Etc/GMT-11"
 msgstr "Etc/GMT-11"
 
-#. modules: sales_followup, msf_tools, account
+#. modules: sales_followup, msf_tools
 #: selection:ir.followup.location.wizard,state:0
 #: selection:job.in_progress,state:0
-#: view:account.subscription:0
 msgid "Done"
-msgstr "Cloturé"
+msgstr "Clôturé"
 
 #. module: delivery_mechanism
 #: code:addons/delivery_mechanism/delivery_mechanism.py:360
@@ -23920,7 +23917,7 @@ msgstr "De brouillon à demande de Devis."
 #. module: account
 #: field:account.subscription,period_nbr:0
 msgid "Repeat"
-msgstr "Repeat"
+msgstr "Périodicité"
 
 #. module: sourcing
 #: code:addons/sourcing/sale_order_line.py:905
@@ -30358,8 +30355,8 @@ msgstr "Analytic lines linked to the given register line(s). Correction(s) inclu
 
 #. module: account
 #: view:account.subscription.generate:0
-msgid "Automatically generate entries based on what has been entered in the  system before a specific date."
-msgstr "Génère automatiquement des écritures en se basant sur ce qui a été enregistré dans le système avant une date spécifique"
+msgid "Automatically generate entries based on what has been entered in the system until a specific date."
+msgstr "Génère automatiquement des écritures en se basant sur ce qui a été enregistré dans le système jusqu'à une date spécifique."
 
 #. module: base
 #: model:res.currency,currency_name:base.DZD
@@ -33530,11 +33527,6 @@ msgstr "Vous ne pouvez pas clôturer une période dont des lignes d'écriture ne
 #: help:account.bank.statement,account_id:0
 msgid "used in statement reconciliation domain, but shouldn't be used elswhere."
 msgstr "utilisé dans le domaine du lettrage de relevés, mais ne devrait pas être utilisé ailleurs"
-
-#. module: account
-#: view:account.subscription:0
-msgid "Draft Subscription"
-msgstr "Draft Subscription"
 
 #. module: base
 #: view:partner.wizard.ean.check:0
@@ -38117,11 +38109,6 @@ msgstr "La période '%s' n'est pas ouverte ! Pas d'écriture comptable créée."
 msgid "Reservation Destination"
 msgstr "Destination de la Réservation"
 
-#. module: account
-#: view:account.subscription:0
-msgid "Remove Lines"
-msgstr "Supprimer des lignes"
-
 #. module: base
 #: help:ir.cron,function:0
 msgid "Name of the method to be called on the object when this scheduler is executed."
@@ -38290,7 +38277,7 @@ msgstr "(vacances)"
 #: code:addons/account/wizard/account_subscription_generate.py:52
 #, python-format
 msgid "The Recurring Model %s must have at least two lines."
-msgstr "Le Modèle Récurrent %s doit au moins avoir deux lignes."
+msgstr "Le Modèle Périodique %s doit avoir au moins deux lignes."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/msf_import_export.py:103
@@ -38566,7 +38553,7 @@ msgstr "Est-ce une zone optionnelle?"
 msgid "Is inactive for destination given in context"
 msgstr "Is inactive for destination given in context"
 
-#. modules: sales_followup, account, documents_done, consumption_calculation, sale, specific_rules, transport_mgmt, account_override, purchase_allocation_report, product_list, tender_flow, msf_doc_import, stock, product_attributes, purchase_override, purchase
+#. modules: sales_followup, account, documents_done, consumption_calculation, sale, specific_rules, transport_mgmt, account_override, purchase_allocation_report, product_list, tender_flow, msf_doc_import, stock, product_attributes, purchase_override, purchase, account_subscription
 #: field:account.move.line,date_created:0
 #: field:account.move.reconcile,create_date:0
 #: report:allocation.invoices.report:0
@@ -38593,6 +38580,7 @@ msgstr "Is inactive for destination given in context"
 #: field:internal.request.import,in_creation_date:0
 #: field:purchase.order.line,create_date:0
 #: field:internal.request.import,in_creation_date:0
+#: field:account.model,create_date:0
 #, python-format
 msgid "Creation date"
 msgstr "Date de création"
@@ -39197,7 +39185,7 @@ msgstr "Transbordement - Valeur."
 msgid "RfQs"
 msgstr "DdD"
 
-#. modules: account, sync_client, product_asset, base, msf_audittrail, board, object_query, msf_profile, msf_field_access_rights, msf_button_access_rights,msf_tools
+#. modules: account, sync_client, product_asset, base, msf_audittrail, board, object_query, msf_profile, msf_field_access_rights, msf_button_access_rights, msf_tools, account_subscription
 #: field:account.model.line,model_id:0
 #: view:account.subscription:0
 #: field:account.subscription,model_id:0
@@ -39226,6 +39214,7 @@ msgstr "DdD"
 #: field:automated.import.function,model_id:0
 #: field:sync.client.log_sale_purchase,model:0
 #: field:sync.client.log_sale_purchase,model_id:0
+#: view:account.model:0
 msgid "Model"
 msgstr "Modèle"
 
@@ -43197,6 +43186,7 @@ msgstr "REGISTRE DE CHÈQUE"
 #. modules: account, finance
 #: view:account.move:0
 #: view:cash.request:0
+#: view:account.model.line:0
 msgid "Total Debit"
 msgstr "Total Débit"
 
@@ -44382,8 +44372,8 @@ msgstr "Validé"
 
 #. module: account
 #: model:ir.actions.act_window,help:account.action_subscription_form
-msgid "A recurring entry is a miscellaneous entry that occurs on a recurrent basis from a specific date, i.e. corresponding to the signature of a contract or an agreement with a customer or a supplier. With Define Recurring Entries, you can create such entries to automate the postings in the system."
-msgstr "Une écriture périodique est une écriture qui est configurée par le biais de la fonctionnalité Définir Ecritures Périodiques. Ceci vous permet d'enregistrer une écriture à partir d'une date spécifique. Cette écriture sera reproduite automatiquement dans votre comptabilité et à une fréquence définie. Vous pouvez utiliser cette fonctionnalité par exemple pour étaler la charge d'un loyer sur plusieurs mensualités. "
+msgid "A recurring entry is a miscellaneous entry that occurs on a recurrent basis from a specific date, i.e. corresponding to the signature of a contract or an agreement with a customer or a supplier. With Recurring Plan, you can create such entries to automate the postings in the system."
+msgstr "Une écriture périodique est une écriture qui est configurée par le biais de la fonctionnalité Plan d'Ecritures Périodiques. Ceci vous permet d'enregistrer une écriture à partir d'une date spécifique. Cette écriture sera reproduite automatiquement dans votre comptabilité et à une fréquence définie. Vous pouvez utiliser cette fonctionnalité par exemple pour étaler la charge d'un loyer sur plusieurs mensualités."
 
 #. modules: account, finance
 #: view:account.bank.statement:0
@@ -50443,11 +50433,6 @@ msgstr "Importer les Lignes"
 #: field:audittrail.log.sequence,sequence:0
 msgid "Logs Sequence"
 msgstr "Journaux de bord - Sequence"
-
-#. module: account
-#: view:account.subscription:0
-msgid "Running Subscription"
-msgstr "Running Subscription"
 
 #. modules: base,  msf_currency_revaluation
 #: code:addons/msf_currency_revaluation/res_currency.py:40
@@ -62592,8 +62577,8 @@ msgstr "Vous ne pouvez pas créer un numéro de lot pour un produit dont le num�
 #. module: account_subscription
 #: model:ir.actions.act_window,name:account_subscription.act_account_subscription_to_account_move_line_open
 #: view:account.move.line:0
-msgid "Recurring Entries To Validate"
-msgstr "Entrées récurrentes à valider"
+msgid "Recurring Entries To Post"
+msgstr "Lignes Périodiques à Poster"
 
 #. module: product
 #: view:product.product:0
@@ -62746,8 +62731,8 @@ msgstr "Nom de la Vue"
 
 #. module: account
 #: view:account.subscription.generate:0
-msgid "Generate Entries before:"
-msgstr "Générer les Ecritures avant :"
+msgid "Generate Entries until:"
+msgstr "Générer les Ecritures jusqu'au :"
 
 #. modules: account, msf_instance
 #: field:account.invoice.refund,journal_id:0
@@ -65434,10 +65419,9 @@ msgstr "Devise de la commande non trouvée !"
 msgid "Supplier catalogue"
 msgstr "Catalogue du fournisseur"
 
-#. module: account_subscription
-#: code:addons/account_subscription/account_subscription.py:41
-#: code:addons/account_subscription/account_subscription.py:50
-#, python-format
+#. modules: account, account_subscription
+#: constraint:account.subscription:0
+#: constraint:account.subscription:0
 msgid "The value in the field \"Repeat\" must be greater than 0!"
 msgstr "La valeur dans le champ \"Périodicité\" doit être supérieure à 0 !"
 
@@ -66550,6 +66534,7 @@ msgstr "UdM attendue en réception"
 #. modules: account, finance
 #: view:account.move:0
 #: view:cash.request:0
+#: view:account.model.line:0
 msgid "Total Credit"
 msgstr "Total Crédit"
 
@@ -74103,14 +74088,8 @@ msgstr "Complete"
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:236
 #, python-format
-msgid "Recurring entries included in the Period \"%s\" or before haven't been created. Please create them before closing the period."
-msgstr "Des Ecritures périodiques incluses dans la Période \"%s\" ou avant n'ont pas été créées. Veuillez les créer avant de clôturer la période."
-
-#. module: account_period_closing_level
-#: code:addons/account_period_closing_level/account_period.py:231
-#, python-format
-msgid "Subscription Lines included in the Period \"%s\" or before haven't been generated. Please generate them and create the related recurring entries before closing the period."
-msgstr "Des Lignes d'Abonnement incluses dans la Période \"%s\" ou avant n'ont pas été générées. Veuillez les générer et créer les écritures périodiques associées avant de clôturer la période."
+msgid "Recurring entries included in the Period \"%s\" or before haven't been created. Please generate them before closing the period."
+msgstr "Des Ecritures périodiques incluses dans la Période \"%s\" ou avant n'ont pas été créées. Veuillez les générer avant de clôturer la période."
 
 #. module: msf_field_access_rights
 #: view:msf_field_access_rights.field_access_rule:0
@@ -74919,9 +74898,11 @@ msgid "Line %s in your Excel file: %s: %s\n"
 msgstr "Line %s in your Excel file: %s: %s\n"
 ""
 
-#. module: account
+#. modules: account, account_subscription
 #: view:account.subscription:0
 #: selection:account.subscription,state:0
+#: selection:account.model,state:0
+#: view:account.model:0
 msgid "Running"
 msgstr "En cours"
 
@@ -76400,7 +76381,7 @@ msgstr "Ou téléchargez le modèle: "
 #. module: account
 #: help:account.subscription,period_nbr:0
 msgid "This field will determine how often entries will be generated: if the period type is 'month' and the repeat '2' then entries will be generated every 2 months"
-msgstr "This field will determine how often entries will be generated: if the period type is 'month' and the repeat '2' then entries will be generated every 2 months"
+msgstr "Ce champ déterminera la fréquence à laquelle les écritures seront générées : si le type de période est 'mois' et la périodicité est '2', alors les écritures seront générées tous les 2 mois."
 
 #. module: sync_client
 #: selection:sync.client.log_sale_purchase,action_type:0
@@ -81497,7 +81478,7 @@ msgstr "Adresse Professionnelle"
 msgid "Confirm the selected invoices"
 msgstr "Confirmer les factures sélectionnées"
 
-#. modules: purchase, res_currency_tables,tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, vertical_integration, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement, procurement_cycle
+#. modules: purchase, res_currency_tables,tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, vertical_integration, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement, procurement_cycle, account_subscription
 #: view:account.bank.statement:0
 #: field:account.bank.statement,state:0
 #: field:account.entries.report,move_state:0
@@ -81709,6 +81690,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:account.invoice.import,state:0
 #: report:addons/procurement_cycle/report/product_stock_out.mako:436
 #: field:product.stock_out,state:0
+#: field:account.model,state:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -82749,10 +82731,9 @@ msgstr "Les écritures de Paiement sont la deuxième partie du lettrage."
 msgid "Select a supplier"
 msgstr "Sélectionner un fournisseur"
 
-#. modules: delivery_mechanism, msf_budget, account, msf_outgoing, msf_homere_interface, sync_client, register_accounting, specific_rules, sale, sales_followup, base, stock, tender_flow, msf_tools, return_claim, msf_doc_import, analytic_distribution, finance, product
+#. modules: delivery_mechanism, msf_budget, account, msf_outgoing, msf_homere_interface, sync_client, register_accounting, specific_rules, sale, sales_followup, base, stock, tender_flow, msf_tools, return_claim, msf_doc_import, analytic_distribution, finance, product, account_subscription
 #: selection:account.invoice.report,state:0
 #: selection:account.journal.period,state:0
-#: selection:account.subscription,state:0
 #: selection:report.invoice.created,state:0
 #: view:account.commitment:0
 #: selection:account.commitment,state:0
@@ -82817,6 +82798,10 @@ msgstr "Sélectionner un fournisseur"
 #: selection:wizard.import.product.line,state:0
 #: selection:product.mass.update,state:0
 #: selection:account.invoice.import,state:0
+#: view:account.subscription:0
+#: view:account.model:0
+#: selection:account.model,state:0
+#: selection:account.subscription,state:0
 #, python-format
 msgid "Done"
 msgstr "Terminé"
@@ -85056,7 +85041,7 @@ msgstr "\n"
 #: code:addons/account_subscription/account_model.py:306
 #, python-format
 msgid "Please define a valid analytic distribution for the recurring model '%s'!"
-msgstr "Please define a valid analytic distribution for the recurring model '%s'!"
+msgstr "Veuillez définir une distribution analytique valide pour le modèle périodique '%s' !"
 
 #. module: sale
 #: model:ir.actions.act_window,name:sale.action_sale_donation_stock_moves
@@ -85127,11 +85112,6 @@ msgstr "Financing Contract List - pdf"
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:170
 msgid "Qty Balance"
 msgstr "Bilan des Qtés"
-
-#. module: account
-#: model:ir.actions.act_window,name:account.action_subscription_form
-msgid "Recurring Lines"
-msgstr "Lignes périodiques"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:54
@@ -93346,7 +93326,7 @@ msgstr "Comptabilité Anglo-Saxonne"
 msgid "Additional Information"
 msgstr "Information Complémentaire"
 
-#. modules: account, register_accounting, account_mcdb, msf_homere_interface, msf_audittrail, account_corrections
+#. modules: account, register_accounting, account_mcdb, msf_homere_interface, msf_audittrail, account_corrections, account_subscription
 #: report:combined.journals.report.pdf:0
 #: report:addons/account_mcdb/report/combined_journals_report.mako:226
 #: field:hr.payroll.msf,partner_type:0
@@ -93364,6 +93344,7 @@ msgstr "Information Complémentaire"
 #: selection:account.journal.column,field:0
 #: field:account.bank.statement.line,partner_type2:0
 #: report:addons/register_accounting/report/fully_report_xls.mako:563
+#: view:account.move.line:0
 msgid "Third Parties"
 msgstr "Tiers"
 
@@ -94266,8 +94247,15 @@ msgstr "wizard.register.import.errors"
 
 #. module: account
 #: model:ir.ui.menu,name:account.menu_action_subscription_form
-msgid "Define Recurring Entries"
-msgstr "Définir des Ecritures Périodiques"
+#: model:ir.actions.act_window,name:account.action_subscription_form
+#: view:account.subscription:0
+msgid "Recurring Plan"
+msgstr "Plan d'Ecritures Périodiques"
+
+#. module: account_subscription
+#: field:account.model,recurring_plan_ids:0
+msgid "Recurring Plans"
+msgstr "Plans d'Ecritures Périodiques"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:628
@@ -110336,6 +110324,56 @@ msgstr "Ligne %s. Les comptes de donation ne sont pas compatibles avec le type d
 msgid "IN-line %s Wrong BN/ED attributes"
 msgstr "Ligne du IN %s: Mauvais attributs NL/DE"
 
+#. module: account
+#: code:addons/account/account.py:2475
+#, python-format
+msgid "You cannot delete a Recurring Plan if Subscription lines have already been computed."
+msgstr "Vous ne pouvez pas supprimer un Plan d'Ecritures Périodiques si les lignes d'Abonnement ont déjà été calculées."
+
+#. module: account
+#: field:account.subscription,frozen_model:0
+msgid "Frozen model"
+msgstr "Modèle figé"
+
+#. module: account_subscription
+#: code:addons/account_subscription/account_model.py:303
+#, python-format
+msgid "You cannot delete a model which is used in the following plan(s): %s"
+msgstr "Vous ne pouvez pas supprimer un modèle qui est utilisé dans le(s) plan(s) suivant(s) : %s"
+
+#. modules: account, account_subscription
+#: constraint:account.model:0
+#: constraint:account.model:0
+msgid "It is not possible to have several Recurring Models with the same name."
+msgstr "Il n'est pas possible d'avoir plusieurs Modèles périodiques portant le même nom."
+
+#. modules: account, account_subscription
+#: constraint:account.subscription:0
+#: constraint:account.subscription:0
+msgid "It is not possible to have several Recurring Plans with the same name."
+msgstr "Il n'est pas possible d'avoir plusieurs Plans d'Ecritures Périodiques portant le même nom."
+
+#. module: account_subscription
+#: field:account.model,is_balanced:0
+#: field:account.model.line,is_balanced:0
+msgid "Is balanced"
+msgstr "Est équilibré"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Plan names"
+msgstr "Nom des plans"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Plan status"
+msgstr "Statut des plans"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Related plans"
+msgstr "Plans associés"
+
 #. module: product
 #: view:product.product:0
 msgid "Merge product"
@@ -110477,3 +110515,9 @@ msgstr "Attention les produits suivants ont déjà été traités dans les docum
 #, python-format
 msgid "Indicative Stock"
 msgstr "Qté Indicative en Stock"
+
+#. module: account
+#: code:addons/account/account.py:2441
+#, python-format
+msgid "You cannot duplicate a Recurring Plan with a Done model."
+msgstr "Vous ne pouvez pas dupliquer un Plan d'Ecritures Périodiques utilisant un modèle Terminé."

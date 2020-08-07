@@ -133,6 +133,7 @@ class account_model_line(osv.osv):
                                            selection=[('no_exp_in', 'Not expense/income'), ('no_header', 'No header'),
                                                       ('valid', 'Valid'), ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
                                            string='Expense/income line status'),  # UFTP-103
+        'is_balanced': fields.related('model_id', 'is_balanced', type='boolean', string='Is balanced', readonly=True, store=False),
     }
 
     _defaults = {
@@ -253,6 +254,75 @@ class account_model(osv.osv):
                     break
         return res
 
+    def _get_model_state(self, cr, uid, ids, name, args, context=None):
+        """
+        A model is:
+        - in Done state if it is used in a least one Done Recurring Plan,
+        - in Running state if it is used in a least one Running Recurring Plan,
+        - in Draft state otherwise.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        recurring_plan_obj = self.pool.get('account.subscription')
+        for model_id in ids:
+            if recurring_plan_obj.search_exist(cr, uid, [('model_id', '=', model_id), ('state', '=', 'done')], context=context):
+                state = 'done'
+            elif recurring_plan_obj.search_exist(cr, uid, [('model_id', '=', model_id), ('state', '=', 'running')], context=context):
+                state = 'running'
+            else:
+                state = 'draft'
+            res[model_id] = state
+        return res
+
+    def _get_models_to_check(self, cr, uid, recurring_plan_ids, context=None):
+        """
+        Returns the list of Recurring Models for which the state should be checked and updated if necessary
+        """
+        if context is None:
+            context = {}
+        res = set()
+        recurring_plan_obj = self.pool.get('account.subscription')
+        for rec_plan in recurring_plan_obj.browse(cr, uid, recurring_plan_ids, fields_to_fetch=['model_id'], context=context):
+            res.add(rec_plan.model_id.id)
+        return list(res)
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Prevents deletion in case the model has been selected into a Recurring Plan
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        recurring_plan_obj = self.pool.get('account.subscription')
+        recurring_plan_ids = recurring_plan_obj.search(cr, uid, [('model_id', 'in', ids)], context=context)
+        if recurring_plan_ids:
+            plan_names = [p.name for p in recurring_plan_obj.browse(cr, uid, recurring_plan_ids, fields_to_fetch=['name'], context=context)]
+            raise osv.except_osv(_('Warning'), _('You cannot delete a model which is used in the following plan(s): %s') %
+                                 (', '.join(plan_names),))
+        return super(account_model, self).unlink(cr, uid, ids, context=context)
+
+    def _get_is_balanced(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns True for the models for which the total of the lines is zero
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for model in self.browse(cr, uid, ids, fields_to_fetch=['lines_id'], context=context):
+            debit = sum([l.debit or 0.0 for l in model.lines_id]) or 0.0
+            credit = sum([l.credit or 0.0 for l in model.lines_id]) or 0.0
+            if abs(debit - credit) <= 10**-3:
+                res[model.id] = True
+            else:
+                res[model.id] = False
+        return res
+
     _columns = {
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -260,12 +330,36 @@ class account_model(osv.osv):
                                                       method=True, type='boolean',
                                                       string='Has bad analytic distribution on expense/income lines',
                                                       help='There is lines with expense or income accounts with invalid analytic distribution or using header AD that is not defined or not compatible.'),  # UFTP-103
+        'state': fields.function(_get_model_state, method=True, type='selection', string="State",
+                                 selection=[('draft', 'Draft'), ('running', 'Running'), ('done', 'Done')],
+                                 store={
+                                     'account.subscription': (_get_models_to_check, ['model_id', 'state'], 10),
+                                 }),
+        'is_balanced': fields.function(_get_is_balanced, method=True, type='boolean', string="Is balanced", readonly=True, store=False),
+        'create_date': fields.date('Creation date', readonly=True),  # overwrites the standard create_date so it can be displayed in the views
+        'recurring_plan_ids': fields.one2many('account.subscription', 'model_id', string='Recurring Plans', readonly=True),
     }
 
     _defaults = {
         'currency_id': lambda self, cr, uid, context: self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id,
         'has_any_bad_ad_line_exp_in': False,
+        'state': lambda *a: 'draft',
     }
+
+    _order = 'create_date DESC, id DESC'
+
+    def _check_model_name_unicity(self, cr, uid, ids, context=None):
+        """
+        Prevents having 2 models using the same name
+        """
+        for model in self.read(cr, uid, ids, ['name']):
+            if self.search_exist(cr, uid, [('name', '=', model['name']), ('id', '!=', model['id'])]):
+                return False
+        return True
+
+    _constraints = [
+        (_check_model_name_unicity, 'It is not possible to have several Recurring Models with the same name.', ['name']),
+    ]
 
     # @@@override@account.account_model.generate()
     def generate(self, cr, uid, ids, datas={}, context=None):
@@ -275,6 +369,7 @@ class account_model(osv.osv):
         account_move_line_obj = self.pool.get('account.move.line')
         pt_obj = self.pool.get('account.payment.term')
         ana_obj = self.pool.get('analytic.distribution')
+        period_obj = self.pool.get('account.period')
 
         if context is None:
             context = {}
@@ -282,13 +377,15 @@ class account_model(osv.osv):
         if datas.get('date', False):
             context.update({'date': datas['date']})
 
-        period_id = self.pool.get('account.period').find(cr, uid, dt=context.get('date', False))
-        if not period_id:
+        period_domain = [('date_start', '<=', context.get('date')), ('date_stop', '>=', context.get('date')), ('special', '=', False)]
+        period_ids = period_obj.search(cr, uid, period_domain, context=context)
+
+        if not period_ids:
             raise osv.except_osv(_('No period found !'), _('Unable to find a valid period !'))
-        period_id = period_id[0]
+        period_id = period_ids[0]
         # UFTP-105: Check that period is open. Otherwise raise an error
-        period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
-        if not period or period.state != 'draft':
+        period = period_obj.browse(cr, uid, period_id, fields_to_fetch=['state', 'name'], context=context)
+        if period.state != 'draft':
             raise osv.except_osv(_('Warning'), _('This period should be in open state: %s') % (period.name))
 
         for model in self.browse(cr, uid, ids, context=context):
@@ -315,8 +412,9 @@ class account_model(osv.osv):
             except Exception:
                 raise osv.except_osv(_('Error'), _('The name of the Recurring Model used is incorrect: %s\n'
                                                    'You can find a list of the formatted strings usable on the Recurring Model form.') % model.name)
+            ref = datas.get('ref', '') or entry['name']
             move_id = account_move_obj.create(cr, uid, {
-                'ref': entry['name'],
+                'ref': ref,
                 'period_id': period_id,
                 'journal_id': model.journal_id.id,
                 'date': context.get('date',time.strftime('%Y-%m-%d'))
@@ -327,10 +425,11 @@ class account_model(osv.osv):
                     'move_id': move_id,
                     'journal_id': model.journal_id.id,
                     'period_id': period_id,
+                    'reference': ref,
                 }
                 if line.account_id.is_analytic_addicted:
                     if line.analytic_distribution_state == 'invalid':
-                        raise osv.except_osv(_('Invalid Analytic Distribution !'),_("Please define a valid analytic distribution for the recurring model '%s'!") % (line.name))
+                        raise osv.except_osv(_('Invalid Analytic Distribution !'),_("Please define a valid analytic distribution for the recurring model '%s'!") % (line.model_id.name))
                     if not model.journal_id.analytic_journal_id:
                         raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (model.journal_id.name,))
                     if line.analytic_distribution_id:
@@ -437,6 +536,24 @@ class account_model(osv.osv):
         to_reset = recurring_obj.search(cr, uid, [('model_id', 'in', ids)])
         recurring_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
         return True
+
+    def copy(self, cr, uid, model_id, default=None, context=None):
+        """
+        Recurring Model duplication: don't copy the link with the rec. plans, and add " (copy)" after the name
+        """
+        if context is None:
+            context = {}
+        suffix = ' (copy)'
+        model_copied = self.read(cr, uid, model_id, ['name'], context=context)
+        name = '%s%s' % (model_copied['name'][:64 - len(suffix)], suffix)
+        if default is None:
+            default = {}
+        default.update({
+            'name': name,
+            'recurring_plan_ids': [],
+        })
+        return super(account_model, self).copy(cr, uid, model_id, default, context=context)
+
 
 account_model()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
