@@ -661,6 +661,14 @@ class O2M(Char):
 class M2M(Char):
 
     def get_text(self):
+        if self.truncate:
+            if not self.value:
+                return ''
+            max_length = int(self.truncate)
+            value_string = ', '.join([x[1] for x in  rpc.RPCProxy(self.attrs['relation']).name_get(self.value, rpc.session.context)])
+            if len(value_string) > max_length:
+                value_string = '%s...' % value_string[:max_length-3]
+            return value_string
         return "%d" % len(self.value)
 
 class Selection(Char):
@@ -898,6 +906,8 @@ class Hidden(TinyInputWidget):
     def update_params(self, params):
         super(Hidden, self).update_params(params)
 
+class URL(Char):
+    template = "openerp/widgets/templates/listgrid/url.mako"
 
 CELLTYPES = {
     'char':Char,
@@ -917,4 +927,5 @@ CELLTYPES = {
     'separator': Separator,
     'human_size': HumanSize,
     'html_text': HtmlText,
+    'url': URL,
 }
