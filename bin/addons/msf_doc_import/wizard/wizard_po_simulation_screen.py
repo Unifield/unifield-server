@@ -1921,6 +1921,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         nb_lines = float(len(ids))
         line_treated = 0.00
         percent_completed = 0.00
+        lines_to_cancel = []
         for line in self.browse(cr, uid, ids, context=context):
             context['purchase_id'] = line.simu_id.order_id.id
             line_treated += 1
@@ -1947,7 +1948,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 })
 
             if line.type_change == 'del' and line.po_line_id:
-                wf_service.trg_validate(uid, 'purchase.order.line', line.po_line_id.id, 'cancel', cr)
+                lines_to_cancel.append(line.po_line_id.id)  # Delay the cancel to prevent the PO's cancellation
                 simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
                 cr.commit()
                 continue
@@ -2088,6 +2089,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
             simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
             cr.commit()
+
+        # Cancel the lines at the end
+        for line_id in lines_to_cancel:
+            wf_service.trg_validate(uid, 'purchase.order.line', line_id, 'cancel', cr)
 
         if ids:
             return simu_obj.go_to_simulation(cr, uid, line.simu_id.id, context=context)
