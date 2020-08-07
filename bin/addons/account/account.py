@@ -2419,7 +2419,8 @@ class account_subscription(osv.osv):
         """
         for plan in self.read(cr, uid, ids, ['name']):
             if self.search_exist(cr, uid, [('name', '=', plan['name']), ('id', '!=', plan['id'])]):
-                return False
+                raise osv.except_osv(_('Error'),
+                                     _('It is not possible to have several Recurring Plans with the same name: %s.') % plan['name'])
         return True
 
     _constraints = [

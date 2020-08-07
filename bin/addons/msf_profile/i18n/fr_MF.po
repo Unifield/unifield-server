@@ -110363,11 +110363,23 @@ msgstr "Vous ne pouvez pas supprimer un modèle qui est utilisé dans le(s) plan
 msgid "It is not possible to have several Recurring Models with the same name."
 msgstr "Il n'est pas possible d'avoir plusieurs Modèles périodiques portant le même nom."
 
+#. module: account_subscription
+#: code:addons/account_subscription/account_model.py:358
+#, python-format
+msgid "It is not possible to have several Recurring Models with the same name: %s."
+msgstr "Il n'est pas possible d'avoir plusieurs Modèles périodiques portant le même nom : %s."
+
 #. modules: account, account_subscription
 #: constraint:account.subscription:0
 #: constraint:account.subscription:0
 msgid "It is not possible to have several Recurring Plans with the same name."
 msgstr "Il n'est pas possible d'avoir plusieurs Plans d'Ecritures Périodiques portant le même nom."
+
+#. module: account
+#: code:addons/account/account.py:2423
+#, python-format
+msgid "It is not possible to have several Recurring Plans with the same name: %s."
+msgstr "Il n'est pas possible d'avoir plusieurs Plans d'Ecritures Périodiques portant le même nom : %s."
 
 #. module: account_subscription
 #: field:account.model,is_balanced:0
