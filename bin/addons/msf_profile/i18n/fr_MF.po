@@ -28646,13 +28646,15 @@ msgstr "Asia/Vladivostok"
 
 #. module: account
 #: selection:account.aged.trial.balance,direction_selection:0
+#: view:sync_client.survey:0
 msgid "Future"
 msgstr "Contrat à terme"
 
-#. modules: stock_override, stock
+#. modules: stock_override, stock, sync_client
 #: view:report.stock.inventory:0
 #: view:stock.move:0
 #: view:stock.move:0
+#: view:sync_client.survey:0
 msgid "Future"
 msgstr "Futur"
 
@@ -45170,7 +45172,7 @@ msgstr "Les groupes servent à définir les droits d'accès aux objets, et la vi
 msgid "The currency you want to %s is used in at least one Commitment Voucher which isn't Done."
 msgstr "La devise que vous désirez %s est utilisée dans un moins un Bon d'Engagement non Terminé."
 
-#. modules: account, resource, account_mcdb, msf_instance, analytic, base, msf_audittrail, msf_profile, product_attributes
+#. modules: account, resource, account_mcdb, msf_instance, analytic, base, msf_audittrail, msf_profile, product_attributes, sync_client
 #: view:account.journal:0
 #: field:account.journal,user_id:0
 #: view:analytic.entries.report:0
@@ -45200,6 +45202,7 @@ msgstr "La devise que vous désirez %s est utilisée dans un moins un Bon d'Enga
 #: field:finance.sync.query,user_id:0
 #: report:addons/product_attributes/report/standard_price_track_changes.mako:92
 #: report:addons/msf_audittrail/report/log_line_xls.mako:78
+#: field:sync_client.survey.user,user_id:0
 msgid "User"
 msgstr "Utilisateur"
 
@@ -71644,6 +71647,8 @@ msgstr "Navajo"
 #: field:replenishment.location.config,active:0
 #: selection:replenishment.order_calc.line,status:0
 #: selection:replenishment.segment.line,status:0
+#: field:survey.common,active:0
+#: field:sync_client.survey,active:0
 #, python-format
 msgid "Active"
 msgstr "Actif"
@@ -85805,13 +85810,14 @@ msgstr "Est-ce que l'appel d'offres provient d'une CdT ?"
 msgid "Consolidated Children"
 msgstr "Enfants consolidés"
 
-#. modules: account, hr, export_import_lang, procurement, base, analytic_distribution
+#. modules: account, hr, export_import_lang, procurement, base, analytic_distribution, sync_client
 #: view:account.analytic.account:0
 #: view:account.analytic.account:0
 #: view:res.request:0
 #: view:res.request:0
 #: view:hr.job:0
 #: view:procurement.order:0
+#: view:sync_client.survey:0
 msgid "Current"
 msgstr "Actuel"
 
@@ -91066,7 +91072,7 @@ msgstr "Plus grand que l'UdM de référence"
 #: field:res.config.users,login:0
 #: field:res.users,login:0
 msgid "Login"
-msgstr "Ouverture de session"
+msgstr "Identifiant"
 
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
@@ -110541,3 +110547,118 @@ msgstr "Instances ayant le CC comme CC sélectionné pour PO/FO"
 #: field:account.analytic.account,cc_missions:0
 msgid "Missions where the CC is added to"
 msgstr "Missions dans lesquelles le CC est ajouté"
+
+#. module: sync_client
+#: field:sync_client.survey.user,nb_displayed:0
+msgid "# Display"
+msgstr "Nb affichage"
+
+#. module: sync_client
+#: selection:sync_client.survey.user,last_choice:0
+msgid "Ask me later"
+msgstr "Plus tard"
+
+#. module: sync_client
+#: field:survey.common,end_date:0
+#: field:sync_client.survey,end_date:0
+msgid "Date End"
+msgstr "Date Fin"
+
+#. module: sync_client
+#: field:survey.common,start_date:0
+#: field:sync_client.survey,start_date:0
+msgid "Date Start"
+msgstr "Date Début"
+
+#. module: sync_client
+#: selection:sync_client.survey.user,last_choice:0
+msgid "Don't Ask"
+msgstr "Ne plus demander"
+
+#. module: sync_client
+#: field:survey.common,url_en:0
+#: field:sync_client.survey,url_en:0
+msgid "English URL"
+msgstr "URL (EN)"
+
+#. module: sync_client
+#: view:sync_client.survey:0
+#: field:sync_client.survey,excluded_group_ids:0
+msgid "Excluded Groups"
+msgstr "Groupes Exclus"
+
+#. module: sync_client
+#: field:survey.common,url_fr:0
+#: field:sync_client.survey,url_fr:0
+msgid "French URL"
+msgstr "URL (FR)"
+
+#. module: sync_client
+#: selection:sync_client.survey.user,last_choice:0
+msgid "Go To"
+msgstr "Répondre"
+
+#. module: sync_client
+#: view:sync_client.survey:0
+#: field:sync_client.survey,included_group_ids:0
+msgid "Included Groups"
+msgstr "Groupes inclus"
+
+#. module: sync_client
+#: field:sync_client.survey.user,last_choice:0
+msgid "Last Choice"
+msgstr "Dernier Choix"
+
+#. module: sync_client
+#: field:sync_client.survey.user,last_displayed:0
+msgid "Last popup Date"
+msgstr "Date dernier affichage"
+
+#. module: sync_client
+#: view:sync_client.survey:0
+#: field:sync_client.survey,users:0
+msgid "Matching Users"
+msgstr "Utilisateurs correspondants"
+
+#. module: sync_client
+#: field:survey.common,name:0
+#: field:sync_client.survey,name:0
+msgid "Name (EN)"
+msgstr "Nom (EN)"
+
+#. module: sync_client
+#: field:survey.common,name_fr:0
+#: field:sync_client.survey,name_fr:0
+msgid "Name (FR)"
+msgstr "Nom (FR)"
+
+#. module: sync_client
+#: field:survey.common,profile:0
+#: field:sync_client.survey,profile:0
+msgid "Profile Name"
+msgstr "Nom du profil"
+
+#. module: sync_client
+#: model:ir.model,name:sync_client.model_sync_client_survey_user
+#: view:sync_client.survey:0
+msgid "Stat by users"
+msgstr "Stat par utilisateurs"
+
+#. module: sync_client
+#: field:sync_client.survey,stat_by_users:0
+msgid "Stats"
+msgstr "Stats"
+
+#. module: sync_client
+#: model:ir.actions.act_window,name:sync_client.sync_client_survey_action
+#: model:ir.ui.menu,name:sync_client.sync_client_survey_menu
+#: view:sync_client.survey:0
+#: field:sync_client.survey.user,survey_id:0
+msgid "Survey"
+msgstr "Sondage"
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:864
+#, python-format
+msgid "Survey: %s"
+msgstr "Sondage: %s"
