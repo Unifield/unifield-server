@@ -1264,9 +1264,12 @@ class purchase_order_line(osv.osv):
             default = {}
 
         # do not copy canceled purchase.order.line:
-        pol = self.browse(cr, uid, p_id, fields_to_fetch=['state', 'order_id', 'linked_sol_id'], context=context)
+        pol = self.browse(cr, uid, p_id, fields_to_fetch=['state', 'order_id', 'linked_sol_id', 'product_id'], context=context)
         if pol.state in ['cancel', 'cancel_r'] and not context.get('allow_cancelled_pol_copy', False):
             return False
+        if pol.product_id:  # Check constraints on lines
+            self.pool.get('product.product')._get_restriction_error(cr, uid, [pol.product_id.id],
+                                                                    {'partner_id': pol.order_id.partner_id.id}, context=context)
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': []})
 

@@ -354,6 +354,10 @@ class stock_incoming_processor(osv.osv):
                 )
 
             for line in proc.move_ids:
+                if line.product_id:  # Check constraints on products
+                    self.pool.get('product.product')._get_restriction_error(cr, uid, [line.product_id.id],
+                                                                            {'location_id': line.location_id.id},
+                                                                            context=context)
                 # If one line as an error, return to wizard
                 if line.integrity_status not in ['empty', 'missing_1', 'to_smaller_than_from', 'overlap', 'gap', 'missing_weight']:
                     return {

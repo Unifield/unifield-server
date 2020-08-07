@@ -62,9 +62,9 @@ class sync_server_survey(osv.osv):
                     return False
         return True
 
-    _constraints = {
+    _constraints = [
         (_one_included_if_active, 'Please set at least one Included Group', [])
-    }
+    ]
 
     def write(self, cr, uid, ids, vals, context=None):
         vals['server_write_date'] = time.strftime('%Y-%m-%d %H:%M:%S')

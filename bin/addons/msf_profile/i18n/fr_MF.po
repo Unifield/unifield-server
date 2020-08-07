@@ -5390,7 +5390,7 @@ msgstr "validated - (sale.order.line)"
 #: code:addons/product_attributes/product_attributes.py:1205
 #, python-format
 msgid "be %s externally"
-msgstr "be %s externally"
+msgstr "être %s à l'extérieur"
 
 #. modules: procurement_auto, procurement, procurement_cycle
 #: view:stock.warehouse.orderpoint:0
@@ -8011,7 +8011,7 @@ msgstr "Assistant d'importation de la liste du personnel"
 #: code:addons/product_attributes/product_attributes.py:1213
 #, python-format
 msgid "be supplied/exchanged internally"
-msgstr "be supplied/exchanged internally"
+msgstr "être approvisionné/échangé en interne"
 
 #. module: msf_outgoing
 #: view:stock.move.memory.shipment.returnpacks:0
@@ -14711,7 +14711,7 @@ msgstr "Aucune période n'a été définie pour la ligne '%s' !"
 #: code:addons/product_attributes/product_attributes.py:1201
 #, python-format
 msgid "be exchanged"
-msgstr "be exchanged"
+msgstr "être échangé"
 
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.sl
@@ -41811,7 +41811,7 @@ msgstr "Résumé de l'import précédent"
 #: code:addons/product_attributes/product_attributes.py:1226
 #, python-format
 msgid "status"
-msgstr "status"
+msgstr "statut"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/check_line.py:187
@@ -48538,7 +48538,7 @@ msgstr "Date de Début de Contrat"
 #: code:addons/product_attributes/product_attributes.py:1209
 #, python-format
 msgid "be %s ESC"
-msgstr "be %s ESC"
+msgstr "être %s l'ESC"
 
 #. module: kit
 #: code:addons/kit/kit_creation.py:83
@@ -51491,7 +51491,7 @@ msgstr "MSF Locations configuration"
 #: code:addons/product_attributes/product_attributes.py:1221
 #, python-format
 msgid "be stored anymore"
-msgstr "be stored anymore"
+msgstr "être stocké"
 
 #. module: account
 #: model:ir.actions.act_window,name:account.action_account_print_journal
@@ -52990,7 +52990,7 @@ msgstr "La définition du code de taxe dépend de la déclaration fiscale de vot
 #: code:addons/product_attributes/product_attributes.py:1226
 #, python-format
 msgid "product creator"
-msgstr "product creator"
+msgstr "créateur produit"
 
 #. modules: procurement, account_hq_entries
 #: view:hq.entries:0
@@ -54572,7 +54572,7 @@ msgstr "Fermer les statuts de l'Exercice Comptable et des périodes"
 #: code:addons/product_attributes/product_attributes.py:1209
 #, python-format
 msgid "purchased at"
-msgstr "purchased at"
+msgstr "acheté à"
 
 #. module: msf_doc_import
 #: model:product.nomenclature,name:msf_doc_import.nomen_tbd0
@@ -64431,7 +64431,7 @@ msgstr "Approvisionnement Automatique : %s"
 #: code:addons/product_attributes/product_attributes.py:1209
 #, python-format
 msgid "shipped to"
-msgstr "shipped to"
+msgstr "envoyé vers"
 
 #. module: account
 #: code:addons/account/account.py:1247
@@ -79011,7 +79011,7 @@ msgstr "Import / Import Translations"
 #: code:addons/product_attributes/product_attributes.py:1217
 #, python-format
 msgid "be consumed internally"
-msgstr "be consumed internally"
+msgstr "être consommé en interne"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:317
@@ -83477,7 +83477,7 @@ msgstr "Stock par Zone"
 #: code:addons/product_attributes/product_attributes.py:1072
 #, python-format
 msgid "shipped"
-msgstr "Expédié"
+msgstr "expédié"
 
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:200
@@ -89799,8 +89799,8 @@ msgstr "Contenu du RML"
 #: code:addons/product_attributes/product_attributes.py:1096
 #: code:addons/product_attributes/product_attributes.py:1229
 #, python-format
-msgid "The product [%s] %s gets the %s '%s' and consequently can't %s"
-msgstr "The product [%s] %s gets the %s '%s' and consequently can't %s"
+msgid "The product [%s] gets the %s '%s' and consequently can't %s"
+msgstr "Le produit [%s] a le %s '%s' et ne peut donc plus %s"
 
 #. module: sale
 #: model:ir.actions.act_window,help:sale.action_shop_form
@@ -109035,6 +109035,18 @@ msgstr "CCM Produit"
 msgid "more FMC"
 msgstr "plus de PCM"
 
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1196
+#, python-format
+msgid "be sent"
+msgstr "être envoyé"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1206
+#, python-format
+msgid "%s line %s: "
+msgstr "%s ligne %s: "
+
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:287
 #, python-format
@@ -110661,3 +110673,13 @@ msgstr "Sondage: %s"
 #: field:account.period,is_revaluated:0
 msgid "Revaluation run for the period"
 msgstr "Réévaluation lancée pour la période"
+
+#. module: delivery_mechanism
+#: code:addons/delivery_mechanism/delivery_mechanism.py:705
+#, python-format
+msgid "Error: %s\n"
+"\n"
+"Please reset the incoming shipment processing and fix the source of the error before re-try the processing."
+msgstr "Erreur: %s\n"
+"\n"
+"Veuillez réinitialiser le processus de la livraison entrante et corriger la source de cette erreur avant de recommencer le processus."

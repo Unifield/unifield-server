@@ -52,7 +52,45 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+
     # UF18.0
+    def us_7215_prod_set_active_sync(self, cr, uids, *a, **b):
+        if not self.pool.get('sync.client.message_received'):
+            # new instance
+            return True
+        cr.execute("""
+            update product_product p set
+                active_change_date=d.last_modification, active_sync_change_date=d.sync_date
+            from
+                ir_model_data d
+            where
+                d.model='product.product' and
+                d.module='sd' and
+                d.res_id = p.id and
+                touched like '%''state''%'
+        """)
+        self._logger.warn('Set active_sync_change_date on %d product' % (cr.rowcount,))
+
+        return True
+
+    def us_7158_prod_set_uf_status(self, cr, uid, *a, **b):
+        st_obj = self.pool.get('product.status')
+        stopped_ids = st_obj.search(cr, uid, [('code', '=', 'stopped'), ('active', 'in', ['t', 'f'])])
+        phase_out_ids = st_obj.search(cr, uid, [('code', '=', 'phase_out')])
+
+        st12_ids = st_obj.search(cr, uid, [('code', 'in', ['status1', 'status2']), ('active', 'in', ['t', 'f'])])
+        valid_ids = st_obj.search(cr, uid, [('code', '=', 'valid')])
+
+        # state 1, state2, blank to valid
+        cr.execute('''update product_template set state = %s where state is NUll or state in %s''' , (valid_ids[0], tuple(st12_ids)))
+        cr.execute('''update stock_mission_report_line set product_state='valid' where product_state is NULL or product_state in ('', 'status1', 'status2')''')
+
+        # stopped to pahse_out
+        cr.execute('''update product_template set state = %s where state = %s''' , (phase_out_ids[0], stopped_ids[0]))
+        cr.execute('''update stock_mission_report_line set product_state='phase_out' where product_state = 'stopped' ''')
+
+        return True
+
     def us_5216_update_recurring_object_state(self, cr, uid, *a, **b):
         """
         Updates the state of the Recurring Plans and Recurring Models with the new rules set in US-5216.
@@ -493,6 +531,7 @@ class patch_scripts(osv.osv):
                    AND journal_id IN (SELECT id FROM account_journal WHERE type in ('bank', 'cash'));
                    """)
         self._logger.warn('Starting Balance set to zero in %s registers.' % (cr.rowcount,))
+
         return True
 
     def us_6641_remove_duplicates_from_stock_mission(self, cr, uid, *a, **b):
