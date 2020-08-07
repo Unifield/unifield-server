@@ -106515,12 +106515,6 @@ msgid "Active Users"
 msgstr "Utilisateurs Actifs"
 
 #. module: account_period_closing_level
-#: code:addons/account_period_closing_level/account_period.py:203
-#, python-format
-msgid "Impossible to check the revaluation entries of the period: Revaluation Journal not found."
-msgstr "Impossible de vérifier les écritures de réévaluation de la période : Journal de Réévaluation non trouvé."
-
-#. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:207
 #, python-format
 msgid "You should run the month-end revaluation before closing the period."
@@ -110662,3 +110656,8 @@ msgstr "Sondage"
 #, python-format
 msgid "Survey: %s"
 msgstr "Sondage: %s"
+
+#. module: account_period_closing_level
+#: field:account.period,is_revaluated:0
+msgid "Revaluation run for the period"
+msgstr "Réévaluation lancée pour la période"

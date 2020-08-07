@@ -113,6 +113,43 @@ class patch_scripts(osv.osv):
                     cr.execute(update_rec_models, (model_state, tuple(rec_models[model_state])))
         return True
 
+    def us_7448_set_revaluated_periods(self, cr, uid, *a, **b):
+        """
+        Sets the tag "is_revaluated" for the existing periods in which the revaluation has been run,
+        based on the rules which applied until now
+        """
+        if not self.pool.get('sync.server.update'):
+            user_obj = self.pool.get('res.users')
+            period_obj = self.pool.get('account.period')
+            fy_obj = self.pool.get('account.fiscalyear')
+            journal_obj = self.pool.get('account.journal')
+            aml_obj = self.pool.get('account.move.line')
+            instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+            revaluated_period_ids = []
+            if instance and instance.level == 'coordo':
+                reval_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'revaluation'), ('is_current_instance', '=', True)])
+                if reval_journal_ids:
+                    period_ids = period_obj.search(cr, uid, [('special', '=', False)])
+                    for period in period_obj.browse(cr, uid, period_ids, fields_to_fetch=[('number', 'fiscalyear_id', 'name')]):
+                        # domain taken from the check which was done until now at period closing time
+                        aml_domain = [('journal_id', 'in', reval_journal_ids), ('period_id', '=', period.id)]
+                        # additional check which was done at revaluation time
+                        # for the January periods having a previous FY
+                        if period.number == 1:
+                            if fy_obj.search_exist(cr, uid, [('date_start', '<', period.fiscalyear_id.date_start)]):
+                                aml_domain.append(('name', 'like', "Revaluation - %s" % (period.name,)))
+                        if aml_obj.search_exist(cr, uid, aml_domain):
+                            revaluated_period_ids.append(period.id)
+            if revaluated_period_ids:
+                update_period_sql = """
+                                UPDATE account_period
+                                SET is_revaluated = 't'
+                                WHERE id IN %s;
+                                """
+                cr.execute(update_period_sql, (tuple(revaluated_period_ids),))
+                self._logger.warn('Number of periods set as revaluated: %s.' % (cr.rowcount,))
+        return True
+
     def us_7412_set_fy_closure_settings(self, cr, uid, *a, **b):
         """
         Sets the Fiscal Year Closure options depending on the OC.

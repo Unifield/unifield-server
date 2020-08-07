@@ -585,5 +585,9 @@
             <field name="method">us_5216_update_recurring_object_state</field>
         </record>
 
+        <record id="us_7448_set_revaluated_periods" model="patch.scripts">
+            <field name="method">us_7448_set_revaluated_periods</field>
+        </record>
+
     </data>
 </openerp>
