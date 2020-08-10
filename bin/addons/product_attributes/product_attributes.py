@@ -1184,12 +1184,15 @@ class product_attributes(osv.osv):
 
         return res
 
-    def _test_restriction_error(self, cr, uid, ids, vals={}, context=None):
+    def _test_restriction_error(self, cr, uid, ids, vals=None, context=None):
         '''
         Builds and returns an error message according to the constraints
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if vals is None:
+            vals = {}
 
         if context is None:
             context = {}
@@ -1197,6 +1200,7 @@ class product_attributes(osv.osv):
         error = False
         error_msg = ''
         constraints = []
+        partner_type = False
         sale_obj = vals.get('obj_type') == 'sale.order'
 
         # Compute the constraint if a partner is passed in vals
@@ -1216,20 +1220,24 @@ class product_attributes(osv.osv):
         # Compute the constraint if a location is passed in vals
         if vals.get('location_id'):
             location = self.pool.get('stock.location').browse(cr, uid, vals.get('location_id'), context=context)
-            bef_scrap_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
-            if location.usage != 'inventory' and not location.destruction_location and (not bef_scrap_id or location.id != bef_scrap_id):
+            is_scrap_loc = location.destruction_location or location.quarantine_location
+            if location.usage != 'inventory' and not is_scrap_loc:
                 constraints.append('storage')
 
         # Compute the constraint if a destination location is passed in vals
         if vals.get('location_dest_id'):
             dest_location = self.pool.get('stock.location').browse(cr, uid, vals.get('location_dest_id'), context=context)
-            if not (dest_location.destruction_location or dest_location.quarantine_location):
+            if not dest_location.destruction_location and not dest_location.quarantine_location:
                 if vals.get('move') and vals['move'].sale_line_id and not vals['move'].sale_line_id.order_id.procurement_request:
                     if (vals['move'].picking_id.shipment_id and vals['move'].picking_id.shipment_id.partner_id.partner_type != 'internal') or \
                             vals['move'].picking_id.partner_id.partner_type != 'internal':
                         constraints.append('cant_use')
+                elif vals.get('move') and vals['move'].picking_id.type == 'internal' and vals['move'].picking_id.previous_chained_pick_id and vals['move'].picking_id.previous_chained_pick_id.partner_id.partner_type == 'internal':
+                    constraints.append('from_internal_in')
                 else:
                     constraints.append('cant_use')
+            else:
+                constraints.append('to_quarantine')
 
         # Compute constraints if constraints is passed in vals
         if vals.get('constraints'):
@@ -1242,6 +1250,14 @@ class product_attributes(osv.osv):
             msg = ''
             st_cond = True
 
+
+            if product.state.code == 'forbidden':
+                if sale_obj and partner_type == 'internal':
+                    continue
+                if 'to_quarantine' in constraints or 'from_internal_in' in constraints:
+                    continue
+                if vals.get('obj_type') == 'in' and vals.get('partner_type') == 'internal':
+                    continue
             if product.no_external and product.no_esc and product.no_internal and 'picking' in constraints:
                 error = True
                 msg = _('be exchanged')
@@ -1268,7 +1284,7 @@ class product_attributes(osv.osv):
                 st_cond = product.state.no_storage
             elif product.state.code == 'forbidden' and 'cant_use' in constraints:
                 error = True
-                msg = _('be sent')
+                msg = _('be moved')
                 st_cond = product.state.no_consumption
 
             if error:
@@ -1279,14 +1295,14 @@ class product_attributes(osv.osv):
                 error_msg = ''
                 if vals.get('move'):
                     error_msg = _('%s line %s: ') % (vals['move'].picking_id.name, vals['move'].line_number)
-                error_msg += _('The product [%s] gets the %s \'%s\' and consequently can\'t %s') \
+                error_msg += _('The product [%s] has the %s \'%s\' and consequently can\'t %s') \
                     % (product.default_code, st_type, st_name, msg)
         if context.get('noraise'):
             error = False
 
         return error, error_msg
 
-    def _get_restriction_error(self, cr, uid, ids, vals={}, context=None):
+    def _get_restriction_error(self, cr, uid, ids, vals=None, context=None):
         '''
         Raise an error if the product is not compatible with the order
         '''
