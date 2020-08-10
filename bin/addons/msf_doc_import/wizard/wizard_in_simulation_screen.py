@@ -1499,10 +1499,11 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             prod_id = False
             loc_id = line.move_id and line.move_id.location_id.id or line.parent_line_id and \
                 line.parent_line_id.move_id.location_id.id or False
+            dest_loc_id = line.move_id and line.move_id.location_dest_id.id or line.parent_line_id and line.parent_line_id.move_id.location_dest_id or False
             if values.get('product_code') == line.move_product_id.default_code:
                 if line.move_product_id:
                     p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [line.move_product_id.id],
-                                                                      vals={'location_id': loc_id},
+                                                                      vals={'location_id': loc_id, 'location_dest_id': dest_loc_id, 'obj_type': 'in', 'partner_type': line.simu_id.picking_id.partner_id.partner_type},
                                                                       context=context)
                     if p_error:  # Check constraints on products
                         write_vals['type_change'] = 'error'
@@ -1531,7 +1532,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         self.write(cr, uid, [line.id], write_vals, context=context)
                         continue
                     else:
-                        p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [prod_id], vals={'location_id': loc_id},
+                        p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [prod_id], vals={'location_id': loc_id, 'location_dest_id': dest_loc_id, 'obj_type': 'in', 'partner_type': line.simu_id.picking_id.partner_id.partner_type},
                                                                           context=context)
                         if p_error:  # Check constraints on products
                             write_vals['type_change'] = 'error'
@@ -1539,7 +1540,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         else:
                             write_vals['imp_product_id'] = prod_ids[0]
                 else:
-                    p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [prod_id], vals={'location_id': loc_id},
+                    p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [prod_id], vals={'location_id': loc_id, 'location_dest_id': dest_loc_id, 'obj_type': 'in', 'partner_type': line.simu_id.picking_id.partner_id.partner_type},
                                                                       context=context)
                     if p_error:  # Check constraints on products
                         write_vals['type_change'] = 'error'

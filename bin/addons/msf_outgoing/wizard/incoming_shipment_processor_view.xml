@@ -24,6 +24,7 @@
                     <field name="contains_kc" invisible="1" />
                     <field name="location_dest_active_ok" invisible="1"/>
                     <field name="draft" invisible="1" />
+                    <field name="forbidden_product" nolabel="1" widget="html_text" colspan="4"/>
                     <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', True), ('contains_kc', '=', False)]}">
                         <html>
                             <p style="text-align: center; v-align: middle;">

@@ -56,6 +56,7 @@ class stock_picking_processor(osv.osv):
             res[wizard_id] = {
                 'contains_kc': False,
                 'contains_dg': False,
+                'forbidden_product': False
             }
             # KC
             kc_lines = line_obj.search(cr, uid, [
@@ -71,6 +72,32 @@ class stock_picking_processor(osv.osv):
             ], limit=1, order='NO_ORDER', context=context)
             if dg_lines:
                 res[wizard_id]['contains_dg'] = True
+
+            if self._columns['move_ids']._obj == 'stock.move.in.processor':
+                list_forbidden = []
+                cr.execute('''select
+                    default_code
+                from product_product p, product_template tmpl, stock_incoming_processor m, stock_move_in_processor l, product_status st
+                where
+                    l.product_id = p.id and
+                    st.code = 'forbidden' and
+                    st.id = tmpl.state and
+                    tmpl.id = p.product_tmpl_id and
+                    l.wizard_id = m.id and
+                    m.id = %s
+                limit 6''',
+                           (wizard_id,))
+                for x in cr.fetchall():
+                    if len(list_forbidden) == 5:
+                        list_forbidden.append('...')
+                    else:
+                        list_forbidden.append(x[0])
+                if list_forbidden:
+                    res[wizard_id]['forbidden_product'] = '''<p style="text-align: center; v-align: middle;">
+                        <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                        %s %s
+                        <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                    <p>''' % (_('Warning, you are processing product(s) which have "Forbidden" status, these should not be used. Please refer to your OC guidelines for their management: '), ', '.join(list_forbidden))
 
         return res
 
@@ -90,6 +117,7 @@ class stock_picking_processor(osv.osv):
             'wizard_id',
             string='Moves',
         ),
+        'forbidden_product': fields.function(_get_moves_product_info, method=True, string='List of forbidden', type='char', store=False,  multi='kc_dg'),
         'contains_dg': fields.function(
             _get_moves_product_info,
             method=True,

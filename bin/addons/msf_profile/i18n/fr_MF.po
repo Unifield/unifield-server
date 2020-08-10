@@ -51680,6 +51680,12 @@ msgstr "This field is used to have only one PO by replenishment\n"
 msgid "Products to Process"
 msgstr "Produits à Traiter"
 
+#. module: msf_outgoing
+#: code:addons/addons/msf_outgoing/wizard/picking_processor.py:100
+#, python-format
+msgid "Warning, you are processing product(s) which have \"Forbidden\" status, these should not be used. Please refer to your OC guidelines for their management: "
+msgstr "Attention, vous allez traiter des produits qui sont dans l'état \"Interdit\", ils ne devraient pas être utilisés. Veuillez vous référer aux instructions de votre OC: "
+
 #. modules: delivery_mechanism, analytic_distribution_supply, product_asset, return_claim, stock_override, stock_forecast, order_types, msf_doc_import, stock, msf_order_date, reason_types_moves, finance, purchase, service_purchasing, consumption_calculation, specific_rules, kit, out_step, delete_button, msf_cross_docking, sales_followup, msf_outgoing, stock_move_tracking, sale, transport_mgmt, procurement, msf_custom_settings, msf_audittrail, specific_locations, sync_so
 #: constraint:stock.move:0
 #: constraint:stock.picking:0
@@ -89799,7 +89805,7 @@ msgstr "Contenu du RML"
 #: code:addons/product_attributes/product_attributes.py:1096
 #: code:addons/product_attributes/product_attributes.py:1229
 #, python-format
-msgid "The product [%s] gets the %s '%s' and consequently can't %s"
+msgid "The product [%s] has the %s '%s' and consequently can't %s"
 msgstr "Le produit [%s] a le %s '%s' et ne peut donc plus %s"
 
 #. module: sale
@@ -109038,8 +109044,8 @@ msgstr "plus de PCM"
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1196
 #, python-format
-msgid "be sent"
-msgstr "être envoyé"
+msgid "be moved"
+msgstr "être déplacé"
 
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1206
