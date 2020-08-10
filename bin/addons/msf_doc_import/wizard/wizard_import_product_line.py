@@ -163,7 +163,7 @@ class wizard_import_product_line(osv.osv_memory):
                                                 error_list_line.append(_('Product %s doesn\'t have the expected Product Creator. ')
                                                                        % (row[0].data,))
                                             else:
-                                                error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "HQ". ')
+                                                error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "ITC", "ESC" or "HQ". ')
                                                                        % (row[0].data,))
                                         elif instance_level == 'coordo':
                                             error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "Local". ')
