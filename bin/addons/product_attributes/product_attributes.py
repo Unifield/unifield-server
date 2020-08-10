@@ -1051,7 +1051,7 @@ class product_attributes(osv.osv):
     }
 
     def need_to_push(self, cr, uid, ids, touched_fields=None, field='sync_date', empty_ids=False, context=None):
-        if touched_fields != ['active', 'local_from_hq', 'id']:
+        if touched_fields != ['active', 'local_from_hq', 'local_activation_from_merge', 'id']:
             return super(product_attributes, self).need_to_push(cr, uid, ids, touched_fields=touched_fields, field=field, empty_ids=empty_ids, context=context)
 
         if not empty_ids and not ids:
@@ -1479,6 +1479,7 @@ class product_attributes(osv.osv):
             if 'oc_subscription' not in vals:
                 vals['oc_subscription'] = intstat_code == 'unidata'
 
+        if intstat_code == 'unidata':
             if not context.get('sync_update_execution'):
                 if 'state_ud' in vals:
                     if self.mapping_ud.get(vals['state_ud']):
