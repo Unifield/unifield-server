@@ -24,7 +24,7 @@
             <field name="code">phase_out</field>
             <field name="name">Phase Out</field>
             <field name="no_external" eval="True" />
-            <field name="no_esc" eval="False" />
+            <field name="no_esc" eval="True" />
             <field name="no_internal" eval="False" />
             <field name="no_consumption" eval="False" />
             <field name="no_storage" eval="False" />
