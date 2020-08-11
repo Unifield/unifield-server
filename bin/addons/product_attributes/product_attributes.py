@@ -491,6 +491,10 @@ class product_attributes(osv.osv):
                 elif arg[2] == 'esc':
                     return [('no_esc', '=', False)]
                 elif arg[2] in ('internal', 'intermission', 'section'):
+                    if context.get('sale_id') and arg[2] == 'internal':
+                        forbidden_ids = self.pool.get('product.status').search(cr, uid, [('code', '=', 'forbidden')], context=context)
+                        if forbidden_ids:
+                            return ['|', ('no_internal', '=', False), ('state', '=', forbidden_ids[0])]
                     return [('no_internal', '=', False)]
                 elif arg[2] == 'consumption':
                     return [('no_consumption', '=', False)]
