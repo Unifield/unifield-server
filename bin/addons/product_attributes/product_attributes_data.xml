@@ -31,7 +31,7 @@
         </record>
         <record model="product.status" id="status_3">
             <field name="code">stopped</field>
-            <field name="name">Stopped (to del)</field>
+            <field name="name">Stopped (deprecated)</field>
             <field name="no_external" eval="True" />
             <field name="no_esc" eval="True" />
             <field name="no_internal" eval="True" />
@@ -51,7 +51,7 @@
         </record>
         <record model="product.status" id="status_5">
             <field name="code">status1</field>
-            <field name="name">Status 1 (to del)</field>
+            <field name="name">Status 1 (deprecated)</field>
             <field name="no_external" eval="False" />
             <field name="no_esc" eval="False" />
             <field name="no_internal" eval="False" />
@@ -62,7 +62,7 @@
         </record>
         <record model="product.status" id="status_6">
             <field name="code">status2</field>
-            <field name="name">Status 2 (to_del)</field>
+            <field name="name">Status 2 (deprecated)</field>
             <field name="no_external" eval="False" />
             <field name="no_esc" eval="False" />
             <field name="no_internal" eval="False" />

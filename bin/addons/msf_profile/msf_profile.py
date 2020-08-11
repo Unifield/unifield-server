@@ -75,6 +75,7 @@ class patch_scripts(osv.osv):
 
     def us_7158_prod_set_uf_status(self, cr, uid, *a, **b):
         st_obj = self.pool.get('product.status')
+        audit_obj = self.pool.get('audittrail.rule')
         stopped_ids = st_obj.search(cr, uid, [('code', '=', 'stopped'), ('active', 'in', ['t', 'f'])])
         phase_out_ids = st_obj.search(cr, uid, [('code', '=', 'phase_out')])
 
@@ -85,8 +86,13 @@ class patch_scripts(osv.osv):
         cr.execute('''update product_template set state = %s where state is NUll or state in %s''' , (valid_ids[0], tuple(st12_ids)))
         cr.execute('''update stock_mission_report_line set product_state='valid' where product_state is NULL or product_state in ('', 'status1', 'status2')''')
 
-        # stopped to pahse_out
-        cr.execute('''update product_template set state = %s where state = %s''' , (phase_out_ids[0], stopped_ids[0]))
+        # stopped to phase_out
+        cr.execute('''update product_template set state = %s where state = %s RETURNING id''' , (phase_out_ids[0], stopped_ids[0]))
+        prod_templ_ids = [x[0] for x in cr.fetchall()]
+        if prod_templ_ids:
+            audit_ids = audit_obj.search(cr, uid, [('name', '=', 'Product_template rule')])
+            if audit_ids:
+                audit_obj.audit_log(cr, uid, audit_ids, 'product.template', prod_templ_ids, 'write', previous_value=[{'state': (stopped_ids[0], 'Stopped'), 'id': pt_id} for pt_id in prod_templ_ids], current={x: {'state': (phase_out_ids[0], 'Phase out')} for x in prod_templ_ids}, context=None)
         cr.execute('''update stock_mission_report_line set product_state='phase_out' where product_state = 'stopped' ''')
 
         return True
