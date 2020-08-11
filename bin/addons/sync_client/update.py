@@ -314,6 +314,20 @@ class update_to_send(osv.osv,fv_formatter):
         max_offset = len(update_ids)
         while min_offset < max_offset:
             offset = (min_offset + 200) < max_offset and min_offset + 200 or max_offset
+
+            # specific case to split the active field on product.product
+            # i.e: at COO an update received on product must not block a possible update on active field to the project
+            cr.execute('''
+                update product_product set active_sync_change_date = upd.create_date
+                    from sync_client_update_to_send upd, ir_model_data d, sync_client_rule rule
+                where
+                    rule.id = upd.rule_id and
+                    rule.sequence_number in (602, 603) and
+                    d.model = 'product.product' and
+                    d.name = upd.sdref and
+                    product_product.id = d.res_id and
+                    upd.id in %s
+            ''', (tuple(update_ids[min_offset:offset]),))
             for update in self.browse(cr, uid, update_ids[min_offset:offset], context=context):
                 try:
                     self.pool.get('ir.model.data').update_sd_ref(cr, uid,
@@ -569,15 +583,20 @@ class update_received(osv.osv,fv_formatter):
             # Prepare updates
             # TODO: skip updates not preparable
             for update in updates:
-                if self.search_exist(cr, uid,
-                                     [('sdref', '=', update.sdref),
-                                      ('is_deleted', '=', False),
-                                         ('run', '=', False),
-                                      ('rule_sequence', '=', update.rule_sequence),
-                                      ('sequence_number', '<', update.sequence_number)]):
-                    # previous not run on the same (sdref, rule_sequence): do not execute
-                    self._set_not_run(cr, uid, [update.id], log="Cannot execute due to previous not run on the same record/rule.", context=context)
-                    continue
+                prev_nr_ids = self.search(cr, uid,
+                                          [('sdref', '=', update.sdref),
+                                           ('is_deleted', '=', False),
+                                              ('run', '=', False),
+                                              ('rule_sequence', '=', update.rule_sequence),
+                                              ('sequence_number', '<', update.sequence_number)])
+                # previous not run on the same (sdref, rule_sequence): do not execute
+                if prev_nr_ids:
+                    if update.rule_sequence in (602, 603):
+                        # update on product state, we don't care of previous NR
+                        self.write(cr, uid, prev_nr_ids, {'run': 't', 'log': 'Set as Run due to a later update on the same record/rule.', 'editable': False, 'execution_date': datetime.now()}, context=context)
+                    else:
+                        self._set_not_run(cr, uid, [update.id], log="Cannot execute due to previous not run on the same record/rule.", context=context)
+                        continue
 
                 row = eval(update.values)
 

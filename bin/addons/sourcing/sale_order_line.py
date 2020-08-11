@@ -783,6 +783,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 vals['po_cft'] = 'dpo'
         elif not product and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0', False)):
             vals['po_cft'] = 'dpo'
+        elif product and product.state.code == 'forbidden':
+            vals['type'] = 'make_to_stock'
 
         if not product:
             vals.update({
@@ -1001,14 +1003,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if not check_fnct:
             check_fnct = self.pool.get('product.product')._get_restriction_error
 
-        vals = {}
+        vals = {'obj_type': 'sale.order'}
         if line_type == 'make_to_order' and product_id and (po_cft == 'cft' or partner_id):
             if po_cft == 'cft':
-                vals = {'constraints': ['external']}
-            elif partner_id:
-                vals = {'partner_id': partner_id}
+                vals['constraints'] = ['external']
         elif line_type == 'make_to_stock' and product_id:
-            vals = {'constraints': ['storage']}
+            vals['constraints'] = ['storage']
+
+        if partner_id:
+            vals['partner_id'] = partner_id
 
         if product_id:
             return check_fnct(cr, uid, product_id, vals, *args, **kwargs)
@@ -1581,6 +1584,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         company_currency_id = self.pool.get('res.users').get_company_currency_id(cr, uid)
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
+            if sourcing_line.procurement_request:  # Check constraints on lines
+                check_vals = {'constraints': 'consumption'}
+            else:
+                check_vals = {'obj_type': 'sale.order', 'partner_id': sourcing_line.order_id.partner_id.id}
+            self.pool.get('product.product')._get_restriction_error(cr, uid, [sourcing_line.product_id.id], vals=check_vals,
+                                                                    context=context)
             if sourcing_line.supplier and sourcing_line.supplier_type == 'esc' and \
                     sourcing_line.supplier_split_po == 'yes' and not sourcing_line.related_sourcing_id:
                 raise osv.except_osv(_('Error'), _('For this Supplier you have to select a Sourcing Group'))
@@ -2218,7 +2227,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     (line.product_id.seller_id.supplier or line.product_id.seller_id.manufacturer
                      or line.product_id.seller_id.transporter):
                 value['supplier'] = line.product_id.seller_id.id
-
         if l_type == 'make_to_stock':
             if not location_id:
                 wh_ids = wh_obj.search(cr, uid, [], context=context)
@@ -2247,7 +2255,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         check_fnct,
                         field_name='l_type',
                         values=res,
-                        vals={'constraints': ['storage']},
+                        vals={'constraints': ['storage'], 'obj_type': 'sale.order', 'partner_id': line.order_id.partner_id.id},
                         context=context,
                     )
 
