@@ -1172,7 +1172,7 @@ class product_attributes(osv.osv):
                                                                     context=context)
             else:
                 filter_domain = "[('available_for_restriction','=',%s)]" % arg
-            new_filter = """<filter string="%s" name="not_restricted" icon="terp-accessories-archiver-minus" domain="%s" />""" % (_('Only not forbidden'), filter_domain)
+            new_filter = """<filter string="%s" name="not_restricted" icon="terp-accessories-archiver-minus" domain="%s" />""" % (_('Only permitted'), filter_domain)
             #generate new xml form$
             new_form = etree.fromstring(new_filter)
             # instert new form just after state index position
