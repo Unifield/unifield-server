@@ -93,7 +93,7 @@
             <field name="context">{}</field>
         </record>
 
-        <menuitem id="sync_server_survey_menu" parent="sync_server.sync_menu" sequence="100" action="sync_server_survey_action" />
+        <menuitem id="sync_server_survey_menu" parent="sync_server.sync_menu" sequence="100" action="sync_server_survey_action" groups="sync_common.sync_read_group"/>
 
         <record model="ir.ui.view" id="res_groups_instances_search">
             <field name="name">res_groups_instances_search</field>

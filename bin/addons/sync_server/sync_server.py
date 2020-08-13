@@ -663,17 +663,17 @@ class sync_manager(osv.osv):
 
         if last_date:
             dom += [('server_write_date', '>', last_date)]
-            deactivated_ids = survey_obj.search(cr, uid, ['|', ('active', '=', False), ('activated', '=', False), ('server_write_date', '>', last_date)], context=context)
+            deactivated_ids = survey_obj.search(cr, 1, ['|', ('active', '=', False), ('activated', '=', False), ('server_write_date', '>', last_date)], context=context)
 
-        survey_ids = survey_obj.search(cr, uid, dom, context=context)
-        max_date = survey_obj.get_last_write(cr, uid)
+        survey_ids = survey_obj.search(cr, 1, dom, context=context)
+        max_date = survey_obj.get_last_write(cr, 1)
 
         self._logger.info("::::::::[%s] since %s: %d active surveys, %d inactive" % (entity.name, last_date, len(survey_ids), len(deactivated_ids)))
         if not survey_ids:
             return {'active': [], 'deactivated_ids': deactivated_ids, 'max_date': max_date}
 
         return {
-            'active': survey_obj.read(cr, uid, survey_ids, ['name', 'name_fr',  'profile', 'start_date', 'end_date', 'url_en', 'url_fr', 'server_write_date', 'included_group_txt', 'excluded_group_txt'], context=context),
+            'active': survey_obj.read(cr, 1, survey_ids, ['name', 'name_fr',  'profile', 'start_date', 'end_date', 'url_en', 'url_fr', 'server_write_date', 'included_group_txt', 'excluded_group_txt'], context=context),
             'deactivated_ids': deactivated_ids,
             'max_date': max_date
         }
