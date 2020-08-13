@@ -364,7 +364,7 @@ class stock_picking(osv.osv):
                     'line_number': x.get('line_number', False),
                     'name': x.get('name', False),
                     'note': x.get('note', False),
-                    'original_qty_partial': x.get('original_qty_partial', False),
+                    'original_qty_partial': x.get('product_qty', False),
                     'product_id': product_obj.search(cr, uid, [('name', '=', x.get('product_id', False)['name'])],
                                                      limit=1, context=context)[0],
                     'product_qty': x.get('product_qty', False),
@@ -375,6 +375,11 @@ class stock_picking(osv.osv):
                     'location_dest_id': location_input_id,
                 }) for x in pick_dict.get('move_lines', False)]
             }
+
+            # when OUT line has been split in Pick or PLL
+            for line in pack_data:
+                for data in pack_data[line]['data']:
+                    data['original_qty_partial'] = -1
 
             in_id = self.create(cr, uid, in_claim_dict, context=context)
 
