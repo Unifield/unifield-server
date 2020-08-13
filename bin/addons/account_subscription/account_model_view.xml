@@ -9,7 +9,7 @@
             <field name="inherit_id" ref="account.view_model_form"/>
             <field name="arch" type="xml">
                 <form string="Journal Entry Model" position="replace">
-                    <form string="Journal Entry Model">
+                    <form string="Recurring Models">
                        <group><html>
                             <p id="para_has_any_bad_ad_line_exp_in"
                             style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
@@ -24,19 +24,38 @@
                         </script>
                         </html></group>
                         <group col="6" colspan="4">
-                            <field name="name"/>
-                            <field name="journal_id" domain="[('type','=','purchase'),('is_current_instance','=',True)]"/>
-                            <field name="currency_id"/>
+                            <group attrs="{'readonly': [('state', '=', 'done')]}" colspan="6" col="6">
+                                <field name="name"/>
+                                <field name="journal_id" domain="[('type', '=', 'purchase'), ('is_current_instance', '=', True)]"/>
+                                <field name="currency_id"/>
+                            </group>
                             <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
                                 <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="3" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
-                                <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="3"/>
+                                <button name="button_reset_distribution" string="Reset AD at line level" type="object"
+                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', '=', 'done')]}"/>
                             </group>
                             <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
                                 <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="3" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
-                                <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="3"/>
+                                <button name="button_reset_distribution" string="Reset AD at line level" type="object"
+                                        icon="gtk-undelete" colspan="3" attrs="{'invisible': [('state', '=', 'done')]}"/>
                             </group>
                             <field name="analytic_distribution_id" invisible="1"/>
-                            <field colspan="6" nolabel="1" name="lines_id" widget="one2many_list"/>
+                            <notebook colspan="4">
+                                <page string="Model">
+                                    <field nolabel="1" name="lines_id" widget="one2many_list" colspan="4"
+                                           attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                </page>
+                                <page string="Related plans">
+                                    <field nolabel="1" name="recurring_plan_ids" colspan="4">
+                                        <tree>
+                                            <field name="name" string="Plan names"/>
+                                            <field name="state" string="Plan status"/>
+                                        </tree>
+                                    </field>
+                                </page>
+                            </notebook>
+                            <label string="" colspan="4"/>
+                            <field name="state" readonly="1"/>
                             <separator colspan="6" string="Legend (for the Model Name)"/>
                             <group col="8" colspan="6">
                                 <group>
@@ -91,7 +110,8 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Journal Entry Model Line" editable="bottom"
-                    colors="red: exp_in_ad_state in ('no_header', 'bad_header', 'invalid', 'invalid_small_amount')">
+                      colors="red: exp_in_ad_state in ('no_header', 'bad_header', 'invalid', 'invalid_small_amount');blue:not is_balanced and exp_in_ad_state not in ('no_header', 'bad_header', 'invalid', 'invalid_small_amount')">
+                    <field name="is_balanced" invisible="1"/>
                     <field name="sequence" readonly="1"/>
                     <field name="name"/>
                     <field name="account_id" domain="[('restricted_area', '=', 'recurring_lines')]"/>
@@ -101,8 +121,8 @@
                     <field name="analytic_distribution_state" invisible="1"/>
                     <field name="is_allocatable" invisible="1"/>
                     <field name="partner_id"/>
-                    <field name="debit"/>
-                    <field name="credit"/>
+                    <field name="debit" sum="Total Debit"/>
+                    <field name="credit" sum="Total Credit"/>
                     <field name="exp_in_ad_state" invisible="1"/>
                 </tree>
             </field>
@@ -162,7 +182,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="14"/>
             <field name="arch" type="xml">
-                <tree string="Recurring Entries To Validate" min_rows="100"
+                <tree string="Recurring Entries To Post" min_rows="100"
                       hide_new_button="1" hide_delete_button="1" hide_edit_button="1"
                       colors="red:analytic_distribution_state not in ('valid')">
                     <field name="instance_id"/>
@@ -209,14 +229,47 @@
             </field>
         </record>
 
-        <act_window
-            id="act_account_subscription_to_account_move_line_open"
-            name="Recurring Entries To Validate"
-            domain="[('move_id.state','=','draft'), ('is_recurring', '=', True)]"
-            context="{'from_recurring_entries': True}"
-            res_model="account.move.line"
-            src_model="account.subscription"
-            view_id="account_move_line_recurring_entries_to_validate"/>
+        <!-- Recurring Entries To Post Search View -->
+        <record id="view_recurring_entries_to_post_search" model="ir.ui.view">
+            <field name="name">recurring.entries.to.post.search</field>
+            <field name="model">account.move.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="25"/>
+            <field name="arch" type="xml">
+                <search>
+                    <group colspan="6" col="14">
+                        <field name="move_id"/>
+                        <field name="name"/>
+                        <field name="ref"/>
+                        <field name="document_date"/>
+                        <field name="date"/>
+                        <field name="period_id" domain="[('special', '=', False), ('state', '=', 'draft')]"/>
+                        <field name="account_id" domain="[('restricted_area', '=', 'recurring_lines')]"/>
+                        <newline/>
+                        <!-- title matching with the tree view but only Partners are possible -->
+                        <field name="partner_id" string="Third Parties"/>
+                        <field name="debit_currency"/>
+                        <field name="credit_currency"/>
+                        <field name="currency_id"/>
+                        <field name="debit"/>
+                        <field name="credit"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Recurring Entries To Post Entry Menu -->
+        <record id="act_account_subscription_to_account_move_line_open" model="ir.actions.act_window">
+            <field name="name">Recurring Entries To Post</field>
+            <field name="res_model">account.move.line</field>
+            <field name="src_model">account.subscription</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="account_move_line_recurring_entries_to_validate"/>
+            <field name="context">{'from_recurring_entries': True}</field>
+            <field name="domain">[('move_id.state', '=', 'draft'), ('is_recurring', '=', True)]</field>
+            <field name="search_view_id" ref="view_recurring_entries_to_post_search"/>
+        </record>
 
     </data>
 </openerp>

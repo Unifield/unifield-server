@@ -23,6 +23,7 @@ from osv import osv, fields
 from tools.translate import _
 import base64
 import logging
+import pooler
 
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
@@ -521,6 +522,20 @@ class user_access_configurator(osv.osv_memory):
         context=dict(context, active_test=False)
         # gather data structure corresponding to selected file
         data_structure = self._import_data_uac(cr, uid, ids, context=context)
+
+        if self.pool.get('res.groups.instances'):
+            # we are on the sync server, save the list of groups
+            new_cr = pooler.get_db(cr.dbname).cursor()
+            group_map = {}
+            new_cr.execute('select id, name from res_groups_instances')
+            for x in new_cr.fetchall():
+                group_map[x[1]] = x[0]
+            for gr in data_structure.get(ids[0], {}).get('group_name_list', []):
+                gr = gr.split('$')[0]
+                if gr not in group_map:
+                    self.pool.get('res.groups.instances').create(new_cr, uid, {'name': gr}, context=context)
+            new_cr.commit()
+            new_cr.close()
         # process the groups
         self._process_groups_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
         # process menus - groups relation

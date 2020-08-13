@@ -245,7 +245,7 @@ class wizard_import_in_simulation_screen(osv.osv):
             'context': context,
         }
 
-    def launch_import(self, cr, uid, ids, context=None):
+    def launch_import(self, cr, uid, ids, context=None, with_ppl=False):
         '''
         '''
         if context is None:
@@ -254,10 +254,10 @@ class wizard_import_in_simulation_screen(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        return self._import(cr, uid, ids, context=context)
+        return self._import(cr, uid, ids, context=context, with_ppl=with_ppl)
 
     def launch_import_pack(self, cr, uid, ids, context=None):
-        return self.launch_import(cr, uid, ids, context)
+        return self.launch_import(cr, uid, ids, context, with_ppl=True)
 
     def populate(self, cr, uid, import_id, picking_id, context=None):
         if context is None:
@@ -518,6 +518,50 @@ the date has a wrong format: %s') % (index+1, str(e)))
                     raise osv.except_osv(_('Error'), _("Line %s of the imported file, extra column found (%s cols found)\n-- %s") % (index+1, len(row), tools.ustr(traceback.format_exc())))
 
         return values, nb_line, error
+
+    def error_pick_already_processed(self, cr, uid, sol_id_sum, sol_id_to_wiz_line, context):
+        if not sol_id_sum:
+            return ''
+        cr.execute('''
+                select m.sale_line_id, sum(m.product_qty)
+                from stock_move m, stock_picking p
+                where
+                    m.picking_id = p.id and
+                    p.type = 'out' and
+                    p.subtype = 'picking' and
+                    p.state = 'draft' and
+                    m.state in ('assigned', 'confirmed') and
+                    m.sale_line_id in %s
+                group by
+                    m.sale_line_id
+            ''', (tuple(sol_id_sum.keys()),))
+        extra_qty = {}
+        for x in cr.fetchall():
+            if x[1] < sol_id_sum[x[0]]:
+                extra_qty[x[0]] = sol_id_sum[x[0]] -  x[1]
+
+        already_process = {}
+        if extra_qty:
+            cr.execute('''
+                    select m.sale_line_id, sum(m.product_qty)
+                    from stock_move m, stock_picking p
+                    where
+                        m.picking_id = p.id and
+                        p.type = 'out' and
+                        p.state not in  ('draft', 'cancel') and
+                        m.sale_line_id in %s
+                    group by
+                        m.sale_line_id
+                ''', (tuple(extra_qty.keys()),))
+            for x in cr.fetchall():
+                already_process[x[0]] = x[1]
+
+        if already_process:
+            details = []
+            for sol in self.pool.get('sale.order.line').browse(cr, uid, already_process.keys(), fields_to_fetch=['product_id'], context=context):
+                details.append('Line number: %s, [%s] %s' % (sol_id_to_wiz_line.get(sol.id),sol.product_id.default_code, sol.product_id.name))
+            return _('Warning the following product lines have already been processed in linked OUT/Pick document, so cannot be processed here. Please remove these lines before trying to processs the movement\n%s') % ("\n".join(details))
+        return ''
 
     # Simulation routing
     def simulate(self, dbname, uid, ids, context=None):
@@ -966,6 +1010,27 @@ Nothing has been imported because of %s. See below:
                                 err = _('Line %s of the Excel file: %s') % (file_line[0], err)
                                 values_line_errors.append(err)
 
+                if wiz.with_pack and not context.get('auto_import_ok'):
+                    # check if an out line has been forced
+                    cr.execute('''
+                        select wiz_line.line_number, pol.linked_sol_id, sum(wiz_line.imp_product_qty)
+                        from wizard_import_in_line_simulation_screen wiz_line
+                        left join wizard_import_in_simulation_screen wiz on wiz.id = wiz_line.simu_id
+                        left join stock_move move_in on move_in.picking_id = wiz.picking_id and move_in.line_number = wiz_line.line_number
+                        left join purchase_order_line pol on pol.id = move_in.purchase_line_id
+                        where
+                            (wiz_line.type_change in ('', 'split') or wiz_line.type_change is NULL) and
+                            wiz.id = %s
+                        group by wiz_line.line_number, pol.linked_sol_id
+                    ''', (wiz.id,))
+                    sol_id_to_wiz_line = {}
+                    sol_id_sum = {}
+                    for x in cr.fetchall():
+                        sol_id_to_wiz_line[x[1]] = x[0]
+                        sol_id_sum[x[1]] = x[2]
+                    error_pick = self.error_pick_already_processed(cr, uid, sol_id_sum, sol_id_to_wiz_line, context)
+                    if error_pick:
+                        values_line_errors.append(error_pick)
 
                 # Create new lines
                 for in_line in new_in_lines:
@@ -1049,7 +1114,7 @@ Nothing has been imported because of %s. See below:
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def _import_with_thread(self, cr, uid, partial_id, simu_id, context=None):
+    def _import_with_thread(self, cr, uid, partial_id, simu_id, context=None, with_ppl=False):
         inc_proc_obj = self.pool.get('stock.incoming.processor')
         in_proc_obj = self.pool.get('stock.move.in.processor')
         picking_obj = self.pool.get('stock.picking')
@@ -1063,7 +1128,7 @@ Nothing has been imported because of %s. See below:
                         prodlot_id = self.pool.get('stock.production.lot')._get_prodlot_from_expiry_date(new_cr, uid, line.expiry_date, line.product_id.id, context=context)
                         in_proc_obj.write(new_cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
 
-            new_picking = picking_obj.do_incoming_shipment(new_cr, uid, partial_id, context=context)
+            new_picking = picking_obj.do_incoming_shipment(new_cr, uid, partial_id, context=context, with_ppl=with_ppl)
             if isinstance(new_picking, (int,long)):
                 context['new_picking'] = new_picking
             new_cr.commit()
@@ -1087,7 +1152,7 @@ Nothing has been imported because of %s. See below:
         return True
 
 
-    def _import(self, cr, uid, ids, context=None):
+    def _import(self, cr, uid, ids, context=None, with_ppl=False):
         '''
         Create memeory moves and return to the standard incoming processing wizard
         '''
@@ -1122,9 +1187,9 @@ Nothing has been imported because of %s. See below:
             cr.commit()
             if context.get('do_not_import_with_thread'):
                 # Auto VI IN import: do not process IN
-                self._import_with_thread(cr, uid, [partial_id], simu_id.id, context=context)
+                self._import_with_thread(cr, uid, [partial_id], simu_id.id, context=context, with_ppl=with_ppl)
             else:
-                new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context))
+                new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context, with_ppl))
                 new_thread.start()
                 new_thread.join(20)
                 if new_thread.isAlive():
@@ -1157,18 +1222,35 @@ class wizard_import_in_pack_simulation_screen(osv.osv):
     _name = 'wizard.import.in.pack.simulation.screen'
     _rec_name = 'parcel_from'
 
+    def _get_real_total(self, cr, uid, ids, f, a, context=None):
+        res = {}
+        for pack in self.browse(cr, uid, ids, context=context):
+            res[pack.id] = {'real_total_volume': False, 'real_total_weight': False}
+
+            if pack.parcel_to and pack.parcel_from:
+                nb_pack = pack.parcel_to - pack.parcel_from + 1
+                if pack.total_weight:
+                    res[pack.id]['real_total_weight'] = int(round(nb_pack * pack.total_weight, 0))
+                if pack.total_height and pack.total_length and pack.total_width:
+                    res[pack.id]['real_total_volume'] = int(round(pack.total_height * pack.total_length * pack.total_width * nb_pack / 1000, 0))
+        return res
+
     _columns = {
         'wizard_id': fields.many2one('wizard.import.in.simulation.screen', 'Simu Wizard'),
-        'parcel_from': fields.integer('Parcel From'),
-        'parcel_to': fields.integer('Parcel To'),
-        'parcel_qty': fields.integer('Parcel Qty'),
-        'total_weight': fields.float('Weight', digits=(16,2)),
-        'total_volume': fields.float('Volume', digits=(16,2)),
-        'total_height': fields.float('Height', digits=(16,2)),
-        'total_length': fields.float('Length', digits=(16,2)),
-        'total_width': fields.float('Width', digits=(16,2)),
+        'parcel_from': fields.integer_null('Parcel From'),
+        'parcel_to': fields.integer_null('Parcel To'),
+        'parcel_qty': fields.integer_null('Parcel Qty'),
+        # on IN VI import file the fields are named total_xxx but the figures are p.p
+        'total_weight': fields.float_null('Weight', digits=(16,2)),
+        'total_volume': fields.float_null('Volume', digits=(16,2)),
+        'total_height': fields.float_null('Height', digits=(16,2)),
+        'total_length': fields.float_null('Length', digits=(16,2)),
+        'total_width': fields.float_null('Width', digits=(16,2)),
         'packing_list': fields.char('Supplier Packing List', size=30),
+        'ppl_name': fields.char('Supplier Packing List', size=128),
         'integrity_status': fields.selection(string='Integrity Status', selection=PACK_INTEGRITY_STATUS_SELECTION, readonly=True),
+        'real_total_volume': fields.function(_get_real_total, method=True, type='integer_null', string='Total volume for all packs', multi='real_total'),
+        'real_total_weight': fields.function(_get_real_total, method=True, type='integer_null', string='Total weight for all packs', multi='real_total'),
     }
 
     _defaults = {
@@ -1415,9 +1497,20 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             # Product
             prod_id = False
+            loc_id = line.move_id and line.move_id.location_id.id or line.parent_line_id and \
+                line.parent_line_id.move_id.location_id.id or False
+            dest_loc_id = line.move_id and line.move_id.location_dest_id.id or line.parent_line_id and line.parent_line_id.move_id.location_dest_id or False
             if values.get('product_code') == line.move_product_id.default_code:
-                prod_id = line.move_product_id and line.move_product_id.id or False
-                write_vals['imp_product_id'] = prod_id
+                if line.move_product_id:
+                    p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [line.move_product_id.id],
+                                                                      vals={'location_id': loc_id, 'location_dest_id': dest_loc_id, 'obj_type': 'in', 'partner_type': line.simu_id.picking_id.partner_id.partner_type},
+                                                                      context=context)
+                    if p_error:  # Check constraints on products
+                        write_vals['type_change'] = 'error'
+                        errors.append(p_msg)
+                    else:
+                        prod_id = line.move_product_id.id
+                        write_vals['imp_product_id'] = prod_id
             else:
                 prod_id = False
                 if values.get('product_code'):
@@ -1439,9 +1532,21 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                         self.write(cr, uid, [line.id], write_vals, context=context)
                         continue
                     else:
-                        write_vals['imp_product_id'] = prod_ids[0]
+                        p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [prod_id], vals={'location_id': loc_id, 'location_dest_id': dest_loc_id, 'obj_type': 'in', 'partner_type': line.simu_id.picking_id.partner_id.partner_type},
+                                                                          context=context)
+                        if p_error:  # Check constraints on products
+                            write_vals['type_change'] = 'error'
+                            errors.append(p_msg)
+                        else:
+                            write_vals['imp_product_id'] = prod_ids[0]
                 else:
-                    write_vals['imp_product_id'] = prod_id
+                    p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [prod_id], vals={'location_id': loc_id, 'location_dest_id': dest_loc_id, 'obj_type': 'in', 'partner_type': line.simu_id.picking_id.partner_id.partner_type},
+                                                                      context=context)
+                    if p_error:  # Check constraints on products
+                        write_vals['type_change'] = 'error'
+                        errors.append(p_msg)
+                    else:
+                        write_vals['imp_product_id'] = prod_id
 
             product = False
             if write_vals.get('imp_product_id'):

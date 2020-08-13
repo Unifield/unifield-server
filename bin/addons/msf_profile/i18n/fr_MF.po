@@ -1641,8 +1641,8 @@ msgstr "Taille Sauvegarde"
 #: selection:product.product,state_ud:0
 #: model:product.status,name:product_attributes.status_3
 #: selection:product.mass.update,product_state:0
-msgid "Stopped"
-msgstr "Arrêté"
+msgid "Stopped (obsolete)"
+msgstr "Arrêté (obsolète)"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:268
@@ -2156,12 +2156,6 @@ msgstr "La ligne %s du fichier Excel a été ajoutée aux fichiers des erreurs :
 msgid "My Instance"
 msgstr "Mon Instance"
 
-#. module: purchase
-#: code:addons/purchase/purchase_order.py:1752
-#, python-format
-msgid "You set an intermission partner, at validation Cost Centers will be changed to intermission."
-msgstr "You set an intermission partner, at validation Cost Centers will be changed to intermission."
-
 #. module: account_override
 #: report:addons/account_override/report/account_chart_export.mako:103
 msgid "Period from"
@@ -2528,13 +2522,6 @@ msgstr "Importer des articles du Kit Théorique"
 #: help:stock.move.processor,ssl_check:0
 msgid "Ticked if the product is a Short Shelf Life product"
 msgstr "Coché si le produit est à durée de conservation limitée"
-
-#. module: sourcing
-#: code:addons/sourcing/sale_order_line.py:898
-#, python-format
-msgid "For an Internal Request with a procurement method 'On Order' and without product,\n"
-"the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ESC' type."
-msgstr "Pour une Demande Interne avec une méthode d'approvisionnement `Sur Commande´ et sans produit, le fournisseur doit être soit de type 'Interne', 'Inter-section', 'Intermission ou 'ESC' ."
 
 #. module: account_hq_entries
 #: field:hq.entries,split_ids:0
@@ -5403,7 +5390,7 @@ msgstr "validated - (sale.order.line)"
 #: code:addons/product_attributes/product_attributes.py:1205
 #, python-format
 msgid "be %s externally"
-msgstr "be %s externally"
+msgstr "être %s à l'extérieur"
 
 #. modules: procurement_auto, procurement, procurement_cycle
 #: view:stock.warehouse.orderpoint:0
@@ -5655,8 +5642,8 @@ msgstr "Entrées Siège Défractionner"
 
 #. module: msf_instance
 #: view:res.company:0
-msgid "P&L result accounts"
-msgstr "Comptes de revenu et dépense "
+msgid "Fiscal Year Closure"
+msgstr "Fermeture d'Exercice Comptable"
 
 #. module: account
 #: model:ir.actions.act_window,help:account.action_account_tax_chart
@@ -8024,7 +8011,7 @@ msgstr "Assistant d'importation de la liste du personnel"
 #: code:addons/product_attributes/product_attributes.py:1213
 #, python-format
 msgid "be supplied/exchanged internally"
-msgstr "be supplied/exchanged internally"
+msgstr "être approvisionné/échangé en interne"
 
 #. module: msf_outgoing
 #: view:stock.move.memory.shipment.returnpacks:0
@@ -8442,7 +8429,7 @@ msgstr "Sous-type de Picking"
 msgid "Either there are no moves linked to the picking or Accounting Journals are misconfigured!"
 msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de mouvement connexe à ce prélèvement !"
 
-#. modules: tender_flow, financing_contract, msf_tools, account_override, purchase_allocation_report, register_accounting, mission_stock, msf_accrual, finance, sync_client, return_claim, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, stock_forecast, analytic, stock_override, msf_doc_import, analytic_distribution, msf_order_date, msf_homere_interface, consumption_calculation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_supply_doc_export, msf_budget, account_corrections, account, msf_outgoing, documents_done, sale, sales_followup, procurement, sourcing, purchase, msf_audittrail, stock, product, procurement_cycle
+#. modules: tender_flow, financing_contract, msf_tools, account_override, purchase_allocation_report, register_accounting, mission_stock, msf_accrual, finance, sync_client, return_claim, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, stock_forecast, analytic, stock_override, msf_doc_import, analytic_distribution, msf_order_date, msf_homere_interface, consumption_calculation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_supply_doc_export, msf_budget, account_corrections, account, msf_outgoing, documents_done, sale, sales_followup, procurement, sourcing, purchase, msf_audittrail, stock, product, procurement_cycle, account_subscription
 #: code:addons/msf_supply_doc_export/wizard/po_follow_up.py:106
 #: selection:msf.instance.cloud,state:0
 #: field:ppl.processor,draft_step2:0
@@ -8615,6 +8602,8 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:replenishment.segment,state:0
 #: view:product.stock_out:0
 #: selection:product.stock_out,state:0
+#: selection:account.model,state:0
+#: view:account.model:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -10064,11 +10053,6 @@ msgstr "Pas de rapport trouvé  sur l'historique des consommations !"
 msgid "Funding pools:"
 msgstr "Funding pools:"
 
-#. module: account
-#: view:account.subscription:0
-msgid "Entry Subscription"
-msgstr "Ecriture de souscription"
-
 #. modules: account, account_period_closing_level
 #: model:ir.actions.act_window,help:account.action_account_period_tree
 #: model:ir.actions.act_window,help:account_period_closing_level.action_account_period_closing_level_tree
@@ -11209,7 +11193,7 @@ msgstr "Lignes analytiques"
 msgid "Line %s. You cannot only add partner or employee or journal."
 msgstr "Line %s. You cannot only add partner or employee or journal."
 
-#. modules: purchase, account, base, useability_dashboard_and_menu, msf_partner
+#. modules: purchase, account, base, useability_dashboard_and_menu, msf_partner, stock
 #: model:ir.ui.menu,name:account.menu_account_customer
 #: model:ir.ui.menu,name:account.menu_finance_receivables
 #: model:ir.actions.act_window,name:base.action_partner_customer_form
@@ -11220,6 +11204,7 @@ msgstr "Line %s. You cannot only add partner or employee or journal."
 #: field:purchase.order,dest_partner_ids:0
 #: field:purchase.order,dest_partner_names:0
 #: model:ir.ui.menu,name:useability_dashboard_and_menu.menu_customer
+#: field:stock.picking,customers:0
 msgid "Customers"
 msgstr "Clients"
 
@@ -13492,10 +13477,10 @@ msgstr "Prix d'Origine"
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:98
 #, python-format
-msgid "You should have exactly 8 columns in this order:\n"
-"Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Date, Consumed Quantity, Remark"
-msgstr "You should have exactly 8 columns in this order:\n"
-"Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Date, Consumed Quantity, Remark"
+msgid "You should have exactly 9 columns in this order:\n"
+"Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number, Asset, Expiry Date, Consumed Quantity, Remark"
+msgstr "Vous devriez avoir exactement 9 colonnes dans cet ordre:\n"
+"Code Produit*, Description du Produit*, UdM du Produit, Qté Indicative du Stock, Numéro de Lot, Actif, Date d'Expiration, Quantité Consommée, Remarque"
 
 #. module: sales_followup
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:182
@@ -13619,9 +13604,10 @@ msgstr "Gestion de Projets"
 msgid "Invoice Control"
 msgstr "Contrôle Facture"
 
-#. module: account
+#. modules: account, account_subscription
 #: model:ir.actions.act_window,name:account.action_model_form
 #: model:ir.ui.menu,name:account.menu_action_model_form
+#: view:account.model:0
 msgid "Recurring Models"
 msgstr "Modèles périodiques"
 
@@ -14725,7 +14711,7 @@ msgstr "Aucune période n'a été définie pour la ligne '%s' !"
 #: code:addons/product_attributes/product_attributes.py:1201
 #, python-format
 msgid "be exchanged"
-msgstr "be exchanged"
+msgstr "être échangé"
 
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.sl
@@ -20782,12 +20768,11 @@ msgstr "Is child of CoA"
 msgid "Etc/GMT-11"
 msgstr "Etc/GMT-11"
 
-#. modules: sales_followup, msf_tools, account
+#. modules: sales_followup, msf_tools
 #: selection:ir.followup.location.wizard,state:0
 #: selection:job.in_progress,state:0
-#: view:account.subscription:0
 msgid "Done"
-msgstr "Cloturé"
+msgstr "Clôturé"
 
 #. module: delivery_mechanism
 #: code:addons/delivery_mechanism/delivery_mechanism.py:360
@@ -23932,7 +23917,7 @@ msgstr "De brouillon à demande de Devis."
 #. module: account
 #: field:account.subscription,period_nbr:0
 msgid "Repeat"
-msgstr "Repeat"
+msgstr "Périodicité"
 
 #. module: sourcing
 #: code:addons/sourcing/sale_order_line.py:905
@@ -25197,9 +25182,10 @@ msgstr "Éléments supplémentaires"
 msgid "Update or create ?"
 msgstr "Mettre à jour ou créer ?"
 
-#. module: purchase
+#. module: purchase, stock
 #: field:purchase.order,customer_ref:0
 #: field:purchase.order,short_customer_ref:0
+#: field:stock.picking,customer_ref:0
 msgid "Customer Ref."
 msgstr "Ref. Client"
 
@@ -28660,13 +28646,15 @@ msgstr "Asia/Vladivostok"
 
 #. module: account
 #: selection:account.aged.trial.balance,direction_selection:0
+#: view:sync_client.survey:0
 msgid "Future"
 msgstr "Contrat à terme"
 
-#. modules: stock_override, stock
+#. modules: stock_override, stock, sync_client
 #: view:report.stock.inventory:0
 #: view:stock.move:0
 #: view:stock.move:0
+#: view:sync_client.survey:0
 msgid "Future"
 msgstr "Futur"
 
@@ -30133,6 +30121,9 @@ msgstr "Operator '%s' not suported"
 #: field:sync.client.register_entity,message:0
 #: selection:sync.client.register_entity,state:0
 #: field:account.invoice.import,message:0
+#: field:wizard.import.po.simulation.screen.line,info_msg:0
+#: field:wizard.import.ppl.to.create.ship,message:0
+#: field:wizard.import.product.line,message:0
 msgid "Message"
 msgstr "Message"
 
@@ -30366,8 +30357,8 @@ msgstr "Analytic lines linked to the given register line(s). Correction(s) inclu
 
 #. module: account
 #: view:account.subscription.generate:0
-msgid "Automatically generate entries based on what has been entered in the  system before a specific date."
-msgstr "Génère automatiquement des écritures en se basant sur ce qui a été enregistré dans le système avant une date spécifique"
+msgid "Automatically generate entries based on what has been entered in the system until a specific date."
+msgstr "Génère automatiquement des écritures en se basant sur ce qui a été enregistré dans le système jusqu'à une date spécifique."
 
 #. module: base
 #: model:res.currency,currency_name:base.DZD
@@ -33539,11 +33530,6 @@ msgstr "Vous ne pouvez pas clôturer une période dont des lignes d'écriture ne
 msgid "used in statement reconciliation domain, but shouldn't be used elswhere."
 msgstr "utilisé dans le domaine du lettrage de relevés, mais ne devrait pas être utilisé ailleurs"
 
-#. module: account
-#: view:account.subscription:0
-msgid "Draft Subscription"
-msgstr "Draft Subscription"
-
 #. module: base
 #: view:partner.wizard.ean.check:0
 msgid "Correct EAN13"
@@ -33551,6 +33537,7 @@ msgstr "EAN 13 Correcte"
 
 #. module: msf_outgoing
 #: model:process.transition,name:msf_outgoing.process_transition_draft_pick_picking_ppl
+#: model:process.transition,note:msf_outgoing.process_transition_draft_pick_picking_ppl
 msgid "From picking to ppl."
 msgstr "De Picking à  liste de pré-colis"
 
@@ -34970,12 +34957,13 @@ msgstr "Utiliser un modèle"
 msgid "Earmarked - Actuals"
 msgstr "Earmarked - Actuals"
 
-#. modules: msf_doc_import, msf_custom_settings, consumption_calculation
-#: sql_constraint:real.average.consumption.line:0
-#: sql_constraint:real.average.consumption.line:0
-#: sql_constraint:real.average.consumption.line:0
-msgid "The couple product, batch number has to be unique"
-msgstr "Le couple produit, numéro de lot doit être unique"
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/consumption_calculation.py:905
+#, python-format
+msgid "Each product or couple product plus batch number has to be unique:\n"
+"%s"
+msgstr "Chaque produit ou couple produit plus numéro de lot doit être unique:\n"
+"%s"
 
 #. module: tender_flow
 #: field:procurement.order,rfq_line_id:0
@@ -36152,16 +36140,6 @@ msgstr "Date du Cloud"
 #: field:purchase.order.merged.line,original_currency_id:0
 msgid "Original Currency"
 msgstr "Devise d'Origine"
-
-#. module: sourcing
-#: code:addons/sourcing/sale_order_line.py:1218
-#, python-format
-msgid "For an Internal Request with a procurement method 'On Order' and without product,\n"
-"                    the supplier must be either in 'Internal', 'Inter-Section', 'Intermission' or 'ESC' type.\n"
-"                    "
-msgstr "For an Internal Request with a procurement method 'On Order' and without product,\n"
-"                    the supplier must be either in 'Internal', 'Inter-Section', 'Intermission' or 'ESC' type.\n"
-"                    "
 
 #. module: hr
 #: help:hr.employee,parent_id:0
@@ -37447,12 +37425,6 @@ msgstr "Macao"
 msgid "Subtotal"
 msgstr "Sous-total"
 
-#. module: sourcing
-#: code:addons/sourcing/sale_order_line.py:954
-#, python-format
-msgid "You can't Source to an 'External' partner if you don't have product."
-msgstr "You can't Source to an 'External' partner if you don't have product."
-
 #. module: sync_client
 #: field:backup.config,name:0
 msgid "Path to backup to"
@@ -37851,7 +37823,7 @@ msgstr "Exporter des lignes Consommations Moyennes Réelles (CMR) "
 #: code:addons/consumption_calculation/consumption_calculation.py:799
 #, python-format
 msgid "Line %s of the imported file: Qty Consumed (%s) can't be greater than the Indicative Stock (%s)"
-msgstr "Ligne %s du fichier: la qté consommée (%s) ne peut être supérieure à la qté indicative du stock (%s)"
+msgstr "Ligne %s du fichier: la qté consommée (%s) ne peut être supérieure à la Qté Indicative du Stock (%s)"
 
 #. module: base
 #: selection:ir.translation,lang:0
@@ -38139,11 +38111,6 @@ msgstr "La période '%s' n'est pas ouverte ! Pas d'écriture comptable créée."
 msgid "Reservation Destination"
 msgstr "Destination de la Réservation"
 
-#. module: account
-#: view:account.subscription:0
-msgid "Remove Lines"
-msgstr "Supprimer des lignes"
-
 #. module: base
 #: help:ir.cron,function:0
 msgid "Name of the method to be called on the object when this scheduler is executed."
@@ -38312,7 +38279,7 @@ msgstr "(vacances)"
 #: code:addons/account/wizard/account_subscription_generate.py:52
 #, python-format
 msgid "The Recurring Model %s must have at least two lines."
-msgstr "Le Modèle Récurrent %s doit au moins avoir deux lignes."
+msgstr "Le Modèle Périodique %s doit avoir au moins deux lignes."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/msf_import_export.py:103
@@ -38477,7 +38444,7 @@ msgstr "Créer des Périodes Mensuelles"
 #. module: stock
 #: code:addons/stock/physical_inventory.py:1411
 #: field:physical.inventory.discrepancy,discrepancy_value:0
-#: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:813
+#: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:833
 #, python-format
 msgid "Discrepancy Value"
 msgstr "Valeur des Écarts"
@@ -38533,6 +38500,9 @@ msgstr "base.report.sxw"
 #: selection:purchase.order,transport_mode:0
 #: selection:shipment.add.pack.processor,transport_type:0
 #: selection:international.transport.cost.report,transport_type:0
+#: selection:wizard.import.in.simulation.screen,transport_type:0
+#: selection:wizard.import.po.simulation.screen,imp_transport_type:0
+#: selection:wizard.import.po.simulation.screen,in_transport_type:0
 msgid "Sea"
 msgstr "Mer"
 
@@ -38585,7 +38555,7 @@ msgstr "Est-ce une zone optionnelle?"
 msgid "Is inactive for destination given in context"
 msgstr "Is inactive for destination given in context"
 
-#. modules: sales_followup, account, documents_done, consumption_calculation, sale, specific_rules, transport_mgmt, account_override, purchase_allocation_report, product_list, tender_flow, msf_doc_import, stock, product_attributes, purchase_override, purchase
+#. modules: sales_followup, account, documents_done, consumption_calculation, sale, specific_rules, transport_mgmt, account_override, purchase_allocation_report, product_list, tender_flow, msf_doc_import, stock, product_attributes, purchase_override, purchase, account_subscription
 #: field:account.move.line,date_created:0
 #: field:account.move.reconcile,create_date:0
 #: report:allocation.invoices.report:0
@@ -38612,6 +38582,7 @@ msgstr "Is inactive for destination given in context"
 #: field:internal.request.import,in_creation_date:0
 #: field:purchase.order.line,create_date:0
 #: field:internal.request.import,in_creation_date:0
+#: field:account.model,create_date:0
 #, python-format
 msgid "Creation date"
 msgstr "Date de création"
@@ -39216,7 +39187,7 @@ msgstr "Transbordement - Valeur."
 msgid "RfQs"
 msgstr "DdD"
 
-#. modules: account, sync_client, product_asset, base, msf_audittrail, board, object_query, msf_profile, msf_field_access_rights, msf_button_access_rights,msf_tools
+#. modules: account, sync_client, product_asset, base, msf_audittrail, board, object_query, msf_profile, msf_field_access_rights, msf_button_access_rights, msf_tools, account_subscription
 #: field:account.model.line,model_id:0
 #: view:account.subscription:0
 #: field:account.subscription,model_id:0
@@ -39245,6 +39216,7 @@ msgstr "DdD"
 #: field:automated.import.function,model_id:0
 #: field:sync.client.log_sale_purchase,model:0
 #: field:sync.client.log_sale_purchase,model_id:0
+#: view:account.model:0
 msgid "Model"
 msgstr "Modèle"
 
@@ -41514,8 +41486,9 @@ msgid "The partner is missing."
 msgstr "The partner is missing."
 
 #. module: stock
+#: view:physical.inventory:0
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:682
-msgid "With discrepencies"
+msgid "With discrepancies"
 msgstr "Avec les écarts"
 
 #. module: base
@@ -41838,7 +41811,7 @@ msgstr "Résumé de l'import précédent"
 #: code:addons/product_attributes/product_attributes.py:1226
 #, python-format
 msgid "status"
-msgstr "status"
+msgstr "statut"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/check_line.py:187
@@ -43215,6 +43188,7 @@ msgstr "REGISTRE DE CHÈQUE"
 #. modules: account, finance
 #: view:account.move:0
 #: view:cash.request:0
+#: view:account.model.line:0
 msgid "Total Debit"
 msgstr "Total Débit"
 
@@ -43308,6 +43282,8 @@ msgstr "Budget Mensuel (XLS)"
 #: field:wizard.import.batch,info_message:0
 #: view:internal.request.import:0
 #: view:account.invoice.import.errors:0
+#: view:wizard.import.ppl.to.create.ship:0
+#: view:wizard.import.product.line:0
 msgid "Information"
 msgstr "Informations"
 
@@ -44398,8 +44374,8 @@ msgstr "Validé"
 
 #. module: account
 #: model:ir.actions.act_window,help:account.action_subscription_form
-msgid "A recurring entry is a miscellaneous entry that occurs on a recurrent basis from a specific date, i.e. corresponding to the signature of a contract or an agreement with a customer or a supplier. With Define Recurring Entries, you can create such entries to automate the postings in the system."
-msgstr "Une écriture périodique est une écriture qui est configurée par le biais de la fonctionnalité Définir Ecritures Périodiques. Ceci vous permet d'enregistrer une écriture à partir d'une date spécifique. Cette écriture sera reproduite automatiquement dans votre comptabilité et à une fréquence définie. Vous pouvez utiliser cette fonctionnalité par exemple pour étaler la charge d'un loyer sur plusieurs mensualités. "
+msgid "A recurring entry is a miscellaneous entry that occurs on a recurrent basis from a specific date, i.e. corresponding to the signature of a contract or an agreement with a customer or a supplier. With Recurring Plan, you can create such entries to automate the postings in the system."
+msgstr "Une écriture périodique est une écriture qui est configurée par le biais de la fonctionnalité Plan d'Ecritures Périodiques. Ceci vous permet d'enregistrer une écriture à partir d'une date spécifique. Cette écriture sera reproduite automatiquement dans votre comptabilité et à une fréquence définie. Vous pouvez utiliser cette fonctionnalité par exemple pour étaler la charge d'un loyer sur plusieurs mensualités."
 
 #. modules: account, finance
 #: view:account.bank.statement:0
@@ -45196,7 +45172,7 @@ msgstr "Les groupes servent à définir les droits d'accès aux objets, et la vi
 msgid "The currency you want to %s is used in at least one Commitment Voucher which isn't Done."
 msgstr "La devise que vous désirez %s est utilisée dans un moins un Bon d'Engagement non Terminé."
 
-#. modules: account, resource, account_mcdb, msf_instance, analytic, base, msf_audittrail, msf_profile, product_attributes
+#. modules: account, resource, account_mcdb, msf_instance, analytic, base, msf_audittrail, msf_profile, product_attributes, sync_client
 #: view:account.journal:0
 #: field:account.journal,user_id:0
 #: view:analytic.entries.report:0
@@ -45226,6 +45202,7 @@ msgstr "La devise que vous désirez %s est utilisée dans un moins un Bon d'Enga
 #: field:finance.sync.query,user_id:0
 #: report:addons/product_attributes/report/standard_price_track_changes.mako:92
 #: report:addons/msf_audittrail/report/log_line_xls.mako:78
+#: field:sync_client.survey.user,user_id:0
 msgid "User"
 msgstr "Utilisateur"
 
@@ -48064,11 +48041,6 @@ msgstr "America/Nassau"
 msgid "Unit"
 msgstr "Unité"
 
-#. module: stock
-#: view:physical.inventory:0
-msgid "With discrepancies"
-msgstr "Avec les écart"
-
 #. module: msf_instance
 #: view:res.company:0
 msgid "B/S Move to 0 accounts"
@@ -48191,8 +48163,8 @@ msgstr "The claim %s is created by sync and linked to the claim %s by Push Flow 
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_year_end_closing.py:658
 #, python-format
-msgid "B/S Regular Equity result accounts credit/debit not set in company settings 'P&L result accounts'"
-msgstr "B/S Regular Equity result accounts credit/debit not set in company settings 'P&L result accounts'"
+msgid "Accounts not set in company settings \"Fiscal Year Closure\" (B/S accounts)"
+msgstr "Comptes non définis dans la section \"Fermeture d'Exercice Comptable\" de la configuration de la société (Comptes de Bilan)"
 
 #. module: base
 #: model:res.partner.title,name:base.res_partner_title_sir
@@ -48566,7 +48538,7 @@ msgstr "Date de Début de Contrat"
 #: code:addons/product_attributes/product_attributes.py:1209
 #, python-format
 msgid "be %s ESC"
-msgstr "be %s ESC"
+msgstr "être %s l'ESC"
 
 #. module: kit
 #: code:addons/kit/kit_creation.py:83
@@ -50465,11 +50437,6 @@ msgstr "Importer les Lignes"
 msgid "Logs Sequence"
 msgstr "Journaux de bord - Sequence"
 
-#. module: account
-#: view:account.subscription:0
-msgid "Running Subscription"
-msgstr "Running Subscription"
-
 #. modules: base,  msf_currency_revaluation
 #: code:addons/msf_currency_revaluation/res_currency.py:40
 #: code:addons/base/res/res_currency.py:108
@@ -51524,7 +51491,7 @@ msgstr "MSF Locations configuration"
 #: code:addons/product_attributes/product_attributes.py:1221
 #, python-format
 msgid "be stored anymore"
-msgstr "be stored anymore"
+msgstr "être stocké"
 
 #. module: account
 #: model:ir.actions.act_window,name:account.action_account_print_journal
@@ -51712,6 +51679,12 @@ msgstr "This field is used to have only one PO by replenishment\n"
 #, python-format
 msgid "Products to Process"
 msgstr "Produits à Traiter"
+
+#. module: msf_outgoing
+#: code:addons/addons/msf_outgoing/wizard/picking_processor.py:100
+#, python-format
+msgid "Warning, you are processing product(s) which have \"Forbidden\" status, these should not be used. Please refer to your OC guidelines for their management: "
+msgstr "Attention, vous allez traiter des produits qui sont dans l'état \"Interdit\", ils ne devraient pas être utilisés. Veuillez vous référer aux instructions de votre OC: "
 
 #. modules: delivery_mechanism, analytic_distribution_supply, product_asset, return_claim, stock_override, stock_forecast, order_types, msf_doc_import, stock, msf_order_date, reason_types_moves, finance, purchase, service_purchasing, consumption_calculation, specific_rules, kit, out_step, delete_button, msf_cross_docking, sales_followup, msf_outgoing, stock_move_tracking, sale, transport_mgmt, procurement, msf_custom_settings, msf_audittrail, specific_locations, sync_so
 #: constraint:stock.move:0
@@ -53023,7 +52996,7 @@ msgstr "La définition du code de taxe dépend de la déclaration fiscale de vot
 #: code:addons/product_attributes/product_attributes.py:1226
 #, python-format
 msgid "product creator"
-msgstr "product creator"
+msgstr "créateur produit"
 
 #. modules: procurement, account_hq_entries
 #: view:hq.entries:0
@@ -54605,7 +54578,7 @@ msgstr "Fermer les statuts de l'Exercice Comptable et des périodes"
 #: code:addons/product_attributes/product_attributes.py:1209
 #, python-format
 msgid "purchased at"
-msgstr "purchased at"
+msgstr "acheté à"
 
 #. module: msf_doc_import
 #: model:product.nomenclature,name:msf_doc_import.nomen_tbd0
@@ -56995,8 +56968,8 @@ msgstr "Inconnu"
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_year_end_closing.py:519
 #, python-format
-msgid "Accounts not set in company settings 'P&L result accounts'"
-msgstr "Accounts not set in company settings 'P&L result accounts'"
+msgid "Accounts not set in company settings \"Fiscal Year Closure\""
+msgstr "Comptes non définis dans la section \"Fermeture d'Exercice Comptable\" de la configuration de la société"
 
 #. module: mission_stock
 #: field:stock.mission.report.line,cu_qty:0
@@ -62613,8 +62586,8 @@ msgstr "Vous ne pouvez pas créer un numéro de lot pour un produit dont le num�
 #. module: account_subscription
 #: model:ir.actions.act_window,name:account_subscription.act_account_subscription_to_account_move_line_open
 #: view:account.move.line:0
-msgid "Recurring Entries To Validate"
-msgstr "Entrées récurrentes à valider"
+msgid "Recurring Entries To Post"
+msgstr "Lignes Périodiques à Poster"
 
 #. module: product
 #: view:product.product:0
@@ -62767,8 +62740,8 @@ msgstr "Nom de la Vue"
 
 #. module: account
 #: view:account.subscription.generate:0
-msgid "Generate Entries before:"
-msgstr "Générer les Ecritures avant :"
+msgid "Generate Entries until:"
+msgstr "Générer les Ecritures jusqu'au :"
 
 #. modules: account, msf_instance
 #: field:account.invoice.refund,journal_id:0
@@ -63152,14 +63125,6 @@ msgstr "EST5EDT"
 #: report:msf.freight_manifest:0
 msgid "If so, claim reference :"
 msgstr "Si oui, référence de la réclamation :"
-
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:169
-#, python-format
-msgid "Line %s of the imported file: the Expiry Date does not match with any batch number of the product.\n"
-""
-msgstr "Ligne %s du fichier importé: la Date d'Expiration ne correspond à aucun numéro de lot du produit.\n"
-""
 
 #. module: analytic_distribution
 #: field:account.destination.link,destination_id:0
@@ -64472,7 +64437,7 @@ msgstr "Approvisionnement Automatique : %s"
 #: code:addons/product_attributes/product_attributes.py:1209
 #, python-format
 msgid "shipped to"
-msgstr "shipped to"
+msgstr "envoyé vers"
 
 #. module: account
 #: code:addons/account/account.py:1247
@@ -65463,10 +65428,9 @@ msgstr "Devise de la commande non trouvée !"
 msgid "Supplier catalogue"
 msgstr "Catalogue du fournisseur"
 
-#. module: account_subscription
-#: code:addons/account_subscription/account_subscription.py:41
-#: code:addons/account_subscription/account_subscription.py:50
-#, python-format
+#. modules: account, account_subscription
+#: constraint:account.subscription:0
+#: constraint:account.subscription:0
 msgid "The value in the field \"Repeat\" must be greater than 0!"
 msgstr "La valeur dans le champ \"Périodicité\" doit être supérieure à 0 !"
 
@@ -65818,6 +65782,7 @@ msgstr "Achat - Devise par Défaut"
 #: field:wizard.import.po.line,import_error_ok:0
 #: field:wizard.import.tender.line,import_error_ok:0
 #: field:wizard.import.ppl.to.create.ship,import_error_ok:0
+#: field:wizard.import.product.line,import_error_ok:0
 msgid "Error at import"
 msgstr "Erreur lors de l'import"
 
@@ -66059,10 +66024,10 @@ msgstr "Plage de Planification (en jours)"
 msgid "Can not create the module file: %s !"
 msgstr "Impossible de créer le fichier du module: %s !"
 
-#. module: account_period_closing_level
-#: field:wizard.account.year.end.closing,has_move_regular_bs_to_0:0
+#. module: account_override
+#: field:res.company,has_move_regular_bs_to_0:0
 msgid "Move regular B/S account to 0"
-msgstr "Move regular B/S account to 0"
+msgstr "Passer les comptes de bilan \"regular\" à 0"
 
 #. module: base
 #: view:ir.actions.server:0
@@ -66578,6 +66543,7 @@ msgstr "UdM attendue en réception"
 #. modules: account, finance
 #: view:account.move:0
 #: view:cash.request:0
+#: view:account.model.line:0
 msgid "Total Credit"
 msgstr "Total Crédit"
 
@@ -67464,9 +67430,9 @@ msgstr "America/Montserrat"
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:156
 #, python-format
-msgid "Line %s of the imported file: Batch Number required.\n"
+msgid "Line %s of the imported file: Batch Number and Expiry Date required.\n"
 ""
-msgstr "Line %s of the imported file: Batch Number required.\n"
+msgstr "Ligne %s du fichier importé: le Numéro de Lot et la Date d'Expiration sont obligatoires.\n"
 ""
 
 #. module: stock
@@ -69387,6 +69353,7 @@ msgstr "23e"
 #: view:wizard.import.stock.warehouse.orderpoint.line:0
 #: view:wizard.import.tender.line:0
 #: view:wizard.import.threshold.value.line:0
+#: view:wizard.import.product.line:0
 msgid "Import of lines"
 msgstr "Importation de lignes"
 
@@ -69558,10 +69525,10 @@ msgstr "Délai de Produits Sortants"
 msgid "Properties composition"
 msgstr "Combinaison de Propriétés"
 
-#. module: account_period_closing_level
-#: field:wizard.account.year.end.closing,has_book_pl_results:0
+#. module: account_override
+#: field:res.company,has_book_pl_results:0
 msgid "Book the P&L results"
-msgstr "Book the P&L results"
+msgstr "Passer l'écriture du compte de résultat"
 
 #. module: product_attributes
 #: field:product.product,options_ids_inv:0
@@ -71686,6 +71653,8 @@ msgstr "Navajo"
 #: field:replenishment.location.config,active:0
 #: selection:replenishment.order_calc.line,status:0
 #: selection:replenishment.segment.line,status:0
+#: field:survey.common,active:0
+#: field:sync_client.survey,active:0
 #, python-format
 msgid "Active"
 msgstr "Actif"
@@ -71816,9 +71785,10 @@ msgstr "Diviser le mouvement"
 msgid "No catalogue found !"
 msgstr "Catalogue pas trouvé !"
 
-#. module: purchase, purchase_override
+#. module: purchase, purchase_override, msf_doc_import
 #: field:purchase.order.merged.line,instance_sync_order_ref:0
 #: field:purchase.order.line,instance_sync_order_ref:0
+#: field:wizard.import.po.simulation.screen.line,imp_sync_order_ref:0
 msgid "Order in sync. instance"
 msgstr "Commande en instance sync."
 
@@ -72281,8 +72251,7 @@ msgstr "Ticked if the product is a Dangerous Good"
 msgid "PO state"
 msgstr "PO state"
 
-#. modules: base, account_period_closing_level, finance, msf_currency_revaluation
-#: field:wizard.account.year.end.closing,instance_level:0
+#. modules: base, finance, msf_currency_revaluation
 #: field:res.config.users,instance_level:0
 #: field:res.users,instance_level:0
 #: field:cash.request.commitment,instance_level:0
@@ -73514,6 +73483,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/account_override/account.py:1256
 #: code:addons/account/wizard/account_invoice_import.py:0
 #: selection:account.invoice.import,state:0
+#: field:wizard.common.import.line,display_error:0
 #, python-format, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -74129,14 +74099,8 @@ msgstr "Complete"
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:236
 #, python-format
-msgid "Recurring entries included in the Period \"%s\" or before haven't been created. Please create them before closing the period."
-msgstr "Des Ecritures périodiques incluses dans la Période \"%s\" ou avant n'ont pas été créées. Veuillez les créer avant de clôturer la période."
-
-#. module: account_period_closing_level
-#: code:addons/account_period_closing_level/account_period.py:231
-#, python-format
-msgid "Subscription Lines included in the Period \"%s\" or before haven't been generated. Please generate them and create the related recurring entries before closing the period."
-msgstr "Des Lignes d'Abonnement incluses dans la Période \"%s\" ou avant n'ont pas été générées. Veuillez les générer et créer les écritures périodiques associées avant de clôturer la période."
+msgid "Recurring entries included in the Period \"%s\" or before haven't been created. Please generate them before closing the period."
+msgstr "Des Ecritures périodiques incluses dans la Période \"%s\" ou avant n'ont pas été créées. Veuillez les générer avant de clôturer la période."
 
 #. module: msf_field_access_rights
 #: view:msf_field_access_rights.field_access_rule:0
@@ -74945,9 +74909,11 @@ msgid "Line %s in your Excel file: %s: %s\n"
 msgstr "Line %s in your Excel file: %s: %s\n"
 ""
 
-#. module: account
+#. modules: account, account_subscription
 #: view:account.subscription:0
 #: selection:account.subscription,state:0
+#: selection:account.model,state:0
+#: view:account.model:0
 msgid "Running"
 msgstr "En cours"
 
@@ -75886,6 +75852,7 @@ msgstr "Export to HQ system (OCA)"
 #: field:wizard.import.tender.line,filename_template:0
 #: field:wizard.import.threshold.value.line,filename_template:0
 #: field:wizard.import.ppl.to.create.ship,filename_template:0
+#: field:wizard.import.product.line,filename_template:0
 msgid "Templates"
 msgstr "Modèles"
 
@@ -75949,12 +75916,6 @@ msgstr "Livre les lieux disponibles comme lieu de destination d'un envoi entrant
 #: model:ir.actions.act_window,name:base.action_view_base_language_install
 msgid "Load Official Translation"
 msgstr "Charger une traduction officielle"
-
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:175
-#, python-format
-msgid "Line %s of the imported file: Expiry Date has been changed to %s which is the system BN date (was wrong in the file)"
-msgstr "Line %s of the imported file: Expiry Date has been changed to %s which is the system BN date (was wrong in the file)"
 
 #. module: sale
 #: help:res.company,security_lead:0
@@ -76431,7 +76392,7 @@ msgstr "Ou téléchargez le modèle: "
 #. module: account
 #: help:account.subscription,period_nbr:0
 msgid "This field will determine how often entries will be generated: if the period type is 'month' and the repeat '2' then entries will be generated every 2 months"
-msgstr "This field will determine how often entries will be generated: if the period type is 'month' and the repeat '2' then entries will be generated every 2 months"
+msgstr "Ce champ déterminera la fréquence à laquelle les écritures seront générées : si le type de période est 'mois' et la périodicité est '2', alors les écritures seront générées tous les 2 mois."
 
 #. module: sync_client
 #: selection:sync.client.log_sale_purchase,action_type:0
@@ -77173,14 +77134,14 @@ msgid "\n"
 "\n"
 "        The file should be in XML 2003 format.\n"
 "        The columns should be in this order :\n"
-"           Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark\n"
+"           Product Code ; Product Description ; UoM ; Indicative Stock (ignored) ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark\n"
 "        "
 msgstr "\n"
 "        IMPORTANT : La première ligne sera ignorée par la système.\n"
 "        \n"
 "        Les fichier doit être au format XML 2003.\n"
 "        Les colonnes doivent être dans cet ordre :\n"
-"           Code Produit ;  Description Produit ; UdM du Produit ; Numéro de Lot ;  Date d'Expiration (DD/MM/YYYY) (ignorée si un lot est indiqué);  Actif ; Qté Consommée ; Remarque\n"
+"           Code Produit ;  Description Produit ; UdM du Produit ; Qté Indicative en Stock (ignorée) ; Numéro de Lot ;  Date d'Expiration (DD/MM/YYYY) (ignorée si un lot est indiqué);  Actif ; Qté Consommée ; Remarque\n"
 "        "
 
 #. module: msf_outgoing
@@ -79056,7 +79017,7 @@ msgstr "Import / Import Translations"
 #: code:addons/product_attributes/product_attributes.py:1217
 #, python-format
 msgid "be consumed internally"
-msgstr "be consumed internally"
+msgstr "être consommé en interne"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:317
@@ -81528,7 +81489,7 @@ msgstr "Adresse Professionnelle"
 msgid "Confirm the selected invoices"
 msgstr "Confirmer les factures sélectionnées"
 
-#. modules: purchase, res_currency_tables,tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, vertical_integration, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement, procurement_cycle
+#. modules: purchase, res_currency_tables,tender_flow, sync_client, account_mcdb, sales_followup, supplier_catalogue, sale, account, stock_forecast, export_import_lang, purchase_followup, msf_supply_doc_export, specific_rules, analytic_distribution, useability_dashboard_and_menu, procurement_request, out_step, consumption_calculation, stock_override, process, account_reconciliation, msf_instance, purchase_override, account_hq_entries, purchase_allocation_report, msf_tools, vertical_integration, msf_outgoing, register_accounting, documents_done, transport_mgmt, analytic, msf_audittrail, msf_doc_import, stock, msf_budget, msf_homere_interface, kit, hr, finance, financing_contract, update_client, account_override, base, return_claim, procurement, procurement_cycle, account_subscription
 #: view:account.bank.statement:0
 #: field:account.bank.statement,state:0
 #: field:account.entries.report,move_state:0
@@ -81740,6 +81701,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:account.invoice.import,state:0
 #: report:addons/procurement_cycle/report/product_stock_out.mako:436
 #: field:product.stock_out,state:0
+#: field:account.model,state:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -81966,6 +81928,10 @@ msgstr "analytic.distribution"
 #: selection:shipment,transport_type:0
 #: selection:shipment.add.pack.processor,transport_type:0
 #: selection:international.transport.cost.report,transport_type:0
+#: selection:purchase.import.xml.line,transport_type:0
+#: selection:wizard.import.in.simulation.screen,transport_type:0
+#: selection:wizard.import.po.simulation.screen,imp_transport_type:0
+#: selection:wizard.import.po.simulation.screen,in_transport_type:0
 msgid "Road"
 msgstr "Route"
 
@@ -82122,6 +82088,7 @@ msgstr "You have to select a closed register!"
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:183
 #: model:ir.actions.report.xml,name:msf_outgoing.report_packing_list
 #: code:addons/stock/stock.py:1775
+#: field:stock.move.in.processor,ppl_name:0
 #, python-format
 msgid "Packing List"
 msgstr "Liste de Colisage"
@@ -82775,10 +82742,9 @@ msgstr "Les écritures de Paiement sont la deuxième partie du lettrage."
 msgid "Select a supplier"
 msgstr "Sélectionner un fournisseur"
 
-#. modules: delivery_mechanism, msf_budget, account, msf_outgoing, msf_homere_interface, sync_client, register_accounting, specific_rules, sale, sales_followup, base, stock, tender_flow, msf_tools, return_claim, msf_doc_import, analytic_distribution, finance, product
+#. modules: delivery_mechanism, msf_budget, account, msf_outgoing, msf_homere_interface, sync_client, register_accounting, specific_rules, sale, sales_followup, base, stock, tender_flow, msf_tools, return_claim, msf_doc_import, analytic_distribution, finance, product, account_subscription
 #: selection:account.invoice.report,state:0
 #: selection:account.journal.period,state:0
-#: selection:account.subscription,state:0
 #: selection:report.invoice.created,state:0
 #: view:account.commitment:0
 #: selection:account.commitment,state:0
@@ -82843,6 +82809,10 @@ msgstr "Sélectionner un fournisseur"
 #: selection:wizard.import.product.line,state:0
 #: selection:product.mass.update,state:0
 #: selection:account.invoice.import,state:0
+#: view:account.subscription:0
+#: view:account.model:0
+#: selection:account.model,state:0
+#: selection:account.subscription,state:0
 #, python-format
 msgid "Done"
 msgstr "Terminé"
@@ -83350,6 +83320,7 @@ msgstr "Maroc"
 #: field:report.stock.move,move:0
 #: field:stock.move.cancel.more.wizard,move_id:0
 #: field:change.dest.location,picking_id:0
+#: field:return.ppl.move.processor,move_id:0
 msgid "Move"
 msgstr "Transaction"
 
@@ -83512,7 +83483,7 @@ msgstr "Stock par Zone"
 #: code:addons/product_attributes/product_attributes.py:1072
 #, python-format
 msgid "shipped"
-msgstr "Expédié"
+msgstr "expédié"
 
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:200
@@ -85081,7 +85052,7 @@ msgstr "\n"
 #: code:addons/account_subscription/account_model.py:306
 #, python-format
 msgid "Please define a valid analytic distribution for the recurring model '%s'!"
-msgstr "Please define a valid analytic distribution for the recurring model '%s'!"
+msgstr "Veuillez définir une distribution analytique valide pour le modèle périodique '%s' !"
 
 #. module: sale
 #: model:ir.actions.act_window,name:sale.action_sale_donation_stock_moves
@@ -85152,11 +85123,6 @@ msgstr "Financing Contract List - pdf"
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:170
 msgid "Qty Balance"
 msgstr "Bilan des Qtés"
-
-#. module: account
-#: model:ir.actions.act_window,name:account.action_subscription_form
-msgid "Recurring Lines"
-msgstr "Lignes périodiques"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:54
@@ -85850,13 +85816,14 @@ msgstr "Est-ce que l'appel d'offres provient d'une CdT ?"
 msgid "Consolidated Children"
 msgstr "Enfants consolidés"
 
-#. modules: account, hr, export_import_lang, procurement, base, analytic_distribution
+#. modules: account, hr, export_import_lang, procurement, base, analytic_distribution, sync_client
 #: view:account.analytic.account:0
 #: view:account.analytic.account:0
 #: view:res.request:0
 #: view:res.request:0
 #: view:hr.job:0
 #: view:procurement.order:0
+#: view:sync_client.survey:0
 msgid "Current"
 msgstr "Actuel"
 
@@ -86254,9 +86221,9 @@ msgstr "Vérification Cachée des Expirés "
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:160
 #, python-format
-msgid "Line %s of the imported file: Batch Number [%s] not found.\n"
+msgid "Line %s of the imported file: Batch Number [%s] with the Expiry Date [%s] not found.\n"
 ""
-msgstr "Ligne %s du fichier importé: Lot [%s] non trouvé.\n"
+msgstr "Ligne %s du fichier importé: Lot [%s] avec la Date d'Expiration [%s] non trouvé.\n"
 ""
 
 #. module: account
@@ -88248,12 +88215,6 @@ msgstr "No revision has been applied yet."
 msgid "Only translated"
 msgstr "Only translated"
 
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:235
-#, python-format
-msgid "The line %s of the Excel file was ignored. The couple product (%s), batch number (%s) has to be unique."
-msgstr "The line %s of the Excel file was ignored. The couple product (%s), batch number (%s) has to be unique."
-
 #. module: account
 #: model:process.transition,note:account.process_transition_supplieranalyticcost0
 msgid "Analytic costs (timesheets, some purchased products, ...) come from analytic accounts. These generate draft supplier invoices."
@@ -89844,8 +89805,8 @@ msgstr "Contenu du RML"
 #: code:addons/product_attributes/product_attributes.py:1096
 #: code:addons/product_attributes/product_attributes.py:1229
 #, python-format
-msgid "The product [%s] %s gets the %s '%s' and consequently can't %s"
-msgstr "The product [%s] %s gets the %s '%s' and consequently can't %s"
+msgid "The product [%s] has the %s '%s' and consequently can't %s"
+msgstr "Le produit [%s] a le %s '%s' et ne peut donc plus %s"
 
 #. module: sale
 #: model:ir.actions.act_window,help:sale.action_shop_form
@@ -91117,7 +91078,7 @@ msgstr "Plus grand que l'UdM de référence"
 #: field:res.config.users,login:0
 #: field:res.users,login:0
 msgid "Login"
-msgstr "Ouverture de session"
+msgstr "Identifiant"
 
 #. module: msf_outgoing
 #: report:certificate.free.gift:0
@@ -91204,7 +91165,6 @@ msgstr "Vous ne pouvez pas avoir deux lignes pour le produit %s avec un prix moy
 #: field:wizard.import.po.simulation.screen.line,imp_discrepancy:0
 #: field:wizard.simu.import.po.line,discrepancy:0
 #: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:801
-#: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:811
 msgid "Discrepancy"
 msgstr "Écarts"
 
@@ -92419,11 +92379,6 @@ msgstr "Valid lines"
 msgid "Gives the margin of profitability by calculating the difference between Unit Price and Cost Price."
 msgstr "Donne la marge de rentabilité en calculant la différence entre le prix unitaire et le prix"
 
-#. module: stock
-#: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:803
-msgid "Discrepancy value"
-msgstr "Valeur des écarts"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -92454,7 +92409,8 @@ msgstr "Letton / latviešu valoda"
 msgid "Show all"
 msgstr "Tout afficher"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, stock
+#: view:stock.picking:0
 #: view:stock.picking:0
 msgid "Show all lines"
 msgstr "Toutes les lignes"
@@ -93382,7 +93338,7 @@ msgstr "Comptabilité Anglo-Saxonne"
 msgid "Additional Information"
 msgstr "Information Complémentaire"
 
-#. modules: account, register_accounting, account_mcdb, msf_homere_interface, msf_audittrail, account_corrections
+#. modules: account, register_accounting, account_mcdb, msf_homere_interface, msf_audittrail, account_corrections, account_subscription
 #: report:combined.journals.report.pdf:0
 #: report:addons/account_mcdb/report/combined_journals_report.mako:226
 #: field:hr.payroll.msf,partner_type:0
@@ -93400,6 +93356,7 @@ msgstr "Information Complémentaire"
 #: selection:account.journal.column,field:0
 #: field:account.bank.statement.line,partner_type2:0
 #: report:addons/register_accounting/report/fully_report_xls.mako:563
+#: view:account.move.line:0
 msgid "Third Parties"
 msgstr "Tiers"
 
@@ -94213,8 +94170,8 @@ msgstr "Compte- Livre des Tiers"
 
 #. module: account_period_closing_level
 #: view:wizard.account.year.end.closing:0
-msgid "Are you sure to close the selected fiscal year ? If yes do you confirm selected options ?"
-msgstr "Etes-vous sûr de vouloir clôturer cet exercice comptable ? Si oui, confirmez-vous les options sélectionnées ?"
+msgid "Are you sure you want to close the selected fiscal year?"
+msgstr "Etes-vous sûr de vouloir clôturer cet exercice comptable ?"
 
 #. module: procurement
 #: view:stock.warehouse.orderpoint:0
@@ -94302,8 +94259,15 @@ msgstr "wizard.register.import.errors"
 
 #. module: account
 #: model:ir.ui.menu,name:account.menu_action_subscription_form
-msgid "Define Recurring Entries"
-msgstr "Définir des Ecritures Périodiques"
+#: model:ir.actions.act_window,name:account.action_subscription_form
+#: view:account.subscription:0
+msgid "Recurring Plan"
+msgstr "Plan d'Ecritures Périodiques"
+
+#. module: account_subscription
+#: field:account.model,recurring_plan_ids:0
+msgid "Recurring Plans"
+msgstr "Plans d'Ecritures Périodiques"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:628
@@ -95506,6 +95470,7 @@ msgstr "Méthode d'Approvisionnement"
 #: selection:stock.move.processor,integrity_status:0
 #: selection:validate.move.processor,integrity_status:0
 #: code:addons/msf_outgoing/__init__.py:37
+#: selection:return.ppl.move.processor,integrity_status:0
 #, python-format
 msgid "Batch Number is Missing"
 msgstr "Numéro de lot manquant"
@@ -97337,6 +97302,7 @@ msgstr "Asia/Kuala_Lumpur"
 #: selection:product.ul,type:0
 #: field:stock.move,tracking_id:0
 #: field:report.stock.move,tracking_id:0
+#: field:stock.move.in.processor,filter_pack:0
 msgid "Pack"
 msgstr "Colis"
 
@@ -97772,6 +97738,8 @@ msgstr "À"
 #: selection:stock.move,integrity_error:0
 #: view:account.invoice.import:0
 #: code:addons/msf_outgoing/__init__.py:26
+#: view:wizard.common.import.line:0
+#: selection:stock.move.in.processor,sequence_issue:0
 msgid "Ok"
 msgstr "Ok"
 
@@ -101226,6 +101194,7 @@ msgstr "PL Fournisseur"
 #: field:stock.move.in.processor,packing_list:0
 #: field:stock.picking,packing_list:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:335
+#: field:wizard.import.in.pack.simulation.screen,ppl_name:0
 msgid "Supplier Packing List"
 msgstr "Liste Colisage Fournisseur"
 
@@ -102757,8 +102726,8 @@ msgstr "\n"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_product_line.py:169
 #, python-format
-msgid "Product %s doesn't have the expected Product Creator \"HQ\". "
-msgstr "Le Produit %s n'a pas le Créateur Produit attendu \"HQ\". "
+msgid "Product %s doesn't have the expected Product Creator \"ITC\", \"ESC\" or \"HQ\". "
+msgstr "Le Produit %s n'a pas le Créateur Produit attendu \"ITC\", \"ESC\" ou \"HQ\". "
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_product_line.py:254
@@ -105322,15 +105291,14 @@ msgstr "Le fichier n'a pas de ligne, il n'y a rien à importer"
 #. module: product, product_attributes
 #: selection:product.mass.update,product_state:0
 #: model:product.status,name:product_attributes.status_5
-msgid "Status 1"
-msgstr "Statut 1"
+msgid "Status 1 (obsolete)"
+msgstr "Statut 1 (obsolète)"
 
-#. module: product_attributes
-#. module: product
+#. modules: product_attributes, product
 #: model:product.status,name:product_attributes.status_6
 #: selection:product.mass.update,product_state:0
-msgid "Status 2"
-msgstr "Statut 2"
+msgid "Status 2 (obsolete)"
+msgstr "Statut 2 (obsolète)"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1542
@@ -106107,6 +106075,11 @@ msgstr "Estimation des coûts du transport : "
 #: selection:res.partner,transport_2:0
 #: selection:purchase.order,transport_type:0
 #: selection:international.transport.cost.report,transport_type:0
+#: selection:purchase.import.xml.line,transport_type:0
+#: selection:wizard.import.in.simulation.screen,transport_type:0
+#: selection:wizard.import.po.simulation.screen,imp_transport_type:0
+#: selection:wizard.import.po.simulation.screen,in_transport_type:0
+#: selection:shipment.add.pack.processor,transport_type:0
 msgid "Hand carry"
 msgstr "Transport en bagage à main"
 
@@ -106510,6 +106483,16 @@ msgstr "Date d'Expédition"
 msgid "Functional total cost :"
 msgstr "Total Coût Fonctionnel :"
 
+#. module: stock
+#: view:stock.picking:0
+msgid "Show available lines"
+msgstr "Afficher les lignes disponibles"
+
+#. module: stock
+#: view:stock.picking:0
+msgid "Show cancelled lines"
+msgstr "Afficher les lignes annulées"
+
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:2629
 #, python-format
@@ -106535,12 +106518,6 @@ msgstr "Calcul en devise fonctionnelle"
 #: view:account.mcdb:0
 msgid "Active Users"
 msgstr "Utilisateurs Actifs"
-
-#. module: account_period_closing_level
-#: code:addons/account_period_closing_level/account_period.py:203
-#, python-format
-msgid "Impossible to check the revaluation entries of the period: Revaluation Journal not found."
-msgstr "Impossible de vérifier les écritures de réévaluation de la période : Journal de Réévaluation non trouvé."
 
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:207
@@ -106828,7 +106805,7 @@ msgstr "Vous ne pouvez pas lier la taxe au partenaire %s : seuls les partenaires
 #. module: product_attributes
 #: code:addons/product_attributes/product_attributes.py:1026
 #, python-format
-msgid "Only not forbidden"
+msgid "Only permitted"
 msgstr "Produits autorisés"
 
 #. module: product
@@ -109063,6 +109040,18 @@ msgstr "CCM Produit"
 msgid "more FMC"
 msgstr "plus de PCM"
 
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1196
+#, python-format
+msgid "be moved"
+msgstr "être déplacé"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:1206
+#, python-format
+msgid "%s line %s: "
+msgstr "%s ligne %s: "
+
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:287
 #, python-format
@@ -109229,6 +109218,11 @@ msgstr "Compte de Débit par défaut pour les Journaux de Liquidités"
 msgid "Cash Default Credit Account"
 msgstr "Compte de Crédit par défaut pour les Journaux de Liquidités"
 
+#. module: stock
+#: field:stock.production.lot,stock_location_id:0
+msgid "Location of Stock Level"
+msgstr "Zone du Niveau de Stock"
+
 #. module: account_override
 #: view:account.invoice:0
 #: code:addons/account_override/invoice.py:1274
@@ -109379,6 +109373,11 @@ msgstr "Vous ne pouvez pas dupliquer une facture Annulée."
 #, python-format
 msgid "Theoretical Balance is not equal to the Cashbox Balance."
 msgstr "Le Solde Théorique n'est pas égal au Solde de Caisse."
+
+#. module: account
+#: constraint:account.cashbox.line:0
+msgid "The values of the Closing Balance lines must be unique per register."
+msgstr "Les valeurs des lignes du Solde de Clôture doivent être uniques par registre."
 
 #. module: account
 #: report:account.invoice2:0
@@ -110341,3 +110340,363 @@ msgstr "Ligne %s. Les comptes de donation ne sont pas compatibles avec le type d
 #, python-format
 msgid "IN-line %s Wrong BN/ED attributes"
 msgstr "Ligne du IN %s: Mauvais attributs NL/DE"
+
+#. module: account
+#: code:addons/account/account.py:2475
+#, python-format
+msgid "You cannot delete a Recurring Plan if Subscription lines have already been computed."
+msgstr "Vous ne pouvez pas supprimer un Plan d'Ecritures Périodiques si les lignes d'Abonnement ont déjà été calculées."
+
+#. module: account
+#: field:account.subscription,frozen_model:0
+msgid "Frozen model"
+msgstr "Modèle figé"
+
+#. module: account_subscription
+#: code:addons/account_subscription/account_model.py:303
+#, python-format
+msgid "You cannot delete a model which is used in the following plan(s): %s"
+msgstr "Vous ne pouvez pas supprimer un modèle qui est utilisé dans le(s) plan(s) suivant(s) : %s"
+
+#. modules: account, account_subscription
+#: constraint:account.model:0
+#: constraint:account.model:0
+msgid "It is not possible to have several Recurring Models with the same name."
+msgstr "Il n'est pas possible d'avoir plusieurs Modèles périodiques portant le même nom."
+
+#. module: account_subscription
+#: code:addons/account_subscription/account_model.py:358
+#, python-format
+msgid "It is not possible to have several Recurring Models with the same name: %s."
+msgstr "Il n'est pas possible d'avoir plusieurs Modèles périodiques portant le même nom : %s."
+
+#. modules: account, account_subscription
+#: constraint:account.subscription:0
+#: constraint:account.subscription:0
+msgid "It is not possible to have several Recurring Plans with the same name."
+msgstr "Il n'est pas possible d'avoir plusieurs Plans d'Ecritures Périodiques portant le même nom."
+
+#. module: account
+#: code:addons/account/account.py:2423
+#, python-format
+msgid "It is not possible to have several Recurring Plans with the same name: %s."
+msgstr "Il n'est pas possible d'avoir plusieurs Plans d'Ecritures Périodiques portant le même nom : %s."
+
+#. module: account_subscription
+#: field:account.model,is_balanced:0
+#: field:account.model.line,is_balanced:0
+msgid "Is balanced"
+msgstr "Est équilibré"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Plan names"
+msgstr "Nom des plans"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Plan status"
+msgstr "Statut des plans"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Related plans"
+msgstr "Plans associés"
+
+#. module: product
+#: view:product.product:0
+msgid "Merge product"
+msgstr "Fusion produit"
+
+#. module: stock
+#: code:addons/stock/stock.py:1813
+#, python-format
+msgid "is dispatched."
+msgstr "est expédié."
+
+#. module: sale
+#: code:addons/sale/sale_workflow.py:584
+#, python-format
+msgid "You can not validate a line of a Regular FO with an Inter-section Customer if it was not created by sync."
+msgstr "Vous ne pouvez pas valider une ligne de CdT Normale qui a un Client Inter-section si elle n'a pas été créée par synchro."
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:841
+msgid "Total Discrepancy"
+msgstr "Écart Total"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report_xls.mako:843
+msgid "Total Discrepancy Value"
+msgstr "Valeur Totale des Écarts"
+
+#. module: msf_outgoing
+#: help:internal.move.processor,ordered_product_id:0
+#: help:outgoing.delivery.move.processor,ordered_product_id:0
+#: help:return.ppl.move.processor,ordered_product_id:0
+#: help:stock.move.in.processor,ordered_product_id:0
+#: help:stock.move.processor,ordered_product_id:0
+msgid "Expected product to receive"
+msgstr "Produit attendu en réception"
+
+#. modules: msf_doc_import, msf_outgoing
+#: selection:purchase.import.xml.line,transport_type:0
+#: selection:wizard.import.in.simulation.screen,transport_type:0
+#: selection:wizard.import.po.simulation.screen,imp_transport_type:0
+#: selection:wizard.import.po.simulation.screen,in_transport_type:0
+#: selection:return.pack.shipment.processor,transport_type:0
+#: selection:return.shipment.processor,transport_type:0
+#: selection:shipment,transport_type:0
+#: selection:shipment.add.pack.processor,transport_type:0
+msgid "Express"
+msgstr "Express"
+
+#. module: msf_outgoing
+#: field:check.ppl.integrity,incoming_processor_id:0
+msgid "IN processor"
+msgstr "Processeur IN"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_product_line.py:212
+#, python-format
+msgid "Import is limited to 500 products, %d lines ignored"
+msgstr "L'import est limité à 500 produits, %d lignes ignorées"
+
+#. module: msf_outgoing
+#: field:stock.incoming.processor,sequence_issue:0
+msgid "Issue with To ship"
+msgstr "Problème avec l'expédition"
+
+#. module: msf_outgoing
+#: help:return.ppl.processor,move_ids:0
+msgid "Lines of the PPL processor wizard"
+msgstr "Lignes du processeur LPC"
+
+#. module: msf_doc_import
+#: field:wizard.common.import.line,msg:0
+msgid "Msg"
+msgstr "Msg"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Original PICK"
+msgstr "Pick d'origine"
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "Please correct red lines before processing or do not process to ship"
+msgstr "Veuillez corriger les lignes en rouge ou ne pas traiter jusqu'à l'expédition"
+
+#. module: msf_outgoing
+#: field:shipment.add.pack.processor.line,wizard_id:0
+msgid "Processor"
+msgstr "Processeur"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_product_line.py:163
+#, python-format
+msgid "Product %s doesn't have the expected Product Creator. "
+msgstr "Le produit %s n'a pas le bon Créateur produit"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:650
+#: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:760
+#, python-format
+msgid "This type of import cannot be used because related PICK document has been converted to %s"
+msgstr "Ce type d'import ne peut être utilisé car le document de Picking lié a été converti en %s"
+
+#. module: msf_outgoing
+#: field:stock.move.in.processor,total_volume:0
+msgid "Total Volume [dm³]"
+msgstr "Volume Total [dm³]"
+
+#. module: msf_outgoing
+#: field:stock.move.in.processor,total_weight:0
+msgid "Total Weight [kg]"
+msgstr "Poids Total [kg]"
+
+#. module: msf_doc_import
+#: field:wizard.import.in.pack.simulation.screen,real_total_volume:0
+msgid "Total volume for all packs"
+msgstr "Volume total de tous les colis"
+
+#. module: msf_doc_import
+#: field:wizard.import.in.pack.simulation.screen,real_total_weight:0
+msgid "Total weight for all packs"
+msgstr "Poids total de tous les colis"
+
+#. module: msf_doc_import
+#: field:wizard.import.po.simulation.screen,import_warning_ok:0
+msgid "Warning at import"
+msgstr "Avertisssment lors de l'import"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:563
+#, python-format
+msgid "Warning the following product lines have already been processed in linked OUT/Pick document, so cannot be processed here. Please remove these lines before trying to processs the movement\n"
+"%s"
+msgstr "Attention les produits suivants ont déjà été traités dans les documents d'expédition OUT/Picking et ne peuvent plus être taités ici. Veuillez supprimer ces lignes avant de taiter le mouvement\n"
+"%s"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/consumption_calculation.py:498
+#: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:72
+#, python-format
+msgid "Indicative Stock"
+msgstr "Qté Indicative en Stock"
+
+#. module: account
+#: code:addons/account/account.py:2441
+#, python-format
+msgid "You cannot duplicate a Recurring Plan with a Done model."
+msgstr "Vous ne pouvez pas dupliquer un Plan d'Ecritures Périodiques utilisant un modèle Terminé."
+
+#. module: analytic_override
+#: field:account.analytic.account,top_cc_instance_ids:0
+msgid "Instances having the CC as Top CC"
+msgstr "Instances ayant le CC comme CC Principal"
+
+#. module: analytic_override
+#: field:account.analytic.account,is_target_cc_instance_ids:0
+msgid "Instances having the CC as Target CC"
+msgstr "Instances ayant le CC comme CC Cible"
+
+#. module: analytic_override
+#: field:account.analytic.account,po_fo_cc_instance_ids:0
+msgid "Instances having the CC as CC picked for PO/FO ref"
+msgstr "Instances ayant le CC comme CC sélectionné pour PO/FO"
+
+#. module: analytic_override
+#: field:account.analytic.account,cc_missions:0
+msgid "Missions where the CC is added to"
+msgstr "Missions dans lesquelles le CC est ajouté"
+
+#. module: sync_client
+#: field:sync_client.survey.user,nb_displayed:0
+msgid "# Display"
+msgstr "Nb affichage"
+
+#. module: sync_client
+#: selection:sync_client.survey.user,last_choice:0
+msgid "Ask me later"
+msgstr "Plus tard"
+
+#. module: sync_client
+#: field:survey.common,end_date:0
+#: field:sync_client.survey,end_date:0
+msgid "Date End"
+msgstr "Date Fin"
+
+#. module: sync_client
+#: field:survey.common,start_date:0
+#: field:sync_client.survey,start_date:0
+msgid "Date Start"
+msgstr "Date Début"
+
+#. module: sync_client
+#: selection:sync_client.survey.user,last_choice:0
+msgid "Don't Ask"
+msgstr "Ne plus demander"
+
+#. module: sync_client
+#: field:survey.common,url_en:0
+#: field:sync_client.survey,url_en:0
+msgid "English URL"
+msgstr "URL (EN)"
+
+#. module: sync_client
+#: view:sync_client.survey:0
+#: field:sync_client.survey,excluded_group_ids:0
+msgid "Excluded Groups"
+msgstr "Groupes Exclus"
+
+#. module: sync_client
+#: field:survey.common,url_fr:0
+#: field:sync_client.survey,url_fr:0
+msgid "French URL"
+msgstr "URL (FR)"
+
+#. module: sync_client
+#: selection:sync_client.survey.user,last_choice:0
+msgid "Go To"
+msgstr "Répondre"
+
+#. module: sync_client
+#: view:sync_client.survey:0
+#: field:sync_client.survey,included_group_ids:0
+msgid "Included Groups"
+msgstr "Groupes inclus"
+
+#. module: sync_client
+#: field:sync_client.survey.user,last_choice:0
+msgid "Last Choice"
+msgstr "Dernier Choix"
+
+#. module: sync_client
+#: field:sync_client.survey.user,last_displayed:0
+msgid "Last popup Date"
+msgstr "Date dernier affichage"
+
+#. module: sync_client
+#: view:sync_client.survey:0
+#: field:sync_client.survey,users:0
+msgid "Matching Users"
+msgstr "Utilisateurs correspondants"
+
+#. module: sync_client
+#: field:survey.common,name:0
+#: field:sync_client.survey,name:0
+msgid "Name (EN)"
+msgstr "Nom (EN)"
+
+#. module: sync_client
+#: field:survey.common,name_fr:0
+#: field:sync_client.survey,name_fr:0
+msgid "Name (FR)"
+msgstr "Nom (FR)"
+
+#. module: sync_client
+#: field:survey.common,profile:0
+#: field:sync_client.survey,profile:0
+msgid "Profile Name"
+msgstr "Nom du profil"
+
+#. module: sync_client
+#: model:ir.model,name:sync_client.model_sync_client_survey_user
+#: view:sync_client.survey:0
+msgid "Stat by users"
+msgstr "Stat par utilisateurs"
+
+#. module: sync_client
+#: field:sync_client.survey,stat_by_users:0
+msgid "Stats"
+msgstr "Stats"
+
+#. module: sync_client
+#: model:ir.actions.act_window,name:sync_client.sync_client_survey_action
+#: model:ir.ui.menu,name:sync_client.sync_client_survey_menu
+#: view:sync_client.survey:0
+#: field:sync_client.survey.user,survey_id:0
+msgid "Survey"
+msgstr "Sondage"
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:864
+#, python-format
+msgid "Survey: %s"
+msgstr "Sondage: %s"
+
+#. module: account_period_closing_level
+#: field:account.period,is_revaluated:0
+msgid "Revaluation run for the period"
+msgstr "Réévaluation lancée pour la période"
+
+#. module: delivery_mechanism
+#: code:addons/delivery_mechanism/delivery_mechanism.py:705
+#, python-format
+msgid "Error: %s\n"
+"\n"
+"Please reset the incoming shipment processing and fix the source of the error before re-try the processing."
+msgstr "Erreur: %s\n"
+"\n"
+"Veuillez réinitialiser le processus de la livraison entrante et corriger la source de cette erreur avant de recommencer le processus."

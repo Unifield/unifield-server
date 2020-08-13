@@ -551,7 +551,7 @@
                         <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
                         <field name="name"/>
                         <newline/>
-                        <field name="period_id"/>
+                        <field name="period_id" domain="[('state', '!=', 'created')]"/>
                         <field name="journal_id" domain="[('type', '=', 'cash')]" />
                     </group>
                     <newline/>
@@ -699,7 +699,7 @@
                         <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
                         <field name="name"/>
                         <newline/>
-                        <field name="period_id"/>
+                        <field name="period_id" domain="[('state', '!=', 'created')]"/>
                         <field name="journal_id" domain="[('type', '=', 'bank')]" />
                     </group>
                     <newline/>
@@ -969,7 +969,7 @@
                         <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
                         <field name="name"/>
                         <newline/>
-                        <field name="period_id"/>
+                        <field name="period_id" domain="[('state', '!=', 'created')]"/>
                         <field name="journal_id" domain="[('type', '=', 'cheque')]" />
                     </group>
                     <newline/>

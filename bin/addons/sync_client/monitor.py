@@ -75,7 +75,7 @@ class MonitorLogger(object):
 
     def __format_message(self, message, step):
         return "%s: %s" % (self.monitor._columns[step].string, message) \
-               if step is not None and not step == 'status' \
+               if step is not None and not step == 'status' and step in self.monitor._columns \
                else message
 
     def append(self, message='', step=None):

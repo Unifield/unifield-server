@@ -930,6 +930,8 @@ class stock_move(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
             default = {}
+        prod_obj = self.pool.get('product.product')
+
         default = default.copy()
         if 'qty_processed' not in default:
             default['qty_processed'] = 0
@@ -941,7 +943,18 @@ class stock_move(osv.osv):
         if 'integrity_error' not in default:
             default['integrity_error'] = 'empty'
 
-        return super(stock_move, self).copy(cr, uid, id, default, context=context)
+
+        new_id = super(stock_move, self).copy(cr, uid, id, default, context=context)
+        if 'product_id' in default:  # Check constraints on lines
+            move = self.browse(cr, uid, new_id, fields_to_fetch=['type', 'picking_id', 'location_dest_id', 'product_id'], context=context)
+            if move.type == 'in':
+                prod_obj._get_restriction_error(cr, uid, [move.product_id.id], {'partner_id': move.picking_id.partner_id.id, 'location_dest_id': move.location_dest_id.id, 'obj_type': 'in', 'partner_type':  move.picking_id.partner_id.partner_type},
+                                                context=context)
+            elif move.type == 'out' and move.product_id.state.code == 'forbidden':
+                check_vals = {'location_dest_id': move.location_dest_id.id, 'move': move}
+                prod_obj._get_restriction_error(cr, uid, [move.product_id.id], check_vals, context=context)
+
+        return new_id
 
     def copy_data(self, cr, uid, id, defaults=None, context=None):
         '''
@@ -1404,11 +1417,6 @@ class stock_move(osv.osv):
             context = {}
 
         self.write(cr, uid, ids, {'qty_to_process': 0,'state': 'confirmed', 'prodlot_id': False, 'expired_date': False})
-        if not context.get('sync_message_execution', False):
-            for line in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
-                if line.location_id.location_id and line.location_id.location_id.usage != 'view':
-                    self.write(cr, uid, [line.id], {'location_id': line.location_id.location_id.id})
-
         res = []
 
         fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',
@@ -2414,5 +2422,14 @@ class stock_move(osv.osv):
         return {
             'value': {'integrity_error': 'empty'}
         }
+
+    def open_in_form(self, cr, uid, ids, context=None):
+        move = self.browse(cr, uid, ids[0], fields_to_fetch=['picking_id', 'linked_incoming_move'], context=context)
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_picking_tree4', ['form', 'tree'], new_tab=True, context=context)
+        res['keep_open'] = True
+        res['res_id'] = move.linked_incoming_move and move.linked_incoming_move.picking_id.id or move.picking_id.id
+        return res
+
 stock_move()
 

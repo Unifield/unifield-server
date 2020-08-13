@@ -715,6 +715,12 @@ class instance_auto_creation(osv.osv):
                     for uf_prop in unifield_prop:
                         vals[uf_prop] = account_id
 
+            if vals.get('ye_pl_cp_for_bs_debit_bal_account') and vals.get('ye_pl_cp_for_bs_credit_bal_account'):
+                vals['has_move_regular_bs_to_0'] = True
+
+            if vals.get('ye_pl_pos_credit_account') and vals.get('ye_pl_ne_debit_account'):
+                vals['has_book_pl_results'] = True
+
             company_obj.write(cr, uid, company_id, vals)
 
             # configure cost center for FX gain loss

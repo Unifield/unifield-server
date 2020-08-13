@@ -8,6 +8,8 @@ from tools.translate import _
 import decimal_precision as dp
 from mx import DateTime
 from dateutil.relativedelta import relativedelta
+from lxml import etree
+
 
 class stock_production_lot(osv.osv):
     _name = 'stock.production.lot'
@@ -329,6 +331,18 @@ class stock_production_lot(osv.osv):
 
         return res
 
+    def _get_stock_location_id(self, cr, uid, ids, field_name, arg, context=None):
+        if context is None:
+            context = {}
+
+        res = {}
+        if context.get('full'):  # Prevent to display the location's complete_name
+            context.pop('full')
+        for _id in ids:
+            res[_id] = context['location_id'] if isinstance(context.get('location_id'), (int, long)) else False
+
+        return res
+
     _columns = {
         'name': fields.char('Batch Number', size=1024, required=True, help="Unique batch number, will be displayed as: PREFIX/SERIAL [INT_REF]"),
         'ref': fields.char('Internal Reference', size=256, help="Internal reference number in case it differs from the manufacturer's serial number"),
@@ -370,6 +384,7 @@ class stock_production_lot(osv.osv):
         'removal_date': fields.date('Removal Date', help='The date on which the lot should be removed.'),
         'alert_date': fields.date('Alert Date', help="The date on which an alert should be notified about the production lot."),
         'comment': fields.char('Comment', size=100),
+        'stock_location_id': fields.function(_get_stock_location_id, method=True, type='many2one', relation='stock.location', string='Location of Stock Level'),
     }
 
     def _get_date(dtype):
@@ -625,13 +640,23 @@ class stock_production_lot(osv.osv):
         if context is None:
             context = {}
 
-        # warehouse wizards or inventory screen
-        if view_type == 'tree' and ((context.get('expiry_date_check', False) and not context.get('batch_number_check', False)) or context.get('hidden_perishable_mandatory', False)):
-            view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_production_lot_expiry_date_tree')
-            if view:
-                view_id = view[1]
+        has_location = False
+        if view_type == 'tree':
+            if (context.get('expiry_date_check', False) and not context.get('batch_number_check', False)) or context.get('hidden_perishable_mandatory', False):
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_production_lot_expiry_date_tree')
+                if view:
+                    view_id = view[1]
+            if context.get('location_id') and isinstance(context['location_id'], (int, long)):
+                has_location = True
+
         result = super(stock_production_lot, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if not has_location:
+            root = etree.fromstring(result['arch'])
+            for node in root.xpath("//field[@name='stock_location_id']"):
+                node.set('invisible', "1")
+            result['arch'] = etree.tostring(root)
         return result
+
 
     def create_sequence(self, cr, uid, vals, context=None):
         """

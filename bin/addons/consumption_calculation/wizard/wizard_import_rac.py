@@ -36,7 +36,7 @@ class wizard_import_rac(osv.osv_memory):
 
         The file should be in XML 2003 format.
         The columns should be in this order :
-           Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark
+           Product Code ; Product Description ; UoM ; Indicative Stock (ignored) ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark
         """)
     _columns = {
         'file': fields.binary(string='File to import', required=True),
@@ -94,9 +94,9 @@ class wizard_import_rac(osv.osv_memory):
             col_count = len(row)
             if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
                 continue
-            if col_count != 8:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
-Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Date, Consumed Quantity, Remark"""))
+            if col_count != 9:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 9 columns in this order:
+Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number, Asset, Expiry Date, Consumed Quantity, Remark"""))
             # default values
             to_write = {
                 'default_code': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1],
@@ -115,14 +115,15 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
             batch_mandatory = False
             date_mandatory = False
             line_num += 1
+            existing_line_domain = [('rac_id', '=', rac_id)]
             context.update({'import_in_progress': True, 'noraise': True})
             try:
-                # Cell 5: Quantity
-                if row.cells[6] and row.cells[6].data:
+                # Cell 8: Quantity
+                if row.cells[7] and row.cells[7].data:
                     try:
-                        consumed_qty = float(row.cells[6].data)
+                        consumed_qty = float(row.cells[7].data)
                     except ValueError:
-                        error += _("Line %s of the imported file: the Consumed Quantity should be a number and not %s \n.") % (line_num, row.cells[6].data,)
+                        error += _("Line %s of the imported file: the Consumed Quantity should be a number and not %s \n.") % (line_num, row.cells[7].data,)
 
                 # Cell 0: Product Code
                 expiry_date = False
@@ -132,58 +133,48 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
                     product_id = p_value['default_code']
                     to_write.update({'product_id': product_id})
                     prod = product_obj.browse(cr, uid, [product_id], context)[0]
+                    existing_line_domain.append(('product_id', '=', product_id))
                     # Expiry Date
                     if prod.perishable:
                         date_mandatory = True
-                        if not row[4] or row[4] is None:
+                        if not row[4] or row[5] is None:
                             error += _("Line %s of the imported file: expiry date required\n") % (line_num, )
-                        elif row[4] and row[4].data:
-                            if row[4].type in ('datetime', 'date'):
-                                expiry_date = row[4].data
-                            elif row[4].type == 'str':
+                        elif row[5] and row[5].data:
+                            if row[5].type in ('datetime', 'date'):
+                                expiry_date = row[5].data
+                            elif row[5].type == 'str':
                                 try:
-                                    expiry_date = time.strftime('%d/%b/%Y', time.strptime(row[4].data, '%d/%m/%Y'))
+                                    expiry_date = time.strftime('%d/%b/%Y', time.strptime(row[5].data, '%d/%m/%Y'))
                                 except ValueError:
                                     try:
-                                        expiry_date = time.strftime('%d/%b/%Y', time.strptime(row[4].data, '%d/%b/%Y'))
+                                        expiry_date = time.strftime('%d/%b/%Y', time.strptime(row[5].data, '%d/%b/%Y'))
                                     except ValueError as e:
                                         error += _("""Line %s of the imported file: expiry date %s has a wrong format (day/month/year).'\n"""
-                                                   ) % (line_num, row[4],)
-                    # Cell 3: Batch Number
+                                                   ) % (line_num, row[5],)
+                            if expiry_date:
+                                existing_line_domain.append(('expiry_date', '=', expiry_date))
+                    # Cell 4: Batch Number
                     if prod.batch_management:
                         batch_mandatory = True
-                        if prod.batch_management and not row[3]:
-                            error += _("Line %s of the imported file: Batch Number required.\n") % (line_num,)
-                        if row[3]:
-                            lot = prodlot_obj.search(cr, uid, [('name', '=', row[3]), ('product_id', '=', prod.id)], context=context)
-                            if not lot and consumed_qty:
-                                error +=  _("Line %s of the imported file: Batch Number [%s] not found.\n") % (line_num, row[3])
+                        if not row[4] or not expiry_date:
+                            error += _("Line %s of the imported file: Batch Number and Expiry Date required.\n") % (line_num,)
+                        elif row[4]:
+                            lot = prodlot_obj.search(cr, uid, [('name', '=', row[4]), ('product_id', '=', prod.id), ('life_date', '=', expiry_date)], context=context)
+                            if not lot:
+                                error += _("Line %s of the imported file: Batch Number [%s] with the Expiry Date [%s] not found.\n") % (line_num, row[4], expiry_date)
                             elif lot:
                                 batch = lot[0]
-                        if expiry_date and product_id:
-                            if not batch:
-                                batch_list = prodlot_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry_date)], context=context)
-                                if batch_list:
-                                    batch = batch_list[0]
-                                else:
-                                    error += _("Line %s of the imported file: the Expiry Date does not match with any batch number of the product.\n") % (line_num,)
-                            else:
-                                # if the expiry date and batch exist, the expiry date indicated here and the one on the batch should be the same
-                                if not prodlot_obj.search(cr, uid, [('id', '=', batch), ('product_id', '=', product_id), ('life_date', '=', expiry_date)], context=context):
-                                    batch_read = prodlot_obj.read(cr, uid, batch, ['life_date', 'name'], context)
-                                    expiry_date = batch_read['life_date']
-                                    error += _("""Line %s of the imported file: Expiry Date has been changed to %s which is the system BN date (was wrong in the file)"""
-                                               ) % (line_num, batch_read['life_date'] and time.strftime('%d/%b/%Y', time.strptime(batch_read['life_date'], '%Y-%m-%d')))
-                                    just_info_ok = True
+                        if batch:
+                            existing_line_domain.append(('prodlot_id', '=', batch))
 
-                    # Cell 5 : Asset
+                    # Cell 6 : Asset
                     if _get_asset_mandatory(prod):
-                        if not row[5].data:
+                        if not row[6].data:
                             error += _("Line %s of the imported file: Asset form required.\n") % (line_num,)
-                        if row[5].data:
-                            asset = asset_obj.search(cr, uid, [('name', '=', row[5]), ('product_id', '=', prod.id)], context=context)
+                        if row[6].data:
+                            asset = asset_obj.search(cr, uid, [('name', '=', row[6]), ('product_id', '=', prod.id)], context=context)
                             if not asset and consumed_qty:
-                                error += _("Line %s of the imported file: Asset [%s] not found.\n") % (line_num, row[5])
+                                error += _("Line %s of the imported file: Asset [%s] not found.\n") % (line_num, row[6])
                             elif asset:
                                 asset = asset[0]
                 else:
@@ -200,6 +191,9 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
                     uom_id = False
                     error += _('Line %s of the imported file: UoM [%s] not found ! Details: %s') % (line_num, row[2], uom_value['error_list'])
 
+                # Cell 3: Indicative Stock
+                # IGNORE IT
+
                 # Check rounding of qty according to UoM
                 if uom_id and consumed_qty:
                     round_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, consumed_qty, 'consumed_qty')
@@ -207,11 +201,11 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
                         consumed_qty = round_qty['value']['consumed_qty']
                         error_log += _('Line %s of the imported file: %s') % (line_num, round_qty.get('warning', {}).get('message'))
 
-                # Cell 6: Remark
-                if row.cells[7] and row.cells[7].data:
-                    remark = row.cells[7].data
+                # Cell 8: Remark
+                if row.cells[8] and row.cells[8].data:
+                    remark = row.cells[8].data
                 error += '\n'.join(to_write['error_list'])
-                if not consumed_qty and not product_id==product_tbd:
+                if not consumed_qty and not product_id == product_tbd:
                      # If the line doesn't have quantity we do not check it.
                     error = None
                 line_data = {'batch_mandatory': batch_mandatory,
@@ -231,23 +225,26 @@ Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Da
                 if product_id:
                     product_obj._get_restriction_error(cr, uid, [product_id], {'constraints': ['consumption']}, context=dict(context, noraise=False))
 
-                if product_id and batch and line_obj.search_count(cr, uid, [('product_id', '=', product_id), ('prodlot_id', '=', batch), ('rac_id', '=', rac_id)]):
-                    error_log += _("""The line %s of the Excel file was ignored. The couple product (%s), batch number (%s) has to be unique."""
-                                   ) % (line_num, product_obj.read(cr, uid, product_id, ['default_code'], context)['default_code'], not batch and 'Not specified' or prodlot_obj.read(cr, uid, batch, ['name'], context)['name'])
-                    ignore_lines += 1
-                    continue
                 context.update({'line_num': line_num})
-                line_id = line_obj.create(cr, uid, line_data, context=context)
+                existing_line_ids = []
+                if existing_line_domain:
+                    existing_line_ids = line_obj.search(cr, uid, existing_line_domain, context=context)
+                if existing_line_ids:
+                    line_id = existing_line_ids[0]
+                    line_obj.write(cr, uid, line_id, line_data, context=context)
+                else:
+                    line_id = line_obj.create(cr, uid, line_data, context=context)
 
                 complete_lines += 1
                 # when we enter the create, we catch the raise error into the context value of 'error_message'
                 list_message = context.get('error_message')
                 if list_message:
                     # if errors are found and a text_error was already existing we add it the line after
-                    text_error = line_obj.read(cr, uid, line_id,['text_error'], context)['text_error'] + '\n'+ '\n'.join(list_message)
+                    line_errors = line_obj.read(cr, uid, line_id, ['text_error'], context)
+                    text_error = line_errors['text_error'] or '' + '\n' + '\n'.join(list_message)
                     line_obj.write(cr, uid, line_id, {'text_error': text_error}, context)
                 if error or list_message:
-                    if consumed_qty or product_id==product_tbd:
+                    if consumed_qty or product_id == product_tbd:
                         lines_to_correct += 1
                 cr.commit()
             except IndexError, e:

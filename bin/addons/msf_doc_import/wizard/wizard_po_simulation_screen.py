@@ -1537,7 +1537,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'in_ext_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'type_change': fields.selection([('', ''), ('error', 'Error'), ('new', 'New'),
                                          ('split', 'Split'), ('del', 'Del'),
-                                         ('ignore', 'Ignore'), ('warning', 'Warning')],
+                                         ('ignore', 'Ignore'), ('warning', 'Warning'), ('cdd', 'CDD')],
                                         string='Change type', readonly=True),
         'imp_product_id': fields.many2one('product.product', string='Product',
                                           readonly=True),
@@ -1615,9 +1615,38 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 self.write(cr, uid, [line.id], {'type_change': 'ignore'}, context=context)
                 continue
 
-            if line.po_line_id.state in ('confirmed', 'done'):
+            if line.po_line_id.state == 'done':
                 write_vals['type_change'] = 'warning'
                 warnings.append(_('PO line has been confirmed and consequently is not editable'))
+
+            # Delivery Confirmed Date
+            dcd_value = values[11]
+            if dcd_value and type(dcd_value) == type(DateTime.now()):
+                write_vals['imp_dcd'] = dcd_value.strftime('%Y-%m-%d')
+            elif dcd_value and isinstance(dcd_value, str):
+                try:
+                    time.strptime(dcd_value, '%Y-%m-%d')
+                    write_vals['imp_dcd'] = dcd_value
+                except ValueError:
+                    err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
+                    errors.append(err_msg)
+                    write_vals['type_change'] = 'error'
+            elif dcd_value:
+                err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
+                errors.append(err_msg)
+                write_vals['type_change'] = 'error'
+
+            if line.po_line_id.state == 'confirmed':
+                if write_vals.get('imp_dcd') and write_vals.get('imp_dcd') != line.in_dcd:
+                    if self.pool.get('stock.move').search_exists(cr ,uid, [('purchase_line_id', '=', line.po_line_id.id), ('type', '=', 'in'), ('state', '=', 'done')], context=context):
+                        write_vals['type_change'] = 'warning'
+                        warnings.append(_("IN for line %s has been parially processed, CDD can't be changed") % (line.in_line_number,))
+                    else:
+                        write_vals['type_change'] = 'cdd'
+                if not write_vals.get('type_change'):
+                    write_vals['type_change'] = 'ignore'
+                self.write(cr, uid, [line.id], write_vals, context=context)
+                continue
 
             # External Ref.
             write_vals['imp_external_ref'] = values[1]
@@ -1655,8 +1684,18 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['type_change'] = 'error'
 
             # Product
+            partner_id = line.simu_id.order_id.partner_id.id
             if (values[2] and values[2] == line.in_product_id.default_code):
-                write_vals['imp_product_id'] = line.in_product_id and line.in_product_id.id or False
+                if line.in_product_id:
+                    p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [line.in_product_id.id],
+                                                                      vals={'partner_id': partner_id}, context=context)
+                    if p_error:  # Check constraints on products
+                        write_vals['type_change'] = 'error'
+                        errors.append(p_msg)
+                    else:
+                        write_vals['imp_product_id'] = line.in_product_id.id
+                else:
+                    write_vals['imp_product_id'] = False
             else:
                 prod_id = False
                 if values[2]:
@@ -1664,14 +1703,28 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
                 if not prod_id and values[2]:
                     prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[2])], context=context)
-                    if not prod_ids:
+                    if prod_ids:
+                        p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [prod_ids[0]],
+                                                                          vals={'partner_id': partner_id},
+                                                                          context=context)
+                        if p_error:  # Check constraints on products
+                            write_vals['type_change'] = 'error'
+                            errors.append(p_msg)
+                        else:
+                            write_vals['imp_product_id'] = prod_ids[0]
+                    else:
                         write_vals['type_change'] = 'error'
                         errors.append(_('Product %s not found in database') % values[2])
-                    else:
-                        write_vals['imp_product_id'] = prod_ids[0]
                 else:
-                    write_vals['imp_product_id'] = prod_id
-                    if not prod_id:
+                    if prod_id:
+                        p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [prod_id], vals={'partner_id': partner_id},
+                                                                          context=context)
+                        if p_error:  # Check constraints on products
+                            write_vals['type_change'] = 'error'
+                            errors.append(p_msg)
+                        else:
+                            write_vals['imp_product_id'] = prod_id
+                    else:
                         write_vals['type_change'] = 'error'
 
             write_vals['ad_info'] = False
@@ -1840,22 +1893,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
 
-            # Delivery Confirmed Date
-            dcd_value = values[11]
-            if dcd_value and type(dcd_value) == type(DateTime.now()):
-                write_vals['imp_dcd'] = dcd_value.strftime('%Y-%m-%d')
-            elif dcd_value and isinstance(dcd_value, str):
-                try:
-                    time.strptime(dcd_value, '%Y-%m-%d')
-                    write_vals['imp_dcd'] = dcd_value
-                except ValueError:
-                    err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
-                    errors.append(err_msg)
-                    write_vals['type_change'] = 'error'
-            elif dcd_value:
-                err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
-                errors.append(err_msg)
-                write_vals['type_change'] = 'error'
 
             # ESC Confirmed
             if write_vals.get('imp_dcd') and line.simu_id.order_id.partner_type == 'esc':
@@ -1908,6 +1945,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         nb_lines = float(len(ids))
         line_treated = 0.00
         percent_completed = 0.00
+        lines_to_cancel = []
         for line in self.browse(cr, uid, ids, context=context):
             context['purchase_id'] = line.simu_id.order_id.id
             line_treated += 1
@@ -1934,11 +1972,19 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 })
 
             if line.type_change == 'del' and line.po_line_id:
-                wf_service.trg_validate(uid, 'purchase.order.line', line.po_line_id.id, 'cancel', cr)
+                lines_to_cancel.append(line.po_line_id.id)  # Delay the cancel to prevent the PO's cancellation
                 simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
                 cr.commit()
                 continue
 
+            if line.type_change == 'cdd':
+                line_obj.write(cr, uid, [line.po_line_id.id], {'confirmed_delivery_date': line.imp_dcd}, context=context)
+                in_ids = self.pool.get('stock.move').search(cr ,uid, [('purchase_line_id', '=', line.po_line_id.id), ('type', '=', 'in'), ('state', 'in', ['confirmed', 'assigned'])], context=context)
+                if in_ids:
+                    self.pool.get('stock.move').write(cr, uid, in_ids, {'date_expected': line.imp_dcd}, context=context)
+
+                cr.commit()
+                continue
             line_vals = {
                 'product_id': line.imp_product_id.id,
                 'product_uom': line.imp_uom.id,
@@ -2067,6 +2113,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
             simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
             cr.commit()
+
+        # Cancel the lines at the end
+        for line_id in lines_to_cancel:
+            wf_service.trg_validate(uid, 'purchase.order.line', line_id, 'cancel', cr)
 
         if ids:
             return simu_obj.go_to_simulation(cr, uid, line.simu_id.id, context=context)

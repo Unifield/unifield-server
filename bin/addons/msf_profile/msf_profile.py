@@ -52,13 +52,284 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+
     # UF18.0
-    def sync_msg_from_itself(self, cr, uid, *a, **b):
-        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
-        if not instance:
+    def us_7215_prod_set_active_sync(self, cr, uids, *a, **b):
+        if not self.pool.get('sync.client.message_received'):
+            # new instance
             return True
-        cr.execute(''' update sync_client_message_received set run='t', manually_ran='t', log='Set manually to run without execution', manually_set_run_date=now() where run='f' and source=%s ''', (instance.instance, ))
-        self._logger.warn('Set %s self sync messages as Run' % (cr.rowcount,))
+        cr.execute("""
+            update product_product p set
+                active_change_date=d.last_modification, active_sync_change_date=d.sync_date
+            from
+                ir_model_data d
+            where
+                d.model='product.product' and
+                d.module='sd' and
+                d.res_id = p.id and
+                touched like '%''state''%'
+        """)
+        self._logger.warn('Set active_sync_change_date on %d product' % (cr.rowcount,))
+
+        return True
+
+    def us_7158_prod_set_uf_status(self, cr, uid, *a, **b):
+        st_obj = self.pool.get('product.status')
+        audit_obj = self.pool.get('audittrail.rule')
+        stopped_ids = st_obj.search(cr, uid, [('code', '=', 'stopped'), ('active', 'in', ['t', 'f'])])
+        phase_out_ids = st_obj.search(cr, uid, [('code', '=', 'phase_out')])
+
+        st12_ids = st_obj.search(cr, uid, [('code', 'in', ['status1', 'status2']), ('active', 'in', ['t', 'f'])])
+        valid_ids = st_obj.search(cr, uid, [('code', '=', 'valid')])
+
+        # state 1, state2, blank to valid
+        cr.execute('''update product_template set state = %s where state is NUll or state in %s''' , (valid_ids[0], tuple(st12_ids)))
+        cr.execute('''update stock_mission_report_line set product_state='valid' where product_state is NULL or product_state in ('', 'status1', 'status2')''')
+
+        # stopped to phase_out
+        cr.execute('''update product_template set state = %s where state = %s RETURNING id''' , (phase_out_ids[0], stopped_ids[0]))
+        prod_templ_ids = [x[0] for x in cr.fetchall()]
+        if prod_templ_ids:
+            audit_ids = audit_obj.search(cr, uid, [('name', '=', 'Product_template rule')])
+            if audit_ids:
+                audit_obj.audit_log(cr, uid, audit_ids, 'product.template', prod_templ_ids, 'write', previous_value=[{'state': (stopped_ids[0], 'Stopped'), 'id': pt_id} for pt_id in prod_templ_ids], current={x: {'state': (phase_out_ids[0], 'Phase out')} for x in prod_templ_ids}, context=None)
+        cr.execute('''update stock_mission_report_line set product_state='phase_out' where product_state = 'stopped' ''')
+
+        return True
+
+    def us_5216_update_recurring_object_state(self, cr, uid, *a, **b):
+        """
+        Updates the state of the Recurring Plans and Recurring Models with the new rules set in US-5216.
+        """
+        if not self.pool.get('sync.server.update'):
+            rec_plan_obj = self.pool.get('account.subscription')
+            rec_model_obj = self.pool.get('account.model')
+            # Recurring Plans
+            rec_plans = {
+                'draft': [],
+                'running': [],
+                'done': [],
+            }
+            rec_plan_ids = rec_plan_obj.search(cr, uid, [], order='NO_ORDER')
+            for rec_plan in rec_plan_obj.browse(cr, uid, rec_plan_ids, fields_to_fetch=['lines_id']):
+                if not rec_plan.lines_id:
+                    rec_plans['draft'].append(rec_plan.id)
+                else:
+                    running = False
+                    for sub_line in rec_plan.lines_id:
+                        if not sub_line.move_id or sub_line.move_id.state != 'posted':
+                            running = True
+                            break
+                    if running:
+                        rec_plans['running'].append(rec_plan.id)
+                    else:
+                        rec_plans['done'].append(rec_plan.id)
+            for plan_state in rec_plans:
+                if rec_plans[plan_state]:
+                    update_rec_plans = """
+                                       UPDATE account_subscription
+                                       SET state = %s
+                                       WHERE id IN %s;
+                                       """
+                    cr.execute(update_rec_plans, (plan_state, tuple(rec_plans[plan_state])))
+            # Recurring Models
+            rec_models = {
+                'draft': [],
+                'running': [],
+                'done': [],
+            }
+            rec_model_ids = rec_model_obj.search(cr, uid, [], order='NO_ORDER')
+            for model_id in rec_model_ids:
+                if rec_plan_obj.search_exist(cr, uid, [('model_id', '=', model_id), ('state', '=', 'done')]):
+                    state = 'done'
+                elif rec_plan_obj.search_exist(cr, uid, [('model_id', '=', model_id), ('state', '=', 'running')]):
+                    state = 'running'
+                else:
+                    state = 'draft'
+                rec_models[state].append(model_id)
+            for model_state in rec_models:
+                if rec_models[model_state]:
+                    update_rec_models = """
+                                        UPDATE account_model
+                                        SET state = %s
+                                        WHERE id IN %s;
+                                        """
+                    cr.execute(update_rec_models, (model_state, tuple(rec_models[model_state])))
+        return True
+
+    def us_7448_set_revaluated_periods(self, cr, uid, *a, **b):
+        """
+        Sets the tag "is_revaluated" for the existing periods in which the revaluation has been run,
+        based on the rules which applied until now
+        """
+        if not self.pool.get('sync.server.update'):
+            user_obj = self.pool.get('res.users')
+            period_obj = self.pool.get('account.period')
+            fy_obj = self.pool.get('account.fiscalyear')
+            journal_obj = self.pool.get('account.journal')
+            aml_obj = self.pool.get('account.move.line')
+            instance = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+            revaluated_period_ids = []
+            if instance and instance.level == 'coordo':
+                reval_journal_ids = journal_obj.search(cr, uid, [('type', '=', 'revaluation'), ('is_current_instance', '=', True)])
+                if reval_journal_ids:
+                    period_ids = period_obj.search(cr, uid, [('special', '=', False)])
+                    for period in period_obj.browse(cr, uid, period_ids, fields_to_fetch=[('number', 'fiscalyear_id', 'name')]):
+                        # domain taken from the check which was done until now at period closing time
+                        aml_domain = [('journal_id', 'in', reval_journal_ids), ('period_id', '=', period.id)]
+                        # additional check which was done at revaluation time
+                        # for the January periods having a previous FY
+                        if period.number == 1:
+                            if fy_obj.search_exist(cr, uid, [('date_start', '<', period.fiscalyear_id.date_start)]):
+                                aml_domain.append(('name', 'like', "Revaluation - %s" % (period.name,)))
+                        if aml_obj.search_exist(cr, uid, aml_domain):
+                            revaluated_period_ids.append(period.id)
+            if revaluated_period_ids:
+                update_period_sql = """
+                                UPDATE account_period
+                                SET is_revaluated = 't'
+                                WHERE id IN %s;
+                                """
+                cr.execute(update_period_sql, (tuple(revaluated_period_ids),))
+                self._logger.warn('Number of periods set as revaluated: %s.' % (cr.rowcount,))
+        return True
+
+    def us_7412_set_fy_closure_settings(self, cr, uid, *a, **b):
+        """
+        Sets the Fiscal Year Closure options depending on the OC.
+        """
+        if self.pool.get('sync.client.entity') and not self.pool.get('sync.server.update'):
+            oc_sql = "SELECT oc FROM sync_client_entity LIMIT 1;"
+            cr.execute(oc_sql)
+            oc = cr.fetchone()[0]
+            has_move_regular_bs_to_0 = False
+            has_book_pl_results = False
+            if oc == 'ocg':
+                has_move_regular_bs_to_0 = True
+            elif oc == 'ocb':
+                has_move_regular_bs_to_0 = True
+                has_book_pl_results = True
+            update_company = """
+                             UPDATE res_company
+                             SET has_move_regular_bs_to_0 = %s, has_book_pl_results = %s;
+                             """
+            cr.execute(update_company, (has_move_regular_bs_to_0, has_book_pl_results))
+
+    def us_6453_set_ref_on_in(self, cr, uid, *a, **b):
+        if self.pool.get('sync.client.entity'):
+            cr.execute('''
+            update stock_picking set customer_ref=x.ref, customers=x.cust from (
+                select
+                    p.id,
+                    string_agg(distinct(regexp_replace(so.client_order_ref,'^.*\.', '')),';') as ref,
+                    string_agg(distinct(part.name), ';') as cust
+                from
+                    stock_picking p,
+                    sale_order so,
+                    sale_order_line sol,
+                    purchase_order_line pol,
+                    purchase_order po,
+                    res_partner part
+                where
+                    p.type='in' and
+                    p.purchase_id=po.id and
+                    pol.order_id=po.id and
+                    pol.linked_sol_id=sol.id and
+                    sol.order_id=so.id and
+                    part.id = so.partner_id
+                group by p.id
+                ) as x
+            where x.id=stock_picking.id and type='in'
+            ''')
+
+            cr.execute("SELECT name FROM sync_client_entity LIMIT 1")
+            inst_name = cr.fetchone()[0]
+            if not inst_name:
+                return False
+
+            cr.execute("update stock_picking set customers=%s where customers is null and type='in'", (inst_name, ))
+
+        return True
+
+    def us_7646_dest_loc_on_pol(self, cr, uid, *a, **b):
+        data_obj = self.pool.get('ir.model.data')
+        try:
+            service_id = self.pool.get('stock.location').get_service_location(cr, uid)
+            conso_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+            log_id = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_logistic')[1]
+            med_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_medical')[1]
+            cross_dock_id =  data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        except:
+            return True
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s where id in (
+            select pol.id
+            from purchase_order_line pol, purchase_order po, product_product prod, product_template tmpl
+            where
+                pol.order_id = po.id and
+                pol.product_id = prod.id and
+                tmpl.id = prod.product_tmpl_id and
+                tmpl.type = 'service_recep' and
+                coalesce(po.cross_docking_ok, 'f') = 'f' and
+                pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
+            ) ''', (service_id,))
+        self._logger.warn('POL loc_dest service on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s where id in (
+            select pol.id
+            from purchase_order_line pol, purchase_order po, product_product prod, product_template tmpl
+            where
+                pol.order_id = po.id and
+                pol.product_id = prod.id and
+                tmpl.id = prod.product_tmpl_id and
+                tmpl.type = 'consu' and
+                pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
+            ) ''', (conso_id,))
+        self._logger.warn('POL loc_dest conso on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = so.location_requestor_id
+                        from sale_order so, sale_order_line sol, stock_location loc, product_product prod, product_template tmpl
+                        where
+                            so.id = sol.order_id and
+                            loc.id = so.location_requestor_id and
+                            loc.usage != 'customer' and
+                            so.procurement_request = 't' and
+                            purchase_order_line.linked_sol_id = sol.id and
+                            purchase_order_line.product_id = prod.id and
+                            tmpl.id = prod.product_tmpl_id and
+                            tmpl.type != 'consu' and
+                            purchase_order_line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') ''', (conso_id,))
+        self._logger.warn('POL loc_dest IR on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s from purchase_order po
+                        where
+                            po.id = purchase_order_line.order_id and
+                            purchase_order_line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
+                            coalesce(po.cross_docking_ok, 'f') = 't' and
+                            location_dest_id is NULL ''', (cross_dock_id,))
+        self._logger.warn('POL loc_dest Cross Dock on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s
+                    from product_product prod, product_template tmpl, product_nomenclature nom
+                    where
+                        purchase_order_line.product_id = prod.id and
+                        tmpl.nomen_manda_0 = nom.id and
+                        nom.name = 'MED' and
+                        tmpl.id = prod.product_tmpl_id and
+                        location_dest_id is NULL and
+                        purchase_order_line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') ''', (med_id,))
+        self._logger.warn('POL loc_dest MED on %s lines' % (cr.rowcount,))
+
+        cr.execute('''update purchase_order_line set location_dest_id = %s
+                    from product_product prod, product_template tmpl, product_nomenclature nom
+                    where
+                        purchase_order_line.product_id = prod.id and
+                        tmpl.nomen_manda_0 = nom.id and
+                        nom.name = 'LOG' and
+                        tmpl.id = prod.product_tmpl_id and
+                        location_dest_id is NULL and
+                        purchase_order_line.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') ''', (log_id,))
+        self._logger.warn('POL loc_dest LOG on %s lines' % (cr.rowcount,))
         return True
 
 
@@ -119,6 +390,14 @@ class patch_scripts(osv.osv):
                 self._logger.warn('Liquidity journals set on company form')
 
             return True
+
+    def sync_msg_from_itself(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        cr.execute(''' update sync_client_message_received set run='t', manually_ran='t', log='Set manually to run without execution', manually_set_run_date=now() where run='f' and source=%s ''', (instance.instance, ))
+        self._logger.warn('Set %s self sync messages as Run' % (cr.rowcount,))
+        return True
 
     def us_7593_inactivate_en_US(self, cr, uid, *a, **b):
         """
@@ -258,6 +537,7 @@ class patch_scripts(osv.osv):
                    AND journal_id IN (SELECT id FROM account_journal WHERE type in ('bank', 'cash'));
                    """)
         self._logger.warn('Starting Balance set to zero in %s registers.' % (cr.rowcount,))
+
         return True
 
     def us_6641_remove_duplicates_from_stock_mission(self, cr, uid, *a, **b):

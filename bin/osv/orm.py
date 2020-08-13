@@ -63,7 +63,7 @@ from tools.safe_eval import safe_eval as eval
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
 from tools import SKIPPED_ELEMENT_TYPES, cache
 
-regex_order = re.compile('^(([a-z0-9_]+|"[a-z0-9_]+")( *desc| *asc)?( *, *|))+$', re.I)
+regex_order = re.compile('^(([a-z0-9_\.]+|"[a-z0-9_\.]+")( *desc| *asc)?( *, *|))+$', re.I)
 
 POSTGRES_CONFDELTYPES = {
     'RESTRICT': 'r',
@@ -234,7 +234,7 @@ class browse_record(object):
                             for result_line in field_values:
                                 result_line[field_name] = self._fields_process[field_column._type](result_line[field_name])
                                 if result_line[field_name]:
-                                    result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj)
+                                    result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj, result_line['id'])
 
             if not field_values:
                 # Where did those ids come from? Perhaps old entries in ir_model_dat?
@@ -2117,13 +2117,16 @@ class orm_template(object):
         '''
         return self.search(cr, user, args, offset, limit, order, context, count)
 
-    def search_exist(self, cr, user, args, context=None):
+    def search_exists(self, cr, user, args, context=None):
         """
         return True if there is at least one element matching the criterions,
         False otherwise.
         """
         return bool(self.search(cr, user, args, context=context,
                                 limit=1, order='NO_ORDER'))
+
+    def search_exist(self, cr, user, args, context=None):
+        return self.search_exists(cr, user, args, context=context)
 
     def search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
         """
@@ -4761,7 +4764,7 @@ class orm(orm_template):
             kwargs = dict(parent_model=inherited_model, child_object=self) #workaround for python2.5
             apply_rule(*rule_obj.domain_get(cr, uid, inherited_model, mode, context=context), **kwargs)
 
-    def _generate_m2o_order_by(self, order_field, query):
+    def _generate_m2o_order_by(self, order_field, query, subfield=False):
         """
         Add possibly missing JOIN to ``query`` and generate the ORDER BY clause for m2o fields,
         either native m2o fields or function/related fields that are stored, including
@@ -4786,7 +4789,19 @@ class orm(orm_template):
 
         # figure out the applicable order_by for the m2o
         dest_model = self.pool.get(order_field_column._obj)
-        if order_field_column.m2o_order:
+        if subfield:
+            src_table, src_field = qualified_field.replace('"','').split('.', 1)
+            query.join((src_table, dest_model._table, src_field, 'id'), outer=True)
+            m2o_order = subfield
+            model = dest_model._table
+
+            if subfield in dest_model._inherit_fields:
+                src_table, src_field = dest_model._inherits_join_calc(subfield, query).replace('"','').split('.', 1)
+                query.join((src_table, dest_model._table, src_field, 'id'), outer=True)
+                model = src_table
+            qualify = lambda field: '"%s"."%s"' % (model, field)
+            return map(qualify, m2o_order) if isinstance(m2o_order, list) else qualify(m2o_order)
+        elif order_field_column.m2o_order:
             m2o_order = order_field_column.m2o_order
         else:
             m2o_order = dest_model._order
@@ -4831,6 +4846,9 @@ class orm(orm_template):
                 translatable = False
                 order_split = order_part.strip().split(' ')
                 order_field = order_split[0].strip()
+                subfield = False
+                if '.' in order_field:
+                    order_field, subfield = order_field.split('.', 1)
                 order_direction = order_split[1].strip() if len(order_split) == 2 else ''
                 inner_clause = None
                 end_inner_clause = []
@@ -4839,21 +4857,42 @@ class orm(orm_template):
                 elif order_field in self._columns:
                     order_column = self._columns[order_field]
                     translatable = order_column.translate
-                    if translatable and order_column._classic_read:
+                    trans_table = self._table
+                    trans_obj_name = self._name
+                    trans_classic_read = order_column._classic_read
+
+                    if order_column._classic_read:
+                        inner_clause = '"%s"."%s"' % (self._table, order_field)
+                    elif order_column._type == 'many2one':
+                        inner_clause = self._generate_m2o_order_by(order_field, query, subfield)
+                        if subfield:
+                            pool_sub_obj = self.pool.get(order_column._obj)
+                            order_field = subfield
+
+                            if pool_sub_obj._columns.get(subfield):
+                                translatable =  pool_sub_obj._columns[subfield].translate
+                                trans_classic_read = pool_sub_obj._columns[subfield]._classic_read
+                                if translatable:
+                                    trans_table = pool_sub_obj._columns[subfield]._table
+                                    trans_obj_name = pool_sub_obj._name
+                            elif pool_sub_obj._inherit_fields.get(subfield):
+                                translatable =  pool_sub_obj._inherit_fields[subfield][2].translate
+                                trans_classic_read = pool_sub_obj._inherit_fields[subfield][2]._classic_read
+                                if translatable:
+                                    trans_table = self.pool.get(pool_sub_obj._inherit_fields[subfield][0])._table
+                                    trans_obj_name = pool_sub_obj._inherit_fields[subfield][0]
+                    else:
+                        continue # ignore non-readable or "non-joinable" fields
+
+                    if translatable and trans_classic_read:
                         translation += 1
                         trans_name = '"ir_translation%s"' % translation
                         init_field = '"%s"."%s"' % (self._table, order_field)
                         order_by_elements.append('COALESCE(%s."value", %s) %s' % (trans_name, init_field, order_direction))
                         left_join_clause = 'LEFT JOIN "ir_translation" %s' % trans_name
                         on_clause = 'ON %s.res_id = "%s".id AND %s.name = \'%s,%s\' AND %s.type = \'model\' AND %s.lang = \'%s\'' % (
-                            trans_name, self._table, trans_name, self._name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
+                            trans_name, trans_table, trans_name, trans_obj_name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
                         from_order_clause.append('%s %s' % (left_join_clause, on_clause))
-                    if order_column._classic_read:
-                        inner_clause = '"%s"."%s"' % (self._table, order_field)
-                    elif order_column._type == 'many2one':
-                        inner_clause = self._generate_m2o_order_by(order_field, query)
-                    else:
-                        continue # ignore non-readable or "non-joinable" fields
 
                 elif order_field in self._inherit_fields:
                     parent_obj = self.pool.get(self._inherit_fields[order_field][3])
@@ -5093,6 +5132,9 @@ class orm(orm_template):
             record['res_id'] = new_id
             trans_obj.create(cr, uid, record, context=context)
 
+
+    def copy_web(self, cr, uid, id, default=None, context=None):
+        return self.copy(cr, uid, id, default, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):
         """
