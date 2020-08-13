@@ -66,7 +66,7 @@ class product_mass_update(osv.osv):
                                      help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),
         'procure_method': fields.selection([('make_to_stock', 'Make to Stock'), ('make_to_order', 'Make to Order')], 'Procurement Method',
                                            help="If you encode manually a Procurement, you probably want to use a make to order method."),
-        'product_state': fields.selection([('valid', 'Valid'), ('phase_out', 'Phase Out'), ('stopped', 'Stopped'), ('archived', 'Archived'), ('status1', 'Status 1'), ('status2', 'Status 2'), ], 'Status', help="Tells the user if he can use the product or not."),
+        'product_state': fields.selection([('valid', 'Valid'), ('phase_out', 'Phase Out'), ('forbidden', 'Forbidden'), ('archived', 'Archived')], 'Status', help="Tells the user if he can use the product or not."),
         'sterilized': fields.selection(selection=[('no', 'No'), ('yes', 'Yes'), ('no_know', 'tbd')], string='Sterile'),
         'supply_method': fields.selection([('produce', 'Produce'), ('buy', 'Buy')], 'Supply Method',
                                           help="Produce will generate production order or tasks, according to the product type. Purchase will trigger purchase orders when requested."),
@@ -75,7 +75,7 @@ class product_mass_update(osv.osv):
                                                    help='This account will be used for invoices instead of the default one to value sales for the current product'),
         'property_account_expense': fields.many2one('account.account', string='Expense Account',
                                                     help='This account will be used for invoices instead of the default one to value expenses for the current product'),
-        'empty_status': fields.boolean(string='Set Status as empty'),
+        'empty_status': fields.boolean(string='Set Status as empty (obsolete)', readonly=True),
         'empty_inc_account': fields.boolean(string='Set Income Account as empty'),
         'empty_exp_account': fields.boolean(string='Set Expense Account as empty'),
         'type_of_ed_bn': fields.selection([('no_bn_no_ed', 'No BN/No ED'), ('bn', 'BN+ED'), ('ed', 'ED Only')], string='Target Attributes'),
@@ -124,8 +124,6 @@ class product_mass_update(osv.osv):
         if not ids:
             return True
 
-        if 'empty_status' in vals and vals['empty_status']:
-            vals['product_state'] = ''
         if 'empty_inc_account' in vals and vals['empty_inc_account']:
             vals['property_account_income'] = False
         if 'empty_exp_account' in vals and vals['empty_exp_account']:
@@ -155,11 +153,6 @@ class product_mass_update(osv.osv):
         })
 
         return super(product_mass_update, self).copy(cr, uid, id, default=default, context=context)
-
-    def onchange_status_check(self, cr, uid, ids, empty_status):
-        if empty_status:
-            return {'value': {'product_state': ''}}
-        return {'value': {}}
 
     def onchange_inc_check(self, cr, uid, ids, empty_inc_account):
         if empty_inc_account:
@@ -279,8 +272,6 @@ class product_mass_update(osv.osv):
             p_state_ids = p_state_obj.search(cr, uid, [('code', '=', p_mass_upd.product_state)], context=context)
             if p_state_ids:
                 vals.update({'state': p_state_ids[0]})
-        elif p_mass_upd.empty_status:
-            vals.update({'state': False})
         if p_mass_upd.sterilized:
             vals.update({'sterilized': p_mass_upd.sterilized})
         if p_mass_upd.supply_method:

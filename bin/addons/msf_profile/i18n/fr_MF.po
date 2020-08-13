@@ -32842,12 +32842,12 @@ msgstr "Sélectionner des produits à tenir compte pour l'inventaire, en u"
 msgid "Asia/Dushanbe"
 msgstr "Asia/Dushanbe"
 
-#. module: product_attributes, product
+#. modules: product_attributes, product
 #: selection:product.product,state_ud:0
 #: model:product.status,name:product_attributes.status_2
 #: selection:product.mass.update,product_state:0
 msgid "Phase Out"
-msgstr "Élimination"
+msgstr "Supprimé"
 
 #. module: sync_so
 #: field:purchase.order,push_fo:0
@@ -45264,8 +45264,10 @@ msgstr "Coûts de Transport "
 msgid "Additional Info"
 msgstr "Information Complémentaire"
 
-#. module: product_attributes
+#. modules: product_attributes, product
 #: selection:product.product,state_ud:0
+#: model:product.status,name:product_attributes.status_forbidden
+#: selection:product.mass.update,product_state:0
 msgid "Forbidden"
 msgstr "Interdit"
 
@@ -71670,6 +71672,7 @@ msgstr "Navajo"
 #: selection:replenishment.segment.line,status:0
 #: field:survey.common,active:0
 #: field:sync_client.survey,active:0
+#: field:product.status,active:0
 #, python-format
 msgid "Active"
 msgstr "Actif"
@@ -105463,8 +105466,8 @@ msgstr "Mettre le Compte de Produits à vide"
 
 #. module: product
 #: field:product.mass.update,empty_status:0
-msgid "Set Status as empty"
-msgstr "Mettre le Statut à vide"
+msgid "Set Status as empty (obsolete)"
+msgstr "Mettre le Statut à vide (obsolète)"
 
 #. module: sourcing
 #: code:addons/sourcing/sale_order_line.py:1606
@@ -110427,6 +110430,21 @@ msgstr "Plans associés"
 msgid "Merge product"
 msgstr "Fusion produit"
 
+#. module: product
+#: view:product.product:0
+msgid "Change to ED only"
+msgstr "Changer en DE seulement"
+
+#. module: product
+#: view:product.product:0
+msgid "Remove ED/BN"
+msgstr "Supprimer NL/DE"
+
+#. module: product
+#: view:product.product:0
+msgid "Change to BN+ED"
+msgstr "Changer en NL+DE"
+
 #. module: stock
 #: code:addons/stock/stock.py:1813
 #, python-format
@@ -110811,5 +110829,10 @@ msgstr "Erreur inattendue durant l'import:\n"
 #. module: procurement_cycle
 #: code:addons/procurement_cycle/replenishment.py:1414
 #, python-format
-msgid "Line %d: product code %s you can\'t replace a product by itself !"
+msgid "Line %d: product code %s you can\\'t replace a product by itself !"
 msgstr "Ligne %d: Code Produit %s vous ne pouvez pas remplacer un produit par lui-même !"
+
+#. module: product_attributes
+#: field:product.status,mapped_to:0
+msgid "Replaced by"
+msgstr "Remplacé par"
