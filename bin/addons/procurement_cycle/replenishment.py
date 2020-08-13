@@ -1357,7 +1357,7 @@ class replenishment_segment(osv.osv):
 
             idx = -1
 
-            status = dict([(x[1], x[0]) for x in life_cycle_status])
+            status = dict([(_(x[1]), x[0]) for x in life_cycle_status])
             error = []
             code_created = {}
             created = 0
@@ -1410,6 +1410,8 @@ class replenishment_segment(osv.osv):
                         replacing_id = product_obj.search(cr, uid, [('default_code', '=ilike', row.cells[col_replacing].data.strip())], context=context)
                         if not replacing_id:
                             line_error.append(_('Line %d: replacing product code %s not found') % (idx+1, row.cells[col_replacing].data))
+                        elif row.cells[col_replacing].data.strip().lower() == prod_code.lower():
+                            line_error.append(_('Line %d: product code %s you can\'t replace a product by itself !') % (idx+1, prod_code))
                         else:
                             data_towrite['replacing_product_id'] = replacing_id[0]
                 elif data_towrite['status'] == 'replaced' and not data_towrite['replacing_product_id']:
@@ -1422,6 +1424,8 @@ class replenishment_segment(osv.osv):
                         replaced_id = product_obj.search(cr, uid, [('default_code', '=ilike', row.cells[col_replaced].data.strip())], context=context)
                         if not replaced_id:
                             line_error.append(_('Line %d: replaced product code %s not found') % (idx+1, row.cells[col_replaced].data))
+                        elif row.cells[col_replaced].data.strip().lower() == prod_code.lower():
+                            line_error.append(_('Line %d: product code %s you can\'t replace a product by itself !') % (idx+1, prod_code))
                         else:
                             data_towrite['replaced_product_id'] = replaced_id[0]
                 elif data_towrite['status'] in ('replacing', 'activereplacing') and not data_towrite['replaced_product_id']:

@@ -34245,7 +34245,7 @@ msgstr "Distribution analytique non valide!"
 msgid "IR/FO Order"
 msgstr "IR/FO Order"
 
-#. modules: purchase, account, analytic_distribution_supply, msf_homere_interface, res_currency_tables, register_accounting, account_hq_entries, account_corrections, product_attributes, base, account_subscription, analytic_distribution, purchase_override, product, msf_accrual
+#. modules: purchase, account, analytic_distribution_supply, msf_homere_interface, res_currency_tables, register_accounting, account_hq_entries, account_corrections, product_attributes, base, account_subscription, analytic_distribution, purchase_override, product, msf_accrual, procurement_cycle
 #: selection:account.entries.report,move_line_state:0
 #: selection:account.move.line,state:0
 #: selection:wizard.journal.items.corrections.lines,analytic_distribution_state:0
@@ -34271,6 +34271,10 @@ msgstr "IR/FO Order"
 #: model:product.status,name:product_attributes.status_1
 #: selection:product.mass.update,product_state:0
 #: selection:msf.accrual.line,analytic_distribution_state:0
+#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:930
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:505
+#: field:replenishment.inventory.review.line,valid_rr_fmc:0
+#: field:replenishment.order_calc.line,valid_rr_fmc:0
 msgid "Valid"
 msgstr "Valide"
 
@@ -107282,6 +107286,8 @@ msgstr "Qté Réappro Auto"
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line,auto_qty:0
 #: field:replenishment.segment.line,auto_qty:0
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:502
+#: field:replenishment.order_calc.line,auto_qty:0
 msgid "Auto. Supply Qty"
 msgstr "Qté réappro. auto"
 
@@ -107299,6 +107305,7 @@ msgstr "Tampon (Qté)"
 #: report:addons/procurement_cycle/report/replenishment_segment.mako:373
 #: field:replenishment.inventory.review.line,buffer_qty:0
 #: field:replenishment.segment.line,buffer_qty:0
+#: field:replenishment.order_calc.line,buffer_qty:0
 msgid "Buffer Qty"
 msgstr "Qté Tampon"
 
@@ -107632,7 +107639,7 @@ msgstr "Date Génération"
 #. module: procurement_cycle
 #: field:replenishment.segment,handling_lt:0
 msgid "Handling Lead Time (days)"
-msgstr "Délai de traitement (jours)"
+msgstr "Délai de Manutention (jours)"
 
 #. module: procurement_cycle
 #: field:replenishment.segment,has_inprogress_cal:0
@@ -108040,7 +108047,7 @@ msgstr "Commentaire Qté commandée"
 #. module: procurement_cycle
 #: field:replenishment.segment,order_validation_lt:0
 msgid "Order Validation Lead Time (days)"
-msgstr "Délai de Validation de la Commande (jours)"
+msgstr "Délai de Validation de Commande (jours)"
 
 #. module: procurement_cycle
 #: field:replenishment.inventory.review.line,pas_ids:0
@@ -108998,6 +109005,7 @@ msgstr "Zones des autres instances"
 
 #. module: procurement_cycle
 #: field:replenishment.segment.line,status:0
+#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:914
 msgid "RR Lifecycle"
 msgstr "Cycle RR"
 
@@ -110302,7 +110310,7 @@ msgstr "Ligne XLS %d: vous ne pouvez pas substituer un produit par lui même"
 #. module: procurement_cycle
 #: view:replenishment.segment:0
 msgid "Order Validation Lead Time (days) :"
-msgstr "Délai de Validation de la Commande (jours) :"
+msgstr "Délai de Validation de Commande (jours) :"
 
 #. module: procurement_cycle
 #: view:replenishment.segment:0
@@ -110711,3 +110719,97 @@ msgid "Error: %s\n"
 msgstr "Erreur: %s\n"
 "\n"
 "Veuillez réinitialiser le processus de la livraison entrante et corriger la source de cette erreur avant de recommencer le processus."
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:18
+#: report:addons/procurement_cycle/report/replenishment_segment.mako:541
+#: selection:replenishment.inventory.review.line,status:0
+#: selection:replenishment.order_calc.line,status:0
+#: selection:replenishment.segment.line,status:0
+#, python-format
+msgid "Phasing Out"
+msgstr "Suppression"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:915
+msgid "Replaced/Replacing"
+msgstr "Remplacé/Remplaçant"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:18
+#: report:addons/procurement_cycle/report/replenishment_segment.mako:541
+#: selection:replenishment.inventory.review.line,status:0
+#: selection:replenishment.order_calc.line,status:0
+#: selection:replenishment.segment.line,status:0
+#, python-format
+msgid "Active-Replacing"
+msgstr "Actif-Remplaçant"
+
+#. module: procurement_cycle
+#: report:addons/procurement_cycle/report/replenishment_order_calc.mako:498
+msgid "Buffer"
+msgstr "Tampon"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1133
+#, python-format
+msgid "Delay"
+msgstr "Délai"
+
+#. module: procurement_cycle
+#: field:replenishment.inventory.review.line,external_lt:0
+msgid "External LT"
+msgstr "Délai Externe"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1911
+#, python-format
+msgid "Phased out?"
+msgstr "Supprimé?"
+
+#. module: procurement_cycle
+#: view:replenishment.inventory.review:0
+msgid "Pipeline (PO)"
+msgstr "Pipeline (BC)"
+
+#. module: procurement_cycle
+#: view:replenishment.inventory.review:0
+msgid "Pipeline (Stock Moves)"
+msgstr "Pipeline (Mouvements)"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1131
+#, python-format
+msgid "Pipeline in the past"
+msgstr "Pipeline dans le passé"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1071
+#, python-format
+msgid "Replaced SO"
+msgstr "Replaçant Rupture"
+
+#. module: procurement_cycle
+#: field:replenishment.inventory.review.line,paired_product_id:0
+msgid "Replacing/Replaced product"
+msgstr "Produit Remplaçant/Remplacé"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1069
+#, python-format
+msgid "SODate of linked products is %s"
+msgstr "Date Rupture du produit lié: %s"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1510
+#, python-format
+msgid "Unexpected error during import:\n"
+"%s"
+msgstr "Erreur inattendue durant l'import:\n"
+"%s"
+
+#. module: procurement_cycle
+#: code:addons/procurement_cycle/replenishment.py:1414
+#, python-format
+msgid "Line %d: product code %s you can\'t replace a product by itself !"
+msgstr "Ligne %d: Code Produit %s vous ne pouvez pas remplacer un produit par lui-même !"
