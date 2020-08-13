@@ -1091,6 +1091,12 @@ class return_claim(osv.osv):
         # Create lines
         for x in product_line_data:
             prod_id = product_obj.search(cr, uid, [('name', '=', x.product_id_claim_product_line.name)], context=context)[0]
+            prod_data = product_obj.browse(cr, uid, prod_id, fields_to_fetch=['perishable', 'batch_management'], context=context)
+            batch_id = False
+            if prod_data.perishable and not prod_data.batch_management and x.expiry_date_claim_product_line:
+                batch_id = lot_obj._get_prodlot_from_expiry_date(cr, uid, x.expiry_date_claim_product_line, prod_id, context=context)
+            elif prod_data.perishable and prod_data.batch_management and x.expiry_date_claim_product_line and x.lot_id_claim_product_line.name:
+                batch_id = lot_obj.get_or_create_prodlot(cr, uid, x.lot_id_claim_product_line.name, x.expiry_date_claim_product_line, prod_id, context=context)
             line_data = {
                 'claim_id_claim_product_line': claim_id,
                 'qty_claim_product_line': x.qty_claim_product_line,
@@ -1100,9 +1106,7 @@ class return_claim(osv.osv):
                 'product_id_claim_product_line': prod_id,
                 'uom_id_claim_product_line': uom_obj.search(cr, uid, [('name', '=', x.uom_id_claim_product_line.name)], context=context)[0],
                 'type_check': x.type_check,
-                'lot_id_claim_product_line': x.lot_id_claim_product_line and lot_obj.get_or_create_prodlot(
-                    cr, uid, x.lot_id_claim_product_line.name, x.expiry_date_claim_product_line, prod_id,
-                    context=context),
+                'lot_id_claim_product_line': batch_id,
                 'expiry_date_claim_product_line': x.expiry_date_claim_product_line,
                 'src_location_id_claim_product_line': location_id,
             }
