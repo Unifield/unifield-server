@@ -4854,13 +4854,19 @@ msgstr "option 2"
 msgid "You removed all lines of this purchase order, would you cancel it ?"
 msgstr "Vous avez supprimé toutes les lignes de ce bon de commande, voulez vous l'annuler ?"
 
-#. modules: sale, stock_override
+#. modules: sale, stock_override, kit
 #: report:msf.consumption_report:0
 #: report:msf.product_list:0
 #: report:delivery.order:0
 #: report:internal.move:0
+#: report:kit.report:0
 msgid "Reference :"
 msgstr "Référence :"
+
+#. module: kit
+#: report:kit.report:0
+msgid "Expiry Date :"
+msgstr "Date d'Expiration :"
 
 #. module: purchase
 #: model:process.transition,note:purchase.process_transition_createpackinglist0
@@ -32219,7 +32225,12 @@ msgstr "Ajouter Boutons pour Impression"
 #: report:kit.report:0
 #: report:procurement.request.report:0
 msgid "Creation Date :"
-msgstr "Date de Création :"
+msgstr "Date de Création :"
+
+#. module: kit
+#: report:kit.report:0
+msgid "Batch Number :"
+msgstr "Numéro de Lot :"
 
 #. module: kit
 #: report:kit.report:0
