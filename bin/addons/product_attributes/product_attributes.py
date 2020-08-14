@@ -1923,7 +1923,8 @@ class product_attributes(osv.osv):
                     'context': context
                 }
 
-        self.write(cr, uid, ids, {'active': True}, context=context)
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.write(cr, real_uid, ids, {'active': True}, context=context)
 
         return True
 
