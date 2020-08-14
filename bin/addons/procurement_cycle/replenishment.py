@@ -1066,12 +1066,14 @@ class replenishment_segment(osv.osv):
                         if line.status == 'activereplacing':
                             replaced_lack = lacking_by_prod.get(line.replaced_product_id.id)
                             if replaced_lack:
-                                wmsg = _('SODate of linked products is %s') % (self.pool.get('date.tools').get_date_formatted(cr, uid, datetime=replaced_lack.strftime('%Y-%m-%d'), context=context))
+                                wmsg = _('SODate of linked product is %s') % (self.pool.get('date.tools').get_date_formatted(cr, uid, datetime=replaced_lack.strftime('%Y-%m-%d'), context=context))
                                 warnings.append(wmsg)
                                 warnings_html.append('<span title="%s">%s</span>'  % (misc.escape_html(wmsg), misc.escape_html(_('Replaced SO'))))
 
                         if lacking:
                             qty_lacking_needed_by = today + relativedelta(days=month_of_supply*30.44)
+                            if review_id:
+                                lacking_by_prod[line.product_id.id] = qty_lacking_needed_by
                     if line.status != 'phasingout' and review_id and round(sum_line.get(line.id, {}).get('expired_before_rdd',0)):
                         wmsg = _('Forecasted expiries')
                         warnings.append(wmsg)

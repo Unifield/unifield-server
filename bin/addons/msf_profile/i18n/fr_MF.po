@@ -110815,7 +110815,7 @@ msgstr "Produit Remplaçant/Remplacé"
 #. module: procurement_cycle
 #: code:addons/procurement_cycle/replenishment.py:1069
 #, python-format
-msgid "SODate of linked products is %s"
+msgid "SODate of linked product is %s"
 msgstr "Date Rupture du produit lié: %s"
 
 #. module: procurement_cycle
