@@ -94797,7 +94797,7 @@ msgstr "("
 #: view:stock.incoming.processor:0
 #: field:stock.incoming.processor,display_process_to_ship_button:0
 msgid "Process to ship"
-msgstr "Process to ship"
+msgstr "Taiter jusqu'à l'expédition"
 
 #. module: kit
 #: field:substitute.item.mirror,item_id_mirror:0
@@ -110852,3 +110852,14 @@ msgstr "De Colis"
 #: report:msf.report_reception_in:0
 msgid "To parcel"
 msgstr "À colis"
+
+#. module: purchase
+#: code:addons/purchase/purchase_order.py:1393
+#, python-format
+msgid "Please fill the \"Delivery Requested Date (modified)\" field."
+msgstr "Veuillez remplir le champ \"Date de Livraison Souhaitée (modifiée)\"."
+
+#. module: purchase
+#: field:purchase.order,delivery_requested_date_modified:0
+msgid "Delivery Requested Date (modified)"
+msgstr "Date de Livraison Souhaitée (modifiée)"
