@@ -285,7 +285,7 @@ class stock_picking_processor(osv.osv):
                         'packing_list': move.pack_info_id.packing_list,
                         'ppl_name': move.pack_info_id.ppl_name,
                         'cost': move.price_unit,
-                        'currency': move.currency_id.id,
+                        'currency': move.price_currency_id.id,
                         'pack_info_id': move.pack_info_id.id,
                     })
                 line_obj.create(cr, uid, line_data, context=context)
