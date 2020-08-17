@@ -21968,7 +21968,7 @@ msgstr "Nom de l'Instance :"
 #: code:addons/account_override/account_move_line.py:433
 #, python-format
 msgid "The selected account is not active: %s."
-msgstr "The selected account is not active: %s."
+msgstr "Le compte sélectionné n'est pas actif : %s."
 
 #. module: account_override
 #: view:product.category:0

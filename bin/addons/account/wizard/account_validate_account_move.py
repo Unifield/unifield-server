@@ -56,8 +56,14 @@ class validate_account_move_lines(osv.osv_memory):
             context = {}
         data_line = obj_move_line.browse(cr, uid, context['active_ids'], context)
         for line in data_line:
-            if line.move_id.state=='draft':
-                move_ids.append(line.move_id.id)
+            am = line.move_id
+            if am.state == 'draft':
+                for aml in am.line_id:
+                    # check G/L account validity
+                    vals_to_check = {'date': aml.date, 'period_id': aml.period_id.id,
+                                     'account_id': aml.account_id.id, 'journal_id': aml.journal_id.id}
+                    obj_move_line._check_date(cr, uid, vals_to_check, context=context)
+                move_ids.append(am.id)
         move_ids = list(set(move_ids))
         if not move_ids:
             raise osv.except_osv(_('Warning'), _('Selected Entry Lines does not have any account move enties in draft state'))
