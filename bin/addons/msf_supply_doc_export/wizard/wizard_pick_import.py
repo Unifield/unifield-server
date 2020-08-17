@@ -189,7 +189,8 @@ class wizard_pick_import(osv.osv_memory):
 
         raise osv.except_osv(
             _('Error'),
-            _('The total quantity of line #%s in the import file doesn\'t match with the total qty on screen') % line_data['item']
+            _('The total quantity of line #%s in the import file (%s) doesn\'t match with the total qty on screen')
+                % (line_data['item'], line_data['qty'])
         )
 
     def checks_on_batch(self, cr, uid, ids, product, line_data, context=None):
@@ -335,15 +336,15 @@ class wizard_pick_import(osv.osv_memory):
         cr.execute("""
             SELECT m.line_number, p.default_code, SUM(product_qty) 
             FROM stock_move m, product_product p
-            WHERE m.product_id = p.id AND m.picking_id = %s AND m.state = 'assigned' 
+            WHERE m.product_id = p.id AND m.picking_id = %s AND m.state in ('confirmed', 'assigned') 
             GROUP BY m.line_number, p.default_code
         """, (wiz.picking_id.id,))
         for prod in cr.fetchall():
             if prod[2] != 0 and qty_per_line.get(prod[0]) and qty_per_line[prod[0]] != prod[2]:
                 raise osv.except_osv(
                     _('Error'),
-                    _('The total quantity of line #%s in the import file doesn\'t match with the total qty on screen')
-                    % (prod[0],)
+                    _('The total quantity of line #%s in the import file (%s) doesn\'t match with the total qty on screen (%s)')
+                    % (prod[0], prod[2], qty_per_line.get(prod[0]))
                 )
 
         for to_write in moves_data:
