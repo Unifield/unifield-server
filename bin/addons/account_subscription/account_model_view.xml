@@ -270,6 +270,15 @@
             <field name="domain">[('move_id.state', '=', 'draft'), ('is_recurring', '=', True)]</field>
             <field name="search_view_id" ref="view_recurring_entries_to_post_search"/>
         </record>
+        <!-- Add the entry in the Links section of the menu -->
+        <record id="ir_account_subscription_to_account_move_line_open" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">account.subscription</field>
+            <field name="name">Recurring Entries To Post</field>
+            <field eval="'ir.actions.act_window,%d'%ref('act_account_subscription_to_account_move_line_open')" name="value"/>
+            <field name="key">action</field>
+            <field eval="True" name="object"/>
+        </record>
 
     </data>
 </openerp>
