@@ -182,7 +182,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="14"/>
             <field name="arch" type="xml">
-                <tree string="Recurring Entries To Post" min_rows="100"
+                <tree string="Recurring Entries To Post"
                       hide_new_button="1" hide_delete_button="1" hide_edit_button="1"
                       colors="red:analytic_distribution_state not in ('valid')">
                     <field name="instance_id"/>
