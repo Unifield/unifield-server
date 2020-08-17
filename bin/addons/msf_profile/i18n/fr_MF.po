@@ -31727,9 +31727,10 @@ msgstr "Veuillez corriger le montant des champs!"
 msgid "Choose a Purchase Order"
 msgstr "Choisir un Bon de Commande"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, sale
 #: report:packing.list:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:421
+#: report:msf.report_reception_in:0
 msgid "Total volume"
 msgstr "Volume total"
 
@@ -50643,6 +50644,7 @@ msgstr "De cette vue, ayez une analyse des différents comptes financiers. Le do
 #: selection:sync.monitor,msg_push_send:0
 #: selection:sync.monitor,status:0
 #: selection:sync.monitor,user_rights:0
+#: report:msf.freight_manifest:0
 msgid "/"
 msgstr "/"
 
@@ -75324,9 +75326,10 @@ msgstr "The Shipment %s is set to delivered!"
 msgid "Search Account Journal"
 msgstr "Rechercher un Journal de Compte"
 
-#. module: msf_outgoing
+#. module: msf_outgoing, sale
 #: report:packing.list:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:421
+#: report:msf.report_reception_in:0
 msgid "Total weight"
 msgstr "Poids total"
 
@@ -82101,12 +82104,13 @@ msgstr "Ligne %s. Le Centre de Coût %s n'est pas compatible avec le Funding Poo
 msgid "You have to select a closed register!"
 msgstr "You have to select a closed register!"
 
-#. modules: msf_doc_import, msf_supply_doc_export, msf_outgoing, stock
+#. modules: msf_doc_import, msf_supply_doc_export, msf_outgoing, stock, sale
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:49
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:183
 #: model:ir.actions.report.xml,name:msf_outgoing.report_packing_list
 #: code:addons/stock/stock.py:1775
 #: field:stock.move.in.processor,ppl_name:0
+#: report:msf.report_reception_in:0
 #, python-format
 msgid "Packing List"
 msgstr "Liste de Colisage"
@@ -91637,6 +91641,7 @@ msgstr "Ceci est le délai moyen (en jours) entre la confirmation de la commande
 #: field:sale.order,amount_total:0
 #: view:sale.order.line:0
 #: report:addons/stock/report/reserved_products_report_xls.mako:164
+#: report:msf.freight_manifest:0
 #, python-format
 msgid "Total"
 msgstr "Total"
@@ -101203,7 +101208,7 @@ msgstr "Sélectionner les zones"
 msgid "Supplier PL"
 msgstr "PL Fournisseur"
 
-#. modules: msf_doc_import, msf_outgoing, stock
+#. modules: msf_doc_import, msf_outgoing, stock, sale
 #: field:wizard.import.in.pack.simulation.screen,packing_list:0
 #: field:in.family.processor,packing_list:0
 #: field:pack.family.memory,packing_list:0
@@ -101213,6 +101218,7 @@ msgstr "PL Fournisseur"
 #: field:stock.picking,packing_list:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:335
 #: field:wizard.import.in.pack.simulation.screen,ppl_name:0
+#: report:msf.report_reception_in:0
 msgid "Supplier Packing List"
 msgstr "Liste Colisage Fournisseur"
 
@@ -110836,3 +110842,13 @@ msgstr "Ligne %d: Code Produit %s vous ne pouvez pas remplacer un produit par lu
 #: field:product.status,mapped_to:0
 msgid "Replaced by"
 msgstr "Remplacé par"
+
+#. module: sale
+#: report:msf.report_reception_in:0
+msgid "From parcel"
+msgstr "De Colis"
+
+#. module: sale
+#: report:msf.report_reception_in:0
+msgid "To parcel"
+msgstr "À colis"
