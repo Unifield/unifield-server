@@ -51,16 +51,23 @@ class validate_account_move_lines(osv.osv_memory):
         obj_move = self.pool.get('account.move')
         obj_subscription_line = self.pool.get('account.subscription.line')
         obj_recurring_plan = self.pool.get('account.subscription')
-        move_ids = []
+        moves = []
         if context is None:
             context = {}
         data_line = obj_move_line.browse(cr, uid, context['active_ids'], context)
         for line in data_line:
-            if line.move_id.state=='draft':
-                move_ids.append(line.move_id.id)
-        move_ids = list(set(move_ids))
-        if not move_ids:
+            if line.move_id.state == 'draft':
+                moves.append(line.move_id)
+        moves = list(set(moves))
+        if not moves:
             raise osv.except_osv(_('Warning'), _('Selected Entry Lines does not have any account move enties in draft state'))
+        # check G/L account validity
+        for am in moves:
+            for aml in am.line_id:
+                vals_to_check = {'date': aml.date, 'period_id': aml.period_id.id,
+                                 'account_id': aml.account_id.id, 'journal_id': aml.journal_id.id}
+                obj_move_line._check_date(cr, uid, vals_to_check, context=context)
+        move_ids = [m.id for m in moves]
         obj_move.button_validate(cr, uid, move_ids, context)
         # update the state of the related Recurring Plans if any
         sub_line_ids = obj_subscription_line.search(cr, uid, [('move_id', 'in', move_ids)], context=context)
