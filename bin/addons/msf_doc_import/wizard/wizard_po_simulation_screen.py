@@ -1651,8 +1651,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 continue
 
             if line.simu_id.order_id.state in ['confirmed', 'confirmed_p']:
-                write_vals['type_change'] = 'warning'
-                warnings.append(_("Line %s can't be processed on a Confirmed PO") % (line.in_line_number or values[1] or ''))
+                write_vals['type_change'] = 'ignore'
                 self.write(cr, uid, [line.id], write_vals, context=context)
                 continue
 

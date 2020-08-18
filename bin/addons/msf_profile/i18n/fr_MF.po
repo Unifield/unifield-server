@@ -41202,12 +41202,6 @@ msgstr "Nom de modèle facultatif des objets pour lesquels cette action doit êt
 msgid "Line no is not consistent with validated PO."
 msgstr "Le num de ligne n'est pas cohérent avec le BC validé."
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1580
-#, python-format
-msgid "Line %s can't be processed on a Confirmed PO"
-msgstr "La ligne %s ne peut pas être taitée sur un BC confirmé"
-
 #. module: unifield_setup
 #: view:field.orders.setup:0
 msgid "Activate the Field orders feature"
