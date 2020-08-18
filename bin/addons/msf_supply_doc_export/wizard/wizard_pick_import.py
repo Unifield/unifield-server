@@ -287,8 +287,8 @@ class wizard_pick_import(osv.osv_memory):
                     })
                     if line_data['qty_to_process'] > line_data['qty']:
                         raise osv.except_osv(
-                            _('Error'),
-                            _('Line %s: Column "Qty to Process" cannot be greater than "Qty"') % line_data['item']
+                            _('Error'), _('Line %s: Column "Qty to Process" (%s) cannot be greater than "Qty" (%s)')
+                            % (line_data['item'], line_data['qty_to_process'], line_data['qty'])
                         )
                     treated_lines.append(to_write['move_id'])
 
