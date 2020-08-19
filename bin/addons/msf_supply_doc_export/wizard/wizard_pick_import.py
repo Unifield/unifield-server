@@ -189,7 +189,8 @@ class wizard_pick_import(osv.osv_memory):
 
         raise osv.except_osv(
             _('Error'),
-            _('The total quantity of line #%s in the import file doesn\'t match with the total qty on screen') % line_data['item']
+            _('The total quantity of line #%s in the import file (%s) doesn\'t match with the total qty on screen')
+            % (line_data['item'], line_data['qty'])
         )
 
     def checks_on_batch(self, cr, uid, ids, product, line_data, context=None):
@@ -274,11 +275,6 @@ class wizard_pick_import(osv.osv_memory):
             line_data = self.normalize_data(cr, uid, line_data)
             if line_data['qty']:
                 to_write = {}
-                # Save qties by line
-                if qty_per_line.get(line_data['item']):
-                    qty_per_line[line_data['item']] += line_data['qty']
-                else:
-                    qty_per_line[line_data['item']] = line_data['qty']
 
                 product = self.get_product(cr, uid, ids, line_data, context=context)
                 move_id = self.get_matching_move(cr, uid, ids, line_data, product.id, wiz.picking_id.id, treated_lines, context=context)
@@ -291,12 +287,19 @@ class wizard_pick_import(osv.osv_memory):
                     })
                     if line_data['qty_to_process'] > line_data['qty']:
                         raise osv.except_osv(
-                            _('Error'),
-                            _('Line %s: Column "Qty to Process" cannot be greater than "Qty"') % line_data['item']
+                            _('Error'), _('Line %s: Column "Qty to Process" (%s) cannot be greater than "Qty" (%s)')
+                            % (line_data['item'], line_data['qty_to_process'], line_data['qty'])
                         )
                     treated_lines.append(to_write['move_id'])
 
                 move = self.pool.get('stock.move').browse(cr, uid, to_write['move_id'], context=context)
+
+                if move.state == 'assigned':  # Save qties by line
+                    if qty_per_line.get(line_data['item']):
+                        qty_per_line[line_data['item']] += line_data['qty']
+                    else:
+                        qty_per_line[line_data['item']] = line_data['qty']
+
                 to_write['qty_to_process'] = line_data['qty_to_process']
                 if move.product_id.batch_management:
                     if line_data['batch'] and line_data['expiry_date']:
@@ -342,8 +345,8 @@ class wizard_pick_import(osv.osv_memory):
             if prod[2] != 0 and qty_per_line.get(prod[0]) and qty_per_line[prod[0]] != prod[2]:
                 raise osv.except_osv(
                     _('Error'),
-                    _('The total quantity of line #%s in the import file doesn\'t match with the total qty on screen')
-                    % (prod[0],)
+                    _('The total quantity of line #%s in the import file (%s) doesn\'t match with the total qty on screen (%s)')
+                    % (prod[0], prod[2], qty_per_line.get(prod[0]))
                 )
 
         for to_write in moves_data:

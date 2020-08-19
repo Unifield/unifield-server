@@ -103372,16 +103372,21 @@ msgstr "Ligne %s: La colonne \"Qté à Traiter\" devrait contenir la quantité �
 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:191
+#, python-format
+msgid "The total quantity of line #%s in the import file (%s) doesn't match with the total qty on screen"
+msgstr "La quantité totale de la ligne %s dans le fichier d'import (%s) ne correspond pas à la quantité totale d'UniField"
+
+#. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:336
 #, python-format
-msgid "The total quantity of line #%s in the import file doesn't match with the total qty on screen"
-msgstr "La quantité totale de la ligne %s dans le fichier d'import ne correspond pas à la quantité totale d'UniField"
+msgid "The total quantity of line #%s in the import file (%s) doesn't match with the total qty on screen (%s)"
+msgstr "La quantité totale de la ligne %s dans le fichier d'import (%s) ne correspond pas à la quantité totale d'UniField (%s)"
 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:160
 #, python-format
-msgid "Line %s: Column \"Qty to Process\" cannot be greater than \"Qty\""
-msgstr "Ligne %s: La colonne \"Qté à Traiter\" ne peut pas être supérieure à la \"Qté\""
+msgid "Line %s: Column \"Qty to Process\" (%s) cannot be greater than \"Qty\" (%s)"
+msgstr "Ligne %s: La colonne \"Qté à Traiter\" (%s) ne peut pas être supérieure à la \"Qté\" (%s)"
 
 #. module: msf_supply_doc_export
 #: code:addons/msf_supply_doc_export/wizard/wizard_pick_import.py:189
