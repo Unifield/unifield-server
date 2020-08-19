@@ -36,7 +36,7 @@ class wizard_import_rac(osv.osv_memory):
 
         The file should be in XML 2003 format.
         The columns should be in this order :
-           Product Code ; Product Description ; UoM ; Indicative Stock (ignored) ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark
+           Product Code ; Product Description ; UoM ; Indicative Stock (ignored) ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark; BN; ED
         """)
     _columns = {
         'file': fields.binary(string='File to import', required=True),
@@ -80,7 +80,9 @@ class wizard_import_rac(osv.osv_memory):
 
         ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
         error_log = ''
-        line_num = 0
+        line_num = 1
+        done_line = ['0']
+        errors = []
         if not import_rac.file:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
@@ -90,13 +92,14 @@ class wizard_import_rac(osv.osv_memory):
         reader.next()
 
         for row in reader:
+            line_num += 1
             # Check length of the row
             col_count = len(row)
             if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
                 continue
-            if col_count != 9:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 9 columns in this order:
-Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number, Asset, Expiry Date, Consumed Quantity, Remark"""))
+            if col_count < 9:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 11 columns in this order:
+Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number, Asset, Expiry Date, Consumed Quantity, Remark, BN, ED"""))
             # default values
             to_write = {
                 'default_code': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1],
@@ -114,8 +117,7 @@ Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number
             expiry_date = None # date type
             batch_mandatory = False
             date_mandatory = False
-            line_num += 1
-            existing_line_domain = [('rac_id', '=', rac_id)]
+            existing_line_domain = [('rac_id', '=', rac_id), ('id', 'not in', done_line)]
             context.update({'import_in_progress': True, 'noraise': True})
             try:
                 # Cell 8: Quantity
@@ -129,6 +131,10 @@ Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number
                 expiry_date = False
                 p_value = {}
                 p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                if not p_value['product_id']:
+                    errors.append(_('xls line %s, product %s not found in db, line ignored') % (line_num, row.cells[0].data))
+                    ignore_lines += 1
+                    continue
                 if p_value['default_code']:
                     product_id = p_value['default_code']
                     to_write.update({'product_id': product_id})
@@ -141,18 +147,25 @@ Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number
                             error += _("Line %s of the imported file: expiry date required\n") % (line_num, )
                         elif row[5] and row[5].data:
                             if row[5].type in ('datetime', 'date'):
-                                expiry_date = row[5].data
+                                expiry_date = row[5].data.strftime('%Y-%m-%d')
                             elif row[5].type == 'str':
                                 try:
-                                    expiry_date = time.strftime('%d/%b/%Y', time.strptime(row[5].data, '%d/%m/%Y'))
+                                    expiry_date = time.strftime('%Y-%m-%d', time.strptime(row[5].data, '%d/%m/%Y'))
                                 except ValueError:
                                     try:
-                                        expiry_date = time.strftime('%d/%b/%Y', time.strptime(row[5].data, '%d/%b/%Y'))
+                                        expiry_date = time.strftime('%Y-%m-%d', time.strptime(row[5].data, '%d/%b/%Y'))
                                     except ValueError as e:
                                         error += _("""Line %s of the imported file: expiry date %s has a wrong format (day/month/year).'\n"""
                                                    ) % (line_num, row[5],)
                             if expiry_date:
-                                existing_line_domain.append(('expiry_date', '=', expiry_date))
+                                if not prod.batch_management:
+                                    lot = prodlot_obj.search(cr, uid, [('type', '=', 'internal'), ('product_id', '=', prod.id), ('life_date', '=', expiry_date)], context=context)
+                                    if not lot:
+                                        error += _("Line %s of the imported file: no batch found with the Expiry Date [%s].\n") % (line_num, expiry_date)
+                                        expiry_date = False
+                                    else:
+                                        batch = lot[0]
+                                        existing_line_domain += ['|', ('prodlot_id', '=', batch), ('prodlot_id', '=', False)]
                     # Cell 4: Batch Number
                     if prod.batch_management:
                         batch_mandatory = True
@@ -165,7 +178,7 @@ Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number
                             elif lot:
                                 batch = lot[0]
                         if batch:
-                            existing_line_domain.append(('prodlot_id', '=', batch))
+                            existing_line_domain += ['|', ('prodlot_id', '=', batch), ('prodlot_id', '=', False)]
 
                     # Cell 6 : Asset
                     if _get_asset_mandatory(prod):
@@ -177,9 +190,6 @@ Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number
                                 error += _("Line %s of the imported file: Asset [%s] not found.\n") % (line_num, row[6])
                             elif asset:
                                 asset = asset[0]
-                else:
-                    product_id = False
-                    error += _('Line %s of the imported file: Product Code [%s] not found ! Details: %s \n') % (line_num, row[0], p_value['error_list'])
 
                 # Cell 2: UOM
                 uom_value = {}
@@ -232,8 +242,10 @@ Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number
                 if existing_line_ids:
                     line_id = existing_line_ids[0]
                     line_obj.write(cr, uid, line_id, line_data, context=context)
+                    done_line.append(line_id)
                 else:
                     line_id = line_obj.create(cr, uid, line_data, context=context)
+                    done_line.append(line_id)
 
                 complete_lines += 1
                 # when we enter the create, we catch the raise error into the context value of 'error_message'
@@ -265,7 +277,9 @@ Product Code*, Product Description*, Product UOM, Indicative Stock, Batch Number
                 ignore_lines += 1
                 cr.rollback()
                 continue
-        if error_log: error_log = _("Reported errors for ignored lines : \n") + error_log
+        if error_log or errors:
+            error_log = '%s%s\n%s' % (_("Reported errors for ignored lines : \n"), error_log, "\n".join(errors))
+
         end_time = time.time()
         total_time = str(round(end_time-start_time)) + _(' second(s)')
         vals = {'message': _(''' Importation completed in %s second(s)!
