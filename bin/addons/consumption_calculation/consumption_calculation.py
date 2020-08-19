@@ -495,7 +495,7 @@ class real_average_consumption(osv.osv):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'real.consumption.xls',
-            'datas': {'ids': [ids[0]], 'target_filename': 'rac_%s.xls' % rac.cons_location_id.name.replace(' ', '_')},
+            'datas': {'ids': [ids[0]], 'target_filename': 'rac_%s' % rac.cons_location_id.name.replace(' ', '_')},
             'nodestroy': True,
             'context': context,
         }
