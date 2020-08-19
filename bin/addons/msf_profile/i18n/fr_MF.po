@@ -110868,3 +110868,24 @@ msgstr "Veuillez remplir le champ \"Date de Livraison Souhaitée (modifiée)\"."
 #: field:purchase.order,delivery_requested_date_modified:0
 msgid "Delivery Requested Date (modified)"
 msgstr "Date de Livraison Souhaitée (modifiée)"
+
+#. modules: purchase, sale, procurement_request
+#: view:sale.order:0
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "Hide closed"
+msgstr "Non fermées"
+
+#. modules: purchase, sale, procurement_request
+#: view:sale.order:0
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "Show closed only"
+msgstr "Fermées seulement"
+
+#. modules: purchase, sale, procurement_request
+#: view:sale.order:0
+#: view:purchase.order:0
+#: view:sale.order:0
+msgid "Show all lines that are not closed and not cancelled"
+msgstr "Toutes les lignes non fermées et non annulées"
