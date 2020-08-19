@@ -371,6 +371,7 @@ def create_cashbox_lines(self, cr, uid, register_ids, ending=False, context=None
                     }
                     if el == 'ending_id':
                         starting_vals.update({'number': 0.0,})
+                    # note: if ending is True, closing lines are created, but the check on duplicates is skipped as the reg. is in Draft state
                     cashbox_line_obj.create(cr, uid, starting_vals, context=context)
             # update new register balance_start
             balance = st_obj._get_starting_balance(cr, uid, [next_reg_id], context=context)[next_reg_id].get('balance_start', False)

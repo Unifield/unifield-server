@@ -98,7 +98,7 @@
                     <para style="Info">Number of parcels:</para>
                 </td>
                 <td>
-                    <para style="InfoBlue">[[ formatLang(s.num_of_packs or 0.00) ]]</para>
+                    <para style="InfoBlue">[[ s.num_of_packs or 0 ]]</para>
                 </td>
             </tr>
             <tr>

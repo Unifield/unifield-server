@@ -98,6 +98,11 @@
                         </page>
                         <page string="Description">
                             <field colspan="4" name="description" nolabel="1"/>
+                            <!-- exportable fields -->
+                            <field name="top_cc_instance_ids" invisible="1"/>
+                            <field name="is_target_cc_instance_ids" invisible="1"/>
+                            <field name="po_fo_cc_instance_ids" invisible="1"/>
+                            <field name="cc_missions" invisible="1"/>
                         </page>
                     </notebook>
                 </form>

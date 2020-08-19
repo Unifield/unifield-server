@@ -48,6 +48,33 @@ class purchase_order(osv.osv):
     _description = "Purchase Order"
     _order = "id desc"
 
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        '''
+            overwrite to allow search on customer and self instance
+
+        '''
+        new_dom = []
+        dest_partner_names = False
+        for x in domain:
+            if x[0] == 'dest_partner_names':
+                dest_partner_names = x[2]
+            else:
+                new_dom.append(x)
+
+        ret = super(purchase_order, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if dest_partner_names:
+            ret.tables.append('"res_partner_purchase_order_rel"')
+            ret.joins['"purchase_order"'] = [('"res_partner_purchase_order_rel"', 'id', 'purchase_order_id', 'LEFT JOIN')]
+            ret.tables.append('"res_partner"')
+            ret.joins['"res_partner_purchase_order_rel"'] = [('"res_partner"', 'partner_id', 'id', 'LEFT JOIN')]
+            if self.pool.get('sync.client.entity').search_exist(cr, uid, [('name', 'ilike', dest_partner_names)], context=context):
+                ret.where_clause.append(' ("res_partner"."name" ilike %s OR "res_partner_purchase_order_rel".partner_id IS NULL) ')
+            else:
+                ret.where_clause.append(' "res_partner"."name" ilike %s ')
+            ret.where_clause_params.append('%%%s%%'%dest_partner_names)
+            ret.having = ' GROUP BY "purchase_order"."id" '
+        return ret
+
 
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
@@ -278,6 +305,8 @@ class purchase_order(osv.osv):
                 if name_tuples:
                     names_list = [nt[1] for nt in name_tuples]
                     names = "; ".join(names_list)
+            else:
+                names = self.pool.get('res.company')._get_instance_record(cr, uid).instance
             res[po_r['id']] = names
         return res
 
@@ -1234,7 +1263,7 @@ class purchase_order(osv.osv):
         # if the copy comes from the button duplicate
         if context.get('from_button'):
             default.update({'is_a_counterpart': False})
-        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False, 'po_confirmed': False, 'split_during_sll_mig': False})
+        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False, 'po_confirmed': False, 'split_during_sll_mig': False, 'dest_partner_ids': False})
         if not context.get('keepOrigin', False):
             default.update({'origin': False})
 
@@ -1910,7 +1939,6 @@ class purchase_order(osv.osv):
         fiscal_position = part.property_account_position and part.property_account_position.id or False
         res = {'value':{'partner_address_id': addr['default'], 'pricelist_id': pricelist, 'fiscal_position': fiscal_position}}
 
-
         partner_obj = self.pool.get('res.partner')
         product_obj = self.pool.get('product.product')
         partner = partner_obj.read(cr, uid, part.id, ['partner_type'])
@@ -1925,24 +1953,7 @@ class purchase_order(osv.osv):
                             return res
         if partner['partner_type'] in ('internal', 'esc'):
             res['value']['invoice_method'] = 'manual'
-        elif ids and partner['partner_type'] == 'intermission':
-            try:
-                intermission = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                                                                   'analytic_account_project_intermission')[1]
-            except ValueError:
-                intermission = 0
-            cr.execute('''select po.id from purchase_order po
-                left join purchase_order_line pol on pol.order_id = po.id
-                left join cost_center_distribution_line cl1 on cl1.distribution_id = po.analytic_distribution_id
-                left join cost_center_distribution_line cl2 on cl2.distribution_id = pol.analytic_distribution_id
-                where po.id in %s and (cl1.analytic_id!=%s or cl2.analytic_id!=%s)''', (tuple(ids), intermission, intermission))
-            if cr.rowcount > 0:
-                res.setdefault('warning', {})
-                msg = _('You set an intermission partner, at validation Cost Centers will be changed to intermission.')
-                if res.get('warning', {}).get('message'):
-                    res['warning']['message'] += msg
-                else:
-                    res['warning'] = {'title': _('Warning'), 'message': msg}
+
         res = common_onchange_partner_id(self, cr, uid, ids, part=part.id, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         # reset confirmed date
         res.setdefault('value', {}).update({'delivery_confirmed_date': False})

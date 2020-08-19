@@ -25,6 +25,7 @@ from osv import osv, fields
 from tools.translate import _
 from order_types.stock import check_rw_warning
 import logging
+import tools
 
 
 class stock_picking_processing_info(osv.osv_memory):
@@ -701,9 +702,9 @@ class stock_picking(osv.osv):
             logging.getLogger('stock.picking').warn('Exception do_incoming_shipment', exc_info=True)
             for wiz in inc_proc_obj.read(new_cr, uid, wizard_ids, ['picking_id'], context=context):
                 self.update_processing_info(new_cr, uid, wiz['picking_id'][0], False, {
-                    'error_msg': '%s\n\nPlease reset the incoming shipment '\
-                                 'processing and fix the source of the error'\
-                                 'before re-try the processing.' % str(e),
+                    'error_msg': _('Error: %s\n\nPlease reset the incoming shipment '\
+                                   'processing and fix the source of the error '\
+                                   'before re-try the processing.') % tools.ustr(e.value),
                 }, context=context)
         finally:
             # Close the cursor
@@ -711,11 +712,13 @@ class stock_picking(osv.osv):
 
         return res
 
-    def do_incoming_shipment(self, cr, uid, wizard_ids, context=None):
+    def do_incoming_shipment(self, cr, uid, wizard_ids, shipment_ref=False, context=None, with_ppl=False):
         """
         Take the data in wizard_ids and lines of stock.incoming.processor and
         do the split of stock.move according to the data.
         """
+
+
         # Objects
         inc_proc_obj = self.pool.get('stock.incoming.processor')
         move_proc_obj = self.pool.get('stock.move.in.processor')
@@ -802,7 +805,7 @@ class stock_picking(osv.osv):
                 line = False
                 for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
-                    if context.get('do_not_process_incoming') and line.pack_info_id:
+                    if (sync_in or context.get('do_not_process_incoming')) and line.pack_info_id:
                         # we are processing auto import IN, we must register pack_info data
                         values['pack_info_id'] = line.pack_info_id.id
 
@@ -851,7 +854,7 @@ class stock_picking(osv.osv):
                     if out_values.get('location_dest_id', False):
                         out_values.pop('location_dest_id')
 
-                    if line.pack_info_id:
+                    if with_ppl and line.pack_info_id:
                         all_pack_info[line.pack_info_id.id] = True
                     remaining_out_qty = line.quantity
                     out_move = None
@@ -981,7 +984,16 @@ class stock_picking(osv.osv):
                             processed_out_moves_by_exp.setdefault(line.prodlot_id and line.prodlot_id.life_date or False, []).append(out_move.id)
                         else:
                             # Just update the data of the initial out move
-                            processed_qty = lst_out_move is out_moves[-1] and uom_partial_qty - minus_qty or out_move.product_qty
+                            if lst_out_move is out_moves[-1]:
+                                processed_qty = uom_partial_qty - minus_qty
+                                if processed_qty <= 0:
+                                    processed_qty = out_move.product_qty
+                                elif context.get('auto_import_ok'):
+                                    # IN pre-processing : do not add extra qty in OUT, it will be added later on IN processing
+                                    processed_qty = out_move.product_qty
+                            else:
+                                processed_qty = out_move.product_qty
+
                             out_values.update({
                                 'product_qty': processed_qty,
                                 'product_uom': line.uom_id.id,
@@ -1053,6 +1065,7 @@ class stock_picking(osv.osv):
                     })
 
                 backorder_id = False
+                backorder_ids = False
                 if context.get('for_dpo', False) and picking_dict['purchase_id']:
                     # Look for an available IN for the same purchase order in case of DPO
                     backorder_ids = self.search(cr, uid, [
@@ -1060,8 +1073,15 @@ class stock_picking(osv.osv):
                         ('in_dpo', '=', True),
                         ('state', '=', 'assigned'),
                     ], limit=1, context=context)
-                    if backorder_ids:
-                        backorder_id = backorder_ids[0]
+                elif sync_in and picking_dict['purchase_id'] and shipment_ref:
+                    backorder_ids = self.search(cr, uid, [
+                        ('purchase_id', '=', picking_dict['purchase_id'][0]),
+                        ('shipment_ref', '=', shipment_ref),
+                        ('state', '=', 'shipped'),
+                    ], limit=1, context=context)
+
+                if backorder_ids:
+                    backorder_id = backorder_ids[0]
 
                 backorder_name = picking_dict['name']
                 if not backorder_id:

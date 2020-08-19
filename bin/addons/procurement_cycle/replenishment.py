@@ -1066,12 +1066,14 @@ class replenishment_segment(osv.osv):
                         if line.status == 'activereplacing':
                             replaced_lack = lacking_by_prod.get(line.replaced_product_id.id)
                             if replaced_lack:
-                                wmsg = _('SODate of linked products is %s') % (self.pool.get('date.tools').get_date_formatted(cr, uid, datetime=replaced_lack.strftime('%Y-%m-%d'), context=context))
+                                wmsg = _('SODate of linked product is %s') % (self.pool.get('date.tools').get_date_formatted(cr, uid, datetime=replaced_lack.strftime('%Y-%m-%d'), context=context))
                                 warnings.append(wmsg)
                                 warnings_html.append('<span title="%s">%s</span>'  % (misc.escape_html(wmsg), misc.escape_html(_('Replaced SO'))))
 
                         if lacking:
                             qty_lacking_needed_by = today + relativedelta(days=month_of_supply*30.44)
+                            if review_id:
+                                lacking_by_prod[line.product_id.id] = qty_lacking_needed_by
                     if line.status != 'phasingout' and review_id and round(sum_line.get(line.id, {}).get('expired_before_rdd',0)):
                         wmsg = _('Forecasted expiries')
                         warnings.append(wmsg)
@@ -1357,7 +1359,7 @@ class replenishment_segment(osv.osv):
 
             idx = -1
 
-            status = dict([(x[1], x[0]) for x in life_cycle_status])
+            status = dict([(_(x[1]), x[0]) for x in life_cycle_status])
             error = []
             code_created = {}
             created = 0
@@ -1410,6 +1412,8 @@ class replenishment_segment(osv.osv):
                         replacing_id = product_obj.search(cr, uid, [('default_code', '=ilike', row.cells[col_replacing].data.strip())], context=context)
                         if not replacing_id:
                             line_error.append(_('Line %d: replacing product code %s not found') % (idx+1, row.cells[col_replacing].data))
+                        elif row.cells[col_replacing].data.strip().lower() == prod_code.lower():
+                            line_error.append(_('Line %d: product code %s you can\'t replace a product by itself !') % (idx+1, prod_code))
                         else:
                             data_towrite['replacing_product_id'] = replacing_id[0]
                 elif data_towrite['status'] == 'replaced' and not data_towrite['replacing_product_id']:
@@ -1422,6 +1426,8 @@ class replenishment_segment(osv.osv):
                         replaced_id = product_obj.search(cr, uid, [('default_code', '=ilike', row.cells[col_replaced].data.strip())], context=context)
                         if not replaced_id:
                             line_error.append(_('Line %d: replaced product code %s not found') % (idx+1, row.cells[col_replaced].data))
+                        elif row.cells[col_replaced].data.strip().lower() == prod_code.lower():
+                            line_error.append(_('Line %d: product code %s you can\'t replace a product by itself !') % (idx+1, prod_code))
                         else:
                             data_towrite['replaced_product_id'] = replaced_id[0]
                 elif data_towrite['status'] in ('replacing', 'activereplacing') and not data_towrite['replaced_product_id']:

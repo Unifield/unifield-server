@@ -1684,8 +1684,18 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['type_change'] = 'error'
 
             # Product
+            partner_id = line.simu_id.order_id.partner_id.id
             if (values[2] and values[2] == line.in_product_id.default_code):
-                write_vals['imp_product_id'] = line.in_product_id and line.in_product_id.id or False
+                if line.in_product_id:
+                    p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [line.in_product_id.id],
+                                                                      vals={'partner_id': partner_id}, context=context)
+                    if p_error:  # Check constraints on products
+                        write_vals['type_change'] = 'error'
+                        errors.append(p_msg)
+                    else:
+                        write_vals['imp_product_id'] = line.in_product_id.id
+                else:
+                    write_vals['imp_product_id'] = False
             else:
                 prod_id = False
                 if values[2]:
@@ -1693,14 +1703,28 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
                 if not prod_id and values[2]:
                     prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[2])], context=context)
-                    if not prod_ids:
+                    if prod_ids:
+                        p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [prod_ids[0]],
+                                                                          vals={'partner_id': partner_id},
+                                                                          context=context)
+                        if p_error:  # Check constraints on products
+                            write_vals['type_change'] = 'error'
+                            errors.append(p_msg)
+                        else:
+                            write_vals['imp_product_id'] = prod_ids[0]
+                    else:
                         write_vals['type_change'] = 'error'
                         errors.append(_('Product %s not found in database') % values[2])
-                    else:
-                        write_vals['imp_product_id'] = prod_ids[0]
                 else:
-                    write_vals['imp_product_id'] = prod_id
-                    if not prod_id:
+                    if prod_id:
+                        p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [prod_id], vals={'partner_id': partner_id},
+                                                                          context=context)
+                        if p_error:  # Check constraints on products
+                            write_vals['type_change'] = 'error'
+                            errors.append(p_msg)
+                        else:
+                            write_vals['imp_product_id'] = prod_id
+                    else:
                         write_vals['type_change'] = 'error'
 
             write_vals['ad_info'] = False
@@ -1921,6 +1945,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         nb_lines = float(len(ids))
         line_treated = 0.00
         percent_completed = 0.00
+        lines_to_cancel = []
         for line in self.browse(cr, uid, ids, context=context):
             context['purchase_id'] = line.simu_id.order_id.id
             line_treated += 1
@@ -1947,7 +1972,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 })
 
             if line.type_change == 'del' and line.po_line_id:
-                wf_service.trg_validate(uid, 'purchase.order.line', line.po_line_id.id, 'cancel', cr)
+                lines_to_cancel.append(line.po_line_id.id)  # Delay the cancel to prevent the PO's cancellation
                 simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
                 cr.commit()
                 continue
@@ -2088,6 +2113,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
             simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
             cr.commit()
+
+        # Cancel the lines at the end
+        for line_id in lines_to_cancel:
+            wf_service.trg_validate(uid, 'purchase.order.line', line_id, 'cancel', cr)
 
         if ids:
             return simu_obj.go_to_simulation(cr, uid, line.simu_id.id, context=context)

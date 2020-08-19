@@ -1264,9 +1264,12 @@ class purchase_order_line(osv.osv):
             default = {}
 
         # do not copy canceled purchase.order.line:
-        pol = self.browse(cr, uid, p_id, fields_to_fetch=['state', 'order_id', 'linked_sol_id'], context=context)
+        pol = self.browse(cr, uid, p_id, fields_to_fetch=['state', 'order_id', 'linked_sol_id', 'product_id'], context=context)
         if pol.state in ['cancel', 'cancel_r'] and not context.get('allow_cancelled_pol_copy', False):
             return False
+        if pol.product_id:  # Check constraints on lines
+            self.pool.get('product.product')._get_restriction_error(cr, uid, [pol.product_id.id],
+                                                                    {'partner_id': pol.order_id.partner_id.id}, context=context)
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': []})
 
@@ -1414,7 +1417,11 @@ class purchase_order_line(osv.osv):
                     new_po_origin = '%s:%s' % (po_obj.origin, origin)
                 else:
                     new_po_origin = origin
-                self.pool.get('purchase.order').write(cr, uid, [po_obj.id], {'origin': new_po_origin}, context=context)
+                to_write = {'origin': new_po_origin}
+                so_data = self.pool.get('sale.order').browse(cr, uid, so_ids[0], fields_to_fetch=['partner_id', 'procurement_request'], context=context)
+                if not so_data.procurement_request:
+                    to_write['dest_partner_ids'] = [(4, so_data.partner_id.id)]
+                self.pool.get('purchase.order').write(cr, uid, [po_obj.id], to_write, context=context)
             return {'link_so_id': so_ids[0]}
         return {}
 

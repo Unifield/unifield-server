@@ -577,5 +577,26 @@
             <field name="method">us_7412_set_fy_closure_settings</field>
         </record>
 
+        <record id="us_6453_set_ref_on_in" model="patch.scripts">
+            <field name="method">us_6453_set_ref_on_in</field>
+        </record>
+
+        <record id="us_5216_update_recurring_object_state" model="patch.scripts">
+            <field name="method">us_5216_update_recurring_object_state</field>
+        </record>
+
+        <record id="us_7448_set_revaluated_periods" model="patch.scripts">
+            <field name="method">us_7448_set_revaluated_periods</field>
+        </record>
+
+        <record id="us_7158_prod_set_uf_status" model="patch.scripts">
+            <field name="method">us_7158_prod_set_uf_status</field>
+        </record>
+
+        <record id="us_7215_prod_set_active_sync" model="patch.scripts">
+            <field name="method">us_7215_prod_set_active_sync</field>
+        </record>
+
+
     </data>
 </openerp>

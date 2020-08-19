@@ -210,10 +210,16 @@ class stock_picking(osv.osv):
         self._check_restriction_line(cr, uid, ids, context=context)
 
         certif = False
+        from_esc = False
         for pick in self.browse(cr, uid, ids, context=context):
             if pick.type in ['in', 'out']:
-                if not context.get('yesorno', False) :
+                from_esc = pick.partner_id.partner_type == 'esc' and pick.state == 'updated'
+                if not context.get('yesorno', False):
                     for move in pick.move_lines:
+                        if pick.type == 'out' and move.product_id and move.product_id.state.code == 'forbidden':  # Check constraints on lines
+                            check_vals = {'location_dest_id': move.location_dest_id.id, 'move': move}
+                            self.pool.get('product.product')._get_restriction_error(cr, uid, [move.product_id.id],
+                                                                                    check_vals, context=context)
                         if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
                             certif = True
                             break
@@ -256,7 +262,10 @@ class stock_picking(osv.osv):
                 if wiz_ids:
                     proc_id = wiz_ids[0]
                 else:
-                    proc_id = wizard_obj.create(cr, uid, {'picking_id': pick.id})
+                    write_data = {'picking_id': pick.id}
+                    if from_esc:
+                        write_data['fields_as_ro'] = True
+                    proc_id = wizard_obj.create(cr, uid, write_data)
                 wizard_obj.create_lines(cr, uid, proc_id, context=context)
 
                 res = {

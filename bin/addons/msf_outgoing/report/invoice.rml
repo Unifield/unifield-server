@@ -247,7 +247,7 @@
               <para style="ItemsLineValue">[[ move[1].comment or '' ]]</para>
             </td>
             <td>
-              <para style="ItemsLineValueRight">[[ formatLang(move[1].product_qty or 0.) ]]</para>
+              <para style="ItemsLineValueRight">[[ move[1].product_qty or 0. ]]</para>
             </td>
             <td>
               <para style="ItemsLineValue">[[ move[1].product_uom and move[1].product_uom.name or '' ]]</para>
