@@ -36,7 +36,7 @@ class wizard_import_rac(osv.osv_memory):
 
         The file should be in XML 2003 format.
         The columns should be in this order :
-           Product Code ; Product Description ; UoM ; Indicative Stock (ignored) ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Asset ; Consumed quantity ; Remark; BN; ED
+           Product Code ; Product Description ; UoM ; Indicative Stock (ignored) ; Batch Number ; Expiry Date ; Asset ; Consumed quantity ; Remark ; BN ; ED
         """)
     _columns = {
         'file': fields.binary(string='File to import', required=True),
