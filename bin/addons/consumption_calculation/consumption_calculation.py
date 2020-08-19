@@ -696,7 +696,7 @@ class real_average_consumption_line(osv.osv):
     _name = 'real.average.consumption.line'
     _description = 'Real average consumption line'
     _rec_name = 'product_id'
-    _order = 'product_id, id'
+    _order = 'ref, id'
 
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         result = {}
