@@ -31,6 +31,8 @@
     'init_xml': [],
     'data': [
         'data/res.partner.csv',
+        'data/account.analytic.journal.csv',
+        'data/account.journal.csv',
     ],
     'demo_xml': [],
     'test':[],

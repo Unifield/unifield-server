@@ -414,6 +414,10 @@ class weekly_forecast_report(osv.osv):
                     intervals.append((interval_name, interval_from, interval_to))
                     dict_int_from.setdefault(interval_from.strftime('%Y-%m-%d'), interval_name)
 
+                max_date = fixed_now
+                if intervals:
+                    max_date = intervals[-1][2]
+
                 percent_completed = 0.00
                 progress_comment = ""
                 product_ids = []
@@ -446,7 +450,12 @@ class weekly_forecast_report(osv.osv):
 
                 if len(product_ids) > 0:
                     ##### UFTP-220: Filter this list of products for those only appeared in the selected location of the report, not all product
-                    new_cr.execute("select distinct product_id from report_stock_inventory where location_id in %s and product_id in %s and state !='cancel'", (tuple(loc_asked_by_user),tuple(product_ids),) )
+                    new_cr.execute("""
+                        select product_id from (
+                            select product_id from report_stock_inventory where location_id in %(loc)s and product_id in %(p_id)s and state !='cancel' group by product_id
+                        UNION
+                            select product_id from purchase_order_line where location_dest_id in %(loc)s and product_id in %(p_id)s and state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') group by product_id
+                    ) x group by product_id """, {'loc': tuple(loc_asked_by_user), 'p_id': tuple(product_ids)} )
                     product_ids = []
                     for row in new_cr.dictfetchall():
                         product_ids.append(row['product_id'])
@@ -459,7 +468,7 @@ class weekly_forecast_report(osv.osv):
                 while t < nb_products:
                     # Get consumption, in-pipe and expired quantities for each product
                     product_cons.update(self._get_product_consumption(new_cr, uid, product_ids, location_ids, report, context=context))
-                    in_pipe_vals.update(self._get_in_pipe_vals(new_cr, uid, product_ids, location_ids, report, context=context))
+                    in_pipe_vals.update(self._get_in_pipe_vals(new_cr, uid, product_ids, location_ids, report, max_date, context=context))
                     exp_vals.update(self._get_expiry_batch(new_cr, uid, product_cons, location_ids, report, fixed_now=fixed_now, context=context))
 
                     percent_completed = (t/nb_products) * 100
@@ -766,7 +775,7 @@ class weekly_forecast_report(osv.osv):
 
         return res
 
-    def _get_in_pipe_vals(self, cr, uid, product_ids, location_ids, report, context=None):
+    def _get_in_pipe_vals(self, cr, uid, product_ids, location_ids, report, max_date, context=None):
         """
         Returns a dictionary with for each product in product_ids, the quantity in-pipe.
 
@@ -785,14 +794,29 @@ class weekly_forecast_report(osv.osv):
             context = {}
 
         res = {}
-
         cr.execute("""
-            SELECT product_id, sum(qty) AS qty, date
+        SELECT product_id, sum(qty) AS qty, date FROM (
+            SELECT
+               pol.product_id AS product_id,
+               sum(pol.product_qty/u1.factor/u2.factor) AS qty,
+               coalesce(pol.confirmed_delivery_date, pol.date_planned) AS date
             FROM
-            ((SELECT
+               purchase_order_line pol
+               LEFT JOIN product_product p ON p.id = pol.product_id
+               LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
+               LEFT JOIN product_uom u1 ON pol.product_uom = u1.id
+               LEFT JOIN product_uom u2 ON pt.uom_id = u2.id
+            WHERE
+               pol.location_dest_id IN %(location_ids)s AND
+               pol.product_id IN %(product_ids)s  AND
+               pol.state IN ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') AND
+               coalesce(pol.confirmed_delivery_date, pol.date_planned) <= %(max_date)s
+            GROUP BY pol.product_id, coalesce(pol.confirmed_delivery_date, pol.date_planned)
+        UNION
+            SELECT
                p.id AS product_id,
                sum(-s.product_qty/u1.factor/u2.factor) AS qty,
-               s.date AS date
+               date(s.date) AS date
             FROM
                stock_move s
                LEFT JOIN product_product p ON p.id = s.product_id
@@ -800,29 +824,16 @@ class weekly_forecast_report(osv.osv):
                LEFT JOIN product_uom u1 ON s.product_uom = u1.id
                LEFT JOIN product_uom u2 ON pt.uom_id = u2.id
             WHERE
-               s.location_id IN %(location_ids)s
-               AND
-               s.product_id IN %(product_ids)s
-               AND
-               s.state IN ('assigned', 'confirmed')
-               AND
-               s.id NOT IN 
-                    (SELECT
-                        l.move_dest_id
-                     FROM
-                        purchase_order_line l
-                        LEFT JOIN purchase_order o ON o.id = l.order_id
-                     WHERE
-                        l.move_dest_id IS NOT NULL
-                        AND
-                        o.state NOT IN ('approved', 'except_picking', 'except_invoice', 'done')
-                    )
-            GROUP BY p.id, s.date)
+               s.location_id IN %(location_ids)s AND
+               s.product_id IN %(product_ids)s  AND
+               s.state IN ('assigned', 'confirmed') AND
+               s.date <= %(max_date)s
+            GROUP BY p.id, date(s.date)
         UNION
-            (SELECT
+            SELECT
                p.id AS product_id,
                sum(s.product_qty/u1.factor/u2.factor) AS qty,
-               s.date AS date
+               date(s.date) AS date
             FROM
                stock_move s
                LEFT JOIN product_product p ON p.id = s.product_id
@@ -830,29 +841,18 @@ class weekly_forecast_report(osv.osv):
                LEFT JOIN product_uom u1 ON s.product_uom = u1.id
                LEFT JOIN product_uom u2 ON pt.uom_id = u2.id
             WHERE
-              s.location_dest_id IN %(location_ids)s
-              AND
-              s.product_id IN %(product_ids)s
-              AND
-              s.state IN ('assigned', 'confirmed')
-              AND
-              s.id NOT IN 
-                   (SELECT
-                       l.move_dest_id
-                    FROM
-                       purchase_order_line l
-                       LEFT JOIN purchase_order o ON o.id = l.order_id
-                    WHERE
-                       l.move_dest_id IS NOT NULL
-                       AND
-                       o.state NOT IN ('approved', 'except_picking', 'except_invoice', 'done')
-                   )
-            GROUP BY p.id, s.date))
+              s.location_dest_id IN %(location_ids)s AND
+              s.product_id IN %(product_ids)s AND
+              s.state IN ('assigned', 'confirmed') AND
+              s.date <= %(max_date)s
+            GROUP BY p.id, date(s.date)
+        )
             AS subrequest
             GROUP BY product_id, date;
         """, {
             'location_ids': tuple(location_ids),
-            'product_ids': tuple(product_ids)
+            'product_ids': tuple(product_ids),
+            'max_date': max_date.strftime('%Y-%m-%d'),
         })
 
         for r in cr.dictfetchall():

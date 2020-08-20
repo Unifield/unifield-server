@@ -45,7 +45,7 @@
                     <field name="hide_column_error_ok" invisible="1" />
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}"
                     context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
-                        <tree string="Products" editable="top" colors="red: consumed_qty>0 and (inactive_product or to_correct_ok or consumed_qty > product_qty or (batch_mandatory and not prodlot_id) or (date_mandatory and not expiry_date));blue: not prodlot_id and consumed_qty>product_qty and not to_correct_ok and not inactive_product">
+                        <tree string="Products" editable="top" colors="red: consumed_qty>0 and (inactive_product or to_correct_ok or consumed_qty > product_qty or (batch_mandatory and not prodlot_id) or (date_mandatory and not expiry_date)) or to_correct_ok;blue: not prodlot_id and consumed_qty>product_qty and not to_correct_ok and not inactive_product">
                             <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id, parent.categ)"
                                 context="{'location': parent.cons_location_id, 'compute_child': False, 'available_for_restriction': 'consumption', 'search_default_not_restricted': 1}" />
                             <!-- domain="[('list_ids', '=', parent.sublist_id)]" /> -->
@@ -134,7 +134,9 @@
             <field name="arch" type="xml">
                 <search string="Real consumption reports">
                     <group col="10" colspan="4">
+                        <filter icon="terp-document-new" name="draft" string="Draft"  domain="[('state', '=', 'draft')]" />
                         <filter icon="terp-check" string="Closed" domain="[('created_ok','=',True)]"/>
+                        <filter icon="gtk-cancel" name="cancel" string="Cancelled" domain="[('state','=','cancel')]" />
                         <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="cons_location_id"/>
@@ -183,7 +185,8 @@
         <menuitem
             id="consumption_reports_menu"
             action="action_real_average_consumption"
-            parent="warehouse_consumption_menu" />
+            parent="stock.menu_stock_warehouse_mgmt"
+            sequence="3"/>
           
         <record id="monthly_review_consumption_form_view" model="ir.ui.view">
             <field name="name">monthly.review.consumption.form.view</field>

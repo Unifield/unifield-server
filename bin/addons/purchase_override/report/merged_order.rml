@@ -86,7 +86,7 @@
         <paraStyle name="TextInformationH" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="3.0" spaceBefore="0" spaceAfter="0" />
         <paraStyle name="TextInformation" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="0" spaceAfter="0" />
         <paraStyle name="TextInformationMail" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="0" spaceAfter="0" />
-        <paraStyle name="TextRemarks" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextNotes" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
         <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
@@ -620,7 +620,7 @@
                         <para style="LinesBlue">[[ line['comment'] ]]</para>
                     </td>
                     <td>
-                        <para style="LinesBlue" alignment="RIGHT">[[ line['quantity'] or '0.00' ]]</para>
+                        <para style="LinesBlue" alignment="RIGHT">[[ line['quantity'] and formatFloatDigitsToUom(line['quantity'], line['product_uom_rounding']) or '0.00' ]]</para>
                     </td>
                     <td>
                         <para style="LinesBlue" alignment="CENTER">[[ line['product_uom'] ]]</para>
@@ -651,7 +651,7 @@
         <blockTable colWidths="772.0" style="RemarkTable" keepWithNext="1">
             <tr>
                 <td>
-                    <para style="TextRemarks">REMARKS : [[ objects[0].notes ]]</para>
+                    <para style="TextNotes">Notes : [[ objects[0].notes ]]</para>
                 </td>
             </tr>
             <tr>

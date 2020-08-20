@@ -1,29 +1,7 @@
 from report import report_sxw
-import pooler
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 assert _  # pyflakes check
-
-
-
-class report_project_expenses(report_sxw.report_sxw):
-    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
-
-    def create(self, cr, uid, ids, data, context=None):
-        pool = pooler.get_pool(cr.dbname)
-
-        obj = pool.get('wizard.expense.report')
-        # Context updated with wizard's value
-        contract_id = data['id']
-        reporting_type = 'project'
-
-        csv_data = obj._get_expenses_data(cr, uid, contract_id, reporting_type, context=context)
-
-        return obj._create_csv(csv_data)
-
-report_project_expenses('report.financing.project.expenses', 'financing.contract.contract', False, parser=False)
-
 
 class report_project_expenses2(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -96,7 +74,9 @@ class report_project_expenses2(report_sxw.rml_parse):
         return res
 
     def getBookAm(self,contract,analytic_line):
-        date_context = {'date': analytic_line.document_date,'currency_table_id': contract.currency_table_id and contract.currency_table_id.id or None}
+        # this report is based on doc. date
+        date_context = {'currency_date': analytic_line.document_date,
+                        'currency_table_id': contract.currency_table_id and contract.currency_table_id.id or None}
         amount = self.pool.get('res.currency').compute(self.cr, self.uid, analytic_line.currency_id.id, contract.reporting_currency.id, analytic_line.amount_currency or 0.0, round=True, context=date_context)
         self.len1 += 1
         self.len2 += 1

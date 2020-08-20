@@ -31,20 +31,11 @@ This module provides :
 * a basic mechanism to easily plug various automated payment.
     """,
     'author': 'OpenERP SA',
-    'depends': ['account_voucher'],
+    'depends': ['account'],
     'update_xml': [
-        'security/account_payment_security.xml',
-        'security/ir.model.access.csv',
-        'wizard/account_payment_pay_view.xml',
-        'wizard/account_payment_populate_statement_view.xml',
-        'wizard/account_payment_create_order_view.xml',
-        'account_payment_view.xml',
-        'account_payment_workflow.xml',
-        'account_payment_sequence.xml',
         'account_invoice_view.xml',
-        'account_payment_report.xml',
     ],
-    'demo_xml': ['account_payment_demo.xml'],
+    'demo_xml': [],
     'test': [
     ],
     'installable': True,

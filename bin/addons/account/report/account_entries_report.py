@@ -29,7 +29,6 @@ class account_entries_report(osv.osv):
     _auto = False
     _rec_name = 'date'
     _columns = {
-        'date': fields.date('Effective Date', readonly=True),
         'date_created': fields.date('Date Created', readonly=True),
         'date_maturity': fields.date('Date Maturity', readonly=True),
         'ref': fields.char('Reference', size=64, readonly=True),
@@ -43,8 +42,8 @@ class account_entries_report(osv.osv):
         'currency_id': fields.many2one('res.currency', 'Currency', readonly=True),
         'amount_currency': fields.float('Amount Currency', digits_compute=dp.get_precision('Account'), readonly=True),
         'month':fields.selection([('01','January'), ('02','February'), ('03','March'), ('04','April'),
-            ('05','May'), ('06','June'), ('07','July'), ('08','August'), ('09','September'),
-            ('10','October'), ('11','November'), ('12','December')], 'Month', readonly=True),
+                                  ('05','May'), ('06','June'), ('07','July'), ('08','August'), ('09','September'),
+                                  ('10','October'), ('11','November'), ('12','December')], 'Month', readonly=True),
         'period_id': fields.many2one('account.period', 'Period', readonly=True),
         'account_id': fields.many2one('account.account', 'Account', readonly=True),
         'journal_id': fields.many2one('account.journal', 'Journal', readonly=True),
@@ -91,10 +90,10 @@ class account_entries_report(osv.osv):
             if a in args:
                 args.remove(a)
         return super(account_entries_report, self).search(cr, uid, args=args,
-                offset=offset, limit=limit, order=order,
-                context=context, count=count)
+                                                          offset=offset, limit=limit, order=order,
+                                                          context=context, count=count)
 
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, count=False):
         if context is None:
             context = {}
         fiscalyear_obj = self.pool.get('account.fiscalyear')
@@ -108,7 +107,7 @@ class account_entries_report(osv.osv):
             domain.append(['period_id','in',ids])
         else:
             domain = domain
-        return super(account_entries_report, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
+        return super(account_entries_report, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby, count=count)
 
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'account_entries_report')

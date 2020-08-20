@@ -63,14 +63,31 @@ class account_cashbox_line(osv.osv):
         'ending_id': fields.many2one('account.bank.statement', ondelete='cascade'),
     }
 
+    def _check_cashbox_closing_duplicates(self, cr, uid, ids):
+        """
+        Blocks duplicated values in the Cashbox Closing Balance
+        Note that the check is only done in opened registers where the closing balance lines can be changed manually.
+        """
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['ending_id', 'pieces']):
+            if line.ending_id and line.ending_id.state == 'open':
+                dom = [('ending_id', '=', line.ending_id.id), ('pieces', '=', line.pieces), ('id', '!=', line.id)]
+                if self.search_exist(cr, uid, dom):
+                    return False
+        return True
+
+    _constraints = [
+        (_check_cashbox_closing_duplicates, 'The values of the Closing Balance lines must be unique per register.', ['ending_id', 'pieces']),
+    ]
+
+
 account_cashbox_line()
+
 
 class account_cash_statement(osv.osv):
 
     _inherit = 'account.bank.statement'
 
     def _get_starting_balance(self, cr, uid, ids, context=None):
-
         """ Find starting balance
         @param name: Names of fields.
         @param arg: User defined arguments
@@ -83,12 +100,17 @@ class account_cash_statement(osv.osv):
             if statement.journal_id.type not in('cash'):
                 continue
 
-            for line in statement.starting_details_ids:
-                amount_total+= line.pieces * line.number
+            if not statement.prev_reg_id:
+                for line in statement.starting_details_ids:
+                    amount_total+= line.pieces * line.number
+            else:
+                amount_total = statement.prev_reg_id.msf_calculated_balance
+
             res[statement.id] = {
                 'balance_start': amount_total
             }
         return res
+
 
     def _balance_end_cash(self, cr, uid, ids, name, arg, context=None):
         """ Find ending balance  "
@@ -118,39 +140,6 @@ class account_cash_statement(osv.osv):
                 encoding_total += line.amount
             res2[statement.id] = encoding_total
         return res2
-
-    def _end_balance(self, cursor, user, ids, name, attr, context=None):
-        res_currency_obj = self.pool.get('res.currency')
-        res_users_obj = self.pool.get('res.users')
-        res = {}
-
-        company_currency_id = res_users_obj.browse(cursor, user, user,
-                                                   context=context).company_id.currency_id.id
-
-        statements = self.browse(cursor, user, ids, context=context)
-        for statement in statements:
-            res[statement.id] = statement.balance_start
-            currency_id = statement.currency.id
-            for line in statement.move_line_ids:
-                if line.debit > 0:
-                    if line.account_id.id == \
-                            statement.journal_id.default_debit_account_id.id:
-                        res[statement.id] += res_currency_obj.compute(cursor,
-                                                                      user, company_currency_id, currency_id,
-                                                                      line.debit, context=context)
-                else:
-                    if line.account_id.id == \
-                            statement.journal_id.default_credit_account_id.id:
-                        res[statement.id] -= res_currency_obj.compute(cursor,
-                                                                      user, company_currency_id, currency_id,
-                                                                      line.credit, context=context)
-
-            if statement.state in ('draft', 'open'):
-                for line in statement.line_ids:
-                    res[statement.id] += line.amount
-        for r in res:
-            res[r] = round(res[r], 2)
-        return res
 
     def _get_company(self, cr, uid, context=None):
         user_pool = self.pool.get('res.users')
@@ -218,78 +207,18 @@ class account_cash_statement(osv.osv):
         return res
 
     _columns = {
-        'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm': [('readonly', True)]}, help="closing balance entered by the cashbox verifier"),
-        'state': fields.selection(
-            [('draft', 'Draft'),
-             ('confirm', 'Closed'),
-             ('open','Open')], 'State', required=True, states={'confirm': [('readonly', True)]}, readonly="1"),
         'total_entry_encoding': fields.function(_get_sum_entry_encoding, method=True, store=False, string="Cash Transaction", help="Total cash transactions"),
-        'balance_end': fields.function(_end_balance, method=True, store=False, string='Balance', help="Closing balance based on Starting Balance and Cash Transactions"),
         'balance_end_cash': fields.function(_balance_end_cash, method=True, store=False, string='Balance', help="Closing balance based on cashBox"),
         'starting_details_ids': fields.one2many('account.cashbox.line', 'starting_id', string='Opening Cashbox'),
         'ending_details_ids': fields.one2many('account.cashbox.line', 'ending_id', string='Closing Cashbox'),
-        'name': fields.char('Name', size=64, required=True, states={'draft': [('readonly', False)]}, readonly=True, help='if you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself'),
         'user_id': fields.many2one('res.users', 'Responsible', required=False),
     }
     _defaults = {
-        'state': 'draft',
         'date': lambda *a: time.strftime("%Y-%m-%d %H:%M:%S"),
         'user_id': lambda self, cr, uid, context=None: uid,
         'starting_details_ids': _get_cash_open_box_lines,
         'ending_details_ids': _get_default_cash_close_box_lines
     }
-
-    def create(self, cr, uid, vals, context=None):
-        sql = [
-            ('journal_id', '=', vals.get('journal_id', False)),
-            ('state', '=', 'open')
-        ]
-        open_jrnl = self.search(cr, uid, sql)
-        if open_jrnl:
-            raise osv.except_osv(_('Error'), _('You can not have two open register for the same journal'))
-
-        if self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context).type == 'cash':
-            open_close = self._get_cash_open_close_box_lines(cr, uid, context)
-            if vals.get('starting_details_ids', False):
-                for start in vals.get('starting_details_ids'):
-                    dict_val = start[2]
-                    for end in open_close['end']:
-                        if end[2]['pieces'] == dict_val['pieces']:
-                            end[2]['number'] += dict_val['number']
-            vals.update({
-                #                'ending_details_ids': open_close['start'],
-                'starting_details_ids': open_close['end']
-            })
-        else:
-            vals.update({
-                'ending_details_ids': False,
-                'starting_details_ids': False
-            })
-        res_id = super(account_cash_statement, self).create(cr, uid, vals, context=context)
-        self.write(cr, uid, [res_id], {})
-        return res_id
-
-    def write(self, cr, uid, ids, vals, context=None):
-        """
-        Update redord(s) comes in {ids}, with new value comes as {vals}
-        return True on success, False otherwise
-
-        @param cr: cursor to database
-        @param user: id of current user
-        @param ids: list of record ids to be update
-        @param vals: dict of new values to be set
-        @param context: context arguments, like lang, time zone
-
-        @return: True on success, False otherwise
-        """
-        if not ids:
-            return True
-
-        super(account_cash_statement, self).write(cr, uid, ids, vals, context=context)
-        res = self._get_starting_balance(cr, uid, ids)
-        for rs in res:
-            super(account_cash_statement, self).write(cr, uid, [rs], res.get(rs))
-        return True
 
     def onchange_journal_id(self, cr, uid, statement_id, journal_id, context=None):
         """ Changes balance start and starting details if journal_id changes"
@@ -346,13 +275,6 @@ class account_cash_statement(osv.osv):
             self.write(cr, uid, [statement.id], vals, context=context)
         return True
 
-    def balance_check(self, cr, uid, cash_id, journal_type='bank', context=None):
-        if journal_type == 'bank':
-            return super(account_cash_statement, self).balance_check(cr, uid, cash_id, journal_type, context)
-        if not self._equal_balance(cr, uid, cash_id, context):
-            raise osv.except_osv(_('Error !'), _('CashBox Balance is not matching with Calculated Balance !'))
-        return True
-
     def statement_close(self, cr, uid, ids, journal_type='bank', context=None):
         if journal_type == 'bank':
             return super(account_cash_statement, self).statement_close(cr, uid, ids, journal_type, context)
@@ -361,15 +283,6 @@ class account_cash_statement(osv.osv):
             'closing_date': time.strftime("%Y-%m-%d %H:%M:%S")
         }
         return self.write(cr, uid, ids, vals, context=context)
-
-    def check_status_condition(self, cr, uid, state, journal_type='bank'):
-        if journal_type == 'bank':
-            return super(account_cash_statement, self).check_status_condition(cr, uid, state, journal_type)
-        return state=='open'
-
-    def button_confirm_cash(self, cr, uid, ids, context=None):
-        super(account_cash_statement, self).button_confirm_bank(cr, uid, ids, context=context)
-        return self.write(cr, uid, ids, {'closing_date': time.strftime("%Y-%m-%d %H:%M:%S")}, context=context)
 
     def button_cancel(self, cr, uid, ids, context=None):
         cash_box_line_pool = self.pool.get('account.cashbox.line')

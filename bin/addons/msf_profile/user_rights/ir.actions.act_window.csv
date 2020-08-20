@@ -6,12 +6,9 @@ Post Journal Entries,validate.account.move.lines,form,Post Journal Entries,,Fin_
 Unreconcile Entries,account.unreconcile,form,Unreconcile Entries,,Fin_Accounting_Entries_Act,sd.account_action_account_unreconcile
 Unreconcile Entries,account.move.line.unreconcile.select,form,account.move.line.unreconcile.select.form,,Fin_Accounting_Entries_Act,sd.account_action_account_unreconcile_select
 Unreconcile Entries,account.unreconcile.reconcile,form,Unreconcile Entries,,Fin_Accounting_Entries_Act,sd.account_action_account_unreconcile_reconcile
-Unreconcile entries,account.voucher.unreconcile,form,Account voucher unreconcile,,Fin_Accounting_Entries_Act,sd.account_voucher_action_view_account_voucher_unreconcile
 Reconcile Entries,account.move.line.reconcile.select,form,account.move.line.reconcile.select.form,,Fin_Accounting_Entries_Act,sd.account_action_account_reconcile_select
 Reconcile Entries,account.move.line.reconcile,form,account.move.line.reconcile.full.form,,Fin_Accounting_Entries_Act,sd.account_action_view_account_move_line_reconcile
 Reconciliation: Go to Next Partner,account.partner.reconcile.process,form,Partner Reconcilation Process,,Fin_Accounting_Entries_Act,sd.account_action_account_partner_reconcile
-Re-Open cash box,cashbox.write.off,form,,[],"Fin_Advanced_Accounting,Fin_Config_Coordo,Fin_Config_Project,Fin_Config_Admin_Mission",sd.register_accounting_action_write_off
-Re-open partially closed register,cashbox.write.off,form,,[],"Fin_Advanced_Accounting,Fin_Config_Coordo,Fin_Config_Project,Fin_Config_Admin_Mission",sd.register_accounting_action_write_off
 Re-open closed register,register.reopen,form,,[],"Administration / Access Rights,Fin_Config_Admin_Mission",sd.register_accounting_action_wizard_reopen_register
 Validate Accrual Lines,wizard.accrual.validation,form,,[],"Fin_Config_Coordo,Fin_Config_Admin_Mission",sd.msf_accrual_action_wizard_accrual_validation
 Post Accrual Reversal,wizard.accrual.reversal,form,,[],"Fin_Config_Coordo,Fin_Config_Admin_Mission",sd.msf_accrual_action_wizard_post_accrual_reversal

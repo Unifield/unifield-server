@@ -203,12 +203,6 @@ class product_product(osv.osv):
         if context.get('search_location'):
             context['location'] = context.get('search_location')
 
-        if context.get('warehouse', False):
-            lot_stock_id = stock_warehouse_obj.read(cr, uid, int(context['warehouse']),
-                                                    ['lot_stock_id'], context=context)['lot_stock_id']
-            if lot_stock_id:
-                context['location'] = lot_stock_id[0]
-
         if context.get('location', False):
             if type(context['location']) == type(1):
                 location_ids = [context['location']]
@@ -266,6 +260,15 @@ class product_product(osv.osv):
             where.append(tuple(date_values))
         prodlot_id = context.get('prodlot_id', False)
         prodlot_id_str = (prodlot_id and (' AND prodlot_id = %s ' % str(prodlot_id)) or '')
+
+        expired_before = context.get('stock_expired_before_date')
+        join_batch = ""
+        where_batch = ""
+        if expired_before:
+            join_batch = ' inner join stock_production_lot lot on lot.id=m.prodlot_id'
+            where_batch = ' and lot.life_date < %s'
+            where.append(expired_before)
+
         date_str = date_str and ' AND %s '% date_str or ''
         if 'in' in what:
             if not states and context.get('in_states'):
@@ -275,13 +278,15 @@ class product_product(osv.osv):
             cr.execute("""
                 select sum(m.product_qty), m.product_id, m.product_uom, t.uom_id
                 from stock_move m
+                %s
                 left join product_product p on p.id = m.product_id
                 left join product_template t on t.id = p.product_tmpl_id
                 where m.location_id NOT IN %%s
                 and m.location_dest_id IN %%s
                 and m.product_id IN %%s %s
                 and m.state in %%s %s
-                group by m.product_id, m.product_uom, t.uom_id""" % (prodlot_id_str, date_str),tuple(where))  # not_a_user_entry
+                %s
+                group by m.product_id, m.product_uom, t.uom_id""" % (join_batch, prodlot_id_str, date_str, where_batch),tuple(where))  # not_a_user_entry
             results = cr.fetchall()
         if 'out' in what:
             if not states and context.get('out_states'):
@@ -290,13 +295,15 @@ class product_product(osv.osv):
             cr.execute("""
                 select sum(m.product_qty), m.product_id, m.product_uom, t.uom_id
                 from stock_move m
+                %s
                 left join product_product p on p.id = m.product_id
                 left join product_template t on t.id = p.product_tmpl_id
                 where m.location_id IN %%s
                 and m.location_dest_id NOT IN %%s
                 and m.product_id IN %%s %s
                 and m.state in %%s %s
-                group by m.product_id, m.product_uom, t.uom_id""" % (prodlot_id_str, date_str),tuple(where))  # not_a_user_entry
+                %s
+                group by m.product_id, m.product_uom, t.uom_id""" % (join_batch, prodlot_id_str, date_str, where_batch),tuple(where))  # not_a_user_entry
             results2 = cr.fetchall()
         if results or results2:
             uoms_o = {}
@@ -338,6 +345,8 @@ class product_product(osv.osv):
                 c.update({ 'states': ('confirmed','waiting','assigned'), 'what': ('out',) })
             elif f == 'qty_allocable':
                 c.update({'what': ('in', 'out'), 'in_states': ('done',), 'out_states': ('done', 'assigned'), 'states': []})
+            elif f == 'qty_reserved':
+                c.update({'states': ('assigned', ), 'what': ('out')})
 
             stock = self.get_product_available(cr, uid, ids, context=c)
             if any(stock.values()):
@@ -346,6 +355,7 @@ class product_product(osv.osv):
         return res
 
     _columns = {
+        'qty_reserved': fields.function(_product_available, method=True, type='float', string='Reserved Qty', multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'qty_allocable': fields.function(_product_available, method=True, type='float', string='Available Qty', help="Real stock - reserved stock", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'qty_available': fields.function(_product_available, method=True, type='float', string='Real Stock', help="Current quantities of products in selected locations or all internal if none have been selected.", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
         'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM'), related_uom='uom_id'),
@@ -409,6 +419,44 @@ class product_product(osv.osv):
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('Produced Qty')
         return res
+
+    def get_pipeline_from_po(self, cr, uid, ids, from_date=False, to_date=False, location_ids=False, context=None):
+        '''
+            ids: product_ids
+
+            return the pipeline from validated(-p) purchase order line
+        '''
+
+        params = []
+        query = ''
+        if location_ids:
+            query += ' and location_dest_id in %s '
+            if isinstance(location_ids, (int, long)):
+                params.append((location_ids, ))
+            else:
+                params.append(tuple(location_ids))
+
+        if from_date:
+            query += ' and coalesce(confirmed_delivery_date, date_planned) > %s '
+            params.append(from_date)
+
+        if to_date:
+            query += ' and coalesce(confirmed_delivery_date, date_planned) <= %s '
+            params.append(to_date)
+
+
+        cr.execute('''
+            select
+                pol.product_id, sum(pol.product_qty)
+            from
+                purchase_order_line pol
+            where
+                pol.product_id in %s and
+                pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n')
+                ''' + query + '''
+                group by pol.product_id''',
+                   [tuple(ids)]+params)  # not_a_user_entry
+        return dict(cr.fetchall())
 
 product_product()
 

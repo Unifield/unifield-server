@@ -22,6 +22,7 @@
 from osv import fields, osv
 from tools.translate import _
 import decimal_precision as dp
+import netsvc
 
 
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
@@ -154,6 +155,7 @@ class kit_selection(osv.osv_memory):
         # objects
         pol_obj = self.pool.get('purchase.order.line')
         sol_obj = self.pool.get('sale.order.line')
+        wf_service = netsvc.LocalService("workflow")
         # id of corresponding purchase order line
         pol_ids = context['active_ids']
         pol_id = context['active_ids'][0]
@@ -244,8 +246,10 @@ class kit_selection(osv.osv_memory):
                         # copy the original purchase order line
                         last_line_id = pol_obj.copy(cr, uid, last_line_id, values, context=ctx_keep_info)
                         # if original po line is confirmed, we action_confirm new line
-                        if obj.order_line_id_kit_selection.state == 'confirmed':
-                            pol_obj.action_confirm(cr, uid, [last_line_id], context=context)
+                        if obj.order_line_id_kit_selection.state == 'validated_n':
+                            wf_service.trg_validate(uid, 'purchase.order.line', last_line_id, 'validated_n', cr)
+                        elif obj.order_line_id_kit_selection.state == 'validated':
+                            wf_service.trg_validate(uid, 'purchase.order.line', last_line_id, 'validated', cr)
                     else:
                         # first item to be treated, we update the existing line
                         last_line_id = obj.order_line_id_kit_selection.id

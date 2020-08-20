@@ -225,11 +225,11 @@ class purchase_report(osv.osv):
         ],
     }
 
-    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False, count=False):
         '''
         Add functional currency on all lines
         '''
-        res = super(purchase_report, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
+        res = super(purchase_report, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby, count=count)
         if self._name == 'purchase.report':
             for data in res:
                 # If no information to display, don't display the currency

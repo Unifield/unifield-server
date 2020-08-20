@@ -40,7 +40,7 @@ from xlwt import Workbook, easyxf, Borders, add_palette_colour
 import tempfile
 import shutil
 from mx.DateTime import DateTime as mxdt
-
+import re
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
 STOCK_MISSION_REPORT_NAME_PATTERN = 'Mission_Stock_Report_%s_%s'
@@ -830,17 +830,18 @@ class stock_mission_report(osv.osv):
                                 stock_mission_report_line smrl WHERE mission_report_id = %s
                                 AND p.id = smrl.product_id)
                             ''', (report['id'],))
-                for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
-                    line_obj.create(cr, uid, {
-                        'product_id': product,
-                        'mission_report_id': report['id'],
-                        'product_active': prod_active,
-                        'state_ud': prod_state_ud,
-                        'international_status_code': prod_creator,
-                        'product_state': prod_state or '',
-                        #'product_amc': product_values.get(product, {}).get('product_amc', 0),
-                        #'product_consumption': product_values.get(product, {}).get('reviewed_consumption', 0),
-                    }, context=context)
+                if report['local_report']:  # We only generate lines for the current instance
+                    for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
+                        line_obj.create(cr, uid, {
+                            'product_id': product,
+                            'mission_report_id': report['id'],
+                            'product_active': prod_active,
+                            'state_ud': prod_state_ud,
+                            'international_status_code': prod_creator,
+                            'product_state': prod_state or '',
+                            #'product_amc': product_values.get(product, {}).get('product_amc', 0),
+                            #'product_consumption': product_values.get(product, {}).get('reviewed_consumption', 0),
+                        }, context=context)
 
                 if report['local_report'] and not report['full_view']:
                     # update AMC / FMC
@@ -933,13 +934,26 @@ class stock_mission_report(osv.osv):
 
         for report_id in report_ids:
             # In-Pipe moves
-            cr.execute('''SELECT m.product_id, sum(m.product_qty), m.product_uom, p.name
-                          FROM stock_move m
-                              LEFT JOIN stock_picking s ON m.picking_id = s.id
-                              LEFT JOIN res_partner p ON s.partner_id2 = p.id
-                          WHERE s.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')
-                          GROUP BY m.product_id, m.product_uom, p.name
-                          ORDER BY m.product_id''')
+            cr.execute('''
+              SELECT product_id, sum(product_qty), uom_id, p_name
+              FROM (
+                SELECT pol.product_id as product_id, sum(pol.product_qty) as product_qty, pol.product_uom as uom_id, p.name as p_name
+                    FROM purchase_order_line pol, purchase_order po, res_partner p
+                WHERE
+                    pol.state in ('validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n') and
+                    po.id = pol.order_id and
+                    po.partner_id = p.id
+                GROUP BY pol.product_id, pol.product_uom, p.name
+                UNION
+                SELECT m.product_id as product_id, sum(m.product_qty) as product_qty, m.product_uom as uom_id, p.name as p_name
+                    FROM stock_move m
+                    LEFT JOIN stock_picking s ON m.picking_id = s.id
+                    LEFT JOIN res_partner p ON s.partner_id2 = p.id
+                  WHERE
+                    s.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')
+                  GROUP BY m.product_id, m.product_uom, p.name
+                ) x GROUP BY product_id, product_qty, uom_id, p_name
+                  ORDER BY product_id''')
 
             in_pipe_moves = cr.fetchall()
             current_product = None
@@ -1317,13 +1331,13 @@ class stock_mission_report_line_location(osv.osv):
             }
 
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id
-        cr.execute('''select line.id, loc.name from stock_mission_report_line_location line, stock_location loc
+        cr.execute('''select line.id, loc.name, loc.id from stock_mission_report_line_location line, stock_location loc
             where line.location_id = loc.id and line.id in %s''', (tuple(ids), ))
 
         for x in cr.fetchall():
             res[x[0]] = {
                 'instance_id': instance_id,
-                'location_name': x[1],
+                'location_name': '%s/%s' % (x[1], x[2]),
             }
 
         return res
@@ -1331,7 +1345,19 @@ class stock_mission_report_line_location(osv.osv):
     def _set_instance_loc(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
         # set instance and location name to process received updates
         assert name in ('instance_id', 'location_name'), 'Bad query'
-        cr.execute('update stock_mission_report_line_location set remote_'+name+'=%s where id=%s', (value or 'NULL', id)) # not_a_user_entry
+        if name == 'instance_id':
+            cr.execute('update stock_mission_report_line_location set remote_instance_id=%s where id=%s', (value or 'NULL', id))
+            return True
+
+        loc_id = 0
+        loc_name = value
+        if value:
+            m = re.match('(.*)/([0-9]+)$', value)
+            if m:
+                loc_id = int(m.group(2))
+                loc_name = m.group(1)
+
+        cr.execute('update stock_mission_report_line_location set remote_location_name=%s, remote_location_id=%s where id=%s', (loc_name or 'NULL', loc_id, id))
         return True
 
     _columns = {
@@ -1346,8 +1372,9 @@ class stock_mission_report_line_location(osv.osv):
 
         'remote_instance_id': fields.many2one('msf.instance', 'Instance', select=1),
         'remote_location_name': fields.char('Location', size=128, select=1),
-        # TODO
-        # batch
+        'remote_location_id': fields.integer('ID of remote location'),
+        #  TODO JFB RR
+        # force sync ??
     }
 
     _sql_constraints = [

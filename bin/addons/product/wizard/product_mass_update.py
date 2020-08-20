@@ -39,17 +39,20 @@ class product_mass_update(osv.osv):
     _columns = {
         'name': fields.char(size=64, string='Update Reference'),
         'state': fields.selection(selection=[('draft', 'Draft'), ('in_progress', 'In Progress'), ('error', 'Error'), ('done', 'Done')], string='Status', readonly=True),
-        'date_done': fields.datetime(string='Date of the update'),
+        'date_done': fields.datetime(string='Date of the update', readonly=True),
         'user_id': fields.many2one('res.users', string='User who Updated', readonly=True),
         'import_in_progress': fields.boolean(string='Import in progress'),
         'percent_completed': fields.function(_get_percent_completed, method=True, string='% completed', type='integer', readonly=True),
         'message': fields.text(string='Message', readonly=True),
         'product_ids': fields.many2many('product.product', 'prod_mass_update_product_rel', 'product_id',
                                         'prod_mass_update_id', string="Product selection", order_by="default_code",
-                                        domain=[('expected_prod_creator', '=', 'True'), '|', ('active', '=', True), ('active', '=', False)]),
+                                        domain=[('active', 'in', ['t', 'f'])]),
         'not_deactivated_product_ids': fields.one2many('product.mass.update.errors', 'p_mass_upd_id',
                                                        string="Product(s) that can not be deactivated"),
         'has_not_deactivable': fields.boolean(string='Document has non-deactivable product(s)', readonly=True),
+        'not_activated_product_ids': fields.one2many('product.mass.update.errors', 'p_mass_upd_id',
+                                                     string="Product(s) that can not be deactivated"),
+        'has_not_activable': fields.boolean(string='Document has non-activable product(s)', readonly=True),
         # Fields
         'active_product': fields.selection(selection=[('no', 'No'), ('yes', 'Yes')], string='Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
         'dangerous_goods': fields.selection(selection=[('False', 'No'), ('True', 'Yes'), ('no_know', 'tbd')], string='Dangerous Goods'),
@@ -63,7 +66,7 @@ class product_mass_update(osv.osv):
                                      help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),
         'procure_method': fields.selection([('make_to_stock', 'Make to Stock'), ('make_to_order', 'Make to Order')], 'Procurement Method',
                                            help="If you encode manually a Procurement, you probably want to use a make to order method."),
-        'product_state': fields.selection([('valid', 'Valid'), ('phase_out', 'Phase Out'), ('stopped', 'Stopped'), ('archived', 'Archived'), ('status1', 'Status 1'), ('status2', 'Status 2'), ], 'Status', help="Tells the user if he can use the product or not."),
+        'product_state': fields.selection([('valid', 'Valid'), ('phase_out', 'Phase Out'), ('forbidden', 'Forbidden'), ('archived', 'Archived')], 'Status', help="Tells the user if he can use the product or not."),
         'sterilized': fields.selection(selection=[('no', 'No'), ('yes', 'Yes'), ('no_know', 'tbd')], string='Sterile'),
         'supply_method': fields.selection([('produce', 'Produce'), ('buy', 'Buy')], 'Supply Method',
                                           help="Produce will generate production order or tasks, according to the product type. Purchase will trigger purchase orders when requested."),
@@ -72,9 +75,11 @@ class product_mass_update(osv.osv):
                                                    help='This account will be used for invoices instead of the default one to value sales for the current product'),
         'property_account_expense': fields.many2one('account.account', string='Expense Account',
                                                     help='This account will be used for invoices instead of the default one to value expenses for the current product'),
-        'empty_status': fields.boolean(string='Set Status as empty'),
+        'empty_status': fields.boolean(string='Set Status as empty (obsolete)', readonly=True),
         'empty_inc_account': fields.boolean(string='Set Income Account as empty'),
         'empty_exp_account': fields.boolean(string='Set Expense Account as empty'),
+        'type_of_ed_bn': fields.selection([('no_bn_no_ed', 'No BN/No ED'), ('bn', 'BN+ED'), ('ed', 'ED Only')], string='Target Attributes'),
+        'product_history_ids': fields.one2many('product.ed_bn.mass.update.history', 'p_mass_upd_id', 'History'),
     }
 
     _defaults = {
@@ -89,7 +94,22 @@ class product_mass_update(osv.osv):
         'procure_method': '',
         'sterilized': '',
         'supply_method': '',
+        'type_of_ed_bn': False,
     }
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        override create method
+        '''
+        if context is None:
+            context = {}
+
+        # Prevent creation of BN/ED mass update when trying to update with 0 products while editing newly created doc
+        if context.get('button', False) == 'change_bn_ed' and vals.get('type_of_ed_bn') and \
+                vals.get('product_ids', False) == [(6, 0, [])]:
+            raise osv.except_osv(_('Warning'), _('Please add at least 1 product before proceeding.'))
+
+        return super(product_mass_update, self).create(cr, uid, vals, context)
 
     def write(self, cr, user, ids, vals, context=None):
         '''
@@ -104,8 +124,6 @@ class product_mass_update(osv.osv):
         if not ids:
             return True
 
-        if 'empty_status' in vals and vals['empty_status']:
-            vals['product_state'] = ''
         if 'empty_inc_account' in vals and vals['empty_inc_account']:
             vals['property_account_income'] = False
         if 'empty_exp_account' in vals and vals['empty_exp_account']:
@@ -126,17 +144,15 @@ class product_mass_update(osv.osv):
             'message': '',
             'not_deactivated_product_ids': [(6, 0, [])],
             'has_not_deactivable': False,
+            'not_activated_product_ids': [(6, 0, [])],
+            'has_not_activable': False,
             'empty_status': False,
             'empty_inc_account': False,
             'empty_exp_account': False,
+            'product_history_ids': [],
         })
 
         return super(product_mass_update, self).copy(cr, uid, id, default=default, context=context)
-
-    def onchange_status_check(self, cr, uid, ids, empty_status):
-        if empty_status:
-            return {'value': {'product_state': ''}}
-        return {'value': {}}
 
     def onchange_inc_check(self, cr, uid, ids, empty_inc_account):
         if empty_inc_account:
@@ -193,6 +209,7 @@ class product_mass_update(osv.osv):
             'state': 'draft',
             'message': '',
             'has_not_deactivable': False,
+            'has_not_activable': False,
         }
         self.write(cr, uid, ids, vals, context=context)
 
@@ -255,8 +272,6 @@ class product_mass_update(osv.osv):
             p_state_ids = p_state_obj.search(cr, uid, [('code', '=', p_mass_upd.product_state)], context=context)
             if p_state_ids:
                 vals.update({'state': p_state_ids[0]})
-        elif p_mass_upd.empty_status:
-            vals.update({'state': False})
         if p_mass_upd.sterilized:
             vals.update({'sterilized': p_mass_upd.sterilized})
         if p_mass_upd.supply_method:
@@ -292,6 +307,7 @@ class product_mass_update(osv.osv):
         upd_errors_obj = self.pool.get('product.mass.update.errors')
 
         p_mass_upd = self.browse(cr, uid, ids[0], context=context)
+        instance_level = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level
         try:
             # For the progress bar
             upd_progress_ids = upd_progress_obj.search(cr, uid, [('p_mass_upd_id', '=', p_mass_upd.id)], context=context)
@@ -301,6 +317,7 @@ class product_mass_update(osv.osv):
                 upd_progress_id = upd_progress_obj.create(cr, uid, {'p_mass_upd_id': p_mass_upd.id}, context=context)
 
             num_prod = 0
+            not_activated = []
             not_deactivated = []
             for prod in p_mass_upd.product_ids:
                 # Check procurement method
@@ -313,7 +330,10 @@ class product_mass_update(osv.osv):
                     p_suppinfo_obj.create(cr, uid, {'product_id': prod.product_tmpl_id.id, 'name': p_mass_upd.seller_id.id, 'sequence': 0}, context=context)
                 if p_mass_upd.active_product:
                     if not prod.active and p_mass_upd.active_product == 'yes':
-                        prod_obj.reactivate_product(cr, uid, [prod.id], context=context)
+                        if instance_level in ['project', 'coordo'] and prod.standard_ok == 'non_standard_local':
+                            not_activated.append(prod.id)
+                        else:
+                            prod_obj.reactivate_product(cr, uid, [prod.id], context=context)
                     elif prod.active and p_mass_upd.active_product == 'no':
                         deactivated = prod_obj.deactivate_product(cr, uid, [prod.id], context=context)
                         if deactivated != True:  # If doesn't return True, the product has not been deactivated
@@ -322,24 +342,43 @@ class product_mass_update(osv.osv):
                 percent_completed = float(num_prod) / float(len(p_mass_upd.product_ids)) * 100.0
                 upd_progress_obj.write(cr, uid, upd_progress_id, {'percent_completed': percent_completed}, context=context)
 
-            if not_deactivated:
+            p_mass_upd_vals = {}
+            msg = ''
+            if not_deactivated or not_activated:
                 cr.rollback()  # Rollback deactivation and product seller creation
-                for wiz_prod_error in self.pool.get('product.deactivation.error').browse(cr, uid, not_deactivated):
-                    err_vals = {
-                        'p_mass_upd_id': p_mass_upd.id,
-                        'product_id': wiz_prod_error.product_id.id,
-                        'stock_exist': wiz_prod_error.stock_exist,
-                        'open_documents': wiz_prod_error.error_lines and ', '.join([x.doc_ref for x in wiz_prod_error.error_lines if x.doc_ref]) or '',
-                    }
-                    upd_errors_obj.create(cr, uid, err_vals, context=context)
+                if not_deactivated:
+                    for wiz_prod_error in self.pool.get('product.deactivation.error').browse(cr, uid, not_deactivated):
+                        err_vals = {
+                            'p_mass_upd_id': p_mass_upd.id,
+                            'product_id': wiz_prod_error.product_id.id,
+                            'stock_exist': wiz_prod_error.stock_exist,
+                            'open_documents': wiz_prod_error.error_lines and ', '.join([x.doc_ref for x in wiz_prod_error.error_lines if x.doc_ref]) or '',
+                            'not_deactivable': True,
+                        }
+                        upd_errors_obj.create(cr, uid, err_vals, context=context)
 
-                p_mass_upd_vals = {
-                    'has_not_deactivable': True,
-                    'message': _('Some products could not be deactivated. No product will be changed until all of them can be deactivated. Please check the corresponding tab.'),
+                    msg += _('Some products could not be deactivated. No product will be changed until all of them can be deactivated.\n')
+                    p_mass_upd_vals.update({'has_not_deactivable': True})
+                if not_activated:
+                    for prod_id in not_activated:
+                        err_vals = {
+                            'p_mass_upd_id': p_mass_upd.id,
+                            'product_id': prod_id,
+                            'not_activable': True,
+                        }
+                        upd_errors_obj.create(cr, uid, err_vals, context=context)
+
+                    msg += _('Some NSL (Non-standard Local) products could not be activated to ensure that there is no duplicate “Local” product. No product will be changed and those NSL products should be activated manually.\n')
+                    p_mass_upd_vals.update({'has_not_activable': True})
+
+                msg += _('Please check the corresponding tab.')
+                p_mass_upd_vals.update({
+                    'message': msg,
                     'state': 'error',
-                }
+                })
                 self.write(cr, uid, p_mass_upd.id, p_mass_upd_vals, context=context)
-            else:
+
+            if not not_deactivated and not not_activated:
                 prod_obj.write(cr, uid, [prod.id for prod in p_mass_upd.product_ids], vals, context=context)
                 user_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).id
 
@@ -349,9 +388,11 @@ class product_mass_update(osv.osv):
 
                 p_mass_upd_vals = {
                     'has_not_deactivable': False,
+                    'has_not_activable': False,
                     'date_done': time.strftime('%Y-%m-%d %H:%M'),
                     'user_id': user_id,
                     'state': 'done',
+                    'message': '',
                 }
                 self.write(cr, uid, p_mass_upd.id, p_mass_upd_vals, context=context)
         except Exception as e:
@@ -366,6 +407,73 @@ class product_mass_update(osv.osv):
             cr.close(True)
 
         return True
+
+    def change_bn_ed(self, cr, uid, ids, context=None):
+        prod_obj = self.pool.get('product.product')
+
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        prod_ids = prod_obj.search(cr, uid, [('id', 'in', [x.id for x in wiz.product_ids]), ('expected_prod_creator', '=', 'bned'), ('active', 'in', ['t', 'f'])], context=context)
+        if not prod_ids:
+            raise osv.except_osv(_('Warning'), _('Please add at least 1 product before proceeding.'))
+        if len(prod_ids) > 500:
+            raise osv.except_osv(_('Warning'), _('Please limit your query to a maximum of 500 products.'))
+
+        self.pool.get('product.mass.update.progressbar').create(cr, uid,  {'p_mass_upd_id': ids[0]}, context=context)
+        thread = threading.Thread(target=self.change_bn_ed_thread, args=(cr, uid, ids[0], prod_ids, context))
+        thread.start()
+
+        thread.join(5)
+        if thread.isAlive():
+            msg_to_return = _("Update in progress, please leave this window open and press the button 'Update' when you think that the update is done. Otherwise, you can continue to use Unifield.")
+            self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
+        return True
+
+    def change_bn_ed_thread(self, new_cr, uid, _id, product_ids, context):
+        real_user = hasattr(uid, 'realUid') and uid.realUid or uid
+        prod_obj = self.pool.get('product.product')
+        history_obj = self.pool.get('product.ed_bn.mass.update.history')
+        progress_obj = self.pool.get('product.mass.update.progressbar')
+        cr = pooler.get_db(new_cr.dbname).cursor()
+        try:
+            wiz = self.browse(cr, uid, _id, context=context)
+            progress_ids = progress_obj.search(cr, uid, [('p_mass_upd_id', '=', _id)], context=context)
+            split = 0
+            steps = 50
+            while split < len(product_ids):
+                prod_ids = product_ids[split:split+steps]
+                split += steps
+
+                for x in prod_obj.search(cr, uid, [('id', 'in', prod_ids), ('perishable', '=', False), ('batch_management', '=', False)], context=context):
+                    history_obj.create(cr, uid, {'product_id': x, 'p_mass_upd_id': _id, 'old_bn': False, 'old_ed': False}, context=context)
+
+                for x in prod_obj.search(cr, uid, [('id', 'in', prod_ids), ('perishable', '=', True), ('batch_management', '=', False)], context=context):
+                    history_obj.create(cr, uid, {'product_id': x, 'p_mass_upd_id': _id, 'old_bn': False, 'old_ed': True}, context=context)
+
+                for x in prod_obj.search(cr, uid, [('id', 'in', prod_ids), ('perishable', '=', True), ('batch_management', '=', True)], context=context):
+                    history_obj.create(cr, uid, {'product_id': x, 'p_mass_upd_id': _id, 'old_bn': True, 'old_ed': True}, context=context)
+
+                if wiz.type_of_ed_bn == 'no_bn_no_ed':
+                    prod_obj.set_as_nobn_noed(cr, uid, prod_ids, context=context)
+                elif wiz.type_of_ed_bn == 'bn':
+                    prod_obj.set_as_bned(cr, uid, prod_ids, context=context)
+                elif wiz.type_of_ed_bn == 'ed':
+                    prod_obj.set_as_edonly(cr, uid, prod_ids, context=context)
+                progress_obj.write(cr, uid, progress_ids, {'percent_completed': (split-steps)/ float(len(product_ids)) * 100.0}, context=context)
+
+            self.write(cr, uid, _id, {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S'), 'user_id': real_user}, context=context)
+
+        except Exception as e:
+            cr.rollback()
+            error = e
+            if hasattr(e, 'value'):
+                error = e.value
+            err = _('An error has occured during the update:\n%s') % tools.ustr(error)
+            self.write(cr, uid, _id, {'state': 'error', 'message': err}, context=context)
+        finally:
+            cr.commit()
+            cr.close(True)
+        return True
+
 
     def wizard_import_products(self, cr, uid, ids, context=None):
         '''
@@ -449,3 +557,18 @@ class product_mass_update_errors(osv.osv):
 
 
 product_mass_update_errors()
+
+
+class product_ed_bn_mass_update_history(osv.osv):
+    _name = 'product.ed_bn.mass.update.history'
+    _description = 'List of change'
+
+    _columns = {
+        'product_id': fields.many2one('product.product', string='Product', required=True),
+        'p_mass_upd_id': fields.many2one('product.mass.update', 'Product Mass Update', ondelete='cascade'),
+        'old_bn': fields.boolean('Old BN'),
+        'old_ed': fields.boolean('Old ED'),
+    }
+
+
+product_ed_bn_mass_update_history()

@@ -476,9 +476,11 @@ class import_data(osv.osv_memory):
 
                     if ids_to_update:
                         #UF-2170: remove the standard price value from the list for update product case
-                        if 'standard_price' in data:
-                            del data['standard_price']
-                        impobj.write(cr, uid, ids_to_update, data)
+                        # US-6468: remove BN/ED attr for update
+                        for to_remove in ['standard_price', 'perishable', 'batch_management']:
+                            if to_remove in data:
+                                del data[to_remove]
+                        impobj.write(cr, uid, ids_to_update, data, context=context)
                         nb_update_success += 1
                         cr.commit()
                     else:

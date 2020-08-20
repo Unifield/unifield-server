@@ -111,7 +111,7 @@ class local_message_rule(osv.osv):
             return self.browse(cr, uid, rules, context=context)[0]
         return False
 
-    def _manual_create_sync_message(self, cr, real_uid, model_name, res_id, return_info, rule_method, logger, check_identifier=True, context=None):
+    def _manual_create_sync_message(self, cr, real_uid, model_name, res_id, return_info, rule_method, logger, check_identifier=True, context=None, extra_arg=None, force_domain=False):
         if context is None:
             context ={}
         if True:
@@ -125,13 +125,15 @@ class local_message_rule(osv.osv):
                 return
 
             model_obj = self.pool.get(model_name)
-            if res_id not in model_obj.search(cr, uid, eval(rule.domain), order='NO_ORDER', context=context):
+            if not force_domain and res_id not in model_obj.search(cr, uid, eval(rule.domain), order='NO_ORDER', context=context):
                 return
 
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")
             partner = model_obj.browse(cr, uid, res_id)[rule.destination_name]
             partner_name = partner.name
             arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, destination=partner, context=context)
+            if extra_arg:
+                arguments[0].update(extra_arg)
             sale_name = ''
             if 'name' in arguments[0]:
                 sale_name = arguments[0]['name']
@@ -153,7 +155,8 @@ class local_message_rule(osv.osv):
                 'generate_message' : True,
             }
             msg_to_send_obj.create(cr, uid, data, context=context)
-            logger.info("A manual message for the method: %s, created for the object: %s " % (rule_method, sale_name))
+            if logger:
+                logger.info("A manual message for the method: %s, created for the object: %s " % (rule_method, sale_name))
             if at is None:
                 del context['active_test']
             else:
@@ -258,21 +261,32 @@ class message_to_send(osv.osv):
         ignored_ids = list(set(obj_ids_temp) - set(obj_ids))
         dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}
-        for obj_id in obj_ids:
-            if initial == False: # default action
-                args[obj_id] = self.pool.get(rule.model).get_message_arguments(cr, uid, obj_id, rule, context=context)
-            else: # UF-2483: fake RW sync on creation of the RW instance
-                args[obj_id] = "Initial RW Sync - Ignore"
-
         generated_ids = []
-        for id in obj_ids:
-            for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
-                # UF-2531: allow this when creating usb msg for the INT from scratch from RW to CP
-                if destination is False:
-                    destination = 'fake'
-                # UF-2483: By default the "sent" parameter is False
-                self.create_message(cr, uid, identifiers[id], rule.remote_call, args[id], destination, initial, context)
-            generated_ids.append(id)
+
+
+        if obj_ids and rule.model == 'stock.picking' and rule.remote_call in ('stock.picking.partial_shipped_fo_updates_in_po', 'stock.picking.partial_shippped_dpo_updates_in_po'):
+            cr.execute("select array_agg(id) from stock_picking where id in %s group by subtype, partner_id, origin, claim, coalesce(shipment_id, id)", (tuple(obj_ids),))
+            for picks in cr.fetchall():
+                arg = self.pool.get('stock.picking').get_message_arguments(cr, uid, picks[0], rule, context=context)
+                first_id = picks[0][0]
+                self.create_message(cr, uid, identifiers[first_id], rule.remote_call, arg, dest[first_id], initial, context)
+                generated_ids += picks[0]
+        else:
+            for obj_id in obj_ids:
+                if initial == False: # default action
+                    args[obj_id] = self.pool.get(rule.model).get_message_arguments(cr, uid, obj_id, rule, context=context)
+                else: # UF-2483: fake RW sync on creation of the RW instance
+                    args[obj_id] = "Initial RW Sync - Ignore"
+
+
+            for id in obj_ids:
+                for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
+                    # UF-2531: allow this when creating usb msg for the INT from scratch from RW to CP
+                    if destination is False:
+                        destination = 'fake'
+                    # UF-2483: By default the "sent" parameter is False
+                    self.create_message(cr, uid, identifiers[id], rule.remote_call, args[id], destination, initial, context)
+                generated_ids.append(id)
 
         return generated_ids, ignored_ids
 
@@ -323,6 +337,7 @@ class message_to_send(osv.osv):
                 'call' : message.remote_call,
                 'dest' : message.destination_name,
                 'args' : message.arguments,
+                'client_db_id': message.id,
             })
             msg_ids.append(message.id)
 

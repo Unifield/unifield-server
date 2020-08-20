@@ -167,6 +167,11 @@ class wizard_import_cheque(osv.osv_memory):
             if not imported_line.document_date:
                 raise osv.except_osv(_('Warning'), _('Please add a Document Date on imported lines.'))
 
+            invoice_ids = []
+            regline_ids = absl_obj.search(cr, uid, [('first_move_line_id', '=', line.id)], context=context)
+            for regline in absl_obj.browse(cr, uid, regline_ids, context=context):
+                invoice_ids.extend([inv.id for inv in regline.imported_account_invoice_ids])
+
             vals = {
                 'name': 'Imported Cheque: ' + (line.cheque_number or line.name or line.ref or ''),
                 'ref': line.ref,
@@ -179,6 +184,7 @@ class wizard_import_cheque(osv.osv_memory):
                 'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or None,
                 'amount': total,
                 'from_import_cheque_id': line.id,
+                'imported_account_invoice_ids': [(6, 0, invoice_ids)],
             }
             # create the register line
             absl_id = absl_obj.create(cr, uid, vals, context=context)

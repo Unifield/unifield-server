@@ -62,7 +62,7 @@ class return_pack_shipment_processor(osv.osv):
 
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Returns Packs from Shipment'),
+            'name': _('Return Packs from Shipment'),
             'res_model': self._name,
             'view_mode': 'form',
             'view_type': 'form',
@@ -96,7 +96,7 @@ class return_pack_shipment_processor(osv.osv):
 
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Returns Packs from Shipment'),
+            'name': _('Return Packs from Shipment'),
             'res_model': self._name,
             'view_type': 'form',
             'view_mode': 'form',

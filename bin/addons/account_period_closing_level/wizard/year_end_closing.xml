@@ -7,20 +7,12 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Close the Fiscal Year">
-                    <field name="instance_level" invisible="1" />
                     <field name="fy_id" />
-                    <group colspan="4" col="4"
-                        attrs="{'invisible': [('instance_level', '=', 'section')]}">
-                        <field name="has_move_regular_bs_to_0" />
-                        <newline />
-                        <field name="has_book_pl_results" />
-                        <newline />
-                    </group>
                     <separator string="" colspan="4"/>
                     <group colspan="4" col="4">
                         <button icon="gtk-cancel" special="cancel" string="Cancel"/>
                         <button icon="terp-check" string="Close FY" name="btn_close_fy" type="object"
-                            confirm="Are you sure to close the selected fiscal year ? If yes do you confirm selected options ?" />
+                            confirm="Are you sure you want to close the selected fiscal year?" />
                     </group>
                 </form>
             </field>

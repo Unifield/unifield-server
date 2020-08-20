@@ -828,7 +828,7 @@ class account_fiscalyear(osv.osv):
         'state': 'draft',
         'company_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.id,
     }
-    _order = "date_start"
+    _order = "date_start DESC"
 
     def _check_fiscal_year(self, cr, uid, ids, context=None):
         current_fiscal_yr = self.browse(cr, uid, ids, context=context)[0]
@@ -920,7 +920,6 @@ class account_period(osv.osv):
     _defaults = {
         'state': 'draft',
     }
-    _order = "date_start"
 
     def _check_duration(self,cr,uid,ids,context=None):
         obj_period = self.browse(cr, uid, ids[0], context=context)
@@ -951,7 +950,7 @@ class account_period(osv.osv):
     ]
 
     def next(self, cr, uid, period, step, context=None):
-        ids = self.search(cr, uid, [('date_start','>',period.date_start)])
+        ids = self.search(cr, uid, [('date_start','>',period.date_start)], order='date_start, number')
         if len(ids)>=step:
             return ids[step-1]
         return False
@@ -1709,7 +1708,7 @@ class account_move_reconcile(osv.osv):
     _name = "account.move.reconcile"
     _description = "Account Reconciliation"
     _columns = {
-        'name': fields.char('Name', size=64, required=True),
+        'name': fields.char('Name', size=64, required=True, select=1),
         'type': fields.char('Type', size=16, required=True),
         'line_id': fields.one2many('account.move.line', 'reconcile_id', 'Entry Lines'),
         'line_partial_ids': fields.one2many('account.move.line', 'reconcile_partial_id', 'Partial Entry lines'),
@@ -1894,6 +1893,7 @@ class account_tax(osv.osv):
 
     _name = 'account.tax'
     _description = 'Tax'
+    _trace = True
     _columns = {
         'name': fields.char('Tax Name', size=64, required=True, translate=True, help="This name will be displayed on reports"),
         'sequence': fields.integer('Sequence', required=True, help="The sequence field is used to order the tax lines from the lowest sequences to the higher ones. The order is important if you have a tax with several tax children. In this case, the evaluation order is important."),
@@ -1909,6 +1909,9 @@ class account_tax(osv.osv):
         'parent_id':fields.many2one('account.tax', 'Parent Tax Account', select=True),
         'child_ids':fields.one2many('account.tax', 'parent_id', 'Child Tax Accounts'),
         'child_depend':fields.boolean('Tax on Children', help="Set if the tax computation is based on the computation of child taxes rather than on the total amount."),
+        'partner_id': fields.many2one('res.partner', 'Partner',
+                                      domain=[('partner_type', '=', 'external'), ('active', '=', True)],
+                                      ondelete='restrict'),
         'python_compute':fields.text('Python Code'),
         'python_compute_inv':fields.text('Python Code (reverse)'),
         'python_applicable':fields.text('Python Code'),
@@ -1963,11 +1966,31 @@ class account_tax(osv.osv):
             ids = self.search(cr, user, args, limit=limit, context=context or {})
         return self.name_get(cr, user, ids, context=context)
 
+    def _check_tax_partner(self, cr, uid, vals, context=None):
+        """
+        Raises an error in case the partner selected for the tax isn't allowed
+        """
+        if context is None:
+            context = {}
+        partner_obj = self.pool.get('res.partner')
+        if vals.get('partner_id'):
+            partner = partner_obj.browse(cr, uid, vals['partner_id'], fields_to_fetch=['active', 'partner_type', 'name'], context=context)
+            if not partner.active or partner.partner_type != 'external':
+                raise osv.except_osv(_('Error'),
+                                     _("You can't link the tax to the Partner %s: only active external partners are allowed.") % partner.name)
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        self._check_tax_partner(cr, uid, vals, context=context)
+        return super(account_tax, self).create(cr, uid, vals, context=context)
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
         if vals.get('type', False) and vals['type'] in ('none', 'code'):
             vals.update({'amount': 0.0})
+        self._check_tax_partner(cr, uid, vals, context=context)
         return super(account_tax, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -2041,9 +2064,9 @@ class account_tax(osv.osv):
         obj_partener_address = self.pool.get('res.partner.address')
         for tax in taxes:
             # we compute the amount for the current tax object and append it to the result
-
+            description = "%s%s%s" % (tax.name, partner and ' - ' or '', partner and partner.name or '')  # tax name and INVOICE partner name
             data = {'id':tax.id,
-                    'name':tax.description and tax.description + " - " + tax.name or tax.name,
+                    'name': description,
                     'account_collected_id':tax.account_collected_id.id,
                     'account_paid_id':tax.account_paid_id.id,
                     'base_code_id': tax.base_code_id.id,
@@ -2200,10 +2223,11 @@ class account_tax(osv.osv):
                 todo = 0
             else:
                 todo = 1
+            description = "%s%s%s" % (tax.name, partner and ' - ' or '', partner and partner.name or '')  # tax name and INVOICE partner name
             res.append({
                 'id': tax.id,
                 'todo': todo,
-                'name': tax.name,
+                'name': description,
                 'amount': amount,
                 'account_collected_id': tax.account_collected_id.id,
                 'account_paid_id': tax.account_paid_id.id,
@@ -2245,7 +2269,7 @@ class account_tax(osv.osv):
             tax = {'name':'', 'amount':0.0, 'account_collected_id':1, 'account_paid_id':2}
             one tax for each tax id in IDS and their children
         """
-        res = self._unit_compute_inv(cr, uid, taxes, price_unit, address_id, product, partner=None)
+        res = self._unit_compute_inv(cr, uid, taxes, price_unit, address_id, product, partner=partner)
         total = 0.0
         obj_precision = self.pool.get('decimal.precision')
         for r in res:
@@ -2276,75 +2300,6 @@ class account_model(osv.osv):
     _defaults = {
         'legend': lambda self, cr, uid, context:_('You can specify year, month and date in the name of the model using the following labels:\n\n%(year)s: To Specify Year \n%(month)s: To Specify Month \n%(date)s: Current Date\n\ne.g. My model on %(date)s'),
     }
-    def generate(self, cr, uid, ids, datas={}, context=None):
-        move_ids = []
-        entry = {}
-        account_move_obj = self.pool.get('account.move')
-        account_move_line_obj = self.pool.get('account.move.line')
-        pt_obj = self.pool.get('account.payment.term')
-
-        if context is None:
-            context = {}
-
-        if datas.get('date', False):
-            context.update({'date': datas['date']})
-
-        period_id = self.pool.get('account.period').find(cr, uid, dt=context.get('date', False))
-        if not period_id:
-            raise osv.except_osv(_('No period found !'), _('Unable to find a valid period !'))
-        period_id = period_id[0]
-
-        for model in self.browse(cr, uid, ids, context=context):
-            entry['name'] = model.name%{'year':time.strftime('%Y'), 'month':time.strftime('%m'), 'date':time.strftime('%Y-%m')}
-            move_id = account_move_obj.create(cr, uid, {
-                'ref': entry['name'],
-                'period_id': period_id,
-                'journal_id': model.journal_id.id,
-                'date': context.get('date',time.strftime('%Y-%m-%d'))
-            })
-            move_ids.append(move_id)
-            for line in model.lines_id:
-                analytic_account_id = False
-                if line.analytic_account_id:
-                    if not model.journal_id.analytic_journal_id:
-                        raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") % (model.journal_id.name,))
-                    analytic_account_id = line.analytic_account_id.id
-                val = {
-                    'move_id': move_id,
-                    'journal_id': model.journal_id.id,
-                    'period_id': period_id,
-                    'analytic_account_id': analytic_account_id
-                }
-
-                date_maturity = time.strftime('%Y-%m-%d')
-                if line.date_maturity == 'partner':
-                    if not line.partner_id:
-                        raise osv.except_osv(_('Error !'), _("Maturity date of entry line generated by model line '%s' of model '%s' is based on partner payment term!" \
-                                                             "\nPlease define partner on it!")%(line.name, model.name))
-                    if line.partner_id.property_payment_term:
-                        payment_term_id = line.partner_id.property_payment_term.id
-                        pterm_list = pt_obj.compute(cr, uid, payment_term_id, value=1, date_ref=date_maturity)
-                        if pterm_list:
-                            pterm_list = [l[0] for l in pterm_list]
-                            pterm_list.sort()
-                            date_maturity = pterm_list[-1]
-
-                val.update({
-                    'name': line.name,
-                    'quantity': line.quantity,
-                    'debit': line.debit,
-                    'credit': line.credit,
-                    'account_id': line.account_id.id,
-                    'move_id': move_id,
-                    'partner_id': line.partner_id.id,
-                    'date': context.get('date',time.strftime('%Y-%m-%d')),
-                    'date_maturity': date_maturity
-                })
-                c = context.copy()
-                c.update({'journal_id': model.journal_id.id,'period_id': period_id})
-                account_move_line_obj.create(cr, uid, val, context=c)
-
-        return move_ids
 
 account_model()
 
@@ -2399,6 +2354,29 @@ class account_subscription(osv.osv):
                     break
         return res
 
+    def _is_frozen_model(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns True for the Recurring Plans for which the model field should be frozen, i.e. readonly:
+        - if journal entries have been generated, posted or not
+        - if the model already selected is in Done state (note that Done models aren't selectable, so the model would
+          have been selected BEFORE it becomes Done).
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for plan in self.browse(cr, uid, ids, fields_to_fetch=['model_id', 'lines_id'], context=context):
+            res[plan.id] = False
+            if plan.model_id.state == 'done':
+                res[plan.id] = True
+            else:
+                for line in plan.lines_id:
+                    if line.move_id:
+                        res[plan.id] = True
+                        break
+        return res
+
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         'ref': fields.char('Reference', size=16),
@@ -2406,45 +2384,142 @@ class account_subscription(osv.osv):
 
         'date_start': fields.date('Start Date', required=True),
         'period_total': fields.integer('Number of Periods', required=True),
-        'period_nbr': fields.integer('Period', required=True),
+        'period_nbr': fields.integer('Repeat', required=True,
+                                     help="This field will determine how often entries will be generated: if the period type is 'month' and the repeat '2' then entries will be generated every 2 months"),
         'period_type': fields.selection([('day','days'),('month','month'),('year','year')], 'Period Type', required=True),
         'state': fields.selection([('draft','Draft'),('running','Running'),('done','Done')], 'State', required=True, readonly=True),
 
         'lines_id': fields.one2many('account.subscription.line', 'subscription_id', 'Subscription Lines'),
         'has_unposted_entries': fields.function(_get_has_unposted_entries, method=True, type='boolean',
                                                 store=False, string='Has unposted entries'),
+        'frozen_model': fields.function(_is_frozen_model, method=True, type='boolean', store=False, string='Frozen model'),
     }
     _defaults = {
         'date_start': lambda *a: time.strftime('%Y-%m-%d'),
         'period_type': 'month',
-        'period_total': 12,
+        'period_total': 0,
         'period_nbr': 1,
         'state': 'draft',
     }
 
-    def check(self, cr, uid, ids, context=None):
-        todone = []
-        for sub in self.browse(cr, uid, ids, context=context):
-            ok = True
-            for line in sub.lines_id:
-                if not line.move_id.id:
-                    ok = False
+    _order = 'date_start desc, id desc'
+
+    def _check_repeat_value(self, cr, uid, ids, context=None):
+        """
+        Prevents negative frequency
+        """
+        for plan in self.read(cr, uid, ids, ['period_nbr']):
+            if plan['period_nbr'] < 1:
+                return False
+        return True
+
+    def _check_plan_name_unicity(self, cr, uid, ids, context=None):
+        """
+        Prevents having 2 rec. plans using the same name
+        """
+        for plan in self.read(cr, uid, ids, ['name']):
+            if self.search_exist(cr, uid, [('name', '=', plan['name']), ('id', '!=', plan['id'])]):
+                raise osv.except_osv(_('Error'),
+                                     _('It is not possible to have several Recurring Plans with the same name: %s.') % plan['name'])
+        return True
+
+    _constraints = [
+        (_check_repeat_value, 'The value in the field "Repeat" must be greater than 0!', ['period_nbr']),
+        (_check_plan_name_unicity, 'It is not possible to have several Recurring Plans with the same name.', ['name']),
+    ]
+
+    def copy(self, cr, uid, acc_sub_id, default=None, context=None):
+        """
+        Account Subscription duplication:
+        - block the process if the model has been set to Done as it shouldn't be used in any plans created afterwards
+        - don't copy the link with subscription lines
+        - add " (copy)" after the name
+        """
+        if context is None:
+            context = {}
+        sub_copied = self.browse(cr, uid, acc_sub_id, fields_to_fetch=['name', 'model_id'], context=context)
+        if sub_copied.model_id.state == 'done':
+            raise osv.except_osv(_('Warning'), _('You cannot duplicate a Recurring Plan with a Done model.'))
+        suffix = ' (copy)'
+        name = '%s%s' % (sub_copied.name[:64 - len(suffix)], suffix)
+        if default is None:
+            default = {}
+        default.update({
+            'lines_id': [],
+            'name': name,
+        })
+        return super(account_subscription, self).copy(cr, uid, acc_sub_id, default, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Edition of the Recurring Plans. If the model has been changed, triggers the recomputation of the state of the previous model used.
+
+        UC: use the model X in one plan. Compute Rec. entries => the plans and models are Running.
+        Select another model in the plan => model X must be set back to Draft.
+        """
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        rec_model_obj = self.pool.get('account.model')
+        models_to_check = set()
+        for rec_plan in self.browse(cr, uid, ids, fields_to_fetch=['model_id'], context=context):
+            previous_model_id = rec_plan.model_id.id
+            if 'model_id' in vals and vals['model_id'] != previous_model_id:
+                models_to_check.add(previous_model_id)
+        res = super(account_subscription, self).write(cr, uid, ids, vals, context=context)
+        if models_to_check:
+            # check model states after the plan states have been updated
+            rec_model_obj._store_set_values(cr, uid, list(models_to_check), ['state'], context)
+        return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Prevents deletion in case the subscription lines have already been computed
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        sub_lines_obj = self.pool.get('account.subscription.line')
+        if sub_lines_obj.search_exist(cr, uid, [('subscription_id', 'in', ids)], context=context):
+            raise osv.except_osv(_('Warning'), _('You cannot delete a Recurring Plan if Subscription lines have already been computed.'))
+        return super(account_subscription, self).unlink(cr, uid, ids, context=context)
+
+    def update_plan_state(self, cr, uid, subscription_id, context=None):
+        """
+        Updates the Recurring Plan state with the following rules:
+        - no lines computed = Draft
+        - lines computed but not all lines posted = Running
+        - all lines posted = Done
+        """
+        if context is None:
+            context = {}
+        sub = self.browse(cr, uid, subscription_id, fields_to_fetch=['lines_id'], context=context)
+        if not sub.lines_id:
+            state = 'draft'
+        else:
+            running = False
+            for sub_line in sub.lines_id:
+                if not sub_line.move_id or sub_line.move_id.state != 'posted':
+                    running = True
                     break
-            if ok:
-                todone.append(sub.id)
-        if todone:
-            self.write(cr, uid, todone, {'state':'done'})
-        return False
+            if running:
+                state = 'running'
+            else:
+                state = 'done'
+        self.write(cr, uid, subscription_id, {'state': state}, context=context)
 
     def remove_line(self, cr, uid, ids, context=None):
         toremove = []
         for sub in self.browse(cr, uid, ids, context=context):
             for line in sub.lines_id:
-                if not line.move_id.id:
+                if not line.move_id:
                     toremove.append(line.id)
         if toremove:
             self.pool.get('account.subscription.line').unlink(cr, uid, toremove)
-        self.write(cr, uid, ids, {'state':'draft'})
         return False
 
     def delete_unposted(self, cr, uid, ids, context=None):
@@ -2452,29 +2527,17 @@ class account_subscription(osv.osv):
         This method:
         - searches for the unposted Journal Entries linked to the account subscription(s)
         - deletes the unposted JEs, and the related JIs and AJIs
-        - deletes all the Subscription Lines not linked to a Posted JE
-        - triggers the "Compute" method on the subscription(s) to get the correct lines and state
         """
         if context is None:
             context = {}
-        subline_obj = self.pool.get('account.subscription.line')
         je_obj = self.pool.get('account.move')
-        subline_to_delete_ids = []
         je_to_delete_ids = []
         for sub in self.browse(cr, uid, ids, fields_to_fetch=['lines_id'], context=context):
             for subline in sub.lines_id:
-                if not subline.move_id:
-                    # also deletes the sub. lines without JE (covers the case where frequency has been modified
-                    # => avoids having inconsistent lines at the end of the process)
-                    subline_to_delete_ids.append(subline.id)
-                elif subline.move_id.state == 'draft':  # draft = Unposted state
-                    subline_to_delete_ids.append(subline.id)
+                if subline.move_id and subline.move_id.state == 'draft':  # draft = Unposted state
                     je_to_delete_ids.append(subline.move_id.id)
-        subline_obj.unlink(cr, uid, subline_to_delete_ids, context=context)
-        je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
-        # retrigger the creation of the subscription lines "to be generated"
-        # and recompute the state of the subscription accordingly (= "Running" if lines have been generated)
-        self.compute(cr, uid, ids, context=context)
+        if je_to_delete_ids:
+            je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
         return True
 
     def get_dates_to_create(self, cr, uid, subscription_id, context=None):
@@ -2505,6 +2568,9 @@ class account_subscription(osv.osv):
         if context is None:
             context = {}
         for sub in self.browse(cr, uid, ids, context=context):
+            if sub.state == 'running':
+                # first remove existing lines without JE
+                self.remove_line(cr, uid, ids, context=context)
             if sub.model_id and sub.model_id.has_any_bad_ad_line_exp_in:
                 # UFTP-103: block compute if recurring model has line with
                 # expense/income accounts with invalid AD
@@ -2519,10 +2585,7 @@ class account_subscription(osv.osv):
                     'date': date_sub,
                     'subscription_id': sub.id,
                 })
-            if dates_to_create:
-                self.write(cr, uid, sub.id, {'state': 'running'}, context=context)
-            else:  # all the subscription lines were already created => the account subscription can be marked as "Done"
-                self.write(cr, uid, sub.id, {'state': 'done'}, context=context)
+            self.update_plan_state(cr, uid, sub.id, context=context)
         return True
 account_subscription()
 
@@ -2537,19 +2600,16 @@ class account_subscription_line(osv.osv):
     _order = 'date, id'
 
     def move_create(self, cr, uid, ids, context=None):
-        tocheck = {}
         all_moves = []
         obj_model = self.pool.get('account.model')
         for line in self.browse(cr, uid, ids, context=context):
             datas = {
                 'date': line.date,
+                'ref': line.subscription_id.ref or '',
             }
             move_ids = obj_model.generate(cr, uid, [line.subscription_id.model_id.id], datas, context)
-            tocheck[line.subscription_id.id] = True
             self.write(cr, uid, [line.id], {'move_id':move_ids[0]})
             all_moves.extend(move_ids)
-        if tocheck:
-            self.pool.get('account.subscription').check(cr, uid, tocheck.keys(), context)
         return all_moves
 
     _rec_name = 'date'

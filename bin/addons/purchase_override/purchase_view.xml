@@ -65,7 +65,7 @@
         </record>
         
 	<!-- Invoice control -->
-        <menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" />
+        <menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" sequence="8"/>
 
         <record id="purchase_order_cancel_wizard_form_view" model="ir.ui.view">
             <field name="name">purchase.order.cancel.wizard.form.view</field>

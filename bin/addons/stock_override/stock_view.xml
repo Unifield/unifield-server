@@ -393,19 +393,7 @@
                 </field>
             </field>
         </record>
-        
-        <record id="purchase.stock_picking_inherit_purchase" model="ir.ui.view">
-            <field name="name">Picking list</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_form"/>
-            <field name="arch" type="xml">
-                <field name="auto_picking" position="after">
-                    <field name="purchase_id" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                </field>
-            </field>
-        </record>
-        
+
         <record id="stock.view_picking_in_form" model="ir.ui.view">
         	<field name="name">view.picking.in.form</field>
         	<field name="model">stock.picking</field>
@@ -442,6 +430,7 @@
                         </html>
                     </group>
                     <field name="sale_id" invisible="1" />
+                    <field name="purchase_id" invisible="1" />
                     <group colspan="4" col="6">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
@@ -450,12 +439,13 @@
                             <field name="ext_cu" on_change="on_change_ext_cu(ext_cu)" attrs="{'readonly': ['|', '|', '|', ('partner_id2', '!=', False), ('sale_id', '!=', False), ('purchase_id', '!=', False), ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" domain="[('location_category', '=', 'consumption_unit'), ('usage', 'in', ('customer', 'supplier'))]" />
                             <field name="address_id" invisible="1" />
                             <field name="backorder_id" readonly="1"/>
+                            <field name="customer_ref" readonly="1" />
                             <field name="reason_type_id" widget="selection"
                                    domain="[('incoming_ok', '=', True)]"
                                    attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
-                            <field name="order_category"/>
+                            <field name="customers" readonly="1" />
                             <field name="change_reason"/>
-                            <field name="claim" readonly="1"/>
+                            <field name="order_category"/>
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" string="Creation Date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
@@ -481,6 +471,7 @@
                                 default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_in_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
                                 on_change="onchange_move()"
+                                filter_selector="[('Show available lines', [('state', 'not in', ['cancel', 'cancel_r'])]), ('Show all lines', []), ('Show cancelled lines', [('state', 'in', ['cancel', 'cancel_r'])])]"
                                 >
                                 <tree
                                     colors="grey:scrapped==True; red: inactive_product == True or to_correct_ok == True"
@@ -612,7 +603,7 @@
                                     confirm="Warning, you are going to Cancel!"
                                     />
                                 <field name="from_wkf_sourcing" invisible="1" />
-                                <button name="enter_reason"
+                                <button name="enter_reason_cr"
                                     states="assigned,confirmed,draft,shipped,updated"
                                     attrs="{'invisible': ['|', '|', ('state', 'not in', ['assigned', 'confirmed', 'draft', 'shipped', 'updated']), ('progress_memory_not_done', '!=', False), ('from_wkf_sourcing', '=', False)]}"
                                     string="Cancel &amp; Resource"
@@ -638,10 +629,13 @@
                             </group>
                         </page>
                         <page string="Additional Info">
-                            <field name="fake_type" readonly="1" />
-                            <field name="type" invisible="1" />
-                            <field name="attach_cert" readonly="1" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
-                            <field name="company_id" widget="selection" invisible="1"/>
+                            <group colspan="4" col="6">
+                                <field name="fake_type" readonly="1" />
+                                <field name="type" invisible="1" />
+                                <field name="attach_cert" readonly="1" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
+                                <field name="claim" readonly="1"/>
+                                <field name="company_id" widget="selection" invisible="1"/>
+                            </group>
                         </page>
                         <page string="Notes">
                             <field name="last_imported_filename" invisible="0" readonly="1" />
@@ -660,7 +654,7 @@
             <field name="arch" type="xml">
                 <search string="Stock Moves">
                     <group col="14" colspan="4">
-                        <filter icon="terp-go-today" string="Today" domain="[('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders processed Today or planned for Today"/>
+                        <filter icon="terp-go-today" string="Today" domain="['&amp;', ('date','&lt;=',time.strftime('%%Y-%%m-%%d 23:59:59')),('date','&gt;=',time.strftime('%%Y-%%m-%%d 00:00:00'))]" help="Orders processed Today or planned for Today"/>
                         <separator orientation="vertical"/>
                         <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state','=','done')]" help="Stock moves that have been processed"/>
                         <filter icon="terp-stock" string="Future" name="future" domain="[('state','in',('assigned','confirmed','waiting'))]" help="Stock moves that are Confirmed, Available or Waiting"/>
@@ -708,18 +702,6 @@
             </field>
         </record>
         
-
-        <record id="purchase.stock_picking_in_inherit_purchase" model="ir.ui.view">
-            <field name="name">Incoming Picking Inherited</field>
-            <field name="model">stock.picking</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="stock.view_picking_in_form"/>
-            <field name="arch" type="xml">
-                <field name="backorder_id" position="after">
-                    <field name="purchase_id" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                </field>
-            </field>
-        </record>
 
         <record id="stock.view_picking_out_form" model="ir.ui.view">
             <field name="name">view.picking.out.form</field>
@@ -901,19 +883,19 @@
                                 <button name="set_delivered"
                                         icon="gtk-apply"
                                         type="object"
-                                        string="Confirm Delivery"
+                                        string="Confirm Reception"
                                         attrs="{'invisible': ['|', '|', '|', '|',
                                                               ('type', '!=', 'out'), ('subtype', '!=', 'standard'),
                                                               ('state', '!=', 'done'),
                                                               ('partner_type', 'not in', ['internal', 'intermission', 'section']),
                                                               ('is_company', '=', True),
                                                               ]}"
-                                        confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"
+                                        confirm="Synchronization engine should confirm the reception once recorded on the receiving instance, do you want to continue?"
                                 />
                                 <button name="set_delivered"
                                         icon="gtk-apply"
                                         type="object"
-                                        string="Confirm Delivery"
+                                        string="Confirm Reception"
                                         attrs="{'invisible': ['|', '|', '|',
                                                               ('type', '!=', 'out'), ('subtype', '!=', 'standard'),
                                                               ('state', '!=', 'done'),

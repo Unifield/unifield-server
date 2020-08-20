@@ -70,7 +70,7 @@ class export_report_stopped_products(osv.osv):
 
             # state of report is in progress :
             self.write(cr, uid, [report.id], {
-                'name': time.strftime('%Y-%m-%d %H:%M:%S'), 
+                'name': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'state': 'in_progress'
             }, context=context)
 
@@ -157,8 +157,6 @@ class export_report_stopped_products(osv.osv):
 export_report_stopped_products()
 
 
-
-
 class parser_report_stopped_products_xls(report_sxw.rml_parse):
     '''
     To parse our mako template for stopped products
@@ -176,7 +174,6 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
 
         self.status_buffer = {}
 
-
     def get_uf_stopped_products(self):
         '''
         Return browse record list that contains stopped products
@@ -187,35 +184,34 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
         data_obj = self.pool.get('ir.model.data')
         smrl_obj = self.pool.get('stock.mission.report.line')
 
-        stopped_state_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'status_3')[1]
+        phase_out_state_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'status_2')[1]
         status_local_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'int_4')[1]
         temporary_status_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'int_5')[1]
 
-        hq_stopped_ids = prod_obj.search(self.cr, self.uid, [
-            ('state', '=', stopped_state_id), 
+        hq_phase_out_ids = prod_obj.search(self.cr, self.uid, [
+            ('state', '=', phase_out_state_id),
             ('international_status', '!=', status_local_id),
             ('international_status', '!=', temporary_status_id)],
             context=self.localcontext)
 
         smrl_ids = smrl_obj.search(self.cr, self.uid, [
             ('full_view', '=', False),
-            ('product_state', '=', 'stopped'),
+            ('product_state', '=', 'phase_out'),
             '|', ('internal_qty', '!=', 0),
             ('in_pipe_qty', '!=', 0)
         ], context=self.localcontext)
 
-        sm_stopped_ids = smrl_obj.read(self.cr, self.uid, smrl_ids, ['product_id'], context=self.localcontext)
-        sm_stopped_ids = [x.get('product_id')[0] for x in sm_stopped_ids]
+        sm_phase_out_ids = smrl_obj.read(self.cr, self.uid, smrl_ids, ['product_id'], context=self.localcontext)
+        sm_phase_out_ids = [x.get('product_id')[0] for x in sm_phase_out_ids]
 
         # build a list of stopped products with unique ids and sorted by default_code:
-        stopped_ids = list(set(hq_stopped_ids + sm_stopped_ids))
+        phase_out_ids = list(set(hq_phase_out_ids + sm_phase_out_ids))
         ls = []
-        for prod in prod_obj.browse(self.cr, self.uid, stopped_ids, context=self.localcontext):
+        for prod in prod_obj.browse(self.cr, self.uid, phase_out_ids, context=self.localcontext):
             ls.append( (prod.id, prod.default_code) )
-        sorted_stopped_ids = [x[0] for x in sorted(ls, key=lambda tup: tup[1])]
+        sorted_phase_out_ids = [x[0] for x in sorted(ls, key=lambda tup: tup[1])]
 
-        return prod_obj.browse(self.cr, self.uid, sorted_stopped_ids, context=self.localcontext)
-
+        return prod_obj.browse(self.cr, self.uid, sorted_phase_out_ids, context=self.localcontext)
 
     def get_stock_mission_report_lines(self, product):
         '''
@@ -225,13 +221,13 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
         smrl_obj = self.pool.get('stock.mission.report.line')
         smrl_ids = smrl_obj.search(self.cr, self.uid, [('product_id', '=', product.id)], context=self.localcontext)
 
-        stopped_state_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'status_3')[1]
+        phase_out_state_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'status_2')[1]
 
         res = [smrl for smrl in smrl_obj.browse(self.cr, self.uid, smrl_ids, context=self.localcontext) if \
-               not smrl.full_view and (smrl.product_state == 'stopped' or product.state.id == stopped_state_id) and (smrl.internal_qty != 0 or smrl.in_pipe_qty != 0)]
+               not smrl.full_view and (smrl.product_state == 'phase_out' or product.state.id == phase_out_state_id) and
+               (smrl.internal_qty != 0 or smrl.in_pipe_qty != 0) and smrl.mission_report_id.instance_id.state != 'inactive']
 
         return res
-
 
     def get_uf_status(self, code):
         '''
@@ -251,7 +247,6 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
         return res
 
 
-
 class report_stopped_products_xls(SpreadsheetReport):
 
     def __init(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -267,7 +262,6 @@ class report_stopped_products_xls(SpreadsheetReport):
     def create(self, cr, uid, ids, data, context=None):
         a = super(report_stopped_products_xls, self).create(cr, uid, ids, data, context=context)
         return (a[0], 'xls')
-
 
 
 report_stopped_products_xls(

@@ -20,65 +20,45 @@
 ##############################################################################
 
 from osv import fields, osv
-from tools.translate import _
 
 
 class wizard_account_year_end_closing(osv.osv_memory):
     _name="wizard.account.year.end.closing"
 
-    def _get_instance_level(self, cr, uid, ids, field_names, args,
-        context=None):
-        res = {}
-        if not ids:
-            return res
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        level = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0].company_id.instance_id.level
-        for id in ids:
-            res[id] = level
-        return res
-
     _columns = {
         'fy_id': fields.many2one('account.fiscalyear', "Fiscal Year",
-            required=True,
-            domain=[('state', 'in', ('draft', 'mission-closed'))]),
-        'has_move_regular_bs_to_0': fields.boolean(
-            "Move regular B/S account to 0"),
-        'has_book_pl_results': fields.boolean("Book the P&L results"),
-        'instance_level': fields.function(_get_instance_level, type='char',
-            method=True, string='Instance level'),
-    }
-
-    _defaults = {
-        'has_move_regular_bs_to_0': False,
-        'has_book_pl_results': False,
+                                 required=True,
+                                 domain=[('state', 'in', ('draft', 'mission-closed'))]),
     }
 
     def default_get(self, cr, uid, vals, context=None):
         ayec_obj = self.pool.get('account.year.end.closing')
         fy_id = context and context.get('fy_id', False) or False
         fy_rec = fy_id and self.pool.get('account.fiscalyear').browse(cr, uid,
-            fy_id, context=context) or False
-        level = ayec_obj.check_before_closing_process(cr, uid, fy_rec,
-            context=context)
+                                                                      fy_id, context=context) or False
+        ayec_obj.check_before_closing_process(cr, uid, fy_rec, context=context)
 
         res = super(wizard_account_year_end_closing, self).default_get(cr, uid,
-            vals, context=context)
+                                                                       vals, context=context)
         res['fy_id'] = fy_id
-        res['instance_level'] = level
         return res
 
     def btn_close_fy(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long, )):
             ids = [ids]
         rec = self.browse(cr, uid, ids[0], context=context)
+        company = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
+        if company.instance_id and company.instance_id.level == 'coordo':
+            has_move_regular_bs_to_0 = company.has_move_regular_bs_to_0
+            has_book_pl_results = company.has_book_pl_results
+        else:
+            has_move_regular_bs_to_0 = False
+            has_book_pl_results = False
         self.pool.get('account.year.end.closing').process_closing(cr, uid,
-            rec.fy_id,
-            has_move_regular_bs_to_0=rec.has_move_regular_bs_to_0,
-            has_book_pl_results=rec.has_book_pl_results,
-            context=context)
+                                                                  rec.fy_id,
+                                                                  has_move_regular_bs_to_0=has_move_regular_bs_to_0,
+                                                                  has_book_pl_results=has_book_pl_results,
+                                                                  context=context)
         return {'type': 'ir.actions.act_window_close', 'context': context}
 
 wizard_account_year_end_closing()

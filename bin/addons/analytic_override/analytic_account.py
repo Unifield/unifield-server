@@ -32,12 +32,32 @@ class analytic_account(osv.osv):
     _name = "account.analytic.account"
     _inherit = "account.analytic.account"
 
+    def _get_dest_without_cc(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Returns a dict with key = id of the analytic account,
+        and value = True if the analytic account is a Destination of normal type allowing no Cost Center, False otherwise
+        """
+        if context is None:
+            context = {}
+        res = {}
+        for a in self.browse(cr, uid, ids, fields_to_fetch=['category', 'type', 'allow_all_cc', 'dest_cc_ids'], context=context):
+            if a.category == 'DEST' and a.type == 'normal' and not a.allow_all_cc and not a.dest_cc_ids:
+                res[a.id] = True
+            else:
+                res[a.id] = False
+        return res
+
     def _get_active(self, cr, uid, ids, field_name, args, context=None):
-        '''
+        """
         If date out of date_start/date of given analytic account, then account is inactive.
         The comparison could be done via a date given in context.
-        '''
+
+        A normal-type destination allowing no CC is also seen as inactive whatever its activation dates
+        Exception when coming from a Supply workflow: PO/FO validation should not be blocked for that reason.
+        """
         res = {}
+        if context is None:
+            context = {}
         cmp_date = date.today().strftime('%Y-%m-%d')
         if context.get('date', False):
             cmp_date = context.get('date')
@@ -45,28 +65,50 @@ class analytic_account(osv.osv):
             res[a.id] = True
             if a.date_start > cmp_date:
                 res[a.id] = False
-            if a.date and a.date <= cmp_date:
+            elif a.date and a.date <= cmp_date:
+                res[a.id] = False
+            elif not context.get('from_supply_wkf') and a.dest_without_cc:
                 res[a.id] = False
         return res
 
     def _search_filter_active(self, cr, uid, ids, name, args, context=None):
         """
-        UTP-410: Add the search on active/inactive CC
+        Analytic accounts are seen as active if the date in context (or today's date) is included within the active date range.
+        In case of Destination with normal Type: it must additionally allows at least one Cost Center.
         """
         arg = []
         cmp_date = date.today().strftime('%Y-%m-%d')
         if context.get('date', False):
             cmp_date = context.get('date')
         for x in args:
-            if x[0] == 'filter_active' and x[2] == True:
+            # filter: active
+            if x[0] == 'filter_active' and x[2] is True:
+                arg.append('&')
+                arg.append('&')
                 arg.append(('date_start', '<=', cmp_date))
                 arg.append('|')
                 arg.append(('date', '>', cmp_date))
                 arg.append(('date', '=', False))
-            elif x[0] == 'filter_active' and x[2] == False:
+                arg.append('|')
+                arg.append('|')
+                arg.append('|')
+                arg.append(('category', '!=', 'DEST'))
+                arg.append(('type', '=', 'view'))
+                arg.append(('allow_all_cc', '=', True))
+                arg.append(('dest_cc_ids', '!=', False))
+            # filter: inactive
+            elif x[0] == 'filter_active' and x[2] is False:
+                arg.append('|')
                 arg.append('|')
                 arg.append(('date_start', '>', cmp_date))
                 arg.append(('date', '<=', cmp_date))
+                arg.append('&')
+                arg.append('&')
+                arg.append('&')
+                arg.append(('category', '=', 'DEST'))
+                arg.append(('type', '=', 'normal'))
+                arg.append(('allow_all_cc', '=', False))
+                arg.append(('dest_cc_ids', '=', False))
         return arg
 
     def _get_fake(self, cr, uid, ids, *a, **b):
@@ -248,6 +290,52 @@ class analytic_account(osv.osv):
                 dom.append(('id', 'in', compatible_dest_ids))
         return dom
 
+    def _get_cc_instance_ids(self, cr, uid, ids, fields, arg, context=None):
+        """
+        Computes the values for fields.function fields, retrieving:
+        - the instances using the analytic account...
+          ...as Top Cost Center => top_cc_instance_ids
+          ...as Target Cost Center => is_target_cc_instance_ids
+          ...as Cost centre picked for PO/FO reference => po_fo_cc_instance_ids
+          (Note that those fields should theoretically always be linked to one single instance,
+           but they are set as one2many in order to be consistent with the type of fields used in the related object.)
+        - the Missions where the Cost Center is added to => cc_missions
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        acc_target_cc_obj = self.pool.get('account.target.costcenter')
+        for analytic_acc_id in ids:
+            top_instance_ids = []
+            target_instance_ids = []
+            po_fo_instance_ids = []
+            missions = set()
+            missions_str = ""
+            target_cc_ids = acc_target_cc_obj.search(cr, uid, [('cost_center_id', '=', analytic_acc_id)], context=context)
+            if target_cc_ids:
+                field_list = ['instance_id', 'is_target', 'is_po_fo_cost_center', 'is_top_cost_center']
+                for target_cc in acc_target_cc_obj.browse(cr, uid, target_cc_ids, fields_to_fetch=field_list, context=context):
+                    instance = target_cc.instance_id
+                    if instance.mission:
+                        missions.add(instance.mission)
+                    if target_cc.is_top_cost_center:
+                        top_instance_ids.append(instance.id)
+                    if target_cc.is_target:
+                        target_instance_ids.append(instance.id)
+                    if target_cc.is_po_fo_cost_center:
+                        po_fo_instance_ids.append(instance.id)
+            if missions:
+                missions_str = ", ".join(missions)
+            res[analytic_acc_id] = {
+                'top_cc_instance_ids': top_instance_ids,
+                'is_target_cc_instance_ids': target_instance_ids,
+                'po_fo_cc_instance_ids': po_fo_instance_ids,
+                'cc_missions': missions_str,
+            }
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
@@ -274,6 +362,20 @@ class analytic_account(osv.osv):
                                                        string='Destinations compatible with the Cost Center',
                                                        type='many2many', relation='account.analytic.account',
                                                        fnct_search=_search_dest_compatible_with_cc_ids),
+        'dest_without_cc': fields.function(_get_dest_without_cc, type='boolean', method=True, store=False,
+                                           string="Destination allowing no Cost Center",),
+        'top_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                               string="Instances having the CC as Top CC",
+                                               type="one2many", relation="msf.instance", multi="cc_instances"),
+        'is_target_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                                     string="Instances having the CC as Target CC",
+                                                     type="one2many", relation="msf.instance", multi="cc_instances"),
+        'po_fo_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                                 string="Instances having the CC as CC picked for PO/FO ref",
+                                                 type="one2many", relation="msf.instance", multi="cc_instances"),
+        'cc_missions': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                       string="Missions where the CC is added to",
+                                       type='char', multi="cc_instances"),
     }
 
     _defaults ={
