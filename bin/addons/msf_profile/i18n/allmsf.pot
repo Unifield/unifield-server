@@ -331,11 +331,6 @@ msgid "No period defined for this date: %s !\n"
 "Please create a fiscal year."
 msgstr ""
 
-#. module: consumption_calculation
-#: model:ir.model,name:consumption_calculation.model_wizard_export_rac
-msgid "Export RAC lines"
-msgstr ""
-
 #. module: base
 #: code:addons/base/module/wizard/base_export_language.py:56
 #, python-format
@@ -5144,8 +5139,6 @@ msgstr ""
 #: field:res.log,name:0
 #: view:wizard.export.fmc:0
 #: field:wizard.export.fmc,message:0
-#: view:wizard.export.rac:0
-#: field:wizard.export.rac,message:0
 #: field:wizard.import.fmc,message:0
 #: field:wizard.import.rac,message:0
 #: view:product.list.export:0
@@ -10409,7 +10402,6 @@ msgstr ""
 #: field:base.language.export,name:0
 #: field:ir.attachment,datas_fname:0
 #: field:wizard.export.fmc,filename:0
-#: field:wizard.export.rac,filename:0
 #: field:stock.certificate.picking,att_fname:0
 #: field:product.list.export,filename:0
 #: field:stock.forecast.export,filename:0
@@ -25449,11 +25441,6 @@ msgstr ""
 msgid "Configuration Error!"
 msgstr ""
 
-#. module: consumption_calculation
-#: view:wizard.export.rac:0
-msgid "RAC lines exported"
-msgstr ""
-
 #. module: stock
 #: code:addons/stock/wizard/stock_return_picking.py:126
 #, python-format
@@ -28211,7 +28198,6 @@ msgstr ""
 #. module: consumption_calculation
 #: field:monthly.review.consumption.line,fmc:0
 #: field:wizard.export.fmc,fmc_id:0
-#: field:wizard.export.rac,rac_id:0
 msgid "FMC"
 msgstr ""
 
@@ -30442,7 +30428,6 @@ msgstr ""
 #. modules: stock_forecast, product_list, consumption_calculation, account_mcdb
 #: view:account.line.csv.export:0
 #: view:wizard.export.fmc:0
-#: view:wizard.export.rac:0
 #: view:product.list.export:0
 #: view:stock.forecast.export:0
 msgid "File to download"
@@ -35395,7 +35380,6 @@ msgstr ""
 
 #. modules: product_list, consumption_calculation
 #: view:wizard.export.fmc:0
-#: view:wizard.export.rac:0
 #: view:wizard.import.fmc:0
 #: view:wizard.import.rac:0
 #: view:product.list.import:0
@@ -39869,7 +39853,6 @@ msgstr ""
 #. modules: stock_forecast, consumption_calculation, account_mcdb
 #: field:account.line.csv.export,file:0
 #: field:wizard.export.fmc,file:0
-#: field:wizard.export.rac,file:0
 #: field:stock.forecast.export,file:0
 msgid "File to export"
 msgstr ""
