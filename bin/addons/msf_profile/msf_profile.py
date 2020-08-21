@@ -54,7 +54,17 @@ class patch_scripts(osv.osv):
 
 
     # UF18.0
-    def us_7215_prod_set_active_sync(self, cr, uids, *a, **b):
+    def uf18_0_migrate_acl(self, cr, uid, *a, **b):
+        cr.execute('''
+            update button_access_rule_groups_rel set
+            button_access_rule_id=(select res_id from ir_model_data where name='BAR_stockview_production_lot_tree_unlink' limit 1)
+            where
+            button_access_rule_id=(select res_id from ir_model_data where name='BAR_specific_rulesview_production_lot_tree_unlink' limit 1)
+        ''')
+        self._logger.warn('%d BAR updated' % (cr.rowcount, ))
+        return True
+
+    def us_7215_prod_set_active_sync(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.message_received'):
             # new instance
             return True
