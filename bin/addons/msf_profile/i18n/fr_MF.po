@@ -1641,8 +1641,8 @@ msgstr "Taille Sauvegarde"
 #: selection:product.product,state_ud:0
 #: model:product.status,name:product_attributes.status_3
 #: selection:product.mass.update,product_state:0
-msgid "Stopped (obsolete)"
-msgstr "Arrêté (obsolète)"
+msgid "Stopped"
+msgstr "Arrêté"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:268
@@ -105305,14 +105305,14 @@ msgstr "Le fichier n'a pas de ligne, il n'y a rien à importer"
 #. module: product, product_attributes
 #: selection:product.mass.update,product_state:0
 #: model:product.status,name:product_attributes.status_5
-msgid "Status 1 (obsolete)"
-msgstr "Statut 1 (obsolète)"
+msgid "Status 1"
+msgstr "Statut 1"
 
 #. modules: product_attributes, product
 #: model:product.status,name:product_attributes.status_6
 #: selection:product.mass.update,product_state:0
-msgid "Status 2 (obsolete)"
-msgstr "Statut 2 (obsolète)"
+msgid "Status 2"
+msgstr "Statut 2"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1542
