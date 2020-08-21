@@ -1660,7 +1660,7 @@ class purchase_order(osv.osv):
                 if first_dest_partner is None:
                     first_dest_partner = porder.dest_address_id and porder.dest_address_id.id or False
                 elif first_dest_partner is not None and first_dest_partner != porder.dest_address_id.id:
-                    raise osv.except_osv(_('Error'), _('The Destination Partner must be the same in all DPOs to be merged.'))
+                    raise osv.except_osv(_('Error'), _('The Address of the Destination Partner must be the same in all DPOs to be merged.'))
 
             old_po_name[porder.id] = porder.name
             if not order_infos:
