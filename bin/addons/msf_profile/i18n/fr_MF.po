@@ -110859,3 +110859,15 @@ msgstr "Date de Livraison Souhaitée (modifiée)"
 #, python-format
 msgid "xls line %s, product %s not found in db, line ignored"
 msgstr "Ligne xls %s, produit %s non trouvé en base, ligne ignorée"
+
+#. module: stock
+#: code:addons/stock/stock.py:781
+#, python-format
+msgid "Picking Ticket - %s Flow"
+msgstr "Bon de Picking - Flux %s"
+
+#. module: stock
+#: code:addons/stock/stock.py:783
+#, python-format
+msgid "Picking List - %s Flow"
+msgstr "Liste de Picking - Flux %s"

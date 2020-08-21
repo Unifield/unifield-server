@@ -774,12 +774,13 @@ class stock_picking(osv.osv):
 
     def _get_object_name(self, cr, uid, ids, field_name, args, context=None):
         ret = {}
-        for pick in self.read(cr, uid, ids, ['is_subpick', 'subtype'], context=context):
+        for pick in self.read(cr, uid, ids, ['is_subpick', 'subtype', 'flow_type'], context=context):
+            flow_type = dict(self.fields_get(cr, uid, context=context)['flow_type']['selection']).get(pick['flow_type'])
             if pick['subtype'] == 'picking':
                 if pick['is_subpick']:
-                    ret[pick['id']] = _('Picking Ticket')
+                    ret[pick['id']] = _('Picking Ticket - %s Flow') % (flow_type,)
                 else:
-                    ret[pick['id']] = _('Picking List')
+                    ret[pick['id']] = _('Picking List - %s Flow') % (flow_type,)
             else:
                 ret[pick['id']] = False
         return ret
