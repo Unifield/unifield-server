@@ -364,7 +364,7 @@ class stock_picking(osv.osv):
                     'line_number': x.get('line_number', False),
                     'name': x.get('name', False),
                     'note': x.get('note', False),
-                    'original_qty_partial': x.get('original_qty_partial', False),
+                    'original_qty_partial': x.get('product_qty', False),
                     'product_id': product_obj.search(cr, uid, [('name', '=', x.get('product_id', False)['name'])],
                                                      limit=1, context=context)[0],
                     'product_qty': x.get('product_qty', False),
@@ -375,6 +375,11 @@ class stock_picking(osv.osv):
                     'location_dest_id': location_input_id,
                 }) for x in pick_dict.get('move_lines', False)]
             }
+
+            # when OUT line has been split in Pick or PLL
+            for line in pack_data:
+                for data in pack_data[line]['data']:
+                    data['original_qty_partial'] = -1
 
             in_id = self.create(cr, uid, in_claim_dict, context=context)
 
@@ -1124,6 +1129,10 @@ class stock_picking(osv.osv):
                 original_sol_analytic_distrib_id = sol_obj.browse(cr, uid, original_sol_id[0],
                                                                   fields_to_fetch=['analytic_distribution_id'],
                                                                   context=context).analytic_distribution_id.id
+            else:
+                original_sol_analytic_distrib_id = sp_com_obj.get_analytic_distribution_id(cr, uid, line.purchase_line_id.to_dict(), context)
+
+
             fo_line_data = {
                 'order_id': fo_id,
                 'name': line.name,
@@ -1138,6 +1147,7 @@ class stock_picking(osv.osv):
                 'date_planned': po_info.delivery_requested_date,
                 'stock_take_date': po_info.stock_take_date,
                 'analytic_distribution_id': original_sol_analytic_distrib_id or po_analytic_distrib or False,
+                'sync_linked_pol': line.purchase_line_id.sync_local_id,
             }
             sol_obj.create(cr, uid, fo_line_data, context=context)
 

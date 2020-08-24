@@ -762,6 +762,8 @@ class stock_picking(osv.osv):
         all_pack_info = {}
 
         for wizard in inc_proc_obj.browse(cr, uid, wizard_ids, context=context):
+            if wizard.register_a_claim and wizard.claim_type in ['return', 'missing']:
+                in_out_updated = False
             picking_id = wizard.picking_id.id
             picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines',
                                                                   'type',
@@ -1029,7 +1031,7 @@ class stock_picking(osv.osv):
                         internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
                         if internal_move:
                             move_obj.write(cr, uid, internal_move, {'product_qty': diff_qty, 'product_uos_qty': diff_qty}, context=context)
-                else:
+                elif not wizard.register_a_claim or not wizard.claim_replacement_picking_expected:
                     for sptc_values in move_sptc_values:
                         # track change that will be created:
                         track_changes_to_create.append({
@@ -1181,21 +1183,13 @@ class stock_picking(osv.osv):
                 else:
                     wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                     # Then we finish the good picking
-                    if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
-                        if wizard.claim_replacement_picking_expected:
-                            move_ids = move_obj.search(cr, uid, [('picking_id', '=', backorder_id)])
-                            for move in move_obj.browse(cr, uid, move_ids, context=context):
-                                if move.purchase_line_id:
-                                    new_qty = move.purchase_line_id.product_qty - move.product_qty
-                                    self.pool.get('purchase.order.line').write(cr, uid, [move.purchase_line_id.id], {'product_qty': new_qty}, context=context)
-                        # To cancel the created INT
-                        self.action_move(cr, uid, [backorder_id], return_goods=True, context=context)
+                    return_goods =  wizard.register_a_claim and wizard.claim_type in ('return', 'surplus')
+                    self.action_move(cr, uid, [backorder_id], return_goods=return_goods, context=context)
+                    if return_goods:
                         # check the OUT availability
                         out_domain = [('backorder_id', '=', backorder_id), ('type', '=', 'out')]
                         out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
                         self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
-                    else:
-                        self.action_move(cr, uid, [backorder_id], context=context)
                     wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', picking_id, cr)
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
@@ -1233,24 +1227,12 @@ class stock_picking(osv.osv):
                         move_obj.write(cr, uid, move_ids, {'purchase_line_id': False, 'state': 'cancel'})
                         self.action_cancel(cr, uid, [picking_id], context=context)
                     else:
-                        if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
-                            if wizard.claim_replacement_picking_expected:
-                                move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking_id)])
-                                for move in move_obj.browse(cr, uid, move_ids, context=context):
-                                    if move.purchase_line_id:
-                                        new_qty = move.purchase_line_id.product_qty - move.product_qty
-                                        if new_qty:
-                                            self.pool.get('purchase.order.line').write(cr, uid, [move.purchase_line_id.id], {'product_qty': new_qty}, context=context)
-                                        else:
-                                            wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'cancel', cr)
-                            # To cancel the created INT
-                            self.action_move(cr, uid, [picking_id], return_goods=True, context=context)
-                            # check the OUT availability
+                        return_goods = wizard.register_a_claim and wizard.claim_type in ('return', 'surplus')
+                        self.action_move(cr, uid, [picking_id], return_goods=return_goods, context=context)
+                        if return_goods:
                             out_domain = [('backorder_id', '=', picking_id), ('type', '=', 'out')]
                             out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
                             self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
-                        else:
-                            self.action_move(cr, uid, [picking_id], context=context)
                         wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_done', cr)
 
                     if picking_dict['purchase_id']:
