@@ -110571,6 +110571,12 @@ msgid "Warning the following product lines have already been processed in linked
 msgstr "Attention les produits suivants ont déjà été traités dans les documents d'expédition OUT/Picking et ne peuvent plus être taités ici. Veuillez supprimer ces lignes avant de taiter le mouvement\n"
 "%s"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:562
+#, python-format
+msgid "Line number: %s, [%s] %s, qty already processed: %s, qty imported: %s"
+msgstr "Ligne %s, [%s] %s, qté déjà traitée: %s, qté importée: %s"
+
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/consumption_calculation.py:498
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:72
