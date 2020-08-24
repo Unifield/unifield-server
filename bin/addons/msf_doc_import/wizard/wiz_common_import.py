@@ -596,6 +596,7 @@ class sale_order(osv.osv):
                 'pricelist': order.pricelist_id.id,
                 'warehouse': order.warehouse_id.id,
                 'categ': order.categ,
+                'sale_id': order.id,
             }
         context.update(context_update)
 
