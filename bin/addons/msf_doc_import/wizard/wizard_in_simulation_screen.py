@@ -560,7 +560,7 @@ the date has a wrong format: %s') % (index+1, str(e)))
             details = []
             for sol in self.pool.get('sale.order.line').browse(cr, uid, already_process.keys(), fields_to_fetch=['product_id'], context=context):
                 details.append(_('Line number: %s, [%s] %s, qty already processed: %s, qty imported: %s') % (sol_id_to_wiz_line.get(sol.id),sol.product_id.default_code, sol.product_id.name, '{:g}'.format(round(already_process.get(sol.id, 0),2)), '{:g}'.format(round(sol_id_sum.get(sol.id,0),2))))
-            return _('Warning the following product lines have already been processed in linked OUT/Pick document, so cannot be processed here. Please remove these lines before trying to processs the movement\n%s') % ("\n".join(details))
+            return _('Warning the following product lines have already been processed in linked OUT/Pick document, so cannot be processed here. Please remove these lines or adjust quantity before trying to processs the movement\n%s') % ("\n".join(details))
         return ''
 
     # Simulation routing

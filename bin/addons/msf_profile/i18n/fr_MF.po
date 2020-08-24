@@ -110566,9 +110566,9 @@ msgstr "Avertisssment lors de l'import"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:563
 #, python-format
-msgid "Warning the following product lines have already been processed in linked OUT/Pick document, so cannot be processed here. Please remove these lines before trying to processs the movement\n"
+msgid "Warning the following product lines have already been processed in linked OUT/Pick document, so cannot be processed here. Please remove these lines or adjust quantity before trying to processs the movement\n"
 "%s"
-msgstr "Attention les produits suivants ont déjà été traités dans les documents d'expédition OUT/Picking et ne peuvent plus être taités ici. Veuillez supprimer ces lignes avant de taiter le mouvement\n"
+msgstr "Attention les produits suivants ont déjà été traités dans les documents d'expédition OUT/Picking et ne peuvent plus être taités ici. Veuillez supprimer ces lignes ou ajuster les quantités avant de taiter le mouvement\n"
 "%s"
 
 #. module: msf_doc_import
