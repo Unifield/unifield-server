@@ -167,6 +167,21 @@ class patch_scripts(osv.osv):
                     cr.execute(update_rec_models, (model_state, tuple(rec_models[model_state])))
         return True
 
+    def us_5216_remove_duplicated_ir_values(self, cr, uid, *a, **b):
+        """
+        Removes the old ir.values related to the act_window "Recurring Entries To Post",
+        so that the menu entry appears only once in the already existing DBs.
+        """
+        if self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id:
+            delete_ir_values = """
+                               DELETE FROM ir_values
+                               WHERE name='act_account_subscription_to_account_move_line_open'
+                               AND key2='client_action_relate'
+                               AND model='account.subscription';
+                               """
+            cr.execute(delete_ir_values)
+        return True
+
     def us_7448_set_revaluated_periods(self, cr, uid, *a, **b):
         """
         Sets the tag "is_revaluated" for the existing periods in which the revaluation has been run,
