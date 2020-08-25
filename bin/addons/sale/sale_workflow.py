@@ -509,6 +509,9 @@ class sale_order_line(osv.osv):
                     # in case of IR not sourced from stock, don't create INT
                     continue
 
+                if self.pool.get('purchase.order.line').search_exist(cr, uid, [('linked_sol_id', '=', sol.id), ('from_synchro_return_goods', '=', True)], context=context):
+                    # used by a claim, OUT already exists
+                    continue
                 # create or update PICK/OUT/INT:
                 pick_to_use = self.get_existing_pick(cr, uid, sol.id, context=context)
 

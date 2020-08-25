@@ -717,7 +717,7 @@ class product_attributes(osv.osv):
         res = {}
         level = self.pool.get('res.company')._get_instance_level(cr, uid)
         for _id in ids:
-            res[_id] = level
+            res[_id] = level or False
         return res
 
     def _get_allow_merge(self, cr, uid, ids, field_name, args, context=None):

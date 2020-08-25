@@ -1255,11 +1255,7 @@ class stock_move(osv.osv):
         pickid = kwargs['picking']
         picking_obj = self.pool.get('stock.picking')
         wf_service = netsvc.LocalService("workflow")
-        if kwargs['return_goods']:
-            # Cancel the INT in case of Claim return/surplus processed from IN
-            wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_cancel', cr)
-            picking_obj.action_cancel(cr, uid, [pickid], context=context)
-        else:
+        if not kwargs.get('return_goods'):
             wf_service.trg_validate(uid, 'stock.picking', pickid, 'button_confirm', cr)
             wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_assign', cr)
             # Make the stock moves available
@@ -1276,6 +1272,9 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
         seq_obj = self.pool.get('ir.sequence')
+        if return_goods:
+            return []
+
         for picking, todo in self._chain_compute(cr, uid, moves, context=context).items():
             ptype = todo[0][1][5] and todo[0][1][5] or location_obj.picking_type_get(cr, uid, todo[0][0].location_dest_id, todo[0][1][0])
             if picking:

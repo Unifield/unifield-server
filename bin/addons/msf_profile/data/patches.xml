@@ -597,6 +597,10 @@
             <field name="method">us_7215_prod_set_active_sync</field>
         </record>
 
+        <record id="uf18_0_migrate_acl" model="patch.scripts">
+            <field name="method">uf18_0_migrate_acl</field>
+        </record>
+
 
     </data>
 </openerp>
