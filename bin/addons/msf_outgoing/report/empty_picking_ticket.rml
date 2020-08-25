@@ -553,7 +553,7 @@
                     </td>
                     <td>
 			<para style="LineValue">[[ m.no_product and m.product_qty or removeParentNode('para') ]] [[ m.product_uom.name ]]</para>
-                        <para style="LineValueBold">[[ not m.no_product and m.product_qty or removeParentNode('para') ]] [[ m.product_uom.name ]]</para>
+                        <para style="LineValueBold">[[ not m.no_product and formatFloatDigitsToUom(m.product_qty or 0.00, m.product_uom.rounding) or removeParentNode('para') ]] [[ m.product_uom.name ]]</para>
                     </td>
                     <td>
                         <para style="LineValue">[[ m.prodlot_id and m.prodlot_id.name or '' ]]</para>
