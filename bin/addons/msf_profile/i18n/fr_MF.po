@@ -17640,8 +17640,8 @@ msgstr "Group by month of Invoice Date"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:1761
 #, python-format
-msgid "The Shipment %s has been closed."
-msgstr "Les %s de l'expédition ont été fermés."
+msgid "The Shipment %s has been dispatched."
+msgstr "%s a été expédié."
 
 #. module: msf_supply_doc_export
 #: report:po.follow.up_rml:0
