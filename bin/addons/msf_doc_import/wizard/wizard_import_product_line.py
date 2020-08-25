@@ -68,21 +68,16 @@ class wizard_import_product_line(osv.osv_memory):
         wiz_common_import = self.pool.get('wiz.common.import')
         context.update({'import_in_progress': True, 'noraise': True})
         start_time = time.time()
-        obj_data = self.pool.get('ir.model.data')
         product_obj = self.pool.get('product.product')
         p_mass_upd_obj = self.pool.get('product.mass.update')
         line_with_error = []
 
         # Get the expected product creator id
         instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
-        prod_creator_id = False
-        if instance_level == 'section':
-            prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]
-        elif instance_level == 'coordo':
-            prod_creator_id = obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
 
         for wiz_browse in self.browse(cr, uid, ids, context):
             p_mass_upd_id = wiz_browse.product_mass_upd_id.id
+            prod_creator_id = product_obj._get_authorized_creator(cr, uid, bool(wiz_browse.product_mass_upd_id.type_of_ed_bn), context)
             try:
                 product_ids = [prod.id for prod in wiz_browse.product_mass_upd_id.product_ids]
 
@@ -157,15 +152,19 @@ class wizard_import_product_line(osv.osv_memory):
                             # Cell 0: Product
                             if row[0]:
                                 prod_ids = product_obj.search(cr, uid, [('default_code', '=ilike', row[0].data),
-                                                                        ('active', 'in', ['t', 'f'])], context=context)
+                                                                        ('active', 'in', ['t', 'f']), ('replaced_by_product_id', '=', False)], context=context)
                                 if prod_ids and prod_ids[0] not in product_ids:
                                     prod = product_obj.browse(cr, uid, prod_ids[0], fields_to_fetch=['international_status'], context=context)
-                                    if prod_creator_id and prod.international_status.id == prod_creator_id:
+                                    if prod_creator_id and prod.international_status.id in prod_creator_id:
                                         product_ids.append(prod.id)
                                     else:
                                         if instance_level == 'section':
-                                            error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "HQ". ')
-                                                                   % (row[0].data,))
+                                            if wiz_browse.product_mass_upd_id.type_of_ed_bn:
+                                                error_list_line.append(_('Product %s doesn\'t have the expected Product Creator. ')
+                                                                       % (row[0].data,))
+                                            else:
+                                                error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "ITC", "ESC" or "HQ". ')
+                                                                       % (row[0].data,))
                                         elif instance_level == 'coordo':
                                             error_list_line.append(_('Product %s doesn\'t have the expected Product Creator "Local". ')
                                                                    % (row[0].data,))
@@ -206,6 +205,12 @@ class wizard_import_product_line(osv.osv_memory):
                             cr.commit()
 
                 # Update products
+                if wiz_browse.product_mass_upd_id.type_of_ed_bn and len(product_ids) > 500:
+                    nb_in_file = len(product_ids)
+                    ignore_lines += nb_in_file - 500
+                    product_ids = product_ids[0:500]
+                    error_list.append(_('Import is limited to 500 products, %d lines ignored') % (nb_in_file - 500))
+
                 p_mass_upd_obj.write(cr, uid, p_mass_upd_id, {'product_ids': [(6, 0, product_ids)]}, context=context)
 
                 error_log += '\n'.join(error_list)
@@ -292,16 +297,16 @@ Otherwise, you can continue to use Unifield.""")
         '''
         if isinstance(ids, (int, long)):
             ids=[ids]
-        for wiz_obj in self.read(cr, uid, ids, ['product_mass_upd_id']):
-            p_mass_upd_id = wiz_obj['product_mass_upd_id']
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'product.mass.update',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'target': 'crush',
-                'res_id': p_mass_upd_id,
-                'context': context,
-                }
+        wiz_obj = self.browse(cr, uid, ids[0], fields_to_fetch=['product_mass_upd_id'])
+        p_mass_upd_id = wiz_obj.product_mass_upd_id.id
+        if wiz_obj.product_mass_upd_id.type_of_ed_bn:
+            xmlid = 'product.products_bn_ed_mass_update_action'
+        else:
+            xmlid = 'product.previous_mass_update_action'
+
+        act = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, xmlid, ['form', 'tree'], context=context)
+        act['res_id'] = p_mass_upd_id
+        return act
 
     def close_import(self, cr, uid, ids, context=None):
         '''

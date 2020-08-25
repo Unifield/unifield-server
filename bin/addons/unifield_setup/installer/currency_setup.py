@@ -119,7 +119,7 @@ class currency_setup(osv.osv_memory):
         analytic_ids = self.pool.get('account.analytic.account').search(cr, uid, [('currency_id', '=', 1)])
         # use a for to avoid a recursive account error
         for analytic_id in analytic_ids:
-            self.pool.get('account.analytic.account').write(cr, uid, [analytic_id], {'currency_id': cur_id})
+            self.pool.get('account.analytic.account').write(cr, uid, [analytic_id], {'currency_id': cur_id}, context={'lang': 'en_MF'})
 
         # product.product
         # UF-1766 : Pass out the OpenObject framework to gain time on currency change with a big amount of products

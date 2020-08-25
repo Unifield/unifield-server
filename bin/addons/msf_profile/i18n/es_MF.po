@@ -590,8 +590,6 @@ msgstr "Fusionar órdenes de compra"
 #: field:res.log,name:0
 #: view:wizard.export.fmc:0
 #: field:wizard.export.fmc,message:0
-#: view:wizard.export.rac:0
-#: field:wizard.export.rac,message:0
 #: field:wizard.import.fmc,message:0
 #: field:wizard.import.rac,message:0
 #: view:stock.remove.location.wizard:0
@@ -6103,11 +6101,6 @@ msgstr "Realizado el"
 #: selection:base.setup.company,ship_state_id:0
 msgid "Tennessee"
 msgstr "Tennesse"
-
-#. module: consumption_calculation
-#: view:wizard.export.rac:0
-msgid "RAC lines exported"
-msgstr "Líneas consumo real medio importadas"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:2751
@@ -18140,7 +18133,6 @@ msgstr "Acceda a los registros de sus proveedores y mantenga una buena relación
 #: field:base.language.export,name:0
 #: field:ir.attachment,datas_fname:0
 #: field:wizard.export.fmc,filename:0
-#: field:wizard.export.rac,filename:0
 #: field:wizard.export.po,filename:0
 #: field:hr.payroll.import.confirmation,filename:0
 #: field:stock.certificate.picking,att_fname:0
@@ -32188,11 +32180,6 @@ msgstr "Tipo de certificado"
 msgid "Claim Partner"
 msgstr "Reclamación - Tercero"
 
-#. module: account_msf
-#: view:account.invoice:0
-msgid "I/MI voucher date"
-msgstr "I/MI fecha del bono"
-
 #. module: base_report_designer
 #: view:base_report_designer.installer:0
 #: model:ir.actions.act_window,name:base_report_designer.action_report_designer_wizard
@@ -38124,7 +38111,6 @@ msgstr "El producto [%s]%s no es un producto \"Transporte\". Solo puede vender p
 #: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:69
 #: field:monthly.review.consumption.line,fmc:0
 #: field:wizard.export.fmc,fmc_id:0
-#: field:wizard.export.rac,rac_id:0
 #: field:stock.mission.report.line,reviewed_consumption:0
 #: field:auto.supply.rules.report,fmc:0
 #: field:min.max.rules.report,fmc:0
@@ -42512,11 +42498,6 @@ msgstr "Secuencia de envío"
 #: model:ir.model,name:order_types.model_stock_print_certificate
 msgid "Print a certificate from an Outgoing donation"
 msgstr "Imprimir un certificado de una donación saliente"
-
-#. module: consumption_calculation
-#: model:ir.model,name:consumption_calculation.model_wizard_export_rac
-msgid "Export RAC lines"
-msgstr "Exportar líneas CRM (Consumo real medio)"
 
 #. module: account
 #: model:ir.model,name:account.model_account_installer_modules
@@ -47327,7 +47308,6 @@ msgstr "Configuración de restricciones del país "
 #. modules: stock_forecast, msf_doc_import, consumption_calculation, account_mcdb
 #: view:account.line.csv.export:0
 #: view:wizard.export.fmc:0
-#: view:wizard.export.rac:0
 #: view:wizard.export.po:0
 #: view:stock.forecast.export:0
 msgid "File to download"
@@ -59768,7 +59748,6 @@ msgstr "Procesos"
 #. modules: stock_forecast, msf_doc_import, consumption_calculation, account_mcdb
 #: field:account.line.csv.export,file:0
 #: field:wizard.export.fmc,file:0
-#: field:wizard.export.rac,file:0
 #: field:wizard.export.po,file:0
 #: field:stock.forecast.export,file:0
 msgid "File to export"
@@ -68408,7 +68387,6 @@ msgstr "Moneda por defecto para pedidos de terreno"
 
 #. modules: import_data, consumption_calculation, purchase_override, product_attributes, mission_stock, msf_doc_import
 #: view:wizard.export.fmc:0
-#: view:wizard.export.rac:0
 #: view:wizard.import.fmc:0
 #: view:wizard.import.rac:0
 #: view:import_product:0

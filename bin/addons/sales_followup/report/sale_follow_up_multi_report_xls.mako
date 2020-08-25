@@ -95,8 +95,8 @@
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
     <Style ss:ID="line_left_date">
-        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
-        <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@" />
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+        <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -106,7 +106,7 @@
         <Font ss:Size="8" ss:Color="#0000FF"/>
     </Style>
     <Style ss:ID="line_left_date_fr">
-        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
         <NumberFormat ss:Format="Short Date" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -119,7 +119,7 @@
 
     <Style ss:ID="short_date">
         <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1" />
-        <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@" />
+        <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@" />
         <Font ss:Size="8" ss:Color="#0000FF" />
     </Style>
     <Style ss:ID="short_date_fr">
@@ -161,8 +161,8 @@
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
     <Style ss:ID="line_left_date_grey">
-        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
-        <NumberFormat ss:Format="[$-40C]d\-mmm\-yyyy;@" />
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+        <NumberFormat ss:Format="[ENG][$-409]d\-mmm\-yyyy;@" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -172,7 +172,7 @@
         <Font ss:Size="8" ss:Color="#747474"/>
     </Style>
     <Style ss:ID="line_left_date_grey_fr">
-        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
         <NumberFormat ss:Format="Short Date" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -227,7 +227,7 @@
         ## Transport file
         <Column ss:AutoFitWidth="1" ss:Width="55.75" />
         ## CDD
-        <Column ss:AutoFitWidth="1" ss:Width="55.75" />
+        <Column ss:AutoFitWidth="1" ss:Width="107.25" />
         ## ETA
         <Column ss:AutoFitWidth="1" ss:Width="50" />
         ## RTS Date
@@ -391,11 +391,15 @@
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
                     % endif
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
-                    % if line.get('cdd') and isDate(line['cdd']):
-                        % if getLang() == 'fr_MF':
-                        <Cell ss:StyleID="line_left_date_grey_fr"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                    % if line.get('cdd'):
+                        % if isDate(line['cdd']):
+                            % if getLang() == 'fr_MF':
+                            <Cell ss:StyleID="line_left_date_grey_fr"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            % else:
+                            <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            % endif
                         % else:
-                        <Cell ss:StyleID="line_left_date_grey"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line['cdd']|x}</Data></Cell>
                         % endif
                     % else:
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String"></Data></Cell>
@@ -474,11 +478,15 @@
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
                     % endif
-                    % if line.get('cdd') and isDate(line['cdd']):
-                        % if getLang() == 'fr_MF':
-                        <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                    % if line.get('cdd'):
+                        % if isDate(line['cdd']):
+                            % if getLang() == 'fr_MF':
+                            <Cell ss:StyleID="line_left_date_fr"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            % else:
+                            <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            % endif
                         % else:
-                        <Cell ss:StyleID="line_left_date"><Data ss:Type="DateTime">${line['cdd']|n}T00:00:00.000</Data></Cell>
+                            <Cell ss:StyleID="line_left"><Data ss:Type="String">${line['cdd']|x}</Data></Cell>
                         % endif
                     % else:
                     <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>

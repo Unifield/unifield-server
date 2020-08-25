@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="export_replenishment_product_list_form">
+            <field name="name">wizard.export.replenishment.product.list</field>
+            <field name="model">wizard.export.replenishment.product.list</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+
+                <form string="Export Product List Consistency Report">
+                    <group colspan="4">
+                        <group col="1"></group>
+                        <group col="2" colspan="2">
+                            <field colspan="2" name="list_id"/>
+                            <button colspan="2" name="create_report" string="Export" type="object" icon="gtk-print"/>
+                        </group>
+                        <group col="1"></group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <!-- Actions -->
+        <act_window id="action_replenishment_product_list"
+            name="Export Product List"
+            res_model="wizard.export.replenishment.product.list"
+            src_model="replenishment.product.list"
+            view_mode="form"
+            view_type="form"
+            key2="client_print_multi"
+            target="new" />
+
+
+        <record model="ir.ui.view" id="replenishment_segment_line_paired_form">
+            <field name="name">replenishment.segment.line.paired</field>
+            <field name="model">replenishment.segment.line</field>
+            <field name="type">form</field>
+            <field name="priority">25</field>
+            <field name="arch" type="xml">
+                <form string="Set Paired Product">
+                        <field name="product_id" readonly="1" colspan="4"/>
+                        <field name="status" invisible="1" />
+                        <field name="replacing_product_id" attrs="{'invisible': [('status', 'not in', ['replaced', 'phasingout'])], 'required':  [('status', '=', 'replaced')]}" colspan="4" domain="[('id', '!=', product_id)]" />
+                        <field name="replaced_product_id" attrs="{'invisible': [('status', 'not in', ['replacing', 'activereplacing'])], 'required':  [('status', 'in', ['replacing', 'activereplacing'])]}" colspan="4" domain="[('id', '!=', product_id)]"/>
+                        <group colspan="4">
+                            <button name="save_paired" icon="gtk-ok" string="Save" type="object"/>
+                            <button special="cancel" string="Close" icon="gtk-cancel" />
+                        </group>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>
+

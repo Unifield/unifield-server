@@ -63,7 +63,7 @@ class instance_auto_creation(osv.osv):
             ('end_init_sync', 'Init sync finished !'),
             ('reconfigure', 'Do reconfigure...'),
             ('reconfigure_done', 'Reconfigure done.'),
-            ('import_files', 'Start file imoprt...'),
+            ('import_files', 'Start importing files ...'),
             ('files_imported', 'Files import done.'),
             ('partner_configuration', 'Start configuration of internal partner...'),
             ('partner_configuration_done', 'Internal partner configuration done.'),
@@ -361,6 +361,7 @@ class instance_auto_creation(osv.osv):
                 self.write(cr, 1, creation_id,
                            {'state': 'waiting_for_validation'}, context=context)
         except Exception as e:
+            logging.getLogger('autoinstall').error('Auto creation error: %s' % tools.misc.get_traceback(e))
             self.write(cr, 1, creation_id,
                        {'error': '%s' % e}, context=context)
 
@@ -406,18 +407,18 @@ class instance_auto_creation(osv.osv):
                 if sync_status == 'Syncing...':
                     # keep going
                     pass
-                elif sync_status == 'Connected' or sync_status.startswith('Last Sync: In Progress...'):
+                elif sync_status.startswith('Last Sync: Ok'):
+                    self.write(cr, 1, creation_id,
+                               {'state': 'end_init_sync'}, context=context)
+                elif sync_status == 'Connected' or sync_status.startswith('Last Sync:'):
                     # start/restart the init sync (very long)
                     self.write(cr, 1, creation_id,
                                {'state': 'start_init_sync'}, context=context)
                     entity_obj.sync(cr, uid)
                     self.write(cr, 1, creation_id,
                                {'state': 'end_init_sync'}, context=context)
-                elif sync_status.startswith('Last Sync: Ok'):
-                    self.write(cr, 1, creation_id,
-                               {'state': 'end_init_sync'}, context=context)
                 else:
-                    raise 'Impossible to perform the sync. Sync status is \'%s\'.' % sync_status
+                    raise osv.except_osv(_("Error!"), 'Impossible to perform the sync. Sync status is \'%s\'.' % sync_status)
 
             if not skip_backup_config:
                 self.write(cr, 1, creation_id,
@@ -615,12 +616,15 @@ class instance_auto_creation(osv.osv):
                         cr.rollback()
                         logging.getLogger('autoinstall').warn('Unable to set Silent Upgrade, please check the silent upgrade and auto sync times')
 
+            cr.commit()
             if not skip_import_files:
                 self.write(cr, 1, creation_id,
                            {'state': 'import_files'}, context=context)
                 import_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall', 'import')
                 file_to_import = []
                 for file_name in os.listdir(import_path):
+                    if file_name.endswith('.imported'):
+                        continue
                     if not '.csv' in file_name:
                         raise osv.except_osv(_("Error!"), 'Only CSV file can be imported. \'%s\' is not a CSV extension.' % file_name)
                     if file_name == 'account.analytic.journal.csv':
@@ -630,7 +634,11 @@ class instance_auto_creation(osv.osv):
                 for file_name in file_to_import:
                     model_to_import = file_name.split('.csv')[0]
                     model_obj = self.pool.get(model_to_import)
-                    model_obj.import_data_from_csv(cr, uid, os.path.join(import_path, file_name))
+                    processed, rejected, headers = model_obj.import_data_from_csv(cr, uid, os.path.join(import_path, file_name), with_commit=False)
+                    if rejected:
+                        raise osv.except_osv(_("Error!"), "Import file %s\n %s" % (file_name, "\n".join(["Line: %s %s" % (x[0], x[2]) for x in rejected])))
+                    cr.commit()
+                    os.rename(os.path.join(import_path, file_name), os.path.join(import_path, '%s.imported' %file_name))
                 self.write(cr, 1, creation_id,
                            {'state': 'files_imported'}, context=context)
 
@@ -692,6 +700,9 @@ class instance_auto_creation(osv.osv):
                 'debit_account_pl_positive': 'ye_pl_pos_debit_account',
                 'credit_account_pl_negative': 'ye_pl_ne_credit_account',
                 'debit_account_pl_negative': 'ye_pl_ne_debit_account',
+                'default_cheque_account': ['cheque_debit_account_id', 'cheque_credit_account_id'],
+                'default_bank_account': ['bank_debit_account_id', 'bank_credit_account_id'],
+                'default_cash_account': ['cash_debit_account_id', 'cash_credit_account_id'],
             }
 
             for config_file_prop, unifield_prop in account_property_dict.items():
@@ -699,7 +710,16 @@ class instance_auto_creation(osv.osv):
                 account_id = account_obj.search(cr, uid, [('code', '=', account)])
                 account_id = account_id and account_id[0] or False
                 if account_id:
-                    vals[unifield_prop] = account_id
+                    if isinstance(unifield_prop, basestring):
+                        unifield_prop = [unifield_prop]
+                    for uf_prop in unifield_prop:
+                        vals[uf_prop] = account_id
+
+            if vals.get('ye_pl_cp_for_bs_debit_bal_account') and vals.get('ye_pl_cp_for_bs_credit_bal_account'):
+                vals['has_move_regular_bs_to_0'] = True
+
+            if vals.get('ye_pl_pos_credit_account') and vals.get('ye_pl_ne_debit_account'):
+                vals['has_book_pl_results'] = True
 
             company_obj.write(cr, uid, company_id, vals)
 
@@ -723,6 +743,8 @@ class instance_auto_creation(osv.osv):
             shutil.move(config_file_path, "%s-%s" % (config_file_path, time.strftime('%Y%m%d-%H%M')))
 
         except Exception as e:
+            cr.rollback()
+            logging.getLogger('autoinstall').error('Auto creation error: %s' % tools.misc.get_traceback(e))
             self.write(cr, 1, creation_id,
                        {'error': '%s' % e}, context=context)
 

@@ -24,9 +24,7 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from osv import osv
 from tools.translate import _
 
-
 class combined_journals_report(report_sxw.rml_parse):
-
     def __init__(self, cr, uid, name, context=None):
         super(combined_journals_report, self).__init__(cr, uid, name, context=context)
         self.context = {}
@@ -101,37 +99,43 @@ class combined_journals_report(report_sxw.rml_parse):
                       'partner_txt', 'debit_currency', 'credit_currency', 'currency_id', 'debit', 'credit', 'reconcile_txt',
                       'move_state']
         current_line_position = 0
-        for aml in aml_obj.browse(self.cr, self.uid, aml_ids, fields_to_fetch=aml_fields, context=self.context):
-            current_line_position += 1
-            aml_dict = {
-                'type': 'aml',
-                'id': aml.id,
-                'prop_instance': aml.instance_id and aml.instance_id.code or '',
-                'journal_code': aml.journal_id.code,
-                'entry_sequence': aml.move_id.name,
-                'description': aml.name,
-                'reference': aml.ref or '',
-                'document_date': aml.document_date,
-                'posting_date': aml.date,
-                'period': aml.period_id.code or '',
-                'gl_account': '%s - %s' % (aml.account_id.code, aml.account_id.name),
-                'account_analytic_addicted': aml.account_id.is_analytic_addicted and 1 or 0,
-                'third_party': aml.partner_txt or '',
-                'cost_center': '',
-                'destination': '',
-                'funding_pool': '',
-                'analytic_account': '',
-                'booking_debit': aml.debit_currency or 0.0,
-                'booking_credit': aml.credit_currency or 0.0,
-                'booking_currency': aml.currency_id and aml.currency_id.name or '',
-                'func_debit': aml.debit or 0.0,
-                'func_credit': aml.credit or 0.0,
-                'func_currency': func_currency_name,
-                'reconcile': aml.reconcile_txt or '',
-                'status': aml.move_state,
-            }
-            amls.append(aml_dict)
-            self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(aml_ids), before=0.05, after=0.15, context=self.context)
+        aml_num = len(aml_ids)
+        processed = 0
+        step = 1000
+        while processed < aml_num:
+            limit = processed
+            processed += step
+            for aml in aml_obj.browse(self.cr, self.uid, aml_ids[limit:processed], fields_to_fetch=aml_fields, context=self.context):
+                current_line_position += 1
+                aml_dict = {
+                    'type': 'aml',
+                    'id': aml.id,
+                    'prop_instance': aml.instance_id and aml.instance_id.code or '',
+                    'journal_code': aml.journal_id.code,
+                    'entry_sequence': aml.move_id.name,
+                    'description': aml.name,
+                    'reference': aml.ref or '',
+                    'document_date': aml.document_date,
+                    'posting_date': aml.date,
+                    'period': aml.period_id.code or '',
+                    'gl_account': '%s - %s' % (aml.account_id.code, aml.account_id.name),
+                    'account_analytic_addicted': aml.account_id.is_analytic_addicted and 1 or 0,
+                    'third_party': aml.partner_txt or '',
+                    'cost_center': '',
+                    'destination': '',
+                    'funding_pool': '',
+                    'analytic_account': '',
+                    'booking_debit': aml.debit_currency or 0.0,
+                    'booking_credit': aml.credit_currency or 0.0,
+                    'booking_currency': aml.currency_id and aml.currency_id.name or '',
+                    'func_debit': aml.debit or 0.0,
+                    'func_credit': aml.credit or 0.0,
+                    'func_currency': func_currency_name,
+                    'reconcile': aml.reconcile_txt or '',
+                    'status': aml.move_state,
+                }
+                amls.append(aml_dict)
+                self.percent = bg_obj.compute_percent(self.cr, self.uid, current_line_position, len(aml_ids), before=0.05, after=0.15, context=self.context)
         amls.sort(self._cmp_sequence_account_type)
         if bg_id:
             self.percent += 0.05  # 20% of the total process
@@ -327,7 +331,7 @@ class combined_journals_report(report_sxw.rml_parse):
         for aji in aal_obj.browse(self.cr, self.uid, analytic_line_ids, fields_to_fetch=aji_fields, context=self.context):
             if not aji.move_id:
                 aji_ids.append(aji.id)
-            elif aji.journal_id.type == 'correction':
+            elif aji.journal_id.type in ('correction', 'correction_hq', 'extra'):
                 corrected_aal = aji.last_corrected_id or aji.reversal_origin or False
                 corrected_aml = corrected_aal and corrected_aal.move_id or False
                 if corrected_aml and corrected_aml.last_cor_was_only_analytic and corrected_aml.id == aji.move_id.id:

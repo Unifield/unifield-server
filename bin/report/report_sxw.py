@@ -33,6 +33,7 @@ import pooler
 import tools
 import zipfile
 import common
+import math
 from osv.fields import float as float_class, function as function_class
 
 DT_FORMAT = '%Y-%m-%d'
@@ -66,6 +67,7 @@ rml2sxw = {
     'para': 'p',
 }
 
+
 def isDate(date, date_format=False):
     '''
     return False if the value stored in field is not a date, True else.
@@ -78,12 +80,16 @@ def isDate(date, date_format=False):
         return False
     return True
 
+
 class _format(object):
-    def set_value(self, cr, uid, name, object, field, lang_obj):
+    def set_value(self, cr, uid, name, object, field, lang_obj, object_id=False):
         self.object = object
         self._field = field
         self.name = name
         self.lang_obj = lang_obj
+        if object_id:
+            self.object_id = object_id
+
 
 class _float_format(float, _format):
     def __init__(self,value):
@@ -93,16 +99,29 @@ class _float_format(float, _format):
     def __str__(self):
         digits = 2
         computation = False
-        if hasattr(self,'_field') and getattr(self._field, 'digits', None):
+        related_uom_rounding = False
+        if hasattr(self, '_field') and getattr(self._field, 'digits', None):
             digits = self._field.digits[1]
 
         # custom fields - decimal_precision computation
-        if hasattr(self,'_field') and getattr(self._field, 'computation', None):
+        if hasattr(self, '_field') and getattr(self._field, 'computation', None):
             computation = self._field.computation
 
+        # Search for the related UoM of the field
+        if hasattr(self, '_field') and getattr(self._field, 'related_uom', None):
+            related_uom_field = self._field.related_uom
+            if hasattr(self, 'object') and hasattr(self.object, related_uom_field) and self.object[related_uom_field]:
+                # Try to get the exact line
+                if hasattr(self, 'object_id') and self.object._data[self.object_id] and \
+                        self.object._data[self.object_id].get(related_uom_field) and self.object._data[self.object_id][related_uom_field]:
+                    related_uom_rounding = self.object._data[self.object_id][related_uom_field].rounding
+                else:
+                    related_uom_rounding = self.object[related_uom_field].rounding
+
         if hasattr(self, 'lang_obj'):
-            # dynamic number of digits if computation - do not interfer with number formatting according to locale
-            if computation:
+            if related_uom_rounding:
+                digits = int(abs(math.log10(related_uom_rounding)))
+            elif computation:  # dynamic number of digits if computation - do not interfer with number formatting according to locale
                 v = ("%%.%df" % digits) % self.name
                 num, decimals = v.split(".", 1)
                 # fixed min decimal value
@@ -157,8 +176,10 @@ class _dttime_format(str, _format):
 
 _fields_process = {
     'float': _float_format,
+    'float_null': _float_format,
     'date': _date_format,
     'integer': _int_format,
+    'integer_null': _int_format,
     'datetime' : _dttime_format
 }
 
@@ -204,6 +225,8 @@ class rml_parse(object):
             'isDateTime': self.isDateTime,
             'isTime': self.isTime,
             'getSelValue': self.getSelValue,
+            'sheet_name': self.sheet_name,
+            'formatFloatDigitsToUom': self.formatFloatDigitsToUom,
             # more context members are setup in setCompany() below:
             #  - company_id
             #  - logo
@@ -220,6 +243,30 @@ class rml_parse(object):
         self.lang_dict_called = False
         self._transl_regex = re.compile('(\[\[.+?\]\])')
         self.log_export = False
+        self.sheet_name_used = []
+        self.total_sheet_number = 0
+
+    def sheet_name(self, default_name=False, context=None):
+        sheet_max_size = 31
+        if not default_name:
+            default_name = 'Sheet %s' % (self.total_sheet_number, )
+
+        default_name = default_name[0:sheet_max_size].replace('/','_')
+
+        if default_name in self.sheet_name_used:
+            default_name = '%s %s'% (default_name[0:sheet_max_size - len('%s' % self.total_sheet_number) - 1], self.total_sheet_number)
+
+        self.sheet_name_used.append(default_name)
+        self.total_sheet_number += 1
+        return default_name
+
+    def translate_call(self, src):
+        """Translate String."""
+        ir_translation = self.pool.get('ir.translation')
+        res = ir_translation._get_source(self.cr, self.uid, self.orig_file, 'report', self.localcontext.get('lang', 'en_US'), src)
+        if not res:
+            return src
+        return res
 
     def isDate(self, date, date_format=DT_FORMAT):
         '''
@@ -335,6 +382,37 @@ class rml_parse(object):
             d = obj._field.digits[1] or DEFAULT_DIGITS
         return d
 
+    def format_xls_lang(self, value, digits=None, date=False, date_time=False, grouping=True, monetary=False):
+        """format using the know cursor, language from localcontext"""
+        if digits is None:
+            digits = self.get_digits(value)
+        if isinstance(value, (str, unicode)) and not value:
+            return ''
+        pool_lang = self.pool.get('res.lang')
+        lang = self.localcontext['lang']
+
+        lang_ids = pool_lang.search(self.cr, self.uid, [('code','=',lang)])[0]
+        lang_obj = pool_lang.browse(self.cr, self.uid, lang_ids)
+
+        if date or date_time:
+            if not str(value):
+                return ''
+
+            date_format = lang_obj.date_format
+            parse_format = '%Y-%m-%d'
+            if date_time:
+                value=value.split('.')[0]
+                date_format = date_format + " " + lang_obj.time_format
+                parse_format = '%Y-%m-%d %H:%M:%S'
+            if not isinstance(value, time.struct_time):
+                return time.strftime(date_format, time.strptime(value, parse_format))
+
+            else:
+                date = datetime(*value.timetuple()[:6])
+            return date.strftime(date_format)
+
+        return lang_obj.format('%.' + str(digits) + 'f', value, grouping=grouping, monetary=monetary)
+
     def formatLang(self, value, digits=None, date=False, date_time=False, grouping=True, monetary=False, dp=False):
         """
             Assuming 'Account' decimal.precision=3:
@@ -442,6 +520,23 @@ class rml_parse(object):
             # company in the localcontext. For other cases the report
             # will have to call setCompany() inside the main repeatIn loop.
             self.setCompany(objects[0].company_id)
+
+    def formatFloatDigitsToUom(self, float_to_format, rounding=False):
+        '''
+        Modify the digits of the given float to match the rounding and return it
+        '''
+        lang_obj = self.pool.get('res.lang')
+
+        if rounding:
+            digits = int(abs(math.log10(rounding)))
+        else:
+            digits = 2
+
+        lang_ids = lang_obj.search(self.cr, self.uid, [('code', '=', self.localcontext.get('lang', 'en_US'))])
+        lang = lang_obj.browse(self.cr, self.uid, lang_ids[0])
+
+        return lang.format('%.' + str(digits) + 'f', float_to_format, True)
+
 
 class report_sxw(report_rml, preprocess.report):
     def __init__(self, name, table, rml=False, parser=rml_parse, header='external', store=False):

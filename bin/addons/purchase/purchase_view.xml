@@ -221,8 +221,10 @@
                                 <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" context="{'rfq_ok': False}"/>
                                 <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object"/>
                             </group>
-                            <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_p'])]}"/>
-                            <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_p'])]}"/>
+                            <group colspan="4" col="4" attrs="{'invisible':['&amp;', ('state', 'not in', ['validated', 'validated_p']), '|', ('partner_type', 'not in', ['esc', 'external']), ('state', 'not in', ['confirmed', 'confirmed_p'])]}">
+                                <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" />
+                                <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" />
+                            </group>
                             <field name="order_line" colspan="4" nolabel="1" mode="tree,form"
                                 context="{'purchase_id': active_id, 'partner_type': partner_type, 'categ': categ, 'pricelist_id': pricelist_id, 'rfq_ok': False, 'from_fo': po_from_fo or po_from_ir or False}"
                                 on_change="order_line_change(order_line)"
@@ -263,7 +265,7 @@
                                     <field name="account_4_distribution" string="Acc. for Ana. Distrib." invisible="1"/>
                                     <field name="kit_pol_check" invisible="True"/>
                                     <field name="po_state_stored" invisible="True"/>
-                                    <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check', '=', False), ('po_state_stored', '!=', 'confirmed')]}"/>
+                                    <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check', '=', False), ('fake_state', 'not in', ['draft', 'validated', 'validated_n'])]}"/>
                                     <field name="red_color" invisible="1"/>
                                     <field name="tender_line_id" invisible="1"/>
                                     <field name="to_correct_ok" invisible="1"/>
@@ -314,8 +316,11 @@
                             <group colspan="4" col="4">
                                 <separator colspan="4" string="Dates"/>
                                 <group colspan="2" col="3">
-                                    <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)"/>
-                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}"/>
+                                   <group colspan="2" col="4">
+                                    <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)"/>
+                                    <field name="delivery_requested_date_modified" attrs="{'readonly': [('state', 'not in', ['draft_p', 'validated', 'validated_p'])]}" />
+                                   </group>
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated', 'validated_p'))]}"/>
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
@@ -416,7 +421,7 @@
                     </group>
                     <group colspan="4" col="16">
                         <field name="state" readonly="1"/>
-                        <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test" attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}"/>
+                        <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test" attrs="{'invisible': ['|', ('state', 'not in', ['confirmed', 'confirmed_p']), ('order_type', '!=', 'direct')]}"/>
                         <button name="purchase_cancel" type="object" attrs="{'invisible': ['|', '&amp;', ('state', 'not in', ['draft', 'draft_p']), ('partner_type', 'not in', ['external', 'esc']), '&amp;', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('partner_type', 'in', ['external', 'esc'])]}" string="Cancel document" icon="gtk-cancel" help="all the lines will be Cancelled where this status change is feasible" />
                         <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}"/>
                         <button name="validate_lines" states="draft,draft_p" string="Validate document" type="object" icon="gtk-go-forward" help="all the lines will be Validated where this status change is feasible" />
@@ -435,14 +440,12 @@
                 <search string="Search Purchase Orders">
                     <group col="8" colspan="4">
                         <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft', 'draft_p'])]" separator="1" help="Purchase orders which are in draft state"/>
-                        <filter icon="terp-check" name="approved" string="Validated" domain="[('state', 'in', ['validated', 'validated_p'])]" separator="1" help="Purchase orders which are in approved state."/>
+                        <filter icon="terp-check" name="validated" string="Validated" domain="[('state', 'in', ['validated', 'validated_p'])]" separator="1" help="Purchase orders which are in approved state."/>
                         <filter icon="gtk-paste-v" name="sourced" string="Sourced" domain="[('state','in',['sourced','sourced_p'])]" separator="1"/>
                         <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','in',['confirmed','confirmed_p'])]" separator="1" help="Purchase orders which are in validated state."/>
                         <filter icon="gtk-close" name="done" string="Closed" domain="[('state', 'in', ['done'])]" separator="1" help="Purchase orders which are in done state."/>
-                        <separator orientation="vertical"/>
                         <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', 'in', ['cancel'])]" separator="1" help="Purchase orders which are in cancelled state."/>
                         <separator orientation="vertical"/>
-                        <filter icon="terp-emblem-important" name="exception" string="Exception" domain="[('state', 'in', ['except_invoice', 'except_picking'])]" separator="1" help="Purchase orders which are in the exception state."/>
                         <separator orientation="vertical"/>
                         <field name="name" select="1" string="Reference"/>
                         <field name="partner_id" select="1" string="Supplier"/>
@@ -452,6 +455,7 @@
                     <group>
                         <field name="product_id"/>
                         <field name="origin"/>
+                        <field name="dest_partner_names" />
                         <field name="details"/>
                         <field name="create_uid"/>
                         <field name="date_order"/>
@@ -547,7 +551,7 @@
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">purchase.order</field>
             <field name="view_mode">tree,form,graph,calendar</field>
-            <field name="context">{'purchase_order': True}</field>
+            <field name="context">{'purchase_order': True, 'search_default_draft': 1, 'search_default_validated': 1, 'search_default_sourced': 1}</field>
             <field name="domain">[('tender_id', '=', False), ('rfq_ok', '=', False)]</field>
             <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
             <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
@@ -1009,21 +1013,52 @@
 
         <menuitem action="purchase_line_form_action2" id="menu_purchase_line_order_draft" groups="base.group_extended" parent="menu_procurement_management_invoice" sequence="72"/>
 
-
-        <!--
-            Procurements
-        -->
-        <record id="view_procurement_form_inherit" model="ir.ui.view">
-            <field name="name">procurement.order.form.inherit</field>
-            <field name="model">procurement.order</field>
-            <field name="inherit_id" ref="procurement.procurement_form_view"/>
-            <field name="type">form</field>
-            <field name="priority">25</field>
+        <record id="purchase_order_line_pipeline_tree" model="ir.ui.view">
+            <field name="name">purchase.order.line.tree</field>
+            <field name="model">purchase.order.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="250" />
             <field name="arch" type="xml">
-                <xpath expr="/form/notebook/page/field[@name='close_move']" position="before">
-                    <field name="purchase_id"/>
-                </xpath>
+                <tree string="Purchase Order Lines" hide_delete_button="1" hide_new_button="1">
+                    <field name="order_id"/>
+                    <field name="partner_id" string="Supplier"/>
+                    <field name="line_number"/>
+                    <field name="product_id"/>
+                    <field name="price_unit"/>
+                    <field name="product_qty"/>
+                    <field name="product_uom"/>
+                    <field name="date_planned" widget="date" />
+                    <field name="confirmed_delivery_date" widget="date" />
+                    <field name="state" />
+                    <button type="object" name="open_po_form" icon="terp-gtk-go-back-rtl" string="View PO" />
+                </tree>
             </field>
         </record>
+        <record id="purchase_order_line_pipeline_search" model="ir.ui.view">
+            <field name="name">purchase.order.line.search</field>
+            <field name="model">purchase.order.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="250" />
+            <field name="arch" type="xml">
+                <search>
+                    <field name="order_id"/>
+                    <field name="partner_id" string="Supplier"/>
+                    <field name="product_id"/>
+                    <field name="date_planned" widget="date" />
+                    <field name="confirmed_delivery_date" widget="date" />
+                </search>
+            </field>
+        </record>
+        <record id="purchase_line_pipeline_action" model="ir.actions.act_window">
+            <field name="name">PO Line</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.order.line</field>
+            <field name="domain"></field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="purchase_order_line_pipeline_tree" />
+            <field name="search_view_id" ref="purchase_order_line_pipeline_search"/>
+        </record>
+
     </data>
 </openerp>

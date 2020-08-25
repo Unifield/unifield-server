@@ -318,8 +318,8 @@ class account_year_end_closing(osv.osv):
                 'block_manual_currency_id': True,
                 'company_id': cpy_rec.id,
                 'currency_id': ccy_id,
-                'date': posting_date,
-                'document_date': posting_date,
+                'date': last_day_fy,
+                'document_date': last_day_fy,
                 'instance_id': instance_rec.id,
                 'journal_id': journal_id,
                 'name': name,
@@ -339,13 +339,13 @@ class account_year_end_closing(osv.osv):
                 'account_id': account_id,
                 'company_id': cpy_rec.id,
                 'currency_id': ccy_id,
-                'date': posting_date,
-                'document_date': posting_date,
+                'date': last_day_fy,
+                'document_date': last_day_fy,
                 'instance_id': instance_rec.id,
                 'journal_id': journal_id,
                 'name': name,
                 'period_id': period_id,
-                'source_date': posting_date,
+                'source_date': last_day_fy,
 
                 'debit_currency': \
                 balance_currency if balance_currency > 0. else 0.,
@@ -378,7 +378,7 @@ class account_year_end_closing(osv.osv):
                                                          instance_rec.id, context=context)
 
         fy_year = self._get_fy_year(cr, uid, fy_rec, context=context)
-        posting_date = "%d-12-31" % (fy_year, )
+        last_day_fy = "%d-12-31" % (fy_year, )
 
         journal_code = 'EOY'
         journal_id = self._get_journal(cr, uid, journal_code, context=context)
@@ -407,8 +407,10 @@ class account_year_end_closing(osv.osv):
             inner join account_move m on m.id = ml.move_id
             inner join account_account a on a.id = ml.account_id
             inner join res_currency c on c.id = ml.currency_id
+            inner join account_period p on ml.period_id = p.id
             where ml.instance_id in %s and a.include_in_yearly_move = 't'
             and ml.date >= %s and ml.date <= %s and m.period_id != %s
+            and p.number != 0
             group by ml.account_id, ml.currency_id, ml.reconcile_id, ml.reconcile_partial_id
         '''
         cr.execute(sql, (tuple(instance_ids), fy_rec.date_start,
@@ -517,7 +519,7 @@ class account_year_end_closing(osv.osv):
             or not cpy_rec.ye_pl_ne_credit_account \
                 or not cpy_rec.ye_pl_ne_debit_account:
             raise osv.except_osv(_('Error'),
-                                 _("Accounts not set in company settings 'P&L result accounts'"))
+                                 _("Accounts not set in company settings \"Fiscal Year Closure\""))
         instance_rec = cpy_rec.instance_id
         instance_ids = self._get_mission_ids_from_coordo(cr, uid,
                                                          instance_rec.id, context=context)
@@ -593,8 +595,8 @@ class account_year_end_closing(osv.osv):
                 'block_manual_currency_id': True,
                 'company_id': cpy_rec.id,
                 'currency_id': ccy_id,
-                'date': posting_date,
-                'document_date': posting_date,
+                'date': first_day_next_fy,
+                'document_date': first_day_next_fy,
                 'instance_id': instance_rec.id,
                 'journal_id': journal_id,
                 'name': name,
@@ -615,13 +617,13 @@ class account_year_end_closing(osv.osv):
                 'account_id': account_id,
                 'company_id': cpy_rec.id,
                 'currency_id': ccy_id,
-                'date': posting_date,
-                'document_date': posting_date,
+                'date': first_day_next_fy,
+                'document_date': first_day_next_fy,
                 'instance_id': instance_rec.id,
                 'journal_id': journal_id,
                 'name': name or default_name,
                 'period_id': period_id,
-                'source_date': posting_date,
+                'source_date': first_day_next_fy,
 
                 'debit_currency': \
                 balance_currency if balance_currency > 0. else 0.,
@@ -656,15 +658,14 @@ class account_year_end_closing(osv.osv):
         if not cpy_rec.ye_pl_pos_debit_account \
                 or not cpy_rec.ye_pl_ne_credit_account:
             raise osv.except_osv(_('Error'),
-                                 _("B/S Regular Equity result accounts credit/debit not set" \
-                                   " in company settings 'P&L result accounts'"))
+                                 _("Accounts not set in company settings \"Fiscal Year Closure\" (B/S accounts)"))
         instance_rec = cpy_rec.instance_id
         instance_ids = self._get_mission_ids_from_coordo(cr, uid,
                                                          instance_rec.id, context=context)
 
         fy_year = self._get_fy_year(cr, uid, fy_rec, context=context)
         next_fy_id = self._get_next_fy_id(cr, uid, fy_rec, context=context)
-        posting_date = "%d-01-01" % (fy_year + 1, )
+        first_day_next_fy = "%d-01-01" % (fy_year + 1, )
 
         journal_code = 'IB'
         journal_id = self._get_journal(cr, uid, journal_code, context=context)

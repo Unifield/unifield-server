@@ -210,9 +210,9 @@ class purchase_order(osv.osv):
         if not po_name:
             raise osv.except_osv(_('Error'), _('No PO name found in the given import file'))
 
-        po_id = self.search(cr, uid, [('name', '=', po_name)], context=context)
+        po_id = self.search(cr, uid, [('name', '=', po_name), ('state', 'in', ['validated', 'validated_p', 'confirmed', 'confirmed_p'])], context=context)
         if not po_id:
-            raise osv.except_osv(_('Error'), _('No PO found with the name %s') % po_name)
+            raise osv.except_osv(_('Error'), _('No available PO found with the name %s') % po_name)
 
         return po_id[0]
 
@@ -293,6 +293,9 @@ class purchase_order(osv.osv):
             context = {}
 
         import_success = False
+        # Reset part of the context updated in the PO import
+        context.update({'line_number_to_confirm': [], 'ext_ref_to_confirm': [], 'job_comment': []})
+        simu_obj = self.pool.get('wizard.import.po.simulation.screen')
         try:
             # get filetype
             filetype = self.pool.get('stock.picking').get_import_filetype(cr, uid, file_path, context=context)
@@ -304,11 +307,16 @@ class purchase_order(osv.osv):
             # create wizard.import.po.simulation.screen
             simu_id = self.create_simu_screen_wizard(cr, uid, po_id, file_content, filetype, file_path, context=context)
             # launch simulate
-            self.pool.get('wizard.import.po.simulation.screen').launch_simulate(cr, uid, simu_id, context=context, thread=False)
+            simu_obj.launch_simulate(cr, uid, simu_id, context=context, thread=False)
+
             # get simulation report
             file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
+            simu_result = simu_obj.read(cr, uid, simu_id, ['state', 'message'], context=context)
+            if simu_result['state'] == 'error':
+                raise osv.except_osv(_('Error'), simu_result['message'])
+
             # import lines
-            self.pool.get('wizard.import.po.simulation.screen').launch_import(cr, uid, simu_id, context=context, thread=False)
+            simu_obj.launch_import(cr, uid, simu_id, context=context, thread=False)
             # attach simulation report
             self.pool.get('ir.attachment').create(cr, uid, {
                 'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
@@ -333,6 +341,8 @@ class purchase_order(osv.osv):
             context = {}
 
         context.update({'auto_import_confirm_pol': True})
+        # Reset part of the context updated in the PO import
+        context.update({'line_number_to_confirm': [], 'ext_ref_to_confirm': [], 'job_comment': []})
         res = self.auto_import_purchase_order(cr, uid, file_path, context=context)
         context['rejected_confirmation'] = 0
         if context.get('po_id'):
@@ -344,9 +354,10 @@ class purchase_order(osv.osv):
                 if pol.line_number in context.get('line_number_to_confirm', []) or \
                         (pol.external_ref and pol.external_ref in context.get('ext_ref_to_confirm', [])):
                     try:
-                        self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
-                        cr.commit()
-                        nb_pol_confirmed += 1
+                        if pol.state not in ['confirmed', 'done', 'cancel', 'cancel_r']:
+                            self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id], context=context)
+                            cr.commit()
+                            nb_pol_confirmed += 1
                     except:
                         context['rejected_confirmation'] += 1
                         cr.rollback()
@@ -384,9 +395,12 @@ class purchase_order(osv.osv):
             msg = _('No PO to export !')
             self.infolog(cr, uid, msg)
             context.update({'po_not_found': True})
+            return [], [], ['PO id', 'PO name']
 
         processed, rejected = [], []
-        for index, po_id in enumerate(po_ids):
+        cr.execute('select id from purchase_order where id in %s for update skip locked', (tuple(po_ids),))
+        index = 0
+        for po_id, in cr.fetchall():
             # generate report:
             report_name = 'validated.purchase.order_xls' if export_wiz.export_format == 'excel' else 'validated.purchase.order_xml'
             datas = {'ids': [po_id]}
@@ -449,6 +463,7 @@ class purchase_order(osv.osv):
             self.write(cr, uid, [po_id], {'auto_exported_ok': True}, context=context)
             processed.append((index, [po_id, po_name]))
             self.infolog(cr, uid, _('%s successfully exported') % po_name)
+            index += 1
 
         return processed, rejected, ['PO id', 'PO name']
 
@@ -657,13 +672,8 @@ class purchase_order(osv.osv):
             ids = [ids]
         message = ''
         plural = ''
-        obj_data = self.pool.get('ir.model.data')
 
         for var in self.browse(cr, uid, ids, context=context):
-            # we check the supplier and the address
-            if var.partner_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'supplier_tbd')[1] \
-                    or var.partner_address_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'address_tbd')[1]:
-                raise osv.except_osv(_('Warning !'), _("\n You can't have a supplier or an address 'To Be Defined', please select a consistent supplier."))
             # we check the lines that need to be fixed
             if var.order_line:
                 for var in var.order_line:

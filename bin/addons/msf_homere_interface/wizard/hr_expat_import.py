@@ -27,6 +27,8 @@ from tools.translate import _
 
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from base64 import decodestring
+from mx import DateTime
+
 
 class hr_expat_employee_import_wizard(osv.osv_memory):
     _name = 'hr.expat.employee.import'
@@ -46,15 +48,18 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                 line.cells[cell_index] and line.cells[cell_index].data \
                 or False
 
-        def manage_error(line_index, msg, name='', code='', status=''):
+        def manage_error(line_index, msg, name='', code='', status='', contract_end_date=''):
             if auto_import:
-                rejected_lines.append((line_index, [name, code, status], msg))
+                rejected_data = [name, code, status]
+                if handle_contract_end_date:
+                    rejected_data.append(contract_end_date or '')
+                rejected_lines.append((line_index, rejected_data, msg))
             else:
                 raise osv.except_osv(_('Error'), _(msg))
 
         processed_lines = []
         rejected_lines = []
-        headers = [_('Name'), _('Code'), _('Status')]
+        handle_contract_end_date = False
         hr_emp_obj = self.pool.get('hr.employee')
         # Some verifications
         if not context:
@@ -76,58 +81,88 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
             # Read file
             fileobj = SpreadsheetXML(xmlstring=decodestring(wiz.file))
             reader = fileobj.getRows()
-            reader.next()
             line_index = 2  # header taken into account
+            header_analyzed = False
             for line in reader:
+                if not header_analyzed:
+                    # the 4th column (Contract End Date) may not exist in the file and should then be ignored
+                    contract_end_date_header = get_xml_spreadheet_cell_value(3) or ''
+                    if contract_end_date_header.strip():
+                        handle_contract_end_date = True
+                    header_analyzed = True
+                    continue
                 # get cells
+                contract_end_date = False
+                contract_end_date_str = ''
                 name = get_xml_spreadheet_cell_value(0)
                 if not name:
                     manage_error(line_index, 'No name defined')
+                    line_index += 1
                     continue
+                if handle_contract_end_date:
+                    contract_end_date = get_xml_spreadheet_cell_value(3) or False
+                    if contract_end_date:
+                        if not isinstance(contract_end_date, DateTime.DateTimeType):
+                            msg = _("The Contract End Date format is invalid on line %d") % line_index
+                            manage_error(line_index, msg, name, contract_end_date="%s" % contract_end_date)
+                            line_index += 1
+                            continue  # inserting an invalid date format in the DB would fail
+                        else:
+                            contract_end_date_str = contract_end_date and contract_end_date.strftime('%Y-%m-%d') or ''
                 code = get_xml_spreadheet_cell_value(1)
                 if not code:
                     msg = "At least one employee in the import file does not" \
                         " have an ID number; make sure all employees in the" \
                         " file have an ID number and run the import again."
-                    manage_error(line_index, msg, name)
+                    manage_error(line_index, msg, name, contract_end_date=contract_end_date_str)
                 active_str = get_xml_spreadheet_cell_value(2)
                 if not active_str:
                     msg = "Active column is missing or empty at line %d" % line_index
-                    manage_error(line_index, msg, name, code)
-                active_str = active_str.lower()
+                    manage_error(line_index, msg, name, code, contract_end_date=contract_end_date_str)
+                active_str = active_str and active_str.lower() or ''
                 if active_str not in ('active', 'inactive'):
                     msg = "Active column invalid value line %d" \
                         " (should be Active/Inactive)" % line_index
-                    manage_error(line_index, msg, name, code, active_str)
+                    manage_error(line_index, msg, name, code, active_str, contract_end_date=contract_end_date_str)
                 active = active_str == 'active' or False
 
                 processed += 1
                 if auto_import:
-                    processed_lines.append((line_index, [name, code, active_str]))
+                    processed_data = [name, code, active_str]
+                    if handle_contract_end_date:
+                        processed_data.append(contract_end_date_str)
+                    processed_lines.append((line_index, processed_data))
 
                 ids = hr_emp_obj.search(cr, uid,
-                    [('identification_id', '=', code)])
+                                        [('identification_id', '=', code)])
+                vals = {
+                    'name': name,
+                    'active': active,
+                }
+                if handle_contract_end_date:
+                    vals.update({'contract_end_date': contract_end_date})
                 if ids:
                     # Update name of Expat employee
-                    hr_emp_obj.write(cr, uid, [ids[0]], {
-                        'name': name, 
-                        'active': active,
-                    })
+                    hr_emp_obj.write(cr, uid, [ids[0]], vals, context=context)
                     updated += 1
                 else:
                     # Create Expat employee
-                    hr_emp_obj.create(cr, uid, {
-                        'name': name,
-                        'active': active,
-                        'type': 'ex',
-                        'identification_id': code,
-                    })
+                    vals.update(
+                        {
+                            'type': 'ex',
+                            'identification_id': code,
+                        }
+                    )
+                    hr_emp_obj.create(cr, uid, vals, context=context)
                     created += 1
                 line_index += 1
 
             context.update({'message': ' ', 'from': 'expat_import'})
 
             if auto_import:
+                headers = [_('Name'), _('Code'), _('Status')]
+                if handle_contract_end_date:
+                    headers.append(_('Contract End Date'))
                 return processed_lines, rejected_lines, headers
 
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')

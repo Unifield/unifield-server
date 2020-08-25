@@ -87,15 +87,12 @@ class res_partner(osv.osv):
                     raise osv.except_osv(_('Error'), _('Filter check_partner different than (arg[0], =, id) not implemented.'))
                 if arg[2]:
                     so = self.pool.get('sale.order').browse(cr, uid, arg[2])
-                    sl = self.pool.get('sale.order.line').browse(cr, uid, active_id)[0]
                     newargs.append(('id', '!=', so.partner_id.id))
                     if not so.procurement_request:
                         types_allowed = ['external', 'esc']
                         if so.partner_type not in ['internal', 'section', 'intermission']:
                             types_allowed.extend(['internal', 'section', 'intermission'])
                         newargs.append(('partner_type', 'in', types_allowed))
-                    elif so.procurement_request and not sl.product_id:
-                        newargs.append(('partner_type', 'in', ['internal', 'section', 'intermission', 'esc']))
             else:
                 newargs.append(args)
         return newargs

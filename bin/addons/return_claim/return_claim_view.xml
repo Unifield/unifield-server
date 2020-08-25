@@ -70,8 +70,9 @@
                                                         <field name="creation_date_claim_event" />
                                                         <field name="from_picking_wizard_claim_event" />
                                                         <field name="location_id_claim_event" />
-                                                        <field name="return_claim_id_claim_event" invisible="True" />
+                                                        <field name="return_claim_id_claim_event" invisible="1"/>
                                                         <field name="type_claim_event" />
+                                                        <field name="replacement_picking_expected_claim_event" />
                                                     </group>
                                                 </page>
                                                 <page string="Notes">
@@ -204,8 +205,6 @@
                         <filter icon="terp-personal" name="supplier" string="Supplier" domain="[('type_return_claim','=','supplier')]" separator="1" />
                         <filter icon="terp-personal" name="customer" string="Customer" domain="[('type_return_claim','=', 'customer')]" separator="1" />
                         <filter icon="terp-personal" name="transport" string="Transport" domain="[('type_return_claim','=','transport')]" />
-                        <separator orientation="vertical" />
-                        <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
                         <separator orientation="vertical" />
                         <field name="name" />
                         <field name="type_return_claim" />

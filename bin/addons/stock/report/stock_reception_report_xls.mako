@@ -141,8 +141,10 @@
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Currency
         <Column ss:AutoFitWidth="1" ss:Width="45.0" />
-        ## Total Cost
-        <Column ss:AutoFitWidth="1" ss:Width="70.0" />
+        ## Total Cost (PO currency)
+        <Column ss:AutoFitWidth="1" ss:Width="80.0" />
+        ## Total Cost (Functional currency)
+        <Column ss:AutoFitWidth="1" ss:Width="80.0" />
         ## Destination Location
         <Column ss:AutoFitWidth="1" ss:Width="90.0" />
         ## Final Destination Location
@@ -153,6 +155,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
         ## Physical Reception Date
         <Column ss:AutoFitWidth="1" ss:Width="60.0" />
+        ## INT Ref.
+        <Column ss:AutoFitWidth="1" ss:Width="80.0" />
 
         ## WORKSHEET HEADER
         <Row>
@@ -177,7 +181,7 @@
             <Cell ss:StyleID="big_header" ss:MergeAcross="1"><Data ss:Type="String">${_('FILTERS')|x}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${_('IN date from')|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${_('Actual Receipt Date from')|x}</Data></Cell>
             % if r.start_date and isDate(r.start_date):
             <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(r.start_date)|n}</Data></Cell>
             % else:
@@ -185,7 +189,7 @@
             % endif
         </Row>
         <Row>
-            <Cell ss:StyleID="line"><Data ss:Type="String">${_('IN date to')|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="String">${_('Actual Receipt Date to')|x}</Data></Cell>
             % if r.end_date and isDate(r.end_date):
             <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${parseDateXls(r.end_date)|n}</Data></Cell>
             % else:
@@ -241,12 +245,14 @@
             _('Qty Received'),
             _('Unit Price'),
             _('Currency'),
-            _('Total Cost'),
+            _('Total Cost (PO currency)'),
+            _('Total Cost (Functional currency)'),
             _('Destination Location'),
             _('Final Destination Location'),
             _('Expected Receipt Date'),
             _('Actual Receipt Date'),
             _('Physical Reception Date'),
+            _('INT Ref.'),
         ]
         %>
         <Row>
@@ -285,6 +291,7 @@
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['unit_price']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['currency']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['total_cost']|x}</Data></Cell>
+                <Cell ss:StyleID="line_center_nb"><Data ss:Type="Number">${move['total_cost_func']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['dest_loc']|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['final_dest_loc']|x}</Data></Cell>
                 % if move['exp_receipt_date'] and isDateTime(move['exp_receipt_date']):
@@ -302,6 +309,7 @@
                 % else:
                 <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 % endif
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${move['int_name']|x}</Data></Cell>
             </Row>
         % endfor
 

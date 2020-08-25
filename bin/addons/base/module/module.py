@@ -116,7 +116,7 @@ class module(osv.osv):
 
         view_id = model_data_obj.search(cr,uid,[('module','in', mnames.keys()),
                                                 ('model','in',('ir.ui.view','ir.actions.report.xml','ir.ui.menu'))])
-        for data_id in model_data_obj.browse(cr,uid,view_id,context):
+        for data_id in model_data_obj.browse(cr,uid,view_id, fields_to_fetch=['model', 'module', 'res_id', 'name'], context=context):
             # We use try except, because views or menus may not exist
             try:
                 key = data_id.model

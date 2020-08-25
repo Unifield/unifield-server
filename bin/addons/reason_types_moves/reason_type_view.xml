@@ -199,7 +199,7 @@
                     </xpath>
                     <xpath expr="/search//field[@name='company_id']" position="replace" />
                     <xpath expr="/search//filter[@name='done']" position="attributes">
-                        <attribute name="string">Closed</attribute>
+                        <attribute name="string">Dispatched</attribute>
                     </xpath>
                     <xpath expr="/search/group[@string='Group By...']/filter[@string='Journal']" position="replace">
                         <filter string="Reason type" icon="terp-purchase" domain="[]" context="{'group_by': 'reason_type_id'}" />

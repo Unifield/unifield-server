@@ -94,6 +94,15 @@ class sale_order_line(osv.osv):
                 # UFTP-277: Check funding pool lines if missing
                 ana_obj.create_funding_pool_lines(cr, uid, [id_ad], context=context)
 
+            # check that the analytic accounts are active. Done at the end to use the newest AD of the FO line (to re-browse)
+            fol_ad = self.browse(cr, uid, line.id, fields_to_fetch=['analytic_distribution_id'], context=context).analytic_distribution_id
+            ad = fol_ad or so.analytic_distribution_id or False
+            if ad:
+                if fol_ad:
+                    prefix = _("Analytic Distribution on line %s:\n") % line.line_number
+                else:
+                    prefix = _("Analytic Distribution at header level:\n")
+                ana_obj.check_cc_distrib_active(cr, uid, ad, prefix=prefix, from_supply=True)
         return True
 
     def copy_analytic_distribution_on_lines(self, cr, uid, ids, context=None):
@@ -178,6 +187,7 @@ class sale_order_line(osv.osv):
                     'resourced_at_state': sol.state,
                     'is_line_split': False,
                     'analytic_distribution_id': sol.analytic_distribution_id.id or False,
+                    'ir_name_from_sync': sol.ir_name_from_sync or False,
                 }
                 new_sol_id = self.copy(cr, uid, sol.id, sol_vals, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
@@ -499,6 +509,9 @@ class sale_order_line(osv.osv):
                     # in case of IR not sourced from stock, don't create INT
                     continue
 
+                if self.pool.get('purchase.order.line').search_exist(cr, uid, [('linked_sol_id', '=', sol.id), ('from_synchro_return_goods', '=', True)], context=context):
+                    # used by a claim, OUT already exists
+                    continue
                 # create or update PICK/OUT/INT:
                 pick_to_use = self.get_existing_pick(cr, uid, sol.id, context=context)
 
@@ -509,8 +522,11 @@ class sale_order_line(osv.osv):
 
                 # confirm the OUT if in draft state:
                 pick_state = self.pool.get('stock.picking').read(cr, uid, pick_to_use, ['state'], context=context)['state']
-                if picking_data['type'] == 'out' and picking_data['subtype'] == 'standard' and pick_state == 'draft':
-                    self.pool.get('stock.picking').draft_force_assign(cr, uid, [pick_to_use], context=context)
+                if picking_data['type'] == 'out' and pick_state == 'draft':
+                    if picking_data['subtype'] == 'standard':
+                        self.pool.get('stock.picking').draft_force_assign(cr, uid, [pick_to_use], context=context)
+                    elif picking_data['subtype'] == 'picking':  # Add interface log for PICK
+                        self.pool.get('stock.picking').log_picking(cr, uid, [pick_to_use], context=context)
                 # run check availability on PICK/OUT:
                 if picking_data['type'] == 'out' and picking_data['subtype'] in ['picking', 'standard']:
                     self.pool.get('stock.move').action_assign(cr, uid, [move_id])
@@ -554,6 +570,12 @@ class sale_order_line(osv.osv):
 
         for sol in self.browse(cr, uid, ids, context=context):
             to_write = {}
+            if sol.product_id:  # Check constraints on lines
+                if sol.procurement_request:
+                    check_vals = {'constraints': 'consumption'}
+                else:
+                    check_vals = {'obj_type': 'sale.order', 'partner_id': sol.order_id.partner_id.id}
+                self.pool.get('product.product')._get_restriction_error(cr, uid, [sol.product_id.id], vals=check_vals, context=context)
             if sol.order_id.procurement_request and not sol.order_id.location_requestor_id:
                 raise osv.except_osv(_('Warning !'),
                                      _('You can not validate the line without a Location Requestor.'))
@@ -562,6 +584,10 @@ class sale_order_line(osv.osv):
             if not sol.order_id.delivery_requested_date:
                 raise osv.except_osv(_('Warning !'),
                                      _('You can not validate the line without a Requested date.'))
+            if not sol.order_id.procurement_request and sol.order_id.partner_id.partner_type == 'section' and \
+                    sol.order_id.order_type == 'regular' and not sol.order_id.client_order_ref:
+                raise osv.except_osv(_('Warning !'),
+                                     _('You can not validate a line of a Regular FO with an Inter-section Customer if it was not created by sync.'))
             if not sol.product_uom \
                     or sol.product_uom.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]:
                 raise osv.except_osv(_('Error'),

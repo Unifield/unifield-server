@@ -46,7 +46,7 @@ class account_analytic_line(osv.osv):
 
     _columns = {
         'is_corrigible': fields.function(_is_aji_corrigible, method=True, string='Is corrigible?', type='boolean', readonly=True, store=False),
-        'last_corrected_id': fields.many2one('account.analytic.line', string="Last corrected entry", readonly=True),
+        'last_corrected_id': fields.many2one('account.analytic.line', string="Last corrected entry", readonly=True, select=1),
     }
 
     def button_corrections(self, cr, uid, ids, context=None):
