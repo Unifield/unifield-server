@@ -89,6 +89,19 @@ class hq_report_ocg(report_sxw.report_sxw):
                      line_debit > 0 and "0.00" or round(-line_debit, 2),
                      currency.name]]
 
+    def _get_destination_code(self, analytic_line, context):
+        """
+        For the OCG-POC VI: returns the code of the default destination of the G/L account
+        For the standard OCG VI: returns the code of the destination used on the AJI
+        """
+        if context is None:
+            context = {}
+        if context.get('ocg_poc'):
+            dest = analytic_line.general_account_id.default_destination_id
+        else:
+            dest = analytic_line.destination_id
+        return dest and dest.code or ""
+
     def create(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
@@ -260,7 +273,7 @@ class hq_report_ocg(report_sxw.report_sxw):
                               self.translate_account(cr, uid, pool, account),
                               #account and account.code,
                               account and account.code + " " + account.name or "",
-                              analytic_line.destination_id and analytic_line.destination_id.code or "",
+                              self._get_destination_code(analytic_line, context),
                               cost_center_code,
                               analytic_line.account_id and analytic_line.account_id.code or "",
                               analytic_line.partner_txt or "",

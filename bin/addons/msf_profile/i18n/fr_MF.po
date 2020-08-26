@@ -110865,3 +110865,9 @@ msgstr "Date de Livraison Souhaitée (modifiée)"
 #, python-format
 msgid "xls line %s, product %s not found in db, line ignored"
 msgstr "Ligne xls %s, produit %s non trouvé en base, ligne ignorée"
+
+#. module: vertical_integration
+#: model:ir.actions.act_window,name:vertical_integration.action_hq_export_ocg_poc
+#: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocg_poc
+msgid "Export to HQ system (OCG-POC)"
+msgstr "Export vers le système HQ (OCG-POC)"
