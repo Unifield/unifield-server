@@ -4747,6 +4747,7 @@ msgstr "Mois :"
 #: report:addons/stock/report/stock_delivery_report_xls.mako:215
 #: report:addons/procurement_cycle/report/product_stock_out.mako:468
 #: field:product.stock_out.line,line_number:0
+#: report:kitting.order.report:0
 #, python-format
 msgid "Line"
 msgstr "Ligne"
@@ -4860,6 +4861,7 @@ msgstr "Vous avez supprimé toutes les lignes de ce bon de commande, voulez vous
 #: report:delivery.order:0
 #: report:internal.move:0
 #: report:kit.report:0
+#: report:kitting.order.report:0
 msgid "Reference :"
 msgstr "Référence :"
 
@@ -8342,6 +8344,7 @@ msgstr "Générer les écarts"
 #: code:addons/stock_override/report/report_stock_move.py:759
 #: report:addons/account/report/invoice_excel_export.mako:68
 #: report:addons/account/report/export_invoice.mako:122
+#: report:kitting.order.report:0
 #, python-format
 msgid "Quantity"
 msgstr "Quantité"
@@ -10659,6 +10662,7 @@ msgstr "Juin"
 
 #. module: kit
 #: report:kit.report:0
+#: report:kitting.order.report:0
 msgid "Version :"
 msgstr "Version :"
 
@@ -14836,12 +14840,13 @@ msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'
 msgid "Not implemented"
 msgstr "Non mis en œuvre"
 
-#. modules: stock_override, procurement_request, msf_outgoing
+#. modules: stock_override, procurement_request, msf_outgoing, kit
 #: report:delivery.order:0
 #: report:internal.move:0
 #: report:procurement.request.report:0
 #: report:empty.picking.ticket:0
 #: report:picking.ticket:0
+#: report:kitting.order.report:0
 msgid "Approved by :"
 msgstr "Approuvé par :"
 
@@ -17856,6 +17861,7 @@ msgstr "Cela permettra de valider toutes les écritures de Paie et de créer des
 #: view:kit.creation:0
 #: field:kit.creation.to.consume,kit_creation_id_to_consume:0
 #: field:process.to.consume.line,kit_creation_id_process_to_consume:0
+#: report:kitting.order.report:0
 #, python-format
 msgid "Kitting Order"
 msgstr "Commande d'assemblage de kit"
@@ -19460,6 +19466,7 @@ msgstr "Incorrectly formatted expiry date: %s. The expected date should be > 01/
 #: report:addons/stock/report/stock_delivery_report_xls.mako:194
 #: report:addons/stock/report/stock_delivery_report_xls.mako:223
 #: field:stock.delivery.wizard,location_id:0
+#: report:kitting.order.report:0
 #, python-format
 msgid "Source Location"
 msgstr "Zone Source"
@@ -21197,6 +21204,7 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: field:ppl.processor,name:0
 #: field:return.ppl.processor,name:0
 #: code:addons/mission_stock/mission_stock.py:52
+#: report:kitting.order.report:0
 #, python-format
 msgid "Name"
 msgstr "Nom"
@@ -32222,6 +32230,7 @@ msgstr "Ajouter Boutons pour Impression"
 #. modules: procurement_request, kit
 #: report:kit.report:0
 #: report:procurement.request.report:0
+#: report:kitting.order.report:0
 msgid "Creation Date :"
 msgstr "Date de Création :"
 
@@ -33084,10 +33093,11 @@ msgstr "Facture Ouverte"
 msgid "The certificate ID of the module must be unique !"
 msgstr "L'Identité du certificat du module doit être unique !"
 
-#. modules: stock_override, procurement_request
+#. modules: stock_override, procurement_request, kit
 #: report:delivery.order:0
 #: report:procurement.request.report:0
 #: report:internal.move:0
+#: report:kitting.order.report:0
 msgid "Logistics / Supply :"
 msgstr "Logistique / Appro. :"
 
@@ -34007,6 +34017,7 @@ msgstr "Hide download template"
 
 #. module: kit
 #: report:kit.report:0
+#: report:kitting.order.report:0
 msgid "Product :"
 msgstr "Produit :"
 
@@ -37238,6 +37249,7 @@ msgstr "Sur Plusieurs Documents"
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:71
 #: field:replenishment.inventory.review.line.exp,date:0
 #: field:replenishment.inventory.review.line.pas,date:0
+#: report:kitting.order.report:0
 #, python-format
 msgid "Date"
 msgstr "Date"
@@ -40326,6 +40338,7 @@ msgstr "De confirmé à attribué."
 #: field:product.stock_out.line,substitute_2_uom_id:0
 #: field:product.stock_out.line,substitute_3_uom_id:0
 #: field:product.stock_out.line,uom_id:0
+#: report:kitting.order.report:0
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -42751,6 +42764,7 @@ msgstr "Type de Rapport"
 #: report:internal.move:0
 #: report:kit.report:0
 #: report:procurement.request.report:0
+#: report:kitting.order.report:0
 msgid "State :"
 msgstr "Statut:"
 
@@ -43392,6 +43406,7 @@ msgstr "Contient des Produits Dangereux"
 #: field:replenishment.order_calc.line,product_id:0
 #: field:replenishment.product.list,default_code:0
 #: field:replenishment.segment.line,product_id:0
+#: report:kitting.order.report:0
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -45649,7 +45664,7 @@ msgstr "Exclure la sélection d'employés"
 msgid "Exclude journal selection"
 msgstr "Exclure la sélection de journaux"
 
-#. modules: msf_outgoing, stock_move_tracking, stock_override, consumption_calculation, specific_rules, msf_supply_doc_export, msf_doc_import, procurement_report, stock, order_types
+#. modules: msf_outgoing, stock_move_tracking, stock_override, consumption_calculation, specific_rules, msf_supply_doc_export, msf_doc_import, procurement_report, stock, order_types, kit
 #: view:expiry.quantity.report:0
 #: field:expiry.quantity.report.line,batch_number:0
 #: view:product.likely.expire.report.item:0
@@ -45686,6 +45701,7 @@ msgstr "Exclure la sélection de journaux"
 #: report:addons/specific_rules/report/report_stock_inventory_xls.mako:226
 #: report:order.type.donation.certificate:0
 #: code:addons/stock_override/report/report_stock_move.py:759
+#: report:kitting.order.report:0
 #, python-format
 msgid "Batch"
 msgstr "Lot"
@@ -46878,7 +46894,7 @@ msgid "The following projects are not field-closed:\n"
 msgstr "Les projets suivants ne sont pas fermés sur le terrain :\n"
 "%s"
 
-#. modules: tender_flow, base, stock_override, procurement_request, msf_outgoing
+#. modules: tender_flow, base, stock_override, procurement_request, msf_outgoing, kit
 #: field:res.config.users,signature:0
 #: view:res.users:0
 #: field:res.users,signature:0
@@ -46891,6 +46907,7 @@ msgstr "Les projets suivants ne sont pas fermés sur le terrain :\n"
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:658
 #: report:empty.picking.ticket:0
 #: report:picking.ticket:0
+#: report:kitting.order.report:0
 msgid "Signature"
 msgstr "Signature"
 
@@ -57540,6 +57557,7 @@ msgstr "%s was not a number, it is set to %d by default."
 #: report:addons/stock_override/report/stock_card_report_xls.mako:144
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:149
 #: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:178
+#: report:kitting.order.report:0
 #, python-format
 msgid "Expiry Date"
 msgstr "Date d'Expiration"
@@ -73887,10 +73905,11 @@ msgstr "Statut Converti de la Commande d'Approvisionnement."
 msgid "Ease data searching in Analytic Journal Items and Journal Items"
 msgstr "Ease data searching in Analytic Journal Items and Journal Items"
 
-#. modules: stock_override, procurement_request
+#. modules: stock_override, procurement_request, kit
 #: report:delivery.order:0
 #: report:internal.move:0
 #: report:procurement.request.report:0
+#: report:kitting.order.report:0
 msgid "Storekeeper :"
 msgstr "Logisticien :"
 
@@ -75692,6 +75711,7 @@ msgstr "Sorte de Node"
 #: report:addons/procurement_cycle/report/replenishment_product_list.mako:125
 #: report:addons/procurement_cycle/report/replenishment_inventory_review.mako:825
 #: field:replenishment.product.list,product_description:0
+#: report:kitting.order.report:0
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -81712,6 +81732,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: report:addons/procurement_cycle/report/product_stock_out.mako:436
 #: field:product.stock_out,state:0
 #: field:account.model,state:0
+#: report:kitting.order.report:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -84826,9 +84847,10 @@ msgstr "Incoming Shipments already processed"
 msgid "Products Attributes & Manufacturers"
 msgstr "Products Attributes & Manufacturers"
 
-#. module: stock_override
+#. module: stock_override, kit
 #: report:delivery.order:0
 #: report:internal.move:0
+#: report:kitting.order.report:0
 msgid "Receiver :"
 msgstr "Réceptionniste :"
 
@@ -99036,6 +99058,7 @@ msgstr "Langues"
 #: view:return.claim:0
 #: view:supplier.catalogue.line:0
 #: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:74
+#: report:kitting.order.report:0
 #, python-format
 msgid "Asset"
 msgstr "Actif"
@@ -110865,3 +110888,24 @@ msgstr "Date de Livraison Souhaitée (modifiée)"
 #, python-format
 msgid "xls line %s, product %s not found in db, line ignored"
 msgstr "Ligne xls %s, produit %s non trouvé en base, ligne ignorée"
+
+#. module: kit
+#: report:kitting.order.report:0
+msgid "Quantity :"
+msgstr "Quantité :"
+
+#. module: kit
+#: report:kitting.order.report:0
+msgid "UoM :"
+msgstr "UdM :"
+
+#. module: kit
+#: report:kitting.order.report:0
+msgid "Default Source Location :"
+msgstr "Zone Source par Défaut :"
+
+#. module: kit
+#: model:ir.actions.report.xml,name:kit.kitting_order_report
+#, python-format
+msgid "Kitting Order Report"
+msgstr "Rapport de Commande d'assemblage de kit"

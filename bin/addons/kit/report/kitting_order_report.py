@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,6 +19,23 @@
 #
 ##############################################################################
 
-import kit_report
-import kit_mass_impor_export
-import kitting_order_report
+from report import report_sxw
+
+import time
+
+
+class kitting_order_report(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(kitting_order_report, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+        })
+
+
+report_sxw.report_sxw(
+    'report.kitting.order.report',
+    'kit.creation',
+    'addons/kit/report/kitting_order_report_report.rml',
+    parser=kitting_order_report,
+    header=False,
+)
