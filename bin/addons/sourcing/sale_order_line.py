@@ -1141,7 +1141,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         f_to_check = ['type', 'order_id', 'po_cft', 'product_id', 'supplier', 'state', 'location_id']
         for f in f_to_check:
             if vals.get(f, False):
-                self._check_line_conditions(cr, uid, ids, context=context)
+                ids_to_check = self.search(cr, uid, [('id', 'in', ids), ('state', 'in', ['draft', 'validated'])], context=context)
+                if ids_to_check:
+                    self._check_line_conditions(cr, uid, ids_to_check, context=context)
                 break
 
         return result

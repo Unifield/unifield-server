@@ -1501,10 +1501,11 @@ class purchase_order_line(osv.osv):
                 'old_line_qty': pol.product_qty - cancel_qty,
                 'new_line_qty': cancel_qty,
             }, context=context)
-            context.update({'return_new_line_id': True, 'keepLineNumber': True})
+            context.update({'return_new_line_id': True, 'keepLineNumber': True, 'cancel_only': not resource})
             new_po_line = split_obj.split_line(cr, uid, [split_id], context=context)
             context.pop('return_new_line_id')
             context.pop('keepLineNumber')
+            context.pop('cancel_only')
 
             # udpate linked FO lines if has:
             self.write(cr, uid, [new_po_line], {'origin': pol.origin}, context=context) # otherwise not able to link with FO
