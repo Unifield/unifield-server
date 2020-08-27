@@ -948,7 +948,7 @@ class stock_move(osv.osv):
         if 'product_id' in default:  # Check constraints on lines
             move = self.browse(cr, uid, new_id, fields_to_fetch=['type', 'picking_id', 'location_dest_id', 'product_id'], context=context)
             if move.type == 'in':
-                prod_obj._get_restriction_error(cr, uid, [move.product_id.id], {'partner_id': move.picking_id.partner_id.id, 'location_dest_id': move.location_dest_id.id, 'obj_type': 'in', 'partner_type':  move.picking_id.partner_id.partner_type},
+                prod_obj._get_restriction_error(cr, uid, [move.product_id.id], {'location_dest_id': move.location_dest_id.id, 'obj_type': 'in', 'partner_type':  move.picking_id.partner_id.partner_type},
                                                 context=context)
             elif move.type == 'out' and move.product_id.state.code == 'forbidden':
                 check_vals = {'location_dest_id': move.location_dest_id.id, 'move': move}
