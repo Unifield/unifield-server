@@ -1201,6 +1201,9 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
 
+        if context.get('cancel_only'):
+            return False, ''
+
         error = False
         error_msg = ''
         constraints = []
