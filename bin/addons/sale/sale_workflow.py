@@ -599,11 +599,15 @@ class sale_order_line(osv.osv):
                     % (sol.line_number,)
                 )
 
+
+            supplier = sol.supplier
             # US-4576: Set supplier
             if sol.type == 'make_to_order' and sol.order_id.order_type not in ['loan', 'donation_st', 'donation_exp']\
                     and sol.product_id and sol.product_id.seller_id and (sol.product_id.seller_id.supplier or
                                                                          sol.product_id.seller_id.manufacturer or sol.product_id.seller_id.transporter):
+
                 to_write['supplier'] = sol.product_id.seller_id.id
+                supplier = sol.product_id.seller_id
 
             if sol.order_id.order_type == 'loan':
                 to_write['supplier'] = False
@@ -633,6 +637,10 @@ class sale_order_line(osv.osv):
 
             elif sol.order_id.procurement_request:  # in case of IR
                 self.check_product_or_nomenclature(cr, uid, ids, context=context)
+
+            if sol.type == 'make_to_order' and supplier and sol.product_id and supplier.partner_type in  ('esc', 'external') and sol.product_id.state.code in ('forbidden', 'phase_out'):
+                # do not block FO/IR line validation if default supplier is esc/external and prod stat not allowed
+                to_write['supplier'] = False
 
             if to_write:
                 self.write(cr, uid, sol.id, to_write, context=context)
