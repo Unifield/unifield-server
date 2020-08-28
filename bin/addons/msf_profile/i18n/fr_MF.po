@@ -110865,3 +110865,24 @@ msgstr "Date de Livraison Souhaitée (modifiée)"
 #, python-format
 msgid "xls line %s, product %s not found in db, line ignored"
 msgstr "Ligne xls %s, produit %s non trouvé en base, ligne ignorée"
+
+#. module: purchase
+#: field:po.custom.text,po_text:0
+msgid "PO Custom Text"
+msgstr "Texte de BdC Perso"
+
+#. module: purchase
+#: model:ir.actions.server,name:purchase.ir_actions_server_open_po_custom_text
+msgid "Open PO Customised Text"
+msgstr "Ouvrir le Texte de BdC Personnalisé"
+
+#. module: purchase
+#: model:ir.ui.menu,name:purchase.ir_ui_menu_po_custom_text
+#: view:po.custom.text:0
+msgid "PO Customised Text"
+msgstr "Texte de BdC Personnalisé"
+
+#. module: purchase
+#: field:purchase.order,show_default_msg:0
+msgid "Show PO Default Message"
+msgstr "Montrer le Message de BdC par Défaut"

@@ -175,6 +175,9 @@
                     <field name="parent_order_name" readonly="True" attrs="{'invisible': [('parent_order_name', '=', False)]}"/>
                     <newline/>
                     <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}"/>
+                    <newline/>
+                    <field name="not_beyond_validated" invisible="1"/>
+                    <field name="show_default_msg" attrs="{'readonly': [('not_beyond_validated', '=', False)]}"/>
                     <field name="company_id" groups="base.group_multi_company" widget="selection"/>
                     <newline/>
                     <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
@@ -1058,6 +1061,52 @@
             <field name="view_mode">tree</field>
             <field name="view_id" ref="purchase_order_line_pipeline_tree" />
             <field name="search_view_id" ref="purchase_order_line_pipeline_search"/>
+        </record>
+
+        <!-- Supply Configuration > Orders > PO Customised Text -->
+        <record id="po_custom_text_form_view" model="ir.ui.view">
+            <field name="name">po.custom.text.form.view</field>
+            <field name="model">po.custom.text</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="PO Customised Text" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                    <field name="po_text" nolabel="1" widget="text"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="ir_actions_server_open_po_custom_text" model="ir.actions.server">
+            <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'po_custom_text_default')
+action = {
+'res_model' : 'po.custom.text',
+'view_type' : 'form',
+'view_mode' : 'form',
+'type': 'ir.actions.act_window',
+'res_id' : res[1],
+}</field>
+            <field eval="5" name="sequence"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_po_custom_text"/>
+            <field name="condition">True</field>
+            <field name="name">Open PO Customised Text</field>
+        </record>
+
+        <record id="ir_ui_menu_po_custom_text" model="ir.ui.menu">
+            <field name="name">PO Customised Text</field>
+            <field name="parent_id" ref="base.menu_sale_config_sales"/>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="ir_values_menuitem_po_custom_text" model="ir.values">
+            <field name="name">Menuitem PO Customised Text</field>
+            <field name="key2">tree_but_open</field>
+            <field eval="1" name="object"/>
+            <field name="value" eval="'ir.actions.server,%s' % ref('purchase.ir_actions_server_open_po_custom_text')" />
+            <field name="key">action</field>
+            <field name="model">ir.ui.menu</field>
+            <field eval="ref('ir_ui_menu_po_custom_text')" name="res_id"/>
         </record>
 
     </data>

@@ -227,6 +227,7 @@ class rml_parse(object):
             'getSelValue': self.getSelValue,
             'sheet_name': self.sheet_name,
             'formatFloatDigitsToUom': self.formatFloatDigitsToUom,
+            'getPoCustomTxt': self.get_po_custom_txt,
             # more context members are setup in setCompany() below:
             #  - company_id
             #  - logo
@@ -536,6 +537,10 @@ class rml_parse(object):
         lang = lang_obj.browse(self.cr, self.uid, lang_ids[0])
 
         return lang.format('%.' + str(digits) + 'f', float_to_format, True)
+
+    def get_po_custom_txt(self):
+        self.cr.execute('''SELECT po_text FROM po_custom_text ORDER BY id DESC limit 1''')
+        return self.cr.fetchone()[0]
 
 
 class report_sxw(report_rml, preprocess.report):

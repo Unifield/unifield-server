@@ -731,6 +731,21 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _get_not_beyond_validated(self, cr, uid, ids, name, arg, context=None):
+        res = {}
+        for po in self.browse(cr, uid, ids, fields_to_fetch=['state', 'order_line'], context=context):
+            not_beyond_validated = True
+            if po.state in ['draft', 'draft_p', 'validated']:
+                for line in po.order_line:
+                    if line.state not in ['draft', 'validated', 'validated_n', 'cancel', 'cancel_r']:
+                        not_beyond_validated = False
+                        break
+            else:
+                not_beyond_validated = False
+
+            res[po.id] = not_beyond_validated
+
+        return res
 
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
@@ -894,6 +909,8 @@ class purchase_order(osv.osv):
         'empty_po_cancelled': fields.boolean('Empty PO cancelled', help='Flag to see if the PO has been cancelled while empty'),
         'from_address': fields.many2one('res.partner.address', string='From Address', required=True),
         'msg_big_qty': fields.function(_get_msg_big_qty, type='char', string='Lines with 10 digits total amounts', method=1),
+        'show_default_msg': fields.boolean(string='Show PO Default Message'),
+        'not_beyond_validated': fields.function(_get_not_beyond_validated, type='boolean', string="Check if lines' and document's state is not beyond validated", method=1),
     }
     _defaults = {
         'split_during_sll_mig': False,
@@ -925,6 +942,7 @@ class purchase_order(osv.osv):
         'fixed_order_type': lambda *a: json.dumps([]),
         'confirmed_date_by_synchro': False,
         'empty_po_cancelled': False,
+        'show_default_msg': False,
     }
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
@@ -2848,6 +2866,7 @@ class purchase_order(osv.osv):
         }
         audit_line_obj.create(cr, uid, vals, context=context)
 
+
 purchase_order()
 
 
@@ -2867,6 +2886,22 @@ class stock_invoice_onshipping(osv.osv_memory):
                     'invoice_ids': [(4, res[pick_id])]}, context=context)
         return res
 
+
 stock_invoice_onshipping()
+
+
+class po_custom_text(osv.osv):
+    _name = 'po.custom.text'
+
+    _columns = {
+        'po_text': fields.char(size=1000, string='PO Custom Text'),
+    }
+
+    _defaults = {
+        'po_text': '',
+    }
+
+
+po_custom_text()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
