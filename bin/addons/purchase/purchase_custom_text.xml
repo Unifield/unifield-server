@@ -2,7 +2,7 @@
 <openerp>
     <data noupdate="1">
 		<record id="po_custom_text_default" model="po.custom.text">
-			<field name="po_text">test</field>
+			<field name="po_text"/>
 		</record>
 	</data>
 </openerp>
