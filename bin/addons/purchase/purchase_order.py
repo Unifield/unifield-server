@@ -943,6 +943,7 @@ class purchase_order(osv.osv):
         'confirmed_date_by_synchro': False,
         'empty_po_cancelled': False,
         'show_default_msg': False,
+        'not_beyond_validated': True,
     }
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
@@ -1309,7 +1310,7 @@ class purchase_order(osv.osv):
             default = {}
         if context is None:
             context = {}
-        fields_to_reset = ['delivery_requested_date', 'delivery_requested_date_modified', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date']
+        fields_to_reset = ['delivery_requested_date', 'delivery_requested_date_modified', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve', 'analytic_distribution_id', 'empty_po_cancelled', 'stock_take_date', 'show_default_msg']
         to_del = []
         for ftr in fields_to_reset:
             if ftr not in default:
