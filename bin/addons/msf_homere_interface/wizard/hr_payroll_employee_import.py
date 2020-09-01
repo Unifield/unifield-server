@@ -387,6 +387,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             email = employee_data.get('email', False)
             id_staff = employee_data.get('id_staff', False)
             id_unique = employee_data.get('id_unique', False)
+            uuid_key = employee_data.get('uuid_key', False)
             nation = employee_data.get('nation', False)
             nom = employee_data.get('nom', False)
             num_soc = employee_data.get('num_soc', False)
@@ -435,6 +436,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 'homere_codeterrain': codeterrain,
                 'homere_id_staff': id_staff,
                 'homere_id_unique': uniq_id,
+                'homere_uuid_key': uuid_key,
                 'photo': False,
                 'identification_id': code_staff or False,
                 'notes': commentaire and ustr(commentaire) or '',
