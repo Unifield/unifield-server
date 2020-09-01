@@ -24903,6 +24903,11 @@ msgstr "Importer les produits"
 msgid "Homere field: id_unique"
 msgstr "Champ Homere : id_unique"
 
+#. module: msf_homere_interface
+#: field:hr.employee,homere_uuid_key:0
+msgid "Homere field: UUID_key"
+msgstr "Champ Homere : UUID_key"
+
 #. module: hr
 #: field:hr.employee,photo:0
 msgid "Photo"
