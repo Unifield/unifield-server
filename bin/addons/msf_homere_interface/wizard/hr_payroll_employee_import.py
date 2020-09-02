@@ -405,6 +405,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         # Process data
         uuid_field = self.pool.get('hr.employee')._columns.get('homere_uuid_key')
         if uuid_key and uuid_field:
+            uuid_key = ustr(uuid_key)
             uuid_field_size = uuid_field.size
             if len(uuid_key) > uuid_field_size:
                 message = _('Line %s. The UUID_key has more than %d characters.') % (line_number, uuid_field_size)
