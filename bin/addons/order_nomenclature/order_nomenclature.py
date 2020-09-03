@@ -233,9 +233,9 @@ class purchase_order_line(osv.osv):
         'comment': fields.char('Comment', size=1024),
         'name': fields.char('Product description', size=1024, required=True),
         'default_code': fields.function(_get_product_code_name, type='char', size=1024,
-                                        method=True, string='Product Code', multi="product",),
+                                        method=True, string='Product Code', multi="product", sort_column='product_id'),
         'default_name': fields.function(_get_product_code_name, type='char', size=1024,
-                                        method=True, string='Product Description', multi="product",),
+                                        method=True, string='Product Description', multi="product", sort_column='product_id.name'),
 
         ### EXACT COPY-PASTE FROM product_nomenclature -> product_template
         # mandatory nomenclature levels -> not mandatory on screen here

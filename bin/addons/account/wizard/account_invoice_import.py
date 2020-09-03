@@ -54,6 +54,13 @@ class account_invoice_import(osv.osv_memory):
         'state': lambda *a: 'draft',
     }
 
+    def create(self, cr, uid, vals, context=None):
+        """
+        Creation of the wizard using the realUid to allow the process for the non-admin users
+        """
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        return super(account_invoice_import, self).create(cr, real_uid, vals, context=context)
+
     def _import(self, dbname, uid, ids, context=None):
         """
         Checks file data, and either updates the lines or displays the errors found

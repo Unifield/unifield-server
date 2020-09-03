@@ -605,7 +605,7 @@ class account_move_reconcile(osv.osv):
             if p or t:
                 sql_params = [name, tuple(p+t)]
                 new_field = ""
-                if prev is not None and not context.get('sync_update_execution'):
+                if prev is not None:
                     self.pool.get('account.move.line').log_reconcile(cr, uid, r, previous=prev, rec_name=name, context=context)
                 if context.get('sync_update_execution') and t:
                     if action_date:
@@ -634,6 +634,7 @@ class account_move_reconcile(osv.osv):
         prev = {}
         aml_ids = []
 
+        new_vals = {}
         # use one2many codification (x,values) to get account.move.line tied to this new rec
         # x=5 to delete existing links is ignored as we are in create mode
         for rec_type in ['line_id', 'line_partial_ids']:
@@ -641,8 +642,15 @@ class account_move_reconcile(osv.osv):
                 for x in vals.get(rec_type):
                     if x[0] in (1, 2, 3, 4):
                         aml_ids.append(x[1])
+                        if context.get('sync_update_execution'):
+                            new_vals.setdefault(rec_type, []).append(x)
                     elif x[0] == 6:
                         aml_ids += x[2]
+                        if context.get('sync_update_execution') and x[2]:
+                            new_vals.setdefault(rec_type, []).append((7, x[2]))
+
+        if new_vals:
+            vals.update(new_vals)
 
         # get previous reconcile from _txt
         already_reconciled = []
@@ -663,6 +671,9 @@ class account_move_reconcile(osv.osv):
             if isinstance(res, (int, long)):
                 tmp_res = [tmp_res]
             self.common_create_write(cr, uid, tmp_res, vals.get('action_date'), prev=prev, context=context)
+
+        if context.get('sync_update_execution'):
+            self.pool.get('account.move.line').reconciliation_update(cr, uid, [res], context=context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):

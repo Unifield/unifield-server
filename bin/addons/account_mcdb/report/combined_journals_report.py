@@ -331,7 +331,7 @@ class combined_journals_report(report_sxw.rml_parse):
         for aji in aal_obj.browse(self.cr, self.uid, analytic_line_ids, fields_to_fetch=aji_fields, context=self.context):
             if not aji.move_id:
                 aji_ids.append(aji.id)
-            elif aji.journal_id.type == 'correction':
+            elif aji.journal_id.type in ('correction', 'correction_hq', 'extra'):
                 corrected_aal = aji.last_corrected_id or aji.reversal_origin or False
                 corrected_aml = corrected_aal and corrected_aal.move_id or False
                 if corrected_aml and corrected_aml.last_cor_was_only_analytic and corrected_aml.id == aji.move_id.id:

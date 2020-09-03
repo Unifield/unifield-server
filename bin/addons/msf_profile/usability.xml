@@ -7,7 +7,7 @@
         <!-- reorder existing ones -->
         <menuitem id="account.menu_finance_periodical_processing" name="Periodical Processing" parent="account.menu_finance" sequence="7" />
         <menuitem id="account.menu_finance_charts" name="Charts" parent="account.menu_finance" sequence="8"/>
-        <menuitem name="Define Recurring Entries" action="account.action_subscription_form" id="account.menu_action_subscription_form" sequence="2" parent="account.menu_finance_recurrent_entries"/>
+        <menuitem name="Recurring Plan" action="account.action_subscription_form" id="account.menu_action_subscription_form" sequence="2" parent="account.menu_finance_recurrent_entries"/>
         <menuitem id="account.menu_finance_entries" name="Journal Entries" parent="account.menu_finance" sequence="10" />
         <menuitem id="account.menu_action_model_form" action="account.action_model_form" sequence="1" parent="account.menu_finance_recurrent_entries" />
         <menuitem id="account.menu_finance_accounting" name="Financial Accounting" parent="account.menu_finance_configuration" sequence="1"/>

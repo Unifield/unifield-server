@@ -737,6 +737,10 @@ class stock_picking(osv.osv):
         return res
 
     def create(self, cr, user, vals, context=None):
+        if vals.get('type') == 'in' and not vals.get('customers'):
+            # manual creation
+            vals['customers'] = self.pool.get('res.company')._get_instance_record(cr, user).instance
+
         if vals.get('type', False) and vals['type'] == 'in' \
                 and not vals.get('from_wkf', False) and not vals.get('from_wkf_sourcing', False):
             reason_type = self.pool.get('stock.reason.type').browse(cr, user, vals.get('reason_type_id', False), context=context)
@@ -855,6 +859,8 @@ class stock_picking(osv.osv):
         'packing_list': fields.char('Supplier Packing List', size=30),
         'is_subpick': fields.boolean('Main or Sub PT'),
         'destinations_list': fields.function(_get_destinations_list, method=True, type='char', size=512, string='Destination Location', store=False),
+        'customers': fields.char('Customers', size=1026),
+        'customer_ref': fields.char('Customer Ref.', size=1026),
     }
 
     _defaults = {
@@ -911,17 +917,26 @@ class stock_picking(osv.osv):
         assert res is not None, 'missing res'
         return res and not context.get('keep_prodlot', False)
 
+    def copy_web(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        default.update({'customers': False, 'customer_ref': False})
+        return self.copy(cr, uid, id, default=default, context=context)
+
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
             default = {}
         if context is None:
             context = {}
         default = default.copy()
-        default.update({
+        to_reset = {
             'claim': False,
             'claim_name': '',
             'from_manage_expired': False,
-        })
+        }
+        for reset_f in to_reset:
+            if reset_f not in default:
+                default[reset_f] = to_reset[reset_f]
 
         if 'is_subpick' not in default:
             default['is_subpick'] = False
@@ -1792,10 +1807,12 @@ class stock_picking(osv.osv):
                 'ppl': _('Pre-Packing List')
             }
 
+            done_out = False
             if pick.type == 'out' and pick.subtype in sub_type:
                 doc_name = sub_type.get(pick.subtype)
             else:
                 doc_name = type_list.get(pick.type, _('Document'))
+                done_out = pick.state == 'done' and pick.type == 'out' and pick.subtype == 'standard'
             # modify the list of views
             message = ''.join((doc_name, " '", (pick.name or '?'), "' "))
             infolog_message = None
@@ -1809,11 +1826,12 @@ class stock_picking(osv.osv):
                 'cancel': _('is cancelled.'),
                 'done': _('is done.'),
                 'delivered': _('is delivered.'),
-                'draft':_('is in draft state.'),
+                'draft': _('is in draft state.'),
+                'dispatched': _('is dispatched.'),
             }
             state_list = self._hook_state_list(cr, uid, state_list=state_list, msg=msg)
             action_xmlid = self._hook_picking_get_view(cr, uid, ids, context=context, pick=pick)
-            message += state_list[pick.state]
+            message += done_out and state_list['dispatched'] or state_list[pick.state]
             if infolog_message:
                 infolog_message += state_list[pick.state]
             # modify the message to be displayed

@@ -16,7 +16,6 @@
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="is_initial_balance_available" invisible="1"/>
                 <field name="display_account"/>
-                <field name="sortby" invisible="1" />
                 <field name="initial_balance" attrs="{'readonly':[('is_initial_balance_available', '=', False)]}" />
                 <field name="export_format"/>
                 <newline/>   
@@ -24,7 +23,7 @@
                 <field name="amount_currency" invisible="1" />
                 <newline/>
                 <field name="account_type" />
-                <newline/>
+                <field name="sortby" />
                 <field name="reconciled" />
                 <field name="reconcile_date" />
                 <field name="open_items"/>
