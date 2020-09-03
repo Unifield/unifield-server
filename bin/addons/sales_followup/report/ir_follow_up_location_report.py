@@ -195,6 +195,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             for cancel_in in cancel_in_moves:
                 bo_qty -= uom_obj._compute_qty(self.cr, self.uid, cancel_in[0], cancel_in[1], line.product_uom.id)
 
+            received_qty = 0.00  # for received non-stockable products
             if len(line.move_ids) > 0:
                 for move in sorted(line.move_ids, cmp=lambda x, y: cmp(sort_state.get(x.state, 0), sort_state.get(y.state, 0)) or cmp(x.id, y.id)):
                     data = {
@@ -328,7 +329,6 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 fl_index = m_index
                             m_index += 1
             else:  # No move found
-                received_qty = 0.00
                 # Look for received qty in the IN(s) linked to a non-stockable product
                 if line.product_id and line.product_id.type == 'consu':
                     self.cr.execute("""
@@ -353,7 +353,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'ordered_qty': line.product_uom_qty,
                         'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date,
                         'delivered_qty': received_qty,
-                        'delivered_uom': '-',
+                        'delivered_uom': received_qty and line.product_uom.name or '-',
                         'delivery_order': '-',
                         'backordered_qty': line.order_id.state != 'cancel' and line.product_uom_qty - received_qty or 0.00,
                         'cdd': cdd,
