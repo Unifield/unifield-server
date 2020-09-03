@@ -9,7 +9,7 @@
             key2="client_action_multi"
             multi="True"
 		    id="act_stock_return_picking"
-            view_ids=""
+            view_ids="msf_outgoing.view_picking_ticket_tree"
             />
 	</data>
 </openerp>
