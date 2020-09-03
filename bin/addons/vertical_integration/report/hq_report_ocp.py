@@ -477,8 +477,9 @@ class hq_report_ocp(report_sxw.report_sxw):
         selected_period = strftime('%Y%m', strptime(first_day_of_period, '%Y-%m-%d')) or ''
         current_time = time.strftime('%d%m%y%H%M%S')
         monthly_export_filename = '%s_%s_%s_Monthly_Export.csv' % (instance_code, selected_period, current_time)
-        liquidity_balance_filename = '%s_%s_%s_Liquidity_Balances.csv' % (instance_code, selected_period, current_time)
-        account_balance_filename = '%s_%s_%s_Account_Balances.csv' % (instance_code, selected_period, current_time)
+        if not context.get('ocp_poc'):
+            liquidity_balance_filename = '%s_%s_%s_Liquidity_Balances.csv' % (instance_code, selected_period, current_time)
+            account_balance_filename = '%s_%s_%s_Account_Balances.csv' % (instance_code, selected_period, current_time)
 
         processrequests = [
             {
@@ -509,25 +510,34 @@ class hq_report_ocp(report_sxw.report_sxw):
                 'id': 0,
                 'object': 'account.move.line',
             },
-            {
-                'headers': ['Instance', 'Code', 'Name', 'Period', 'Starting balance', 'Calculated balance',
-                            'Closing balance', 'Currency'],
-                'filename': liquidity_balance_filename,
-                'key': 'liquidity',
-                'query_params': (tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, first_day_of_period,
-                                 last_day_of_period, reg_types, last_day_of_period, tuple(instance_ids)),
-                'function': 'postprocess_liquidity_balances',
-                'fnct_params': context,
-            },
-            {
-                'headers': ['Instance', 'Account', 'Account Name', 'Period', 'Starting balance', 'Calculated balance',
-                            'Closing balance', 'Booking Currency'],
-                'filename': account_balance_filename,
-                'key': 'account_balances_per_currency',
-                'query_params': (tuple([period_yyyymm]), first_day_of_period, tuple(instance_ids), period.id,
-                                 tuple(instance_ids), last_day_of_period, tuple(instance_ids)),
-            },
         ]
+        if not context.get('ocp_poc'):
+            # Liquidity Balances
+            processrequests.append(
+                {
+                    'headers': ['Instance', 'Code', 'Name', 'Period', 'Starting balance', 'Calculated balance',
+                                'Closing balance', 'Currency'],
+                    'filename': liquidity_balance_filename,
+                    'key': 'liquidity',
+                    'query_params': (
+                    tuple([period_yyyymm]), reg_types, first_day_of_period, reg_types, first_day_of_period,
+                    last_day_of_period, reg_types, last_day_of_period, tuple(instance_ids)),
+                    'function': 'postprocess_liquidity_balances',
+                    'fnct_params': context,
+                }
+            )
+            # Account Balances
+            processrequests.append(
+                {
+                    'headers': ['Instance', 'Account', 'Account Name', 'Period', 'Starting balance',
+                                'Calculated balance',
+                                'Closing balance', 'Booking Currency'],
+                    'filename': account_balance_filename,
+                    'key': 'account_balances_per_currency',
+                    'query_params': (tuple([period_yyyymm]), first_day_of_period, tuple(instance_ids), period.id,
+                                     tuple(instance_ids), last_day_of_period, tuple(instance_ids)),
+                }
+            )
         if plresult_ji_in_ids:
             processrequests.append({
                 'filename': monthly_export_filename,

@@ -70,8 +70,11 @@ class ocp_export_wizard(osv.osv_memory):
             # Get projects below instance
             inst = wizard.instance_id
             data['form'].update({'instance_id': inst.id, })
-            data['form'].update(
-                {'instance_ids': [inst.id] + [x.id for x in inst.child_ids]})
+            if context.get('ocp_poc'):
+                inst_ids = self.pool.get('msf.instance').search(cr, uid, [('level', '!=', 'section')], order='NO_ORDER', context=context)
+            else:
+                inst_ids = [inst.id] + [x.id for x in inst.child_ids]
+            data['form'].update({'instance_ids': inst_ids})
         if wizard.period_id:
             period = wizard.period_id
             data['form'].update({'period_id': period.id})
