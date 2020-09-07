@@ -638,7 +638,7 @@ class sale_order_line(osv.osv):
             elif sol.order_id.procurement_request:  # in case of IR
                 self.check_product_or_nomenclature(cr, uid, ids, context=context)
 
-            if sol.type == 'make_to_order' and supplier and sol.product_id and supplier.partner_type in  ('esc', 'external') and sol.product_id.state.code in ('forbidden', 'phase_out'):
+            if supplier and sol.product_id and supplier.partner_type in ('esc', 'external') and sol.product_id.state.code in ('forbidden', 'phase_out'):
                 # do not block FO/IR line validation if default supplier is esc/external and prod stat not allowed
                 to_write['supplier'] = False
 
