@@ -967,6 +967,22 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search Taxes">
+                    <group col="10" colspan="4">
+                        <field name="name"/>
+                        <field name="description"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Tax Search View With Filters. To be used ONLY from the standard tax menu as it allows the selection of inactive taxes -->
+        <record id="view_account_tax_search_with_filters" model="ir.ui.view">
+            <field name="name">account.tax.search.with.filters</field>
+            <field name="model">account.tax</field>
+            <field name="type">search</field>
+            <field name="priority">99</field>
+            <field name="arch" type="xml">
+                <search string="Search Taxes">
                     <group>
                         <filter string="Active" name="filter_tax_active"
                                 domain="[('active', '=', True)]" icon="terp-check"/>
@@ -980,13 +996,14 @@
                         <label string=""/>
                     </group>
                     <newline/>
-                    <group col="10" colspan="4">
+                    <group>
                         <field name="name"/>
                         <field name="description"/>
                     </group>
                 </search>
             </field>
         </record>
+
         <record id="view_tax_form" model="ir.ui.view">
             <field name="name">account.tax.form</field>
             <field name="model">account.tax</field>
@@ -1059,6 +1076,7 @@
             <field name="res_model">account.tax</field>
             <field name="view_type">form</field>
             <field name="view_id" ref="view_tax_tree"/>
+            <field name="search_view_id" ref="view_account_tax_search_with_filters"/>
             <field name="domain">[('parent_id','=',False)]</field>
             <field name="context">{'search_default_filter_tax_active': 1,
                                    'search_default_filter_tax_included': 1,
