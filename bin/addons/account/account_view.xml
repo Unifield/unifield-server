@@ -1077,7 +1077,7 @@
             <field name="view_type">form</field>
             <field name="view_id" ref="view_tax_tree"/>
             <field name="search_view_id" ref="view_account_tax_search_with_filters"/>
-            <field name="domain">[('parent_id','=',False)]</field>
+            <field name="domain">[('parent_id', '=', False), ('active', 'in', ['t', 'f'])]</field>
             <field name="context">{'search_default_filter_tax_active': 1,
                                    'search_default_filter_tax_included': 1,
                                    'search_default_filter_tax_not_included': 1}</field>
