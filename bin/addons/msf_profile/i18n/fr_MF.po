@@ -110871,3 +110871,8 @@ msgstr "Ligne xls %s, produit %s non trouvé en base, ligne ignorée"
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocg_poc
 msgid "Export to HQ system (OCG-POC)"
 msgstr "Export vers le système HQ (OCG-POC)"
+
+#. module: register_accounting
+#: field:account.bank.statement.line,display_analytic_lines_button:0
+msgid "Display analytic lines button"
+msgstr "Afficher le bouton des lignes analytiques"
