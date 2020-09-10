@@ -38,6 +38,21 @@
             action="action_hq_export_ocg"
             id="menu_action_hq_export_ocg"  sequence="10"/>
 
+        <!-- OCG-POC -->
+        <record id="action_hq_export_ocg_poc" model="ir.actions.act_window">
+            <field name="name">Export to HQ system (OCG-POC)</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">wizard.hq.report.ocg</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="hq_export_ocg_view"/>
+            <field name="context">{'ocg_poc': True}</field>
+            <field name="target">new</field>
+        </record>
+        <menuitem parent="account.menu_finance_generic_reporting"
+                  action="action_hq_export_ocg_poc"
+                  id="menu_action_hq_export_ocg_poc" sequence="12"/>
+
     <!-- OCA export -->
 
         <record id="hq_export_oca_view" model="ir.ui.view">

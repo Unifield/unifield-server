@@ -169,10 +169,8 @@ class account_fiscalyear_state(osv.osv):
             sql = '''SELECT ml.id
                      FROM account_move_line ml
                      INNER JOIN account_move m ON m.id = ml.move_id
-                     INNER JOIN account_period p ON ml.period_id = p.id
                      WHERE ml.instance_id in %s
                      AND ml.date >= %s AND ml.date <= %s AND m.period_id != %s
-                     AND p.number != 0
                      AND ml.account_id = %s AND ml.currency_id = %s;
                   '''
             for fy_state_id in ids:

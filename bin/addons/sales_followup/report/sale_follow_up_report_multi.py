@@ -100,14 +100,14 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     return True
         return False
 
-    def in_line_data_expected_date(self, po_id, prod_id):
+    def in_line_data_expected_date(self, pol_id):
         '''
          Get data from the IN moves' linked to the PO
         '''
         self.cr.execute('''
             SELECT DISTINCT(m.date_expected) FROM stock_move m, stock_picking p
-            WHERE m.picking_id = p.id AND p.purchase_id = %s AND m.product_id = %s AND p.type = 'in'
-        ''', (po_id, prod_id))
+            WHERE m.picking_id = p.id AND m.purchase_line_id = %s AND p.type = 'in' AND m.state != 'cancel'
+        ''', (pol_id,))
 
         return [data[0] for data in self.cr.fetchall()]
 
@@ -154,7 +154,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 cdd = linked_pol.confirmed_delivery_date
                 supplier_name = linked_pol.order_id.partner_id.name
                 if line.product_id:
-                    in_data = self.in_line_data_expected_date(linked_pol.order_id.id, line.product_id.id)
+                    in_data = self.in_line_data_expected_date(linked_pol.id)
                     if len(in_data) > 1:
                         cdd = ', '.join([datetime.strptime(exp_date[:10], '%Y-%m-%d').strftime(date_format) for exp_date in in_data])
                     elif len(in_data) == 1:
