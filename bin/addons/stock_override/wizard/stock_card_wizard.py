@@ -67,6 +67,18 @@ class stock_card_wizard(osv.osv_memory):
         })
         return res
 
+    def onchange_all_inout(self, cr, uid, ids, all_inout, context=None):
+        '''
+        Empty the 'location_id' field if the 'all_inout' field is selected.
+        '''
+        if not context:
+            context = {}
+
+        if all_inout:
+            return {'value': {'location_id': False}}
+
+        return {}
+
     def onchange_product_id(self, cr, uid, ids, product_id, context=None):
         '''
         Set the 'perishable' field if the selected product is perishable.
