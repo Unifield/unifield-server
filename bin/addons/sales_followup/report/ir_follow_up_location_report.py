@@ -117,7 +117,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     return True
         return False
 
-    def in_line_data(self, po_id, prod_id):
+    def in_line_data(self, po_id, prod_id, pol_id):
         res = []
 
         # Get data for cancel IN line
@@ -137,9 +137,9 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
         # Get expected dates from the IN moves' linked to the PO
         self.cr.execute('''
             SELECT DISTINCT(m.date_expected) FROM stock_move m, stock_picking p
-            WHERE m.picking_id = p.id AND p.purchase_id = %s AND m.product_id = %s AND p.type = 'in'
+            WHERE m.picking_id = p.id AND m.purchase_line_id = %s AND p.type = 'in' AND m.state != 'cancel'
             ORDER BY m.date_expected
-        ''', (po_id, prod_id))
+        ''', (pol_id, ))
         res.append([data[0] for data in self.cr.fetchall()])
 
         return res
@@ -151,7 +151,6 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
         sol_obj = self.pool.get('sale.order.line')
         pol_obj = self.pool.get('purchase.order.line')
         uom_obj = self.pool.get('product.uom')
-        keys = []
 
         if not isinstance(order_id, int):
             order_id = order_id.id
@@ -160,6 +159,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
         line_state_display_dict = dict(sol_obj.fields_get(self.cr, self.uid, ['state_to_display'], context=self.localcontext).get('state_to_display', {}).get('selection', []))
 
         for line in self._get_order_line(order_id):
+            keys = []
             lines = []
             first_line = True
             fl_index = 0
@@ -181,7 +181,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                 po_name = linked_pol.order_id.name
                 cdd = linked_pol.confirmed_delivery_date
                 if line.product_id:
-                    in_data = self.in_line_data(linked_pol.order_id.id, line.product_id.id)
+                    in_data = self.in_line_data(linked_pol.order_id.id, line.product_id.id, linked_pol.id)
                     cancel_in_moves = in_data[0]
                     if len(in_data[1]) > 1:
                         cdd = ', '.join([datetime.strptime(exp_date[:10], '%Y-%m-%d').strftime(date_format) for exp_date in in_data[1]])
@@ -255,7 +255,6 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             else:
                                 packing = move.picking_id.name or '-'
                                 shipment = '-'
-
                             key = (packing, shipment, move.product_uom.name, line.line_number)
                             data.update({
                                 'packing': packing,

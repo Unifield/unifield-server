@@ -407,10 +407,8 @@ class account_year_end_closing(osv.osv):
             inner join account_move m on m.id = ml.move_id
             inner join account_account a on a.id = ml.account_id
             inner join res_currency c on c.id = ml.currency_id
-            inner join account_period p on ml.period_id = p.id
             where ml.instance_id in %s and a.include_in_yearly_move = 't'
             and ml.date >= %s and ml.date <= %s and m.period_id != %s
-            and p.number != 0
             group by ml.account_id, ml.currency_id, ml.reconcile_id, ml.reconcile_partial_id
         '''
         cr.execute(sql, (tuple(instance_ids), fy_rec.date_start,

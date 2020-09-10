@@ -930,11 +930,14 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         default = default.copy()
-        default.update({
+        to_reset = {
             'claim': False,
             'claim_name': '',
             'from_manage_expired': False,
-        })
+        }
+        for reset_f in to_reset:
+            if reset_f not in default:
+                default[reset_f] = to_reset[reset_f]
 
         if 'is_subpick' not in default:
             default['is_subpick'] = False

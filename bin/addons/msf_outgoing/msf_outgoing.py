@@ -1612,8 +1612,8 @@ class shipment(osv.osv):
             self.shipment_create_invoice(cr, uid, shipment.id, context=context)
 
             # log validate action
-            self.log(cr, uid, shipment.id, _('The Shipment %s has been closed.') % (shipment.name,))
-            self.infolog(cr, uid, "The Shipment id:%s (%s) has been closed." % (
+            self.log(cr, uid, shipment.id, _('The Shipment %s has been dispatched.') % (shipment.name,))
+            self.infolog(cr, uid, "The Shipment id:%s (%s) has been dispatched." % (
                 shipment.id, shipment.name,
             ))
 
