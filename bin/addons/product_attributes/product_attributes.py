@@ -1213,10 +1213,7 @@ class product_attributes(osv.osv):
         # Compute the constraint if a partner is passed in vals
         if vals.get('partner_id'):
             partner_obj = self.pool.get('res.partner')
-            partner_type = partner_obj.browse(cr,
-                                              uid,
-                                              vals.get('partner_id'),
-                                              context=context).partner_type
+            partner_type = partner_obj.browse(cr, uid, vals.get('partner_id'), context=context).partner_type
             if partner_type == 'external':
                 constraints.append('external')
             elif partner_type == 'esc':
@@ -1256,7 +1253,6 @@ class product_attributes(osv.osv):
         for product in self.browse(cr, uid, ids, context=context):
             msg = ''
             st_cond = True
-
 
             if product.state.code == 'forbidden':
                 if sale_obj and partner_type == 'internal':
