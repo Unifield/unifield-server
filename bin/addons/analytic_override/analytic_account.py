@@ -357,7 +357,8 @@ class analytic_account(osv.osv):
         'dest_cc_ids': fields.many2many('account.analytic.account', 'destination_cost_center_rel',
                                         'destination_id', 'cost_center_id', string='Cost Centers',
                                         domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
-        'allow_all_cc': fields.boolean(string="Allow all Cost Centers"),
+        'allow_all_cc': fields.boolean(string="Allow all Cost Centers"),  # for the Destinations
+        'allow_all_cc_with_fp': fields.boolean(string="Allow all Cost Centers"),  # for the Funding Pools
         'dest_compatible_with_cc_ids': fields.function(_get_fake, method=True, store=False,
                                                        string='Destinations compatible with the Cost Center',
                                                        type='many2many', relation='account.analytic.account',
@@ -453,29 +454,37 @@ class analytic_account(osv.osv):
         res['domain']['parent_id'] = [('category', '=', category), ('type', '=', 'view')]
         return res
 
-    def on_change_allow_all_cc(self, cr, uid, ids, allow_all_cc, dest_cc_ids, context=None):
+    def on_change_allow_all_cc(self, cr, uid, ids, allow_all_cc, cc_ids, acc_type='destination', field_name='allow_all_cc', context=None):
         """
         If the user tries to tick the box "Allow all Cost Centers" whereas CC are selected,
         informs him that he has to remove the CC first
+        (acc_type = name of the Analytic Account Type to which the CC are linked, displayed in the warning msg)
         """
         res = {}
-        if allow_all_cc and dest_cc_ids and dest_cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
+        if allow_all_cc and cc_ids and cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
             warning = {
                 'title': _('Warning!'),
-                'message': _('Please remove the Cost Centers linked to the Destination before ticking this box.')
+                'message': _('Please remove the Cost Centers linked to the %s before ticking this box.' % acc_type.title())
             }
             res['warning'] = warning
-            res['value'] = {'allow_all_cc': False, }
+            res['value'] = {field_name: False, }
         return res
 
-    def on_change_dest_cc_ids(self, cr, uid, ids, dest_cc_ids, context=None):
+    def on_change_allow_all_cc_with_fp(self, cr, uid, ids, allow_all_cc_with_fp, cost_center_ids, context=None):
+        return self.on_change_allow_all_cc(cr, uid, ids, allow_all_cc_with_fp, cost_center_ids, acc_type='funding pool',
+                                           field_name='allow_all_cc_with_fp', context=context)
+
+    def on_change_cc_ids(self, cr, uid, ids, cc_ids, field_name='allow_all_cc', context=None):
         """
         If at least a CC is selected, unticks the box "Allow all Cost Centers"
         """
         res = {}
-        if dest_cc_ids and dest_cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
-            res['value'] = {'allow_all_cc': False, }
+        if cc_ids and cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
+            res['value'] = {field_name: False, }
         return res
+
+    def on_change_cc_with_fp(self, cr, uid, ids, cost_center_ids, context=None):
+        return self.on_change_cc_ids(cr, uid, ids, cost_center_ids, field_name='allow_all_cc_with_fp', context=context)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:

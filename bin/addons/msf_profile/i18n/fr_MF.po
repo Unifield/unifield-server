@@ -105502,6 +105502,7 @@ msgstr "Filtre non mis en oeuvre sur les Destinations."
 
 #. module: analytic_override
 #: field:account.analytic.account,allow_all_cc:0
+#: field:account.analytic.account,allow_all_cc_with_fp:0
 msgid "Allow all Cost Centers"
 msgstr "Autoriser tous les Centres de Coût"
 
@@ -105521,6 +105522,12 @@ msgstr "Destinations compatibles avec le Centre de Coût"
 #, python-format
 msgid "Please remove the Cost Centers linked to the Destination before ticking this box."
 msgstr "Veuillez supprimer les Centres de Coût liés à la Destination avant de cocher cette case."
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:347
+#, python-format
+msgid "Please remove the Cost Centers linked to the Funding Pool before ticking this box."
+msgstr "Veuillez supprimer les Centres de Coût liés au Funding Pool avant de cocher cette case."
 
 #. module: account_corrections
 #: code:addons/account_corrections/wizard/analytic_distribution_wizard.py:246
