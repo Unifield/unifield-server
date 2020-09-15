@@ -71,6 +71,7 @@ class stock_delivery_wizard(osv.osv_memory):
                 ('picking_id.state', 'in', ['done', 'delivered'])
             ]
             ppl_domain = [
+                '&', '&', '&', '&', '&',
                 ('location_dest_id', '!=', dispatch_location),
                 ('picking_id.previous_step_id.state', '=', 'done'),
                 ('picking_id.subtype', '=', 'packing'),
