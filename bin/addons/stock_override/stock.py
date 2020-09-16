@@ -27,6 +27,7 @@ import netsvc
 from osv import fields, osv
 import tools
 from tools.translate import _
+import math
 
 import decimal_precision as dp
 from msf_partner import PARTNER_TYPE
@@ -1919,9 +1920,15 @@ class stock_location(osv.osv):
         result = super(stock_location, self)._product_value(cr, uid, ids, field_names, arg, context=context)
 
         product_product_obj = self.pool.get('product.product')
+
         currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         currency_obj = self.pool.get('res.currency')
         currency = currency_obj.read(cr, uid, currency_id, ['rounding'], context=context)
+
+        lang_obj = self.pool.get('res.lang')
+        lang_ids = lang_obj.search(cr, uid, [('code', '=', context.get('lang', 'en_US'))])
+        lang = lang_obj.browse(cr, uid, lang_ids[0])
+
         if context.get('product_id'):
             view_ids = self.search(cr, uid, [('usage', '=', 'view')], context=context)
             result.update(dict([(i, {}.fromkeys(field_names, 0.0)) for i in list(set([aaa for aaa in view_ids]))]))
@@ -1929,23 +1936,33 @@ class stock_location(osv.osv):
                 c = (context or {}).copy()
                 c['location'] = loc_id
                 c['compute_child'] = True
-                for prod in product_product_obj.read(cr, uid, [context.get('product_id')],
-                                                     ['qty_available', 'virtual_available', 'standard_price'], context=c):
+                digits = 2
+                for prod in product_product_obj.browse(cr, uid, [context.get('product_id')],
+                                                       fields_to_fetch=['qty_available', 'virtual_available',
+                                                                        'standard_price', 'uom_id'], context=c):
+                    if prod.uom_id:
+                        digits = int(abs(math.log10(prod.uom_id.rounding)))
                     for f in field_names:
-                        if f == 'stock_real':
+                        if f in ['stock_real', 'stock_real_uom_rounding']:
                             if loc_id not in result:
                                 result[loc_id] = {}
-                            result[loc_id][f] += prod['qty_available']
-                        elif f == 'stock_virtual':
-                            result[loc_id][f] += prod['virtual_available']
+                            result[loc_id][f] += prod.qty_available
+                        elif f in ['stock_virtual', 'stock_virtual_uom_rounding']:
+                            result[loc_id][f] += prod.virtual_available
                         elif f == 'stock_real_value':
-                            amount = prod['qty_available'] * prod['standard_price']
+                            amount = prod.qty_available * prod.standard_price
                             amount = currency_obj.round(cr, uid, currency['rounding'], amount)
                             result[loc_id][f] += amount
                         elif f == 'stock_virtual_value':
-                            amount = prod['virtual_available'] * prod['standard_price']
+                            amount = prod.virtual_available * prod.standard_price
                             amount = currency_obj.round(cr, uid, currency['rounding'], amount)
                             result[loc_id][f] += amount
+
+                # Format the stock using the product's rounding
+                if 'stock_real_uom_rounding' in field_names:
+                    result[loc_id]['stock_real_uom_rounding'] = lang.format('%.' + str(digits) + 'f', result[loc_id]['stock_real_uom_rounding'] or 0, True)
+                if 'stock_virtual_uom_rounding' in field_names:
+                    result[loc_id]['stock_virtual_uom_rounding'] = lang.format('%.' + str(digits) + 'f', result[loc_id]['stock_virtual_uom_rounding'] or 0, True)
 
         return result
 
@@ -2047,6 +2064,8 @@ class stock_location(osv.osv):
         'optional_loc': fields.boolean(string='Is an optional location ?'),
         'stock_real': fields.function(_product_value, method=True, type='float', string='Real Stock', multi="stock"),
         'stock_virtual': fields.function(_product_value, method=True, type='float', string='Virtual Stock', multi="stock"),
+        'stock_real_uom_rounding': fields.function(_product_value, method=True, type='char', size=32, string='Real Stock', multi="stock"),
+        'stock_virtual_uom_rounding': fields.function(_product_value, method=True, type='char', size=32, string='Virtual Stock', multi="stock"),
         'stock_real_value': fields.function(_product_value, method=True, type='float', string='Real Stock Value', multi="stock", digits_compute=dp.get_precision('Account')),
         'stock_virtual_value': fields.function(_product_value, method=True, type='float', string='Virtual Stock Value', multi="stock", digits_compute=dp.get_precision('Account')),
         'check_prod_loc': fields.function(_fake_get, method=True, type='many2one', relation='stock.location', string='zz', fnct_search=_prod_loc_search),
