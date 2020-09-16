@@ -1936,12 +1936,13 @@ class stock_location(osv.osv):
                 c = (context or {}).copy()
                 c['location'] = loc_id
                 c['compute_child'] = True
-                digits = 2
                 for prod in product_product_obj.browse(cr, uid, [context.get('product_id')],
                                                        fields_to_fetch=['qty_available', 'virtual_available',
                                                                         'standard_price', 'uom_id'], context=c):
                     if prod.uom_id:
                         digits = int(abs(math.log10(prod.uom_id.rounding)))
+                    else:
+                        digits = 2
                     for f in field_names:
                         if f in ['stock_real', 'stock_real_uom_rounding']:
                             if loc_id not in result:
