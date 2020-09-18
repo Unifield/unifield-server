@@ -1368,6 +1368,7 @@ class Entity(osv.osv):
         self._logger.info('Not run updates : %d' % (nb_data_not_run, ))
         self._logger.info('Not run messages : %d' % (nb_msg_not_run, ))
         self._logger.info("Synchronization successfully done")
+        self.pool.get('wizard.hq.report.oca').launch_auto_export(cr, uid, context=context)
         return True
 
     @sync_process()

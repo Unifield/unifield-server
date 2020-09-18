@@ -29,6 +29,7 @@ from osv import fields
 from tools.translate import _
 from ftplib import FTP
 
+import pooler
 
 class automated_export(osv.osv):
     _name = 'automated.export'
@@ -277,6 +278,17 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
             'context': context,
         }
 
+
+    def run_job_newcr(self, dbname, uid, ids, context=None):
+        cr = pooler.get_db(dbname).cursor()
+        try:
+            self.run_job(cr, uid, ids, context=context)
+        except:
+            cr.rollback()
+            raise
+        finally:
+            cr.commit()
+            cr.close(True)
 
     def run_job(self, cr, uid, ids, context=None, params=None):
         """
