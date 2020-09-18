@@ -106,7 +106,8 @@ class hq_entries(osv.osv):
                 continue
             if line.analytic_id and not line.destination_id: # CASE 2/
                 # D Check, except B check
-                if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
+                if line.analytic_id.id != fp_id and \
+                        not ad_obj.check_fp_cc_compatibility(cr, uid, line.analytic_id.id, line.cost_center_id.id, context=context):
                     res[line.id] = 'invalid'
                     logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: CC (%s) not found in FP (%s)') % (line.id or '', line.cost_center_id.code or '', line.analytic_id.code or ''))
                     continue
@@ -124,7 +125,8 @@ class hq_entries(osv.osv):
                     logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: Tuple Account/DEST (%s/%s) not found in FP (%s)') % (line.id or '', line.account_id.code or '', line.destination_id.code or '', line.analytic_id.code or ''))
                     continue
                 # D Check, except B check
-                if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
+                if line.analytic_id.id != fp_id and \
+                        not ad_obj.check_fp_cc_compatibility(cr, uid, line.analytic_id.id, line.cost_center_id.id, context=context):
                     res[line.id] = 'invalid'
                     logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: CC (%s) not found in FP (%s)') % (line.id or '', line.cost_center_id.code or '', line.analytic_id.code or ''))
                     continue
