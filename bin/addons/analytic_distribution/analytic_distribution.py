@@ -44,6 +44,29 @@ class analytic_distribution(osv.osv):
                 return False
         return True
 
+    def check_fp_cc_compatibility(self, cr, uid, fp_id, cost_center_id, context=None):
+        """
+        Checks the compatibility between the FP and the Cost Center (cf. CC tab in the FP form).
+        Returns False if they aren't compatible.
+
+        If "Allow all Cost Centers" is ticked: only CC linked to the prop. instance of the FP are allowed.
+        """
+        if context is None:
+            context = {}
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        if fp_id and cost_center_id:
+            fp = analytic_acc_obj.browse(cr, uid, fp_id,
+                                         fields_to_fetch=['category', 'allow_all_cc_with_fp', 'instance_id', 'cost_center_ids'],
+                                         context=context)
+            cc = analytic_acc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['category', 'cc_instance_ids'], context=context)
+            if fp and cc and fp.category == 'FUNDING' and cc.category == 'OC':
+                if fp.allow_all_cc_with_fp and fp.instance_id and fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
+                    return True
+                elif cc.id in [c.id for c in fp.cost_center_ids]:
+                    return True
+                return False
+        return True
+
     def _get_distribution_state(self, cr, uid, distrib_id, parent_id, account_id, context=None,
                                 doc_date=False, posting_date=False, manual=False, amount=False):
         """
@@ -110,7 +133,7 @@ class analytic_distribution(osv.osv):
                 continue
             if (account_id, fp_line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.analytic_id.tuple_destination_account_ids if not x.disabled]:
                 return 'invalid'
-            if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
+            if not self.check_fp_cc_compatibility(cr, uid, fp_line.analytic_id.id, fp_line.cost_center_id.id, context=context):
                 return 'invalid'
         # Check the date validity of the free accounts used in manual entries
         if manual and doc_date:

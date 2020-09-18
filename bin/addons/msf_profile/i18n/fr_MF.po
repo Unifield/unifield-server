@@ -110617,6 +110617,11 @@ msgstr "Instances ayant le CC comme CC sélectionné pour PO/FO"
 msgid "Missions where the CC is added to"
 msgstr "Missions dans lesquelles le CC est ajouté"
 
+#. module: analytic_override
+#: field:account.analytic.account,cc_instance_ids:0
+msgid "Instances where the CC is added to"
+msgstr "Instances dans lesquelles le CC est ajouté"
+
 #. module: sync_client
 #: field:sync_client.survey.user,nb_displayed:0
 msgid "# Display"

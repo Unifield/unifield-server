@@ -299,7 +299,8 @@ class analytic_account(osv.osv):
           ...as Cost centre picked for PO/FO reference => po_fo_cc_instance_ids
           (Note that those fields should theoretically always be linked to one single instance,
            but they are set as one2many in order to be consistent with the type of fields used in the related object.)
-        - the Missions where the Cost Center is added to => cc_missions
+        - the Instances where the Cost Center is added to => cc_instance_ids
+        - the related Missions => cc_missions
         """
         if context is None:
             context = {}
@@ -311,6 +312,7 @@ class analytic_account(osv.osv):
             top_instance_ids = []
             target_instance_ids = []
             po_fo_instance_ids = []
+            all_instance_ids = []
             missions = set()
             missions_str = ""
             target_cc_ids = acc_target_cc_obj.search(cr, uid, [('cost_center_id', '=', analytic_acc_id)], context=context)
@@ -318,6 +320,7 @@ class analytic_account(osv.osv):
                 field_list = ['instance_id', 'is_target', 'is_po_fo_cost_center', 'is_top_cost_center']
                 for target_cc in acc_target_cc_obj.browse(cr, uid, target_cc_ids, fields_to_fetch=field_list, context=context):
                     instance = target_cc.instance_id
+                    all_instance_ids.append(instance.id)
                     if instance.mission:
                         missions.add(instance.mission)
                     if target_cc.is_top_cost_center:
@@ -333,6 +336,7 @@ class analytic_account(osv.osv):
                 'is_target_cc_instance_ids': target_instance_ids,
                 'po_fo_cc_instance_ids': po_fo_instance_ids,
                 'cc_missions': missions_str,
+                'cc_instance_ids': all_instance_ids,
             }
         return res
 
@@ -377,6 +381,9 @@ class analytic_account(osv.osv):
         'cc_missions': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
                                        string="Missions where the CC is added to",
                                        type='char', multi="cc_instances"),
+        'cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                           string="Instances where the CC is added to",
+                                           type="one2many", relation="msf.instance", multi="cc_instances"),
     }
 
     _defaults ={
