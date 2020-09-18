@@ -530,7 +530,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                                               (current_line_num, line[cols['G/L Account']], line[cols['Destination']],
                                                line[cols['Funding Pool']]))
                                 continue
-                            if cc.id not in [c.id for c in fp.cost_center_ids]:
+                            if not ad_obj.check_fp_cc_compatibility(cr, uid, fp.id, cc.id, context=context):
                                 errors.append(_('Line %s. The Cost Center %s is not compatible with the Funding Pool %s.') %
                                               (current_line_num, line[cols['Cost Centre']], line[cols['Funding Pool']]))
                                 continue
