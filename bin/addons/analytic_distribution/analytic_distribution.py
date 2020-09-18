@@ -54,18 +54,27 @@ class analytic_distribution(osv.osv):
         if context is None:
             context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
+        ir_model_data_obj = self.pool.get('ir.model.data')
+        res = True
         if fp_id and cost_center_id:
-            fp = analytic_acc_obj.browse(cr, uid, fp_id,
-                                         fields_to_fetch=['category', 'allow_all_cc_with_fp', 'instance_id', 'cost_center_ids'],
-                                         context=context)
-            cc = analytic_acc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['category', 'cc_instance_ids'], context=context)
-            if fp and cc and fp.category == 'FUNDING' and cc.category == 'OC':
-                if fp.allow_all_cc_with_fp and fp.instance_id and fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
-                    return True
-                elif cc.id in [c.id for c in fp.cost_center_ids]:
-                    return True
-                return False
-        return True
+            # The Funding Pool PF is compatible with every CC
+            try:
+                pf_id = ir_model_data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                pf_id = 0
+            if fp_id != pf_id:
+                fp = analytic_acc_obj.browse(cr, uid, fp_id,
+                                             fields_to_fetch=['category', 'allow_all_cc_with_fp', 'instance_id', 'cost_center_ids'],
+                                             context=context)
+                cc = analytic_acc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['category', 'cc_instance_ids'], context=context)
+                if fp and cc and fp.category == 'FUNDING' and cc.category == 'OC':
+                    if fp.allow_all_cc_with_fp and fp.instance_id and fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
+                        res = True
+                    elif cc.id in [c.id for c in fp.cost_center_ids]:
+                        res = True
+                    else:
+                        res = False
+        return res
 
     def _get_distribution_state(self, cr, uid, distrib_id, parent_id, account_id, context=None,
                                 doc_date=False, posting_date=False, manual=False, amount=False):

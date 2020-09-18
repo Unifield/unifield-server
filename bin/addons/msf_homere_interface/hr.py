@@ -208,21 +208,26 @@ class hr_employee(osv.osv):
         (_check_unicity, "Another employee has the same Identification No.", ['identification_id']),
     ]
 
-    def _check_employe_dest_cc_compatibility(self, cr, uid, employee_id, context=None):
+    def _check_employe_cc_compatibility(self, cr, uid, employee_id, context=None):
         """
-        Raises an error in case the employee Destination and Cost Center are not compatible
+        Raises an error in case the employee "Destination and Cost Center" or "Funding Pool and Cost Center" are not compatible.
         """
         if context is None:
             context = {}
         ad_obj = self.pool.get('analytic.distribution')
-        employee_fields = ['destination_id', 'cost_center_id', 'name_resource']
+        employee_fields = ['destination_id', 'cost_center_id', 'funding_pool_id', 'name_resource']
         employee = self.browse(cr, uid, employee_id, fields_to_fetch=employee_fields, context=context)
         emp_dest = employee.destination_id
         emp_cc = employee.cost_center_id
+        emp_fp = employee.funding_pool_id
         if emp_dest and emp_cc:
             if not ad_obj.check_dest_cc_compatibility(cr, uid, emp_dest.id, emp_cc.id, context=context):
                 raise osv.except_osv(_('Error'), _('Employee %s: the Cost Center %s is not compatible with the Destination %s.') %
                                      (employee.name_resource, emp_cc.code or '', emp_dest.code or ''))
+        if emp_fp and emp_cc:
+            if not ad_obj.check_fp_cc_compatibility(cr, uid, emp_fp.id, emp_cc.id, context=context):
+                raise osv.except_osv(_('Error'), _('Employee %s: the Cost Center %s is not compatible with the Funding Pool %s.') %
+                                     (employee.name_resource, emp_cc.code or '', emp_fp.code or ''))
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -245,7 +250,7 @@ class hr_employee(osv.osv):
             if (not context.get('from', False) or context.get('from') not in ['yaml', 'import']) and not context.get('sync_update_execution', False) and not allow_edition:
                 raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
         employee_id = super(hr_employee, self).create(cr, uid, vals, context)
-        self._check_employe_dest_cc_compatibility(cr, uid, employee_id, context=context)
+        self._check_employe_cc_compatibility(cr, uid, employee_id, context=context)
         return employee_id
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -297,7 +302,7 @@ class hr_employee(osv.osv):
             employee_id = super(hr_employee, self).write(cr, uid, emp.id, new_vals, context)
             if employee_id:
                 res.append(employee_id)
-            self._check_employe_dest_cc_compatibility(cr, uid, emp.id, context=context)
+            self._check_employe_cc_compatibility(cr, uid, emp.id, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
