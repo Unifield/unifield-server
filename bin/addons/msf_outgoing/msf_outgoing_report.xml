@@ -2,7 +2,22 @@
 <openerp>
     <data>
         <!-- delete packing list original report -->
-    	
+    	<report auto="False"
+                id="report_freight_manifest"
+                model="shipment"
+                name="freight_manifest"
+                header="False"
+                rml="addons/msf_outgoing/report/freight_manifest.rml"
+                string="Freight Manifest" />
+
+        <report auto="False"
+                id="report_freight_manifest_xls"
+                model="shipment"
+                name="freight_manifest_xls"
+                header="False"
+                rml="msf_outgoing/report/freight_manifest_xls.mako"
+                report_type="webkit"
+                string="Freight Manifest (xls)" />
                 
         <report auto="False" 
                 id="report_invoice"
