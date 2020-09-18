@@ -33,34 +33,6 @@ from ftplib import FTP
 class automated_export(osv.osv):
     _name = 'automated.export'
 
-    def _check_paths(self, cr, uid, ids, context=None):
-        """
-        Check if given paths are accessible and make checks that src path is not same path as report or dest path.
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls the method
-        :param ids: List of ID of automated.export on which checks are made
-        :param context: Context of the call
-        :return: Return True or raise an error
-        """
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for imp_brw in self.browse(cr, uid, ids, context=context):
-            for path in [('dest_path', 'w', 'ftp_dest_ok'), ('dest_path_failure', 'w', 'ftp_dest_fail_ok'), ('report_path', 'w', 'ftp_report_ok')]:
-                if imp_brw[path[0]] and path[2] and not imp_brw[path[2]]:
-                    self.path_is_accessible(imp_brw[path[0]], path[1])
-
-            if imp_brw.active and not (imp_brw.dest_path and imp_brw.report_path):
-                raise osv.except_osv(
-                    _('Error'),
-                    _('Before activation, the different paths should be set.')
-                )
-
-        return True
-
     _columns = {
         'name': fields.char(
             size=128,
@@ -79,6 +51,8 @@ class automated_export(osv.osv):
             size=512,
             string='Report Path',
         ),
+        'destination_local_path': fields.char(size=512, string='Destination Local Path'),
+        'report_local_path': fields.char(size=512, string='Report Local Path'),
         'start_time': fields.datetime(
             string='Date and time of first planned execution',
         ),
@@ -101,6 +75,7 @@ class automated_export(osv.osv):
             string='Functionality',
             required=True,
         ),
+        'disable_cron': fields.related('function_id', 'disable_cron', string='Cron disabled', type='boolean', write_relate=False),
         'export_format': fields.selection(
             selection=[
                 ('excel', 'Excel'),
@@ -133,6 +108,7 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         'ftp_dest_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'ftp_dest_fail_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'ftp_report_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
+
     }
 
     _defaults = {
@@ -162,9 +138,11 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         ),
     ]
 
-    _constraints = [
-        (_check_paths, _('There is a problem with paths'), ['active', 'dest_path', 'report_path', 'dest_path_failure']),
-    ]
+    def change_function_id(self, cr, uid, ids, function_id, context=None):
+        disable_cron = False
+        if function_id:
+            disable_cron = self.pool.get('automated.export.function').browse(cr, uid, function_id, context=context).disable_cron
+        return {'value': {'disable_cron': disable_cron}}
 
     def onchange_ftp_ok(self, cr, uid, ids, ftp_ok, context=None):
         if context is None:
@@ -249,25 +227,8 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         # Use uid=1 to avoid return of only osv.memory that belongs to the current user
         return job_progress_obj.search(cr, 1, [('export_id', 'in', ids)], limit=1, context=context)
 
-    def path_is_accessible(self, path, mode='r'):
-        """
-        Returns if the given path is accessible in the given mode
-        :param path: Local path to test
-        :param mode: Mode to test (can be 'r' for read, 'w' for write)
-        :return: True if the path is accessible or the error if not
-        """
-        msg = None
-        if not os.access(path, os.F_OK):
-            msg = _('Path \'%s\' doesn\'t exist!') % path
-        elif 'r' in mode and not os.access(path, os.R_OK):
-            msg =  _('Read is not allowed on \'%s\'!') % path
-        elif 'w' in mode and not os.access(path, os.W_OK):
-            msg = _('Write is not allowed on \'%s\'!') % path
-
-        if msg:
-            raise osv.except_osv(_('Error'), msg)
-
-        return True
+    def sent_to_remote(self, cr, uid, ids, context=None):
+        return self.run_job_manually( cr, uid, ids, context=context, params={'disable_generation': True})
 
     def run_job_manually(self, cr, uid, ids, context=None, params=None):
         """
@@ -299,10 +260,10 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
                     _('Error'),
                     _('You should define all paths before run manually this job !'),
                 )
-            params = {
+            params.update({
                 'export_id': export_brw.id,
                 'state': 'draft',
-            }
+            })
             job_id = job_obj.create(cr, uid, params, context=context)
 
         return {
@@ -398,8 +359,9 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
 
         # Generate new ir.cron
         export_brw = self.browse(cr, uid, new_id, context=context)
-        cron_id = cron_obj.create(cr, uid, self._generate_ir_cron(export_brw), context=context)
-        self.write(cr, uid, [new_id], {'cron_id': cron_id}, context=context)
+        if not export_brw.function_id.disable_cron:
+            cron_id = cron_obj.create(cr, uid, self._generate_ir_cron(export_brw), context=context)
+            self.write(cr, uid, [new_id], {'cron_id': cron_id}, context=context)
 
         return new_id
 
@@ -438,8 +400,11 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
         for export_brw in self.browse(cr, uid, ids, context=context):
             cron_vals = self._generate_ir_cron(export_brw)
             if export_brw.cron_id:
-                cron_obj.write(cr, uid, [export_brw.cron_id.id], cron_vals, context=context)
-            elif not vals.get('cron_id', False):
+                if export_brw.function_id.disable_cron:
+                    cron_obj.unlink(cr, uid, [export_brw.cron_id.id], context=context)
+                else:
+                    cron_obj.write(cr, uid, [export_brw.cron_id.id], cron_vals, context=context)
+            elif not vals.get('cron_id', False) and not export_brw.function_id.disable_cron:
                 cron_id = cron_obj.create(cr, uid, cron_vals, context=context)
                 self.write(cr, uid, [export_brw.id], {'cron_id': cron_id}, context=context)
 
@@ -496,6 +461,51 @@ to export well some data (e.g: Product Categories needs Product nomenclatures)."
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+        for job in self.browse(cr, uid, ids, context=context):
+            if not job.dest_path:
+                raise osv.except_osv(_('Warning'), _('Please set the Destination Path.'))
+            if not job.report_path:
+                raise osv.except_osv(_('Warning'), _('Please set the Report Path.'))
+
+            if job.ftp_ok:
+                context['no_raise_if_ok'] = True
+                conn = self.ftp_test_connection(cr, uid, [job.id], context)
+                if job.ftp_dest_ok:
+                    try:
+                        if job.ftp_protocol == 'sftp':
+                            with conn.cd(job.dest_path):
+                                pass
+                        else:
+                            conn.cwd(job.dest_path)
+                    except:
+                        raise osv.except_osv(_('Warning'), _('Remote path %s does not exist.') % job.dest_path)
+                if job.ftp_report_ok:
+                    try:
+                        if job.ftp_protocol == 'sftp':
+                            with conn.cd(job.report_path):
+                                pass
+                        else:
+                            conn.cwd(job.report_path)
+                    except:
+                        raise osv.except_osv(_('Warning'), _('Remote path %s does not exist.') % job.report_path)
+
+            local_path_to_check = []
+            if not job.ftp_dest_ok:
+                local_path_to_check.append(job.dest_path)
+            elif job.destination_local_path:
+                local_path_to_check.append(job.destination_local_path)
+
+            if not job.ftp_report_ok:
+                local_path_to_check.append(job.report_path)
+            elif job.report_local_path:
+                local_path_to_check.append(job.report_local_path)
+
+            for x in local_path_to_check:
+                if not os.path.exists(x) or not os.path.isdir(x):
+                    raise osv.except_osv(_('Warning'), _('Local path %s does not exist.') % x)
+                if not os.access(x, os.W_OK):
+                    raise osv.except_osv(_('Warning'),_("Write is not allowed on '%s'.") % x)
+
 
         return self.write(cr, uid, ids, {'active': True}, context=context)
 

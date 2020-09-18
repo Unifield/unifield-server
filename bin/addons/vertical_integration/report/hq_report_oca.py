@@ -487,7 +487,13 @@ class hq_report_oca(report_sxw.report_sxw):
         period_number = period and period.number and '%02d' % period.number or ''
         prefix = '%sY%sP%s_' % (mission_code, year, period_number)
 
-        zip_buffer = StringIO.StringIO()
+        if data.get('output_file'):
+            zip_buffer = data['output_file']
+            in_memory = False
+            out = ''
+        else:
+            zip_buffer = StringIO.StringIO()
+            in_memory = True
         first_fileobj = NamedTemporaryFile('w+b', delete=False)
         second_fileobj = NamedTemporaryFile('w+b', delete=False)
         # for Raw data file: use double quotes for all entries
@@ -505,7 +511,8 @@ class hq_report_oca(report_sxw.report_sxw):
         out_zipfile.write(first_fileobj.name, prefix + "Raw data UF export.csv", zipfile.ZIP_DEFLATED)
         out_zipfile.write(second_fileobj.name, prefix + "formatted data D365 import.csv", zipfile.ZIP_DEFLATED)
         out_zipfile.close()
-        out = zip_buffer.getvalue()
+        if in_memory:
+            out = zip_buffer.getvalue()
         os.unlink(first_fileobj.name)
         os.unlink(second_fileobj.name)
 

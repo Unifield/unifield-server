@@ -35,9 +35,18 @@ class account_period_state(osv.osv):
     _columns = {
         'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade', select=1),
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
-        'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State',
-                                  readonly=True),
+        'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State', readonly=True),
+        # TODO: patch script
+        'auto_export_vi': fields.boolean('Auto VI exported', select=1),
     }
+
+    _defaults = {
+        'auto_export_vi': False,
+    }
+
+    def clean_auto_export(self, cr, uid, vals, context=None):
+        if vals and vals.get('state') == 'mission-closed' and 'auto_export_vi' not in vals:
+            vals['auto_export_vi'] = False
 
     def create(self, cr, uid, vals, context=None):
         if context is None:
@@ -46,8 +55,13 @@ class account_period_state(osv.osv):
             # US-841: period is required but we got
             # an update related to non existant period: ignore it
             return False
-
+        self.clean_auto_export(cr, uid, vals, context)
         return super(account_period_state, self).create(cr, uid, vals, context=context)
+
+
+    def write(self, cr, uid, ids, vals, context=None):
+        self.clean_auto_export(cr, uid, vals, context)
+        return super(account_period_state, self).write(cr, uid, ids, vals, context=context)
 
     def get_period(self, cr, uid, ids, context=None):
         mod_obj = self.pool.get('ir.model.data')
