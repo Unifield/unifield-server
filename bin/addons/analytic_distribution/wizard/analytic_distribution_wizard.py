@@ -238,11 +238,16 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                             or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
                             or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
-                        # Filter is only on cost_center and MSF Private Fund on invoice header
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), ('hide_closed_fp', '=', True), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+                        # Filter is only on cost_centers on invoice header
+                        field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
+                                            "('hide_closed_fp', '=', True), ('fp_compatible_with_cc_ids', '=', cost_center_id)]")
                     else:
                         # Add account_id constraints for invoice lines
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), ('hide_closed_fp', '=', True), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (parent.account_id, destination_id)), ('id', '=', %s)]" % fp_id)
+                        field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
+                                            "('hide_closed_fp', '=', True), "
+                                            "'|', "
+                                            "'&', ('fp_compatible_with_cc_ids', '=', cost_center_id), ('tuple_destination', '=', (parent.account_id, destination_id)), "
+                                            "('id', '=', %s)]" % fp_id)
                 # Change Destination field
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
@@ -438,19 +443,11 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
         """
         # Prepare some values
         res = {}
-        # Search MSF Private Fund element, because it's valid with all accounts
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                                                        'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            fp_id = 0
-
+        ad_obj = self.pool.get('analytic.distribution')
         if cost_center_id and analytic_id:
-            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
-            if cost_center_id not in [x.id for x in fp_line.cost_center_ids] and analytic_id != fp_id:
+            if not ad_obj.check_fp_cc_compatibility(cr, uid, analytic_id, cost_center_id):
                 res = {'value': {'analytic_id': False}}
-        elif not cost_center_id \
-                or analytic_id == fp_id:  # PF always compatible:
+        elif not cost_center_id:
             res = {}
         else:
             res = {'value': {'analytic_id': False}}
