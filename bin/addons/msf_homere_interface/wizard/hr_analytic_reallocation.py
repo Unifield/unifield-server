@@ -67,9 +67,8 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
         # Prepare some values
         res = {}
         ad_obj = self.pool.get('analytic.distribution')
-        if cost_center_id and funding_pool_id:
-            if not ad_obj.check_fp_cc_compatibility(cr, uid, funding_pool_id, cost_center_id):
-                res = {'value': {'funding_pool_id': False}}
+        if cost_center_id and funding_pool_id and not ad_obj.check_fp_cc_compatibility(cr, uid, funding_pool_id, cost_center_id):
+            res = {'value': {'funding_pool_id': False}}
         elif not cost_center_id:
             res = {}
         else:
