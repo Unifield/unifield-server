@@ -44,6 +44,12 @@ class account_period_state(osv.osv):
     }
 
     def clean_auto_export(self, cr, uid, vals, context=None):
+        '''
+        Set the account.period.state as ready for auto export if:
+          1/ we are in a sync and
+          2/ the state is mission-close and
+          3/ auto export is enabled: we are on HQ OCA and the job is active
+        '''
         if context is None:
             context = {}
         if context.get('sync_update_execution') and vals and vals.get('state') == 'mission-closed' and 'auto_export_vi' not in vals and self.pool.get('wizard.hq.report.oca').get_active_export_ids(cr, uid, context=context):

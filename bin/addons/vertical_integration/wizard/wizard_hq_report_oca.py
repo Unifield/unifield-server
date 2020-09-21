@@ -76,6 +76,10 @@ class wizard_hq_report_oca(osv.osv_memory):
         return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False), ('period_id.number', '<', 16)], context=context)
 
     def auto_export_vi(self, cr, uid, export_wiz, remote_con, disable_generation=False, context=None):
+        """
+            disable_generation=True when we only want to push files to remote
+        """
+
         if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
             raise osv.except_osv(_('Waning'), _('Export is only available at HQ level.'))
 
@@ -124,10 +128,12 @@ class wizard_hq_report_oca(osv.osv_memory):
                     nb_error += 1
 
             for period_state_ids in instance_seen.items():
+                # overkill ? just in case of duplicates period_id / coordo_id
                 p_state_obj.write(cr, uid, period_state_ids, {'auto_export_vi': True}, context=context)
 
 
         if export_wiz.ftp_dest_ok:
+            # send all reports (old + and new) to remote
             for filename in os.listdir(export_wiz.destination_local_path):
                 fullfilename = os.path.join(export_wiz.destination_local_path, filename)
                 msg.append('[%s] sending %s to %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), fullfilename, export_wiz.dest_path))
@@ -142,6 +148,7 @@ class wizard_hq_report_oca(osv.osv_memory):
 
         current_report_path = export_wiz.report_path
         if export_wiz.ftp_report_ok:
+            # send all old log files
             current_report_path = export_wiz.report_local_path
             for filename in os.listdir(export_wiz.report_local_path):
                 fullfilename = os.path.join(export_wiz.report_local_path, filename)
@@ -156,6 +163,7 @@ class wizard_hq_report_oca(osv.osv_memory):
                     msg.append('ERROR %s %s' % (filename,  misc.get_traceback(e)))
 
         if msg:
+            # generate the current log file and push to remote
             current_report = os.path.join(current_report_path, '%s_report.txt' % time.strftime('%Y-%m-%d-%H%M%S'))
             with open(current_report, 'wb') as current_report_fp:
                 current_report_fp.write("\n".join(msg))
