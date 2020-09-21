@@ -36,16 +36,17 @@ class account_period_state(osv.osv):
         'period_id': fields.many2one('account.period', 'Period', required=1, ondelete='cascade', select=1),
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', select=1),
         'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State', readonly=True),
-        # TODO: patch script
         'auto_export_vi': fields.boolean('Auto VI exported', select=1),
     }
 
     _defaults = {
-        'auto_export_vi': False,
+        'auto_export_vi': True,
     }
 
     def clean_auto_export(self, cr, uid, vals, context=None):
-        if vals and vals.get('state') == 'mission-closed' and 'auto_export_vi' not in vals:
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution') and vals and vals.get('state') == 'mission-closed' and 'auto_export_vi' not in vals and self.pool.get('wizard.hq.report.oca').get_active_export_ids(cr, uid, context=context):
             vals['auto_export_vi'] = False
 
     def create(self, cr, uid, vals, context=None):

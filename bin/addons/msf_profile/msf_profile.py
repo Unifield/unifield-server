@@ -52,15 +52,6 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
-    # UF19.0
-    def us_7750_set_mission_closed_exported(self, cr, uid, *a, **b):
-        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        if not instance_id:
-            return True
-        if instance_id.level == 'section':
-            cr.execute("update account_period_state set auto_export_vi='t' where state='mission-closed'")
-        return True
-
     # UF18.0
     def uf18_0_migrate_acl(self, cr, uid, *a, **b):
         cr.execute('''

@@ -44,19 +44,22 @@ class wizard_hq_report_oca(osv.osv_memory):
         'selection': lambda *a: 'all',
     }
 
-    def launch_auto_export(self, cr, uid, context=None):
+    def get_active_export_ids(self, cr, uid, context=None):
         instance = self.pool.get('res.company')._get_instance_record(cr, uid)
         if not instance or instance.name != 'HQ_OCA':
             return False
 
-        export_obj = self.pool.get('automated.export')
-        export_ids = export_obj.search(cr, uid, [('active', '=', True), ('function_id.model_id', '=', 'wizard.hq.report.oca')], context=context)
+        return self.pool.get('automated.export').search(cr, uid, [('active', '=', True), ('function_id.model_id', '=', 'wizard.hq.report.oca')], context=context)
+
+    def launch_auto_export(self, cr, uid, context=None):
+        export_ids = self.get_active_export_ids(cr, uid, context)
         if not export_ids:
             return False
 
         if not self.get_period_state(cr, uid, context=None):
             return False
 
+        export_obj = self.pool.get('automated.export')
         new_thread = threading.Thread(
             target=export_obj.run_job_newcr,
             args=(cr.dbname, uid, export_ids, context)
@@ -70,7 +73,7 @@ class wizard_hq_report_oca(osv.osv_memory):
             return []
 
         coordo_ids = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo')], context=context)
-        return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False), ('number', '<', 16)], context=context)
+        return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False), ('period_id.number', '<', 16)], context=context)
 
     def auto_export_vi(self, cr, uid, export_wiz, remote_con, disable_generation=False, context=None):
         if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':

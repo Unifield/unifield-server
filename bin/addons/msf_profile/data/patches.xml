@@ -605,10 +605,5 @@
             <field name="method">uf18_0_migrate_acl</field>
         </record>
 
-        <!-- UF19.0 -->
-        <record id="us_7750_set_mission_closed_exported" model="patch.scripts">
-            <field name="method">us_7750_set_mission_closed_exported</field>
-        </record>
-
     </data>
 </openerp>
