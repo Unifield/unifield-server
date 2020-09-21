@@ -70,7 +70,7 @@ class wizard_hq_report_oca(osv.osv_memory):
             return []
 
         coordo_ids = self.pool.get('msf.instance').search(cr, uid, [('level', '=', 'coordo')], context=context)
-        return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False)], context=context)
+        return self.pool.get('account.period.state').search(cr, uid, [('instance_id', 'in', coordo_ids), ('state', '=', 'mission-closed'), ('auto_export_vi', '=', False), ('number', '<', 16)], context=context)
 
     def auto_export_vi(self, cr, uid, export_wiz, remote_con, disable_generation=False, context=None):
         if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
