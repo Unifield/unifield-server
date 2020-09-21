@@ -332,7 +332,7 @@ class hr_employee(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Change funding pool domain in order to include MSF Private fund
+        Adapts domain for AD fields
         """
         if not context:
             context = {}
@@ -363,23 +363,15 @@ class hr_employee(osv.osv):
 
     def onchange_cc(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False):
         """
-        Update FP or CC regarding both.
+        Resets the FP in case the CC selected isn't compatible with it.
         """
         # Prepare some values
         vals = {}
+        ad_obj = self.pool.get('analytic.distribution')
         if not cost_center_id or not funding_pool_id:
             return {}
-        if cost_center_id and funding_pool_id:
-            fp = self.pool.get('account.analytic.account').browse(cr, uid, funding_pool_id)
-            try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
-            # Exception for MSF Private Fund
-            if funding_pool_id == fp_id:
-                return {}
-            if cost_center_id not in [x.id for x in fp.cost_center_ids]:
-                vals.update({'funding_pool_id': False})
+        elif not ad_obj.check_fp_cc_compatibility(cr, uid, funding_pool_id, cost_center_id):
+            vals.update({'funding_pool_id': False})
         return {'value': vals}
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
