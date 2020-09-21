@@ -516,6 +516,10 @@ class hq_report_oca(report_sxw.report_sxw):
         os.unlink(first_fileobj.name)
         os.unlink(second_fileobj.name)
 
+        # if manual export set period state as exported (no more auto export)
+        if in_memory:
+            cr.execute("UPDATE account_period_state SET auto_export_vi = 't' WHERE instance_id in %s AND period_id = %s", (tuple(data['form']['instance_ids']), data['form']['period_id']))
+
         # Mark lines as exported
         if move_line_ids:
             sql = """UPDATE account_move_line SET exported = 't' WHERE id in %s;"""

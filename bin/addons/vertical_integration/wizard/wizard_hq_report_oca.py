@@ -155,7 +155,7 @@ class wizard_hq_report_oca(osv.osv_memory):
         if msg:
             current_report = os.path.join(current_report_path, '%s_report.txt' % time.strftime('%Y-%m-%d-%H%M%S'))
             with open(current_report, 'wb') as current_report_fp:
-                current_report_fp.write("\n".join(current_report))
+                current_report_fp.write("\n".join(msg))
             if export_wiz.ftp_report_ok:
                 msg.append('[%s] sending %s to %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), current_report, export_wiz.report_path))
                 try:
