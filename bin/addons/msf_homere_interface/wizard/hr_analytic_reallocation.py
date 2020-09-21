@@ -40,7 +40,7 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Change funding pool domain in order to include MSF Private fund
+        Computes the domain for the Cost Center field
         """
         if not context:
             context = {}
@@ -66,15 +66,9 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
         """
         # Prepare some values
         res = {}
+        ad_obj = self.pool.get('analytic.distribution')
         if cost_center_id and funding_pool_id:
-            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, funding_pool_id)
-            # Search MSF Private Fund element, because it's valid with all accounts
-            try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
-            if cost_center_id not in [x.id for x in fp_line.cost_center_ids] and funding_pool_id != fp_id:
+            if not ad_obj.check_fp_cc_compatibility(cr, uid, funding_pool_id, cost_center_id):
                 res = {'value': {'funding_pool_id': False}}
         elif not cost_center_id:
             res = {}
