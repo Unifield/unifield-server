@@ -56,16 +56,6 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
             fields = form.xpath('//field[@name="cost_center_id"]')
             for field in fields:
                 field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
-            # Change FP field
-            try:
-                fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
-            fp_fields = form.xpath('//field[@name="funding_pool_id"]')
-            # Do not use line with account_id, because of NO ACCOUNT_ID PRESENCE!
-            for field in fp_fields:
-                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
-            # NO NEED TO CHANGE DESTINATION_ID FIELD because NO ACCOUNT_ID PRESENCE!
             # Apply changes
             view['arch'] = etree.tostring(form)
         return view
