@@ -110916,6 +110916,11 @@ msgid "Report Local Path"
 msgstr "Chemin Local du rapport"
 
 #. module: msf_tools
+#: field:automated.export,destination_local_path:0
+msgid "Destination Local Path"
+msgstr "Chemin Local de destination"
+
+#. module: msf_tools
 #: view:automated.export.job:0
 msgid "Sent to remote"
 msgstr "Envoyé vers serveur distant"
