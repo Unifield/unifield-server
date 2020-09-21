@@ -177,7 +177,7 @@
     # Our ref
     <Column ss:AutoFitWidth="1" ss:Width="120" />
     # Your ref
-    <Column ss:AutoFitWidth="1" ss:Width="150" />
+    <Column ss:AutoFitWidth="1" ss:Width="180" />
     # Packing List
     <Column ss:AutoFitWidth="1" ss:Width="70" />
     # Description
@@ -327,7 +327,7 @@
 
 
     <Row>
-        <Cell ss:StyleID="header_left_no_bg"><Data ss:Type="String">${_('Additional Items')|x}</Data></Cell>
+        <Cell ss:StyleID="header_left_no_bg" ss:MergeAcross="1"><Data ss:Type="String">${_('Additional Items')|x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ss:MergeAcross="1"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
