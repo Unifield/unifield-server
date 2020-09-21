@@ -354,13 +354,10 @@ class hr_employee(osv.osv):
                 dest_field.set('domain', "[('category', '=', 'DEST'), ('type', '!=', 'view'), "
                                          "('dest_compatible_with_cc_ids', '=', cost_center_id)]")
             # Change FP field
-            try:
-                fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
             fp_fields = form.xpath('/'  + view_type + '//field[@name="funding_pool_id"]')
             for field in fp_fields:
-                field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+                field.set('domain',
+                          "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('fp_compatible_with_cc_ids', '=', cost_center_id)]")
             view['arch'] = etree.tostring(form)
         return view
 

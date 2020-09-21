@@ -290,6 +290,49 @@ class analytic_account(osv.osv):
                 dom.append(('id', 'in', compatible_dest_ids))
         return dom
 
+    def _search_fp_compatible_with_cc_ids(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain with all funding pools compatible with the selected Cost Center
+        E.g.: to get the FPs compatible with the CC 2, use the dom [('fp_compatible_with_cc_ids', '=', 2)]
+        """
+        dom = []
+        if context is None:
+            context = {}
+        ir_model_data_obj = self.pool.get('ir.model.data')
+        for arg in args:
+            if arg[0] == 'fp_compatible_with_cc_ids':
+                operator = arg[1]
+                cc_id = arg[2]
+                if operator != '=':
+                    raise osv.except_osv(_('Error'), _('Filter not implemented on Funding Pools.'))
+                cc = False
+                if cc_id and isinstance(cc_id, (int, long)):
+                    cc = self.browse(cr, uid, cc_id, fields_to_fetch=['category', 'cc_instance_ids'], context=context)
+                    if cc.category != 'OC':
+                        raise osv.except_osv(_('Error'), _('Filter only compatible with a Cost Center.'))
+                compatible_fp_ids = []
+                # The Funding Pool PF is compatible with every CC
+                try:
+                    pf_id = ir_model_data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+                except ValueError:
+                    pf_id = 0
+                compatible_fp_ids.append(pf_id)
+                if cc:
+                    other_fp_ids = self.search(cr, uid, [('category', '=', 'FUNDING'), ('id', '!=', pf_id)], context=context)
+                    for fp in self.browse(cr, uid, other_fp_ids,
+                                          fields_to_fetch=['allow_all_cc_with_fp', 'instance_id', 'cc_instance_ids', 'cost_center_ids'],
+                                          context=context):
+                        if fp.allow_all_cc_with_fp and fp.instance_id and fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
+                            compatible = True
+                        elif cc.id in [c.id for c in fp.cost_center_ids]:
+                            compatible = True
+                        else:
+                            compatible = False
+                        if compatible:
+                            compatible_fp_ids.append(fp.id)
+                dom.append(('id', 'in', compatible_fp_ids))
+        return dom
+
     def _get_cc_instance_ids(self, cr, uid, ids, fields, arg, context=None):
         """
         Computes the values for fields.function fields, retrieving:
@@ -369,6 +412,10 @@ class analytic_account(osv.osv):
                                                        fnct_search=_search_dest_compatible_with_cc_ids),
         'dest_without_cc': fields.function(_get_dest_without_cc, type='boolean', method=True, store=False,
                                            string="Destination allowing no Cost Center",),
+        'fp_compatible_with_cc_ids': fields.function(_get_fake, method=True, store=False,
+                                                     string='Funding Pools compatible with the Cost Center',
+                                                     type='many2many', relation='account.analytic.account',
+                                                     fnct_search=_search_fp_compatible_with_cc_ids),
         'top_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
                                                string="Instances having the CC as Top CC",
                                                type="one2many", relation="msf.instance", multi="cc_instances"),

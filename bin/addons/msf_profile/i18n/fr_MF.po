@@ -105501,6 +105501,18 @@ msgid "Filter not implemented on Destinations."
 msgstr "Filtre non mis en oeuvre sur les Destinations."
 
 #. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:307
+#, python-format
+msgid "Filter not implemented on Funding Pools."
+msgstr "Filtre non mis en oeuvre sur les Funding Pools."
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:312
+#, python-format
+msgid "Filter only compatible with a Cost Center."
+msgstr "Filtre compatible uniquement avec un Centre de Coût."
+
+#. module: analytic_override
 #: field:account.analytic.account,allow_all_cc:0
 #: field:account.analytic.account,allow_all_cc_with_fp:0
 msgid "Allow all Cost Centers"
@@ -105516,6 +105528,11 @@ msgstr "Veuillez soit lister les Centres de Coût à autoriser, soit autoriser t
 #: field:account.analytic.account,dest_compatible_with_cc_ids:0
 msgid "Destinations compatible with the Cost Center"
 msgstr "Destinations compatibles avec le Centre de Coût"
+
+#. module: analytic_override
+#: field:account.analytic.account,fp_compatible_with_cc_ids:0
+msgid "Funding Pools compatible with the Cost Center"
+msgstr "Funding Pools compatibles avec le Centre de Coût"
 
 #. module: analytic_override
 #: code:addons/analytic_override/analytic_account.py:347
