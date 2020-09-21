@@ -45728,6 +45728,8 @@ msgstr "Type de vue"
 #: code:addons/msf_tools/automated_export_job.py:242
 #: code:addons/msf_tools/automated_import_job.py:514
 #: code:addons/msf_tools/automated_import_job.py:521
+#: code:addons/msf_tools/automated_export_job.py:252
+#: code:addons/msf_tools/automated_import_job.py:626
 #, python-format
 msgid "Unable to write report on FTP server"
 msgstr "Unable to write report on FTP server"
@@ -110871,3 +110873,67 @@ msgstr "Ligne xls %s, produit %s non trouvé en base, ligne ignorée"
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocg_poc
 msgid "Export to HQ system (OCG-POC)"
 msgstr "Export vers le système HQ (OCG-POC)"
+
+#. module: vertical_integration
+#: code:addons/vertical_integration/wizard/wizard_hq_report_oca.py:80
+#, python-format
+msgid "Export is only available at HQ level."
+msgstr "Export disponible uniquement au siège."
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:517
+#, python-format
+msgid "Local path %s does not exist."
+msgstr "Le chemin local %s n'existe pas."
+
+#. module: msf_tools
+#: view:automated.export:0
+msgid "Manually send to FTP"
+msgstr "Envoyer manuellement sur le serveur FTP"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_job.py:102
+#, python-format
+msgid "Moving %s to %s"
+msgstr "Déplacement de %s vers %s"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:478
+#, python-format
+msgid "Please set the Destination Path."
+msgstr "Veuillez indiquer un Chemin de Destination"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:493
+#: code:addons/msf_tools/automated_export.py:502
+#, python-format
+msgid "Remote path %s does not exist."
+msgstr "Le chemin distant %s n'existe pas."
+
+#. module: msf_tools
+#: field:automated.export,report_local_path:0
+msgid "Report Local Path"
+msgstr "Chemin Local du rapport"
+
+#. module: msf_tools
+#: view:automated.export.job:0
+msgid "Sent to remote"
+msgstr "Envoyé vers serveur distant"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export_job.py:280
+#, python-format
+msgid "Unable to write file on FTP server"
+msgstr "Impossible d'écrire un fichier sur le serveur FTP"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:519
+#, python-format
+msgid "Write is not allowed on '%s'."
+msgstr "Écriture refusée sur %s."
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_job.py:606
+#, python-format
+msgid "Writing file report at %s"
+msgstr "Écriture du fichier rapport sur %s"

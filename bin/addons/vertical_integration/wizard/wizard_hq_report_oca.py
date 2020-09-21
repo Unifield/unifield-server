@@ -81,7 +81,7 @@ class wizard_hq_report_oca(osv.osv_memory):
         """
 
         if self.pool.get('res.company')._get_instance_level(cr, uid) != 'section':
-            raise osv.except_osv(_('Waning'), _('Export is only available at HQ level.'))
+            raise osv.except_osv(_('Warning'), _('Export is only available at HQ level.'))
 
         p_state_obj = self.pool.get('account.period.state')
         export_job_obj = self.pool.get('automated.export.job')
