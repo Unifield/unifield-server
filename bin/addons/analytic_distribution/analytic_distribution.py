@@ -193,7 +193,7 @@ class analytic_distribution(osv.osv):
             return 'invalid', _('Cost Center not compatible with destination')
         if not is_private_fund:
             # Check that cost center is compatible with FP (except if FP is MSF Private Fund)
-            if cost_center_id not in [x.id for x in fp.cost_center_ids]:
+            if not self.check_fp_cc_compatibility(cr, uid, analytic_id, cost_center_id, context=context):
                 return 'invalid', _('Cost Center not compatible with FP')
             # Check that tuple account/destination is compatible with FP (except if FP is MSF Private Fund):
             if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp.tuple_destination_account_ids if not x.disabled]:

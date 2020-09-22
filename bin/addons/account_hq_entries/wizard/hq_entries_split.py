@@ -292,7 +292,10 @@ class hq_entries_split(osv.osv_memory):
                 arch = etree.fromstring(viewtemp['tree']['arch']) # the analytic_id is found in the line_ids, one level down
                 fields = arch.xpath('field[@name="analytic_id"]')
                 if fields:
-                    fields[0].set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (account_id, destination_id)), ('id', '=', %s)]" % fp_id)
+                    fields[0].set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'),"
+                                            "'|', "
+                                            "'&', ('fp_compatible_with_cc_ids', '=', cost_center_id), ('tuple_destination', '=', (account_id, destination_id)), "
+                                            "('id', '=', %s)]" % fp_id)
 
                 # Change Destination field
                 dest_fields = arch.xpath('field[@name="destination_id"]')
