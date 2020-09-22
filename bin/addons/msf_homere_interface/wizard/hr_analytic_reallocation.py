@@ -61,20 +61,8 @@ class hr_payroll_analytic_reallocation(osv.osv_memory):
         return view
 
     def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False):
-        """
-        Check given cost_center with funding pool
-        """
-        # Prepare some values
-        res = {}
-        ad_obj = self.pool.get('analytic.distribution')
-        if cost_center_id and funding_pool_id:
-            if not ad_obj.check_fp_cc_compatibility(cr, uid, funding_pool_id, cost_center_id):
-                res = {'value': {'funding_pool_id': False}}
-        elif not cost_center_id:
-            res = {}
-        else:
-            res = {'value': {'funding_pool_id': False}}
-        return res
+        return self.pool.get('analytic.distribution').\
+            onchange_ad_cost_center(cr, uid, ids, cost_center_id=cost_center_id, funding_pool_id=funding_pool_id)
 
     def button_validate(self, cr, uid ,ids, context=None):
         """

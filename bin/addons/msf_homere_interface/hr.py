@@ -362,17 +362,8 @@ class hr_employee(osv.osv):
         return view
 
     def onchange_cc(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False):
-        """
-        Resets the FP in case the CC selected isn't compatible with it.
-        """
-        # Prepare some values
-        vals = {}
-        ad_obj = self.pool.get('analytic.distribution')
-        if not cost_center_id or not funding_pool_id:
-            return {}
-        elif not ad_obj.check_fp_cc_compatibility(cr, uid, funding_pool_id, cost_center_id):
-            vals.update({'funding_pool_id': False})
-        return {'value': vals}
+        return self.pool.get('analytic.distribution').\
+            onchange_ad_cost_center(cr, uid, ids, cost_center_id=cost_center_id, funding_pool_id=funding_pool_id)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
 

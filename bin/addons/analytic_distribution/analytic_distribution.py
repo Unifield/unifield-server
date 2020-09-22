@@ -76,6 +76,15 @@ class analytic_distribution(osv.osv):
                         res = False
         return res
 
+    def onchange_ad_cost_center(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False, fp_field_name='funding_pool_id'):
+        """
+        Resets the FP in case the CC selected isn't compatible with it.
+        """
+        res = {}
+        if cost_center_id and funding_pool_id and not self.check_fp_cc_compatibility(cr, uid, funding_pool_id, cost_center_id):
+            res = {'value': {fp_field_name: False}}
+        return res
+
     def _get_distribution_state(self, cr, uid, distrib_id, parent_id, account_id, context=None,
                                 doc_date=False, posting_date=False, manual=False, amount=False):
         """

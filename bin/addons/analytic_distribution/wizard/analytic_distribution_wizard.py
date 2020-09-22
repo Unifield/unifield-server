@@ -438,22 +438,12 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
         return res
 
     def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, analytic_id=False):
-        """
-        Check given cost_center with funding pool
-        """
-        # Prepare some values
-        res = {}
-        ad_obj = self.pool.get('analytic.distribution')
-        if cost_center_id and analytic_id:
-            if not ad_obj.check_fp_cc_compatibility(cr, uid, analytic_id, cost_center_id):
-                res = {'value': {'analytic_id': False}}
-        elif not cost_center_id:
-            res = {}
-        else:
-            res = {'value': {'analytic_id': False}}
-        return res
+        return self.pool.get('analytic.distribution').\
+            onchange_ad_cost_center(cr, uid, ids, cost_center_id=cost_center_id, funding_pool_id=analytic_id, fp_field_name='analytic_id')
+
 
 analytic_distribution_wizard_fp_lines()
+
 
 class analytic_distribution_wizard_f1_lines(osv.osv_memory):
     _name = 'analytic.distribution.wizard.f1.lines'
