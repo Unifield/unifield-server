@@ -255,7 +255,7 @@ class hr_payroll(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Change funding pool domain in order to include MSF Private fund
+        Adapts domain for AD fields
         """
         if not context:
             context = {}
@@ -278,7 +278,10 @@ class hr_payroll(osv.osv):
                 fp_id = 0
             fp_fields = form.xpath('//field[@name="funding_pool_id"]')
             for field in fp_fields:
-                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (account_id, destination_id)), ('id', '=', %s)]" % fp_id)
+                field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
+                                    "'|', "
+                                    "'&', ('fp_compatible_with_cc_ids', '=', cost_center_id), ('tuple_destination', '=', (account_id, destination_id)), "
+                                    " ('id', '=', %s)]" % fp_id)
             # Change Destination field
             dest_fields = form.xpath('//field[@name="destination_id"]')
             for field in dest_fields:
