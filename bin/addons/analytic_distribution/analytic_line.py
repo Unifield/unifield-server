@@ -541,8 +541,7 @@ class analytic_line(osv.osv):
             # check funding pool (expect for MSF Private Fund)
             if not new_fp_id == msf_pf_id:  # all OK for MSF Private Fund
                 # - cost center and funding pool compatibility
-                cc_ids = [cc.id for cc in new_fp_br.cost_center_ids]
-                if not new_cc_id in cc_ids:
+                if not ad_obj.check_fp_cc_compatibility(cr, uid, new_fp_id, new_cc_id, context=context):
                     # not compatible with CC
                     res.append((id, entry_sequence, _('CC')))
                     return False
