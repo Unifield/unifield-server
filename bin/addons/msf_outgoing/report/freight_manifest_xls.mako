@@ -342,8 +342,8 @@
     </Row>
     % for add_item in o.additional_items_ids:
     <Row>
-        <Cell ss:StyleID="line_left"><Data ss:Type="String">${add_item.name or ''|x}</Data></Cell>
-        <Cell ss:StyleID="line_left"><Data ss:Type="String">${add_item.comment or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line_left" ss:MergeAcross="1"><Data ss:Type="String">${add_item.name or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line_left" ss:MergeAcross="1"><Data ss:Type="String">${add_item.comment or ''|x}</Data></Cell>
         <Cell ss:StyleID="line_right"><Data ss:Type="Number">${add_item.nb_parcels or 0|x}</Data></Cell>
         <Cell ss:StyleID="line_right"><Data ss:Type="Number">${add_item.weight or 0|x}</Data></Cell>
         <Cell ss:StyleID="line_right"><Data ss:Type="Number">${(add_item.volume or 0) / 1000|x}</Data></Cell>
