@@ -103,7 +103,7 @@ class hr_payroll(osv.osv):
                 continue
             if line.funding_pool_id and not line.destination_id: # CASE 2/
                 # D Check, except B check
-                if line.cost_center_id.id not in [x.id for x in line.funding_pool_id.cost_center_ids] and line.funding_pool_id.id != fp_id:
+                if not ad_obj.check_fp_cc_compatibility(cr, uid, line.funding_pool_id.id, line.cost_center_id.id, context=context):
                     res[line.id] = 'invalid'
                     continue
             elif not line.funding_pool_id and line.destination_id: # CASE 3/
@@ -118,7 +118,7 @@ class hr_payroll(osv.osv):
                     res[line.id] = 'invalid'
                     continue
                 # D Check, except B check
-                if line.cost_center_id.id not in [x.id for x in line.funding_pool_id.cost_center_ids] and line.funding_pool_id.id != fp_id:
+                if not ad_obj.check_fp_cc_compatibility(cr, uid, line.funding_pool_id.id, line.cost_center_id.id, context=context):
                     res[line.id] = 'invalid'
                     continue
                 # E Check
