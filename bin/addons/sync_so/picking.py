@@ -473,7 +473,7 @@ class stock_picking(osv.osv):
                                     ('sync_linked_sol', 'ilike', '%%/%s' % sol_id),
                                 ], context=context)
                                 if pol_id:
-                                    move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_id)], context=context)
+                                    move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_id), ('state', 'not in', ['done', 'cancel'])], context=context)
                         if not move_ids:
                             #US-1294: absolutely no moves -> probably they are closed, just show the error message then ignore
                             closed_in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['done', 'cancel'], context)
