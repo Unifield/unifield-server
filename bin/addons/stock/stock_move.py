@@ -1421,7 +1421,7 @@ class stock_move(osv.osv):
 
         fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',
                           'product_qty', 'product_uos_qty', 'location_dest_id',
-                          'prodlot_id', 'asset_id', 'composition_list_id', 'line_number', 'in_out_updated']
+                          'prodlot_id', 'asset_id', 'composition_list_id', 'line_number', 'in_out_updated', 'sale_line_id']
 
         qty_data = {}
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
