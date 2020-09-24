@@ -2282,13 +2282,15 @@ class sale_order_line(osv.osv):
             'from_cancel_out': False,
             'created_by_sync': False,
             'cancelled_by_sync': False,
-            'counterpart_po_line_id': False,
         })
 
         if 'ir_name_from_sync' not in default:
             default['ir_name_from_sync'] = False
         if 'in_name_goods_return' not in default:
             default['in_name_goods_return'] = False
+
+        if 'counterpart_po_line_id' not in default:
+            default['counterpart_po_line_id'] = False
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
@@ -2325,12 +2327,11 @@ class sale_order_line(osv.osv):
             'created_by_sync': False,
             'cancelled_by_sync': False,
             'stock_take_date': False,
-            'counterpart_po_line_id': False,
         })
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
 
-        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line', 'ir_name_from_sync']:
+        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line', 'ir_name_from_sync', 'counterpart_po_line_id', 'from_cancel_out']:
             if x not in default:
                 default[x] = False
 
@@ -2675,6 +2676,7 @@ class sale_order_line(osv.osv):
         if qty_diff >= line.product_uom_qty:
             if signal == 'done':
                 self.write(cr, uid, [line.id], {'from_cancel_out': True}, context=context)
+
             wf_service.trg_validate(uid, 'sale.order.line', line.id, signal, cr)
         else:
             # Update the line and the procurement

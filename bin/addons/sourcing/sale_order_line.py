@@ -1390,6 +1390,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 ('delivery_requested_date', '=', self.compute_delivery_requested_date(cr, uid, sourcing_line.id, context=context)),
                 ('order_type', '=', 'loan'),
                 ('is_a_counterpart', '=', True),
+                ('unique_fo_id', '=', sourcing_line.order_id.id),
             ]
             res_id = self.pool.get('purchase.order').search(cr, uid, domain, context=context)
 
@@ -1481,7 +1482,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 'details': sourcing_line.order_id.details,
                 'delivery_requested_date': self.compute_delivery_requested_date(cr, uid, sourcing_line.id, context=context),
                 'related_sourcing_id': sourcing_line.related_sourcing_id.id or False,
-                'unique_fo_id': sourcing_line.order_id.id if (sourcing_line.supplier and sourcing_line.supplier.po_by_project == 'isolated') else False,
+                'unique_fo_id': sourcing_line.order_id.id,
                 'is_a_counterpart': True,
                 'loan_duration': sourcing_line.order_id.loan_duration,
             }
