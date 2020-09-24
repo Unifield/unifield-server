@@ -3,3 +3,4 @@ import rules
 import update
 import message
 import sync_disabled
+import survey

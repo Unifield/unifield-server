@@ -104,13 +104,13 @@
                     <para style="Header">[[ getSel(o, 'state') ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">[[ o.composition_type == 'real' and (o.composition_product_id.batch_management and 'Batch Number :' or 'Reference :') or '' ]]</para>
+                    <para style="HeaderRight">[[ o.composition_type == 'real' and (o.composition_product_id.batch_management and translate('Batch Number :') or translate('Reference :')) or '' ]]</para>
                 </td>
                 <td>
                     <para style="Header">[[ o.composition_type == 'real' and (o.composition_product_id.batch_management and o.composition_lot_id and o.composition_lot_id.name or o.composition_reference) or '' ]]</para>
                 </td>
                 <td>
-                    <para style="HeaderRight">[[ o.composition_type == 'real' and 'Expiry Date :' or '' ]]</para>
+                    <para style="HeaderRight">[[ o.composition_type == 'real' and translate('Expiry Date :') or '' ]]</para>
                 </td>
                 <td>
                     <para style="Header">[[ o.composition_type == 'real' and formatLang(o.composition_exp, date=True) or '' ]]</para>

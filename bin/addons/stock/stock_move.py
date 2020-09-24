@@ -930,6 +930,8 @@ class stock_move(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         if default is None:
             default = {}
+        prod_obj = self.pool.get('product.product')
+
         default = default.copy()
         if 'qty_processed' not in default:
             default['qty_processed'] = 0
@@ -941,7 +943,18 @@ class stock_move(osv.osv):
         if 'integrity_error' not in default:
             default['integrity_error'] = 'empty'
 
-        return super(stock_move, self).copy(cr, uid, id, default, context=context)
+
+        new_id = super(stock_move, self).copy(cr, uid, id, default, context=context)
+        if 'product_id' in default:  # Check constraints on lines
+            move = self.browse(cr, uid, new_id, fields_to_fetch=['type', 'picking_id', 'location_dest_id', 'product_id'], context=context)
+            if move.type == 'in':
+                prod_obj._get_restriction_error(cr, uid, [move.product_id.id], {'location_dest_id': move.location_dest_id.id, 'obj_type': 'in', 'partner_type':  move.picking_id.partner_id.partner_type},
+                                                context=context)
+            elif move.type == 'out' and move.product_id.state.code == 'forbidden':
+                check_vals = {'location_dest_id': move.location_dest_id.id, 'move': move}
+                prod_obj._get_restriction_error(cr, uid, [move.product_id.id], check_vals, context=context)
+
+        return new_id
 
     def copy_data(self, cr, uid, id, defaults=None, context=None):
         '''
@@ -1242,11 +1255,7 @@ class stock_move(osv.osv):
         pickid = kwargs['picking']
         picking_obj = self.pool.get('stock.picking')
         wf_service = netsvc.LocalService("workflow")
-        if kwargs['return_goods']:
-            # Cancel the INT in case of Claim return/surplus processed from IN
-            wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_cancel', cr)
-            picking_obj.action_cancel(cr, uid, [pickid], context=context)
-        else:
+        if not kwargs.get('return_goods'):
             wf_service.trg_validate(uid, 'stock.picking', pickid, 'button_confirm', cr)
             wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_assign', cr)
             # Make the stock moves available
@@ -1263,6 +1272,9 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
         seq_obj = self.pool.get('ir.sequence')
+        if return_goods:
+            return []
+
         for picking, todo in self._chain_compute(cr, uid, moves, context=context).items():
             ptype = todo[0][1][5] and todo[0][1][5] or location_obj.picking_type_get(cr, uid, todo[0][0].location_dest_id, todo[0][1][0])
             if picking:
@@ -1405,11 +1417,6 @@ class stock_move(osv.osv):
             context = {}
 
         self.write(cr, uid, ids, {'qty_to_process': 0,'state': 'confirmed', 'prodlot_id': False, 'expired_date': False})
-        if not context.get('sync_message_execution', False):
-            for line in self.browse(cr, uid, ids, fields_to_fetch=['location_id'], context=context):
-                if line.location_id.location_id and line.location_id.location_id.usage != 'view':
-                    self.write(cr, uid, [line.id], {'location_id': line.location_id.location_id.id})
-
         res = []
 
         fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',

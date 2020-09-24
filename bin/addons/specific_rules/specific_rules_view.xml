@@ -35,38 +35,6 @@
             </field>
         </record>
 
-        <record id="view_production_lot_tree" model="ir.ui.view">
-            <field name="name">stock.production.lot.tree</field>
-            <field name="model">stock.production.lot</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="stock.view_production_lot_tree" />
-            <field name="arch" type="xml">
-                <data>
-
-                    <xpath expr="/tree" position="attributes">
-                        <attribute name="string">Batch numbers</attribute>
-                        <attribute name="hide_delete_button">1</attribute>
-                        <attribute name="colors">red:life_date &lt; current_date</attribute>
-                    </xpath>
-                    <field name="ref" position="replace">
-                        <field name="type" />
-                        <field name="life_date" />
-                    </field>
-
-                    <field name="prefix" position="replace" />
-
-                    <field name="stock_available" position="after">
-                        <field name="stock_virtual" />
-                    </field>
-
-                    <field name="date" position="after">
-                        <field name="delete_ok" invisible="1" />
-                        <button name="unlink" string="Delete" icon="gtk-del" type="object" attrs="{'invisible': [('delete_ok', '=', False)]}" confirm="Do you really want to delete selected record(s) ?" />
-                    </field>
-                </data>
-            </field>
-        </record>
-
         <record id="view_production_lot_expiry_date_tree" model="ir.ui.view">
             <field name="name">stock.production.lot.expiry.date.tree</field>
             <field name="model">stock.production.lot</field>
@@ -82,7 +50,9 @@
                     <field name="product_id"/>
                     <field name="stock_available"/>
                     <field name="stock_virtual" />
+                    <field name="stock_location_id" />
                     <field name="date"/>
+                    <field name="uom_id" invisible="1" />
                 </tree>
             </field>
         </record>
@@ -96,6 +66,7 @@
                 <data>
                     <filter name="available" position="replace">
                         <filter icon="terp-check" name="real" string="Real" domain="[('stock_available', '&gt;', 0)]" help="Real Stock" />
+                        <separator />
                         <filter icon="terp-check" name="virtual" string="Available" domain="[('stock_virtual', '&gt;', 0)]" help="Available Product Batch numbers" />
                     </filter>
                     <field name="prefix" position="replace" />

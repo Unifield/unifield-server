@@ -2331,7 +2331,7 @@ class sale_order_line(osv.osv):
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
 
-        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line', 'ir_name_from_sync', 'counterpart_po_line_id', 'from_cancel_out']:
+        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line', 'ir_name_from_sync', 'in_name_goods_return', 'counterpart_po_line_id', 'from_cancel_out']:
             if x not in default:
                 default[x] = False
 
@@ -2673,6 +2673,7 @@ class sale_order_line(osv.osv):
 
         order = line.order_id and line.order_id.id
 
+        context['cancel_only'] = not resource
         if qty_diff >= line.product_uom_qty:
             if signal == 'done':
                 self.write(cr, uid, [line.id], {'from_cancel_out': True}, context=context)
@@ -2682,6 +2683,7 @@ class sale_order_line(osv.osv):
             # Update the line and the procurement
             self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource, cancel_move=cancel_move, context=context)
 
+        context.pop('cancel_only')
         so_to_cancel_id = False
         if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
             so_to_cancel_id = order
@@ -2985,6 +2987,7 @@ class sale_order_line(osv.osv):
             context = {}
         if not vals.get('product_id') and context.get('sale_id', []):
             vals.update({'type': 'make_to_order'})
+        so_obj = self.pool.get('sale.order')
 
         self.check_empty_line(cr, uid, False, vals, context=context)
         # UF-1739: as we do not have product_uos_qty in PO (only in FO), we recompute here the product_uos_qty for the SYNCHRO
@@ -2996,18 +2999,32 @@ class sale_order_line(osv.osv):
                 qty = float(qty)
             vals.update({'product_uos_qty' : qty * product_obj.read(cr, uid, product_id, ['uos_coeff'])['uos_coeff']})
 
-        # Internal request
         pricelist = False
         order_id = vals.get('order_id', False)
+        order_data = False
         if order_id:
-            order_data = self.pool.get('sale.order').\
-                read(cr, uid, order_id, ['procurement_request', 'pricelist_id', 'fo_created_by_po_sync'], context)
-            if order_data['procurement_request']:
+            ftf = ['procurement_request', 'pricelist_id', 'fo_created_by_po_sync', 'partner_id']
+            order_data = so_obj.browse(cr, uid, order_id, fields_to_fetch=ftf, context=context)
+
+        if product_id:  # Check constraints on lines
+            partner_id = False
+            if order_data:
+                partner_id = order_data.partner_id.id
+            if order_data and order_data.procurement_request:
+                self.pool.get('product.product')._get_restriction_error(cr, uid, [product_id],
+                                                                        {'constraints': 'consumption'}, context=context)
+            else:
+                self._check_product_constraints(cr, uid, vals.get('type'), vals.get('po_cft'), product_id, partner_id,
+                                                check_fnct=False, context=context)
+
+        # Internal request
+        if order_data:
+            if order_data.procurement_request:
                 vals.update({'cost_price': vals.get('cost_price', False)})
-            if order_data['pricelist_id']:
-                pricelist = order_data['pricelist_id'][0]
+            if order_data.pricelist_id:
+                pricelist = order_data.pricelist_id.id
             # New line created out of synchro on a FO/IR created by synchro
-            if order_data['fo_created_by_po_sync'] and not context.get('sync_message_execution'):
+            if order_data.fo_created_by_po_sync and not context.get('sync_message_execution'):
                 vals.update({'created_by_sync': True})
 
         # force the line creation with the good state, otherwise track changes for order state will
@@ -3030,7 +3047,7 @@ class sale_order_line(osv.osv):
         so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
         if not vals.get('sync_order_line_db_id', False):  # 'sync_order_line_db_id' not in vals or vals:
             if vals.get('order_id', False):
-                name = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).name
+                name = so_obj.browse(cr, uid, vals.get('order_id'), context=context).name
                 super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': name + "_" + str(so_line_ids), } , context=context)
 
         if vals.get('stock_take_date'):

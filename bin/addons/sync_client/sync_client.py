@@ -823,6 +823,57 @@ class Entity(osv.osv):
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
         return True
 
+    @sync_process('get_surveys')
+    def get_surveys(self, cr, uid, context=None):
+        try:
+            cr.execute("SAVEPOINT import_surveys")
+            survey_obj = self.pool.get('sync_client.survey')
+            logger = context.get('logger')
+
+            entity = self.get_entity(cr, uid, context)
+            proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+            last_date = survey_obj.get_last_write(cr, uid)
+            res = proxy.get_surveys(entity.identifier, self._hardware_id, last_date)
+
+            results_log = {}
+            if res.get('deactivated_ids'):
+                cr.execute("update sync_client_survey set active='f', server_write_date=%s where sync_server_id in %s", (res['max_date'], tuple(res['deactivated_ids'])))
+                results_log['deactivated'] = cr.rowcount
+
+            for survey_data in res.get('active', []):
+                if 'id' in survey_data:
+                    survey_data['sync_server_id'] = survey_data['id']
+                    del(survey_data['id'])
+
+                    survey_data['active'] = 't'
+                    for field in ['included', 'excluded']:
+                        list_ids = []
+                        if survey_data['%s_group_txt' % field]:
+                            list_ids = self.pool.get('res.groups').search(cr, uid, [('name', 'in', survey_data['%s_group_txt' % field].split(','))], context=context)
+                        del(survey_data['%s_group_txt' % field])
+                        survey_data['%s_group_ids' % field] = [(6, 0, list_ids)]
+
+                    local_id = survey_obj.search(cr, uid, [('sync_server_id', '=', survey_data['sync_server_id']), ('active', 'in', ['t', 'f'])], context=context)
+                    if local_id:
+                        survey_obj.write(cr, uid, local_id, survey_data, context=context)
+                        results_log['updated'] = results_log.setdefault('updated', 0) + 1
+                    else:
+                        survey_obj.create(cr, uid, survey_data, context=context)
+                        results_log['created'] = results_log.setdefault('created', 0) + 1
+            if logger and results_log:
+                logger.append(_("Survey: %s") % ', '.join(['%d %s' % (x[1], x[0]) for x in results_log.iteritems()]))
+                logger.write()
+
+            return True
+        except Exception, e:
+            cr.execute("ROLLBACK TO SAVEPOINT import_surveys")
+            if logger:
+                logger.append("Survey error: unable to get surveys")
+                logger.write()
+            self._logger.error('Survey error: %s' % tools.misc.get_traceback(e))
+        else:
+            cr.execute("RELEASE SAVEPOINT import_surveys")
+
     @sync_process('data_pull')
     def pull_update(self, cr, uid, recover=False, context=None):
         """
@@ -1302,6 +1353,7 @@ class Entity(osv.osv):
             cr.rollback()
             logging.getLogger('version.instance.monitor').exception('Cannot generate instance monitor data')
         self.check_user_rights(cr, uid, context=context)
+        self.get_surveys(cr, uid, context=context)
         self.set_rules(cr, uid, context=context)
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)

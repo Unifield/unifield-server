@@ -398,7 +398,9 @@ class stock_picking(osv.osv):
             vals['from_wkf'] = False
 
         if vals.get('from_wkf') and vals.get('purchase_id'):
-            po = self.pool.get('purchase.order').browse(cr, uid, vals.get('purchase_id'), context=context)
+            po = self.pool.get('purchase.order').browse(cr, uid, vals.get('purchase_id'), fields_to_fetch=['dest_partner_names', 'short_customer_ref', 'linked_sol_id', 'order_line'], context=context)
+            vals['customers'] = po.dest_partner_names
+            vals['customer_ref'] = po.short_customer_ref
             for line in po.order_line:
                 if line.linked_sol_id:
                     vals['from_wkf_sourcing'] = True
