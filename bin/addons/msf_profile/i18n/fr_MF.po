@@ -61982,10 +61982,10 @@ msgid "The amount without tax."
 msgstr "Le total hors-taxe"
 
 #. module: register_accounting
-#: code:addons/register_accounting/wizard/wizard_cash_return.py:800
+#: code:addons/register_accounting/wizard/wizard_cash_return.py:824
 #, python-format
-msgid "All advance lines with account that depends on analytic distribution must have an allocation."
-msgstr "All advance lines with account that depends on analytic distribution must have an allocation."
+msgid "All advance lines with an account depending on an analytic distribution must have a valid allocation."
+msgstr "Toutes les lignes d'avance dont le compte dépend d'une distribution analytique doivent avoir une allocation valide."
 
 #. module: stock
 #: field:product.category,property_stock_account_output_categ:0
