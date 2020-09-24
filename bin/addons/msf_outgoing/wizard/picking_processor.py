@@ -271,6 +271,8 @@ class stock_picking_processor(osv.osv):
                     continue
 
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
+                if wizard.fields_as_ro:
+                    line_data['cost_as_ro'] = True
                 if line_obj._name == 'stock.move.in.processor' and move.pack_info_id:
                     line_data.update({
                         'from_pack': move.pack_info_id.parcel_from,
