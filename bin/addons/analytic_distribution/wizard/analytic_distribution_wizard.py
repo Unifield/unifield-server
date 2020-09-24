@@ -237,7 +237,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
                             or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
                             or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
-                            or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
+                            or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int))\
+                            or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)):
                         # Filter is only on cost_centers on invoice header
                         field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
                                             "('hide_closed_fp', '=', True), ('fp_compatible_with_cc_ids', '=', cost_center_id)]")
