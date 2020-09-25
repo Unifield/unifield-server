@@ -461,7 +461,7 @@ class analytic_line(osv.osv):
                     elif aline.account_id and ad_obj.check_fp_cc_compatibility(cr, uid, aline.account_id.id, account_id, context=context):
                         res.append(aline.id)
         elif account_type == 'FUNDING':
-            fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['cost_center_ids', 'tuple_destination_account_ids'], context=context)
+            fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['tuple_destination_account_ids'], context=context)
             tuple_destination_account_ids = fp and fp.get('tuple_destination_account_ids', []) or []
             tuple_list = [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in self.pool.get('account.destination.link').browse(cr, uid, tuple_destination_account_ids) if not x.disabled]
             # Browse all analytic line to verify them
