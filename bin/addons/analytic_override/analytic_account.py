@@ -836,7 +836,7 @@ class analytic_account(osv.osv):
         - if "Allow all Cost Centers" is ticked: all CC linked to the prop. instance of the FP
         - else all CC selected in the FP form.
 
-        Note: this methods aims at replacing fp.cost_center_ids, in particular in the places where a list of CC should
+        Note: this method aims at replacing fp.cost_center_ids, in particular in the places where a list of CC should
               be displayed. It returns an empty list for PF.
         """
         if context is None:
