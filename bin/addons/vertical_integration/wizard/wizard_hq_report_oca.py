@@ -97,7 +97,7 @@ class wizard_hq_report_oca(osv.osv_memory):
                     continue
 
                 try:
-                    file_name = '%sY%sP%02d_formatted_data_D365_import.zip' % (period_state.instance_id.code[:3], strptime(period_state.period_id.date_start, '%Y-%m-%d').tm_year, period_state.period_id.number or 0)
+                    file_name = '%sY%sP%02d_formatted_data_D365_import.zip' % (period_state.instance_id.code, strptime(period_state.period_id.date_start, '%Y-%m-%d').tm_year, period_state.period_id.number or 0)
                     if not export_wiz.ftp_dest_ok:
                         out_file_name = os.path.join(export_wiz.dest_path, file_name)
                     else:
