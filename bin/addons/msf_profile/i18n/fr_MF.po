@@ -110871,3 +110871,43 @@ msgstr "Ligne xls %s, produit %s non trouvé en base, ligne ignorée"
 #: model:ir.ui.menu,name:vertical_integration.menu_action_hq_export_ocg_poc
 msgid "Export to HQ system (OCG-POC)"
 msgstr "Export vers le système HQ (OCG-POC)"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_14
+msgid "0208 - Cold Chain / Refrigerated 2-8°C"
+msgstr "0208 - Chaîne du Froid / Réfrigéré 2-8°C"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_15
+msgid "1525 - Controlled Room Temperature 15-25°C"
+msgstr "1525 - Température Ambiante Contrôlée 15-25°C"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_16
+msgid "CT25 - Controlled Temperature 2-25°C"
+msgstr "CT25 - Température Contrôlée 2-25°C"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_17
+msgid "CT30 - Controlled Temperature 2-30°C"
+msgstr "CT30 - Température Contrôlée 2-30°C"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_18
+msgid "F-20 - Frozen <-20°C"
+msgstr "F-20 - Congelé <-20°C"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_19
+msgid "FSRT - Frozen for Storage, Refrigerated for Transport"
+msgstr "FSRT - Congelé pour le Stockage, Réfrigéré pour le Transport"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_20
+msgid "Mix/Check - Article with components that need different cold chain storage conditions"
+msgstr "Mix/Vérification - Article avec des composants nécessitant différentes conditions de stockage de chaîne de froid"
+
+#. module: product_attributes
+#: model:product.cold_chain,name:product_attributes.cold_21
+msgid "CT3+ - Temperature Monitoring 2-40°C"
+msgstr "CT3+ - Surveillance de la Température 2-40°C"
