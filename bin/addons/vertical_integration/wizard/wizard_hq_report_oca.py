@@ -103,7 +103,7 @@ class wizard_hq_report_oca(osv.osv_memory):
                     else:
                         out_file_name = os.path.join(export_wiz.destination_local_path, file_name)
 
-                    msg.append('[%s] generating %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), out_file_name))
+                    msg.append('[%s] processing %s' % (time.strftime('%Y-%m-%d %H:%M:%S'), out_file_name))
 
                     out_file = open(out_file_name, 'wb')
                     report_data = {
