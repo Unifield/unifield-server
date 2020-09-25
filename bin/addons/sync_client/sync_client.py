@@ -1371,9 +1371,9 @@ class Entity(osv.osv):
         if self.pool.get('wizard.hq.report.oca').launch_auto_export(cr, uid, context=context):
             if logger:
                 logger_index = logger.append()
-                logger.replace(logger_index, 'Generating Export to HQ system (OCA) - Not yet exported')
+                logger.replace(logger_index, 'Processing Export to HQ system (OCA) - Not yet exported')
                 logger.write()
-            self._logger.info('Generating Export to HQ system (OCA) - Not yet exported')
+            self._logger.info('Processing Export to HQ system (OCA) - Not yet exported')
         return True
 
     @sync_process()
