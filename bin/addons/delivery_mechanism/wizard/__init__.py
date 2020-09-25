@@ -19,5 +19,4 @@
 #
 ##############################################################################
 
-import change_product_memory_move
 import enter_reason

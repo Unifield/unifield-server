@@ -816,12 +816,6 @@ class stock_move_processor(osv.osv):
         """
         return vals
 
-    def _update_change_product_wr_vals(self, vals):
-        """
-        Allow other modules to override the write values when change product on a line
-        """
-        return vals
-
     """
     Model methods
     """
@@ -953,8 +947,9 @@ class stock_move_processor(osv.osv):
         wr_vals = {
             'change_reason': change_reason,
             'product_id': product_id,
+            'prodlot_id': False,
+            'expiry_date': False,
         }
-        self._update_change_product_wr_vals(vals=wr_vals)  # w/o overriding, just return wr_vals
         self.write(cr, uid, ids, wr_vals, context=context)
 
         pick_wiz_id = self.read(cr, uid, ids[0], ['wizard_id'], context=context)['wizard_id']
