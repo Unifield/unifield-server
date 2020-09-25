@@ -46,6 +46,7 @@ class analytic_line(osv.osv):
         if not args:
             return []
         res = []
+        analytic_acc_obj = self.pool.get('account.analytic.account')
         # We just support '=' operator
         for arg in args:
             if not arg[1]:
@@ -54,9 +55,9 @@ class analytic_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
             if not arg[2]:
                 raise osv.except_osv(_('Warning'), _('Some search args are missing!'))
-            analytic_account = self.pool.get('account.analytic.account').browse(cr, uid, arg[2])
+            analytic_account = analytic_acc_obj.browse(cr, uid, arg[2], fields_to_fetch=['tuple_destination_account_ids'], context=context)
             tuple_list = [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in analytic_account.tuple_destination_account_ids if not x.disabled]
-            cost_center_ids = [x and x.id for x in analytic_account.cost_center_ids]
+            cost_center_ids = [c.id for c in analytic_acc_obj.get_cc_linked_to_fp(cr, uid, analytic_account.id, context=context)]
             for cc in cost_center_ids:
                 for t in tuple_list:
                     if res:
