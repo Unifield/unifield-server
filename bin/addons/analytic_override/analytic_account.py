@@ -830,6 +830,32 @@ class analytic_account(osv.osv):
             'target': 'current',
         }
 
+    def get_cc_linked_to_fp(self, cr, uid, fp_id, context=None):
+        """
+        Returns a browse record list of all Cost Centers compatible with the Funding Pool in parameter:
+        - if "Allow all Cost Centers" is ticked: all CC linked to the prop. instance of the FP
+        - else all CC selected in the FP form.
+
+        Note: this methods aims at replacing fp.cost_center_ids, in particular in the places where a list of CC should
+              be displayed. It returns an empty list for PF.
+        """
+        if context is None:
+            context = {}
+        cc_list = []
+        fp = self.browse(cr, uid, fp_id,
+                         fields_to_fetch=['category', 'allow_all_cc_with_fp', 'instance_id', 'cost_center_ids'],
+                         context=context)
+        if fp.category == 'FUNDING':
+            if fp.allow_all_cc_with_fp and fp.instance_id:
+                # inactive CC are included on purpose, to match with selectable CC in FP form
+                for cc_id in self.search(cr, uid, [('category', '=', 'OC'), ('type', '!=', 'view')], order='code', context=context):
+                    cc = self.browse(cr, uid, cc_id, context=context)
+                    if fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
+                        cc_list.append(cc)
+            else:
+                cc_list = fp.cost_center_ids or []
+        return cc_list
+
     def button_cc_clear(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'cost_center_ids':[(6, 0, [])]}, context=context)
         return True

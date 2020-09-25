@@ -206,7 +206,7 @@
         </td>
       </tr>
         <tr>
-      <para style="P17">[[repeatIn(o.cost_center_ids,'line')]]</para>
+      <para style="P17">[[repeatIn(all_cc(o.id), 'line')]]</para>
           <td>
             <para style="P7">[[ line.code or '' ]]</para>
           </td>
