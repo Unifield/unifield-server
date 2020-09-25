@@ -432,14 +432,6 @@ class stock_picking(osv.osv):
         # return updated move or False
         return out_move_id
 
-    def _do_incoming_shipment_first_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        hook to update values for stock move if first encountered
-        '''
-        values = kwargs.get('values')
-        assert values is not None, 'missing values'
-        return values
-
     def _get_db_data_dict(self, cr, uid):
         """
         Get some data from data.xml file (like stock locations, Unifield setup...)

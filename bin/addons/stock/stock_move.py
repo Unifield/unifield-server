@@ -36,24 +36,6 @@ class stock_move(osv.osv):
         return res
 
 
-    def action_partial_move(self, cr, uid, ids, context=None):
-        if context is None: context = {}
-        partial_id = self.pool.get("stock.partial.move").create(
-            cr, uid, {}, context=context)
-        return {
-            'name':_("Products to Process"),
-            'view_mode': 'form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': 'stock.partial.move',
-            'res_id': partial_id,
-            'type': 'ir.actions.act_window',
-            'nodestroy': True,
-            'target': 'new',
-            'domain': '[]',
-            'context': context
-        }
-
     def name_get(self, cr, uid, ids, context=None):
         res = []
         for line in self.browse(cr, uid, ids, context=context):
@@ -1853,14 +1835,9 @@ class stock_move(osv.osv):
         """ Makes the move done and if all moves are done, it will finish the picking.
         @return:
         """
-        partial_datas=''
         picking_ids = []
         move_ids = []
-        partial_obj=self.pool.get('stock.partial.picking')
         wf_service = netsvc.LocalService("workflow")
-        partial_id=partial_obj.search(cr,uid,[], order='NO_ORDER')
-        if partial_id:
-            partial_datas = partial_obj.read(cr, uid, partial_id, context=context)[0]
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -1895,9 +1872,6 @@ class stock_move(osv.osv):
                     if move.move_dest_id.auto_validate:
                         self.action_done(cr, uid, [move.move_dest_id.id], context=context)
 
-            prodlot_id = partial_datas and partial_datas.get('move%s_prodlot_id' % (move.id), False)
-            if prodlot_id:
-                vals.update({'prodlot_id': prodlot_id})
             if vals:
                 self.write(cr, uid, [move.id], vals)
             if move.state not in ('confirmed', 'done', 'assigned'):
