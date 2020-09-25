@@ -174,6 +174,8 @@ class automated_export_job(osv.osv):
                         self.pool.get(job.export_id.function_id.model_id.model),
                         job.export_id.function_id.method_to_call
                     )(cr, uid, job.export_id, remote_con=ftp_connec or sftp, disable_generation=job.disable_generation, context=context)
+                    if nb_rejected:
+                        state = 'error'
 
                 self.write(cr, uid, [job.id], {
                     'start_time': start_time,
