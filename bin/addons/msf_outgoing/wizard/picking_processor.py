@@ -418,6 +418,9 @@ class stock_move_processor(osv.osv):
         """
         lot_manda = line.product_id.batch_management
         perishable = line.product_id.perishable
+
+        if (lot_manda or perishable) and line.prodlot_id and line.prodlot_id.product_id.id != line.product_id.id:
+            res = 'lot_not_linked_to_prod'
         if lot_manda:
             # Batch mandatory
             if not line.prodlot_id:
