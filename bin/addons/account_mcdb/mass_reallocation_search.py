@@ -61,7 +61,7 @@ class mass_reallocation_search(osv.osv_memory):
                 search.append(('destination_id', '=', 0))
             cost_centers = analytic_acc_obj.get_cc_linked_to_fp(cr, uid, account.id, context=context)
             if cost_centers:
-                search.append(('cost_center_id', 'in', [x.id for x in cost_centers]))
+                search.append(('cost_center_id', 'in', [c.id for c in cost_centers]))
             else:
                 # trick to avoid problem with FP that have NO CC.
                 search.append(('cost_center_id', '=', 0))
