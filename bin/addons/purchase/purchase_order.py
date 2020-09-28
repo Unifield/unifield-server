@@ -980,6 +980,17 @@ class purchase_order(osv.osv):
                         _('Error'), _('The Stock Take Date of %s is not consistent! It should not be later than its creation date')
                         % (po.name,)
                     )
+                # Check the lines as well (was for the UC where Creation Date was modified)
+                error_lines = []
+                for pol in po.order_line:
+                    if pol.state in ['draft', 'validated', 'validated_n'] and pol.stock_take_date and \
+                            pol.stock_take_date > po.date_order:
+                        error_lines.append(str(pol.line_number))
+                if error_lines:
+                    raise osv.except_osv(
+                        _('Error'), _('The Stock Take Date of the lines %s is not consistent! It should not be later than %s\'s creation date')
+                                    % (', '.join(error_lines), po.name or _('the PO'))
+                    )
 
         return True
 
@@ -1117,7 +1128,7 @@ class purchase_order(osv.osv):
 
         res = super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
-        if vals.get('stock_take_date'):
+        if vals.get('stock_take_date') or vals.get('date_order'):
             self._check_stock_take_date(cr, uid, ids, context=context)
 
         # Delete expected sale order line
