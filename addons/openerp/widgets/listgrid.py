@@ -774,7 +774,10 @@ class ProgressBar(Char):
 class DateTime(Char):
 
     def get_text(self):
-        return format.format_datetime(self.value, kind=self.attrs.get('type', 'datetime'))
+        try:
+            return format.format_datetime(self.value, kind=self.attrs.get('type', 'datetime'))
+        except ValueError:
+            return self.value
 
     def get_sortable_text(self):
         return ustr(self.value or '')
