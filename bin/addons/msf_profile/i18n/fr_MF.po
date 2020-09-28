@@ -12845,6 +12845,12 @@ msgstr "Zone de Destination"
 msgid "Expiry date %s is not valid"
 msgstr "La date d'expiration %s n'est pas valide"
 
+#. module: stock
+#: code:addons/stock/physical_inventory.py:790
+#, python-format
+msgid "Expiry date: year must be after 1899"
+msgstr "Date d'Expiration: l'année doit être après 1899"
+
 #. module: sale
 #: field:sale.order.sourcing.progress.mem,check_data:0
 msgid "Check order data"
