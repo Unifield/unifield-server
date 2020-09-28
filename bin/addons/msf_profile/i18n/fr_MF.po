@@ -110889,6 +110889,7 @@ msgstr "CT25 - Température Contrôlée 2-25°C"
 
 #. module: product_attributes
 #: model:product.cold_chain,name:product_attributes.cold_17
+#: model:product.cold_chain,name:product_attributes.cold_21
 msgid "CT30 - Controlled Temperature 2-30°C"
 msgstr "CT30 - Température Contrôlée 2-30°C"
 
@@ -110906,8 +110907,3 @@ msgstr "FSRT - Congelé pour le Stockage, Réfrigéré pour le Transport"
 #: model:product.cold_chain,name:product_attributes.cold_20
 msgid "Mix/Check - Article with components that need different cold chain storage conditions"
 msgstr "Mix/Vérification - Article avec des composants nécessitant différentes conditions de stockage de chaîne de froid"
-
-#. module: product_attributes
-#: model:product.cold_chain,name:product_attributes.cold_21
-msgid "CT3+ - Temperature Monitoring 2-40°C"
-msgstr "CT3+ - Surveillance de la Température 2-40°C"
