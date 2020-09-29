@@ -104238,8 +104238,9 @@ msgstr "Instance/Mission"
 msgid "There is no stopped products to report"
 msgstr "Il n'y a aucun produit stoppé"
 
-#. module: msf_tools
+#. module: msf_tools, product
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:98
+#: field:product.template,state:0
 msgid "Unifield Status"
 msgstr "Statut Unifield"
 
