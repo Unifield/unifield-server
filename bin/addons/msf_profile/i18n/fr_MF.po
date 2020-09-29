@@ -35560,7 +35560,6 @@ msgstr "    - %s :\n"
 #: view:procurement.order:0
 #: view:product.product:0
 #: view:product.template:0
-#: field:product.template,state:0
 #: field:account.bank.statement.line,state:0
 #: field:sync.monitor,status:0
 #: field:product.mass.update,product_state:0
@@ -104238,8 +104237,9 @@ msgstr "Instance/Mission"
 msgid "There is no stopped products to report"
 msgstr "Il n'y a aucun produit stoppé"
 
-#. module: msf_tools
+#. module: msf_tools, product
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:98
+#: field:product.template,state:0
 msgid "Unifield Status"
 msgstr "Statut Unifield"
 
