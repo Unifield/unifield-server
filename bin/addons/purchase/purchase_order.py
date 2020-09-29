@@ -1351,8 +1351,30 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         res = {}
-        # compute requested date
-        res = common_onchange_date_order(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+
+        # Check the stock_take_date
+        std_err = ''
+        for po in self.browse(cr, uid, ids, fields_to_fetch=['state', 'stock_take_date', 'order_line'], context=context):
+            if po.state in ['draft', 'draft_p', 'validated'] and po.stock_take_date \
+                    and po.stock_take_date > date_order:
+                std_err = _('The Stock Take Date of %s is not consistent! It should not be later than its creation date') % (po.name,)
+                break
+            # Check the lines as well (was for the UC where Creation Date was modified)
+            error_lines = []
+            for pol in po.order_line:
+                if pol.state in ['draft', 'validated', 'validated_n'] and pol.stock_take_date and \
+                        pol.stock_take_date > date_order:
+                    error_lines.append(str(pol.line_number))
+            if error_lines:
+                std_err = _('The Stock Take Date of the lines %s is not consistent! It should not be later than %s\'s creation date') \
+                          % (', '.join(error_lines), po.name or _('the PO'))
+
+        if std_err:
+            res['warning'] = {'title': _('Error'), 'message': std_err}
+        else:
+            # compute requested date
+            res = common_onchange_date_order(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+
         return res
 
     def onchange_transport_type(self, cr, uid, ids, part=False, transport_type=False, requested_date=False, context=None):
