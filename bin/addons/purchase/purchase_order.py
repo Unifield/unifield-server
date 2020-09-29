@@ -1354,7 +1354,9 @@ class purchase_order(osv.osv):
 
         # Check the stock_take_date
         std_err = ''
-        for po in self.browse(cr, uid, ids, fields_to_fetch=['state', 'stock_take_date', 'order_line'], context=context):
+        prev_date_order = False
+        for po in self.browse(cr, uid, ids, fields_to_fetch=['state', 'stock_take_date', 'order_line', 'date_order'], context=context):
+            prev_date_order = po.date_order
             if po.state in ['draft', 'draft_p', 'validated'] and po.stock_take_date \
                     and po.stock_take_date > date_order:
                 std_err = _('The Stock Take Date of %s is not consistent! It should not be later than its creation date') % (po.name,)
@@ -1370,7 +1372,10 @@ class purchase_order(osv.osv):
                           % (', '.join(error_lines), po.name or _('the PO'))
 
         if std_err:
-            res['warning'] = {'title': _('Error'), 'message': std_err}
+            res = {
+                'warning': {'title': _('Error'), 'message': std_err},
+                'value': {'date_order': prev_date_order}
+            }
         else:
             # compute requested date
             res = common_onchange_date_order(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
