@@ -24903,6 +24903,17 @@ msgstr "Importer les produits"
 msgid "Homere field: id_unique"
 msgstr "Champ Homere : id_unique"
 
+#. module: msf_homere_interface
+#: field:hr.employee,homere_uuid_key:0
+msgid "Homere field: UUID_key"
+msgstr "Champ Homere : UUID_key"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:410
+#, python-format
+msgid "Line %s. The UUID_key has more than %d characters."
+msgstr "Ligne %s. L'UUID_key a plus de %d caractères."
+
 #. module: hr
 #: field:hr.employee,photo:0
 msgid "Photo"
