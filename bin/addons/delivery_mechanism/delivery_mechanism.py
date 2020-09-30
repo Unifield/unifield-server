@@ -752,6 +752,8 @@ class stock_picking(osv.osv):
         if sync_in or context.get('do_not_process_incoming'):
             in_out_updated = False
 
+        process_avg_sysint = not sync_in and not context.get('do_not_process_incoming')
+
         backorder_id = False
 
         internal_loc = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('cross_docking_location_ok', '=', False)])
@@ -815,9 +817,7 @@ class stock_picking(osv.osv):
                     if not values.get('product_qty', 0.00):
                         continue
                     # Check if we must re-compute the price of the product
-                    compute_average = not sync_in and picking_dict['type'] == 'in' and line.product_id.cost_method
-                    if not sync_in and values.get('location_dest_id', False):
-                        compute_average = picking_dict['type'] == 'in' and line.product_id.cost_method == 'average'
+                    compute_average = process_avg_sysint and picking_dict['type'] == 'in' and line.product_id.cost_method == 'average'
 
                     if compute_average:
                         average_values, sptc_values = self._compute_average_values(cr, uid, move, line, product_availability, context=context)
@@ -986,7 +986,7 @@ class stock_picking(osv.osv):
                 # and the remaining quantity to list of moves to put in backorder
                 if diff_qty > 0.00 and move.state != 'cancel':
                     backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values, line and line.product_id.id))
-                    if not sync_in:
+                    if process_avg_sysint:
                         # decrement qty of linked INTernal move:
                         internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
                         if internal_move:
@@ -999,7 +999,7 @@ class stock_picking(osv.osv):
                             'transaction_name': _('Reception %s') % move.picking_id.name,
                             'sptc_values': sptc_values.copy(),
                         })
-                    if not sync_in:
+                    if process_avg_sysint:
                         # cancel linked INTernal move (INT):
                         internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
                         if internal_move:
