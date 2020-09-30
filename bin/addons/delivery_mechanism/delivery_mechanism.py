@@ -1248,7 +1248,7 @@ class stock_picking(osv.osv):
 
 
                         # ppl creation
-                        ppl_id = self.do_validate_picking(cr, uid, [new_pick], context=context).get('res_id')
+                        ppl_id = self.do_validate_picking(cr, uid, [new_pick], context=context, ignore_quick=True).get('res_id')
                         self.check_ppl_integrity(cr, uid, [ppl_id], context=context)
                         stock_issues_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', ppl_id), ('integrity_error', '!=', 'empty')], context=context)
                         if stock_issues_ids:
