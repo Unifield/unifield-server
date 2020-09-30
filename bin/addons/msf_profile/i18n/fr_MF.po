@@ -92508,6 +92508,11 @@ msgid "Need Batch Number (Standard) not Expiry Date (Internal)"
 msgstr "Mention nécessaire d'un numéro de lot (Standard) mais pas d'une date d'expiration (Interne)"
 
 #. module: msf_outgoing
+#: code:addons/msf_outgoing/__init__.py:43
+msgid "BN is linked to another product"
+msgstr "Ce lot est lié à un autre produit"
+
+#. module: msf_outgoing
 #: report:empty.picking.ticket:0
 msgid "(w x l x h) (cm)"
 msgstr "(w x l x h) (cm)"
