@@ -210,10 +210,12 @@ class stock_picking(osv.osv):
         self._check_restriction_line(cr, uid, ids, context=context)
 
         certif = False
-        from_esc = False
+        fields_as_ro = False
         for pick in self.browse(cr, uid, ids, context=context):
+            if pick.type == 'in':
+                fields_as_ro = pick.partner_id.partner_type == 'esc' and pick.state == 'updated' or pick.partner_id.partner_type in ('internal', 'intermission', 'section')  and pick.state == 'shipped'
+
             if pick.type in ['in', 'out']:
-                from_esc = pick.partner_id.partner_type == 'esc' and pick.state == 'updated'
                 if not context.get('yesorno', False):
                     for move in pick.move_lines:
                         if pick.type == 'out' and move.state not in ['done', 'cancel'] and \
@@ -264,8 +266,8 @@ class stock_picking(osv.osv):
                     proc_id = wiz_ids[0]
                 else:
                     write_data = {'picking_id': pick.id}
-                    if from_esc:
-                        write_data['fields_as_ro'] = True
+                    if fields_as_ro:
+                        write_data['fields_as_ro'] = fields_as_ro
                     proc_id = wizard_obj.create(cr, uid, write_data)
                 wizard_obj.create_lines(cr, uid, proc_id, context=context)
 

@@ -220,7 +220,7 @@ class stock_incoming_processor(osv.osv):
         ),
         'display_process_to_ship_button': fields.function(_get_display_process_to_ship_button, method=True, type='char', string='Process to ship'),
         'location_dest_active_ok': fields.function(_get_location_dest_active_ok, method=True, type='boolean', string='Dest location is inactive ?', store=False),
-        'fields_as_ro': fields.boolean('Set Cost/Split .. as RO', internal=True),
+        'fields_as_ro': fields.boolean('Hide split/change prod', internal=True),
         'sequence_issue': fields.boolean('Issue with To ship'),
     }
 
@@ -1206,6 +1206,7 @@ class stock_move_in_processor(osv.osv):
         'sequence_issue': fields.selection(PACK_INTEGRITY_STATUS_SELECTION, 'Sequence issue', readonly=True),
         'split_move_ok': fields.boolean(string='Is split move ?'),
         'filter_pack': fields.function(_get_pack_info, method=True, type='char', string='Pack', fnct_search=_search_pack_info),
+        'cost_as_ro': fields.boolean('Set Cost Price as RO', internal=1),
     }
 
 
