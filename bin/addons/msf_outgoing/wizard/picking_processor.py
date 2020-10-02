@@ -271,25 +271,27 @@ class stock_picking_processor(osv.osv):
                     continue
 
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
-                if wizard.fields_as_ro:
-                    line_data['cost_as_ro'] = True
-                if line_obj._name == 'stock.move.in.processor' and move.pack_info_id:
-                    line_data.update({
-                        'from_pack': move.pack_info_id.parcel_from,
-                        'to_pack': move.pack_info_id.parcel_to,
-                        'weight': move.pack_info_id.total_weight,
-                        'total_weight': move.pack_info_id.real_total_weight,
-                        'volume': move.pack_info_id.total_volume,
-                        'total_volume': move.pack_info_id.real_total_volume,
-                        'height': move.pack_info_id.total_height,
-                        'length': move.pack_info_id.total_length,
-                        'width': move.pack_info_id.total_width,
-                        'packing_list': move.pack_info_id.packing_list,
-                        'ppl_name': move.pack_info_id.ppl_name,
-                        'cost': move.price_unit,
-                        'currency': move.price_currency_id.id,
-                        'pack_info_id': move.pack_info_id.id,
-                    })
+                if line_obj._name == 'stock.move.in.processor':
+                    if wizard.fields_as_ro:
+                        line_data['cost_as_ro'] = True
+
+                    if move.pack_info_id:
+                        line_data.update({
+                            'from_pack': move.pack_info_id.parcel_from,
+                            'to_pack': move.pack_info_id.parcel_to,
+                            'weight': move.pack_info_id.total_weight,
+                            'total_weight': move.pack_info_id.real_total_weight,
+                            'volume': move.pack_info_id.total_volume,
+                            'total_volume': move.pack_info_id.real_total_volume,
+                            'height': move.pack_info_id.total_height,
+                            'length': move.pack_info_id.total_length,
+                            'width': move.pack_info_id.total_width,
+                            'packing_list': move.pack_info_id.packing_list,
+                            'ppl_name': move.pack_info_id.ppl_name,
+                            'cost': move.price_unit,
+                            'currency': move.price_currency_id.id,
+                            'pack_info_id': move.pack_info_id.id,
+                        })
                 line_obj.create(cr, uid, line_data, context=context)
 
         return True
