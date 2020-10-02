@@ -1635,8 +1635,10 @@ class shipment(osv.osv):
                 )
             # gather the corresponding packing and trigger the corresponding function
             packing_ids = pick_obj.search(cr, uid, [('shipment_id', '=', shipment.id), ('state', '=', 'done')], context=context)
-            # set delivered all packings
-            pick_obj.write(cr, uid, packing_ids, {'delivered': True}, context=context)
+            # set delivered all packings, but disable touch on ir.model.data
+            ctx = context.copy()
+            ctx['sync_update_execution'] = True
+            pick_obj.write(cr, uid, packing_ids, {'delivered': True}, context=ctx)
 
         return True
 
