@@ -147,6 +147,7 @@
                     <field name="type_check" invisible="1" />
                     <field name="ordered_uom_category" invisible="1" />
                     <field name="kit_check" invisible="1" />
+                    <field name="cost_as_ro" invisible="1" />
                     <field name="asset_check" invisible="1" />
                     <field name="location_id" invisible="1" />
                     <field name="ssl_check" invisible="1" widget="null_boolean" />
@@ -175,11 +176,7 @@
                         string="Quantity to process"
                         on_change="onchange_uom_qty(uom_id, quantity)"
                         />
-                    <field name="uom_id"
-                        domain="[('category_id', '=', ordered_uom_category)]"
-                        on_change="onchange_uom_qty(uom_id, quantity)"
-                        attrs="{'readonly': [('fields_as_ro', '=', True)]}"
-                        />
+                    <field name="uom_id" readonly="1" />
                     <field name="from_pack" readonly="1" />
                     <field name="to_pack" readonly="1" />
                     <field name="filter_pack" filter_selector="1" invisible="1" />
@@ -207,7 +204,7 @@
                     <field name="kc_check" widget="null_boolean" />
                     <field name="dg_check" widget="null_boolean" />
                     <field name="np_check" widget="null_boolean" />
-                    <field name="cost" attrs="{'readonly': [('fields_as_ro', '=', True)]}" />
+                    <field name="cost" attrs="{'readonly': [('cost_as_ro', '=', True)]}" />
                     <field name="currency" />
                     <field name="integrity_status" string="" />
                 </tree>

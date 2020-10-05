@@ -24903,6 +24903,17 @@ msgstr "Importer les produits"
 msgid "Homere field: id_unique"
 msgstr "Champ Homere : id_unique"
 
+#. module: msf_homere_interface
+#: field:hr.employee,homere_uuid_key:0
+msgid "Homere field: UUID_key"
+msgstr "Champ Homere : UUID_key"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:410
+#, python-format
+msgid "Line %s. The UUID_key has more than %d characters."
+msgstr "Ligne %s. L'UUID_key a plus de %d caractères."
+
 #. module: hr
 #: field:hr.employee,photo:0
 msgid "Photo"
@@ -35560,7 +35571,6 @@ msgstr "    - %s :\n"
 #: view:procurement.order:0
 #: view:product.product:0
 #: view:product.template:0
-#: field:product.template,state:0
 #: field:account.bank.statement.line,state:0
 #: field:sync.monitor,status:0
 #: field:product.mass.update,product_state:0
@@ -104238,8 +104248,9 @@ msgstr "Instance/Mission"
 msgid "There is no stopped products to report"
 msgstr "Il n'y a aucun produit stoppé"
 
-#. module: msf_tools
+#. module: msf_tools, product
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:98
+#: field:product.template,state:0
 msgid "Unifield Status"
 msgstr "Statut Unifield"
 
@@ -106104,6 +106115,7 @@ msgstr "La Date de Prise de Stock des lignes %s n'est pas cohérente! Elle ne de
 
 #. modules: purchase, sale
 #: code:addons/purchase/purchase_order.py:933
+#: code:addons/purchase/purchase_order.py:991
 #: code:addons/sale/sale_order.py:733
 #, python-format
 msgid "The Stock Take Date of %s is not consistent! It should not be later than its creation date"
@@ -106163,6 +106175,7 @@ msgstr "\n"
 
 #. module: purchase
 #: code:addons/purchase/purchase_order_line.py:637
+#: code:addons/purchase/purchase_order.py:992
 #, python-format
 msgid "the PO"
 msgstr "le BdC"
