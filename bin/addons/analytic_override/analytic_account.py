@@ -437,6 +437,7 @@ class analytic_account(osv.osv):
         'date_start': lambda *a: (datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'for_fx_gain_loss': lambda *a: False,
         'allow_all_cc': lambda *a: False,
+        'allow_all_cc_with_fp': lambda *a: False,
     }
 
     def _check_code_unicity(self, cr, uid, ids, context=None):
@@ -618,6 +619,7 @@ class analytic_account(osv.osv):
             if vals['category'] != 'FUNDING':
                 vals['tuple_destination_account_ids'] = [(6, 0, [])]
                 vals['cost_center_ids'] = [(6, 0, [])]
+                vals['allow_all_cc_with_fp'] = False  # default value
         return vals
 
     def _check_date(self, vals):

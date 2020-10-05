@@ -208,7 +208,7 @@ class hr_employee(osv.osv):
         (_check_unicity, "Another employee has the same Identification No.", ['identification_id']),
     ]
 
-    def _check_employe_cc_compatibility(self, cr, uid, employee_id, context=None):
+    def _check_employee_cc_compatibility(self, cr, uid, employee_id, context=None):
         """
         Raises an error in case the employee "Destination and Cost Center" or "Funding Pool and Cost Center" are not compatible.
         """
@@ -250,7 +250,7 @@ class hr_employee(osv.osv):
             if (not context.get('from', False) or context.get('from') not in ['yaml', 'import']) and not context.get('sync_update_execution', False) and not allow_edition:
                 raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
         employee_id = super(hr_employee, self).create(cr, uid, vals, context)
-        self._check_employe_cc_compatibility(cr, uid, employee_id, context=context)
+        self._check_employee_cc_compatibility(cr, uid, employee_id, context=context)
         return employee_id
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -302,7 +302,7 @@ class hr_employee(osv.osv):
             employee_id = super(hr_employee, self).write(cr, uid, emp.id, new_vals, context)
             if employee_id:
                 res.append(employee_id)
-            self._check_employe_cc_compatibility(cr, uid, emp.id, context=context)
+            self._check_employee_cc_compatibility(cr, uid, emp.id, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
