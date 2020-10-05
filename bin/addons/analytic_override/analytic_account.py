@@ -603,12 +603,12 @@ class analytic_account(osv.osv):
             vals['parent_id'] = funding_pool_parent
 
     def remove_inappropriate_links(self, vals, context=None):
-        '''
-        Remove relations that are incoherent regarding the category selected. For instance an account with
-        category "Funding Pool" can have associated cost centers, whereas a "Destination" shouldn't.
+        """
+        Removes relations that are inconsistent regarding the category selected. For instance an account with the
+        category "Funding Pool" can have associated cost centers, whereas a "Cost Center" shouldn't.
         (That would happen if the category is modified after that the relations have been created).
         :return: corrected vals
-        '''
+        """
         if context is None:
             context = {}
         if 'category' in vals:
