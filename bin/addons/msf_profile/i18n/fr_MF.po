@@ -60853,8 +60853,9 @@ msgstr "Transfer Interne"
 msgid "G/L Account"
 msgstr "Compte Grand Livre"
 
-#. module: analytic_distribution
+#. modules: analytic_distribution, account
 #: view:account.analytic.account:0
+#: view:account.account:0
 msgid "G/L Accounts"
 msgstr "Comptes Grand Livre"
 
