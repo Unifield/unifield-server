@@ -51,7 +51,7 @@
                             <field name="destination_id" attrs="{'readonly': [('is_not_ad_correctable', '=', True)]}"/>
                             <field name="cost_center_id" attrs="{'readonly': [('is_not_ad_correctable', '=', True)]}"/>
                             <field name="analytic_id" attrs="{'readonly': [('is_not_ad_correctable', '=', True)]}"
-                                   domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open'), ('cost_center_ids', '=', cost_center_id)]"
+                                   domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('fp_compatible_with_cc_ids', '=', cost_center_id)]"
                                    string="Funding Pool"
                                    context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('document_date')}"/>
                             <field name="state"/>

@@ -290,6 +290,49 @@ class analytic_account(osv.osv):
                 dom.append(('id', 'in', compatible_dest_ids))
         return dom
 
+    def _search_fp_compatible_with_cc_ids(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain with all funding pools compatible with the selected Cost Center
+        E.g.: to get the FPs compatible with the CC 2, use the dom [('fp_compatible_with_cc_ids', '=', 2)]
+        """
+        dom = []
+        if context is None:
+            context = {}
+        ir_model_data_obj = self.pool.get('ir.model.data')
+        for arg in args:
+            if arg[0] == 'fp_compatible_with_cc_ids':
+                operator = arg[1]
+                cc_id = arg[2]
+                if operator != '=':
+                    raise osv.except_osv(_('Error'), _('Filter not implemented on Funding Pools.'))
+                cc = False
+                if cc_id and isinstance(cc_id, (int, long)):
+                    cc = self.browse(cr, uid, cc_id, fields_to_fetch=['category', 'cc_instance_ids'], context=context)
+                    if cc.category != 'OC':
+                        raise osv.except_osv(_('Error'), _('Filter only compatible with a Cost Center.'))
+                compatible_fp_ids = []
+                # The Funding Pool PF is compatible with every CC
+                try:
+                    pf_id = ir_model_data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+                except ValueError:
+                    pf_id = 0
+                compatible_fp_ids.append(pf_id)
+                if cc:
+                    other_fp_ids = self.search(cr, uid, [('category', '=', 'FUNDING'), ('id', '!=', pf_id)], context=context)
+                    for fp in self.browse(cr, uid, other_fp_ids,
+                                          fields_to_fetch=['allow_all_cc_with_fp', 'instance_id', 'cc_instance_ids', 'cost_center_ids'],
+                                          context=context):
+                        if fp.allow_all_cc_with_fp and fp.instance_id and fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
+                            compatible = True
+                        elif cc.id in [c.id for c in fp.cost_center_ids]:
+                            compatible = True
+                        else:
+                            compatible = False
+                        if compatible:
+                            compatible_fp_ids.append(fp.id)
+                dom.append(('id', 'in', compatible_fp_ids))
+        return dom
+
     def _get_cc_instance_ids(self, cr, uid, ids, fields, arg, context=None):
         """
         Computes the values for fields.function fields, retrieving:
@@ -299,7 +342,8 @@ class analytic_account(osv.osv):
           ...as Cost centre picked for PO/FO reference => po_fo_cc_instance_ids
           (Note that those fields should theoretically always be linked to one single instance,
            but they are set as one2many in order to be consistent with the type of fields used in the related object.)
-        - the Missions where the Cost Center is added to => cc_missions
+        - the Instances where the Cost Center is added to => cc_instance_ids
+        - the related Missions => cc_missions
         """
         if context is None:
             context = {}
@@ -311,6 +355,7 @@ class analytic_account(osv.osv):
             top_instance_ids = []
             target_instance_ids = []
             po_fo_instance_ids = []
+            all_instance_ids = []
             missions = set()
             missions_str = ""
             target_cc_ids = acc_target_cc_obj.search(cr, uid, [('cost_center_id', '=', analytic_acc_id)], context=context)
@@ -318,6 +363,7 @@ class analytic_account(osv.osv):
                 field_list = ['instance_id', 'is_target', 'is_po_fo_cost_center', 'is_top_cost_center']
                 for target_cc in acc_target_cc_obj.browse(cr, uid, target_cc_ids, fields_to_fetch=field_list, context=context):
                     instance = target_cc.instance_id
+                    all_instance_ids.append(instance.id)
                     if instance.mission:
                         missions.add(instance.mission)
                     if target_cc.is_top_cost_center:
@@ -333,6 +379,7 @@ class analytic_account(osv.osv):
                 'is_target_cc_instance_ids': target_instance_ids,
                 'po_fo_cc_instance_ids': po_fo_instance_ids,
                 'cc_missions': missions_str,
+                'cc_instance_ids': all_instance_ids,
             }
         return res
 
@@ -357,13 +404,18 @@ class analytic_account(osv.osv):
         'dest_cc_ids': fields.many2many('account.analytic.account', 'destination_cost_center_rel',
                                         'destination_id', 'cost_center_id', string='Cost Centers',
                                         domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
-        'allow_all_cc': fields.boolean(string="Allow all Cost Centers"),
+        'allow_all_cc': fields.boolean(string="Allow all Cost Centers"),  # for the Destinations
+        'allow_all_cc_with_fp': fields.boolean(string="Allow all Cost Centers"),  # for the Funding Pools
         'dest_compatible_with_cc_ids': fields.function(_get_fake, method=True, store=False,
                                                        string='Destinations compatible with the Cost Center',
                                                        type='many2many', relation='account.analytic.account',
                                                        fnct_search=_search_dest_compatible_with_cc_ids),
         'dest_without_cc': fields.function(_get_dest_without_cc, type='boolean', method=True, store=False,
                                            string="Destination allowing no Cost Center",),
+        'fp_compatible_with_cc_ids': fields.function(_get_fake, method=True, store=False,
+                                                     string='Funding Pools compatible with the Cost Center',
+                                                     type='many2many', relation='account.analytic.account',
+                                                     fnct_search=_search_fp_compatible_with_cc_ids),
         'top_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
                                                string="Instances having the CC as Top CC",
                                                type="one2many", relation="msf.instance", multi="cc_instances"),
@@ -376,12 +428,16 @@ class analytic_account(osv.osv):
         'cc_missions': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
                                        string="Missions where the CC is added to",
                                        type='char', multi="cc_instances"),
+        'cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                           string="Instances where the CC is added to",
+                                           type="one2many", relation="msf.instance", multi="cc_instances"),
     }
 
     _defaults ={
         'date_start': lambda *a: (datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'for_fx_gain_loss': lambda *a: False,
         'allow_all_cc': lambda *a: False,
+        'allow_all_cc_with_fp': lambda *a: False,
     }
 
     def _check_code_unicity(self, cr, uid, ids, context=None):
@@ -453,29 +509,37 @@ class analytic_account(osv.osv):
         res['domain']['parent_id'] = [('category', '=', category), ('type', '=', 'view')]
         return res
 
-    def on_change_allow_all_cc(self, cr, uid, ids, allow_all_cc, dest_cc_ids, context=None):
+    def on_change_allow_all_cc(self, cr, uid, ids, allow_all_cc, cc_ids, acc_type='destination', field_name='allow_all_cc', context=None):
         """
         If the user tries to tick the box "Allow all Cost Centers" whereas CC are selected,
         informs him that he has to remove the CC first
+        (acc_type = name of the Analytic Account Type to which the CC are linked, displayed in the warning msg)
         """
         res = {}
-        if allow_all_cc and dest_cc_ids and dest_cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
+        if allow_all_cc and cc_ids and cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
             warning = {
                 'title': _('Warning!'),
-                'message': _('Please remove the Cost Centers linked to the Destination before ticking this box.')
+                'message': _('Please remove the Cost Centers linked to the %s before ticking this box.' % acc_type.title())
             }
             res['warning'] = warning
-            res['value'] = {'allow_all_cc': False, }
+            res['value'] = {field_name: False, }
         return res
 
-    def on_change_dest_cc_ids(self, cr, uid, ids, dest_cc_ids, context=None):
+    def on_change_allow_all_cc_with_fp(self, cr, uid, ids, allow_all_cc_with_fp, cost_center_ids, context=None):
+        return self.on_change_allow_all_cc(cr, uid, ids, allow_all_cc_with_fp, cost_center_ids, acc_type='funding pool',
+                                           field_name='allow_all_cc_with_fp', context=context)
+
+    def on_change_cc_ids(self, cr, uid, ids, cc_ids, field_name='allow_all_cc', context=None):
         """
         If at least a CC is selected, unticks the box "Allow all Cost Centers"
         """
         res = {}
-        if dest_cc_ids and dest_cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
-            res['value'] = {'allow_all_cc': False, }
+        if cc_ids and cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
+            res['value'] = {field_name: False, }
         return res
+
+    def on_change_cc_with_fp(self, cr, uid, ids, cost_center_ids, context=None):
+        return self.on_change_cc_ids(cr, uid, ids, cost_center_ids, field_name='allow_all_cc_with_fp', context=context)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:
@@ -539,12 +603,12 @@ class analytic_account(osv.osv):
             vals['parent_id'] = funding_pool_parent
 
     def remove_inappropriate_links(self, vals, context=None):
-        '''
-        Remove relations that are incoherent regarding the category selected. For instance an account with
-        category "Funding Pool" can have associated cost centers, whereas a "Destination" shouldn't.
+        """
+        Removes relations that are inconsistent regarding the category selected. For instance an account with the
+        category "Funding Pool" can have associated cost centers, whereas a "Cost Center" shouldn't.
         (That would happen if the category is modified after that the relations have been created).
         :return: corrected vals
-        '''
+        """
         if context is None:
             context = {}
         if 'category' in vals:
@@ -555,6 +619,7 @@ class analytic_account(osv.osv):
             if vals['category'] != 'FUNDING':
                 vals['tuple_destination_account_ids'] = [(6, 0, [])]
                 vals['cost_center_ids'] = [(6, 0, [])]
+                vals['allow_all_cc_with_fp'] = False  # default value
         return vals
 
     def _check_date(self, vals):
@@ -766,6 +831,32 @@ class analytic_account(osv.osv):
             'domain': domain,
             'target': 'current',
         }
+
+    def get_cc_linked_to_fp(self, cr, uid, fp_id, context=None):
+        """
+        Returns a browse record list of all Cost Centers compatible with the Funding Pool in parameter:
+        - if "Allow all Cost Centers" is ticked: all CC linked to the prop. instance of the FP
+        - else all CC selected in the FP form.
+
+        Note: this method aims at replacing fp.cost_center_ids, in particular in the places where a list of CC should
+              be displayed. It returns an empty list for PF.
+        """
+        if context is None:
+            context = {}
+        cc_list = []
+        fp = self.browse(cr, uid, fp_id,
+                         fields_to_fetch=['category', 'allow_all_cc_with_fp', 'instance_id', 'cost_center_ids'],
+                         context=context)
+        if fp.category == 'FUNDING':
+            if fp.allow_all_cc_with_fp and fp.instance_id:
+                # inactive CC are included on purpose, to match with selectable CC in FP form
+                for cc_id in self.search(cr, uid, [('category', '=', 'OC'), ('type', '!=', 'view')], order='code', context=context):
+                    cc = self.browse(cr, uid, cc_id, context=context)
+                    if fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
+                        cc_list.append(cc)
+            else:
+                cc_list = fp.cost_center_ids or []
+        return cc_list
 
     def button_cc_clear(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'cost_center_ids':[(6, 0, [])]}, context=context)

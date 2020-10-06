@@ -519,9 +519,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                             continue
                         # if the Fund. Pool used is NOT "PF" check the compatibility with the (account, dest) and the CC
                         if r_fp != msf_fp_id:
-                            fp_fields = ['tuple_destination_account_ids', 'cost_center_ids']
                             fp = self.pool.get('account.analytic.account').browse(cr, uid, r_fp,
-                                                                                  fields_to_fetch=fp_fields, context=context)
+                                                                                  fields_to_fetch=['tuple_destination_account_ids'],
+                                                                                  context=context)
                             if (account.id, r_destination) not in \
                                 [t.account_id and t.destination_id and (t.account_id.id, t.destination_id.id)
                                  for t in fp.tuple_destination_account_ids if not t.disabled]:
@@ -530,7 +530,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                                               (current_line_num, line[cols['G/L Account']], line[cols['Destination']],
                                                line[cols['Funding Pool']]))
                                 continue
-                            if cc.id not in [c.id for c in fp.cost_center_ids]:
+                            if not ad_obj.check_fp_cc_compatibility(cr, uid, fp.id, cc.id, context=context):
                                 errors.append(_('Line %s. The Cost Center %s is not compatible with the Funding Pool %s.') %
                                               (current_line_num, line[cols['Cost Centre']], line[cols['Funding Pool']]))
                                 continue

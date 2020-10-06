@@ -46,6 +46,7 @@ class analytic_line(osv.osv):
         if not args:
             return []
         res = []
+        analytic_acc_obj = self.pool.get('account.analytic.account')
         # We just support '=' operator
         for arg in args:
             if not arg[1]:
@@ -54,9 +55,9 @@ class analytic_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
             if not arg[2]:
                 raise osv.except_osv(_('Warning'), _('Some search args are missing!'))
-            analytic_account = self.pool.get('account.analytic.account').browse(cr, uid, arg[2])
+            analytic_account = analytic_acc_obj.browse(cr, uid, arg[2], fields_to_fetch=['tuple_destination_account_ids'], context=context)
             tuple_list = [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in analytic_account.tuple_destination_account_ids if not x.disabled]
-            cost_center_ids = [x and x.id for x in analytic_account.cost_center_ids]
+            cost_center_ids = [c.id for c in analytic_acc_obj.get_cc_linked_to_fp(cr, uid, analytic_account.id, context=context)]
             for cc in cost_center_ids:
                 for t in tuple_list:
                     if res:
@@ -457,12 +458,10 @@ class analytic_line(osv.osv):
                                                       account_id, context=context):
                     if aline.account_id and aline.account_id.id == msf_private_fund:
                         res.append(aline.id)
-                    elif aline.account_id and aline.cost_center_id and aline.account_id.cost_center_ids:
-                        if account_id in [x and x.id for x in aline.account_id.cost_center_ids] or aline.account_id.id == msf_private_fund:
-                            res.append(aline.id)
+                    elif aline.account_id and ad_obj.check_fp_cc_compatibility(cr, uid, aline.account_id.id, account_id, context=context):
+                        res.append(aline.id)
         elif account_type == 'FUNDING':
-            fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['cost_center_ids', 'tuple_destination_account_ids'], context=context)
-            cc_ids = fp and fp.get('cost_center_ids', []) or []
+            fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['tuple_destination_account_ids'], context=context)
             tuple_destination_account_ids = fp and fp.get('tuple_destination_account_ids', []) or []
             tuple_list = [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in self.pool.get('account.destination.link').browse(cr, uid, tuple_destination_account_ids) if not x.disabled]
             # Browse all analytic line to verify them
@@ -481,7 +480,9 @@ class analytic_line(osv.osv):
                 # - the cost_center is in compatible cost center from the new funding pool
                 # - the general account is in compatible account/destination tuple
                 # - the destination is in compatible account/destination tuple
-                if aline.cost_center_id and aline.cost_center_id.id in cc_ids and aline.general_account_id and aline.destination_id and (aline.general_account_id.id, aline.destination_id.id) in tuple_list:
+                if aline.cost_center_id and ad_obj.check_fp_cc_compatibility(cr, uid, account_id, aline.cost_center_id.id, context=context)\
+                        and aline.general_account_id and aline.destination_id and\
+                        (aline.general_account_id.id, aline.destination_id.id) in tuple_list:
                     res.append(aline.id)
         elif account_type == "DEST":
             for aline in self.browse(cr, uid, ids, context=context):
@@ -541,8 +542,7 @@ class analytic_line(osv.osv):
             # check funding pool (expect for MSF Private Fund)
             if not new_fp_id == msf_pf_id:  # all OK for MSF Private Fund
                 # - cost center and funding pool compatibility
-                cc_ids = [cc.id for cc in new_fp_br.cost_center_ids]
-                if not new_cc_id in cc_ids:
+                if not ad_obj.check_fp_cc_compatibility(cr, uid, new_fp_id, new_cc_id, context=context):
                     # not compatible with CC
                     res.append((id, entry_sequence, _('CC')))
                     return False
