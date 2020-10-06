@@ -16456,8 +16456,13 @@ msgstr "\n"
 
 #. module: analytic_distribution
 #: view:account.analytic.account:0
-msgid "Remove all"
-msgstr "Tout supprimer"
+msgid "Remove all accounts/destinations"
+msgstr "Supprimer tous les comptes/destinations"
+
+#. module: analytic_distribution
+#: view:account.analytic.account:0
+msgid "Remove all accounts"
+msgstr "Supprimer tous les comptes"
 
 #. module: vertical_integration
 #: code:addons/vertical_integration/report/hq_report_oca.py:176
@@ -29057,8 +29062,9 @@ msgstr "procurement.request.sourcing.document"
 msgid "This view can be used by accountants in order to quickly record entries in OpenERP. If you want to record a supplier invoice, start by recording the line of the expense account. OpenERP will propose to you automatically the Tax related to this account and the counterpart \"Account Payable\"."
 msgstr "Cette vue peut être utilisée par des comptables afin d'enregistrer rapidement des écritures comptables dans OpenERP. Si vous voulez enregistrer une facture fournisseur, commencez par enregistrer la ligne du compte de charge. OpenERP vous proposera automatiquement la taxe afférente à ce compte et la contrepartie \"Compte fournisseur\"."
 
-#. module: financing_contract
+#. modules: financing_contract, analytic_distribution
 #: field:financing.contract.format.line,account_destination_ids:0
+#: view:account.analytic.account:0
 msgid "Accounts/Destinations"
 msgstr "Comptes/Destinations"
 
@@ -60847,6 +60853,21 @@ msgstr "Transfer Interne"
 msgid "G/L Account"
 msgstr "Compte Grand Livre"
 
+#. module: analytic_distribution
+#: view:account.analytic.account:0
+msgid "G/L Accounts"
+msgstr "Comptes Grand Livre"
+
+#. module: analytic_override
+#: help:account.analytic.account,fp_account_ids:0
+msgid "G/L accounts linked to the Funding Pool"
+msgstr "Comptes Grand Livre liés au Funding Pool"
+
+#. module: analytic_override
+#: field:account.analytic.account,select_accounts_only:0
+msgid "Select Accounts Only"
+msgstr "Sélectionner des Comptes Uniquement"
+
 #. module: purchase_override
 #: view:purchase.order.cancel.wizard:0
 msgid "Please confirm that you want to cancel all non-confirmed lines of this PO"
@@ -84499,7 +84520,7 @@ msgstr "Total Project - Actuals"
 msgid "Settings Error!"
 msgstr "Erreur de paramétrage !"
 
-#. modules: msf_budget, account, finance, account_mcdb, account_override, account_journal, analytic_distribution
+#. modules: msf_budget, account, finance, account_mcdb, account_override, account_journal, analytic_distribution, analytic_override
 #: view:account.account:0
 #: view:account.journal:0
 #: report:account.partner.balance:0
@@ -84528,6 +84549,7 @@ msgstr "Erreur de paramétrage !"
 #: view:account.analytic.chart:0
 #: report:addons/account/report/free_allocation_report.mako:168
 #: field:free.allocation.wizard,account_ids:0
+#: field:account.analytic.account,fp_account_ids:0
 #, python-format
 msgid "Accounts"
 msgstr "Comptes"

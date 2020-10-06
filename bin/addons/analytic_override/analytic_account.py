@@ -431,6 +431,10 @@ class analytic_account(osv.osv):
         'cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
                                            string="Instances where the CC is added to",
                                            type="one2many", relation="msf.instance", multi="cc_instances"),
+        'select_accounts_only': fields.boolean(string="Select Accounts Only"),
+        'fp_account_ids': fields.many2many('account.account', 'fp_account_rel', 'fp_id', 'account_id', string='Accounts',
+                                           domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('active', '=', 't')]",
+                                           help="G/L accounts linked to the Funding Pool"),
     }
 
     _defaults ={
@@ -438,6 +442,7 @@ class analytic_account(osv.osv):
         'for_fx_gain_loss': lambda *a: False,
         'allow_all_cc': lambda *a: False,
         'allow_all_cc_with_fp': lambda *a: False,
+        'select_accounts_only': lambda *a: False,
     }
 
     def _check_code_unicity(self, cr, uid, ids, context=None):
@@ -871,6 +876,13 @@ class analytic_account(osv.osv):
 
     def button_dest_clear(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'tuple_destination_account_ids':[(6, 0, [])]}, context=context)
+        return True
+
+    def button_fp_account_clear(self, cr, uid, ids, context=None):
+        """
+        Removes all G/L accounts selected in the Funding Pool view
+        """
+        self.write(cr, uid, ids, {'fp_account_ids': [(6, 0, [])]}, context=context)
         return True
 
     def get_destinations_by_accounts(self, cr, uid, ids, context=None):
