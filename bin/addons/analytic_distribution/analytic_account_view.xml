@@ -84,7 +84,6 @@
                         </page>
                         <page string="Cost centers" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
                             <field name="allow_all_cc_with_fp" colspan="4"
-                                   string="Allow all Cost Centers"
                                    on_change="on_change_allow_all_cc_with_fp(allow_all_cc_with_fp, cost_center_ids)"/>
                             <button name="button_cc_clear" type="object" string="Remove all" icon="gtk-clear" colspan="4"/>
                             <separator/>
