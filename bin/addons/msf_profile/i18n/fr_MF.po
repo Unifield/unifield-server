@@ -106079,6 +106079,7 @@ msgstr "La Date de Prise de Stock des lignes %s n'est pas cohérente! Elle ne de
 
 #. modules: purchase, sale
 #: code:addons/purchase/purchase_order.py:933
+#: code:addons/purchase/purchase_order.py:991
 #: code:addons/sale/sale_order.py:733
 #, python-format
 msgid "The Stock Take Date of %s is not consistent! It should not be later than its creation date"
@@ -106138,6 +106139,7 @@ msgstr "\n"
 
 #. module: purchase
 #: code:addons/purchase/purchase_order_line.py:637
+#: code:addons/purchase/purchase_order.py:992
 #, python-format
 msgid "the PO"
 msgstr "le BdC"
