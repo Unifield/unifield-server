@@ -110902,8 +110902,3 @@ msgstr "F-20 - Congelé <-20°C"
 #: model:product.cold_chain,name:product_attributes.cold_19
 msgid "FSRT - Frozen for Storage, Refrigerated for Transport"
 msgstr "FSRT - Congelé pour le Stockage, Réfrigéré pour le Transport"
-
-#. module: product_attributes
-#: model:product.cold_chain,name:product_attributes.cold_20
-msgid "Mix/Check - Article with components that need different cold chain storage conditions"
-msgstr "Mix/Vérification - Article avec des composants nécessitant différentes conditions de stockage de chaîne de froid"
