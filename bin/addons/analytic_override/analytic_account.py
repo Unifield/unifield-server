@@ -627,6 +627,14 @@ class analytic_account(osv.osv):
                 vals['tuple_destination_account_ids'] = [(6, 0, [])]
                 vals['cost_center_ids'] = [(6, 0, [])]
                 vals['allow_all_cc_with_fp'] = False  # default value
+                vals['select_accounts_only'] = False
+                vals['fp_account_ids'] = [(6, 0, [])]
+            # Funding Pools: either "Account/Destination combinations" or "G/L accounts only" must be stored
+            if vals['category'] == 'FUNDING' and 'select_accounts_only' in vals:
+                if vals['select_accounts_only']:
+                    vals['tuple_destination_account_ids'] = [(6, 0, [])]
+                else:
+                    vals['fp_account_ids'] = [(6, 0, [])]
         return vals
 
     def _check_date(self, vals):
