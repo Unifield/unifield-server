@@ -382,7 +382,6 @@ class product_likely_expire_report(osv.osv):
         else:
             new_cr = cr
 
-        move_obj = self.pool.get('stock.move')
         lot_obj = self.pool.get('stock.production.lot')
         loc_obj = self.pool.get('stock.location')
         product_obj = self.pool.get('product.product')
@@ -448,16 +447,7 @@ class product_likely_expire_report(osv.osv):
                 location_ids = loc_obj.search(new_cr, uid, [('location_id', 'child_of', report.location_id.id), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id', context=context)
             else:
                 # Get all locations
-                wh_location_ids = loc_obj.search(new_cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id', context=context)
-
-                move_ids = move_obj.search(new_cr, uid, [('prodlot_id', '!=', False)], context=context)
-                for move in move_obj.browse(new_cr, uid, move_ids, context=context):
-                    if move.location_id.id not in location_ids:
-                        if move.location_id.usage == 'internal' and not move.location_id.quarantine_location and move.location_id.id in wh_location_ids:
-                            location_ids.append(move.location_id.id)
-                    if move.location_dest_id.id not in location_ids and not move.location_dest_id.quarantine_location and move.location_dest_id.id in wh_location_ids:
-                        if move.location_dest_id.usage == 'internal':
-                            location_ids.append(move.location_dest_id.id)
+                location_ids = loc_obj.search(new_cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('id', 'not in', not_loc_ids)], order='location_id', context=context)
 
         context.update({'location_id': location_ids, 'location': location_ids})
 
@@ -466,7 +456,6 @@ class product_likely_expire_report(osv.osv):
             lot_domain.append(('product_id', 'in', only_product_ids))
 
         lot_ids = lot_obj.search(new_cr, uid, lot_domain, order='product_id, life_date', context=context)
-
         from_date = DateFrom(report.date_from)
         to_date = DateFrom(report.date_to) + RelativeDateTime(day=1, months=1, days=-1)
 
@@ -510,26 +499,28 @@ class product_likely_expire_report(osv.osv):
                     if not last_expiry_date:
                         last_expiry_date = month - RelativeDateTime(days=1)
 
-                    item_id = item_obj.create(new_cr, uid, {
-                        'name': start_month_flag and 'expired_qty_col' or month.strftime('%m/%y'),
-                        'line_id': products[lot.product_id.id]['line_id'],
-                        'uom_id': lot.product_id.uom_id.id,
-                    }, context=context)
                     available_qty = 0.00
                     expired_qty = 0.00
                     seq += 1
 
                     # Create a line for each lot which expired in this month
                     domain = [('product_id', '=', lot.product_id.id),
-                              ('stock_available', '>', 0.00),
+                              ('id', 'in', lot_ids),
                               ('life_date', '<', (month + RelativeDateTime(months=1, day=1)).strftime('%Y-%m-%d'))]
 
                     if not start_month_flag:
                         domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
-                        item_obj.write(new_cr, uid, [item_id], {'period_start': (month + RelativeDateTime(day=1)).strftime('%Y-%m-%d')}, context=context)
+                        item_period_start = (month + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
                     else:
-                        item_obj.write(new_cr, uid, [item_id], {'period_start': month.strftime('%Y-%m-%d')}, context=context)
+                        item_period_start = month.strftime('%Y-%m-%d')
                         domain.append(('life_date', '<=', month.strftime('%Y-%m-01')))
+
+                    item_id = item_obj.create(new_cr, uid, {
+                        'name': start_month_flag and 'expired_qty_col' or month.strftime('%m/%y'),
+                        'line_id': products[lot.product_id.id]['line_id'],
+                        'uom_id': lot.product_id.uom_id.id,
+                        'period_start': item_period_start,
+                    }, context=context)
 
                     product_lot_ids = lot_obj.search(new_cr, uid, domain, order='life_date', context=context)
 
@@ -576,7 +567,6 @@ class product_likely_expire_report(osv.osv):
 
                         lot_context = context.copy()
                         lot_context.update({'prodlot_id': product_lot.id})
-                        product = product_obj.browse(new_cr, uid, lot.product_id.id, context=lot_context)
                         lot_expired_qty = l_expired_qty
                         for location in location_ids:
                             new_lot_context = lot_context.copy()
@@ -592,12 +582,13 @@ class product_likely_expire_report(osv.osv):
                                     lot_expired_qty = 0.00
                                 item_line_obj.create(new_cr, uid, {'item_id': item_id,
                                                                    'lot_id': product_lot.id,
-                                                                   'uom_id': product.uom_id.id,
+                                                                   'uom_id': lot.product_id.uom_id.id,
                                                                    'location_id': location,
                                                                    'available_qty': product2.qty_available,
                                                                    'expired_qty': new_lot_expired}, context=context)
 
-                        available_qty += product.qty_available
+                        # TODO : test if product.qty_available == product_lot.stock_available : example put the same BN in another loc
+                        available_qty += product_lot.stock_available
 
                     item_obj.write(new_cr, uid, [item_id], {'available_qty': available_qty,
                                                             'expired_qty': expired_qty}, context=context)
