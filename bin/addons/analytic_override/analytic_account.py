@@ -522,9 +522,11 @@ class analytic_account(osv.osv):
         """
         res = {}
         if allow_all_cc and cc_ids and cc_ids[0][2]:  # e.g. [(6, 0, [1, 2])]
+            # NOTE: the msg is stored in a variable on purpose, otherwise the ".po" translation files would wrongly contain Python code
+            msg = 'Please remove the Cost Centers linked to the %s before ticking this box.' % acc_type.title()
             warning = {
                 'title': _('Warning!'),
-                'message': _('Please remove the Cost Centers linked to the %s before ticking this box.' % acc_type.title())
+                'message': _(msg)
             }
             res['warning'] = warning
             res['value'] = {field_name: False, }
