@@ -60853,9 +60853,10 @@ msgstr "Transfer Interne"
 msgid "G/L Account"
 msgstr "Compte Grand Livre"
 
-#. modules: analytic_distribution, account
+#. modules: analytic_distribution, account, analytic_override
 #: view:account.analytic.account:0
 #: view:account.account:0
+#: field:account.analytic.account,fp_account_ids:0
 msgid "G/L Accounts"
 msgstr "Comptes Grand Livre"
 
@@ -84521,7 +84522,7 @@ msgstr "Total Project - Actuals"
 msgid "Settings Error!"
 msgstr "Erreur de paramétrage !"
 
-#. modules: msf_budget, account, finance, account_mcdb, account_override, account_journal, analytic_distribution, analytic_override
+#. modules: msf_budget, account, finance, account_mcdb, account_override, account_journal, analytic_distribution
 #: view:account.account:0
 #: view:account.journal:0
 #: report:account.partner.balance:0
@@ -84550,7 +84551,6 @@ msgstr "Erreur de paramétrage !"
 #: view:account.analytic.chart:0
 #: report:addons/account/report/free_allocation_report.mako:168
 #: field:free.allocation.wizard,account_ids:0
-#: field:account.analytic.account,fp_account_ids:0
 #, python-format
 msgid "Accounts"
 msgstr "Comptes"

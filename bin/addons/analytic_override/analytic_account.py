@@ -432,7 +432,7 @@ class analytic_account(osv.osv):
                                            string="Instances where the CC is added to",
                                            type="one2many", relation="msf.instance", multi="cc_instances"),
         'select_accounts_only': fields.boolean(string="Select Accounts Only"),
-        'fp_account_ids': fields.many2many('account.account', 'fp_account_rel', 'fp_id', 'account_id', string='Accounts',
+        'fp_account_ids': fields.many2many('account.account', 'fp_account_rel', 'fp_id', 'account_id', string='G/L Accounts',
                                            domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('active', '=', 't')]",
                                            help="G/L accounts linked to the Funding Pool"),
     }
