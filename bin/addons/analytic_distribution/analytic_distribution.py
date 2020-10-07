@@ -85,6 +85,39 @@ class analytic_distribution(osv.osv):
             res = {'value': {fp_field_name: False}}
         return res
 
+    def check_fp_acc_dest_compatibility(self, cr, uid, fp_id, account_id, dest_id, context=None):
+        """
+        Checks the compatibility between the FP and the "G/L Account/Destination" combination.
+        Returns False if they aren't compatible.
+        """
+        if context is None:
+            context = {}
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        ir_model_data_obj = self.pool.get('ir.model.data')
+        res = True
+        if fp_id and account_id and dest_id:
+            # The Funding Pool PF is compatible with every combination
+            try:
+                pf_id = ir_model_data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                pf_id = 0
+            if fp_id != pf_id:
+                fp = analytic_acc_obj.browse(cr, uid, fp_id,
+                                             fields_to_fetch=['category', 'select_accounts_only', 'fp_account_ids',
+                                                              'tuple_destination_account_ids'],
+                                             context=context)
+                if fp and fp.category == 'FUNDING':
+                    # when the link is made to G/L accounts only: all Destinations are allowed
+                    if fp.select_accounts_only and account_id in [a.id for a in fp.fp_account_ids]:
+                        res = True
+                    # otherwise the combination "account + dest" must be checked
+                    elif not fp.select_accounts_only and (account_id, dest_id) in \
+                            [(t.account_id.id, t.destination_id.id) for t in fp.tuple_destination_account_ids if not t.disabled]:
+                        res = True
+                    else:
+                        res = False
+        return res
+
     def _get_distribution_state(self, cr, uid, distrib_id, parent_id, account_id, context=None,
                                 doc_date=False, posting_date=False, manual=False, amount=False):
         """
