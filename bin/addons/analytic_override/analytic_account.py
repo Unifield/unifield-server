@@ -405,7 +405,7 @@ class analytic_account(osv.osv):
                                         'destination_id', 'cost_center_id', string='Cost Centers',
                                         domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
         'allow_all_cc': fields.boolean(string="Allow all Cost Centers"),  # for the Destinations
-        'allow_all_cc_with_fp': fields.boolean(string="Allow all Cost Centers (FP)"),  # for the Funding Pools
+        'allow_all_cc_with_fp': fields.boolean(string="Allow all Cost Centers"),  # for the Funding Pools
         'dest_compatible_with_cc_ids': fields.function(_get_fake, method=True, store=False,
                                                        string='Destinations compatible with the Cost Center',
                                                        type='many2many', relation='account.analytic.account',

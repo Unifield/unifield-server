@@ -105523,16 +105523,11 @@ msgstr "Filtre non mis en oeuvre sur les Funding Pools."
 msgid "Filter only compatible with a Cost Center."
 msgstr "Filtre compatible uniquement avec un Centre de Coût."
 
-#. modules: analytic_override, analytic_distribution
+#. module: analytic_override
 #: field:account.analytic.account,allow_all_cc:0
-#: view:account.analytic.account:0
+#: field:account.analytic.account,allow_all_cc_with_fp:0
 msgid "Allow all Cost Centers"
 msgstr "Autoriser tous les Centres de Coût"
-
-#. module: analytic_override
-#: field:account.analytic.account,allow_all_cc_with_fp:0
-msgid "Allow all Cost Centers (FP)"
-msgstr "Autoriser tous les Centres de Coût (FP)"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/msf_import_export.py:999
