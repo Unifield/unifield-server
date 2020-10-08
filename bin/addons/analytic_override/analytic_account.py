@@ -434,7 +434,7 @@ class analytic_account(osv.osv):
         'select_accounts_only': fields.boolean(string="Select Accounts Only"),
         'fp_account_ids': fields.many2many('account.account', 'fp_account_rel', 'fp_id', 'account_id', string='G/L Accounts',
                                            domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True), ('active', '=', 't')]",
-                                           help="G/L accounts linked to the Funding Pool"),
+                                           help="G/L accounts linked to the Funding Pool", order_by='code'),
     }
 
     _defaults ={
