@@ -262,9 +262,10 @@
             <field name="type">tree</field>
             <field name="priority" eval="90"/>
             <field name="arch" type="xml">
-                <tree string="G/L Accounts">
+                <tree string="G/L Accounts" colors="grey:selected_in_fp" notselectable="selected_in_fp" >
                     <field name="code"/>
                     <field name="name"/>
+                    <field name="selected_in_fp" invisible="1"/>
                 </tree>
             </field>
         </record>

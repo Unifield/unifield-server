@@ -112,7 +112,7 @@
                                    attrs="{'invisible': [('select_accounts_only', '=', True)]}"
                             />
                             <field name="fp_account_ids" colspan="4" nolabel="1"
-                                   context="{'from_fp': True}"
+                                   context="{'from_fp': True, 'accounts_selected': fp_account_ids}"
                                    attrs="{'invisible': [('select_accounts_only', '=', False)]}">
                                 <tree string="G/L Accounts">
                                     <field name="code"/>

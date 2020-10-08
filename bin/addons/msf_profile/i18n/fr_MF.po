@@ -60870,6 +60870,11 @@ msgstr "Comptes Grand Livre liés au Funding Pool"
 msgid "Select Accounts Only"
 msgstr "Sélectionner des Comptes Uniquement"
 
+#. module: account_override
+#: field:account.account,selected_in_fp:0
+msgid "Selected in Funding Pool"
+msgstr "Sélectionné dans le Funding Pool"
+
 #. module: purchase_override
 #: view:purchase.order.cancel.wizard:0
 msgid "Please confirm that you want to cancel all non-confirmed lines of this PO"
