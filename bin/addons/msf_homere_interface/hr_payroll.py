@@ -114,7 +114,8 @@ class hr_payroll(osv.osv):
                     continue
             else: # CASE 4/
                 # C Check, except B
-                if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.funding_pool_id.tuple_destination_account_ids if not x.disabled] and line.funding_pool_id.id != fp_id:
+                if not ad_obj.check_fp_acc_dest_compatibility(cr, uid, line.funding_pool_id.id, line.account_id.id,
+                                                              line.destination_id.id, context=context):
                     res[line.id] = 'invalid'
                     continue
                 # D Check, except B check
