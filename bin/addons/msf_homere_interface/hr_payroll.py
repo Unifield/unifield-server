@@ -281,8 +281,10 @@ class hr_payroll(osv.osv):
             for field in fp_fields:
                 field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
                                     "'|', "
-                                    "'&', ('fp_compatible_with_cc_ids', '=', cost_center_id), ('tuple_destination', '=', (account_id, destination_id)), "
-                                    " ('id', '=', %s)]" % fp_id)
+                                    "'&', "
+                                    "('fp_compatible_with_cc_ids', '=', cost_center_id), "
+                                    "('fp_compatible_with_acc_dest_ids', '=', (account_id, destination_id)), "
+                                    "('id', '=', %s)]" % fp_id)
             # Change Destination field
             dest_fields = form.xpath('//field[@name="destination_id"]')
             for field in dest_fields:

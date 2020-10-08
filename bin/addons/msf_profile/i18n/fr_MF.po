@@ -105574,6 +105574,11 @@ msgid "Funding Pools compatible with the Cost Center"
 msgstr "Funding Pools compatibles avec le Centre de Coût"
 
 #. module: analytic_override
+#: field:account.analytic.account,fp_compatible_with_acc_dest_ids:0
+msgid "Funding Pools compatible with the Account/Destination combination"
+msgstr "Funding Pools compatibles avec la combinaison Compte/Destination"
+
+#. module: analytic_override
 #: code:addons/analytic_override/analytic_account.py:347
 #, python-format
 msgid "Please remove the Cost Centers linked to the Destination before ticking this box."
