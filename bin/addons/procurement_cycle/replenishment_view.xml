@@ -181,6 +181,223 @@
             name="Inventory Review Config"
             parent="replenishment_configuration" />
 
+<!-- parent seg -->
+        <record id="replenishment_parent_segment_form" model="ir.ui.view">
+            <field name="name">replenishment.parent.segment.form</field>
+            <field name="model">replenishment.parent.segment</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Replenishment Parent Segment" hide_duplicate_button="1" hide_delete_button="1" noteditable="not is_current_instance" force_string="1">
+                    <field name="active" invisible="1" readonly="1" />
+                    <field name="review_active" invisible="1" readonly="1" />
+                    <html colspan="4">
+                        <p id="active_warn" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                            <translate>Warning: location config is inactive</translate>
+                        </p>
+                        <p id="review_active_warn" style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
+                            <translate>Warning: Inventory Review Configuration is inactive</translate>
+                        </p>
+                        <script language="javascript">
+                            var active_warn = $('#active').val();
+                            if (active_warn != "1") {
+                                msg_dom = $('#active_warn');
+                                msg_dom.show();
+                            }
+                            var review_active_warn = $('#review_active').val();
+                            var config_id = $('#location_config_id').attr('value');
+                            if (review_active_warn != "1" &amp;&amp; config_id) {
+                                msg_dom = $('#review_active_warn');
+                                msg_dom.show();
+                            }
+
+                            set_unit_label = function(init) {
+                                console.log('call set ');
+                                if  ($('#_terp_editable').val() == 'True') {
+                                    var unit = $('#time_unit_lt option:selected ').html();
+                                    if (init) {
+                                        $('#time_unit_lt').change(set_unit_label);
+                                    }
+                                } else {
+                                    var unit = $('#time_unit_lt').html();
+                                }
+                                if (unit) {
+                                    ['order_coverage', 'safety_stock', 'order_preparation_lt', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'total_lt', 'internal_lt', 'external_lt'].forEach(function (f){
+                                        var field_label = $('label[for='+f+']');
+                                        if (field_label) {
+                                            label_content = field_label.html().replace(/ *\([^)]*\) */g, "")
+                                            field_label.html(label_content+ ' ('+unit+')');
+                                        }
+                                    });
+                                }
+                            }
+                            set_unit_label(true);
+                        </script>
+
+
+                    </html>
+                    <field name="name_parent_seg" />
+                    <field name="description_parent_seg" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                    <field name="location_config_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('is_current_instance', '=', True)]" on_change="change_location_config_id(location_config_id, ir_requesting_location)"/>
+                    <field name="time_unit_lt" on_change="compute_next_order_received(time_unit_lt, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
+                    <notebook colspan="4">
+                        <page string="Parameters">
+                            <html colspan="4">
+                             <table id="rr-chrono" width="100%%">
+                                    <tr>
+                                        <td colspan="10" class="tlt"><label html="1" for="total_lt"><translate>Total Lead Time</translate></label> :<field name="total_lt" nolabel="1"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="6" class="ilt"><label html="1" for="internal_lt"><translate>Internal Lead Time</translate></label> :<field name="internal_lt" nolabel="1" /></td>
+                                        <td colspan="4" class="elt"><label html="1" for="external_lt"><translate>External Lead Time</translate></label> :<field name="external_lt" nolabel="1" /></td>
+                                    </tr>
+                                    <tr>
+
+                                        <td class="oplt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="order_preparation_lt"><label html="1" for="order_preparation_lt"><translate>Order Preparation Lead Time</translate></label> :<field name="order_preparation_lt" on_change="on_change_lt(time_unit_lt, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1"/></td>
+                                        <td class="oclt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="order_creation_lt"><label html="1" for="order_creation_lt"><translate>Order Creation Lead Time</translate></label> :<field name="order_creation_lt" on_change="on_change_lt(time_unit_lt, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1"/></td>
+                                        <td class="ovlt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="order_validation_lt"><label html="1" for="order_validation_lt"><translate>Order Validation Lead Time</translate></label> :<field name="order_validation_lt" on_change="on_change_lt(time_unit_lt, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
+                                        <td class="slt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="supplier_lt"><label html="1" for="supplier_lt"><translate>Supplier Lead Time</translate></label> :<field name="supplier_lt" on_change="on_change_lt(time_unit_lt, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
+                                        <td class="hlt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="handling_lt"><label html="1" for="handling_lt"><translate>Handling Lead Time</translate></label> :<field name="handling_lt" on_change="on_change_lt(time_unit_lt, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
+                                    </tr>
+                                </table>
+                             </html>
+
+
+                            <group colspan="4" col="6">
+                                <group colspan="2" col="2">
+                                    <field name="previous_order_rdd" />
+                                    <field name="date_preparing" />
+                                    <field name="date_next_order_validated" />
+                                    <field name="date_next_order_received" />
+                                    <label colspan="2" />
+                                    <field name="date_next_order_received_modified" attrs="{'readonly': [('state', '!=', 'draft')]}"  on_change="compute_next_order_received(time_unit_lt, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
+
+                                </group>
+
+                                <group colspan="2" col="2">
+                                    <field name="order_coverage" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft')]}" on_change="compute_next_order_received(time_unit_lt, order_preparation_lt, order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
+                                </group>
+                            </group>
+
+                            <field name="child_ids" colspan="4" nolabel="1" />
+
+                        </page>
+
+                        <page string="Location Information">
+                            <field name="is_current_instance" invisible="1" />
+                            <group colspan="4" col="14">
+                                <field name="description" readonly="1" string="Location Config Description" colspan="4"/>
+                                <field name="main_instance" readonly="1" colspan="4"/>
+                                <group colspan="4" col="2">
+                                    <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('ir_requesting_location_rdo', '!=', False)]}" required="1"/>
+                                    <field name="ir_requesting_location_rdo" attrs="{'invisible': ['|', ('ir_requesting_location_rdo', '=', False), ('_terp_editable', '=', 'False')]}" />
+                                </group>
+                                <field name="rr_amc" readonly="1" colspan="2"/>
+                            </group>
+
+
+                            <group colspan="4" col="6">
+                                <field name="local_location_ids" colspan="2" nolabel="1" readonly="1">
+                                    <tree min_rows="10">
+                                        <field name="complete_name" string="Current Instance Locations"/>
+                                    </tree>
+                                </field>
+
+                                <field name="remote_location_ids" colspan="2" nolabel="1" readonly="1">
+                                    <tree min_rows="10">
+                                        <field name="full_name" string="Other Instance Locations"/>
+                                    </tree>
+                                </field>
+
+                                <!--
+                                <group colspan="2" col="2">
+                                    <field name="last_generation" nolabel="1" colspan="2">
+                                        <tree string="Generation Date" min_rows="10">
+                                            <field name="instance_id" />
+                                            <field name="amc_date" />
+                                            <field name="full_date" />
+                                            <field name="review_date" />
+                                        </tree>
+                                    </field>
+                                </group>
+                                -->
+                            </group>
+                            <group colspan="2" col="2">
+                                <separator string="AMC Locations" colspan="2" />
+                                <field name="amc_location_txt" nolabel="1" colspan="2" />
+                            </group>
+                        </page>
+                    </notebook>
+                    <group colspan="4">
+                        <field name="state_parent" />
+                        <!-- <field name="has_inprogress_cal" invisible="1" /> -->
+                        <group colspan="2">
+                            <button name="trigger_compute_segment_data" string="Compute Data" type="object" icon="gtk-execute" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}" force_editable="1"/>
+                            <button name="completed" string="Completed" type="object" icon="terp-check" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                            <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('state', 'not in', ['complete', 'archived', 'cancel'])]}" icon="gtk-go-back" />
+                            <button name="generate_order_calc" string="Generate Order Calc" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': [('state', '!=', 'complete')]}"/>
+                            <button name="set_as_archived" string="Archive" type="object" attrs="{'invisible':[('state', 'in', ['cancel', 'archived'])]}" icon="terp-locked" />
+                            <button name="set_as_cancel" string="Cancel" type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', True)]}" icon="gtk-cancel" />
+                            <button name="set_as_cancel_and_cancel_order" string="Cancel Segment and Order Calc." type="object" attrs="{'invisible':['|', ('state', '=', 'cancel'), ('has_inprogress_cal', '=', False)]}" icon="gtk-cancel" confirm="This will cancel the Segment and the in-progess Order Calc. Do you confirm ?"/>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="replenishment_parent_segment_tree" model="ir.ui.view">
+            <field name="name">replenishment.parent.segment.tree</field>
+            <field name="model">replenishment.parent.segment</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Replenishment Parent Segments" hide_delete_button="1">
+                    <field name="name_parent_seg" />
+                    <field name="description_parent_seg" />
+                    <field name="location_config_id" />
+                    <field name="date_preparing" />
+                    <field name="date_next_order_validated" />
+                    <field name="state_parent" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="replenishment_parent_segment_search" model="ir.ui.view">
+            <field name="name">replenishment.parent.segment.search</field>
+            <field name="model">replenishment.parent.segment</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Replenishment Parent Segments">
+                    <filter string="Current Instance" name="current_instance" icon="terp-stage" domain="[('is_current_instance', '=', True)]"/>
+                    <separator orientation="vertical"/>
+                    <filter string="Draft" domain="[('state_parent', '=', 'draft')]" icon="terp-document-new"/>
+                    <filter string="Complete" domain="[('state_parent', '=', 'complete')]" icon="terp-check"/>
+                    <filter string="Archived" domain="[('state_parent', '=', 'archived')]" icon="terp-locked"/>
+                    <filter string="Cancelled" domain="[('state_parent', '=', 'cancel')]" icon="gtk-cancel"/>
+                    <separator orientation="vertical" />
+
+                    <field name="name_parent_seg" />
+                    <field name="description_parent_seg" />
+                </search>
+            </field>
+        </record>
+
+        <record id="replenishment_parent_segment_action" model="ir.actions.act_window">
+            <field name="res_model">replenishment.parent.segment</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{'search_default_current_instance': True}</field>
+        </record>
+
+        <menuitem id="replenishment_parent_segment_menu"
+            action="replenishment_parent_segment_action"
+            sequence="35"
+            name="Replenishment Parent Segment"
+            parent="replenishment_configuration" />
+
+
+
+
+<!-- seg -->
 
         <record id="replenishment_segment_form" model="ir.ui.view">
             <field name="name">replenishment.segment.form</field>
@@ -232,24 +449,25 @@
 
                     </html>
                     <field name="name_seg" />
-                    <field name="description_seg" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                    <field name="location_config_id" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('is_current_instance', '=', True)]" on_change="change_location_config_id(location_config_id, ir_requesting_location)"/>
+                    <field name="description_seg" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    <field name="parent_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    <field name="location_config_id" readonly="1"/>
                     <notebook colspan="4">
                         <page string="Parameters">
                             <html colspan="4">
                              <table id="rr-chrono" width="100%%">
                                     <tr>
-                                        <td colspan="8" class="tlt"><translate>Total Lead Time (days) :</translate><field name="total_lt" nolabel="1"/></td>
+                                        <td colspan="8" class="tlt"><translate>Total Lead Time :</translate><field name="total_lt" nolabel="1"/></td>
                                     </tr>
                                     <tr>
-                                        <td colspan="4" class="ilt"><translate>Internal Lead Time (days) :</translate><field name="internal_lt" nolabel="1" /></td>
-                                        <td colspan="4" class="elt"><translate>External Lead Time (days) :</translate><field name="external_lt" nolabel="1" /></td>
+                                        <td colspan="4" class="ilt"><translate>Internal Lead Time :</translate><field name="internal_lt" nolabel="1" /></td>
+                                        <td colspan="4" class="elt"><translate>External Lead Time :</translate><field name="external_lt" nolabel="1" /></td>
                                     </tr>
                                     <tr>
-                                        <td class="oclt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="order_creation_lt"><translate>Order Creation Lead Time (days) :</translate><field name="order_creation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1"/></td>
-                                        <td class="ovlt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="order_validation_lt"><translate>Order Validation Lead Time (days) :</translate><field name="order_validation_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
-                                        <td class="slt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="supplier_lt"><translate>Supplier Lead Time (days) :</translate><field name="supplier_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
-                                        <td class="hlt" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" widget="handling_lt"><translate>Handling Lead Time (days) :</translate><field name="handling_lt" on_change="on_change_lt(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)" nolabel="1" /></td>
+                                        <td class="oclt" colspan="2" widget="order_creation_lt"><translate>Order Creation Lead Time :</translate><field name="order_creation_lt" readonly="1" nolabel="1"/></td>
+                                        <td class="ovlt" colspan="2" widget="order_validation_lt"><translate>Order Validation Lead Time :</translate><field name="order_validation_lt" readonly="1" nolabel="1" /></td>
+                                        <td class="slt" colspan="2" widget="supplier_lt"><translate>Supplier Lead Time :</translate><field name="supplier_lt" readonly="1" nolabel="1" /></td>
+                                        <td class="hlt" colspan="2" widget="handling_lt"><translate>Handling Lead Time :</translate><field name="handling_lt" readonly="1" nolabel="1" /></td>
                                     </tr>
                                 </table>
                              </html>
@@ -269,12 +487,11 @@
                                     <field name="date_next_order_validated" />
                                     <field name="date_next_order_received" />
                                     <label colspan="2" />
-                                    <field name="date_next_order_received_modified" attrs="{'readonly': [('state', '!=', 'draft')]}"  on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
-
+                                    <field name="date_next_order_received_modified" readonly="1" />
                                 </group>
 
                                 <group colspan="2" col="2">
-                                    <field name="order_coverage" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft')]}" on_change="compute_next_order_received(order_creation_lt, order_validation_lt, supplier_lt, handling_lt, order_coverage, previous_order_rdd, date_next_order_received_modified)"/>
+                                    <field name="order_coverage" readonly="1" />
                                     <field name="safety_stock" attrs="{'readonly': [('state', '!=', 'draft')], 'required': [('state', '=', 'draft'), ('rule', '=', 'cycle')], 'invisible': [('rule', '!=', 'cycle')]}"/>
                                 </group>
                             </group>
@@ -378,10 +595,7 @@
                             <group colspan="4" col="14">
                                 <field name="description" readonly="1" string="Location Config Description" colspan="4"/>
                                 <field name="main_instance" readonly="1" colspan="4"/>
-                                <group colspan="4" col="2">
-                                    <field name="ir_requesting_location" domain="[('usage', '=', 'internal'), ('location_category', 'in', ['stock', 'consumption_unit', 'eprep']), ('from_config', '=', location_config_id)]" attrs="{'readonly': [('state', '!=', 'draft')], 'invisible': [('ir_requesting_location_rdo', '!=', False)]}" required="1"/>
-                                    <field name="ir_requesting_location_rdo" attrs="{'invisible': ['|', ('ir_requesting_location_rdo', '=', False), ('_terp_editable', '=', 'False')]}" />
-                                </group>
+                                <field name="ir_requesting_location" readonly="1"/>
                                 <field name="rr_amc" readonly="1" colspan="2"/>
                             </group>
 
@@ -528,8 +742,10 @@
                         <page string="Parameters">
                             <group colspan="4" col="6">
                                 <group colspan="2" col="2">
+                                    <!--
                                     <field name="rule" />
                                     <field name="rule_alert" />
+                                    -->
                                     <field name="total_lt" />
                                 </group>
                                 <group colspan="2" col="2">
@@ -546,34 +762,35 @@
                                 <field name="file_to_import" colspan="2" />
                                 <button name="import_lines" string="Import Lines" type="object" colspan="2" icon="gtk-save" />
                             </group>
-                            <field name="order_calc_line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" default_get="rule=rule" scroll="1">
+                            <field name="order_calc_line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" scroll="1">
                                 <tree editable="top" editable_style="new" colors="red:expired_qty_before_cons or (status!='new' and qty_lacking) or not valid_rr_fmc;orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc" hide_new_button="0" hide_delete_button="1">
                                     <field name="product_id" filter_selector="1" />
                                     <field name="product_description" displayon="noteditable" filter_selector="1" />
                                     <field name="uom_id" invisible="1" />
                                     <field name="status" invisible="1" />
                                     <field name="in_main_list" filter_selector="1" />
-                                    <field name="auto_qty" invisible="context.get('rule')!='auto'"/>
-                                    <field name="buffer_qty" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="min_max" invisible="context.get('rule')!='minmax'"/>
+                                    <field name="rule" />
+                                    <field name="auto_qty" />
+                                    <field name="buffer_qty" />
+                                    <field name="min_max" />
                                     <field name="valid_rr_fmc" />
                                     <field name="real_stock" />
                                     <field name="pipeline_qty" />
                                     <field name="eta_for_next_pipeline" />
                                     <field name="reserved_stock_qty" />
                                     <field name="projected_stock_qty" />
-                                    <field name="qty_lacking" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="qty_lacking_needed_by" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="qty_lacking" />
+                                    <field name="qty_lacking_needed_by" />
                                     <field name="open_loan" />
                                     <field name="open_donation" />
-                                    <field name="expired_qty_before_cons" invisible="context.get('rule')!='cycle'"/>
-                                    <field name="expired_qty_before_eta" invisible="context.get('rule')=='cycle'"/>
+                                    <field name="expired_qty_before_cons" />
+                                    <field name="expired_qty_before_eta" />
                                     <field name="proposed_order_qty" />
                                     <field name="agreed_order_qty" />
                                     <field name="cost_price" />
                                     <field name="line_value" />
                                     <field name="order_qty_comment" />
-                                    <field name="warning_html" invisible="context.get('rule')=='auto'" widget="html_text"/>
+                                    <field name="warning_html" widget="html_text"/>
                                 </tree>
                             </field>
                         </page>
