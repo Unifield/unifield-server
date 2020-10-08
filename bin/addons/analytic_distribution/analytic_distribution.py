@@ -118,6 +118,17 @@ class analytic_distribution(osv.osv):
                         res = False
         return res
 
+    def onchange_ad_destination(self, cr, uid, ids, destination_id=False, funding_pool_id=False, account_id=False,
+                                fp_field_name='funding_pool_id'):
+        """
+        Resets the FP in case the Dest/Acc combination selected isn't compatible with it.
+        """
+        res = {}
+        if destination_id and funding_pool_id and account_id and \
+                not self.check_fp_acc_dest_compatibility(cr, uid, funding_pool_id, account_id, destination_id):
+            res = {'value': {fp_field_name: False}}
+        return res
+
     def _get_distribution_state(self, cr, uid, distrib_id, parent_id, account_id, context=None,
                                 doc_date=False, posting_date=False, manual=False, amount=False):
         """
