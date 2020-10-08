@@ -3512,7 +3512,7 @@ class stock_picking(osv.osv):
         nb_lines = self.pool.get('stock.move').search(cr, uid, [('state', '=', 'assigned'), ('picking_id', 'in', ids)], count=True)
         return self.pool.get('job.in_progress')._prepare_run_bg_job(cr, uid, ids, 'stock.picking', self.do_validate_picking, nb_lines, _('Validate Picking'), context=context)
 
-    def do_validate_picking(self, cr, uid, ids, context=None, job_id=False):
+    def do_validate_picking(self, cr, uid, ids, context=None, job_id=False, ignore_quick=False):
         '''
         Validate the picking ticket from selected stock moves
 
@@ -3665,7 +3665,7 @@ class stock_picking(osv.osv):
             wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
 
             # if the flow type is in quick mode, we perform the ppl steps automatically
-            if picking.flow_type == 'quick' and new_ppl:
+            if not ignore_quick and picking.flow_type == 'quick' and new_ppl:
                 context['from_quick_flow'] = picking.id
                 res = self.quick_mode(cr, uid, new_ppl.id, context=context)
                 return res
