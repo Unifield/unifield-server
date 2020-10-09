@@ -70228,10 +70228,11 @@ msgstr "Palau"
 msgid "Sender's email"
 msgstr "Courriel de l'expéditeur"
 
-#. module: analytic_distribution
+#. module: analytic_distribution, kit
 #: view:account.analytic.account:0
+#: view:composition.kit:0
 msgid "Re-activate"
-msgstr "Re-activate"
+msgstr "Réactiver"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:435
@@ -110461,6 +110462,12 @@ msgstr "Changer en NL+DE"
 #, python-format
 msgid "is dispatched."
 msgstr "est expédié."
+
+#. module: kit
+#: code:addons/kit/kit.py:196
+#, python-format
+msgid "You can only re-activate a Closed Kit Composition."
+msgstr "Vous pouvez uniquement réactiver une Composition de Kit Cloturée."
 
 #. module: sale
 #: code:addons/sale/sale_workflow.py:584
