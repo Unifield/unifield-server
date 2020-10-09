@@ -605,5 +605,10 @@
             <field name="method">uf18_0_migrate_acl</field>
         </record>
 
+        <!-- UF19.0 -->
+        <record id="us_2725_uf_write_date_on_products" model="patch.scripts">
+            <field name="method">us_2725_uf_write_date_on_products</field>
+        </record>
+
     </data>
 </openerp>
