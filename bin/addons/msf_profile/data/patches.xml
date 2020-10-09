@@ -605,6 +605,5 @@
             <field name="method">uf18_0_migrate_acl</field>
         </record>
 
-
     </data>
 </openerp>

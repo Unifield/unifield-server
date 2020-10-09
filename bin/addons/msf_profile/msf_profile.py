@@ -52,7 +52,6 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
-
     # UF18.0
     def uf18_0_migrate_acl(self, cr, uid, *a, **b):
         cr.execute('''
