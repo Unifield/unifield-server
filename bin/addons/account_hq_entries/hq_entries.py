@@ -473,7 +473,9 @@ class hq_entries(osv.osv):
                 fp_id = 0
             fields[0].set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
                                     "'|', "
-                                    "'&', ('fp_compatible_with_cc_ids', '=', cost_center_id), ('tuple_destination', '=', (account_id, destination_id)), "
+                                    "'&', "
+                                    "('fp_compatible_with_cc_ids', '=', cost_center_id), "
+                                    "('fp_compatible_with_acc_dest_ids', '=', (account_id, destination_id)), "
                                     "('id', '=', %s)]" % fp_id)
         # Change Destination field
         dest_fields = arch.xpath('field[@name="destination_id"]')
