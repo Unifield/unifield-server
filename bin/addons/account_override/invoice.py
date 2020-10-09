@@ -704,6 +704,8 @@ class account_invoice(osv.osv):
                                                      context=context):
                 vals['supplier_reference'] = partner['ref']
 
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name'])
+
         return super(account_invoice, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -732,6 +734,7 @@ class account_invoice(osv.osv):
                             raise osv.except_osv(_('Error'),
                                                  _('Tax included in price can not be tied to the whole invoice.'))
 
+        self.pool.get('data.tools').replace_line_breaks_from_vals(vals, ['name'])
         res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
         return res
