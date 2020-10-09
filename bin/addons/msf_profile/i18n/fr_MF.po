@@ -11400,7 +11400,7 @@ msgstr "Budget - Importation"
 msgid "Creation Month"
 msgstr "Creation Month"
 
-#. modules: resource, finance, supplier_catalogue, msf_field_access_rights, msf_instance, msf_button_access_rights, msf_tools, analytic_distribution, financing_contract, sync_client, hr,res_currency_functional,msf_profile, procurement_cycle
+#. modules: resource, finance, supplier_catalogue, msf_field_access_rights, msf_instance, msf_button_access_rights, msf_tools, analytic_distribution, financing_contract, sync_client, hr, res_currency_functional, msf_profile, procurement_cycle, account
 #: view:financing.contract.donor:0
 #: view:msf.instance:0
 #: selection:msf.instance.cloud,state:0
@@ -11422,6 +11422,7 @@ msgstr "Creation Month"
 #: view:product.product:0
 #: view:res.request:0
 #: view:replenishment.location.config:0
+#: view:account.tax:0
 msgid "Inactive"
 msgstr "Inactif"
 
@@ -61257,8 +61258,14 @@ msgstr "JRNL"
 #. module: account
 #: field:account.tax,price_include:0
 #: field:account.tax.template,price_include:0
+#: view:account.tax:0
 msgid "Tax Included in Price"
 msgstr "Taxe Incluse dans le Prix"
+
+#. module: account
+#: view:account.tax:0
+msgid "Tax Not Included in Price"
+msgstr "Taxe Non Incluse dans le Prix"
 
 #. module: register_accounting
 #: view:account.bank.statement:0
@@ -71679,6 +71686,7 @@ msgstr "Navajo"
 #: field:survey.common,active:0
 #: field:sync_client.survey,active:0
 #: field:product.status,active:0
+#: view:account.tax:0
 #, python-format
 msgid "Active"
 msgstr "Actif"
