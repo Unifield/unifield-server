@@ -459,7 +459,7 @@ class hq_entries(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Change funding pool domain in order to include MSF Private fund
+        Adapts domain for AD fields
         """
         if context is None:
             context = {}
@@ -467,16 +467,9 @@ class hq_entries(osv.osv):
         arch = etree.fromstring(view['arch'])
         fields = arch.xpath('field[@name="analytic_id"]')
         if fields:
-            try:
-                fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-            except ValueError:
-                fp_id = 0
             fields[0].set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
-                                    "'|', "
-                                    "'&', "
                                     "('fp_compatible_with_cc_ids', '=', cost_center_id), "
-                                    "('fp_compatible_with_acc_dest_ids', '=', (account_id, destination_id)), "
-                                    "('id', '=', %s)]" % fp_id)
+                                    "('fp_compatible_with_acc_dest_ids', '=', (account_id, destination_id))]")
         # Change Destination field
         dest_fields = arch.xpath('field[@name="destination_id"]')
         for field in dest_fields:
