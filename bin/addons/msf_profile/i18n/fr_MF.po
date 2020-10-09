@@ -110915,3 +110915,8 @@ msgstr "F-20 - Congelé <-20°C"
 #: model:product.cold_chain,name:product_attributes.cold_19
 msgid "FSRT - Frozen for Storage, Refrigerated for Transport"
 msgstr "FSRT - Congelé pour le Stockage, Réfrigéré pour le Transport"
+
+#. module: register_accounting
+#: field:account.bank.statement.line,display_analytic_lines_button:0
+msgid "Display analytic lines button"
+msgstr "Afficher le bouton des lignes analytiques"
