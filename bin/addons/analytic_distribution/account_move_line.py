@@ -433,8 +433,15 @@ class account_move_line(osv.osv):
                         vals.update({'destination_id': l.account_id.default_destination_id.id})
                 if l.employee_id.funding_pool_id:
                     vals.update({'analytic_id': l.employee_id.funding_pool_id.id})
+                    use_default_pf = False
                     if not ad_obj.check_fp_cc_compatibility(cr, uid, l.employee_id.funding_pool_id.id, l.employee_id.cost_center_id.id,
                                                             context=context):
+                        use_default_pf = True
+                    elif 'destination_id' in vals and not ad_obj.check_fp_acc_dest_compatibility(cr, uid, l.employee_id.funding_pool_id.id,
+                                                                                                 l.account_id.id, vals['destination_id'],
+                                                                                                 context=context):
+                        use_default_pf = True
+                    if use_default_pf:
                         # Fetch default funding pool: MSF Private Fund
                         try:
                             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
