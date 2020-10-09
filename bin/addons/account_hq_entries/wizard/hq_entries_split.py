@@ -271,41 +271,6 @@ class hq_entries_split(osv.osv_memory):
         return super(hq_entries_split, self).create(cr, uid, vals,
                                                     context=context)
 
-    # UFTP-200: Add the correct funding pool domain to the split line based on the account_id and cost_center
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        """
-        Change funding pool domain in order to include MSF Private fund
-        """
-        if context is None:
-            context = {}
-        view = super(hq_entries_split, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        fields = view['fields']
-        if view_type=='form' and fields:
-            if fields.get('line_ids') and fields.get('line_ids')['views']:
-                # get the default PF and include into the domain for analytic_id
-                try:
-                    fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-                except ValueError:
-                    fp_id = 0
-
-                viewtemp = fields.get('line_ids')['views']
-                arch = etree.fromstring(viewtemp['tree']['arch']) # the analytic_id is found in the line_ids, one level down
-                fields = arch.xpath('field[@name="analytic_id"]')
-                if fields:
-                    fields[0].set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'),"
-                                            "'|', "
-                                            "'&', "
-                                            "('fp_compatible_with_cc_ids', '=', cost_center_id), "
-                                            "('fp_compatible_with_acc_dest_ids', '=', (account_id, destination_id)), "
-                                            "('id', '=', %s)]" % fp_id)
-
-                # Change Destination field
-                dest_fields = arch.xpath('field[@name="destination_id"]')
-                for field in dest_fields:
-                    field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', account_id)]")
-                    viewtemp['tree']['arch'] = etree.tostring(arch)
-        return view
-
     def button_validate(self, cr, uid, ids, context=None):
         """
         Validate wizard lines and create new split HQ lines.
