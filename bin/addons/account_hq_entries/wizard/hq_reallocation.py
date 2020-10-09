@@ -69,11 +69,10 @@ class hq_analytic_reallocation(osv.osv_memory):
                 field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
             # Change FP field
             fp_fields = form.xpath('//field[@name="analytic_id"]')
-            # Do not use line with account_id, because of NO ACCOUNT_ID PRESENCE!
+            # no restrictions are related to the G/L accounts because the wizard isn't linked to one single line with a specific account_id
             for field in fp_fields:
                 field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
                                     "('fp_compatible_with_cc_ids', '=', cost_center_id)]")
-            # NO NEED TO CHANGE DESTINATION_ID FIELD because NO ACCOUNT_ID PRESENCE!
             view['arch'] = etree.tostring(form)
         return view
 
