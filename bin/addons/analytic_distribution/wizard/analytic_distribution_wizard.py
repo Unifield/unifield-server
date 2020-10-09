@@ -246,9 +246,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                         # Add account_id constraints for invoice lines
                         field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), "
                                             "('hide_closed_fp', '=', True), "
-                                            "'|', "
-                                            "'&', ('fp_compatible_with_cc_ids', '=', cost_center_id), ('tuple_destination', '=', (parent.account_id, destination_id)), "
-                                            "('id', '=', %s)]" % fp_id)
+                                            "('fp_compatible_with_cc_ids', '=', cost_center_id), "
+                                            "('fp_compatible_with_acc_dest_ids', '=', (parent.account_id, destination_id))]")
                 # Change Destination field
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
@@ -410,33 +409,9 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
     }
 
     def onchange_destination(self, cr, uid, ids, destination_id=False, analytic_id=False, account_id=False):
-        """
-        Check given funding pool with destination
-        """
-        # Prepare some values
-        res = {}
-        # Search MSF Private Fund element, because it's valid with all accounts
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                                                        'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            fp_id = 0
-
-        # If all elements given, then search FP compatibility
-        if destination_id and analytic_id and account_id:
-            fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
-            # Delete analytic_id if not valid with tuple "account_id/destination_id".
-            # but do an exception for MSF Private FUND analytic account
-            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids if not x.disabled] and analytic_id != fp_id:
-                res = {'value': {'analytic_id': False}}
-        # If no destination, do nothing
-        elif not destination_id \
-                or analytic_id == fp_id:  # PF always compatible
-            res = {}
-        # Otherway: delete FP
-        else:
-            res = {'value': {'analytic_id': False}}
-        return res
+        return self.pool.get('analytic.distribution').onchange_ad_destination(cr, uid, ids, destination_id=destination_id,
+                                                                              funding_pool_id=analytic_id, account_id=account_id,
+                                                                              fp_field_name='analytic_id')
 
     def onchange_cost_center(self, cr, uid, ids, cost_center_id=False, analytic_id=False):
         return self.pool.get('analytic.distribution').\
