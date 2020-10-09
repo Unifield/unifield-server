@@ -155,12 +155,6 @@ class analytic_distribution(osv.osv):
         if amount is not None and amount is not False and abs(amount) <= 1:
             if not all(len(d) <= 1 for d in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]):
                 return 'invalid_small_amount'
-        # Search MSF Private Fund element, because it's valid with all accounts
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                                                        'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            fp_id = 0
         account = self.pool.get('account.account').read(cr, uid, account_id, ['destination_ids'])
         # Check Cost Center lines regarding destination/account and destination/CC links
         for cc_line in distrib.cost_center_lines:
@@ -190,10 +184,8 @@ class analytic_distribution(osv.osv):
                 return 'invalid'
             if not fp_line.analytic_id:
                 return 'invalid'
-            # If fp_line is MSF Private Fund, all is ok
-            if fp_line.analytic_id.id == fp_id:
-                continue
-            if (account_id, fp_line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.analytic_id.tuple_destination_account_ids if not x.disabled]:
+            if not self.check_fp_acc_dest_compatibility(cr, uid, fp_line.analytic_id.id, account_id,
+                                                        fp_line.destination_id.id, context=context):
                 return 'invalid'
             if not self.check_fp_cc_compatibility(cr, uid, fp_line.analytic_id.id, fp_line.cost_center_id.id, context=context):
                 return 'invalid'
