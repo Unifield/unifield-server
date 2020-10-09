@@ -294,7 +294,9 @@ class hq_entries_split(osv.osv_memory):
                 if fields:
                     fields[0].set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'),"
                                             "'|', "
-                                            "'&', ('fp_compatible_with_cc_ids', '=', cost_center_id), ('tuple_destination', '=', (account_id, destination_id)), "
+                                            "'&', "
+                                            "('fp_compatible_with_cc_ids', '=', cost_center_id), "
+                                            "('fp_compatible_with_acc_dest_ids', '=', (account_id, destination_id)), "
                                             "('id', '=', %s)]" % fp_id)
 
                 # Change Destination field

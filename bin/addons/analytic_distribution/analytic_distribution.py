@@ -220,14 +220,6 @@ class analytic_distribution(osv.osv):
         info = ''
         ana_obj = self.pool.get('account.analytic.account')
         account = self.pool.get('account.account').browse(cr, uid, account_id, context=context)
-        fp = ana_obj.browse(cr, uid, analytic_id, context=context)
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            fp_id = 0
-        is_private_fund = False
-        if analytic_id == fp_id:
-            is_private_fund = True
         # DISTRIBUTION VERIFICATION
         # Check that destination is compatible with account
         if destination_id not in [x.id for x in account.destination_ids]:
@@ -235,13 +227,12 @@ class analytic_distribution(osv.osv):
         # Check that Destination and Cost Center are compatible
         if not self.check_dest_cc_compatibility(cr, uid, destination_id, cost_center_id, context=context):
             return 'invalid', _('Cost Center not compatible with destination')
-        if not is_private_fund:
-            # Check that cost center is compatible with FP (except if FP is MSF Private Fund)
-            if not self.check_fp_cc_compatibility(cr, uid, analytic_id, cost_center_id, context=context):
-                return 'invalid', _('Cost Center not compatible with FP')
-            # Check that tuple account/destination is compatible with FP (except if FP is MSF Private Fund):
-            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp.tuple_destination_account_ids if not x.disabled]:
-                return 'invalid', _('account/destination tuple not compatible with given FP analytic account')
+        # Check that cost center is compatible with FP
+        if not self.check_fp_cc_compatibility(cr, uid, analytic_id, cost_center_id, context=context):
+            return 'invalid', _('Cost Center not compatible with FP')
+        # Check that tuple account/destination is compatible with FP
+        if not self.check_fp_acc_dest_compatibility(cr, uid, analytic_id, account_id, destination_id, context=context):
+            return 'invalid', _('account/destination tuple not compatible with given FP analytic account')
         return res, info
 
     def check_cc_distrib_active(self, cr, uid, distrib_br, posting_date=False, prefix='', from_supply=False):
