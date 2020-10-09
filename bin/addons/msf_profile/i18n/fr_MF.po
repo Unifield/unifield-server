@@ -110902,7 +110902,7 @@ msgstr "CT25 - Température Contrôlée 2-25°C"
 
 #. module: product_attributes
 #: model:product.cold_chain,name:product_attributes.cold_17
-#: model:product.cold_chain,name:product_attributes.cold_21
+#: model:product.cold_chain,name:product_attributes.cold_20
 msgid "CT30 - Controlled Temperature 2-30°C"
 msgstr "CT30 - Température Contrôlée 2-30°C"
 

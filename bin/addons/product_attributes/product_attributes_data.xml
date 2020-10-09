@@ -206,7 +206,7 @@
             <field name="code">FSRT</field>
             <field name="name">FSRT - Frozen for Storage, Refrigerated for Transport</field>
         </record>
-        <record model="product.cold_chain" id="cold_21">
+        <record model="product.cold_chain" id="cold_20">
             <field name="code">CT30</field>
             <field name="name">CT30 - Controlled Temperature 2-30°C</field>
         </record>
