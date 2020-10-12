@@ -493,7 +493,7 @@ class Float(TinyInputWidget):
 #            self.default = 0.0
 
     def set_value(self, value):
-        if self.with_null and value is False:
+        if self.with_null and (value is False or value is None):
             self.default = ''
         else:
             self.default = value or 0.0
@@ -970,7 +970,7 @@ class Form(TinyInputWidget):
             elif node.localName=='separator':
                 views.append(Separator(**attrs))
 
-            elif node.localName=='label':
+            elif node.localName=='label' and not attrs.get('html'):
                 text = attrs.get('string', '')
 
                 if not text:
