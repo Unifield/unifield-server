@@ -418,11 +418,6 @@ class analytic_line(osv.osv):
         res = []
         if not account_type:
             return res
-        try:
-            msf_private_fund = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                                                                   'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            msf_private_fund = 0
         expired_date_ids = []
         date_start = account and account.get('date_start', False) or False
         date_stop = account and account.get('date', False) or False
@@ -456,14 +451,9 @@ class analytic_line(osv.osv):
                     continue
                 if ad_obj.check_dest_cc_compatibility(cr, uid, aline.destination_id and aline.destination_id.id or False,
                                                       account_id, context=context):
-                    if aline.account_id and aline.account_id.id == msf_private_fund:
-                        res.append(aline.id)
-                    elif aline.account_id and ad_obj.check_fp_cc_compatibility(cr, uid, aline.account_id.id, account_id, context=context):
+                    if ad_obj.check_fp_cc_compatibility(cr, uid, aline.account_id.id, account_id, context=context):
                         res.append(aline.id)
         elif account_type == 'FUNDING':
-            fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['tuple_destination_account_ids'], context=context)
-            tuple_destination_account_ids = fp and fp.get('tuple_destination_account_ids', []) or []
-            tuple_list = [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in self.pool.get('account.destination.link').browse(cr, uid, tuple_destination_account_ids) if not x.disabled]
             # Browse all analytic line to verify them
             for aline in self.browse(cr, uid, ids):
                 # Verify that:
@@ -471,23 +461,23 @@ class analytic_line(osv.osv):
                 check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aline.account_id.id])
                 if check_accounts and aline.account_id.id in check_accounts:
                     continue
-                # No verification if account is MSF Private Fund because of its compatibility with all elements.
-                if account_id == msf_private_fund:
-                    res.append(aline.id)
-                    continue
                 # Verify that:
                 # - the line have a cost_center_id field (we expect it's a line with a funding pool account)
                 # - the cost_center is in compatible cost center from the new funding pool
                 # - the general account is in compatible account/destination tuple
                 # - the destination is in compatible account/destination tuple
-                if aline.cost_center_id and ad_obj.check_fp_cc_compatibility(cr, uid, account_id, aline.cost_center_id.id, context=context)\
-                        and aline.general_account_id and aline.destination_id and\
-                        (aline.general_account_id.id, aline.destination_id.id) in tuple_list:
+                if aline.cost_center_id and aline.destination_id and \
+                    ad_obj.check_fp_cc_compatibility(cr, uid, account_id, aline.cost_center_id.id, context=context) and \
+                    ad_obj.check_fp_acc_dest_compatibility(cr, uid, account_id, aline.general_account_id.id,
+                                                           aline.destination_id.id, context=context):
                     res.append(aline.id)
         elif account_type == "DEST":
             for aline in self.browse(cr, uid, ids, context=context):
-                if ad_obj.check_dest_cc_compatibility(cr, uid, account_id, aline.cost_center_id and aline.cost_center_id.id or False, context=context) and \
-                        aline.general_account_id and account_id in [x.id for x in aline.general_account_id.destination_ids]:
+                if ad_obj.check_dest_cc_compatibility(cr, uid, account_id, aline.cost_center_id and aline.cost_center_id.id or False,
+                                                      context=context) and \
+                    account_id in [x.id for x in aline.general_account_id.destination_ids] and \
+                    ad_obj.check_fp_acc_dest_compatibility(cr, uid, aline.account_id.id, aline.general_account_id.id,
+                                                           account_id, context=context):
                     res.append(aline.id)
         else:
             # Case of FREE1 and FREE2 lines
