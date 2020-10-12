@@ -529,22 +529,17 @@ class analytic_line(osv.osv):
                     res.append((id, entry_sequence, _('CC/DEST')))
                     return False
 
-            # check funding pool (expect for MSF Private Fund)
-            if not new_fp_id == msf_pf_id:  # all OK for MSF Private Fund
-                # - cost center and funding pool compatibility
-                if not ad_obj.check_fp_cc_compatibility(cr, uid, new_fp_id, new_cc_id, context=context):
-                    # not compatible with CC
-                    res.append((id, entry_sequence, _('CC')))
-                    return False
+            # - cost center and funding pool compatibility
+            if not ad_obj.check_fp_cc_compatibility(cr, uid, new_fp_id, new_cc_id, context=context):
+                # not compatible with CC
+                res.append((id, entry_sequence, _('CC')))
+                return False
 
-                # - destination / account
-                acc_dest = (general_account_br.id, new_dest_id)
-                if acc_dest not in [x.account_id and x.destination_id and \
-                                    (x.account_id.id, x.destination_id.id) \
-                                    for x in new_fp_br.tuple_destination_account_ids if not x.disabled]:
-                    # not compatible with dest/account
-                    res.append((id, entry_sequence, _('account/dest')))
-                    return False
+            # - destination / account
+            if not ad_obj.check_fp_acc_dest_compatibility(cr, uid, new_fp_id, general_account_br.id, new_dest_id, context=context):
+                # not compatible with account/dest
+                res.append((id, entry_sequence, _('account/dest')))
+                return False
 
             # check active date
             if not check_date(new_dest_br, posting_date):
