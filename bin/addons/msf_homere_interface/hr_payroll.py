@@ -175,8 +175,13 @@ class hr_payroll(osv.osv):
             elif ana_account['category'] == 'FUNDING':
                 fp.append(ana_account['id'])
         if len(fp) > 1 or len(cc) > 1 or len(dest) > 1:
-            return self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft'), '|', '|', ('funding_pool_id', 'in', fp), ('cost_center_id','in', cc), ('destination_id','in', dest)])
-
+            return self.pool.get('hr.payroll.msf').search(cr, uid,
+                                                          [('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', True),
+                                                           '|', '|',
+                                                           ('funding_pool_id', 'in', fp),
+                                                           ('cost_center_id', 'in', cc),
+                                                           ('destination_id', 'in', dest)],
+                                                          order='NO_ORDER')
         return []
 
     def _get_trigger_state_account(self, cr, uid, ids, context=None):
@@ -236,7 +241,12 @@ class hr_payroll(osv.osv):
                                           store={
                                               'hr.payroll.msf': (lambda self, cr, uid, ids, c=None: ids, ['account_id', 'cost_center_id', 'funding_pool_id', 'destination_id'], 10),
                                               'account.account': (_get_trigger_state_account, ['user_type_code', 'destination_ids'], 20),
-                                              'account.analytic.account': (_get_trigger_state_ana, ['date', 'date_start', 'cost_center_ids', 'tuple_destination_account_ids'], 20),
+                                              'account.analytic.account': (_get_trigger_state_ana, ['date', 'date_start', 'allow_all_cc',
+                                                                                                    'dest_cc_ids', 'allow_all_cc_with_fp',
+                                                                                                    'cost_center_ids', 'select_accounts_only',
+                                                                                                    'fp_account_ids',
+                                                                                                    'tuple_destination_account_ids'],
+                                                                           20),
                                               'account.destination.link': (_get_trigger_state_dest_link, ['account_id', 'destination_id'], 30),
                                           }
                                           ),
