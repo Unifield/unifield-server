@@ -164,9 +164,9 @@ class hr_payroll(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        fp = [0]
-        cc = [0]
-        dest = [0]
+        fp = [-1]
+        cc = [-1]
+        dest = [-1]
         for ana_account in self.read(cr, uid, ids, ['category']):
             if ana_account['category'] == 'OC':
                 cc.append(ana_account['id'])
@@ -176,7 +176,7 @@ class hr_payroll(osv.osv):
                 fp.append(ana_account['id'])
         if len(fp) > 1 or len(cc) > 1 or len(dest) > 1:
             return self.pool.get('hr.payroll.msf').search(cr, uid,
-                                                          [('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', True),
+                                                          [('state', '=', 'draft'),
                                                            '|', '|',
                                                            ('funding_pool_id', 'in', fp),
                                                            ('cost_center_id', 'in', cc),
