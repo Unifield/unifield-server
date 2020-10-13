@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="stock_pipe_per_product_instance_search_view" model="ir.ui.view">
+            <field name="name">stock.pipe.per.product.instance.search.view</field>
+            <field name="model">stock.pipe.per.product.instance</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Export Stock &amp; Pipe per Product and per Instance">
+                    <field name="name" />
+                    <field name="state" />
+                    <field name="product_id" />
+                    <field name="product_list_id" />
+                </search>
+            </field>
+        </record>
+
+        <record id="stock_pipe_per_product_instance_tree_view" model="ir.ui.view">
+            <field name="name">stock.pipe.per.product.instance.tree.view</field>
+            <field name="model">stock.pipe.per.product.instance</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Export Stock &amp; Pipe per Product and per Instance">
+                    <field name="name" />
+                    <field name="state" />
+                    <field name="product_id" />
+                    <field name="product_list_id" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="stock_pipe_per_product_instance_form_view" model="ir.ui.view">
+            <field name="name">stock.pipe.per.product.instance.form.view</field>
+            <field name="model">stock.pipe.per.product.instance</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Export Stock &amp; Pipe per Product and per Instance" noteditable="state != 'draft'">
+                    <separator colspan="4" string="Request information" />
+                    <group colspan="4" col="4">
+                        <field name="name" />
+                        <field name="state" />
+                        <field name="product_id" attrs="{'readonly': [('product_list_id', '!=', False)]}" />
+                        <field name="product_list_id" attrs="{'readonly': [('product_id', '!=', False)]}" />
+                    </group>
+                    <button name="generate_report" type="object" string="Generate report" icon="gtk-execute" states='draft' />
+                </form>
+            </field>
+        </record>
+
+        <record id="stock_pipe_per_product_instance_info_view" model="ir.ui.view">
+            <field name="name">stock.pipe.per.product.instance.info.view</field>
+            <field name="model">stock.pipe.per.product.instance</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Status of the report" hide_new_button="1" hide_delete_button="1">
+                    <label> </label>
+                    <group colspan="2" col="2">
+                        <html>
+                            <div style="align: center">
+                                <p style="font-size:14px;align:center">
+                                    Your export inventory level demand will be treated quickly.<br />
+                                </p>
+                                <p style="font-size:14px;align:center">
+                                    Due to the volume of data, your report cannot be shown immediatly.<br />
+                                </p>
+                                <p style="font-size:14px;align:center">
+                                    When the report will be ready, you can access to it by the menu Tools / Export Stock &amp; Pipe per Product and per Instance.<br />
+                                </p>
+                            </div>
+                        </html>
+                    </group>
+                    <label> </label>
+                </form>
+            </field>
+        </record>
+
+        <!-- Report -->
+        <report
+            id="report_stock_pipe_per_product_instance_xls"
+            string="Stock &amp; Pipe per Product and per Instance"
+            model="stock.pipe.per.product.instance"
+            name="stock.pipe.per.product.instance.xls"
+            file="msf_tools/report/report_stock_pipe_per_product_instance_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
+
+        <!-- Menu -->
+        <record id="stock_pipe_per_product_instance_action" model="ir.actions.act_window">
+            <field name="name">Export Stock &amp; Pipe Report</field>
+            <field name="res_model">stock.pipe.per.product.instance</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            id="stock_pipe_per_product_instance_menu"
+            action="stock_pipe_per_product_instance_action"
+            parent="object_query.menu_preferences"
+            sequence="52" />
+    </data>
+</openerp>

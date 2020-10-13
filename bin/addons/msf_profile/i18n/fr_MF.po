@@ -1112,6 +1112,7 @@ msgstr "Décocher le champ \"Actif\" si réglé sur Faux, cela vous permettra de
 #. module: product_attributes, msf_tools
 #: field:product.product,standard_ok:0
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:82
+#: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:89
 msgid "Standardization Level"
 msgstr "Niveau de standardisation"
 
@@ -5920,6 +5921,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:492
 #: report:addons/procurement_cycle/report/replenishment_segment.mako:356
 #: report:addons/procurement_cycle/report/replenishment_segment.mako:395
+#: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:87
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -8610,6 +8612,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:product.stock_out,state:0
 #: selection:account.model,state:0
 #: view:account.model:0
+#: selection:stock.pipe.per.product.instance,state:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -15842,6 +15845,7 @@ msgstr "Poids net"
 #: view:stock.move:0
 #: selection:sync.client.entity_manager,state:0
 #: selection:stock.expired.damaged.report,state:0
+#: selection:stock.pipe.per.product.instance,state:0
 msgid "Ready"
 msgstr "Prêt"
 
@@ -23666,6 +23670,7 @@ msgstr "Taux"
 #: view:export.report.stopped.products:0
 #: view:export.report.stock.inventory:0
 #: view:export.report.stock.move:0
+#: view:stock.pipe.per.product.instance:0
 msgid "Request information"
 msgstr "Demande d'informations"
 
@@ -29886,6 +29891,7 @@ msgstr "System period ?"
 #: view:export.report.stock.move:0
 #: view:unconsistent.stock.report:0
 #: view:stock.expired.damaged.report:0
+#: view:stock.pipe.per.product.instance:0
 msgid "Generate report"
 msgstr "Générer le rapport"
 
@@ -34949,6 +34955,7 @@ msgstr "Michigan"
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:79
 #: report:addons/stock/report/products_situation_report_xls.mako:216
 #: field:products.situation.report,p_code:0
+#: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:86
 #, python-format
 msgid "Code"
 msgstr "Code"
@@ -43082,6 +43089,7 @@ msgstr "Domaine des comptes"
 #: field:product.product,international_status:0
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:81
 #: report:addons/stock/report/products_situation_report_xls.mako:220
+#: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:88
 msgid "Product Creator"
 msgstr "Créateur produit"
 
@@ -58579,6 +58587,7 @@ msgstr "Année en cours avec le Siècle : %(year)s"
 #. module: msf_tools
 #: field:export.report.inconsistencies,name:0
 #: field:export.report.stopped.products,name:0
+#: field:stock.pipe.per.product.instance,name:0
 msgid "Generated On"
 msgstr "Généré le"
 
@@ -63621,12 +63630,13 @@ msgstr "Type de réccurence"
 msgid "Linked Supplier Info line"
 msgstr "Ligne d'Info sur Fournisseur Connexe"
 
-#. modules: stock, msf_doc_import, product_attributes, procurement_cycle
+#. modules: stock, msf_doc_import, product_attributes, procurement_cycle, msf_tools
 #: field:physical.inventory.select.products,product_list:0
 #: field:msf.import.export,product_list_id:0
 #: code:addons/product_attributes/product_attributes.py:1580
 #: field:products.situation.report,product_list_id:0
 #: field:wizard.export.replenishment.product.list,list_id:0
+#: field:stock.pipe.per.product.instance,product_list_id:0
 msgid "Product List"
 msgstr "Liste de Produits"
 
@@ -71103,10 +71113,11 @@ msgstr "Afficher les boutons d'import"
 msgid "America/Indiana/Vincennes"
 msgstr "America/Indiana/Vincennes"
 
-#. modules: account_override, board, vertical_integration
+#. modules: account_override, board, vertical_integration, msf_tolls
 #: report:addons/account_override/report/open_invoices_xls.mako:280
 #: report:addons/board/report/integrity.mako:82
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:265
+#: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:74
 msgid "Report Date"
 msgstr "Date de génération"
 
@@ -81722,6 +81733,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: report:addons/procurement_cycle/report/product_stock_out.mako:436
 #: field:product.stock_out,state:0
 #: field:account.model,state:0
+#: field:stock.pipe.per.product.instance,state:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -82453,7 +82465,7 @@ msgstr "Créer / Ecrire / Copier"
 msgid "SFTP connection succeeded"
 msgstr "SFTP connection succeeded"
 
-#. modules: tender_flow, product_nomenclature, product_asset, account_override, product_attributes, register_accounting, product_expiry, procurement_cycle, return_claim, supplier_catalogue, import_data, mission_stock, unifield_setup, stock_forecast, stock_batch_recall, order_types, msf_doc_import, purchase_followup, product, stock_override, stock_schedule, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, base, product_list, product_manufacturer, procurement_report, threshold_value, purchase, account, msf_outgoing, stock_move_tracking, purchase_allocation_report, procurement_auto, sale, transport_mgmt, procurement, sourcing, msf_audittrail, purchase_msf, stock, sync_so
+#. modules: tender_flow, product_nomenclature, product_asset, account_override, product_attributes, register_accounting, product_expiry, procurement_cycle, return_claim, supplier_catalogue, import_data, mission_stock, unifield_setup, stock_forecast, stock_batch_recall, order_types, msf_doc_import, purchase_followup, product, stock_override, stock_schedule, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, base, product_list, product_manufacturer, procurement_report, threshold_value, purchase, account, msf_outgoing, stock_move_tracking, purchase_allocation_report, procurement_auto, sale, transport_mgmt, procurement, sourcing, msf_audittrail, purchase_msf, stock, sync_so, msf_tools
 #: field:account.analytic.line,product_id:0
 #: view:account.entries.report:0
 #: field:account.entries.report,product_id:0
@@ -82660,6 +82672,7 @@ msgstr "SFTP connection succeeded"
 #: report:addons/account/report/invoice_excel_export.mako:66
 #: report:addons/account/report/export_invoice.mako:120
 #: field:product.ask.activate.wizard,product_id:0
+#: field:stock.pipe.per.product.instance,product_id:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -83640,6 +83653,7 @@ msgstr "Ligne sourcée-n"
 #: selection:product.mass.update,state:0
 #: selection:stock.expired.damaged.report,state:0
 #: selection:account.invoice.import,state:0
+#: selection:stock.pipe.per.product.instance,state:0
 #, python-format
 msgid "In Progress"
 msgstr "En cours"
@@ -86810,6 +86824,7 @@ msgstr "Commande de Terrain - brouillo"
 #: field:product.product,state_ud:0
 #: report:addons/msf_tools/report/report_inconsistencies_xls.mako:84
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:83
+#: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:90
 msgid "Unidata Status"
 msgstr "Statut UniData"
 
@@ -102335,6 +102350,7 @@ msgstr "Toutes zones"
 #: code:addons/mission_stock/mission_stock.py:517
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:56
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:99
+#: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:105
 #, python-format
 msgid "Instance stock"
 msgstr "Stock de l'Instance"
@@ -102385,6 +102401,7 @@ msgstr "Nombre de"
 #: report:addons/procurement_cycle/report/replenishment_order_calc.mako:412
 #: field:replenishment.inventory.review.line,pipeline_qty:0
 #: field:replenishment.order_calc.line,pipeline_qty:0
+#: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:106
 #, python-format
 msgid "Pipeline Qty"
 msgstr "Qté en attente"
@@ -104240,6 +104257,7 @@ msgstr "Numéro de lot spécifique"
 
 #. module: msf_tools
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:97
+#: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:103
 msgid "Instance/Mission"
 msgstr "Instance/Mission"
 
@@ -104251,6 +104269,7 @@ msgstr "Il n'y a aucun produit stoppé"
 #. module: msf_tools, product
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:98
 #: field:product.template,state:0
+#: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:104
 msgid "Unifield Status"
 msgstr "Statut Unifield"
 
@@ -110915,3 +110934,19 @@ msgstr "F-20 - Congelé <-20°C"
 #: model:product.cold_chain,name:product_attributes.cold_19
 msgid "FSRT - Frozen for Storage, Refrigerated for Transport"
 msgstr "FSRT - Congelé pour le Stockage, Réfrigéré pour le Transport"
+
+#. module: msf_tools
+#: model:ir.actions.act_window,name:msf_tools.stock_pipe_per_product_instance_action
+#: model:ir.ui.menu,name:msf_tools.stock_pipe_per_product_instance_menu
+msgid "Export Stock & Pipe Report"
+msgstr "Export du Rapport Stock/Qtés en Cours"
+
+#. module: msf_tools
+#: view:stock.pipe.per.product.instance:0
+msgid "Export Stock & Pipe per Product and per Instance"
+msgstr "Export du Stock et des Qtés en Cours par Produit et par Instance"
+
+#. module: msf_tools
+#: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:80
+msgid "There is no products to report"
+msgstr "Il n'y a aucun produit dans le rapport"
