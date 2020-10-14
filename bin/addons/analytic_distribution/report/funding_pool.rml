@@ -273,7 +273,7 @@
       <tr>
       [[ repeatIn(o.fp_account_ids, 'acc') ]]
         <td>
-          <para style="P7">[[ acc.code or '' ]]</para>
+          <para style="P7">[[ acc.code ]]</para>
         </td>
         <td>
           <para style="P7">[[ acc.name ]]</para>
