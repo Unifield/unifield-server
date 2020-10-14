@@ -108,6 +108,7 @@ class analytic_distribution(osv.osv):
                                              context=context)
                 if fp and fp.category == 'FUNDING':
                     # when the link is made to G/L accounts only: all Destinations are allowed
+                    # note that the compatibility between account and dest. should be checked separately
                     if fp.select_accounts_only and account_id in [a.id for a in fp.fp_account_ids]:
                         res = True
                     # otherwise the combination "account + dest" must be checked
