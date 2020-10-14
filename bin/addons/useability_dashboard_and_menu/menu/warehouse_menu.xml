@@ -71,7 +71,7 @@
                   parent="stock.menu_stock_inventory_control" 
                   sequence="21"/>
 	              
-        <menuitem name="Mission stock"
+        <menuitem name="Mission Stock Report"
                   id="mission_stock.mission_stock_wizard_menu"
                   parent="stock.menu_stock_inventory_control"
                   sequence="23"

@@ -16535,7 +16535,6 @@ msgstr "%s update%s"
 
 #. modules: msf_budget, sales_followup, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, msf_partner, res_currency_tables, salr, sourcing, tender_flow, msf_doc_import, finance, msf_order_date, stock, product, stock_override
 #: view:account.state.open:0
-#: selection:mission.stock.wizard,split_stock:0
 #: selection:mission.stock.wizard,with_valuation:0
 #: view:wizard.accrual.reversal:0
 #: view:wizard.accrual.validation:0
@@ -24791,7 +24790,6 @@ msgstr "Europe/Bucharest"
 
 #. modules: msf_budget, account, product_attributes, register_accounting, unifield_setup, object_query, order_types, mission_stock, msf_accrual, procurement_report, stock, msf_partner, salr, sourcing, tender_flow, msf_doc_import, finance, msf_supply_doc_export, product, stock_override, msf_order_date
 #: view:account.state.open:0
-#: selection:mission.stock.wizard,split_stock:0
 #: selection:mission.stock.wizard,with_valuation:0
 #: view:wizard.accrual.reversal:0
 #: view:wizard.accrual.validation:0
@@ -27280,6 +27278,12 @@ msgstr "URL"
 
 #. module: mission_stock
 #: model:ir.ui.menu,name:mission_stock.mission_stock_wizard_menu
+#: code:addons/mission_stock/wizard/mission_stock_wizard.py:217
+#: view:stock.mission.report.line:0
+msgid "Mission Stock Report"
+msgstr "Rapport de Stock de Mission"
+
+#. module: mission_stock
 #: view:mission.stock.wizard:0
 msgid "Mission stock"
 msgstr "Stock de Mission"
@@ -46162,11 +46166,6 @@ msgstr "Produits inactivés"
 msgid "Type fields"
 msgstr "Champs de type"
 
-#. module: mission_stock
-#: field:mission.stock.wizard,split_stock:0
-msgid "Split the Warehouse stock qty. to Stock and Unallocated Stock."
-msgstr "Scinder la qté de stock en entrepôt en stock et stock non affecté."
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -57187,13 +57186,6 @@ msgstr "Date de départ:"
 #: view:msf.budget:0
 msgid "Do you really want to delete this budget?"
 msgstr "Do you really want to delete this budget?"
-
-#. module: mission_stock
-#: code:addons/mission_stock/wizard/mission_stock_wizard.py:217
-#: view:stock.mission.report.line:0
-#, python-format
-msgid "Stock mission report"
-msgstr "Stock - Rapport mission"
 
 #. module: sync_client
 #: code:addons/sync_client/sync_client.py:219
@@ -81920,7 +81912,6 @@ msgid "Invoice line that has been reversed by this one through a \"refund cancel
 msgstr "Ligne de facture qui a été contrepassée par celle-ci via un avoir de type \"annulation\" ou \"modification\""
 
 #. module: mission_stock
-#: report:addons/mission_stock/report/stock_mission_report_xls.mako:64
 #: field:stock.mission.report.line,wh_qty:0
 #: code:addons/mission_stock/mission_stock.py:55
 #: code:addons/mission_stock/mission_stock.py:70
@@ -102287,8 +102278,8 @@ msgstr "Date de livraison %s"
 
 #. module: mission_stock
 #: field:mission.stock.wizard,display_only_in_stock:0
-msgid "Display only products in stock"
-msgstr "N'afficher que les produits en stock"
+msgid "Display only products in stock and/or in pipe"
+msgstr "N'afficher que les produits en stock et/ou en attente"
 
 #. module: consumption_calculation
 #: report:addons/consumption_calculation/report/expiry_report.mako:107

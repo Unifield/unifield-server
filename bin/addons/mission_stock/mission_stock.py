@@ -796,7 +796,6 @@ class stock_mission_report(osv.osv):
 
     def check_new_product_and_create_export(self, cr, uid, report_ids, product_values,
                                             csv=True, xls=True, with_valuation=True,
-                                            split_stock=True,
                                             all_products=True,
                                             display_only_in_stock=False,
                                             context=None):
@@ -869,7 +868,6 @@ class stock_mission_report(osv.osv):
                 self._get_export(cr, uid, report['id'], product_values,
                                  csv=csv, xls=xls,
                                  with_valuation=with_valuation,
-                                 split_stock=split_stock,
                                  all_products=all_products,
                                  display_only_in_stock=display_only_in_stock,
                                  context=context)
@@ -1090,8 +1088,7 @@ class stock_mission_report(osv.osv):
                 except:
                     pass
 
-    def _get_export(self, cr, uid, ids, product_values, csv=True, xls=True,
-                    with_valuation=True, split_stock=True, all_products=True,
+    def _get_export(self, cr, uid, ids, product_values, csv=True, xls=True, with_valuation=True, all_products=True,
                     display_only_in_stock=False, context=None):
         '''
         Get the CSV files of the stock mission report.
@@ -1128,14 +1125,10 @@ class stock_mission_report(osv.osv):
             cr.execute(GET_EXPORT_REQUEST, (lang, (report_id, )))
             request_result = cr.dictfetchall()
 
-            if split_stock and with_valuation:
+            if with_valuation:
                 report_type = 's_v_vals'
-            elif split_stock and not with_valuation:
+            elif not with_valuation:
                 report_type = 's_nv_vals'
-            elif not split_stock and with_valuation:
-                report_type = 'ns_v_vals'
-            elif not split_stock and not with_valuation:
-                report_type = 'ns_nv_vals'
 
             report = self.browse(cr, uid, report_id, fields_to_fetch=['full_view'], context=context)
             hide_amc_fmc = report.full_view and (self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.level in ['section', 'coordo'])

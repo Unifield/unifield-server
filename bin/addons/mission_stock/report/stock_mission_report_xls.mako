@@ -57,12 +57,8 @@
          % if o.with_valuation:
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Instance stock val.')}</Data></Cell>
          % endif
-         % if o.split_stock:
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Stock Qty.')}</Data></Cell>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Unallocated Stock Qty.')}</Data></Cell>
-         % else:
-                <Cell ss:StyleID="header"><Data ss:Type="String">${_('Warehouse stock')}</Data></Cell>
-         % endif
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Cross-Docking Qty.')}</Data></Cell>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Secondary Stock Qty.')}</Data></Cell>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Internal Cons. Unit Qty.')}</Data></Cell>
@@ -71,19 +67,11 @@
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('In Pipe Qty')}</Data></Cell>
             </Row>
 
-        % if o.split_stock:
-            % if o.with_valuation:
-                ${o.report_id.s_v_vals}
-             % else:
-                ${o.report_id.s_nv_vals}
-             % endif
-        % else:
-            % if o.with_valuation:
-                ${o.report_id.ns_v_vals}
-            % else:
-                ${o.report_id.ns_nv_vals}
-            % endif
-        % endif
+         % if o.with_valuation:
+            ${o.report_id.s_v_vals}
+         % else:
+            ${o.report_id.s_nv_vals}
+         % endif
     </Table>
 
     <x:WorksheetOptions/>

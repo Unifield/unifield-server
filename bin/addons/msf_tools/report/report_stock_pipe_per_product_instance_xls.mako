@@ -84,6 +84,7 @@
         <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Report Date')}:</Data></Cell>
         <Cell ss:StyleID="tab_date"><Data ss:Type="DateTime">${parseDateXls(r.name)|n}</Data></Cell>
     </Row>
+    <Row></Row>
     <% products = get_products() %>
     % if not products:
         <Row ss:AutoFitHeight="1">
