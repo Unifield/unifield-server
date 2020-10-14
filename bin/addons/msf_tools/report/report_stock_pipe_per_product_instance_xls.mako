@@ -92,6 +92,7 @@
     % endif
 
     % for prod in products:
+        <% prod_info = get_prod_info(prod[0]) %>
         <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Code')|x}</Data></Cell>
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
@@ -104,11 +105,11 @@
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${prod[1]|x}</Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${prod[2]|x}</Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${prod[3] or ''|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${prod[4] or ''|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${prod[5] or ''|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${getSel(prod_info, 'standard_ok') or ''|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${getSel(prod_info, 'state_ud') or ''|x}</Data></Cell>
         </Row>
 
-        <% smrl_list = get_stock_mission_report_lines(prod) %>
+        <% smrl_list = get_stock_mission_report_lines(r, prod) %>
         <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Instance/Mission')|x}</Data></Cell>
           <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('Unifield Status')|x}</Data></Cell>
@@ -117,10 +118,10 @@
         </Row>
         % for smrl in smrl_list:
             <Row ss:AutoFitHeight="1">
-              <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl[0]|x}</Data></Cell>
-              <Cell ss:StyleID="tab_content"><Data ss:Type="String">${get_uf_status(smrl[1])|x}</Data></Cell>
-              <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${smrl[2]|x}</Data></Cell>
-              <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${smrl[3]|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content"><Data ss:Type="String">${smrl[1]|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content"><Data ss:Type="String">${getSel(prod_info.state, 'name') or ''|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${smrl[4]|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${smrl[5]|x}</Data></Cell>
             </Row>
         % endfor
         <Row></Row>

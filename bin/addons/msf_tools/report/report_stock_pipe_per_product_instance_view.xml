@@ -42,6 +42,14 @@
                         <field name="product_id" attrs="{'readonly': [('product_list_id', '!=', False)]}" />
                         <field name="product_list_id" attrs="{'readonly': [('product_id', '!=', False)]}" />
                     </group>
+                    <field name="stock_pipe_per_product_instance_prod_lines_ids" attrs="{'invisible': ['|', ('product_id', '=', False), ('state', '!=', 'ready')]}" mode="tree" readonly="1" colspan="4" nolabel="1">
+                       <tree string="Stock &amp; Pipe for the selected Product">
+                          <field name="instance_id"/>
+                          <field name="uf_state"/>
+                          <field name="instance_stock"/>
+                          <field name="pipe_qty"/>
+                       </tree>
+                    </field>
                     <button name="generate_report" type="object" string="Generate report" icon="gtk-execute" states='draft' />
                 </form>
             </field>

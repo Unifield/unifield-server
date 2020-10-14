@@ -41,7 +41,7 @@ class stock_pipe_per_product_instance(osv.osv):
         'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('ready', 'Ready')], string='State', readonly=True),
         'product_id': fields.many2one('product.product', string='Product'),
         'product_list_id': fields.many2one('product.list', string='Product List'),
-        'stock_pipe_per_product_instance_prod_lines_ids': fields.one2many('stock.pipe.per.product.instance.prod.lines', 'stock_pipe_per_product_instance_id', string='Stock & Pipe for selected Product'),
+        'stock_pipe_per_product_instance_prod_lines_ids': fields.one2many('stock.pipe.per.product.instance.prod.lines', 'stock_pipe_per_product_instance_id', string='Stock & Pipe for the selected Product'),
     }
 
     _defaults = {
@@ -95,7 +95,7 @@ class stock_pipe_per_product_instance(osv.osv):
             }
 
             if new_thread.isAlive():
-                view_id = data_obj.get_object_reference(cr, uid, 'msf_tools', 'report_stock_pipe_per_product_instance_info_view')[1]
+                view_id = data_obj.get_object_reference(cr, uid, 'msf_tools', 'stock_pipe_per_product_instance_info_view')[1]
                 res['view_id'] = [view_id]
 
         if not res:
@@ -159,11 +159,11 @@ class stock_pipe_per_product_instance_prod_lines(osv.osv):
     _columns = {
         'stock_pipe_per_product_instance_id': fields.many2one('stock.pipe.per.product.instance', string='Report Stock & Pipe per Product and per Instance'),
         'product_id': fields.many2one('product.product', string='Product'),
-        'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', readonly=1, write_relate=False, string='UoM'),
-        'instance_id': fields.many2one('msf.instance', 'Instance', readonly=1),
-        'uf_state': fields.char('UniField Status', size=64, readonly=1),
-        'instance_stock': fields.integer('Instance Stock', readonly=1),
-        'pipe_qty': fields.integer('Pipeline Qty', readonly=1),
+        'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', store=True, string='UoM'),
+        'instance_id': fields.many2one('msf.instance', 'Instance/Mission'),
+        'uf_state': fields.related('product_id', 'state', type='many2one', relation='product.status', store=True, string='UniField Status'),
+        'instance_stock': fields.float('Instance stock', related_uom='uom_id'),
+        'pipe_qty': fields.float('Pipeline Qty', related_uom='uom_id'),
     }
 
 
@@ -180,10 +180,10 @@ class parser_report_stock_pipe_per_product_instance_xls(report_sxw.rml_parse):
         # localcontext allows you to call methods inside mako file :
         self.localcontext.update({
             'time': time,
-            '_parse_date_xls': self.parseDateXls,
+            'parseDateXls': self._parse_date_xls,
             'get_products': self.get_products,
+            'get_prod_info': self.get_prod_info,
             'get_stock_mission_report_lines': self.get_stock_mission_report_lines,
-            'get_uf_status': self.get_uf_status,
         })
 
         self.status_buffer = {}
@@ -211,36 +211,34 @@ class parser_report_stock_pipe_per_product_instance_xls(report_sxw.rml_parse):
 
         return self.cr.fetchall()
 
-    def get_stock_mission_report_lines(self, product):
+    def get_prod_info(self, prod_id):
+        '''
+        Get the Unifield Status, Standardization Level and Unidata Status of the product
+        '''
+        ftf = ['state', 'standard_ok', 'state_ud']
+        prod_info = self.pool.get('product.product').browse(self.cr, self.uid, prod_id, fields_to_fetch=ftf, context=self.localcontext)
+
+        return prod_info
+
+    def get_stock_mission_report_lines(self, report, product):
         '''
         Return browse record list of stock_mission_report_line with given product_id
         '''
         self.cr.execute("""
-            SELECT m.name, l.product_state, l.internal_qty, l.in_pipe_qty 
+            SELECT m.instance_id, m.name, l.product_id, l.product_state, l.internal_qty, l.in_pipe_qty 
             FROM stock_mission_report_line l 
             LEFT JOIN stock_mission_report m ON l.mission_report_id = m.id 
             LEFT JOIN msf_instance i ON m.instance_id = i.id AND i.state != 'inactive' 
             WHERE l.full_view = 'f' AND l.product_id = %s AND (l.internal_qty != 0 OR l.in_pipe_qty != 0)
         """, (product[0],))
 
-        return self.cr.fetchall()
+        prod_infos = self.cr.fetchall()
+        if report.product_id:  # Create lines to display only if one product has been selected
+            for prod in prod_infos:
+                info = {'stock_pipe_per_product_instance_id': report.id, 'product_id': prod[2], 'instance_id': prod[0], 'instance_stock': prod[4], 'pipe_qty': prod[5]}
+                self.pool.get('stock.pipe.per.product.instance.prod.lines').create(self.cr, self.uid, info, context=self.localcontext)
 
-    def get_uf_status(self, code):
-        '''
-        Return the name of the unifield status with the given code
-        '''
-        if code in self.status_buffer:
-            return self.status_buffer[code]
-
-        status_obj = self.pool.get('product.status')
-        code_ids = status_obj.search(self.cr, self.uid, [('code', '=', code)], context=self.localcontext)
-        res = ""
-        if code_ids:
-            res = status_obj.read(self.cr, self.uid, code_ids, ['name'])[0]['name']
-
-        self.status_buffer[code] = res
-
-        return res
+        return prod_infos
 
 
 class report_stock_pipe_per_product_instance_xls(SpreadsheetReport):

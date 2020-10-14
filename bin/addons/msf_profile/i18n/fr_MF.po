@@ -82673,6 +82673,7 @@ msgstr "SFTP connection succeeded"
 #: report:addons/account/report/export_invoice.mako:120
 #: field:product.ask.activate.wizard,product_id:0
 #: field:stock.pipe.per.product.instance,product_id:0
+#: field:stock.pipe.per.product.instance.prod.lines,product_id:0
 #, python-format
 msgid "Product"
 msgstr "Produit"
@@ -102351,6 +102352,7 @@ msgstr "Toutes zones"
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:56
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:99
 #: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:105
+#: field:stock.pipe.per.product.instance.prod.lines,instance_stock:0
 #, python-format
 msgid "Instance stock"
 msgstr "Stock de l'Instance"
@@ -102402,6 +102404,7 @@ msgstr "Nombre de"
 #: field:replenishment.inventory.review.line,pipeline_qty:0
 #: field:replenishment.order_calc.line,pipeline_qty:0
 #: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:106
+#: field:stock.pipe.per.product.instance.prod.lines,pipe_qty:0
 #, python-format
 msgid "Pipeline Qty"
 msgstr "Qté en attente"
@@ -104258,6 +104261,7 @@ msgstr "Numéro de lot spécifique"
 #. module: msf_tools
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:97
 #: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:103
+#: field:stock.pipe.per.product.instance.prod.lines,instance_id:0
 msgid "Instance/Mission"
 msgstr "Instance/Mission"
 
@@ -104270,6 +104274,7 @@ msgstr "Il n'y a aucun produit stoppé"
 #: report:addons/msf_tools/report/report_stopped_products_xls.mako:98
 #: field:product.template,state:0
 #: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:104
+#: field:stock.pipe.per.product.instance.prod.lines,uf_state:0
 msgid "Unifield Status"
 msgstr "Statut Unifield"
 
@@ -110950,3 +110955,20 @@ msgstr "Export du Stock et des Qtés en Cours par Produit et par Instance"
 #: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:80
 msgid "There is no products to report"
 msgstr "Il n'y a aucun produit dans le rapport"
+
+#. module: msf_tools
+#: report:addons/msf_tools/report/report_stock_pipe_per_product_instance_xls.mako:67
+#: model:ir.actions.report.xml,name:msf_tools.report_stock_pipe_per_product_instance_xls
+msgid "Stock & Pipe per Product and per Instance"
+msgstr "Stock & et Qtés en Cours par Produit et par Instance"
+
+#. module: msf_tools
+#: view:stock.pipe.per.product.instance:0
+#: field:stock.pipe.per.product.instance,stock_pipe_per_product_instance_prod_lines_ids:0
+msgid "Stock & Pipe for the selected Product"
+msgstr "Stock & Qtés en Cours pour le Produit sélectionné"
+
+#. module: msf_tools
+#: field:stock.pipe.per.product.instance.prod.lines,stock_pipe_per_product_instance_id:0
+msgid "Report Stock & Pipe per Product and per Instance"
+msgstr "Rapport du Stock & Qtés en Cours par Produit et par Instance"
