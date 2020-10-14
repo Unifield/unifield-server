@@ -60860,6 +60860,11 @@ msgstr "Compte Grand Livre"
 msgid "G/L Accounts"
 msgstr "Comptes Grand Livre"
 
+#. module: analytic_distribution
+#: report:funding.pool:0
+msgid "G/L Accounts:"
+msgstr "Comptes Grand Livre :"
+
 #. module: analytic_override
 #: help:account.analytic.account,fp_account_ids:0
 msgid "G/L accounts linked to the Funding Pool"
