@@ -361,13 +361,14 @@ class analytic_account(osv.osv):
                     pf_id = 0
                 compatible_fp_ids.append(pf_id)
                 if acc_id and dest_id:
-                    other_fp_ids = self.search(cr, uid, [('category', '=', 'FUNDING'), ('id', '!=', pf_id)], context=context)
+                    other_fp_ids = self.search(cr, uid, [('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('id', '!=', pf_id)],
+                                               context=context)
                     for fp in self.browse(cr, uid, other_fp_ids,
                                           fields_to_fetch=['select_accounts_only', 'fp_account_ids', 'tuple_destination_account_ids'],
                                           context=context):
-                        # when the link is made to G/L accounts only: all Destinations are allowed
-                        # note that the compatibility between account and dest. should be checked separately
-                        if fp.select_accounts_only and acc_id in [a.id for a in fp.fp_account_ids]:
+                        # when the link is made to G/L accounts only: all Destinations compatible with the acc. are allowed
+                        if fp.select_accounts_only and \
+                                acc_id in [a.id for a in fp.fp_account_ids if dest_id in [d.id for d in a.destination_ids]]:
                             compatible = True
                         # otherwise the combination "account + dest" must be checked
                         elif not fp.select_accounts_only and (acc_id, dest_id) in \
