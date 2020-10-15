@@ -217,7 +217,7 @@
                                         $('#time_unit_lt').change(set_unit_label);
                                     }
                                 } else {
-                                    var unit = $('#time_unit_lt').html();
+                                    var unit = $('#time_unit_lt').html().trim();
                                 }
                                 if (unit) {
                                     ['order_coverage', 'order_preparation_lt', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'total_lt', 'internal_lt', 'external_lt'].forEach(function (f){
@@ -455,7 +455,7 @@
                                         $('#time_unit_lt').change(set_unit_label);
                                     }
                                 } else {
-                                    var unit = $('#time_unit_lt').html();
+                                    var unit = $('#time_unit_lt').html().trim();
                                 }
                                 if (unit) {
                                     ['order_coverage', 'safety_stock', 'order_preparation_lt', 'order_creation_lt', 'order_validation_lt', 'supplier_lt', 'handling_lt', 'total_lt', 'internal_lt', 'external_lt'].forEach(function (f){
@@ -553,20 +553,21 @@
                                     <field name="rr_fmc_3" invisible="context.get('rule')!='cycle'" nolabel="1"/>
                                     <field name="rr_fmc_to_3" invisible="context.get('rule')!='cycle'" attrs="{'required': [('rr_fmc_3', '!=', False)]}" on_change="change_fmc('to', '3', rr_fmc_to_3, False)" nolabel="1"/>
                                     <field name= "list_fmc" invisible="context.get('rule')!='cycle'" displayon="notedition"/>
-                                    <button name="openform" special="openform" string="Edit 12 FMC" invisible="context.get('rule')!='cycle'" attrs="{'invisible': [('state', '!=', 'draft')]}"  icon="terp-go-week" />
+                                    <button name="openform" special="openform" string="Edit 12 FMC" invisible="context.get('rule')!='cycle'" attrs="{'invisible': [('state', 'not in', ['draft', 'complete'])]}"  icon="terp-go-week" />
                                     <field name="warning_html" widget="html_text" displayon="noteditable"/>
 
                                 </tree>
                                 <form>
-                                    <field name="product_id" filter_selector="1" />
-                                    <field name="product_description" displayon="noteditable" filter_selector="1" />
+                                    <field name="parent_state" invisible="1" />
+                                    <field name="product_id" attrs="{'readonly':[('parent_state', '!=', 'draft')]}" />
+                                    <field name="product_description"  />
                                     <field name="uom_id" invisible="1" />
-                                    <field name="in_main_list" filter_selector="1" />
-                                    <field name="status" filter_selector="1" />
+                                    <field name="in_main_list" />
+                                    <field name="status"  attrs="{'readonly':[('parent_state', '!=', 'draft')]}" />
                                     <field name="min_qty" invisible="context.get('rule')!='minmax'"/>
                                     <field name="max_qty" invisible="context.get('rule')!='minmax'"/>
                                     <field name="auto_qty" invisible="context.get('rule')!='auto'"/>
-                                    <field name="buffer_qty" invisible="context.get('rule')!='cycle'"/>
+                                    <field name="buffer_qty" invisible="context.get('rule')!='cycle'" attrs="{'readonly':[('parent_state', '!=', 'draft')]}"/>
                                     <field name="real_stock" />
                                     <field name="rr_amc" />
                                     <group colspan="4" col="4">
@@ -785,8 +786,9 @@
                     <notebook colspan="4">
                         <page string="Parameters">
                             <group colspan="4" col="6">
-                                <group colspan="2" col="2">
+                                <group colspan="2" col="3">
                                     <field name="total_lt" />
+                                    <field name="time_unit_lt" nolabel="1" />
                                 </group>
                                 <group colspan="2" col="2">
                                     <field name="new_order_reception_date" />
@@ -809,7 +811,6 @@
                                     <field name="uom_id" invisible="1" />
                                     <field name="status" invisible="1" />
                                     <field name="in_main_list" filter_selector="1" />
-                                    <field name="segment_id" />
                                     <field name="min_max" />
                                     <field name="auto_qty" />
                                     <field name="buffer_ss_qty" />
@@ -953,7 +954,7 @@
                             <field name="projected_stock_qty_amc" />
                             <field name="rr_fmc_avg" />
                             <field name="rr_amc" />
-                            <field name="buffer_qty" />
+                            <field name="buffer_ss_qty" />
                             <field name="valid_rr_fmc" />
                             <field name="real_stock" />
                             <field name="pipeline_qty" />
@@ -1002,7 +1003,7 @@
                             <field name="max_qty" />
                             <field name="auto_qty" />
                             <field name="buffer_qty" />
-                            <field name="safety_stock" />
+                            <field name="safety_stock_qty" />
                             <field name="internal_lt" />
                             <field name="external_lt" />
                             <field name="total_lt" />

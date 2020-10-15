@@ -241,11 +241,6 @@ class replenishment_location_config(osv.osv):
         review_obj = self.pool.get('replenishment.inventory.review')
         now = datetime.now()
 
-        dwm_coeff = {
-            'd': 30.44,
-            'w': 4.35,
-            'm': 1,
-        }
         for config in self.browse(cr, uid, ids, context=context):
             logger.info('Try to gen inv. review on %s' % config.name)
             seg_dom = [('location_config_id', '=', config.id), ('state', '=', 'complete')]
@@ -292,7 +287,7 @@ class replenishment_location_config(osv.osv):
             error = []
             for segment in segments:
                 try:
-                    segment_obj.generate_order_cacl_inv_data(cr, uid, [segment.id], review_id=review_id, context=context, review_date=config.next_scheduler, coeff=dwm_coeff.get(config.time_unit,1))
+                    segment_obj.generate_order_cacl_inv_data(cr, uid, [segment.id], review_id=review_id, context=context, review_date=config.next_scheduler, inv_unit=config.time_unit)
                     logger.info('Inventory Review for config %s, segment %s ok' % (config.name, segment.name_seg))
                     cr.commit()
                 except osv.except_osv, o:
@@ -625,7 +620,7 @@ class replenishment_parent_segment(osv.osv):
         self.check_confirmed_segment(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'state_parent': 'draft'}, context=context)
         seg_reset = []
-        for parent in self.browse(cr, uid, ids, field_to_fecth=['child_ids'], context=context):
+        for parent in self.browse(cr, uid, ids, fields_to_fetch=['child_ids'], context=context):
             for child in parent.child_ids:
                 seg_reset.append(child.id)
         if seg_reset:
@@ -649,6 +644,7 @@ class replenishment_parent_segment(osv.osv):
                             'location_config_id': pseg.location_config_id.id,
                             'location_config_description': pseg.location_config_id.description,
                             'total_lt': pseg.total_lt,
+                            'time_unit_lt': pseg.time_unit_lt,
                             'local_location_ids': [(6, 0, [x.id for x in pseg.local_location_ids])],
                             'remote_location_ids': [(6, 0, [x.id for x in pseg.remote_location_ids])],
                             'instance_id': pseg.main_instance.id,
@@ -806,7 +802,7 @@ class replenishment_segment(osv.osv):
         'last_review_date': fields.datetime('Last review date', readonly=1),
         'have_product': fields.function(_get_have_product, type='boolean', method=1, internal=1, string='Products are set'),
         'missing_order_calc': fields.function(_missing_instances, type='char', method=1, string='Missing OC data', multi='_missing_instances'),
-        'missing_review': fields.function(_missing_instances, type='char', method=1, string='Missing Inv.R data', multi='_missing_instances'),
+        'missing_inv_review': fields.function(_missing_instances, type='char', method=1, string='Missing Inv.R data', multi='_missing_instances'),
     }
 
     _defaults = {
@@ -869,13 +865,30 @@ class replenishment_segment(osv.osv):
         return self.pool.get('replenishment.segment.line.amc').generate_segment_data(cr, uid, context=context, seg_ids=seg_ids, force_review=True)
 
 
-    def generate_order_cacl_inv_data(self, cr, uid, ids, review_id=False, calc_id=False, context=None, review_date=False, coeff=1):
+    def convert_time_unit(self, value, from_unit, to_unit):
+        days_coeff = {
+            'd': 1.,
+            'w': 7.,
+            'm': 30.44,
+
+        }
+        if from_unit == to_unit:
+            return value
+
+        return value * days_coeff.get(from_unit, 'd') / days_coeff.get(to_unit, 'd')
+
+    def generate_order_cacl_inv_data(self, cr, uid, ids, review_id=False, calc_id=False, context=None, review_date=False, inv_unit='d'):
 
         if context is None:
             context = {}
 
         if review_id:
             context['inv_review'] = True
+            coeff = {
+                'd': 30.44,
+                'w': 4.35,
+                'm': 1,
+            }.get(inv_unit, 'd')
         order_calc_line = self.pool.get('replenishment.order_calc.line')
         review_line = self.pool.get('replenishment.inventory.review.line')
 
@@ -921,7 +934,7 @@ class replenishment_segment(osv.osv):
                 prod_eta[x[0]] = x[1]
 
             cr.execute('''
-                select segment_line_id, sum(reserved_stock), sum(real_stock - reserved_stock - expired_before_rdd), sum(expired_before_rdd), sum(expired_between_rdd_oc), bool_or(open_loan), sum(total_expiry_nocons_qty), sum(real_stock), sum(expired_qty_before_eta), sum(sleeping_qty), bool_or(open_donation)
+                select segment_line_id, sum(reserved_stock), sum(real_stock - expired_before_rdd), sum(expired_before_rdd), sum(expired_between_rdd_oc), bool_or(open_loan), sum(total_expiry_nocons_qty), sum(real_stock), sum(expired_qty_before_eta), sum(sleeping_qty), bool_or(open_donation)
                     from replenishment_segment_line_amc amc, replenishment_segment_line line
                     where
                         line.id = amc.segment_line_id and
@@ -1219,19 +1232,12 @@ class replenishment_segment(osv.osv):
                 qty_lacking_needed_by = False
                 proposed_order_qty = 0
                 if seg.rule == 'cycle':
-                    if line.status == 'new':
-                        if total_month_oc:
-                            ss_stock = seg.safety_stock_month * total_fmc_oc / total_month_oc
-                    else:
-                        # sum fmc from today to ETC - qty in stock
-                        #qty_lacking =  max(0, total_fmc - sum_line.get(line.id, {}).get('pas_no_pipe_no_fmc', 0))
-                        if total_month_oc+total_month:
-                            if line.status == 'replacing':
-                                # TODO lt / order coverage in unit
-                                ss_stock = seg.safety_stock_month * ((total_fmc_oc+total_fmc)/(line.segment_id.order_coverage+int(line.segment_id.total_lt)/30.44))
-                            else:
-                                ss_stock = seg.safety_stock_month * ((total_fmc_oc+total_fmc)/(total_month_oc+total_month))
-
+                    if calc_id and total_month_oc:
+                        # in cas of replacing total_fmc_oc and total_month_oc start from SODate
+                        ss_stock = seg.safety_stock_month * total_fmc_oc / total_month_oc
+                    elif review_id and total_month:
+                        ss_stock = seg.safety_stock_month * total_fmc / total_month
+                    if line.status != 'new':
                         if line.status != 'phasingout':
                             if total_month and pas and pas <= line.buffer_qty + seg.safety_stock_month * (total_fmc / total_month):
                                 wmsg = _('Projected use of safety stock/buffer')
@@ -1332,10 +1338,12 @@ class replenishment_segment(osv.osv):
                     'open_loan': sum_line.get(line.id, {}).get('open_loan', False),
                     'open_donation': sum_line.get(line.id, {}).get('open_donation', False),
                     'auto_qty': line.auto_qty if seg.rule =='auto' else False,
-                    'buffer_ss_qty': '%d / %s' % (line.buffer_qty or 0,  re.sub('\.?0+$', '', '%s' % (seg.safety_stock or '0.0'))),
+                    'buffer_ss_qty': False,
                     'min_max': '',
                 }
 
+                if seg.rule == 'cycle':
+                    line_data['buffer_ss_qty'] = '%d / %s' % (line.buffer_qty or 0,  re.sub('\.?0+$', '', '%s' % (round(ss_stock, 2) or '0.0')))
                 if seg.rule == 'minmax':
                     line_data['min_max'] = '%d / %d' % (line.min_qty, line.max_qty)
 
@@ -1403,16 +1411,16 @@ class replenishment_segment(osv.osv):
                         'date_preparing': seg.date_preparing,
                         'date_next_order_validated': seg.date_next_order_validated,
                         'date_next_order_rdd': seg.date_next_order_received_modified or seg.date_next_order_received,
-                        'internal_lt': seg.internal_lt,
-                        'external_lt': seg.external_lt,
-                        'total_lt': seg.total_lt,
-                        # TODO order_coverage unit
-                        'order_coverage': seg.order_coverage * coeff,
+                        'internal_lt': self.convert_time_unit(seg.internal_lt, seg.time_unit_lt, inv_unit),
+                        'external_lt': self.convert_time_unit(seg.external_lt, seg.time_unit_lt, inv_unit),
+                        'total_lt': self.convert_time_unit(seg.total_lt, seg.time_unit_lt, inv_unit),
+                        'order_coverage': self.convert_time_unit(seg.order_coverage, seg.time_unit_lt, inv_unit),
                         'primay_product_list': line.in_main_list and seg.product_list_id.name,
                         'rule': seg.rule,
                         'min_qty': line.min_qty,
                         'max_qty': line.max_qty,
-                        'safety_stock': seg.safety_stock_month * coeff,
+                        'safety_stock_qty': ss_stock and round(ss_stock, 2) or False,
+                        'buffer_qty': line.buffer_qty or False,
                         'pas_ids': detailed_pas,
                         'segment_line_id': line.id,
                         'sleeping_qty': round(sum_line.get(line.id, {}).get('sleeping_qty',0)),
@@ -2085,6 +2093,7 @@ class replenishment_segment_line(osv.osv):
 
     _columns = {
         'segment_id': fields.many2one('replenishment.segment', 'Replenishment Segment', select=1, required=1),
+        'parent_state': fields.related('segment_id', 'state', string='Segment Status', type='char', readonly=True, write_relate=False),
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1),
         'product_description': fields.related('product_id', 'name',  string='Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
@@ -2693,6 +2702,7 @@ class replenishment_order_calc(osv.osv):
         'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, readonly=1),
         'location_config_description': fields.char('Description', size=28, readonly=1),
         'total_lt': fields.float('Total Lead Time', readonly=1),
+        'time_unit_lt': fields.selection([('d', 'days'), ('w', 'weeks'), ('m', 'months')], string='Unit of Time', readonly=1),
         'generation_date': fields.date('Order Calc generation date', readonly=1),
         'next_generation_date': fields.date('Date next order to be generated by', readonly=1),
         'new_order_reception_date': fields.date('Date new order reception date', readonly=1),
@@ -2876,7 +2886,7 @@ class replenishment_order_calc_line(osv.osv):
         'order_qty_comment': fields.char('Order Qty Comment', size=512),
         'warning': fields.text('Warning', readonly='1'),
         'warning_html': fields.text('Warning', readonly='1'),
-        'buffer_ss_qty': fields.char('Buffer / SS', size=128, readonly=1),
+        'buffer_ss_qty': fields.char('Buffer / SS Qty', size=128, readonly=1),
         'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id', readonly=1),
         'min_max': fields.char('Min/Max', size=128, readonly=1),
     }
@@ -2982,8 +2992,9 @@ class replenishment_inventory_review_line(osv.osv):
         'max_qty': fields.float_null('Max Qty', related_uom='uom_id'), # Seg line
         'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id'), # Seg line
         'buffer_qty': fields.float_null('Buffer Qty', related_uom='uom_id'), # Seg line
+        'safety_stock_qty': fields.float_null('Safety Stock (Qty)'),
         'min_max': fields.char('Min / Max', size=128),
-        'safety_stock': fields.integer('Safety Stock'), # Seg
+        'buffer_ss_qty': fields.char('Buffer / SS Qty', size=128, readonly=1),
         'segment_ref_name': fields.char('Segment Ref/Name', size=512), # Seg
         'rr_fmc_avg': fields.float_null('RR-FMC (average for period)', null_value='N/A'),
         'rr_amc': fields.float('RR-AMC'),
