@@ -55,9 +55,9 @@ class analytic_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
             if not arg[2]:
                 raise osv.except_osv(_('Warning'), _('Some search args are missing!'))
-            analytic_account = analytic_acc_obj.browse(cr, uid, arg[2], fields_to_fetch=['tuple_destination_account_ids'], context=context)
-            tuple_list = [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in analytic_account.tuple_destination_account_ids if not x.disabled]
-            cost_center_ids = [c.id for c in analytic_acc_obj.get_cc_linked_to_fp(cr, uid, analytic_account.id, context=context)]
+            fp_id = arg[2]
+            tuple_list = analytic_acc_obj.get_acc_dest_linked_to_fp(cr, uid, fp_id, context=context)
+            cost_center_ids = [c.id for c in analytic_acc_obj.get_cc_linked_to_fp(cr, uid, fp_id, context=context)]
             for cc in cost_center_ids:
                 for t in tuple_list:
                     if res:

@@ -54,7 +54,7 @@ class mass_reallocation_search(osv.osv_memory):
         except ValueError:
             fp_id = 0
         if account.id != fp_id:
-            if account.tuple_destination_account_ids:
+            if account.tuple_destination_account_ids or account.fp_account_ids:
                 search.append(('is_fp_compat_with', '=', account.id))
             else:
                 # trick to avoid problem with FP that have NO destination link. So we need to search a "False" Destination.

@@ -926,6 +926,30 @@ class analytic_account(osv.osv):
                 cc_list = fp.cost_center_ids or []
         return cc_list
 
+    def get_acc_dest_linked_to_fp(self, cr, uid, fp_id, context=None):
+        """
+        Returns a tuple of all combinations of (account_id, destination_id) compatible with the FP in parameter:
+        - if "Select Accounts Only" is ticked: the accounts selected and the Destinations compatible with them
+        - else the Account/Destination combinations selected.
+
+        Note: this method matches with what has been selected in the Accounts/Destinations tab of the FP form.
+              It returns an empty list for PF.
+        """
+        if context is None:
+            context = {}
+        combinations = []
+        fp = self.browse(cr, uid, fp_id,
+                         fields_to_fetch=['category', 'select_accounts_only', 'fp_account_ids', 'tuple_destination_account_ids'],
+                         context=context)
+        if fp.category == 'FUNDING':
+            if fp.select_accounts_only:
+                for account in fp.fp_account_ids:
+                    for dest in account.destination_ids:
+                        combinations.append((account.id, dest.id))
+            else:
+                combinations = [(t.account_id.id, t.destination_id.id) for t in fp.tuple_destination_account_ids if not t.disabled]
+        return combinations
+
     def button_cc_clear(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'cost_center_ids':[(6, 0, [])]}, context=context)
         return True
