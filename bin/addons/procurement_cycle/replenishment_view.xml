@@ -279,7 +279,21 @@
                                 </group>
                             </group>
 
-                            <field name="child_ids" colspan="4" nolabel="1" />
+                            <field name="child_ids" colspan="4" nolabel="1" o2m_selectable="2">
+                                <tree string="Segment">
+                                    <field name="name_seg" filter_selector="1"/>
+                                    <field name="description_seg" filter_selector="1"/>
+                                    <field name="line_ids" />
+                                    <field name="rule" string="Replenishment Rule" filter_selector="1"/>
+                                    <field name="product_list_id" />
+                                    <field name="state" filter_selector="1" />
+                                    <field name="fake_state" invisible="1"/>
+                                    <button name="set_as_draft" string="Set As Draft" type="object" attrs="{'invisible':[('fake_state', 'not in', ['complete', 'archived', 'cancel'])]}" icon="gtk-go-back" header="True" />
+                                    <button name="completed" string="Completed" type="object" icon="terp-check" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
+                                    <button name="set_as_archived" string="Archive" type="object" attrs="{'invisible':[('fake_state', 'in', ['cancel', 'archived'])]}" icon="terp-locked" header="True" />
+                                    <button name="set_as_cancel" string="Cancel" type="object" attrs="{'invisible':[('fake_state', '=', 'cancel')]}" icon="gtk-cancel" header="True" />
+                                </tree>
+                            </field>
 
                         </page>
 

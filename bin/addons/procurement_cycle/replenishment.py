@@ -793,6 +793,7 @@ class replenishment_segment(osv.osv):
         'rule_alert': fields.function(_get_rule_alert, method=1, string='Replenishment Rule (Alert Theshold)', type='char'),
         'product_list_id': fields.many2one('product.list', 'Primary product list'),
         'state': fields.selection([('draft', 'Draft'), ('complete', 'Complete'), ('cancel', 'Cancelled'), ('archived', 'Archived')], 'State', readonly=1),
+        'fake_state': fields.related('state', string='State internal', readonly=1, write_relate=False),
         'safety_stock': fields.float_null('Safety Stock', computation=-1),
         'safety_stock_month': fields.function(_get_ss_month, type='float', method=True, string='Safety Stock in months'),
         'line_ids': fields.one2many('replenishment.segment.line', 'segment_id', 'Products', context={'default_code_only': 1}),
@@ -1304,7 +1305,7 @@ class replenishment_segment(osv.osv):
                     warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('FMC'))))
 
                 if line.status != 'phasingout':
-                    if review_id and month_of_supply and month_of_supply*30.44 > (seg_rdd-today).days + line.segment_id.safety_stock_month*30.44:
+                    if review_id and month_of_supply and month_of_supply*30.44 > (seg_rdd-today).days + line.segment_id.safety_stock_month*30.44 + self.convert_time_unit(seg.order_coverage, seg.time_unit_lt, 'd'):
                         wmsg = _('Excess Stock')
                         warnings.append(wmsg)
                         warnings_html.append('<span title="%s">%s</span>' % (misc.escape_html(wmsg), misc.escape_html(_('Excess'))))
