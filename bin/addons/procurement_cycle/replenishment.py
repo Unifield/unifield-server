@@ -1345,7 +1345,13 @@ class replenishment_segment(osv.osv):
                 if seg.rule == 'cycle':
                     line_data['buffer_ss_qty'] = '%d / %s' % (line.buffer_qty or 0,  re.sub('\.?0+$', '', '%s' % (round(ss_stock, 2) or '0.0')))
                 if seg.rule == 'minmax':
-                    line_data['min_max'] = '%d / %d' % (line.min_qty, line.max_qty)
+                    min_max_list = []
+                    for v in [line.min_qty, line.max_qty]:
+                        if v is False:
+                            min_max_list.append('')
+                        else:
+                            min_max_list.append('%d'%v)
+                    line_data['min_max'] = ' / '.join(min_max_list)
 
                 # order_cacl
                 if not review_id:
@@ -1660,9 +1666,9 @@ class replenishment_segment(osv.osv):
                             })
                         col_first_fmc += 2
                 elif cells_nb > col_buffer_min_qty and seg.rule == 'minmax':
-                    if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float)):
+                    if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float, type(None))):
                         line_error.append(_('Line %d: Min Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
-                    elif not row.cells[col_buffer_min_qty+1] or not isinstance(row.cells[col_buffer_min_qty+1].data, (int, long, float)):
+                    elif not row.cells[col_buffer_min_qty+1] or not isinstance(row.cells[col_buffer_min_qty+1].data, (int, long, float, type(None))):
                         line_error.append(_('Line %d: Max Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty+1].data))
                     elif row.cells[col_buffer_min_qty+1].data < row.cells[col_buffer_min_qty].data:
                         line_error.append(_('Line %d: Max Qty (%s) must be larger than Min Qty (%s)') % (idx+1, row.cells[col_buffer_min_qty+1].data, row.cells[col_buffer_min_qty].data))
@@ -1672,7 +1678,7 @@ class replenishment_segment(osv.osv):
                             'max_qty': row.cells[col_buffer_min_qty+1].data,
                         })
                 elif cells_nb > col_buffer_min_qty:
-                    if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float)):
+                    if not row.cells[col_buffer_min_qty] or not isinstance(row.cells[col_buffer_min_qty].data, (int, long, float, type(None))):
                         line_error.append(_('Line %d: Auto Supply Qty, number expected, found %s') % (idx+1, row.cells[col_buffer_min_qty].data))
                     else:
                         data_towrite['auto_qty'] = row.cells[col_buffer_min_qty].data
