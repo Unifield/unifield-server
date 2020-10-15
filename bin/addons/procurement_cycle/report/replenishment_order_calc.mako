@@ -25,6 +25,7 @@
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
  <Styles>
+   <% rounded_color="#0070C0" %>
   <Style ss:ID="Default" ss:Name="Normal">
    <Alignment ss:Vertical="Bottom"/>
    <Borders/>
@@ -185,6 +186,9 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <Interior/>
   </Style>
+  <Style ss:ID="s95rounded" ss:Parent="s95">
+    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="${rounded_color}"/>
+  </Style>
   <Style ss:ID="s96">
    <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
    <Borders>
@@ -194,6 +198,9 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <Interior/>
+  </Style>
+  <Style ss:ID="s96rounded" ss:Parent="s96">
+    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="${rounded_color}"/>
   </Style>
     <Style ss:ID="s973D">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -205,6 +212,11 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <NumberFormat ss:Format="0.000"/>
   </Style>
+  <Style ss:ID="s973Drounded" ss:Parent="s973D">
+    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="${rounded_color}"/>
+  </Style>
+
+
     <Style ss:ID="s972D">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
    <Borders>
@@ -215,6 +227,9 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <NumberFormat ss:Format="Fixed"/>
   </Style>
+  <Style ss:ID="s972Drounded" ss:Parent="s972D">
+    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="${rounded_color}"/>
+  </Style>
 
   <Style ss:ID="s97">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -224,6 +239,9 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
+  </Style>
+    <Style ss:ID="s97rounded" ss:Parent="s97">
+    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="${rounded_color}"/>
   </Style>
   <Style ss:ID="s97u">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -236,6 +254,9 @@
    <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
    <Protection ss:Protected="0"/>
   </Style>
+    <Style ss:ID="s97urounded" ss:Parent="s97u">
+     <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="${rounded_color}"/>
+  </Style>
   <Style ss:ID="sw97">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -245,6 +266,10 @@
    </Borders>
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
   </Style>
+ <Style ss:ID="sw97rounded" ss:Parent="sw97">
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="${rounded_color}"/>
+  </Style>
+
   <Style ss:ID="sw97u">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -256,6 +281,10 @@
    <Interior ss:Color="#BDD7EE" ss:Pattern="Solid"/>
    <Protection ss:Protected="0"/>
   </Style>
+    <Style ss:ID="sw97urounded" ss:Parent="sw97u">
+     <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="${rounded_color}"/>
+  </Style>
+
   <Style ss:ID="s97d">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
    <Borders>
@@ -266,6 +295,11 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
    <NumberFormat ss:Format="Short Date"/>
   </Style>
+  <Style ss:ID="s97drounded" ss:Parent="s97d">
+    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="${rounded_color}"/>
+  </Style>
+
+
     <Style ss:ID="s98">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -521,34 +555,35 @@
        % endif
    <% cnt += 1 %>
    <Row ss:AutoFitHeight="0" ss:Height="15.75">
-    <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.default_code|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s96"><Data ss:Type="String">${prod.product_id.name|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.in_main_list and _('Yes') or _('No')}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.segment_id.name_seg|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.min_max}</Data></Cell>
-    <Cell ss:StyleID="s95">
+     <% color = 'rounded' if prod.rounded_qty else '' %>
+    <Cell ss:StyleID="s96${color}"><Data ss:Type="String">${prod.product_id.default_code|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s96${color}"><Data ss:Type="String">${prod.product_id.name|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s95${color}"><Data ss:Type="String">${prod.in_main_list and _('Yes') or _('No')}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s95${color}"><Data ss:Type="String">${prod.segment_id.name_seg|x}</Data><NamedCell ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s95${color}"><Data ss:Type="String">${prod.min_max}</Data></Cell>
+    <Cell ss:StyleID="s95${color}">
         % if prod.auto_qty is not False:
             <Data ss:Type="Number">${prod.auto_qty}</Data>
         % else:
             <Data ss:Type="String"/>
         % endif
     </Cell>
-    <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.buffer_ss_qty}</Data></Cell>
-    <Cell ss:StyleID="s95"><Data ss:Type="String">${prod.valid_rr_fmc and _('Yes') or _('No') }</Data></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.real_stock}</Data></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.pipeline_qty}</Data></Cell>
-    <Cell ss:StyleID="s97d">
+    <Cell ss:StyleID="s95${color}"><Data ss:Type="String">${prod.buffer_ss_qty or ''}</Data></Cell>
+    <Cell ss:StyleID="s95${color}"><Data ss:Type="String">${prod.valid_rr_fmc and _('Yes') or _('No') }</Data></Cell>
+    <Cell ss:StyleID="s97${color}"><Data ss:Type="Number">${prod.real_stock}</Data></Cell>
+    <Cell ss:StyleID="s97${color}"><Data ss:Type="Number">${prod.pipeline_qty}</Data></Cell>
+    <Cell ss:StyleID="s97d${color}">
         % if isDate(prod.eta_for_next_pipeline):
         <Data ss:Type="DateTime">${prod.eta_for_next_pipeline|n}T00:00:00.000</Data>
         % else:
         <Data ss:Type="String"></Data>
         % endif
     </Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.reserved_stock_qty}</Data></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.projected_stock_qty}</Data></Cell>
+    <Cell ss:StyleID="s97${color}"><Data ss:Type="Number">${prod.reserved_stock_qty}</Data></Cell>
+    <Cell ss:StyleID="s97${color}"><Data ss:Type="Number">${prod.projected_stock_qty}</Data></Cell>
     % if prod.rule == 'cycle':
-        <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.qty_lacking}</Data></Cell>
-        <Cell ss:StyleID="s97d">
+        <Cell ss:StyleID="s97${color}"><Data ss:Type="Number">${prod.qty_lacking}</Data></Cell>
+        <Cell ss:StyleID="s97d${color}">
             % if isDate(prod.qty_lacking_needed_by):
                 <Data ss:Type="DateTime">${prod.qty_lacking_needed_by|n}T00:00:00.000</Data>
             % else:
@@ -556,30 +591,30 @@
             % endif
         </Cell>
     % else:
-        <Cell ss:StyleID="s97" />
-        <Cell ss:StyleID="s97" />
+        <Cell ss:StyleID="s97${color}" />
+        <Cell ss:StyleID="s97${color}" />
     % endif
-    <Cell ss:StyleID="s97"><Data ss:Type="String">${prod.open_loan and _('Yes') or _('No')}</Data></Cell>
-    <Cell ss:StyleID="s97"><Data ss:Type="String">${prod.open_donation and _('Yes') or _('No')}</Data></Cell>
+    <Cell ss:StyleID="s97${color}"><Data ss:Type="String">${prod.open_loan and _('Yes') or _('No')}</Data></Cell>
+    <Cell ss:StyleID="s97${color}"><Data ss:Type="String">${prod.open_donation and _('Yes') or _('No')}</Data></Cell>
     % if prod.rule == 'cycle':
-        <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.expired_qty_before_cons}</Data></Cell>
-        <Cell ss:StyleID="s97"><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="s97${color}"><Data ss:Type="Number">${prod.expired_qty_before_cons}</Data></Cell>
+        <Cell ss:StyleID="s97${color}"><Data ss:Type="String"></Data></Cell>
     % else:
-        <Cell ss:StyleID="s97"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="s97"><Data ss:Type="Number">${prod.expired_qty_before_eta}</Data></Cell>
+        <Cell ss:StyleID="s97${color}"><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="s97${color}"><Data ss:Type="Number">${prod.expired_qty_before_eta}</Data></Cell>
     % endif
-    <Cell ss:StyleID="s97"><Data ss:Type="Number">${int(prod.proposed_order_qty)}</Data></Cell>
-    <Cell ss:StyleID="s97u">
+    <Cell ss:StyleID="s97${color}"><Data ss:Type="Number">${int(prod.proposed_order_qty)}</Data></Cell>
+    <Cell ss:StyleID="s97u${color}">
     % if prod.agreed_order_qty is False:
         <Data ss:Type="String" />
     % else:
         <Data ss:Type="Number">${prod.agreed_order_qty}</Data>
     % endif
     </Cell>
-    <Cell ss:StyleID="s973D"><Data ss:Type="Number">${prod.cost_price}</Data></Cell>
-    <Cell ss:StyleID="s972D" ss:Formula="=RC[-2]*RC[-1]"><Data ss:Type="Number">${prod.line_value or 0}</Data></Cell>
-    <Cell ss:StyleID="sw97u"><Data ss:Type="String">${(prod.order_qty_comment or '')|x}</Data></Cell>
-    <Cell ss:StyleID="sw97"><Data ss:Type="String">${(prod.warning or '')|xn}</Data></Cell>
+    <Cell ss:StyleID="s973D${color}"><Data ss:Type="Number">${prod.cost_price}</Data></Cell>
+    <Cell ss:StyleID="s972D${color}" ss:Formula="=RC[-2]*RC[-1]"><Data ss:Type="Number">${prod.line_value or 0}</Data></Cell>
+    <Cell ss:StyleID="sw97u${color}"><Data ss:Type="String">${(prod.order_qty_comment or '')|x}</Data></Cell>
+    <Cell ss:StyleID="sw97${color}"><Data ss:Type="String">${(prod.warning or '')|xn}</Data></Cell>
 
    </Row>
    % endfor

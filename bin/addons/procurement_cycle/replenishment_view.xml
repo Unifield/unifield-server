@@ -804,12 +804,14 @@
                                 <field name="file_to_import" colspan="2" />
                                 <button name="import_lines" string="Import Lines" type="object" colspan="2" icon="gtk-save" />
                             </group>
+                            <button colspan="4" string="Round Agreed Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                             <field name="order_calc_line_ids" colspan="4" nolabel="1" attrs="{'readonly':[('state', '!=', 'draft')]}" scroll="1">
-                                <tree editable="top" editable_style="new" colors="red:expired_qty_before_cons or (status!='new' and qty_lacking) or not valid_rr_fmc;orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc" hide_new_button="0" hide_delete_button="1">
+                                <tree editable="top" editable_style="new" colors="blue:rounded_qty;red:expired_qty_before_cons or (status!='new' and qty_lacking) or not valid_rr_fmc;orange:status=='new' and not expired_qty_before_cons and valid_rr_fmc" hide_new_button="0" hide_delete_button="1">
                                     <field name="product_id" filter_selector="1" />
                                     <field name="product_description" displayon="noteditable" filter_selector="1" />
                                     <field name="uom_id" invisible="1" />
                                     <field name="status" invisible="1" />
+                                    <field name="rounded_qty" invisible="1" />
                                     <field name="in_main_list" filter_selector="1" />
                                     <field name="min_max" />
                                     <field name="auto_qty" />

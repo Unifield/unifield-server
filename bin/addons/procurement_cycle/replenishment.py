@@ -2840,6 +2840,22 @@ class replenishment_order_calc(osv.osv):
     def button_dummy(self, cr, uid, ids, context=None):
         return True
 
+    def round_to_soq(self, cr, uid, ids, context=None):
+        cr.execute('''
+            update replenishment_order_calc_line line
+                set
+                    agreed_order_qty = agreed_order_qty + mod(agreed_order_qty, prod.soq_quantity),
+                    rounded_qty = 't'
+                from product_product prod
+                where
+                    prod.id = line.product_id and
+                    coalesce(prod.soq_quantity,0) not in (0, 1) and
+                    coalesce(agreed_order_qty, 0) != 0 and
+                    mod(agreed_order_qty, prod.soq_quantity) != 0 and
+                    line.order_calc_id in %s
+        ''', (tuple(ids), ))
+        return True
+
 replenishment_order_calc()
 
 class replenishment_order_calc_line(osv.osv):
@@ -2864,6 +2880,26 @@ class replenishment_order_calc_line(osv.osv):
 
         return ret
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if vals is None:
+            vals = {}
+
+        reset_soq_ids = []
+        if 'agreed_order_qty' in vals:
+            reset_soq_ids = self.search(cr, uid, [('id', 'in', ids), ('rounded_qty', '=', 't'), ('agreed_order_qty', '!=', vals['agreed_order_qty'])], context=context)
+
+        if reset_soq_ids:
+            untouched_ids = list(set(ids) - set(reset_soq_ids))
+            if untouched_ids:
+                super(replenishment_order_calc_line, self).write(cr, uid, untouched_ids, vals, context=context)
+            vals['rounded_qty'] = False
+            return super(replenishment_order_calc_line, self).write(cr, uid, reset_soq_ids, vals, context=context)
+
+        return super(replenishment_order_calc_line, self).write(cr, uid, ids, vals, context=context)
+
+
     _columns = {
         'order_calc_id': fields.many2one('replenishment.order_calc', 'Order Calc', required=1, select=1),
         'segment_id': fields.many2one('replenishment.segment', 'Segment', required=1, select=1, readonly=1),
@@ -2885,8 +2921,9 @@ class replenishment_order_calc_line(osv.osv):
         'open_donation': fields.boolean('Donations pending', readonly=1),
         'expired_qty_before_cons': fields.float_null('Expired Qty before cons.', readonly=1, related_uom='uom_id'),
         'expired_qty_before_eta': fields.float_null('Expired Qty before RDD', readonly=1, related_uom='uom_id'),
-        'proposed_order_qty': fields.float('Proposed Order Qty', readonly=1, related_uom='uom_id'),
-        'agreed_order_qty': fields.float_null('Agreed Order Qty', related_uom='uom_id'),
+        'proposed_order_qty': fields.float('Proposed Order Qty', readonly=1, related_uom='uom_id', digits=(16,2)),
+        'agreed_order_qty': fields.float_null('Agreed Order Qty', related_uom='uom_id', digits=(16,2)),
+        'rounded_qty': fields.boolean('Agreed Qty Rounded', readonly=1),
         'cost_price': fields.float('Cost Price', readonly=1, digits_compute=dp.get_precision('Account Computation')),
         'line_value': fields.function(_get_line_value, method=True, type='float', with_null=True, string='Line Value', digits=(16, 2)),
         'order_qty_comment': fields.char('Order Qty Comment', size=512),
@@ -2895,6 +2932,10 @@ class replenishment_order_calc_line(osv.osv):
         'buffer_ss_qty': fields.char('Buffer / SS Qty', size=128, readonly=1),
         'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id', readonly=1),
         'min_max': fields.char('Min/Max', size=128, readonly=1),
+    }
+
+    _defaults = {
+        'rounded_qty': False,
     }
 
 replenishment_order_calc_line()
