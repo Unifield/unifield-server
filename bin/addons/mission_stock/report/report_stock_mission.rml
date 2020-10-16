@@ -44,7 +44,7 @@
 	
 	<para style="P1"><font color="white"> </font></para>
   
-  	<blockTable colWidths="98.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0" style="reportLines">
+  	<blockTable colWidths="98.0,25.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,50.0,45.0,45.0" style="reportLines">
   		<tr>
   			<td>
   				<para style="linesHead">
@@ -78,11 +78,6 @@
   			</td>
   			<td>
   				<para style="linesHead">
-  					Central Stock Qty.
-  				</para>
-  			</td>
-  			<td>
-  				<para style="linesHead">
   					Cross-docking Qty.
   				</para>
   			</td>
@@ -94,6 +89,21 @@
   			<td>
   				<para style="linesHead">
   					Consumption Unit Qty.
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					Quarantine Qty.
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					Input Qty.
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					Output/Packing/Dispatch/Distribution Qty.
   				</para>
   			</td>
   			<td>
@@ -141,11 +151,6 @@
   			</td>
   			<td>
   				<para style="lines">
-  					[[ o.central_qty != 0.00 and o.central_qty or '0.00' ]]
-  				</para>
-  			</td>
-  			<td>
-  				<para style="lines">
   					[[ o.cross_qty != 0.00 and o.cross_qty or '0.00' ]]
   				</para>
   			</td>
@@ -157,6 +162,21 @@
   			<td>
   				<para style="lines">
   					[[ o.cu_qty != 0.00 or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.quarantine_qty != 0.00 or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.input_qty != 0.00 or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.opdd_qty != 0.00 or '0.00' ]]
   				</para>
   			</td>
   			<td>

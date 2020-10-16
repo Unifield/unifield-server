@@ -58,10 +58,12 @@
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Instance stock val.')}</Data></Cell>
          % endif
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Stock Qty.')}</Data></Cell>
-                <Cell ss:StyleID="header"><Data ss:Type="String">${_('Unallocated Stock Qty.')}</Data></Cell>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Cross-Docking Qty.')}</Data></Cell>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Secondary Stock Qty.')}</Data></Cell>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('Internal Cons. Unit Qty.')}</Data></Cell>
+                <Cell ss:StyleID="header"><Data ss:Type="String">${_('Quarantine Qty.')}</Data></Cell>
+                <Cell ss:StyleID="header"><Data ss:Type="String">${_('Input Qty.')}</Data></Cell>
+                <Cell ss:StyleID="header"><Data ss:Type="String">${_('Output/Packing/Dispatch/Distribution Qty.')}</Data></Cell>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('AMC')}</Data></Cell>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('FMC')}</Data></Cell>
                 <Cell ss:StyleID="header"><Data ss:Type="String">${_('In Pipe Qty')}</Data></Cell>

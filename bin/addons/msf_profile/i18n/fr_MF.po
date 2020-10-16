@@ -40628,11 +40628,6 @@ msgstr "Avoirs Fournisseur"
 msgid "Operations"
 msgstr "Opérations"
 
-#. module: mission_stock
-#: field:stock.mission.report.line,central_val:0
-msgid "Unallocated Stock Val."
-msgstr "Val. de stock non allouée."
-
 #. module: msf_audittrail
 #: model:ir.module.module,description:msf_audittrail.module_meta_information
 msgid "\n"
@@ -91680,15 +91675,6 @@ msgstr "GMDN - Description"
 #: model:ir.model,name:specific_rules.model_product_uom
 msgid "Product Unit of Measure"
 msgstr "Produit - Unité de Mesure"
-
-#. module: mission_stock
-#: report:addons/mission_stock/report/stock_mission_report_xls.mako:62
-#: field:stock.mission.report.line,central_qty:0
-#: code:addons/mission_stock/mission_stock.py:83
-#: code:addons/mission_stock/mission_stock.py:99
-#: code:addons/mission_stock/mission_stock.py:520
-msgid "Unallocated Stock Qty."
-msgstr "Qté de stock non allouée."
 
 #. modules: specific_rules, stock_override
 #: view:export.report.stock.inventory:0

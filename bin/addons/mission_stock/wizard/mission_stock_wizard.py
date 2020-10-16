@@ -178,11 +178,11 @@ class mission_stock_wizard(osv.osv_memory):
             'with_valuation': wiz_id.with_valuation == 'true',
             'hide_amc_fmc': wiz_id.report_id.full_view and (self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.level in ['section', 'coordo']),
         })
-        display_only_in_stock =  wiz_id.display_only_in_stock == 'true'
+        display_only_in_stock = wiz_id.display_only_in_stock == 'true'
         if display_only_in_stock:
             domain = ['&',
                       ('mission_report_id', '=', wiz_id.report_id.id),
-                      '|', '|', '|', '|', '|', '|', '|',
+                      '|', '|', '|', '|', '|', '|', '|', '|', '|',
                       ('internal_qty', '!=', 0),
                       ('wh_qty', '!=', 0),
                       ('cross_qty', '!=', 0),
@@ -190,7 +190,9 @@ class mission_stock_wizard(osv.osv_memory):
                       ('cu_qty', '!=', 0),
                       ('in_pipe_qty', '!=', 0),
                       ('stock_qty', '!=', 0),
-                      ('central_qty', '!=', 0)]
+                      ('quarantine_qty', '!=', 0),
+                      ('input_qty', '!=', 0),
+                      ('opdd_qty', '!=', 0)]
         else:
             domain = [('mission_report_id', '=', wiz_id.report_id.id)]
 

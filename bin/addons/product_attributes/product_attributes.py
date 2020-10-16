@@ -2868,9 +2868,9 @@ class product_attributes(osv.osv):
             'in_pipe_coor_qty', 'in_pipe_coor_val', 'in_pipe_qty', 'in_pipe_val',
             'secondary_qty', 'secondary_val',
             'cu_qty', 'cu_val',
-            'central_qty', 'central_val',
             'cross_qty', 'cross_val',
             'wh_qty', 'internal_qty'
+            'quarantine_qty', 'input_qty', 'opdd_qty'
         ]
         cr.execute('''
             update stock_mission_report_line set ''' + ', '.join(['%s=%%(zero)s' % field  for field in mission_stock_fields_reset]) + '''
