@@ -2857,6 +2857,18 @@ class replenishment_order_calc(osv.osv):
         ''', (tuple(ids), ))
         return True
 
+
+    def check_draft_consolidated(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if not context.get('active_ids') or self.search_exists(cr, uid, [('id', 'in', context['active_ids']), ('state', '!=', 'draft')], context=context):
+            raise osv.except_osv(_('Warning'), _('Selected OC must be in Draft state'))
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'report_replenishment_order_calc_draft_consolidated_xls',
+            'context': context,
+        }
+
 replenishment_order_calc()
 
 class replenishment_order_calc_line(osv.osv):
