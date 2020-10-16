@@ -32,7 +32,10 @@ class financing_contract_account_quadruplet(osv.osv):
     def _auto_init(self, cr, context=None):
         res = super(financing_contract_account_quadruplet, self)._auto_init(cr, context)
         sql.drop_view_if_exists(cr, 'financing_contract_account_quadruplet')
+# all cc = f, G/L = f
         cr.execute("""CREATE OR REPLACE VIEW financing_contract_account_quadruplet AS (
+            SELECT id, account_destination_id, cost_center_id, funding_pool_id, account_destination_name, account_id, disabled, account_destination_link_id FROM
+            (
             SELECT abs(('x'||substr(md5(fp.code || cc.code || lnk.name),1,16))::bit(32)::int) as id,
             lnk.destination_id AS account_destination_id, cc.id AS cost_center_id, fp.id AS funding_pool_id, lnk.name AS account_destination_name, lnk.account_id, lnk.disabled, lnk.id as account_destination_link_id
             FROM account_analytic_account fp,
@@ -44,7 +47,68 @@ class financing_contract_account_quadruplet(osv.osv):
              AND fpacc.cost_center_id = cc.id
              AND lnk.id = fpad.tuple_id
              AND fp.id = fpad.funding_pool_id
-           ORDER BY lnk.name, cc.code DESC)""")
+
+           UNION
+
+
+            -- all cc = t , G/L = t
+
+            select abs(('x'||substr(md5(fp.code || cc.code || lnk.name),1,16))::bit(32)::int) as id,
+            lnk.destination_id AS account_destination_id, cc.id AS cost_center_id, fp.id AS funding_pool_id, lnk.name AS account_destination_name, lnk.account_id, lnk.disabled, lnk.id as account_destination_link_id
+            FROM
+                account_analytic_account fp,
+                account_analytic_account cc,
+                fp_account_rel,
+                account_destination_link lnk,
+                account_account  gl_account
+            where
+                fp.allow_all_cc_with_fp = 't' and
+                cc.type != 'view' and
+                fp.select_accounts_only = 't' and
+                fp_account_rel.fp_id = fp.id and
+                fp_account_rel.account_id= gl_account.id and
+                lnk.account_id = gl_account.id
+
+            UNION
+
+            -- all cc = f , G/L = t
+            select abs(('x'||substr(md5(fp.code || cc.code || lnk.name),1,16))::bit(32)::int) as id,
+            lnk.destination_id AS account_destination_id, cc.id AS cost_center_id, fp.id AS funding_pool_id, lnk.name AS account_destination_name, lnk.account_id, lnk.disabled, lnk.id as account_destination_link_id
+            FROM
+                account_analytic_account fp,
+                account_analytic_account cc,
+                funding_pool_associated_cost_centers fpacc,
+                fp_account_rel,
+                account_destination_link lnk,
+                account_account  gl_account
+            where
+                fp.allow_all_cc_with_fp = 'f' and
+                fpacc.funding_pool_id = fp.id and
+                fpacc.cost_center_id = cc.id and
+                fp.select_accounts_only = 't' and
+                fp_account_rel.fp_id = fp.id and
+                fp_account_rel.account_id= gl_account.id and
+                lnk.account_id = gl_account.id
+
+            UNION
+
+            -- all cc = t , G/L = f
+            select abs(('x'||substr(md5(fp.code || cc.code || lnk.name),1,16))::bit(32)::int) as id,
+            lnk.destination_id AS account_destination_id, cc.id AS cost_center_id, fp.id AS funding_pool_id, lnk.name AS account_destination_name, lnk.account_id, lnk.disabled, lnk.id as account_destination_link_id
+            FROM
+                account_analytic_account fp,
+                account_analytic_account cc,
+                funding_pool_associated_destinations fpad,
+                account_destination_link lnk
+            where
+                fp.allow_all_cc_with_fp = 't' and
+                cc.type != 'view' and
+                fp.select_accounts_only = 'f' and
+                lnk.id = fpad.tuple_id and
+                fp.id = fpad.funding_pool_id
+            ) AS headache
+
+           ORDER BY account_destination_name)""")
         return res
 
 
