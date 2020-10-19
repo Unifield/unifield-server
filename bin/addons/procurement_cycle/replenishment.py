@@ -452,6 +452,7 @@ class replenishment_parent_segment(osv.osv):
     _name = 'replenishment.parent.segment'
     _description = 'Replenishment Parent Segment'
     _inherits = {'replenishment.location.config': 'location_config_id'}
+    _rec_name = 'name_parent_seg'
     _order = 'id desc'
 
 
@@ -785,7 +786,7 @@ class replenishment_segment(osv.osv):
 
 
     _columns = {
-        'parent_id': fields.many2one('replenishment.parent.segment', 'Parent', required=1, ondelete='cascade', select=1, domain="[('hidden', '=', False), ('state', 'in', ['complete', 'draft'])]"),
+        'parent_id': fields.many2one('replenishment.parent.segment', 'Parent', required=1, ondelete='cascade', select=1, domain="[('hidden', '=', False), ('state_parent', 'in', ['complete', 'draft'])]"),
         'name_seg': fields.char('Reference', size=64, readonly=1, select=1),
         'description_seg': fields.char('Replenishment Segment Description', required=1, size=28, select=1),
 
@@ -1845,6 +1846,26 @@ class replenishment_segment(osv.osv):
 
         return True
 
+
+    def open_history(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        seg = self.browse(cr, uid, ids[0], fields_to_fetch=['rule', 'name_seg'], context=context)
+        if seg.rule == 'cycle':
+            obj = 'replenishment.segment.line.amc.past_fmc'
+        else:
+            obj = 'replenishment.segment.line.min_max_auto_supply.history'
+
+        return {
+            'name': 'History %s' % (seg.name_seg, ),
+            'type': 'ir.actions.act_window',
+            'res_model': obj,
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'domain': [('segment_id', '=', seg.id)],
+        }
+
 replenishment_segment()
 
 class replenishment_segment_line(osv.osv):
@@ -2100,7 +2121,7 @@ class replenishment_segment_line(osv.osv):
 
     _columns = {
         'segment_id': fields.many2one('replenishment.segment', 'Replenishment Segment', select=1, required=1),
-        'parent_state': fields.related('segment_id', 'state', string='Segment Status', type='char', readonly=True, write_relate=False),
+        'line_state_parent': fields.related('segment_id', 'state', string='Segment Status', type='char', readonly=True, write_relate=False),
         'product_id': fields.many2one('product.product', 'Product Code', select=1, required=1),
         'product_description': fields.related('product_id', 'name',  string='Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
@@ -2262,7 +2283,35 @@ class replenishment_segment_line(osv.osv):
         return super(replenishment_segment_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         self._clean_data(cr, uid, vals, context=context)
+        if not context.get('sync_update_execution') and ( 'min_qty' in vals or 'max_qty' in vals or 'auto_qty' in vals):
+            histo_obj = self.pool.get('replenishment.segment.line.min_max_auto_supply.history')
+            cr.execute("""
+                select
+                    l.id, l.min_qty, l.max_qty, l.auto_qty, s.rule
+                from
+                    replenishment_segment_line l, replenishment_segment s
+                where
+                    s.id = l.segment_id and
+                    l.id in %s and
+                        (
+                            s.rule = 'minmax' and (coalesce(min_qty, 0)!=%s or coalesce(max_qty, 0)!=%s)
+                            or
+                            s.rule = 'auto' and coalesce(auto_qty, 0)!=%s
+                        )
+            """, (tuple(ids), vals.get('min_qty') or 0, vals.get('max_qty') or 0, vals.get('auto_qty') or 0))
+            for change in cr.dictfetchall():
+                if change['rule'] == 'auto':
+                    histo_obj.create(cr, 1, {'line_id': change['id'], 'old_value': '%d' % change['auto_qty'] or 0, 'new_value': '%d' % vals.get('auto_qty') or 0, 'field': 'auto'}, context=context)
+                else:
+
+                    histo_obj.create(cr, 1, {'line_id': change['id'], 'old_value': '%d / %d' % (change['min_qty'] or 0, change['max_qty'] or 0), 'new_value': '%d / %d' % (vals.get('min_qty', change['min_qty']) or 0 , vals.get('max_qty', change['max_qty']) or 0), 'field': 'minmax'}, context=context)
+
         return super(replenishment_segment_line, self).write(cr, uid, ids, vals, context=context)
 
     def create_multiple_lines(self, cr, uid, parent_id, product_ids, context=None):
@@ -2332,6 +2381,26 @@ class replenishment_segment_line(osv.osv):
         return {'type': 'ir.actions.act_window_close', 'o2m_refresh': 'line_ids'}
 
 replenishment_segment_line()
+
+class replenishment_segment_line_min_max_auto_supply_history(osv.osv):
+    _name = 'replenishment.segment.line.min_max_auto_supply.history'
+    _inherits = {'replenishment.segment.line': 'line_id'}
+    _rec_name = 'date'
+    _order = 'id desc'
+
+    _columns = {
+        'line_id': fields.many2one('replenishment.segment.line', 'Replenishment Segment Line', select=1, required=1, ondelete='cascade'),
+        'date': fields.datetime('Date', select=1, required=1),
+        'old_value': fields.char('Old Value', size=126),
+        'new_value': fields.char('New Value', size=126),
+        'field': fields.selection([('minmax', 'Min/Max'), ('auto', 'AutoSupply')], 'Field'),
+    }
+
+    _defaults = {
+        'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+    }
+
+replenishment_segment_line_min_max_auto_supply_history()
 
 class replenishment_segment_date_generation(osv.osv):
     _name = 'replenishment.segment.date.generation'
@@ -2445,8 +2514,9 @@ class replenishment_segment_line_amc(osv.osv):
                 if gen_inv_review and prod_alloc.qty_available:
                     prod_with_stock.append(prod_alloc['id'])
 
+            open_loan = {}
+            open_donation = {}
             if full_data:
-                open_loan = {}
                 cr.execute('''
                     select product_id from purchase_order_line pol, purchase_order po
                     where
@@ -2474,7 +2544,6 @@ class replenishment_segment_line_amc(osv.osv):
                 for loan in cr.fetchall():
                     open_loan[loan[0]] = True
 
-                open_donation = {}
                 if seg_context['amc_location_ids']:
                     cr.execute('''
                         select distinct(m.product_id) from stock_move m, stock_picking p, stock_reason_type rt
@@ -2658,7 +2727,7 @@ replenishment_segment_line_amc_month_exp()
 
 class replenishment_segment_line_amc_detailed_amc(osv.osv):
     _name = 'replenishment.segment.line.amc.detailed.amc'
-    _rec_name = 'line_amc_id'
+    _rec_name = 'segment_line_id'
     _columns = {
         'segment_line_id': fields.many2one('replenishment.segment.line', 'Seg Line', required=1, select=1, ondelete='cascade'),
         'month': fields.date('Month', required=1, select=1),
@@ -2668,7 +2737,9 @@ replenishment_segment_line_amc_detailed_amc()
 
 class replenishment_segment_line_amc_past_fmc(osv.osv):
     _name = 'replenishment.segment.line.amc.past_fmc'
-    _rec_name = 'line_amc_id'
+    _rec_name = 'segment_line_id'
+    _inherits = {'replenishment.segment.line': 'segment_line_id'}
+    _order = 'month desc'
     _columns = {
         'segment_line_id': fields.many2one('replenishment.segment.line', 'Seg Line', required=1, select=1, ondelete='cascade'),
         'month': fields.date('Month', required=1, select=1),
@@ -2676,7 +2747,76 @@ class replenishment_segment_line_amc_past_fmc(osv.osv):
     }
 replenishment_segment_line_amc_past_fmc()
 
-class replenishment_order_calc(osv.osv):
+
+class common_oc_inv():
+    def _selected_data(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Warning!'), _('Please select at least one line'))
+
+        main_obj = self.browse(cr, uid, ids[0], context=context)
+        loc_ids = [x.id for x in main_obj.location_config_id.local_location_ids]
+
+        if self._name == 'replenishment.inventory.review':
+            line_obj = self.pool.get('replenishment.inventory.review.line')
+        else:
+            line_obj = self.pool.get('replenishment.order_calc.line')
+
+        lines = line_obj.browse(cr, uid, context.get('button_selected_ids'), context=context)
+
+        return {
+            'location_ids': loc_ids,
+            'products': [x.product_id for x in lines],
+            'inv_review': main_obj,
+        }
+
+    def pipeline_po(self, cr, uid, ids, context=None):
+        data = self._selected_data(cr, uid, ids, context=context)
+
+        product_ids = [x.id for x in data['products']]
+        product_code = [x.default_code for x in data['products']]
+
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'purchase.purchase_line_pipeline_action', ['tree'], new_tab=True, context=context)
+        res['domain'] = ['&', '&', ('location_dest_id', 'in', data['location_ids']), ('state', 'in', ['validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n']), ('product_id', 'in', product_ids)]
+        res['name'] = _('Pipeline %s: %s') % (data['inv_review'].location_config_id.name, ', '.join(product_code))
+        res['nodestroy'] = True
+        res['target'] = 'new'
+        return res
+
+    def pipeline(self, cr, uid, ids, context=None):
+        data = self._selected_data(cr, uid, ids, context=context)
+
+        product_ids = [x.id for x in data['products']]
+        product_code = [x.default_code for x in data['products']]
+
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_move_form3', ['tree', 'form'], context=context)
+        res['domain'] = ['&', '&', ('location_dest_id', 'in', data['location_ids']), ('state', 'in', ['confirmed', 'assigned']), ('product_id', 'in', product_ids)]
+        res['name'] = _('Pipeline %s: %s') % (data['inv_review'].location_config_id.name, ', '.join(product_code))
+        res['nodestroy'] = True
+        res['target'] = 'new'
+        return res
+
+    def stock_by_location(self, cr, uid, ids, context=None):
+        data = self._selected_data(cr, uid, ids, context=context)
+        prod_id = data['products'][0].id
+        context['active_id'] = prod_id
+        return self.pool.get('product.product').open_stock_by_location(cr, uid, [prod_id], context=context)
+
+    def reserved(self, cr, uid, ids, context=None):
+        data = self._selected_data(cr, uid, ids, context=context)
+        product_ids = [x.id for x in data['products']]
+        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.reserved_products_action', ['tree', 'form'], context=context)
+        res['domain'] = [('product_id', 'in', product_ids)]
+        res['nodestroy'] = True
+        res['target'] = 'new'
+        return res
+
+        return res
+
+class replenishment_order_calc(osv.osv, common_oc_inv):
     _name = 'replenishment.order_calc'
     _description = 'Order Calculation'
     _order = 'id desc'
@@ -2953,7 +3093,9 @@ class replenishment_order_calc_line(osv.osv):
 
 replenishment_order_calc_line()
 
-class replenishment_inventory_review(osv.osv):
+
+
+class replenishment_inventory_review(osv.osv, common_oc_inv):
     _name = 'replenishment.inventory.review'
     _description = 'Inventory Review'
     _order = 'id desc'
@@ -2977,57 +3119,6 @@ class replenishment_inventory_review(osv.osv):
         'state': 'inprogress',
         'generation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
     }
-
-    def _selected_data(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-
-        if not context.get('button_selected_ids'):
-            raise osv.except_osv(_('Warning!'), _('Please select at least one line'))
-
-        inv_review = self.browse(cr, uid, ids[0], context=context)
-        loc_ids = [x.id for x in inv_review.location_config_id.local_location_ids]
-
-        inv_review_line = self.pool.get('replenishment.inventory.review.line').browse(cr, uid, context.get('button_selected_ids'), context=context)
-
-        return {
-            'location_ids': loc_ids,
-            'products': [x.product_id for x in inv_review_line],
-            'inv_review': inv_review,
-        }
-
-    def pipeline_po(self, cr, uid, ids, context=None):
-        data = self._selected_data(cr, uid, ids, context=context)
-
-        product_ids = [x.id for x in data['products']]
-        product_code = [x.default_code for x in data['products']]
-
-
-        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'purchase.purchase_line_pipeline_action', ['tree'], new_tab=True, context=context)
-        res['domain'] = ['&', '&', ('location_dest_id', 'in', data['location_ids']), ('state', 'in', ['validated', 'validated_n', 'sourced_sy', 'sourced_v', 'sourced_n']), ('product_id', 'in', product_ids)]
-        res['name'] = _('Pipeline %s: %s') % (data['inv_review'].location_config_id.name, ', '.join(product_code))
-        res['nodestroy'] = True
-        res['target'] = 'new'
-        return res
-
-    def pipeline(self, cr, uid, ids, context=None):
-        data = self._selected_data(cr, uid, ids, context=context)
-
-        product_ids = [x.id for x in data['products']]
-        product_code = [x.default_code for x in data['products']]
-
-        res = self.pool.get('ir.actions.act_window').open_view_from_xmlid(cr, uid, 'stock.action_move_form3', ['tree', 'form'], context=context)
-        res['domain'] = ['&', '&', ('location_dest_id', 'in', data['location_ids']), ('state', 'in', ['confirmed', 'assigned']), ('product_id', 'in', product_ids)]
-        res['name'] = _('Pipeline %s: %s') % (data['inv_review'].location_config_id.name, ', '.join(product_code))
-        res['nodestroy'] = True
-        res['target'] = 'new'
-        return res
-
-    def stock_by_location(self, cr, uid, ids, context=None):
-        data = self._selected_data(cr, uid, ids, context=context)
-        prod_id = data['products'][0].id
-        context['active_id'] = prod_id
-        return self.pool.get('product.product').open_stock_by_location(cr, uid, [prod_id], context=context)
 
 
 replenishment_inventory_review()

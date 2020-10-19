@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
-from osv import osv
 
 def get_lines(self, objects):
     if not self.localcontext['is_multi']:
@@ -13,7 +12,6 @@ class order_calc_parser(report_sxw.rml_parse):
 
     def __init__(self, cr, uid, name, context):
         super(order_calc_parser, self).__init__(cr, uid, name, context=context)
-        raise osv.except_osv('oo', 'ooo')
         self.localcontext.update({
             'only_warning': lambda *a : False,
             'is_multi': lambda *a : False,
