@@ -32,10 +32,10 @@ class financing_contract_account_quadruplet(osv.osv):
     def _auto_init(self, cr, context=None):
         res = super(financing_contract_account_quadruplet, self)._auto_init(cr, context)
         sql.drop_view_if_exists(cr, 'financing_contract_account_quadruplet')
-        # all cc = f, G/L = f
         cr.execute("""CREATE OR REPLACE VIEW financing_contract_account_quadruplet AS (
             SELECT id, account_destination_id, cost_center_id, funding_pool_id, account_destination_name, account_id, disabled, account_destination_link_id FROM
             (
+            -- all cc = f, G/L = f
             SELECT abs(('x'||substr(md5(fp.code || cc.code || lnk.name),1,16))::bit(32)::int) as id,
             lnk.destination_id AS account_destination_id, cc.id AS cost_center_id, fp.id AS funding_pool_id, lnk.name AS account_destination_name, lnk.account_id, lnk.disabled, lnk.id as account_destination_link_id
             FROM account_analytic_account fp,
@@ -50,9 +50,7 @@ class financing_contract_account_quadruplet(osv.osv):
 
            UNION
 
-
-            -- all cc = t , G/L = t
-
+            -- all cc = t, G/L = t
             select abs(('x'||substr(md5(fp.code || cc.code || lnk.name),1,16))::bit(32)::int) as id,
             lnk.destination_id AS account_destination_id, cc.id AS cost_center_id, fp.id AS funding_pool_id, lnk.name AS account_destination_name, lnk.account_id, lnk.disabled, lnk.id as account_destination_link_id
             FROM
@@ -71,7 +69,7 @@ class financing_contract_account_quadruplet(osv.osv):
 
             UNION
 
-            -- all cc = f , G/L = t
+            -- all cc = f, G/L = t
             select abs(('x'||substr(md5(fp.code || cc.code || lnk.name),1,16))::bit(32)::int) as id,
             lnk.destination_id AS account_destination_id, cc.id AS cost_center_id, fp.id AS funding_pool_id, lnk.name AS account_destination_name, lnk.account_id, lnk.disabled, lnk.id as account_destination_link_id
             FROM
