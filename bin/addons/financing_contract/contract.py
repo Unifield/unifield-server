@@ -62,7 +62,10 @@ class financing_contract_funding_pool_line(osv.osv):
         return True
 
     def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
+        format_obj = self.pool.get('financing.contract.format')
         # US-113: Check if the call is from sync update
         if context.get('sync_update_execution') and vals.get('contract_id', False):
             # US-113: and if there is any financing contract existed for this format, if no, then ignore this call
@@ -76,12 +79,11 @@ class financing_contract_funding_pool_line(osv.osv):
 
         #US-345: the following block cannot be executed in the sync context, because it would then reset all costcenters from the funding pools!
         # making that the deleted costcenters from the sender were not taken into account
-        if not context.get('sync_update_execution') and 'contract_id' in vals and 'funding_pool_id' in vals:
-            # get the cc ids from for this funding pool
+        if not context.get('sync_update_execution') and vals.get('contract_id') and vals.get('funding_pool_id'):
+            # get the Cost Centers linked to the Funding Pool
             fp_cc_ids = [c.id for c in analytic_acc_obj.get_cc_linked_to_fp(cr, uid, vals['funding_pool_id'], context=context)]
 
             # get the format instance
-            format_obj = self.pool.get('financing.contract.format')
             cc_rows = format_obj.browse(cr, uid, vals['contract_id'], context=context).cost_center_ids
             cc_ids = []
             for cc in cc_rows:
