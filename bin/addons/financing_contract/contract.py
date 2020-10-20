@@ -62,6 +62,7 @@ class financing_contract_funding_pool_line(osv.osv):
         return True
 
     def create(self, cr, uid, vals, context=None):
+        analytic_acc_obj = self.pool.get('account.analytic.account')
         # US-113: Check if the call is from sync update
         if context.get('sync_update_execution') and vals.get('contract_id', False):
             # US-113: and if there is any financing contract existed for this format, if no, then ignore this call
@@ -77,14 +78,7 @@ class financing_contract_funding_pool_line(osv.osv):
         # making that the deleted costcenters from the sender were not taken into account
         if not context.get('sync_update_execution') and 'contract_id' in vals and 'funding_pool_id' in vals:
             # get the cc ids from for this funding pool
-            quad_obj = self.pool.get('financing.contract.account.quadruplet')
-            quad_ids = quad_obj.search(cr, uid, [('funding_pool_id','=',vals['funding_pool_id'])],context=context)
-            quad_rows = quad_obj.browse(cr, uid, quad_ids,context=context)
-            quad_cc_ids = []
-            for quad in quad_rows:
-                cc_id_temp = quad.cost_center_id.id
-                if cc_id_temp not in quad_cc_ids:
-                    quad_cc_ids.append(cc_id_temp)
+            fp_cc_ids = [c.id for c in analytic_acc_obj.get_cc_linked_to_fp(cr, uid, vals['funding_pool_id'], context=context)]
 
             # get the format instance
             format_obj = self.pool.get('financing.contract.format')
@@ -94,7 +88,7 @@ class financing_contract_funding_pool_line(osv.osv):
                 cc_ids.append(cc.id)
 
             # append the ccs from the fp only if not already there
-            cc_ids = list(set(cc_ids).union(quad_cc_ids))
+            cc_ids = list(set(cc_ids).union(fp_cc_ids))
             # replace the associated cc list -NOT WORKING
             format_obj.write(cr, uid, vals['contract_id'],{'cost_center_ids':[(6,0,cc_ids)]}, context=context)
         # UFTP-121: Check that FP is not used yet.
