@@ -62,6 +62,7 @@ class financing_contract_account_quadruplet(osv.osv):
             where
                 fp.allow_all_cc_with_fp = 't' and
                 cc.type != 'view' and
+                cc.category = 'OC' and
                 fp.select_accounts_only = 't' and
                 fp_account_rel.fp_id = fp.id and
                 fp_account_rel.account_id= gl_account.id and
@@ -101,6 +102,7 @@ class financing_contract_account_quadruplet(osv.osv):
             where
                 fp.allow_all_cc_with_fp = 't' and
                 cc.type != 'view' and
+                cc.category = 'OC' and
                 fp.select_accounts_only = 'f' and
                 lnk.id = fpad.tuple_id and
                 fp.id = fpad.funding_pool_id
