@@ -63,7 +63,6 @@
                     <field name="active" />
                     <field name="is_admin" invisible="1"/>
                     <button name="run_job_manually" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
-                    <label colspan="2"/>
                     <button name="local_autoconfig" string="Local Auto Configuration" colspan="2" type="object" icon="terp-dialog-close" confirm="This action should only be executed on a Sandbox, it will override the current configuration. Do you confirm ?" attrs="{'invisible': [('is_admin', '=', False)]}"/>
 
                     <separator colspan="4" string="FTP server" />
