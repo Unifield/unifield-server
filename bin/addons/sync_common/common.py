@@ -105,6 +105,7 @@ WHITE_LIST_MODEL = [
     'real.average.consumption',
     'real.average.consumption.line',
     'replenishment.location.config',
+    'replenishment.parent.segment',
     'replenishment.segment',
     'replenishment.segment.line',
     'replenishment.segment.line.amc',

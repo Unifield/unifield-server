@@ -2307,7 +2307,7 @@ class replenishment_segment_line(osv.osv):
             """, (tuple(ids), vals.get('min_qty') or 0, vals.get('max_qty') or 0, vals.get('auto_qty') or 0))
             for change in cr.dictfetchall():
                 if change['rule'] == 'auto':
-                    histo_obj.create(cr, 1, {'line_id': change['id'], 'old_value': '%d' % change['auto_qty'] or 0, 'new_value': '%d' % vals.get('auto_qty') or 0, 'field': 'auto'}, context=context)
+                    histo_obj.create(cr, 1, {'line_id': change['id'], 'old_value': '%d' % (change['auto_qty'] or 0, ), 'new_value': '%d' % (vals.get('auto_qty') or 0, ), 'field': 'auto'}, context=context)
                 else:
 
                     histo_obj.create(cr, 1, {'line_id': change['id'], 'old_value': '%d / %d' % (change['min_qty'] or 0, change['max_qty'] or 0), 'new_value': '%d / %d' % (vals.get('min_qty', change['min_qty']) or 0 , vals.get('max_qty', change['max_qty']) or 0), 'field': 'minmax'}, context=context)
