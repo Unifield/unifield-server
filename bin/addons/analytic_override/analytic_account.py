@@ -307,9 +307,9 @@ class analytic_account(osv.osv):
                     raise osv.except_osv(_('Error'), _('Filter not implemented on Funding Pools.'))
                 cc = False
                 if cc_id and isinstance(cc_id, (int, long)):
-                    cc = self.browse(cr, uid, cc_id, fields_to_fetch=['category', 'cc_instance_ids'], context=context)
-                    if cc.category != 'OC':
-                        raise osv.except_osv(_('Error'), _('Filter only compatible with a Cost Center.'))
+                    cc = self.browse(cr, uid, cc_id, fields_to_fetch=['category', 'type', 'cc_instance_ids'], context=context)
+                    if cc.category != 'OC' or cc.type == 'view':
+                        raise osv.except_osv(_('Error'), _('Filter only compatible with a normal-type Cost Center.'))
                 compatible_fp_ids = []
                 # The Funding Pool PF is compatible with every CC
                 try:
