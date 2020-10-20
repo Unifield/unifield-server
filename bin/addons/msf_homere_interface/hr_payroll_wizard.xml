@@ -18,7 +18,9 @@
                         <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"
                                domain="[('category', '=', 'DEST'), ('type', '!=', 'view'),
                                         ('dest_compatible_with_cc_ids', '=', cost_center_id)]"/>
-                        <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                        <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"
+                               domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'),
+                                        ('fp_compatible_with_cc_ids', '=', cost_center_id)]"/>
                     </group>
                     <newline/>
                     <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>

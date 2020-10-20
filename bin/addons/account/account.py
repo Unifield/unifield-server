@@ -517,6 +517,24 @@ class account_account(osv.osv):
             res['value'] = {'prevent_multi_curr_rec': False}
         return res
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Displays specific views when G/L accounts are selected from a Funding Pool
+        """
+        if context is None:
+            context = {}
+        ir_model_obj = self.pool.get('ir.model.data')
+        if context.get('from_fp'):
+            view = False
+            module = 'account'
+            if view_type == 'search':
+                view = ir_model_obj.get_object_reference(cr, uid, module, 'view_account_fp_search')
+            elif view_type == 'tree':
+                view = ir_model_obj.get_object_reference(cr, uid, module, 'view_account_fp_tree')
+            if view:
+                view_id = view[1]
+        return super(account_account, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
 
 account_account()
 

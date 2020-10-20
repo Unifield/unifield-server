@@ -180,10 +180,6 @@ class msf_doc_import_accounting(osv.osv_memory):
         # Prepare some values
         # Do changes because of YAML tests
         cr = pooler.get_db(dbname).cursor()
-        try:
-            msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            msf_fp_id = 0
         created = 0
         processed = 0
         errors = []
@@ -517,23 +513,15 @@ class msf_doc_import_accounting(osv.osv_memory):
                             errors.append(_('Line %s. The Cost Center %s is not compatible with the Destination %s.') %
                                           (current_line_num, line[cols['Cost Centre']], line[cols['Destination']]))
                             continue
-                        # if the Fund. Pool used is NOT "PF" check the compatibility with the (account, dest) and the CC
-                        if r_fp != msf_fp_id:
-                            fp_fields = ['tuple_destination_account_ids', 'cost_center_ids']
-                            fp = self.pool.get('account.analytic.account').browse(cr, uid, r_fp,
-                                                                                  fields_to_fetch=fp_fields, context=context)
-                            if (account.id, r_destination) not in \
-                                [t.account_id and t.destination_id and (t.account_id.id, t.destination_id.id)
-                                 for t in fp.tuple_destination_account_ids if not t.disabled]:
-                                errors.append(_('Line %s. The combination "account %s and destination %s" is not '
-                                                'compatible with the Funding Pool %s.') %
-                                              (current_line_num, line[cols['G/L Account']], line[cols['Destination']],
-                                               line[cols['Funding Pool']]))
-                                continue
-                            if cc.id not in [c.id for c in fp.cost_center_ids]:
-                                errors.append(_('Line %s. The Cost Center %s is not compatible with the Funding Pool %s.') %
-                                              (current_line_num, line[cols['Cost Centre']], line[cols['Funding Pool']]))
-                                continue
+                        if not ad_obj.check_fp_acc_dest_compatibility(cr, uid, r_fp, account.id, r_destination, context=context):
+                            errors.append(_('Line %s. The combination "account %s and destination %s" is not '
+                                            'compatible with the Funding Pool %s.') %
+                                          (current_line_num, line[cols['G/L Account']], line[cols['Destination']], line[cols['Funding Pool']]))
+                            continue
+                        if not ad_obj.check_fp_cc_compatibility(cr, uid, r_fp, cc.id, context=context):
+                            errors.append(_('Line %s. The Cost Center %s is not compatible with the Funding Pool %s.') %
+                                          (current_line_num, line[cols['Cost Centre']], line[cols['Funding Pool']]))
+                            continue
 
                     # US-937: use period of import file
                     if period_name.startswith('Period 16'):

@@ -32,7 +32,7 @@
                     <field name="destination_id" on_change="onchange_destination(destination_id, analytic_id, parent.account_id)"
                            context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
                     <field name="analytic_id"
-                           domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open'), ('cost_center_ids', '=', cost_center_id)]"
+                           domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('fp_compatible_with_cc_ids', '=', cost_center_id)]"
                            string="Funding Pool" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('document_date')}"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
                     <field name="amount" sum="Total Amount"/>

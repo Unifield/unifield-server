@@ -363,6 +363,24 @@ class account_account(osv.osv):
                     ret[link['account_id'][0]] = True
         return ret
 
+    def _get_selected_in_fp(self, cr, uid, account_ids, name=False, args=False, context=None):
+        """
+        Returns True for the G/L accounts already selected in the Funding Pool:
+        they will be displayed in grey in the list and won't be re-selectable.
+        """
+        if context is None:
+            context = {}
+        if isinstance(account_ids, (int, long)):
+            account_ids = [account_ids]
+        selected = []
+        acc = context.get('accounts_selected')
+        if acc and isinstance(acc, list) and len(acc) == 1 and len(acc[0]) == 3:
+            selected = acc[0][2]
+        res = {}
+        for account_id in account_ids:
+            res[account_id] = account_id in selected
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'activation_date': fields.date('Active from', required=True),
@@ -400,6 +418,8 @@ class account_account(osv.osv):
         'has_partner_type_empty': fields.boolean('Empty'),  # US-1307 empty
 
         'inactivated_for_dest': fields.function(_get_inactivated_for_dest, method=True, type='boolean', string='Is inactive for destination given in context'),
+
+        'selected_in_fp': fields.function(_get_selected_in_fp, string='Selected in Funding Pool', method=True, store=False, type='boolean'),
     }
 
     _defaults = {

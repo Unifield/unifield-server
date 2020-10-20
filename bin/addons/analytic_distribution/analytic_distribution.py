@@ -44,6 +44,93 @@ class analytic_distribution(osv.osv):
                 return False
         return True
 
+    def check_fp_cc_compatibility(self, cr, uid, fp_id, cost_center_id, context=None):
+        """
+        Checks the compatibility between the FP and the Cost Center (cf. CC tab in the FP form).
+        Returns False if they aren't compatible.
+
+        If "Allow all Cost Centers" is ticked: only CC linked to the prop. instance of the FP are allowed.
+        """
+        if context is None:
+            context = {}
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        ir_model_data_obj = self.pool.get('ir.model.data')
+        res = True
+        if fp_id and cost_center_id:
+            # The Funding Pool PF is compatible with every CC
+            try:
+                pf_id = ir_model_data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                pf_id = 0
+            if fp_id != pf_id:
+                fp = analytic_acc_obj.browse(cr, uid, fp_id,
+                                             fields_to_fetch=['category', 'allow_all_cc_with_fp', 'instance_id', 'cost_center_ids'],
+                                             context=context)
+                cc = analytic_acc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['category', 'type', 'cc_instance_ids'], context=context)
+                if fp and cc and fp.category == 'FUNDING' and cc.category == 'OC':
+                    if fp.allow_all_cc_with_fp and cc.type != 'view' and fp.instance_id and \
+                            fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
+                        res = True
+                    elif cc.id in [c.id for c in fp.cost_center_ids]:
+                        res = True
+                    else:
+                        res = False
+        return res
+
+    def onchange_ad_cost_center(self, cr, uid, ids, cost_center_id=False, funding_pool_id=False, fp_field_name='funding_pool_id'):
+        """
+        Resets the FP in case the CC selected isn't compatible with it.
+        """
+        res = {}
+        if cost_center_id and funding_pool_id and not self.check_fp_cc_compatibility(cr, uid, funding_pool_id, cost_center_id):
+            res = {'value': {fp_field_name: False}}
+        return res
+
+    def check_fp_acc_dest_compatibility(self, cr, uid, fp_id, account_id, dest_id, context=None):
+        """
+        Checks the compatibility between the FP and the "G/L Account/Destination" combination.
+        Returns False if they aren't compatible.
+        """
+        if context is None:
+            context = {}
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        ir_model_data_obj = self.pool.get('ir.model.data')
+        res = True
+        if fp_id and account_id and dest_id:
+            # The Funding Pool PF is compatible with every combination
+            try:
+                pf_id = ir_model_data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+            except ValueError:
+                pf_id = 0
+            if fp_id != pf_id:
+                fp = analytic_acc_obj.browse(cr, uid, fp_id,
+                                             fields_to_fetch=['category', 'select_accounts_only', 'fp_account_ids',
+                                                              'tuple_destination_account_ids'],
+                                             context=context)
+                if fp and fp.category == 'FUNDING':
+                    # when the link is made to G/L accounts only: all Destinations compatible with the acc. are allowed
+                    if fp.select_accounts_only and \
+                            account_id in [a.id for a in fp.fp_account_ids if dest_id in [d.id for d in a.destination_ids]]:
+                        res = True
+                    # otherwise the combination "account + dest" must be checked
+                    elif not fp.select_accounts_only and (account_id, dest_id) in \
+                            [(t.account_id.id, t.destination_id.id) for t in fp.tuple_destination_account_ids if not t.disabled]:
+                        res = True
+                    else:
+                        res = False
+        return res
+
+    def onchange_ad_destination(self, cr, uid, ids, destination_id=False, funding_pool_id=False, account_id=False,
+                                fp_field_name='funding_pool_id'):
+        """
+        Resets the FP in case the Dest/Acc combination selected isn't compatible with it.
+        """
+        res = {}
+        if destination_id and funding_pool_id and account_id and \
+                not self.check_fp_acc_dest_compatibility(cr, uid, funding_pool_id, account_id, destination_id):
+            res = {'value': {fp_field_name: False}}
+        return res
+
     def _get_distribution_state(self, cr, uid, distrib_id, parent_id, account_id, context=None,
                                 doc_date=False, posting_date=False, manual=False, amount=False):
         """
@@ -70,12 +157,6 @@ class analytic_distribution(osv.osv):
         if amount is not None and amount is not False and abs(amount) <= 1:
             if not all(len(d) <= 1 for d in [distrib.funding_pool_lines, distrib.free_1_lines, distrib.free_2_lines]):
                 return 'invalid_small_amount'
-        # Search MSF Private Fund element, because it's valid with all accounts
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                                                                        'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            fp_id = 0
         account = self.pool.get('account.account').read(cr, uid, account_id, ['destination_ids'])
         # Check Cost Center lines regarding destination/account and destination/CC links
         for cc_line in distrib.cost_center_lines:
@@ -105,12 +186,10 @@ class analytic_distribution(osv.osv):
                 return 'invalid'
             if not fp_line.analytic_id:
                 return 'invalid'
-            # If fp_line is MSF Private Fund, all is ok
-            if fp_line.analytic_id.id == fp_id:
-                continue
-            if (account_id, fp_line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.analytic_id.tuple_destination_account_ids if not x.disabled]:
+            if not self.check_fp_acc_dest_compatibility(cr, uid, fp_line.analytic_id.id, account_id,
+                                                        fp_line.destination_id.id, context=context):
                 return 'invalid'
-            if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
+            if not self.check_fp_cc_compatibility(cr, uid, fp_line.analytic_id.id, fp_line.cost_center_id.id, context=context):
                 return 'invalid'
         # Check the date validity of the free accounts used in manual entries
         if manual and doc_date:
@@ -135,14 +214,6 @@ class analytic_distribution(osv.osv):
         info = ''
         ana_obj = self.pool.get('account.analytic.account')
         account = self.pool.get('account.account').browse(cr, uid, account_id, context=context)
-        fp = ana_obj.browse(cr, uid, analytic_id, context=context)
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            fp_id = 0
-        is_private_fund = False
-        if analytic_id == fp_id:
-            is_private_fund = True
         # DISTRIBUTION VERIFICATION
         # Check that destination is compatible with account
         if destination_id not in [x.id for x in account.destination_ids]:
@@ -150,13 +221,12 @@ class analytic_distribution(osv.osv):
         # Check that Destination and Cost Center are compatible
         if not self.check_dest_cc_compatibility(cr, uid, destination_id, cost_center_id, context=context):
             return 'invalid', _('Cost Center not compatible with destination')
-        if not is_private_fund:
-            # Check that cost center is compatible with FP (except if FP is MSF Private Fund)
-            if cost_center_id not in [x.id for x in fp.cost_center_ids]:
-                return 'invalid', _('Cost Center not compatible with FP')
-            # Check that tuple account/destination is compatible with FP (except if FP is MSF Private Fund):
-            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp.tuple_destination_account_ids if not x.disabled]:
-                return 'invalid', _('account/destination tuple not compatible with given FP analytic account')
+        # Check that cost center is compatible with FP
+        if not self.check_fp_cc_compatibility(cr, uid, analytic_id, cost_center_id, context=context):
+            return 'invalid', _('Cost Center not compatible with FP')
+        # Check that tuple account/destination is compatible with FP
+        if not self.check_fp_acc_dest_compatibility(cr, uid, analytic_id, account_id, destination_id, context=context):
+            return 'invalid', _('account/destination tuple not compatible with given FP analytic account')
         return res, info
 
     def check_cc_distrib_active(self, cr, uid, distrib_br, posting_date=False, prefix='', from_supply=False):
