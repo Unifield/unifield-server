@@ -321,7 +321,7 @@ class analytic_account(osv.osv):
                     other_fp_ids = self.search(cr, uid, [('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('id', '!=', pf_id)],
                                                context=context)
                     for fp in self.browse(cr, uid, other_fp_ids,
-                                          fields_to_fetch=['allow_all_cc_with_fp', 'instance_id', 'cc_instance_ids', 'cost_center_ids'],
+                                          fields_to_fetch=['allow_all_cc_with_fp', 'instance_id', 'cost_center_ids'],
                                           context=context):
                         if fp.allow_all_cc_with_fp and fp.instance_id and fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
                             compatible = True
