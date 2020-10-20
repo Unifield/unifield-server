@@ -37,10 +37,34 @@
             <field name="arch" type="xml">
                 <form string="Automated import">
                     <separator colspan="4" string="General configuration" />
+                    <html colspan="4">
+                        <script language="javascript">
+                            $(document).ready(function() {
+                                original_onclick = $('#local_autoconfig').attr('onclick');
+                                original_confirm = $('#local_autoconfig').attr('confirm');
+                                $('#local_autoconfig').removeAttr('onclick');
+                                $('#local_autoconfig').click(function() {
+                                    if (!confirm(original_confirm)) {
+                                        return false;
+                                    }
+                                    ['src_path', 'dest_path', 'dest_path_failure', 'report_path'].forEach(function (f){
+                                        $('#'+f).val('');
+                                        $('#'+f).removeClass('requiredfield');
+                                    });
+                                    $('#active').removeAttr('disabled');
+                                    $('#active').val('');
+                                    original_onclick();
+                                });
+                            });
+                        </script>
+                    </html>
                     <field name="name" />
                     <field name="function_id" widget="selection" />
                     <field name="active" />
+                    <field name="is_admin" invisible="1"/>
                     <button name="run_job_manually" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
+                    <label colspan="2"/>
+                    <button name="local_autoconfig" string="Local Auto Configuration" colspan="2" type="object" icon="terp-dialog-close" confirm="This action should only be executed on a Sandbox, it will override the current configuration. Do you confirm ?" attrs="{'invisible': [('is_admin', '=', False)]}"/>
 
                     <separator colspan="4" string="FTP server" />
                     <group col="4" colspan="4">
