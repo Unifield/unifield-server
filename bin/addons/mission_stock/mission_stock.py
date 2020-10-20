@@ -105,7 +105,8 @@ GET_EXPORT_REQUEST = '''SELECT
         trim(to_char(l.opdd_qty, '999999999999.999')) as l_opdd_qty,
         l.product_amc as product_amc,
         l.product_consumption as product_consumption,
-        mission_report_id
+        mission_report_id,
+        l.product_active as product_active
     FROM stock_mission_report_line l
          LEFT JOIN product_product pp ON l.product_id = pp.id
          LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
@@ -255,7 +256,7 @@ class stock_mission_report(osv.osv):
     def xls_write_header(self, sheet, cell_list, style):
         column_count = 0
         for column in cell_list:
-            sheet.write(2, column_count, _(column), style)
+            sheet.write(4, column_count, _(column), style)
             column_count += 1
 
     def xls_write_row(self, sheet, cell_list, row_count, style):
@@ -287,8 +288,7 @@ class stock_mission_report(osv.osv):
                              product_values, file_type='xls',
                              display_only_in_stock=False):
         in_stock = display_only_in_stock and '_only_stock' or ''
-        file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id,
-                                                         report_type + in_stock + '.' + file_type)
+        file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + in_stock + '.' + file_type)
 
         if display_only_in_stock:
             ignore_if_null = []
@@ -302,8 +302,14 @@ class stock_mission_report(osv.osv):
             export_file = cStringIO.StringIO()
 
         header_row = [_(column_name) for column_name, colum_property in header]
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.name
+        report_name = self.read(cr, uid, report_id, ['name'])['name']
+        report_last_updt = time.strftime('%d-%m-%Y %H:%M:%S')
         if file_type == 'csv':
             writer = UnicodeWriter(export_file, dialect=excel_semicolon)
+            # Write common data: Current Instance, Instance Selection, Generation Date, Export Date
+            writer.writerows([[_("Generating instance"), instance_name], [_("Instance selection"), report_name],
+                              [_("Last update"), report_last_updt], [_("Export Date"), report_last_updt]])
             # write headers of the csv file
             writer.writerow(header_row)
 
@@ -334,21 +340,27 @@ class stock_mission_report(osv.osv):
             sheet = book.add_sheet('Sheet 1')
             sheet.row_default_height = 60*20
 
+            # First Line
             sheet.write(0, 0, _("Generating instance"), row_style)
-            instance_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.name
             sheet.write(0, 1, instance_name, row_style)
+            # Second Line
             sheet.write(1, 0, _("Instance selection"), row_style)
-            report_name = self.read(cr, uid, report_id, ['name'])['name']
             sheet.write(1, 1, report_name, row_style)
+            # Third Line
+            sheet.write(2, 0, _("Last update"), row_style)
+            sheet.write(2, 1, report_last_updt, row_style)
+            # Fourth Line
+            sheet.write(3, 0, _("Export Date"), row_style)
+            sheet.write(3, 1, report_last_updt, row_style)
 
             self.xls_write_header(sheet, header_row, header_style)
 
             # tab header bigger height:
-            sheet.row(2).height_mismatch = True
-            sheet.row(2).height = 45*20
+            sheet.row(4).height_mismatch = True
+            sheet.row(4).height = 45*20
 
         # write the lines
-        row_count = 3
+        row_count = 5
         for row in request_result:
             try:
                 data_list = []
@@ -489,6 +501,7 @@ class stock_mission_report(osv.osv):
         fixed_data = [
             (_('Reference'), 'default_code'),
             (_('Name'), 'pt_name'),
+            (_('Active'), 'product_active'),
             (_('UoM'), 'pu_name'),
             (_('Cost Price'), 'pt_standard_price'),
             (_('Func. Cur.'), 'rc_name')

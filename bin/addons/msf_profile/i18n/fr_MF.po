@@ -27280,6 +27280,7 @@ msgstr "URL"
 #: model:ir.ui.menu,name:mission_stock.mission_stock_wizard_menu
 #: code:addons/mission_stock/wizard/mission_stock_wizard.py:217
 #: view:stock.mission.report.line:0
+#: model:ir.actions.report.xml,name:mission_stock.stock_mission_report_xls
 msgid "Mission Stock Report"
 msgstr "Rapport de Stock de Mission"
 
@@ -71674,6 +71675,7 @@ msgstr "Navajo"
 #: field:survey.common,active:0
 #: field:sync_client.survey,active:0
 #: field:product.status,active:0
+#: code:addons/mission_stock/mission_stock.py:504
 #, python-format
 msgid "Active"
 msgstr "Actif"
@@ -102278,8 +102280,9 @@ msgid "Full View"
 msgstr "Vue complète"
 
 #. module: mission_stock
-#: code:addons/mission_stock/mission_stock.py:357
-#: code:addons/mission_stock/mission_stock.py:495
+#: code:addons/mission_stock/mission_stock.py:311
+#: code:addons/mission_stock/mission_stock.py:344
+#: code:addons/mission_stock/mission_stock.py:487
 #, python-format
 msgid "Generating instance"
 msgstr "Instance génératrice"
@@ -102308,8 +102311,9 @@ msgid "Instance Level"
 msgstr "Niveau de l'instance"
 
 #. module: mission_stock
-#: code:addons/mission_stock/mission_stock.py:360
-#: code:addons/mission_stock/mission_stock.py:499
+#: code:addons/mission_stock/mission_stock.py:311
+#: code:addons/mission_stock/mission_stock.py:347
+#: code:addons/mission_stock/mission_stock.py:491
 #, python-format
 msgid "Instance selection"
 msgstr "Sélection Instance"
@@ -110949,3 +110953,36 @@ msgstr "Stock & Qtés en Cours pour le Produit sélectionné"
 #: field:stock.pipe.per.product.instance.prod.lines,stock_pipe_per_product_instance_id:0
 msgid "Report Stock & Pipe per Product and per Instance"
 msgstr "Rapport du Stock & Qtés en Cours par Produit et par Instance"
+
+#. module: mission_stock
+#: code:addons/mission_stock/wizard/mission_stock_wizard.py:268
+#, python-format
+msgid "Consolidated_Mission_Stock_Report_%s_%s"
+msgstr "Rapport_Stock_de_Mission_Consolide_%s_%s"
+
+#. module: mission_stock
+#: model:ir.actions.act_window,name:mission_stock.consolidated_mission_stock_wizard_action
+#: model:ir.ui.menu,name:mission_stock.consolidated_mission_stock_wizard_menu
+#: view:mission.stock.wizard:0
+msgid "Consolidated Mission Stock Report"
+msgstr "Rapport de Mission de Stock Consolidé"
+
+#. module: mission_stock
+#: code:addons/mission_stock/wizard/mission_stock_wizard.py:110
+#, python-format
+msgid "Mission_Stock_Report_%s_%s"
+msgstr "Rapport_Mission_de_Stock_%s_%s"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:312
+#: code:addons/mission_stock/mission_stock.py:350
+#, python-format
+msgid "Last update"
+msgstr "Dernière mise à jour"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:312
+#: code:addons/mission_stock/mission_stock.py:353
+#, python-format
+msgid "Export Date"
+msgstr "Date d'Export"

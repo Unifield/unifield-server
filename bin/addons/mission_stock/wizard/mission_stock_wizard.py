@@ -23,6 +23,7 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
+import time
 
 
 class mission_stock_wizard(osv.osv_memory):
@@ -101,10 +102,17 @@ class mission_stock_wizard(osv.osv_memory):
         'full_view': fields.boolean('Full View'),
     }
 
+    def _get_fname(self, cr, uid, context=None):
+        if context is None:
+            context = {}
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.name
+
+        return _('Mission_Stock_Report_%s_%s') % (instance_name, time.strftime('%Y%m%d_%H%M%S'))
+
     _defaults = {
         'with_valuation': lambda *a: 'true',
         'display_only_in_stock': lambda *a: 'false',
-        'fname': lambda *a: 'Mission stock report',
+        'fname': _get_fname,
         'processed_state': lambda *a: 'not_started',
         'export_error_msg': lambda *a: False,
         'local_report': True,
@@ -249,10 +257,16 @@ report when the last update field will be filled. Thank you for your comprehensi
         return self.open_file(cr, uid, ids, file_format='csv', context=context)
 
     def open_consolidated_xls(self, cr, uid, ids, context=None):
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.name
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'stock.mission.report_xls',
-            'datas': {'file_name': 'consolidate_mission_stock.xls', 'file_format': 'xls'},
+            'datas': {
+                'file_name': 'consolidate_mission_stock.xls',
+                'file_format': 'xls',
+                'target_filename': _('Consolidated_Mission_Stock_Report_%s_%s') % (instance_name, time.strftime('%Y%m%d_%H%M%S'))
+            },
             'nodestroy': True,
             'context': context,
         }
@@ -273,7 +287,7 @@ report when the last update field will be filled. Thank you for your comprehensi
 
         # add the requested field name and report_id to the datas
         # to be used later on in the stock_mission_report_xls_parser
-        res = self.read(cr, uid, ids, ['with_valuation', 'report_id', 'display_only_in_stock'], context=context)
+        res = self.read(cr, uid, ids, ['with_valuation', 'report_id', 'display_only_in_stock', 'fname'], context=context)
 
         field_name = None
         if res['with_valuation'] == 'true':
@@ -281,10 +295,13 @@ report when the last update field will be filled. Thank you for your comprehensi
         elif res['with_valuation'] == 'false':
             field_name = 's_nv_vals'
 
-        datas['field_name'] = field_name
-        datas['report_id'] = res['report_id']
-        datas['file_format'] = file_format
-        datas['display_only_in_stock'] = (res['display_only_in_stock'] == 'true')
+        datas.update({
+            'field_name': field_name,
+            'report_id': res['report_id'],
+            'file_format': file_format,
+            'display_only_in_stock': (res['display_only_in_stock'] == 'true'),
+            'target_filename': res['fname'],
+        })
 
         return {
             'type': 'ir.actions.report.xml',

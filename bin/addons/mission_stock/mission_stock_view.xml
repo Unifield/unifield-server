@@ -6,6 +6,7 @@
         <field name="name">mission.stock.wizard.view</field>
         <field name="model">mission.stock.wizard</field>
         <field name="type">form</field>
+        <field name="priority">1</field>
         <field name="arch" type="xml">
             <form string="Mission stock report">
                 <field name="export_ok" invisible="1" />
@@ -25,16 +26,12 @@
                     <separator colspan="4" string="Errors"/>
                     <field name="export_error_msg" colspan="4" />
                 </group>
-                <field name="instance_level" invisible="1" />
                 <separator colspan="4" string="Actions" />
                 <button name="update" string="Update (in background)" type="object" colspan="4" icon="gtk-remove" attrs="{'invisible': ['|', ('local_report', '!=', True), ('full_view', '=', True)]}"/>
                 <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
                 <button name="open_products_view" string="Open report" type="object" icon="gtk-go-forward" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
                 <button name="open_xls_file" string="Open XLS file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
                 <button name="open_csv_file" string="Open CSV file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
-                <group colspan="2" attrs="{'invisible': [('instance_level', '!=', 'coordo')]}">
-                    <button name="open_consolidated_xls" string="Open Consolidated XLS file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': ['|', ('processed_state', '!=', 'done'), ('export_ok', '=', False)]}" />
-                </group>
             </form>
         </field>
     </record>
@@ -160,6 +157,42 @@
                 <field name="type" invisible="1" />
             </tree>
         </field>
+    </record>
+
+    <record id="consolidated_mission_stock_wizard_view" model="ir.ui.view">
+        <field name="name">consolidated.mission.stock.wizard.view</field>
+        <field name="model">mission.stock.wizard</field>
+        <field name="type">form</field>
+        <field name="priority">3</field>
+        <field name="arch" type="xml">
+            <form string="Consolidated Mission Stock Report">
+                <field name="export_ok" invisible="1" />
+                <field name="local_report" invisible="1" />
+                <field name="full_view" invisible="1" />
+                <separator colspan="4" string="Mission stock" />
+                <field name="last_update" />
+                <label colspan="4" />
+                <field name="processed_state" string="Updating..." attrs="{'invisible': [('local_report', '!=', True)]}"/>
+                <field name="processed_start_date" attrs="{'invisible': [('processed_state', '!=', 'in_progress')]}"/>
+                <group colspan="4" attrs="{'invisible': [('export_error_msg', '=', False)]}">
+                    <separator colspan="4" string="Errors"/>
+                    <field name="export_error_msg" colspan="4" />
+                </group>
+                <separator colspan="4" string="Actions" />
+                <button name="update" string="Update (in background)" type="object" colspan="2" icon="gtk-remove" attrs="{'invisible': ['|', ('local_report', '!=', True), ('full_view', '=', True)]}"/>
+                <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
+                <button name="open_consolidated_xls" string="Open Consolidated XLS file" type="object" icon="gtk-print" colspan="4" attrs="{'readonly': ['|', ('processed_state', '!=', 'done'), ('export_ok', '=', False)]}" />
+            </form>
+        </field>
+    </record>
+
+    <record id="consolidated_mission_stock_wizard_action" model="ir.actions.act_window">
+        <field name="name">Consolidated Mission Stock Report</field>
+        <field name="res_model">mission.stock.wizard</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="consolidated_mission_stock_wizard_view" />
     </record>
 
 </data>

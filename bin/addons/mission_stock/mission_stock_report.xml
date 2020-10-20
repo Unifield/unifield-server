@@ -18,7 +18,7 @@
             header="False"
             model="mission.stock.wizard"
             name="stock.mission.report_xls"
-            string="Mission stock report"
+            string="Mission Stock Report"
             file="mission_stock/report/stock_mission_report_xls.mako"
             report_type="webkit"
             />
