@@ -105531,8 +105531,8 @@ msgstr "Filtre non mis en oeuvre sur les Funding Pools."
 #. module: analytic_override
 #: code:addons/analytic_override/analytic_account.py:312
 #, python-format
-msgid "Filter only compatible with a Cost Center."
-msgstr "Filtre compatible uniquement avec un Centre de Coût."
+msgid "Filter only compatible with a normal-type Cost Center."
+msgstr "Filtre compatible uniquement avec un Centre de Coût de type normal."
 
 #. module: analytic_override
 #: field:account.analytic.account,allow_all_cc:0

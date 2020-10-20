@@ -66,9 +66,10 @@ class analytic_distribution(osv.osv):
                 fp = analytic_acc_obj.browse(cr, uid, fp_id,
                                              fields_to_fetch=['category', 'allow_all_cc_with_fp', 'instance_id', 'cost_center_ids'],
                                              context=context)
-                cc = analytic_acc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['category', 'cc_instance_ids'], context=context)
+                cc = analytic_acc_obj.browse(cr, uid, cost_center_id, fields_to_fetch=['category', 'type', 'cc_instance_ids'], context=context)
                 if fp and cc and fp.category == 'FUNDING' and cc.category == 'OC':
-                    if fp.allow_all_cc_with_fp and fp.instance_id and fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
+                    if fp.allow_all_cc_with_fp and cc.type != 'view' and fp.instance_id and \
+                            fp.instance_id.id in [inst.id for inst in cc.cc_instance_ids]:
                         res = True
                     elif cc.id in [c.id for c in fp.cost_center_ids]:
                         res = True
