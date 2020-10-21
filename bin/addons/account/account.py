@@ -519,12 +519,12 @@ class account_account(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Displays specific views when G/L accounts are selected from a Funding Pool
+        Displays specific views when G/L accounts are selected from a Funding Pool or a Financing Contract
         """
         if context is None:
             context = {}
         ir_model_obj = self.pool.get('ir.model.data')
-        if context.get('from_fp'):
+        if context.get('from_fp') or context.get('from_contract'):
             view = False
             module = 'account'
             if view_type == 'search':

@@ -142,6 +142,7 @@
                                                domain="[('can_be_used','=',True)]">
                                         </field>
                                         <field name="reporting_account_ids" colspan="4" string="G/L Accounts" nolabel="1"
+                                               context="{'from_contract': True}"
                                                attrs="{'invisible': ['|',
                                                                      ('line_type', '=', 'view'),
                                                                      ('reporting_select_accounts_only', '=', False)]}"

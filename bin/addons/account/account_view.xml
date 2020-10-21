@@ -239,7 +239,7 @@
             </field>
         </record>
 
-        <!-- G/L account Search View to be displayed from FP -->
+        <!-- G/L account Search View to be displayed from FP and contracts -->
         <record id="view_account_fp_search" model="ir.ui.view">
             <field name="name">account.account.fp.search</field>
             <field name="model">account.account</field>
@@ -255,7 +255,7 @@
             </field>
         </record>
 
-        <!-- G/L account Tree View to be displayed from FP -->
+        <!-- G/L account Tree View to be displayed from FP and contracts -->
         <record id="view_account_fp_tree" model="ir.ui.view">
             <field name="name">account.account.fp.tree</field>
             <field name="model">account.account</field>
