@@ -175,7 +175,6 @@
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
                     <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract;red:disabled" notselectable="used_in_contract" editable="top" noteditable="1">
-                        <field name="can_be_used" invisible="1"/>
                         <field name="account_destination_name"/>
                         <field name="funding_pool_id"/>
                         <field name="cost_center_id"/>
