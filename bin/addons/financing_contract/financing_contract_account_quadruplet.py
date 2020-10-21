@@ -57,12 +57,15 @@ class financing_contract_account_quadruplet(osv.osv):
                 account_analytic_account fp,
                 account_analytic_account cc,
                 fp_account_rel,
+                account_target_costcenter target,
                 account_destination_link lnk,
                 account_account  gl_account
             where
                 fp.allow_all_cc_with_fp = 't' and
                 cc.type != 'view' and
                 cc.category = 'OC' and
+                target.cost_center_id = cc.id and
+                target.instance_id = fp.instance_id and
                 fp.select_accounts_only = 't' and
                 fp_account_rel.fp_id = fp.id and
                 fp_account_rel.account_id= gl_account.id and
@@ -98,11 +101,14 @@ class financing_contract_account_quadruplet(osv.osv):
                 account_analytic_account fp,
                 account_analytic_account cc,
                 funding_pool_associated_destinations fpad,
+                account_target_costcenter target,
                 account_destination_link lnk
             where
                 fp.allow_all_cc_with_fp = 't' and
                 cc.type != 'view' and
                 cc.category = 'OC' and
+                target.cost_center_id = cc.id and
+                target.instance_id = fp.instance_id and
                 fp.select_accounts_only = 'f' and
                 lnk.id = fpad.tuple_id and
                 fp.id = fpad.funding_pool_id
