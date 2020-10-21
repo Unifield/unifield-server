@@ -14798,11 +14798,6 @@ msgstr "Por hacer"
 msgid "You need to specify an event type."
 msgstr "Debe especificar un tipo de evento."
 
-#. module: mission_stock
-#: field:stock.mission.report.line,central_val:0
-msgid "Unallocated Stock Val."
-msgstr "Valor stock no asignado "
-
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/stock_partial_move.py:67
 #, python-format

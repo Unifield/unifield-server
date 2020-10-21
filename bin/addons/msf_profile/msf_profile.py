@@ -1473,12 +1473,6 @@ class patch_scripts(osv.osv):
         if not instance_id:
             return True
 
-        central_loc = self.pool.get('stock.location').search(cr, uid, [('central_location_ok', '=', 't')])
-        if not central_loc:
-            cr.execute("update stock_mission_report_line set central_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (instance_id.id,))
-            if cr.rowcount:
-                trigger_up.create(cr, uid, {'name': 'clean_mission_stock_central', 'args': instance_id.code})
-
         cu_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal'), ('location_category', '=', 'consumption_unit')])
         if not cu_loc:
             cr.execute("update stock_mission_report_line set cu_qty=0, cu_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (instance_id.id,))
@@ -2497,7 +2491,7 @@ class patch_scripts(osv.osv):
         cr.execute('truncate mission_move_rel')
         fields_to_reset = ['in_pipe_coor_val', 'in_pipe_coor_qty', 'in_pipe_val', 'in_pipe_qty',
                            'secondary_val', 'cu_qty', 'wh_qty', 'cu_val', 'stock_val',
-                           'cross_qty', 'cross_val', 'secondary_qty', 'central_val', 'internal_qty', 'stock_qty'
+                           'cross_qty', 'cross_val', 'secondary_qty', 'internal_qty', 'stock_qty'
                            ]
         if self.pool.get('sync.client.entity'):
             cr.execute("""update ir_model_data set touched='[''wh_qty'']', last_modification=NOW()
@@ -4523,12 +4517,7 @@ class sync_tigger_something_up(osv.osv):
             context = {}
         if context.get('sync_update_execution'):
             _logger = logging.getLogger('tigger')
-            if vals.get('name') == 'clean_mission_stock_central':
-                remote_id = self.pool.get('msf.instance').search(cr, uid, [('code', '=', vals['args'])])
-                if remote_id:
-                    cr.execute("update stock_mission_report_line set central_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
-                    _logger.warn('Reset %d mission stock Unall. Stock for instance_id %s' % (cr.rowcount, remote_id[0]))
-            elif vals.get('name') == 'clean_mission_stock_cu':
+            if vals.get('name') == 'clean_mission_stock_cu':
                 remote_id = self.pool.get('msf.instance').search(cr, uid, [('code', '=', vals['args'])])
                 if remote_id:
                     cr.execute("update stock_mission_report_line set cu_qty=0, cu_val=0 where mission_report_id in (select id from stock_mission_report where instance_id = %s and full_view='f')", (remote_id[0],))
