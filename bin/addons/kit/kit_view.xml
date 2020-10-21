@@ -128,9 +128,10 @@
                     </group>
                     <notebook colspan="4">
                     	<page string="Composition Items">
-                    		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="4">
-                    			<form string="Theoretical Kit Item">
-				                    <group col="6" colspan="4">
+                    		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4">
+								<form string="Theoretical Kit Item" noteditable="state != 'draft'">
+				                    <field name="kit_state" invisible="1" />
+									<group col="6" colspan="4">
 				            			<notebook colspan="4">
 				            				<page string="Composition Item">
 				           						<field name="item_module" />
@@ -144,21 +145,22 @@
 				            			</notebook>
 				                    </group>
 				            	</form>
-                    			<tree string="Theoretical Kit Item" editable="top" colors="red: inactive_product==True">
-				            		<field name="item_module" />
-				            		<field name="item_product_id" on_change="on_product_change(item_product_id)" />
-				            		<field name="item_qty" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
-				            		<field name="item_uom_id" on_change="onchange_uom_qty(item_uom_id, item_qty)" domain="[('uom_by_product', '=', item_product_id)]" />
+                    			<tree string="Theoretical Kit Item" editable="top" noteditable="kit_state in ['done', 'cancel']" colors="red: inactive_product==True">
+				            		<field name="kit_state" invisible="1" />
+									<field name="item_module" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
+				            		<field name="item_product_id" on_change="on_product_change(item_product_id)" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
+				            		<field name="item_qty" on_change="onchange_uom_qty(item_uom_id, item_qty)" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
+				            		<field name="item_uom_id" on_change="onchange_uom_qty(item_uom_id, item_qty)" domain="[('uom_by_product', '=', item_product_id)]" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
-				            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
+				            			attrs="{'readonly': ['|', ('hidden_asset_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="comment" />
 									<field name="item_lot"
 				            			on_change="on_lot_change(item_product_id, item_lot, context)"
-				            			attrs="{'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
-				            		<field name="item_exp" attrs="{'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
+				            			attrs="{'readonly': ['|', ('hidden_batch_management_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
+				            		<field name="item_exp" attrs="{'readonly': ['|', ('hidden_perishable_mandatory', '=', False), ('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
 				            		<field name="hidden_asset_mandatory" invisible="True" />
-				            		<field name="hidden_batch_management_mandatory" />
-                                    <field name="hidden_perishable_mandatory" />
+				            		<field name="hidden_batch_management_mandatory" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
+                                    <field name="hidden_perishable_mandatory" attrs="{'readonly': [('kit_state', 'in', ['in_production', 'completed', 'done', 'cancel'])]}" />
                                     <field name="inactive_product" invisible="1" />
                                     <field name="inactive_error" readonly="1" />
 				            	</tree>

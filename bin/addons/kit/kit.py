@@ -1152,6 +1152,7 @@ class composition_item(osv.osv):
                 'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
                 'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
                 'comment': fields.char(size=256, string='Comment'),
+                'kit_state': fields.related('item_kit_id', 'state', type='char', size=64, string='Kit State', readonly=True),
                 }
 
     _defaults = {'hidden_batch_management_mandatory': False,
