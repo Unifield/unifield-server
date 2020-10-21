@@ -59,7 +59,7 @@ class stock_pipe_per_product_instance(osv.osv):
         for report in self.browse(cr, uid, ids, context=context):
             # get ids of all products :
             if report.product_list_id:
-                product_ids = [p.id for p in report.product_list_id.product_ids]
+                product_ids = [pll.name.id for pll in report.product_list_id.product_ids]
             elif report.product_id:
                 product_ids = [report.product_id.id]
             else:
