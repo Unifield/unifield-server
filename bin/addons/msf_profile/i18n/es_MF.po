@@ -64511,11 +64511,6 @@ msgstr "subflow.delivery_done - (procurement.order)"
 msgid "Company must be same for its related account and period."
 msgstr "La empresa debe ser la misma en las cuentas y periodos asociados."
 
-#. module: mission_stock
-#: field:stock.mission.report.line,central_qty:0
-msgid "Unallocated Stock Qty."
-msgstr "Cantidad stock no asignado "
-
 #. module: account
 #: code:addons/account/account_move_line.py:1167
 #: code:addons/account/account_move_line.py:1262
