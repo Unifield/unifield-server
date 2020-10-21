@@ -15,6 +15,7 @@ import pooler
 import decimal_precision as dp
 import math
 import re
+import hashlib
 
 life_cycle_status = [('active', _('Active')), ('new', _('New')), ('replaced', _('Replaced')), ('replacing', _('Replacing')), ('phasingout', _('Phasing Out')), ('activereplacing', _('Active-Replacing'))]
 class replenishment_location_config(osv.osv):
@@ -964,10 +965,10 @@ class replenishment_segment(osv.osv):
             if seg.rule == 'cycle':
                 self.save_past_fmc(cr, uid, [seg.id], context=context)
 
+            product_already_exp = {}
             if review_id:
                 rdd = today + relativedelta(months=seg.projected_view, day=1, days=-1)
                 exp_by_month = {}
-
                 if seg.rule == 'cycle':
                     # sum expired by month
                     cr.execute('''
@@ -977,14 +978,21 @@ class replenishment_segment(osv.osv):
                             left join replenishment_segment_line_amc_month_exp exp on exp.line_amc_id = amc.id
                             where
                                 line.segment_id = %s and
-                                exp.month >= %s and
-                                exp.month <= %s
+                                exp.month <= %s and
+                                line.fmc_version = exp.fmc_version
                             group by line.product_id, exp.month
-                    ''', (seg.id, today.strftime('%Y-%m-%d'), rdd.strftime('%Y-%m-%d')))
+                    ''', (seg.id, rdd.strftime('%Y-%m-%d')))
                     for x in cr.fetchall():
                         end_day_month = (datetime.strptime(x[1], '%Y-%m-%d')+relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
-                        exp_by_month.setdefault(x[0], {}).update({end_day_month: x[2]})
-
+                        if end_day_month < today.strftime('%Y-%m-%d'):
+                            product_already_exp[x[0]] = product_already_exp.setdefault(x[0], 0) + x[2]
+                        else:
+                            if x[0] not in exp_by_month:
+                                exp_by_month[x[0]] = {}
+                            if end_day_month not in exp_by_month[x[0]]:
+                                exp_by_month[x[0]][end_day_month] = x[2]
+                            else:
+                                exp_by_month[x[0]][end_day_month] += x[2]
 
                 past_fmc = {}
                 if seg.rule == 'cycle':
@@ -1183,7 +1191,6 @@ class replenishment_segment(osv.osv):
 
                                 begin += relativedelta(months=1, day=1)
 
-
                             if not review_id:
                                 if oc <= to_fmc:
                                     before_oc = True
@@ -1213,7 +1220,7 @@ class replenishment_segment(osv.osv):
                     valid_line = valid_rr_fmc
 
                     if review_id and loc_ids and seg.rule == 'cycle':
-                        total_expired_qty = sum_line[line.id].get('expired_rdd_oc', 0) + sum_line[line.id].get('expired_before_rdd', 0)
+                        total_expired_qty = sum_line[line.id].get('expired_rdd_oc', 0) + sum_line[line.id].get('expired_before_rdd', 0) - product_already_exp.get(line.product_id.id, 0)
                         for nb_month in range(1, line.segment_id.projected_view+1):
                             end_date = today + relativedelta(months=nb_month, day=1, days=-1)
                             total_expired_qty -= exp_by_month.get(line.product_id.id, {}).get(end_date.strftime('%Y-%m-%d'), 0)
@@ -1471,12 +1478,12 @@ class replenishment_segment(osv.osv):
                             seg_line.segment_id = %s and
                             review_line.review_id = %s
                     ''', (seg.id, review_id))
-                    cr.execute('''insert into replenishment_inventory_review_line_exp (review_line_id, date, instance_id, exp_qty, expiry_line_id)
-                        select review_line.id, exp.month, amc.instance_id, exp.quantity, exp.expiry_line_id from
+                    cr.execute('''insert into replenishment_inventory_review_line_exp (review_line_id, date, instance_id, exp_qty, expiry_line_id, name)
+                        select review_line.id, exp.month, amc.instance_id, exp.quantity, exp.expiry_line_id, exp.name from
                             replenishment_inventory_review_line review_line
                             left join replenishment_segment_line_amc amc on amc.segment_line_id = review_line.segment_line_id
-                            left join replenishment_segment_line_amc_month_exp exp on exp.line_amc_id = amc.id
                             left join replenishment_segment_line seg_line on seg_line.id = review_line.segment_line_id
+                            left join replenishment_segment_line_amc_month_exp exp on exp.line_amc_id = amc.id and exp.fmc_version = seg_line.fmc_version
                         where
                             seg_line.segment_id = %s and
                             review_line.review_id = %s
@@ -2129,55 +2136,56 @@ class replenishment_segment_line(osv.osv):
         'status_tooltip': fields.function(_get_status_tooltip, type='char', method=True, string='Paired product'),
         'display_paired_icon': fields.function(_get_display_paired_icon, type='boolean', method=True, string='Display paired icon'),
         'status': fields.selection(life_cycle_status, string='RR Lifecycle'),
-        'min_qty': fields.float_null('Min Qty', related_uom='uom_id'),
-        'max_qty': fields.float_null('Max Qty', related_uom='uom_id'),
-        'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id'),
-        'buffer_qty': fields.float_null('Buffer Qty', related_uom='uom_id'),
+        'min_qty': fields.float_null('Min Qty', related_uom='uom_id', digits=(16, 2)),
+        'max_qty': fields.float_null('Max Qty', related_uom='uom_id', digits=(16, 2)),
+        'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id', digits=(16, 2)),
+        'buffer_qty': fields.float_null('Buffer Qty', related_uom='uom_id', digits=(16, 2)),
         'real_stock': fields.function(_get_real_stock, type='float', method=True, related_uom='uom_id', string='Real Stock', multi='get_stock_amc'),
         'pipeline_before_rdd': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline Before RDD', multi='get_pipeline_before'),
         'pipeline_between_rdd_oc': fields.function(_get_pipeline_before, type='float', method=True, string='Pipeline between RDD and OC', multi='get_pipeline_before'),
         'rr_amc': fields.function(_get_real_stock, type='float', method=True, string='RR-AMC', multi='get_stock_amc'),
         'list_fmc': fields.function(_get_list_fmc, method=1, type='char', string='more FMC'),
-        'rr_fmc_1': fields.float_null('RR FMC 1', related_uom='uom_id'),
+        'rr_fmc_1': fields.float_null('RR FMC 1', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_1': fields.date('From 1'),
         'rr_fmc_to_1': fields.date('To 1'),
-        'rr_fmc_2': fields.float_null('RR FMC 2', related_uom='uom_id'),
+        'rr_fmc_2': fields.float_null('RR FMC 2', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_2': fields.date('From 2'),
         'rr_fmc_to_2': fields.date('To 2'),
-        'rr_fmc_3': fields.float_null('RR FMC 3', related_uom='uom_id'),
+        'rr_fmc_3': fields.float_null('RR FMC 3', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_3': fields.date('From 3'),
         'rr_fmc_to_3': fields.date('To 3'),
-        'rr_fmc_4': fields.float_null('RR FMC 4', related_uom='uom_id'),
+        'rr_fmc_4': fields.float_null('RR FMC 4', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_4': fields.date('From 4'),
         'rr_fmc_to_4': fields.date('To 4'),
-        'rr_fmc_5': fields.float_null('RR FMC 5', related_uom='uom_id'),
+        'rr_fmc_5': fields.float_null('RR FMC 5', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_5': fields.date('From 5'),
         'rr_fmc_to_5': fields.date('To 5'),
-        'rr_fmc_6': fields.float_null('RR FMC 6', related_uom='uom_id'),
+        'rr_fmc_6': fields.float_null('RR FMC 6', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_6': fields.date('From 6'),
         'rr_fmc_to_6': fields.date('To 6'),
-        'rr_fmc_7': fields.float_null('RR FMC 7', related_uom='uom_id'),
+        'rr_fmc_7': fields.float_null('RR FMC 7', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_7': fields.date('From 7'),
         'rr_fmc_to_7': fields.date('To 7'),
-        'rr_fmc_8': fields.float_null('RR FMC 8', related_uom='uom_id'),
+        'rr_fmc_8': fields.float_null('RR FMC 8', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_8': fields.date('From 8'),
         'rr_fmc_to_8': fields.date('To 8'),
-        'rr_fmc_9': fields.float_null('RR FMC 9', related_uom='uom_id'),
+        'rr_fmc_9': fields.float_null('RR FMC 9', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_9': fields.date('From 9'),
         'rr_fmc_to_9': fields.date('To 9'),
-        'rr_fmc_10': fields.float_null('RR FMC 10', related_uom='uom_id'),
+        'rr_fmc_10': fields.float_null('RR FMC 10', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_10': fields.date('From 10'),
         'rr_fmc_to_10': fields.date('To 10'),
-        'rr_fmc_11': fields.float_null('RR FMC 11', related_uom='uom_id'),
+        'rr_fmc_11': fields.float_null('RR FMC 11', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_11': fields.date('From 11'),
         'rr_fmc_to_11': fields.date('To 11'),
-        'rr_fmc_12': fields.float_null('RR FMC 12', related_uom='uom_id'),
+        'rr_fmc_12': fields.float_null('RR FMC 12', related_uom='uom_id', digits=(16, 2)),
         'rr_fmc_from_12': fields.date('From 12'),
-        'rr_fmc_to_12': fields.date('To 12'),
+        'rr_fmc_to_12': fields.date('To 12', digits=(16, 2)),
         'replacing_product_id': fields.many2one('product.product', 'Replacing product', select=1),
         'replaced_product_id': fields.many2one('product.product', 'Replaced product', select=1),
         'warning': fields.function(_get_warning, method=1, string='Warning', multi='get_warn', type='text'),
         'warning_html': fields.function(_get_warning, method=1, string='Warning', multi='get_warn', type='text'),
+        'fmc_version': fields.char('FMC timestamp', size=64, select=1),
     }
 
     _sql_constraints = [
@@ -2192,10 +2200,12 @@ class replenishment_segment_line(osv.osv):
             return True
         for line in self.browse(cr, uid, line_ids, context=context):
             prev_to = False
+            md5_data = []
             for x in range(1, 13):
                 rr_fmc = getattr(line, 'rr_fmc_%d'%x)
                 rr_from = getattr(line, 'rr_fmc_from_%d'%x)
                 rr_to = getattr(line, 'rr_fmc_to_%d'%x)
+                md5_data.append('%s %s %s' % (rr_fmc, rr_from, rr_to))
                 if rr_from:
                     rr_from = datetime.strptime(rr_from, '%Y-%m-%d')
                     if rr_from.day != 1:
@@ -2220,6 +2230,7 @@ class replenishment_segment_line(osv.osv):
             if error:
                 raise osv.except_osv(_('Error'), _('Please correct the following FMC values:\n%s') % ("\n".join(error)))
 
+            cr.execute('update replenishment_segment_line set fmc_version=%s where id=%s', (hashlib.md5(''.join(md5_data)).hexdigest(), line.id))
             return True
 
     def _uniq_prod_location(self, cr, uid, ids, context=None):
@@ -2425,17 +2436,17 @@ class replenishment_segment_line_amc(osv.osv):
     _columns = {
         'name': fields.datetime('Date of last Generation'),
         'segment_line_id': fields.many2one('replenishment.segment.line', 'Segment Line', select=1, ondelete='cascade'),
-        'amc': fields.float('AMC'),
+        'amc': fields.float('AMC', digits=(16, 2)),
         'instance_id': fields.many2one('msf.instance', string='Instance', select=1),
-        'reserved_stock': fields.float('Reserved Stock'),
-        'real_stock': fields.float('Reserved Stock'),
-        'expired_before_rdd': fields.float('Expired Qty before RDD'),
-        'expired_qty_before_eta': fields.float('Qty expiring before RDD'),
-        'expired_between_rdd_oc': fields.float('Expired Qty between RDD and OC'),
+        'reserved_stock': fields.float('Reserved Stock', digits=(16, 2)),
+        'real_stock': fields.float('Reserved Stock', digits=(16, 2)),
+        'expired_before_rdd': fields.float('Expired Qty before RDD', digits=(16, 2)),
+        'expired_qty_before_eta': fields.float('Qty expiring before RDD', digits=(16, 2)),
+        'expired_between_rdd_oc': fields.float('Expired Qty between RDD and OC', digits=(16, 2)),
         'open_loan': fields.boolean('Open Loan'),
         'open_donation': fields.boolean('Donations pending'),
-        'sleeping_qty': fields.float('Sleeping Qty'),
-        'total_expiry_nocons_qty': fields.float('Qty expiring no cons.'),
+        'sleeping_qty': fields.float('Sleeping Qty', digits=(16, 2)),
+        'total_expiry_nocons_qty': fields.float('Qty expiring no cons.', digits=(16, 2)),
     }
 
     _defaults = {
@@ -2488,8 +2499,10 @@ class replenishment_segment_line_amc(osv.osv):
                 'amc_location_ids': [x.id for x in segment.local_location_ids],
             }
             lines = {}
+            fmc_version_cache = {}
             for line in segment.line_ids:
                 lines[line.product_id.id] = line.id
+                fmc_version_cache[line.product_id.id] = line.fmc_version
             if not lines:
                 continue
             # update vs create line
@@ -2688,16 +2701,21 @@ class replenishment_segment_line_amc(osv.osv):
                     if gen_inv_review:
                         if segment.rule == 'cycle':
                             cr.execute("""
-                                select line.product_id, item.period_start, sum(item.expired_qty), line.id
+                                select line.product_id, item.period_start, sum(item.expired_qty), line.id, item.name
                                 from product_likely_expire_report_line line, product_likely_expire_report_item item
                                 where
                                     item.line_id = line.id and
                                     report_id=%s and
                                     item.period_start <= %s
-                                group by line.product_id, item.period_start, line.id
+                                group by line.product_id, item.period_start, line.id, item.name
                                 having sum(item.expired_qty) > 0 """, (expired_id, projected_view))
                             for x in cr.fetchall():
-                                month_exp_obj.create(cr, uid, {'line_amc_id': cache_line_amc[lines[x[0]]], 'month': x[1], 'quantity': x[2], 'expiry_line_id': x[3]}, context=context)
+                                expire_at_end_of = x[1]
+                                name = ''
+                                if x[4] == 'expired_qty_col':
+                                    name = 'expired_qty_col'
+                                    expire_at_end_of = (datetime.now() + relativedelta(day=1, months=-1)).strftime('%Y-%m-%d')
+                                month_exp_obj.create(cr, uid, {'line_amc_id': cache_line_amc[lines[x[0]]], 'month': expire_at_end_of, 'quantity': x[2], 'expiry_line_id': x[3], 'name': name, 'fmc_version': fmc_version_cache.get(x[0], False)}, context=context)
 
             if last_gen_id:
                 last_gen_obj.write(cr, uid, last_gen_id, last_gen_data, context=context)
@@ -2719,8 +2737,10 @@ class replenishment_segment_line_amc_month_exp(osv.osv):
     _columns = {
         'line_amc_id': fields.many2one('replenishment.segment.line.amc', 'Line AMC', required=1, select=1, ondelete='cascade'),
         'month': fields.date('Month', required=1, select=1),
-        'quantity': fields.float('Qty'),
+        'quantity': fields.float('Qty', digits=(16, 2)),
         'expiry_line_id': fields.many2one('product.likely.expire.report.line', 'Expiry Line'),
+        'fmc_version': fields.char('FMC timestamp', size=64, select=1),
+        'name': fields.char('Name', size=62),
     }
 
 replenishment_segment_line_amc_month_exp()
@@ -2731,7 +2751,7 @@ class replenishment_segment_line_amc_detailed_amc(osv.osv):
     _columns = {
         'segment_line_id': fields.many2one('replenishment.segment.line', 'Seg Line', required=1, select=1, ondelete='cascade'),
         'month': fields.date('Month', required=1, select=1),
-        'amc': fields.float('AMC'),
+        'amc': fields.float('AMC', digits=(16, 2)),
     }
 replenishment_segment_line_amc_detailed_amc()
 
@@ -2743,7 +2763,7 @@ class replenishment_segment_line_amc_past_fmc(osv.osv):
     _columns = {
         'segment_line_id': fields.many2one('replenishment.segment.line', 'Seg Line', required=1, select=1, ondelete='cascade'),
         'month': fields.date('Month', required=1, select=1),
-        'fmc': fields.float('FMC'),
+        'fmc': fields.float('FMC', digits=(16, 2)),
     }
 replenishment_segment_line_amc_past_fmc()
 
@@ -2848,7 +2868,7 @@ class replenishment_order_calc(osv.osv, common_oc_inv):
         'description_seg': fields.char('Description', required=1, size=28, readonly=1),
         'location_config_id': fields.many2one('replenishment.location.config', 'Location Config', required=1, readonly=1),
         'location_config_description': fields.char('Description', size=28, readonly=1),
-        'total_lt': fields.float('Total Lead Time', readonly=1),
+        'total_lt': fields.float('Total Lead Time', readonly=1, digits=(16, 2)),
         'time_unit_lt': fields.selection([('d', 'days'), ('w', 'weeks'), ('m', 'months')], string='Unit of Time', readonly=1),
         'generation_date': fields.date('Order Calc generation date', readonly=1),
         'next_generation_date': fields.date('Date next order to be generated by', readonly=1),
@@ -3063,17 +3083,17 @@ class replenishment_order_calc_line(osv.osv):
         'uom_id': fields.related('product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
         'in_main_list': fields.boolean('Prim. prod. list', readonly=1),
         'valid_rr_fmc': fields.boolean('Valid', readonly=1),
-        'real_stock': fields.float('Real Stock', readonly=1, related_uom='uom_id'),
-        'pipeline_qty': fields.float('Pipeline Qty', readonly=1, related_uom='uom_id'),
+        'real_stock': fields.float('Real Stock', readonly=1, related_uom='uom_id', digits=(16, 2)),
+        'pipeline_qty': fields.float('Pipeline Qty', readonly=1, related_uom='uom_id', digits=(16, 2)),
         'eta_for_next_pipeline': fields.date('ETA for Next Pipeline', readonly=1),
-        'reserved_stock_qty': fields.float('Reserved Stock Qty', readonly=1, related_uom='uom_id'),
-        'projected_stock_qty': fields.float('Projected Stock Level', readonly=1, related_uom='uom_id'),
-        'qty_lacking': fields.float_null('Qty lacking before next RDD', readonly=1, related_uom='uom_id', null_value='N/A'),
+        'reserved_stock_qty': fields.float('Reserved Stock Qty', readonly=1, related_uom='uom_id', digits=(16, 2)),
+        'projected_stock_qty': fields.float('Projected Stock Level', readonly=1, related_uom='uom_id', digits=(16, 2)),
+        'qty_lacking': fields.float_null('Qty lacking before next RDD', readonly=1, related_uom='uom_id', null_value='N/A', digits=(16, 2)),
         'qty_lacking_needed_by': fields.date('Qty lacking needed by', readonly=1),
         'open_loan': fields.boolean('Open Loan', readonly=1),
         'open_donation': fields.boolean('Donations pending', readonly=1),
-        'expired_qty_before_cons': fields.float_null('Expired Qty before cons.', readonly=1, related_uom='uom_id'),
-        'expired_qty_before_eta': fields.float_null('Expired Qty before RDD', readonly=1, related_uom='uom_id'),
+        'expired_qty_before_cons': fields.float_null('Expired Qty before cons.', readonly=1, related_uom='uom_id', digits=(16, 2)),
+        'expired_qty_before_eta': fields.float_null('Expired Qty before RDD', readonly=1, related_uom='uom_id', digits=(16, 2)),
         'proposed_order_qty': fields.float('Proposed Order Qty', readonly=1, related_uom='uom_id', digits=(16,2)),
         'agreed_order_qty': fields.float_null('Agreed Order Qty', related_uom='uom_id', digits=(16,2)),
         'rounded_qty': fields.boolean('Agreed Qty Rounded', readonly=1),
@@ -3083,7 +3103,7 @@ class replenishment_order_calc_line(osv.osv):
         'warning': fields.text('Warning', readonly='1'),
         'warning_html': fields.text('Warning', readonly='1'),
         'buffer_ss_qty': fields.char('Buffer / SS Qty', size=128, readonly=1),
-        'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id', readonly=1),
+        'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id', readonly=1, digits=(16, 2)),
         'min_max': fields.char('Min/Max', size=128, readonly=1),
     }
 
@@ -3139,42 +3159,42 @@ class replenishment_inventory_review_line(osv.osv):
         'paired_product_id': fields.many2one('product.product', 'Replacing/Replaced product'),
         'primay_product_list': fields.char('Primary Product List', size=512), # OC
         'rule': fields.selection([('cycle', 'Order Cycle'), ('minmax', 'Min/Max'), ('auto', 'Automatic Supply')], string='Replenishment Rule (Order quantity)', required=1), #Seg
-        'min_qty': fields.float_null('Min Qty', related_uom='uom_id'), # Seg line
-        'max_qty': fields.float_null('Max Qty', related_uom='uom_id'), # Seg line
-        'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id'), # Seg line
-        'buffer_qty': fields.float_null('Buffer Qty', related_uom='uom_id'), # Seg line
-        'safety_stock_qty': fields.float_null('Safety Stock (Qty)'),
+        'min_qty': fields.float_null('Min Qty', related_uom='uom_id', digits=(16, 2)), # Seg line
+        'max_qty': fields.float_null('Max Qty', related_uom='uom_id', digits=(16, 2)), # Seg line
+        'auto_qty': fields.float_null('Auto. Supply Qty', related_uom='uom_id', digits=(16, 2)), # Seg line
+        'buffer_qty': fields.float_null('Buffer Qty', related_uom='uom_id', digits=(16, 2)), # Seg line
+        'safety_stock_qty': fields.float_null('Safety Stock (Qty)', digits=(16, 2)),
         'min_max': fields.char('Min / Max', size=128),
         'buffer_ss_qty': fields.char('Buffer / SS Qty', size=128, readonly=1),
         'segment_ref_name': fields.char('Segment Ref/Name', size=512), # Seg
-        'rr_fmc_avg': fields.float_null('RR-FMC (average for period)', null_value='N/A'),
-        'rr_amc': fields.float('RR-AMC'),
+        'rr_fmc_avg': fields.float_null('RR-FMC (average for period)', null_value='N/A', digits=(16, 2)),
+        'rr_amc': fields.float('RR-AMC', digits=(16, 2)),
         'valid_rr_fmc': fields.boolean('Valid', readonly=1), # OC
-        'real_stock': fields.float('Real Stock', readonly=1, related_uom='uom_id'), # OC
-        'pipeline_qty': fields.float('Pipeline Qty', readonly=1, related_uom='uom_id'), # OC
-        'reserved_stock_qty': fields.float('Reserved Stock Qty', readonly=1, related_uom='uom_id'),# OC
-        'expired_qty_before_cons': fields.float_null('Expired Qty before cons.', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
-        'total_expired_qty': fields.float('Qty expiring within period', readonly=1, related_uom='uom_id'),
-        'sleeping_qty': fields.float('Sleeping Qty'),
-        'projected_stock_qty': fields.float_null('RR-FMC Projected Stock Level', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
-        'projected_stock_qty_amc': fields.float_null('RR-AMC Projected Stock Level', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
-        'unit_of_supply_amc': fields.float_null('Days/weeks/months of supply (RR-AMC)', null_value='N/A'),
-        'unit_of_supply_fmc': fields.float_null('Days/weeks/months of supply (RR-FMC)', null_value='N/A'),
+        'real_stock': fields.float('Real Stock', readonly=1, related_uom='uom_id', digits=(16, 2)), # OC
+        'pipeline_qty': fields.float('Pipeline Qty', readonly=1, related_uom='uom_id', digits=(16, 2)), # OC
+        'reserved_stock_qty': fields.float('Reserved Stock Qty', readonly=1, related_uom='uom_id', digits=(16, 2)),# OC
+        'expired_qty_before_cons': fields.float_null('Expired Qty before cons.', readonly=1, related_uom='uom_id', null_value='N/A', digits=(16, 2)), # OC
+        'total_expired_qty': fields.float('Qty expiring within period', readonly=1, related_uom='uom_id', digits=(16, 2)),
+        'sleeping_qty': fields.float('Sleeping Qty', digits=(16, 2)),
+        'projected_stock_qty': fields.float_null('RR-FMC Projected Stock Level', readonly=1, related_uom='uom_id', null_value='N/A', digits=(16, 2)), # OC
+        'projected_stock_qty_amc': fields.float_null('RR-AMC Projected Stock Level', readonly=1, related_uom='uom_id', null_value='N/A', digits=(16, 2)), # OC
+        'unit_of_supply_amc': fields.float_null('Days/weeks/months of supply (RR-AMC)', null_value='N/A', digits=(16, 2)),
+        'unit_of_supply_fmc': fields.float_null('Days/weeks/months of supply (RR-FMC)', null_value='N/A', digits=(16, 2)),
         'warning': fields.text('Warning', readonly='1'), # OC
         'warning_html': fields.text('Warning', readonly='1'), # OC
         'open_loan': fields.boolean('Open Loan', readonly=1), # OC
         'open_donation': fields.boolean('Donations pending', readonly=1), # OC
-        'qty_lacking': fields.float_null('Qty lacking before next RDD', readonly=1, related_uom='uom_id', null_value='N/A'), # OC
+        'qty_lacking': fields.float_null('Qty lacking before next RDD', readonly=1, related_uom='uom_id', null_value='N/A', digits=(16, 2)), # OC
         'qty_lacking_needed_by': fields.date('Qty lacking needed by', readonly=1), # OC
         'eta_for_next_pipeline': fields.date('ETA for Next Pipeline', readonly=1), # Seg
 
         'date_preparing': fields.date('Start preparing the next order'), # Seg
         'date_next_order_validated': fields.date('Next order to be validated by'), # Seg
         'date_next_order_rdd': fields.date('RDD for next order'), # Seg
-        'internal_lt': fields.float('Internal LT'),
-        'external_lt': fields.float('External LT'),
-        'total_lt': fields.float('Total LT'),
-        'order_coverage': fields.float('Order Coverage'),
+        'internal_lt': fields.float('Internal LT', digits=(16, 2)),
+        'external_lt': fields.float('External LT', digits=(16, 2)),
+        'total_lt': fields.float('Total LT', digits=(16, 2)),
+        'order_coverage': fields.float('Order Coverage', digits=(16, 2)),
         'pas_ids': fields.one2many('replenishment.inventory.review.line.pas', 'review_line_id', 'PAS by month'),
         'detail_ids': fields.one2many('replenishment.inventory.review.line.stock', 'review_line_id', 'Exp by month'),
         'detail_exp_nocons':  fields.one2many('replenishment.inventory.review.line.exp.nocons', 'review_line_id', 'Exp.'),
@@ -3197,8 +3217,8 @@ class replenishment_inventory_review_line_pas(osv.osv):
     _columns = {
         'review_line_id': fields.many2one('replenishment.inventory.review.line', 'Review Line', required=1, select=1, ondelete='cascade'),
         'date': fields.date('Date'),
-        'rr_fmc': fields.float_null('RR-FMC'),
-        'projected': fields.float_null('Projected'),
+        'rr_fmc': fields.float_null('RR-FMC', digits=(16, 2)),
+        'projected': fields.float_null('Projected', digits=(16, 2)),
     }
 
 replenishment_inventory_review_line_pas()
@@ -3212,10 +3232,10 @@ class replenishment_inventory_review_line_exp_nocons(osv.osv):
     _columns = {
         'review_line_id': fields.many2one('replenishment.inventory.review.line', 'Review Line', required=1, select=1, ondelete='cascade'),
         'instance_id': fields.many2one('msf.instance', 'Instance'),
-        'exp_qty': fields.float_null('Exp'),
+        'exp_qty': fields.float_null('Exp', digits=(16, 2)),
         'batch_number': fields.char('BN', size=256),
         'life_date': fields.date('ED'),
-        'stock_qty': fields.float_null('Stock Qty'),
+        'stock_qty': fields.float_null('Stock Qty', digits=(16, 2)),
     }
 replenishment_inventory_review_line_exp_nocons()
 
@@ -3229,8 +3249,9 @@ class replenishment_inventory_review_line_exp(osv.osv):
         'review_line_id': fields.many2one('replenishment.inventory.review.line', 'Review Line', required=1, select=1, ondelete='cascade'),
         'date': fields.date('Date'),
         'instance_id': fields.many2one('msf.instance', 'Instance'),
-        'exp_qty': fields.float('Exp'),
+        'exp_qty': fields.float('Exp', digits=(16, 2)),
         'expiry_line_id': fields.many2one('product.likely.expire.report.line', 'Expiry Line'),
+        'name': fields.char('Name', size=126),
     }
 replenishment_inventory_review_line_exp()
 
@@ -3240,10 +3261,10 @@ class replenishment_inventory_review_line_stock(osv.osv):
 
     _columns = {
         'review_line_id': fields.many2one('replenishment.inventory.review.line', 'Review Line', required=1, select=1, ondelete='cascade'),
-        'qty': fields.float('Stock Level'),
+        'qty': fields.float('Stock Level', digits=(16, 2)),
         'instance_id': fields.many2one('msf.instance', 'Instance'),
         'local_instance': fields.boolean('Local instance'),
-        'total_exp': fields.float('Total Exp.'),
+        'total_exp': fields.float('Total Exp.', digits=(16, 2)),
     }
 
     def fields_get(self, cr, uid, fields=None, context=None, with_uom_rounding=False):
@@ -3317,9 +3338,12 @@ class replenishment_inventory_review_line_stock(osv.osv):
             exp_obj = self.pool.get('replenishment.inventory.review.line.exp')
             exp_ids = exp_obj.search(cr, uid, [('review_line_id', '=', context.get('review_line_id')), ('date', '=', context.get('item_date'))], context=context)
             if exp_ids:
-                exp = exp_obj.read(cr, uid, exp_ids, ['expiry_line_id'], context=context)[0]
+                exp = exp_obj.read(cr, uid, exp_ids, ['expiry_line_id', 'name'], context=context)[0]
                 if exp and exp['expiry_line_id']:
-                    item_ids = self.pool.get('product.likely.expire.report.item').search(cr, uid, [('period_start', '=', context.get('item_date')), ('line_id', '=', exp['expiry_line_id'][0])], context=context)
+                    if exp['name']:
+                        item_ids = self.pool.get('product.likely.expire.report.item').search(cr, uid, [('name', '=', exp['name']), ('line_id', '=', exp['expiry_line_id'][0])], context=context)
+                    else:
+                        item_ids = self.pool.get('product.likely.expire.report.item').search(cr, uid, [('period_start', '=', context.get('item_date')), ('line_id', '=', exp['expiry_line_id'][0])], context=context)
                     return {
                         'type': 'ir.actions.act_window',
                         'res_model': 'product.likely.expire.report.item',
@@ -3671,24 +3695,24 @@ class product_stock_out_line(osv.osv):
         'from_date': fields.date('Stock out from', required=1),
         'to_date': fields.date('Stock out to', required=1),
         'nb_days': fields.function(_get_nb_days, method=1, type='integer', string='Days of stock out'),
-        'qty_missed': fields.float_null('Qty missed', related_uom='uom_id'),
+        'qty_missed': fields.float_null('Qty missed', related_uom='uom_id', digits=(16, 2)),
         'substitute_1_product_id': fields.many2one('product.product', '1. Substitute product', select=1),
         'substitute_1_product_code': fields.related('substitute_1_product_id', 'default_code',  string='1. Substitute product', type='char', size=64, readonly=True, select=True, write_relate=False),
         'substitute_1_product_description': fields.related('substitute_1_product_id', 'name',  string='1. Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'substitute_1_uom_id': fields.related('substitute_1_product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
-        'substitute_1_qty': fields.float_null('1. Qty used as substitute', related_uom='substitute_1_uom_id'),
+        'substitute_1_qty': fields.float_null('1. Qty used as substitute', related_uom='substitute_1_uom_id', digits=(16, 2)),
 
         'substitute_2_product_id': fields.many2one('product.product', '2. Substitute product', select=1),
         'substitute_2_product_code': fields.related('substitute_2_product_id', 'default_code',  string='2. Substitute product', type='char', size=64, readonly=True, select=True, write_relate=False),
         'substitute_2_product_description': fields.related('substitute_2_product_id', 'name',  string='2. Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'substitute_2_uom_id': fields.related('substitute_2_product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
-        'substitute_2_qty': fields.float_null('2. Qty used as substitute', related_uom='substitute_2_uom_id'),
+        'substitute_2_qty': fields.float_null('2. Qty used as substitute', related_uom='substitute_2_uom_id', digits=(16, 2)),
 
         'substitute_3_product_id': fields.many2one('product.product', '3. Substitute product', select=1),
         'substitute_3_product_code': fields.related('substitute_3_product_id', 'default_code',  string='3. Substitute product', type='char', size=64, readonly=True, select=True, write_relate=False),
         'substitute_3_product_description': fields.related('substitute_3_product_id', 'name',  string='3. Description', type='char', size=64, readonly=True, select=True, write_relate=False),
         'substitute_3_uom_id': fields.related('substitute_3_product_id', 'uom_id',  string='UoM', type='many2one', relation='product.uom', readonly=True, select=True, write_relate=False),
-        'substitute_3_qty': fields.float_null('3. Qty used as substitute', related_uom='substitute_3_uom_id'),
+        'substitute_3_qty': fields.float_null('3. Qty used as substitute', related_uom='substitute_3_uom_id', digits=(16, 2)),
     }
 
     def create(self, cr, uid, vals, context=None):

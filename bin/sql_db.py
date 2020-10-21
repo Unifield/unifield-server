@@ -166,7 +166,7 @@ class Cursor(object):
                     self._oe.remember_slow_query(query, delta)
         except psycopg2.ProgrammingError, pe:
             if log_exceptions:
-                self.__logger.error("Programming error: %s, in query %s", pe, query)
+                self.__logger.error("Programming error: %s, in query %s, %s", pe, query, misc.get_stack())
             raise
         except psycopg2.IntegrityError, ie:
             if log_exceptions:
