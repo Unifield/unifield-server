@@ -3482,7 +3482,7 @@ msgstr "Comparaison"
 #: view:financing.contract.account.quadruplet:0
 #: view:financing.contract.contract:0
 msgid "Account/Destination/Funding Pool/Cost Centre"
-msgstr "Account/Destination/Funding Pool/Cost Centre"
+msgstr "Compte/Destination/Funding Pool/Centre de Coût"
 
 #. module: sync_client
 #: field:sync.monitor,data_push_send:0
@@ -8991,7 +8991,7 @@ msgstr "Transitions Sortantes"
 #. module: financing_contract
 #: view:financing.contract.contract:0
 msgid "Remove all couples"
-msgstr "Remove all couples"
+msgstr "Supprimer toutes les paires"
 
 #. modules: purchase, tender_flow, msf_outgoing, stock
 #: view:stock.picking:0
@@ -16049,7 +16049,7 @@ msgstr "Soft-closed date:"
 #. module: financing_contract
 #: view:financing.contract.contract:0
 msgid "Remove all quads"
-msgstr "Remove all quads"
+msgstr "Supprimer tous les quadruplets"
 
 #. modules: tender_flow, process, account_hq_entries, account_override, procurement_cycle, return_claim, finance, sync_client, account_mcdb, procurement_request, product_asset, board, stock_override, msf_button_access_rights, analytic_distribution, msf_homere_interface, hr, consumption_calculation, register_accounting, kit, base, procurement_report, threshold_value, purchase, account, msf_outgoing, resource, stock_move_tracking, msf_partner, procurement_auto, msf_field_access_rights, sale, transport_mgmt, procurement, sourcing, msf_audittrail, stock
 #: view:account.account:0
@@ -16460,8 +16460,9 @@ msgstr "\n"
 msgid "Remove all accounts/destinations"
 msgstr "Supprimer tous les comptes/destinations"
 
-#. module: analytic_distribution
+#. modules: analytic_distribution, financing_contract
 #: view:account.analytic.account:0
+#: view:financing.contract.contract:0
 msgid "Remove all accounts"
 msgstr "Supprimer tous les comptes"
 
@@ -60856,10 +60857,12 @@ msgstr "Transfer Interne"
 msgid "G/L Account"
 msgstr "Compte Grand Livre"
 
-#. modules: analytic_distribution, account, analytic_override
+#. modules: analytic_distribution, account, analytic_override, financing_contract
 #: view:account.analytic.account:0
 #: view:account.account:0
 #: field:account.analytic.account,fp_account_ids:0
+#: view:financing.contract.contract:0
+#: field:financing.contract.format.line,reporting_account_ids:0
 msgid "G/L Accounts"
 msgstr "Comptes Grand Livre"
 
@@ -60873,8 +60876,9 @@ msgstr "Comptes Grand Livre :"
 msgid "G/L accounts linked to the Funding Pool"
 msgstr "Comptes Grand Livre liés au Funding Pool"
 
-#. module: analytic_override
+#. modules: analytic_override, financing_contract
 #: field:account.analytic.account,select_accounts_only:0
+#: field:financing.contract.format.line,reporting_select_accounts_only:0
 msgid "Select Accounts Only"
 msgstr "Sélectionner des Comptes Uniquement"
 

@@ -150,6 +150,13 @@ class financing_contract_format_line(osv.osv):
         self.write(cr, uid, ids, {'account_destination_ids':[(6, 0, [])]}, context=context )
         return True
 
+    def button_remove_all_accounts(self, cr, uid, ids, context=None):
+        """
+        Removes all G/L accounts selected in the Reporting lines wizard
+        """
+        self.write(cr, uid, ids, {'reporting_account_ids': [(6, 0, [])]}, context=context)
+        return True
+
     # Get the list of accounts for both duplet and quadruplet
     def _get_accounts_couple_and_quadruplets(self, browse_line):
         account_destination_result = []
@@ -433,10 +440,18 @@ class financing_contract_format_line(osv.osv):
         'project_real': fields.function(_get_actual_amount, method=True, store=False, string="Total project - Actuals", type="float", readonly=True),
         'quadruplet_update': fields.text('Internal Use Only'),
         'instance_id': fields.many2one('msf.instance','Proprietary Instance'),
+        'reporting_select_accounts_only': fields.boolean(string="Select Accounts Only"),
+        'reporting_account_ids': fields.many2many('account.account', 'contract_format_line_account_rel', 'format_line_id', 'account_id',
+                                                  string='G/L Accounts',
+                                                  domain="[('type', '!=', 'view'),"
+                                                         " ('is_analytic_addicted', '=', True),"
+                                                         " ('active', 'in', ['t', 'f'])]",
+                                                  order_by='code'),
     }
 
     _defaults = {
         'is_quadruplet': False,
+        'reporting_select_accounts_only': False,
         'line_type': 'actual',
         'overhead_type': 'cost_percentage',
         'parent_id': lambda *a: False
@@ -512,6 +527,25 @@ class financing_contract_format_line(osv.osv):
             for child_line in browse_source_line.child_ids:
                 self.copy_format_line(cr, uid, child_line, destination_format_id, parent_line_id, context=context)
         return
+
+    def on_change_is_quadruplet(self, cr, uid, ids, is_quadruplet, context=None):
+        """
+        Ticking "Input CC/FP at line level?" automatically unticks "Select Accounts Only"
+        """
+        res = {}
+        if is_quadruplet:
+            res['value'] = {'reporting_select_accounts_only': False, }
+        return res
+
+    def on_change_reporting_select_accounts_only(self, cr, uid, ids, reporting_select_accounts_only, context=None):
+        """
+        Ticking "Select Accounts Only" automatically unticks "Input CC/FP at line level?"
+        """
+        res = {}
+        if reporting_select_accounts_only:
+            res['value'] = {'is_quadruplet': False, }
+        return res
+
 
 financing_contract_format_line()
 
