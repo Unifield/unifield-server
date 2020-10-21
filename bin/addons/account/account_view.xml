@@ -239,7 +239,7 @@
             </field>
         </record>
 
-        <!-- G/L account Search View to be displayed from FP and contracts -->
+        <!-- G/L account Search View to be displayed from FP -->
         <record id="view_account_fp_search" model="ir.ui.view">
             <field name="name">account.account.fp.search</field>
             <field name="model">account.account</field>
@@ -248,6 +248,24 @@
             <field name="arch" type="xml">
                 <search>
                     <group>
+                        <field name="code"/>
+                        <field name="name"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- G/L account Search View to be displayed from contracts -->
+        <record id="view_account_contract_search" model="ir.ui.view">
+            <field name="name">account.account.contract.search</field>
+            <field name="model">account.account</field>
+            <field name="type">search</field>
+            <field name="priority" eval="91"/>
+            <field name="arch" type="xml">
+                <search>
+                    <group>
+                        <filter name="active" string="Active" icon="terp-check" domain="[('filter_active', '=', True)]" />
+                        <filter name="inactive" string="Inactive" icon="gtk-dialog-error" domain="[('filter_active', '=', False)]" />
                         <field name="code"/>
                         <field name="name"/>
                     </group>

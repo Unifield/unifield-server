@@ -528,7 +528,8 @@ class account_account(osv.osv):
             view = False
             module = 'account'
             if view_type == 'search':
-                view = ir_model_obj.get_object_reference(cr, uid, module, 'view_account_fp_search')
+                search_view_name = context.get('from_contract') and 'view_account_contract_search' or 'view_account_fp_search'
+                view = ir_model_obj.get_object_reference(cr, uid, module, search_view_name)
             elif view_type == 'tree':
                 view = ir_model_obj.get_object_reference(cr, uid, module, 'view_account_fp_tree')
             if view:
