@@ -137,8 +137,8 @@ class financing_contract_account_quadruplet(osv.osv):
         # TODO this should be renamed format_id
         cr.execute('''select account_quadruplet_id
                         from financing_contract_actual_account_quadruplets
-                        where actual_line_id in (select id from financing_contract_format_line
-                                                where format_id = %s and is_quadruplet is true)''', (contract.format_id.id,))
+                        where account_quadruplet_id in %s and actual_line_id in (select id from financing_contract_format_line
+                                                where format_id = %s and is_quadruplet is true)''', (tuple(ids), contract.format_id.id,))
         rows = cr.fetchall()
         for id in [x[0] for x in rows]:
             exclude[id] = True
@@ -148,7 +148,7 @@ class financing_contract_account_quadruplet(osv.osv):
             if not active_id or line.id != active_id:
                 for account_destination in line.account_destination_ids:
                     # search the quadruplet to exclude
-                    quadruplet_ids_to_exclude = self.search(cr, uid, [('account_id', '=', account_destination.account_id.id),('account_destination_id','=',account_destination.destination_id.id)])
+                    quadruplet_ids_to_exclude = self.search(cr, uid, [('id', 'in', ids), ('account_id', '=', account_destination.account_id.id),('account_destination_id','=',account_destination.destination_id.id)])
                     for item in quadruplet_ids_to_exclude:
                         exclude[item] = True
 
@@ -160,34 +160,19 @@ class financing_contract_account_quadruplet(osv.osv):
         res = {}
         if context is None:
             context = {}
-        exclude = {}
+        res = {}
 
         if not context.get('contract_id'):
             for id in ids:
                 res[id] = False
             return res
 
-        ctr_obj = self.pool.get('financing.contract.contract')
-        contract = ctr_obj.browse(cr, uid, context['contract_id'])
-        # financing_contract_funding_pool_line.contract_id is a FK for financing_contract_format.id
-        # TODO this should be renamed format_id during refactoring
-        exclude = {}
-        cr.execute('''select id from financing_contract_account_quadruplet
-                        where funding_pool_id in
-                             (select funding_pool_id
-                             from financing_contract_funding_pool_line
-                             where contract_id = %s)
-                      and exists (select 'X'
-                                from financing_contract_cost_center cc
-                                where cc.contract_id = %s
-                                and cc.cost_center_id =
-                                    financing_contract_account_quadruplet.cost_center_id)''', (contract.format_id.id,contract.format_id.id))
-        for id in [x[0] for x in cr.fetchall()]:
-            exclude[id] = True
-        for id in ids:
-            res[id] = id in exclude
-        return res
+        for _id in ids:
+            res[_id] = False
 
+        for _id in self.search(cr, uid, [('can_be_used', '=', True)], context=context):
+            res[_id] = True
+        return res
 
     def _search_can_be(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
@@ -200,22 +185,10 @@ class financing_contract_account_quadruplet(osv.osv):
             return res
 
         ctr_obj = self.pool.get('financing.contract.contract')
-        contract = ctr_obj.browse(cr, uid, context['contract_id'])
-        cr.execute('''select id from financing_contract_account_quadruplet
-                        where funding_pool_id in
-                             (select funding_pool_id
-                             from financing_contract_funding_pool_line
-                             where contract_id = %s)
-                      and exists (select 'X'
-                                from financing_contract_cost_center cc
-                                where cc.contract_id = %s
-                                and cc.cost_center_id =
-                                    financing_contract_account_quadruplet.cost_center_id)''', (contract.format_id.id,contract.format_id.id))
-        someids = []
-        someids += [x[0] for x in cr.fetchall()]
-        return [('id','in',someids)]
-
-
+        contract = ctr_obj.browse(cr, uid, context['contract_id'], fields_to_fetch=['funding_pool_ids', 'cost_center_ids'])
+        cc_ids = [cc.id for cc in contract.cost_center_ids]
+        fp_ids = [fp.funding_pool_id.id for fp in contract.funding_pool_ids]
+        return [('cost_center_id', 'in', cc_ids), ('funding_pool_id', 'in', fp_ids)]
 
     def _search_used_in_contract(self, cr, uid, obj, name, args, context=None):
         if not args:
