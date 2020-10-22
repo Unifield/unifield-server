@@ -111006,3 +111006,8 @@ msgstr "Écriture refusée sur %s."
 #, python-format
 msgid "Writing file report at %s"
 msgstr "Écriture du fichier rapport sur %s"
+
+#. module: msf_outgoing
+#: view:stock.move:0
+msgid "Ship Closed Date"
+msgstr "Date de Clôture de l'Expédition"
