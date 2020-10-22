@@ -151,6 +151,10 @@ class financing_contract_account_quadruplet(osv.osv):
                     quadruplet_ids_to_exclude = self.search(cr, uid, [('id', 'in', ids), ('account_id', '=', account_destination.account_id.id),('account_destination_id','=',account_destination.destination_id.id)])
                     for item in quadruplet_ids_to_exclude:
                         exclude[item] = True
+                for account in line.reporting_account_ids:
+                    # exclude the quadruplets when the account has been selected in lines with "accounts only"
+                    for quad in self.search(cr, uid, [('account_id', '=', account.id)], order='NO_ORDER', context=context):
+                        exclude[quad] = True
 
         for id in ids:
             ids_to_exclude[id] = id in exclude
