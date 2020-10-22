@@ -194,42 +194,13 @@ class financing_contract_account_quadruplet(osv.osv):
         fp_ids = [fp.funding_pool_id.id for fp in contract.funding_pool_ids]
         return [('cost_center_id', 'in', cc_ids), ('funding_pool_id', 'in', fp_ids)]
 
-    def _search_used_in_contract(self, cr, uid, obj, name, args, context=None):
-        if not args:
-            return []
-        if context is None:
-            context = {}
-        assert args[0][1] == '=' and args[0][2], 'Filter not implemented'
-        if not context.get('contract_id'):
-            return []
-
-        ctr_obj = self.pool.get('financing.contract.contract')
-        contract = ctr_obj.browse(cr, uid, context['contract_id'])
-
-        exclude = []
-        for line in contract.actual_line_ids:
-            if context.get('active_id', False) and line.id != context['active_id']:
-                for account_destination in line.account_destination_ids:
-                    cr.execute('''select account_quadruplet_id
-                                  from financing_contract_actual_account_quadruplets
-                                  where actual_line_id in (select l.id from financing_contract_contract c,
-                                                          financing_contract_format f,
-                                                          financing_contract_format_line l
-                                                          where c.id = %s
-                                                          and f.id = c.format_id
-                                                          and l.format_id = f.id)''', (contract.format_id.id,))
-                    exclude += [x[0] for x in cr.fetchall()]
-                for account_quadruplet in line.account_quadruplet_ids:
-                    exclude.append(account_quadruplet.id)
-        return [('id', 'not in', exclude)]
-
     #columns for view
     _columns = {
         'account_destination_id': fields.many2one('account.destination.link', 'Account/Destination', relate=True, readonly=True),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Centre', relate=True, readonly=True),
         'funding_pool_id': fields.many2one('account.analytic.account', 'Funding Pool', relate=True, readonly=True),
         'account_destination_name': fields.char('Account', size=64, readonly=True),
-        'used_in_contract': fields.function(_get_used_in_contract, method=True, type='boolean', string='Used', fnct_search=_search_used_in_contract),
+        'used_in_contract': fields.function(_get_used_in_contract, method=True, type='boolean', string='Used'),
         'can_be_used': fields.function(_can_be_used_in_contract, method=True, type='boolean', string='Can', fnct_search=_search_can_be),
         'account_id': fields.many2one('account.destination.link', 'Account ID', relate=True, readonly=True),
         'account_destination_link_id': fields.many2one('account.destination.link', 'Link id', readonly=True),
