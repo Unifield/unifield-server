@@ -60887,6 +60887,11 @@ msgstr "Sélectionner des Comptes Uniquement"
 msgid "Selected in Funding Pool"
 msgstr "Sélectionné dans le Funding Pool"
 
+#. module: account_override
+#: field:account.account,selectable_in_contract:0
+msgid "Selectable in Contract"
+msgstr "Sélectionnable dans le Contrat"
+
 #. module: purchase_override
 #: view:purchase.order.cancel.wizard:0
 msgid "Please confirm that you want to cancel all non-confirmed lines of this PO"

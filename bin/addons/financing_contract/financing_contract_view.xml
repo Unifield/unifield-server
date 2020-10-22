@@ -146,8 +146,8 @@
                                                attrs="{'invisible': ['|',
                                                                      ('line_type', '=', 'view'),
                                                                      ('reporting_select_accounts_only', '=', False)]}"
-                                        >
-                                        </field>
+                                               domain="[('selectable_in_contract', '=', True)]"
+                                        />
                                     </form>
                                 </field>
                             </page>

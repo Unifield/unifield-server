@@ -381,6 +381,30 @@ class account_account(osv.osv):
             res[account_id] = account_id in selected
         return res
 
+    def _get_false(self, cr, uid, ids, *a, **b):
+        """
+        Returns False for all ids
+        """
+        return {}.fromkeys(ids, False)
+
+    def _search_selectable_in_contract(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Returns a domain with the G/L accounts selectable in the contract in context.
+        The accounts must appear either in the G/L accounts or in the Account/Destination combinations linked to the
+        Funding Pools selected in the contract.
+        """
+        if context is None:
+            context = {}
+        contract_obj = self.pool.get('financing.contract.contract')
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        acc_ids = set()
+        if context.get('contract_id'):
+            contract = contract_obj.browse(cr, uid, context['contract_id'], fields_to_fetch=['funding_pool_ids'], context=context)
+            for contract_fp_line in contract.funding_pool_ids:
+                acc_ids.update([t[0] for t in
+                                analytic_acc_obj.get_acc_dest_linked_to_fp(cr, uid, contract_fp_line.funding_pool_id.id, context=context)])
+        return [('id', 'in', list(acc_ids))]
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'activation_date': fields.date('Active from', required=True),
@@ -420,6 +444,8 @@ class account_account(osv.osv):
         'inactivated_for_dest': fields.function(_get_inactivated_for_dest, method=True, type='boolean', string='Is inactive for destination given in context'),
 
         'selected_in_fp': fields.function(_get_selected_in_fp, string='Selected in Funding Pool', method=True, store=False, type='boolean'),
+        'selectable_in_contract': fields.function(_get_false, string='Selectable in Contract', method=True, store=False,
+                                                  type='boolean', fnct_search=_search_selectable_in_contract),
     }
 
     _defaults = {
