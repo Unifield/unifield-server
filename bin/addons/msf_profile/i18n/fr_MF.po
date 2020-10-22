@@ -110986,3 +110986,45 @@ msgstr "Dernière mise à jour"
 #, python-format
 msgid "Export Date"
 msgstr "Date d'Export"
+
+#. module: mission_stock
+#: report:addons/mission_stock/report/stock_mission_report_xls.mako:64
+#: field:stock.mission.report.line,quarantine_qty:0
+msgid "Quarantine Qty."
+msgstr "Qté. Quarantaine"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:59
+#: code:addons/mission_stock/mission_stock.py:77
+#: code:addons/mission_stock/mission_stock.py:516
+#, python-format
+msgid "Quarantine Qty"
+msgstr "Qté Quarantaine"
+
+#. module: mission_stock
+#: report:addons/mission_stock/report/stock_mission_report_xls.mako:65
+#: field:stock.mission.report.line,input_qty:0
+msgid "Input Qty."
+msgstr "Qté. Entrée"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:60
+#: code:addons/mission_stock/mission_stock.py:78
+#: code:addons/mission_stock/mission_stock.py:517
+#, python-format
+msgid "Input Qty"
+msgstr "Qté Entrée"
+
+#. module: mission_stock
+#: code:addons/mission_stock/mission_stock.py:61
+#: code:addons/mission_stock/mission_stock.py:79
+#: code:addons/mission_stock/mission_stock.py:518
+#, python-format
+msgid "Output/Packing/Dispatch/Distribution Qty"
+msgstr "Qté Sortie/Colisage/Expédition/Distribution"
+
+#. module: mission_stock
+#: report:addons/mission_stock/report/stock_mission_report_xls.mako:66
+#: field:stock.mission.report.line,opdd_qty:0
+msgid "Output/Packing/Dispatch/Distribution Qty."
+msgstr "Qté. Sortie/Colisage/Expédition/Distribution"
