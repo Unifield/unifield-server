@@ -56,6 +56,7 @@ class stock_picking_processor(osv.osv):
             res[wizard_id] = {
                 'contains_kc': False,
                 'contains_dg': False,
+                'forbidden_product': False
             }
             # KC
             kc_lines = line_obj.search(cr, uid, [
@@ -71,6 +72,32 @@ class stock_picking_processor(osv.osv):
             ], limit=1, order='NO_ORDER', context=context)
             if dg_lines:
                 res[wizard_id]['contains_dg'] = True
+
+            if self._columns['move_ids']._obj == 'stock.move.in.processor':
+                list_forbidden = []
+                cr.execute('''select
+                    default_code
+                from product_product p, product_template tmpl, stock_incoming_processor m, stock_move_in_processor l, product_status st
+                where
+                    l.product_id = p.id and
+                    st.code = 'forbidden' and
+                    st.id = tmpl.state and
+                    tmpl.id = p.product_tmpl_id and
+                    l.wizard_id = m.id and
+                    m.id = %s
+                limit 6''',
+                           (wizard_id,))
+                for x in cr.fetchall():
+                    if len(list_forbidden) == 5:
+                        list_forbidden.append('...')
+                    else:
+                        list_forbidden.append(x[0])
+                if list_forbidden:
+                    res[wizard_id]['forbidden_product'] = '''<p style="text-align: center; v-align: middle;">
+                        <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                        %s %s
+                        <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                    <p>''' % (_('Warning, you are processing product(s) which have "Forbidden" status, these should not be used. Please refer to your OC guidelines for their management: '), ', '.join(list_forbidden))
 
         return res
 
@@ -90,6 +117,7 @@ class stock_picking_processor(osv.osv):
             'wizard_id',
             string='Moves',
         ),
+        'forbidden_product': fields.function(_get_moves_product_info, method=True, string='List of forbidden', type='char', store=False,  multi='kc_dg'),
         'contains_dg': fields.function(
             _get_moves_product_info,
             method=True,
@@ -144,6 +172,21 @@ class stock_picking_processor(osv.osv):
                 _('No wizard found !'),
             )
 
+        if self._name == 'stock.incoming.processor':
+            line_obj = self.pool.get('stock.move.in.processor')
+            dom = context.get('selected_domain', [])
+            if dom:
+                dom = ['&', ('wizard_id', '=', ids[0])] + dom
+            else:
+                dom = [('wizard_id', '=', ids[0])]
+            lines_ids = line_obj.search(cr, uid, dom, context=context)
+            for move in line_obj.browse(cr, uid, lines_ids, context=context):
+                line_obj.write(cr, uid, [move.id], {'quantity': move.ordered_quantity}, context=context)
+            return {
+                'type': 'ir.actions.refresh_o2m',
+                'o2m_refresh': 'move_ids'
+            }
+
         for wizard in self.browse(cr, uid, ids, context=context):
             for move in wizard.move_ids:
                 self.pool.get(move._name).write(cr, uid, [move.id], {'quantity': move.ordered_quantity}, context=context)
@@ -172,6 +215,21 @@ class stock_picking_processor(osv.osv):
                 _('Error'),
                 _('No wizard found !'),
             )
+
+        if self._name == 'stock.incoming.processor':
+            line_obj = self.pool.get('stock.move.in.processor')
+            dom = context.get('selected_domain', [])
+            if dom:
+                dom = ['&', ('wizard_id', '=', ids[0])] + dom
+            else:
+                dom = [('wizard_id', '=', ids[0])]
+            lines_ids = line_obj.search(cr, uid, dom, context=context)
+            for move in line_obj.browse(cr, uid, lines_ids, context=context):
+                line_obj.write(cr, uid, [move.id], {'quantity': 0}, context=context)
+            return {
+                'type': 'ir.actions.refresh_o2m',
+                'o2m_refresh': 'move_ids'
+            }
 
         for wizard in self.browse(cr, uid, ids, context=context):
             move_obj = wizard.move_ids[0]._name
@@ -213,19 +271,27 @@ class stock_picking_processor(osv.osv):
                     continue
 
                 line_data = line_obj._get_line_data(cr, uid, wizard, move, context=context)
-                if line_obj._name == 'stock.move.in.processor' and move.pack_info_id:
-                    line_data.update({
-                        'from_pack': move.pack_info_id.parcel_from,
-                        'to_pack': move.pack_info_id.parcel_to,
-                        'weight': move.pack_info_id.total_weight,
-                        'volume': move.pack_info_id.total_volume,
-                        'height': move.pack_info_id.total_height,
-                        'length': move.pack_info_id.total_length,
-                        'width': move.pack_info_id.total_width,
-                        'packing_list': move.pack_info_id.packing_list,
-                        'cost': move.price_unit,
-                        'currency': move.currency_id.id,
-                    })
+                if line_obj._name == 'stock.move.in.processor':
+                    if wizard.fields_as_ro:
+                        line_data['cost_as_ro'] = True
+
+                    if move.pack_info_id:
+                        line_data.update({
+                            'from_pack': move.pack_info_id.parcel_from,
+                            'to_pack': move.pack_info_id.parcel_to,
+                            'weight': move.pack_info_id.total_weight,
+                            'total_weight': move.pack_info_id.real_total_weight,
+                            'volume': move.pack_info_id.total_volume,
+                            'total_volume': move.pack_info_id.real_total_volume,
+                            'height': move.pack_info_id.total_height,
+                            'length': move.pack_info_id.total_length,
+                            'width': move.pack_info_id.total_width,
+                            'packing_list': move.pack_info_id.packing_list,
+                            'ppl_name': move.pack_info_id.ppl_name,
+                            'cost': move.price_unit,
+                            'currency': move.price_currency_id.id,
+                            'pack_info_id': move.pack_info_id.id,
+                        })
                 line_obj.create(cr, uid, line_data, context=context)
 
         return True
@@ -1060,6 +1126,7 @@ class stock_move_processor(osv.osv):
             'nodestroy': True,
             'target': 'new',
             'res_id': split_wiz_id,
+            'keep_open': 1,
             'context': context,
         }
 

@@ -122,6 +122,7 @@ class account_cash_statement(osv.osv):
                 'pieces': line.pieces,
                 'number': 0.0,
             }
+            # note: check on closing line duplicates will be skipped as the reg. is still in Draft state at this step
             cashbox_line_obj.create(cr, uid, vals, context=context)
         # Give a Cash Register Name with the following composition :
         #+ Cash Journal Name

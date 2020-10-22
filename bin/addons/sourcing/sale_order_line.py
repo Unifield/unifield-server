@@ -783,6 +783,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 vals['po_cft'] = 'dpo'
         elif not product and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0', False)):
             vals['po_cft'] = 'dpo'
+        elif product and product.state.code == 'forbidden':
+            vals['type'] = 'make_to_stock'
 
         if not product:
             vals.update({
@@ -922,18 +924,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     _("You cannot choose a source location which is the destination location of the Internal Request"),
                 )
 
-            if line.type == 'make_to_order' and \
-               line.po_cft not in ['cft'] and \
-               not line.product_id and \
-               line.order_id.procurement_request and \
-               line.supplier and \
-               line.supplier.partner_type not in ['internal', 'section', 'intermission', 'esc']:
-                raise osv.except_osv(
-                    _('Warning'),
-                    _("""For an Internal Request with a procurement method 'On Order' and without product,
-the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ESC' type."""),
-                )
-
             if line.product_id and \
                line.product_id.type in ('consu', 'service', 'service_recep') and \
                line.type == 'make_to_stock':
@@ -983,11 +973,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         _('Warning'),
                         _("You can't Source 'from stock' if you don't have product."),
                     )
-                if line.supplier and line.supplier.partner_type in ('external'):
-                    raise osv.except_osv(
-                        _('Warning'),
-                        _("You can't Source to an 'External' partner if you don't have product."),
-                    )
 
             if line.state not in ('draft', 'cancel') and line.product_id and line.supplier and not context.get('bypass_product_constraints'):
                 # Check product constraints (no external supply, no storage...)
@@ -1018,14 +1003,15 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         if not check_fnct:
             check_fnct = self.pool.get('product.product')._get_restriction_error
 
-        vals = {}
+        vals = {'obj_type': 'sale.order'}
         if line_type == 'make_to_order' and product_id and (po_cft == 'cft' or partner_id):
             if po_cft == 'cft':
-                vals = {'constraints': ['external']}
-            elif partner_id:
-                vals = {'partner_id': partner_id}
+                vals['constraints'] = ['external']
         elif line_type == 'make_to_stock' and product_id:
-            vals = {'constraints': ['storage']}
+            vals['constraints'] = ['storage']
+
+        if partner_id:
+            vals['partner_id'] = partner_id
 
         if product_id:
             return check_fnct(cr, uid, product_id, vals, *args, **kwargs)
@@ -1155,7 +1141,9 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         f_to_check = ['type', 'order_id', 'po_cft', 'product_id', 'supplier', 'state', 'location_id']
         for f in f_to_check:
             if vals.get(f, False):
-                self._check_line_conditions(cr, uid, ids, context=context)
+                ids_to_check = self.search(cr, uid, [('id', 'in', ids), ('state', 'in', ['draft', 'validated'])], context=context)
+                if ids_to_check:
+                    self._check_line_conditions(cr, uid, ids_to_check, context=context)
                 break
 
         return result
@@ -1189,7 +1177,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             ('id', 'in', ids),
             ('product_id', '=', False),
             ('order_id.procurement_request', '=', False),
-            ('supplier.partner_type', '!=', 'esc'),
+            ('supplier.partner_type', 'not in', ['esc', 'external']),
         ], count=True, context=context)
 
         if no_prod:
@@ -1238,21 +1226,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         if mto_no_cft_no_sup:
             raise osv.except_osv(_('Warning'), _("The supplier must be chosen before sourcing the line"))
-
-        mto_no_cft_no_prod = self.search(cr, uid, [
-            ('id', 'in', ids),
-            ('type', '=', 'make_to_order'),
-            ('po_cft', 'not in', ['cft']),
-            ('supplier', '!=', False),
-            ('product_id', '=', False),
-            ('order_id.procurement_request', '=', True),
-            ('supplier.partner_type', 'not in', ['internal', 'section', 'intermission', 'esc']),
-        ], count=True, context=context)
-
-        if mto_no_cft_no_prod:
-            raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
-                    the supplier must be either in 'Internal', 'Inter-Section', 'Intermission' or 'ESC' type.
-                    """))
 
         stock_no_loc = self.search(cr, uid, [
             ('id', 'in', ids),
@@ -1613,6 +1586,13 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         company_currency_id = self.pool.get('res.users').get_company_currency_id(cr, uid)
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
+            if sourcing_line.procurement_request:  # Check constraints on lines
+                check_vals = {'constraints': 'consumption'}
+            else:
+                check_vals = {'obj_type': 'sale.order', 'partner_id': sourcing_line.order_id.partner_id.id}
+            if sourcing_line.product_id.id:
+                self.pool.get('product.product')._get_restriction_error(cr, uid, [sourcing_line.product_id.id], vals=check_vals,
+                                                                        context=context)
             if sourcing_line.supplier and sourcing_line.supplier_type == 'esc' and \
                     sourcing_line.supplier_split_po == 'yes' and not sourcing_line.related_sourcing_id:
                 raise osv.except_osv(_('Error'), _('For this Supplier you have to select a Sourcing Group'))
@@ -1678,7 +1658,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                                     _('AD missing on line %s, FO %s') % (sourcing_line.line_number, sourcing_line.order_id.name),
                                 )
 
-                            anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distib_to_copy, {}, context=context)
+                            anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distib_to_copy, {'partner_type': po.partner_id.partner_type}, context=context)
 
                         # set unit price
                         price = 0.0
@@ -1690,7 +1670,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                                 price = price_dict[sourcing_line.supplier.property_product_pricelist_purchase.id]
 
                         if not price:
-                            price = sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0
+                            if not sourcing_line.product_id and sourcing_line.comment:  # Product by nomenclature
+                                price = sourcing_line.price_unit or 0.0
+                            else:
+                                price = sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0
                             if price and company_currency_id != target_currency_id:
                                 price = self.pool.get('res.currency').compute(cr, uid, company_currency_id, target_currency_id, price, round=False, context=context)
 
@@ -2247,7 +2230,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     (line.product_id.seller_id.supplier or line.product_id.seller_id.manufacturer
                      or line.product_id.seller_id.transporter):
                 value['supplier'] = line.product_id.seller_id.id
-
         if l_type == 'make_to_stock':
             if not location_id:
                 wh_ids = wh_obj.search(cr, uid, [], context=context)
@@ -2276,7 +2258,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         check_fnct,
                         field_name='l_type',
                         values=res,
-                        vals={'constraints': ['storage']},
+                        vals={'constraints': ['storage'], 'obj_type': 'sale.order', 'partner_id': line.order_id.partner_id.id},
                         context=context,
                     )
 

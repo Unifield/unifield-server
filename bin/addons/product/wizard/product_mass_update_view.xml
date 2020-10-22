@@ -21,8 +21,8 @@
                         <field name="procure_delay" />
                         <field name="procure_method" />
                         <group colspan="2">
-                            <field name="product_state" attrs="{'readonly':['|', ('empty_status', '=', True), ('state', '!=', 'draft')]}" />
-                            <field name="empty_status" on_change="onchange_status_check(empty_status)" />
+                            <field name="product_state" attrs="{'readonly':[('state', '!=', 'draft')]}" />
+                            <field name="empty_status" attrs="{'invisible': [('empty_status', '=', False)]}" />
                         </group>
                         <field name="sterilized" />
                         <field name="supply_method" />

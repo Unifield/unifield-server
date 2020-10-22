@@ -340,7 +340,7 @@ class product_template(osv.osv):
         'warranty': fields.float('Warranty (months)'),
         'sale_ok': fields.boolean('Can be Sold', help="Determines if the product can be visible in the list of product within a selection from a sale order line."),
         'purchase_ok': fields.boolean('Can be Purchased', help="Determine if the product is visible in the list of products within a selection from a purchase order line."),
-        'state': fields.integer('Status'),
+        'state': fields.integer('UniField Status', required=1),
         'uom_id': fields.many2one('product.uom', 'Default Unit Of Measure', required=True, help="Default Unit of Measure used for all stock operation."),
         'uom_po_id': fields.many2one('product.uom', 'Purchase Unit of Measure', required=True, help="Default Unit of Measure used for purchase orders. It must be in the same category than the default unit of measure."),
         'uos_id' : fields.many2one('product.uom', 'Unit of Sale',
@@ -602,15 +602,14 @@ class product_product(osv.osv):
         instance_level = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
         prod_creator = []
         if instance_level == 'section':
+            # ITC, ESC, HQ
+            prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_1')[1])
+            prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_2')[1])
+            prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1])
             if check_edbn:
-                # ITC, ESC, HQ, Local, ED
-                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_1')[1])
-                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_2')[1])
-                prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1])
+                # Local, UD
                 prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1])
                 prod_creator.append(obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1])
-            else:
-                prod_creator = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_3')[1]]
         elif instance_level == 'coordo':
             prod_creator = [obj_data.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]]
         return prod_creator

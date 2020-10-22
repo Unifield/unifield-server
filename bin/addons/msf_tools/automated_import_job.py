@@ -537,7 +537,10 @@ class automated_import_job(osv.osv):
                     cr.commit()
                 except Exception as e:
                     cr.rollback()
-                    trace_b = tools.ustr(traceback.format_exc())
+                    if isinstance(e, osv.except_osv):
+                        trace_b = e.value
+                    else:
+                        trace_b = tools.ustr(traceback.format_exc())
                     self.infolog(cr, uid, '%s :: %s' % (import_data.name, trace_b))
                     self.write(cr, uid, [job.id], {
                         'filename': False,

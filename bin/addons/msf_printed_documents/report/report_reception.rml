@@ -106,7 +106,7 @@
         <blockTableStyle id="OrderInformations2">
             <blockAlignment value="CENTER" />
             <blockVAlign value="CENTER" />
-            <blockBackground colorName="silver" start="0,6" stop="0,6" />
+            <blockBackground colorName="silver" start="0,7" stop="0,7" />
             <lineStyle kind="GRID" colorName="#000000" start="0,6" stop="-1,-1" thickness="0.5"/>
             <blockTopPadding value="0"   />
             <blockBottomPadding value="0" />
@@ -119,6 +119,20 @@
             <blockBottomPadding value="0" />
 
             <lineStyle kind="LINEBEFORE" colorName="black"  start="2,0" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="PackingList">
+            <blockAlignment value="CENTER" />
+            <blockValign value="MIDDLE" />
+            <blockTopPadding value="10" />
+            <blockBottomPadding value="0" />
+            <blockBackground colorName="silver" start="0,0" stop="0,0" />
+            <blockBackground colorName="silver" start="2,0" stop="2,0" />
+            <blockBackground colorName="silver" start="4,0" stop="4,0" />
+            <blockBackground colorName="silver" start="6,0" stop="6,0" />
+            <blockBackground colorName="silver" start="8,0" stop="8,0" />
+            <blockBackground colorName="silver" start="10,0" stop="10,0" />
+            <lineStyle kind="LINEBEFORE" colorName="black"  start="0,0" thickness="0.5" />
         </blockTableStyle>
 
         <blockTableStyle id="OrderInformations4">
@@ -410,7 +424,9 @@
             <tr><td></td></tr>
         </blockTable>
 
-        <blockTable colWidths="800.0" style="OrderInformations2" repeatRows="7">
+<section>
+  [[ repeatIn(get_lines_by_packing(objects[0]), 'pack') ]]
+        <blockTable colWidths="800.0" style="OrderInformations2" repeatRows="8">
 
             <tr><td></td></tr>
             <tr>
@@ -476,23 +492,72 @@
 
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <blockTable colWidths="60,80,100,70,60,30,50,40,90,75,91,54" style="PackingList">
+                        <tr>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">Packing List</para>
+                                </td>
+
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">[[ pack[0].ppl_name ]]</para>
+
+                                </td>
+
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">Supplier Packing List</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">[[ pack[0].packing_list ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">From parcel</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">[[ pack[0].parcel_from or '' ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">To parcel</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">[[ pack[0].parcel_to or '' ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">Total volume</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">[[ pack[0].real_total_volume and u'%s dm³'%pack[0].real_total_volume or '' ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">Total weight</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">[[ pack[0].real_total_weight and '%s kg'%pack[0].real_total_weight or '' ]]</para>
+                                </td>
+                        </tr>
+                    </blockTable>
+
+
+                </td>
+            </tr>
 
             <tr>
                 <td>
                     <blockTable colWidths="30,370,50,40,50,40,75,53,20,18,18,18,18" style="OrderInformations3">
                         <tr>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">Item</para>
+                                    <para style="TextInformation4" alignment="CENTER">Item</para> <!-- 30 -->
                                 </td>
 
                                 <td>
                                 <blockTable colWidths="110,260" style="OrderInformations4">
                                     <tr>
                                         <td>
-                                            <para style="TextInformation" alignment="LEFT">Code</para>
+                                            <para style="TextInformation" alignment="LEFT">Code</para> <!-- 110 -->
                                         </td>
                                         <td>
-                                            <para style="TextInformation" alignment="LEFT">Description</para>
+                                            <para style="TextInformation" alignment="LEFT">Description</para> <!-- 260 -->
                                         </td>
                                     </tr>
                                     <tr>
@@ -508,37 +573,37 @@
                                 </td>
 
                                 <td>
-                                    <para style="TextInformation5" alignment="CENTER">Qty confirmed</para>
+                                    <para style="TextInformation5" alignment="CENTER">Qty confirmed</para> <!-- 50 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation5" alignment="CENTER">Unit of Measure</para>
+                                    <para style="TextInformation5" alignment="CENTER">Unit of Measure</para> <!-- 40 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation5" alignment="CENTER">Qty backorder</para>
+                                    <para style="TextInformation5" alignment="CENTER">Qty backorder</para> <!-- 50 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation5" alignment="CENTER">Qty received</para>
+                                    <para style="TextInformation5" alignment="CENTER">Qty received</para> <!-- 40 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation5" alignment="CENTER">Batch / Serial number</para>
+                                    <para style="TextInformation5" alignment="CENTER">Batch / Serial number</para> <!-- 75 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation5" alignment="CENTER">Expiry date</para>
+                                    <para style="TextInformation5" alignment="CENTER">Expiry date</para> <!-- 53 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">ED</para>
+                                    <para style="TextInformation4" alignment="CENTER">ED</para> <!-- 20 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">BM</para>
+                                    <para style="TextInformation4" alignment="CENTER">BM</para> <!-- 18 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">KC</para>
+                                    <para style="TextInformation4" alignment="CENTER">KC</para> <!-- 18 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">DG</para>
+                                    <para style="TextInformation4" alignment="CENTER">DG</para> <!-- 18 -->
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">CS</para>
+                                    <para style="TextInformation4" alignment="CENTER">CS</para> <!-- 18 -->
                                 </td>
                         </tr>
                     </blockTable>
@@ -552,7 +617,7 @@
 
 
             <tr>
-            [[ repeatIn(get_lines(objects[0]), 'line') ]]
+            [[ repeatIn(pack[1], 'line') ]]
                 <td>
                     <blockTable colWidths="30,370,50,40,50,40,75,53,20,18,18,18,18" style="OrderInformations3">
                         <tr>
@@ -583,16 +648,16 @@
                                 </td>
 
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyPO(line) ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ formatFloatDigitsToUom(getQtyPO(line), line.product_uom.rounding) ]]</para>
                                 </td>
                                 <td>
                                     <para style="TextInformation4" alignment="CENTER">[[ line.product_uom and line.product_uom.name or False ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyBO(line,objects[0]) ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ formatFloatDigitsToUom(getQtyBO(line,objects[0]), line.product_uom.rounding) ]]</para>
                                 </td>
                                 <td>
-                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyIS(line,objects[0]) ]]</para>
+                                    <para style="TextInformation4" alignment="CENTER">[[ formatFloatDigitsToUom(getQtyIS(line,objects[0]), line.product_uom.rounding) ]]</para>
                                 </td>
                                 <td>
                                     <para style="TextInformation4" alignment="CENTER">[[ getBatch(line) ]]</para>
@@ -622,6 +687,7 @@
             </tr>
 
         </blockTable>
+</section>
 
         <blockTable colWidths="800.0" style="OrderInformationsRien" >
             <tr>
