@@ -97,11 +97,11 @@
                             </field>
                         </page>
                     </notebook>
-                    <group colspan="4" col="4">
-                        <field name="state" />
-                        <button name="delete_update" string="Delete Update" icon="gtk-del" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
-                        <button name="cancel_update" string="Cancel Update" icon="gtk-cancel" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
-                        <button name="launch_update" string="Apply Update" icon="gtk-go-forward" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <group colspan="4">
+                        <field name="state" colspan="2" />
+                        <button name="delete_update" string="Delete Update" colspan="1" icon="gtk-cancel" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <button name="cancel_update" string="Cancel Update" colspan="1" icon="gtk-cancel" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <button name="launch_update" string="Apply Update" colspan="1" icon="gtk-go-forward" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     </group>
                 </form>
             </field>
