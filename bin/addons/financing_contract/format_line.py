@@ -520,6 +520,7 @@ class financing_contract_format_line(osv.osv):
                 'parent_id': parent_id,
                 'line_type': browse_source_line.line_type,
                 'account_quadruplet_ids': [(6, 0, [])],
+                'reporting_account_ids': [(6, 0, [])],
             }
             account_destination_ids = [account_destination.id for account_destination in browse_source_line.account_destination_ids]
             format_line_vals['account_destination_ids'] = [(6, 0, account_destination_ids)]
