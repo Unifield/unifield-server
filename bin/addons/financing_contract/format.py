@@ -97,6 +97,10 @@ class account_destination_link(osv.osv):
                     duplet_ids_to_exclude = self.search(cr, uid, [('account_id', '=', account_quadruplet.account_id.id),('destination_id','=',account_quadruplet.account_destination_id.id)])
                     for item in duplet_ids_to_exclude:
                         exclude[item] = True
+                for account in line.reporting_account_ids:
+                    # exclude the acc/dest combinations when the account has been selected in lines with "accounts only"
+                    for acc_dest in self.search(cr, uid, [('account_id', '=', account.id)], order='NO_ORDER', context=context):
+                        exclude[acc_dest] = True
 
         for id in ids:
             ids_to_exclude[id] = id in exclude
