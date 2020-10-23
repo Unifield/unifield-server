@@ -53,7 +53,6 @@ class financing_contract_account_quadruplet(osv.osv):
             ret = cr.fetchone()
             if ret:
                 new_ids.append(ret[0])
-        print 'migrate', ids, new_ids
         return new_ids
 
     def _auto_init(self, cr, context=None):
