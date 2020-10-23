@@ -280,10 +280,12 @@
             <field name="type">tree</field>
             <field name="priority" eval="90"/>
             <field name="arch" type="xml">
-                <tree string="G/L Accounts" colors="grey:selected_in_fp" notselectable="selected_in_fp" >
+                <tree string="G/L Accounts" colors="grey:selected_in_fp or selected_in_contract"
+                      notselectable="selected_in_fp or selected_in_contract" >
                     <field name="code"/>
                     <field name="name"/>
                     <field name="selected_in_fp" invisible="1"/>
+                    <field name="selected_in_contract" invisible="1"/>
                 </tree>
             </field>
         </record>

@@ -60892,6 +60892,11 @@ msgstr "Sélectionné dans le Funding Pool"
 msgid "Selectable in Contract"
 msgstr "Sélectionnable dans le Contrat"
 
+#. module: account_override
+#: field:account.account,selected_in_contract:0
+msgid "Selected in Contract"
+msgstr "Sélectionné dans le Contrat"
+
 #. module: purchase_override
 #: view:purchase.order.cancel.wizard:0
 msgid "Please confirm that you want to cancel all non-confirmed lines of this PO"
