@@ -183,6 +183,8 @@ class account_account(osv.osv):
         # Prepare some values
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if context is None:
             context = {}
         # Check default destination presence
@@ -196,7 +198,8 @@ class account_account(osv.osv):
                     all_ids.append(dd_id)
                     super(account_account, self).write(cr, uid, [a.id], {'destination_ids': [(6, 0, all_ids)]})
             link_obj = self.pool.get('account.destination.link')
-            link_ids = link_obj.search(cr, uid, [('account_id', 'in', ids), ('disabled', '=', True)], context=context)
+            link_ids = link_obj.search(cr, uid, [('account_id', 'in', ids), ('destination_id', '=', dd_id), ('disabled', '=', True)],
+                                       context=context)
             if link_ids:
                 link_obj.write(cr, uid, link_ids, {'disabled': False}, context=context)
             return res
