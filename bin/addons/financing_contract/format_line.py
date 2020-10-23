@@ -461,28 +461,43 @@ class financing_contract_format_line(osv.osv):
 
     # UF-2311: Calculate the quadruplet value before writing or creating the format line
     def calculate_quaduplet(self, vals, context):
+        # View Line Type = no items selected
         if 'line_type' in vals and vals['line_type'] == 'view':
             vals['allocated_amount'] = 0.0
             vals['project_amount'] = 0.0
             vals['account_destination_ids'] = [(6, 0, [])]
             vals['account_quadruplet_ids'] = [(6, 0, [])]
-        elif 'is_quadruplet' in vals: # If the vals contains quadruplet value, then check if it is true or false
-            if vals.get('is_quadruplet', False):
-                # delete account/destinations
-                vals['account_destination_ids'] = [(6, 0, [])]
-                if context.get('sync_update_execution'):
-                    quads_list = []
-                    if vals.get('quadruplet_update', False):
-                        quadrup_str = vals['quadruplet_update']
-                        quads_list = map(int, quadrup_str.split(','))
-                    vals['account_quadruplet_ids'] = [(6, 0, quads_list)]
-                else:
-                    temp = vals['account_quadruplet_ids']
-                    if temp[0]:
-                        vals['quadruplet_update'] = str(temp[0][2]).strip('[]')
+            vals['quadruplet_update'] = ''
+            vals['reporting_account_ids'] = [(6, 0, [])]
+            vals['is_quadruplet'] = False
+            vals['reporting_select_accounts_only'] = False
+        # "Input CC/FP at line level" = quadruplets selected
+        elif vals.get('is_quadruplet'):
+            # reset the acc/dest and G/L accounts which might have been selected before ticking the box "Input CC/FP at line level"
+            vals['account_destination_ids'] = [(6, 0, [])]
+            vals['reporting_account_ids'] = [(6, 0, [])]
+            # compute the quadruplet values
+            if context.get('sync_update_execution'):
+                quads_list = []
+                if vals.get('quadruplet_update', False):
+                    quadrup_str = vals['quadruplet_update']
+                    quads_list = map(int, quadrup_str.split(','))
+                vals['account_quadruplet_ids'] = [(6, 0, quads_list)]
             else:
-                vals['account_quadruplet_ids'] = [(6, 0, [])]
-                vals['quadruplet_update'] = '' # delete quadruplets
+                temp = vals['account_quadruplet_ids']
+                if temp[0]:
+                    vals['quadruplet_update'] = str(temp[0][2]).strip('[]')
+        # "Select Accounts Only" = only G/L accounts selected: reset the acc/dest and quadruplets
+        elif vals.get('reporting_select_accounts_only'):
+            vals['account_destination_ids'] = [(6, 0, [])]
+            vals['account_quadruplet_ids'] = [(6, 0, [])]
+            vals['quadruplet_update'] = ''
+        # No boxes ticked = Accounts/Destinations selected: reset the G/L accounts and quadruplets
+        elif 'is_quadruplet' in vals and 'reporting_select_accounts_only' in vals and \
+                not vals['is_quadruplet'] and not vals['reporting_select_accounts_only']:
+            vals['reporting_account_ids'] = [(6, 0, [])]
+            vals['account_quadruplet_ids'] = [(6, 0, [])]
+            vals['quadruplet_update'] = ''
 
     def create(self, cr, uid, vals, context=None):
         if not context:
