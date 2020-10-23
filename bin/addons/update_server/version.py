@@ -21,7 +21,6 @@ from cStringIO import StringIO
 import hashlib
 import threading
 
-
 class version(osv.osv):
 
     _name = "sync_server.version"
@@ -340,3 +339,4 @@ class sync_server_user_rights_add_file(osv.osv_memory):
         return True
 
 sync_server_user_rights_add_file()
+

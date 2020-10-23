@@ -63,9 +63,11 @@
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
                 <form string="Automated export job">
+                    <field name="disable_generation" invisible="1" />
                     <separator colspan="4" string="Actions" />
-                    <button name="cancel_file_export" type="object" string="Cancel" icon="gtk-cancel" colspan="2" />
-                    <button name="process_export" type="object" string="Run job" icon="gtk-execute" colspan="2" />
+                    <button name="cancel_file_export" type="object" string="Cancel" icon="gtk-cancel" />
+                    <button name="process_export" type="object" string="Run job" icon="gtk-execute" attrs="{'invisible': [('disable_generation', '=', True)]}"/>
+                    <button name="process_export" type="object" string="Sent to remote" icon="cloud.png" attrs="{'invisible': [('disable_generation', '=', False)]}"/>
                 </form>
             </field>
         </record>

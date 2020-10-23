@@ -64,7 +64,10 @@
                                     <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state in ('invalid', 'invalid_small_amount'))) or red_on_supplier == True" limit="20">
                                         <field name="red_on_supplier" invisible="1"/>
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
-                                        <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
+                                        <field name="display_analytic_lines_button" invisible="1"/>
+                                        <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom"
+                                                attrs="{'invisible': [('display_analytic_lines_button', '=', False)]}"
+                                        />
                                         <field name="from_cash_return" invisible="1"/>
                                         <field name="employee_id" invisible="1"/>
                                         <button name="button_advance" states="hard" string="Advance return" type="object"
@@ -233,7 +236,10 @@
                                 <field colspan="4" name="line_ids" nolabel="1">
                                     <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state in ('invalid', 'invalid_small_amount'))) or red_on_supplier == True" limit="20">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
-                                        <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
+                                        <field name="display_analytic_lines_button" invisible="1"/>
+                                        <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom"
+                                                attrs="{'invisible': [('display_analytic_lines_button', '=', False)]}"
+                                        />
                                         <field name="from_cash_return" invisible="1"/>
                                         <button name="button_advance" states="hard" string="Advance return" type="object"
                                             icon="terp-stock_effects-object-colorize" context="context"
@@ -551,7 +557,7 @@
                         <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
                         <field name="name"/>
                         <newline/>
-                        <field name="period_id"/>
+                        <field name="period_id" domain="[('state', '!=', 'created')]"/>
                         <field name="journal_id" domain="[('type', '=', 'cash')]" />
                     </group>
                     <newline/>
@@ -699,7 +705,7 @@
                         <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
                         <field name="name"/>
                         <newline/>
-                        <field name="period_id"/>
+                        <field name="period_id" domain="[('state', '!=', 'created')]"/>
                         <field name="journal_id" domain="[('type', '=', 'bank')]" />
                     </group>
                     <newline/>
@@ -824,7 +830,10 @@
                                 <!-- WARNING: because of UTP-331, in cheque register direct invoice lines should be editable but ONLY for cheque_number FIELD. That's why ALL field must be not editable when "direct_invoice" is True. -->
                                 <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state in ('invalid', 'invalid_small_amount'))) or red_on_supplier == True" limit="20">
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
-                                    <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
+                                    <field name="display_analytic_lines_button" invisible="1"/>
+                                    <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom"
+                                            attrs="{'invisible': [('display_analytic_lines_button', '=', False)]}"
+                                    />
                                     <field name="document_date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
                                     <field name="red_on_supplier" invisible="1" />
                                     <field name="date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
@@ -969,7 +978,7 @@
                         <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
                         <field name="name"/>
                         <newline/>
-                        <field name="period_id"/>
+                        <field name="period_id" domain="[('state', '!=', 'created')]"/>
                         <field name="journal_id" domain="[('type', '=', 'cheque')]" />
                     </group>
                     <newline/>

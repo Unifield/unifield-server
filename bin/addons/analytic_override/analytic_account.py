@@ -290,6 +290,52 @@ class analytic_account(osv.osv):
                 dom.append(('id', 'in', compatible_dest_ids))
         return dom
 
+    def _get_cc_instance_ids(self, cr, uid, ids, fields, arg, context=None):
+        """
+        Computes the values for fields.function fields, retrieving:
+        - the instances using the analytic account...
+          ...as Top Cost Center => top_cc_instance_ids
+          ...as Target Cost Center => is_target_cc_instance_ids
+          ...as Cost centre picked for PO/FO reference => po_fo_cc_instance_ids
+          (Note that those fields should theoretically always be linked to one single instance,
+           but they are set as one2many in order to be consistent with the type of fields used in the related object.)
+        - the Missions where the Cost Center is added to => cc_missions
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        acc_target_cc_obj = self.pool.get('account.target.costcenter')
+        for analytic_acc_id in ids:
+            top_instance_ids = []
+            target_instance_ids = []
+            po_fo_instance_ids = []
+            missions = set()
+            missions_str = ""
+            target_cc_ids = acc_target_cc_obj.search(cr, uid, [('cost_center_id', '=', analytic_acc_id)], context=context)
+            if target_cc_ids:
+                field_list = ['instance_id', 'is_target', 'is_po_fo_cost_center', 'is_top_cost_center']
+                for target_cc in acc_target_cc_obj.browse(cr, uid, target_cc_ids, fields_to_fetch=field_list, context=context):
+                    instance = target_cc.instance_id
+                    if instance.mission:
+                        missions.add(instance.mission)
+                    if target_cc.is_top_cost_center:
+                        top_instance_ids.append(instance.id)
+                    if target_cc.is_target:
+                        target_instance_ids.append(instance.id)
+                    if target_cc.is_po_fo_cost_center:
+                        po_fo_instance_ids.append(instance.id)
+            if missions:
+                missions_str = ", ".join(missions)
+            res[analytic_acc_id] = {
+                'top_cc_instance_ids': top_instance_ids,
+                'is_target_cc_instance_ids': target_instance_ids,
+                'po_fo_cc_instance_ids': po_fo_instance_ids,
+                'cc_missions': missions_str,
+            }
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
@@ -318,6 +364,18 @@ class analytic_account(osv.osv):
                                                        fnct_search=_search_dest_compatible_with_cc_ids),
         'dest_without_cc': fields.function(_get_dest_without_cc, type='boolean', method=True, store=False,
                                            string="Destination allowing no Cost Center",),
+        'top_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                               string="Instances having the CC as Top CC",
+                                               type="one2many", relation="msf.instance", multi="cc_instances"),
+        'is_target_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                                     string="Instances having the CC as Target CC",
+                                                     type="one2many", relation="msf.instance", multi="cc_instances"),
+        'po_fo_cc_instance_ids': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                                 string="Instances having the CC as CC picked for PO/FO ref",
+                                                 type="one2many", relation="msf.instance", multi="cc_instances"),
+        'cc_missions': fields.function(_get_cc_instance_ids, method=True, store=False, readonly=True,
+                                       string="Missions where the CC is added to",
+                                       type='char', multi="cc_instances"),
     }
 
     _defaults ={
@@ -632,53 +690,6 @@ class analytic_account(osv.osv):
             for analytic_acc_id in ids:
                 self._check_existing_entries(cr, uid, analytic_acc_id, context=context)
         return res
-
-    def unlink(self, cr, uid, ids, context=None):
-        """
-        Delete some analytic account is forbidden!
-        """
-        # Some verification
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        analytic_accounts = []
-        # Search OC CC
-        try:
-            oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
-        except ValueError:
-            oc_id = 0
-        analytic_accounts.append(oc_id)
-        # Search Funding Pool
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_funding_pool')[1]
-        except ValueError:
-            fp_id = 0
-        analytic_accounts.append(fp_id)
-        # Search Free 1
-        try:
-            f1_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_free_1')[1]
-        except ValueError:
-            f1_id = 0
-        analytic_accounts.append(f1_id)
-        # Search Free 2
-        try:
-            f2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_free_2')[1]
-        except ValueError:
-            f2_id = 0
-        analytic_accounts.append(f2_id)
-        # Search MSF Private Fund
-        try:
-            msf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            msf_id = 0
-        analytic_accounts.append(msf_id)
-        # Accounts verification
-        for i in ids:
-            if i in analytic_accounts:
-                raise osv.except_osv(_('Error'), _('You cannot delete this Analytic Account!'))
-        return super(analytic_account, self).unlink(cr, uid, ids, context=context)
 
     def get_analytic_line(self, cr, uid, ids, context=None):
         """

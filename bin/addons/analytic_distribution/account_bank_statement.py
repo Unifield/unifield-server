@@ -69,6 +69,20 @@ class account_bank_statement_line(osv.osv):
                                                                                                  amount=line.get('amount', 0.0))
         return res
 
+    def _display_analytic_lines_button(self, cr, uid, ids, name, args, context=None):
+        """
+        The Analytic Lines "magnifying glass" should be displayed only for expense or income lines being either temp or hard-posted.
+        """
+        res = {}
+        if context is None:
+            context = {}
+        for absl in self.browse(cr, uid, ids, fields_to_fetch=['state', 'account_id'], context=context):
+            if absl.state not in ('temp', 'hard') or not absl.account_id.is_analytic_addicted:
+                res[absl.id] = False
+            else:
+                res[absl.id] = True
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True,
@@ -77,10 +91,13 @@ class account_bank_statement_line(osv.osv):
                                                        selection=[('none', 'None'), ('valid', 'Valid'),
                                                                   ('invalid', 'Invalid'), ('invalid_small_amount', 'Invalid')],
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'display_analytic_lines_button': fields.function(_display_analytic_lines_button, method=True, store=False, type='boolean',
+                                                         string='Display analytic lines button', readonly=True),
     }
 
     _defaults = {
         'display_analytic_button': lambda *a: True,
+        'display_analytic_lines_button': lambda *a: True,
     }
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
