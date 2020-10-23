@@ -196,13 +196,13 @@ class financing_contract_account_quadruplet(osv.osv):
 
     #columns for view
     _columns = {
-        'account_destination_id': fields.many2one('account.destination.link', 'Account/Destination', relate=True, readonly=True),
+        'account_destination_id': fields.many2one('account.analytic.account', 'Destination', relate=True, readonly=True),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Centre', relate=True, readonly=True),
         'funding_pool_id': fields.many2one('account.analytic.account', 'Funding Pool', relate=True, readonly=True),
         'account_destination_name': fields.char('Account', size=64, readonly=True),
         'used_in_contract': fields.function(_get_used_in_contract, method=True, type='boolean', string='Used'),
         'can_be_used': fields.function(_can_be_used_in_contract, method=True, type='boolean', string='Can', fnct_search=_search_can_be),
-        'account_id': fields.many2one('account.destination.link', 'Account ID', relate=True, readonly=True),
+        'account_id': fields.many2one('account.account', 'Account ID', relate=True, readonly=True),
         'account_destination_link_id': fields.many2one('account.destination.link', 'Link id', readonly=True),
         'disabled': fields.boolean('Disabled'),
     }

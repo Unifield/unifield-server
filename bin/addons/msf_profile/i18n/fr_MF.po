@@ -69636,7 +69636,6 @@ msgid "Canceled End"
 msgstr "Canceled End"
 
 #. modules: financing_contract, analytic_distribution
-#: field:financing.contract.account.quadruplet,account_destination_id:0
 #: field:account.analytic.account,tuple_destination_account_ids:0
 #: view:account.destination.link:0
 #: view:account.destination.link:0
@@ -94957,6 +94956,7 @@ msgstr "Facture venant de"
 #: view:account.destination.summary:0
 #: code:addons/stock_override/report/report_stock_move.py:759
 #: report:addons/account/report/invoice_excel_export.mako:75
+#: field:financing.contract.account.quadruplet,account_destination_id:0
 #, python-format
 msgid "Destination"
 msgstr "Destination"
