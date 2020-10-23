@@ -780,6 +780,8 @@ class po_follow_up_mixin(object):
             other_product = []
 
             for inl in self.getAllLineIN(line[0]):
+                if inl.get('date_expected'):
+                    inl['date_expected'] = inl['date_expected'].split(' ')[0]
                 if inl.get('product_id') and inl.get('product_id') == line[4]:
                     if inl.get('product_uom') and inl.get('product_uom') == line[7]:
                         same_product_same_uom.append(inl)
@@ -835,7 +837,7 @@ class po_follow_up_mixin(object):
                 report_line = {
                     'order_ref': po[2] or '',
                     'order_created': po[3],
-                    'order_confirmed_date': line[9] or po[9],
+                    'order_confirmed_date': spsul.get('date_expected') or line[9] or po[9],
                     'delivery_requested_date': line[10],
                     'raw_state': line[1],
                     'order_status': po_state,
@@ -886,7 +888,7 @@ class po_follow_up_mixin(object):
                 report_line = {
                     'order_ref': po[2] or '',
                     'order_created': po[3],
-                    'order_confirmed_date': line[9] or po[9],
+                    'order_confirmed_date': spl.get('date_expected') or line[9] or po[9],
                     'delivery_requested_date': line[10],
                     'raw_state': line[1],
                     'order_status': po_state,
@@ -937,9 +939,9 @@ class po_follow_up_mixin(object):
                                            fields_to_fetch=['default_code', 'name'], context=self.localcontext)
                 report_line = {
                     'order_ref': po[2] or '',
-                    'order_created': self.format_date(po[3]),
-                    'order_confirmed_date': self.format_date(line[9] or po[9]),
-                    'delivery_requested_date': self.format_date(line[10]),
+                    'order_created': po[3],
+                    'order_confirmed_date': ol.get('date_expected') or line[9] or po[9],
+                    'delivery_requested_date': line[10],
                     'raw_state': line[1],
                     'order_status': po_state,
                     'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line[1],
@@ -1010,7 +1012,7 @@ class po_follow_up_mixin(object):
             SELECT
                 sm.id, sp.name, sm.product_id, sm.product_qty,
                 sm.product_uom, sm.price_unit, sm.state,
-                sp.backorder_id, sm.picking_id
+                sp.backorder_id, sm.picking_id, sm.date_expected
             FROM
                 stock_move sm, stock_picking sp
             WHERE

@@ -238,8 +238,8 @@
                     <para style="Line">[[ line.state != 'cancel' and line.notes or removeParentNode('para') ]]</para>
                 </td>
                 <td>
-                    <para style="LineGrey">[[ line.state == 'cancel' and formatLang(line.product_uom_qty) or removeParentNode('para') ]]</para>
-                    <para style="Line">[[ line.state != 'cancel' and formatLang(line.product_uom_qty) or removeParentNode('para') ]]</para>
+                    <para style="LineGrey">[[ line.state == 'cancel' and line.product_uom_qty or removeParentNode('para') ]]</para>
+                    <para style="Line">[[ line.state != 'cancel' and line.product_uom_qty or removeParentNode('para') ]]</para>
                 </td>
                 <td>
                     <para style="LineGrey">[[ line.state == 'cancel' and formatLang(line.price_unit) or removeParentNode('para') ]]</para>

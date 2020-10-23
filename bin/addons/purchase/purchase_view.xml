@@ -221,8 +221,10 @@
                                 <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" context="{'rfq_ok': False}"/>
                                 <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object"/>
                             </group>
-                            <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_p'])]}"/>
-                            <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_p'])]}"/>
+                            <group colspan="4" col="4" attrs="{'invisible':['&amp;', ('state', 'not in', ['validated', 'validated_p']), '|', ('partner_type', 'not in', ['esc', 'external']), ('state', 'not in', ['confirmed', 'confirmed_p'])]}">
+                                <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" />
+                                <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" />
+                            </group>
                             <field name="order_line" colspan="4" nolabel="1" mode="tree,form"
                                 context="{'purchase_id': active_id, 'partner_type': partner_type, 'categ': categ, 'pricelist_id': pricelist_id, 'rfq_ok': False, 'from_fo': po_from_fo or po_from_ir or False}"
                                 on_change="order_line_change(order_line)"
@@ -314,8 +316,11 @@
                             <group colspan="4" col="4">
                                 <separator colspan="4" string="Dates"/>
                                 <group colspan="2" col="3">
-                                    <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)"/>
-                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}"/>
+                                   <group colspan="2" col="4">
+                                    <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)"/>
+                                    <field name="delivery_requested_date_modified" attrs="{'readonly': [('state', 'not in', ['draft_p', 'validated', 'validated_p'])]}" />
+                                   </group>
+                                    <button colspan="1" name="update_date" string="Apply to lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated', 'validated_p'))]}"/>
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
@@ -450,6 +455,7 @@
                     <group>
                         <field name="product_id"/>
                         <field name="origin"/>
+                        <field name="dest_partner_names" />
                         <field name="details"/>
                         <field name="create_uid"/>
                         <field name="date_order"/>
@@ -1007,6 +1013,52 @@
 
         <menuitem action="purchase_line_form_action2" id="menu_purchase_line_order_draft" groups="base.group_extended" parent="menu_procurement_management_invoice" sequence="72"/>
 
+        <record id="purchase_order_line_pipeline_tree" model="ir.ui.view">
+            <field name="name">purchase.order.line.tree</field>
+            <field name="model">purchase.order.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="250" />
+            <field name="arch" type="xml">
+                <tree string="Purchase Order Lines" hide_delete_button="1" hide_new_button="1">
+                    <field name="order_id"/>
+                    <field name="partner_id" string="Supplier"/>
+                    <field name="line_number"/>
+                    <field name="product_id"/>
+                    <field name="price_unit"/>
+                    <field name="product_qty"/>
+                    <field name="product_uom"/>
+                    <field name="date_planned" widget="date" />
+                    <field name="confirmed_delivery_date" widget="date" />
+                    <field name="state" />
+                    <button type="object" name="open_po_form" icon="terp-gtk-go-back-rtl" string="View PO" />
+                </tree>
+            </field>
+        </record>
+        <record id="purchase_order_line_pipeline_search" model="ir.ui.view">
+            <field name="name">purchase.order.line.search</field>
+            <field name="model">purchase.order.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="250" />
+            <field name="arch" type="xml">
+                <search>
+                    <field name="order_id"/>
+                    <field name="partner_id" string="Supplier"/>
+                    <field name="product_id"/>
+                    <field name="date_planned" widget="date" />
+                    <field name="confirmed_delivery_date" widget="date" />
+                </search>
+            </field>
+        </record>
+        <record id="purchase_line_pipeline_action" model="ir.actions.act_window">
+            <field name="name">PO Line</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.order.line</field>
+            <field name="domain"></field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="purchase_order_line_pipeline_tree" />
+            <field name="search_view_id" ref="purchase_order_line_pipeline_search"/>
+        </record>
 
     </data>
 </openerp>

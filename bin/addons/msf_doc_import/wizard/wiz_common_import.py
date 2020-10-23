@@ -389,23 +389,28 @@ class purchase_order_line(osv.osv):
                       'product_qty': p_data['import_product_qty'],
                       'old_price_unit': p_data['standard_price'],}
 
-            values.update(self.product_id_on_change(cr, uid, False,
-                                                    po_data['pricelist_id'][0], # Pricelist
-                                                    values['product_id'], # Product
-                                                    p_data['import_product_qty'], # Product Qty - Use 1.00 to compute the price according to supplier catalogue
-                                                    values['product_uom'], # UoM
-                                                    po_data['partner_id'][0], # Supplier
-                                                    po_data['date_order'], # Date order
-                                                    po_data['fiscal_position'], # Fiscal position
-                                                    po_data['date_order'], # Date planned
-                                                    '', # Name
-                                                    values['price_unit'], # Price unit
-                                                    '', # Notes
-                                                    po_data['state'], # State
-                                                    values['old_price_unit'], # Old price unit
-                                                    False, # Nomen_manda_0
-                                                    '', # Comment
-                                                    context=context).get('value', {}))
+            product_id_on_change = self.product_id_on_change(cr, uid, False,
+                                                             po_data['pricelist_id'][0], # Pricelist
+                                                             values['product_id'], # Product
+                                                             p_data['import_product_qty'], # Product Qty - Use 1.00 to compute the price according to supplier catalogue
+                                                             values['product_uom'], # UoM
+                                                             po_data['partner_id'][0], # Supplier
+                                                             po_data['date_order'], # Date order
+                                                             po_data['fiscal_position'], # Fiscal position
+                                                             po_data['date_order'], # Date planned
+                                                             '', # Name
+                                                             values['price_unit'], # Price unit
+                                                             '', # Notes
+                                                             po_data['state'], # State
+                                                             values['old_price_unit'], # Old price unit
+                                                             False, # Nomen_manda_0
+                                                             '', # Comment
+                                                             context=context)
+            if product_id_on_change.get('warning', {}).get('message') and 'product_id' in product_id_on_change.get('value', {}) and not product_id_on_change['value']['product_id']:
+                # warning is raised and product_id is removed
+                raise osv.except_osv(_('Warning'), product_id_on_change['warning']['message'])
+
+            values.update(product_id_on_change.get('value', {}))
             # Set the quantity to 0.00
             values.update({'product_qty': p_data['import_product_qty']})
 
@@ -532,9 +537,11 @@ class sale_order_line(osv.osv):
                       'product_uom': p_data['uom_id'][0]}
 
             if order_data['procurement_request']:
-                values.update(self.requested_product_id_change(cr, uid, False,
-                                                               p_data['id'],
-                                                               '').get('value', {}))
+                product_id_change = self.requested_product_id_change(cr, uid, False, p_data['id'], '')
+                if product_id_change.get('warning', {}).get('message') and 'product_id' in product_id_change.get('value', {}) and not product_id_change['value']['product_id']:
+                    # warning is raised and product_id is removed
+                    raise osv.except_osv(_('Warning'), product_id_change['warning']['message'])
+                values.update(product_id_change.get('value', {}))
             else:
                 values.update(self.product_id_on_change(cr, uid, False, order_data['pricelist_id'][0],
                                                         p_data['id'],
@@ -596,6 +603,7 @@ class sale_order(osv.osv):
                 'pricelist': order.pricelist_id.id,
                 'warehouse': order.warehouse_id.id,
                 'categ': order.categ,
+                'sale_id': order.id,
             }
         context.update(context_update)
 

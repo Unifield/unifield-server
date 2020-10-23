@@ -180,6 +180,23 @@ class composition_kit(osv.osv):
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
         return True
 
+    def reactivate_kit(self, cr, uid, ids, context=None):
+        '''
+        set the state of a Kit Composition List to 'completed'
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for kit in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context):
+            if kit.state != 'done':
+                raise osv.except_osv(_('Error'), _('You can only re-activate a Closed Kit Composition.'))
+
+        self.write(cr, uid, ids, {'state': 'completed'}, context=context)
+        return True
+
     def reset_to_version(self, cr, uid, ids, context=None):
         '''
         open confirmation wizard
@@ -235,16 +252,7 @@ class composition_kit(osv.osv):
                           }
                 item_obj.create(cr, uid, values, context=context)
             # we display the composition list view form
-            return {'name':_("Kit Composition List"),
-                    'view_mode': 'form,tree',
-                    'view_type': 'form',
-                    'res_model': 'composition.kit',
-                    'res_id': obj.id,
-                    'type': 'ir.actions.act_window',
-                    'target': 'dummy',
-                    'domain': [('composition_type', '=', 'real')],
-                    'context': {'composition_type':'real'},
-                    }
+            return {'type': 'ir.actions.act_window_close'}
 
     def _generate_item_mirror_objects(self, cr, uid, ids, wizard_data, context=None):
         """

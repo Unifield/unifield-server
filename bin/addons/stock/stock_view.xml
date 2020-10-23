@@ -356,14 +356,18 @@
             <field name="model">stock.production.lot</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Production Lot">
-                    <field name="prefix" />
+                <tree string="Batch numbers" hide_delete_button="1" colors="red:life_date &lt; current_date">
                     <field name="name"/>
-                    <field name="ref"/>
+                    <field name="type" />
+                    <field name="life_date" />
                     <field name="product_id"/>
                     <field name="stock_available"/>
+                    <field name="stock_virtual" />
+                    <field name="stock_location_id" />
                     <field name="date"/>
+                    <field name="delete_ok" invisible="1" />
                     <field name="uom_id" invisible="1" />
+                    <button name="unlink" string="Delete" icon="gtk-del" type="object" attrs="{'invisible': [('delete_ok', '=', False)]}" confirm="Do you really want to delete selected record(s) ?" />
                 </tree>
             </field>
         </record>
@@ -878,27 +882,15 @@
             <field name="view_mode">calendar</field>
             <field name="act_window_id" ref="action_picking_tree"/>
         </record>
-        <menuitem action="action_picking_tree" id="menu_action_picking_tree" parent="menu_stock_warehouse_mgmt" sequence="3"/>
+        <menuitem action="action_picking_tree" id="menu_action_picking_tree" parent="menu_stock_warehouse_mgmt" sequence="4"/>
 
         <record id="view_picking_in_tree" model="ir.ui.view">
             <field name="name">stock.picking.in.tree</field>
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="blue:state in ('draft');grey:state in ('done');red:state not in ('cancel', 'done') and date &lt; current_date" string="Picking list">
-                    <field name="name"/>
-                    <field name="partner_id" />
-                    <field name="backorder_id" groups="base.group_extended"/>
-                    <field name="origin"/>
-                    <field name="date" string="Creation date" />
-                    <field name="date_done" string="Actual Receipt Date" />
-                    <field name="min_date"/>
-                    <field name="invoice_state" groups="base.group_extended"/>
-                    <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>
-                    <field name="state"/>
-                    <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
-                    <button name="button_cancel" states="assigned,confirmed,draft" string="Cancel" icon="gtk-cancel" confirm="This operation will cancel the shipment. Do you want to continue?" />
-                </tree>
+            <!-- see reason_types_moves/stock_view.xml -->
+                <tree />
             </field>
         </record>
         <record id="view_picking_in_form" model="ir.ui.view">
@@ -1251,6 +1243,7 @@
                     <field name="ssl_check" invisible="True" widget="null_boolean" />
                     <field name="dg_check" widget="null_boolean" />
                     <field name="np_check" widget="null_boolean" />
+                    <button type="object" name="open_in_form" icon="terp-gtk-go-back-rtl" string="View IN" />
                 </tree>
             </field>
         </record>

@@ -63,7 +63,25 @@ class account_cashbox_line(osv.osv):
         'ending_id': fields.many2one('account.bank.statement', ondelete='cascade'),
     }
 
+    def _check_cashbox_closing_duplicates(self, cr, uid, ids):
+        """
+        Blocks duplicated values in the Cashbox Closing Balance
+        Note that the check is only done in opened registers where the closing balance lines can be changed manually.
+        """
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['ending_id', 'pieces']):
+            if line.ending_id and line.ending_id.state == 'open':
+                dom = [('ending_id', '=', line.ending_id.id), ('pieces', '=', line.pieces), ('id', '!=', line.id)]
+                if self.search_exist(cr, uid, dom):
+                    return False
+        return True
+
+    _constraints = [
+        (_check_cashbox_closing_duplicates, 'The values of the Closing Balance lines must be unique per register.', ['ending_id', 'pieces']),
+    ]
+
+
 account_cashbox_line()
+
 
 class account_cash_statement(osv.osv):
 

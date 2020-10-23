@@ -6,5 +6,11 @@
             <field name="model_id" model="ir.model" search="[('model', '=', 'purchase.order')]" />
             <field name="method_to_call">auto_export_validated_purchase_order</field>
         </record>
+        <record id="auto_export_fnct_oca_finance_vi" model="automated.export.function">
+            <field name="name">Export to HQ system (OCA) - Not yet exported</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'wizard.hq.report.oca')]" />
+            <field name="method_to_call">auto_export_vi</field>
+            <field name="disable_cron" eval="True" />
+        </record>
     </data>
 </openerp>

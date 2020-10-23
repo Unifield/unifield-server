@@ -617,11 +617,18 @@ class internal_request_import(osv.osv):
                         if prod_ids:
                             product_id = prod_ids[0]
                             prod_cols = ['standard_price', 'uom_id', 'uom_po_id']
-                            product = prod_obj.read(cr, uid, product_id, prod_cols, context=context)
-                            line_data.update({
-                                'imp_product_id': product_id,
-                                'imp_comment': comment or '',
-                            })
+                            p_error, p_msg = prod_obj._test_restriction_error(cr, uid, [product_id],
+                                                                              vals={'constraints': 'consumption'},
+                                                                              context=context)
+                            if p_error:  # Check constraints on products
+                                red = True
+                                line_errors += p_msg + '. '
+                            else:
+                                product = prod_obj.read(cr, uid, product_id, prod_cols, context=context)
+                                line_data.update({
+                                    'imp_product_id': product_id,
+                                    'imp_comment': comment or '',
+                                })
                         else:
                             if ir_imp.no_prod_as_comment:
                                 nb_treated_lines_by_nomen += 1

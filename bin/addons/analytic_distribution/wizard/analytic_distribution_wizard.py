@@ -549,6 +549,11 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if not context.get('from_correction', False) and \
                         el.move_id.state and el.move_id.state not in ['draft']:
                     res[el.id] = False
+            # check Recurring Model state
+            if el.model_id and el.model_id.state == 'done':
+                res[el.id] = False
+            if el.model_line_id and el.model_line_id.model_id.state == 'done':
+                res[el.id] = False
         return res
 
     def _have_header(self, cr, uid, ids, name, args, context=None):
