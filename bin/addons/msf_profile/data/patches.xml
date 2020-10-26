@@ -605,6 +605,10 @@
             <field name="method">uf18_0_migrate_acl</field>
         </record>
 
+        <!-- UF19.0 -->
+        <record id="us_7742_hide_stock_pipe" model="patch.scripts">
+            <field name="method">us_7742_hide_stock_pipe</field>
+        </record>
 
     </data>
 </openerp>

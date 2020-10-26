@@ -53,6 +53,14 @@ class patch_scripts(osv.osv):
     }
 
 
+    def us_7742_hide_stock_pipe(self, cr, uid, *a, **b):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
+        if not instance:
+            return True
+        stock_pipe_report_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'stock_pipe_per_product_instance_menu')[1]
+        self.pool.get('ir.ui.menu').write(cr, uid, stock_pipe_report_menu_id, {'active': instance.level == 'section'}, context={})
+        return True
+
     # UF18.0
     def uf18_0_migrate_acl(self, cr, uid, *a, **b):
         cr.execute('''
