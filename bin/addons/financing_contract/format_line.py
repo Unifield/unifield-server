@@ -468,8 +468,8 @@ class financing_contract_format_line(osv.osv):
                         cost_center_id = %s
                 ) RETURNING id
                 ''', (link_sdref.get(data[0]), aa_sdref.get(data[1]), aa_sdref.get(data[2])))
-                quad_id = cr.fetchone()[0]
-            cr.execute('insert into financing_contract_actual_account_quadruplets (actual_line_id, account_quadruplet_id) values (%s, %s)', (id, quad_id))
+                quad_id = cr.fetchone()
+            cr.execute('insert into financing_contract_actual_account_quadruplets (actual_line_id, account_quadruplet_id) values (%s, %s)', (id, quad_id[0]))
 
         return True
 
