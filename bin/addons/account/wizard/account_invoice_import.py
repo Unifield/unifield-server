@@ -102,6 +102,7 @@ class account_invoice_import(osv.osv_memory):
                     'account': 2,
                     'quantity': 3,
                     'unit_price': 4,
+                    'description': 5,
                 }
                 # number of the first line in the file containing data (not header)
                 base_num = 10
@@ -164,6 +165,7 @@ class account_invoice_import(osv.osv_memory):
                     account_code = line[cols['account']] and tools.ustr(line[cols['account']])
                     quantity = line[cols['quantity']] or 0.0
                     unit_price = line[cols['unit_price']] or 0.0
+                    description = line[cols['description']] and tools.ustr(line[cols['description']])
                     if not line_number:
                         errors.append(_('Line %s: the line number is missing.') % (current_line_num,))
                         continue
@@ -223,6 +225,9 @@ class account_invoice_import(osv.osv_memory):
                             errors.append(_("Line %s: the quantity format is incorrect.") % (current_line_num,))
                             continue
                         vals['quantity'] = quantity
+
+                    vals['name'] = description
+
                     # update the line
                     invoice_line_obj.write(cr, uid, invoice_line_ids[0], vals, context=context)
                     # update the percent
