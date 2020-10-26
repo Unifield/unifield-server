@@ -38,33 +38,36 @@
                 <form string="Automated export">
                     <separator colspan="4" string="General configuration" />
                     <field name="name" />
-                    <field name="function_id" widget="selection" />
+                    <field name="function_id" widget="selection" on_change="change_function_id(function_id)"/>
                     <field name="active" />
-                    <field name="export_format"/>
+                    <field name="export_format" attrs="{'invisible': [('disable_cron', '=', True)]}"/>
                     <button name="run_job_manually" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
+                    <button name="sent_to_remote" string="Manually send to FTP" colspan="2" type="object" icon="cloud.png" attrs="{'invisible': ['|', ('disable_cron', '=', False), ('ftp_ok', '=', False)]}" />
+
+                    <field name="disable_cron" invisible="1" />
 
                     <separator colspan="4" string="FTP server" />
                     <group col="4" colspan="4">
-                        <field name="ftp_ok" on_change="onchange_ftp_ok(ftp_ok)"/>
-                        <field name="ftp_protocol" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
-                        <field name="ftp_url" attrs="{'readonly': [('ftp_ok', '=', False)], 'required': [('ftp_ok', '!=', False)]}"/>
-                        <field name="ftp_login" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
-                        <field name="ftp_port" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
-                        <field name="ftp_password" password="True" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
-                        <button name="ftp_test_connection" string="Test connection" colspan="2" type="object" icon="terp-stock_zoom" attrs="{'readonly': [('ftp_ok', '=', False)]}" /> 
+                        <field name="ftp_ok" on_change="onchange_ftp_ok(ftp_ok)" attrs="{'readonly': [('active', '=', True)]}"/>
+                        <field name="ftp_protocol" attrs="{'readonly': ['|', ('active', '=', True), ('ftp_ok', '=', False)]}"/>
+                        <field name="ftp_url" attrs="{'required': [('ftp_ok', '!=', False)], 'readonly': ['|', ('active', '=', True), ('ftp_ok', '=', False)]}"/>
+                        <field name="ftp_login" attrs="{'readonly': ['|', ('active', '=', True), ('ftp_ok', '=', False)]}"/>
+                        <field name="ftp_port" attrs="{'readonly': ['|', ('active', '=', True), ('ftp_ok', '=', False)]}"/>
+                        <field name="ftp_password" password="True" attrs="{'readonly': ['|', ('active', '=', True), ('ftp_ok', '=', False)]}"/>
+                        <button name="ftp_test_connection" string="Test connection" colspan="2" type="object" icon="terp-stock_zoom" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
                     </group>
                     <separator colspan="4" string="Paths configuration" />
-                    <group col="4" colspan="4">
-                        <field name="dest_path" attrs="{'required': [('active', '=', True)]}" />
-                        <field name="ftp_dest_ok" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
-<!--                         <field name="dest_path_failure" attrs="{'required': [('active', '=', True)]}" />
-                        <field name="ftp_dest_fail_ok" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
- -->                        <field name="report_path" attrs="{'required': [('active', '=', True)]}" />
-                        <field name="ftp_report_ok" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
+                    <group colspan="4">
+                        <field name="dest_path" attrs="{'readonly': [('active', '=', True)]}" />
+                        <field name="ftp_dest_ok" attrs="{'readonly': ['|', ('ftp_ok', '=', False), ('active', '=', True)]}"/>
+                        <field name="destination_local_path" attrs="{'readonly': [('active', '=', True)], 'invisible': ['|', ('disable_cron', '=', False), ('ftp_dest_ok', '=', False)], 'required': [('disable_cron', '=', True), ('ftp_dest_ok', '=', True)]}" colspan="4"/>
+                        <field name="report_path" attrs="{'readonly': [('active', '=', True)]}" />
+                        <field name="ftp_report_ok" attrs="{'readonly': ['|', ('ftp_ok', '=', False), ('active', '=', True)]}"/>
+                        <field name="report_local_path" attrs="{'readonly': [('active', '=', True)], 'invisible': ['|', ('disable_cron', '=', False), ('ftp_report_ok', '=', False)], 'required': [('disable_cron', '=', True), ('ftp_report_ok', '=', True)]}" colspan="4"/>
                     </group>
 
-                    <separator colspan="4" string="Scheduler configuration" />
-                    <group colspan="4" col="6">
+                    <group colspan="4" col="6" attrs="{'invisible': [('disable_cron', '=', True)]}">
+                        <separator colspan="6" string="Scheduler configuration" />
                         <field name="priority" />
                         <field name="interval" attrs="{'required': [('interval_unit', '&gt;', 0)]}" />
                         <field name="interval_unit" />

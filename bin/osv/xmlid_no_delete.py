@@ -1,0 +1,133 @@
+prevent_deletion =  {
+    'account.account.type': [
+        ('account', 'account_type_asset'),
+        ('account_override', 'account_type_capital'),
+        ('account', 'account_type_cash_moves'),
+        ('account_override', 'account_type_debt'),
+        ('account', 'account_type_cash_equity'),
+        ('account', 'account_type_expense_no_pl'),
+        ('account', 'account_type_expense'),
+        ('account', 'account_type_income'),
+        ('account', 'account_type_payable'),
+        ('account', 'account_type_receivable'),
+        ('account_override', 'account_type_stock'),
+        ('vat_management', 'account_type_tax'),
+        ('account', 'account_type_root')
+    ],
+    'account.analytic.account': [
+        ('analytic_distribution', 'analytic_account_project'),
+        ('analytic_distribution', 'analytic_account_project_intermission'),
+        ('analytic_distribution', 'analytic_account_funding_pool'),
+        ('analytic_distribution', 'analytic_account_free_1'),
+        ('analytic_distribution', 'analytic_account_free_2'),
+        ('analytic_distribution', 'analytic_account_msf_private_funds'),
+        ('analytic_distribution', 'analytic_account_destination'),
+        ('analytic_distribution', 'analytic_account_destination_operation'),
+        ('analytic_distribution', 'analytic_account_destination_support'),
+        ('analytic_distribution', 'analytic_account_destination_national_staff'),
+        ('analytic_distribution', 'analytic_account_destination_expatriates')
+    ],
+    'ir.cron': [
+        ('sync_client', 'ir_cron_memory_usage_create'),
+        ('sync_client', 'ir_cron_memory_ops_memory'),
+        ('sync_client', 'ir_cron_automaticsyncbackup'),
+        ('sync_client', 'ir_cron_automaticsynchronization0'),
+        ('base', 'cronjob_osv_memory_autovacuum'),
+        ('sync_client', 'cronjob_update_autovacuum'),
+        ('account_mcdb', 'ir_cron_account_mcdb_clean_up_action'),
+        ('specific_rules', 'ir_cron_remove_unconsistent_line'),
+        ('base', 'ir_cron_migrate_attachment'),
+        ('sync_client', 'ir_cron_hq_monitor_not_run'),
+        ('sync_client', 'ir_cron_ops_counts_purge'),
+        ('sync_client', 'ir_cron_ops_events_purge'),
+        ('msf_instance', 'ir_cron_remote_backup'),
+        ('mission_stock', 'ir_cron_stock_mission_update_action'),
+        ('sync_client', 'ir_cron_ops_counts_write'),
+        ('sync_client', 'ir_cron_wal'),
+        ('procurement_cycle', 'ir_cron_replenishment_segment'),
+    ],
+    'po.automation.config': [('sourcing', 'po_automation_config_data')],
+    'product.nomenclature': [
+        ('msf_doc_import', 'nomen_tbd0'),
+        ('msf_doc_import', 'nomen_tbd1'),
+        ('msf_doc_import', 'nomen_tbd2'),
+        ('msf_doc_import', 'nomen_tbd3'),
+        ('msf_config_locations', 'nomen_med'),
+        ('msf_config_locations', 'nomen_log')
+    ],
+    'product.pricelist.type': [
+        ('product', 'pricelist_type_sale'),
+        ('purchase', 'pricelist_type_purchase')
+    ],
+    'product.uom.categ': [
+        ('product', 'product_uom_categ_unit'),
+        ('product', 'product_uom_categ_kgm'),
+        ('product', 'uom_categ_wtime'),
+        ('product', 'uom_categ_length'),
+        ('msf_doc_import', 'product_uom_tbd'),
+        ('msf_profile', 'uom_category_percentage')
+    ],
+    'res.company': [
+        ('base', 'main_company')
+    ],
+    'res.lang': [
+        ('base', 'lang_en'),
+        ('msf_profile', 'lang_msf_en'),
+        ('msf_profile', 'lang_msf_fr'),
+        ('msf_profile', 'lang_msf_es'),
+    ],
+    'res.partner': [
+        ('order_types', 'res_partner_local_market')
+    ],
+    'res.users': [
+        ('base', 'user_sync')
+    ],
+    'stock.incoterms': [
+        ('stock', 'incoterm_EXW'),
+        ('stock', 'incoterm_FOB'),
+        ('stock', 'incoterm_CFR'),
+        ('stock', 'incoterm_CIF'),
+        ('stock', 'incoterm_CPT'),
+        ('stock', 'incoterm_CIP'),
+        ('stock', 'incoterm_DDU'),
+        ('stock', 'incoterm_DAT'),
+        ('stock', 'incoterm_DAP'),
+        ('stock', 'incoterm_FCA')
+    ],
+    'stock.location': [
+        ('stock', 'stock_location_company'),
+        ('msf_config_locations', 'stock_location_internal_client_view'),
+        ('msf_config_locations', 'stock_location_quarantine_view'),
+        ('stock', 'stock_location_internal_suppliers_view'),
+        ('msf_config_locations', 'stock_location_internal_customers_view'),
+        ('stock', 'location_production'),
+        ('stock', 'location_procurement'),
+        ('stock_override', 'stock_location_non_stockable'),
+        ('stock', 'location_inventory'),
+        ('msf_config_locations', 'stock_location_service'),
+        ('stock', 'stock_location_scrapped'),
+        ('msf_cross_docking', 'stock_location_input'),
+        ('msf_config_locations', 'stock_location_view_all_stock'),
+        ('msf_cross_docking', 'stock_location_cross_docking'),
+        ('stock', 'stock_location_output'),
+        ('msf_outgoing', 'stock_location_packing'),
+        ('msf_outgoing', 'stock_location_dispatch'),
+        ('msf_outgoing', 'stock_location_distribution'),
+        ('msf_config_locations', 'stock_location_medical'),
+        ('stock_override', 'stock_location_logistic'),
+        ('msf_config_locations', 'stock_location_unalloc_medical'),
+        ('msf_config_locations', 'stock_location_unalloc_logistic'),
+        ('stock', 'stock_location_stock'),
+        ('stock_override',  'stock_location_quarantine_analyze'),
+        ('stock_override', 'stock_location_quarantine_scrap'),
+        ('msf_config_locations', 'stock_location_intermediate_client_view'),
+        ('msf_config_locations', 'stock_location_consumption_units_view'),
+        ('stock', 'stock_location_internal_suppliers'),
+        ('stock', 'stock_location_suppliers'),
+        ('stock', 'stock_location_internal_customers'),
+        ('stock', 'stock_location_customers'),
+        ('stock', 'stock_location_locations'),
+        ('stock', 'stock_location_locations_partner'),
+        ('stock', 'stock_location_locations_virtual')
+    ]
+}

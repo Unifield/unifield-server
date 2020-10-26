@@ -2327,7 +2327,7 @@ class sale_order_line(osv.osv):
         if context.get('from_button') and 'is_line_split' not in default:
             default['is_line_split'] = False
 
-        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line', 'ir_name_from_sync']:
+        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line', 'ir_name_from_sync', 'in_name_goods_return']:
             if x not in default:
                 default[x] = False
 
@@ -2669,6 +2669,7 @@ class sale_order_line(osv.osv):
 
         order = line.order_id and line.order_id.id
 
+        context['cancel_only'] = not resource
         if qty_diff >= line.product_uom_qty:
             if signal == 'done':
                 self.write(cr, uid, [line.id], {'from_cancel_out': True}, context=context)
@@ -2677,6 +2678,7 @@ class sale_order_line(osv.osv):
             # Update the line and the procurement
             self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource, cancel_move=cancel_move, context=context)
 
+        context.pop('cancel_only')
         so_to_cancel_id = False
         if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
             so_to_cancel_id = order

@@ -56,14 +56,19 @@
 <ss:Worksheet ss:Name="${"%s"%(o.name.replace('/', '_') or 'Sheet1')|x}">
 
 ## definition of the columns' size
-<% nb_of_columns = 8 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
 <Column ss:AutoFitWidth="1" ss:Width="300" />
-% for x in range(2,nb_of_columns - 1):
 <Column ss:AutoFitWidth="1" ss:Width="60" />
-% endfor
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="250" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
 
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
@@ -72,8 +77,11 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Indicative Stock')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch Number')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Asset')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Consumed Quantity')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Remark')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('BN')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ED')}</Data></Cell>
     </Row>
     ## we loop over the products line
     % for line in o.line_ids:
@@ -81,7 +89,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.uom_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_qty or 0)|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or 0)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.prodlot_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="short_date" >
             % if isDate(line.expiry_date):
@@ -90,6 +98,7 @@
                 <Data ss:Type="String"></Data>
             % endif
         </Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line.asset_id and line.asset_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" >
             % if line.consumed_qty:
                 <Data ss:Type="Number">${(line.consumed_qty or '')|x}</Data>
@@ -98,9 +107,29 @@
             % endif
         </Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.remark or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.batch_mandatory and 'X' or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.date_mandatory and 'X' or '')|x}</Data></Cell>
     </Row>
     % endfor
 </Table>
+ <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <Selected/>
+   <FreezePanes/>
+   <FrozenNoSplit/>
+   <SplitHorizontal>1</SplitHorizontal>
+   <TopRowBottomPane>1</TopRowBottomPane>
+   <ActivePane>2</ActivePane>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+    </Pane>
+    <Pane>
+     <Number>2</Number>
+    </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+ </WorksheetOptions>
 <x:WorksheetOptions/>
 </ss:Worksheet>
 % endfor

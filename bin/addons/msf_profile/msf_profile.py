@@ -52,9 +52,31 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF19.0
+    def us_2725_uf_write_date_on_products(self, cr, uid, *a, **b):
+        '''
+        Set the uf_write_date of products which don't have one to the date of creation
+        '''
+
+        cr.execute('''
+            UPDATE product_product SET uf_write_date = uf_create_date WHERE uf_write_date is NULL
+        ''')
+        self._logger.warn('The uf_write_date has been modified on %s products' % (cr.rowcount,))
+
+        return True
 
     # UF18.0
-    def us_7215_prod_set_active_sync(self, cr, uids, *a, **b):
+    def uf18_0_migrate_acl(self, cr, uid, *a, **b):
+        cr.execute('''
+            update button_access_rule_groups_rel set
+            button_access_rule_id=(select res_id from ir_model_data where name='BAR_stockview_production_lot_tree_unlink' limit 1)
+            where
+            button_access_rule_id=(select res_id from ir_model_data where name='BAR_specific_rulesview_production_lot_tree_unlink' limit 1)
+        ''')
+        self._logger.warn('%d BAR updated' % (cr.rowcount, ))
+        return True
+
+    def us_7215_prod_set_active_sync(self, cr, uid, *a, **b):
         if not self.pool.get('sync.client.message_received'):
             # new instance
             return True
@@ -155,6 +177,20 @@ class patch_scripts(osv.osv):
                                         WHERE id IN %s;
                                         """
                     cr.execute(update_rec_models, (model_state, tuple(rec_models[model_state])))
+        return True
+
+    def us_5216_remove_duplicated_ir_values(self, cr, uid, *a, **b):
+        """
+        Removes the old ir.values related to the act_window "Recurring Entries To Post",
+        so that the menu entry appears only once in the already existing DBs.
+        """
+        cr.execute("""
+           DELETE FROM ir_values
+           WHERE
+                name='act_account_subscription_to_account_move_line_open' AND
+                key2='client_action_relate' AND
+                model='account.subscription'
+        """)
         return True
 
     def us_7448_set_revaluated_periods(self, cr, uid, *a, **b):

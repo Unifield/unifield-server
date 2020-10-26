@@ -71,7 +71,7 @@ class purchase_order_line(osv.osv):
             ], context=context)
             if related_in_moves:
                 self.pool.get('stock.move').action_cancel(cr, uid, related_in_moves, context=context)
-
+            self.pool.get('stock.move').decrement_sys_init(cr, uid, 'all', pol.id, context=context)
         return True
 
 
@@ -220,7 +220,7 @@ class purchase_order_line(osv.osv):
                         ('type', '=', 'out'),
                         ('state', 'in', ['assigned', 'confirmed'])],
                         context=context)
-                    if len(linked_out_moves) > 1:
+                    if linked_out_moves:
                         # try first confirmed OUT, if not found link assigned OUT
                         out_to_update = False
                         for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
@@ -781,6 +781,8 @@ class purchase_order_line(osv.osv):
             if internal_ir or dpo or ir_non_stockable:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'done', cr)
 
+            # cancel remaining SYS-INT
+            self.pool.get('stock.move').decrement_sys_init(cr, uid, 'all', pol_id=pol.id, context=context)
         self.write(cr, uid, ids, {'state': 'done', 'closed_date': datetime.now().strftime('%Y-%m-%d')}, context=context)
 
         return True

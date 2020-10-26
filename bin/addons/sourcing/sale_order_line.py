@@ -1141,7 +1141,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         f_to_check = ['type', 'order_id', 'po_cft', 'product_id', 'supplier', 'state', 'location_id']
         for f in f_to_check:
             if vals.get(f, False):
-                self._check_line_conditions(cr, uid, ids, context=context)
+                ids_to_check = self.search(cr, uid, [('id', 'in', ids), ('state', 'in', ['draft', 'validated'])], context=context)
+                if ids_to_check:
+                    self._check_line_conditions(cr, uid, ids_to_check, context=context)
                 break
 
         return result
@@ -1656,7 +1658,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                     _('AD missing on line %s, FO %s') % (sourcing_line.line_number, sourcing_line.order_id.name),
                                 )
 
-                            anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distib_to_copy, {}, context=context)
+                            anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distib_to_copy, {'partner_type': po.partner_id.partner_type}, context=context)
 
                         # set unit price
                         price = 0.0

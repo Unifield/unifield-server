@@ -559,8 +559,8 @@ the date has a wrong format: %s') % (index+1, str(e)))
         if already_process:
             details = []
             for sol in self.pool.get('sale.order.line').browse(cr, uid, already_process.keys(), fields_to_fetch=['product_id'], context=context):
-                details.append('Line number: %s, [%s] %s' % (sol_id_to_wiz_line.get(sol.id),sol.product_id.default_code, sol.product_id.name))
-            return _('Warning the following product lines have already been processed in linked OUT/Pick document, so cannot be processed here. Please remove these lines before trying to processs the movement\n%s') % ("\n".join(details))
+                details.append(_('Line number: %s, [%s] %s, qty already processed: %s, qty imported: %s') % (sol_id_to_wiz_line.get(sol.id),sol.product_id.default_code, sol.product_id.name, '{:g}'.format(round(already_process.get(sol.id, 0),2)), '{:g}'.format(round(sol_id_sum.get(sol.id,0),2))))
+            return _('Warning the following product lines have already been processed in linked OUT/Pick document, so cannot be processed here. Please remove these lines or adjust quantity before trying to processs the movement\n%s') % ("\n".join(details))
         return ''
 
     # Simulation routing
@@ -1169,10 +1169,11 @@ Nothing has been imported because of %s. See below:
 
         context['active_id'] = simu_id.picking_id.id
         context['active_ids'] = [simu_id.picking_id.id]
-        partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': simu_id.picking_id.id, 'date': simu_id.picking_id.date}, context=context)
+        fields_as_ro = simu_id.picking_id.partner_id.partner_type == 'esc' and simu_id.picking_id.state == 'updated' or simu_id.picking_id.partner_id.partner_type in ('internal', 'intermission', 'section')  and simu_id.picking_id.state == 'shipped'
+        partial_id = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': simu_id.picking_id.id, 'date': simu_id.picking_id.date, 'fields_as_ro': fields_as_ro}, context=context)
         line_ids = line_obj.search(cr, uid, [('simu_id', '=', simu_id.id), '|', ('type_change', 'not in', ('del', 'error', 'new')), ('type_change', '=', False)], context=context)
 
-        mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, context=context)
+        mem_move_ids, move_ids = line_obj.put_in_memory_move(cr, uid, line_ids, partial_id, fields_as_ro=fields_as_ro, context=context)
 
         # delete extra lines
         del_lines = mem_move_obj.search(cr, uid, [('wizard_id', '=', partial_id), ('id', 'not in', mem_move_ids), ('move_id', 'in', move_ids)], context=context)
@@ -1805,7 +1806,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
         return batch_id
 
-    def put_in_memory_move(self, cr, uid, ids, partial_id, context=None):
+    def put_in_memory_move(self, cr, uid, ids, partial_id, fields_as_ro=False, context=None):
         '''
         Create a stock.move.memory.in for each lines
         '''
@@ -1852,7 +1853,8 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'ordered_quantity': move.product_qty,
                     'quantity': line.imp_product_qty,
                     'wizard_id': partial_id,
-                    'pack_info_id': line.pack_info_id and line.pack_info_id.id or False
+                    'pack_info_id': line.pack_info_id and line.pack_info_id.id or False,
+                    'cost_as_ro': fields_as_ro,
                     }
 
             mem_move_ids.append(move_obj.create(cr, uid, vals, context=context))

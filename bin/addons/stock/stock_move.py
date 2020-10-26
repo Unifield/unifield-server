@@ -948,7 +948,7 @@ class stock_move(osv.osv):
         if 'product_id' in default:  # Check constraints on lines
             move = self.browse(cr, uid, new_id, fields_to_fetch=['type', 'picking_id', 'location_dest_id', 'product_id'], context=context)
             if move.type == 'in':
-                prod_obj._get_restriction_error(cr, uid, [move.product_id.id], {'partner_id': move.picking_id.partner_id.id, 'location_dest_id': move.location_dest_id.id, 'obj_type': 'in', 'partner_type':  move.picking_id.partner_id.partner_type},
+                prod_obj._get_restriction_error(cr, uid, [move.product_id.id], {'location_dest_id': move.location_dest_id.id, 'obj_type': 'in', 'partner_type':  move.picking_id.partner_id.partner_type},
                                                 context=context)
             elif move.type == 'out' and move.product_id.state.code == 'forbidden':
                 check_vals = {'location_dest_id': move.location_dest_id.id, 'move': move}
@@ -1255,11 +1255,7 @@ class stock_move(osv.osv):
         pickid = kwargs['picking']
         picking_obj = self.pool.get('stock.picking')
         wf_service = netsvc.LocalService("workflow")
-        if kwargs['return_goods']:
-            # Cancel the INT in case of Claim return/surplus processed from IN
-            wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_cancel', cr)
-            picking_obj.action_cancel(cr, uid, [pickid], context=context)
-        else:
+        if not kwargs.get('return_goods'):
             wf_service.trg_validate(uid, 'stock.picking', pickid, 'button_confirm', cr)
             wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_assign', cr)
             # Make the stock moves available
@@ -1276,6 +1272,9 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
         seq_obj = self.pool.get('ir.sequence')
+        if return_goods:
+            return []
+
         for picking, todo in self._chain_compute(cr, uid, moves, context=context).items():
             ptype = todo[0][1][5] and todo[0][1][5] or location_obj.picking_type_get(cr, uid, todo[0][0].location_dest_id, todo[0][1][0])
             if picking:
@@ -1699,6 +1698,7 @@ class stock_move(osv.osv):
                         wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.original_line_id.id, 'done', cr)
 
                 self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
+                self.decrement_sys_init(cr, uid, move.product_qty, pol_id=move.purchase_line_id and move.purchase_line_id.id or False, context=context)
 
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
                 sol_ids_to_check[move.sale_line_id.id] = True
@@ -1729,10 +1729,6 @@ class stock_move(osv.osv):
                 self.write(cr, uid, [move.move_dest_id.id], state)
                 if context.get('call_unlink',False) and move.move_dest_id.picking_id:
                     wf_service.trg_write(uid, 'stock.picking', move.move_dest_id.picking_id.id, cr)
-            # cancel linked internal move if has, to keep the virtual stock consistent:
-            internal_move = self.search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
-            if internal_move:
-                self.action_cancel(cr, uid, internal_move, context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel', 'move_dest_id': False})
 
@@ -1760,6 +1756,30 @@ class stock_move(osv.osv):
                 ptc.action_done(context=context)
 
 
+        return True
+
+    def decrement_sys_init(self, cr, uid, qty, pol_id, context=None):
+        if not pol_id:
+            return False
+
+        if qty == 'all':
+            query = 'LEAST(product_qty, %s)'
+            qty = 0
+        else:
+            query = 'GREATEST(0, product_qty - %s)'
+        cr.execute('''
+            update stock_move as m set product_qty = ''' +query+ '''
+            from stock_picking p where
+                m.purchase_line_id=%s and
+                p.id = m.picking_id and
+                p.type = 'internal' and
+                p.subtype = 'sysint' and
+                m.state != 'cancel'
+            returning m.id, m.product_qty
+        ''', (qty, pol_id)) # not_a_user_entry
+        for x in cr.fetchall():
+            if not x[1]:
+                self.action_cancel(cr, uid, x[0], context=context)
         return True
 
     def _get_accounting_data_for_valuation(self, cr, uid, move, context=None):

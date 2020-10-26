@@ -26,10 +26,8 @@ from mx.DateTime import DateFrom, RelativeDate, RelativeDateTime, Age, strptime,
 from tools.translate import _
 
 import time
-import base64
 import netsvc
 
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from order_types import ORDER_CATEGORY
 
 
@@ -492,30 +490,15 @@ class real_average_consumption(osv.osv):
         '''
         Creates an XML file and launches the wizard to save it
         '''
-        if context is None:
-            context = {}
-        rac = self.browse(cr, uid, ids[0], context=context)
-        header_columns = [(_('Product Code'), 'string'), (_('Product Description'),'string'),(_('Product UoM'), 'string'), (_('Indicative Stock'), 'string'), (_('Batch Number'),'string'), (_('Expiry Date'), 'string'), (_('Asset'), 'string'), (_('Consumed Qty'),'string'), (_('Remark'), 'string')]
-        list_of_lines = []
-        for line in rac.line_ids:
-            list_of_lines.append([line.product_id.default_code, line.product_id.name, line.uom_id.name, line.product_qty or 0, line.prodlot_id and line.prodlot_id.name,
-                                  line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '', line.asset_id and line.asset_id.name, line.consumed_qty, line.remark or ''])
-        instanciate_class = SpreadsheetCreator('RAC', header_columns, list_of_lines)
-        file = base64.encodestring(instanciate_class.get_xml(default_filters=['decode.utf8']))
+        rac = self.browse(cr, uid, ids[0], fields_to_fetch=['cons_location_id'], context=context)
 
-        export_id = self.pool.get('wizard.export.rac').create(cr, uid, {'rac_id': ids[0],
-                                                                        'file': file,
-                                                                        'filename': 'rac_%s.xls' % (rac.cons_location_id.name.replace(' ', '_')),
-                                                                        'message': _('The RAC lines has been exported. Please click on Save As button to download the file'),}, context=context)
-
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.export.rac',
-                'res_id': export_id,
-                'view_mode': 'form',
-                'view_type': 'form',
-                'target': 'new',
-                'context': context,
-                }
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'real.consumption.xls',
+            'datas': {'ids': [ids[0]], 'target_filename': 'rac_%s' % rac.cons_location_id.name.replace(' ', '_')},
+            'nodestroy': True,
+            'context': context,
+        }
 
     def copy_all(self, cr, uid, ids, context=None):
         '''
@@ -713,7 +696,7 @@ class real_average_consumption_line(osv.osv):
     _name = 'real.average.consumption.line'
     _description = 'Real average consumption line'
     _rec_name = 'product_id'
-    _order = 'id, ref'
+    _order = 'ref, id'
 
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         result = {}
@@ -844,7 +827,7 @@ class real_average_consumption_line(osv.osv):
         return res
 
     _columns = {
-        'product_id': fields.many2one('product.product', string='Product', required=True),
+        'product_id': fields.many2one('product.product', string='Product', required=True, select=1),
         'ref': fields.related('product_id', 'default_code', type='char', size=64, readonly=True,
                               store={'product.product': (_get_product, ['default_code'], 10),
                                      'real.average.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20)}),
@@ -862,7 +845,7 @@ class real_average_consumption_line(osv.osv):
         'asset_mandatory': fields.boolean('AM'),
         'remark': fields.char(size=256, string='Comment'),
         'move_id': fields.many2one('stock.move', string='Move'),
-        'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
+        'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade', select=1),
         'text_error': fields.text('Errors', readonly=True),
         'to_correct_ok': fields.function(_get_checks_all, method=True, type="boolean", string="To correct", store=False, readonly=True, multi="m"),
         'just_info_ok': fields.boolean(string='Just for info'),

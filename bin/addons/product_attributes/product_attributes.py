@@ -717,7 +717,7 @@ class product_attributes(osv.osv):
         res = {}
         level = self.pool.get('res.company')._get_instance_level(cr, uid)
         for _id in ids:
-            res[_id] = level
+            res[_id] = level or False
         return res
 
     def _get_allow_merge(self, cr, uid, ids, field_name, args, context=None):
@@ -1201,6 +1201,9 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
 
+        if context.get('cancel_only'):
+            return False, ''
+
         error = False
         error_msg = ''
         constraints = []
@@ -1210,10 +1213,7 @@ class product_attributes(osv.osv):
         # Compute the constraint if a partner is passed in vals
         if vals.get('partner_id'):
             partner_obj = self.pool.get('res.partner')
-            partner_type = partner_obj.browse(cr,
-                                              uid,
-                                              vals.get('partner_id'),
-                                              context=context).partner_type
+            partner_type = partner_obj.browse(cr, uid, vals.get('partner_id'), context=context).partner_type
             if partner_type == 'external':
                 constraints.append('external')
             elif partner_type == 'esc':
@@ -1253,7 +1253,6 @@ class product_attributes(osv.osv):
         for product in self.browse(cr, uid, ids, context=context):
             msg = ''
             st_cond = True
-
 
             if product.state.code == 'forbidden':
                 if sale_obj and partner_type == 'internal':
@@ -1501,7 +1500,10 @@ class product_attributes(osv.osv):
             if f in vals and not vals.get(f):
                 vals[f] = 'no'
 
-        vals['uf_create_date'] = vals.get('uf_create_date') or datetime.now()
+        vals.update({
+            'uf_create_date': vals.get('uf_create_date') or datetime.now(),
+            'uf_write_date': vals.get('uf_write_date') or datetime.now(),
+        })
 
         self.convert_price(cr, uid, vals, context)
 

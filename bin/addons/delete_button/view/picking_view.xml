@@ -143,23 +143,5 @@
             </field>
         </record>
  
-        <record id="real_average_consumption_tree_view" model="ir.ui.view">
-            <field name="name">real.average.consumption.tree.view</field>
-            <field name="model">real.average.consumption</field>
-            <field name="type">tree</field>
-            <field name="inherit_id" ref="consumption_calculation.real_average_consumption_tree_view" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/tree" position="attributes">
-                        <attribute name='hide_delete_button'>1</attribute>
-                    </xpath>
-                    <xpath expr="/tree/field[@name='state']" position="after">
-                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
-                        states='draft'  confirm='Do you really want to delete selected record(s) ?'/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-        
     </data>
 </openerp>

@@ -1618,6 +1618,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             if line.po_line_id.state == 'done':
                 write_vals['type_change'] = 'warning'
                 warnings.append(_('PO line has been confirmed and consequently is not editable'))
+                self.write(cr, uid, [line.id], write_vals, context=context)
+                continue
 
             # Delivery Confirmed Date
             dcd_value = values[11]
@@ -1645,6 +1647,11 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         write_vals['type_change'] = 'cdd'
                 if not write_vals.get('type_change'):
                     write_vals['type_change'] = 'ignore'
+                self.write(cr, uid, [line.id], write_vals, context=context)
+                continue
+
+            if line.simu_id.order_id.state in ['confirmed', 'confirmed_p']:
+                write_vals['type_change'] = 'ignore'
                 self.write(cr, uid, [line.id], write_vals, context=context)
                 continue
 

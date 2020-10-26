@@ -295,6 +295,7 @@ class purchase_order(osv.osv):
         import_success = False
         # Reset part of the context updated in the PO import
         context.update({'line_number_to_confirm': [], 'ext_ref_to_confirm': [], 'job_comment': []})
+        simu_obj = self.pool.get('wizard.import.po.simulation.screen')
         try:
             # get filetype
             filetype = self.pool.get('stock.picking').get_import_filetype(cr, uid, file_path, context=context)
@@ -306,11 +307,16 @@ class purchase_order(osv.osv):
             # create wizard.import.po.simulation.screen
             simu_id = self.create_simu_screen_wizard(cr, uid, po_id, file_content, filetype, file_path, context=context)
             # launch simulate
-            self.pool.get('wizard.import.po.simulation.screen').launch_simulate(cr, uid, simu_id, context=context, thread=False)
+            simu_obj.launch_simulate(cr, uid, simu_id, context=context, thread=False)
+
             # get simulation report
             file_res = self.generate_simulation_screen_report(cr, uid, simu_id, context=context)
+            simu_result = simu_obj.read(cr, uid, simu_id, ['state', 'message'], context=context)
+            if simu_result['state'] == 'error':
+                raise osv.except_osv(_('Error'), simu_result['message'])
+
             # import lines
-            self.pool.get('wizard.import.po.simulation.screen').launch_import(cr, uid, simu_id, context=context, thread=False)
+            simu_obj.launch_import(cr, uid, simu_id, context=context, thread=False)
             # attach simulation report
             self.pool.get('ir.attachment').create(cr, uid, {
                 'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
