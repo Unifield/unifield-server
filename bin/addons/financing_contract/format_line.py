@@ -524,7 +524,7 @@ class financing_contract_format_line(osv.osv):
     _order = 'code asc'
 
     # UF-2311: Calculate the quadruplet value before writing or creating the format line
-    def calculate_quaduplet(self, cr, uid, vals, context):
+    def calculate_quadruplet(self, cr, uid, vals, context):
         # View Line Type = no items selected
         if 'line_type' in vals and vals['line_type'] == 'view':
             vals['allocated_amount'] = 0.0
@@ -563,7 +563,7 @@ class financing_contract_format_line(osv.osv):
             context = {}
 
         # calculate the quadruplet combination
-        self.calculate_quaduplet(cr, uid, vals, context)
+        self.calculate_quadruplet(cr, uid, vals, context)
         return super(financing_contract_format_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -582,7 +582,7 @@ class financing_contract_format_line(osv.osv):
                 return True
 
         # calculate the quadruplet combination
-        self.calculate_quaduplet(cr, uid, vals, context)
+        self.calculate_quadruplet(cr, uid, vals, context)
         return super(financing_contract_format_line, self).write(cr, uid, ids, vals, context=context)
 
     def copy_format_line(self, cr, uid, browse_source_line, destination_format_id, parent_id=None, context=None):
