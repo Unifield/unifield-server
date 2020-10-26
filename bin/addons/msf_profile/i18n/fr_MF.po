@@ -53842,8 +53842,8 @@ msgstr "Statut validé de la commande de terrain"
 
 #. module: financing_contract
 #: field:financing.contract.format.line,quadruplet_update:0
-msgid "Internal Use Only"
-msgstr "Internal Use Only"
+msgid "Internal Use Only (deprecated - kept to manage old sync update)"
+msgstr "Usage Interne Uniquement (déprécié - conservé pour gérer les anciennes mises à jour via synch.)"
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
@@ -60896,6 +60896,21 @@ msgstr "Sélectionnable dans le Contrat"
 #: field:account.account,selected_in_contract:0
 msgid "Selected in Contract"
 msgstr "Sélectionné dans le Contrat"
+
+#. module: financing_contract
+#: sql_constraint:financing.contract.account.quadruplet:0
+msgid "not unique!"
+msgstr "non unique !"
+
+#. module: financing_contract
+#: field:financing.contract.format.line,quadruplet_sync_list:0
+msgid "Used to sync quad"
+msgstr "Utilisé pour synch. les quadruplets"
+
+#. module: financing_contract
+#: field:financing.contract.contract,quad_gen_date:0
+msgid "Date of last generation of quad"
+msgstr "Date de la dernière génération des quadruplets"
 
 #. module: purchase_override
 #: view:purchase.order.cancel.wizard:0

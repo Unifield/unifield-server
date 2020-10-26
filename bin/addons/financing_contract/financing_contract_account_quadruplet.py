@@ -291,7 +291,9 @@ class financing_contract_account_quadruplet(osv.osv):
     }
 
     _sql_constraints = {
-        ('check_unique', 'unique (account_destination_id, cost_center_id, funding_pool_id, account_id, account_destination_link_id)', 'not unique !')
+        ('check_unique',
+         'unique (account_destination_id, cost_center_id, funding_pool_id, account_id, account_destination_link_id)',
+         'not unique!')
     }
     _order = 'account_destination_name asc, funding_pool_id asc, cost_center_id asc, id'
 
