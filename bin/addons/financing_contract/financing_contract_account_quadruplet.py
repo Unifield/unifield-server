@@ -181,6 +181,11 @@ class financing_contract_account_quadruplet(osv.osv):
                 # ignore quad_gen_date in the future
                 cc_ids = [cc.id for cc in contract.cost_center_ids]
                 fp_ids = [fp.funding_pool_id.id for fp in contract.funding_pool_ids]
+                if not cc_ids:
+                    # do not traceback if cc / fp not set on contract
+                    cc_ids = [0]
+                if not fp_ids:
+                    fp_ids = [0]
                 cr.execute('''
                     INSERT INTO financing_contract_account_quadruplet
                         (account_destination_name, account_id, cost_center_id, disabled, account_destination_link_id, funding_pool_id, account_destination_id)
