@@ -333,6 +333,7 @@ class financing_contract_contract(osv.osv):
                                      ondelete="cascade", required=True),
         'fp_added_flag': fields.boolean('Flag when new FP is added'),
         'instance_level': fields.function(_get_instance_level, method=True, string="Current instance level", type="char", readonly=True),  # UFTP-343
+        'quad_gen_date': fields.datetime('Date of last generation of quad'),
     }
 
     _defaults = {
