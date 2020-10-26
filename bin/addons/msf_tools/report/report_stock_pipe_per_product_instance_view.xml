@@ -28,7 +28,7 @@
                 </tree>
             </field>
         </record>
-
+        
         <record id="stock_pipe_per_product_instance_form_view" model="ir.ui.view">
             <field name="name">stock.pipe.per.product.instance.form.view</field>
             <field name="model">stock.pipe.per.product.instance</field>
@@ -111,5 +111,22 @@
             action="stock_pipe_per_product_instance_action"
             parent="object_query.menu_preferences"
             sequence="52" />
+        
+        <record id="stock_pipe_per_product_instance_prod_lines_tree" model="ir.ui.view">
+            <field name="name">stock.pipe.per.product.instance.tree.view</field>
+            <field name="model">stock.pipe.per.product.instance.prod.lines</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                      <field name="product_id" />
+                      <field name="uom_id"  />
+                      <field name="instance_id"/>
+                      <field name="uf_state"/>
+                      <field name="instance_stock"/>
+                      <field name="pipe_qty"/>
+                </tree>
+            </field>
+        </record>
+
     </data>
 </openerp>
