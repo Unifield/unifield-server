@@ -96,7 +96,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Accounts/Destinations" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
+                        <page string="Destinations" attrs="{'invisible': [('category', '!=', 'FUNDING')]}">
                             <field name="select_accounts_only"/>
                             <button name="button_dest_clear" type="object" string="Remove all accounts/destinations"
                                     icon="gtk-clear" colspan="4"
