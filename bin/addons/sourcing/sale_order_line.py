@@ -81,9 +81,41 @@ class sale_order_line(osv.osv):
         ],
     }
 
-    """
-    Other methods
-    """
+
+    def _where_calc(self, cr, uid, domain, active_test=True, context=None):
+        '''
+            overwrite to speed up OST search on fields categ, priority, order state
+        '''
+
+        new_dom = []
+
+        fields_filter = {
+            'categ': {'db_field': 'categ'},
+            'priority': {'db_field': 'priority'},
+            'sale_order_state': {'db_field': 'state'},
+        }
+        has_filter = False
+
+        operator = ['=', '!=']
+        for x in domain:
+            if x[0]  in fields_filter:
+                if x[1] not in operator:
+                    raise osv.except_osv(_('Warning'), _('Operator %s not allowed on %s') % (x[1], x[0]))
+                fields_filter[x[0]].update({'operator': x[1], 'filter': x[2]})
+                has_filter = True
+            else:
+                new_dom.append(x)
+        ret = super(sale_order_line, self)._where_calc(cr, uid, new_dom, active_test=active_test, context=context)
+        if has_filter:
+            ret.tables.append('"sale_order"')
+            ret.joins['"sale_order_line"'] = [('"sale_order"', 'order_id', 'id', 'LEFT JOIN')]
+            for field in fields_filter:
+                if fields_filter[field].get('operator'):
+                    ret.where_clause.append(' "sale_order"."' + fields_filter[field]['db_field'] + '" ' + fields_filter[field]['operator'] + ' %s ')
+                    ret.where_clause_params.append(fields_filter[field]['filter'])
+
+        return ret
+
     def _check_browse_param(self, param, method):
         """
         Returns an error message if the parameter is not a
@@ -366,82 +398,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return result
 
-    """
-    Methods to search values for fields.function
-    """
-    def _src_order_state(self, cr, uid, obj, name, args, context=None):
-        """
-        Returns all field order lines that match with the order state domain
-        given in args.
-
-        :param cr: Cursor to the database
-        :param uid: ID of the user that runs the method
-        :param obj: Object on which the search is
-        :param field_name: Name of the field on which the search is
-        :param args: The domain
-        :param context: Context of the call
-
-        :return A list of tuples that allows the system to return the list
-                 of matching field order lines
-        :rtype list
-        """
-        if context is None:
-            context = {}
-
-        if not args:
-            return []
-
-        res = []
-        for arg in args:
-            if arg[0] == 'sale_order_state' and arg[1] == '=' and arg[2] == 'split_so' :
-                split_dom = [
-                    ('state', '=', 'done'),
-                    ('split_type_sale_order', '=', 'original_sale_order'),
-                    ('procurement_request', '=', False),
-                    ('active', 'in', ['t','f'])
-                ]
-                split_ids = self.pool.get('sale.order').search(cr, uid, split_dom, context=context)
-                res = [('order_id', 'in', split_ids)]
-            elif arg[0] == 'sale_order_state':
-                res = [('order_id.state', arg[1], arg[2])]
-
-        return res
-
-    def _src_line_values(self, cr, uid, obj, name, args, context=None):
-        """
-        Returns all field order lines that match with the order category or priority
-        domain given in args.
-
-        :param cr: Cursor to the database
-        :param uid: ID of the user that runs the method
-        :param obj: Object on which the search is
-        :param field_name: Name of the field on which the search is
-        :param args: The domain
-        :param context: Context of the call
-
-        :return A list of tuples that allows the system to return the list
-                 of matching field order lines
-        :rtype list
-        """
-        if context is None:
-            context = {}
-
-        if not args:
-            return []
-
-        domain = [('active', 'in', ['t', 'f'])]
-        for arg in args:
-            if arg[0] == 'categ':
-                domain.append(('categ', arg[1], arg[2]))
-            elif arg[0] == 'priority':
-                domain.append(('priority', arg[1], arg[2]))
-
-        order_ids = self.pool.get('sale.order').search(cr, uid, domain, context=context)
-        if order_ids:
-            return [('order_id', 'in', order_ids)]
-
-        return []
-
     def _get_related_sourcing_ok(self, cr, uid, ids, field_name, args, context=None):
         """
         Return True or False to determine if the user could select a sourcing group on the OST for the line
@@ -491,7 +447,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ),
         'priority': fields.function(
             _get_line_values,
-            fnct_search=_src_line_values,
             method=True,
             selection=ORDER_PRIORITY,
             type='selection',
@@ -502,7 +457,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ),
         'categ': fields.function(
             _get_line_values,
-            fnct_search=_src_line_values,
             method=True,
             selection=ORDER_CATEGORY,
             type='selection',
@@ -513,7 +467,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ),
         'sale_order_state': fields.function(
             _get_line_values,
-            fnct_search=_src_order_state,
             method=True,
             selection=SALE_ORDER_STATE_SELECTION,
             type='selection',
