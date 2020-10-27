@@ -111006,3 +111006,15 @@ msgstr "Écriture refusée sur %s."
 #, python-format
 msgid "Writing file report at %s"
 msgstr "Écriture du fichier rapport sur %s"
+
+#. module: msf_tools
+#: view:automated.import:0
+msgid "This action should only be executed on a Sandbox, it will override the current configuration. Do you confirm ?"
+msgstr "Cette action ne doit être exécutée que sur une instance de tests, cela va modifier la configuration actuelle. Confirmez-vous ?"
+
+#. module: msf_tools
+#: view:automated.import:0
+msgid "Local Auto Configuration"
+msgstr "Auto Configuration Locale"
+
+
