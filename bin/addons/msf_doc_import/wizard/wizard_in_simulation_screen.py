@@ -1808,7 +1808,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
     def put_in_memory_move(self, cr, uid, ids, partial_id, fields_as_ro=False, context=None):
         '''
-        Create a stock.move.memory.in for each lines
+        Create a stock.move.in.processor for each lines
         '''
         move_obj = self.pool.get('stock.move.in.processor')
 

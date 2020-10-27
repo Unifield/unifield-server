@@ -387,11 +387,6 @@ msgstr "Extraction des Données Ok"
 msgid "This action is only applied to closed registers!"
 msgstr "Cette action n'est effectuée que sur les registres fermés!"
 
-#. module: msf_outgoing
-#: model:ir.model,name:msf_outgoing.model_stock_move_memory_returnproducts
-msgid "stock.move.memory.returnproducts"
-msgstr "stock.move.memory.returnproducts"
-
 #. module: base
 #: help:ir.actions.report.xml,attachment_use:0
 msgid "If you check this, then the second time the user prints with same attachment name, it returns the previous report."
@@ -399,11 +394,6 @@ msgstr "Si vous cochez ceci, la seconde fois que l'utilisateur imprime une pièc
 
 #. modules: msf_outgoing, consumption_calculation, specific_rules
 #: field:real.average.consumption.line,expiry_date_check:0
-#: field:stock.move.memory.picking,expiry_date_check:0
-#: field:stock.move.memory.ppl,expiry_date_check:0
-#: field:stock.move.memory.returnproducts,expiry_date_check:0
-#: field:stock.move.memory.in,expiry_date_check:0
-#: field:stock.move.memory.out,expiry_date_check:0
 msgid "Expiry Date Check"
 msgstr "Vérification Date d'Expiration"
 
@@ -2856,21 +2846,7 @@ msgstr "Traiter Node"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 #: code:addons/msf_outgoing/__init__.py:63
@@ -4725,11 +4701,6 @@ msgstr "Mois :"
 #: field:return.ppl.move.processor,line_number:0
 #: view:stock.move.in.processor:0
 #: field:stock.move.in.processor,line_number:0
-#: field:stock.move.memory.in,line_number:0
-#: field:stock.move.memory.out,line_number:0
-#: field:stock.move.memory.picking,line_number:0
-#: field:stock.move.memory.ppl,line_number:0
-#: field:stock.move.memory.returnproducts,line_number:0
 #: view:stock.move.processor:0
 #: field:stock.move.processor,line_number:0
 #: field:purchase.order.line,line_number:0
@@ -4794,21 +4765,7 @@ msgstr "Line %s, incorrect column number value and name should not be empty."
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
@@ -5447,15 +5404,6 @@ msgstr "Nouveau report des consommations réelles"
 #, python-format
 msgid "The Stock Move %s from %s has been updated to %s %s."
 msgstr "Le mouvement de stock %s de %s a été mis à jour pour  %s %s."
-
-#. module: msf_outgoing
-#: field:stock.move.memory.in,initial_qty:0
-#: field:stock.move.memory.out,initial_qty:0
-#: field:stock.move.memory.picking,initial_qty:0
-#: field:stock.move.memory.ppl,initial_qty:0
-#: field:stock.move.memory.returnproducts,initial_qty:0
-msgid "Initial Qty"
-msgstr "Qté Initiale"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:303
@@ -6491,14 +6439,9 @@ msgid "Finance"
 msgstr "Finance"
 
 #. modules: msf_outgoing, specific_rules
-#: field:stock.move.memory.picking,ssl_check:0
-#: field:stock.move.memory.ppl,ssl_check:0
-#: field:stock.move.memory.returnproducts,ssl_check:0
 #: field:initial.stock.inventory.line,ssl_check:0
 #: field:stock.inventory.line,ssl_check:0
 #: field:stock.move,ssl_check:0
-#: field:stock.move.memory.in,ssl_check:0
-#: field:stock.move.memory.out,ssl_check:0
 #: field:stock.production.lot,ssl_check:0
 #: field:internal.move.processor,ssl_check:0
 #: field:outgoing.delivery.move.processor,ssl_check:0
@@ -6893,15 +6836,10 @@ msgstr "Envoi de Marchandises"
 #: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:261
 #: field:shipment.additionalitems,dg:0
 #: report:addons/msf_outgoing/report/packing_list_xls.mako:436
-#: field:stock.move.memory.picking,dg_check:0
-#: field:stock.move.memory.ppl,dg_check:0
-#: field:stock.move.memory.returnproducts,dg_check:0
 #: report:msf.freight_manifest:0
 #: field:initial.stock.inventory.line,dg_check:0
 #: field:stock.inventory.line,dg_check:0
 #: field:stock.move,dg_check:0
-#: field:stock.move.memory.in,dg_check:0
-#: field:stock.move.memory.out,dg_check:0
 #: field:stock.production.lot,dg_check:0
 #: report:destruction.location:0
 #: field:wizard.import.in.line.simulation.screen,dg_check:0
@@ -8019,12 +7957,6 @@ msgstr "Assistant d'importation de la liste du personnel"
 msgid "be supplied/exchanged internally"
 msgstr "être approvisionné/échangé en interne"
 
-#. module: msf_outgoing
-#: view:stock.move.memory.shipment.returnpacks:0
-#: view:stock.move.memory.shipment.returnpacksfromshipment:0
-msgid "Weight to Return"
-msgstr "Poids à Retourner"
-
 #. modules: account, register_accounting
 #: view:account.bank.statement:0
 #: model:ir.module.module,shortdesc:register_accounting.module_meta_information
@@ -8271,7 +8203,6 @@ msgstr "Générer les écarts"
 #: code:addons/msf_doc_import/wizard/__init__.py:87
 #: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:193
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:213
-#: field:incoming.import.xml.line,quantity:0
 #: field:purchase.line.import.xml.line,product_qty:0
 #: field:internal.move.processor,quantity:0
 #: report:invoice:0
@@ -8280,7 +8211,6 @@ msgstr "Générer les écarts"
 #: field:split.memory.move,quantity:0
 #: field:split.move.processor,quantity:0
 #: field:stock.move.in.processor,quantity:0
-#: view:stock.move.memory.ppl:0
 #: field:stock.move.processor,quantity:0
 #: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:57
 #: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:71
@@ -9405,23 +9335,9 @@ msgstr "Stock futur"
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,availability_status_hidden_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
 #: selection:report.stock.move,state:0
 #: selection:stock.move,state:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 #: code:addons/msf_outgoing/__init__.py:53
@@ -9761,9 +9677,6 @@ msgstr "selection"
 
 #. module: msf_outgoing
 #: field:pack.family.memory,draft_packing_id:0
-#: field:stock.move.memory.shipment.create,draft_packing_id:0
-#: field:stock.move.memory.shipment.returnpacks,draft_packing_id:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,draft_packing_id:0
 msgid "Draft Packing Ref"
 msgstr "Référence du Brouillon Colisage"
 
@@ -11328,8 +11241,6 @@ msgstr "Aucun produit trouvé pour le code '%s'"
 #: model:ir.actions.report.xml,name:kit.kit_report
 #: model:ir.module.module,shortdesc:kit.module_meta_information
 #: field:stock.move,composition_list_id:0
-#: field:stock.move.memory.in,composition_list_id:0
-#: field:stock.move.memory.out,composition_list_id:0
 #: field:substitute.item.mirror,kit_id_mirror:0
 #: code:addons/msf_doc_import/wizard/__init__.py:67
 #: code:addons/msf_doc_import/wizard/__init__.py:72
@@ -11342,9 +11253,6 @@ msgstr "Aucun produit trouvé pour le code '%s'"
 #: field:return.ppl.move.processor,kit_check:0
 #: field:stock.move.in.processor,composition_list_id:0
 #: field:stock.move.in.processor,kit_check:0
-#: field:stock.move.memory.picking,composition_list_id:0
-#: field:stock.move.memory.ppl,composition_list_id:0
-#: field:stock.move.memory.returnproducts,composition_list_id:0
 #: field:stock.move.processor,composition_list_id:0
 #: field:stock.move.processor,kit_check:0
 #: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:73
@@ -12245,11 +12153,6 @@ msgstr "Régularisation?"
 #: help:return.ppl.move.processor,currency:0
 #: help:stock.move.in.processor,currency:0
 #: help:stock.move.processor,currency:0
-#: help:stock.move.memory.picking,currency:0
-#: help:stock.move.memory.ppl,currency:0
-#: help:stock.move.memory.returnproducts,currency:0
-#: help:stock.move.memory.in,currency:0
-#: help:stock.move.memory.out,currency:0
 msgid "Currency in which Unit cost is expressed"
 msgstr "Devise dans laquelle le coût unitaire est exprimé"
 
@@ -14184,11 +14087,6 @@ msgstr "Afficher les Employés ?"
 
 #. module: consumption_calculation, return_claim,product_asset,msf_outgoing
 #: field:real.average.consumption.line,asset_check:0
-#: field:stock.move.memory.picking,asset_check:0
-#: field:stock.move.memory.ppl,asset_check:0
-#: field:stock.move.memory.returnproducts,asset_check:0
-#: field:stock.move.memory.in,asset_check:0
-#: field:stock.move.memory.out,asset_check:0
 #: field:claim.product.line,hidden_asset_claim_product_line:0
 msgid "Asset Check"
 msgstr "Vérification Actif"
@@ -15251,15 +15149,10 @@ msgstr "Autre information"
 #: field:substitute.item,hidden_perishable_mandatory:0
 #: field:substitute.item.mirror,hidden_perishable_mandatory:0
 #: field:wizard.import.in.line.simulation.screen,exp_check:0
-#: field:stock.move.memory.picking,exp_check:0
-#: field:stock.move.memory.ppl,exp_check:0
-#: field:stock.move.memory.returnproducts,exp_check:0
 #: field:claim.product.line,expiry_date_claim_product_line:0
 #: field:claim.product.line,hidden_perishable_mandatory_claim_product_line:0
 #: view:return.claim:0
 #: view:initial.stock.inventory:0
-#: field:stock.move.memory.in,exp_check:0
-#: field:stock.move.memory.out,exp_check:0
 #: field:replenishment.inventory.review.line.exp,exp_qty:0
 #: field:replenishment.inventory.review.line.exp.nocons,exp_qty:0
 msgid "Exp"
@@ -15310,21 +15203,7 @@ msgstr "Diagramme"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -15438,7 +15317,6 @@ msgstr "Fonctions d'export automatisé"
 #: view:sale.report:0
 #: field:stock.production.lot,type:0
 #: view:report.stock.move:0
-#: field:stock.partial.move,type:0
 #: field:stock.move,type:0
 #: view:purchase.order:0
 #: field:sync.client.logs,type:0
@@ -15718,15 +15596,6 @@ msgstr "Comme cette date n'est pas dans le passé, aucun nouveau réapprovisionn
 #: view:stock.picking:0
 msgid "Cancel Availability"
 msgstr "Annuler Disponibilité"
-
-#. modules: msf_outgoing, specific_rules
-#: field:stock.move.memory.picking,quantity_ordered:0
-#: field:stock.move.memory.ppl,quantity_ordered:0
-#: field:stock.move.memory.returnproducts,quantity_ordered:0
-#: field:stock.move.memory.in,quantity_ordered:0
-#: field:stock.move.memory.out,quantity_ordered:0
-msgid "Quantity ordered"
-msgstr "Quantité commandée"
 
 #. module: base_setup
 #: view:base.setup.company:0
@@ -17291,7 +17160,6 @@ msgid "This order category is not consistent with product(s) on this order."
 msgstr "This order category is not consistent with product(s) on this order."
 
 #. module: msf_outgoing
-#: field:stock.move.memory.returnproducts,qty_to_return:0
 #: view:return.ppl.move.processor:0
 msgid "Qty to return"
 msgstr "Qté à retourner"
@@ -19438,12 +19306,7 @@ msgstr "Incorrectly formatted expiry date: %s. The expected date should be > 01/
 #: code:addons/msf_doc_import/wizard/__init__.py:68
 #: code:addons/msf_doc_import/wizard/__init__.py:73
 #: code:addons/msf_doc_import/wizard/__init__.py:78
-#: field:stock.move.memory.picking,location_id:0
-#: field:stock.move.memory.ppl,location_id:0
-#: field:stock.move.memory.returnproducts,location_id:0
 #: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:77
-#: field:stock.move.memory.in,location_id:0
-#: field:stock.move.memory.out,location_id:0
 #: view:report.stock.move:0
 #: field:report.stock.move,location_id:0
 #: field:stock.inventory.line.split,location_id:0
@@ -20303,11 +20166,6 @@ msgstr "Terminé"
 msgid "account.drill"
 msgstr "account.drill"
 
-#. module: msf_outgoing
-#: field:stock.move.memory.shipment.returnpacksfromshipment,return_from:0
-msgid "Return From"
-msgstr "Retour De"
-
 #. modules: account, account_period_closing_level
 #: view:account.period:0
 #: view:account.period:0
@@ -20659,9 +20517,6 @@ msgstr "The Purchase Order %s does not correspond to the current one (%s)."
 #: field:return.ppl.move.processor,np_check:0
 #: field:stock.move,is_narcotic:0
 #: field:stock.move.in.processor,np_check:0
-#: field:stock.move.memory.picking,np_check:0
-#: field:stock.move.memory.ppl,np_check:0
-#: field:stock.move.memory.returnproducts,np_check:0
 #: field:stock.move.processor,np_check:0
 #: field:stock.picking,is_narcotic:0
 #: report:msf.freight_manifest:0
@@ -20669,8 +20524,6 @@ msgstr "The Purchase Order %s does not correspond to the current one (%s)."
 #: field:initial.stock.inventory.line,np_check:0
 #: field:stock.inventory.line,np_check:0
 #: field:stock.move,np_check:0
-#: field:stock.move.memory.in,np_check:0
-#: field:stock.move.memory.out,np_check:0
 #: field:stock.production.lot,np_check:0
 #: view:physical.inventory:0
 #: field:physical.inventory.counting,is_cs:0
@@ -20891,9 +20744,6 @@ msgstr "Product category MSFID \"%s\" not found"
 #: view:return.ppl.move.processor:0
 #: field:physical.inventory.discrepancy,product_uom_id:0
 #: view:account.invoice:0
-#: view:stock.move.memory.picking:0
-#: view:stock.move.memory.ppl:0
-#: view:stock.move.memory.returnproducts:0
 #: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:58
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:68
 #: view:procurement.order:0
@@ -20939,21 +20789,7 @@ msgstr "Suivi"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -21485,7 +21321,6 @@ msgstr "Unités Logistiques"
 #: field:product.likely.expire.report.item.line,expired_date:0
 #: field:real.average.consumption.line,expiry_date:0
 #: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:166
-#: field:incoming.import.xml.line,expiry_date:0
 #: field:wizard.import.in.line.simulation.screen,imp_exp_date:0
 #: field:internal.move.processor,expiry_date:0
 #: field:outgoing.delivery.move.processor,expiry_date:0
@@ -24025,12 +23860,9 @@ msgstr "Zone Interne"
 #: code:addons/msf_doc_import/wizard/__init__.py:78
 #: field:wizard.import.in.line.simulation.screen,imp_batch_id:0
 #: field:wizard.import.in.line.simulation.screen,imp_batch_name:0
-#: view:stock.move.memory.picking:0
 #: view:stock.picking:0
 #: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:75
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:70
-#: view:stock.move.memory.in:0
-#: view:stock.move.memory.out:0
 #: field:stock.production.lot,name:0
 #: field:report.batch.recall,prodlot_id:0
 #: report:destruction.location:0
@@ -25184,7 +25016,6 @@ msgstr "Guide de Références"
 #: view:shipment.additionalitems:0
 #: model:ir.model,name:msf_outgoing.model_memory_additionalitems
 #: model:ir.model,name:msf_outgoing.model_shipment_additionalitems
-#: model:ir.model,name:msf_outgoing.model_stock_move_memory_shipment_additionalitems
 #: field:shipment,additional_items_ids:0
 #: report:msf.freight_manifest:0
 msgid "Additional Items"
@@ -25917,11 +25748,6 @@ msgstr "Le comptable valide les écritures comptables provenant de la facture."
 msgid "Can not %s draft/proforma/cancel invoice."
 msgstr "Ne peut %s une facture brouillon/pro forma/annulée."
 
-#. module: msf_doc_import
-#: model:ir.model,name:msf_doc_import.model_incoming_import_xml_line
-msgid "incoming.import.xml.line"
-msgstr "incoming.import.xml.line"
-
 #. modules: account_override,  account
 #: selection:account.journal.column,field:0
 #: field:account.move.line,is_addendum_line:0
@@ -25942,11 +25768,6 @@ msgstr "Aller au document"
 #: selection:res.request,state:0
 msgid "draft"
 msgstr "brouillon"
-
-#. module: msf_outgoing
-#: view:stock.move.memory.shipment.create:0
-msgid "Number to Ship"
-msgstr "Nombre à Expédier"
 
 #. modules: account, account_mcdb, register_accounting, msf_doc_import
 #: report:combined.journals.report.pdf:0
@@ -26528,12 +26349,7 @@ msgstr "Total Solde Calculé en Devise Fonctionnelle"
 #: field:outgoing.delivery.move.processor,cost:0
 #: field:return.ppl.move.processor,cost:0
 #: field:stock.move.in.processor,cost:0
-#: field:stock.move.memory.picking,cost:0
-#: field:stock.move.memory.ppl,cost:0
-#: field:stock.move.memory.returnproducts,cost:0
 #: field:stock.move.processor,cost:0
-#: field:stock.move.memory.in,cost:0
-#: field:stock.move.memory.out,cost:0
 msgid "Cost"
 msgstr "Coût"
 
@@ -28238,11 +28054,6 @@ msgstr "Mettre à jours des Données"
 #. module: msf_outgoing
 #: field:pack.family.memory,from_pack:0
 #: field:stock.move,from_pack:0
-#: field:stock.move.memory.families,from_pack:0
-#: field:stock.move.memory.ppl,from_pack:0
-#: field:stock.move.memory.shipment.create,from_pack:0
-#: field:stock.move.memory.shipment.returnpacks,from_pack:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,from_pack:0
 #: field:in.family.processor,from_pack:0
 #: field:ppl.family.processor,from_pack:0
 #: field:return.pack.shipment.family.processor,from_pack:0
@@ -28265,9 +28076,6 @@ msgstr "Mnt résiduel dev. d'enreg."
 
 #. module: msf_outgoing
 #: field:pack.family.memory,ppl_id:0
-#: field:stock.move.memory.shipment.create,ppl_id:0
-#: field:stock.move.memory.shipment.returnpacks,ppl_id:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,ppl_id:0
 msgid "PPL Ref"
 msgstr "Réf. LPC"
 
@@ -29152,8 +28960,6 @@ msgid "Import IN, process IN & pick and pack"
 msgstr "Importer IN, traiter IN & Pick et Colissage"
 
 #. modules: delivery_mechanism, msf_outgoing
-#: view:stock.move.memory.in:0
-#: view:stock.move.memory.out:0
 #: view:internal.move.processor:0
 #: view:outgoing.delivery.move.processor:0
 #: view:stock.move.in.processor:0
@@ -29502,11 +29308,6 @@ msgid "Error! The duration of the Fiscal Year is invalid. "
 msgstr "Erreur ! La durée de l'Exercice comptable est incorrecte. "
 
 #. modules: msf_outgoing, stock
-#: help:stock.move.memory.picking,cost:0
-#: help:stock.move.memory.ppl,cost:0
-#: help:stock.move.memory.returnproducts,cost:0
-#: help:stock.move.memory.in,cost:0
-#: help:stock.move.memory.out,cost:0
 #: help:internal.move.processor,cost:0
 #: help:outgoing.delivery.move.processor,cost:0
 #: help:return.ppl.move.processor,cost:0
@@ -31032,21 +30833,7 @@ msgstr "Run scheduler automatically ?"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -31474,11 +31261,6 @@ msgstr "Entrée - Période"
 msgid "Default Purchase Tax"
 msgstr "Taxe d'Achat par défaut"
 
-#. module: msf_outgoing
-#: model:ir.model,name:msf_outgoing.model_stock_move_memory_ppl
-msgid "stock.move.memory.ppl"
-msgstr "stock.move.memory.ppl"
-
 #. module: register_accounting
 #: field:wizard.cash.return,returned_amount:0
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:883
@@ -31540,13 +31322,8 @@ msgstr "Pacific/Galapagos"
 #: field:kit.creation.to.consume,batch_check_kit_creation_to_consume:0
 #: field:substitute.item,hidden_batch_management_mandatory:0
 #: field:substitute.item.mirror,hidden_batch_management_mandatory:0
-#: field:stock.move.memory.picking,lot_check:0
-#: field:stock.move.memory.ppl,lot_check:0
-#: field:stock.move.memory.returnproducts,lot_check:0
 #: field:claim.product.line,hidden_batch_management_mandatory_claim_product_line:0
 #: view:initial.stock.inventory:0
-#: field:stock.move.memory.in,lot_check:0
-#: field:stock.move.memory.out,lot_check:0
 #: field:wizard.import.in.line.simulation.screen,lot_check:0
 #: field:internal.move.processor,lot_check:0
 #: field:outgoing.delivery.move.processor,lot_check:0
@@ -34353,13 +34130,6 @@ msgstr "Fetched on"
 msgid "Display Button"
 msgstr "Display Button"
 
-#. module: msf_outgoing
-#: field:stock.move.memory.shipment.create,selected_number:0
-#: field:stock.move.memory.shipment.returnpacks,selected_number:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,selected_number:0
-msgid "Selected Number"
-msgstr "Selected Number"
-
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
 #: selection:base.setup.company,bill_country_id:0
@@ -34554,21 +34324,7 @@ msgstr "MALAYSIAN RINGGIT"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -36019,11 +35775,6 @@ msgstr "JE status"
 msgid "%U - Week number of the year (Sunday as the first day of the week) as a decimal number [00,53]. All days in a new year preceding the first Sunday are considered to be in week 0."
 msgstr "%U - Numéro de la semaine de l'année (Dimanche étant le premier jour de la semaine) enregistré sous forme décimale [00,53]. Tous les jours d'une nouvelle année précédant le premier dimanche de cette même année sont considérés faisant partie de la semaine 0.."
 
-#. module: msf_outgoing
-#: field:stock.move.memory.shipment.returnpacksfromshipment,return_to:0
-msgid "Return To"
-msgstr "Retour Vers/A"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -36062,10 +35813,6 @@ msgstr "Gestion des Widgets de la page d'accueil"
 #: field:pack.family.memory,length:0
 #: field:pack.type,length:0
 #: field:stock.move,length:0
-#: field:stock.move.memory.families,length:0
-#: field:stock.move.memory.shipment.create,length:0
-#: field:stock.move.memory.shipment.returnpacks,length:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,length:0
 #: field:in.family.processor,length:0
 #: field:ppl.family.processor,length:0
 #: field:return.pack.shipment.family.processor,length:0
@@ -36272,10 +36019,6 @@ msgstr "Indes/Chagos"
 
 #. module: msf_outgoing
 #: view:shipment:0
-#: view:stock.move.memory.families:0
-#: view:stock.move.memory.shipment.create:0
-#: view:stock.move.memory.shipment.returnpacks:0
-#: view:stock.move.memory.shipment.returnpacksfromshipment:0
 #: view:ppl.family.processor:0
 #: view:return.pack.shipment.family.processor:0
 #: view:return.shipment.family.processor:0
@@ -36301,11 +36044,6 @@ msgstr "Produit commandé"
 #: selection:ir.translation,lang:0
 msgid "Korean (KP) / 한국어 (KP)"
 msgstr "Coréen (KP) / 한국어 (KP)"
-
-#. module: msf_outgoing
-#: model:ir.model,name:msf_outgoing.model_stock_move_memory_shipment_returnpacks
-msgid "stock.move.memory.shipment.returnpacks"
-msgstr "stock.move.memory.shipment.returnpacks"
 
 #. module: purchase
 #: code:addons/purchase/purchase_order_line.py:653
@@ -36443,11 +36181,6 @@ msgstr "vsep"
 #: help:wizard.import.invoice,statement_id:0
 msgid "Register that we come from."
 msgstr "Registre d'où nous venons."
-
-#. module: msf_outgoing
-#: field:stock.move.memory.ppl,qty_per_pack:0
-msgid "Qty p.p."
-msgstr "Qté par colis"
 
 #. module: msf_outgoing
 #: model:ir.model,name:msf_outgoing.model_return_ppl_processor
@@ -37224,7 +36957,6 @@ msgstr "Sur Plusieurs Documents"
 #: view:stock.inventory:0
 #: report:stock.inventory.move:0
 #: view:stock.move:0
-#: field:stock.partial.move,date:0
 #: field:stock.partial.picking,date:0
 #: view:stock.picking:0
 #: field:stock.forecast.line,date:0
@@ -37662,9 +37394,6 @@ msgstr "Réallocation groupée - Toutes lignes résultats"
 #: report:picking.ticket:0
 #: report:msf.report_reception_in:0
 #: field:account.invoice.line,uos_id:0
-#: field:stock.move.memory.picking,product_uom:0
-#: field:stock.move.memory.ppl,product_uom:0
-#: field:stock.move.memory.returnproducts,product_uom:0
 #: field:make.procurement,uom_id:0
 #: report:msf.purchase.order:0
 #: report:msf.purchase.quotation:0
@@ -37672,8 +37401,6 @@ msgstr "Réallocation groupée - Toutes lignes résultats"
 #: field:wizard.account.invoice.line,uos_id:0
 #: report:msf.sale.order:0
 #: field:stock.move,product_uom:0
-#: field:stock.move.memory.in,product_uom:0
-#: field:stock.move.memory.out,product_uom:0
 #: field:account.direct.invoice.wizard.line,uos_id:0
 msgid "Unit of Measure"
 msgstr "Unité de Mesure"
@@ -39035,11 +38762,6 @@ msgstr "America/Recife"
 #: field:enter.reason,change_reason:0
 #: field:stock.move,change_reason:0
 #: field:stock.picking,change_reason:0
-#: field:stock.move.memory.in,change_reason:0
-#: field:stock.move.memory.out,change_reason:0
-#: field:stock.move.memory.picking,change_reason:0
-#: field:stock.move.memory.ppl,change_reason:0
-#: field:stock.move.memory.returnproducts,change_reason:0
 #: field:change.product.move.processor,change_reason:0
 msgid "Change Reason"
 msgstr "Raison du Changement"
@@ -40229,7 +39951,6 @@ msgstr "De confirmé à attribué."
 #: code:addons/msf_doc_import/wizard/__init__.py:104
 #: code:addons/msf_doc_import/wizard/__init__.py:122
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:222
-#: field:incoming.import.xml.line,uom_id:0
 #: report:po.simulation.screen:0
 #: field:purchase.line.import.xml.line,product_uom:0
 #: field:wizard.import.in.line.simulation.screen,imp_uom_id:0
@@ -42212,21 +41933,7 @@ msgstr "Afficher les instances ?"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -43135,11 +42842,6 @@ msgstr "\n"
 "        "
 
 #. modules: msf_outgoing, stock
-#: view:stock.move.memory.picking:0
-#: view:stock.move.memory.ppl:0
-#: view:stock.move.memory.returnproducts:0
-#: view:stock.move.memory.in:0
-#: view:stock.move.memory.out:0
 #: view:return.ppl.move.processor:0
 msgid "Product Moves"
 msgstr "Mouvements Produit"
@@ -43605,21 +43307,7 @@ msgstr "MACEDONIAN DENAR"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -43638,21 +43326,7 @@ msgstr "La quantité allouée doit être plus petite ou égale à la quantité d
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -43667,11 +43341,6 @@ msgstr "Pas besoin de mentionner un numéro de lot/une date d'expiration"
 
 #. modules: msf_outgoing, consumption_calculation, specific_rules
 #: field:real.average.consumption.line,batch_number_check:0
-#: field:stock.move.memory.picking,batch_number_check:0
-#: field:stock.move.memory.ppl,batch_number_check:0
-#: field:stock.move.memory.returnproducts,batch_number_check:0
-#: field:stock.move.memory.in,batch_number_check:0
-#: field:stock.move.memory.out,batch_number_check:0
 msgid "Batch Number Check"
 msgstr "Vérification Numéro de Lot"
 
@@ -44999,11 +44668,6 @@ msgstr "FACTURES OUVERTES"
 #. modules: msf_outgoing, kit
 #: field:purchase.order.line,kit_pol_check:0
 #: field:sale.order.line,kit_pol_check_sale_order_line:0
-#: field:stock.move.memory.in,kit_mem_check:0
-#: field:stock.move.memory.out,kit_mem_check:0
-#: field:stock.move.memory.picking,kit_mem_check:0
-#: field:stock.move.memory.ppl,kit_mem_check:0
-#: field:stock.move.memory.returnproducts,kit_mem_check:0
 msgid "Kit Mem Check"
 msgstr "Kit - Mem Vérification"
 
@@ -45019,16 +44683,6 @@ msgstr "Modèles de Taxe"
 #: view:ir.actions.wizard:0
 #: field:wizard.ir.model.menu.create.line,wizard_id:0
 #: field:documents.done.problem,wizard_id:0
-#: field:stock.move.memory.families,wizard_id:0
-#: field:stock.move.memory.picking,wizard_id:0
-#: field:stock.move.memory.picking,wizard_pick_id:0
-#: field:stock.move.memory.ppl,wizard_id:0
-#: field:stock.move.memory.ppl,wizard_pick_id:0
-#: field:stock.move.memory.returnproducts,wizard_id:0
-#: field:stock.move.memory.returnproducts,wizard_pick_id:0
-#: field:stock.move.memory.shipment.create,wizard_id:0
-#: field:stock.move.memory.shipment.returnpacks,wizard_id:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,wizard_id:0
 #: field:user.access.results.groups.line,wizard_id_user_access_results_line:0
 #: field:user.access.results.menus.line,wizard_id_user_access_results_line:0
 #: field:user.access.results.users.line,wizard_id_user_access_results_line:0
@@ -45036,14 +44690,9 @@ msgstr "Modèles de Taxe"
 #: field:wizard.register.creation.lines,wizard_id:0
 #: field:wizard.register.import.errors,wizard_id:0
 #: field:wizard.register.import.lines,wizard_id:0
-#: field:stock.move.memory.in,wizard_id:0
-#: field:stock.move.memory.in,wizard_pick_id:0
-#: field:stock.move.memory.out,wizard_id:0
-#: field:stock.move.memory.out,wizard_pick_id:0
 #: field:stock.forecast.line,wizard_id:0
 #: field:res.country.restriction.memory,wizard_id:0
 #: field:hq.entries.split.lines,wizard_id:0
-#: field:incoming.import.xml.line,wizard_id:0
 #: field:msf.doc.import.accounting.errors,wizard_id:0
 #: field:msf.doc.import.accounting.lines,wizard_id:0
 #: field:product.product.import.line.qty,wizard_id:0
@@ -45102,21 +44751,7 @@ msgstr "Excel file"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
@@ -45665,7 +45300,6 @@ msgstr "Exclure la sélection de journaux"
 #: field:expiry.quantity.report.line,batch_number:0
 #: view:product.likely.expire.report.item:0
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:46
-#: field:incoming.import.xml.line,prodlot_id:0
 #: report:empty.picking.ticket:0
 #: report:packing.list:0
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:180
@@ -47908,11 +47542,6 @@ msgstr "Destination Partenaire"
 #: field:stock.move.in.processor,location_supplier_customer_mem_out:0
 #: field:stock.move.processor,location_supplier_customer_mem_out:0
 #: field:validate.move.processor,location_supplier_customer_mem_out:0
-#: field:stock.move.memory.picking,location_supplier_customer_mem_out:0
-#: field:stock.move.memory.ppl,location_supplier_customer_mem_out:0
-#: field:stock.move.memory.returnproducts,location_supplier_customer_mem_out:0
-#: field:stock.move.memory.in,location_supplier_customer_mem_out:0
-#: field:stock.move.memory.out,location_supplier_customer_mem_out:0
 msgid "Location Supplier Customer"
 msgstr "Zone Fournisseur Client"
 
@@ -48983,21 +48612,7 @@ msgstr "Air"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -49486,21 +49101,7 @@ msgstr "Product not defined on %s line%s: %s"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -49910,21 +49511,7 @@ msgstr "Toutes les écritures doivent être comptabilisées définitivement avan
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 #: code:addons/msf_outgoing/__init__.py:49
@@ -49988,22 +49575,8 @@ msgstr "Vous ne pouvez pas supprimer ce créateur  produit parce qu il est utili
 #: selection:return.pack.shipment.family.processor,integrity_status:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
 #: selection:stock.move,integrity_error:0
 #: selection:stock.move.in.processor,sequence_issue:0
@@ -51828,10 +51401,6 @@ msgstr "\n"
 #: field:pack.family.memory,width:0
 #: field:pack.type,width:0
 #: field:stock.move,width:0
-#: field:stock.move.memory.families,width:0
-#: field:stock.move.memory.shipment.create,width:0
-#: field:stock.move.memory.shipment.returnpacks,width:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,width:0
 #: field:in.family.processor,width:0
 #: field:ppl.family.processor,width:0
 #: field:return.pack.shipment.family.processor,width:0
@@ -52204,21 +51773,7 @@ msgstr "Planification"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -52836,11 +52391,6 @@ msgstr "-"
 #: model:process.node,name:hr.process_node_openerpuser0
 msgid "Openerp user"
 msgstr "Utilisateur Openerp"
-
-#. module: msf_doc_import
-#: field:incoming.import.xml.line,line_values:0
-msgid "Line values"
-msgstr "Line values"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,state_id:0
@@ -56362,10 +55912,6 @@ msgstr "Clôture annuelle"
 #: field:pack.family.memory,height:0
 #: field:pack.type,height:0
 #: field:stock.move,height:0
-#: field:stock.move.memory.families,height:0
-#: field:stock.move.memory.shipment.create,height:0
-#: field:stock.move.memory.shipment.returnpacks,height:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,height:0
 #: field:in.family.processor,height:0
 #: field:ppl.family.processor,height:0
 #: field:return.pack.shipment.family.processor,height:0
@@ -57527,9 +57073,6 @@ msgstr "%s was not a number, it is set to %d by default."
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:47
 #: report:empty.picking.ticket:0
 #: report:picking.ticket:0
-#: field:stock.move.memory.picking,expiry_date:0
-#: field:stock.move.memory.ppl,expiry_date:0
-#: field:stock.move.memory.returnproducts,expiry_date:0
 #: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:76
 #: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:71
 #: report:addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako:64
@@ -57539,8 +57082,6 @@ msgstr "%s was not a number, it is set to %d by default."
 #: field:initial.stock.inventory.line,expiry_date:0
 #: field:report.stock.inventory,expired_date:0
 #: field:stock.inventory.line,expiry_date:0
-#: field:stock.move.memory.in,expiry_date:0
-#: field:stock.move.memory.out,expiry_date:0
 #: field:stock.move,expired_date:0
 #: report:delivery.order:0
 #: report:internal.move:0
@@ -58621,16 +58162,6 @@ msgstr "Le nom complet du pays."
 #: report:purchase.order:0
 msgid "Fax :"
 msgstr "Fax :"
-
-#. modules: msf_outgoing, stock_override, product_asset, specific_rules, kit, stock
-#: model:ir.model,name:kit.model_stock_move_memory_in
-#: model:ir.model,name:msf_outgoing.model_stock_move_memory_in
-#: model:ir.model,name:product_asset.model_stock_move_memory_in
-#: model:ir.model,name:specific_rules.model_stock_move_memory_in
-#: model:ir.model,name:stock.model_stock_move_memory_in
-#: model:ir.model,name:stock_override.model_stock_move_memory_in
-msgid "stock.move.memory.in"
-msgstr "stock.move.memory.in"
 
 #. module: consumption_calculation
 #: view:product.likely.expire.report:0
@@ -60122,13 +59653,8 @@ msgstr "Palette"
 #: field:internal.move.processor,np_check:0
 #: field:pack.family.memory,fake_state:0
 #: field:shipment,partner_type:0
-#: field:stock.move.memory.picking,uom_category:0
-#: field:stock.move.memory.ppl,uom_category:0
-#: field:stock.move.memory.returnproducts,uom_category:0
 #: field:expected.sale.order.line,po_id:0
 #: field:sale.order.line,loan_type:0
-#: field:stock.move.memory.in,uom_category:0
-#: field:stock.move.memory.out,uom_category:0
 #: field:report.stock.lines.date,product_code:0
 #: field:report.stock.lines.date,product_name:0
 #: field:stock.picking,partner_type:0
@@ -60336,11 +59862,6 @@ msgstr "Asie/Katmandou"
 #. module: msf_outgoing
 #: field:pack.family.memory,to_pack:0
 #: field:stock.move,to_pack:0
-#: field:stock.move.memory.families,to_pack:0
-#: field:stock.move.memory.ppl,to_pack:0
-#: field:stock.move.memory.shipment.create,to_pack:0
-#: field:stock.move.memory.shipment.returnpacks,to_pack:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,to_pack:0
 #: field:in.family.processor,to_pack:0
 #: field:ppl.family.processor,to_pack:0
 #: field:return.pack.shipment.family.processor,to_pack:0
@@ -60809,13 +60330,6 @@ msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Journal 
 #: selection:sync.monitor,user_rights:0
 msgid "In Progress..."
 msgstr "En Cours..."
-
-#. module: msf_outgoing
-#: field:stock.move.memory.shipment.create,selected_weight:0
-#: field:stock.move.memory.shipment.returnpacks,selected_weight:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,selected_weight:0
-msgid "Selected Weight [kg]"
-msgstr "Poids Sélectionné [kg]"
 
 #. module: msf_config_locations
 #: field:stock.location,input_ok:0
@@ -64607,7 +64121,6 @@ msgstr "Gestion des Suivis"
 
 #. modules: msf_doc_import, msf_tools, msf_supply_doc_export, sale, account
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:64
-#: field:incoming.import.xml.line,line_number:0
 #: field:purchase.line.import.xml.line,line_number:0
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:221
 #: code:addons/msf_tools/automated_import_job.py:499
@@ -65079,21 +64592,7 @@ msgstr "En Cours à partir de la Coordination"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 #: selection:stock.move.in.processor,sequence_issue:0
@@ -65157,21 +64656,7 @@ msgstr "Les produits de Service doivent avoir comme lieu source le lieu de trans
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -65309,11 +64794,6 @@ msgid "Change currency of the order"
 msgstr "Modifier la devise de la commande"
 
 #. modules: delivery_mechanism, msf_outgoing, stock, msf_doc_import, account_hq_entries
-#: view:stock.move.memory.in:0
-#: view:stock.move.memory.out:0
-#: view:stock.move.memory.picking:0
-#: view:stock.move.memory.ppl:0
-#: view:stock.move.memory.shipment.returnpacksfromshipment:0
 #: selection:wizard.import.in.line.simulation.screen,type_change:0
 #: selection:wizard.import.po.simulation.screen.line,type_change:0
 #: selection:wizard.simu.import.po.line,change_type:0
@@ -66905,8 +66385,6 @@ msgstr "New Mexico"
 #: view:stock.move.processor:0
 #: view:stock.move:0
 #: view:stock.move:0
-#: field:stock.partial.move,product_moves_in:0
-#: field:stock.partial.move,product_moves_out:0
 #: field:stock.partial.picking,product_moves_in:0
 #: field:stock.partial.picking,product_moves_out:0
 #: view:stock.card.wizard:0
@@ -68605,21 +68083,7 @@ msgstr "Méthode d'Approvisionnement"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.pack.simulation.screen,integrity_status:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
@@ -71733,25 +71197,11 @@ msgstr "Invalid prefix or suffix for sequence '%s'"
 #: field:return.shipment.family.processor,integrity_status:0
 #: field:shipment.additional.line.processor,integrity_status:0
 #: field:shipment.family.processor,integrity_status:0
-#: field:stock.move.memory.families,integrity_status:0
-#: field:stock.move.memory.in,integrity_status:0
-#: field:stock.move.memory.out,integrity_status:0
-#: field:stock.move.memory.picking,integrity_status:0
-#: field:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: field:stock.move.memory.ppl,integrity_status:0
-#: field:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: field:stock.move.memory.returnproducts,integrity_status:0
-#: field:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: field:stock.move.memory.shipment.create,integrity_status:0
-#: field:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:product.asset.event,state:0
 #: view:purchase.order.line:0
 #: field:claim.product.line,integrity_status_claim_product_line:0
 #: view:sale.order.cancelation.wizard:0
 #: view:initial.stock.inventory:0
-#: field:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: field:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: view:sale.price.setup:0
 msgid " "
 msgstr " "
@@ -74042,11 +73492,6 @@ msgid "You can't source a loan 'on order'."
 msgstr "You can't source a loan 'on order'."
 
 #. modules: msf_outgoing, stock
-#: field:stock.move.memory.picking,quantity:0
-#: field:stock.move.memory.ppl,quantity:0
-#: field:stock.move.memory.returnproducts,quantity:0
-#: field:stock.move.memory.in,quantity:0
-#: field:stock.move.memory.out,quantity:0
 #: view:internal.move.processor:0
 #: view:outgoing.delivery.move.processor:0
 #: view:stock.move.in.processor:0
@@ -75130,11 +74575,6 @@ msgstr "%j - Jour dans l'année [001,366]."
 msgid "Domain"
 msgstr "Domaine"
 
-#. module: msf_outgoing
-#: model:ir.model,name:msf_outgoing.model_stock_move_memory_shipment_returnpacksfromshipment
-msgid "stock.move.memory.shipment.returnpacksfromshipment"
-msgstr "stock.move.memory.shipment.returnpacksfromshipment"
-
 #. module: procurement
 #: model:ir.module.module,description:procurement.module_meta_information
 msgid "\n"
@@ -75764,21 +75204,7 @@ msgstr "La connexion au site distant est OK"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 #: code:addons/msf_outgoing/__init__.py:43
@@ -76325,15 +75751,10 @@ msgid "Stocks exist (internal locations)"
 msgstr "Stock existant (zone interne)"
 
 #. modules: msf_outgoing, sale, specific_rules
-#: field:stock.move.memory.picking,kc_check:0
-#: field:stock.move.memory.ppl,kc_check:0
-#: field:stock.move.memory.returnproducts,kc_check:0
 #: report:msf.freight_manifest:0
 #: field:initial.stock.inventory.line,kc_check:0
 #: field:stock.inventory.line,kc_check:0
 #: field:stock.move,kc_check:0
-#: field:stock.move.memory.in,kc_check:0
-#: field:stock.move.memory.out,kc_check:0
 #: field:stock.production.lot,kc_check:0
 msgid "KC"
 msgstr "GF"
@@ -76605,10 +76026,6 @@ msgstr "Stock - Prévision"
 
 #. module: msf_outgoing
 #: field:stock.move,num_of_packs:0
-#: field:stock.move.memory.ppl,num_of_packs:0
-#: field:stock.move.memory.shipment.create,num_of_packs:0
-#: field:stock.move.memory.shipment.returnpacks,num_of_packs:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,num_of_packs:0
 #: field:stock.picking,num_of_packs:0
 msgid "#Packs"
 msgstr "#Colis"
@@ -76923,10 +76340,6 @@ msgstr "Limitation"
 #: model:ir.model,name:msf_outgoing.model_pack_type
 #: field:pack.family.memory,pack_type:0
 #: field:stock.move,pack_type:0
-#: field:stock.move.memory.families,pack_type:0
-#: field:stock.move.memory.shipment.create,pack_type:0
-#: field:stock.move.memory.shipment.returnpacks,pack_type:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,pack_type:0
 #: model:ir.model,name:sync_so.model_pack_type
 #: field:in.family.processor,pack_type:0
 #: field:ppl.family.processor,pack_type:0
@@ -78026,15 +77439,6 @@ msgstr "Tiers"
 msgid "Not Printable in Invoice"
 msgstr "Ne peut pas être impirmé sur la Facture"
 
-#. module: msf_outgoing
-#: field:stock.move.memory.in,force_complete:0
-#: field:stock.move.memory.out,force_complete:0
-#: field:stock.move.memory.picking,force_complete:0
-#: field:stock.move.memory.ppl,force_complete:0
-#: field:stock.move.memory.returnproducts,force_complete:0
-msgid "Force"
-msgstr "Effectifs"
-
 #. module: supplier_catalogue
 #: view:catalogue.export.lines:0
 msgid "Export lines from a catalogue"
@@ -78049,15 +77453,6 @@ msgstr "Créer et gérer les comptes dont vous avez besoin pour enregistrer des 
 #: model:ir.model,name:unifield_setup.model_allocation_stock_setup
 msgid "allocation.stock.setup"
 msgstr "allocation.stock.setup"
-
-#. modules: msf_outgoing, specific_rules
-#: field:stock.move.memory.picking,type_check:0
-#: field:stock.move.memory.ppl,type_check:0
-#: field:stock.move.memory.returnproducts,type_check:0
-#: field:stock.move.memory.in,type_check:0
-#: field:stock.move.memory.out,type_check:0
-msgid "Picking Type Check"
-msgstr "Type de Picking Vérification"
 
 #. module: procurement
 #: view:procurement.order:0
@@ -80094,16 +79489,6 @@ msgstr "\n"
 msgid "No invoice line given. Please save your commitment voucher line before."
 msgstr "Pas de ligne de facture donnée. Veuillez d'abord sauver la ligne de votre bon d'engagement. "
 
-#. modules: msf_outgoing, stock_override, product_asset, specific_rules, kit, stock
-#: model:ir.model,name:kit.model_stock_move_memory_out
-#: model:ir.model,name:msf_outgoing.model_stock_move_memory_out
-#: model:ir.model,name:product_asset.model_stock_move_memory_out
-#: model:ir.model,name:specific_rules.model_stock_move_memory_out
-#: model:ir.model,name:stock.model_stock_move_memory_out
-#: model:ir.model,name:stock_override.model_stock_move_memory_out
-msgid "stock.move.memory.out"
-msgstr "stock.move.memory.out"
-
 #. modules: object_query, useability_dashboard_and_menu
 #: model:ir.ui.menu,name:object_query.main_menu_preferences
 #: model:ir.ui.menu,name:object_query.menu_preferences
@@ -80136,21 +79521,7 @@ msgstr "Factures Manuelles"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -80489,9 +79860,6 @@ msgstr "Product creators"
 #. module: msf_outgoing
 #: field:return.pack.shipment.family.processor,volume:0
 #: field:return.shipment.family.processor,volume:0
-#: field:stock.move.memory.shipment.create,volume:0
-#: field:stock.move.memory.shipment.returnpacks,volume:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,volume:0
 msgid "Volume [dm³]"
 msgstr "Volume [dm³]"
 
@@ -80866,11 +80234,6 @@ msgstr "Non disponible"
 #: view:hr.expat.employee.import:0
 msgid "This wizard will import an Expat employees file in XML Spreadsheet 2003 format. To generate this file, create a Spreadsheet with 4 columns: 'Name' , 'Code', 'Status' and 'Contract End Date' (optional)."
 msgstr "Cet assistant importera un fichier d'employés expatriés au format Tableur XML 2003. Pour générer ce fichier, créez une feuille de calcul avec 4 colonnes : 'Nom' , 'Code', 'Statut' et 'Date de Fin de Contrat' (optionnel)."
-
-#. module: msf_outgoing
-#: model:ir.model,name:msf_outgoing.model_stock_move_memory_shipment_create
-msgid "stock.move.memory.shipment.create"
-msgstr "stock.move.memory.shipment.create"
 
 #. module: finance
 #: model:ir.model,name:finance.model_cash_request_payable
@@ -82515,7 +81878,6 @@ msgstr "SFTP connection succeeded"
 #: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:158
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:230
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:241
-#: field:incoming.import.xml.line,product_id:0
 #: model:ir.model,name:msf_doc_import.model_product_product
 #: report:po.simulation.screen:0
 #: field:product.product.import.line.qty,product_id:0
@@ -82533,9 +81895,6 @@ msgstr "SFTP connection succeeded"
 #: field:return.ppl.move.processor,product_id:0
 #: view:stock.move.in.processor:0
 #: field:stock.move.in.processor,product_id:0
-#: field:stock.move.memory.picking,product_id:0
-#: field:stock.move.memory.ppl,product_id:0
-#: field:stock.move.memory.returnproducts,product_id:0
 #: view:stock.move.processor:0
 #: field:stock.move.processor,product_id:0
 #: report:order.type.donation.certificate:0
@@ -82630,8 +81989,6 @@ msgstr "SFTP connection succeeded"
 #: report:stock.inventory.move:0
 #: view:stock.move:0
 #: field:stock.move,product_id:0
-#: field:stock.move.memory.in,product_id:0
-#: field:stock.move.memory.out,product_id:0
 #: field:stock.move.split,product_id:0
 #: view:stock.production.lot:0
 #: field:stock.production.lot,product_id:0
@@ -83342,13 +82699,8 @@ msgstr "Maroc"
 #: report:account.journal.period.print:0
 #: field:analytic.entries.report,move_id:0
 #: field:real.average.consumption.line,move_id:0
-#: field:stock.move.memory.picking,move_id:0
-#: field:stock.move.memory.ppl,move_id:0
-#: field:stock.move.memory.returnproducts,move_id:0
 #: field:stock.certificate.valuation,move_id:0
 #: field:purchase.order.followup.line,move_id:0
-#: field:stock.move.memory.in,move_id:0
-#: field:stock.move.memory.out,move_id:0
 #: field:report.stock.move,move:0
 #: field:stock.move.cancel.more.wizard,move_id:0
 #: field:change.dest.location,picking_id:0
@@ -83882,11 +83234,6 @@ msgstr "Field order created in current year"
 #: view:account.tax.template:0
 msgid "Special Computation"
 msgstr "Calcul Spécial"
-
-#. module: msf_outgoing
-#: view:stock.move.memory.shipment.create:0
-msgid "Weight to Ship [kg]"
-msgstr "Poids à Expédier [kg]"
 
 #. module: purchase_allocation_report
 #: view:purchase.order:0
@@ -85764,11 +85111,6 @@ msgstr "Fournisseur"
 #: model:ir.model,name:sync_so.model_sale_order_line_cancel
 msgid "sale.order.line.cancel"
 msgstr "sale.order.line.cancel"
-
-#. module: msf_outgoing
-#: view:stock.move.memory.shipment.returnpacks:0
-msgid "Number to Return"
-msgstr "Nombre à Retourner"
 
 #. module: base_setup
 #: model:ir.actions.act_window,name:base_setup.action_base_setup
@@ -88938,9 +88280,6 @@ msgstr "Deleted Object SD Ref"
 
 #. module: msf_outgoing
 #: field:pack.family.memory,sale_order_id:0
-#: field:stock.move.memory.shipment.create,sale_order_id:0
-#: field:stock.move.memory.shipment.returnpacks,sale_order_id:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,sale_order_id:0
 msgid "Sale Order Ref"
 msgstr "Réf Commande de Terrain"
 
@@ -90042,10 +89381,6 @@ msgstr "Valider les Lignes d'Ecriture comptable"
 #. module: msf_outgoing
 #: field:pack.family.memory,weight:0
 #: field:stock.move,weight:0
-#: field:stock.move.memory.families,weight:0
-#: field:stock.move.memory.shipment.create,weight:0
-#: field:stock.move.memory.shipment.returnpacks,weight:0
-#: field:stock.move.memory.shipment.returnpacksfromshipment,weight:0
 #: field:in.family.processor,weight:0
 #: field:ppl.family.processor,weight:0
 #: field:return.pack.shipment.family.processor,weight:0
@@ -90134,13 +89469,8 @@ msgid "Asia/Kashgar"
 msgstr "Asia/Kashgar"
 
 #. modules: sales_followup, msf_outgoing, specific_rules
-#: field:stock.move.memory.picking,uom_ordered:0
-#: field:stock.move.memory.ppl,uom_ordered:0
-#: field:stock.move.memory.returnproducts,uom_ordered:0
 #: report:addons/sales_followup/report/ir_follow_up_location_report_xls.mako:290
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:288
-#: field:stock.move.memory.in,uom_ordered:0
-#: field:stock.move.memory.out,uom_ordered:0
 msgid "UoM ordered"
 msgstr "UdM commandée"
 
@@ -91721,21 +91051,7 @@ msgstr "Entrant"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:return.ppl.move.processor,integrity_status:0
 #: selection:stock.move,integrity_error:0
 #: code:addons/msf_outgoing/__init__.py:54
@@ -92448,11 +91764,6 @@ msgstr "Tout afficher"
 msgid "Show all lines"
 msgstr "Toutes les lignes"
 
-#. module: msf_outgoing
-#: model:ir.model,name:msf_outgoing.model_stock_move_memory_families
-msgid "stock.move.memory.families"
-msgstr "stock.move.memory.families"
-
 #. modules: analytic_distribution_supply, analytic_override, analytic_distribution
 #: field:analytic.distribution.wizard,partner_type:0
 #: field:analytic.distribution,partner_type:0
@@ -92791,9 +92102,6 @@ msgstr "America/Anguilla"
 #: field:shipment,currency_id:0
 #: field:stock.move,currency_id:0
 #: field:stock.move.in.processor,currency:0
-#: field:stock.move.memory.picking,currency:0
-#: field:stock.move.memory.ppl,currency:0
-#: field:stock.move.memory.returnproducts,currency:0
 #: field:stock.move.processor,currency:0
 #: field:stock.picking,currency_id:0
 #: field:product.supplierinfo,get_first_currency:0
@@ -92848,8 +92156,6 @@ msgstr "America/Anguilla"
 #: field:sale.report,currency_id:0
 #: field:sale.report,pricelist_id:0
 #: field:stock.cost.reevaluation.line,currency_id:0
-#: field:stock.move.memory.in,currency:0
-#: field:stock.move.memory.out,currency:0
 #: field:report.stock.move,currency_id:0
 #: model:ir.model,name:supplier_catalogue.model_res_currency
 #: view:product.pricelist:0
@@ -93209,21 +92515,7 @@ msgstr "annuler"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -93235,6 +92527,11 @@ msgstr "annuler"
 #: code:addons/msf_outgoing/__init__.py:42
 msgid "Need Batch Number (Standard) not Expiry Date (Internal)"
 msgstr "Mention nécessaire d'un numéro de lot (Standard) mais pas d'une date d'expiration (Interne)"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/__init__.py:43
+msgid "BN is linked to another product"
+msgstr "Ce lot est lié à un autre produit"
 
 #. module: msf_outgoing
 #: report:empty.picking.ticket:0
@@ -94122,7 +93419,6 @@ msgid "Revaluated Amount"
 msgstr "Revaluated Amount"
 
 #. module: msf_doc_import
-#: field:incoming.import.xml.line,file_line_number:0
 #: field:purchase.import.xml.line,file_line_number:0
 #: field:purchase.line.import.xml.line,file_line_number:0
 msgid "File line numbers"
@@ -95473,21 +94769,7 @@ msgstr "Méthode d'Approvisionnement"
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1628
 #: selection:stock.move.in.processor,sequence_issue:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
@@ -96823,11 +96105,6 @@ msgstr "The Kit \"%s\" does not exist for this product."
 msgid "Line %s in the Excel file was ignored. Details: %s"
 msgstr "Ligne %s du fichier Excel a été ignorée. Détails : %s"
 
-#. module: msf_outgoing
-#: model:ir.model,name:msf_outgoing.model_stock_move_memory_picking
-msgid "stock.move.memory.picking"
-msgstr "stock.move.memory.picking"
-
 #. modules: purchase, account
 #: model:process.node,name:account.process_node_draftinvoices0
 #: model:process.node,name:purchase.process_node_invoicecontrol0
@@ -97230,21 +96507,7 @@ msgstr "Cochez cette case pour forcer cet utilisateur à changer son mot de pass
 #: selection:kit.selection.sale.line,integrity_status:0
 #: selection:substitute.item,integrity_status_func_substitute_item:0
 #: selection:substitute.item.mirror,integrity_status_func_substitute_item:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:claim.product.line,integrity_status_claim_product_line:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: selection:wizard.import.in.line.simulation.screen,integrity_status:0
 #: selection:internal.move.processor,integrity_status:0
 #: selection:outgoing.delivery.move.processor,integrity_status:0
@@ -97723,18 +96986,6 @@ msgstr "À"
 #: view:split.memory.move:0
 #: view:split.move.processor:0
 #: selection:stock.move.in.processor,integrity_status:0
-#: selection:stock.move.memory.families,integrity_status:0
-#: selection:stock.move.memory.in,integrity_status:0
-#: selection:stock.move.memory.out,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status:0
-#: selection:stock.move.memory.picking,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.ppl,integrity_status:0
-#: selection:stock.move.memory.ppl,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.returnproducts,integrity_status:0
-#: selection:stock.move.memory.returnproducts,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.shipment.create,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacks,integrity_status:0
-#: selection:stock.move.memory.shipment.returnpacksfromshipment,integrity_status:0
 #: selection:stock.move.processor,integrity_status:0
 #: view:register.reopen:0
 #: view:wizard.cash.return:0
@@ -97746,8 +96997,6 @@ msgstr "À"
 #: view:stock.inventory.line.split:0
 #: view:stock.move.split:0
 #: view:stock.split.into:0
-#: selection:stock.move.memory.in,integrity_status_func_stock_memory_move:0
-#: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 #: view:sync.client.register_entity:0
 #: selection:sync.monitor,data_pull:0
 #: selection:sync.monitor,data_pull_execute:0
@@ -98954,15 +98203,10 @@ msgstr "Picking – fermé"
 #. modules: base, stock, msf_outgoing
 #: selection:res.request,ref_doc1:0
 #: selection:res.request,ref_doc2:0
-#: field:stock.move.memory.picking,prodlot_id:0
-#: field:stock.move.memory.ppl,prodlot_id:0
-#: field:stock.move.memory.returnproducts,prodlot_id:0
 #: field:physical.inventory.counting,prod_lot_id:0
 #: model:res.request.link,name:stock.req_link_tracking
 #: field:stock.change.product.qty,prodlot_id:0
 #: report:stock.inventory.move:0
-#: field:stock.move.memory.in,prodlot_id:0
-#: field:stock.move.memory.out,prodlot_id:0
 #: field:stock.move.split.lines.exist,prodlot_id:0
 #: view:stock.production.lot:0
 msgid "Production Lot"
@@ -99036,12 +98280,7 @@ msgstr "Langues"
 #: field:substitute.item,hidden_asset_mandatory:0
 #: field:substitute.item.mirror,asset_id_substitute_item:0
 #: field:substitute.item.mirror,hidden_asset_mandatory:0
-#: field:stock.move.memory.picking,asset_id:0
-#: field:stock.move.memory.ppl,asset_id:0
-#: field:stock.move.memory.returnproducts,asset_id:0
 #: field:stock.move,asset_id:0
-#: field:stock.move.memory.in,asset_id:0
-#: field:stock.move.memory.out,asset_id:0
 #: field:claim.product.line,asset_id_claim_product_line:0
 #: report:delivery.order:0
 #: report:internal.move:0
