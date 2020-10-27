@@ -65,7 +65,7 @@ class financing_contract_format_line(osv.osv):
     # get list of accounts for duplet format lines
     def _create_account_couple_domain(self, account_destination_list):
         """
-        Returns the domain corresponding to the acc/dest list in param.
+        Returns the domain corresponding to the list of acc/dest in param.
         """
         dom = []
         if not account_destination_list:
@@ -80,7 +80,7 @@ class financing_contract_format_line(osv.osv):
         return dom
 
     # get list of accounts for quadruplet format lines
-    def _create_account_quadruplet_domain(self, account_quadruplet_list, funding_pool_ids=False):
+    def _create_account_quadruplet_domain(self, account_quadruplet_list, funding_pool_ids=[]):
         """
         Returns the domain corresponding to the list of quadruplets in param.
         """
@@ -229,17 +229,20 @@ class financing_contract_format_line(osv.osv):
                 account_couple_domain = self._create_account_couple_domain(account_destination_quadruplet_ids['account_destination_list'])
                 # get the criteria for accounts of quadruplet mode
                 account_quadruplet_domain = self._create_account_quadruplet_domain(account_destination_quadruplet_ids['account_quadruplet_list'], general_domain['funding_pool_ids'])
-
-                if not account_couple_domain and not account_quadruplet_domain:
-                    return [('id', '=', '-1')]
+                # "Accounts Only" Domain
+                account_only_domain = []
+                if browse_line.reporting_select_accounts_only:
+                    account_only_domain = [('general_account_id', 'in', [a.id for a in browse_line.reporting_account_ids])]
 
                 accounts_criteria = ['&', '&', ] + non_corrected_domain
-                if account_couple_domain and account_quadruplet_domain:
-                    accounts_criteria += ['|'] + account_couple_domain + account_quadruplet_domain
-                elif account_couple_domain:
+                if account_couple_domain:
                     accounts_criteria += account_couple_domain
                 elif account_quadruplet_domain:
                     accounts_criteria += account_quadruplet_domain
+                elif account_only_domain:
+                    accounts_criteria += account_only_domain
+                else:
+                    return [('id', '=', -1)]
 
                 return accounts_criteria
             else:
