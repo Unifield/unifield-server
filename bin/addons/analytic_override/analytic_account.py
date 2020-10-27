@@ -340,10 +340,11 @@ class analytic_account(osv.osv):
         It requires a tuple with (account, destination), e.g.: to get the FPs compatible with the G/L account 20 and the
         destination 30, use the dom [('fp_compatible_with_acc_dest_ids', '=', (20, 30))]
         """
-        dom = []
+        fp_ids = []
         if context is None:
             context = {}
         ir_model_data_obj = self.pool.get('ir.model.data')
+        account_obj = self.pool.get('account.account')
         for arg in args:
             if arg[0] == 'fp_compatible_with_acc_dest_ids':
                 operator = arg[1]
@@ -354,33 +355,41 @@ class analytic_account(osv.osv):
                 if acc_dest and isinstance(acc_dest, tuple) and len(acc_dest) == 2:
                     acc_id = acc_dest[0]
                     dest_id = acc_dest[1]
-                compatible_fp_ids = []
-                # The Funding Pool PF is compatible with everything
+                # The Funding Pool PF is compatible with everything and must always be displayed
                 try:
                     pf_id = ir_model_data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
                 except ValueError:
                     pf_id = 0
-                compatible_fp_ids.append(pf_id)
+                fp_ids.append(pf_id)
                 if acc_id and dest_id:
-                    other_fp_ids = self.search(cr, uid, [('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('id', '!=', pf_id)],
-                                               context=context)
-                    for fp in self.browse(cr, uid, other_fp_ids,
-                                          fields_to_fetch=['select_accounts_only', 'fp_account_ids', 'tuple_destination_account_ids'],
-                                          context=context):
-                        # when the link is made to G/L accounts only: all Destinations compatible with the acc. are allowed
-                        if fp.select_accounts_only and \
-                                acc_id in [a.id for a in fp.fp_account_ids if dest_id in [d.id for d in a.destination_ids]]:
-                            compatible = True
-                        # otherwise the combination "account + dest" must be checked
-                        elif not fp.select_accounts_only and (acc_id, dest_id) in \
-                                [(t.account_id.id, t.destination_id.id) for t in fp.tuple_destination_account_ids if not t.disabled]:
-                            compatible = True
-                        else:
-                            compatible = False
-                        if compatible:
-                            compatible_fp_ids.append(fp.id)
-                dom.append(('id', 'in', compatible_fp_ids))
-        return dom
+                    account_selected = account_obj.browse(cr, uid, acc_id, fields_to_fetch=['destination_ids'], context=context)
+                    # search for compatible FPs only if the account and destination selected are compatible with one another
+                    if dest_id in [d.id for d in account_selected.destination_ids]:
+                        # note: when the link is made to G/L accounts only, all Destinations compatible with the acc. are allowed
+                        cr.execute('''
+                            SELECT fp.id
+                            FROM
+                                account_analytic_account fp
+                                  LEFT JOIN fp_account_rel ON fp_account_rel.fp_id = fp.id
+                                  LEFT JOIN funding_pool_associated_destinations ON funding_pool_associated_destinations.funding_pool_id = fp.id
+                                  LEFT JOIN account_destination_link link ON link.id = funding_pool_associated_destinations.tuple_id
+                            WHERE
+                                fp.category = 'FUNDING' AND
+                                fp.type != 'view' AND
+                                fp.id != %(pf_id)s AND
+                                (
+                                    fp.select_accounts_only = 't' AND 
+                                    fp_account_rel.account_id = %(acc_id)s
+                                OR
+                                    fp.select_accounts_only = 'f' AND 
+                                    link.account_id = %(acc_id)s AND 
+                                    link.destination_id = %(dest_id)s AND 
+                                    link.disabled = 'f'
+                                )
+                        ''', {'pf_id': pf_id, 'acc_id': acc_id, 'dest_id': dest_id})
+                        other_fp_ids = [x[0] for x in cr.fetchall()]
+                        fp_ids.extend(other_fp_ids)
+        return [('id', 'in', fp_ids)]
 
     def _get_cc_instance_ids(self, cr, uid, ids, fields, arg, context=None):
         """
