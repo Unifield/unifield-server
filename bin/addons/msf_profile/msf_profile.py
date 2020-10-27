@@ -53,6 +53,59 @@ class patch_scripts(osv.osv):
     }
 
 
+    def us_7742_update_stock_mission(self, cr, uid, *a, **b):
+        cr.execute('''update stock_move m set included_in_mission_stock='t' from mission_move_rel rel where m.id = rel.move_id''')
+
+        location_obj = self.pool.get('stock.location')
+        quarantine_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('quarantine_location', '=', True)])
+        input_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('input_ok', '=', True)])
+        output_loc = location_obj.search(cr, uid, [('usage', '=', 'internal'), ('output_ok', '=', True)])
+        report_ids = self.pool.get('stock.mission.report').search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)])
+        if not report_ids:
+            return True
+        report_id = report_ids[0]
+
+        stock_query = '''
+          SELECT al.product_id, al.qty FROM (
+            SELECT
+                m.product_id,
+                SUM(
+                    CASE
+                        WHEN COALESCE(m.product_qty, 0.0)=0 THEN 0
+                        WHEN m.location_dest_id in %(loc)s and m.location_id in %(loc)s THEN 0
+                        WHEN m.location_dest_id in %(loc)s AND pt.uom_id = m.product_uom THEN m.product_qty
+                        WHEN m.location_dest_id in %(loc)s AND pt.uom_id != m.product_uom THEN m.product_qty / u.factor * pu.factor
+                        WHEN pt.uom_id = m.product_uom THEN -m.product_qty
+                        ELSE -m.product_qty / u.factor * pu.factor
+                    END
+                ) AS qty
+            FROM stock_move m
+                LEFT JOIN product_product pp ON m.product_id = pp.id
+                LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
+                LEFT JOIN product_uom pu ON pt.uom_id = pu.id
+                LEFT JOIN product_uom u ON m.product_uom = u.id
+            WHERE
+                m.state = 'done' AND
+                m.included_in_mission_stock = 't' AND
+                ( m.location_dest_id in %(loc)s or m.location_id in %(loc)s) AND
+                m.location_dest_id != m.location_id
+            GROUP BY
+                m.product_id
+            ) al WHERE qty!=0'''
+
+        for col, loc in [('quarantine_qty', quarantine_loc), ('input_qty', input_loc), ('opdd_qty', output_loc)]:
+            nb_update = 0
+            cr.execute(stock_query, {'loc': tuple(loc)})
+            for x in cr.fetchall():
+                cr.execute('update stock_mission_report_line line set '+col+'=%s  where product_id = %s and line.mission_report_id=%s RETURNING id', (x[1], x[0], report_id)) # not_a_user_entry
+                line_id = cr.fetchone()
+                if line_id:
+                    nb_update += 1
+                    cr.execute("update ir_model_data set last_modification=NOW(), touched='[''product_id'']' where model='stock.mission.report.line' and module='sd' and res_id=%s", (line_id[0],))
+            self._logger.warn('Mission stock line %s, updated: %d' % (col, nb_update))
+        return True
+
+
     def us_7742_hide_stock_pipe(self, cr, uid, *a, **b):
         instance = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id.instance_id
         if not instance:
@@ -3897,6 +3950,7 @@ class patch_scripts(osv.osv):
                 getattr(model_obj, method)(cr, uid, *a, **b)
                 self.write(cr, uid, [ps['id']], {'run': True})
             except Exception as e:
+                raise
                 err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
                 self._logger.error(err_msg)
                 raise osv.except_osv(

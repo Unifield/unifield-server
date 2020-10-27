@@ -1008,11 +1008,12 @@ class stock_mission_report(osv.osv):
                         SELECT id, product_id, product_uom, product_qty, location_id, location_dest_id
                         FROM stock_move
                         WHERE state = 'done'
-                        AND id not in (SELECT move_id FROM mission_move_rel WHERE mission_id = %s)
-            ''', (report_id,))
+                        AND included_in_mission_stock='f'
+            ''')
             res = cr.fetchall()
+            all_move_ids = []
             for move in res:
-                cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)', (report_id, move[0]))
+                all_move_ids.append(move[0])
                 product = product_obj.browse(cr, uid, move[1],
                                              fields_to_fetch=['uom_id', 'standard_price'])
                 line_id = line_obj.search(cr, uid, [('product_id', '=', move[1]),
@@ -1067,6 +1068,8 @@ class stock_mission_report(osv.osv):
 
                     vals.update({'internal_val': vals['internal_qty'] * product.standard_price})
                     line_obj.write(cr, uid, line.id, vals)
+            if all_move_ids:
+                cr.execute("update stock_move set included_in_mission_stock='t' where id in %s", (tuple(all_move_ids), ))
         return True
 
     def delete_previous_reports_attachments(self, cr, uid, ids, context=None):
@@ -1545,7 +1548,6 @@ class stock_mission_report_line(osv.osv):
         'in_pipe_coor_val': fields.float(digits=(16,2), string='In Pipe from Coord.', related_uom='uom_id'),
         'updated': fields.boolean(string='Updated'),
         'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean', store=True),
-        'move_ids': fields.many2many('stock.move', 'mission_line_move_rel', 'line_id', 'move_id', string='Moves'),
         'instance_id': fields.many2one(
             'msf.instance',
             string='HQ Instance',

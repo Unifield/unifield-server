@@ -635,6 +635,7 @@ class stock_move(osv.osv):
         'volume_set': fields.boolean('Volume set at PLL stage', readonly=1),
         'weight_set': fields.boolean('Weight set at PLL stage', readonly=1),
         'picking_with_sysint_name': fields.function(_get_picking_with_sysint_name, method=1, string='Picking IN [SYS-INT] name', type='char'),
+        'included_in_mission_stock': fields.boolean('Stock move used to compute MSRL', internal=1, select=1),
     }
 
     def _check_asset(self, cr, uid, ids, context=None):
@@ -768,6 +769,7 @@ class stock_move(osv.osv):
         'reason_type_id': lambda obj, cr, uid, context = {}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
         'not_chained': lambda *a: False,
         'integrity_error': 'empty',
+        'included_in_mission_stock': False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -942,7 +944,7 @@ class stock_move(osv.osv):
             default['pt_created'] = False
         if 'integrity_error' not in default:
             default['integrity_error'] = 'empty'
-
+        default['included_in_mission_stock'] = False
 
         new_id = super(stock_move, self).copy(cr, uid, id, default, context=context)
         if 'product_id' in default:  # Check constraints on lines
@@ -969,6 +971,7 @@ class stock_move(osv.osv):
 
         defaults['procurements'] = []
         defaults['original_from_process_stock_move'] = False
+        defaults['included_in_mission_stock'] = False
 
         # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
         if 'line_number' not in defaults and not context.get('keepLineNumber', False):
