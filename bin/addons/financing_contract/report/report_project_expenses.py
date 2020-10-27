@@ -142,6 +142,19 @@ class report_project_expenses2(report_sxw.rml_parse):
                 else:
                     lines[fcfl.code] = [ana_tuple]
 
+        # apply the exact same logic as above for "accounts only" selection
+        for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines):
+            ids_fcfl = format_line_obj.search(self.cr, self.uid,
+                                              [('reporting_account_ids', 'in', [analytic_line.general_account_id.id]),
+                                               ('format_id', '=', contract.format_id.id)])
+            for fcfl in format_line_obj.browse(self.cr, self.uid, ids_fcfl):
+                ana_tuple = (analytic_line, fcfl.code, fcfl.name)
+                if lines.has_key(fcfl.code):
+                    if not ana_tuple in lines[fcfl.code]:
+                        lines[fcfl.code] += [ana_tuple]
+                else:
+                    lines[fcfl.code] = [ana_tuple]
+
         self.lines = lines
         for x in lines:
             self.iter.append(len(lines[x]))
