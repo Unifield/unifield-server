@@ -67,9 +67,9 @@ class financing_contract_format_line(osv.osv):
         """
         Returns the domain corresponding to the acc/dest list in param.
         """
-        if not account_destination_list:
-            return False
         dom = []
+        if not account_destination_list:
+            return dom
         first = True
         for account_dest in account_destination_list:
             dom += ['&', ('general_account_id', '=', account_dest.account_id.id), ('destination_id', '=', account_dest.destination_id.id)]
@@ -81,29 +81,27 @@ class financing_contract_format_line(osv.osv):
 
     # get list of accounts for quadruplet format lines
     def _create_account_quadruplet_domain(self, account_quadruplet_list, funding_pool_ids=False):
-        if len(account_quadruplet_list) == 0:
-            return False
-        elif len(account_quadruplet_list) == 1:
-            if account_quadruplet_list[0].funding_pool_id.id in funding_pool_ids:
-                quad_element = account_quadruplet_list[0]
-                return ['&',
+        """
+        Returns the domain corresponding to the list of quadruplets in param.
+        """
+        dom = []
+        if not account_quadruplet_list:
+            return dom
+        first = True
+        for quad in account_quadruplet_list:
+            if quad.funding_pool_id.id in funding_pool_ids:
+                dom += ['&',
                         '&',
-                        ('general_account_id', '=', quad_element.account_id.id),
-                        ('destination_id', '=', quad_element.account_destination_id.id),
                         '&',
-                        ('cost_center_id', '=', quad_element.cost_center_id.id),
-                        ('account_id', '=', quad_element.funding_pool_id.id)]
-            else:
-                return False
-        else:
-            firstElement = self._create_account_quadruplet_domain([account_quadruplet_list[0]], funding_pool_ids)
-            secondElement = self._create_account_quadruplet_domain(account_quadruplet_list[1:], funding_pool_ids)
-
-            if firstElement and secondElement:
-                return ['|'] + firstElement + secondElement
-            elif firstElement:
-                return firstElement
-            return secondElement
+                        ('general_account_id', '=', quad.account_id.id),
+                        ('destination_id', '=', quad.account_destination_id.id),
+                        ('cost_center_id', '=', quad.cost_center_id.id),
+                        ('account_id', '=', quad.funding_pool_id.id)]
+                if not first:
+                    dom.insert(0, '|')
+                else:
+                    first = False
+        return dom
 
     def _get_number_of_childs(self, cr, uid, ids, field_name=None, arg=None, context=None):
         # Verifications
