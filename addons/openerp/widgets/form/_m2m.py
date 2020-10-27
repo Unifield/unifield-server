@@ -150,7 +150,10 @@ class M2M(TinyInputWidget):
         if self.editable is False:
             selectable = 0
         else:
-            selectable = 2
+            if attrs.get("m2m_selectable"):
+                selectable = 2
+            else:
+                selectable = 3
 
         # try to get original input values if creating validation form
         if not params.filter_action:
