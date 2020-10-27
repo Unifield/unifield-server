@@ -24719,16 +24719,6 @@ msgstr "Chèque"
 msgid "The Journal Entry of the invoice have been totally reconciled with one or several Journal Entries of payment."
 msgstr "L'écriture comptable de la facture a été totalement lettrée avec une ou plusieurs écritures comptables de paiement."
 
-#. module: stock_override
-#: code:addons/stock_override/stock.py:617
-#, python-format
-msgid "\n"
-"You cannot choose this supplier because some destination locations are not available for this partner.\n"
-""
-msgstr "\n"
-"Vous ne pouvez pas choisir ce fournisseur parce que certaines destinations ne sont pas disponible pour ce partenaire.\n"
-""
-
 #. module: sync_client
 #: view:backup.config:0
 #: model:ir.model,name:sync_client.model_backup_config
