@@ -100,6 +100,7 @@ class res_company(osv.osv):
             ids = [ids]
 
         instance_obj = self.pool.get('msf.instance')
+        check_menu = False
         if 'instance_id' in vals:
             # only one company (unicity)
             if len(ids) != 1:
@@ -113,7 +114,9 @@ class res_company(osv.osv):
             if not company.instance_id:
                 # An instance was not set; add DB name and activate it
                 instance_obj.write(cr, uid, [vals['instance_id']], instance_data, context=context)
+                check_menu = True
             elif company.instance_id.id != vals.get('instance_id'):
+                check_menu = True
                 # An instance was already set
                 old_instance_id = company.instance_id.id
                 # Deactivate the instance
@@ -123,7 +126,13 @@ class res_company(osv.osv):
                 # refresh all objects
                 for object in ['account.analytic.journal', 'account.journal', 'account.analytic.line', 'account.move', 'account.move.line', 'account.bank.statement']:
                     self._refresh_objects(cr, uid, object, old_instance_id, vals['instance_id'], context=context)
-        return super(res_company, self).write(cr, uid, ids, vals, context=context)
+
+        ret = super(res_company, self).write(cr, uid, ids, vals, context=context)
+        if check_menu:
+            level = self._get_instance_level(cr, uid)
+            stock_pipe_report_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'stock_pipe_per_product_instance_menu')[1]
+            self.pool.get('ir.ui.menu').write(cr, uid, stock_pipe_report_menu_id, {'active': level == 'section'}, context=context)
+        return ret
 
     def _get_instance_level(self, cr, uid):
         instance = self._get_instance_record(cr, uid)

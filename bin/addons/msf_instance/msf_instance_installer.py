@@ -52,8 +52,6 @@ class msf_instance_setup(osv.osv_memory):
                                        {'groups_id': [(6, 0, user['groups_id'])]},
                                        context=context)
 
-            stock_pipe_report_menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_tools', 'stock_pipe_per_product_instance_menu')[1]
-            self.pool.get('ir.ui.menu').write(cr, uid, stock_pipe_report_menu_id, {'active': level == 'section'}, context=context)
 
 
             return self.action_next(cr, uid, ids, context=context)
