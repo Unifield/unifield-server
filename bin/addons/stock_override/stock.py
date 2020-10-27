@@ -516,8 +516,9 @@ class stock_picking(osv.osv):
 
             v.update({'address_id': addr})
 
+        if partner_id and ids:
             picking = self.browse(cr, uid, ids[0], context=context)
-            if not picking.origin and partner and partner.partner_type in ('internal', 'intermission', 'section'):
+            if not picking.origin and partner.partner_type in ('internal', 'intermission', 'section'):
                 return {
                     'value': {'partner_id2': False, 'partner_id': False,},
                     'warning': {
