@@ -17258,13 +17258,6 @@ msgstr "Ligne %s. Aucune monnaie précisée !"
 msgid "Period '%s' is not open! No Register is created"
 msgstr "Period '%s' is not open! No Register is created"
 
-#. modules: reason_types_moves, stock
-#: model:ir.model,name:reason_types_moves.model_stock_return_picking
-#: model:ir.actions.act_window,name:stock.act_stock_return_picking
-#: model:ir.model,name:stock.model_stock_return_picking
-msgid "Return Picking"
-msgstr "Retour de Picking"
-
 #. module: product
 #: help:product.template,state:0
 #: help:product.mass.update,product_state:0
@@ -22016,12 +22009,6 @@ msgstr "Mapping of Instance into a Country Code"
 #: field:physical.inventory.import.line.wizard,line_id:0
 msgid "Line ID"
 msgstr "ID de ligne"
-
-#. module: stock
-#: code:addons/stock/wizard/stock_return_picking.py:126
-#, python-format
-msgid "To be refunded/invoiced"
-msgstr "A Rembourser /A Facturer."
 
 #. module: unifield_setup
 #: view:allocation.stock.setup:0
@@ -44368,12 +44355,6 @@ msgstr "HR"
 msgid "Loaning"
 msgstr "Prêt/Emprunt"
 
-#. module: stock
-#: code:addons/stock/wizard/stock_return_picking.py:115
-#, python-format
-msgid "Provide the quantities of the returned products."
-msgstr "Indiquez les quantités des Produits Retournés."
-
 #. module: stock_schedule
 #: field:stock.frequence,yearly_choose_day:0
 msgid "Choose day"
@@ -48017,12 +47998,6 @@ msgstr "Qté. Min."
 #, python-format
 msgid "The entry %s has already been corrected."
 msgstr "L'écriture %s a déjà été corrigée."
-
-#. module: stock
-#: code:addons/stock/wizard/stock_return_picking.py:203
-#, python-format
-msgid "Please specify at least one non-zero quantity!"
-msgstr "Veuillez spécifier au moins une quantité non nulle!"
 
 #. module: finance
 #: field:cash.request.liquidity.total,amount_functional:0
@@ -59543,9 +59518,6 @@ msgstr "Avancement"
 #: code:addons/stock/wizard/stock_invoice_onshipping.py:65
 #: code:addons/stock/wizard/stock_invoice_onshipping.py:89
 #: code:addons/stock/wizard/stock_invoice_onshipping.py:91
-#: code:addons/stock/wizard/stock_return_picking.py:77
-#: code:addons/stock/wizard/stock_return_picking.py:92
-#: code:addons/stock/wizard/stock_return_picking.py:203
 #: code:addons/stock_forecast/wizard/stock_forecast.py:253
 #: code:addons/stock_forecast/wizard/stock_forecast.py:296
 #: code:addons/stock_forecast/wizard/stock_forecast.py:395
@@ -60653,7 +60625,6 @@ msgstr "Commande de Terrain"
 #: model:ir.ui.menu,name:account.periodical_processing_invoicing
 #: view:purchase.order.line:0
 #: model:ir.ui.menu,name:sale.menu_invoiced
-#: code:addons/stock/wizard/stock_return_picking.py:126
 #, python-format
 msgid "Invoicing"
 msgstr "Facturation"
@@ -67397,12 +67368,6 @@ msgstr "Partially Posted"
 #: view:sale.order.followup:0
 msgid "Export PDF"
 msgstr "Export PDF"
-
-#. module: stock
-#: code:addons/stock/wizard/stock_return_picking.py:115
-#, python-format
-msgid "Return lines"
-msgstr "Lignes de retour"
 
 #. module: msf_doc_import
 #: model:ir.actions.report.xml,name:msf_doc_import.po_simulation_screen
@@ -75430,12 +75395,6 @@ msgstr "Europe/Guernsey"
 msgid "Comparison between accounting and payment entries"
 msgstr "Comparaison entre les écritures comptables et de paiement"
 
-#. module: stock
-#: code:addons/stock/wizard/stock_return_picking.py:126
-#, python-format
-msgid "No invoicing"
-msgstr "Pas de facturation"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -80384,12 +80343,6 @@ msgstr "Données Tirées"
 #: field:financing.contract.account.quadruplet,account_destination_link_id:0
 msgid "Link id"
 msgstr "Link id"
-
-#. module: stock
-#: code:addons/stock/wizard/stock_return_picking.py:92
-#, python-format
-msgid "There are no products to return (only lines in Done state and not fully returned yet can be returned)!"
-msgstr "Il n'y a pas de produit à retourner (seulement les lignes sous statut 'Terminé' et pas encore totalement retournées peuvent être retournées) !"
 
 #. modules: base_setup, unifield_setup, base
 #: selection:base.setup.company,country_id:0
@@ -96423,12 +96376,6 @@ msgstr " * Le statut 'Brouillon' est mis automatiquement quand le bon de command
 #, python-format
 msgid "#%d account %s - %s"
 msgstr "#%d account %s - %s"
-
-#. module: stock
-#: code:addons/stock/wizard/stock_return_picking.py:77
-#, python-format
-msgid "You may only return pickings that are Confirmed, Available or Done!"
-msgstr "Les retours de prélèvements ne sont possibles que si le statut du prélèvement est sous  \"Confirmé\", \"Disponible\" ou \"Terminé\" !"
 
 #. modules: purchase, purchase_followup
 #: field:purchase.order,partner_ref:0
