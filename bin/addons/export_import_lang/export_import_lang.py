@@ -293,12 +293,6 @@ class res_lang(osv.osv):
         cr.commit()
         cr.close(True)
 
-    def unlink(self, cr, uid, ids, context=None):
-        languages = self.read(cr, uid, ids, ['code','active'], context=context)
-        for lang in languages:
-            if lang['code'] in ('es_MF', 'fr_MF', 'en_MF', 'en_US'):
-                raise osv.except_osv(_('User Error'), _("Base Language '%s' can not be deleted !") % lang['code'])
-        return super(res_lang, self).unlink(cr, uid, ids, context=context)
 res_lang()
 
 class base_language_install(osv.osv_memory):

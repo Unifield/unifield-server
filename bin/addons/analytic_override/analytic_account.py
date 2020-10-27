@@ -691,53 +691,6 @@ class analytic_account(osv.osv):
                 self._check_existing_entries(cr, uid, analytic_acc_id, context=context)
         return res
 
-    def unlink(self, cr, uid, ids, context=None):
-        """
-        Delete some analytic account is forbidden!
-        """
-        # Some verification
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        analytic_accounts = []
-        # Search OC CC
-        try:
-            oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]
-        except ValueError:
-            oc_id = 0
-        analytic_accounts.append(oc_id)
-        # Search Funding Pool
-        try:
-            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_funding_pool')[1]
-        except ValueError:
-            fp_id = 0
-        analytic_accounts.append(fp_id)
-        # Search Free 1
-        try:
-            f1_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_free_1')[1]
-        except ValueError:
-            f1_id = 0
-        analytic_accounts.append(f1_id)
-        # Search Free 2
-        try:
-            f2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_free_2')[1]
-        except ValueError:
-            f2_id = 0
-        analytic_accounts.append(f2_id)
-        # Search MSF Private Fund
-        try:
-            msf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            msf_id = 0
-        analytic_accounts.append(msf_id)
-        # Accounts verification
-        for i in ids:
-            if i in analytic_accounts:
-                raise osv.except_osv(_('Error'), _('You cannot delete this Analytic Account!'))
-        return super(analytic_account, self).unlink(cr, uid, ids, context=context)
-
     def get_analytic_line(self, cr, uid, ids, context=None):
         """
         Return analytic lines list linked to the given analytic accounts

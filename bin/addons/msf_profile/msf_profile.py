@@ -52,6 +52,18 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF19.0
+    def us_2725_uf_write_date_on_products(self, cr, uid, *a, **b):
+        '''
+        Set the uf_write_date of products which don't have one to the date of creation
+        '''
+
+        cr.execute('''
+            UPDATE product_product SET uf_write_date = uf_create_date WHERE uf_write_date is NULL
+        ''')
+        self._logger.warn('The uf_write_date has been modified on %s products' % (cr.rowcount,))
+
+        return True
 
     def us_7742_update_stock_mission(self, cr, uid, *a, **b):
         cr.execute('''update stock_move m set included_in_mission_stock='t' from mission_move_rel rel where m.id = rel.move_id''')

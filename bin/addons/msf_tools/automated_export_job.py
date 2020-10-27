@@ -104,10 +104,12 @@ class automated_export_job(osv.osv):
             readonly=True,
             required=True,
         ),
+        'disable_generation': fields.boolean('Do not generate reports, push only to remote'),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
+        'disable_generation': False,
     }
 
     _order = 'id desc'
@@ -147,24 +149,33 @@ class automated_export_job(osv.osv):
                 error_message = []
                 state = 'done'
 
-                processed, rejected, headers = getattr(
-                    self.pool.get(job.export_id.function_id.model_id.model),
-                    job.export_id.function_id.method_to_call
-                )(cr, uid, job.export_id, context=context)
 
-                if context.get('po_not_found'):
-                    error_message.append(_('No PO to export !'))
+                if job.export_id.function_id.model_id.model != 'wizard.hq.report.oca':
+                    processed, rejected, headers = getattr(
+                        self.pool.get(job.export_id.function_id.model_id.model),
+                        job.export_id.function_id.method_to_call
+                    )(cr, uid, job.export_id, context=context)
 
-                if processed:
-                    nb_processed = self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp)
+                    if context.get('po_not_found'):
+                        error_message.append(_('No PO to export !'))
 
-                if rejected:
-                    nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp)
-                    state = 'error'
-                    for resjected_line in rejected:
-                        line_message = _('Line %s: ') % resjected_line[0]
-                        line_message += resjected_line[2]
-                        error_message.append(line_message)
+                    if processed:
+                        nb_processed = self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec, sftp=sftp)
+
+                    if rejected:
+                        nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec, sftp=sftp)
+                        state = 'error'
+                        for resjected_line in rejected:
+                            line_message = _('Line %s: ') % resjected_line[0]
+                            line_message += resjected_line[2]
+                            error_message.append(line_message)
+                else:
+                    nb_processed, nb_rejected, error_message = getattr(
+                        self.pool.get(job.export_id.function_id.model_id.model),
+                        job.export_id.function_id.method_to_call
+                    )(cr, uid, job.export_id, remote_con=ftp_connec or sftp, disable_generation=job.disable_generation, context=context)
+                    if nb_rejected:
+                        state = 'error'
 
                 self.write(cr, uid, [job.id], {
                     'start_time': start_time,
@@ -259,6 +270,20 @@ class automated_export_job(osv.osv):
         })
 
         return len(data_lines)
+
+    def send_file(self, cr, uid, export_obj, remote_con, filename, destination_path, delete=False, context=None):
+        if export_obj.ftp_protocol == 'sftp':
+            with remote_con.cd(destination_path):
+                remote_con.put(filename)
+        else:
+            with open(filename, 'rb') as temp_file:
+                rep = remote_con.storbinary('STOR %s' % os.path.join(destination_path, os.path.basename(filename)), temp_file)
+                if not rep.startswith('2'):
+                    raise osv.except_osv(_('Error'), _('Unable to write file on FTP server'))
+        if delete:
+            os.unlink(filename)
+        return True
+
 
     def cancel_file_export(self, cr, uid, ids, context=None):
         """

@@ -1368,6 +1368,12 @@ class Entity(osv.osv):
         self._logger.info('Not run updates : %d' % (nb_data_not_run, ))
         self._logger.info('Not run messages : %d' % (nb_msg_not_run, ))
         self._logger.info("Synchronization successfully done")
+        if self.pool.get('wizard.hq.report.oca').launch_auto_export(cr, uid, context=context):
+            if logger:
+                logger_index = logger.append()
+                logger.replace(logger_index, 'Processing Export to HQ system (OCA) - Not yet exported')
+                logger.write()
+            self._logger.info('Processing Export to HQ system (OCA) - Not yet exported')
         return True
 
     @sync_process()

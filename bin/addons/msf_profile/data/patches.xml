@@ -614,5 +614,9 @@
             <field name="method">us_7742_update_stock_mission</field>
         </record>
 
+        <record id="us_2725_uf_write_date_on_products" model="patch.scripts">
+            <field name="method">us_2725_uf_write_date_on_products</field>
+        </record>
+
     </data>
 </openerp>
