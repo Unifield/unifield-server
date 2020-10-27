@@ -170,16 +170,13 @@ class product_mass_update(osv.osv):
         '''
         if context is None:
             context = {}
+        if not context.get('button_selected_ids'):
+            raise osv.except_osv(_('Warning'),  _('Please select at least one line'))
 
-        self.unlink(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'product_ids': [(3, x) for x in context['button_selected_ids']]}, context=context)
+        #self.unlink(cr, uid, ids, context=context)
 
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'product.mass.update',
-            'view_type': 'form',
-            'view_mode': 'tree,form',
-            'target': 'crush',
-        }
+        return True
 
     def cancel_update(self, cr, uid, ids, context=None):
         '''
