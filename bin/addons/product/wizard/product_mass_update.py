@@ -38,7 +38,7 @@ class product_mass_update(osv.osv):
 
     _columns = {
         'name': fields.char(size=64, string='Update Reference'),
-        'state': fields.selection(selection=[('draft', 'Draft'), ('in_progress', 'In Progress'), ('error', 'Error'), ('done', 'Done'), ('cancel', 'Cancel')], string='Status', readonly=True),
+        'state': fields.selection(selection=[('draft', 'Draft'), ('in_progress', 'In Progress'), ('error', 'Error'), ('done', 'Done'), ('cancel', 'Cancelled')], string='Status', readonly=True),
         'date_done': fields.datetime(string='Date of the update', readonly=True),
         'user_id': fields.many2one('res.users', string='User who Updated', readonly=True),
         'import_in_progress': fields.boolean(string='Import in progress'),

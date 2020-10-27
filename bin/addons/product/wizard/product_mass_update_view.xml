@@ -71,7 +71,7 @@
                             <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                                 <button name="wizard_import_products" string="Import products" icon="gtk-dnd" colspan="2" type="object"/>
                             </group>
-                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('active', 'in', ['t', 'f']), ('expected_prod_creator', '=', True)]">
+                            <field name="product_ids" colspan="4" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('active', 'in', ['t', 'f']), ('expected_prod_creator', '=', True)]" m2m_selectable="2">
                                 <tree string="Products" hide_edit_button="1" colors="grey:active == False">
                                     <field name="default_code" />
                                     <field name="name" />
@@ -97,11 +97,11 @@
                             </field>
                         </page>
                     </notebook>
-                    <group colspan="4">
-                        <field name="state" colspan="2" />
-                        <button name="delete_update" string="Delete Update" colspan="1" icon="gtk-cancel" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
-                        <button name="cancel_update" string="Cancel Update" colspan="1" icon="gtk-cancel" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
-                        <button name="launch_update" string="Apply Update" colspan="1" icon="gtk-go-forward" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <field name="state" />
+                    <group col="3" colspan="6">
+                        <button name="delete_update" string="Delete Update" icon="gtk-cancel" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <button name="cancel_update" string="Cancel Update" icon="gtk-cancel" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <button name="launch_update" string="Apply Update" icon="gtk-go-forward" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     </group>
                 </form>
             </field>
