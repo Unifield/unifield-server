@@ -63,24 +63,21 @@ class financing_contract_format_line(osv.osv):
         return domain
 
     # get list of accounts for duplet format lines
-    def _create_account_couple_domain(self, account_destination_list, general_domain):
-        if len(account_destination_list) == 0:
-            return False # Just make this condition to False
-        elif len(account_destination_list) == 1:
-            temp_domain = ['&',
-                           ('general_account_id', '=', account_destination_list[0].account_id.id),
-                           ('destination_id', '=', account_destination_list[0].destination_id.id)]
-
-            return temp_domain
-        else:
-            firstElement = self._create_account_couple_domain([account_destination_list[0]], general_domain)
-            secondElement = self._create_account_couple_domain(account_destination_list[1:], general_domain)
-
-            if firstElement and secondElement:
-                return ['|'] + firstElement + secondElement
-            elif firstElement:
-                return firstElement
-            return secondElement
+    def _create_account_couple_domain(self, account_destination_list):
+        """
+        Returns the domain corresponding to the acc/dest list in param.
+        """
+        if not account_destination_list:
+            return False
+        dom = []
+        first = True
+        for account_dest in account_destination_list:
+            dom += ['&', ('general_account_id', '=', account_dest.account_id.id), ('destination_id', '=', account_dest.destination_id.id)]
+            if not first:
+                dom.insert(0, '|')
+            else:
+                first = False
+        return dom
 
     # get list of accounts for quadruplet format lines
     def _create_account_quadruplet_domain(self, account_quadruplet_list, funding_pool_ids=False):
@@ -231,7 +228,7 @@ class financing_contract_format_line(osv.osv):
 
                 # Account + destination domain
                 account_destination_quadruplet_ids = self._get_accounts_couple_and_quadruplets(browse_line)
-                account_couple_domain = self._create_account_couple_domain(account_destination_quadruplet_ids['account_destination_list'], False)
+                account_couple_domain = self._create_account_couple_domain(account_destination_quadruplet_ids['account_destination_list'])
                 # get the criteria for accounts of quadruplet mode
                 account_quadruplet_domain = self._create_account_quadruplet_domain(account_destination_quadruplet_ids['account_quadruplet_list'], general_domain['funding_pool_ids'])
 
