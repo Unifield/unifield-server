@@ -94,6 +94,7 @@ class analytic_distribution(osv.osv):
         if context is None:
             context = {}
         analytic_acc_obj = self.pool.get('account.analytic.account')
+        account_obj = self.pool.get('account.account')
         ir_model_data_obj = self.pool.get('ir.model.data')
         res = True
         if fp_id and account_id and dest_id:
@@ -108,16 +109,20 @@ class analytic_distribution(osv.osv):
                                                               'tuple_destination_account_ids'],
                                              context=context)
                 if fp and fp.category == 'FUNDING':
-                    # when the link is made to G/L accounts only: all Destinations compatible with the acc. are allowed
-                    if fp.select_accounts_only and \
-                            account_id in [a.id for a in fp.fp_account_ids if dest_id in [d.id for d in a.destination_ids]]:
-                        res = True
-                    # otherwise the combination "account + dest" must be checked
-                    elif not fp.select_accounts_only and (account_id, dest_id) in \
-                            [(t.account_id.id, t.destination_id.id) for t in fp.tuple_destination_account_ids if not t.disabled]:
-                        res = True
-                    else:
+                    # continue only if the account and destination selected are compatible with one another
+                    account_selected = account_obj.browse(cr, uid, account_id, fields_to_fetch=['destination_ids'], context=context)
+                    if dest_id not in [d.id for d in account_selected.destination_ids]:
                         res = False
+                    else:
+                        # when the link is made to G/L accounts only: all Destinations compatible with the acc. are allowed
+                        if fp.select_accounts_only and account_id in [a.id for a in fp.fp_account_ids]:
+                            res = True
+                        # otherwise the combination "account + dest" must be checked
+                        elif not fp.select_accounts_only and (account_id, dest_id) in \
+                                [(t.account_id.id, t.destination_id.id) for t in fp.tuple_destination_account_ids if not t.disabled]:
+                            res = True
+                        else:
+                            res = False
         return res
 
     def onchange_ad_destination(self, cr, uid, ids, destination_id=False, funding_pool_id=False, account_id=False,
