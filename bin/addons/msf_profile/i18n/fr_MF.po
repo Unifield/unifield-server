@@ -60895,8 +60895,8 @@ msgstr "Sélectionnable dans le Contrat"
 
 #. module: account_override
 #: field:account.account,selected_in_contract:0
-msgid "Selected in Contract"
-msgstr "Sélectionné dans le Contrat"
+msgid "Selected in Contract or Donor"
+msgstr "Sélectionné dans le Contrat ou le Bailleur"
 
 #. module: financing_contract
 #: sql_constraint:financing.contract.account.quadruplet:0

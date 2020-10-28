@@ -407,7 +407,7 @@ class account_account(osv.osv):
 
     def _get_selected_in_contract(self, cr, uid, account_ids, name=False, args=False, context=None):
         """
-        Returns True for the G/L accounts already selected in the contract in context:
+        Returns True for the G/L accounts already selected in the contract or donor in context:
         they will be displayed in grey in the list and won't be re-selectable.
 
         As soon as an account has been selected in either G/L accounts only, acc/dest combinaisons, or quadruplets,
@@ -482,8 +482,8 @@ class account_account(osv.osv):
         # G/L acc. which CAN BE selected in the Financing Contract:
         'selectable_in_contract': fields.function(_get_false, string='Selectable in Contract', method=True, store=False,
                                                   type='boolean', fnct_search=_search_selectable_in_contract),
-        # G/L acc. which ARE currently selected in the Financing Contract:
-        'selected_in_contract': fields.function(_get_selected_in_contract, string='Selected in Contract', method=True,
+        # G/L acc. which ARE currently selected in the Financing Contract or Donor:
+        'selected_in_contract': fields.function(_get_selected_in_contract, string='Selected in Contract or Donor', method=True,
                                                 store=False, type='boolean'),
     }
 
