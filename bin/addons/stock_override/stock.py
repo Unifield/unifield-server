@@ -504,7 +504,6 @@ class stock_picking(osv.osv):
             d.update({'address_id': [('partner_id', '=', partner_id)]})
             v.update({'is_esc': partner.partner_type == 'esc'})
 
-
         if address_id:
             addr = self.pool.get('res.partner.address').browse(cr, uid, address_id, context=context)
 
@@ -518,26 +517,6 @@ class stock_picking(osv.osv):
             v.update({'address_id': addr})
 
         if partner_id and ids:
-            context['partner_id'] = partner_id
-
-            out_loc_ids = self.pool.get('stock.location').search(cr, uid, [
-                ('outgoing_dest', '=', context['partner_id']),
-            ], order='NO_ORDER', context=context)
-            move_ids = self.pool.get('stock.move').search(cr, uid, [
-                ('picking_id', 'in', ids),
-                ('location_dest_id', 'not in', out_loc_ids),
-            ], limit=1, order='NO_ORDER', context=context)
-            if move_ids:
-                return {
-                    'value': {'partner_id2': False, 'partner_id': False,},
-                    'warning': {
-                        'title': _('Error'),
-                        'message': _("""
-You cannot choose this supplier because some destination locations are not available for this partner.
-"""),
-                    },
-                }
-
             picking = self.browse(cr, uid, ids[0], context=context)
             if not picking.origin and partner.partner_type in ('internal', 'intermission', 'section'):
                 return {
