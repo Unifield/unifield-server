@@ -9,6 +9,7 @@
             % else:
             	<input type="hidden" class="${css_class}" id='${name}_set' kind="${kind}" ${py.attrs(attrs)} style="width: 100%;"/>
             % endif
+            <input type="hidden" name="${name}/_terp_previously_selected" id="${name}/_terp_previously_selected" />
             % if error:
             	<span class="fielderror">${error}</span>
             % endif
