@@ -99,7 +99,7 @@
                     </notebook>
                     <field name="state" />
                     <group col="3" colspan="6">
-                        <button name="delete_update" string="Delete Update" icon="gtk-cancel" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        <button name="delete_update" string="Delete Update" icon="gtk-cancel" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}" set_ids="product_ids"/>
                         <button name="cancel_update" string="Cancel Update" icon="gtk-cancel" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                         <button name="launch_update" string="Apply Update" icon="gtk-go-forward" type="object" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     </group>
