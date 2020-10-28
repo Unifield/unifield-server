@@ -164,9 +164,9 @@ class product_mass_update(osv.osv):
             return {'value': {'property_account_expense': False}}
         return {'value': {}}
 
-    def delete_update(self, cr, uid, ids, context=None):
+    def delete_products(self, cr, uid, ids, context=None):
         '''
-        Delete the current Product Mass Update
+        Delete the selected products
         '''
         if context is None:
             context = {}
@@ -174,7 +174,6 @@ class product_mass_update(osv.osv):
             raise osv.except_osv(_('Warning'),  _('Please select at least one line'))
 
         self.write(cr, uid, ids, {'product_ids': [(3, x) for x in context['button_selected_ids']]}, context=context)
-        #self.unlink(cr, uid, ids, context=context)
 
         return True
 
