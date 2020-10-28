@@ -82,7 +82,7 @@ class stock_pipe_per_product_instance(osv.osv):
             cr.commit()
             new_thread = threading.Thread(target=self.generate_report_bkg, args=(cr, uid, report.id, datas, context))
             new_thread.start()
-            new_thread.join(timeout=30.0) # join = wait until new_thread is finished but if it last more then timeout value, you can continue to work
+            new_thread.join(timeout=5.0) # join = wait until new_thread is finished but if it last more then timeout value, you can continue to work
 
             res = {
                 'type': 'ir.actions.act_window',

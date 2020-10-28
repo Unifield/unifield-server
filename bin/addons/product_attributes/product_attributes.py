@@ -1500,7 +1500,10 @@ class product_attributes(osv.osv):
             if f in vals and not vals.get(f):
                 vals[f] = 'no'
 
-        vals['uf_create_date'] = vals.get('uf_create_date') or datetime.now()
+        vals.update({
+            'uf_create_date': vals.get('uf_create_date') or datetime.now(),
+            'uf_write_date': vals.get('uf_write_date') or datetime.now(),
+        })
 
         self.convert_price(cr, uid, vals, context)
 

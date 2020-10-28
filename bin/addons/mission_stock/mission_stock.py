@@ -36,7 +36,7 @@ import cStringIO
 import base64
 from msf_field_access_rights.osv_override import _get_instance_level
 from datetime import datetime
-from xlwt import Workbook, easyxf, Borders, add_palette_colour
+from xlwt import Workbook, easyxf, Borders, add_palette_colour, Formula
 import tempfile
 import shutil
 from mx.DateTime import DateTime as mxdt
@@ -303,13 +303,15 @@ class stock_mission_report(osv.osv):
 
         header_row = [_(column_name) for column_name, colum_property in header]
         instance_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.name
-        report_name = self.read(cr, uid, report_id, ['name'])['name']
-        report_last_updt = time.strftime('%d-%m-%Y %H:%M:%S')
+        report_data = self.read(cr, uid, report_id, ['name', 'last_update'])
+        report_name = report_data['name']
+        report_last_updt = report_data['last_update']
+
         if file_type == 'csv':
             writer = UnicodeWriter(export_file, dialect=excel_semicolon)
             # Write common data: Current Instance, Instance Selection, Generation Date, Export Date
             writer.writerows([[_("Generating instance"), instance_name], [_("Instance selection"), report_name],
-                              [_("Last update"), report_last_updt], [_("Export Date"), report_last_updt]])
+                              [_("Last update"), report_last_updt], [_("Export Date"), time.strftime('%Y-%m-%d %H:%M:%S')]])
             # write headers of the csv file
             writer.writerow(header_row)
 
@@ -336,6 +338,13 @@ class stock_mission_report(osv.osv):
                 """)
             row_style.borders = borders
 
+            data_row_style = easyxf("""
+                    font: height 220;
+                    font: name Calibri;
+                    align: wrap on, vert center, horiz center;
+                """)
+            data_row_style.borders = borders
+            data_row_style.num_format_str = 'DD/MMM/YYYY HH:MM'
             book = Workbook()
             sheet = book.add_sheet('Sheet 1')
             sheet.row_default_height = 60*20
@@ -348,16 +357,18 @@ class stock_mission_report(osv.osv):
             sheet.write(1, 1, report_name, row_style)
             # Third Line
             sheet.write(2, 0, _("Last update"), row_style)
-            sheet.write(2, 1, report_last_updt, row_style)
+            sheet.write(2, 1,  report_last_updt and datetime.strptime(report_last_updt, '%Y-%m-%d %H:%M:%S') or '', data_row_style)
             # Fourth Line
             sheet.write(3, 0, _("Export Date"), row_style)
-            sheet.write(3, 1, report_last_updt, row_style)
+            sheet.write(3, 1, Formula('IF(D2=0;NOW();D2)'), data_row_style)
 
             self.xls_write_header(sheet, header_row, header_style)
 
             # tab header bigger height:
             sheet.row(4).height_mismatch = True
             sheet.row(4).height = 45*20
+            sheet.col(0).width=8000
+            sheet.col(1).width=10000
 
         # write the lines
         row_count = 5
@@ -997,11 +1008,12 @@ class stock_mission_report(osv.osv):
                         SELECT id, product_id, product_uom, product_qty, location_id, location_dest_id
                         FROM stock_move
                         WHERE state = 'done'
-                        AND id not in (SELECT move_id FROM mission_move_rel WHERE mission_id = %s)
-            ''', (report_id,))
+                        AND included_in_mission_stock='f'
+            ''')
             res = cr.fetchall()
+            all_move_ids = []
             for move in res:
-                cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)', (report_id, move[0]))
+                all_move_ids.append(move[0])
                 product = product_obj.browse(cr, uid, move[1],
                                              fields_to_fetch=['uom_id', 'standard_price'])
                 line_id = line_obj.search(cr, uid, [('product_id', '=', move[1]),
@@ -1056,6 +1068,8 @@ class stock_mission_report(osv.osv):
 
                     vals.update({'internal_val': vals['internal_qty'] * product.standard_price})
                     line_obj.write(cr, uid, line.id, vals)
+            if all_move_ids:
+                cr.execute("update stock_move set included_in_mission_stock='t' where id in %s", (tuple(all_move_ids), ))
         return True
 
     def delete_previous_reports_attachments(self, cr, uid, ids, context=None):
@@ -1534,7 +1548,6 @@ class stock_mission_report_line(osv.osv):
         'in_pipe_coor_val': fields.float(digits=(16,2), string='In Pipe from Coord.', related_uom='uom_id'),
         'updated': fields.boolean(string='Updated'),
         'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean', store=True),
-        'move_ids': fields.many2many('stock.move', 'mission_line_move_rel', 'line_id', 'move_id', string='Moves'),
         'instance_id': fields.many2one(
             'msf.instance',
             string='HQ Instance',

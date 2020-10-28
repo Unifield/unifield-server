@@ -11403,7 +11403,7 @@ msgstr "Budget - Importation"
 msgid "Creation Month"
 msgstr "Creation Month"
 
-#. modules: resource, finance, supplier_catalogue, msf_field_access_rights, msf_instance, msf_button_access_rights, msf_tools, analytic_distribution, financing_contract, sync_client, hr,res_currency_functional,msf_profile, procurement_cycle
+#. modules: resource, finance, supplier_catalogue, msf_field_access_rights, msf_instance, msf_button_access_rights, msf_tools, analytic_distribution, financing_contract, sync_client, hr, res_currency_functional, msf_profile, procurement_cycle, account
 #: view:financing.contract.donor:0
 #: view:msf.instance:0
 #: selection:msf.instance.cloud,state:0
@@ -11425,6 +11425,7 @@ msgstr "Creation Month"
 #: view:product.product:0
 #: view:res.request:0
 #: view:replenishment.location.config:0
+#: view:account.tax:0
 msgid "Inactive"
 msgstr "Inactif"
 
@@ -45746,6 +45747,8 @@ msgstr "Type de vue"
 #: code:addons/msf_tools/automated_export_job.py:242
 #: code:addons/msf_tools/automated_import_job.py:514
 #: code:addons/msf_tools/automated_import_job.py:521
+#: code:addons/msf_tools/automated_export_job.py:252
+#: code:addons/msf_tools/automated_import_job.py:626
 #, python-format
 msgid "Unable to write report on FTP server"
 msgstr "Unable to write report on FTP server"
@@ -61252,8 +61255,14 @@ msgstr "JRNL"
 #. module: account
 #: field:account.tax,price_include:0
 #: field:account.tax.template,price_include:0
+#: view:account.tax:0
 msgid "Tax Included in Price"
 msgstr "Taxe Incluse dans le Prix"
+
+#. module: account
+#: view:account.tax:0
+msgid "Tax Not Included in Price"
+msgstr "Taxe Non Incluse dans le Prix"
 
 #. module: register_accounting
 #: view:account.bank.statement:0
@@ -70224,10 +70233,11 @@ msgstr "Palau"
 msgid "Sender's email"
 msgstr "Courriel de l'expéditeur"
 
-#. module: analytic_distribution
+#. module: analytic_distribution, kit
 #: view:account.analytic.account:0
+#: view:composition.kit:0
 msgid "Re-activate"
-msgstr "Re-activate"
+msgstr "Réactiver"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:435
@@ -71676,6 +71686,7 @@ msgstr "Navajo"
 #: field:sync_client.survey,active:0
 #: field:product.status,active:0
 #: code:addons/mission_stock/mission_stock.py:504
+#: view:account.tax:0
 #, python-format
 msgid "Active"
 msgstr "Actif"
@@ -110465,6 +110476,12 @@ msgstr "Changer en NL+DE"
 msgid "is dispatched."
 msgstr "est expédié."
 
+#. module: kit
+#: code:addons/kit/kit.py:196
+#, python-format
+msgid "You can only re-activate a Closed Kit Composition."
+msgstr "Vous pouvez uniquement réactiver une Composition de Kit Cloturée."
+
 #. module: sale
 #: code:addons/sale/sale_workflow.py:584
 #, python-format
@@ -111028,3 +111045,77 @@ msgstr "Qté Sortie/Colisage/Expédition/Distribution"
 #: field:stock.mission.report.line,opdd_qty:0
 msgid "Output/Packing/Dispatch/Distribution Qty."
 msgstr "Qté. Sortie/Colisage/Expédition/Distribution"
+
+#. module: register_accounting
+#: field:account.bank.statement.line,display_analytic_lines_button:0
+msgid "Display analytic lines button"
+msgstr "Afficher le bouton des lignes analytiques"
+
+#. module: vertical_integration
+#: code:addons/vertical_integration/wizard/wizard_hq_report_oca.py:80
+#, python-format
+msgid "Export is only available at HQ level."
+msgstr "Export disponible uniquement au siège."
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:517
+#, python-format
+msgid "Local path %s does not exist."
+msgstr "Le chemin local %s n'existe pas."
+
+#. module: msf_tools
+#: view:automated.export:0
+msgid "Manually send to FTP"
+msgstr "Envoyer manuellement sur le serveur FTP"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_job.py:102
+#, python-format
+msgid "Moving %s to %s"
+msgstr "Déplacement de %s vers %s"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:478
+#, python-format
+msgid "Please set the Destination Path."
+msgstr "Veuillez indiquer un Chemin de Destination"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:493
+#: code:addons/msf_tools/automated_export.py:502
+#, python-format
+msgid "Remote path %s does not exist."
+msgstr "Le chemin distant %s n'existe pas."
+
+#. module: msf_tools
+#: field:automated.export,report_local_path:0
+msgid "Report Local Path"
+msgstr "Chemin Local du rapport"
+
+#. module: msf_tools
+#: field:automated.export,destination_local_path:0
+msgid "Destination Local Path"
+msgstr "Chemin Local de destination"
+
+#. module: msf_tools
+#: view:automated.export.job:0
+msgid "Sent to remote"
+msgstr "Envoyé vers serveur distant"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export_job.py:280
+#, python-format
+msgid "Unable to write file on FTP server"
+msgstr "Impossible d'écrire un fichier sur le serveur FTP"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_export.py:519
+#, python-format
+msgid "Write is not allowed on '%s'."
+msgstr "Écriture refusée sur %s."
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_job.py:606
+#, python-format
+msgid "Writing file report at %s"
+msgstr "Écriture du fichier rapport sur %s"
