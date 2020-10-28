@@ -80,13 +80,15 @@ class financing_contract_format_line(osv.osv):
         return dom
 
     # get list of accounts for quadruplet format lines
-    def _create_account_quadruplet_domain(self, account_quadruplet_list, funding_pool_ids=[]):
+    def _create_account_quadruplet_domain(self, account_quadruplet_list, funding_pool_ids=None):
         """
         Returns the domain corresponding to the list of quadruplets in param.
         """
         dom = []
         if not account_quadruplet_list:
             return dom
+        if funding_pool_ids is None:
+            funding_pool_ids = []
         first = True
         for quad in account_quadruplet_list:
             if quad.funding_pool_id.id in funding_pool_ids:
