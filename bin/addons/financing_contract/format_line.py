@@ -523,6 +523,18 @@ class financing_contract_format_line(osv.osv):
 
     # UF-2311: Calculate the quadruplet value before writing or creating the format line
     def calculate_quadruplet(self, cr, uid, vals, context):
+        if context is None:
+            context = {}
+        # UC "Account/Dest." selection when...
+        # ...either no boxes are ticked
+        if 'is_quadruplet' in vals and 'reporting_select_accounts_only' in vals and \
+                not vals['is_quadruplet'] and not vals['reporting_select_accounts_only']:
+            acc_dest_selected = True
+        # ...or "Select Accounts Only" isn't ticked in the Donors where no quadruplets are handled
+        elif context.get('donor_id') and 'reporting_select_accounts_only' in vals and not vals['reporting_select_accounts_only']:
+            acc_dest_selected = True
+        else:
+            acc_dest_selected = False
         # View Line Type = no items selected
         if 'line_type' in vals and vals['line_type'] == 'view':
             vals['allocated_amount'] = 0.0
@@ -548,12 +560,12 @@ class financing_contract_format_line(osv.osv):
             vals['account_destination_ids'] = [(6, 0, [])]
             vals['account_quadruplet_ids'] = [(6, 0, [])]
             vals['quadruplet_update'] = ''
-        # No boxes ticked = Accounts/Destinations selected: reset the G/L accounts and quadruplets
-        elif 'is_quadruplet' in vals and 'reporting_select_accounts_only' in vals and \
-                not vals['is_quadruplet'] and not vals['reporting_select_accounts_only']:
+        # Accounts/Destinations selected: reset the G/L accounts and quadruplets
+        elif acc_dest_selected:
             vals['reporting_account_ids'] = [(6, 0, [])]
             vals['account_quadruplet_ids'] = [(6, 0, [])]
             vals['quadruplet_update'] = ''
+        return True
 
 
     def create(self, cr, uid, vals, context=None):
