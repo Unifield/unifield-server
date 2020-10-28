@@ -66,7 +66,6 @@
                 header="False"
                 rml="addons/msf_outgoing/report/picking_ticket.rml"
                 string="Picking Ticket"
-                update_title="1"
                 view_ids="msf_outgoing.view_picking_ticket_tree,msf_outgoing.view_picking_ticket_form"
                 />
 
