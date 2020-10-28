@@ -110301,3 +110301,8 @@ msgstr "Auto Configuration Locale"
 #: report:freight_manifest:0
 msgid "Reception remarks"
 msgstr "Remarques de réception"
+
+#. module: msf_outgoing
+#: view:stock.move:0
+msgid "Ship Closed Date"
+msgstr "Date de Clôture de l'Expédition"
